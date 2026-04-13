@@ -338,7 +338,6 @@ app.delete('/api/time-entries/:id', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMIT PIPELINE
 // ─────────────────────────────────────────────────────────────────────────────
-
 const PERMIT_STAGES = ['potential','started','submitted','approved','checklist','billed'];
 
 app.get('/api/permits', async (req, res) => {
@@ -608,7 +607,7 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AI CHAT
+// AI CHAT — FULL TOOL SUITE
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function getDBContext() {
@@ -618,11 +617,11 @@ async function getDBContext() {
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
              p.billing_type, p.billing_rate, p.footage, p.miles,
              p.expected_hours, p.expected_revenue, p.actual_hours,
-             cl.name as client_name, co.contract_number
+             cl.name as client_name, co.contract_number,
+             p.start_date, p.completed_date, p.billed_date, p.notes
       FROM projects p
       LEFT JOIN clients cl ON cl.id=p.client_id
       LEFT JOIN contracts co ON co.id=p.contract_id
-      WHERE p.status != 'billed'
       ORDER BY p.created_at DESC LIMIT 50
     `),
     pool.query('SELECT id, name FROM staff WHERE active=true ORDER BY name'),
@@ -631,54 +630,143 @@ async function getDBContext() {
   return { clients: clients.rows, projects: projects.rows, staff: staff.rows, contracts: contracts.rows };
 }
 
-const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services, a fiber optic infrastructure company in Macon, Georgia.
+const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services, a fiber optic infrastructure company in Macon, Georgia. You have FULL access to the database through tools. You are smart, proactive, and thorough.
 
 RATE STRUCTURE:
 - Inspection: $90/hr (RUS work only, PSC client)
 - Resident Engineer (RE): $100/hr (RUS/PSC only)
-- Permitting: $90/hr billed at 27.5 hours/mile (15 hour minimum)
+- Permitting: $90/hr billed at 27.5 hours/mile (15 hour minimum), billing_type = 'footage'
 - Design: VARIABLE - always ask for billing rate
 - Other: VARIABLE - always ask for billing rate
 
 CLIENTS: PSC (RUS - Contracts 3, 4, 5), COX, IFT, TRI-CO
-RUS work is PSC only. Each contract has individual work orders.
+RUS work is PSC only. Each PSC contract has individual work orders.
 
-RULES:
-1. Always confirm the billing rate before creating any project - ask even for standard rates.
-2. For permitting projects, calculate billing from footage automatically.
-3. For CSV workforce imports, match work order numbers to existing projects.
-4. Always summarize what you are about to do and ask the user to confirm before calling any tool.
-5. When the user confirms (says yes, ok, looks good, correct, etc.) - call the appropriate tool immediately.
-6. Use the DATABASE CONTEXT to find correct UUIDs for client_id and contract_id.
+YOUR CAPABILITIES — you can do ALL of the following:
+1. CREATE, UPDATE, and DELETE projects
+2. CREATE clients, staff members, and contracts
+3. LOG time entries (single or bulk from CSV)
+4. MARK projects as billed or change their status
+5. ADVANCE permit stages
+6. QUERY the database for any information — projects, hours, revenue, etc.
+7. Answer questions about project data, billing, revenue, hours
 
-DATABASE CONTEXT:
+HOW TO WORK:
+- When the user asks to create/update/delete something, first summarize what you'll do, then ask for confirmation.
+- When the user confirms (says yes, ok, correct, go ahead, etc.), IMMEDIATELY call the appropriate tool. Do not say "I'll create it now" — just call the tool.
+- Use the DATABASE CONTEXT below to find correct UUIDs for client_id, contract_id, staff_id, and project_id. Match by name when the user refers to things by name.
+- If a user mentions a client that doesn't exist, offer to create it.
+- If a user mentions a staff member that doesn't exist, offer to create them.
+- For permitting projects, always set billing_type to 'footage' and billing_rate to 90. The footage field drives the financial calculation.
+- For inspection, set billing_rate to 90 and billing_type to 'hourly'.
+- For RE, set billing_rate to 100 and billing_type to 'hourly'.
+- For design/other, ASK for the billing rate before creating.
+
+QUERYING DATA:
+- You have a query_database tool that can run SELECT queries. Use it to answer questions about projects, hours, revenue, etc.
+- NEVER run INSERT, UPDATE, DELETE, DROP, ALTER, or any modifying SQL through query_database. Only SELECT.
+- Use the specific action tools (create_project, update_project, etc.) for modifications.
+
+DATABASE CONTEXT (current data):
 {CONTEXT}`;
 
-// Tool definitions for Claude to use
+// ─── TOOL DEFINITIONS ────────────────────────────────────────────────────────
 const AI_TOOLS = [
   {
     name: 'create_project',
-    description: 'Create a new project in the database. Only call this after the user has confirmed the project details.',
+    description: 'Create a new project in the database. Call this ONLY after the user has confirmed the details.',
     input_schema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Project name' },
         client_id: { type: 'string', description: 'Client UUID from database context' },
-        contract_id: { type: 'string', description: 'Contract UUID from database context (optional)' },
+        contract_id: { type: 'string', description: 'Contract UUID (optional, for PSC/RUS)' },
         work_order_number: { type: 'string', description: 'Work order number' },
         project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'] },
         billing_type: { type: 'string', enum: ['hourly', 'footage'] },
         billing_rate: { type: 'number', description: 'Hourly rate in dollars' },
         footage: { type: 'number', description: 'Linear footage (permitting projects only)' },
         status: { type: 'string', enum: ['active', 'completed', 'on_hold'], default: 'active' },
+        start_date: { type: 'string', description: 'YYYY-MM-DD format (optional)' },
         notes: { type: 'string' }
       },
       required: ['name', 'client_id', 'project_type', 'billing_type', 'billing_rate']
     }
   },
   {
+    name: 'update_project',
+    description: 'Update an existing project. Only include the fields that are changing. Call ONLY after user confirms.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'UUID of the project to update' },
+        name: { type: 'string' },
+        client_id: { type: 'string' },
+        contract_id: { type: 'string' },
+        work_order_number: { type: 'string' },
+        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'] },
+        status: { type: 'string', enum: ['active', 'completed', 'on_hold', 'billed'] },
+        billing_type: { type: 'string', enum: ['hourly', 'footage'] },
+        billing_rate: { type: 'number' },
+        footage: { type: 'number' },
+        start_date: { type: 'string' },
+        completed_date: { type: 'string' },
+        notes: { type: 'string' }
+      },
+      required: ['project_id']
+    }
+  },
+  {
+    name: 'delete_project',
+    description: 'Delete a project and all its associated data. Call ONLY after user explicitly confirms deletion.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'UUID of the project to delete' }
+      },
+      required: ['project_id']
+    }
+  },
+  {
+    name: 'create_client',
+    description: 'Create a new client in the database.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Client name' },
+        is_rus: { type: 'boolean', description: 'Whether this is a RUS client (default false)' },
+        notes: { type: 'string' }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'create_staff',
+    description: 'Create a new staff member.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Staff member full name' }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'create_contract',
+    description: 'Create a new contract for a client.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id: { type: 'string', description: 'Client UUID' },
+        contract_number: { type: 'string', description: 'Contract number/identifier' },
+        name: { type: 'string', description: 'Contract name/description' }
+      },
+      required: ['client_id', 'contract_number']
+    }
+  },
+  {
     name: 'log_time_entries',
-    description: 'Log time entries for one or more projects. Only call after user confirms.',
+    description: 'Log one or more time entries for projects. Call after user confirms.',
     input_schema: {
       type: 'object',
       properties: {
@@ -701,126 +789,235 @@ const AI_TOOLS = [
     }
   },
   {
-    name: 'mark_project_billed',
-    description: 'Mark a project as billed. Only call after user confirms.',
+    name: 'update_project_status',
+    description: 'Quick status change for a project: active, completed, on_hold, or billed. For marking billed, also sets billed_date.',
     input_schema: {
       type: 'object',
       properties: {
-        project_id: { type: 'string', description: 'Project UUID' }
+        project_id: { type: 'string', description: 'Project UUID' },
+        status: { type: 'string', enum: ['active', 'completed', 'on_hold', 'billed'] }
+      },
+      required: ['project_id', 'status']
+    }
+  },
+  {
+    name: 'advance_permit_stage',
+    description: 'Advance a permitting project to the next stage in the pipeline.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string' },
+        updated_by: { type: 'string', description: 'Name of person advancing the stage' },
+        notes: { type: 'string' }
       },
       required: ['project_id']
     }
   },
   {
-    name: 'advance_permit_stage',
-    description: 'Advance a permitting project to the next stage.',
+    name: 'query_database',
+    description: 'Run a read-only SELECT query against the database to look up information. Use this to answer questions about projects, hours, revenue, staff, etc. ONLY SELECT queries allowed — never INSERT/UPDATE/DELETE/DROP/ALTER.',
     input_schema: {
       type: 'object',
       properties: {
-        project_id: { type: 'string' },
-        updated_by: { type: 'string' }
+        sql: { type: 'string', description: 'A SELECT query to run. Available tables: clients, contracts, staff, projects, time_entries, permit_stages, permit_documents, invoices, invoice_items. Key columns — projects: id, name, client_id, contract_id, work_order_number, project_type, status, billing_type, billing_rate, footage, miles, expected_hours, expected_revenue, actual_hours, start_date, completed_date, billed_date, notes. time_entries: id, project_id, staff_id, entry_date, hours, job_title.' },
+        description: { type: 'string', description: 'What you are looking up and why' }
       },
-      required: ['project_id']
+      required: ['sql', 'description']
     }
   }
 ];
 
+// ─── TOOL EXECUTION ──────────────────────────────────────────────────────────
 async function executeTool(toolName, toolInput) {
-  switch (toolName) {
-    case 'create_project': {
-      const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
-      const { rows } = await pool.query(`
-        INSERT INTO projects (
+  try {
+    switch (toolName) {
+      case 'create_project': {
+        const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
+        const { rows } = await pool.query(`
+          INSERT INTO projects (
+            name, client_id, contract_id, work_order_number,
+            project_type, status, billing_type, billing_rate,
+            footage, miles, expected_hours, expected_revenue,
+            start_date, notes
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          RETURNING *
+        `, [
+          toolInput.name,
+          toolInput.client_id,
+          toolInput.contract_id || null,
+          toolInput.work_order_number || null,
+          toolInput.project_type,
+          toolInput.status || 'active',
+          toolInput.billing_type,
+          toolInput.billing_rate,
+          toolInput.footage || null,
+          fin.miles,
+          fin.expectedHours,
+          fin.expectedRevenue,
+          toolInput.start_date || null,
+          toolInput.notes || null
+        ]);
+        if (toolInput.project_type === 'permitting') {
+          await pool.query(
+            'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+            [rows[0].id, 'potential']
+          );
+        }
+        return { success: true, project: rows[0] };
+      }
+
+      case 'update_project': {
+        // First fetch the existing project
+        const { rows: existing } = await pool.query('SELECT * FROM projects WHERE id=$1', [toolInput.project_id]);
+        if (!existing.length) return { success: false, error: 'Project not found' };
+        const p = existing[0];
+
+        // Merge updates with existing values
+        const name = toolInput.name ?? p.name;
+        const client_id = toolInput.client_id ?? p.client_id;
+        const contract_id = toolInput.contract_id ?? p.contract_id;
+        const work_order_number = toolInput.work_order_number ?? p.work_order_number;
+        const project_type = toolInput.project_type ?? p.project_type;
+        const status = toolInput.status ?? p.status;
+        const billing_type = toolInput.billing_type ?? p.billing_type;
+        const billing_rate = toolInput.billing_rate ?? p.billing_rate;
+        const footage = toolInput.footage ?? p.footage;
+        const start_date = toolInput.start_date ?? p.start_date;
+        const completed_date = toolInput.completed_date ?? p.completed_date;
+        const notes = toolInput.notes !== undefined ? toolInput.notes : p.notes;
+
+        const fin = calcProjectFinancials(project_type, billing_rate, footage);
+        const { rows } = await pool.query(`
+          UPDATE projects SET
+            name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
+            project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
+            footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
+            start_date=$13, completed_date=$14, notes=$15
+          WHERE id=$16 RETURNING *
+        `, [
           name, client_id, contract_id, work_order_number,
           project_type, status, billing_type, billing_rate,
-          footage, miles, expected_hours, expected_revenue,
-          notes
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-        RETURNING *
-      `, [
-        toolInput.name,
-        toolInput.client_id,
-        toolInput.contract_id || null,
-        toolInput.work_order_number || null,
-        toolInput.project_type,
-        toolInput.status || 'active',
-        toolInput.billing_type,
-        toolInput.billing_rate,
-        toolInput.footage || null,
-        fin.miles,
-        fin.expectedHours,
-        fin.expectedRevenue,
-        toolInput.notes || null
-      ]);
-      if (toolInput.project_type === 'permitting') {
-        await pool.query(
-          'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
-          [rows[0].id, 'potential']
-        );
+          footage, fin.miles, fin.expectedHours, fin.expectedRevenue,
+          start_date, completed_date, notes,
+          toolInput.project_id
+        ]);
+        return { success: true, project: rows[0] };
       }
-      return { success: true, project: rows[0] };
-    }
-    case 'log_time_entries': {
-      const result = await pool.query(
-        'SELECT 1'
-      );
-      const importBatch = `ai_import_${Date.now()}`;
-      let count = 0;
-      for (const e of toolInput.entries) {
-        await pool.query(
-          'INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch) VALUES ($1,$2,$3,$4,$5,$6)',
-          [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title || null, importBatch]
-        );
-        count++;
+
+      case 'delete_project': {
+        const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [toolInput.project_id]);
+        if (!rows.length) return { success: false, error: 'Project not found' };
+        return { success: true, deleted: rows[0].name };
       }
-      const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
-      for (const pid of projectIds) {
-        await pool.query(
-          'UPDATE projects SET actual_hours = (SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1) WHERE id=$1',
-          [pid]
+
+      case 'create_client': {
+        const { rows } = await pool.query(
+          'INSERT INTO clients (name, is_rus, notes) VALUES ($1,$2,$3) RETURNING *',
+          [toolInput.name, toolInput.is_rus || false, toolInput.notes || null]
         );
+        return { success: true, client: rows[0] };
       }
-      return { success: true, inserted: count };
+
+      case 'create_staff': {
+        const { rows } = await pool.query(
+          'INSERT INTO staff (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET active=true RETURNING *',
+          [toolInput.name]
+        );
+        return { success: true, staff: rows[0] };
+      }
+
+      case 'create_contract': {
+        const { rows } = await pool.query(
+          'INSERT INTO contracts (client_id, contract_number, name) VALUES ($1,$2,$3) RETURNING *',
+          [toolInput.client_id, toolInput.contract_number, toolInput.name || null]
+        );
+        return { success: true, contract: rows[0] };
+      }
+
+      case 'log_time_entries': {
+        const importBatch = `ai_import_${Date.now()}`;
+        let count = 0;
+        for (const e of toolInput.entries) {
+          await pool.query(
+            'INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch) VALUES ($1,$2,$3,$4,$5,$6)',
+            [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title || null, importBatch]
+          );
+          count++;
+        }
+        // Update actual_hours for affected projects
+        const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
+        for (const pid of projectIds) {
+          await pool.query(
+            'UPDATE projects SET actual_hours = (SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1) WHERE id=$1',
+            [pid]
+          );
+        }
+        return { success: true, inserted: count, batch: importBatch };
+      }
+
+      case 'update_project_status': {
+        let query, params;
+        if (toolInput.status === 'billed') {
+          query = `UPDATE projects SET status='billed', billed_date=NOW() WHERE id=$1 RETURNING name, status`;
+          params = [toolInput.project_id];
+        } else if (toolInput.status === 'completed') {
+          query = `UPDATE projects SET status='completed', completed_date=COALESCE(completed_date, NOW()) WHERE id=$1 RETURNING name, status`;
+          params = [toolInput.project_id];
+        } else {
+          query = `UPDATE projects SET status=$1 WHERE id=$2 RETURNING name, status`;
+          params = [toolInput.status, toolInput.project_id];
+        }
+        const { rows } = await pool.query(query, params);
+        if (!rows.length) return { success: false, error: 'Project not found' };
+        return { success: true, project: rows[0] };
+      }
+
+      case 'advance_permit_stage': {
+        const STAGES = ['potential','started','submitted','approved','checklist','billed'];
+        const { rows: current } = await pool.query(
+          'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
+          [toolInput.project_id]
+        );
+        const currentStage = current[0]?.stage || 'potential';
+        const nextIdx = STAGES.indexOf(currentStage) + 1;
+        if (nextIdx >= STAGES.length) return { success: false, message: 'Already at final stage' };
+        const nextStage = STAGES[nextIdx];
+        await pool.query(
+          'UPDATE permit_stages SET completed_at=NOW(), updated_by=$1, notes=$2 WHERE project_id=$3 AND stage=$4',
+          [toolInput.updated_by || 'AI', toolInput.notes || null, toolInput.project_id, currentStage]
+        );
+        await pool.query(
+          'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+          [toolInput.project_id, nextStage, toolInput.updated_by || 'AI']
+        );
+        return { success: true, previous: currentStage, current: nextStage };
+      }
+
+      case 'query_database': {
+        // Safety: only allow SELECT queries
+        const sqlClean = toolInput.sql.trim().replace(/;+$/, '');
+        const firstWord = sqlClean.split(/\s+/)[0].toUpperCase();
+        if (firstWord !== 'SELECT' && firstWord !== 'WITH') {
+          return { success: false, error: 'Only SELECT queries are allowed. Use the specific action tools for modifications.' };
+        }
+        // Extra safety: reject dangerous keywords
+        const upper = sqlClean.toUpperCase();
+        if (/\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|CREATE|GRANT|REVOKE)\b/.test(upper)) {
+          return { success: false, error: 'Modifying queries are not allowed through query_database. Use the specific tools instead.' };
+        }
+        const { rows } = await pool.query(sqlClean);
+        return { success: true, row_count: rows.length, rows: rows.slice(0, 100) };
+      }
+
+      default:
+        return { success: false, error: 'Unknown tool: ' + toolName };
     }
-    case 'mark_project_billed': {
-      const { rows } = await pool.query(
-        "UPDATE projects SET billed_date=NOW(), status='billed' WHERE id=$1 RETURNING name",
-        [toolInput.project_id]
-      );
-      return { success: true, project: rows[0] };
-    }
-    case 'advance_permit_stage': {
-      const STAGES = ['potential','started','submitted','approved','checklist','billed'];
-      const { rows: current } = await pool.query(
-        'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
-        [toolInput.project_id]
-      );
-      const currentStage = current[0]?.stage || 'potential';
-      const nextIdx = STAGES.indexOf(currentStage) + 1;
-      if (nextIdx >= STAGES.length) return { success: false, message: 'Already at final stage' };
-      const nextStage = STAGES[nextIdx];
-      await pool.query(
-        'UPDATE permit_stages SET completed_at=NOW(), updated_by=$1 WHERE project_id=$2 AND stage=$3',
-        [toolInput.updated_by || 'AI', toolInput.project_id, currentStage]
-      );
-      await pool.query(
-        'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
-        [toolInput.project_id, nextStage, toolInput.updated_by || 'AI']
-      );
-      return { success: true, previous: currentStage, current: nextStage };
-    }
-    default:
-      return { success: false, error: 'Unknown tool' };
+  } catch (err) {
+    return { success: false, error: err.message };
   }
 }
 
-// Detect if user message is a simple confirmation
-function isConfirmation(msg) {
-  const confirmWords = ['yes','yep','yeah','correct','ok','okay','confirm','looks good','that's right','right','sure','go ahead','do it','create it','save it','add it','approved','affirmative','yup','y'];
-  const lower = (msg || '').toLowerCase().trim().replace(/[.!]/g,'');
-  return confirmWords.includes(lower) || lower.length < 15 && confirmWords.some(w => lower.includes(w));
-}
-
+// ─── AI CHAT ENDPOINT ────────────────────────────────────────────────────────
 app.post('/api/ai/chat', async (req, res) => {
   const { messages, session_id } = req.body;
   if (!messages || !messages.length) return res.status(400).json({ error: 'No messages' });
@@ -829,34 +1026,37 @@ app.post('/api/ai/chat', async (req, res) => {
     const ctx = await getDBContext();
     const systemPrompt = SYSTEM_PROMPT.replace('{CONTEXT}', JSON.stringify(ctx, null, 2));
 
-    const lastUserMsg = messages[messages.length - 1]?.content || '';
-    const userConfirming = isConfirmation(lastUserMsg);
-
-    // If user is confirming, force tool use so Claude actually executes instead of just talking
-    const toolChoice = userConfirming ? { type: 'any' } : { type: 'auto' };
-
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: systemPrompt,
       tools: AI_TOOLS,
-      tool_choice: toolChoice,
+      tool_choice: { type: 'auto' },
       messages: messages.map(m => ({ role: m.role, content: m.content }))
     });
 
     let finalText = '';
     let toolResults = [];
+    let conversationMessages = [...messages.map(m => ({ role: m.role, content: m.content }))];
 
-    // Handle tool use in a loop
-    while (response.stop_reason === 'tool_use') {
+    // Handle tool use in a loop (Claude may chain multiple tools)
+    let iterations = 0;
+    const MAX_ITERATIONS = 10;
+
+    while (response.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
+      iterations++;
       const toolUseBlocks = response.content.filter(b => b.type === 'tool_use');
-      const textBlock = response.content.find(b => b.type === 'text');
-      if (textBlock) finalText += textBlock.text + '\n';
+      const textBlocks = response.content.filter(b => b.type === 'text');
+      for (const tb of textBlocks) {
+        if (tb.text.trim()) finalText += tb.text + '\n';
+      }
 
       const toolResultContents = [];
       for (const toolUseBlock of toolUseBlocks) {
+        console.log(`AI Tool Call: ${toolUseBlock.name}`, JSON.stringify(toolUseBlock.input).substring(0, 200));
         const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input);
-        toolResults.push({ tool: toolUseBlock.name, result: toolResult });
+        console.log(`AI Tool Result: ${toolUseBlock.name}`, JSON.stringify(toolResult).substring(0, 200));
+        toolResults.push({ tool: toolUseBlock.name, input: toolUseBlock.input, result: toolResult });
         toolResultContents.push({
           type: 'tool_result',
           tool_use_id: toolUseBlock.id,
@@ -865,22 +1065,24 @@ app.post('/api/ai/chat', async (req, res) => {
       }
 
       // Continue conversation with tool results
+      conversationMessages.push({ role: 'assistant', content: response.content });
+      conversationMessages.push({ role: 'user', content: toolResultContents });
+
       response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
+        max_tokens: 4096,
         system: systemPrompt,
         tools: AI_TOOLS,
-        messages: [
-          ...messages.map(m => ({ role: m.role, content: m.content })),
-          { role: 'assistant', content: response.content },
-          { role: 'user', content: toolResultContents }
-        ]
+        tool_choice: { type: 'auto' },
+        messages: conversationMessages
       });
     }
 
     // Get final text response
-    const lastText = response.content.find(b => b.type === 'text');
-    if (lastText) finalText += lastText.text;
+    const lastTextBlocks = response.content.filter(b => b.type === 'text');
+    for (const tb of lastTextBlocks) {
+      if (tb.text.trim()) finalText += tb.text;
+    }
 
     res.json({
       content: finalText.trim(),

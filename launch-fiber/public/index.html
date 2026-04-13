@@ -393,11 +393,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <button onclick="toggleAI()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="ai-messages" id="ai-messages">
-      <div class="ai-msg assistant">Hi! I'm your AI project manager. I can help you:<br><br>
-        • Create new projects: <em>"Add permitting SR 49, 8,000 LF, PSC Contract 4"</em><br>
-        • Import workforce hours from CSV<br>
-        • Generate monthly billing summaries<br>
-        • Answer questions about projects and revenue<br><br>
+      <div class="ai-msg assistant">Hi! I'm your AI project manager. I can:<br><br>
+        • <strong>Create projects</strong>: <em>"Add permitting SR 49, 8,000 LF, PSC Contract 4"</em><br>
+        • <strong>Update projects</strong>: <em>"Change WO-001 status to completed"</em><br>
+        • <strong>Add clients, staff & contracts</strong><br>
+        • <strong>Log hours</strong> or import workforce CSV<br>
+        • <strong>Query data</strong>: <em>"Show me all active PSC projects"</em><br>
+        • <strong>Generate billing summaries</strong><br>
+        • <strong>Manage permits</strong>: advance stages, track pipeline<br><br>
         What would you like to do?
       </div>
     </div>
@@ -1260,28 +1263,54 @@ async function callAI(messages) {
     // If Claude executed tools, show what was saved
     if (res.toolResults && res.toolResults.length > 0) {
       for (const tr of res.toolResults) {
+        // Skip query_database results (the AI summarizes those in its text)
+        if (tr.tool === 'query_database') continue;
+
+        const successDiv = document.createElement('div');
+        successDiv.className = 'ai-msg assistant';
+
         if (tr.result && tr.result.success) {
-          const successDiv = document.createElement('div');
-          successDiv.className = 'ai-msg assistant';
           successDiv.style.background = '#D4EDDA';
           successDiv.style.color = '#155724';
+
           if (tr.tool === 'create_project') {
-            successDiv.innerHTML = '<strong>✓ Project saved to database:</strong> ' + esc(tr.result.project?.name || 'Project');
+            successDiv.innerHTML = '<strong>✓ Project created:</strong> ' + esc(tr.result.project?.name || 'Project');
             loadProjects(); loadDashboard();
             if (tr.result.project?.project_type === 'permitting') loadPermits();
+          } else if (tr.tool === 'update_project') {
+            successDiv.innerHTML = '<strong>✓ Project updated:</strong> ' + esc(tr.result.project?.name || 'Project');
+            loadProjects(); loadDashboard(); loadPermits();
+          } else if (tr.tool === 'delete_project') {
+            successDiv.innerHTML = '<strong>✓ Project deleted:</strong> ' + esc(tr.result.deleted || '');
+            loadProjects(); loadDashboard(); loadPermits();
+          } else if (tr.tool === 'create_client') {
+            successDiv.innerHTML = '<strong>✓ Client created:</strong> ' + esc(tr.result.client?.name || '');
+            loadClients();
+          } else if (tr.tool === 'create_staff') {
+            successDiv.innerHTML = '<strong>✓ Staff member added:</strong> ' + esc(tr.result.staff?.name || '');
+            loadStaff();
+          } else if (tr.tool === 'create_contract') {
+            successDiv.innerHTML = '<strong>✓ Contract created:</strong> ' + esc(tr.result.contract?.contract_number || '');
           } else if (tr.tool === 'log_time_entries') {
             successDiv.innerHTML = '<strong>✓ Time entries saved:</strong> ' + tr.result.inserted + ' entries logged';
             loadHours();
-          } else if (tr.tool === 'mark_project_billed') {
-            successDiv.innerHTML = '<strong>✓ Marked as billed:</strong> ' + esc(tr.result.project?.name || '');
-            loadRevenue();
+          } else if (tr.tool === 'update_project_status') {
+            successDiv.innerHTML = '<strong>✓ Status updated:</strong> ' + esc(tr.result.project?.name || '') + ' → ' + esc(tr.result.project?.status || '');
+            loadProjects(); loadDashboard(); loadRevenue();
           } else if (tr.tool === 'advance_permit_stage') {
             successDiv.innerHTML = '<strong>✓ Stage advanced:</strong> ' + tr.result.previous + ' → ' + tr.result.current;
             loadPermits();
+          } else {
+            successDiv.innerHTML = '<strong>✓ Action completed</strong>';
           }
-          document.getElementById('ai-messages').appendChild(successDiv);
-          scrollAI();
+        } else if (tr.result && !tr.result.success) {
+          successDiv.style.background = '#F8D7DA';
+          successDiv.style.color = '#721C24';
+          successDiv.innerHTML = '<strong>✗ Error:</strong> ' + esc(tr.result.error || tr.result.message || 'Unknown error');
         }
+
+        document.getElementById('ai-messages').appendChild(successDiv);
+        scrollAI();
       }
     }
   } catch (e) {

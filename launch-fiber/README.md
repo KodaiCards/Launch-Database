@@ -29,6 +29,22 @@ Railway auto-deploys on push. First deploy runs the schema automatically.
 
 ---
 
+## File Structure
+
+```
+├── server.js          # Express server + all API routes + AI chat engine
+├── db.js              # PostgreSQL pool + schema init
+├── schema.sql         # Database schema (auto-run on first start)
+├── package.json       # Dependencies
+├── public/
+│   └── index.html     # Single-page frontend application
+├── nixpacks.toml      # Railway build config
+├── railway.json       # Railway deploy config
+└── .env.example       # Environment variable template
+```
+
+---
+
 ## Local Development
 
 ```bash
@@ -40,14 +56,19 @@ npm run dev
 
 ---
 
-## Features
-- Project management (inspection, RE, permitting, design)
-- RUS billing logic (PSC Contracts 3/4/5, work orders)
-- Permitting pipeline tracker with file uploads
-- Workforce CSV import via AI
-- Monthly billing report (printable)
-- Hours tracking and reporting
-- Claude AI assistant for project creation and data entry
+## AI Assistant Capabilities
+
+The built-in AI assistant (Claude) can:
+
+- **Create, update, and delete projects** with proper billing logic
+- **Create clients, staff members, and contracts**
+- **Log time entries** (single or bulk from CSV import)
+- **Change project status** (active, completed, on_hold, billed)
+- **Advance permit stages** through the pipeline
+- **Query the database** to answer questions about projects, hours, revenue
+- **Auto-calculate** permitting financials (footage → miles → hours → revenue)
+
+The AI has access to 10 tools that directly interact with the database, with safety guards (read-only queries for data lookup, confirmation required for modifications).
 
 ## Rate Structure
 - Inspection: $90/hr (RUS only)
