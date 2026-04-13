@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const Anthropic = require('@anthropic-ai/sdk');
+const XLSX = require('xlsx');
 const { pool, initSchema } = require('./db');
 
 const app = express();
@@ -24,6 +25,24 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// ─── Password Protection ─────────────────────────────────────────────────────
+if (process.env.APP_PASSWORD) {
+  app.use((req, res, next) => {
+    const auth = req.headers.authorization;
+    if (auth) {
+      const [scheme, encoded] = auth.split(' ');
+      if (scheme === 'Basic') {
+        const [user, pass] = Buffer.from(encoded, 'base64').toString().split(':');
+        if (pass === process.env.APP_PASSWORD) return next();
+      }
+    }
+    res.set('WWW-Authenticate', 'Basic realm="Launch Fiber Services"');
+    res.status(401).send('Authentication required');
+  });
+  console.log('✓ Password protection enabled');
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOAD_DIR));
 
@@ -671,6 +690,39 @@ QUERYING DATA:
 - NEVER run INSERT, UPDATE, DELETE, DROP, ALTER, or any modifying SQL through query_database. Only SELECT.
 - Use the specific action tools (create_project, update_project, etc.) for modifications.
 
+WORKFORCE FILE IMPORTS:
+When a user uploads an Excel or CSV file with workforce/timesheet data, you must be intelligent about processing it:
+
+1. ANALYZE THE DATA FIRST: Look at column headers and sample rows. Common columns include: employee/name/worker, date, work_order/WO/project, hours, job_title/position/role, client, description.
+
+2. MATCH TO EXISTING DATA:
+   - Match work order numbers (WO-001, etc.) to existing projects in the DATABASE CONTEXT
+   - Match employee names to existing staff members
+   - Match client names to existing clients
+   - Be fuzzy — "J. Smith" might be "John Smith", "WO 001" might be "WO-001"
+
+3. HANDLE MISSING DATA:
+   - If a work order doesn't match any project, tell the user and offer to CREATE the project. Ask what type/rate it should be.
+   - If an employee isn't in the system, offer to CREATE them as staff.
+   - If dates are in different formats (MM/DD/YYYY, M/D/YY, etc.), normalize to YYYY-MM-DD.
+
+4. SUMMARIZE BEFORE ACTING: Show the user a clear breakdown:
+   - How many entries will be logged
+   - Which projects they map to
+   - Which employees are involved
+   - Any entries that couldn't be matched (and what to do about them)
+   - Total hours per project and per employee
+
+5. MAKE INTELLIGENT ASSUMPTIONS:
+   - If a column is labeled "Regular Hours" and "OT Hours", combine them or note the overtime
+   - If there are multiple date columns, use the most specific one (entry_date over pay_period)
+   - If work orders have prefixes like "PSC-" or "RUS-", use that to identify the client
+   - If a sheet has subtotals or summary rows, skip them
+   - If hours are blank or zero for a row, skip that row
+   - Look for patterns: if all work orders start with the same prefix, they likely belong to the same client/contract
+
+6. WAIT FOR CONFIRMATION before calling log_time_entries. Show exactly what will be saved.
+
 DATABASE CONTEXT (current data):
 {CONTEXT}`;
 
@@ -1020,6 +1072,79 @@ async function executeTool(toolName, toolInput) {
     return { success: false, error: err.message };
   }
 }
+
+// ─── FILE UPLOAD FOR AI ──────────────────────────────────────────────────────
+app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  try {
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    let rows = [];
+    let headers = [];
+
+    if (ext === '.xlsx' || ext === '.xls') {
+      const workbook = XLSX.readFile(req.file.path);
+      // Process all sheets or just the first one
+      const sheetNames = workbook.SheetNames;
+      const allData = {};
+
+      for (const sheetName of sheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        if (jsonData.length > 0) {
+          allData[sheetName] = jsonData;
+          if (rows.length === 0) {
+            rows = jsonData;
+            headers = Object.keys(jsonData[0] || {});
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        sheets: sheetNames,
+        headers,
+        row_count: rows.length,
+        data: rows.slice(0, 500), // Cap at 500 rows to stay within token limits
+        all_sheets: Object.keys(allData).length > 1 ? allData : undefined,
+        preview: rows.slice(0, 5)
+      });
+
+    } else if (ext === '.csv' || ext === '.tsv') {
+      const content = fs.readFileSync(req.file.path, 'utf8');
+      const workbook = XLSX.read(content, { type: 'string' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      headers = Object.keys(rows[0] || {});
+
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        headers,
+        row_count: rows.length,
+        data: rows.slice(0, 500),
+        preview: rows.slice(0, 5)
+      });
+
+    } else {
+      // Plain text — just return the content
+      const content = fs.readFileSync(req.file.path, 'utf8');
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        raw_text: content.substring(0, 50000) // Cap text size
+      });
+    }
+
+    // Clean up uploaded file after parsing
+    fs.unlink(req.file.path, () => {});
+
+  } catch (e) {
+    console.error('File parse error:', e.message);
+    res.status(500).json({ error: 'Failed to parse file: ' + e.message });
+  }
+});
 
 // ─── AI CHAT ENDPOINT ────────────────────────────────────────────────────────
 app.post('/api/ai/chat', async (req, res) => {

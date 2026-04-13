@@ -396,19 +396,28 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="ai-msg assistant">Hi! I'm your AI project manager. I can:<br><br>
         • <strong>Create projects</strong>: <em>"Add permitting SR 49, 8,000 LF, PSC Contract 4"</em><br>
         • <strong>Update projects</strong>: <em>"Change WO-001 status to completed"</em><br>
+        • <strong>Import Excel/CSV files</strong>: Upload workforce reports and I'll match employees to projects, create missing jobs, and log hours<br>
         • <strong>Add clients, staff & contracts</strong><br>
-        • <strong>Log hours</strong> or import workforce CSV<br>
         • <strong>Query data</strong>: <em>"Show me all active PSC projects"</em><br>
-        • <strong>Generate billing summaries</strong><br>
         • <strong>Manage permits</strong>: advance stages, track pipeline<br><br>
-        What would you like to do?
+        Use the <strong>Upload</strong> button below to attach an Excel file, then tell me what to do with it.
       </div>
     </div>
     <div class="ai-input-area">
       <textarea class="ai-input" id="ai-input" placeholder="Ask anything or describe a project..." onkeydown="aiKeydown(event)"></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;color:var(--text-muted)">Shift+Enter for new line · Enter to send</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="file" id="ai-file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none" onchange="handleAIFileUpload(event)">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ai-file-input').click()" title="Upload Excel/CSV file"><i class="fa-solid fa-file-excel"></i> Upload</button>
+          <span style="font-size:11px;color:var(--text-muted)">Enter to send</span>
+        </div>
         <button class="btn btn-primary btn-sm" onclick="sendAI()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+      </div>
+      <div id="ai-file-preview" style="display:none;padding:6px 8px;background:var(--primary-light);border-radius:6px;font-size:12px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span><i class="fa-solid fa-file-excel" style="color:var(--primary)"></i> <span id="ai-file-name"></span></span>
+          <button class="btn btn-sm btn-icon" onclick="clearAIFile()" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-xmark"></i></button>
+        </div>
       </div>
     </div>
   </div>
@@ -1234,13 +1243,74 @@ function aiKeydown(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAI(); }
 }
 
+// ─── FILE UPLOAD HANDLING ────────────────────────────────────────────────────
+let pendingFileData = null;
+
+async function handleAIFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Show preview
+  document.getElementById('ai-file-preview').style.display = 'block';
+  document.getElementById('ai-file-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+
+  // Upload and parse the file
+  const fd = new FormData();
+  fd.append('file', file);
+
+  appendAIMessage('assistant', `📄 Parsing **${file.name}**...`);
+
+  try {
+    const response = await fetch('/api/ai/upload', { method: 'POST', body: fd });
+    if (!response.ok) throw new Error(await response.text());
+    pendingFileData = await response.json();
+
+    // Show parse summary
+    let summary = `✓ **${pendingFileData.filename}** parsed successfully\n`;
+    if (pendingFileData.row_count !== undefined) {
+      summary += `• ${pendingFileData.row_count} rows found\n`;
+      summary += `• Columns: ${pendingFileData.headers?.join(', ') || 'unknown'}\n`;
+      if (pendingFileData.sheets && pendingFileData.sheets.length > 1) {
+        summary += `• Sheets: ${pendingFileData.sheets.join(', ')}\n`;
+      }
+    }
+    summary += `\nType a message like **"Import this workforce data"** or **"Assign these hours to projects"** and I'll analyze it.`;
+    appendAIMessage('assistant', summary);
+
+  } catch (e) {
+    appendAIMessage('assistant', '⚠ Failed to parse file: ' + e.message);
+    clearAIFile();
+  }
+
+  // Reset the input so the same file can be re-uploaded
+  event.target.value = '';
+}
+
+function clearAIFile() {
+  pendingFileData = null;
+  document.getElementById('ai-file-preview').style.display = 'none';
+  document.getElementById('ai-file-input').value = '';
+}
+
 async function sendAI() {
   const input = document.getElementById('ai-input');
-  const text = input.value.trim();
-  if (!text) return;
+  let text = input.value.trim();
+  if (!text && !pendingFileData) return;
   input.value = '';
-  appendAIMessage('user', text);
-  aiMessages.push({ role:'user', content:text });
+
+  // If there's a file attached, include the data in the message
+  let userMessage = text || 'Process this uploaded file';
+  if (pendingFileData) {
+    const fileContext = `\n\n[UPLOADED FILE: ${pendingFileData.filename}]\n` +
+      `Row count: ${pendingFileData.row_count || 'N/A'}\n` +
+      `Headers: ${JSON.stringify(pendingFileData.headers || [])}\n` +
+      `Data:\n${JSON.stringify(pendingFileData.data || pendingFileData.raw_text || [], null, 2)}`;
+    userMessage += fileContext;
+    clearAIFile();
+  }
+
+  appendAIMessage('user', text || 'Process this uploaded file');
+  aiMessages.push({ role: 'user', content: userMessage });
   callAI(aiMessages);
 }
 
