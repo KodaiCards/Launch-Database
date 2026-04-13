@@ -634,39 +634,185 @@ async function getDBContext() {
 const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services, a fiber optic infrastructure company in Macon, Georgia.
 
 RATE STRUCTURE:
-- Inspection: $90/hr (RUS work only, PSC client, track total hours only)
-- Resident Engineer (RE): $100/hr (RUS/PSC only, track total hours only)
-- Permitting: $90/hr billed at 27.5 hours/mile (15 hour minimum). Formula: max(miles x 27.5, 15) x $90.
-- Design: VARIABLE - always ask for billing rate.
-- Other: VARIABLE - always ask for billing rate.
+- Inspection: $90/hr (RUS work only, PSC client)
+- Resident Engineer (RE): $100/hr (RUS/PSC only)
+- Permitting: $90/hr billed at 27.5 hours/mile (15 hour minimum)
+- Design: VARIABLE - always ask for billing rate
+- Other: VARIABLE - always ask for billing rate
 
 CLIENTS: PSC (RUS - Contracts 3, 4, 5), COX, IFT, TRI-CO
-RUS work: PSC only. Each contract has individual work orders.
-Billing: Each job type on a separate invoice but sent simultaneously.
+RUS work is PSC only. Each contract has individual work orders.
 
-CRITICAL RULES:
-1. Always confirm billing rate before creating ANY project.
-2. For permitting: calculate from footage automatically.
-3. For CSV import: match work order numbers to projects, flag ambiguous ones.
-4. Always show a summary before writing data.
+RULES:
+1. Always confirm the billing rate before creating any project - ask even for standard rates.
+2. For permitting projects, calculate billing from footage automatically.
+3. For CSV workforce imports, match work order numbers to existing projects.
+4. Always summarize what you are about to do and ask the user to confirm before calling any tool.
+5. When the user confirms (says yes, ok, looks good, correct, etc.) - call the appropriate tool immediately.
+6. Use the DATABASE CONTEXT to find correct UUIDs for client_id and contract_id.
 
-IMPORTANT - HOW SAVING WORKS:
-You cannot save data yourself. The only way data gets saved is by including an action tag in your response that the frontend parses and shows as a confirm button to the user.
-Never say "created" or "saved" unless your response actually contains an action tag.
-When the user says yes or confirms, output the action tag - that is what triggers the save.
-
-ACTION TAG - include at end of response when user confirms:
-<action type="TYPE" data="JSON">label</action>
-
-Use double quotes in the JSON. Types: create_project, update_project, bulk_time_entries, advance_permit_stage, mark_billed
-
-Example for creating a permitting project:
-<action type="create_project" data={"name":"SR74 Permitting","client_id":"UUID_FROM_CONTEXT","contract_id":"UUID_FROM_CONTEXT","work_order_number":"16298","project_type":"permitting","billing_type":"footage","billing_rate":90,"footage":8000,"status":"active"}>Create SR74 Permitting project</action>
-
-Look up the correct UUIDs from the DATABASE CONTEXT below for client_id and contract_id.
-
-CURRENT DATABASE CONTEXT:
+DATABASE CONTEXT:
 {CONTEXT}`;
+
+// Tool definitions for Claude to use
+const AI_TOOLS = [
+  {
+    name: 'create_project',
+    description: 'Create a new project in the database. Only call this after the user has confirmed the project details.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Project name' },
+        client_id: { type: 'string', description: 'Client UUID from database context' },
+        contract_id: { type: 'string', description: 'Contract UUID from database context (optional)' },
+        work_order_number: { type: 'string', description: 'Work order number' },
+        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'] },
+        billing_type: { type: 'string', enum: ['hourly', 'footage'] },
+        billing_rate: { type: 'number', description: 'Hourly rate in dollars' },
+        footage: { type: 'number', description: 'Linear footage (permitting projects only)' },
+        status: { type: 'string', enum: ['active', 'completed', 'on_hold'], default: 'active' },
+        notes: { type: 'string' }
+      },
+      required: ['name', 'client_id', 'project_type', 'billing_type', 'billing_rate']
+    }
+  },
+  {
+    name: 'log_time_entries',
+    description: 'Log time entries for one or more projects. Only call after user confirms.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        entries: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              project_id: { type: 'string' },
+              staff_id: { type: 'string' },
+              entry_date: { type: 'string', description: 'YYYY-MM-DD format' },
+              hours: { type: 'number' },
+              job_title: { type: 'string' }
+            },
+            required: ['project_id', 'entry_date', 'hours']
+          }
+        }
+      },
+      required: ['entries']
+    }
+  },
+  {
+    name: 'mark_project_billed',
+    description: 'Mark a project as billed. Only call after user confirms.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'Project UUID' }
+      },
+      required: ['project_id']
+    }
+  },
+  {
+    name: 'advance_permit_stage',
+    description: 'Advance a permitting project to the next stage.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string' },
+        updated_by: { type: 'string' }
+      },
+      required: ['project_id']
+    }
+  }
+];
+
+async function executeTool(toolName, toolInput) {
+  switch (toolName) {
+    case 'create_project': {
+      const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
+      const { rows } = await pool.query(`
+        INSERT INTO projects (
+          name, client_id, contract_id, work_order_number,
+          project_type, status, billing_type, billing_rate,
+          footage, miles, expected_hours, expected_revenue,
+          notes
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        RETURNING *
+      `, [
+        toolInput.name,
+        toolInput.client_id,
+        toolInput.contract_id || null,
+        toolInput.work_order_number || null,
+        toolInput.project_type,
+        toolInput.status || 'active',
+        toolInput.billing_type,
+        toolInput.billing_rate,
+        toolInput.footage || null,
+        fin.miles,
+        fin.expectedHours,
+        fin.expectedRevenue,
+        toolInput.notes || null
+      ]);
+      if (toolInput.project_type === 'permitting') {
+        await pool.query(
+          'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+          [rows[0].id, 'potential']
+        );
+      }
+      return { success: true, project: rows[0] };
+    }
+    case 'log_time_entries': {
+      const result = await pool.query(
+        'SELECT 1'
+      );
+      const importBatch = `ai_import_${Date.now()}`;
+      let count = 0;
+      for (const e of toolInput.entries) {
+        await pool.query(
+          'INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch) VALUES ($1,$2,$3,$4,$5,$6)',
+          [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title || null, importBatch]
+        );
+        count++;
+      }
+      const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
+      for (const pid of projectIds) {
+        await pool.query(
+          'UPDATE projects SET actual_hours = (SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1) WHERE id=$1',
+          [pid]
+        );
+      }
+      return { success: true, inserted: count };
+    }
+    case 'mark_project_billed': {
+      const { rows } = await pool.query(
+        "UPDATE projects SET billed_date=NOW(), status='billed' WHERE id=$1 RETURNING name",
+        [toolInput.project_id]
+      );
+      return { success: true, project: rows[0] };
+    }
+    case 'advance_permit_stage': {
+      const STAGES = ['potential','started','submitted','approved','checklist','billed'];
+      const { rows: current } = await pool.query(
+        'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
+        [toolInput.project_id]
+      );
+      const currentStage = current[0]?.stage || 'potential';
+      const nextIdx = STAGES.indexOf(currentStage) + 1;
+      if (nextIdx >= STAGES.length) return { success: false, message: 'Already at final stage' };
+      const nextStage = STAGES[nextIdx];
+      await pool.query(
+        'UPDATE permit_stages SET completed_at=NOW(), updated_by=$1 WHERE project_id=$2 AND stage=$3',
+        [toolInput.updated_by || 'AI', toolInput.project_id, currentStage]
+      );
+      await pool.query(
+        'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+        [toolInput.project_id, nextStage, toolInput.updated_by || 'AI']
+      );
+      return { success: true, previous: currentStage, current: nextStage };
+    }
+    default:
+      return { success: false, error: 'Unknown tool' };
+  }
+}
 
 app.post('/api/ai/chat', async (req, res) => {
   const { messages, session_id } = req.body;
@@ -676,32 +822,62 @@ app.post('/api/ai/chat', async (req, res) => {
     const ctx = await getDBContext();
     const systemPrompt = SYSTEM_PROMPT.replace('{CONTEXT}', JSON.stringify(ctx, null, 2));
 
-    const response = await anthropic.messages.create({
+    // First call to Claude
+    let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: systemPrompt,
+      tools: AI_TOOLS,
       messages: messages.map(m => ({ role: m.role, content: m.content }))
     });
 
-    const content = response.content[0].text;
+    let finalText = '';
+    let toolResults = [];
 
-    // Log to DB
-    if (session_id) {
-      const lastUser = messages[messages.length - 1];
-      await pool.query(
-        'INSERT INTO ai_messages (session_id, role, content) VALUES ($1,$2,$3)',
-        [session_id, lastUser.role, lastUser.content]
-      );
-      await pool.query(
-        'INSERT INTO ai_messages (session_id, role, content) VALUES ($1,$2,$3)',
-        [session_id, 'assistant', content]
-      );
+    // Handle tool use in a loop
+    while (response.stop_reason === 'tool_use') {
+      const toolUseBlock = response.content.find(b => b.type === 'tool_use');
+      const textBlock = response.content.find(b => b.type === 'text');
+      if (textBlock) finalText += textBlock.text + '\n';
+
+      // Execute the tool
+      const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input);
+      toolResults.push({ tool: toolUseBlock.name, result: toolResult });
+
+      // Continue conversation with tool result
+      response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: systemPrompt,
+        tools: AI_TOOLS,
+        messages: [
+          ...messages.map(m => ({ role: m.role, content: m.content })),
+          { role: 'assistant', content: response.content },
+          {
+            role: 'user',
+            content: [{
+              type: 'tool_result',
+              tool_use_id: toolUseBlock.id,
+              content: JSON.stringify(toolResult)
+            }]
+          }
+        ]
+      });
     }
 
-    res.json({ content, usage: response.usage });
+    // Get final text response
+    const lastText = response.content.find(b => b.type === 'text');
+    if (lastText) finalText += lastText.text;
+
+    res.json({
+      content: finalText.trim(),
+      toolResults,
+      usage: response.usage
+    });
+
   } catch (e) {
     const msg = e?.message || e?.error?.message || JSON.stringify(e) || 'Unknown error';
-    console.error('AI error full:', msg, e?.status, e?.error);
+    console.error('AI error:', msg, e?.status);
     res.status(500).json({ error: msg });
   }
 });

@@ -1251,14 +1251,39 @@ async function callAI(messages) {
   try {
     const res = await api('/api/ai/chat', 'POST', { messages, session_id: aiSessionId });
     thinking.remove();
-    const content = res.content;
-    // Extract action if present
-    const actionMatch = content.match(/<action type="([^"]+)" data="([^"]*)">(.*?)<\/action>/s);
-    let displayContent = content.replace(/<action[^>]*>.*?<\/action>/gs, '').trim();
-    appendAIMessage('assistant', displayContent, actionMatch ? {
-      type: actionMatch[1], data: actionMatch[2], label: actionMatch[3]
-    } : null);
+    const content = res.content || '';
+
+    // Show the text response
+    appendAIMessage('assistant', content);
     aiMessages.push({ role:'assistant', content });
+
+    // If Claude executed tools, show what was saved
+    if (res.toolResults && res.toolResults.length > 0) {
+      for (const tr of res.toolResults) {
+        if (tr.result && tr.result.success) {
+          const successDiv = document.createElement('div');
+          successDiv.className = 'ai-msg assistant';
+          successDiv.style.background = '#D4EDDA';
+          successDiv.style.color = '#155724';
+          if (tr.tool === 'create_project') {
+            successDiv.innerHTML = '<strong>✓ Project saved to database:</strong> ' + esc(tr.result.project?.name || 'Project');
+            loadProjects(); loadDashboard();
+            if (tr.result.project?.project_type === 'permitting') loadPermits();
+          } else if (tr.tool === 'log_time_entries') {
+            successDiv.innerHTML = '<strong>✓ Time entries saved:</strong> ' + tr.result.inserted + ' entries logged';
+            loadHours();
+          } else if (tr.tool === 'mark_project_billed') {
+            successDiv.innerHTML = '<strong>✓ Marked as billed:</strong> ' + esc(tr.result.project?.name || '');
+            loadRevenue();
+          } else if (tr.tool === 'advance_permit_stage') {
+            successDiv.innerHTML = '<strong>✓ Stage advanced:</strong> ' + tr.result.previous + ' → ' + tr.result.current;
+            loadPermits();
+          }
+          document.getElementById('ai-messages').appendChild(successDiv);
+          scrollAI();
+        }
+      }
+    }
   } catch (e) {
     thinking.remove();
     appendAIMessage('assistant', '⚠ Error: ' + e.message);
