@@ -814,6 +814,13 @@ async function executeTool(toolName, toolInput) {
   }
 }
 
+// Detect if user message is a simple confirmation
+function isConfirmation(msg) {
+  const confirmWords = ['yes','yep','yeah','correct','ok','okay','confirm','looks good','that's right','right','sure','go ahead','do it','create it','save it','add it','approved','affirmative','yup','y'];
+  const lower = (msg || '').toLowerCase().trim().replace(/[.!]/g,'');
+  return confirmWords.includes(lower) || lower.length < 15 && confirmWords.some(w => lower.includes(w));
+}
+
 app.post('/api/ai/chat', async (req, res) => {
   const { messages, session_id } = req.body;
   if (!messages || !messages.length) return res.status(400).json({ error: 'No messages' });
@@ -822,12 +829,18 @@ app.post('/api/ai/chat', async (req, res) => {
     const ctx = await getDBContext();
     const systemPrompt = SYSTEM_PROMPT.replace('{CONTEXT}', JSON.stringify(ctx, null, 2));
 
-    // First call to Claude
+    const lastUserMsg = messages[messages.length - 1]?.content || '';
+    const userConfirming = isConfirmation(lastUserMsg);
+
+    // If user is confirming, force tool use so Claude actually executes instead of just talking
+    const toolChoice = userConfirming ? { type: 'any' } : { type: 'auto' };
+
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: systemPrompt,
       tools: AI_TOOLS,
+      tool_choice: toolChoice,
       messages: messages.map(m => ({ role: m.role, content: m.content }))
     });
 
@@ -836,15 +849,22 @@ app.post('/api/ai/chat', async (req, res) => {
 
     // Handle tool use in a loop
     while (response.stop_reason === 'tool_use') {
-      const toolUseBlock = response.content.find(b => b.type === 'tool_use');
+      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use');
       const textBlock = response.content.find(b => b.type === 'text');
       if (textBlock) finalText += textBlock.text + '\n';
 
-      // Execute the tool
-      const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input);
-      toolResults.push({ tool: toolUseBlock.name, result: toolResult });
+      const toolResultContents = [];
+      for (const toolUseBlock of toolUseBlocks) {
+        const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input);
+        toolResults.push({ tool: toolUseBlock.name, result: toolResult });
+        toolResultContents.push({
+          type: 'tool_result',
+          tool_use_id: toolUseBlock.id,
+          content: JSON.stringify(toolResult)
+        });
+      }
 
-      // Continue conversation with tool result
+      // Continue conversation with tool results
       response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
@@ -853,14 +873,7 @@ app.post('/api/ai/chat', async (req, res) => {
         messages: [
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'assistant', content: response.content },
-          {
-            role: 'user',
-            content: [{
-              type: 'tool_result',
-              tool_use_id: toolUseBlock.id,
-              content: JSON.stringify(toolResult)
-            }]
-          }
+          { role: 'user', content: toolResultContents }
         ]
       });
     }
