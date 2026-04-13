@@ -28,6 +28,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // ─── Anthropic client ─────────────────────────────────────────────────────────
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('WARNING: ANTHROPIC_API_KEY is not set. AI assistant will not work.');
+  console.error('Add it in Railway dashboard → Variables → ANTHROPIC_API_KEY');
+}
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1091,9 +1095,15 @@ app.post('/api/ai/chat', async (req, res) => {
     });
 
   } catch (e) {
-    const msg = e?.message || e?.error?.message || JSON.stringify(e) || 'Unknown error';
-    console.error('AI error:', msg, e?.status);
-    res.status(500).json({ error: msg });
+    const msg = e?.message || e?.error?.message || 'Unknown error';
+    console.error('AI error:', msg);
+    console.error('  Status:', e?.status);
+    console.error('  Type:', e?.constructor?.name);
+    console.error('  Full:', JSON.stringify(e, Object.getOwnPropertyNames(e || {})));
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('  ANTHROPIC_API_KEY is NOT SET — add it in Railway Variables');
+    }
+    res.status(500).json({ error: msg || 'AI request failed — check server logs' });
   }
 });
 
