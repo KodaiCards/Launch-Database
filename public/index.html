@@ -283,6 +283,26 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </table>
         </div>
       </div>
+      <!-- BUDGET SECTION -->
+      <div id="budget-section" style="display:none">
+        <div class="section-header" style="margin-top:8px">
+          <div><div class="section-title" id="budget-section-title">Budget</div><div class="section-sub" id="budget-section-sub"></div></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="openBudgetCodeModal()"><i class="fa-solid fa-plus"></i> Add Code</button>
+          </div>
+        </div>
+        <!-- Budget overview bar -->
+        <div class="stats-grid" id="budget-stats"></div>
+        <!-- Budget codes table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Description</th><th>Allocated</th><th>Spent</th><th>Remaining</th><th>Utilization</th><th>Projects</th><th></th></tr></thead>
+              <tbody id="budget-codes-body"><tr><td colspan="8" class="empty-state">No budget codes</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══════════════════ PERMITTING ═══════════════════ -->
@@ -350,22 +370,42 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <!-- ═══════════════════ REVENUE ═══════════════════ -->
     <div id="view-revenue" class="view">
       <div class="section-header">
-        <div><div class="section-title">Revenue</div></div>
+        <div><div class="section-title">Revenue</div><div class="section-sub" id="rev-period-label"></div></div>
         <div style="display:flex;gap:8px;align-items:center">
-          <select class="filter" id="rev-year"></select>
-          <button class="btn btn-secondary" onclick="loadRevenue()"><i class="fa-solid fa-rotate"></i></button>
-          <button class="btn btn-secondary" onclick="showBillingReport()"><i class="fa-solid fa-file-invoice-dollar"></i> Monthly Billing</button>
-          <button class="btn btn-secondary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+          <select class="filter" id="rev-year" onchange="loadRevenue()"></select>
+          <button class="btn btn-secondary btn-sm" onclick="selectRevMonth(null)" id="rev-ytd-btn"><i class="fa-solid fa-calendar"></i> YTD</button>
+          <button class="btn btn-secondary btn-sm" onclick="showBillingReport()"><i class="fa-solid fa-file-invoice-dollar"></i> Billing Report</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
         </div>
       </div>
+      <!-- Month selector bar -->
+      <div id="rev-month-bar" style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px"></div>
+      <!-- Stats -->
       <div class="stats-grid" id="rev-stats"></div>
+      <!-- Monthly trend mini-chart -->
+      <div class="card" id="rev-trend-card">
+        <div class="card-header"><span class="card-title">Monthly Earnings Trend</span></div>
+        <div class="card-body" id="rev-trend-body" style="height:120px;display:flex;align-items:flex-end;gap:4px;padding-bottom:24px;position:relative"></div>
+      </div>
       <!-- By client -->
       <div class="card">
-        <div class="card-header"><span class="card-title">Revenue by Client</span></div>
+        <div class="card-header"><span class="card-title" id="rev-client-title">Revenue by Client</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Client</th><th>Projects</th><th>Expected</th><th>Earned</th><th>Billed</th></tr></thead>
+            <thead><tr><th>Client</th><th>Projects</th><th>Hours</th><th>Expected</th><th>Earned</th><th>Billed</th></tr></thead>
             <tbody id="rev-client-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Project detail -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="rev-detail-title">Project Detail</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>Hours</th><th>Expected</th><th>Earned</th><th>Status</th></tr></thead>
+            <tbody id="rev-detail-body"></tbody>
           </table>
         </div>
       </div>
@@ -377,7 +417,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client</th><th>Type</th><th>Completed</th><th>Expected Rev.</th><th></th></tr></thead>
+            <thead><tr><th>Project</th><th>Client</th><th>Type</th><th>Completed</th><th>Earned</th><th></th></tr></thead>
             <tbody id="unbilled-body"></tbody>
           </table>
         </div>
@@ -394,7 +434,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="ai-messages" id="ai-messages">
       <div class="ai-msg assistant">Hi! I'm your AI project manager. I can:<br><br>
-        • <strong>Create projects</strong>: <em>"Add permitting SR 49, 8,000 LF, PSC Contract 4"</em><br>
+        • <strong>Create projects</strong>: <em>"Add permitting SR 49, 8,000 LF for PSC"</em><br>
         • <strong>Update projects</strong>: <em>"Change WO-001 status to completed"</em><br>
         • <strong>Import Excel/CSV files</strong>: Upload workforce reports and I'll match employees to projects, create missing jobs, and log hours<br>
         • <strong>Add clients, staff & contracts</strong><br>
@@ -449,7 +489,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="form-row">
           <div class="form-group span2">
             <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
-            <select id="proj-parent"><option value="">None — Top-level project</option></select>
+            <select id="proj-parent" onchange="loadBudgetCodesForProject(this.value)"><option value="">None — Top-level project</option></select>
           </div>
         </div>
         <div class="form-row">
@@ -522,6 +562,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <label>Start Date</label>
             <input type="date" id="proj-start">
           </div>
+        </div>
+        <div class="form-group" id="budget-code-group" style="display:none">
+          <label>Budget Code <span style="font-weight:400;color:var(--text-muted)">(bills against this allocation)</span></label>
+          <select id="proj-budget-code"><option value="">None — No budget link</option></select>
         </div>
         <div class="form-group">
           <label>Notes</label>
@@ -662,6 +706,72 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('permit-doc-modal')">Close</button>
       <button class="btn btn-primary" onclick="uploadDoc()"><i class="fa-solid fa-upload"></i> Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET MODAL -->
+<div class="modal-overlay" id="budget-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title" id="budget-modal-title">Create Budget</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('budget-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="budget-id">
+      <input type="hidden" id="budget-project-id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Budget Name *</label>
+          <input type="text" id="budget-name" placeholder="e.g. RUS 217 Reconnect 3">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="budget-notes" placeholder="Contract details, funding source, etc."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="budget-delete-btn" style="display:none;margin-right:auto" onclick="deleteBudget()"><i class="fa-solid fa-trash"></i> Delete</button>
+      <button class="btn btn-secondary" onclick="closeModal('budget-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBudget()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET CODE MODAL -->
+<div class="modal-overlay" id="budget-code-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title" id="budget-code-modal-title">Add Budget Code</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('budget-code-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="bc-id">
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Code Name *</label>
+            <input type="text" id="bc-code" placeholder="e.g. Inspection">
+          </div>
+          <div class="form-group">
+            <label>Allocated Amount *</label>
+            <div class="input-group">
+              <input type="number" id="bc-amount" placeholder="0.00" step="0.01">
+              <span class="input-addon">$</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="bc-description" placeholder="Optional description">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="bc-delete-btn" style="display:none;margin-right:auto" onclick="deleteBudgetCode()"><i class="fa-solid fa-trash"></i> Delete</button>
+      <button class="btn btn-secondary" onclick="closeModal('budget-code-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBudgetCode()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
     </div>
   </div>
 </div>
@@ -843,7 +953,8 @@ function renderProjects(list) {
       <td>${progressBar(loggedHrs,expHrs)}<span style="font-size:11px;color:var(--text-muted)">${fmt(loggedHrs,'hrs')} / ${fmt(expHrs,'hrs')}</span></td>
       <td>${statusBadge(p.status)}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        ${!p.parent_id ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>` : ''}
         ${p.status==='completed'&&!p.billed_date?`<button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>`:''}
       </td>
     </tr>`;
@@ -884,6 +995,9 @@ async function editProject(id) {
   document.getElementById('proj-status').value = p.status;
   document.getElementById('proj-start').value = p.start_date?.split('T')[0]||'';
   document.getElementById('proj-notes').value = p.notes||'';
+  // Load budget codes if project has a parent with a budget
+  await loadBudgetCodesForProject(p.parent_id || p.id);
+  document.getElementById('proj-budget-code').value = p.budget_code_id||'';
   document.getElementById('proj-modal-title').textContent = 'Edit Project';
   document.getElementById('proj-delete-btn').style.display = 'inline-flex';
   typeChanged();
@@ -895,6 +1009,8 @@ function clearProjectForm() {
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
   document.getElementById('proj-parent').value='';
+  document.getElementById('proj-budget-code').innerHTML='<option value="">None — No budget link</option>';
+  document.getElementById('budget-code-group').style.display='none';
   document.getElementById('proj-type').value='';
   document.getElementById('proj-status').value='active';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
@@ -975,7 +1091,8 @@ async function saveProject() {
     footage: footage ? parseFloat(footage) : null,
     start_date: document.getElementById('proj-start').value,
     notes: document.getElementById('proj-notes').value,
-    parent_id: document.getElementById('proj-parent').value || null
+    parent_id: document.getElementById('proj-parent').value || null,
+    budget_code_id: document.getElementById('proj-budget-code').value || null
   };
   try {
     const id = document.getElementById('proj-id').value;
@@ -1107,6 +1224,216 @@ async function uploadDoc() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// BUDGETS
+// ═══════════════════════════════════════════════════════════
+let currentBudgetProjectId = null;
+let currentBudgetId = null;
+
+async function showBudgetForProject(projectId, projectName) {
+  currentBudgetProjectId = projectId;
+  const section = document.getElementById('budget-section');
+
+  // Check if budget exists for this project
+  const budgets = await api('/api/budgets?project_id=' + projectId);
+
+  if (!budgets.length) {
+    // No budget yet — offer to create one
+    section.style.display = 'block';
+    document.getElementById('budget-section-title').textContent = 'Budget — ' + projectName;
+    document.getElementById('budget-section-sub').textContent = 'No budget assigned yet';
+    document.getElementById('budget-stats').innerHTML = `
+      <div class="stat-card" style="grid-column:span 4;text-align:center;padding:24px">
+        <p style="color:var(--text-muted);margin-bottom:12px">No budget has been created for this project.</p>
+        <button class="btn btn-primary" onclick="openBudgetModal('${projectId}')"><i class="fa-solid fa-plus"></i> Create Budget</button>
+      </div>`;
+    document.getElementById('budget-codes-body').innerHTML = '<tr><td colspan="8" class="empty-state">Create a budget first</td></tr>';
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  // Load budget summary
+  currentBudgetId = budgets[0].id;
+  const summary = await api('/api/budgets/' + currentBudgetId + '/summary');
+
+  section.style.display = 'block';
+  document.getElementById('budget-section-title').innerHTML = '<i class="fa-solid fa-wallet" style="color:var(--primary)"></i> ' + esc(summary.name);
+  document.getElementById('budget-section-sub').textContent = projectName;
+
+  const pctUsed = summary.total_allocated > 0 ? (summary.total_spent / summary.total_allocated * 100) : 0;
+  const barClass = pctUsed > 90 ? 'danger' : pctUsed > 70 ? 'warn' : '';
+
+  document.getElementById('budget-stats').innerHTML = `
+    <div class="stat-card accent">
+      <div class="stat-label">Total Budget</div>
+      <div class="stat-value">${fmtMoney(summary.total_allocated)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Spent</div>
+      <div class="stat-value">${fmtMoney(summary.total_spent)}</div>
+      <div class="stat-sub">${pctUsed.toFixed(1)}% utilized</div>
+    </div>
+    <div class="stat-card ${pctUsed > 90 ? 'warn' : ''}">
+      <div class="stat-label">Remaining</div>
+      <div class="stat-value">${fmtMoney(summary.total_remaining)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Utilization</div>
+      <div style="margin-top:8px"><div class="progress" style="height:10px;width:100%"><div class="progress-bar ${barClass}" style="width:${Math.min(pctUsed,100)}%"></div></div></div>
+      <div class="stat-sub" style="margin-top:4px;display:flex;justify-content:space-between">
+        <span>0%</span>
+        <button class="btn btn-sm btn-secondary" onclick="openBudgetModal('${currentBudgetProjectId}','${currentBudgetId}')" style="font-size:10px;padding:2px 6px"><i class="fa-solid fa-pen"></i> Edit</button>
+        <span>100%</span>
+      </div>
+    </div>`;
+
+  // Render codes table
+  const codes = summary.codes || [];
+  if (!codes.length) {
+    document.getElementById('budget-codes-body').innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>No codes added yet. Click "Add Code" to create budget allocations.</p></div></td></tr>';
+  } else {
+    document.getElementById('budget-codes-body').innerHTML = codes.map(c => {
+      const spent = parseFloat(c.spent) || 0;
+      const allocated = parseFloat(c.allocated_amount) || 0;
+      const remaining = allocated - spent;
+      const pct = allocated > 0 ? (spent / allocated * 100) : 0;
+      const projCount = parseInt(c.project_count) || 0;
+      const cls = pct > 90 ? 'danger' : pct > 70 ? 'warn' : '';
+      return `<tr>
+        <td class="td-name" style="font-weight:600">${esc(c.code)}</td>
+        <td class="td-muted">${esc(c.description || '—')}</td>
+        <td>${fmtMoney(allocated)}</td>
+        <td style="font-weight:600">${fmtMoney(spent)}</td>
+        <td style="color:${remaining < 0 ? 'var(--danger)' : 'var(--success)'};font-weight:600">${fmtMoney(remaining)}</td>
+        <td><div class="progress" style="width:80px"><div class="progress-bar ${cls}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:10px;color:var(--text-muted)">${pct.toFixed(1)}%</span></td>
+        <td><span style="font-size:12px">${projCount} project${projCount !== 1 ? 's' : ''}</span></td>
+        <td><button class="btn btn-sm btn-secondary btn-icon" onclick="editBudgetCode('${c.id}','${esc(c.code)}','${esc(c.description||'')}',${allocated})"><i class="fa-solid fa-pen"></i></button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openBudgetModal(projectId, budgetId) {
+  document.getElementById('budget-project-id').value = projectId;
+  if (budgetId) {
+    document.getElementById('budget-id').value = budgetId;
+    document.getElementById('budget-modal-title').textContent = 'Edit Budget';
+    document.getElementById('budget-delete-btn').style.display = 'inline-flex';
+    // Load existing data
+    api('/api/budgets/' + budgetId + '/summary').then(b => {
+      document.getElementById('budget-name').value = b.name || '';
+      document.getElementById('budget-notes').value = b.notes || '';
+    });
+  } else {
+    document.getElementById('budget-id').value = '';
+    document.getElementById('budget-name').value = '';
+    document.getElementById('budget-notes').value = '';
+    document.getElementById('budget-modal-title').textContent = 'Create Budget';
+    document.getElementById('budget-delete-btn').style.display = 'none';
+  }
+  openModal('budget-modal');
+}
+
+async function saveBudget() {
+  const name = document.getElementById('budget-name').value.trim();
+  if (!name) return alert('Budget name is required');
+  const projectId = document.getElementById('budget-project-id').value;
+  const budgetId = document.getElementById('budget-id').value;
+  const body = { name, notes: document.getElementById('budget-notes').value, project_id: projectId };
+
+  try {
+    if (budgetId) {
+      await api('/api/budgets/' + budgetId, 'PUT', body);
+    } else {
+      await api('/api/budgets', 'POST', body);
+    }
+    closeModal('budget-modal');
+    showBudgetForProject(projectId, '');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteBudget() {
+  if (!confirm('Delete this budget and all its codes? Projects linked to these codes will be unlinked.')) return;
+  const budgetId = document.getElementById('budget-id').value;
+  await api('/api/budgets/' + budgetId, 'DELETE');
+  closeModal('budget-modal');
+  document.getElementById('budget-section').style.display = 'none';
+  currentBudgetId = null;
+}
+
+function openBudgetCodeModal() {
+  if (!currentBudgetId) return alert('Create a budget first');
+  document.getElementById('bc-id').value = '';
+  document.getElementById('bc-code').value = '';
+  document.getElementById('bc-amount').value = '';
+  document.getElementById('bc-description').value = '';
+  document.getElementById('budget-code-modal-title').textContent = 'Add Budget Code';
+  document.getElementById('bc-delete-btn').style.display = 'none';
+  openModal('budget-code-modal');
+}
+
+function editBudgetCode(id, code, description, amount) {
+  document.getElementById('bc-id').value = id;
+  document.getElementById('bc-code').value = code;
+  document.getElementById('bc-amount').value = amount;
+  document.getElementById('bc-description').value = description;
+  document.getElementById('budget-code-modal-title').textContent = 'Edit Budget Code';
+  document.getElementById('bc-delete-btn').style.display = 'inline-flex';
+  openModal('budget-code-modal');
+}
+
+async function saveBudgetCode() {
+  const code = document.getElementById('bc-code').value.trim();
+  const amount = document.getElementById('bc-amount').value;
+  if (!code) return alert('Code name is required');
+  if (!amount) return alert('Allocated amount is required');
+
+  const id = document.getElementById('bc-id').value;
+  const body = {
+    budget_id: currentBudgetId,
+    code,
+    description: document.getElementById('bc-description').value,
+    allocated_amount: parseFloat(amount)
+  };
+
+  try {
+    if (id) {
+      await api('/api/budget-codes/' + id, 'PUT', body);
+    } else {
+      await api('/api/budget-codes', 'POST', body);
+    }
+    closeModal('budget-code-modal');
+    showBudgetForProject(currentBudgetProjectId, '');
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteBudgetCode() {
+  if (!confirm('Delete this budget code?')) return;
+  const id = document.getElementById('bc-id').value;
+  await api('/api/budget-codes/' + id, 'DELETE');
+  closeModal('budget-code-modal');
+  showBudgetForProject(currentBudgetProjectId, '');
+}
+
+async function loadBudgetCodesForProject(projectId) {
+  const sel = document.getElementById('proj-budget-code');
+  sel.innerHTML = '<option value="">None — No budget link</option>';
+  const grp = document.getElementById('budget-code-group');
+
+  if (!projectId) { grp.style.display = 'none'; return; }
+
+  const budgets = await api('/api/budgets?project_id=' + projectId);
+  if (!budgets.length) { grp.style.display = 'none'; return; }
+
+  const codes = await api('/api/budget-codes?budget_id=' + budgets[0].id);
+  if (!codes.length) { grp.style.display = 'none'; return; }
+
+  grp.style.display = 'flex';
+  codes.forEach(c => sel.add(new Option(`${c.code} (${fmtMoney(c.allocated_amount)})`, c.id)));
+}
+
+// ═══════════════════════════════════════════════════════════
 // HOURS
 // ═══════════════════════════════════════════════════════════
 async function loadHours() {
@@ -1185,53 +1512,163 @@ function sendCSVtoAI() {
 // ═══════════════════════════════════════════════════════════
 // REVENUE
 // ═══════════════════════════════════════════════════════════
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let revSelectedMonth = null; // null = YTD
+let revMonthlySummary = [];
+
+function selectRevMonth(month) {
+  revSelectedMonth = month;
+  loadRevenue();
+}
+
 async function loadRevenue() {
   const y = document.getElementById('rev-year').value;
-  const [byClient, unbilled] = await Promise.all([
-    api('/api/revenue/by-client?year='+y),
+  const m = revSelectedMonth;
+  const isYTD = m === null;
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+
+  // Period label
+  document.getElementById('rev-period-label').textContent = isYTD
+    ? `Year-to-Date ${y}` : `${MONTH_FULL[(m||1)-1]} ${y}`;
+
+  // YTD button state
+  document.getElementById('rev-ytd-btn').className = 'btn btn-sm ' + (isYTD ? 'btn-primary' : 'btn-secondary');
+
+  // Load all data
+  const [monthly, byClient, details, unbilled] = await Promise.all([
+    api('/api/revenue/monthly-summary?year=' + y),
+    api('/api/revenue/by-client?year=' + y + (m ? '&month=' + m : '')),
+    api('/api/revenue/details?year=' + y + (m ? '&month=' + m : '')),
     api('/api/revenue/unbilled')
   ]);
+  revMonthlySummary = monthly;
 
-  // Stats
-  const totalEarned = byClient.reduce((s,c)=>s+parseFloat(c.earned_total),0);
-  const totalBilled = byClient.reduce((s,c)=>s+parseFloat(c.billed_total),0);
-  const totalUnbilled = unbilled.reduce((s,p)=>s+parseFloat(p.expected_revenue||0),0);
+  // ── Month selector bar ──
+  const bar = document.getElementById('rev-month-bar');
+  bar.innerHTML = monthly.map((mo, i) => {
+    const mn = i + 1;
+    const earned = parseFloat(mo.earned) || 0;
+    const isSelected = revSelectedMonth === mn;
+    const isFuture = parseInt(y) === now.getFullYear() && mn > currentMonth;
+    return `<div onclick="selectRevMonth(${mn})" style="
+      background:${isSelected ? 'var(--primary)' : 'var(--white)'};
+      color:${isSelected ? '#fff' : isFuture ? 'var(--text-muted)' : 'var(--text)'};
+      border:1px solid ${isSelected ? 'var(--primary)' : 'var(--gray-border)'};
+      border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;
+      opacity:${isFuture ? '0.5' : '1'};transition:all .15s;
+    ">
+      <div style="font-size:11px;font-weight:600">${MONTH_NAMES[i]}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:2px">${earned > 0 ? fmtMoney(earned) : '—'}</div>
+    </div>`;
+  }).join('');
+
+  // ── Stats ──
+  const totalExpected = byClient.reduce((s, c) => s + parseFloat(c.expected_total || 0), 0);
+  const totalEarned = byClient.reduce((s, c) => s + parseFloat(c.earned_total || 0), 0);
+  const totalBilled = byClient.reduce((s, c) => s + parseFloat(c.billed_total || 0), 0);
+  const totalHours = byClient.reduce((s, c) => s + parseFloat(c.total_hours || 0), 0);
+  const totalUnbilled = unbilled.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
+
+  // YTD totals from monthly summary
+  const ytdEarned = monthly.reduce((s, mo) => s + (parseFloat(mo.earned) || 0), 0);
+  const ytdBilled = monthly.reduce((s, mo) => s + (parseFloat(mo.billed) || 0), 0);
+  const ytdHours = monthly.reduce((s, mo) => s + (parseFloat(mo.hours) || 0), 0);
+
+  const periodLabel = isYTD ? 'YTD' : MONTH_NAMES[(m||1)-1];
   document.getElementById('rev-stats').innerHTML = `
-    <div class="stat-card accent"><div class="stat-label">Total Earned ${y}</div><div class="stat-value">${fmtMoney(totalEarned)}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Billed</div><div class="stat-value">${fmtMoney(totalBilled)}</div></div>
-    <div class="stat-card warn"><div class="stat-label">Unbilled</div><div class="stat-value">${fmtMoney(totalUnbilled)}</div></div>
+    <div class="stat-card">
+      <div class="stat-label">${periodLabel} Expected</div>
+      <div class="stat-value">${fmtMoney(totalExpected)}</div>
+      <div class="stat-sub">${byClient.filter(c=>parseFloat(c.project_count)>0).length} client${byClient.filter(c=>parseFloat(c.project_count)>0).length!==1?'s':''}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">${periodLabel} Earned</div>
+      <div class="stat-value">${fmtMoney(isYTD ? ytdEarned : totalEarned)}</div>
+      <div class="stat-sub">${fmt(isYTD ? ytdHours : totalHours, 'hrs')} worked</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">${periodLabel} Billed</div>
+      <div class="stat-value" style="color:var(--success)">${fmtMoney(isYTD ? ytdBilled : totalBilled)}</div>
+    </div>
+    <div class="stat-card ${totalUnbilled > 0 ? 'warn' : ''}">
+      <div class="stat-label">Unbilled Completed</div>
+      <div class="stat-value">${fmtMoney(totalUnbilled)}</div>
+      <div class="stat-sub">${unbilled.length} project${unbilled.length!==1?'s':''}</div>
+    </div>
   `;
 
-  // By client table
-  document.getElementById('rev-client-body').innerHTML = byClient.map(c => `
+  // ── Monthly trend chart ──
+  const maxEarned = Math.max(...monthly.map(mo => parseFloat(mo.earned) || 0), 1);
+  document.getElementById('rev-trend-body').innerHTML = monthly.map((mo, i) => {
+    const earned = parseFloat(mo.earned) || 0;
+    const billed = parseFloat(mo.billed) || 0;
+    const pct = (earned / maxEarned * 100);
+    const mn = i + 1;
+    const isSelected = revSelectedMonth === mn;
+    const isFuture = parseInt(y) === now.getFullYear() && mn > currentMonth;
+    return `<div onclick="selectRevMonth(${mn})" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;opacity:${isFuture?'0.3':'1'}">
+      <span style="font-size:10px;font-weight:600;color:var(--text-muted)">${earned > 0 ? fmtMoney(earned) : ''}</span>
+      <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:80px">
+        <div style="width:100%;background:${isSelected ? 'var(--primary)' : billed > 0 ? 'var(--success)' : 'var(--primary-light)'};border-radius:4px 4px 0 0;min-height:${earned > 0 ? '4' : '0'}px;height:${pct}%;transition:height .3s"></div>
+      </div>
+      <span style="font-size:10px;font-weight:${isSelected?'700':'500'};color:${isSelected?'var(--primary)':'var(--text-muted)'}">${MONTH_NAMES[i]}</span>
+    </div>`;
+  }).join('');
+
+  // ── Revenue by client table ──
+  document.getElementById('rev-client-title').textContent = isYTD ? 'Revenue by Client — YTD' : `Revenue by Client — ${MONTH_FULL[(m||1)-1]}`;
+  const clientRows = byClient.filter(c => parseFloat(c.project_count) > 0);
+  document.getElementById('rev-client-body').innerHTML = clientRows.length ? clientRows.map(c => `
     <tr>
       <td class="td-name">${esc(c.client_name)}</td>
       <td>${c.project_count}</td>
+      <td>${fmt(parseFloat(c.total_hours||0), 'hrs')}</td>
       <td>${fmtMoney(c.expected_total)}</td>
       <td style="font-weight:600;color:var(--primary)">${fmtMoney(c.earned_total)}</td>
       <td style="color:var(--success)">${fmtMoney(c.billed_total)}</td>
-    </tr>`).join('');
+    </tr>`).join('') + `<tr style="background:var(--gray-light);font-weight:700">
+      <td>Total</td><td>${clientRows.reduce((s,c)=>s+parseInt(c.project_count||0),0)}</td>
+      <td>${fmt(totalHours,'hrs')}</td><td>${fmtMoney(totalExpected)}</td>
+      <td style="color:var(--primary)">${fmtMoney(totalEarned)}</td><td style="color:var(--success)">${fmtMoney(totalBilled)}</td>
+    </tr>` : '<tr><td colspan="6" class="empty-state">No revenue data for this period</td></tr>';
 
-  // Unbilled table
+  // ── Project detail table ──
+  document.getElementById('rev-detail-title').textContent = isYTD ? 'Project Detail — YTD' : `Project Detail — ${MONTH_FULL[(m||1)-1]}`;
+  document.getElementById('rev-detail-body').innerHTML = details.length ? details.map(p => {
+    const earned = parseFloat(p.earned) || 0;
+    const expected = parseFloat(p.expected_revenue) || 0;
+    return `<tr>
+      <td class="td-name">${esc(p.name)}</td>
+      <td>${esc(p.client_name||'—')}</td>
+      <td class="td-mono">${esc(p.work_order_number||'—')}</td>
+      <td>${typeBadge(p.project_type)}</td>
+      <td>${fmt(parseFloat(p.period_hours)||0,'hrs')}</td>
+      <td>${fmtMoney(expected)}</td>
+      <td style="font-weight:600;color:${earned > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${fmtMoney(earned)}</td>
+      <td>${statusBadge(p.status)}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" class="empty-state">No project activity for this period</td></tr>';
+
+  // ── Unbilled table ──
   document.getElementById('unbilled-body').innerHTML = unbilled.length ? unbilled.map(p => `
     <tr>
       <td class="td-name">${esc(p.name)}</td>
       <td>${esc(p.client_name||'—')}</td>
       <td>${typeBadge(p.project_type)}</td>
       <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString() : '—'}</td>
-      <td style="font-weight:600">${fmtMoney(p.expected_revenue||0)}</td>
+      <td style="font-weight:600">${fmtMoney(p.earned_amount||0)}</td>
       <td><button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Mark Billed</button></td>
     </tr>`).join('') : '<tr><td colspan="6" class="empty-state" style="padding:24px;text-align:center">No unbilled completed projects</td></tr>';
 }
 
 async function showBillingReport() {
-  const now = new Date();
-  const m = now.getMonth()+1;
-  const y = now.getFullYear();
+  const y = document.getElementById('rev-year').value;
+  const m = revSelectedMonth || (new Date().getMonth() + 1);
   const data = await api(`/api/reports/billing?month=${m}&year=${y}`);
-  const monthName = now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const monthName = `${MONTH_FULL[m-1]} ${y}`;
   document.getElementById('billing-modal-title').textContent = `Monthly Billing — ${monthName}`;
-  // Group by client
   const byClient = {};
   data.forEach(p => { if(!byClient[p.client_name]) byClient[p.client_name]=[]; byClient[p.client_name].push(p); });
   let total = 0;
@@ -1251,7 +1688,8 @@ async function showBillingReport() {
         <tfoot><tr><td colspan="5" style="padding:6px 8px;text-align:right;font-weight:700;font-size:13px;border-top:1px solid var(--gray-border)">Client Total:</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--primary);border-top:1px solid var(--gray-border)">${fmtMoney(clientTotal)}</td></tr></tfoot>
       </table></div>`;
   }
-  html += `<div style="text-align:right;padding:12px;background:var(--primary);color:#fff;border-radius:8px;font-size:16px;font-weight:700;margin-top:16px">TOTAL BILLABLE: ${fmtMoney(total)}</div>`;
+  if (!data.length) html += '<p style="text-align:center;color:var(--text-muted);padding:24px">No billable projects for this period.</p>';
+  else html += `<div style="text-align:right;padding:12px;background:var(--primary);color:#fff;border-radius:8px;font-size:16px;font-weight:700;margin-top:16px">TOTAL BILLABLE: ${fmtMoney(total)}</div>`;
   document.getElementById('billing-modal-body').innerHTML = html;
   openModal('billing-modal');
 }
@@ -1395,6 +1833,12 @@ async function callAI(messages) {
           } else if (tr.tool === 'advance_permit_stage') {
             successDiv.innerHTML = '<strong>✓ Stage advanced:</strong> ' + tr.result.previous + ' → ' + tr.result.current;
             loadPermits();
+          } else if (tr.tool === 'create_budget') {
+            successDiv.innerHTML = '<strong>✓ Budget created:</strong> ' + esc(tr.result.budget?.name || '');
+          } else if (tr.tool === 'create_budget_code') {
+            successDiv.innerHTML = '<strong>✓ Budget code added:</strong> ' + esc(tr.result.budget_code?.code || '') + ' — ' + fmtMoney(tr.result.budget_code?.allocated_amount || 0);
+          } else if (tr.tool === 'update_budget_code') {
+            successDiv.innerHTML = '<strong>✓ Budget code updated:</strong> ' + esc(tr.result.budget_code?.code || '');
           } else {
             successDiv.innerHTML = '<strong>✓ Action completed</strong>';
           }

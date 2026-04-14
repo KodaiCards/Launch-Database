@@ -198,7 +198,7 @@ app.post('/api/projects', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status = 'active', billing_type, billing_rate,
-    footage, start_date, notes, parent_id
+    footage, start_date, notes, parent_id, budget_code_id
   } = req.body;
 
   try {
@@ -209,14 +209,14 @@ app.post('/api/projects', async (req, res) => {
         name, client_id, contract_id, work_order_number,
         project_type, status, billing_type, billing_rate,
         footage, miles, expected_hours, expected_revenue,
-        start_date, notes, parent_id
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+        start_date, notes, parent_id, budget_code_id
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, status, billing_type, billing_rate,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, notes, parent_id || null
+      start_date || null, notes, parent_id || null, budget_code_id || null
     ]);
 
     // Auto-create permit stage if permitting project
@@ -235,7 +235,7 @@ app.put('/api/projects/:id', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status, billing_type, billing_rate,
-    footage, start_date, completed_date, billed_date, notes, parent_id
+    footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id
   } = req.body;
 
   try {
@@ -245,13 +245,13 @@ app.put('/api/projects/:id', async (req, res) => {
         name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
         project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
         footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-        start_date=$13, completed_date=$14, billed_date=$15, notes=$16, parent_id=$17
-      WHERE id=$18 RETURNING *
+        start_date=$13, completed_date=$14, billed_date=$15, notes=$16, parent_id=$17, budget_code_id=$18
+      WHERE id=$19 RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, status, billing_type, billing_rate,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, completed_date || null, billed_date || null, notes, parent_id || null,
+      start_date || null, completed_date || null, billed_date || null, notes, parent_id || null, budget_code_id || null,
       req.params.id
     ]);
     res.json(rows[0]);
@@ -432,6 +432,178 @@ app.post('/api/permits/:projectId/documents', upload.single('file'), async (req,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BUDGETS
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/budgets', async (req, res) => {
+  const { project_id } = req.query;
+  try {
+    let q, params;
+    if (project_id) {
+      q = `SELECT b.*, p.name as project_name FROM budgets b
+           LEFT JOIN projects p ON p.id = b.project_id
+           WHERE b.project_id = $1 ORDER BY b.created_at DESC`;
+      params = [project_id];
+    } else {
+      q = `SELECT b.*, p.name as project_name FROM budgets b
+           LEFT JOIN projects p ON p.id = b.project_id
+           ORDER BY b.created_at DESC`;
+      params = [];
+    }
+    const { rows } = await pool.query(q, params);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/budgets/:id/summary', async (req, res) => {
+  try {
+    // Get the budget
+    const { rows: budgetRows } = await pool.query(
+      `SELECT b.*, p.name as project_name FROM budgets b
+       LEFT JOIN projects p ON p.id = b.project_id WHERE b.id = $1`, [req.params.id]
+    );
+    if (!budgetRows.length) return res.status(404).json({ error: 'Budget not found' });
+    const budget = budgetRows[0];
+
+    // Get all codes with spent amounts
+    const { rows: codes } = await pool.query(`
+      SELECT bc.*,
+        COALESCE(SUM(
+          CASE
+            WHEN proj.billing_type = 'footage' THEN proj.expected_revenue
+            WHEN proj.billing_type = 'hourly' THEN proj.actual_hours * proj.billing_rate
+            ELSE 0
+          END
+        ), 0) as spent,
+        COUNT(proj.id) as project_count,
+        json_agg(json_build_object(
+          'id', proj.id, 'name', proj.name, 'status', proj.status,
+          'project_type', proj.project_type,
+          'billable', CASE
+            WHEN proj.billing_type = 'footage' THEN proj.expected_revenue
+            WHEN proj.billing_type = 'hourly' THEN proj.actual_hours * proj.billing_rate
+            ELSE 0
+          END
+        )) FILTER (WHERE proj.id IS NOT NULL) as projects
+      FROM budget_codes bc
+      LEFT JOIN projects proj ON proj.budget_code_id = bc.id
+      WHERE bc.budget_id = $1
+      GROUP BY bc.id
+      ORDER BY bc.code
+    `, [req.params.id]);
+
+    const totalAllocated = codes.reduce((s, c) => s + parseFloat(c.allocated_amount || 0), 0);
+    const totalSpent = codes.reduce((s, c) => s + parseFloat(c.spent || 0), 0);
+
+    res.json({
+      ...budget,
+      codes,
+      total_allocated: totalAllocated,
+      total_spent: totalSpent,
+      total_remaining: totalAllocated - totalSpent
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/budgets', async (req, res) => {
+  const { project_id, name, total_amount, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO budgets (project_id, name, total_amount, notes)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [project_id, name, total_amount || 0, notes || null]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/budgets/:id', async (req, res) => {
+  const { name, total_amount, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE budgets SET name=$1, total_amount=$2, notes=$3 WHERE id=$4 RETURNING *`,
+      [name, total_amount, notes || null, req.params.id]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/budgets/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM budgets WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUDGET CODES
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/budget-codes', async (req, res) => {
+  const { budget_id } = req.query;
+  try {
+    const q = budget_id
+      ? 'SELECT * FROM budget_codes WHERE budget_id=$1 ORDER BY code'
+      : 'SELECT bc.*, b.name as budget_name FROM budget_codes bc JOIN budgets b ON b.id=bc.budget_id ORDER BY b.name, bc.code';
+    const { rows } = await pool.query(q, budget_id ? [budget_id] : []);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/budget-codes', async (req, res) => {
+  const { budget_id, code, description, allocated_amount } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO budget_codes (budget_id, code, description, allocated_amount)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [budget_id, code, description || null, allocated_amount || 0]
+    );
+    // Recalculate budget total from sum of codes
+    await pool.query(
+      `UPDATE budgets SET total_amount = (
+        SELECT COALESCE(SUM(allocated_amount),0) FROM budget_codes WHERE budget_id=$1
+      ) WHERE id=$1`, [budget_id]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/budget-codes/:id', async (req, res) => {
+  const { code, description, allocated_amount } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE budget_codes SET code=$1, description=$2, allocated_amount=$3
+       WHERE id=$4 RETURNING *`,
+      [code, description || null, allocated_amount || 0, req.params.id]
+    );
+    // Recalculate budget total
+    if (rows[0]) {
+      await pool.query(
+        `UPDATE budgets SET total_amount = (
+          SELECT COALESCE(SUM(allocated_amount),0) FROM budget_codes WHERE budget_id=$1
+        ) WHERE id=$1`, [rows[0].budget_id]
+      );
+    }
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/budget-codes/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM budget_codes WHERE id=$1 RETURNING budget_id', [req.params.id]);
+    // Recalculate budget total
+    if (rows[0]) {
+      await pool.query(
+        `UPDATE budgets SET total_amount = (
+          SELECT COALESCE(SUM(allocated_amount),0) FROM budget_codes WHERE budget_id=$1
+        ) WHERE id=$1`, [rows[0].budget_id]
+      );
+    }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -481,81 +653,188 @@ app.get('/api/dashboard', async (req, res) => {
 // REVENUE
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.get('/api/revenue/by-client', async (req, res) => {
-  const { year } = req.query;
-  const yearFilter = year || new Date().getFullYear();
+// Monthly summary — all months for a given year
+app.get('/api/revenue/monthly-summary', async (req, res) => {
+  const year = req.query.year || new Date().getFullYear();
   try {
+    const { rows } = await pool.query(`
+      WITH monthly AS (
+        SELECT
+          EXTRACT(MONTH FROM te.entry_date)::int as month,
+          COALESCE(SUM(te.hours), 0) as hours,
+          COALESCE(SUM(te.hours * p.billing_rate), 0) as earned
+        FROM time_entries te
+        JOIN projects p ON p.id = te.project_id
+        WHERE EXTRACT(YEAR FROM te.entry_date) = $1
+        GROUP BY month
+      ),
+      billed_monthly AS (
+        SELECT
+          EXTRACT(MONTH FROM p.billed_date)::int as month,
+          COALESCE(SUM(
+            CASE
+              WHEN p.billing_type = 'footage' THEN p.expected_revenue
+              WHEN p.billing_type = 'hourly' THEN p.actual_hours * p.billing_rate
+              ELSE 0
+            END
+          ), 0) as billed
+        FROM projects p
+        WHERE p.billed_date IS NOT NULL
+          AND EXTRACT(YEAR FROM p.billed_date) = $1
+        GROUP BY month
+      )
+      SELECT
+        m.month,
+        COALESCE(m.hours, 0) as hours,
+        COALESCE(m.earned, 0) as earned,
+        COALESCE(b.billed, 0) as billed
+      FROM generate_series(1, 12) AS s(month)
+      LEFT JOIN monthly m ON m.month = s.month
+      LEFT JOIN billed_monthly b ON b.month = s.month
+      ORDER BY s.month
+    `, [year]);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Revenue by client — filterable by month/year
+app.get('/api/revenue/by-client', async (req, res) => {
+  const year = req.query.year || new Date().getFullYear();
+  const month = req.query.month; // optional
+  try {
+    let dateFilter, params;
+    if (month) {
+      dateFilter = `AND EXISTS (
+        SELECT 1 FROM time_entries te2 WHERE te2.project_id = p.id
+        AND EXTRACT(MONTH FROM te2.entry_date) = $2
+        AND EXTRACT(YEAR FROM te2.entry_date) = $1
+      )`;
+      params = [year, month];
+    } else {
+      dateFilter = `AND (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL)`;
+      params = [year];
+    }
+
+    // Hours subquery for month filtering
+    const hoursJoin = month
+      ? `LEFT JOIN time_entries te ON te.project_id = p.id
+         AND EXTRACT(MONTH FROM te.entry_date) = ${month}
+         AND EXTRACT(YEAR FROM te.entry_date) = ${year}`
+      : `LEFT JOIN time_entries te ON te.project_id = p.id
+         AND EXTRACT(YEAR FROM te.entry_date) = ${year}`;
+
     const { rows } = await pool.query(`
       SELECT
         cl.id as client_id,
         cl.name as client_name,
         COUNT(DISTINCT p.id) as project_count,
-        COALESCE(SUM(p.expected_revenue),0) as expected_total,
+        COALESCE(SUM(p.expected_revenue), 0) as expected_total,
+        COALESCE(SUM(COALESCE(te_hrs.hrs, 0) * p.billing_rate), 0) as earned_hourly,
         COALESCE(SUM(
-          CASE p.billing_type
-            WHEN 'footage' THEN p.expected_revenue
-            WHEN 'hourly' THEN p.actual_hours * p.billing_rate
-          END
-        ),0) as earned_total,
-        COALESCE(SUM(CASE WHEN p.billed_date IS NOT NULL THEN p.expected_revenue ELSE 0 END),0) as billed_total
+          CASE WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed')
+          THEN p.expected_revenue ELSE 0 END
+        ), 0) as earned_footage,
+        COALESCE(SUM(
+          CASE WHEN p.billed_date IS NOT NULL THEN
+            CASE
+              WHEN p.billing_type = 'footage' THEN p.expected_revenue
+              WHEN p.billing_type = 'hourly' THEN p.actual_hours * p.billing_rate
+              ELSE 0
+            END
+          ELSE 0 END
+        ), 0) as billed_total,
+        COALESCE(SUM(COALESCE(te_hrs.hrs, 0)), 0) as total_hours
       FROM clients cl
-      LEFT JOIN projects p ON p.client_id = cl.id
-        AND (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL)
+      LEFT JOIN projects p ON p.client_id = cl.id ${dateFilter}
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(SUM(te.hours), 0) as hrs
+        FROM time_entries te
+        WHERE te.project_id = p.id
+        ${month ? `AND EXTRACT(MONTH FROM te.entry_date) = ${month} AND EXTRACT(YEAR FROM te.entry_date) = ${year}` : `AND EXTRACT(YEAR FROM te.entry_date) = ${year}`}
+      ) te_hrs ON true
       GROUP BY cl.id, cl.name
-      ORDER BY earned_total DESC
-    `, [yearFilter]);
+      ORDER BY client_name
+    `, params);
+
+    // Calculate totals
+    rows.forEach(r => {
+      r.earned_total = parseFloat(r.earned_hourly) + parseFloat(r.earned_footage);
+    });
+
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/revenue/by-month', async (req, res) => {
-  const { year } = req.query;
-  const yearFilter = year || new Date().getFullYear();
+// Detailed project breakdown for a specific month
+app.get('/api/revenue/details', async (req, res) => {
+  const year = req.query.year || new Date().getFullYear();
+  const month = req.query.month;
   try {
+    let whereClause, params;
+    if (month) {
+      whereClause = `WHERE EXISTS (
+        SELECT 1 FROM time_entries te2 WHERE te2.project_id = p.id
+        AND EXTRACT(MONTH FROM te2.entry_date) = $2
+        AND EXTRACT(YEAR FROM te2.entry_date) = $1
+      ) OR (p.billing_type = 'footage' AND EXTRACT(MONTH FROM p.start_date) = $2 AND EXTRACT(YEAR FROM p.start_date) = $1)`;
+      params = [year, month];
+    } else {
+      whereClause = `WHERE (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL OR EXISTS (
+        SELECT 1 FROM time_entries te2 WHERE te2.project_id = p.id AND EXTRACT(YEAR FROM te2.entry_date) = $1
+      ))`;
+      params = [year];
+    }
+
+    const hoursFilter = month
+      ? `AND EXTRACT(MONTH FROM te.entry_date) = ${month} AND EXTRACT(YEAR FROM te.entry_date) = ${year}`
+      : `AND EXTRACT(YEAR FROM te.entry_date) = ${year}`;
+
     const { rows } = await pool.query(`
-      SELECT
-        EXTRACT(MONTH FROM te.entry_date) as month,
-        EXTRACT(YEAR FROM te.entry_date) as year,
-        COALESCE(SUM(te.hours),0) as total_hours,
-        cl.name as client_name,
-        p.project_type,
-        COALESCE(SUM(te.hours * p.billing_rate),0) as revenue
-      FROM time_entries te
-      JOIN projects p ON p.id = te.project_id
-      JOIN clients cl ON cl.id = p.client_id
-      WHERE EXTRACT(YEAR FROM te.entry_date) = $1
-        AND p.billing_type = 'hourly'
-      GROUP BY month, year, cl.name, p.project_type
-      ORDER BY year, month
-    `, [yearFilter]);
+      SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
+             p.billing_type, p.billing_rate, p.footage, p.expected_revenue,
+             p.billed_date,
+             cl.name as client_name,
+             co.contract_number,
+             COALESCE(te_sum.hrs, 0) as period_hours,
+             CASE
+               WHEN p.billing_type = 'hourly' THEN COALESCE(te_sum.hrs, 0) * p.billing_rate
+               WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN p.expected_revenue
+               ELSE 0
+             END as earned
+      FROM projects p
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN contracts co ON co.id = p.contract_id
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(SUM(te.hours), 0) as hrs
+        FROM time_entries te WHERE te.project_id = p.id ${hoursFilter}
+      ) te_sum ON true
+      ${whereClause}
+      ORDER BY cl.name, p.project_type, p.name
+    `, params);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/revenue/unbilled', async (req, res) => {
-  const { month, year } = req.query;
-  let where = `p.billed_date IS NULL`;
-  let params = [];
-  if (month && year) {
-    where += ` AND EXTRACT(MONTH FROM p.completed_date)=$1 AND EXTRACT(YEAR FROM p.completed_date)=$2`;
-    params = [month, year];
-  } else {
-    where += ` AND p.status = 'completed'`;
-  }
   try {
     const { rows } = await pool.query(`
       SELECT p.*,
         cl.name as client_name,
         co.contract_number,
-        COALESCE(SUM(te.hours),0) as logged_hours
+        COALESCE(SUM(te.hours),0) as logged_hours,
+        CASE
+          WHEN p.billing_type = 'hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
+          WHEN p.billing_type = 'footage' THEN p.expected_revenue
+          ELSE 0
+        END as earned_amount
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
       LEFT JOIN time_entries te ON te.project_id = p.id
-      WHERE ${where}
+      WHERE p.billed_date IS NULL AND p.status = 'completed'
       GROUP BY p.id, cl.name, co.contract_number
       ORDER BY cl.name, p.project_type, p.completed_date
-    `, params);
+    `);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -639,7 +918,7 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function getDBContext() {
-  const [clients, projects, staff, contracts] = await Promise.all([
+  const [clients, projects, staff, contracts, budgets] = await Promise.all([
     pool.query('SELECT id, name, is_rus FROM clients ORDER BY name'),
     pool.query(`
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
@@ -647,17 +926,30 @@ async function getDBContext() {
              p.expected_hours, p.expected_revenue, p.actual_hours,
              cl.name as client_name, co.contract_number,
              p.start_date, p.completed_date, p.billed_date, p.notes,
-             p.parent_id, pp.name as parent_name
+             p.parent_id, pp.name as parent_name,
+             p.budget_code_id, bc.code as budget_code_name
       FROM projects p
       LEFT JOIN clients cl ON cl.id=p.client_id
       LEFT JOIN contracts co ON co.id=p.contract_id
       LEFT JOIN projects pp ON pp.id=p.parent_id
+      LEFT JOIN budget_codes bc ON bc.id=p.budget_code_id
       ORDER BY p.created_at DESC LIMIT 50
     `),
     pool.query('SELECT id, name FROM staff WHERE active=true ORDER BY name'),
-    pool.query('SELECT c.*, cl.name as client_name FROM contracts c JOIN clients cl ON cl.id=c.client_id ORDER BY cl.name, c.contract_number')
+    pool.query('SELECT c.*, cl.name as client_name FROM contracts c JOIN clients cl ON cl.id=c.client_id ORDER BY cl.name, c.contract_number'),
+    pool.query(`
+      SELECT b.id, b.name, b.project_id, b.total_amount, p.name as project_name,
+             json_agg(json_build_object(
+               'id', bc.id, 'code', bc.code, 'allocated_amount', bc.allocated_amount, 'description', bc.description
+             )) FILTER (WHERE bc.id IS NOT NULL) as codes
+      FROM budgets b
+      LEFT JOIN projects p ON p.id = b.project_id
+      LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+      GROUP BY b.id, b.name, b.project_id, b.total_amount, p.name
+      ORDER BY b.created_at DESC
+    `)
   ]);
-  return { clients: clients.rows, projects: projects.rows, staff: staff.rows, contracts: contracts.rows };
+  return { clients: clients.rows, projects: projects.rows, staff: staff.rows, contracts: contracts.rows, budgets: budgets.rows };
 }
 
 const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services, a fiber optic infrastructure company in Macon, Georgia. You have FULL access to the database through tools. You are smart, proactive, and thorough.
@@ -669,8 +961,8 @@ RATE STRUCTURE:
 - Design: VARIABLE - always ask for billing rate
 - Other: VARIABLE - always ask for billing rate
 
-CLIENTS: PSC (RUS - Contracts 3, 4, 5), COX, IFT, TRI-CO
-RUS work is PSC only. Each PSC contract has individual work orders.
+CLIENTS: PSC (RUS), COX, IFT, TRI-CO
+RUS work is PSC only. Contracts and work orders are managed manually or through the AI.
 
 YOUR CAPABILITIES — you can do ALL of the following:
 1. CREATE, UPDATE, and DELETE projects (including nested sub-projects)
@@ -689,6 +981,16 @@ NESTED PROJECTS:
 - When the user says "add a sub-project under X" or "nest Y inside Z", use the parent_id field.
 - Time entries can be logged against either parent or sub-projects.
 - In the DATABASE CONTEXT, projects with a parent_name are sub-projects.
+
+BUDGETS:
+- Parent projects can have a BUDGET — an external funding source with a name like "RUS 217 Reconnect 3".
+- Each budget has BUDGET CODES (job codes) with allocated dollar amounts, e.g. "Inspection: $50,000", "RE: $75,000", "Permitting: $30,000".
+- Projects link to a budget_code_id so their billable work draws from that code's allocation.
+- When asked to set up a budget, first create the budget (create_budget), then add each code (create_budget_code), then link projects to the appropriate codes (update_project with budget_code_id).
+- To see budget utilization, use query_database to join budgets, budget_codes, and projects.
+- The "spent" amount for a code = sum of billable work from all projects linked to that code (hourly: actual_hours × billing_rate, footage: expected_revenue).
+- If the user uploads a contract document, extract the budget codes and amounts and offer to set them up.
+- The DATABASE CONTEXT includes budgets with their codes — use the budget code IDs when linking projects.
 
 HOW TO WORK:
 - When the user asks to create/update/delete something, first summarize what you'll do, then ask for confirmation.
@@ -761,7 +1063,8 @@ const AI_TOOLS = [
         status: { type: 'string', enum: ['active', 'completed', 'on_hold'], default: 'active' },
         start_date: { type: 'string', description: 'YYYY-MM-DD format (optional)' },
         notes: { type: 'string' },
-        parent_id: { type: 'string', description: 'UUID of parent project to nest this under (optional). Use this to create sub-projects.' }
+        parent_id: { type: 'string', description: 'UUID of parent project to nest this under (optional). Use this to create sub-projects.' },
+        budget_code_id: { type: 'string', description: 'UUID of budget code this project bills against (optional). Get from database context budgets.' }
       },
       required: ['name', 'client_id', 'project_type', 'billing_type', 'billing_rate']
     }
@@ -785,7 +1088,8 @@ const AI_TOOLS = [
         start_date: { type: 'string' },
         completed_date: { type: 'string' },
         notes: { type: 'string' },
-        parent_id: { type: ['string', 'null'], description: 'UUID of parent project, or null to make it top-level' }
+        parent_id: { type: ['string', 'null'], description: 'UUID of parent project, or null to make it top-level' },
+        budget_code_id: { type: ['string', 'null'], description: 'UUID of budget code this project bills against, or null to unlink' }
       },
       required: ['project_id']
     }
@@ -889,14 +1193,55 @@ const AI_TOOLS = [
   },
   {
     name: 'query_database',
-    description: 'Run a read-only SELECT query against the database to look up information. Use this to answer questions about projects, hours, revenue, staff, etc. ONLY SELECT queries allowed — never INSERT/UPDATE/DELETE/DROP/ALTER.',
+    description: 'Run a read-only SELECT query against the database to look up information. Use this to answer questions about projects, hours, revenue, budgets, staff, etc. ONLY SELECT queries allowed — never INSERT/UPDATE/DELETE/DROP/ALTER.',
     input_schema: {
       type: 'object',
       properties: {
-        sql: { type: 'string', description: 'A SELECT query to run. Available tables: clients, contracts, staff, projects, time_entries, permit_stages, permit_documents, invoices, invoice_items. Key columns — projects: id, name, client_id, contract_id, work_order_number, project_type, status, billing_type, billing_rate, footage, miles, expected_hours, expected_revenue, actual_hours, start_date, completed_date, billed_date, notes. time_entries: id, project_id, staff_id, entry_date, hours, job_title.' },
+        sql: { type: 'string', description: 'A SELECT query to run. Available tables: clients, contracts, staff, projects, time_entries, permit_stages, permit_documents, invoices, invoice_items, budgets, budget_codes. Key columns — projects: id, name, client_id, contract_id, work_order_number, project_type, status, billing_type, billing_rate, footage, miles, expected_hours, expected_revenue, actual_hours, start_date, completed_date, billed_date, notes, parent_id, budget_code_id. budgets: id, project_id, name, total_amount. budget_codes: id, budget_id, code, description, allocated_amount.' },
         description: { type: 'string', description: 'What you are looking up and why' }
       },
       required: ['sql', 'description']
+    }
+  },
+  {
+    name: 'create_budget',
+    description: 'Create a budget for a parent project. A budget represents an external funding source (e.g. "RUS 217 Reconnect 3") with allocated amounts per job code.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'UUID of the parent project this budget is for' },
+        name: { type: 'string', description: 'Budget name, e.g. "RUS 217 Reconnect 3"' },
+        notes: { type: 'string' }
+      },
+      required: ['project_id', 'name']
+    }
+  },
+  {
+    name: 'create_budget_code',
+    description: 'Add a job/contract code to a budget with its allocated dollar amount. Each code represents a category of work that draws from the budget.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        budget_id: { type: 'string', description: 'UUID of the budget' },
+        code: { type: 'string', description: 'Code name, e.g. "Inspection", "Resident Engineer", "Permitting", "Design"' },
+        description: { type: 'string', description: 'Optional description of this code' },
+        allocated_amount: { type: 'number', description: 'Dollar amount allocated to this code' }
+      },
+      required: ['budget_id', 'code', 'allocated_amount']
+    }
+  },
+  {
+    name: 'update_budget_code',
+    description: 'Update an existing budget code (change allocation amount, name, etc).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        budget_code_id: { type: 'string', description: 'UUID of the budget code to update' },
+        code: { type: 'string' },
+        description: { type: 'string' },
+        allocated_amount: { type: 'number' }
+      },
+      required: ['budget_code_id']
     }
   }
 ];
@@ -912,8 +1257,8 @@ async function executeTool(toolName, toolInput) {
             name, client_id, contract_id, work_order_number,
             project_type, status, billing_type, billing_rate,
             footage, miles, expected_hours, expected_revenue,
-            start_date, notes, parent_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+            start_date, notes, parent_id, budget_code_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
           RETURNING *
         `, [
           toolInput.name,
@@ -930,7 +1275,8 @@ async function executeTool(toolName, toolInput) {
           fin.expectedRevenue,
           toolInput.start_date || null,
           toolInput.notes || null,
-          toolInput.parent_id || null
+          toolInput.parent_id || null,
+          toolInput.budget_code_id || null
         ]);
         if (toolInput.project_type === 'permitting') {
           await pool.query(
@@ -961,6 +1307,7 @@ async function executeTool(toolName, toolInput) {
         const completed_date = toolInput.completed_date ?? p.completed_date;
         const notes = toolInput.notes !== undefined ? toolInput.notes : p.notes;
         const parent_id = toolInput.parent_id !== undefined ? toolInput.parent_id : p.parent_id;
+        const budget_code_id = toolInput.budget_code_id !== undefined ? toolInput.budget_code_id : p.budget_code_id;
 
         const fin = calcProjectFinancials(project_type, billing_rate, footage);
         const { rows } = await pool.query(`
@@ -968,13 +1315,13 @@ async function executeTool(toolName, toolInput) {
             name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
             project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
             footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-            start_date=$13, completed_date=$14, notes=$15, parent_id=$16
-          WHERE id=$17 RETURNING *
+            start_date=$13, completed_date=$14, notes=$15, parent_id=$16, budget_code_id=$17
+          WHERE id=$18 RETURNING *
         `, [
           name, client_id, contract_id, work_order_number,
           project_type, status, billing_type, billing_rate,
           footage, fin.miles, fin.expectedHours, fin.expectedRevenue,
-          start_date, completed_date, notes, parent_id || null,
+          start_date, completed_date, notes, parent_id || null, budget_code_id || null,
           toolInput.project_id
         ]);
         return { success: true, project: rows[0] };
@@ -1083,6 +1430,46 @@ async function executeTool(toolName, toolInput) {
         }
         const { rows } = await pool.query(sqlClean);
         return { success: true, row_count: rows.length, rows: rows.slice(0, 100) };
+      }
+
+      case 'create_budget': {
+        const { rows } = await pool.query(
+          `INSERT INTO budgets (project_id, name, notes) VALUES ($1,$2,$3) RETURNING *`,
+          [toolInput.project_id, toolInput.name, toolInput.notes || null]
+        );
+        return { success: true, budget: rows[0] };
+      }
+
+      case 'create_budget_code': {
+        const { rows } = await pool.query(
+          `INSERT INTO budget_codes (budget_id, code, description, allocated_amount) VALUES ($1,$2,$3,$4) RETURNING *`,
+          [toolInput.budget_id, toolInput.code, toolInput.description || null, toolInput.allocated_amount || 0]
+        );
+        // Recalculate budget total
+        await pool.query(
+          `UPDATE budgets SET total_amount = (SELECT COALESCE(SUM(allocated_amount),0) FROM budget_codes WHERE budget_id=$1) WHERE id=$1`,
+          [toolInput.budget_id]
+        );
+        return { success: true, budget_code: rows[0] };
+      }
+
+      case 'update_budget_code': {
+        const { rows: existing } = await pool.query('SELECT * FROM budget_codes WHERE id=$1', [toolInput.budget_code_id]);
+        if (!existing.length) return { success: false, error: 'Budget code not found' };
+        const bc = existing[0];
+        const code = toolInput.code ?? bc.code;
+        const description = toolInput.description !== undefined ? toolInput.description : bc.description;
+        const allocated_amount = toolInput.allocated_amount ?? bc.allocated_amount;
+        const { rows } = await pool.query(
+          `UPDATE budget_codes SET code=$1, description=$2, allocated_amount=$3 WHERE id=$4 RETURNING *`,
+          [code, description, allocated_amount, toolInput.budget_code_id]
+        );
+        // Recalculate budget total
+        await pool.query(
+          `UPDATE budgets SET total_amount = (SELECT COALESCE(SUM(allocated_amount),0) FROM budget_codes WHERE budget_id=$1) WHERE id=$1`,
+          [rows[0].budget_id]
+        );
+        return { success: true, budget_code: rows[0] };
       }
 
       default:

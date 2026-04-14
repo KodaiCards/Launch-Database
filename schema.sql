@@ -175,18 +175,6 @@ INSERT INTO clients (name, is_rus) VALUES
   ('TRI-CO', FALSE)
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO contracts (client_id, contract_number, name)
-  SELECT id, 'CONTRACT-3', 'RUS Contract 3' FROM clients WHERE name = 'PSC'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO contracts (client_id, contract_number, name)
-  SELECT id, 'CONTRACT-4', 'RUS Contract 4' FROM clients WHERE name = 'PSC'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO contracts (client_id, contract_number, name)
-  SELECT id, 'CONTRACT-5', 'RUS Contract 5' FROM clients WHERE name = 'PSC'
-ON CONFLICT DO NOTHING;
-
 -- ─────────────────────────────────────────
 -- TRIGGERS: auto-update updated_at
 -- ─────────────────────────────────────────
@@ -210,3 +198,38 @@ CREATE TRIGGER projects_updated_at
 
 -- Add parent_id for nested projects (existing databases)
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;
+
+-- ─────────────────────────────────────────
+-- BUDGETS
+-- ─────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS budgets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  -- links to the parent project
+  name VARCHAR(200) NOT NULL,
+  -- e.g. "RUS 217 Reconnect 3"
+  total_amount DECIMAL(14,2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS budget_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  budget_id UUID REFERENCES budgets(id) ON DELETE CASCADE,
+  code VARCHAR(100) NOT NULL,
+  -- e.g. "Inspection", "Resident Engineer", "Permitting", "Design"
+  description VARCHAR(255),
+  allocated_amount DECIMAL(14,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Link projects to a budget code so billing draws from the right allocation
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS budget_code_id UUID REFERENCES budget_codes(id) ON DELETE SET NULL;
+
+-- Auto-update budgets.updated_at
+DROP TRIGGER IF EXISTS budgets_updated_at ON budgets;
+CREATE TRIGGER budgets_updated_at
+  BEFORE UPDATE ON budgets
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();

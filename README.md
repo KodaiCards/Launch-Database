@@ -77,4 +77,4 @@ The AI has access to 10 tools that directly interact with the database, with saf
 - Design / Other: Variable (prompted on creation)
 
 ## Clients
-PSC (RUS — Contracts 3, 4, 5), COX, IFT, TRI-CO
+PSC (RUS), COX, IFT, TRI-CO — Contracts and work orders managed manually or via AI
