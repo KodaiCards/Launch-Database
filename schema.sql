@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS staff (
 
 CREATE TABLE IF NOT EXISTS projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id UUID REFERENCES projects(id) ON DELETE CASCADE,
   name VARCHAR(200) NOT NULL,
   client_id UUID REFERENCES clients(id),
   contract_id UUID REFERENCES contracts(id),
@@ -202,3 +203,10 @@ DROP TRIGGER IF EXISTS projects_updated_at ON projects;
 CREATE TRIGGER projects_updated_at
   BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ─────────────────────────────────────────
+-- MIGRATIONS (safe to re-run)
+-- ─────────────────────────────────────────
+
+-- Add parent_id for nested projects (existing databases)
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;

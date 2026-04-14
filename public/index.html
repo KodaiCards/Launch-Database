@@ -447,6 +447,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <div class="form-row">
+          <div class="form-group span2">
+            <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
+            <select id="proj-parent"><option value="">None — Top-level project</option></select>
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label>Client *</label>
             <select id="proj-client" onchange="clientChanged()"><option value="">Select client...</option></select>
@@ -804,6 +810,10 @@ async function loadProjects() {
   const tp = document.getElementById('te-project');
   while (tp.options.length > 1) tp.remove(1);
   allProjects.forEach(p => tp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+  // Populate parent project dropdown
+  const pp = document.getElementById('proj-parent');
+  while (pp.options.length > 1) pp.remove(1);
+  allProjects.filter(p => !p.parent_id).forEach(p => pp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
 }
 
 function filterProjects() {
@@ -820,8 +830,12 @@ function renderProjects(list) {
     const expRev = parseFloat(p.expected_revenue)||0;
     const rate = parseFloat(p.billing_rate)||0;
     const earned = p.billing_type==='hourly' ? loggedHrs*rate : expRev;
-    return `<tr>
-      <td class="td-name">${esc(p.name)}</td>
+    const indent = p.parent_id ? 'padding-left:24px' : '';
+    const prefix = p.parent_id ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+    const childLabel = parseInt(p.child_count)>0 ? `<br><span style="font-size:10px;color:var(--primary);font-weight:600">${p.child_count} sub-project${parseInt(p.child_count)>1?'s':''}</span>` : '';
+    const parentLabel = p.parent_name ? `<br><span style="font-size:10px;color:var(--text-muted)">↳ ${esc(p.parent_name)}</span>` : '';
+    return `<tr${p.parent_id ? ' style="background:var(--gray-light)"' : ''}>
+      <td class="td-name" style="${indent}">${prefix}${esc(p.name)}${childLabel}${parentLabel}</td>
       <td>${esc(p.client_name||'—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number||'')}</span></td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
       <td>${typeBadge(p.project_type)}</td>
@@ -849,11 +863,20 @@ function openProjectModal(type='') {
 
 async function editProject(id) {
   const p = await api('/api/projects/'+id);
+  // Ensure parent dropdown is populated
+  if (!allProjects.length) {
+    allProjects = await api('/api/projects?');
+  }
+  const pp = document.getElementById('proj-parent');
+  while (pp.options.length > 1) pp.remove(1);
+  allProjects.filter(pr => !pr.parent_id && pr.id !== id).forEach(pr => pp.add(new Option(`${pr.name} (${pr.client_name||''})`, pr.id)));
+
   document.getElementById('proj-id').value = p.id;
   document.getElementById('proj-name').value = p.name;
   document.getElementById('proj-client').value = p.client_id||'';
   await clientChanged();
   document.getElementById('proj-contract').value = p.contract_id||'';
+  document.getElementById('proj-parent').value = p.parent_id||'';
   document.getElementById('proj-wo').value = p.work_order_number||'';
   document.getElementById('proj-type').value = p.project_type;
   document.getElementById('proj-rate').value = p.billing_rate||'';
@@ -871,6 +894,7 @@ function clearProjectForm() {
   ['proj-id','proj-name','proj-wo','proj-rate','proj-footage','proj-notes'].forEach(id => document.getElementById(id).value='');
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
+  document.getElementById('proj-parent').value='';
   document.getElementById('proj-type').value='';
   document.getElementById('proj-status').value='active';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
@@ -950,7 +974,8 @@ async function saveProject() {
     billing_rate: parseFloat(rate)||null,
     footage: footage ? parseFloat(footage) : null,
     start_date: document.getElementById('proj-start').value,
-    notes: document.getElementById('proj-notes').value
+    notes: document.getElementById('proj-notes').value,
+    parent_id: document.getElementById('proj-parent').value || null
   };
   try {
     const id = document.getElementById('proj-id').value;

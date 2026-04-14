@@ -159,14 +159,17 @@ app.get('/api/projects', async (req, res) => {
         cl.name as client_name,
         co.contract_number,
         co.name as contract_name,
-        COALESCE(SUM(te.hours),0) as logged_hours
+        pp.name as parent_name,
+        COALESCE(SUM(te.hours),0) as logged_hours,
+        (SELECT COUNT(*) FROM projects ch WHERE ch.parent_id = p.id) as child_count
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
       LEFT JOIN time_entries te ON te.project_id = p.id
       ${whereStr}
-      GROUP BY p.id, cl.name, co.contract_number, co.name
-      ORDER BY p.created_at DESC
+      GROUP BY p.id, cl.name, co.contract_number, co.name, pp.name
+      ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
     `, params);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -178,10 +181,12 @@ app.get('/api/projects/:id', async (req, res) => {
       SELECT p.*,
         cl.name as client_name,
         co.contract_number,
-        co.name as contract_name
+        co.name as contract_name,
+        pp.name as parent_name
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
       WHERE p.id = $1
     `, [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
@@ -193,7 +198,7 @@ app.post('/api/projects', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status = 'active', billing_type, billing_rate,
-    footage, start_date, notes
+    footage, start_date, notes, parent_id
   } = req.body;
 
   try {
@@ -204,14 +209,14 @@ app.post('/api/projects', async (req, res) => {
         name, client_id, contract_id, work_order_number,
         project_type, status, billing_type, billing_rate,
         footage, miles, expected_hours, expected_revenue,
-        start_date, notes
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        start_date, notes, parent_id
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, status, billing_type, billing_rate,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, notes
+      start_date || null, notes, parent_id || null
     ]);
 
     // Auto-create permit stage if permitting project
@@ -230,7 +235,7 @@ app.put('/api/projects/:id', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status, billing_type, billing_rate,
-    footage, start_date, completed_date, billed_date, notes
+    footage, start_date, completed_date, billed_date, notes, parent_id
   } = req.body;
 
   try {
@@ -240,13 +245,13 @@ app.put('/api/projects/:id', async (req, res) => {
         name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
         project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
         footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-        start_date=$13, completed_date=$14, billed_date=$15, notes=$16
-      WHERE id=$17 RETURNING *
+        start_date=$13, completed_date=$14, billed_date=$15, notes=$16, parent_id=$17
+      WHERE id=$18 RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, status, billing_type, billing_rate,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, completed_date || null, billed_date || null, notes,
+      start_date || null, completed_date || null, billed_date || null, notes, parent_id || null,
       req.params.id
     ]);
     res.json(rows[0]);
@@ -641,10 +646,12 @@ async function getDBContext() {
              p.billing_type, p.billing_rate, p.footage, p.miles,
              p.expected_hours, p.expected_revenue, p.actual_hours,
              cl.name as client_name, co.contract_number,
-             p.start_date, p.completed_date, p.billed_date, p.notes
+             p.start_date, p.completed_date, p.billed_date, p.notes,
+             p.parent_id, pp.name as parent_name
       FROM projects p
       LEFT JOIN clients cl ON cl.id=p.client_id
       LEFT JOIN contracts co ON co.id=p.contract_id
+      LEFT JOIN projects pp ON pp.id=p.parent_id
       ORDER BY p.created_at DESC LIMIT 50
     `),
     pool.query('SELECT id, name FROM staff WHERE active=true ORDER BY name'),
@@ -666,13 +673,22 @@ CLIENTS: PSC (RUS - Contracts 3, 4, 5), COX, IFT, TRI-CO
 RUS work is PSC only. Each PSC contract has individual work orders.
 
 YOUR CAPABILITIES — you can do ALL of the following:
-1. CREATE, UPDATE, and DELETE projects
+1. CREATE, UPDATE, and DELETE projects (including nested sub-projects)
 2. CREATE clients, staff members, and contracts
 3. LOG time entries (single or bulk from CSV)
 4. MARK projects as billed or change their status
 5. ADVANCE permit stages
 6. QUERY the database for any information — projects, hours, revenue, etc.
 7. Answer questions about project data, billing, revenue, hours
+
+NESTED PROJECTS:
+- Projects can be nested inside other projects using parent_id.
+- A top-level project has parent_id = null. A sub-project has parent_id set to its parent's UUID.
+- Sub-projects inherit the client and contract from the parent conceptually, but each has its own billing config.
+- When creating a sub-project, set parent_id to the parent project's UUID from the DATABASE CONTEXT.
+- When the user says "add a sub-project under X" or "nest Y inside Z", use the parent_id field.
+- Time entries can be logged against either parent or sub-projects.
+- In the DATABASE CONTEXT, projects with a parent_name are sub-projects.
 
 HOW TO WORK:
 - When the user asks to create/update/delete something, first summarize what you'll do, then ask for confirmation.
@@ -730,7 +746,7 @@ DATABASE CONTEXT (current data):
 const AI_TOOLS = [
   {
     name: 'create_project',
-    description: 'Create a new project in the database. Call this ONLY after the user has confirmed the details.',
+    description: 'Create a new project in the database. Can be a top-level project or a sub-project nested under a parent. Call this ONLY after the user has confirmed the details.',
     input_schema: {
       type: 'object',
       properties: {
@@ -744,14 +760,15 @@ const AI_TOOLS = [
         footage: { type: 'number', description: 'Linear footage (permitting projects only)' },
         status: { type: 'string', enum: ['active', 'completed', 'on_hold'], default: 'active' },
         start_date: { type: 'string', description: 'YYYY-MM-DD format (optional)' },
-        notes: { type: 'string' }
+        notes: { type: 'string' },
+        parent_id: { type: 'string', description: 'UUID of parent project to nest this under (optional). Use this to create sub-projects.' }
       },
       required: ['name', 'client_id', 'project_type', 'billing_type', 'billing_rate']
     }
   },
   {
     name: 'update_project',
-    description: 'Update an existing project. Only include the fields that are changing. Call ONLY after user confirms.',
+    description: 'Update an existing project. Only include the fields that are changing. Can move a project under a parent or make it top-level. Call ONLY after user confirms.',
     input_schema: {
       type: 'object',
       properties: {
@@ -767,7 +784,8 @@ const AI_TOOLS = [
         footage: { type: 'number' },
         start_date: { type: 'string' },
         completed_date: { type: 'string' },
-        notes: { type: 'string' }
+        notes: { type: 'string' },
+        parent_id: { type: ['string', 'null'], description: 'UUID of parent project, or null to make it top-level' }
       },
       required: ['project_id']
     }
@@ -894,8 +912,8 @@ async function executeTool(toolName, toolInput) {
             name, client_id, contract_id, work_order_number,
             project_type, status, billing_type, billing_rate,
             footage, miles, expected_hours, expected_revenue,
-            start_date, notes
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+            start_date, notes, parent_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
           RETURNING *
         `, [
           toolInput.name,
@@ -911,7 +929,8 @@ async function executeTool(toolName, toolInput) {
           fin.expectedHours,
           fin.expectedRevenue,
           toolInput.start_date || null,
-          toolInput.notes || null
+          toolInput.notes || null,
+          toolInput.parent_id || null
         ]);
         if (toolInput.project_type === 'permitting') {
           await pool.query(
@@ -941,6 +960,7 @@ async function executeTool(toolName, toolInput) {
         const start_date = toolInput.start_date ?? p.start_date;
         const completed_date = toolInput.completed_date ?? p.completed_date;
         const notes = toolInput.notes !== undefined ? toolInput.notes : p.notes;
+        const parent_id = toolInput.parent_id !== undefined ? toolInput.parent_id : p.parent_id;
 
         const fin = calcProjectFinancials(project_type, billing_rate, footage);
         const { rows } = await pool.query(`
@@ -948,13 +968,13 @@ async function executeTool(toolName, toolInput) {
             name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
             project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
             footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-            start_date=$13, completed_date=$14, notes=$15
-          WHERE id=$16 RETURNING *
+            start_date=$13, completed_date=$14, notes=$15, parent_id=$16
+          WHERE id=$17 RETURNING *
         `, [
           name, client_id, contract_id, work_order_number,
           project_type, status, billing_type, billing_rate,
           footage, fin.miles, fin.expectedHours, fin.expectedRevenue,
-          start_date, completed_date, notes,
+          start_date, completed_date, notes, parent_id || null,
           toolInput.project_id
         ]);
         return { success: true, project: rows[0] };
