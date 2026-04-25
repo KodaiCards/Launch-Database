@@ -891,7 +891,7 @@ app.get('/api/revenue/details', async (req, res) => {
     const { rows } = await pool.query(`
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
              p.billing_type, p.billing_rate, p.footage, p.expected_revenue,
-             p.billed_date,
+             p.billed_date, p.parent_id,
              cl.name as client_name,
              co.contract_number,
              COALESCE(te_sum.hrs, 0) as period_hours,
@@ -1123,6 +1123,20 @@ QUERYING DATA:
 - You have a query_database tool that can run SELECT queries. Use it to answer questions about projects, hours, revenue, etc.
 - NEVER run INSERT, UPDATE, DELETE, DROP, ALTER, or any modifying SQL through query_database. Only SELECT.
 - Use the specific action tools (create_project, update_project, etc.) for modifications.
+- CRITICAL — ALWAYS USE SQL FOR ARITHMETIC. If the user asks for any sum, count, average, or total ("how many hours did X work", "what's the total revenue this month", "how much has been logged for project Y"), write a SQL query — do NOT add numbers up in your response text. LLMs make arithmetic errors silently; the database does not. Example: NEVER write "5 + 3 + 2 = 11 hours" yourself; instead run 'SELECT SUM(hours) FROM time_entries WHERE ...' and report the result.
+
+HONESTY — NEVER FAKE SUCCESS:
+- NEVER claim an action succeeded unless the corresponding tool was actually called AND returned success:true. No exceptions. If you say "I've logged the entries" or "I've created the project," it must be because a tool result confirmed it.
+- After any modifying tool call (log_time_entries, create_project, update_project, etc.), look at the tool result. If success:false or there's an error field, report the error to the user honestly — do not paper over it.
+- After log_time_entries returns success, IMMEDIATELY run a verification query like:
+    SELECT COUNT(*) as cnt, SUM(hours) as total_hours FROM time_entries WHERE import_batch = 'ai_import_<batch_id>'
+  and report the verified count and total to the user. This proves the data actually landed and catches any silent failures.
+
+PROJECT LIFECYCLE — completed means READY TO BILL:
+- Statuses progress: active → completed → billed. The system treats 'completed' as "work done, awaiting invoice."
+- When you mark a project completed (via update_project_status), ALWAYS remind the user it now needs billing and surface the billable amount: hours × rate for hourly, expected_revenue for footage.
+- Do NOT skip from active straight to billed. If the user wants to mark something billed, confirm the work is finished first; if it isn't yet completed, walk them through completed → billed.
+- When asked "what needs to be billed" or similar, query for projects where status='completed' AND billed_date IS NULL.
 
 WORKFORCE FILE IMPORTS:
 When a user uploads an Excel or CSV file with workforce/timesheet data, you must be intelligent about processing it:
@@ -1799,9 +1813,10 @@ app.post('/api/ai/chat', async (req, res) => {
     let toolResults = [];
     let conversationMessages = [...messages.map(m => ({ role: m.role, content: m.content }))];
 
-    // Handle tool use in a loop (Claude may chain multiple tools)
+    // Handle tool use in a loop (Claude may chain multiple tools).
+    // 15 leaves headroom for: paged Excel reads (4-6) + log + verification query + summary.
     let iterations = 0;
-    const MAX_ITERATIONS = 10;
+    const MAX_ITERATIONS = 15;
 
     while (response.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
       iterations++;
@@ -1844,12 +1859,30 @@ app.post('/api/ai/chat', async (req, res) => {
       if (tb.text.trim()) finalText += tb.text;
     }
 
+    // ── Hallucination guard ───────────────────────────────────────────────
+    // If the AI's text claims it logged/created/updated something, verify
+    // a corresponding modifying tool actually ran successfully. This catches
+    // the case where Claude says "I've logged the entries" without actually
+    // calling log_time_entries.
+    const MODIFYING_TOOLS = ['log_time_entries', 'create_project', 'update_project',
+      'delete_project', 'create_client', 'create_staff', 'create_contract',
+      'update_project_status', 'advance_permit_stage', 'create_budget',
+      'create_budget_code', 'update_budget_code'];
+    const successfulModifications = toolResults.filter(
+      tr => MODIFYING_TOOLS.includes(tr.tool) && tr.result?.success === true
+    );
+    const claimsAction = /\b(I['’]?ve|I have|successfully|done|logged|added|created|updated|saved)\b/i.test(finalText);
+    if (claimsAction && successfulModifications.length === 0) {
+      console.warn('AI hallucination guard: text claims action but no successful modifying tool ran');
+      finalText += '\n\n⚠️ **Heads up**: I claimed to take an action but no database changes actually went through. Please ask me to retry — and if I keep saying I did something without it sticking, check the server logs.';
+    }
+
     // Log cache performance — helpful for verifying caching is reducing token spend.
     // cache_creation_input_tokens = first-time cache writes (full price + 25%)
     // cache_read_input_tokens = cache hits (10% of normal price, lower rate-limit weight)
     if (response.usage) {
       const u = response.usage;
-      console.log(`AI usage — in:${u.input_tokens} out:${u.output_tokens} cache_write:${u.cache_creation_input_tokens || 0} cache_read:${u.cache_read_input_tokens || 0} iters:${iterations}`);
+      console.log(`AI usage — in:${u.input_tokens} out:${u.output_tokens} cache_write:${u.cache_creation_input_tokens || 0} cache_read:${u.cache_read_input_tokens || 0} iters:${iterations} mods:${successfulModifications.length}`);
     }
 
     res.json({

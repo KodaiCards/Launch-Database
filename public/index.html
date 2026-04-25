@@ -42,8 +42,8 @@ body{font-family:var(--font);background:var(--gray-light);color:var(--text);font
 
 /* MAIN */
 .main{flex:1;overflow:hidden;display:flex;position:relative}
-.view{display:none;flex:1;overflow-y:auto;padding:24px}
-.view.active{display:flex;flex-direction:column;gap:20px}
+.view{display:none;flex:1;overflow-y:auto;padding:24px;min-height:0}
+.view.active{display:flex;flex-direction:column;gap:20px;min-height:0}
 
 /* CARDS */
 .card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
@@ -1763,6 +1763,133 @@ function selectRevMonth(month) {
   loadRevenue();
 }
 
+// Render the revenue project-detail table as a hierarchical tree.
+// Parent rows show summed period_hours and earned of all descendants
+// so collapsed view still shows meaningful totals.
+function renderRevenueDetail(details) {
+  const tbody = document.getElementById('rev-detail-body');
+  if (!details.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No project activity for this period</td></tr>';
+    return;
+  }
+
+  const byId = {};
+  details.forEach(p => byId[p.id] = p);
+  function getDepth(p) {
+    if (!p.parent_id) return 0;
+    const par = byId[p.parent_id];
+    if (!par || !par.parent_id) return 1;
+    return 2;
+  }
+  const grandparents = details.filter(p => getDepth(p) === 0);
+  const parents = details.filter(p => getDepth(p) === 1);
+  const children = details.filter(p => getDepth(p) === 2);
+  const parentsByGP = {};
+  parents.forEach(p => { (parentsByGP[p.parent_id] = parentsByGP[p.parent_id] || []).push(p); });
+  const childrenByPar = {};
+  children.forEach(c => { (childrenByPar[c.parent_id] = childrenByPar[c.parent_id] || []).push(c); });
+
+  // For parent rows, roll up children's hours and earned so the user sees the total
+  // even when the branch is collapsed.
+  function sumDescendants(p, depth) {
+    let hrs = parseFloat(p.period_hours) || 0;
+    let earned = parseFloat(p.earned) || 0;
+    if (depth === 0) {
+      for (const par of (parentsByGP[p.id] || [])) {
+        const sub = sumDescendants(par, 1);
+        hrs += sub.hrs; earned += sub.earned;
+      }
+    } else if (depth === 1) {
+      for (const kid of (childrenByPar[p.id] || [])) {
+        hrs += parseFloat(kid.period_hours) || 0;
+        earned += parseFloat(kid.earned) || 0;
+      }
+    }
+    return { hrs, earned };
+  }
+
+  function row(p, depth, groupClass) {
+    const indent = depth * 24;
+    const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+    const bgColors = ['', 'background:var(--gray-light)', 'background:#f0f0f0'];
+    const bg = bgColors[depth] || '';
+
+    let kidCount = 0, kidKey = null;
+    if (depth === 0) { kidCount = (parentsByGP[p.id] || []).length; kidKey = 'gp-' + p.id; }
+    else if (depth === 1) { kidCount = (childrenByPar[p.id] || []).length; kidKey = 'pr-' + p.id; }
+
+    const expandable = kidCount > 0;
+    const chevId = 'rc-' + p.id;
+    const click = expandable ? `onclick="rtreeToggle('${kidKey}','${chevId}')"` : '';
+    const cursor = expandable ? 'cursor:pointer;' : '';
+    const chevron = expandable
+      ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s"></i>`
+      : (depth === 0 ? '<span style="width:15px;display:inline-block"></span>' : '');
+    const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
+
+    // Display rolled-up totals on parent rows for at-a-glance context
+    const totals = sumDescendants(p, depth);
+    const expected = parseFloat(p.expected_revenue) || 0;
+    const earnedColor = totals.earned > 0 ? 'var(--primary)' : 'var(--text-muted)';
+
+    const trAttrs = groupClass
+      ? `class="rtree rtree-${groupClass}" style="display:none;${bg};${cursor}"`
+      : `style="${bg};${cursor}"`;
+
+    return `<tr ${trAttrs} ${click}>
+      <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
+      <td>${esc(p.client_name || '—')}</td>
+      <td class="td-mono">${esc(p.work_order_number || '—')}</td>
+      <td>${typeBadge(p.project_type)}</td>
+      <td>${fmt(totals.hrs, 'hrs')}</td>
+      <td>${expected ? fmtMoney(expected) : '—'}</td>
+      <td style="font-weight:600;color:${earnedColor}">${fmtMoney(totals.earned)}</td>
+      <td>${statusBadge(p.status)}</td>
+    </tr>`;
+  }
+
+  let html = '';
+  for (const gp of grandparents) {
+    html += row(gp, 0, null);
+    for (const par of (parentsByGP[gp.id] || [])) {
+      html += row(par, 1, 'gp-' + gp.id);
+      for (const kid of (childrenByPar[par.id] || [])) {
+        html += row(kid, 2, 'pr-' + par.id);
+      }
+    }
+  }
+  // Orphans (parent not in current period filter)
+  for (const par of parents) {
+    if (!byId[par.parent_id]) {
+      html += row(par, 0, null);
+      for (const kid of (childrenByPar[par.id] || [])) html += row(kid, 1, 'pr-' + par.id);
+    }
+  }
+  for (const kid of children) {
+    if (!byId[kid.parent_id]) html += row(kid, 0, null);
+  }
+
+  tbody.innerHTML = html;
+}
+
+function rtreeToggle(groupKey, chevId) {
+  const rows = document.querySelectorAll('.rtree-' + groupKey);
+  const chev = document.getElementById(chevId);
+  const showing = rows[0] && rows[0].style.display !== 'none';
+  rows.forEach(r => {
+    r.style.display = showing ? 'none' : 'table-row';
+    if (showing) {
+      const nestedChev = r.querySelector('[id^="rc-"]');
+      if (nestedChev) {
+        nestedChev.style.transform = 'rotate(0deg)';
+        const nestedId = nestedChev.id.replace('rc-', '');
+        document.querySelectorAll('.rtree-pr-' + nestedId).forEach(n => n.style.display = 'none');
+      }
+    }
+  });
+  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
 async function loadRevenue() {
   const y = document.getElementById('rev-year').value;
   const m = revSelectedMonth;
@@ -1875,22 +2002,9 @@ async function loadRevenue() {
       <td style="color:var(--primary)">${fmtMoney(totalEarned)}</td><td style="color:var(--success)">${fmtMoney(totalBilled)}</td>
     </tr>` : '<tr><td colspan="6" class="empty-state">No revenue data for this period</td></tr>';
 
-  // ── Project detail table ──
+  // ── Project detail table (hierarchical with expand/collapse) ──
   document.getElementById('rev-detail-title').textContent = isYTD ? 'Project Detail — YTD' : `Project Detail — ${MONTH_FULL[(m||1)-1]}`;
-  document.getElementById('rev-detail-body').innerHTML = details.length ? details.map(p => {
-    const earned = parseFloat(p.earned) || 0;
-    const expected = parseFloat(p.expected_revenue) || 0;
-    return `<tr>
-      <td class="td-name">${esc(p.name)}</td>
-      <td>${esc(p.client_name||'—')}</td>
-      <td class="td-mono">${esc(p.work_order_number||'—')}</td>
-      <td>${typeBadge(p.project_type)}</td>
-      <td>${fmt(parseFloat(p.period_hours)||0,'hrs')}</td>
-      <td>${fmtMoney(expected)}</td>
-      <td style="font-weight:600;color:${earned > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${fmtMoney(earned)}</td>
-      <td>${statusBadge(p.status)}</td>
-    </tr>`;
-  }).join('') : '<tr><td colspan="8" class="empty-state">No project activity for this period</td></tr>';
+  renderRevenueDetail(details);
 
   // ── Unbilled table ──
   document.getElementById('unbilled-body').innerHTML = unbilled.length ? unbilled.map(p => `
