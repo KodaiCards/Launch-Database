@@ -274,6 +274,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <option value="design">Design</option>
           <option value="other">Other</option>
         </select>
+        <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(true)" title="Expand all"><i class="fa-solid fa-angles-down"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(false)" title="Collapse all"><i class="fa-solid fa-angles-up"></i></button>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -1035,38 +1037,166 @@ async function loadProjects() {
 }
 
 function filterProjects() {
-  const q = document.getElementById('proj-search').value.toLowerCase();
-  renderProjects(q ? allProjects.filter(p => (p.name+p.client_name+p.work_order_number+p.project_type).toLowerCase().includes(q)) : allProjects);
+  const q = document.getElementById('proj-search').value.toLowerCase().trim();
+  if (!q) { renderProjects(allProjects); return; }
+
+  // Build by-id lookup so we can walk ancestor chains
+  const byId = {};
+  allProjects.forEach(p => byId[p.id] = p);
+
+  // Direct matches first
+  const keep = new Set();
+  allProjects.forEach(p => {
+    const hay = (p.name + ' ' + (p.client_name || '') + ' ' + (p.work_order_number || '') + ' ' + (p.project_type || '')).toLowerCase();
+    if (hay.includes(q)) keep.add(p.id);
+  });
+  // Pull in every ancestor of every match so the tree context isn't lost
+  for (const id of [...keep]) {
+    let cur = byId[id];
+    while (cur && cur.parent_id) {
+      keep.add(cur.parent_id);
+      cur = byId[cur.parent_id];
+    }
+  }
+
+  // Render with expandAll=true so the user actually sees the matches
+  renderProjects(allProjects.filter(p => keep.has(p.id)), true);
 }
 
-function renderProjects(list) {
+function renderProjects(list, expandAll = false) {
   const tbody = document.getElementById('projects-body');
-  if (!list.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No projects found</p></div></td></tr>'; return; }
-  tbody.innerHTML = list.map(p => {
-    const loggedHrs = parseFloat(p.logged_hours)||0;
-    const expHrs = parseFloat(p.expected_hours)||0;
-    const expRev = parseFloat(p.expected_revenue)||0;
-    const rate = parseFloat(p.billing_rate)||0;
-    const earned = p.billing_type==='hourly' ? loggedHrs*rate : expRev;
-    const indent = p.parent_id ? 'padding-left:24px' : '';
-    const prefix = p.parent_id ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
-    const childLabel = parseInt(p.child_count)>0 ? `<br><span style="font-size:10px;color:var(--primary);font-weight:600">${p.child_count} sub-project${parseInt(p.child_count)>1?'s':''}</span>` : '';
-    const parentLabel = p.parent_name ? `<br><span style="font-size:10px;color:var(--text-muted)">↳ ${esc(p.parent_name)}</span>` : '';
-    return `<tr${p.parent_id ? ' style="background:var(--gray-light)"' : ''}>
-      <td class="td-name" style="${indent}">${prefix}${esc(p.name)}${childLabel}${parentLabel}</td>
-      <td>${esc(p.client_name||'—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number||'')}</span></td>
-      <td class="td-mono">${esc(p.work_order_number||'—')}</td>
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No projects found</p></div></td></tr>';
+    return;
+  }
+
+  // Build lookup so depth/ancestor walks are cheap
+  const byId = {};
+  list.forEach(p => byId[p.id] = p);
+
+  // Depth: 0 = grandparent (no parent), 1 = parent, 2 = child
+  function getDepth(p) {
+    if (!p.parent_id) return 0;
+    const par = byId[p.parent_id];
+    if (!par || !par.parent_id) return 1;
+    return 2;
+  }
+
+  // Bucket by relationship for fast tree walk
+  const grandparents = list.filter(p => getDepth(p) === 0);
+  const parents = list.filter(p => getDepth(p) === 1);
+  const children = list.filter(p => getDepth(p) === 2);
+
+  const parentsByGP = {};
+  parents.forEach(p => { (parentsByGP[p.parent_id] = parentsByGP[p.parent_id] || []).push(p); });
+  const childrenByPar = {};
+  children.forEach(c => { (childrenByPar[c.parent_id] = childrenByPar[c.parent_id] || []).push(c); });
+
+  function projRow(p, depth, groupClass) {
+    const indent = depth * 24;
+    const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+    const bgColors = ['', 'background:var(--gray-light)', 'background:#f0f0f0'];
+    const bg = bgColors[depth] || '';
+
+    let kidCount = 0, kidKey = null;
+    if (depth === 0) { kidCount = (parentsByGP[p.id] || []).length; kidKey = 'gp-' + p.id; }
+    else if (depth === 1) { kidCount = (childrenByPar[p.id] || []).length; kidKey = 'pr-' + p.id; }
+
+    const expandable = kidCount > 0;
+    const chevId = 'pc-' + p.id;
+    const click = expandable ? `onclick="ptreeToggle('${kidKey}','${chevId}')"` : '';
+    const cursor = expandable ? 'cursor:pointer;' : '';
+    const chevRotation = expandable && expandAll ? 'transform:rotate(90deg);' : '';
+    const chevron = expandable
+      ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s;${chevRotation}"></i>`
+      : (depth === 0 ? '<span style="width:15px;display:inline-block"></span>' : '');
+    const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
+
+    const loggedHrs = parseFloat(p.logged_hours) || 0;
+    const expHrs = parseFloat(p.expected_hours) || 0;
+    const expRev = parseFloat(p.expected_revenue) || 0;
+
+    // Build tr attributes as ONE well-formed string — no duplicate style attribute.
+    // Children of a group get class="ptree ptree-<key>" so the toggle can find them.
+    const startHidden = groupClass && !expandAll;
+    const display = startHidden ? 'display:none;' : '';
+    const trAttrs = groupClass
+      ? `class="ptree ptree-${groupClass}" style="${display}${bg};${cursor}"`
+      : `style="${bg};${cursor}"`;
+
+    return `<tr ${trAttrs} ${click}>
+      <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
+      <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
+      <td class="td-mono">${esc(p.work_order_number || '—')}</td>
       <td>${typeBadge(p.project_type)}</td>
-      <td><span style="font-size:12px">${expHrs?fmt(expHrs,'hrs'):'—'}</span><br><span class="td-muted" style="font-size:11px">${expRev?fmtMoney(expRev):'—'}</span></td>
-      <td>${progressBar(loggedHrs,expHrs)}<span style="font-size:11px;color:var(--text-muted)">${fmt(loggedHrs,'hrs')} / ${fmt(expHrs,'hrs')}</span></td>
+      <td><span style="font-size:12px">${expHrs ? fmt(expHrs, 'hrs') : '—'}</span><br><span class="td-muted" style="font-size:11px">${expRev ? fmtMoney(expRev) : '—'}</span></td>
+      <td>${progressBar(loggedHrs, expHrs)}<span style="font-size:11px;color:var(--text-muted)">${fmt(loggedHrs, 'hrs')} / ${fmt(expHrs, 'hrs')}</span></td>
       <td>${statusBadge(p.status)}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-        ${!p.parent_id ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>` : ''}
-        ${p.status==='completed'&&!p.billed_date?`<button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>`:''}
+        <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        ${depth === 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>` : ''}
+        ${p.status === 'completed' && !p.billed_date ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>` : ''}
       </td>
     </tr>`;
-  }).join('');
+  }
+
+  let html = '';
+  // Walk the tree top-down through grandparents
+  for (const gp of grandparents) {
+    html += projRow(gp, 0, null);
+    for (const par of (parentsByGP[gp.id] || [])) {
+      html += projRow(par, 1, 'gp-' + gp.id);
+      for (const kid of (childrenByPar[par.id] || [])) {
+        html += projRow(kid, 2, 'pr-' + par.id);
+      }
+    }
+  }
+  // Orphan parents (their grandparent isn't in the current filtered list) → render as top-level
+  for (const par of parents) {
+    if (!byId[par.parent_id]) {
+      html += projRow(par, 0, null);
+      for (const kid of (childrenByPar[par.id] || [])) {
+        html += projRow(kid, 1, 'pr-' + par.id);
+      }
+    }
+  }
+  // Orphan children (their parent isn't in the list) → render as top-level
+  for (const kid of children) {
+    if (!byId[kid.parent_id]) html += projRow(kid, 0, null);
+  }
+
+  tbody.innerHTML = html;
+}
+
+// Toggle one branch open/closed. Uses the 'ptree-' class prefix so it doesn't
+// collide with the dashboard tree's 'dtree-' classes.
+function ptreeToggle(groupKey, chevId) {
+  const rows = document.querySelectorAll('.ptree-' + groupKey);
+  const chev = document.getElementById(chevId);
+  const showing = rows[0] && rows[0].style.display !== 'none';
+  rows.forEach(r => {
+    r.style.display = showing ? 'none' : 'table-row';
+    if (showing) {
+      // When collapsing, also collapse any nested branches inside this one
+      const nestedChev = r.querySelector('[id^="pc-"]');
+      if (nestedChev) {
+        nestedChev.style.transform = 'rotate(0deg)';
+        const nestedId = nestedChev.id.replace('pc-', '');
+        document.querySelectorAll('.ptree-pr-' + nestedId).forEach(n => n.style.display = 'none');
+      }
+    }
+  });
+  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
+// Show or hide every branch in the projects tree at once.
+function ptreeExpandAll(expand) {
+  document.querySelectorAll('#projects-body tr.ptree').forEach(r => {
+    r.style.display = expand ? 'table-row' : 'none';
+  });
+  document.querySelectorAll('#projects-body [id^="pc-"]').forEach(c => {
+    c.style.transform = expand ? 'rotate(90deg)' : 'rotate(0deg)';
+  });
 }
 
 // ═══════════════════════════════════════════════════════════

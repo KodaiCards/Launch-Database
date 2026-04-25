@@ -1143,7 +1143,11 @@ When a user uploads an Excel or CSV file with workforce/timesheet data, you must
 3. HANDLE MISSING DATA:
    - If a work order doesn't match any project, tell the user and offer to CREATE the project. Ask what type/rate it should be.
    - If an employee isn't in the system, offer to CREATE them as staff.
-   - If dates are in different formats (MM/DD/YYYY, M/D/YY, etc.), normalize to YYYY-MM-DD.
+   - DATES — the file parser already normalizes date-formatted cells to YYYY-MM-DD. If you still see ambiguous formats (e.g. "3/15/26" as text), normalize them to YYYY-MM-DD using these rules:
+     • TODAY'S DATE is provided in the DATABASE CONTEXT block as "_today" — always cross-reference against it.
+     • If the year is missing, default to the year of TODAY.
+     • If the year is 2-digit, expand using the current century (so "26" → "2026", not "1926").
+     • SANITY CHECK every date you produce: if any entry_date is more than 18 months before TODAY or any time in the future, STOP and ask the user to confirm before logging. Don't silently log entries from the wrong year — this has happened before and corrupts monthly revenue.
 
 4. SUMMARIZE BEFORE ACTING: Show the user a clear breakdown:
    - How many entries will be logged
@@ -1674,7 +1678,14 @@ app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
 
       for (const sheetName of sheetNames) {
         const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        // raw:false + dateNF forces date-formatted cells into a YYYY-MM-DD string
+        // so the AI sees unambiguous dates instead of Excel serial numbers
+        // or short-year strings like "3/15/26".
+        const jsonData = XLSX.utils.sheet_to_json(sheet, {
+          defval: '',
+          raw: false,
+          dateNF: 'yyyy-mm-dd'
+        });
         if (jsonData.length > 0 && rows.length === 0) {
           rows = jsonData;
           headers = Object.keys(jsonData[0] || {});
@@ -1685,7 +1696,11 @@ app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
       const content = fs.readFileSync(req.file.path, 'utf8');
       const workbook = XLSX.read(content, { type: 'string' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      rows = XLSX.utils.sheet_to_json(sheet, {
+        defval: '',
+        raw: false,
+        dateNF: 'yyyy-mm-dd'
+      });
       headers = Object.keys(rows[0] || {});
 
     } else {
@@ -1746,6 +1761,8 @@ app.post('/api/ai/chat', async (req, res) => {
 
   try {
     const ctx = await getDBContext();
+    // Anchor the AI to today's date so it never guesses the year wrong on imports.
+    ctx._today = new Date().toISOString().split('T')[0];
 
     // Split system prompt into static rules + dynamic DB context, cache both.
     // Static block changes only when SYSTEM_PROMPT does. DB context block is identical
