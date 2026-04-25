@@ -918,95 +918,96 @@ async function loadDashboard() {
   document.getElementById('s-unbilled-count').textContent = d.unbilled_count;
   document.getElementById('s-unbilled-amt').textContent = fmtMoney(d.unbilled_total);
   document.getElementById('s-ytd').textContent = fmtMoney(d.ytd_revenue);
-  // Unbilled alert
   if (d.unbilled_count > 0) {
     document.getElementById('unbilled-alert').style.display='block';
     document.getElementById('unbilled-alert').innerHTML = `<div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>${d.unbilled_count} completed project${d.unbilled_count>1?'s':''}</strong> not yet billed (${fmtMoney(d.unbilled_total)}). <a href="#" onclick="showView('revenue')" style="color:inherit;font-weight:600">Review →</a></div>`;
   }
-  // Projects table — group parents with expandable children
+
   const tbody = document.getElementById('dash-projects-body');
-  if (!d.recent_projects.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No active projects</p></div></td></tr>'; return; }
+  const all = d.recent_projects || [];
+  if (!all.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No active projects</p></div></td></tr>'; return; }
 
-  // Separate parents and children
-  const parents = d.recent_projects.filter(p => !p.parent_id);
-  const children = d.recent_projects.filter(p => p.parent_id);
-  const childrenByParent = {};
-  children.forEach(c => {
-    if (!childrenByParent[c.parent_id]) childrenByParent[c.parent_id] = [];
-    childrenByParent[c.parent_id].push(c);
-  });
+  // Build lookup
+  const byId = {};
+  all.forEach(p => byId[p.id] = p);
 
-  // Also fetch children for parents that might have children not in the top 10
-  const parentIds = parents.map(p => p.id);
+  // Determine depth: 0=grandparent, 1=parent, 2=child
+  function getDepth(p) {
+    if (!p.parent_id) return 0;
+    const par = byId[p.parent_id];
+    if (!par || !par.parent_id) return 1;
+    return 2;
+  }
 
-  let html = '';
-  for (const p of parents) {
-    const hasChildren = childrenByParent[p.id] && childrenByParent[p.id].length > 0;
-    html += `<tr class="dash-parent-row" ${hasChildren ? `onclick="toggleDashChildren('${p.id}')" style="cursor:pointer"` : ''}>
-      <td class="td-name">
-        ${hasChildren ? '<i class="fa-solid fa-chevron-right dash-chevron" id="chev-'+p.id+'" style="font-size:10px;color:var(--text-muted);margin-right:6px;transition:transform .2s"></i>' : '<span style="margin-right:16px"></span>'}
-        ${esc(p.name)}
-        ${hasChildren ? '<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600">'+childrenByParent[p.id].length+' sub</span>' : ''}
-      </td>
+  const grandparents = all.filter(p => getDepth(p) === 0);
+  const parents = all.filter(p => getDepth(p) === 1);
+  const children = all.filter(p => getDepth(p) === 2);
+
+  const parentsByGP = {};
+  parents.forEach(p => { if (!parentsByGP[p.parent_id]) parentsByGP[p.parent_id] = []; parentsByGP[p.parent_id].push(p); });
+
+  const childrenByPar = {};
+  children.forEach(c => { if (!childrenByPar[c.parent_id]) childrenByPar[c.parent_id] = []; childrenByPar[c.parent_id].push(c); });
+
+  function treeRow(p, depth, groupClass) {
+    const indent = depth * 24;
+    const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+    const bgColors = ['', 'background:var(--gray-light)', 'background:#f0f0f0'];
+    const bg = bgColors[depth] || '';
+    const cls = groupClass ? `class="dtree dtree-${groupClass}" style="display:none;${bg}"` : `style="${bg}"`;
+
+    let kidCount = 0, kidKey = null;
+    if (depth === 0) { kidCount = (parentsByGP[p.id]||[]).length; kidKey = 'gp-'+p.id; }
+    else if (depth === 1) { kidCount = (childrenByPar[p.id]||[]).length; kidKey = 'pr-'+p.id; }
+
+    const expandable = kidCount > 0;
+    const chevId = 'dc-' + p.id;
+    const click = expandable ? `onclick="dtreeToggle('${kidKey}','${chevId}')"` : '';
+    const cursor = expandable ? 'cursor:pointer' : '';
+    const chevron = expandable ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s"></i>` : (depth===0 ? '<span style="width:15px;display:inline-block"></span>' : '');
+    const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
+    const area = p.concentrator_area ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">(${esc(p.concentrator_area)})</span>` : '';
+
+    return `<tr ${cls} ${click} style="${cursor};${bg}">
+      <td class="td-name" style="padding-left:${12+indent}px">${chevron}${prefix}${esc(p.name)}${area}${badge}</td>
       <td>${esc(p.client_name||'—')}</td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
       <td>${typeBadge(p.project_type)}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;min-width:100px">
-          <div style="flex:1">${progressBar(p.actual_hours, p.expected_hours)}</div>
-          <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(p.actual_hours||0,'hrs')}/${fmt(p.expected_hours||0,'hrs')}</span>
-        </div>
-      </td>
+      <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(p.actual_hours, p.expected_hours)}</div><span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(p.actual_hours||0,'hrs')}/${fmt(p.expected_hours||0,'hrs')}</span></div></td>
       <td>${statusBadge(p.status)}</td>
       <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
     </tr>`;
+  }
 
-    // Hidden child rows
-    if (hasChildren) {
-      for (const c of childrenByParent[p.id]) {
-        html += `<tr class="dash-child-row dash-children-${p.id}" style="display:none;background:var(--gray-light)">
-          <td class="td-name" style="padding-left:32px">
-            <span style="color:var(--text-muted);margin-right:4px">└</span>${esc(c.name)}
-          </td>
-          <td>${esc(c.client_name||'—')}</td>
-          <td class="td-mono">${esc(c.work_order_number||'—')}</td>
-          <td>${typeBadge(c.project_type)}</td>
-          <td>
-            <div style="display:flex;align-items:center;gap:6px;min-width:100px">
-              <div style="flex:1">${progressBar(c.actual_hours, c.expected_hours)}</div>
-              <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(c.actual_hours||0,'hrs')}/${fmt(c.expected_hours||0,'hrs')}</span>
-            </div>
-          </td>
-          <td>${statusBadge(c.status)}</td>
-          <td><button class="btn btn-sm btn-secondary" onclick="editProject('${c.id}')"><i class="fa-solid fa-pen"></i></button></td>
-        </tr>`;
+  let html = '';
+  for (const gp of grandparents) {
+    html += treeRow(gp, 0, null);
+    for (const par of (parentsByGP[gp.id]||[])) {
+      html += treeRow(par, 1, 'gp-'+gp.id);
+      for (const kid of (childrenByPar[par.id]||[])) {
+        html += treeRow(kid, 2, 'pr-'+par.id);
       }
     }
   }
-
-  // Also show orphan children (children whose parent isn't in recent)
-  const shownChildIds = Object.values(childrenByParent).flat().map(c => c.id);
-  const orphans = children.filter(c => !shownChildIds.includes(c.id));
-  for (const c of orphans) {
-    html += `<tr style="background:var(--gray-light)">
-      <td class="td-name" style="padding-left:24px"><span style="color:var(--text-muted);margin-right:4px">└</span>${esc(c.name)}</td>
-      <td>${esc(c.client_name||'—')}</td>
-      <td class="td-mono">${esc(c.work_order_number||'—')}</td>
-      <td>${typeBadge(c.project_type)}</td>
-      <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(c.actual_hours, c.expected_hours)}</div><span style="font-size:11px;color:var(--text-muted)">${fmt(c.actual_hours||0,'hrs')}/${fmt(c.expected_hours||0,'hrs')}</span></div></td>
-      <td>${statusBadge(c.status)}</td>
-      <td><button class="btn btn-sm btn-secondary" onclick="editProject('${c.id}')"><i class="fa-solid fa-pen"></i></button></td>
-    </tr>`;
-  }
-
   tbody.innerHTML = html;
 }
 
-function toggleDashChildren(parentId) {
-  const rows = document.querySelectorAll('.dash-children-' + parentId);
-  const chev = document.getElementById('chev-' + parentId);
+function dtreeToggle(groupKey, chevId) {
+  const rows = document.querySelectorAll('.dtree-' + groupKey);
+  const chev = document.getElementById(chevId);
   const showing = rows[0] && rows[0].style.display !== 'none';
-  rows.forEach(r => r.style.display = showing ? 'none' : 'table-row');
+  rows.forEach(r => {
+    r.style.display = showing ? 'none' : 'table-row';
+    if (showing) {
+      // Collapse nested children too
+      const nestedChev = r.querySelector('[id^="dc-"]');
+      if (nestedChev) {
+        nestedChev.style.transform = 'rotate(0deg)';
+        const nestedId = nestedChev.id.replace('dc-','');
+        document.querySelectorAll('.dtree-pr-' + nestedId).forEach(n => n.style.display = 'none');
+      }
+    }
+  });
   if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 

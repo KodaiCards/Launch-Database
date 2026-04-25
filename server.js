@@ -695,11 +695,15 @@ app.get('/api/dashboard', async (req, res) => {
       pool.query(`
         SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
                cl.name as client_name, p.expected_hours, p.actual_hours,
-               p.expected_revenue, p.created_at
+               p.expected_revenue, p.created_at, p.parent_id,
+               pp.name as parent_name, pp.parent_id as grandparent_id,
+               con.area_name as concentrator_area
         FROM projects p
         LEFT JOIN clients cl ON cl.id=p.client_id
+        LEFT JOIN projects pp ON pp.id=p.parent_id
+        LEFT JOIN concentrators con ON con.id=p.concentrator_id
         WHERE p.status='active'
-        ORDER BY p.created_at DESC LIMIT 10
+        ORDER BY p.created_at DESC
       `),
       pool.query(`
         SELECT p.id, p.name, p.project_type, p.work_order_number, p.expected_revenue,
@@ -1051,13 +1055,15 @@ YOUR CAPABILITIES — you can do ALL of the following:
 7. Answer questions about project data, billing, revenue, hours
 
 NESTED PROJECTS:
-- Projects can be nested inside other projects using parent_id.
-- A top-level project has parent_id = null. A sub-project has parent_id set to its parent's UUID.
-- Sub-projects inherit the client and contract from the parent conceptually, but each has its own billing config.
-- When creating a sub-project, set parent_id to the parent project's UUID from the DATABASE CONTEXT.
-- When the user says "add a sub-project under X" or "nest Y inside Z", use the parent_id field.
-- Time entries can be logged against either parent or sub-projects.
-- In the DATABASE CONTEXT, projects with a parent_name are sub-projects.
+- Projects support a 3-level hierarchy: GRANDPARENT → PARENT → CHILD.
+- Example: "RUS 217 Engineering Contract" (grandparent) → "Butler" (parent/area) → "Butler SR74 Permitting" (child/actual work)
+- A top-level project has parent_id = null. Set parent_id to nest under another project.
+- The user does NOT need to specify every level. Be smart:
+  - "Add inspection in Butler" → You know Butler is an area under the RUS 217 project. Create a child project under Butler, auto-set the concentrator and WO#.
+  - "Create a permitting project for Mt. Paran, 8000 LF" → Find Mt. Paran's parent, nest under it, set concentrator_id and WO# 16316.
+  - If an area parent doesn't exist yet, offer to create it as a mid-level project.
+- Time entries can be logged against any level but typically go on the lowest (child) level.
+- In the DATABASE CONTEXT, projects with a parent_name are nested. Check grandparent_id to understand the full chain.
 
 BUDGETS:
 - Parent projects can have a BUDGET — an external funding source with a name like "RUS 217 Reconnect 3".
