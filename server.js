@@ -1106,7 +1106,12 @@ QUERYING DATA:
 WORKFORCE FILE IMPORTS:
 When a user uploads an Excel or CSV file with workforce/timesheet data, you must be intelligent about processing it:
 
-1. ANALYZE THE DATA FIRST: Look at column headers and sample rows. Common columns include: employee/name/worker, date, work_order/WO/project, hours, job_title/position/role, client, description.
+1. THE FILE DATA IS STORED SERVER-SIDE. You receive only the upload_id, headers, row count, and 5 sample rows.
+   Use the get_upload_data tool to fetch the actual data in batches of 50 rows.
+   Start with offset=0, then increment by 50 until has_more is false.
+
+2. ANALYZE THE SAMPLE FIRST: Look at the 5 sample rows to understand the structure before fetching everything.
+   Common columns include: employee/name/worker, date, work_order/WO/project, hours, job_title/position/role.
 
 2. MATCH TO EXISTING DATA:
    - Match work order numbers (WO-001, etc.) to existing projects in the DATABASE CONTEXT
@@ -1340,6 +1345,19 @@ const AI_TOOLS = [
       },
       required: ['budget_code_id']
     }
+  },
+  {
+    name: 'get_upload_data',
+    description: 'Fetch rows from an uploaded Excel/CSV file. The file is stored server-side by upload_id. Fetch in batches of up to 50 rows at a time. Start with offset 0 and increase by the batch size to page through. Use this to read the actual data after the user uploads a file.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        upload_id: { type: 'string', description: 'The upload_id from the uploaded file context' },
+        offset: { type: 'number', description: 'Row offset to start from (default 0)', default: 0 },
+        limit: { type: 'number', description: 'Number of rows to fetch (default 50, max 100)', default: 50 }
+      },
+      required: ['upload_id']
+    }
   }
 ];
 
@@ -1571,6 +1589,27 @@ async function executeTool(toolName, toolInput) {
         return { success: true, budget_code: rows[0] };
       }
 
+      case 'get_upload_data': {
+        const data = uploadStore.get(toolInput.upload_id);
+        if (!data) return { success: false, error: 'Upload expired or not found. Ask the user to re-upload.' };
+        if (data.raw_text) return { success: true, raw_text: data.raw_text, row_count: 0 };
+
+        const offset = toolInput.offset || 0;
+        const limit = Math.min(toolInput.limit || 50, 100);
+        const slice = data.rows.slice(offset, offset + limit);
+
+        return {
+          success: true,
+          filename: data.filename,
+          headers: data.headers,
+          total_rows: data.rows.length,
+          offset,
+          returned: slice.length,
+          has_more: offset + limit < data.rows.length,
+          rows: slice
+        };
+      }
+
       default:
         return { success: false, error: 'Unknown tool: ' + toolName };
     }
@@ -1580,6 +1619,16 @@ async function executeTool(toolName, toolInput) {
 }
 
 // ─── FILE UPLOAD FOR AI ──────────────────────────────────────────────────────
+// ─── IN-MEMORY UPLOAD STORE ──────────────────────────────────────────────────
+const uploadStore = new Map(); // uploadId → { rows, headers, filename, timestamp }
+// Clean up old uploads every 30 minutes
+setInterval(() => {
+  const cutoff = Date.now() - 30 * 60 * 1000;
+  for (const [id, data] of uploadStore) {
+    if (data.timestamp < cutoff) uploadStore.delete(id);
+  }
+}, 5 * 60 * 1000);
+
 app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
@@ -1590,32 +1639,16 @@ app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
 
     if (ext === '.xlsx' || ext === '.xls') {
       const workbook = XLSX.readFile(req.file.path);
-      // Process all sheets or just the first one
       const sheetNames = workbook.SheetNames;
-      const allData = {};
 
       for (const sheetName of sheetNames) {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        if (jsonData.length > 0) {
-          allData[sheetName] = jsonData;
-          if (rows.length === 0) {
-            rows = jsonData;
-            headers = Object.keys(jsonData[0] || {});
-          }
+        if (jsonData.length > 0 && rows.length === 0) {
+          rows = jsonData;
+          headers = Object.keys(jsonData[0] || {});
         }
       }
-
-      res.json({
-        success: true,
-        filename: req.file.originalname,
-        sheets: sheetNames,
-        headers,
-        row_count: rows.length,
-        data: rows.slice(0, 500), // Cap at 500 rows to stay within token limits
-        all_sheets: Object.keys(allData).length > 1 ? allData : undefined,
-        preview: rows.slice(0, 5)
-      });
 
     } else if (ext === '.csv' || ext === '.tsv') {
       const content = fs.readFileSync(req.file.path, 'utf8');
@@ -1624,32 +1657,55 @@ app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
       rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
       headers = Object.keys(rows[0] || {});
 
-      res.json({
-        success: true,
-        filename: req.file.originalname,
-        headers,
-        row_count: rows.length,
-        data: rows.slice(0, 500),
-        preview: rows.slice(0, 5)
-      });
-
     } else {
-      // Plain text — just return the content
       const content = fs.readFileSync(req.file.path, 'utf8');
-      res.json({
-        success: true,
-        filename: req.file.originalname,
-        raw_text: content.substring(0, 50000) // Cap text size
-      });
+      const uploadId = uuidv4();
+      uploadStore.set(uploadId, { raw_text: content.substring(0, 50000), filename: req.file.originalname, timestamp: Date.now() });
+      fs.unlink(req.file.path, () => {});
+      return res.json({ success: true, upload_id: uploadId, filename: req.file.originalname, raw_text: content.substring(0, 2000) });
     }
 
-    // Clean up uploaded file after parsing
+    // Store full data server-side, send only summary to client
+    const uploadId = uuidv4();
+    uploadStore.set(uploadId, { rows, headers, filename: req.file.originalname, timestamp: Date.now() });
+
     fs.unlink(req.file.path, () => {});
+
+    res.json({
+      success: true,
+      upload_id: uploadId,
+      filename: req.file.originalname,
+      headers,
+      row_count: rows.length,
+      preview: rows.slice(0, 5) // Only 5 sample rows sent to client
+    });
 
   } catch (e) {
     console.error('File parse error:', e.message);
     res.status(500).json({ error: 'Failed to parse file: ' + e.message });
   }
+});
+
+// AI fetches rows in batches from stored upload
+app.get('/api/ai/upload/:id', async (req, res) => {
+  const data = uploadStore.get(req.params.id);
+  if (!data) return res.status(404).json({ error: 'Upload expired or not found' });
+  if (data.raw_text) return res.json({ rows: [], raw_text: data.raw_text, row_count: 0 });
+
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 rows per batch
+  const slice = data.rows.slice(offset, offset + limit);
+
+  res.json({
+    filename: data.filename,
+    headers: data.headers,
+    total_rows: data.rows.length,
+    offset,
+    limit,
+    returned: slice.length,
+    has_more: offset + limit < data.rows.length,
+    rows: slice
+  });
 });
 
 // ─── AI CHAT ENDPOINT ────────────────────────────────────────────────────────

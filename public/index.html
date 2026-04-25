@@ -1872,13 +1872,15 @@ async function sendAI() {
   if (!text && !pendingFileData) return;
   input.value = '';
 
-  // If there's a file attached, include the data in the message
+  // If there's a file attached, include only the summary and upload_id
   let userMessage = text || 'Process this uploaded file';
   if (pendingFileData) {
     const fileContext = `\n\n[UPLOADED FILE: ${pendingFileData.filename}]\n` +
+      `Upload ID: ${pendingFileData.upload_id}\n` +
       `Row count: ${pendingFileData.row_count || 'N/A'}\n` +
       `Headers: ${JSON.stringify(pendingFileData.headers || [])}\n` +
-      `Data:\n${JSON.stringify(pendingFileData.data || pendingFileData.raw_text || [], null, 2)}`;
+      `Sample rows (first 5):\n${JSON.stringify(pendingFileData.preview || [], null, 2)}\n` +
+      `\nUse the get_upload_data tool with upload_id "${pendingFileData.upload_id}" to fetch the full data in batches of 50 rows.`;
     userMessage += fileContext;
     clearAIFile();
   }
