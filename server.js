@@ -687,11 +687,35 @@ app.get('/api/dashboard', async (req, res) => {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
 
-    const [activeR, unbilledR, monthHrsR, ytdRevR, recentR, alertR] = await Promise.all([
-      pool.query(`SELECT COUNT(*) FROM projects WHERE status='active'`),
+    const [activeR, unbilledR, monthRevR, ytdRevR, recentR, alertR] = await Promise.all([
+      // Active = leaf projects only (exclude grandparents/parents which are file-management containers)
+      pool.query(`
+        SELECT COUNT(*) FROM projects p
+        WHERE p.status='active'
+          AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+      `),
       pool.query(`SELECT COUNT(*), COALESCE(SUM(expected_revenue),0) as total FROM projects WHERE status='completed' AND billed_date IS NULL`),
-      pool.query(`SELECT COALESCE(SUM(hours),0) as hours FROM time_entries WHERE entry_date >= $1`, [monthStart]),
-      pool.query(`SELECT COALESCE(SUM(actual_revenue + CASE WHEN billing_type='hourly' THEN actual_hours*billing_rate ELSE 0 END),0) as rev FROM projects WHERE billed_date >= $1`, [yearStart]),
+      // Monthly revenue: work performed this month, regardless of billing type or
+      // billing date. Every hour logged this month earns at the project's billing_rate.
+      // Resets automatically on the 1st (monthStart is the first of the current month).
+      pool.query(`
+        SELECT COALESCE(SUM(te.hours * p.billing_rate), 0) AS rev
+        FROM time_entries te
+        JOIN projects p ON p.id = te.project_id
+        WHERE te.entry_date >= $1
+      `, [monthStart]),
+      // YTD revenue: same shape as monthly, applied to year-to-date billed work.
+      pool.query(`
+        SELECT COALESCE(SUM(
+          CASE
+            WHEN billing_type = 'footage' THEN expected_revenue
+            WHEN billing_type = 'hourly' THEN actual_hours * billing_rate
+            ELSE 0
+          END
+        ), 0) AS rev
+        FROM projects
+        WHERE billed_date >= $1
+      `, [yearStart]),
       pool.query(`
         SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
                cl.name as client_name, p.expected_hours, p.actual_hours,
@@ -719,7 +743,7 @@ app.get('/api/dashboard', async (req, res) => {
       active_projects: parseInt(activeR.rows[0].count),
       unbilled_count: parseInt(unbilledR.rows[0].count),
       unbilled_total: parseFloat(unbilledR.rows[0].total),
-      month_hours: parseFloat(monthHrsR.rows[0].hours),
+      month_revenue: parseFloat(monthRevR.rows[0].rev),
       ytd_revenue: parseFloat(ytdRevR.rows[0].rev),
       recent_projects: recentR.rows,
       unbilled_projects: alertR.rows
@@ -793,13 +817,10 @@ app.get('/api/revenue/by-client', async (req, res) => {
       params = [year];
     }
 
-    // Hours subquery for month filtering
-    const hoursJoin = month
-      ? `LEFT JOIN time_entries te ON te.project_id = p.id
-         AND EXTRACT(MONTH FROM te.entry_date) = ${month}
-         AND EXTRACT(YEAR FROM te.entry_date) = ${year}`
-      : `LEFT JOIN time_entries te ON te.project_id = p.id
-         AND EXTRACT(YEAR FROM te.entry_date) = ${year}`;
+    // Parameterized lateral filter — never interpolate user input into SQL strings
+    const lateralFilter = month
+      ? `AND EXTRACT(MONTH FROM te.entry_date) = $2 AND EXTRACT(YEAR FROM te.entry_date) = $1`
+      : `AND EXTRACT(YEAR FROM te.entry_date) = $1`;
 
     const { rows } = await pool.query(`
       SELECT
@@ -828,7 +849,7 @@ app.get('/api/revenue/by-client', async (req, res) => {
         SELECT COALESCE(SUM(te.hours), 0) as hrs
         FROM time_entries te
         WHERE te.project_id = p.id
-        ${month ? `AND EXTRACT(MONTH FROM te.entry_date) = ${month} AND EXTRACT(YEAR FROM te.entry_date) = ${year}` : `AND EXTRACT(YEAR FROM te.entry_date) = ${year}`}
+        ${lateralFilter}
       ) te_hrs ON true
       GROUP BY cl.id, cl.name
       ORDER BY client_name
@@ -864,8 +885,8 @@ app.get('/api/revenue/details', async (req, res) => {
     }
 
     const hoursFilter = month
-      ? `AND EXTRACT(MONTH FROM te.entry_date) = ${month} AND EXTRACT(YEAR FROM te.entry_date) = ${year}`
-      : `AND EXTRACT(YEAR FROM te.entry_date) = ${year}`;
+      ? `AND EXTRACT(MONTH FROM te.entry_date) = $2 AND EXTRACT(YEAR FROM te.entry_date) = $1`
+      : `AND EXTRACT(YEAR FROM te.entry_date) = $1`;
 
     const { rows } = await pool.query(`
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
@@ -1476,23 +1497,33 @@ async function executeTool(toolName, toolInput) {
 
       case 'log_time_entries': {
         const importBatch = `ai_import_${Date.now()}`;
-        let count = 0;
-        for (const e of toolInput.entries) {
-          await pool.query(
-            'INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch) VALUES ($1,$2,$3,$4,$5,$6)',
-            [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title || null, importBatch]
-          );
-          count++;
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          let count = 0;
+          for (const e of toolInput.entries) {
+            await client.query(
+              'INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch) VALUES ($1,$2,$3,$4,$5,$6)',
+              [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title || null, importBatch]
+            );
+            count++;
+          }
+          // Update actual_hours for affected projects
+          const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
+          for (const pid of projectIds) {
+            await client.query(
+              'UPDATE projects SET actual_hours = (SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1) WHERE id=$1',
+              [pid]
+            );
+          }
+          await client.query('COMMIT');
+          return { success: true, inserted: count, batch: importBatch };
+        } catch (err) {
+          await client.query('ROLLBACK');
+          return { success: false, error: 'Bulk insert failed and was rolled back: ' + err.message };
+        } finally {
+          client.release();
         }
-        // Update actual_hours for affected projects
-        const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
-        for (const pid of projectIds) {
-          await pool.query(
-            'UPDATE projects SET actual_hours = (SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1) WHERE id=$1',
-            [pid]
-          );
-        }
-        return { success: true, inserted: count, batch: importBatch };
       }
 
       case 'update_project_status': {
@@ -1715,13 +1746,34 @@ app.post('/api/ai/chat', async (req, res) => {
 
   try {
     const ctx = await getDBContext();
-    const systemPrompt = SYSTEM_PROMPT.replace('{CONTEXT}', JSON.stringify(ctx, null, 2));
+
+    // Split system prompt into static rules + dynamic DB context, cache both.
+    // Static block changes only when SYSTEM_PROMPT does. DB context block is identical
+    // across all iterations within a single chat request, so it caches perfectly.
+    const [staticPromptPart] = SYSTEM_PROMPT.split('{CONTEXT}');
+    const systemBlocks = [
+      {
+        type: 'text',
+        text: staticPromptPart,
+        cache_control: { type: 'ephemeral' }
+      },
+      {
+        type: 'text',
+        text: JSON.stringify(ctx, null, 2),
+        cache_control: { type: 'ephemeral' }
+      }
+    ];
+
+    // Cache all 14 tool definitions in one breakpoint by marking the last one.
+    const cachedTools = AI_TOOLS.map((t, i) =>
+      i === AI_TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t
+    );
 
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: systemPrompt,
-      tools: AI_TOOLS,
+      system: systemBlocks,
+      tools: cachedTools,
       tool_choice: { type: 'auto' },
       messages: messages.map(m => ({ role: m.role, content: m.content }))
     });
@@ -1762,8 +1814,8 @@ app.post('/api/ai/chat', async (req, res) => {
       response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-        system: systemPrompt,
-        tools: AI_TOOLS,
+        system: systemBlocks,
+        tools: cachedTools,
         tool_choice: { type: 'auto' },
         messages: conversationMessages
       });
@@ -1773,6 +1825,14 @@ app.post('/api/ai/chat', async (req, res) => {
     const lastTextBlocks = response.content.filter(b => b.type === 'text');
     for (const tb of lastTextBlocks) {
       if (tb.text.trim()) finalText += tb.text;
+    }
+
+    // Log cache performance — helpful for verifying caching is reducing token spend.
+    // cache_creation_input_tokens = first-time cache writes (full price + 25%)
+    // cache_read_input_tokens = cache hits (10% of normal price, lower rate-limit weight)
+    if (response.usage) {
+      const u = response.usage;
+      console.log(`AI usage — in:${u.input_tokens} out:${u.output_tokens} cache_write:${u.cache_creation_input_tokens || 0} cache_read:${u.cache_read_input_tokens || 0} iters:${iterations}`);
     }
 
     res.json({

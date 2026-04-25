@@ -232,7 +232,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
       <div class="stats-grid" id="dash-stats">
         <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
-        <div class="stat-card accent"><div class="stat-label">Hours This Month</div><div class="stat-value" id="s-hours">—</div></div>
+        <div class="stat-card accent"><div class="stat-label">Revenue This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
         <div class="stat-card warn"><div class="stat-label">Unbilled Completed</div><div class="stat-value" id="s-unbilled-count">—</div><div class="stat-sub" id="s-unbilled-amt"></div></div>
         <div class="stat-card"><div class="stat-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
       </div>
@@ -914,7 +914,7 @@ async function clientChanged() {
 async function loadDashboard() {
   const d = await api('/api/dashboard');
   document.getElementById('s-active').textContent = d.active_projects;
-  document.getElementById('s-hours').textContent = fmt(d.month_hours, 'hrs');
+  document.getElementById('s-month-rev').textContent = fmtMoney(d.month_revenue);
   document.getElementById('s-unbilled-count').textContent = d.unbilled_count;
   document.getElementById('s-unbilled-amt').textContent = fmtMoney(d.unbilled_total);
   document.getElementById('s-ytd').textContent = fmtMoney(d.ytd_revenue);
