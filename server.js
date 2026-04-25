@@ -198,7 +198,7 @@ app.post('/api/projects', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status = 'active', billing_type, billing_rate,
-    footage, start_date, notes, parent_id, budget_code_id
+    footage, start_date, notes, parent_id, budget_code_id, concentrator_id
   } = req.body;
 
   try {
@@ -209,14 +209,14 @@ app.post('/api/projects', async (req, res) => {
         name, client_id, contract_id, work_order_number,
         project_type, status, billing_type, billing_rate,
         footage, miles, expected_hours, expected_revenue,
-        start_date, notes, parent_id, budget_code_id
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+        start_date, notes, parent_id, budget_code_id, concentrator_id
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
       RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, status, billing_type, billing_rate,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, notes, parent_id || null, budget_code_id || null
+      start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null
     ]);
 
     // Auto-create permit stage if permitting project
@@ -235,7 +235,7 @@ app.put('/api/projects/:id', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status, billing_type, billing_rate,
-    footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id
+    footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id
   } = req.body;
 
   try {
@@ -245,13 +245,13 @@ app.put('/api/projects/:id', async (req, res) => {
         name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
         project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
         footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-        start_date=$13, completed_date=$14, billed_date=$15, notes=$16, parent_id=$17, budget_code_id=$18
-      WHERE id=$19 RETURNING *
+        start_date=$13, completed_date=$14, billed_date=$15, notes=$16, parent_id=$17, budget_code_id=$18, concentrator_id=$19
+      WHERE id=$20 RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, status, billing_type, billing_rate,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, completed_date || null, billed_date || null, notes, parent_id || null, budget_code_id || null,
+      start_date || null, completed_date || null, billed_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
       req.params.id
     ]);
     res.json(rows[0]);
@@ -604,6 +604,80 @@ app.delete('/api/budget-codes/:id', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CONCENTRATORS / SERVICE AREAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/concentrators', async (req, res) => {
+  const { contract_label } = req.query;
+  try {
+    const q = contract_label
+      ? 'SELECT * FROM concentrators WHERE contract_label=$1 AND active=true ORDER BY area_name'
+      : 'SELECT * FROM concentrators WHERE active=true ORDER BY contract_label, area_name';
+    const { rows } = await pool.query(q, contract_label ? [contract_label] : []);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/concentrators', async (req, res) => {
+  const { contract_label, area_name, work_order_number, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO concentrators (contract_label, area_name, work_order_number, notes)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [contract_label, area_name, work_order_number || null, notes || null]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Budget summary broken down by area/concentrator
+app.get('/api/budgets/:id/by-area', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        c.id as concentrator_id,
+        c.area_name,
+        c.work_order_number,
+        c.contract_label,
+        COUNT(DISTINCT p.id) as project_count,
+        COALESCE(SUM(
+          CASE
+            WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN p.expected_revenue
+            WHEN p.billing_type = 'hourly' THEN p.actual_hours * p.billing_rate
+            ELSE 0
+          END
+        ), 0) as spent,
+        json_agg(json_build_object(
+          'id', p.id, 'name', p.name, 'project_type', p.project_type,
+          'status', p.status,
+          'earned', CASE
+            WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN p.expected_revenue
+            WHEN p.billing_type = 'hourly' THEN p.actual_hours * p.billing_rate
+            ELSE 0
+          END
+        )) FILTER (WHERE p.id IS NOT NULL) as projects
+      FROM concentrators c
+      LEFT JOIN projects p ON p.concentrator_id = c.id
+      WHERE c.active = true
+      GROUP BY c.id, c.area_name, c.work_order_number, c.contract_label
+      ORDER BY c.contract_label, c.area_name
+    `);
+
+    // Get budget total
+    const { rows: budgetRows } = await pool.query('SELECT total_amount FROM budgets WHERE id=$1', [req.params.id]);
+    const budgetTotal = budgetRows[0] ? parseFloat(budgetRows[0].total_amount) : 0;
+    const totalSpent = rows.reduce((s, r) => s + parseFloat(r.spent || 0), 0);
+
+    res.json({
+      budget_total: budgetTotal,
+      total_spent: totalSpent,
+      total_remaining: budgetTotal - totalSpent,
+      areas: rows
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -918,7 +992,7 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function getDBContext() {
-  const [clients, projects, staff, contracts, budgets] = await Promise.all([
+  const [clients, projects, staff, contracts, budgets, concentrators] = await Promise.all([
     pool.query('SELECT id, name, is_rus FROM clients ORDER BY name'),
     pool.query(`
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
@@ -927,12 +1001,14 @@ async function getDBContext() {
              cl.name as client_name, co.contract_number,
              p.start_date, p.completed_date, p.billed_date, p.notes,
              p.parent_id, pp.name as parent_name,
-             p.budget_code_id, bc.code as budget_code_name
+             p.budget_code_id, bc.code as budget_code_name,
+             p.concentrator_id, con.area_name as concentrator_area, con.contract_label as concentrator_contract
       FROM projects p
       LEFT JOIN clients cl ON cl.id=p.client_id
       LEFT JOIN contracts co ON co.id=p.contract_id
       LEFT JOIN projects pp ON pp.id=p.parent_id
       LEFT JOIN budget_codes bc ON bc.id=p.budget_code_id
+      LEFT JOIN concentrators con ON con.id=p.concentrator_id
       ORDER BY p.created_at DESC LIMIT 50
     `),
     pool.query('SELECT id, name FROM staff WHERE active=true ORDER BY name'),
@@ -947,9 +1023,10 @@ async function getDBContext() {
       LEFT JOIN budget_codes bc ON bc.budget_id = b.id
       GROUP BY b.id, b.name, b.project_id, b.total_amount, p.name
       ORDER BY b.created_at DESC
-    `)
+    `),
+    pool.query('SELECT id, contract_label, area_name, work_order_number FROM concentrators WHERE active=true ORDER BY contract_label, area_name')
   ]);
-  return { clients: clients.rows, projects: projects.rows, staff: staff.rows, contracts: contracts.rows, budgets: budgets.rows };
+  return { clients: clients.rows, projects: projects.rows, staff: staff.rows, contracts: contracts.rows, budgets: budgets.rows, concentrators: concentrators.rows };
 }
 
 const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services, a fiber optic infrastructure company in Macon, Georgia. You have FULL access to the database through tools. You are smart, proactive, and thorough.
@@ -991,6 +1068,18 @@ BUDGETS:
 - The "spent" amount for a code = sum of billable work from all projects linked to that code (hourly: actual_hours × billing_rate, footage: expected_revenue).
 - If the user uploads a contract document, extract the budget codes and amounts and offer to set them up.
 - The DATABASE CONTEXT includes budgets with their codes — use the budget code IDs when linking projects.
+- When referencing budgets, always inform the user of per-area spending and remaining budget.
+
+CONCENTRATORS / SERVICE AREAS:
+- The DATABASE CONTEXT includes a concentrators list — these are service areas with their WO numbers, grouped by contract.
+- Each concentrator has: id, contract_label (e.g. "Contract 3"), area_name (e.g. "Mt. Paran"), work_order_number (e.g. "16316").
+- When creating a project, if the user mentions an AREA NAME (like "Mt. Paran", "Butler", "Talbotton", etc.), AUTOMATICALLY look up the matching concentrator and set both:
+  1. concentrator_id = the concentrator's UUID
+  2. work_order_number = the concentrator's WO number
+- Do NOT ask for the WO# if you can match it from the concentrator data. Only ask if you can't find a match.
+- Be fuzzy with area matching: "Paran" should match "Mt. Paran", "Crossroads" should match "Crossroad School", "hwy240" should match "HWY 240".
+- All concentrator areas draw from the same budget (RUS 217). When discussing budget status, break down spending by area.
+- The concentrator list in DATABASE CONTEXT has the exact UUIDs — use those when setting concentrator_id.
 
 HOW TO WORK:
 - When the user asks to create/update/delete something, first summarize what you'll do, then ask for confirmation.
@@ -1064,7 +1153,8 @@ const AI_TOOLS = [
         start_date: { type: 'string', description: 'YYYY-MM-DD format (optional)' },
         notes: { type: 'string' },
         parent_id: { type: 'string', description: 'UUID of parent project to nest this under (optional). Use this to create sub-projects.' },
-        budget_code_id: { type: 'string', description: 'UUID of budget code this project bills against (optional). Get from database context budgets.' }
+        budget_code_id: { type: 'string', description: 'UUID of budget code this project bills against (optional). Get from database context budgets.' },
+        concentrator_id: { type: 'string', description: 'UUID of the concentrator/service area this project belongs to. Look up from concentrators in database context by area name.' }
       },
       required: ['name', 'client_id', 'project_type', 'billing_type', 'billing_rate']
     }
@@ -1089,7 +1179,8 @@ const AI_TOOLS = [
         completed_date: { type: 'string' },
         notes: { type: 'string' },
         parent_id: { type: ['string', 'null'], description: 'UUID of parent project, or null to make it top-level' },
-        budget_code_id: { type: ['string', 'null'], description: 'UUID of budget code this project bills against, or null to unlink' }
+        budget_code_id: { type: ['string', 'null'], description: 'UUID of budget code this project bills against, or null to unlink' },
+        concentrator_id: { type: ['string', 'null'], description: 'UUID of concentrator/service area, or null to unlink' }
       },
       required: ['project_id']
     }
@@ -1197,7 +1288,7 @@ const AI_TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        sql: { type: 'string', description: 'A SELECT query to run. Available tables: clients, contracts, staff, projects, time_entries, permit_stages, permit_documents, invoices, invoice_items, budgets, budget_codes. Key columns — projects: id, name, client_id, contract_id, work_order_number, project_type, status, billing_type, billing_rate, footage, miles, expected_hours, expected_revenue, actual_hours, start_date, completed_date, billed_date, notes, parent_id, budget_code_id. budgets: id, project_id, name, total_amount. budget_codes: id, budget_id, code, description, allocated_amount.' },
+        sql: { type: 'string', description: 'A SELECT query to run. Available tables: clients, contracts, staff, projects, time_entries, permit_stages, permit_documents, invoices, invoice_items, budgets, budget_codes, concentrators. Key columns — projects: id, name, client_id, contract_id, work_order_number, project_type, status, billing_type, billing_rate, footage, miles, expected_hours, expected_revenue, actual_hours, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id. budgets: id, project_id, name, total_amount. budget_codes: id, budget_id, code, description, allocated_amount. concentrators: id, contract_label, area_name, work_order_number.' },
         description: { type: 'string', description: 'What you are looking up and why' }
       },
       required: ['sql', 'description']
@@ -1257,8 +1348,8 @@ async function executeTool(toolName, toolInput) {
             name, client_id, contract_id, work_order_number,
             project_type, status, billing_type, billing_rate,
             footage, miles, expected_hours, expected_revenue,
-            start_date, notes, parent_id, budget_code_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+            start_date, notes, parent_id, budget_code_id, concentrator_id
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
           RETURNING *
         `, [
           toolInput.name,
@@ -1276,7 +1367,8 @@ async function executeTool(toolName, toolInput) {
           toolInput.start_date || null,
           toolInput.notes || null,
           toolInput.parent_id || null,
-          toolInput.budget_code_id || null
+          toolInput.budget_code_id || null,
+          toolInput.concentrator_id || null
         ]);
         if (toolInput.project_type === 'permitting') {
           await pool.query(
@@ -1308,6 +1400,7 @@ async function executeTool(toolName, toolInput) {
         const notes = toolInput.notes !== undefined ? toolInput.notes : p.notes;
         const parent_id = toolInput.parent_id !== undefined ? toolInput.parent_id : p.parent_id;
         const budget_code_id = toolInput.budget_code_id !== undefined ? toolInput.budget_code_id : p.budget_code_id;
+        const concentrator_id = toolInput.concentrator_id !== undefined ? toolInput.concentrator_id : p.concentrator_id;
 
         const fin = calcProjectFinancials(project_type, billing_rate, footage);
         const { rows } = await pool.query(`
@@ -1315,13 +1408,13 @@ async function executeTool(toolName, toolInput) {
             name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
             project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
             footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-            start_date=$13, completed_date=$14, notes=$15, parent_id=$16, budget_code_id=$17
-          WHERE id=$18 RETURNING *
+            start_date=$13, completed_date=$14, notes=$15, parent_id=$16, budget_code_id=$17, concentrator_id=$18
+          WHERE id=$19 RETURNING *
         `, [
           name, client_id, contract_id, work_order_number,
           project_type, status, billing_type, billing_rate,
           footage, fin.miles, fin.expectedHours, fin.expectedRevenue,
-          start_date, completed_date, notes, parent_id || null, budget_code_id || null,
+          start_date, completed_date, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
           toolInput.project_id
         ]);
         return { success: true, project: rows[0] };

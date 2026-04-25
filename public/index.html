@@ -504,8 +504,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label>Service Area / Concentrator</label>
+            <select id="proj-concentrator" onchange="concentratorChanged()">
+              <option value="">None — enter WO# manually</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Work Order Number</label>
-            <input type="text" id="proj-wo" placeholder="e.g. WO-001">
+            <input type="text" id="proj-wo" placeholder="e.g. 16316">
           </div>
           <div class="form-group">
             <label>Project Type *</label>
@@ -804,7 +810,7 @@ async function init() {
   });
   document.getElementById('hrs-month').value = now.getMonth()+1;
 
-  await Promise.all([loadClients(), loadStaff()]);
+  await Promise.all([loadClients(), loadStaff(), loadConcentrators()]);
   await loadDashboard();
 }
 
@@ -859,6 +865,40 @@ async function loadStaff() {
   staff.forEach(s => sel.add(new Option(s.name, s.id)));
 }
 
+let allConcentrators = [];
+async function loadConcentrators() {
+  allConcentrators = await api('/api/concentrators');
+  const sel = document.getElementById('proj-concentrator');
+  while (sel.options.length > 1) sel.remove(1);
+  // Group by contract
+  const byContract = {};
+  allConcentrators.forEach(c => {
+    if (!byContract[c.contract_label]) byContract[c.contract_label] = [];
+    byContract[c.contract_label].push(c);
+  });
+  for (const [label, areas] of Object.entries(byContract)) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    areas.forEach(a => {
+      const opt = new Option(`${a.area_name}${a.work_order_number ? ' (WO# ' + a.work_order_number + ')' : ''}`, a.id);
+      group.appendChild(opt);
+    });
+    sel.appendChild(group);
+  }
+}
+
+function concentratorChanged() {
+  const sel = document.getElementById('proj-concentrator');
+  const id = sel.value;
+  if (!id) return;
+  const conc = allConcentrators.find(c => c.id === id);
+  if (conc) {
+    if (conc.work_order_number) {
+      document.getElementById('proj-wo').value = conc.work_order_number;
+    }
+  }
+}
+
 async function clientChanged() {
   const clientId = document.getElementById('proj-client').value;
   const csel = document.getElementById('proj-contract');
@@ -883,12 +923,31 @@ async function loadDashboard() {
     document.getElementById('unbilled-alert').style.display='block';
     document.getElementById('unbilled-alert').innerHTML = `<div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>${d.unbilled_count} completed project${d.unbilled_count>1?'s':''}</strong> not yet billed (${fmtMoney(d.unbilled_total)}). <a href="#" onclick="showView('revenue')" style="color:inherit;font-weight:600">Review →</a></div>`;
   }
-  // Projects table
+  // Projects table — group parents with expandable children
   const tbody = document.getElementById('dash-projects-body');
   if (!d.recent_projects.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No active projects</p></div></td></tr>'; return; }
-  tbody.innerHTML = d.recent_projects.map(p => `
-    <tr>
-      <td class="td-name">${esc(p.name)}</td>
+
+  // Separate parents and children
+  const parents = d.recent_projects.filter(p => !p.parent_id);
+  const children = d.recent_projects.filter(p => p.parent_id);
+  const childrenByParent = {};
+  children.forEach(c => {
+    if (!childrenByParent[c.parent_id]) childrenByParent[c.parent_id] = [];
+    childrenByParent[c.parent_id].push(c);
+  });
+
+  // Also fetch children for parents that might have children not in the top 10
+  const parentIds = parents.map(p => p.id);
+
+  let html = '';
+  for (const p of parents) {
+    const hasChildren = childrenByParent[p.id] && childrenByParent[p.id].length > 0;
+    html += `<tr class="dash-parent-row" ${hasChildren ? `onclick="toggleDashChildren('${p.id}')" style="cursor:pointer"` : ''}>
+      <td class="td-name">
+        ${hasChildren ? '<i class="fa-solid fa-chevron-right dash-chevron" id="chev-'+p.id+'" style="font-size:10px;color:var(--text-muted);margin-right:6px;transition:transform .2s"></i>' : '<span style="margin-right:16px"></span>'}
+        ${esc(p.name)}
+        ${hasChildren ? '<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600">'+childrenByParent[p.id].length+' sub</span>' : ''}
+      </td>
       <td>${esc(p.client_name||'—')}</td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
       <td>${typeBadge(p.project_type)}</td>
@@ -899,8 +958,56 @@ async function loadDashboard() {
         </div>
       </td>
       <td>${statusBadge(p.status)}</td>
-      <td><button class="btn btn-sm btn-secondary" onclick="editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
-    </tr>`).join('');
+      <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
+    </tr>`;
+
+    // Hidden child rows
+    if (hasChildren) {
+      for (const c of childrenByParent[p.id]) {
+        html += `<tr class="dash-child-row dash-children-${p.id}" style="display:none;background:var(--gray-light)">
+          <td class="td-name" style="padding-left:32px">
+            <span style="color:var(--text-muted);margin-right:4px">└</span>${esc(c.name)}
+          </td>
+          <td>${esc(c.client_name||'—')}</td>
+          <td class="td-mono">${esc(c.work_order_number||'—')}</td>
+          <td>${typeBadge(c.project_type)}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;min-width:100px">
+              <div style="flex:1">${progressBar(c.actual_hours, c.expected_hours)}</div>
+              <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(c.actual_hours||0,'hrs')}/${fmt(c.expected_hours||0,'hrs')}</span>
+            </div>
+          </td>
+          <td>${statusBadge(c.status)}</td>
+          <td><button class="btn btn-sm btn-secondary" onclick="editProject('${c.id}')"><i class="fa-solid fa-pen"></i></button></td>
+        </tr>`;
+      }
+    }
+  }
+
+  // Also show orphan children (children whose parent isn't in recent)
+  const shownChildIds = Object.values(childrenByParent).flat().map(c => c.id);
+  const orphans = children.filter(c => !shownChildIds.includes(c.id));
+  for (const c of orphans) {
+    html += `<tr style="background:var(--gray-light)">
+      <td class="td-name" style="padding-left:24px"><span style="color:var(--text-muted);margin-right:4px">└</span>${esc(c.name)}</td>
+      <td>${esc(c.client_name||'—')}</td>
+      <td class="td-mono">${esc(c.work_order_number||'—')}</td>
+      <td>${typeBadge(c.project_type)}</td>
+      <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(c.actual_hours, c.expected_hours)}</div><span style="font-size:11px;color:var(--text-muted)">${fmt(c.actual_hours||0,'hrs')}/${fmt(c.expected_hours||0,'hrs')}</span></div></td>
+      <td>${statusBadge(c.status)}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editProject('${c.id}')"><i class="fa-solid fa-pen"></i></button></td>
+    </tr>`;
+  }
+
+  tbody.innerHTML = html;
+}
+
+function toggleDashChildren(parentId) {
+  const rows = document.querySelectorAll('.dash-children-' + parentId);
+  const chev = document.getElementById('chev-' + parentId);
+  const showing = rows[0] && rows[0].style.display !== 'none';
+  rows.forEach(r => r.style.display = showing ? 'none' : 'table-row');
+  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -988,6 +1095,7 @@ async function editProject(id) {
   await clientChanged();
   document.getElementById('proj-contract').value = p.contract_id||'';
   document.getElementById('proj-parent').value = p.parent_id||'';
+  document.getElementById('proj-concentrator').value = p.concentrator_id||'';
   document.getElementById('proj-wo').value = p.work_order_number||'';
   document.getElementById('proj-type').value = p.project_type;
   document.getElementById('proj-rate').value = p.billing_rate||'';
@@ -1009,6 +1117,7 @@ function clearProjectForm() {
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
   document.getElementById('proj-parent').value='';
+  document.getElementById('proj-concentrator').value='';
   document.getElementById('proj-budget-code').innerHTML='<option value="">None — No budget link</option>';
   document.getElementById('budget-code-group').style.display='none';
   document.getElementById('proj-type').value='';
@@ -1092,7 +1201,8 @@ async function saveProject() {
     start_date: document.getElementById('proj-start').value,
     notes: document.getElementById('proj-notes').value,
     parent_id: document.getElementById('proj-parent').value || null,
-    budget_code_id: document.getElementById('proj-budget-code').value || null
+    budget_code_id: document.getElementById('proj-budget-code').value || null,
+    concentrator_id: document.getElementById('proj-concentrator').value || null
   };
   try {
     const id = document.getElementById('proj-id').value;

@@ -233,3 +233,37 @@ DROP TRIGGER IF EXISTS budgets_updated_at ON budgets;
 CREATE TRIGGER budgets_updated_at
   BEFORE UPDATE ON budgets
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ─────────────────────────────────────────
+-- CONCENTRATORS / SERVICE AREAS
+-- ─────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS concentrators (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contract_label VARCHAR(100) NOT NULL,
+  area_name VARCHAR(200) NOT NULL,
+  work_order_number VARCHAR(100),
+  active BOOLEAN DEFAULT TRUE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(contract_label, area_name)
+);
+
+-- Link projects to a concentrator
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS concentrator_id UUID REFERENCES concentrators(id) ON DELETE SET NULL;
+
+-- Seed concentrator data
+INSERT INTO concentrators (contract_label, area_name, work_order_number) VALUES
+  ('Contract 3', 'Mt. Paran', '16316'),
+  ('Contract 3', 'Crossroad School', '16300'),
+  ('Contract 3', 'HWY 240', '16302'),
+  ('Contract 3', 'Knoxville', '16298'),
+  ('Contract 3', 'Cummings', '16299'),
+  ('Contract 3', 'Wesley', '16301'),
+  ('Contract 4', 'Butler', '16295'),
+  ('Contract 4', 'Rustin Lake', NULL),
+  ('Contract 4', 'Reynolds', '16294'),
+  ('Contract 5', 'Talbotton', '16303'),
+  ('Contract 5', 'Roberta', '16296'),
+  ('Contract 5', 'Colluden', '16297')
+ON CONFLICT (contract_label, area_name) DO UPDATE SET work_order_number = EXCLUDED.work_order_number;
