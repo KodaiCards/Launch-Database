@@ -1404,14 +1404,35 @@ app.get('/api/revenue/unbilled', async (req, res) => {
           WHEN p.billing_type = 'hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
           WHEN p.billing_type = 'footage' THEN p.expected_revenue
           ELSE 0
-        END as earned_amount
+        END as earned_amount,
+        -- Categorize for the UI: footage finals vs ongoing hourly
+        CASE
+          WHEN p.status = 'completed' THEN 'completed'
+          WHEN p.billing_type = 'hourly' AND p.status = 'active' THEN 'in_progress'
+          ELSE 'other'
+        END as bill_kind
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
       LEFT JOIN time_entries te ON te.project_id = p.id
-      WHERE p.billed_date IS NULL AND p.status = 'completed'
+      WHERE p.billed_date IS NULL
+        AND (
+          -- Completed projects that haven't been billed yet (existing logic)
+          p.status = 'completed'
+          OR
+          -- Active hourly projects with at least one hour logged.
+          -- These are "in-progress" inspections/RE work that can be billed
+          -- for the period covered, with a new follow-on project for ongoing work.
+          (p.status = 'active' AND p.billing_type = 'hourly' AND EXISTS (
+            SELECT 1 FROM time_entries WHERE project_id = p.id
+          ))
+        )
       GROUP BY p.id, cl.name, co.contract_number
-      ORDER BY cl.name, p.project_type, p.completed_date
+      HAVING (
+        p.billing_type = 'footage'
+        OR COALESCE(SUM(te.hours),0) > 0
+      )
+      ORDER BY cl.name, p.project_type, p.completed_date NULLS LAST
     `);
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -1489,6 +1510,85 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// "Bill and clone": marks the current project billed, snapshots an invoice line,
+// and creates a follow-on project for the next billing period so ongoing hourly
+// work (inspection, RE) can keep accumulating without re-entering all the metadata.
+// Body: { invoice_number?, invoice_date?, billed_amount, create_follow_on?, follow_on_name? }
+app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
+  const { invoice_number, invoice_date, billed_amount, create_follow_on, follow_on_name } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Load original project so we can clone its setup
+    const origR = await client.query('SELECT * FROM projects WHERE id=$1', [req.params.id]);
+    const orig = origR.rows[0];
+    if (!orig) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // 1. Mark current project as billed
+    const billDate = invoice_date || new Date().toISOString().split('T')[0];
+    await client.query(
+      `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
+      [billDate, req.params.id]
+    );
+
+    // 2. Snapshot an invoice (using the existing invoices + invoice_items tables)
+    let invoiceId = null;
+    if (billed_amount && parseFloat(billed_amount) > 0) {
+      const invR = await client.query(
+        `INSERT INTO invoices (client_id, invoice_number, invoice_date, total_amount, status, notes)
+         VALUES ($1, $2, $3, $4, 'sent', $5) RETURNING id`,
+        [orig.client_id, invoice_number || null, billDate, billed_amount,
+         `Auto-snapshot from project ${orig.name}`]
+      );
+      invoiceId = invR.rows[0].id;
+
+      const qty = orig.billing_type === 'footage' ? orig.footage : orig.actual_hours;
+      const unit = orig.billing_type === 'footage' ? 'lf' : 'hours';
+      await client.query(
+        `INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [invoiceId, orig.id, orig.name, qty, unit, orig.billing_rate, billed_amount]
+      );
+    }
+
+    // 3. Optionally create a follow-on project (for ongoing hourly work)
+    let followOn = null;
+    if (create_follow_on) {
+      const newName = follow_on_name || `${orig.name} (continued)`;
+      const followR = await client.query(
+        `INSERT INTO projects (
+           parent_id, name, client_id, contract_id, work_order_number,
+           project_type, status, billing_type, billing_rate, footage,
+           expected_hours, expected_revenue, start_date, notes,
+           budget_code_id, concentrator_id
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $10, $11, $12, $13, $14, $15
+         ) RETURNING *`,
+        [
+          orig.parent_id, newName, orig.client_id, orig.contract_id, orig.work_order_number,
+          orig.project_type, orig.billing_type, orig.billing_rate, orig.footage,
+          orig.expected_hours, orig.expected_revenue, billDate, orig.notes,
+          orig.budget_code_id, orig.concentrator_id
+        ]
+      );
+      followOn = followR.rows[0];
+    }
+
+    await client.query('COMMIT');
+    res.json({ ok: true, invoice_id: invoiceId, follow_on: followOn });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('bill-and-clone error:', e);
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

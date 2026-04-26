@@ -228,7 +228,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 <!-- MAIN -->
 <div class="main">
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0">
 
     <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
     <div id="view-dashboard" class="view active">
@@ -743,15 +743,31 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 <!-- PROJECT DETAIL DRILL-DOWN MODAL -->
 <div class="modal-overlay" id="project-detail-modal">
-  <div class="modal" style="max-width:960px;width:95%">
-    <div class="modal-header">
+  <div class="modal" style="max-width:960px;width:95%;display:flex;flex-direction:column">
+    <div class="modal-header" style="position:sticky;top:0;flex-shrink:0;z-index:2">
       <span class="modal-title" id="pd-title">Project Detail</span>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary btn-sm" id="pd-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="btn btn-sm" id="pd-delete-btn" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)"><i class="fa-solid fa-trash"></i> Delete</button>
         <button class="btn btn-icon btn-secondary" onclick="closeModal('project-detail-modal')"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <div class="modal-body" id="pd-body" style="max-height:calc(90vh - 70px);overflow-y:auto"></div>
+    <div class="modal-body" id="pd-body" style="flex:1;overflow-y:auto;min-height:0"></div>
+  </div>
+</div>
+
+<!-- BILL VERIFICATION MODAL -->
+<div class="modal-overlay" id="bill-verify-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Verify and Bill Project</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('bill-verify-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="bill-verify-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('bill-verify-modal')">Cancel</button>
+      <button class="btn btn-success" id="bill-verify-confirm-btn"><i class="fa-solid fa-check"></i> Confirm and Mark Billed</button>
+    </div>
   </div>
 </div>
 
@@ -1352,6 +1368,7 @@ function renderProjects(list, expandAll = false) {
         <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
         ${depth === 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>` : ''}
         ${p.status === 'completed' && !p.billed_date ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>` : ''}
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;
   }
@@ -1565,17 +1582,148 @@ async function saveProject() {
 async function deleteProject() {
   const id = document.getElementById('proj-id').value;
   if (!id) return;
-  if (!confirm('Delete this project and all associated time entries?')) return;
-  await api('/api/projects/'+id, 'DELETE');
-  closeModal('project-modal');
-  loadProjects();
+  await confirmDeleteProject(id, document.getElementById('proj-name').value || 'this project', () => {
+    closeModal('project-modal');
+  });
+}
+
+// Unified delete-project flow used by row trash buttons, the popup, and the modal.
+// Asks for confirmation, calls the API, then refreshes whatever views were open.
+async function confirmDeleteProject(id, name, afterDelete) {
+  const msg = `Delete "${name}"?\n\nThis will also delete:\n• All time entries for this project\n• All sub-projects (and their time entries)\n• All permit stages and documents\n\nThis cannot be undone.`;
+  if (!confirm(msg)) return;
+  try {
+    await api('/api/projects/' + id, 'DELETE');
+    if (typeof afterDelete === 'function') afterDelete();
+    // Refresh whatever views are likely affected
+    loadProjects();
+    loadDashboard();
+    if (typeof loadPermits === 'function') loadPermits();
+    if (typeof loadHours === 'function') loadHours();
+    if (typeof loadRevenue === 'function' && currentView === 'revenue') loadRevenue();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
 }
 
 async function markBilled(id) {
-  if (!confirm('Mark this project as billed?')) return;
-  await api('/api/projects/'+id+'/mark-billed', 'PUT', {});
-  loadProjects();
-  loadDashboard();
+  // Pull the project so we can show the breakdown and decide whether to offer
+  // the follow-on workflow (which only applies to active hourly work).
+  let p;
+  try {
+    p = await api('/api/projects/' + id);
+  } catch (e) { return alert('Failed to load project: ' + e.message); }
+
+  const isHourly = p.billing_type === 'hourly';
+  const isOngoing = p.status === 'active' && isHourly;
+  const hours = parseFloat(p.actual_hours) || 0;
+  const rate = parseFloat(p.billing_rate) || 0;
+  const footage = parseFloat(p.footage) || 0;
+  const expectedRev = parseFloat(p.expected_revenue) || 0;
+  const billable = isHourly ? hours * rate : expectedRev;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  let breakdownHtml;
+  if (isHourly) {
+    breakdownHtml = `
+      <div style="display:flex;justify-content:space-between;padding:6px 0">
+        <span>Hours logged</span><strong>${fmt(hours, 'hrs')}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0">
+        <span>Rate</span><strong>${fmtMoney(rate)}/hr</strong>
+      </div>`;
+  } else {
+    breakdownHtml = `
+      <div style="display:flex;justify-content:space-between;padding:6px 0">
+        <span>Footage</span><strong>${footage.toLocaleString()} LF (${(footage/5280).toFixed(2)} mi)</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0">
+        <span>Expected revenue</span><strong>${fmtMoney(expectedRev)}</strong>
+      </div>`;
+  }
+
+  document.getElementById('bill-verify-body').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--text-muted)">Project</div>
+      <div style="font-size:16px;font-weight:600">${esc(p.name)}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${esc(p.client_name || '—')} · WO ${esc(p.work_order_number || '—')} · ${esc(p.project_type)}</div>
+    </div>
+    <div style="background:var(--gray-light);padding:12px 16px;border-radius:8px;margin-bottom:14px">
+      ${breakdownHtml}
+      <div style="display:flex;justify-content:space-between;padding:10px 0 4px;border-top:1px solid var(--gray-border);margin-top:6px">
+        <strong>Billable amount</strong>
+        <strong style="color:var(--primary);font-size:18px">${fmtMoney(billable)}</strong>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Invoice Number <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <input type="text" id="bv-invoice-num" placeholder="e.g. INV-2026-0042">
+      </div>
+      <div class="form-group">
+        <label>Invoice Date</label>
+        <input type="date" id="bv-invoice-date" value="${today}">
+      </div>
+    </div>
+    ${isOngoing ? `
+      <div style="background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800;padding:10px 14px;border-radius:8px;margin-top:14px;font-size:13px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="bv-create-follow-on" checked style="width:auto">
+          <span><strong>Create follow-on project</strong> for ongoing work after this billing</span>
+        </label>
+        <div style="margin-top:8px;display:none" id="bv-follow-on-name-row">
+          <input type="text" id="bv-follow-on-name" value="${esc(p.name)} (continued)" style="width:100%">
+        </div>
+      </div>` : ''}
+    <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
+      This will mark the project as <strong>billed</strong>, snapshot an invoice record, and lock it from further hour entries${isOngoing ? '. The follow-on project (if checked) will inherit the same client, contract, WO#, and rate.' : '.'}
+    </div>
+  `;
+
+  // Show/hide the follow-on name field when checkbox toggles
+  if (isOngoing) {
+    setTimeout(() => {
+      const cb = document.getElementById('bv-create-follow-on');
+      const row = document.getElementById('bv-follow-on-name-row');
+      if (cb && row) {
+        row.style.display = cb.checked ? 'block' : 'none';
+        cb.addEventListener('change', () => row.style.display = cb.checked ? 'block' : 'none');
+      }
+    }, 0);
+  }
+
+  document.getElementById('bill-verify-confirm-btn').onclick = async () => {
+    const invoice_number = document.getElementById('bv-invoice-num').value.trim() || null;
+    const invoice_date = document.getElementById('bv-invoice-date').value || today;
+    const create_follow_on = isOngoing && document.getElementById('bv-create-follow-on')?.checked;
+    const follow_on_name = isOngoing && document.getElementById('bv-follow-on-name')?.value.trim();
+
+    const btn = document.getElementById('bill-verify-confirm-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Billing...';
+
+    try {
+      const result = await api('/api/projects/' + id + '/bill-and-clone', 'POST', {
+        invoice_number, invoice_date, billed_amount: billable,
+        create_follow_on, follow_on_name
+      });
+      closeModal('bill-verify-modal');
+      let msg = `Project marked as billed for ${fmtMoney(billable)}.`;
+      if (result.follow_on) msg += `\n\nFollow-on project created: "${result.follow_on.name}" — new hours will accumulate there.`;
+      alert(msg);
+      loadProjects();
+      loadDashboard();
+      if (currentView === 'revenue') loadRevenue();
+    } catch (e) {
+      alert('Billing failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm and Mark Billed';
+    }
+  };
+
+  openModal('bill-verify-modal');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1623,6 +1771,7 @@ async function loadPermits() {
       <td style="white-space:nowrap">
         ${currentIdx < STAGES.length-1 ? `<button class="btn btn-sm btn-primary" onclick="advancePermit('${p.id}')">→ ${STAGE_LABELS[STAGES[currentIdx+1]]}</button>` : '<span style="color:var(--success);font-size:12px"><i class="fa-solid fa-check"></i> Done</span>'}
         <button class="btn btn-sm btn-secondary btn-icon" onclick="openPermitDocs('${p.id}','${esc(p.name)}')" title="Documents"><i class="fa-solid fa-paperclip"></i></button>
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -2401,15 +2550,19 @@ async function loadRevenue() {
   renderRevenueDetail(details);
 
   // ── Unbilled table ──
-  document.getElementById('unbilled-body').innerHTML = unbilled.length ? unbilled.map(p => `
-    <tr>
-      <td class="td-name">${esc(p.name)}</td>
+  document.getElementById('unbilled-body').innerHTML = unbilled.length ? unbilled.map(p => {
+    const kindTag = p.bill_kind === 'in_progress'
+      ? '<span style="background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">In progress</span>'
+      : '<span style="background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">Completed</span>';
+    return `<tr>
+      <td class="td-name">${esc(p.name)} ${kindTag}</td>
       <td>${esc(p.client_name||'—')}</td>
       <td>${typeBadge(p.project_type)}</td>
-      <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString() : '—'}</td>
+      <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString() : (p.bill_kind === 'in_progress' ? 'Active' : '—')}</td>
       <td style="font-weight:600">${fmtMoney(p.earned_amount||0)}</td>
-      <td><button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Mark Billed</button></td>
-    </tr>`).join('') : '<tr><td colspan="6" class="empty-state" style="padding:24px;text-align:center">No unbilled completed projects</td></tr>';
+      <td><button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Bill...</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="empty-state" style="padding:24px;text-align:center">No unbilled work</td></tr>';
 }
 
 // ─── PROJECT DETAIL DRILL-DOWN POPUP ──────────────────────────────────────
@@ -2424,6 +2577,10 @@ async function showProjectDetail(projectId) {
   document.getElementById('pd-title').textContent = 'Loading…';
   document.getElementById('pd-body').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
   document.getElementById('pd-edit-btn').onclick = () => { closeModal('project-detail-modal'); editProject(projectId); };
+  document.getElementById('pd-delete-btn').onclick = async () => {
+    const name = document.getElementById('pd-title').textContent.split(' — ')[0] || 'this project';
+    await confirmDeleteProject(projectId, name, () => closeModal('project-detail-modal'));
+  };
   openModal('project-detail-modal');
 
   try {
