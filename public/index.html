@@ -1147,10 +1147,8 @@ async function quickAddParent() {
     });
     // Re-populate the parent dropdown
     allProjects = await api('/api/projects');
-    const pp = document.getElementById('proj-parent');
-    while (pp.options.length > 1) pp.remove(1);
     const currentId = document.getElementById('proj-id').value;
-    allProjects.filter(p => !p.parent_id && p.id !== currentId).forEach(p => pp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+    populateParentDropdown(currentId || null);
     document.getElementById('proj-parent').value = p.id;
     document.getElementById('qa-parent-name').value = '';
     toggleQuickAdd('parent', false);
@@ -1324,10 +1322,74 @@ async function loadProjects() {
   const tp = document.getElementById('te-project');
   while (tp.options.length > 1) tp.remove(1);
   allProjects.forEach(p => tp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
-  // Populate parent project dropdown
+  // Populate parent project dropdown — allow top-level AND mid-level as parents
+  populateParentDropdown(null);
+}
+
+// Build the parent-project dropdown options with proper indentation showing
+// the hierarchy. Top-level projects appear flush; mid-level projects are
+// indented under their grandparent. Excludes the project being edited (and
+// its descendants) so a project can't become its own ancestor.
+//
+// editingId: the ID of the project being edited, or null when creating.
+function populateParentDropdown(editingId) {
   const pp = document.getElementById('proj-parent');
+  if (!pp) return;
   while (pp.options.length > 1) pp.remove(1);
-  allProjects.filter(p => !p.parent_id).forEach(p => pp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+
+  // Build descendant set for editing project (so we can exclude them as parent options)
+  const excluded = new Set();
+  if (editingId) {
+    excluded.add(editingId);
+    const childrenOf = {};
+    allProjects.forEach(p => {
+      if (p.parent_id) {
+        if (!childrenOf[p.parent_id]) childrenOf[p.parent_id] = [];
+        childrenOf[p.parent_id].push(p.id);
+      }
+    });
+    const stack = [editingId];
+    while (stack.length) {
+      const id = stack.pop();
+      for (const kid of (childrenOf[id] || [])) {
+        if (!excluded.has(kid)) { excluded.add(kid); stack.push(kid); }
+      }
+    }
+  }
+
+  // Build a depth lookup: 0 = top-level, 1 = parent (mid-level), 2 = leaf.
+  // Anything at depth 2 cannot become a parent (would create depth-3 grandchildren,
+  // which our 3-level UI doesn't support).
+  const byId = Object.fromEntries(allProjects.map(p => [p.id, p]));
+  function depthOf(p) {
+    if (!p.parent_id) return 0;
+    const par = byId[p.parent_id];
+    if (!par || !par.parent_id) return 1;
+    return 2;
+  }
+
+  // Walk top-level projects first, then their direct children, depth-first
+  // so the dropdown reads as a tree.
+  const topLevel = allProjects.filter(p => !p.parent_id);
+  const childrenOf = {};
+  allProjects.forEach(p => {
+    if (p.parent_id) {
+      if (!childrenOf[p.parent_id]) childrenOf[p.parent_id] = [];
+      childrenOf[p.parent_id].push(p);
+    }
+  });
+
+  for (const top of topLevel) {
+    if (!excluded.has(top.id)) {
+      pp.add(new Option(`${top.name} (${top.client_name || ''})`, top.id));
+    }
+    // Mid-level children of this top-level can also be parents
+    for (const mid of (childrenOf[top.id] || [])) {
+      if (depthOf(mid) === 1 && !excluded.has(mid.id)) {
+        pp.add(new Option(`   └ ${mid.name} (${mid.client_name || ''})`, mid.id));
+      }
+    }
+  }
 }
 
 function filterProjects() {
@@ -1531,9 +1593,7 @@ async function editProject(id) {
   if (!allProjects.length) {
     allProjects = await api('/api/projects?');
   }
-  const pp = document.getElementById('proj-parent');
-  while (pp.options.length > 1) pp.remove(1);
-  allProjects.filter(pr => !pr.parent_id && pr.id !== id).forEach(pr => pp.add(new Option(`${pr.name} (${pr.client_name||''})`, pr.id)));
+  populateParentDropdown(id);
 
   document.getElementById('proj-id').value = p.id;
   document.getElementById('proj-name').value = p.name;
@@ -3034,11 +3094,13 @@ function renderProjectDetail(data, month, year) {
   const children = data.children || [];
   const invoices = data.invoices || [];
   const months_with_activity = data.months_with_activity || [];
+  const lifetime = data.lifetime || { total_hours: 0, earned_hourly: 0 };
+  const subtreeSize = data.subtree_size || 1;
 
   // Period label for header
   const periodLabel = month
     ? `${MONTH_FULL[month - 1]} ${year}`
-    : `Year ${year}`;
+    : `All of ${year}`;
 
   document.getElementById('pd-title').innerHTML = `${esc(p.name)} <span style="color:var(--text-muted);font-weight:400;font-size:13px">— ${periodLabel}</span>`;
 
@@ -3046,9 +3108,12 @@ function renderProjectDetail(data, month, year) {
   const totalHrs = entries.reduce((s, e) => s + parseFloat(e.hours || 0), 0);
   const rate = parseFloat(p.billing_rate) || 0;
   const isFootage = p.billing_type === 'footage';
+  // For container projects the rate sits on the leaves, so prefer the entry's
+  // own rate when computing earned. Falls back to the project's rate for leaves.
+  const earnedFromEntries = entries.reduce((s, e) => s + parseFloat(e.hours || 0) * (parseFloat(e.billing_rate) || rate), 0);
   const earned = isFootage
     ? (['completed', 'billed'].includes(p.status) ? parseFloat(p.expected_revenue || 0) : 0)
-    : totalHrs * rate;
+    : (subtreeSize > 1 ? earnedFromEntries : totalHrs * rate);
 
   // Group entries by staff for a sub-breakdown
   const byStaff = {};
@@ -3062,18 +3127,38 @@ function renderProjectDetail(data, month, year) {
 
   let html = '';
 
-  // ── Period switcher: only show if the project has activity in 2+ months
-  // (otherwise the tabs are noise). Click reloads with that period.
-  if (months_with_activity.length > 1) {
+  // ── Period switcher: shown whenever there's ANY activity. For ongoing
+  // projects this is the main UI for picking a month. Months are grouped by
+  // year so multi-year projects don't sprawl.
+  if (months_with_activity.length > 0) {
+    // Group activity by year (months_with_activity comes back year-desc, month-desc)
+    const byYear = {};
+    months_with_activity.forEach(mw => {
+      if (!byYear[mw.year]) byYear[mw.year] = [];
+      byYear[mw.year].push(mw);
+    });
+    const years = Object.keys(byYear).sort((a, b) => b - a); // newest first
     const currentKey = month ? `${year}-${String(month).padStart(2,'0')}` : `${year}-all`;
-    html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;padding:8px;background:var(--gray-light);border-radius:8px">
-      <button class="btn btn-sm ${currentKey === year + '-all' ? 'btn-primary' : 'btn-secondary'}" onclick="reloadProjectDetail('${p.id}', null, '${year}')">All ${year}</button>
-      ${months_with_activity.map(mw => {
-        const k = `${mw.year}-${String(mw.month).padStart(2,'0')}`;
-        const isActive = currentKey === k;
-        return `<button class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'}" onclick="reloadProjectDetail('${p.id}', ${mw.month}, '${mw.year}')">${MONTH_NAMES[mw.month-1]} ${mw.year} <span style="opacity:.7;margin-left:4px">${fmt(mw.hours,'hrs')}</span></button>`;
-      }).join('')}
-    </div>`;
+
+    html += `<div style="margin-bottom:16px;padding:10px 12px;background:var(--gray-light);border-radius:8px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:8px">Viewing period</div>`;
+
+    for (const yr of years) {
+      const yrTotal = byYear[yr].reduce((s, mw) => s + parseFloat(mw.hours || 0), 0);
+      const yearKey = `${yr}-all`;
+      const yearActive = currentKey === yearKey;
+      html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+        <button class="btn btn-sm ${yearActive ? 'btn-primary' : 'btn-secondary'}" onclick="reloadProjectDetail('${p.id}', null, '${yr}')">
+          All ${yr} <span style="opacity:.7;margin-left:4px">${fmt(yrTotal,'hrs')}</span>
+        </button>
+        ${byYear[yr].map(mw => {
+          const k = `${mw.year}-${String(mw.month).padStart(2,'0')}`;
+          const isActive = currentKey === k;
+          return `<button class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'}" onclick="reloadProjectDetail('${p.id}', ${mw.month}, '${mw.year}')">${MONTH_NAMES[mw.month-1]} <span style="opacity:.7;margin-left:4px">${fmt(mw.hours,'hrs')}</span></button>`;
+        }).join('')}
+      </div>`;
+    }
+    html += `</div>`;
   }
 
   // ── Header strip with key facts
@@ -3091,10 +3176,18 @@ function renderProjectDetail(data, month, year) {
     </div>
   </div>`;
 
-  // ── Summary stats for the period
+  // ── Summary stats: period view + lifetime totals side-by-side so the user
+  // can see "this month" and "all time" together. Lifetime is rolled up from
+  // the whole subtree (so a parent/grandparent sees its descendants' totals).
+  const lifetimeHrs = parseFloat(lifetime.total_hours) || 0;
+  const lifetimeEarned = parseFloat(lifetime.earned_hourly) || 0;
+  const showLifetime = lifetimeHrs > totalHrs || subtreeSize > 1;
+
   html += `<div class="stats-grid" style="margin-bottom:18px">
-    <div class="stat-card"><div class="stat-label">${periodLabel} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries</div></div>
-    <div class="stat-card accent"><div class="stat-label">${periodLabel} Earned</div><div class="stat-value">${fmtMoney(earned)}</div></div>
+    <div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries${subtreeSize > 1 ? ' · across ' + subtreeSize + ' projects' : ''}</div></div>
+    <div class="stat-card accent"><div class="stat-label">${esc(periodLabel)} Earned</div><div class="stat-value">${fmtMoney(earned)}</div></div>
+    ${showLifetime ? `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div><div class="stat-sub">all time, all sub-projects</div></div>` : ''}
+    ${showLifetime && lifetimeEarned > 0 ? `<div class="stat-card"><div class="stat-label">Lifetime Earned</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div></div>` : ''}
     ${parseFloat(p.expected_revenue) > 0 ? `<div class="stat-card"><div class="stat-label">Project Expected</div><div class="stat-value">${fmtMoney(p.expected_revenue)}</div><div class="stat-sub">${fmt(p.expected_hours || 0, 'hrs')}</div></div>` : ''}
     ${isFootage && p.footage ? `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>` : ''}
   </div>`;
@@ -3179,11 +3272,13 @@ function renderProjectDetail(data, month, year) {
 
   // ── Recent time entries (full list, scrollable inside the modal)
   if (entries.length > 0) {
+    const showProjCol = subtreeSize > 1;
     html += `<div class="card"><div class="card-header"><span class="card-title">Time Entries (${entries.length})</span></div>
-      <div style="max-height:340px;overflow-y:auto"><table style="width:100%;font-size:13px"><thead style="position:sticky;top:0;background:var(--white);z-index:1"><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Date</th><th style="padding:8px 12px;text-align:left">Staff</th><th style="padding:8px 12px;text-align:left">Job Title</th><th style="padding:8px 12px;text-align:right">Hours</th></tr></thead>
+      <div style="max-height:340px;overflow-y:auto"><table style="width:100%;font-size:13px"><thead style="position:sticky;top:0;background:var(--white);z-index:1"><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Date</th><th style="padding:8px 12px;text-align:left">Staff</th>${showProjCol ? '<th style="padding:8px 12px;text-align:left">Project</th>' : ''}<th style="padding:8px 12px;text-align:left">Job Title</th><th style="padding:8px 12px;text-align:right">Hours</th></tr></thead>
       <tbody>${entries.map(e => `<tr>
         <td style="padding:6px 12px">${e.entry_date ? new Date(e.entry_date + 'T00:00:00').toLocaleDateString() : '—'}</td>
         <td style="padding:6px 12px">${esc(e.staff_name || '—')}</td>
+        ${showProjCol ? `<td style="padding:6px 12px;color:var(--text)">${esc(e.project_name || '—')} ${e.work_order_number ? `<span class="td-mono" style="color:var(--text-muted);font-size:11px;margin-left:4px">WO ${esc(e.work_order_number)}</span>` : ''}</td>` : ''}
         <td style="padding:6px 12px;color:var(--text-muted)">${esc(e.job_title || '—')}</td>
         <td style="padding:6px 12px;text-align:right;font-weight:600">${fmt(e.hours)}</td>
       </tr>`).join('')}</tbody></table></div></div>`;

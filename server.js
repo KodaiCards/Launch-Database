@@ -901,9 +901,23 @@ app.get('/api/projects/:id/detail', async (req, res) => {
     `, [req.params.id]);
     if (!projR.rows[0]) return res.status(404).json({ error: 'Not found' });
 
+    // Collect this project + ALL descendants (recursive). For container projects
+    // (grandparents/parents) this lets us roll hours up from their leaves so the
+    // popup is meaningful even when no time is logged directly to the container.
+    const subtreeR = await pool.query(`
+      WITH RECURSIVE subtree AS (
+        SELECT id FROM projects WHERE id = $1
+        UNION ALL
+        SELECT p.id FROM projects p
+        JOIN subtree s ON p.parent_id = s.id
+      )
+      SELECT id FROM subtree
+    `, [req.params.id]);
+    const subtreeIds = subtreeR.rows.map(r => r.id);
+
     const month = req.query.month;
     const year = req.query.year;
-    let dateFilter = '', params = [req.params.id];
+    let dateFilter = '', params = [subtreeIds];
     if (month && year) {
       dateFilter = ' AND EXTRACT(MONTH FROM te.entry_date)=$2 AND EXTRACT(YEAR FROM te.entry_date)=$3';
       params.push(month, year);
@@ -912,11 +926,15 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       params.push(year);
     }
 
+    // Time entries: pulled from the whole subtree, joined to project info so
+    // the UI can show which leaf each entry came from.
     const entriesR = await pool.query(`
-      SELECT te.*, s.name as staff_name
+      SELECT te.*, s.name as staff_name,
+             pr.name as project_name, pr.id as project_id, pr.work_order_number, pr.project_type
       FROM time_entries te
       LEFT JOIN staff s ON s.id = te.staff_id
-      WHERE te.project_id = $1 ${dateFilter}
+      LEFT JOIN projects pr ON pr.id = te.project_id
+      WHERE te.project_id = ANY($1::uuid[]) ${dateFilter}
       ORDER BY te.entry_date DESC, s.name
     `, params);
 
@@ -925,39 +943,52 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       [req.params.id]
     );
 
-    // Children for any container project
+    // Direct children for the container's "Sub-projects" table
     const childrenR = await pool.query(
       `SELECT id, name, project_type, status, billing_rate, billing_type, expected_revenue, actual_hours
        FROM projects WHERE parent_id = $1 ORDER BY name`,
       [req.params.id]
     );
 
-    // All invoice line-items linked to this project, with the parent invoice details
+    // Invoices linked to ANY project in the subtree (so a parent shows
+    // its leaves' invoices too)
     const invoicesR = await pool.query(`
       SELECT ii.id, ii.description, ii.quantity, ii.unit, ii.rate, ii.amount,
-             inv.invoice_number, inv.invoice_date, inv.status, inv.notes
+             inv.invoice_number, inv.invoice_date, inv.status, inv.notes,
+             pr.name as project_name
       FROM invoice_items ii
       JOIN invoices inv ON inv.id = ii.invoice_id
-      WHERE ii.project_id = $1
+      LEFT JOIN projects pr ON pr.id = ii.project_id
+      WHERE ii.project_id = ANY($1::uuid[])
       ORDER BY inv.invoice_date DESC, ii.created_at DESC
-    `, [req.params.id]);
+    `, [subtreeIds]);
 
-    // Distinct (year, month) periods the project has activity in — used by the
-    // popup's month-tab switcher so we only show months with data.
+    // Distinct (year, month) periods that have activity ANYWHERE in the subtree.
+    // Powers the month-tab switcher in the popup — for ongoing work the user
+    // can pick any month with data and see just that month's breakdown.
     const periodsR = await pool.query(`
       SELECT EXTRACT(YEAR FROM entry_date)::int AS year,
              EXTRACT(MONTH FROM entry_date)::int AS month,
              SUM(hours)::float AS hours
       FROM time_entries
-      WHERE project_id = $1
+      WHERE project_id = ANY($1::uuid[])
       GROUP BY year, month
       ORDER BY year DESC, month DESC
-    `, [req.params.id]);
+    `, [subtreeIds]);
 
-    // Permit documents (revisions/files) for this project
+    // Lifetime totals — total hours and earned regardless of period filter.
+    // Always shown alongside the period view so ongoing work has context.
+    const lifetimeR = await pool.query(`
+      SELECT COALESCE(SUM(te.hours), 0)::float AS total_hours,
+             COALESCE(SUM(te.hours * pr.billing_rate), 0)::float AS earned_hourly
+      FROM time_entries te
+      JOIN projects pr ON pr.id = te.project_id
+      WHERE te.project_id = ANY($1::uuid[]) AND pr.billing_type = 'hourly'
+    `, [subtreeIds]);
+
     const docsR = await pool.query(
-      `SELECT * FROM permit_documents WHERE project_id = $1 ORDER BY created_at DESC`,
-      [req.params.id]
+      `SELECT * FROM permit_documents WHERE project_id = ANY($1::uuid[]) ORDER BY created_at DESC`,
+      [subtreeIds]
     );
 
     res.json({
@@ -967,7 +998,9 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       permit_documents: docsR.rows,
       children: childrenR.rows,
       invoices: invoicesR.rows,
-      months_with_activity: periodsR.rows
+      months_with_activity: periodsR.rows,
+      lifetime: lifetimeR.rows[0],
+      subtree_size: subtreeIds.length
     });
   } catch (e) {
     console.error('project detail error:', e);
