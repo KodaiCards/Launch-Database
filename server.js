@@ -364,6 +364,384 @@ app.delete('/api/time-entries/:id', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DIRECT CSV IMPORT FOR HOURS (no AI involvement)
+// Two-phase: validate → confirm → commit. All commits in a single transaction.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Normalize a WO# for matching: strip "WO" prefix, separators, whitespace, uppercase
+function normalizeWO(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).trim().toUpperCase()
+    .replace(/^WO[\s\-_#:]*/i, '')   // strip leading "WO ", "WO-", "WO#", etc.
+    .replace(/[\s\-_]+/g, '');         // strip remaining separators
+}
+
+// Normalize a name for matching: trim, collapse whitespace, lowercase
+function normalizeName(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+// Match a header row to our canonical fields. Returns { name, date, wo, hours, job_title }
+// where each value is the actual header string in the file (or null if not found).
+function detectColumns(headers) {
+  const lc = headers.map(h => String(h).trim().toLowerCase());
+  function findOne(...candidates) {
+    for (const c of candidates) {
+      const i = lc.indexOf(c);
+      if (i >= 0) return headers[i];
+    }
+    return null;
+  }
+  return {
+    name: findOne('name', 'employee', 'worker', 'staff', 'staff_name', 'employee_name'),
+    date: findOne('date', 'entry_date', 'work_date', 'day'),
+    wo: findOne('wo', 'wo#', 'wo #', 'work_order', 'work order', 'work_order_number', 'wo_number', 'job', 'job#'),
+    hours: findOne('hours', 'hrs', 'time', 'qty'),
+    job_title: findOne('job_title', 'title', 'position', 'role', 'classification')
+  };
+}
+
+// Parse a date cell into YYYY-MM-DD or return null. Handles ISO, MM/DD/YYYY, M/D/YY, etc.
+function parseDateCell(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const s = String(v).trim();
+  // Already ISO YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // M/D/YYYY or MM/DD/YYYY
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  // M/D/YY (assume current century)
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2})$/);
+  if (m) {
+    const yr = 2000 + parseInt(m[3], 10);
+    return `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  }
+  // Last resort: try Date parser
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  return null;
+}
+
+// Validate a parsed CSV/XLSX file. Does not write anything. Returns:
+//   { stage_id, headers, columns, valid_rows, unknown_staff, unknown_wos, invalid_rows, summary }
+// stage_id is a temp key clients pass back to /commit so we don't re-parse.
+const csvStage = new Map(); // stageId → { rows, expiresAt }
+const CSV_STAGE_TTL_MS = 30 * 60 * 1000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of csvStage) if (v.expiresAt < now) csvStage.delete(k);
+}, 5 * 60 * 1000);
+
+app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  try {
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    let rows = [];
+    let headers = [];
+
+    if (ext === '.xlsx' || ext === '.xls') {
+      const wb = XLSX.readFile(req.file.path);
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+      headers = Object.keys(rows[0] || {});
+    } else if (ext === '.csv' || ext === '.tsv') {
+      const content = fs.readFileSync(req.file.path, 'utf8');
+      const wb = XLSX.read(content, { type: 'string' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+      headers = Object.keys(rows[0] || {});
+    } else {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Unsupported file type. Use .csv, .xlsx, or .xls.' });
+    }
+
+    fs.unlinkSync(req.file.path); // we have the data in memory now
+
+    const cols = detectColumns(headers);
+    const missing = [];
+    if (!cols.name) missing.push('name/employee');
+    if (!cols.date) missing.push('date');
+    if (!cols.wo) missing.push('work_order');
+    if (!cols.hours) missing.push('hours');
+    if (missing.length) {
+      return res.status(400).json({
+        error: 'Missing required columns: ' + missing.join(', '),
+        headers,
+        detected_columns: cols
+      });
+    }
+
+    // Pull all staff and projects so we can look up locally (cheaper than per-row queries)
+    const [staffR, projR] = await Promise.all([
+      pool.query('SELECT id, name FROM staff'),
+      pool.query('SELECT id, name, work_order_number FROM projects WHERE work_order_number IS NOT NULL AND work_order_number != \'\'')
+    ]);
+    const staffByNorm = {};
+    staffR.rows.forEach(s => { staffByNorm[normalizeName(s.name)] = s; });
+    const projByNorm = {};
+    projR.rows.forEach(p => { projByNorm[normalizeWO(p.work_order_number)] = p; });
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const past18 = new Date(today); past18.setMonth(past18.getMonth() - 18);
+
+    // Walk rows, classify each
+    const validRows = [];
+    const unknownStaff = new Map(); // normalized → original name
+    const unknownWOs = new Map();   // normalized → original WO
+    const invalidRows = [];
+
+    rows.forEach((r, i) => {
+      const rowNum = i + 2; // +2 for header row + 1-indexed display
+      const rawName = r[cols.name];
+      const rawDate = r[cols.date];
+      const rawWO = r[cols.wo];
+      const rawHrs = r[cols.hours];
+      const rawTitle = cols.job_title ? r[cols.job_title] : null;
+
+      const issues = [];
+      const name = (rawName || '').toString().trim();
+      const date = parseDateCell(rawDate);
+      const woNorm = normalizeWO(rawWO);
+      const hrs = parseFloat(rawHrs);
+
+      if (!name) issues.push('missing name');
+      if (!date) issues.push('invalid or missing date');
+      else {
+        const d = new Date(date + 'T00:00:00');
+        if (d > today) issues.push('date is in the future');
+        else if (d < past18) issues.push('date is more than 18 months ago');
+      }
+      if (!woNorm) issues.push('missing work order');
+      if (isNaN(hrs) || hrs <= 0) issues.push('invalid hours');
+      if (hrs > 24) issues.push('hours > 24 in a single entry');
+
+      if (issues.length) {
+        invalidRows.push({ row_num: rowNum, raw: { name: rawName, date: rawDate, wo: rawWO, hours: rawHrs }, issues });
+        return;
+      }
+
+      const staff = staffByNorm[normalizeName(name)];
+      const proj = projByNorm[woNorm];
+      const staffKnown = !!staff;
+      const woKnown = !!proj;
+
+      if (!staffKnown) unknownStaff.set(normalizeName(name), name);
+      if (!woKnown) unknownWOs.set(woNorm, String(rawWO).trim());
+
+      validRows.push({
+        row_num: rowNum,
+        name, name_norm: normalizeName(name),
+        wo: String(rawWO).trim(), wo_norm: woNorm,
+        date, hours: hrs,
+        job_title: rawTitle ? String(rawTitle).trim() : null,
+        staff_id: staff?.id || null,
+        project_id: proj?.id || null,
+        staff_known: staffKnown,
+        wo_known: woKnown
+      });
+    });
+
+    // Stage data so /commit doesn't need to re-parse the file
+    const stage_id = uuidv4();
+    csvStage.set(stage_id, {
+      validRows,
+      expiresAt: Date.now() + CSV_STAGE_TTL_MS
+    });
+
+    res.json({
+      stage_id,
+      headers,
+      detected_columns: cols,
+      summary: {
+        total_rows: rows.length,
+        ready_to_import: validRows.filter(r => r.staff_known && r.wo_known).length,
+        rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
+        rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
+        invalid: invalidRows.length
+      },
+      unknown_staff: [...unknownStaff.values()].map(name => ({
+        name,
+        // similar existing names (helps operator catch typos)
+        similar: staffR.rows
+          .filter(s => {
+            const a = normalizeName(s.name), b = normalizeName(name);
+            return a !== b && (a.includes(b.split(' ')[0]) || b.includes(a.split(' ')[0]));
+          })
+          .map(s => ({ id: s.id, name: s.name }))
+          .slice(0, 3)
+      })),
+      unknown_wos: [...unknownWOs.values()],
+      invalid_rows: invalidRows.slice(0, 50) // cap for display
+    });
+  } catch (e) {
+    console.error('CSV validate error:', e);
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+    }
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Commit a previously-validated import. Body shape:
+//   {
+//     stage_id: string,
+//     create_staff: ["Mike Johnson", ...],     // names from unknown_staff to create
+//     map_staff: { "mike johnson": "<staff_uuid>", ... }, // OR map them to existing staff
+//     skip_unknown_wos: true                   // if false → reject; we always require true here
+//   }
+app.post('/api/hours/csv-commit', async (req, res) => {
+  const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true } = req.body;
+  if (!stage_id) return res.status(400).json({ error: 'Missing stage_id' });
+  const staged = csvStage.get(stage_id);
+  if (!staged) return res.status(400).json({ error: 'Staged data expired or not found. Re-validate the file.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Create requested new staff members (case-insensitive de-dup against existing)
+    const existingStaff = await client.query('SELECT id, name FROM staff');
+    const staffByNorm = {};
+    existingStaff.rows.forEach(s => { staffByNorm[normalizeName(s.name)] = s.id; });
+
+    const createdStaff = [];
+    for (const rawName of create_staff) {
+      const name = String(rawName).trim();
+      const norm = normalizeName(name);
+      if (!name || staffByNorm[norm]) continue;
+      const { rows } = await client.query(
+        'INSERT INTO staff (name, active) VALUES ($1, true) ON CONFLICT (name) DO UPDATE SET active=true RETURNING id, name',
+        [name]
+      );
+      staffByNorm[norm] = rows[0].id;
+      createdStaff.push(rows[0]);
+    }
+    // Apply explicit mappings (operator chose "this name = that existing staff record")
+    for (const [norm, staffId] of Object.entries(map_staff)) {
+      staffByNorm[norm] = staffId;
+    }
+
+    // 2. Walk staged rows. Insert ones that have a project_id AND a resolvable staff_id.
+    //    Skip rows where WO is unknown (front-end already required acknowledgment).
+    const importBatch = `csv_import_${Date.now()}`;
+    let inserted = 0;
+    let skipped_unknown_wo = 0;
+    let skipped_unresolved_staff = 0;
+    const projectIds = new Set();
+
+    for (const r of staged.validRows) {
+      if (!r.wo_known) { skipped_unknown_wo++; continue; }
+      const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
+      if (!staffId) { skipped_unresolved_staff++; continue; }
+
+      await client.query(
+        `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [r.project_id, staffId, r.date, r.hours, r.job_title, importBatch]
+      );
+      inserted++;
+      projectIds.add(r.project_id);
+    }
+
+    // 3. Roll up actual_hours for affected projects
+    for (const pid of projectIds) {
+      await client.query(
+        `UPDATE projects SET actual_hours = (
+           SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
+         ) WHERE id=$1`,
+        [pid]
+      );
+    }
+
+    await client.query('COMMIT');
+    csvStage.delete(stage_id);
+
+    res.json({
+      ok: true,
+      batch: importBatch,
+      inserted,
+      skipped_unknown_wo,
+      skipped_unresolved_staff,
+      created_staff: createdStaff,
+      affected_projects: projectIds.size
+    });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('CSV commit error:', e);
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REVENUE — PROJECT DETAIL DRILL-DOWN (for the new clickable row popup)
+// ─────────────────────────────────────────────────────────────────────────────
+app.get('/api/projects/:id/detail', async (req, res) => {
+  try {
+    const projR = await pool.query(`
+      SELECT p.*, cl.name as client_name, co.contract_number, co.name as contract_name,
+             pp.name as parent_name,
+             gp.name as grandparent_name,
+             bc.code as budget_code, b.name as budget_name
+      FROM projects p
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN contracts co ON co.id = p.contract_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
+      LEFT JOIN projects gp ON gp.id = pp.parent_id
+      LEFT JOIN budget_codes bc ON bc.id = p.budget_code_id
+      LEFT JOIN budgets b ON b.id = bc.budget_id
+      WHERE p.id = $1
+    `, [req.params.id]);
+    if (!projR.rows[0]) return res.status(404).json({ error: 'Not found' });
+
+    const month = req.query.month;
+    const year = req.query.year;
+    let dateFilter = '', params = [req.params.id];
+    if (month && year) {
+      dateFilter = ' AND EXTRACT(MONTH FROM te.entry_date)=$2 AND EXTRACT(YEAR FROM te.entry_date)=$3';
+      params.push(month, year);
+    } else if (year) {
+      dateFilter = ' AND EXTRACT(YEAR FROM te.entry_date)=$2';
+      params.push(year);
+    }
+
+    const entriesR = await pool.query(`
+      SELECT te.*, s.name as staff_name
+      FROM time_entries te
+      LEFT JOIN staff s ON s.id = te.staff_id
+      WHERE te.project_id = $1 ${dateFilter}
+      ORDER BY te.entry_date DESC, s.name
+    `, params);
+
+    const stagesR = await pool.query(
+      `SELECT * FROM permit_stages WHERE project_id = $1 ORDER BY created_at`,
+      [req.params.id]
+    );
+
+    // Children for any container project
+    const childrenR = await pool.query(
+      `SELECT id, name, project_type, status, billing_rate, billing_type, expected_revenue, actual_hours
+       FROM projects WHERE parent_id = $1 ORDER BY name`,
+      [req.params.id]
+    );
+
+    res.json({
+      project: projR.rows[0],
+      time_entries: entriesR.rows,
+      permit_stages: stagesR.rows,
+      children: childrenR.rows
+    });
+  } catch (e) {
+    console.error('project detail error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PERMIT PIPELINE
 // ─────────────────────────────────────────────────────────────────────────────
 const PERMIT_STAGES = ['potential','started','submitted','approved','checklist','billed'];
