@@ -1198,92 +1198,62 @@ async function loadDashboard() {
   const all = d.recent_projects || [];
   if (!all.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No active projects</p></div></td></tr>'; return; }
 
-  // Build lookup
+  // Build lookup and children map for unlimited depth
   const byId = {};
   all.forEach(p => byId[p.id] = p);
+  const childrenOf = {};
+  all.forEach(p => { if (p.parent_id) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
+  const roots = all.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // Determine depth: 0=grandparent, 1=parent, 2=child
-  function getDepth(p) {
-    if (!p.parent_id) return 0;
-    const par = byId[p.parent_id];
-    if (!par || !par.parent_id) return 1;
-    return 2;
-  }
-
-  const grandparents = all.filter(p => getDepth(p) === 0);
-  const parents = all.filter(p => getDepth(p) === 1);
-  const children = all.filter(p => getDepth(p) === 2);
-
-  const parentsByGP = {};
-  parents.forEach(p => { if (!parentsByGP[p.parent_id]) parentsByGP[p.parent_id] = []; parentsByGP[p.parent_id].push(p); });
-
-  const childrenByPar = {};
-  children.forEach(c => { if (!childrenByPar[c.parent_id]) childrenByPar[c.parent_id] = []; childrenByPar[c.parent_id].push(c); });
-
-  // Sum actual + expected hours from a project plus all descendants in the tree.
-  // Walks regardless of project_type so a parent project with mixed-type children
-  // still shows the full total. The dashboard query only returns active projects
-  // so this rollup operates on the active set.
-  function sumDashHours(p, depth) {
+  // Recursive hours rollup through any depth
+  function sumTree(p) {
     let actual = parseFloat(p.actual_hours) || 0;
     let expected = parseFloat(p.expected_hours) || 0;
-    if (depth === 0) {
-      for (const par of (parentsByGP[p.id] || [])) {
-        const s = sumDashHours(par, 1);
-        actual += s.actual; expected += s.expected;
-      }
-    } else if (depth === 1) {
-      for (const kid of (childrenByPar[p.id] || [])) {
-        actual += parseFloat(kid.actual_hours) || 0;
-        expected += parseFloat(kid.expected_hours) || 0;
-      }
+    for (const kid of (childrenOf[p.id] || [])) {
+      const s = sumTree(kid);
+      actual += s.actual; expected += s.expected;
     }
     return { actual, expected };
   }
 
-  function treeRow(p, depth, groupClass) {
-    const indent = depth * 24;
-    const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
-    const bgColors = ['', 'background:var(--gray-light)', 'background:#f0f0f0'];
-    const bg = bgColors[depth] || '';
-    const cls = groupClass ? `class="dtree dtree-${groupClass}" style="display:none;${bg}"` : `style="${bg}"`;
+  // Build rows recursively
+  function buildRows(projects, depth, parentGroupClass) {
+    let html = '';
+    for (const p of projects) {
+      const indent = depth * 28;
+      const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+      const kids = childrenOf[p.id] || [];
+      const expandable = kids.length > 0;
+      const groupKey = 'dt-' + p.id;
+      const chevId = 'dc-' + p.id;
+      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+      const cls = parentGroupClass ? `class="dtree dtree-${parentGroupClass}" style="display:none;${bg}"` : `style="${bg}"`;
+      const sums = sumTree(p);
+      const area = p.concentrator_area ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">(${esc(p.concentrator_area)})</span>` : '';
+      const badge = expandable ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kids.length}</span>` : '';
+      const chevron = expandable
+        ? `<span onclick="event.stopPropagation();dtreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></span>`
+        : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
-    let kidCount = 0, kidKey = null;
-    if (depth === 0) { kidCount = (parentsByGP[p.id]||[]).length; kidKey = 'gp-'+p.id; }
-    else if (depth === 1) { kidCount = (childrenByPar[p.id]||[]).length; kidKey = 'pr-'+p.id; }
+      html += `<tr ${cls} onclick="showProjectDetail('${p.id}')" style="cursor:pointer;${bg}">
+        <td class="td-name" style="padding-left:${12+indent}px">${chevron}${prefix}${esc(p.name)}${area}${badge}</td>
+        <td>${esc(p.client_name||'—')}</td>
+        <td class="td-mono">${esc(p.work_order_number||'—')}</td>
+        <td>${typeBadge(p.project_type)}</td>
+        <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(sums.actual, sums.expected)}</div><span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(sums.actual,'hrs')}/${fmt(sums.expected,'hrs')}</span></div></td>
+        <td>${statusBadge(p.status)}</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
+      </tr>`;
 
-    const expandable = kidCount > 0;
-    const chevId = 'dc-' + p.id;
-    const click = expandable ? `onclick="event.stopPropagation();dtreeToggle('${kidKey}','${chevId}')"` : '';
-    const cursor = 'cursor:pointer';
-    const chevron = expandable ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s"></i>` : (depth===0 ? '<span style="width:15px;display:inline-block"></span>' : '');
-    const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
-    const area = p.concentrator_area ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">(${esc(p.concentrator_area)})</span>` : '';
-
-    const sums = sumDashHours(p, depth);
-
-    return `<tr ${cls} onclick="showProjectDetail('${p.id}')" style="${cursor};${bg}">
-      <td class="td-name" style="padding-left:${12+indent}px">${expandable ? `<span ${click}>${chevron}</span>` : chevron}${prefix}${esc(p.name)}${area}${badge}</td>
-      <td>${esc(p.client_name||'—')}</td>
-      <td class="td-mono">${esc(p.work_order_number||'—')}</td>
-      <td>${typeBadge(p.project_type)}</td>
-      <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(sums.actual, sums.expected)}</div><span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(sums.actual,'hrs')}/${fmt(sums.expected,'hrs')}</span></div></td>
-      <td>${statusBadge(p.status)}</td>
-      <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
-    </tr>`;
-  }
-
-  let html = '';
-  for (const gp of grandparents) {
-    html += treeRow(gp, 0, null);
-    for (const par of (parentsByGP[gp.id]||[])) {
-      html += treeRow(par, 1, 'gp-'+gp.id);
-      for (const kid of (childrenByPar[par.id]||[])) {
-        html += treeRow(kid, 2, 'pr-'+par.id);
+      // Recurse into children
+      if (expandable) {
+        html += buildRows(kids, depth + 1, groupKey);
       }
     }
+    return html;
   }
-  tbody.innerHTML = html;
+
+  tbody.innerHTML = buildRows(roots, 0, null);
 }
 
 function dtreeToggle(groupKey, chevId) {
@@ -1293,13 +1263,13 @@ function dtreeToggle(groupKey, chevId) {
   rows.forEach(r => {
     r.style.display = showing ? 'none' : 'table-row';
     if (showing) {
-      // Collapse nested children too
-      const nestedChev = r.querySelector('[id^="dc-"]');
-      if (nestedChev) {
-        nestedChev.style.transform = 'rotate(0deg)';
-        const nestedId = nestedChev.id.replace('dc-','');
-        document.querySelectorAll('.dtree-pr-' + nestedId).forEach(n => n.style.display = 'none');
-      }
+      // Recursively collapse all nested children
+      const nestedChevs = r.querySelectorAll('[id^="dc-"]');
+      nestedChevs.forEach(nc => {
+        nc.style.transform = 'rotate(0deg)';
+        const nestedKey = 'dt-' + nc.id.replace('dc-','');
+        document.querySelectorAll('.dtree-' + nestedKey).forEach(n => n.style.display = 'none');
+      });
     }
   });
   if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
@@ -1326,70 +1296,42 @@ async function loadProjects() {
   populateParentDropdown(null);
 }
 
-// Build the parent-project dropdown options with proper indentation showing
-// the hierarchy. Top-level projects appear flush; mid-level projects are
-// indented under their grandparent. Excludes the project being edited (and
-// its descendants) so a project can't become its own ancestor.
-//
-// editingId: the ID of the project being edited, or null when creating.
+// Build the parent-project dropdown with proper indentation showing hierarchy.
+// Excludes the project being edited (and its descendants) so a project can't
+// become its own ancestor. Supports unlimited nesting depth.
 function populateParentDropdown(editingId) {
   const pp = document.getElementById('proj-parent');
   if (!pp) return;
   while (pp.options.length > 1) pp.remove(1);
 
-  // Build descendant set for editing project (so we can exclude them as parent options)
+  // Build descendant set for editing project
   const excluded = new Set();
   if (editingId) {
     excluded.add(editingId);
-    const childrenOf = {};
-    allProjects.forEach(p => {
-      if (p.parent_id) {
-        if (!childrenOf[p.parent_id]) childrenOf[p.parent_id] = [];
-        childrenOf[p.parent_id].push(p.id);
-      }
-    });
+    const kidMap = {};
+    allProjects.forEach(p => { if (p.parent_id) { (kidMap[p.parent_id] = kidMap[p.parent_id] || []).push(p.id); } });
     const stack = [editingId];
     while (stack.length) {
       const id = stack.pop();
-      for (const kid of (childrenOf[id] || [])) {
-        if (!excluded.has(kid)) { excluded.add(kid); stack.push(kid); }
-      }
+      for (const kid of (kidMap[id] || [])) { if (!excluded.has(kid)) { excluded.add(kid); stack.push(kid); } }
     }
   }
 
-  // Build a depth lookup: 0 = top-level, 1 = parent (mid-level), 2 = leaf.
-  // Anything at depth 2 cannot become a parent (would create depth-3 grandchildren,
-  // which our 3-level UI doesn't support).
+  // Build children map and walk recursively for indented options
   const byId = Object.fromEntries(allProjects.map(p => [p.id, p]));
-  function depthOf(p) {
-    if (!p.parent_id) return 0;
-    const par = byId[p.parent_id];
-    if (!par || !par.parent_id) return 1;
-    return 2;
-  }
-
-  // Walk top-level projects first, then their direct children, depth-first
-  // so the dropdown reads as a tree.
-  const topLevel = allProjects.filter(p => !p.parent_id);
   const childrenOf = {};
-  allProjects.forEach(p => {
-    if (p.parent_id) {
-      if (!childrenOf[p.parent_id]) childrenOf[p.parent_id] = [];
-      childrenOf[p.parent_id].push(p);
-    }
-  });
+  allProjects.forEach(p => { if (p.parent_id) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
+  const roots = allProjects.filter(p => !p.parent_id);
 
-  for (const top of topLevel) {
-    if (!excluded.has(top.id)) {
-      pp.add(new Option(`${top.name} (${top.client_name || ''})`, top.id));
-    }
-    // Mid-level children of this top-level can also be parents
-    for (const mid of (childrenOf[top.id] || [])) {
-      if (depthOf(mid) === 1 && !excluded.has(mid.id)) {
-        pp.add(new Option(`   └ ${mid.name} (${mid.client_name || ''})`, mid.id));
-      }
+  function addOptions(projects, depth) {
+    for (const p of projects) {
+      if (excluded.has(p.id)) continue;
+      const indent = '\u00A0\u00A0\u00A0'.repeat(depth) + (depth > 0 ? '└ ' : '');
+      pp.add(new Option(`${indent}${p.name} (${p.client_name || ''})`, p.id));
+      addOptions(childrenOf[p.id] || [], depth + 1);
     }
   }
+  addOptions(roots, 0);
 }
 
 function filterProjects() {
@@ -1426,127 +1368,70 @@ function renderProjects(list, expandAll = false) {
     return;
   }
 
-  // Build lookup so depth/ancestor walks are cheap
+  // Build lookup and children map for unlimited depth
   const byId = {};
   list.forEach(p => byId[p.id] = p);
+  const childrenOf = {};
+  list.forEach(p => { if (p.parent_id && byId[p.parent_id]) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
+  const roots = list.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // Depth: 0 = grandparent (no parent), 1 = parent, 2 = child
-  function getDepth(p) {
-    if (!p.parent_id) return 0;
-    const par = byId[p.parent_id];
-    if (!par || !par.parent_id) return 1;
-    return 2;
-  }
-
-  // Bucket by relationship for fast tree walk
-  const grandparents = list.filter(p => getDepth(p) === 0);
-  const parents = list.filter(p => getDepth(p) === 1);
-  const children = list.filter(p => getDepth(p) === 2);
-
-  const parentsByGP = {};
-  parents.forEach(p => { (parentsByGP[p.parent_id] = parentsByGP[p.parent_id] || []).push(p); });
-  const childrenByPar = {};
-  children.forEach(c => { (childrenByPar[c.parent_id] = childrenByPar[c.parent_id] || []).push(c); });
-
-  // Roll up logged hours, expected hours, and expected revenue from descendants
-  // so parent rows show the totals (regardless of project_type mix).
-  function sumProjHours(p, depth) {
+  // Recursive rollup through any depth
+  function sumTree(p) {
     let logged = parseFloat(p.logged_hours) || 0;
     let expected = parseFloat(p.expected_hours) || 0;
     let revenue = parseFloat(p.expected_revenue) || 0;
-    if (depth === 0) {
-      for (const par of (parentsByGP[p.id] || [])) {
-        const s = sumProjHours(par, 1);
-        logged += s.logged; expected += s.expected; revenue += s.revenue;
-      }
-    } else if (depth === 1) {
-      for (const kid of (childrenByPar[p.id] || [])) {
-        logged += parseFloat(kid.logged_hours) || 0;
-        expected += parseFloat(kid.expected_hours) || 0;
-        revenue += parseFloat(kid.expected_revenue) || 0;
-      }
+    for (const kid of (childrenOf[p.id] || [])) {
+      const s = sumTree(kid);
+      logged += s.logged; expected += s.expected; revenue += s.revenue;
     }
     return { logged, expected, revenue };
   }
 
-  function projRow(p, depth, groupClass) {
-    const indent = depth * 24;
-    const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
-    const bgColors = ['', 'background:var(--gray-light)', 'background:#f0f0f0'];
-    const bg = bgColors[depth] || '';
+  function buildProjRows(projects, depth, parentGroupClass) {
+    let html = '';
+    for (const p of projects) {
+      const indent = depth * 28;
+      const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+      const kids = childrenOf[p.id] || [];
+      const expandable = kids.length > 0;
+      const groupKey = 'pt-' + p.id;
+      const chevId = 'pc-' + p.id;
+      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+      const startHidden = parentGroupClass && !expandAll;
+      const display = startHidden ? 'display:none;' : '';
+      const trAttrs = parentGroupClass
+        ? `class="ptree ptree-${parentGroupClass}" style="${display}${bg};cursor:pointer"`
+        : `style="${bg};cursor:pointer"`;
+      const sums = sumTree(p);
+      const badge = expandable ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kids.length}</span>` : '';
+      const chevRotation = expandable && expandAll ? 'transform:rotate(90deg);' : '';
+      const chevron = expandable
+        ? `<span onclick="event.stopPropagation();ptreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
+        : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
-    let kidCount = 0, kidKey = null;
-    if (depth === 0) { kidCount = (parentsByGP[p.id] || []).length; kidKey = 'gp-' + p.id; }
-    else if (depth === 1) { kidCount = (childrenByPar[p.id] || []).length; kidKey = 'pr-' + p.id; }
-
-    const expandable = kidCount > 0;
-    const chevId = 'pc-' + p.id;
-    const chevRotation = expandable && expandAll ? 'transform:rotate(90deg);' : '';
-    const chevron = expandable
-      ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s;${chevRotation}"></i>`
-      : (depth === 0 ? '<span style="width:15px;display:inline-block"></span>' : '');
-    const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
-
-    // Rollup totals for parent rows
-    const sums = sumProjHours(p, depth);
-
-    // Build tr attributes — children of a group get class="ptree ptree-<key>" so the toggle can find them.
-    const startHidden = groupClass && !expandAll;
-    const display = startHidden ? 'display:none;' : '';
-    const trAttrs = groupClass
-      ? `class="ptree ptree-${groupClass}" style="${display}${bg};cursor:pointer"`
-      : `style="${bg};cursor:pointer"`;
-
-    // Row click opens detail; chevron click toggles expansion (event.stopPropagation in handler)
-    const chevWrap = expandable ? `<span onclick="event.stopPropagation();ptreeToggle('${kidKey}','${chevId}')">${chevron}</span>` : chevron;
-
-    return `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
-      <td class="td-name" style="padding-left:${12 + indent}px">${chevWrap}${prefix}${esc(p.name)}${badge}</td>
-      <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
-      <td class="td-mono">${esc(p.work_order_number || '—')}</td>
-      <td>${typeBadge(p.project_type)}</td>
-      <td><span style="font-size:12px">${sums.expected ? fmt(sums.expected, 'hrs') : '—'}</span><br><span class="td-muted" style="font-size:11px">${sums.revenue ? fmtMoney(sums.revenue) : '—'}</span></td>
-      <td>${progressBar(sums.logged, sums.expected)}<span style="font-size:11px;color:var(--text-muted)">${fmt(sums.logged, 'hrs')} / ${fmt(sums.expected, 'hrs')}</span></td>
-      <td>${statusBadge(p.status)}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-        ${depth === 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>` : ''}
-        ${p.status === 'completed' && !p.billed_date ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>` : ''}
-        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      </td>
-    </tr>`;
-  }
-
-  let html = '';
-  // Walk the tree top-down through grandparents
-  for (const gp of grandparents) {
-    html += projRow(gp, 0, null);
-    for (const par of (parentsByGP[gp.id] || [])) {
-      html += projRow(par, 1, 'gp-' + gp.id);
-      for (const kid of (childrenByPar[par.id] || [])) {
-        html += projRow(kid, 2, 'pr-' + par.id);
-      }
+      html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
+        <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
+        <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
+        <td class="td-mono">${esc(p.work_order_number || '—')}</td>
+        <td>${typeBadge(p.project_type)}</td>
+        <td><span style="font-size:12px">${sums.expected ? fmt(sums.expected, 'hrs') : '—'}</span><br><span class="td-muted" style="font-size:11px">${sums.revenue ? fmtMoney(sums.revenue) : '—'}</span></td>
+        <td>${progressBar(sums.logged, sums.expected)}<span style="font-size:11px;color:var(--text-muted)">${fmt(sums.logged, 'hrs')} / ${fmt(sums.expected, 'hrs')}</span></td>
+        <td>${statusBadge(p.status)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          ${depth === 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>` : ''}
+          ${p.status === 'completed' && !p.billed_date ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>` : ''}
+          <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>`;
+      if (expandable) html += buildProjRows(kids, depth + 1, groupKey);
     }
-  }
-  // Orphan parents (their grandparent isn't in the current filtered list) → render as top-level
-  for (const par of parents) {
-    if (!byId[par.parent_id]) {
-      html += projRow(par, 0, null);
-      for (const kid of (childrenByPar[par.id] || [])) {
-        html += projRow(kid, 1, 'pr-' + par.id);
-      }
-    }
-  }
-  // Orphan children (their parent isn't in the list) → render as top-level
-  for (const kid of children) {
-    if (!byId[kid.parent_id]) html += projRow(kid, 0, null);
+    return html;
   }
 
-  tbody.innerHTML = html;
+  tbody.innerHTML = buildProjRows(roots, 0, null);
 }
 
-// Toggle one branch open/closed. Uses the 'ptree-' class prefix so it doesn't
-// collide with the dashboard tree's 'dtree-' classes.
 function ptreeToggle(groupKey, chevId) {
   const rows = document.querySelectorAll('.ptree-' + groupKey);
   const chev = document.getElementById(chevId);
@@ -1554,13 +1439,12 @@ function ptreeToggle(groupKey, chevId) {
   rows.forEach(r => {
     r.style.display = showing ? 'none' : 'table-row';
     if (showing) {
-      // When collapsing, also collapse any nested branches inside this one
-      const nestedChev = r.querySelector('[id^="pc-"]');
-      if (nestedChev) {
-        nestedChev.style.transform = 'rotate(0deg)';
-        const nestedId = nestedChev.id.replace('pc-', '');
-        document.querySelectorAll('.ptree-pr-' + nestedId).forEach(n => n.style.display = 'none');
-      }
+      const nestedChevs = r.querySelectorAll('[id^="pc-"]');
+      nestedChevs.forEach(nc => {
+        nc.style.transform = 'rotate(0deg)';
+        const nestedKey = 'pt-' + nc.id.replace('pc-','');
+        document.querySelectorAll('.ptree-' + nestedKey).forEach(n => n.style.display = 'none');
+      });
     }
   });
   if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
@@ -2811,103 +2695,58 @@ function renderRevenueDetail(details) {
 
   const byId = {};
   details.forEach(p => byId[p.id] = p);
-  function getDepth(p) {
-    if (!p.parent_id) return 0;
-    const par = byId[p.parent_id];
-    if (!par || !par.parent_id) return 1;
-    return 2;
-  }
-  const grandparents = details.filter(p => getDepth(p) === 0);
-  const parents = details.filter(p => getDepth(p) === 1);
-  const children = details.filter(p => getDepth(p) === 2);
-  const parentsByGP = {};
-  parents.forEach(p => { (parentsByGP[p.parent_id] = parentsByGP[p.parent_id] || []).push(p); });
-  const childrenByPar = {};
-  children.forEach(c => { (childrenByPar[c.parent_id] = childrenByPar[c.parent_id] || []).push(c); });
+  const childrenOf = {};
+  details.forEach(p => { if (p.parent_id && byId[p.parent_id]) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
+  const roots = details.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // For parent rows, roll up children's hours and earned so the user sees the total
-  // even when the branch is collapsed.
-  function sumDescendants(p, depth) {
+  function sumTree(p) {
     let hrs = parseFloat(p.period_hours) || 0;
     let earned = parseFloat(p.earned) || 0;
-    if (depth === 0) {
-      for (const par of (parentsByGP[p.id] || [])) {
-        const sub = sumDescendants(par, 1);
-        hrs += sub.hrs; earned += sub.earned;
-      }
-    } else if (depth === 1) {
-      for (const kid of (childrenByPar[p.id] || [])) {
-        hrs += parseFloat(kid.period_hours) || 0;
-        earned += parseFloat(kid.earned) || 0;
-      }
+    for (const kid of (childrenOf[p.id] || [])) {
+      const s = sumTree(kid);
+      hrs += s.hrs; earned += s.earned;
     }
     return { hrs, earned };
   }
 
-  function row(p, depth, groupClass) {
-    const indent = depth * 24;
-    const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
-    const bgColors = ['', 'background:var(--gray-light)', 'background:#f0f0f0'];
-    const bg = bgColors[depth] || '';
+  function buildRevRows(projects, depth, parentGroupClass) {
+    let html = '';
+    for (const p of projects) {
+      const indent = depth * 28;
+      const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
+      const kids = childrenOf[p.id] || [];
+      const expandable = kids.length > 0;
+      const groupKey = 'rv-' + p.id;
+      const chevId = 'rc-' + p.id;
+      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+      const trClass = ['clickable'];
+      if (parentGroupClass) trClass.push('rtree', 'rtree-' + parentGroupClass);
+      const trStyle = parentGroupClass ? `display:none;${bg}` : bg;
+      const trAttrs = `class="${trClass.join(' ')}" style="${trStyle}"`;
+      const totals = sumTree(p);
+      const expected = parseFloat(p.expected_revenue) || 0;
+      const earnedColor = totals.earned > 0 ? 'var(--primary)' : 'var(--text-muted)';
+      const badge = expandable ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kids.length}</span>` : '';
+      const chevron = expandable
+        ? `<span onclick="event.stopPropagation();rtreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></span>`
+        : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
-    let kidCount = 0, kidKey = null;
-    if (depth === 0) { kidCount = (parentsByGP[p.id] || []).length; kidKey = 'gp-' + p.id; }
-    else if (depth === 1) { kidCount = (childrenByPar[p.id] || []).length; kidKey = 'pr-' + p.id; }
-
-    const expandable = kidCount > 0;
-    const chevId = 'rc-' + p.id;
-    // Chevron is a clickable span that toggles the tree without firing the row click
-    const chevron = expandable
-      ? `<span onclick="event.stopPropagation();rtreeToggle('${kidKey}','${chevId}')" style="display:inline-block;padding:2px 4px;cursor:pointer;margin-right:4px"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);transition:transform .2s"></i></span>`
-      : (depth === 0 ? '<span style="width:15px;display:inline-block"></span>' : '');
-    const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
-
-    // Display rolled-up totals on parent rows for at-a-glance context
-    const totals = sumDescendants(p, depth);
-    const expected = parseFloat(p.expected_revenue) || 0;
-    const earnedColor = totals.earned > 0 ? 'var(--primary)' : 'var(--text-muted)';
-
-    // Whole row click opens the project detail modal. Tree expansion is a separate click on the chevron.
-    const rowClick = `onclick="showProjectDetail('${p.id}')"`;
-    const trClass = ['clickable'];
-    if (groupClass) trClass.push('rtree', 'rtree-' + groupClass);
-    const trStyle = groupClass ? `display:none;${bg}` : bg;
-    const trAttrs = `class="${trClass.join(' ')}" style="${trStyle}"`;
-
-    return `<tr ${trAttrs} ${rowClick}>
-      <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
-      <td>${esc(p.client_name || '—')}</td>
-      <td class="td-mono">${esc(p.work_order_number || '—')}</td>
-      <td>${typeBadge(p.project_type)}</td>
-      <td>${fmt(totals.hrs, 'hrs')}</td>
-      <td>${expected ? fmtMoney(expected) : '—'}</td>
-      <td style="font-weight:600;color:${earnedColor}">${fmtMoney(totals.earned)}</td>
-      <td>${statusBadge(p.status)}</td>
-    </tr>`;
-  }
-
-  let html = '';
-  for (const gp of grandparents) {
-    html += row(gp, 0, null);
-    for (const par of (parentsByGP[gp.id] || [])) {
-      html += row(par, 1, 'gp-' + gp.id);
-      for (const kid of (childrenByPar[par.id] || [])) {
-        html += row(kid, 2, 'pr-' + par.id);
-      }
+      html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
+        <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
+        <td>${esc(p.client_name || '—')}</td>
+        <td class="td-mono">${esc(p.work_order_number || '—')}</td>
+        <td>${typeBadge(p.project_type)}</td>
+        <td>${fmt(totals.hrs, 'hrs')}</td>
+        <td>${expected ? fmtMoney(expected) : '—'}</td>
+        <td style="font-weight:600;color:${earnedColor}">${fmtMoney(totals.earned)}</td>
+        <td>${statusBadge(p.status)}</td>
+      </tr>`;
+      if (expandable) html += buildRevRows(kids, depth + 1, groupKey);
     }
-  }
-  // Orphans (parent not in current period filter)
-  for (const par of parents) {
-    if (!byId[par.parent_id]) {
-      html += row(par, 0, null);
-      for (const kid of (childrenByPar[par.id] || [])) html += row(kid, 1, 'pr-' + par.id);
-    }
-  }
-  for (const kid of children) {
-    if (!byId[kid.parent_id]) html += row(kid, 0, null);
+    return html;
   }
 
-  tbody.innerHTML = html;
+  tbody.innerHTML = buildRevRows(roots, 0, null);
 }
 
 function rtreeToggle(groupKey, chevId) {
@@ -2917,12 +2756,12 @@ function rtreeToggle(groupKey, chevId) {
   rows.forEach(r => {
     r.style.display = showing ? 'none' : 'table-row';
     if (showing) {
-      const nestedChev = r.querySelector('[id^="rc-"]');
-      if (nestedChev) {
-        nestedChev.style.transform = 'rotate(0deg)';
-        const nestedId = nestedChev.id.replace('rc-', '');
-        document.querySelectorAll('.rtree-pr-' + nestedId).forEach(n => n.style.display = 'none');
-      }
+      const nestedChevs = r.querySelectorAll('[id^="rc-"]');
+      nestedChevs.forEach(nc => {
+        nc.style.transform = 'rotate(0deg)';
+        const nestedKey = 'rv-' + nc.id.replace('rc-','');
+        document.querySelectorAll('.rtree-' + nestedKey).forEach(n => n.style.display = 'none');
+      });
     }
   });
   if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
