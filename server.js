@@ -394,18 +394,28 @@ function detectColumns(headers) {
     return null;
   }
   return {
-    name: findOne('name', 'employee', 'worker', 'staff', 'staff_name', 'employee_name'),
-    date: findOne('date', 'entry_date', 'work_date', 'day'),
-    wo: findOne('wo', 'wo#', 'wo #', 'work_order', 'work order', 'work_order_number', 'wo_number', 'job', 'job#'),
+    name: findOne('name', 'employee', 'worker', 'staff', 'staff_name', 'employee_name', 'inspector', 'inspector name'),
+    date: findOne('date', 'entry_date', 'work_date', 'day', 'work date'),
+    week_ending: findOne('week ending', 'week_ending', 'weekending', 'week-ending'),
+    wo: findOne('wo', 'wo#', 'wo #', 'work_order', 'work order', 'work_order_number', 'wo_number', 'work order #', 'work order#', 'job', 'job#'),
     hours: findOne('hours', 'hrs', 'time', 'qty'),
-    job_title: findOne('job_title', 'title', 'position', 'role', 'classification')
+    job_title: findOne('job_title', 'title', 'position', 'role', 'classification', 'billing code', 'billing_code')
   };
 }
 
-// Parse a date cell into YYYY-MM-DD or return null. Handles ISO, MM/DD/YYYY, M/D/YY, etc.
-function parseDateCell(v) {
+const MONTH_LOOKUP = {
+  jan:1, january:1, feb:2, february:2, mar:3, march:3, apr:4, april:4,
+  may:5, jun:6, june:6, jul:7, july:7, aug:8, august:8,
+  sep:9, sept:9, september:9, oct:10, october:10, nov:11, november:11, dec:12, december:12
+};
+
+// Parse a date cell into YYYY-MM-DD or return null. Handles ISO, MM/DD/YYYY, M/D/YY,
+// "D-MMM" (e.g., "2-Mar"), and "D MMM" formats. anchorYear (from a Week Ending column)
+// is required for the short formats since they don't include a year.
+function parseDateCell(v, anchorYear, anchorDate) {
   if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
+
   // Already ISO YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   // M/D/YYYY or MM/DD/YYYY
@@ -417,10 +427,77 @@ function parseDateCell(v) {
     const yr = 2000 + parseInt(m[3], 10);
     return `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   }
+
+  // "D-MMM" or "D MMM" — day + 3+ letter month, no year.
+  // Use anchorYear (from Week Ending) to fill in the year. If the resulting date
+  // falls AFTER the anchor date by more than a week, the work date is in the
+  // previous year (handles New Year crossover).
+  m = s.match(/^(\d{1,2})[-\s\/]([A-Za-z]{3,})$/);
+  if (m && anchorYear) {
+    const monthNum = MONTH_LOOKUP[m[2].toLowerCase()];
+    if (monthNum) {
+      let year = anchorYear;
+      const day = parseInt(m[1], 10);
+      let result = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      if (anchorDate) {
+        const d = new Date(result + 'T00:00:00');
+        const anchor = new Date(anchorDate + 'T00:00:00');
+        const diffDays = (d - anchor) / 86400000;
+        if (diffDays > 7) {
+          // Work date can't be > 7 days after week-ending; year must be prior
+          year = anchorYear - 1;
+          result = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        } else if (diffDays < -14) {
+          // Or this could be next year (early-year work, week-ending wrapped)
+          year = anchorYear + 1;
+          result = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        }
+      }
+      return result;
+    }
+  }
+
   // Last resort: try Date parser
   const d = new Date(s);
   if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
   return null;
+}
+
+// Find the actual header row in a 2D array of rows. Real-world spreadsheets often
+// have title and metadata rows above the column headers (e.g., "Inspector Daily
+// Time Entry" on row 1, then column names on row 3). Returns the index of the
+// header row, or -1 if none found.
+function findHeaderRow(rows2d) {
+  const SIGNALS = ['name', 'employee', 'worker', 'inspector', 'staff', 'date',
+    'week ending', 'hours', 'hrs', 'wo', 'work order', 'job'];
+  for (let i = 0; i < Math.min(rows2d.length, 20); i++) {
+    const row = rows2d[i] || [];
+    const lc = row.map(c => String(c || '').trim().toLowerCase()).filter(Boolean);
+    if (lc.length < 3) continue;
+    let matches = 0;
+    for (const cell of lc) {
+      for (const sig of SIGNALS) {
+        if (cell === sig || cell.includes(sig)) { matches++; break; }
+      }
+    }
+    if (matches >= 3) return i;
+  }
+  return -1;
+}
+
+// Convert a 2D row array (starting AT the header row) into objects keyed by header.
+function arrayToObjects(rows2d, headerIdx) {
+  const headers = rows2d[headerIdx].map(h => String(h || '').trim());
+  const out = [];
+  for (let i = headerIdx + 1; i < rows2d.length; i++) {
+    const row = rows2d[i] || [];
+    // Skip rows that are entirely empty (separator rows + trailing junk)
+    if (row.every(c => c === null || c === undefined || String(c).trim() === '')) continue;
+    const obj = {};
+    headers.forEach((h, j) => { if (h) obj[h] = row[j]; });
+    out.push(obj);
+  }
+  return { headers: headers.filter(Boolean), rows: out };
 }
 
 // Validate a parsed CSV/XLSX file. Does not write anything. Returns:
@@ -439,30 +516,40 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
 
   try {
     const ext = path.extname(req.file.originalname).toLowerCase();
-    let rows = [];
-    let headers = [];
+    let rows2d = [];
 
+    // Read the sheet as a 2D array so we can scan for the real header row.
+    // Real-world templates often have title/metadata rows above the column headers.
     if (ext === '.xlsx' || ext === '.xls') {
       const wb = XLSX.readFile(req.file.path);
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
-      headers = Object.keys(rows[0] || {});
+      rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
     } else if (ext === '.csv' || ext === '.tsv') {
       const content = fs.readFileSync(req.file.path, 'utf8');
       const wb = XLSX.read(content, { type: 'string' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
-      headers = Object.keys(rows[0] || {});
+      rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
     } else {
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: 'Unsupported file type. Use .csv, .xlsx, or .xls.' });
     }
 
-    fs.unlinkSync(req.file.path); // we have the data in memory now
+    fs.unlinkSync(req.file.path);
 
+    // Find the real header row inside the first ~20 rows
+    const headerIdx = findHeaderRow(rows2d);
+    if (headerIdx < 0) {
+      return res.status(400).json({
+        error: 'Could not find a header row in the first 20 rows of the file. Expected columns include name/employee/inspector, date, hours, work order.',
+        first_rows: rows2d.slice(0, 8)
+      });
+    }
+
+    const { headers, rows } = arrayToObjects(rows2d, headerIdx);
     const cols = detectColumns(headers);
+
     const missing = [];
-    if (!cols.name) missing.push('name/employee');
+    if (!cols.name) missing.push('name/employee/inspector');
     if (!cols.date) missing.push('date');
     if (!cols.wo) missing.push('work_order');
     if (!cols.hours) missing.push('hours');
@@ -474,7 +561,7 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
       });
     }
 
-    // Pull all staff and projects so we can look up locally (cheaper than per-row queries)
+    // Pull staff + projects so per-row matching is cheap
     const [staffR, projR] = await Promise.all([
       pool.query('SELECT id, name FROM staff'),
       pool.query('SELECT id, name, work_order_number FROM projects WHERE work_order_number IS NOT NULL AND work_order_number != \'\'')
@@ -487,23 +574,37 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
     const today = new Date(); today.setHours(0,0,0,0);
     const past18 = new Date(today); past18.setMonth(past18.getMonth() - 18);
 
-    // Walk rows, classify each
     const validRows = [];
-    const unknownStaff = new Map(); // normalized → original name
-    const unknownWOs = new Map();   // normalized → original WO
+    const unknownStaff = new Map();
+    const unknownWOs = new Map();
     const invalidRows = [];
 
     rows.forEach((r, i) => {
-      const rowNum = i + 2; // +2 for header row + 1-indexed display
+      const rowNum = headerIdx + 2 + i; // 1-indexed display number for the user
       const rawName = r[cols.name];
       const rawDate = r[cols.date];
       const rawWO = r[cols.wo];
       const rawHrs = r[cols.hours];
       const rawTitle = cols.job_title ? r[cols.job_title] : null;
+      const rawWeekEnding = cols.week_ending ? r[cols.week_ending] : null;
+
+      // Silently drop rows that are *effectively* empty (no name, no WO, no hours).
+      // This handles the separator rows between inspectors and trailing junk.
+      const allBlank = !String(rawName ?? '').trim()
+        && !String(rawWO ?? '').trim()
+        && !String(rawHrs ?? '').trim();
+      if (allBlank) return;
+
+      // Anchor year for short-month dates: use Week Ending if available
+      let anchorYear = null, anchorDate = null;
+      if (rawWeekEnding) {
+        const we = parseDateCell(rawWeekEnding);
+        if (we) { anchorYear = parseInt(we.split('-')[0], 10); anchorDate = we; }
+      }
 
       const issues = [];
       const name = (rawName || '').toString().trim();
-      const date = parseDateCell(rawDate);
+      const date = parseDateCell(rawDate, anchorYear, anchorDate);
       const woNorm = normalizeWO(rawWO);
       const hrs = parseFloat(rawHrs);
 
@@ -556,7 +657,7 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
       headers,
       detected_columns: cols,
       summary: {
-        total_rows: rows.length,
+        total_rows: validRows.length + invalidRows.length,
         ready_to_import: validRows.filter(r => r.staff_known && r.wo_known).length,
         rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
         rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,

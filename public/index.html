@@ -497,25 +497,77 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="form-row">
           <div class="form-group span2">
             <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
-            <select id="proj-parent" onchange="loadBudgetCodesForProject(this.value)"><option value="">None — Top-level project</option></select>
+            <div style="display:flex;gap:6px">
+              <select id="proj-parent" onchange="loadBudgetCodesForProject(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('parent')" title="Add new parent project"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+              <input type="text" id="qa-parent-name" placeholder="Parent project name (e.g. Reconnect 3 — Contract 3)" style="margin-bottom:6px">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/contract will be inherited.</div>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('parent', false)">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddParent()"><i class="fa-solid fa-check"></i> Add</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Client *</label>
-            <select id="proj-client" onchange="clientChanged()"><option value="">Select client...</option></select>
+            <div style="display:flex;gap:6px">
+              <select id="proj-client" onchange="clientChanged()" style="flex:1"><option value="">Select client...</option></select>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('client')" title="Add new client"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="qa-client" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+                <input type="text" id="qa-client-name" placeholder="Client name (e.g. PSC)" style="flex:1">
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap"><input type="checkbox" id="qa-client-rus" style="width:auto"> RUS</label>
+              </div>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('client', false)">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddClient()"><i class="fa-solid fa-check"></i> Add</button>
+              </div>
+            </div>
           </div>
           <div class="form-group">
             <label>Contract</label>
-            <select id="proj-contract"><option value="">None / N/A</option></select>
+            <div style="display:flex;gap:6px">
+              <select id="proj-contract" style="flex:1"><option value="">None / N/A</option></select>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new contract"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <input type="text" id="qa-contract-num" placeholder="Contract # (e.g. RUS-217)" style="flex:1">
+                <input type="text" id="qa-contract-name" placeholder="Display name (optional)" style="flex:2">
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Will be added under the currently-selected client.</div>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('contract', false)">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddContract()"><i class="fa-solid fa-check"></i> Add</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Service Area / Concentrator</label>
-            <select id="proj-concentrator" onchange="concentratorChanged()">
-              <option value="">None — enter WO# manually</option>
-            </select>
+            <div style="display:flex;gap:6px">
+              <select id="proj-concentrator" onchange="concentratorChanged()" style="flex:1">
+                <option value="">None — enter WO# manually</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('conc')" title="Add new concentrator"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="qa-conc" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Reconnect 3)" style="flex:1">
+                <input type="text" id="qa-conc-area" placeholder="Area name (e.g. Mt. Paran)" style="flex:1">
+                <input type="text" id="qa-conc-wo" placeholder="WO# (optional)" style="flex:1">
+              </div>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('conc', false)">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddConcentrator()"><i class="fa-solid fa-check"></i> Add</button>
+              </div>
+            </div>
           </div>
           <div class="form-group">
             <label>Work Order Number</label>
@@ -579,7 +631,21 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="form-group" id="budget-code-group" style="display:none">
           <label>Budget Code <span style="font-weight:400;color:var(--text-muted)">(bills against this allocation)</span></label>
-          <select id="proj-budget-code"><option value="">None — No budget link</option></select>
+          <div style="display:flex;gap:6px">
+            <select id="proj-budget-code" style="flex:1"><option value="">None — No budget link</option></select>
+            <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('bcode')" title="Add new budget code"><i class="fa-solid fa-plus"></i></button>
+          </div>
+          <div id="qa-bcode" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input type="text" id="qa-bcode-code" placeholder="Code (e.g. Inspection)" style="flex:1">
+              <input type="number" id="qa-bcode-amount" placeholder="Allocated $" style="flex:1" step="0.01">
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Will be added under the parent project's budget. The parent must have a budget already.</div>
+            <div style="display:flex;gap:6px;justify-content:flex-end">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('bcode', false)">Cancel</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="quickAddBudgetCode()"><i class="fa-solid fa-check"></i> Add</button>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label>Notes</label>
@@ -936,7 +1002,128 @@ async function clientChanged() {
   while (csel.options.length > 1) csel.remove(1);
   if (!clientId) return;
   const ctrs = await api('/api/contracts?client_id=' + clientId);
-  ctrs.forEach(c => csel.add(new Option(c.name || c.contract_number, c.id)));
+  // De-dup by display name. If multiple contract records share the same name
+  // (which happens when they get auto-created repeatedly), collapse them into
+  // one dropdown option using the first matching id. The user can clean up
+  // the duplicate records later from the data side; this just keeps the UI sane.
+  const seen = new Set();
+  ctrs.forEach(c => {
+    const display = c.name || c.contract_number;
+    if (seen.has(display)) return;
+    seen.add(display);
+    csel.add(new Option(display, c.id));
+  });
+}
+
+// ─── QUICK-ADD INLINE PANELS ─────────────────────────────────────────────────
+// Each of the lookup dropdowns in the project modal (client, contract,
+// concentrator, parent, budget code) has a small "+" button that opens an
+// inline form below the row. Saving it POSTs to the existing endpoint, refreshes
+// the affected dropdown, and auto-selects the new option.
+
+function toggleQuickAdd(which, force) {
+  const ids = { client:'qa-client', contract:'qa-contract', conc:'qa-conc', parent:'qa-parent', bcode:'qa-bcode' };
+  const el = document.getElementById(ids[which]);
+  if (!el) return;
+  const open = force === undefined ? el.style.display === 'none' : force;
+  el.style.display = open ? 'block' : 'none';
+}
+
+async function quickAddClient() {
+  const name = document.getElementById('qa-client-name').value.trim();
+  if (!name) return alert('Client name is required.');
+  const isRus = document.getElementById('qa-client-rus').checked;
+  try {
+    const c = await api('/api/clients', 'POST', { name, is_rus: isRus });
+    await loadClients();
+    document.getElementById('proj-client').value = c.id;
+    await clientChanged();
+    document.getElementById('qa-client-name').value = '';
+    document.getElementById('qa-client-rus').checked = false;
+    toggleQuickAdd('client', false);
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function quickAddContract() {
+  const clientId = document.getElementById('proj-client').value;
+  if (!clientId) return alert('Pick a client first.');
+  const num = document.getElementById('qa-contract-num').value.trim();
+  const name = document.getElementById('qa-contract-name').value.trim() || num;
+  if (!num) return alert('Contract number is required.');
+  try {
+    const c = await api('/api/contracts', 'POST', { client_id: clientId, contract_number: num, name });
+    await clientChanged(); // re-pulls contracts for current client
+    document.getElementById('proj-contract').value = c.id;
+    document.getElementById('qa-contract-num').value = '';
+    document.getElementById('qa-contract-name').value = '';
+    toggleQuickAdd('contract', false);
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function quickAddConcentrator() {
+  const contractLabel = document.getElementById('qa-conc-contract').value.trim();
+  const areaName = document.getElementById('qa-conc-area').value.trim();
+  const wo = document.getElementById('qa-conc-wo').value.trim();
+  if (!contractLabel || !areaName) return alert('Contract label and area name are required.');
+  try {
+    const c = await api('/api/concentrators', 'POST', {
+      contract_label: contractLabel, area_name: areaName, work_order_number: wo || null
+    });
+    await loadConcentrators();
+    document.getElementById('proj-concentrator').value = c.id;
+    concentratorChanged(); // auto-fill the WO# field
+    document.getElementById('qa-conc-contract').value = '';
+    document.getElementById('qa-conc-area').value = '';
+    document.getElementById('qa-conc-wo').value = '';
+    toggleQuickAdd('conc', false);
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function quickAddParent() {
+  const name = document.getElementById('qa-parent-name').value.trim();
+  if (!name) return alert('Parent project name is required.');
+  const clientId = document.getElementById('proj-client').value || null;
+  const contractId = document.getElementById('proj-contract').value || null;
+  // Parent is a top-level container with type 'other'. The user can edit details later.
+  try {
+    const p = await api('/api/projects', 'POST', {
+      name, client_id: clientId, contract_id: contractId,
+      project_type: 'other', billing_type: 'hourly', billing_rate: 0, status: 'active'
+    });
+    // Re-populate the parent dropdown
+    allProjects = await api('/api/projects');
+    const pp = document.getElementById('proj-parent');
+    while (pp.options.length > 1) pp.remove(1);
+    const currentId = document.getElementById('proj-id').value;
+    allProjects.filter(p => !p.parent_id && p.id !== currentId).forEach(p => pp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+    document.getElementById('proj-parent').value = p.id;
+    document.getElementById('qa-parent-name').value = '';
+    toggleQuickAdd('parent', false);
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function quickAddBudgetCode() {
+  const parentId = document.getElementById('proj-parent').value;
+  if (!parentId) return alert('Pick a parent project first.');
+  const code = document.getElementById('qa-bcode-code').value.trim();
+  const amount = parseFloat(document.getElementById('qa-bcode-amount').value) || 0;
+  if (!code) return alert('Budget code is required.');
+  try {
+    // Find or create a budget for the parent
+    let budgets = await api('/api/budgets?project_id=' + parentId);
+    let budget = budgets[0];
+    if (!budget) {
+      budget = await api('/api/budgets', 'POST', { project_id: parentId, name: 'Default Budget', total_amount: 0 });
+    }
+    const bc = await api('/api/budget-codes', 'POST', {
+      budget_id: budget.id, code, allocated_amount: amount
+    });
+    await loadBudgetCodesForProject(parentId);
+    document.getElementById('proj-budget-code').value = bc.id;
+    document.getElementById('qa-bcode-code').value = '';
+    document.getElementById('qa-bcode-amount').value = '';
+    toggleQuickAdd('bcode', false);
+  } catch (e) { alert('Failed: ' + e.message); }
 }
 
 // ═══════════════════════════════════════════════════════════
