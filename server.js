@@ -1265,7 +1265,7 @@ app.get('/api/revenue/monthly-summary', async (req, res) => {
   const year = req.query.year || new Date().getFullYear();
   try {
     const { rows } = await pool.query(`
-      WITH monthly AS (
+      WITH hourly_monthly AS (
         SELECT
           EXTRACT(MONTH FROM te.entry_date)::int as month,
           COALESCE(SUM(te.hours), 0) as hours,
@@ -1273,6 +1273,16 @@ app.get('/api/revenue/monthly-summary', async (req, res) => {
         FROM time_entries te
         JOIN projects p ON p.id = te.project_id
         WHERE EXTRACT(YEAR FROM te.entry_date) = $1
+        GROUP BY month
+      ),
+      footage_monthly AS (
+        SELECT
+          COALESCE(EXTRACT(MONTH FROM p.completed_date), EXTRACT(MONTH FROM p.billed_date), EXTRACT(MONTH FROM p.start_date))::int as month,
+          COALESCE(SUM(p.expected_revenue), 0) as earned
+        FROM projects p
+        WHERE p.billing_type = 'footage'
+          AND p.status IN ('completed', 'billed')
+          AND EXTRACT(YEAR FROM COALESCE(p.completed_date, p.billed_date, p.start_date)) = $1
         GROUP BY month
       ),
       billed_monthly AS (
@@ -1291,12 +1301,13 @@ app.get('/api/revenue/monthly-summary', async (req, res) => {
         GROUP BY month
       )
       SELECT
-        m.month,
-        COALESCE(m.hours, 0) as hours,
-        COALESCE(m.earned, 0) as earned,
+        s.month,
+        COALESCE(h.hours, 0) as hours,
+        COALESCE(h.earned, 0) + COALESCE(f.earned, 0) as earned,
         COALESCE(b.billed, 0) as billed
       FROM generate_series(1, 12) AS s(month)
-      LEFT JOIN monthly m ON m.month = s.month
+      LEFT JOIN hourly_monthly h ON h.month = s.month
+      LEFT JOIN footage_monthly f ON f.month = s.month
       LEFT JOIN billed_monthly b ON b.month = s.month
       ORDER BY s.month
     `, [year]);
@@ -1463,6 +1474,103 @@ app.get('/api/revenue/unbilled', async (req, res) => {
       ORDER BY cl.name, p.project_type, p.completed_date NULLS LAST
     `);
     res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INVOICE MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+// List invoices with items, grouped by month
+app.get('/api/invoices', async (req, res) => {
+  const year = req.query.year || new Date().getFullYear();
+  try {
+    const { rows } = await pool.query(`
+      SELECT i.*,
+        cl.name as client_name,
+        EXTRACT(MONTH FROM i.invoice_date)::int as month,
+        json_agg(json_build_object(
+          'id', ii.id, 'project_id', ii.project_id,
+          'description', ii.description, 'quantity', ii.quantity,
+          'unit', ii.unit, 'rate', ii.rate, 'amount', ii.amount,
+          'project_name', p.name, 'project_type', p.project_type,
+          'work_order_number', p.work_order_number
+        )) FILTER (WHERE ii.id IS NOT NULL) as items
+      FROM invoices i
+      LEFT JOIN clients cl ON cl.id = i.client_id
+      LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
+      LEFT JOIN projects p ON p.id = ii.project_id
+      WHERE EXTRACT(YEAR FROM i.invoice_date) = $1
+      GROUP BY i.id, cl.name
+      ORDER BY i.invoice_date DESC
+    `, [year]);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete an invoice and optionally wipe associated hours + unbill projects
+app.delete('/api/invoices/:id', async (req, res) => {
+  const { wipe_hours } = req.query; // ?wipe_hours=true
+  try {
+    // Get invoice items to find linked projects
+    const { rows: items } = await pool.query(
+      'SELECT project_id FROM invoice_items WHERE invoice_id=$1', [req.params.id]
+    );
+    const projectIds = items.map(i => i.project_id).filter(Boolean);
+
+    // Unbill linked projects (set status back to completed, clear billed_date)
+    for (const pid of projectIds) {
+      await pool.query(
+        `UPDATE projects SET status='completed', billed_date=NULL WHERE id=$1 AND status='billed'`,
+        [pid]
+      );
+    }
+
+    // Optionally wipe hours for those projects
+    if (wipe_hours === 'true') {
+      for (const pid of projectIds) {
+        await pool.query('DELETE FROM time_entries WHERE project_id=$1', [pid]);
+        await updateProjectHours(pid);
+      }
+    }
+
+    // Delete the invoice (cascade deletes invoice_items)
+    await pool.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
+
+    res.json({ ok: true, unbilled_projects: projectIds.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Unbill a single project (reverse billing, keep hours)
+app.post('/api/projects/:id/unbill', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE projects SET status='completed', billed_date=NULL WHERE id=$1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Project not found' });
+    // Remove invoice items referencing this project
+    await pool.query('DELETE FROM invoice_items WHERE project_id=$1', [req.params.id]);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete a billed project entirely (removes from revenue, hours, everything)
+app.delete('/api/projects/:id/with-hours', async (req, res) => {
+  try {
+    // Delete time entries first
+    await pool.query('DELETE FROM time_entries WHERE project_id=$1', [req.params.id]);
+    // Delete invoice items
+    await pool.query('DELETE FROM invoice_items WHERE project_id=$1', [req.params.id]);
+    // Get parent before deleting
+    const { rows: proj } = await pool.query('SELECT parent_id FROM projects WHERE id=$1', [req.params.id]);
+    // Delete the project
+    await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
+    // Recalculate parent hours
+    if (proj[0] && proj[0].parent_id) {
+      await updateProjectHours(proj[0].parent_id);
+    }
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

@@ -372,19 +372,27 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <!-- ═══════════════════ BILLING ═══════════════════ -->
     <div id="view-billing" class="view">
       <div class="section-header">
-        <div><div class="section-title">Billing</div><div class="section-sub">Unbilled completed work — review and bill</div></div>
+        <div><div class="section-title">Billing</div><div class="section-sub">Manage unbilled work and view invoice history</div></div>
         <div style="display:flex;gap:8px">
+          <select class="filter" id="billing-year" onchange="loadBilling()"></select>
           <button class="btn btn-secondary btn-sm" onclick="loadBilling()"><i class="fa-solid fa-rotate"></i></button>
         </div>
       </div>
+      <!-- Unbilled section -->
       <div class="stats-grid" id="billing-stats"></div>
       <div class="card">
+        <div class="card-header"><span class="card-title">Unbilled — Ready to Bill</span></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th><th>Actions</th></tr></thead>
             <tbody id="billing-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
+      </div>
+      <!-- Invoice history -->
+      <div class="card" style="margin-top:8px">
+        <div class="card-header"><span class="card-title" id="invoice-history-title">Invoice History</span></div>
+        <div id="invoice-history-body" style="padding:0"></div>
       </div>
     </div>
 
@@ -2399,55 +2407,168 @@ async function csvImportCommit() {
 // BILLING
 // ═══════════════════════════════════════════════════════════
 async function loadBilling() {
-  const unbilled = await api('/api/revenue/unbilled');
+  // Populate year dropdown if empty
+  const yrSel = document.getElementById('billing-year');
+  if (yrSel.options.length === 0) {
+    const now = new Date();
+    for (let y = now.getFullYear() + 1; y >= now.getFullYear() - 3; y--) {
+      const o = new Option(y, y);
+      if (y === now.getFullYear()) o.selected = true;
+      yrSel.add(o);
+    }
+  }
+  const year = yrSel.value;
+
+  const [unbilled, invoices] = await Promise.all([
+    api('/api/revenue/unbilled'),
+    api('/api/invoices?year=' + year)
+  ]);
+
+  // ── Unbilled section ──
   const totalUnbilled = unbilled.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
+  const totalBilled = invoices.reduce((s, inv) => s + parseFloat(inv.total_amount || 0), 0);
 
   document.getElementById('billing-stats').innerHTML = `
-    <div class="stat-card accent"><div class="stat-label">Total Unbilled</div><div class="stat-value">${fmtMoney(totalUnbilled)}</div><div class="stat-sub">${unbilled.length} project${unbilled.length!==1?'s':''}</div></div>
+    <div class="stat-card warn"><div class="stat-label">Unbilled</div><div class="stat-value">${fmtMoney(totalUnbilled)}</div><div class="stat-sub">${unbilled.length} project${unbilled.length!==1?'s':''}</div></div>
+    <div class="stat-card accent"><div class="stat-label">Billed ${year}</div><div class="stat-value">${fmtMoney(totalBilled)}</div><div class="stat-sub">${invoices.length} invoice${invoices.length!==1?'s':''}</div></div>
   `;
 
   const tbody = document.getElementById('billing-body');
   if (!unbilled.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state" style="padding:40px"><i class="fa-solid fa-check-circle" style="color:var(--success);font-size:32px"></i><p>All completed projects have been billed!</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state" style="padding:24px"><i class="fa-solid fa-check-circle" style="color:var(--success);font-size:24px"></i><p>All completed projects have been billed!</p></div></td></tr>';
+  } else {
+    const byClient = {};
+    unbilled.forEach(p => { const c = p.client_name||'No Client'; if (!byClient[c]) byClient[c]=[]; byClient[c].push(p); });
+
+    let html = '';
+    for (const [client, projects] of Object.entries(byClient)) {
+      const clientTotal = projects.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
+      html += `<tr style="background:var(--primary-light)">
+        <td colspan="5" style="font-weight:700;color:var(--primary);padding:10px 16px"><i class="fa-solid fa-building" style="margin-right:6px"></i>${esc(client)}</td>
+        <td style="font-weight:700;color:var(--primary)">${fmtMoney(clientTotal)}</td><td colspan="2"></td></tr>`;
+      for (const p of projects) {
+        const hrs = parseFloat(p.logged_hours)||0;
+        const rate = parseFloat(p.billing_rate)||0;
+        const earned = parseFloat(p.earned_amount)||0;
+        html += `<tr>
+          <td class="td-name" style="padding-left:24px">└ ${esc(p.name)}</td>
+          <td>${esc(p.concentrator_area||p.work_order_number||'—')}</td>
+          <td>${typeBadge(p.project_type)}</td>
+          <td>${fmt(hrs,'hrs')}</td>
+          <td>$${rate.toFixed(2)}/hr</td>
+          <td style="font-weight:600">${fmtMoney(earned)}</td>
+          <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Bill</button>
+          </td></tr>`;
+      }
+    }
+    tbody.innerHTML = html;
+  }
+
+  // ── Invoice history ──
+  document.getElementById('invoice-history-title').textContent = `Invoice History — ${year}`;
+  const historyContainer = document.getElementById('invoice-history-body');
+
+  if (!invoices.length) {
+    historyContainer.innerHTML = '<div class="empty-state" style="padding:24px"><p>No invoices for this year</p></div>';
     return;
   }
 
-  // Group by client then parent
-  const byClient = {};
-  unbilled.forEach(p => {
-    const cli = p.client_name || 'No Client';
-    if (!byClient[cli]) byClient[cli] = [];
-    byClient[cli].push(p);
+  // Group invoices by month
+  const byMonth = {};
+  invoices.forEach(inv => {
+    const m = parseInt(inv.month) || 0;
+    if (!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(inv);
   });
 
-  let html = '';
-  for (const [client, projects] of Object.entries(byClient)) {
-    const clientTotal = projects.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
-    html += `<tr style="background:var(--primary-light)">
-      <td colspan="5" style="font-weight:700;font-size:14px;color:var(--primary);padding:10px 16px"><i class="fa-solid fa-building" style="margin-right:6px"></i>${esc(client)}</td>
-      <td style="font-weight:700;color:var(--primary);padding:10px 16px">${fmtMoney(clientTotal)}</td>
-      <td colspan="2"></td>
-    </tr>`;
+  let hHtml = '';
+  const monthsSorted = Object.keys(byMonth).map(Number).sort((a,b) => b-a);
+  for (const m of monthsSorted) {
+    const monthInvs = byMonth[m];
+    const monthTotal = monthInvs.reduce((s,i) => s + parseFloat(i.total_amount||0), 0);
+    const monthKey = 'inv-m-' + m;
+    hHtml += `<div onclick="htreeToggle('${monthKey}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-border);font-weight:700;background:var(--white)">
+      <div><i class="fa-solid fa-chevron-right" id="hc-${monthKey}" style="font-size:10px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-calendar-days" style="color:var(--primary);margin-right:6px"></i> ${MONTH_FULL[m-1] || 'Unknown'} ${year}</div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:14px;color:var(--primary)">${fmtMoney(monthTotal)}</span><span style="font-size:11px;color:var(--text-muted)">${monthInvs.length} invoice${monthInvs.length!==1?'s':''}</span></div>
+    </div>`;
 
-    for (const p of projects) {
-      const hrs = parseFloat(p.logged_hours) || 0;
-      const rate = parseFloat(p.billing_rate) || 0;
-      const earned = parseFloat(p.earned_amount) || 0;
-      html += `<tr>
-        <td class="td-name" style="padding-left:24px">└ ${esc(p.name)}</td>
-        <td>${esc(p.concentrator_area || p.work_order_number || '—')}</td>
-        <td>${typeBadge(p.project_type)}</td>
-        <td>${fmt(hrs, 'hrs')}</td>
-        <td>$${rate.toFixed(2)}/hr</td>
-        <td style="font-weight:600">${fmtMoney(earned)}</td>
-        <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')" title="Bill this project"><i class="fa-solid fa-check"></i> Bill</button>
-        </td>
-      </tr>`;
+    // Group by client within month
+    const byClient = {};
+    monthInvs.forEach(inv => { const c = inv.client_name||'No Client'; if (!byClient[c]) byClient[c]=[]; byClient[c].push(inv); });
+
+    for (const [client, clientInvs] of Object.entries(byClient)) {
+      const clientKey = monthKey + '-c-' + client.replace(/\W/g,'');
+      const clientTotal = clientInvs.reduce((s,i) => s + parseFloat(i.total_amount||0), 0);
+      hHtml += `<div class="htree htree-${monthKey}" onclick="event.stopPropagation();htreeToggle('${clientKey}')" style="display:none;cursor:pointer;padding:10px 16px 10px 40px;border-bottom:1px solid #f0f0f0;background:var(--gray-light);font-weight:600">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><i class="fa-solid fa-chevron-right" id="hc-${clientKey}" style="font-size:9px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-building" style="color:var(--text-muted);margin-right:6px;font-size:12px"></i> ${esc(client)}</div>
+          <div style="font-size:13px">${fmtMoney(clientTotal)}</div>
+        </div>
+      </div>`;
+
+      for (const inv of clientInvs) {
+        const invKey = clientKey + '-i-' + inv.id.substring(0,8);
+        hHtml += `<div class="htree htree-${clientKey}" onclick="event.stopPropagation();htreeToggle('${invKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid #f5f5f5;background:#f8f9fa;font-size:13px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div><i class="fa-solid fa-chevron-right" id="hc-${invKey}" style="font-size:8px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-file-invoice" style="color:var(--text-muted);margin-right:6px;font-size:11px"></i> ${inv.invoice_number ? esc(inv.invoice_number) : 'Invoice'} — <span style="font-weight:600">${fmtMoney(inv.total_amount)}</span></div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:11px;color:var(--text-muted)">${new Date(inv.invoice_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+              <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteInvoice('${inv.id}',false)" title="Delete invoice (keep hours)"><i class="fa-solid fa-trash"></i></button>
+              <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();deleteInvoice('${inv.id}',true)" title="Delete invoice AND wipe hours" style="font-size:10px"><i class="fa-solid fa-eraser"></i></button>
+            </div>
+          </div>
+        </div>`;
+
+        // Invoice line items (jobs)
+        const items = inv.items || [];
+        for (const item of items) {
+          hHtml += `<div class="htree htree-${invKey}" style="display:none;padding:6px 16px 6px 88px;border-bottom:1px solid #fafafa;background:#fdfdfd;font-size:12px;color:var(--text-muted)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                ${item.project_name ? esc(item.project_name) : esc(item.description)}
+                ${item.project_type ? ' '+typeBadge(item.project_type) : ''}
+                ${item.work_order_number ? ' <span class="td-mono" style="font-size:10px">WO# '+esc(item.work_order_number)+'</span>' : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span>${item.quantity ? item.quantity+' '+esc(item.unit||'') : '—'}</span>
+                <span>@ $${parseFloat(item.rate||0).toFixed(2)}</span>
+                <span style="font-weight:600;color:var(--text)">${fmtMoney(item.amount)}</span>
+                ${item.project_id ? '<button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteBilledProject(\''+item.project_id+'\')" title="Delete this billed project" style="width:18px;height:18px;font-size:9px"><i class="fa-solid fa-xmark"></i></button>' : ''}
+              </div>
+            </div>
+          </div>`;
+        }
+      }
     }
   }
-  tbody.innerHTML = html;
+  historyContainer.innerHTML = hHtml;
+}
+
+async function deleteInvoice(invoiceId, wipeHours) {
+  const action = wipeHours
+    ? 'Delete this invoice, unbill the projects, AND erase all their logged hours?'
+    : 'Delete this invoice and unbill the linked projects? Hours will be kept.';
+  if (!confirm(action)) return;
+  try {
+    await api('/api/invoices/' + invoiceId + '?wipe_hours=' + wipeHours, 'DELETE');
+    loadBilling();
+    loadRevenue();
+    loadDashboard();
+    loadHours();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteBilledProject(projectId) {
+  if (!confirm('Delete this billed project and all its hours? This will remove it from revenue.')) return;
+  try {
+    await api('/api/projects/' + projectId + '/with-hours', 'DELETE');
+    loadBilling();
+    loadRevenue();
+    loadDashboard();
+    loadProjects();
+  } catch (e) { alert('Error: ' + e.message); }
 }
 
 // ═══════════════════════════════════════════════════════════
