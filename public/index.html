@@ -24,33 +24,35 @@
   --text-muted:#6C757D;
   --font:'Inter',sans-serif;
 }
-body{font-family:var(--font);background:var(--gray-light);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.main{flex:1;display:flex;position:relative;min-height:0;overflow:hidden}
-.view{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;min-height:0;-webkit-overflow-scrolling:touch}
-.view.active{display:flex;flex-direction:column;gap:20px;min-height:0}
+/* Page-level scrolling — whole document scrolls like a normal website.
+   Header and nav stay sticky at the top. Views just flow inline. */
+html,body{height:auto;min-height:100vh}
+body{font-family:var(--font);background:var(--gray-light);color:var(--text);font-size:14px;display:block;overflow-x:hidden}
+.main{display:block;position:relative}
+.view{display:none;padding:24px;width:100%;box-sizing:border-box}
+.view.active{display:flex;flex-direction:column;gap:20px}
 
 /* CARDS */
-.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:visible}
 .card-header{padding:14px 18px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;background:var(--white)}
 .card-title{font-size:14px;font-weight:600;color:var(--text)}
 .card-body{padding:16px 18px}
 
-/* Revenue tab cards: bigger header + minimum visible body so empty states still look substantial */
+/* Revenue tab cards: bigger header */
 #view-revenue .card-header{padding:18px 22px}
 #view-revenue .card-title{font-size:15px}
-#view-revenue .card .table-wrap{min-height:120px}
 #view-revenue table tbody tr.clickable{cursor:pointer;transition:background .12s}
 #view-revenue table tbody tr.clickable:hover{background:var(--primary-light)}
 
-/* HEADER */
-.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 24px;display:flex;align-items:center;gap:20px;height:58px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* HEADER + NAV are sticky at the top of the scrolling page */
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 24px;display:flex;align-items:center;gap:20px;height:58px;position:sticky;top:0;z-index:20;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .header-logo{height:38px;object-fit:contain}
 .header-divider{width:1px;height:32px;background:var(--gray-border)}
 .header-title{font-size:13px;color:var(--text-muted);font-weight:500;letter-spacing:.02em}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 
 /* NAV */
-.nav{background:var(--primary);display:flex;padding:0 24px;flex-shrink:0}
+.nav{background:var(--primary);display:flex;padding:0 24px;position:sticky;top:58px;z-index:19;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .nav-tab{color:rgba(255,255,255,.7);padding:0 18px;height:42px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none}
 .nav-tab:hover{color:#fff;background:rgba(255,255,255,.08)}
 .nav-tab.active{color:#fff;border-bottom-color:#fff}
@@ -129,8 +131,10 @@ textarea{resize:vertical;min-height:72px}
 .modal-footer{padding:14px 22px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px}
 
 /* AI CHAT PANEL */
-.ai-panel{width:360px;flex-shrink:0;border-left:1px solid var(--gray-border);background:var(--white);display:flex;flex-direction:column;transition:width .2s}
-.ai-panel.collapsed{width:0;overflow:hidden;border:none}
+.ai-panel{width:360px;position:fixed;top:100px;right:0;bottom:0;border-left:1px solid var(--gray-border);background:var(--white);display:flex;flex-direction:column;transition:transform .2s;z-index:18;transform:translateX(0)}
+.ai-panel.collapsed{transform:translateX(100%);overflow:hidden;border:none}
+/* When AI panel is open on desktop, push the page content left to make room */
+body.ai-open .main{padding-right:360px}
 .ai-header{padding:14px 16px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;gap:8px;background:var(--primary);color:#fff;flex-shrink:0}
 .ai-header-title{font-weight:600;font-size:14px;flex:1}
 .ai-dot{width:8px;height:8px;border-radius:50%;background:#4AE54A;flex-shrink:0}
@@ -229,7 +233,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 <!-- MAIN -->
 <div class="main">
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0">
+  <div>
 
     <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
     <div id="view-dashboard" class="view active">
@@ -295,7 +299,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <!-- BUDGET SECTION -->
       <div id="budget-section" style="display:none">
         <div class="section-header" style="margin-top:8px">
-          <div><div class="section-title" id="budget-section-title">Budget</div><div class="section-sub" id="budget-section-sub"></div></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-secondary btn-sm" onclick="closeBudgetSection()" title="Back to projects"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <div><div class="section-title" id="budget-section-title">Budget</div><div class="section-sub" id="budget-section-sub"></div></div>
+          </div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-primary btn-sm" onclick="openBudgetCodeModal()"><i class="fa-solid fa-plus"></i> Add Code</button>
           </div>
@@ -667,6 +674,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <button type="button" class="btn btn-primary btn-sm" onclick="quickAddBudgetCode()"><i class="fa-solid fa-check"></i> Add</button>
             </div>
           </div>
+        </div>
+        <div class="form-group" id="permit-manager-group" style="display:none">
+          <label>Permit Manager / Created by <span style="font-weight:400;color:var(--text-muted)">(used for permit pipeline tracking)</span></label>
+          <input type="text" id="proj-permit-manager" placeholder="Your name">
         </div>
         <div class="form-group">
           <label>Notes</label>
@@ -1211,6 +1222,27 @@ async function loadDashboard() {
   const childrenByPar = {};
   children.forEach(c => { if (!childrenByPar[c.parent_id]) childrenByPar[c.parent_id] = []; childrenByPar[c.parent_id].push(c); });
 
+  // Sum actual + expected hours from a project plus all descendants in the tree.
+  // Walks regardless of project_type so a parent project with mixed-type children
+  // still shows the full total. The dashboard query only returns active projects
+  // so this rollup operates on the active set.
+  function sumDashHours(p, depth) {
+    let actual = parseFloat(p.actual_hours) || 0;
+    let expected = parseFloat(p.expected_hours) || 0;
+    if (depth === 0) {
+      for (const par of (parentsByGP[p.id] || [])) {
+        const s = sumDashHours(par, 1);
+        actual += s.actual; expected += s.expected;
+      }
+    } else if (depth === 1) {
+      for (const kid of (childrenByPar[p.id] || [])) {
+        actual += parseFloat(kid.actual_hours) || 0;
+        expected += parseFloat(kid.expected_hours) || 0;
+      }
+    }
+    return { actual, expected };
+  }
+
   function treeRow(p, depth, groupClass) {
     const indent = depth * 24;
     const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
@@ -1224,18 +1256,20 @@ async function loadDashboard() {
 
     const expandable = kidCount > 0;
     const chevId = 'dc-' + p.id;
-    const click = expandable ? `onclick="dtreeToggle('${kidKey}','${chevId}')"` : '';
-    const cursor = expandable ? 'cursor:pointer' : '';
+    const click = expandable ? `onclick="event.stopPropagation();dtreeToggle('${kidKey}','${chevId}')"` : '';
+    const cursor = 'cursor:pointer';
     const chevron = expandable ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s"></i>` : (depth===0 ? '<span style="width:15px;display:inline-block"></span>' : '');
     const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
     const area = p.concentrator_area ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">(${esc(p.concentrator_area)})</span>` : '';
 
-    return `<tr ${cls} ${click} style="${cursor};${bg}">
-      <td class="td-name" style="padding-left:${12+indent}px">${chevron}${prefix}${esc(p.name)}${area}${badge}</td>
+    const sums = sumDashHours(p, depth);
+
+    return `<tr ${cls} onclick="showProjectDetail('${p.id}')" style="${cursor};${bg}">
+      <td class="td-name" style="padding-left:${12+indent}px">${expandable ? `<span ${click}>${chevron}</span>` : chevron}${prefix}${esc(p.name)}${area}${badge}</td>
       <td>${esc(p.client_name||'—')}</td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
       <td>${typeBadge(p.project_type)}</td>
-      <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(p.actual_hours, p.expected_hours)}</div><span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(p.actual_hours||0,'hrs')}/${fmt(p.expected_hours||0,'hrs')}</span></div></td>
+      <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(sums.actual, sums.expected)}</div><span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(sums.actual,'hrs')}/${fmt(sums.expected,'hrs')}</span></div></td>
       <td>${statusBadge(p.status)}</td>
       <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
     </tr>`;
@@ -1352,6 +1386,27 @@ function renderProjects(list, expandAll = false) {
   const childrenByPar = {};
   children.forEach(c => { (childrenByPar[c.parent_id] = childrenByPar[c.parent_id] || []).push(c); });
 
+  // Roll up logged hours, expected hours, and expected revenue from descendants
+  // so parent rows show the totals (regardless of project_type mix).
+  function sumProjHours(p, depth) {
+    let logged = parseFloat(p.logged_hours) || 0;
+    let expected = parseFloat(p.expected_hours) || 0;
+    let revenue = parseFloat(p.expected_revenue) || 0;
+    if (depth === 0) {
+      for (const par of (parentsByGP[p.id] || [])) {
+        const s = sumProjHours(par, 1);
+        logged += s.logged; expected += s.expected; revenue += s.revenue;
+      }
+    } else if (depth === 1) {
+      for (const kid of (childrenByPar[p.id] || [])) {
+        logged += parseFloat(kid.logged_hours) || 0;
+        expected += parseFloat(kid.expected_hours) || 0;
+        revenue += parseFloat(kid.expected_revenue) || 0;
+      }
+    }
+    return { logged, expected, revenue };
+  }
+
   function projRow(p, depth, groupClass) {
     const indent = depth * 24;
     const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
@@ -1364,33 +1419,32 @@ function renderProjects(list, expandAll = false) {
 
     const expandable = kidCount > 0;
     const chevId = 'pc-' + p.id;
-    const click = expandable ? `onclick="ptreeToggle('${kidKey}','${chevId}')"` : '';
-    const cursor = expandable ? 'cursor:pointer;' : '';
     const chevRotation = expandable && expandAll ? 'transform:rotate(90deg);' : '';
     const chevron = expandable
       ? `<i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:9px;color:var(--text-muted);margin-right:6px;transition:transform .2s;${chevRotation}"></i>`
       : (depth === 0 ? '<span style="width:15px;display:inline-block"></span>' : '');
     const badge = kidCount > 0 ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kidCount}</span>` : '';
 
-    const loggedHrs = parseFloat(p.logged_hours) || 0;
-    const expHrs = parseFloat(p.expected_hours) || 0;
-    const expRev = parseFloat(p.expected_revenue) || 0;
+    // Rollup totals for parent rows
+    const sums = sumProjHours(p, depth);
 
-    // Build tr attributes as ONE well-formed string — no duplicate style attribute.
-    // Children of a group get class="ptree ptree-<key>" so the toggle can find them.
+    // Build tr attributes — children of a group get class="ptree ptree-<key>" so the toggle can find them.
     const startHidden = groupClass && !expandAll;
     const display = startHidden ? 'display:none;' : '';
     const trAttrs = groupClass
-      ? `class="ptree ptree-${groupClass}" style="${display}${bg};${cursor}"`
-      : `style="${bg};${cursor}"`;
+      ? `class="ptree ptree-${groupClass}" style="${display}${bg};cursor:pointer"`
+      : `style="${bg};cursor:pointer"`;
 
-    return `<tr ${trAttrs} ${click}>
-      <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
+    // Row click opens detail; chevron click toggles expansion (event.stopPropagation in handler)
+    const chevWrap = expandable ? `<span onclick="event.stopPropagation();ptreeToggle('${kidKey}','${chevId}')">${chevron}</span>` : chevron;
+
+    return `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
+      <td class="td-name" style="padding-left:${12 + indent}px">${chevWrap}${prefix}${esc(p.name)}${badge}</td>
       <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
       <td class="td-mono">${esc(p.work_order_number || '—')}</td>
       <td>${typeBadge(p.project_type)}</td>
-      <td><span style="font-size:12px">${expHrs ? fmt(expHrs, 'hrs') : '—'}</span><br><span class="td-muted" style="font-size:11px">${expRev ? fmtMoney(expRev) : '—'}</span></td>
-      <td>${progressBar(loggedHrs, expHrs)}<span style="font-size:11px;color:var(--text-muted)">${fmt(loggedHrs, 'hrs')} / ${fmt(expHrs, 'hrs')}</span></td>
+      <td><span style="font-size:12px">${sums.expected ? fmt(sums.expected, 'hrs') : '—'}</span><br><span class="td-muted" style="font-size:11px">${sums.revenue ? fmtMoney(sums.revenue) : '—'}</span></td>
+      <td>${progressBar(sums.logged, sums.expected)}<span style="font-size:11px;color:var(--text-muted)">${fmt(sums.logged, 'hrs')} / ${fmt(sums.expected, 'hrs')}</span></td>
       <td>${statusBadge(p.status)}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -1526,9 +1580,11 @@ function typeChanged() {
   const rl = document.getElementById('rate-label');
   const rh = document.getElementById('rate-hint');
   const rate = document.getElementById('proj-rate');
+  const pm = document.getElementById('permit-manager-group');
 
   fg.style.display = 'none';
   ed.style.display = 'none';
+  if (pm) pm.style.display = 'none';
   rate.readOnly = false;
   rl.textContent = 'Billing Rate ($/hr) *';
   rh.textContent = '';
@@ -1543,6 +1599,7 @@ function typeChanged() {
     rate.value = 90; rate.readOnly = true;
     fg.style.display = 'flex';
     ed.style.display = 'grid';
+    if (pm) pm.style.display = 'flex';
     rl.textContent = 'Rate ($/hr)';
     rh.textContent = 'Billed at 27.5 hrs/mile × $90 (15hr min)';
   } else if (type === 'design') {
@@ -1594,7 +1651,9 @@ async function saveProject() {
     notes: document.getElementById('proj-notes').value,
     parent_id: document.getElementById('proj-parent').value || null,
     budget_code_id: document.getElementById('proj-budget-code').value || null,
-    concentrator_id: document.getElementById('proj-concentrator').value || null
+    concentrator_id: document.getElementById('proj-concentrator').value || null,
+    // Captured once at creation; used for permit pipeline tracking later
+    permit_manager: (document.getElementById('proj-permit-manager')?.value || '').trim() || null
   };
   try {
     const id = document.getElementById('proj-id').value;
@@ -1789,7 +1848,7 @@ async function loadPermits() {
     const currentStageName = currentStage?.stage || stages[stages.length-1]?.stage || 'potential';
     const currentIdx = STAGES.indexOf(currentStageName);
     const docs = p.documents||[];
-    return `<tr>
+    return `<tr onclick="showProjectDetail('${p.id}')" style="cursor:pointer">
       <td class="td-name">${esc(p.name)}<br><span style="font-size:11px;color:var(--text-muted)">${docs.length} doc${docs.length!==1?'s':''}</span></td>
       <td>${esc(p.client_name||'—')}</td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
@@ -1798,9 +1857,9 @@ async function loadPermits() {
       <td><span class="badge badge-permitting">${STAGE_LABELS[currentStageName]||currentStageName}</span></td>
       <td>${pipelineViz(currentIdx)}</td>
       <td style="white-space:nowrap">
-        ${currentIdx < STAGES.length-1 ? `<button class="btn btn-sm btn-primary" onclick="advancePermit('${p.id}')">→ ${STAGE_LABELS[STAGES[currentIdx+1]]}</button>` : '<span style="color:var(--success);font-size:12px"><i class="fa-solid fa-check"></i> Done</span>'}
-        <button class="btn btn-sm btn-secondary btn-icon" onclick="openPermitDocs('${p.id}','${esc(p.name)}')" title="Documents"><i class="fa-solid fa-paperclip"></i></button>
-        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        ${currentIdx < STAGES.length-1 ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();advancePermit('${p.id}')">→ ${STAGE_LABELS[STAGES[currentIdx+1]]}</button>` : '<span style="color:var(--success);font-size:12px"><i class="fa-solid fa-check"></i> Done</span>'}
+        <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openPermitDocs('${p.id}','${esc(p.name)}')" title="Documents"><i class="fa-solid fa-paperclip"></i></button>
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -1815,9 +1874,25 @@ function pipelineViz(currentIdx) {
 }
 
 async function advancePermit(projectId) {
-  const updatedBy = prompt('Your name:') || 'Unknown';
-  await api('/api/permits/'+projectId+'/advance', 'PUT', { updated_by: updatedBy });
+  // No more name prompt — server uses the original creator's name (stored at
+  // permit creation) or 'unknown' as a fallback.
+  await api('/api/permits/'+projectId+'/advance', 'PUT', {});
   loadPermits();
+  loadDashboard();
+}
+
+// Advance a permit from inside the project detail popup, then reload the
+// popup contents so the new stage shows immediately.
+async function advancePermitFromPopup(projectId) {
+  await api('/api/permits/'+projectId+'/advance', 'PUT', {});
+  // Re-render popup with current period
+  const yEl = document.getElementById('rev-year');
+  const y = (yEl && yEl.value) || String(new Date().getFullYear());
+  const m = (typeof revSelectedMonth !== 'undefined') ? revSelectedMonth : null;
+  reloadProjectDetail(projectId, m, y);
+  // Also refresh the underlying lists
+  if (typeof loadPermits === 'function') loadPermits();
+  loadDashboard();
 }
 
 function openPermitDocs(projectId, name) {
@@ -1863,6 +1938,17 @@ async function uploadDoc() {
 // ═══════════════════════════════════════════════════════════
 let currentBudgetProjectId = null;
 let currentBudgetId = null;
+
+// Close the budget section and scroll back up to the projects table.
+function closeBudgetSection() {
+  const section = document.getElementById('budget-section');
+  if (section) section.style.display = 'none';
+  currentBudgetProjectId = null;
+  currentBudgetId = null;
+  // Bring the projects table back into view
+  const projectsCard = document.querySelector('#view-projects .card');
+  if (projectsCard) projectsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 async function showBudgetForProject(projectId, projectName) {
   currentBudgetProjectId = projectId;
@@ -2097,7 +2183,7 @@ async function loadHours() {
     const cli = e.client_name || 'No Client';
     const proj = e.project_name || 'No Project';
     const hrs = parseFloat(e.hours) || 0;
-    if (!tree[emp]) tree[emp] = { hours: 0, clients: {} };
+    if (!tree[emp]) tree[emp] = { hours: 0, staff_id: e.staff_id || null, clients: {} };
     tree[emp].hours += hrs;
     if (!tree[emp].clients[cli]) tree[emp].clients[cli] = { hours: 0, projects: {} };
     tree[emp].clients[cli].hours += hrs;
@@ -2114,7 +2200,10 @@ async function loadHours() {
     const empKey = 'he-' + emp.replace(/\W/g,'');
     html += `<div class="hrs-row" onclick="htreeToggle('${empKey}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-border);font-weight:700">
       <div><i class="fa-solid fa-chevron-right" id="hc-${empKey}" style="font-size:10px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-user" style="color:var(--primary);margin-right:6px"></i> ${esc(emp)}</div>
-      <div style="font-size:14px;color:var(--primary)">${fmt(empData.hours,'hrs')}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:14px;color:var(--primary)">${fmt(empData.hours,'hrs')}</span>
+        ${empData.staff_id ? `<button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();deleteAllHoursForStaff('${empData.staff_id}','${esc(emp)}')" title="Delete all hours for this employee in this period"><i class="fa-solid fa-trash"></i></button>` : ''}
+      </div>
     </div>`;
 
     for (const [cli, cliData] of Object.entries(empData.clients).sort((a,b) => b[1].hours - a[1].hours)) {
@@ -2203,6 +2292,23 @@ async function deleteTimeEntry(id) {
   if (!confirm('Delete this time entry?')) return;
   await api('/api/time-entries/'+id, 'DELETE');
   loadHours();
+  loadDashboard();
+}
+
+async function deleteAllHoursForStaff(staffId, name) {
+  const m = document.getElementById('hrs-month').value;
+  const y = document.getElementById('hrs-year').value;
+  const monthName = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (!confirm(`Delete ALL hours for ${name} in ${monthName}?\n\nThis will:\n• Remove every time entry this employee logged this period\n• Recompute totals on every affected project\n\nThis cannot be undone.`)) return;
+  try {
+    const r = await api(`/api/time-entries/by-staff/${staffId}?month=${m}&year=${y}`, 'DELETE');
+    alert(`Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'}.`);
+    loadHours();
+    loadDashboard();
+    if (typeof loadProjects === 'function') loadProjects();
+  } catch (e) {
+    alert('Failed: ' + e.message);
+  }
 }
 
 // ─── CSV IMPORT (direct, no AI) ──────────────────────────────────────────────
@@ -2287,6 +2393,43 @@ function renderImportReview(d) {
     hours = "${esc(d.detected_columns.hours)}"${d.detected_columns.job_title ? `, job_title = "${esc(d.detected_columns.job_title)}"` : ''}
   </div>`;
 
+  // Job title detection — show inferred-from-filename and prompt if missing
+  const jtSource = d.job_title_source;
+  const inferredJT = d.inferred_job_title || '';
+  const missingJTCount = d.rows_missing_job_title || 0;
+  if (jtSource === 'filename' || missingJTCount > 0 || jtSource === 'none') {
+    const banner = jtSource === 'column'
+      ? `Found job title column "${esc(d.detected_columns.job_title)}".`
+      : jtSource === 'filename'
+        ? `No job title column. Inferred <strong>"${esc(inferredJT)}"</strong> from the filename — applied to all rows.`
+        : `No job title column found and nothing recognizable in the filename.`;
+    html += `<div class="card" style="margin-bottom:14px">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-briefcase" style="color:var(--primary)"></i> Job Title</span></div>
+      <div class="card-body" style="font-size:13px">
+        <p style="margin-bottom:10px;color:var(--text-muted)">${banner}</p>
+        ${missingJTCount > 0 || jtSource === 'none' ? `
+          <label style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-muted)">
+            ${missingJTCount > 0 ? `${missingJTCount} row${missingJTCount!==1?'s':''} have no job title. ` : ''}Apply this job title to ${missingJTCount > 0 ? 'those rows' : 'all rows'}:
+          </label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="apply-job-title" onchange="document.getElementById('apply-job-title-custom').style.display = this.value === '__custom__' ? 'block' : 'none'" style="flex:1;padding:6px;border:1px solid var(--gray-border);border-radius:6px">
+              <option value="">— Leave blank —</option>
+              <option value="Inspector"${inferredJT==='Inspector'?' selected':''}>Inspector</option>
+              <option value="Resident Engineer"${inferredJT==='Resident Engineer'?' selected':''}>Resident Engineer</option>
+              <option value="Permitting"${inferredJT==='Permitting'?' selected':''}>Permitting</option>
+              <option value="Design"${inferredJT==='Design'?' selected':''}>Design</option>
+              <option value="Surveyor"${inferredJT==='Surveyor'?' selected':''}>Surveyor</option>
+              <option value="Splicer"${inferredJT==='Splicer'?' selected':''}>Splicer</option>
+              <option value="Foreman"${inferredJT==='Foreman'?' selected':''}>Foreman</option>
+              <option value="__custom__">Other (enter below)…</option>
+            </select>
+            <input type="text" id="apply-job-title-custom" placeholder="Custom title" style="flex:1;padding:6px;border:1px solid var(--gray-border);border-radius:6px;display:none">
+          </div>
+        ` : ''}
+      </div>
+    </div>`;
+  }
+
   // Unknown staff section
   if (d.unknown_staff.length > 0) {
     html += `<div class="card" style="margin-bottom:14px">
@@ -2369,10 +2512,22 @@ async function csvImportCommit() {
   });
 
   try {
+    // Read the optional job-title override
+    let apply_job_title = null;
+    const jtSel = document.getElementById('apply-job-title');
+    if (jtSel) {
+      if (jtSel.value === '__custom__') {
+        const c = document.getElementById('apply-job-title-custom');
+        apply_job_title = c?.value.trim() || null;
+      } else if (jtSel.value) {
+        apply_job_title = jtSel.value;
+      }
+    }
+
     const r = await fetch('/api/hours/csv-commit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage_id: csvStageData.stage_id, create_staff, map_staff })
+      body: JSON.stringify({ stage_id: csvStageData.stage_id, create_staff, map_staff, apply_job_title })
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Import failed');
@@ -2847,13 +3002,14 @@ async function loadRevenue() {
 
 // ─── PROJECT DETAIL DRILL-DOWN POPUP ──────────────────────────────────────
 async function showProjectDetail(projectId) {
-  const y = document.getElementById('rev-year').value;
-  const m = revSelectedMonth;
+  // Period filter — only meaningful from the Revenue tab; default to current year elsewhere
+  const yEl = document.getElementById('rev-year');
+  const y = (yEl && yEl.value) || String(new Date().getFullYear());
+  const m = (typeof revSelectedMonth !== 'undefined') ? revSelectedMonth : null;
   const params = new URLSearchParams();
   if (y) params.set('year', y);
   if (m) params.set('month', m);
 
-  // Show modal with loading state
   document.getElementById('pd-title').textContent = 'Loading…';
   document.getElementById('pd-body').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
   document.getElementById('pd-edit-btn').onclick = () => { closeModal('project-detail-modal'); editProject(projectId); };
@@ -2876,6 +3032,8 @@ function renderProjectDetail(data, month, year) {
   const entries = data.time_entries || [];
   const stages = data.permit_stages || [];
   const children = data.children || [];
+  const invoices = data.invoices || [];
+  const months_with_activity = data.months_with_activity || [];
 
   // Period label for header
   const periodLabel = month
@@ -2884,7 +3042,7 @@ function renderProjectDetail(data, month, year) {
 
   document.getElementById('pd-title').innerHTML = `${esc(p.name)} <span style="color:var(--text-muted);font-weight:400;font-size:13px">— ${periodLabel}</span>`;
 
-  // Compute summary stats from entries
+  // Compute summary stats from entries (filtered by current period)
   const totalHrs = entries.reduce((s, e) => s + parseFloat(e.hours || 0), 0);
   const rate = parseFloat(p.billing_rate) || 0;
   const isFootage = p.billing_type === 'footage';
@@ -2904,6 +3062,20 @@ function renderProjectDetail(data, month, year) {
 
   let html = '';
 
+  // ── Period switcher: only show if the project has activity in 2+ months
+  // (otherwise the tabs are noise). Click reloads with that period.
+  if (months_with_activity.length > 1) {
+    const currentKey = month ? `${year}-${String(month).padStart(2,'0')}` : `${year}-all`;
+    html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;padding:8px;background:var(--gray-light);border-radius:8px">
+      <button class="btn btn-sm ${currentKey === year + '-all' ? 'btn-primary' : 'btn-secondary'}" onclick="reloadProjectDetail('${p.id}', null, '${year}')">All ${year}</button>
+      ${months_with_activity.map(mw => {
+        const k = `${mw.year}-${String(mw.month).padStart(2,'0')}`;
+        const isActive = currentKey === k;
+        return `<button class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'}" onclick="reloadProjectDetail('${p.id}', ${mw.month}, '${mw.year}')">${MONTH_NAMES[mw.month-1]} ${mw.year} <span style="opacity:.7;margin-left:4px">${fmt(mw.hours,'hrs')}</span></button>`;
+      }).join('')}
+    </div>`;
+  }
+
   // ── Header strip with key facts
   const ancestry = [p.grandparent_name, p.parent_name].filter(Boolean).join(' › ');
   html += `<div style="background:var(--gray-light);padding:14px 18px;border-radius:8px;margin-bottom:16px">
@@ -2915,6 +3087,7 @@ function renderProjectDetail(data, month, year) {
       <div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Status</div><div>${statusBadge(p.status)}</div></div>
       <div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Billing</div><div style="font-weight:600">${esc(p.billing_type)}${rate ? ' @ ' + fmtMoney(rate) + '/hr' : ''}</div></div>
       ${p.budget_code ? `<div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget Code</div><div style="font-weight:600">${esc(p.budget_code)}</div></div>` : ''}
+      ${p.has_budget ? `<div><button class="btn btn-secondary btn-sm" onclick="closeModal('project-detail-modal');showBudgetForProject('${p.id}','${esc(p.name)}')"><i class="fa-solid fa-wallet"></i> View Budget</button></div>` : ''}
     </div>
   </div>`;
 
@@ -2951,14 +3124,57 @@ function renderProjectDetail(data, month, year) {
       </tr>`).join('')}<tr style="background:var(--gray-light);font-weight:700"><td style="padding:8px 12px">Total</td><td style="padding:8px 12px;text-align:right">${entries.length}</td><td style="padding:8px 12px;text-align:right">${fmt(totalHrs)}</td><td style="padding:8px 12px;text-align:right;color:var(--primary)">${fmtMoney(totalHrs * rate)}</td></tr></tbody></table></div>`;
   }
 
-  // ── Permit stages (if applicable)
-  if (stages.length > 0) {
+  // ── Permit stages + documents (if applicable). Includes the advance button
+  // and a quick-upload form so this popup is the central place for everything
+  // about a permit.
+  const permit_documents = data.permit_documents || [];
+  if (stages.length > 0 || p.project_type === 'permitting') {
     const STAGE_LABELS = { potential:'Potential', started:'Started', submitted:'Submitted', approved:'Approved', checklist:'Checklist', billed:'Billed' };
-    html += `<div class="card" style="margin-bottom:14px"><div class="card-header"><span class="card-title">Permit Pipeline</span></div>
-      <div class="card-body"><div style="display:flex;flex-wrap:wrap;gap:8px">${stages.map(s => {
-        const done = !!s.completed_at;
-        return `<div style="padding:8px 14px;border-radius:20px;background:${done ? 'var(--primary)' : 'var(--gray-light)'};color:${done ? '#fff' : 'var(--text)'};font-size:12px;font-weight:600">${done ? '✓ ' : ''}${STAGE_LABELS[s.stage] || s.stage}${done && s.completed_at ? ' — ' + new Date(s.completed_at).toLocaleDateString() : ''}</div>`;
-      }).join('')}</div></div></div>`;
+    const STAGE_ORDER = ['potential','started','submitted','approved','checklist','billed'];
+    const currentStage = stages.find(s => !s.completed_at);
+    const currentName = currentStage?.stage || stages[stages.length-1]?.stage || 'potential';
+    const currentIdx = STAGE_ORDER.indexOf(currentName);
+    const nextStage = currentIdx < STAGE_ORDER.length - 1 ? STAGE_ORDER[currentIdx + 1] : null;
+
+    html += `<div class="card" style="margin-bottom:14px">
+      <div class="card-header">
+        <span class="card-title">Permit Pipeline</span>
+        ${nextStage ? `<button class="btn btn-sm btn-primary" onclick="advancePermitFromPopup('${p.id}')"><i class="fa-solid fa-arrow-right"></i> Advance to ${STAGE_LABELS[nextStage]}</button>` : '<span style="color:var(--success);font-size:12px;font-weight:600"><i class="fa-solid fa-check"></i> Pipeline complete</span>'}
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${STAGE_ORDER.map(s => {
+          const stageRow = stages.find(x => x.stage === s);
+          const done = stageRow?.completed_at;
+          const isCurrent = s === currentName && !done;
+          const bg = done ? 'var(--primary)' : isCurrent ? 'var(--warning)' : 'var(--gray-light)';
+          const fg = done || isCurrent ? '#fff' : 'var(--text)';
+          return `<div style="padding:8px 14px;border-radius:20px;background:${bg};color:${fg};font-size:12px;font-weight:600">${done ? '✓ ' : ''}${STAGE_LABELS[s]}${done ? ' — ' + new Date(stageRow.completed_at).toLocaleDateString() : ''}</div>`;
+        }).join('')}</div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-top:1px solid var(--gray-border);padding-top:12px">
+          <strong style="font-size:13px">Documents & Revisions (${permit_documents.length})</strong>
+          <button class="btn btn-sm btn-secondary" onclick="closeModal('project-detail-modal');openPermitDocs('${p.id}','${esc(p.name)}')"><i class="fa-solid fa-upload"></i> Upload / Manage</button>
+        </div>
+        ${permit_documents.length > 0 ? `
+          <table style="width:100%;font-size:13px">
+            <thead><tr style="background:var(--gray-light)">
+              <th style="padding:8px 12px;text-align:left">Type</th>
+              <th style="padding:8px 12px;text-align:left">File</th>
+              <th style="padding:8px 12px;text-align:right">Rev</th>
+              <th style="padding:8px 12px;text-align:left">Uploaded</th>
+              <th style="padding:8px 12px;text-align:left">Notes</th>
+            </tr></thead>
+            <tbody>${permit_documents.map(d => `<tr>
+              <td style="padding:6px 12px"><span class="badge badge-permitting">${esc(d.doc_type)}</span></td>
+              <td style="padding:6px 12px"><a href="/${esc(d.file_path)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(d.file_name||'file')}</a></td>
+              <td style="padding:6px 12px;text-align:right">${d.revision_number || 1}</td>
+              <td style="padding:6px 12px;color:var(--text-muted);font-size:12px">${d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'}<br>${esc(d.uploaded_by || '')}</td>
+              <td style="padding:6px 12px;color:var(--text-muted);font-size:12px">${esc(d.notes || '')}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        ` : '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:12px">No documents uploaded yet</div>'}
+      </div>
+    </div>`;
   }
 
   // ── Recent time entries (full list, scrollable inside the modal)
@@ -2975,6 +3191,20 @@ function renderProjectDetail(data, month, year) {
     html += `<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No time entries for this period.</div>`;
   }
 
+  // ── Invoices history (any past billing snapshots for this project)
+  if (invoices.length > 0) {
+    html += `<div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title">Invoice History (${invoices.length})</span></div>
+      <table style="width:100%;font-size:13px"><thead><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Invoice #</th><th style="padding:8px 12px;text-align:left">Date</th><th style="padding:8px 12px;text-align:right">Quantity</th><th style="padding:8px 12px;text-align:right">Rate</th><th style="padding:8px 12px;text-align:right">Amount</th><th style="padding:8px 12px">Status</th></tr></thead>
+      <tbody>${invoices.map(inv => `<tr>
+        <td style="padding:6px 12px"><strong>${esc(inv.invoice_number || '—')}</strong></td>
+        <td style="padding:6px 12px">${inv.invoice_date ? new Date(inv.invoice_date+'T00:00:00').toLocaleDateString() : '—'}</td>
+        <td style="padding:6px 12px;text-align:right">${inv.quantity || '—'} ${esc(inv.unit||'')}</td>
+        <td style="padding:6px 12px;text-align:right">${inv.rate ? fmtMoney(inv.rate) : '—'}</td>
+        <td style="padding:6px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(inv.amount || 0)}</td>
+        <td style="padding:6px 12px"><span class="badge badge-${inv.status==='paid'?'completed':inv.status==='sent'?'billed':'active'}">${esc(inv.status || '—')}</span></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }
+
   // ── Notes
   if (p.notes) {
     html += `<div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title">Notes</span></div>
@@ -2982,6 +3212,20 @@ function renderProjectDetail(data, month, year) {
   }
 
   document.getElementById('pd-body').innerHTML = html;
+}
+
+// Used by the month switcher tabs at the top of the project detail popup.
+async function reloadProjectDetail(projectId, month, year) {
+  const params = new URLSearchParams();
+  if (year) params.set('year', year);
+  if (month) params.set('month', month);
+  document.getElementById('pd-body').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
+  try {
+    const data = await api(`/api/projects/${projectId}/detail?${params.toString()}`);
+    renderProjectDetail(data, month, year);
+  } catch (e) {
+    document.getElementById('pd-body').innerHTML = '<div class="alert alert-warn">' + esc(e.message) + '</div>';
+  }
 }
 
 async function showBillingReport() {
@@ -3021,6 +3265,7 @@ async function showBillingReport() {
 function toggleAI() {
   const panel = document.getElementById('ai-panel');
   panel.classList.toggle('collapsed');
+  document.body.classList.toggle('ai-open', !panel.classList.contains('collapsed'));
 }
 
 function aiKeydown(e) {
@@ -3240,6 +3485,23 @@ async function executeAIAction(action, btn) {
 // ═══════════════════════════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Global modal-close behaviors:
+// (1) ESC key closes the topmost open modal
+// (2) Clicking the overlay (outside the .modal box) closes it
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = document.querySelectorAll('.modal-overlay.open');
+  if (!open.length) return;
+  // Close just the last-opened (visually topmost) one
+  open[open.length - 1].classList.remove('open');
+});
+document.addEventListener('click', (e) => {
+  // Only fire when the click target IS the overlay itself, not its children
+  if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('open');
+  }
+});
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
 
 // ═══════════════════════════════════════════════════════════

@@ -267,3 +267,9 @@ INSERT INTO concentrators (contract_label, area_name, work_order_number) VALUES
   ('Contract 5', 'Roberta', '16296'),
   ('Contract 5', 'Colluden', '16297')
 ON CONFLICT (contract_label, area_name) DO UPDATE SET work_order_number = EXCLUDED.work_order_number;
+
+-- ─────────────────────────────────────────
+-- BILLING HOLD (powers the "Wait" button on the Billing tab)
+-- When set, hides a project from the billing queue until that date.
+-- ─────────────────────────────────────────
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS bill_hold_until DATE;

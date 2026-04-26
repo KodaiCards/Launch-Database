@@ -217,7 +217,8 @@ app.post('/api/projects', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
     project_type, status = 'active', billing_type, billing_rate,
-    footage, start_date, notes, parent_id, budget_code_id, concentrator_id
+    footage, start_date, notes, parent_id, budget_code_id, concentrator_id,
+    permit_manager
   } = req.body;
 
   try {
@@ -238,11 +239,12 @@ app.post('/api/projects', async (req, res) => {
       start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null
     ]);
 
-    // Auto-create permit stage if permitting project
+    // Auto-create permit stage if permitting project, stamping the manager's
+    // name so we don't have to ask again at every advance
     if (project_type === 'permitting') {
       await pool.query(
-        'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
-        [rows[0].id, 'potential']
+        'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+        [rows[0].id, 'potential', permit_manager || null]
       );
     }
 
@@ -370,6 +372,33 @@ app.delete('/api/time-entries/:id', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Bulk delete: all time entries for a given staff member, optionally filtered
+// by month/year. Used by the "Delete all hours for [employee]" action in the Hours tab.
+app.delete('/api/time-entries/by-staff/:staffId', async (req, res) => {
+  const { month, year } = req.query;
+  const params = [req.params.staffId];
+  let where = 'staff_id = $1';
+  if (month && year) {
+    where += ' AND EXTRACT(MONTH FROM entry_date)=$2 AND EXTRACT(YEAR FROM entry_date)=$3';
+    params.push(month, year);
+  } else if (year) {
+    where += ' AND EXTRACT(YEAR FROM entry_date)=$2';
+    params.push(year);
+  }
+  try {
+    // Capture affected projects first so we can roll up afterwards
+    const affected = await pool.query(`SELECT DISTINCT project_id FROM time_entries WHERE ${where}`, params);
+    const result = await pool.query(`DELETE FROM time_entries WHERE ${where}`, params);
+    for (const r of affected.rows) {
+      if (r.project_id) await updateProjectHours(r.project_id);
+    }
+    res.json({ ok: true, deleted: result.rowCount });
+  } catch (e) {
+    console.error('bulk delete by staff error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -542,6 +571,30 @@ setInterval(() => {
   for (const [k, v] of csvStage) if (v.expiresAt < now) csvStage.delete(k);
 }, 5 * 60 * 1000);
 
+// Infer the job title from the filename and any title rows above the header.
+// Returns a string like "Inspector" or null if nothing matched.
+function inferJobTitle(filename, rows2d, headerIdx) {
+  const corpus = [
+    filename || '',
+    // Concatenate all rows above the header — these usually hold the title
+    ...(rows2d.slice(0, headerIdx).map(r => (r || []).map(c => String(c || '')).join(' ')))
+  ].join(' ').toLowerCase();
+
+  const KEYWORDS = [
+    { match: /inspect/, title: 'Inspector' },
+    { match: /resident\s*engineer|^re\b|\bre\s+timecard/, title: 'Resident Engineer' },
+    { match: /permit/, title: 'Permitting' },
+    { match: /design/, title: 'Design' },
+    { match: /survey/, title: 'Surveyor' },
+    { match: /splic/, title: 'Splicer' },
+    { match: /foreman/, title: 'Foreman' }
+  ];
+  for (const kw of KEYWORDS) {
+    if (kw.match.test(corpus)) return kw.title;
+  }
+  return null;
+}
+
 app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const overrideYear = req.body.override_year ? parseInt(req.body.override_year, 10) : null;
@@ -592,6 +645,11 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
         detected_columns: cols
       });
     }
+
+    // Try to infer a job title from the filename and rows above the header.
+    // "Inspector_Timecards.csv" → "Inspector"; "Permitting weekly.xlsx" → "Permitting".
+    // This becomes the fallback for any row that doesn't have its own job title.
+    const inferredJobTitle = inferJobTitle(req.file.originalname, rows2d, headerIdx);
 
     // Pull staff + projects so per-row matching is cheap
     const [staffR, projR] = await Promise.all([
@@ -664,12 +722,20 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
       if (!staffKnown) unknownStaff.set(normalizeName(name), name);
       if (!woKnown) unknownWOs.set(woNorm, String(rawWO).trim());
 
+      // Determine a job title: row column → inferred from filename → null
+      const rowTitle = rawTitle ? String(rawTitle).trim() : null;
+      const finalTitle = rowTitle || inferredJobTitle || null;
+      const jobInferred = !rowTitle && !!inferredJobTitle;
+      const jobMissing = !finalTitle;
+
       validRows.push({
         row_num: rowNum,
         name, name_norm: normalizeName(name),
         wo: String(rawWO).trim(), wo_norm: woNorm,
         date, hours: hrs,
-        job_title: rawTitle ? String(rawTitle).trim() : null,
+        job_title: finalTitle,
+        job_inferred: jobInferred,
+        job_missing: jobMissing,
         staff_id: staff?.id || null,
         project_id: proj?.id || null,
         staff_known: staffKnown,
@@ -688,6 +754,11 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
       stage_id,
       headers,
       detected_columns: cols,
+      // Title inference details so the UI can show what was detected and ask
+      // for confirmation when nothing was found
+      inferred_job_title: inferredJobTitle,
+      job_title_source: cols.job_title ? 'column' : (inferredJobTitle ? 'filename' : 'none'),
+      rows_missing_job_title: validRows.filter(r => r.job_missing).length,
       summary: {
         total_rows: validRows.length + invalidRows.length,
         ready_to_import: validRows.filter(r => r.staff_known && r.wo_known).length,
@@ -726,7 +797,7 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
 //     skip_unknown_wos: true                   // if false → reject; we always require true here
 //   }
 app.post('/api/hours/csv-commit', async (req, res) => {
-  const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true } = req.body;
+  const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true, apply_job_title = null } = req.body;
   if (!stage_id) return res.status(400).json({ error: 'Missing stage_id' });
   const staged = csvStage.get(stage_id);
   if (!staged) return res.status(400).json({ error: 'Staged data expired or not found. Re-validate the file.' });
@@ -770,10 +841,14 @@ app.post('/api/hours/csv-commit', async (req, res) => {
       const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
       if (!staffId) { skipped_unresolved_staff++; continue; }
 
+      // Final job title: row's existing value (which may already be inferred
+      // from the filename) → operator-supplied apply_job_title → null
+      const finalJobTitle = r.job_title || apply_job_title || null;
+
       await client.query(
         `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
          VALUES ($1,$2,$3,$4,$5,$6)`,
-        [r.project_id, staffId, r.date, r.hours, r.job_title, importBatch]
+        [r.project_id, staffId, r.date, r.hours, finalJobTitle, importBatch]
       );
       inserted++;
       projectIds.add(r.project_id);
@@ -813,7 +888,8 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       SELECT p.*, cl.name as client_name, co.contract_number, co.name as contract_name,
              pp.name as parent_name,
              gp.name as grandparent_name,
-             bc.code as budget_code, b.name as budget_name
+             bc.code as budget_code, b.name as budget_name,
+             EXISTS (SELECT 1 FROM budgets WHERE project_id = p.id) as has_budget
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
@@ -856,11 +932,42 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       [req.params.id]
     );
 
+    // All invoice line-items linked to this project, with the parent invoice details
+    const invoicesR = await pool.query(`
+      SELECT ii.id, ii.description, ii.quantity, ii.unit, ii.rate, ii.amount,
+             inv.invoice_number, inv.invoice_date, inv.status, inv.notes
+      FROM invoice_items ii
+      JOIN invoices inv ON inv.id = ii.invoice_id
+      WHERE ii.project_id = $1
+      ORDER BY inv.invoice_date DESC, ii.created_at DESC
+    `, [req.params.id]);
+
+    // Distinct (year, month) periods the project has activity in — used by the
+    // popup's month-tab switcher so we only show months with data.
+    const periodsR = await pool.query(`
+      SELECT EXTRACT(YEAR FROM entry_date)::int AS year,
+             EXTRACT(MONTH FROM entry_date)::int AS month,
+             SUM(hours)::float AS hours
+      FROM time_entries
+      WHERE project_id = $1
+      GROUP BY year, month
+      ORDER BY year DESC, month DESC
+    `, [req.params.id]);
+
+    // Permit documents (revisions/files) for this project
+    const docsR = await pool.query(
+      `SELECT * FROM permit_documents WHERE project_id = $1 ORDER BY created_at DESC`,
+      [req.params.id]
+    );
+
     res.json({
       project: projR.rows[0],
       time_entries: entriesR.rows,
       permit_stages: stagesR.rows,
-      children: childrenR.rows
+      permit_documents: docsR.rows,
+      children: childrenR.rows,
+      invoices: invoicesR.rows,
+      months_with_activity: periodsR.rows
     });
   } catch (e) {
     console.error('project detail error:', e);
@@ -900,6 +1007,17 @@ app.put('/api/permits/:projectId/advance', async (req, res) => {
   const { updated_by, notes } = req.body;
   const { projectId } = req.params;
   try {
+    // Fall back to whoever last touched the project's earliest stage if no name supplied
+    let actor = updated_by;
+    if (!actor) {
+      const { rows: prior } = await pool.query(
+        `SELECT updated_by FROM permit_stages
+         WHERE project_id=$1 AND updated_by IS NOT NULL AND updated_by != ''
+         ORDER BY created_at ASC LIMIT 1`, [projectId]
+      );
+      actor = prior[0]?.updated_by || 'unknown';
+    }
+
     // Get current stage
     const { rows: current } = await pool.query(
       'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
@@ -913,12 +1031,12 @@ app.put('/api/permits/:projectId/advance', async (req, res) => {
     // Complete current stage
     await pool.query(
       'UPDATE permit_stages SET completed_at=NOW(), notes=$1, updated_by=$2 WHERE project_id=$3 AND stage=$4',
-      [notes, updated_by, projectId, currentStage]
+      [notes, actor, projectId, currentStage]
     );
     // Create next stage
     await pool.query(
       'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
-      [projectId, nextStage, updated_by]
+      [projectId, nextStage, actor]
     );
     res.json({ previous: currentStage, current: nextStage });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -1199,7 +1317,12 @@ app.get('/api/dashboard', async (req, res) => {
         WHERE p.status='active'
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
       `),
-      pool.query(`SELECT COUNT(*), COALESCE(SUM(expected_revenue),0) as total FROM projects WHERE status='completed' AND billed_date IS NULL`),
+      pool.query(`
+        SELECT COUNT(*), COALESCE(SUM(expected_revenue),0) as total
+        FROM projects p
+        WHERE p.status='completed' AND p.billed_date IS NULL
+          AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+      `),
       // Monthly revenue: work performed this month, regardless of billing type or
       // billing date. Every hour logged this month earns at the project's billing_rate.
       // Resets automatically on the 1st (monthStart is the first of the current month).
@@ -1240,6 +1363,7 @@ app.get('/api/dashboard', async (req, res) => {
         FROM projects p
         LEFT JOIN clients cl ON cl.id=p.client_id
         WHERE p.status='completed' AND p.billed_date IS NULL
+          AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
         ORDER BY p.completed_date ASC
       `)
     ]);
@@ -1455,6 +1579,7 @@ app.get('/api/revenue/unbilled', async (req, res) => {
       LEFT JOIN time_entries te ON te.project_id = p.id
       LEFT JOIN concentrators con ON con.id = p.concentrator_id
       WHERE p.billed_date IS NULL
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
         AND (
           -- Completed projects that haven't been billed yet (existing logic)
           p.status = 'completed'
@@ -1644,6 +1769,21 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
       `UPDATE projects SET billed_date=NOW(), status='billed' WHERE id=$1 RETURNING *`,
       [req.params.id]
     );
+    // If permitting project, advance the permit pipeline to billed too
+    if (rows[0]?.project_type === 'permitting') {
+      await pool.query(
+        `UPDATE permit_stages SET completed_at = COALESCE(completed_at, NOW())
+         WHERE project_id = $1 AND completed_at IS NULL`,
+        [req.params.id]
+      );
+      await pool.query(
+        `INSERT INTO permit_stages (project_id, stage, completed_at, updated_by)
+         VALUES ($1, 'billed', NOW(), 'system')
+         ON CONFLICT (project_id, stage)
+         DO UPDATE SET completed_at = COALESCE(permit_stages.completed_at, NOW())`,
+        [req.params.id]
+      );
+    }
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1693,7 +1833,25 @@ app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
       );
     }
 
-    // 3. Optionally create a follow-on project (for ongoing hourly work)
+    // 3. If this is a permitting project, advance its pipeline to "billed".
+    // This keeps the Permitting tab in sync with the Billing tab automatically.
+    if (orig.project_type === 'permitting') {
+      // Mark any incomplete stages complete, then create a 'billed' stage row
+      await client.query(
+        `UPDATE permit_stages SET completed_at = COALESCE(completed_at, NOW())
+         WHERE project_id = $1 AND completed_at IS NULL`,
+        [orig.id]
+      );
+      await client.query(
+        `INSERT INTO permit_stages (project_id, stage, completed_at, notes, updated_by)
+         VALUES ($1, 'billed', NOW(), $2, 'system')
+         ON CONFLICT (project_id, stage)
+         DO UPDATE SET completed_at = COALESCE(permit_stages.completed_at, NOW())`,
+        [orig.id, `Auto-billed via project bill-and-clone${invoice_number ? ' — invoice ' + invoice_number : ''}`]
+      );
+    }
+
+    // 4. Optionally create a follow-on project (for ongoing hourly work)
     let followOn = null;
     if (create_follow_on) {
       const newName = follow_on_name || `${orig.name} (continued)`;
