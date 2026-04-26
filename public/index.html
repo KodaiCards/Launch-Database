@@ -223,6 +223,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
   <a class="nav-tab" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature"></i> Permitting</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
+  <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
   <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
 </nav>
 
@@ -355,21 +356,33 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
           <select class="filter" id="hrs-year"></select>
-          <button class="btn btn-secondary" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
-          <button class="btn btn-secondary" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import CSV</button>
-          <button class="btn btn-secondary" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Report</button>
-          <button class="btn btn-primary" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+          <button class="btn btn-primary btn-sm" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
         </div>
       </div>
-      <!-- Summary cards -->
       <div class="stats-grid" id="hrs-stats"></div>
-      <!-- Hours table -->
       <div class="card">
         <div class="card-header"><span class="card-title" id="hrs-report-title">Hours Report</span></div>
+        <div id="hours-tree-body" style="padding:0"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ BILLING ═══════════════════ -->
+    <div id="view-billing" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Billing</div><div class="section-sub">Unbilled completed work — review and bill</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="loadBilling()"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+      </div>
+      <div class="stats-grid" id="billing-stats"></div>
+      <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Date</th><th>Staff</th><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>Hours</th><th></th></tr></thead>
-            <tbody id="hours-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+            <thead><tr><th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th><th>Actions</th></tr></thead>
+            <tbody id="billing-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -725,6 +738,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <label>Choose file</label>
           <input type="file" id="csv-import-file" accept=".csv,.tsv,.xlsx,.xls">
         </div>
+        <div class="form-group" style="margin-top:8px">
+          <label>Year Override <span style="font-weight:400;color:var(--text-muted)">(auto-detects by default — only change for special cases)</span></label>
+          <select id="csv-import-year-override" class="filter" style="width:auto">
+            <option value="">Auto-detect (smart assumption)</option>
+          </select>
+        </div>
         <div id="import-error" style="display:none;color:var(--danger);font-size:13px;margin-top:8px"></div>
       </div>
       <!-- Stage 2: validation results (populated by JS) -->
@@ -948,6 +967,7 @@ function showView(view) {
   if (view==='projects') loadProjects();
   if (view==='permitting') loadPermits();
   if (view==='hours') loadHours();
+  if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
 }
 
@@ -1714,7 +1734,8 @@ async function markBilled(id) {
       alert(msg);
       loadProjects();
       loadDashboard();
-      if (currentView === 'revenue') loadRevenue();
+      loadRevenue();
+      if (typeof loadBilling === 'function') loadBilling();
     } catch (e) {
       alert('Billing failed: ' + e.message);
     } finally {
@@ -2046,30 +2067,105 @@ async function loadHours() {
   const m = document.getElementById('hrs-month').value;
   const y = document.getElementById('hrs-year').value;
   const entries = await api(`/api/time-entries?month=${m}&year=${y}`);
-  document.getElementById('hrs-report-title').textContent = `Hours Report — ${new Date(y,m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}`;
+  const monthName = new Date(y,m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  document.getElementById('hrs-report-title').textContent = `Hours Report — ${monthName}`;
 
-  // Summary stats
   const total = entries.reduce((s,e)=>s+parseFloat(e.hours),0);
   const byType = {};
   entries.forEach(e => { byType[e.project_type]=(byType[e.project_type]||0)+parseFloat(e.hours); });
+  const staffCount = new Set(entries.map(e=>e.staff_name).filter(Boolean)).size;
   document.getElementById('hrs-stats').innerHTML = [
-    `<div class="stat-card accent"><div class="stat-label">Total Hours</div><div class="stat-value">${fmt(total,'hrs')}</div></div>`,
+    `<div class="stat-card accent"><div class="stat-label">Total Hours</div><div class="stat-value">${fmt(total,'hrs')}</div><div class="stat-sub">${staffCount} staff member${staffCount!==1?'s':''}</div></div>`,
     ...Object.entries(byType).map(([t,h])=>`<div class="stat-card"><div class="stat-label">${TYPE_LABELS[t]||t}</div><div class="stat-value">${fmt(h,'hrs')}</div></div>`)
   ].join('');
 
-  const tbody = document.getElementById('hours-body');
-  if (!entries.length) { tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><i class="fa-regular fa-clock"></i><p>No hours logged for this period</p></div></td></tr>'; return; }
-  tbody.innerHTML = entries.map(e => `
-    <tr>
-      <td>${new Date(e.entry_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td>
-      <td>${esc(e.staff_name||'—')}</td>
-      <td class="td-name">${esc(e.project_name||'—')}</td>
-      <td>${esc(e.client_name||'—')}</td>
-      <td class="td-mono">${esc(e.work_order_number||'—')}</td>
-      <td>${typeBadge(e.project_type)}</td>
-      <td style="font-weight:600">${e.hours}</td>
-      <td><button class="btn btn-sm btn-danger btn-icon" onclick="deleteTimeEntry('${e.id}')"><i class="fa-solid fa-trash"></i></button></td>
-    </tr>`).join('');
+  const container = document.getElementById('hours-tree-body');
+  if (!entries.length) { container.innerHTML='<div class="empty-state" style="padding:40px"><i class="fa-regular fa-clock"></i><p>No hours logged for this period</p></div>'; return; }
+
+  // Build tree: Employee → Client → Project → Job entries
+  const tree = {};
+  entries.forEach(e => {
+    const emp = e.staff_name || 'Unassigned';
+    const cli = e.client_name || 'No Client';
+    const proj = e.project_name || 'No Project';
+    const hrs = parseFloat(e.hours) || 0;
+    if (!tree[emp]) tree[emp] = { hours: 0, clients: {} };
+    tree[emp].hours += hrs;
+    if (!tree[emp].clients[cli]) tree[emp].clients[cli] = { hours: 0, projects: {} };
+    tree[emp].clients[cli].hours += hrs;
+    if (!tree[emp].clients[cli].projects[proj]) tree[emp].clients[cli].projects[proj] = { hours: 0, type: e.project_type, wo: e.work_order_number, entries: [] };
+    tree[emp].clients[cli].projects[proj].hours += hrs;
+    tree[emp].clients[cli].projects[proj].entries.push(e);
+  });
+
+  // Sort employees by hours descending
+  const sortedEmps = Object.entries(tree).sort((a,b) => b[1].hours - a[1].hours);
+
+  let html = '';
+  for (const [emp, empData] of sortedEmps) {
+    const empKey = 'he-' + emp.replace(/\W/g,'');
+    html += `<div class="hrs-row" onclick="htreeToggle('${empKey}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-border);font-weight:700">
+      <div><i class="fa-solid fa-chevron-right" id="hc-${empKey}" style="font-size:10px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-user" style="color:var(--primary);margin-right:6px"></i> ${esc(emp)}</div>
+      <div style="font-size:14px;color:var(--primary)">${fmt(empData.hours,'hrs')}</div>
+    </div>`;
+
+    for (const [cli, cliData] of Object.entries(empData.clients).sort((a,b) => b[1].hours - a[1].hours)) {
+      const cliKey = empKey + '-c-' + cli.replace(/\W/g,'');
+      html += `<div class="htree htree-${empKey}" onclick="event.stopPropagation();htreeToggle('${cliKey}')" style="display:none;cursor:pointer;padding:10px 16px 10px 40px;border-bottom:1px solid #f0f0f0;background:var(--gray-light);font-weight:600">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><i class="fa-solid fa-chevron-right" id="hc-${cliKey}" style="font-size:9px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-building" style="color:var(--text-muted);margin-right:6px;font-size:12px"></i> ${esc(cli)}</div>
+          <div style="font-size:13px;color:var(--text)">${fmt(cliData.hours,'hrs')}</div>
+        </div>
+      </div>`;
+
+      for (const [proj, projData] of Object.entries(cliData.projects).sort((a,b) => b[1].hours - a[1].hours)) {
+        const projKey = cliKey + '-p-' + proj.replace(/\W/g,'');
+        html += `<div class="htree htree-${cliKey}" onclick="event.stopPropagation();htreeToggle('${projKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid #f5f5f5;background:#f8f9fa;font-weight:500;font-size:13px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div><i class="fa-solid fa-chevron-right" id="hc-${projKey}" style="font-size:8px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i>└ ${esc(proj)} ${projData.wo ? '<span class="td-mono" style="font-size:11px;color:var(--text-muted);margin-left:4px">WO# '+esc(projData.wo)+'</span>' : ''} ${typeBadge(projData.type)}</div>
+            <div style="font-size:13px">${fmt(projData.hours,'hrs')}</div>
+          </div>
+        </div>`;
+
+        // Individual time entries
+        for (const e of projData.entries.sort((a,b) => a.entry_date.localeCompare(b.entry_date))) {
+          html += `<div class="htree htree-${projKey}" style="display:none;padding:6px 16px 6px 88px;border-bottom:1px solid #fafafa;background:#fdfdfd;font-size:12px;color:var(--text-muted)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <span style="min-width:60px;display:inline-block">${new Date(e.entry_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                ${e.job_title ? '<span style="color:var(--text);margin-left:8px">'+esc(e.job_title)+'</span>' : ''}
+                ${e.notes ? '<span style="margin-left:8px;font-style:italic">'+esc(e.notes)+'</span>' : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:600;color:var(--text)">${e.hours} hrs</span>
+                <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTimeEntry('${e.id}')" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+          </div>`;
+        }
+      }
+    }
+  }
+  container.innerHTML = html;
+}
+
+function htreeToggle(key) {
+  const rows = document.querySelectorAll('.htree-' + key);
+  const chev = document.getElementById('hc-' + key);
+  const showing = rows[0] && rows[0].style.display !== 'none';
+  rows.forEach(r => {
+    r.style.display = showing ? 'none' : 'block';
+    if (showing) {
+      const nested = r.querySelectorAll('[id^="hc-"]');
+      nested.forEach(c => c.style.transform = 'rotate(0deg)');
+    }
+  });
+  if (showing) {
+    // Collapse all nested levels
+    const allNested = document.querySelectorAll(`[class*="htree-${key}-"]`);
+    allNested.forEach(n => n.style.display = 'none');
+  }
+  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
 function openTimeEntryModal() {
@@ -2115,6 +2211,12 @@ function openImportModal() {
   document.getElementById('import-modal-title').textContent = 'Import Hours from CSV';
   document.getElementById('import-error').style.display = 'none';
   document.getElementById('csv-import-file').value = '';
+  // Populate year override dropdown
+  const yrSel = document.getElementById('csv-import-year-override');
+  while (yrSel.options.length > 1) yrSel.remove(1);
+  const curYr = new Date().getFullYear();
+  for (let y = curYr + 1; y >= curYr - 3; y--) yrSel.add(new Option(y, y));
+  yrSel.value = '';
   openModal('import-modal');
 }
 
@@ -2132,6 +2234,8 @@ async function csvImportValidate() {
   try {
     const fd = new FormData();
     fd.append('file', file);
+    const overrideYear = document.getElementById('csv-import-year-override').value;
+    if (overrideYear) fd.append('override_year', overrideYear);
     const r = await fetch('/api/hours/csv-validate', { method: 'POST', body: fd });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Validation failed');
@@ -2289,6 +2393,61 @@ async function csvImportCommit() {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Import Valid Rows';
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// BILLING
+// ═══════════════════════════════════════════════════════════
+async function loadBilling() {
+  const unbilled = await api('/api/revenue/unbilled');
+  const totalUnbilled = unbilled.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
+
+  document.getElementById('billing-stats').innerHTML = `
+    <div class="stat-card accent"><div class="stat-label">Total Unbilled</div><div class="stat-value">${fmtMoney(totalUnbilled)}</div><div class="stat-sub">${unbilled.length} project${unbilled.length!==1?'s':''}</div></div>
+  `;
+
+  const tbody = document.getElementById('billing-body');
+  if (!unbilled.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state" style="padding:40px"><i class="fa-solid fa-check-circle" style="color:var(--success);font-size:32px"></i><p>All completed projects have been billed!</p></div></td></tr>';
+    return;
+  }
+
+  // Group by client then parent
+  const byClient = {};
+  unbilled.forEach(p => {
+    const cli = p.client_name || 'No Client';
+    if (!byClient[cli]) byClient[cli] = [];
+    byClient[cli].push(p);
+  });
+
+  let html = '';
+  for (const [client, projects] of Object.entries(byClient)) {
+    const clientTotal = projects.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
+    html += `<tr style="background:var(--primary-light)">
+      <td colspan="5" style="font-weight:700;font-size:14px;color:var(--primary);padding:10px 16px"><i class="fa-solid fa-building" style="margin-right:6px"></i>${esc(client)}</td>
+      <td style="font-weight:700;color:var(--primary);padding:10px 16px">${fmtMoney(clientTotal)}</td>
+      <td colspan="2"></td>
+    </tr>`;
+
+    for (const p of projects) {
+      const hrs = parseFloat(p.logged_hours) || 0;
+      const rate = parseFloat(p.billing_rate) || 0;
+      const earned = parseFloat(p.earned_amount) || 0;
+      html += `<tr>
+        <td class="td-name" style="padding-left:24px">└ ${esc(p.name)}</td>
+        <td>${esc(p.concentrator_area || p.work_order_number || '—')}</td>
+        <td>${typeBadge(p.project_type)}</td>
+        <td>${fmt(hrs, 'hrs')}</td>
+        <td>$${rate.toFixed(2)}/hr</td>
+        <td style="font-weight:600">${fmtMoney(earned)}</td>
+        <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')" title="Bill this project"><i class="fa-solid fa-check"></i> Bill</button>
+        </td>
+      </tr>`;
+    }
+  }
+  tbody.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════════

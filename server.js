@@ -70,6 +70,25 @@ function calcProjectFinancials(type, billingRate, footage) {
   return { expectedHours: null, expectedRevenue: null, miles: null };
 }
 
+// Recalculate actual_hours for a project (own entries + children's hours)
+// then propagate up through parent chain
+async function updateProjectHours(projectId) {
+  // Update this project: own time entries + sum of children's actual_hours
+  await pool.query(`
+    UPDATE projects SET actual_hours = (
+      SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
+    ) + (
+      SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id=$1
+    ) WHERE id=$1
+  `, [projectId]);
+
+  // Propagate up to parent
+  const { rows } = await pool.query('SELECT parent_id FROM projects WHERE id=$1', [projectId]);
+  if (rows[0] && rows[0].parent_id) {
+    await updateProjectHours(rows[0].parent_id);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENTS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -284,10 +303,11 @@ app.get('/api/time-entries', async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT te.*, p.name as project_name, p.work_order_number, p.project_type,
-             s.name as staff_name
+             s.name as staff_name, cl.name as client_name
       FROM time_entries te
       LEFT JOIN projects p ON p.id = te.project_id
       LEFT JOIN staff s ON s.id = te.staff_id
+      LEFT JOIN clients cl ON cl.id = p.client_id
       ${whereStr}
       ORDER BY te.entry_date DESC, te.created_at DESC
     `, params);
@@ -303,12 +323,8 @@ app.post('/api/time-entries', async (req, res) => {
       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
     `, [project_id, staff_id || null, entry_date, hours, job_title, notes]);
 
-    // Update project actual_hours
-    await pool.query(`
-      UPDATE projects SET actual_hours = (
-        SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
-      ) WHERE id=$1
-    `, [project_id]);
+    // Update project actual_hours and propagate up hierarchy
+    await updateProjectHours(project_id);
 
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -330,16 +346,13 @@ app.post('/api/time-entries/bulk', async (req, res) => {
       `, [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title, importBatch]);
       inserted.push(rows[0]);
     }
-    // Update actual_hours for affected projects
+    // Update actual_hours with hierarchy rollup
     const projectIds = [...new Set(entries.map(e => e.project_id))];
-    for (const pid of projectIds) {
-      await client.query(`
-        UPDATE projects SET actual_hours = (
-          SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
-        ) WHERE id=$1
-      `, [pid]);
-    }
     await client.query('COMMIT');
+    // Rollup after commit so pool queries work
+    for (const pid of projectIds) {
+      await updateProjectHours(pid);
+    }
     res.json({ inserted: inserted.length, batch: importBatch });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -353,11 +366,7 @@ app.delete('/api/time-entries/:id', async (req, res) => {
   try {
     const { rows } = await pool.query('DELETE FROM time_entries WHERE id=$1 RETURNING project_id', [req.params.id]);
     if (rows[0]) {
-      await pool.query(`
-        UPDATE projects SET actual_hours = (
-          SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
-        ) WHERE id=$1
-      `, [rows[0].project_id]);
+      await updateProjectHours(rows[0].project_id);
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -412,7 +421,7 @@ const MONTH_LOOKUP = {
 // Parse a date cell into YYYY-MM-DD or return null. Handles ISO, MM/DD/YYYY, M/D/YY,
 // "D-MMM" (e.g., "2-Mar"), and "D MMM" formats. anchorYear (from a Week Ending column)
 // is required for the short formats since they don't include a year.
-function parseDateCell(v, anchorYear, anchorDate) {
+function parseDateCell(v, anchorYear, anchorDate, overrideYear) {
   if (v === null || v === undefined || v === '') return null;
   const s = String(v).trim();
 
@@ -428,28 +437,34 @@ function parseDateCell(v, anchorYear, anchorDate) {
     return `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   }
 
+  // M/D (no year at all — e.g. "2/14" or "12/3")
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (m) {
+    const month = parseInt(m[1], 10);
+    const day = parseInt(m[2], 10);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const year = overrideYear || inferYear(month, anchorYear);
+      return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    }
+  }
+
   // "D-MMM" or "D MMM" — day + 3+ letter month, no year.
-  // Use anchorYear (from Week Ending) to fill in the year. If the resulting date
-  // falls AFTER the anchor date by more than a week, the work date is in the
-  // previous year (handles New Year crossover).
   m = s.match(/^(\d{1,2})[-\s\/]([A-Za-z]{3,})$/);
-  if (m && anchorYear) {
+  if (m) {
     const monthNum = MONTH_LOOKUP[m[2].toLowerCase()];
     if (monthNum) {
-      let year = anchorYear;
+      let year = overrideYear || anchorYear || inferYear(monthNum, null);
       const day = parseInt(m[1], 10);
       let result = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      if (anchorDate) {
+      if (anchorDate && !overrideYear) {
         const d = new Date(result + 'T00:00:00');
         const anchor = new Date(anchorDate + 'T00:00:00');
         const diffDays = (d - anchor) / 86400000;
         if (diffDays > 7) {
-          // Work date can't be > 7 days after week-ending; year must be prior
-          year = anchorYear - 1;
+          year = (anchorYear || year) - 1;
           result = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         } else if (diffDays < -14) {
-          // Or this could be next year (early-year work, week-ending wrapped)
-          year = anchorYear + 1;
+          year = (anchorYear || year) + 1;
           result = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         }
       }
@@ -461,6 +476,22 @@ function parseDateCell(v, anchorYear, anchorDate) {
   const d = new Date(s);
   if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
   return null;
+}
+
+// Smart year inference: if CSV says "December" and current month is January,
+// assume December of PREVIOUS year. If CSV says "February" and it's March,
+// assume February of CURRENT year.
+function inferYear(csvMonth, anchorYear) {
+  if (anchorYear) return anchorYear;
+  const now = new Date();
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+
+  // If the CSV month is ahead of current month by more than 1, it's probably last year
+  // e.g. Current: Jan 2027, CSV: Dec → Dec 2026
+  if (csvMonth > curMonth + 1) return curYear - 1;
+  // Otherwise assume current year
+  return curYear;
 }
 
 // Find the actual header row in a 2D array of rows. Real-world spreadsheets often
@@ -513,6 +544,7 @@ setInterval(() => {
 
 app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const overrideYear = req.body.override_year ? parseInt(req.body.override_year, 10) : null;
 
   try {
     const ext = path.extname(req.file.originalname).toLowerCase();
@@ -604,7 +636,7 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
 
       const issues = [];
       const name = (rawName || '').toString().trim();
-      const date = parseDateCell(rawDate, anchorYear, anchorDate);
+      const date = parseDateCell(rawDate, anchorYear, anchorDate, overrideYear);
       const woNorm = normalizeWO(rawWO);
       const hrs = parseFloat(rawHrs);
 
@@ -747,18 +779,12 @@ app.post('/api/hours/csv-commit', async (req, res) => {
       projectIds.add(r.project_id);
     }
 
-    // 3. Roll up actual_hours for affected projects
-    for (const pid of projectIds) {
-      await client.query(
-        `UPDATE projects SET actual_hours = (
-           SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
-         ) WHERE id=$1`,
-        [pid]
-      );
-    }
-
+    // 3. Roll up actual_hours for affected projects (after commit)
     await client.query('COMMIT');
     csvStage.delete(stage_id);
+    for (const pid of projectIds) {
+      await updateProjectHours(pid);
+    }
 
     res.json({
       ok: true,
@@ -1399,6 +1425,7 @@ app.get('/api/revenue/unbilled', async (req, res) => {
       SELECT p.*,
         cl.name as client_name,
         co.contract_number,
+        con.area_name as concentrator_area,
         COALESCE(SUM(te.hours),0) as logged_hours,
         CASE
           WHEN p.billing_type = 'hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
@@ -1415,6 +1442,7 @@ app.get('/api/revenue/unbilled', async (req, res) => {
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
       LEFT JOIN time_entries te ON te.project_id = p.id
+      LEFT JOIN concentrators con ON con.id = p.concentrator_id
       WHERE p.billed_date IS NULL
         AND (
           -- Completed projects that haven't been billed yet (existing logic)
@@ -1427,7 +1455,7 @@ app.get('/api/revenue/unbilled', async (req, res) => {
             SELECT 1 FROM time_entries WHERE project_id = p.id
           ))
         )
-      GROUP BY p.id, cl.name, co.contract_number
+      GROUP BY p.id, cl.name, co.contract_number, con.area_name
       HAVING (
         p.billing_type = 'footage'
         OR COALESCE(SUM(te.hours),0) > 0
@@ -2105,15 +2133,12 @@ async function executeTool(toolName, toolInput) {
             );
             count++;
           }
-          // Update actual_hours for affected projects
+          // Update actual_hours with hierarchy rollup
           const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
-          for (const pid of projectIds) {
-            await client.query(
-              'UPDATE projects SET actual_hours = (SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1) WHERE id=$1',
-              [pid]
-            );
-          }
           await client.query('COMMIT');
+          for (const pid of projectIds) {
+            await updateProjectHours(pid);
+          }
           return { success: true, inserted: count, batch: importBatch };
         } catch (err) {
           await client.query('ROLLBACK');
