@@ -1829,6 +1829,7 @@ app.get('/api/dashboard', async (req, res) => {
         SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
                cl.name as client_name, p.expected_hours, p.actual_hours,
                p.expected_revenue, p.created_at, p.parent_id,
+               p.billing_rate, p.billing_type,
                pp.name as parent_name, pp.parent_id as grandparent_id,
                con.area_name as concentrator_area
         FROM projects p
