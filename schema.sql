@@ -441,3 +441,32 @@ UPDATE projects SET billing_type = 'hourly'
   WHERE billing_type IS NULL AND LOWER(project_type) IN ('inspection', 're', 'resident engineer');
 UPDATE projects SET billing_type = 'footage'
   WHERE billing_type IS NULL AND LOWER(project_type) = 'permitting';
+
+-- ─────────────────────────────────────────
+-- RECALC: Fix actual_hours from time_entries
+-- Handles cases where hours exist but actual_hours is 0
+-- ─────────────────────────────────────────
+
+-- Step 1: Set leaf projects to their own direct hours
+UPDATE projects SET actual_hours = COALESCE((
+  SELECT SUM(hours) FROM time_entries WHERE project_id = projects.id
+), 0)
+WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = projects.id);
+
+-- Step 2: Roll up to parents (run multiple times for unlimited depth)
+DO $$
+DECLARE
+  i INT := 0;
+  changed INT := 1;
+BEGIN
+  WHILE changed > 0 AND i < 20 LOOP
+    UPDATE projects p SET actual_hours = (
+      SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id = p.id
+    ) + (
+      SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id = p.id
+    )
+    WHERE EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id);
+    GET DIAGNOSTICS changed = ROW_COUNT;
+    i := i + 1;
+  END LOOP;
+END $$;

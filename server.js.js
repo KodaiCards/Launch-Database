@@ -564,6 +564,44 @@ app.delete('/api/projects/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Recalculate actual_hours for a single project from its time_entries
+app.post('/api/projects/:id/recalc-hours', async (req, res) => {
+  try {
+    await updateProjectHours(req.params.id);
+    const { rows } = await pool.query('SELECT actual_hours FROM projects WHERE id=$1', [req.params.id]);
+    res.json({ ok: true, actual_hours: rows[0]?.actual_hours });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Recalculate ALL projects' actual_hours from time_entries (bottom-up)
+app.post('/api/projects/recalc-all', async (req, res) => {
+  try {
+    // First, set all to their own direct hours
+    await pool.query(`
+      UPDATE projects SET actual_hours = COALESCE((
+        SELECT SUM(hours) FROM time_entries WHERE project_id = projects.id
+      ), 0)
+    `);
+    // Then propagate up: repeat until no changes (handles unlimited depth)
+    let changed = 1;
+    let iterations = 0;
+    while (changed > 0 && iterations < 20) {
+      const result = await pool.query(`
+        UPDATE projects p SET actual_hours = (
+          SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id = p.id
+        ) + (
+          SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id = p.id
+        )
+        WHERE EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        RETURNING id
+      `);
+      changed = result.rowCount;
+      iterations++;
+    }
+    res.json({ ok: true, iterations });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TIME ENTRIES
 // ─────────────────────────────────────────────────────────────────────────────
