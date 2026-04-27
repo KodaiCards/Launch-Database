@@ -1418,20 +1418,36 @@ async function loadDashboard() {
   all.forEach(p => { if (p.parent_id) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
   const roots = all.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // Recursive YTD revenue rollup through any depth
+  // Infer billing rate from project type when not explicitly set
+  function inferRate(p) {
+    const r = parseFloat(p.billing_rate);
+    if (r && r > 0) return r;
+    const t = (p.project_type || '').toLowerCase();
+    if (t === 'inspection') return 90;
+    if (t === 're' || t === 'resident engineer') return 100;
+    if (t === 'permitting') return 90;
+    return 0;
+  }
+
+  // Recursive YTD revenue rollup through any depth.
+  // Uses own_hours (this project's direct time entries only) to avoid
+  // double-counting. Parent projects can have their own hours AND children.
   function sumTree(p) {
-    const isLeaf = !(childrenOf[p.id] || []).length;
+    // own_hours = only this project's direct time entries (from server query)
+    // Falls back to actual_hours for leaf projects if own_hours not available
+    const kids = childrenOf[p.id] || [];
+    const isLeaf = kids.length === 0;
+    let hours = parseFloat(p.own_hours) || (isLeaf ? (parseFloat(p.actual_hours) || 0) : 0);
     let ytd = 0;
-    let hours = parseFloat(p.actual_hours) || 0;
-    if (isLeaf) {
-      const rate = parseFloat(p.billing_rate) || 0;
-      if (p.billing_type === 'footage') {
-        if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
-      } else {
-        ytd = hours * rate;
-      }
+    // Calculate this project's own revenue from its own direct hours
+    const rate = inferRate(p);
+    if ((p.billing_type || '').toLowerCase() === 'footage') {
+      if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
+    } else if (hours > 0 && rate > 0) {
+      ytd = hours * rate;
     }
-    for (const kid of (childrenOf[p.id] || [])) {
+    // Add children's values
+    for (const kid of kids) {
       const s = sumTree(kid);
       ytd += s.ytd; hours += s.hours;
     }
@@ -1597,33 +1613,37 @@ function renderProjects(list, expandAll = false) {
   list.forEach(p => { if (p.parent_id && byId[p.parent_id]) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
   const roots = list.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // Recursive rollup through any depth.
-  // Computes: logged hours, expected hours, expected revenue, AND ytd_revenue
-  // (sum of hourly hours × billing_rate plus footage projects' billed amounts).
+  // Infer billing rate from project type when not explicitly set
+  function inferRate(p) {
+    const r = parseFloat(p.billing_rate);
+    if (r && r > 0) return r;
+    const t = (p.project_type || '').toLowerCase();
+    if (t === 'inspection') return 90;
+    if (t === 're' || t === 'resident engineer') return 100;
+    if (t === 'permitting') return 90;
+    return 0;
+  }
+
+  // Recursive rollup — uses logged_hours (direct time entries only, not rolled up)
+  // so parent projects with their own entries AND children both count correctly.
   function sumTree(p) {
-    const isLeaf = !(childrenOf[p.id] || []).length;
+    const kids = childrenOf[p.id] || [];
+    // logged_hours = direct time entries for this project only (from SQL JOIN)
     let logged = parseFloat(p.logged_hours) || 0;
-    let expected = parseFloat(p.expected_hours) || 0;
     let revenue = parseFloat(p.expected_revenue) || 0;
-    // YTD = the realized/earning value on each leaf:
-    //   - hourly leaves: actual_hours × billing_rate
-    //   - footage leaves that are billed/completed: expected_revenue
-    //   - everything else: 0
     let ytd = 0;
-    if (isLeaf) {
-      const rate = parseFloat(p.billing_rate) || 0;
-      const actual = parseFloat(p.actual_hours) || logged;
-      if (p.billing_type === 'footage') {
-        if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
-      } else {
-        ytd = actual * rate;
-      }
+    const rate = inferRate(p);
+    if ((p.billing_type || '').toLowerCase() === 'footage') {
+      if (['completed','billed'].includes(p.status)) ytd = revenue;
+    } else if (logged > 0 && rate > 0) {
+      ytd = logged * rate;
     }
-    for (const kid of (childrenOf[p.id] || [])) {
+    // Add children's values
+    for (const kid of kids) {
       const s = sumTree(kid);
-      logged += s.logged; expected += s.expected; revenue += s.revenue; ytd += s.ytd;
+      logged += s.logged; revenue += s.revenue; ytd += s.ytd;
     }
-    return { logged, expected, revenue, ytd };
+    return { logged, revenue, ytd };
   }
 
   function buildProjRows(projects, depth, parentGroupClass) {
@@ -3705,14 +3725,12 @@ function renderProjectDetail(data, month, year) {
     html += `<div class="card" style="margin-bottom:14px"><div class="card-header"><span class="card-title">Sub-projects (${children.length})</span></div>
       <table style="width:100%;font-size:13px"><thead><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Name</th><th style="padding:8px 12px;text-align:left">Type</th><th style="padding:8px 12px;text-align:left">Status</th><th style="padding:8px 12px;text-align:right">Hours</th><th style="padding:8px 12px;text-align:right">Revenue</th></tr></thead>
       <tbody>${children.map(c => {
-        const cRate = parseFloat(c.billing_rate) || 0;
-        const cHrs = parseFloat(c.actual_hours) || 0;
-        const cRev = c.billing_type === 'footage' && ['completed','billed'].includes(c.status) ? parseFloat(c.expected_revenue)||0 : cHrs * cRate;
+        const cRev = parseFloat(c.subtree_revenue) || 0;
         return `<tr class="clickable" onclick="showProjectDetail('${c.id}')" style="cursor:pointer">
         <td style="padding:8px 12px;font-weight:600">${esc(c.name)}</td>
         <td style="padding:8px 12px">${typeBadge(c.project_type)}</td>
         <td style="padding:8px 12px">${statusBadge(c.status)}</td>
-        <td style="padding:8px 12px;text-align:right">${fmt(cHrs)}</td>
+        <td style="padding:8px 12px;text-align:right">${fmt(c.actual_hours || 0)}</td>
         <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(cRev)}</td>
       </tr>`;}).join('')}</tbody></table></div>`;
   }

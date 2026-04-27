@@ -1343,7 +1343,16 @@ app.get('/api/projects/:id/detail', async (req, res) => {
     // the UI can show which leaf each entry came from.
     const entriesR = await pool.query(`
       SELECT te.*, s.name as staff_name,
-             pr.name as project_name, pr.id as project_id, pr.work_order_number, pr.project_type
+             pr.name as project_name, pr.id as project_id, pr.work_order_number, pr.project_type,
+             COALESCE(pr.billing_rate,
+               CASE LOWER(pr.project_type)
+                 WHEN 'inspection' THEN 90
+                 WHEN 're' THEN 100
+                 WHEN 'resident engineer' THEN 100
+                 WHEN 'permitting' THEN 90
+                 ELSE 0
+               END
+             ) as billing_rate
       FROM time_entries te
       LEFT JOIN staff s ON s.id = te.staff_id
       LEFT JOIN projects pr ON pr.id = te.project_id
@@ -1356,10 +1365,46 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       [req.params.id]
     );
 
-    // Direct children for the container's "Sub-projects" table
-    const childrenR = await pool.query(
-      `SELECT id, name, project_type, status, billing_rate, billing_type, expected_revenue, actual_hours
-       FROM projects WHERE parent_id = $1 ORDER BY name`,
+    // Direct children with computed revenue (handles NULL billing_rate via type inference)
+    const childrenR = await pool.query(`
+      WITH RECURSIVE child_tree AS (
+        SELECT id, parent_id FROM projects WHERE parent_id = $1
+        UNION ALL
+        SELECT p.id, p.parent_id FROM projects p JOIN child_tree ct ON p.parent_id = ct.id
+      )
+      SELECT c.id, c.name, c.project_type, c.status, c.billing_rate, c.billing_type,
+             c.expected_revenue, c.actual_hours,
+             COALESCE(c.billing_rate,
+               CASE LOWER(c.project_type)
+                 WHEN 'inspection' THEN 90
+                 WHEN 're' THEN 100
+                 WHEN 'resident engineer' THEN 100
+                 WHEN 'permitting' THEN 90
+                 ELSE 0
+               END
+             ) as effective_rate,
+             -- Compute subtree revenue for this child
+             COALESCE((
+               WITH RECURSIVE desc AS (
+                 SELECT c.id AS did
+                 UNION ALL
+                 SELECT p.id FROM projects p JOIN desc d ON p.parent_id = d.did
+               )
+               SELECT SUM(
+                 CASE
+                   WHEN leaf.billing_type = 'footage' AND leaf.status IN ('completed','billed')
+                     THEN COALESCE(leaf.expected_revenue, 0)
+                   ELSE COALESCE((SELECT SUM(te.hours) FROM time_entries te WHERE te.project_id = leaf.id), 0)
+                     * COALESCE(leaf.billing_rate,
+                       CASE LOWER(leaf.project_type)
+                         WHEN 'inspection' THEN 90 WHEN 're' THEN 100 WHEN 'resident engineer' THEN 100 WHEN 'permitting' THEN 90 ELSE 0
+                       END)
+                 END
+               ) FROM projects leaf
+               WHERE leaf.id IN (SELECT did FROM desc)
+                 AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = leaf.id)
+             ), 0) as subtree_revenue
+       FROM projects c WHERE c.parent_id = $1 ORDER BY c.name`,
       [req.params.id]
     );
 
@@ -1390,13 +1435,20 @@ app.get('/api/projects/:id/detail', async (req, res) => {
     `, [subtreeIds]);
 
     // Lifetime totals — total hours and earned regardless of period filter.
-    // Always shown alongside the period view so ongoing work has context.
     const lifetimeR = await pool.query(`
       SELECT COALESCE(SUM(te.hours), 0)::float AS total_hours,
-             COALESCE(SUM(te.hours * pr.billing_rate), 0)::float AS earned_hourly
+             COALESCE(SUM(te.hours * COALESCE(pr.billing_rate,
+               CASE LOWER(pr.project_type)
+                 WHEN 'inspection' THEN 90
+                 WHEN 're' THEN 100
+                 WHEN 'resident engineer' THEN 100
+                 WHEN 'permitting' THEN 90
+                 ELSE 0
+               END
+             )), 0)::float AS earned_hourly
       FROM time_entries te
       JOIN projects pr ON pr.id = te.project_id
-      WHERE te.project_id = ANY($1::uuid[]) AND pr.billing_type = 'hourly'
+      WHERE te.project_id = ANY($1::uuid[])
     `, [subtreeIds]);
 
     const docsR = await pool.query(
@@ -1804,34 +1856,55 @@ app.get('/api/dashboard', async (req, res) => {
         WHERE p.status='completed' AND p.billed_date IS NULL
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
       `),
-      // Monthly revenue: work performed this month, regardless of billing type or
-      // billing date. Every hour logged this month earns at the project's billing_rate.
-      // Resets automatically on the 1st (monthStart is the first of the current month).
+      // Monthly revenue: hours logged this month × rate (infer rate from project_type if billing_rate is NULL)
       pool.query(`
-        SELECT COALESCE(SUM(te.hours * p.billing_rate), 0) AS rev
+        SELECT COALESCE(SUM(te.hours * COALESCE(p.billing_rate,
+          CASE LOWER(p.project_type)
+            WHEN 'inspection' THEN 90
+            WHEN 're' THEN 100
+            WHEN 'resident engineer' THEN 100
+            WHEN 'permitting' THEN 90
+            ELSE 0
+          END
+        )), 0) AS rev
         FROM time_entries te
         JOIN projects p ON p.id = te.project_id
         WHERE te.entry_date >= $1
       `, [monthStart]),
-      // YTD revenue: same shape as monthly, applied to year-to-date billed work.
+      // YTD revenue: ALL earned revenue this year (not just billed).
+      // Leaf projects only (no children) to avoid double-counting rolled-up hours.
       pool.query(`
         SELECT COALESCE(SUM(
           CASE
-            WHEN billing_type = 'footage' THEN expected_revenue
-            WHEN billing_type = 'hourly' THEN actual_hours * billing_rate
-            ELSE 0
+            WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN COALESCE(p.expected_revenue, 0)
+            ELSE COALESCE(
+              (SELECT SUM(te.hours) FROM time_entries te
+               WHERE te.project_id = p.id
+                 AND EXTRACT(YEAR FROM te.entry_date) = EXTRACT(YEAR FROM CURRENT_DATE)),
+              0
+            ) * COALESCE(p.billing_rate,
+              CASE LOWER(p.project_type)
+                WHEN 'inspection' THEN 90
+                WHEN 're' THEN 100
+                WHEN 'resident engineer' THEN 100
+                WHEN 'permitting' THEN 90
+                ELSE 0
+              END
+            )
           END
         ), 0) AS rev
-        FROM projects
-        WHERE billed_date >= $1
-      `, [yearStart]),
+        FROM projects p
+        WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+          AND p.status IN ('active','completed','billed')
+      `),
       pool.query(`
         SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
                cl.name as client_name, p.expected_hours, p.actual_hours,
                p.expected_revenue, p.created_at, p.parent_id,
                p.billing_rate, p.billing_type,
                pp.name as parent_name, pp.parent_id as grandparent_id,
-               con.area_name as concentrator_area
+               con.area_name as concentrator_area,
+               COALESCE((SELECT SUM(te.hours) FROM time_entries te WHERE te.project_id = p.id), 0) as own_hours
         FROM projects p
         LEFT JOIN clients cl ON cl.id=p.client_id
         LEFT JOIN projects pp ON pp.id=p.parent_id
