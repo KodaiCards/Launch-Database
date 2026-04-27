@@ -57,17 +57,37 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-function calcProjectFinancials(type, billingRate, footage) {
-  const PERMITTING_RATE = 90;
-  const PERMITTING_HRS_PER_MILE = 27.5;
-  const PERMITTING_MIN_HRS = 15;
+function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride) {
+  // "Permitting" is now triggered by either the legacy project_type='permitting'
+  // OR an explicit hoursPerMileOverride (set when a Job with is_permitting=true
+  // is selected). Same rate ($90/hr by default).
+  const PERMITTING_RATE = parseFloat(billingRate) || 90;
 
   if (type === 'permitting' && footage) {
     const miles = footage / 5280;
-    const hrs = Math.max(miles * PERMITTING_HRS_PER_MILE, PERMITTING_MIN_HRS);
-    return { expectedHours: +hrs.toFixed(2), expectedRevenue: +(hrs * PERMITTING_RATE).toFixed(2), miles: +miles.toFixed(4) };
+    let hoursPerMile, totalHours;
+    if (hoursPerMileOverride && hoursPerMileOverride > 0) {
+      // Caller supplied a previously-saved random factor — re-use it
+      hoursPerMile = +parseFloat(hoursPerMileOverride);
+      totalHours = miles * hoursPerMile;
+    } else {
+      // Random between 25.00 and 30.00 in 0.25 increments → 21 possible values
+      const steps = Math.floor(Math.random() * 21);
+      hoursPerMile = 25 + steps * 0.25;
+      totalHours = miles * hoursPerMile;
+    }
+    // Minimum 25 hours if project is under a mile
+    if (miles < 1) totalHours = Math.max(25, totalHours);
+    // Snap to 0.25 increments
+    totalHours = Math.round(totalHours * 4) / 4;
+    return {
+      expectedHours: totalHours,
+      expectedRevenue: +(totalHours * PERMITTING_RATE).toFixed(2),
+      miles: +miles.toFixed(4),
+      permittingHoursPerMile: hoursPerMile
+    };
   }
-  return { expectedHours: null, expectedRevenue: null, miles: null };
+  return { expectedHours: null, expectedRevenue: null, miles: null, permittingHoursPerMile: null };
 }
 
 // Recalculate actual_hours for a project (own entries + children's hours)
@@ -140,6 +160,206 @@ app.post('/api/contracts', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // STAFF
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// JOBS — work categories (Inspector, RE, Permitting, Design, Other, ...)
+// Replace the role of the old project_type enum for billing logic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/jobs', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM jobs WHERE active = true ORDER BY name');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/jobs', async (req, res) => {
+  const { name, default_billing_type = 'hourly', default_rate = null, is_permitting = false, notes = null } = req.body;
+  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, notes)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (name) DO UPDATE SET active = true RETURNING *`,
+      [String(name).trim(), default_billing_type, default_rate, is_permitting, notes]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/jobs/:id', async (req, res) => {
+  const { name, default_billing_type, default_rate, is_permitting, notes, active } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE jobs SET
+         name = COALESCE($2, name),
+         default_billing_type = COALESCE($3, default_billing_type),
+         default_rate = $4,
+         is_permitting = COALESCE($5, is_permitting),
+         notes = $6,
+         active = COALESCE($7, active)
+       WHERE id = $1 RETURNING *`,
+      [req.params.id, name, default_billing_type, default_rate, is_permitting, notes, active]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/jobs/:id', async (req, res) => {
+  try {
+    // Soft-delete via active=false to preserve historical references in projects
+    await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT TYPES — program categories (BAU / GF(R) / RUS / Other / custom)
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/project-types', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM project_types WHERE active = true ORDER BY name');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/project-types', async (req, res) => {
+  const { name } = req.body;
+  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO project_types (name) VALUES ($1)
+       ON CONFLICT (name) DO UPDATE SET active = true RETURNING *`,
+      [String(name).trim()]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/project-types/:id', async (req, res) => {
+  try {
+    await pool.query('UPDATE project_types SET active = false WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING LIST — Job × Project Type × Billing Code → rate
+// Project creation pulls defaults from here. Settings panel manages it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/pricing', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT pe.*,
+             j.name as job_name, j.is_permitting,
+             pt.name as project_type_name
+      FROM pricing_entries pe
+      LEFT JOIN jobs j ON j.id = pe.job_id
+      LEFT JOIN project_types pt ON pt.id = pe.project_type_id
+      ORDER BY pt.name, j.name, pe.billing_code NULLS LAST
+    `);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Look up the default rate/billing for a job+type (and optionally a billing code).
+// Used by the project create form to auto-fill the rate.
+app.get('/api/pricing/lookup', async (req, res) => {
+  const { job_id, project_type_id, billing_code } = req.query;
+  if (!job_id || !project_type_id) return res.status(400).json({ error: 'job_id and project_type_id required' });
+  try {
+    // Most specific (with code) first, then fall back to the no-code entry
+    const { rows } = await pool.query(`
+      SELECT * FROM pricing_entries
+      WHERE job_id = $1 AND project_type_id = $2
+        AND ($3::text IS NULL OR billing_code = $3 OR billing_code IS NULL)
+      ORDER BY (billing_code = $3) DESC NULLS LAST
+      LIMIT 1
+    `, [job_id, project_type_id, billing_code || null]);
+    res.json(rows[0] || null);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/pricing', async (req, res) => {
+  const { job_id, project_type_id, billing_code, billing_type, rate, notes } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate, notes)
+      VALUES ($1,$2,$3,$4,$5,$6)
+      ON CONFLICT (job_id, project_type_id, billing_code)
+      DO UPDATE SET billing_type = $4, rate = $5, notes = $6, updated_at = NOW()
+      RETURNING *
+    `, [job_id, project_type_id, billing_code || null, billing_type || 'hourly', rate, notes || null]);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/pricing/:id', async (req, res) => {
+  const { billing_type, rate, notes, billing_code } = req.body;
+  try {
+    const { rows } = await pool.query(`
+      UPDATE pricing_entries SET
+        billing_type = COALESCE($2, billing_type),
+        rate = COALESCE($3, rate),
+        notes = $4,
+        billing_code = COALESCE($5, billing_code),
+        updated_at = NOW()
+      WHERE id = $1 RETURNING *
+    `, [req.params.id, billing_type, rate, notes, billing_code]);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/pricing/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM pricing_entries WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Returns the count of "missing pricing" combinations — the red dot in the
+// settings button is shown when this is > 0. A combination is "missing" if
+// there's an active job+project_type pair with no pricing_entries row.
+// (We don't enumerate every billing code — only require one default per job/type.)
+app.get('/api/pricing/gaps', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT j.id as job_id, j.name as job_name,
+             pt.id as project_type_id, pt.name as project_type_name
+      FROM jobs j
+      CROSS JOIN project_types pt
+      WHERE j.active = true AND pt.active = true
+        AND NOT EXISTS (
+          SELECT 1 FROM pricing_entries pe
+          WHERE pe.job_id = j.id AND pe.project_type_id = pt.id
+        )
+      ORDER BY pt.name, j.name
+    `);
+    res.json({ count: rows.length, gaps: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERMITTING CALCULATION (universal, not just RUS)
+// Hours = miles × random(25..30 in 0.25 increments). If miles < 1, force 25 hr min.
+// Stored on the project at creation so re-displays are stable.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function calcPermittingHours(miles) {
+  const m = parseFloat(miles) || 0;
+  // Random between 25 and 30 inclusive, snapped to 0.25 increments.
+  // 25.00, 25.25, 25.50, ..., 30.00 → 21 possible values.
+  const steps = Math.floor(Math.random() * 21);
+  const hoursPerMile = 25 + steps * 0.25;
+  let totalHours = m * hoursPerMile;
+  // Minimum 25 hours when project is under one mile.
+  if (m < 1) totalHours = Math.max(25, totalHours);
+  // Snap final total to 0.25 increments
+  totalHours = Math.round(totalHours * 4) / 4;
+  return { hours_per_mile: hoursPerMile, total_hours: totalHours };
+}
 
 app.get('/api/staff', async (req, res) => {
   try {
@@ -216,32 +436,61 @@ app.get('/api/projects/:id', async (req, res) => {
 app.post('/api/projects', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
-    project_type, status = 'active', billing_type, billing_rate,
+    project_type, project_type_id, job_id,
+    status = 'active', billing_type, billing_rate,
     footage, start_date, notes, parent_id, budget_code_id, concentrator_id,
     permit_manager
   } = req.body;
 
   try {
-    const fin = calcProjectFinancials(project_type, billing_rate, footage);
+    // If a job is selected with is_permitting=true, treat this as a permitting
+    // project regardless of legacy project_type. This is how permitting
+    // becomes universal across program types (BAU/GF(R)/RUS/Other).
+    let isPermitting = project_type === 'permitting';
+    let effectiveBillingType = billing_type;
+    let effectiveRate = billing_rate;
+    if (job_id) {
+      const jr = await pool.query('SELECT * FROM jobs WHERE id = $1', [job_id]);
+      const j = jr.rows[0];
+      if (j) {
+        if (j.is_permitting) {
+          isPermitting = true;
+          effectiveBillingType = 'footage';
+        }
+        if (effectiveRate === undefined || effectiveRate === null || effectiveRate === '') {
+          effectiveRate = j.default_rate;
+        }
+        if (!effectiveBillingType) {
+          effectiveBillingType = j.default_billing_type || 'hourly';
+        }
+      }
+    }
+
+    // For the financials calc, treat is_permitting as the trigger
+    const finType = isPermitting ? 'permitting' : (project_type || 'other');
+    const fin = calcProjectFinancials(finType, effectiveRate, footage);
 
     const { rows } = await pool.query(`
       INSERT INTO projects (
         name, client_id, contract_id, work_order_number,
-        project_type, status, billing_type, billing_rate,
+        project_type, project_type_id, job_id,
+        status, billing_type, billing_rate,
         footage, miles, expected_hours, expected_revenue,
-        start_date, notes, parent_id, budget_code_id, concentrator_id
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+        start_date, notes, parent_id, budget_code_id, concentrator_id,
+        permitting_hours_per_mile
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
       RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
-      project_type, status, billing_type, billing_rate,
+      project_type, project_type_id || null, job_id || null,
+      status, effectiveBillingType, effectiveRate || null,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null
+      start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
+      fin.permittingHoursPerMile || null
     ]);
 
-    // Auto-create permit stage if permitting project, stamping the manager's
-    // name so we don't have to ask again at every advance
-    if (project_type === 'permitting') {
+    // Auto-create permit stage for permitting projects
+    if (isPermitting) {
       await pool.query(
         'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
         [rows[0].id, 'potential', permit_manager || null]
@@ -255,24 +504,53 @@ app.post('/api/projects', async (req, res) => {
 app.put('/api/projects/:id', async (req, res) => {
   const {
     name, client_id, contract_id, work_order_number,
-    project_type, status, billing_type, billing_rate,
+    project_type, project_type_id, job_id,
+    status, billing_type, billing_rate,
     footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id
   } = req.body;
 
   try {
-    const fin = calcProjectFinancials(project_type, billing_rate, footage);
+    // Re-derive permitting status from job (if job specified) or legacy project_type
+    let isPermitting = project_type === 'permitting';
+    let effectiveBillingType = billing_type;
+    let effectiveRate = billing_rate;
+    if (job_id) {
+      const jr = await pool.query('SELECT * FROM jobs WHERE id = $1', [job_id]);
+      const j = jr.rows[0];
+      if (j) {
+        if (j.is_permitting) { isPermitting = true; effectiveBillingType = 'footage'; }
+        if (effectiveRate === undefined || effectiveRate === null || effectiveRate === '') {
+          effectiveRate = j.default_rate;
+        }
+        if (!effectiveBillingType) effectiveBillingType = j.default_billing_type || 'hourly';
+      }
+    }
+
+    // For permitting, reuse the random hours-per-mile factor stored at create-time
+    // so editing footage doesn't generate a new random rate every save.
+    const existing = await pool.query('SELECT permitting_hours_per_mile FROM projects WHERE id=$1', [req.params.id]);
+    const existingHpm = existing.rows[0]?.permitting_hours_per_mile;
+    const finType = isPermitting ? 'permitting' : (project_type || 'other');
+    const fin = calcProjectFinancials(finType, effectiveRate, footage, existingHpm);
+
     const { rows } = await pool.query(`
       UPDATE projects SET
         name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
-        project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
-        footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-        start_date=$13, completed_date=$14, billed_date=$15, notes=$16, parent_id=$17, budget_code_id=$18, concentrator_id=$19
-      WHERE id=$20 RETURNING *
+        project_type=$5, project_type_id=$6, job_id=$7,
+        status=$8, billing_type=$9, billing_rate=$10,
+        footage=$11, miles=$12, expected_hours=$13, expected_revenue=$14,
+        start_date=$15, completed_date=$16, billed_date=$17,
+        notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=$21,
+        permitting_hours_per_mile=$22
+      WHERE id=$23 RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
-      project_type, status, billing_type, billing_rate,
+      project_type, project_type_id || null, job_id || null,
+      status, effectiveBillingType, effectiveRate || null,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
-      start_date || null, completed_date || null, billed_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
+      start_date || null, completed_date || null, billed_date || null,
+      notes, parent_id || null, budget_code_id || null, concentrator_id || null,
+      fin.permittingHoursPerMile || existingHpm || null,
       req.params.id
     ]);
     res.json(rows[0]);
@@ -437,7 +715,8 @@ function detectColumns(headers) {
     week_ending: findOne('week ending', 'week_ending', 'weekending', 'week-ending'),
     wo: findOne('wo', 'wo#', 'wo #', 'work_order', 'work order', 'work_order_number', 'wo_number', 'work order #', 'work order#', 'job', 'job#'),
     hours: findOne('hours', 'hrs', 'time', 'qty'),
-    job_title: findOne('job_title', 'title', 'position', 'role', 'classification', 'billing code', 'billing_code')
+    job_title: findOne('job_title', 'title', 'position', 'role', 'classification'),
+    billing_code: findOne('billing code', 'billing_code', 'code', 'rus code', 'rus billing code')
   };
 }
 
@@ -651,15 +930,65 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
     // This becomes the fallback for any row that doesn't have its own job title.
     const inferredJobTitle = inferJobTitle(req.file.originalname, rows2d, headerIdx);
 
-    // Pull staff + projects so per-row matching is cheap
-    const [staffR, projR] = await Promise.all([
+    // Pull staff + projects + pricing entries so per-row matching is cheap.
+    // For projects we ALSO need to know which are leaves (no children) and
+    // which job each is linked to — so we can pick the right project when
+    // multiple share the same WO# (common: grandparent/parent/child of a
+    // concentrator all carry the same WO).
+    const [staffR, projR, pricingR] = await Promise.all([
       pool.query('SELECT id, name FROM staff'),
-      pool.query('SELECT id, name, work_order_number FROM projects WHERE work_order_number IS NOT NULL AND work_order_number != \'\'')
+      pool.query(`
+        SELECT p.id, p.name, p.work_order_number, p.job_id, p.parent_id,
+               j.name as job_name,
+               EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id) AS has_children
+        FROM projects p
+        LEFT JOIN jobs j ON j.id = p.job_id
+        WHERE p.work_order_number IS NOT NULL AND p.work_order_number != ''
+      `),
+      pool.query(`
+        SELECT pe.billing_code, j.name as job_name
+        FROM pricing_entries pe
+        LEFT JOIN jobs j ON j.id = pe.job_id
+        WHERE pe.billing_code IS NOT NULL AND pe.billing_code != ''
+      `)
     ]);
     const staffByNorm = {};
     staffR.rows.forEach(s => { staffByNorm[normalizeName(s.name)] = s; });
-    const projByNorm = {};
-    projR.rows.forEach(p => { projByNorm[normalizeWO(p.work_order_number)] = p; });
+
+    // Group projects by normalized WO. Each entry is an array of candidate
+    // projects sharing that WO. The per-row matcher picks the best one based
+    // on the billing code (if any) → job match preference, then leaf preference.
+    const projsByNorm = {};
+    projR.rows.forEach(p => {
+      const k = normalizeWO(p.work_order_number);
+      (projsByNorm[k] = projsByNorm[k] || []).push(p);
+    });
+
+    // Map "g-1-B-4" (case-insensitive) → "Inspection"
+    const jobByCode = {};
+    pricingR.rows.forEach(pe => {
+      if (pe.billing_code && pe.job_name) {
+        jobByCode[String(pe.billing_code).trim().toLowerCase()] = pe.job_name;
+      }
+    });
+
+    // Pick the best candidate project for a given WO + billing code.
+    // Preference order:
+    //   1. Leaf project whose job matches the billing code's job  (best match)
+    //   2. Any leaf project (avoid landing entries on containers)
+    //   3. Any project with that WO  (last resort — at least the WO matches)
+    function pickProject(woNorm, billingCodeJobName) {
+      const candidates = projsByNorm[woNorm];
+      if (!candidates || !candidates.length) return null;
+      const leaves = candidates.filter(c => !c.has_children);
+      const pool = leaves.length ? leaves : candidates;
+      if (billingCodeJobName) {
+        const wantLc = billingCodeJobName.toLowerCase();
+        const jobMatch = pool.find(c => c.job_name && c.job_name.toLowerCase() === wantLc);
+        if (jobMatch) return jobMatch;
+      }
+      return pool[0];
+    }
 
     const today = new Date(); today.setHours(0,0,0,0);
     const past18 = new Date(today); past18.setMonth(past18.getMonth() - 18);
@@ -715,18 +1044,26 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
       }
 
       const staff = staffByNorm[normalizeName(name)];
-      const proj = projByNorm[woNorm];
       const staffKnown = !!staff;
+
+      // Resolve job title from row's billing code → row's column → filename inference.
+      // Compute this FIRST so we can use the implied job to disambiguate when
+      // multiple projects share a WO# (e.g. a parent container + its leaves).
+      const rawCode = cols.billing_code ? String(r[cols.billing_code] ?? '').trim() : null;
+      const codeLookup = rawCode ? jobByCode[rawCode.toLowerCase()] : null;
+      const rowTitle = rawTitle ? String(rawTitle).trim() : null;
+      const finalTitle = codeLookup || rowTitle || inferredJobTitle || null;
+      const jobSource = codeLookup ? 'billing_code' : (rowTitle ? 'column' : (inferredJobTitle ? 'filename' : null));
+      const jobMissing = !finalTitle;
+
+      // Now pick the best project for this WO + billing-code-derived job.
+      // Prefers leaves over containers; prefers job-matching leaves when the
+      // billing code disambiguates.
+      const proj = pickProject(woNorm, codeLookup);
       const woKnown = !!proj;
 
       if (!staffKnown) unknownStaff.set(normalizeName(name), name);
       if (!woKnown) unknownWOs.set(woNorm, String(rawWO).trim());
-
-      // Determine a job title: row column → inferred from filename → null
-      const rowTitle = rawTitle ? String(rawTitle).trim() : null;
-      const finalTitle = rowTitle || inferredJobTitle || null;
-      const jobInferred = !rowTitle && !!inferredJobTitle;
-      const jobMissing = !finalTitle;
 
       validRows.push({
         row_num: rowNum,
@@ -734,10 +1071,13 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
         wo: String(rawWO).trim(), wo_norm: woNorm,
         date, hours: hrs,
         job_title: finalTitle,
-        job_inferred: jobInferred,
+        job_source: jobSource,
+        billing_code: rawCode || null,
         job_missing: jobMissing,
         staff_id: staff?.id || null,
         project_id: proj?.id || null,
+        project_name: proj?.name || null,
+        project_job_name: proj?.job_name || null,
         staff_known: staffKnown,
         wo_known: woKnown
       });
@@ -778,7 +1118,12 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
           .slice(0, 3)
       })),
       unknown_wos: [...unknownWOs.values()],
-      invalid_rows: invalidRows.slice(0, 50) // cap for display
+      invalid_rows: invalidRows.slice(0, 50), // cap for display
+      // Full ledger of every valid row + the importer's predetermined matches.
+      // The frontend renders this as an editable table so the user can override
+      // anything before the commit. Capped at 500 — typical CSVs are well under this.
+      valid_rows: validRows.slice(0, 500),
+      valid_rows_total: validRows.length
     });
   } catch (e) {
     console.error('CSV validate error:', e);
@@ -796,6 +1141,60 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
 //     map_staff: { "mike johnson": "<staff_uuid>", ... }, // OR map them to existing staff
 //     skip_unknown_wos: true                   // if false → reject; we always require true here
 //   }
+// Edit a single staged row before commit. Body: { stage_id, row_num, patch }
+// Patch keys: project_id, staff_id, job_title, hours.
+// We validate IDs exist; the row's "known" flags get re-evaluated so the
+// summary stays consistent.
+app.post('/api/hours/csv-edit-row', async (req, res) => {
+  const { stage_id, row_num, patch } = req.body;
+  if (!stage_id || !row_num || !patch) return res.status(400).json({ error: 'stage_id, row_num, patch required' });
+  const staged = csvStage.get(stage_id);
+  if (!staged) return res.status(400).json({ error: 'Staged data expired. Re-validate the file.' });
+
+  const row = staged.validRows.find(r => r.row_num === row_num);
+  if (!row) return res.status(404).json({ error: 'Row not found in staged data' });
+
+  try {
+    if ('project_id' in patch) {
+      if (patch.project_id) {
+        const r = await pool.query('SELECT id, name FROM projects WHERE id=$1', [patch.project_id]);
+        if (!r.rows[0]) return res.status(400).json({ error: 'Project not found' });
+        row.project_id = r.rows[0].id;
+        row.project_name = r.rows[0].name;
+        row.wo_known = true;
+      } else {
+        row.project_id = null;
+        row.wo_known = false;
+      }
+    }
+    if ('staff_id' in patch) {
+      if (patch.staff_id) {
+        const r = await pool.query('SELECT id, name FROM staff WHERE id=$1', [patch.staff_id]);
+        if (!r.rows[0]) return res.status(400).json({ error: 'Staff not found' });
+        row.staff_id = r.rows[0].id;
+        row.staff_known = true;
+      } else {
+        row.staff_id = null;
+        row.staff_known = false;
+      }
+    }
+    if ('job_title' in patch) {
+      row.job_title = patch.job_title ? String(patch.job_title).trim() : null;
+      row.job_source = 'manual';
+      row.job_missing = !row.job_title;
+    }
+    if ('hours' in patch) {
+      const h = parseFloat(patch.hours);
+      if (isNaN(h) || h <= 0) return res.status(400).json({ error: 'Hours must be a positive number' });
+      row.hours = h;
+    }
+
+    res.json({ ok: true, row });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.post('/api/hours/csv-commit', async (req, res) => {
   const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true, apply_job_title = null } = req.body;
   if (!stage_id) return res.status(400).json({ error: 'Missing stage_id' });
@@ -915,6 +1314,20 @@ app.get('/api/projects/:id/detail', async (req, res) => {
     `, [req.params.id]);
     const subtreeIds = subtreeR.rows.map(r => r.id);
 
+    // Active billable count: leaves only, status='active', with a non-Other job.
+    // Mirrors the dashboard's active count rule. Used for the "across N projects"
+    // label so containers/Other/non-active don't inflate the number.
+    const activeCountR = await pool.query(`
+      SELECT COUNT(*)::int AS n FROM projects p
+      LEFT JOIN jobs j ON j.id = p.job_id
+      WHERE p.id = ANY($1::uuid[])
+        AND p.status = 'active'
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        AND p.job_id IS NOT NULL
+        AND LOWER(COALESCE(j.name, '')) <> 'other'
+    `, [subtreeIds]);
+    const activeBillableCount = parseInt(activeCountR.rows[0].n) || 0;
+
     const month = req.query.month;
     const year = req.query.year;
     let dateFilter = '', params = [subtreeIds];
@@ -1000,7 +1413,8 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       invoices: invoicesR.rows,
       months_with_activity: periodsR.rows,
       lifetime: lifetimeR.rows[0],
-      subtree_size: subtreeIds.length
+      subtree_size: subtreeIds.length,
+      active_billable_count: activeBillableCount
     });
   } catch (e) {
     console.error('project detail error:', e);
@@ -1011,7 +1425,11 @@ app.get('/api/projects/:id/detail', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMIT PIPELINE
 // ─────────────────────────────────────────────────────────────────────────────
-const PERMIT_STAGES = ['potential','started','submitted','approved','checklist','billed'];
+// The permit pipeline ends at 'checklist'. "Billed" is no longer a permit stage —
+// billing status is read from projects.billed_date (set by the Billing tab when
+// the project is invoiced). Permit stage rows with stage='billed' from older
+// data are still present in the table but ignored by the pipeline UI.
+const PERMIT_STAGES = ['potential','started','submitted','approved','checklist'];
 
 app.get('/api/permits', async (req, res) => {
   try {
@@ -1121,9 +1539,13 @@ app.get('/api/budgets/:id/summary', async (req, res) => {
     if (!budgetRows.length) return res.status(404).json({ error: 'Budget not found' });
     const budget = budgetRows[0];
 
-    // Get all codes with spent amounts
+    // Get all codes with spent amounts. Spent = sum of earned revenue from
+    // every project linked to this budget_code, optionally filtered by job:
+    // if budget_codes.job_id is set, ONLY projects with the matching job count
+    // toward the code's "spent" total. NULL job_id = applies to any job.
     const { rows: codes } = await pool.query(`
       SELECT bc.*,
+        j.name as job_name,
         COALESCE(SUM(
           CASE
             WHEN proj.billing_type = 'footage' THEN proj.expected_revenue
@@ -1135,6 +1557,7 @@ app.get('/api/budgets/:id/summary', async (req, res) => {
         json_agg(json_build_object(
           'id', proj.id, 'name', proj.name, 'status', proj.status,
           'project_type', proj.project_type,
+          'job_id', proj.job_id,
           'billable', CASE
             WHEN proj.billing_type = 'footage' THEN proj.expected_revenue
             WHEN proj.billing_type = 'hourly' THEN proj.actual_hours * proj.billing_rate
@@ -1142,9 +1565,11 @@ app.get('/api/budgets/:id/summary', async (req, res) => {
           END
         )) FILTER (WHERE proj.id IS NOT NULL) as projects
       FROM budget_codes bc
+      LEFT JOIN jobs j ON j.id = bc.job_id
       LEFT JOIN projects proj ON proj.budget_code_id = bc.id
+        AND (bc.job_id IS NULL OR proj.job_id = bc.job_id)
       WHERE bc.budget_id = $1
-      GROUP BY bc.id
+      GROUP BY bc.id, j.name
       ORDER BY bc.code
     `, [req.params.id]);
 
@@ -1207,12 +1632,12 @@ app.get('/api/budget-codes', async (req, res) => {
 });
 
 app.post('/api/budget-codes', async (req, res) => {
-  const { budget_id, code, description, allocated_amount } = req.body;
+  const { budget_id, code, description, allocated_amount, job_id } = req.body;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO budget_codes (budget_id, code, description, allocated_amount)
-       VALUES ($1,$2,$3,$4) RETURNING *`,
-      [budget_id, code, description || null, allocated_amount || 0]
+      `INSERT INTO budget_codes (budget_id, code, description, allocated_amount, job_id)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [budget_id, code, description || null, allocated_amount || 0, job_id || null]
     );
     // Recalculate budget total from sum of codes
     await pool.query(
@@ -1225,12 +1650,12 @@ app.post('/api/budget-codes', async (req, res) => {
 });
 
 app.put('/api/budget-codes/:id', async (req, res) => {
-  const { code, description, allocated_amount } = req.body;
+  const { code, description, allocated_amount, job_id } = req.body;
   try {
     const { rows } = await pool.query(
-      `UPDATE budget_codes SET code=$1, description=$2, allocated_amount=$3
-       WHERE id=$4 RETURNING *`,
-      [code, description || null, allocated_amount || 0, req.params.id]
+      `UPDATE budget_codes SET code=$1, description=$2, allocated_amount=$3, job_id=$4
+       WHERE id=$5 RETURNING *`,
+      [code, description || null, allocated_amount || 0, job_id || null, req.params.id]
     );
     // Recalculate budget total
     if (rows[0]) {
@@ -1283,6 +1708,29 @@ app.post('/api/concentrators', async (req, res) => {
       [contract_label, area_name, work_order_number || null, notes || null]
     );
     res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Debug: returns the exact list of projects counted as "active" by the
+// dashboard tile. Visible from the dashboard for troubleshooting.
+app.get('/api/dashboard/active-list', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.id, p.name, p.status, p.work_order_number,
+             cl.name AS client_name,
+             j.name AS job_name,
+             pp.name AS parent_name
+      FROM projects p
+      LEFT JOIN jobs j ON j.id = p.job_id
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
+      WHERE p.status='active'
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        AND p.job_id IS NOT NULL
+        AND LOWER(COALESCE(j.name, '')) <> 'other'
+      ORDER BY cl.name, pp.name, p.name
+    `);
+    res.json({ count: rows.length, projects: rows });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1344,11 +1792,18 @@ app.get('/api/dashboard', async (req, res) => {
     const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
 
     const [activeR, unbilledR, monthRevR, ytdRevR, recentR, alertR] = await Promise.all([
-      // Active = leaf projects only (exclude grandparents/parents which are file-management containers)
+      // Active = leaf projects with a real work job (Inspection / RE / Permitting / Design / etc).
+      // Exclude:
+      //   • container projects (anything with children — file-management buckets)
+      //   • projects whose job is "Other" (or no job linked) since those are
+      //     parking-lot organizational projects, not real billable work
       pool.query(`
         SELECT COUNT(*) FROM projects p
+        LEFT JOIN jobs j ON j.id = p.job_id
         WHERE p.status='active'
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+          AND p.job_id IS NOT NULL
+          AND LOWER(COALESCE(j.name, '')) <> 'other'
       `),
       pool.query(`
         SELECT COUNT(*), COALESCE(SUM(expected_revenue),0) as total
@@ -1802,21 +2257,8 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
       `UPDATE projects SET billed_date=NOW(), status='billed' WHERE id=$1 RETURNING *`,
       [req.params.id]
     );
-    // If permitting project, advance the permit pipeline to billed too
-    if (rows[0]?.project_type === 'permitting') {
-      await pool.query(
-        `UPDATE permit_stages SET completed_at = COALESCE(completed_at, NOW())
-         WHERE project_id = $1 AND completed_at IS NULL`,
-        [req.params.id]
-      );
-      await pool.query(
-        `INSERT INTO permit_stages (project_id, stage, completed_at, updated_by)
-         VALUES ($1, 'billed', NOW(), 'system')
-         ON CONFLICT (project_id, stage)
-         DO UPDATE SET completed_at = COALESCE(permit_stages.completed_at, NOW())`,
-        [req.params.id]
-      );
-    }
+    // Permit pipeline ends at 'checklist' — billing status is reflected by
+    // projects.billed_date, not by writing a 'billed' permit_stages row.
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -1866,23 +2308,8 @@ app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
       );
     }
 
-    // 3. If this is a permitting project, advance its pipeline to "billed".
-    // This keeps the Permitting tab in sync with the Billing tab automatically.
-    if (orig.project_type === 'permitting') {
-      // Mark any incomplete stages complete, then create a 'billed' stage row
-      await client.query(
-        `UPDATE permit_stages SET completed_at = COALESCE(completed_at, NOW())
-         WHERE project_id = $1 AND completed_at IS NULL`,
-        [orig.id]
-      );
-      await client.query(
-        `INSERT INTO permit_stages (project_id, stage, completed_at, notes, updated_by)
-         VALUES ($1, 'billed', NOW(), $2, 'system')
-         ON CONFLICT (project_id, stage)
-         DO UPDATE SET completed_at = COALESCE(permit_stages.completed_at, NOW())`,
-        [orig.id, `Auto-billed via project bill-and-clone${invoice_number ? ' — invoice ' + invoice_number : ''}`]
-      );
-    }
+    // 3. Permit pipeline no longer has a "billed" stage — billing status
+    // is read from projects.billed_date directly. Nothing to do here.
 
     // 4. Optionally create a follow-on project (for ongoing hourly work)
     let followOn = null;
@@ -1916,6 +2343,139 @@ app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BULK INVOICE — bill multiple projects as a single invoice
+// Body: { project_ids: [...], invoice_number, invoice_date, invoice_name, items: [{project_id, description, amount}] }
+// Each project gets a line item; the invoice gets one invoice_number.
+// ─────────────────────────────────────────────────────────────────────────────
+app.post('/api/billing/bill-multiple', async (req, res) => {
+  const { project_ids, invoice_number, invoice_date, invoice_name, items } = req.body;
+  if (!Array.isArray(project_ids) || project_ids.length === 0) {
+    return res.status(400).json({ error: 'project_ids must be a non-empty array' });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Pull all projects so we know rates, footage, hours, client_id
+    const projR = await client.query(
+      `SELECT * FROM projects WHERE id = ANY($1::uuid[])`, [project_ids]
+    );
+    if (projR.rows.length !== project_ids.length) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'One or more projects not found' });
+    }
+
+    // All projects in a single invoice should share the same client.
+    // (We could allow mixed-client billing but it's probably user error.)
+    const clientIds = [...new Set(projR.rows.map(p => p.client_id))];
+    if (clientIds.length > 1) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'All selected projects must belong to the same client' });
+    }
+    const billClientId = clientIds[0] || null;
+
+    // Build line items. If the caller supplied per-project line item overrides
+    // (rate / amount / description), use them; otherwise derive from the project.
+    const itemMap = new Map((items || []).map(it => [it.project_id, it]));
+    let total = 0;
+    const lineItems = [];
+    for (const p of projR.rows) {
+      const override = itemMap.get(p.id) || {};
+      const isFootage = p.billing_type === 'footage';
+      const hours = parseFloat(p.actual_hours) || 0;
+      const rate = parseFloat(p.billing_rate) || 0;
+      const expected = parseFloat(p.expected_revenue) || 0;
+      const amount = override.amount != null ? parseFloat(override.amount)
+        : isFootage ? expected : hours * rate;
+      const qty = override.quantity != null ? parseFloat(override.quantity)
+        : isFootage ? p.footage : hours;
+      const unit = override.unit || (isFootage ? 'lf' : 'hours');
+      const description = override.description || p.name;
+      lineItems.push({ project_id: p.id, description, quantity: qty, unit, rate, amount });
+      total += amount;
+    }
+
+    const billDate = invoice_date || new Date().toISOString().split('T')[0];
+    const invR = await client.query(
+      `INSERT INTO invoices (client_id, invoice_number, invoice_date, total_amount, status, notes)
+       VALUES ($1, $2, $3, $4, 'sent', $5) RETURNING id`,
+      [billClientId, invoice_number || null, billDate, total, invoice_name || null]
+    );
+    const invoiceId = invR.rows[0].id;
+
+    for (const li of lineItems) {
+      await client.query(
+        `INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [invoiceId, li.project_id, li.description, li.quantity, li.unit, li.rate, li.amount]
+      );
+      // Mark each project billed
+      await client.query(
+        `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
+        [billDate, li.project_id]
+      );
+      // Permit pipeline ends at 'checklist'. Billing status is reflected by
+      // projects.billed_date — no need to write a 'billed' permit_stages row.
+    }
+
+    await client.query('COMMIT');
+    res.json({ ok: true, invoice_id: invoiceId, total, line_count: lineItems.length });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error('bill-multiple error:', e);
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILLING REPORT — clean ledger of invoices for a period
+// Returns: { period, monthly_revenue, ytd_revenue, invoices: [...] }
+// One row per invoice (not per project), sorted by date.
+// ─────────────────────────────────────────────────────────────────────────────
+app.get('/api/billing/report', async (req, res) => {
+  const month = req.query.month ? parseInt(req.query.month, 10) : null;
+  const year = req.query.year ? parseInt(req.query.year, 10) : new Date().getFullYear();
+  try {
+    let where, params;
+    if (month) {
+      where = `WHERE EXTRACT(MONTH FROM invoice_date) = $1 AND EXTRACT(YEAR FROM invoice_date) = $2`;
+      params = [month, year];
+    } else {
+      where = `WHERE EXTRACT(YEAR FROM invoice_date) = $1`;
+      params = [year];
+    }
+    const invR = await pool.query(`
+      SELECT inv.id, inv.invoice_number, inv.invoice_date, inv.total_amount, inv.status, inv.notes,
+             cl.name as client_name
+      FROM invoices inv
+      LEFT JOIN clients cl ON cl.id = inv.client_id
+      ${where}
+      ORDER BY inv.invoice_date ASC, inv.created_at ASC
+    `, params);
+
+    const monthlyRev = month
+      ? invR.rows.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+      : null;
+
+    const ytdR = await pool.query(`
+      SELECT COALESCE(SUM(total_amount), 0)::float AS ytd
+      FROM invoices
+      WHERE EXTRACT(YEAR FROM invoice_date) = $1
+    `, [year]);
+
+    res.json({
+      year,
+      month,
+      monthly_revenue: monthlyRev,
+      ytd_revenue: parseFloat(ytdR.rows[0].ytd) || 0,
+      invoices: invR.rows
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

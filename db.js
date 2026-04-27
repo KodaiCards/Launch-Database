@@ -1,6 +1,14 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 const fs = require('fs');
 const path = require('path');
+
+// Make the postgres DATE type come back as 'YYYY-MM-DD' strings.
+// pg's default behavior is to coerce DATE to a JS Date object, which
+// breaks any frontend code that does `entry_date + 'T00:00:00'` →
+// the result is "Mon Jan 02 2026 ...T00:00:00" which the Date constructor
+// cannot parse, and toLocaleDateString() shows "Invalid Date".
+// 1082 is the oid for the DATE type. (TIMESTAMPTZ stays a Date object.)
+types.setTypeParser(1082, (val) => val);
 
 // Validate DATABASE_URL exists
 if (!process.env.DATABASE_URL) {

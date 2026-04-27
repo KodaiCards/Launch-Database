@@ -273,3 +273,156 @@ ON CONFLICT (contract_label, area_name) DO UPDATE SET work_order_number = EXCLUD
 -- When set, hides a project from the billing queue until that date.
 -- ─────────────────────────────────────────
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS bill_hold_until DATE;
+
+-- ─────────────────────────────────────────
+-- HOURS PRECISION (preserve decimal precision on imports)
+-- DECIMAL(5,2) was rounding to 2 places, which truncated values like 11.745
+-- to 11.75. Widen to 4 places — matches whatever timesheets actually contain.
+-- ─────────────────────────────────────────
+ALTER TABLE time_entries ALTER COLUMN hours TYPE DECIMAL(8,4);
+ALTER TABLE projects ALTER COLUMN actual_hours TYPE DECIMAL(12,4);
+ALTER TABLE projects ALTER COLUMN expected_hours TYPE DECIMAL(12,4);
+
+-- ─────────────────────────────────────────
+-- JOBS (work categories like Inspector, RE, Permitting, Design...)
+-- These replace the role of project_type for billing logic. project_type
+-- now only describes the program category (BAU / GF(R) / RUS / Other).
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS jobs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL UNIQUE,        -- e.g. "Inspection", "Resident Engineer"
+  default_billing_type VARCHAR(20) DEFAULT 'hourly', -- 'hourly' | 'footage'
+  default_rate NUMERIC(10,2),                -- $/hr for hourly, $/mile for footage
+  -- Permitting is a special kind of footage billing: "calculated hours" at $90/hr
+  -- where hours = miles * (random 25..30 in 0.25 increments), min 25 hours.
+  is_permitting BOOLEAN DEFAULT FALSE,
+  active BOOLEAN DEFAULT TRUE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Project program categories (BAU, GF(R), RUS, Other). User can add more.
+CREATE TABLE IF NOT EXISTS project_types (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL UNIQUE,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO project_types (name) VALUES
+  ('BAU'), ('GF(R)'), ('RUS'), ('Other')
+ON CONFLICT (name) DO NOTHING;
+
+-- Pre-load the standard work jobs. Permitting uses a special calc explained above.
+INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting) VALUES
+  ('Inspection',          'hourly',  90,  FALSE),
+  ('Resident Engineer',   'hourly', 100,  FALSE),
+  ('Permitting',          'footage', 90,  TRUE),
+  ('Design',              'hourly',  NULL, FALSE),
+  ('Other',               'hourly',  NULL, FALSE)
+ON CONFLICT (name) DO NOTHING;
+
+-- Link projects to a job (the work category) and a project_type (the program category).
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS job_id UUID REFERENCES jobs(id) ON DELETE SET NULL;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type_id UUID REFERENCES project_types(id) ON DELETE SET NULL;
+
+-- For permitting projects we now need to remember the randomized hours-per-mile
+-- factor so re-displays show the same "expected hours" the project was created with.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS permitting_hours_per_mile NUMERIC(6,2);
+
+-- ─────────────────────────────────────────
+-- PRICING LIST (Job × Project Type × Billing Code → rate)
+-- The settings panel manages this; project creation pulls defaults from it.
+-- A red dot appears in the settings button when there are jobs / types / codes
+-- that don't yet have a price entry.
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pricing_entries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+  project_type_id UUID REFERENCES project_types(id) ON DELETE CASCADE,
+  billing_code VARCHAR(100), -- e.g. "g-1-B-4" (nullable: not every entry has one)
+  billing_type VARCHAR(20) DEFAULT 'hourly', -- 'hourly' | 'footage' | 'permitting'
+  rate NUMERIC(10,2),         -- $/hr or $/mile depending on billing_type
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (job_id, project_type_id, billing_code)
+);
+
+DROP TRIGGER IF EXISTS pricing_entries_updated_at ON pricing_entries;
+CREATE TRIGGER pricing_entries_updated_at
+  BEFORE UPDATE ON pricing_entries
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Pre-load RUS billing codes the user gave me.
+-- Permitting code (a-2-D) is intentionally configured as 'permitting' billing_type
+-- so the special hours-per-mile logic applies. Rate stays at $90/hr.
+DO $$
+DECLARE
+  rus_id UUID;
+  insp_id UUID; re_id UUID; perm_id UUID; other_id UUID;
+BEGIN
+  SELECT id INTO rus_id FROM project_types WHERE name = 'RUS';
+  SELECT id INTO insp_id FROM jobs WHERE name = 'Inspection';
+  SELECT id INTO re_id   FROM jobs WHERE name = 'Resident Engineer';
+  SELECT id INTO perm_id FROM jobs WHERE name = 'Permitting';
+  SELECT id INTO other_id FROM jobs WHERE name = 'Other';
+
+  -- Hourly RUS codes
+  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
+  VALUES (insp_id, rus_id, 'g-1-B-4', 'hourly', 90)
+  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
+
+  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
+  VALUES (re_id, rus_id, 'g-1-B-1', 'hourly', 100)
+  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
+
+  -- Permitting: $90/hr, special calc applied at project create
+  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
+  VALUES (perm_id, rus_id, 'a-2-D', 'permitting', 90)
+  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
+
+  -- $850 per mile codes (per-mile fixed billing). Mapped to "Other" job
+  -- since they don't fit cleanly into Inspection/RE/Permitting/Design.
+  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate, notes)
+  VALUES
+    (other_id, rus_id, 'a-4',         'footage', 850, 'Update Plant Records'),
+    (other_id, rus_id, 'e-2-A-2(N)',  'footage', 850, 'OSP Staking Underground'),
+    (other_id, rus_id, 'e-2-A-1(N)',  'footage', 850, 'OSP Staking Aerial'),
+    (other_id, rus_id, 'g-1-I-3',     'footage', 850, 'Construction Progress Reports')
+  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
+END $$;
+
+-- ─────────────────────────────────────────
+-- INVOICE GROUPING (multiple projects → one invoice)
+-- The Billing tab already creates invoice records via bill-and-clone.
+-- Now we let the user select multiple projects and bill them as ONE invoice
+-- with one custom name. invoice_items already has project_id, so this works
+-- by inserting one parent invoices row and N invoice_items rows.
+-- ─────────────────────────────────────────
+-- (no schema change needed — just need invoice_number to be settable freely)
+
+-- ─────────────────────────────────────────
+-- BUDGET → JOB LINKAGE
+-- A budget_code can be filtered to a specific job so earned-revenue subtraction
+-- only counts projects whose job matches. NULL = applies to all jobs.
+-- ─────────────────────────────────────────
+ALTER TABLE budget_codes ADD COLUMN IF NOT EXISTS job_id UUID REFERENCES jobs(id) ON DELETE SET NULL;
+
+-- ─────────────────────────────────────────
+-- LEGACY MIGRATION: backfill jobs + project_types for existing rows
+-- Maps old project_type strings ('inspection','re','permitting','design','other')
+-- onto the new jobs table. Runs once safely.
+-- ─────────────────────────────────────────
+DO $$
+BEGIN
+  UPDATE projects p SET job_id = j.id
+    FROM jobs j WHERE p.job_id IS NULL AND p.project_type IS NOT NULL
+    AND (
+      (LOWER(p.project_type) = 'inspection' AND j.name = 'Inspection') OR
+      (LOWER(p.project_type) IN ('re','resident engineer') AND j.name = 'Resident Engineer') OR
+      (LOWER(p.project_type) = 'permitting' AND j.name = 'Permitting') OR
+      (LOWER(p.project_type) = 'design' AND j.name = 'Design') OR
+      (LOWER(p.project_type) = 'other' AND j.name = 'Other')
+    );
+END $$;

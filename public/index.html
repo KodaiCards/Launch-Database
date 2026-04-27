@@ -217,6 +217,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <span class="header-title">Project Management System</span>
   <div class="header-right">
     <span id="hdr-date" style="font-size:12px;color:var(--text-muted)"></span>
+    <button class="btn btn-secondary btn-sm" id="settings-btn" onclick="openSettings()" style="position:relative" title="Settings & Pricing">
+      <i class="fa-solid fa-gear"></i> Settings
+      <span id="settings-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--danger);border-radius:50%;border:2px solid var(--white)"></span>
+    </button>
     <button class="btn btn-secondary btn-sm" onclick="toggleAI()"><i class="fa-solid fa-robot"></i> AI Assistant</button>
   </div>
 </header>
@@ -242,8 +246,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <button class="btn btn-primary" onclick="showView('projects');openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
       </div>
       <div class="stats-grid" id="dash-stats">
-        <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
-        <div class="stat-card accent"><div class="stat-label">Revenue This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
+        <div class="stat-card" style="cursor:pointer" onclick="showActiveList()" title="Click to see which projects are counted"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
+        <div class="stat-card accent"><div class="stat-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
         <div class="stat-card warn"><div class="stat-label">Unbilled Completed</div><div class="stat-value" id="s-unbilled-count">—</div><div class="stat-sub" id="s-unbilled-amt"></div></div>
         <div class="stat-card"><div class="stat-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
       </div>
@@ -291,7 +295,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>Expected</th><th>Actual</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="projects-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -344,7 +348,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Footage</th><th>Expected Rev.</th><th>Stage</th><th>Pipeline</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Footage</th><th>Stage</th><th>Pipeline</th><th>Actions</th></tr></thead>
             <tbody id="permits-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -388,10 +392,16 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <!-- Unbilled section -->
       <div class="stats-grid" id="billing-stats"></div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Unbilled — Ready to Bill</span></div>
+        <div class="card-header">
+          <span class="card-title">Unbilled — Ready to Bill</span>
+          <span style="font-size:12px;color:var(--text-muted)">Check projects to bill them together as one invoice</span>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th><th>Actions</th></tr></thead>
+            <thead><tr>
+              <th style="width:36px;text-align:center"><input type="checkbox" id="bill-select-all" onchange="toggleBillSelectAll(this.checked)" title="Select all"></th>
+              <th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th>
+            </tr></thead>
             <tbody id="billing-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -400,6 +410,19 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card" style="margin-top:8px">
         <div class="card-header"><span class="card-title" id="invoice-history-title">Invoice History</span></div>
         <div id="invoice-history-body" style="padding:0"></div>
+      </div>
+
+      <!-- Floating action bar — only visible when 1+ project is selected.
+           Sits at the bottom of the viewport, above all content. -->
+      <div id="bill-selected-bar" style="display:none;position:sticky;bottom:0;background:var(--primary);color:#fff;padding:14px 20px;border-radius:10px;margin-top:14px;box-shadow:0 -4px 16px rgba(0,0,0,.18);align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap">
+        <div>
+          <span id="bill-selected-count" style="font-size:14px;font-weight:600">0 selected</span>
+          <span id="bill-selected-amount" style="margin-left:14px;opacity:.85"></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="clearBillSelection()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)">Clear</button>
+          <button class="btn btn-success btn-sm" onclick="openBillSelectedModal()"><i class="fa-solid fa-file-invoice-dollar"></i> Bill Selected as One Invoice</button>
+        </div>
       </div>
     </div>
 
@@ -428,7 +451,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="card-header"><span class="card-title" id="rev-client-title">Revenue by Client</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Client</th><th>Projects</th><th>Hours</th><th>Expected</th><th>Earned</th><th>Billed</th></tr></thead>
+            <thead><tr><th>Client</th><th>Projects</th><th>Hours</th><th>Earned</th><th>Billed</th></tr></thead>
             <tbody id="rev-client-body"></tbody>
           </table>
         </div>
@@ -440,7 +463,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>Hours</th><th>Expected</th><th>Earned</th><th>Status</th></tr></thead>
+            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>Hours</th><th>Earned</th><th>Status</th></tr></thead>
             <tbody id="rev-detail-body"></tbody>
           </table>
         </div>
@@ -449,7 +472,6 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="card-header">
           <span class="card-title">Unbilled Completed Projects</span>
-          <button class="btn btn-sm btn-success" onclick="showBillingReport()"><i class="fa-solid fa-file-invoice"></i> Generate Billing Report</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -602,15 +624,46 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
           </div>
           <div class="form-group">
-            <label>Project Type *</label>
-            <select id="proj-type" onchange="typeChanged()">
-              <option value="">Select type...</option>
-              <option value="inspection">Inspection</option>
-              <option value="re">Resident Engineer</option>
-              <option value="permitting">Permitting</option>
-              <option value="design">Design</option>
-              <option value="other">Other</option>
-            </select>
+            <label>Project Type * <span style="color:var(--text-muted);font-weight:400">(program category)</span></label>
+            <div style="display:flex;gap:6px">
+              <select id="proj-ptype" onchange="ptypeChanged()" style="flex:1">
+                <option value="">Select type...</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('ptype')" title="Add new project type"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="qa-ptype" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+              <input type="text" id="qa-ptype-name" placeholder="Type name (e.g. Custom Program)" style="margin-bottom:6px">
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('ptype', false)">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddProjectType()"><i class="fa-solid fa-check"></i> Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Job * <span style="color:var(--text-muted);font-weight:400">(work category)</span></label>
+            <div style="display:flex;gap:6px">
+              <select id="proj-job" onchange="jobChanged()" style="flex:1">
+                <option value="">Select job...</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('job')" title="Add new job"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="qa-job" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+              <div style="display:flex;gap:6px;margin-bottom:6px">
+                <input type="text" id="qa-job-name" placeholder="Job name (e.g. Surveyor)" style="flex:2">
+                <input type="number" id="qa-job-rate" placeholder="Default rate" step="0.01" style="flex:1">
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+                <select id="qa-job-billing" style="flex:1;font-size:12px">
+                  <option value="hourly">Hourly ($/hr)</option>
+                  <option value="footage">Footage ($/mile)</option>
+                </select>
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap"><input type="checkbox" id="qa-job-permit" style="width:auto"> Uses permit calc</label>
+              </div>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('job', false)">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddJob()"><i class="fa-solid fa-check"></i> Add</button>
+              </div>
+            </div>
           </div>
         </div>
         <!-- Rate section — shown/hidden by type -->
@@ -631,16 +684,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
           </div>
         </div>
-        <!-- Expected (auto-calc) -->
-        <div id="expected-display" class="form-row" style="display:none">
-          <div class="form-group">
-            <label>Expected Hours</label>
-            <input type="text" id="proj-exp-hours" readonly style="background:var(--gray-light)">
-          </div>
-          <div class="form-group">
-            <label>Expected Revenue</label>
-            <input type="text" id="proj-exp-rev" readonly style="background:var(--gray-light)">
-          </div>
+        <!-- Hidden: expected_hours / expected_revenue still get computed
+             server-side (needed for footage/permitting billing math) but are
+             not shown to the user. -->
+        <div id="expected-display" style="display:none">
+          <input type="hidden" id="proj-exp-hours">
+          <input type="hidden" id="proj-exp-rev">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -774,7 +823,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <button class="btn btn-secondary" onclick="closeModal('import-modal')">Cancel</button>
       <button class="btn btn-primary" id="import-validate-btn" onclick="csvImportValidate()"><i class="fa-solid fa-magnifying-glass"></i> Validate File</button>
       <button class="btn btn-success" id="import-commit-btn" style="display:none" onclick="csvImportCommit()"><i class="fa-solid fa-check"></i> Import Valid Rows</button>
-      <button class="btn btn-primary" id="import-done-btn" style="display:none" onclick="closeModal('import-modal');loadHours();loadDashboard()">Done</button>
+      <button class="btn btn-primary" id="import-done-btn" style="display:none" onclick="closeModal('import-modal');loadHours();loadDashboard();if(typeof loadProjects==='function')loadProjects()">Done</button>
     </div>
   </div>
 </div>
@@ -923,6 +972,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <label>Description</label>
           <input type="text" id="bc-description" placeholder="Optional description">
         </div>
+        <div class="form-group">
+          <label>Linked Job <span style="font-weight:400;color:var(--text-muted)">(optional — only this job's earned revenue will be subtracted from this allocation)</span></label>
+          <select id="bc-job-id">
+            <option value="">— Any job —</option>
+          </select>
+          <span class="form-hint">Leave blank to track all earned work against this code. Pick a job to scope the budget code to e.g. Inspection earnings only.</span>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -933,13 +989,142 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   </div>
 </div>
 
+<!-- BILL SELECTED MODAL — multiple projects → one named invoice -->
+<div class="modal-overlay" id="bill-selected-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Bill Selected Projects as One Invoice</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('bill-selected-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="bill-selected-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('bill-selected-modal')">Cancel</button>
+      <button class="btn btn-success" id="bill-selected-confirm-btn"><i class="fa-solid fa-check"></i> Create Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SETTINGS / PRICING LIST MODAL ───
+     Manages the pricing entries that drive default rates across the app.
+     Each entry: Job × Project Type × optional Billing Code → rate.
+     Red-dot indicator on the header button shows when there's at least one
+     gap (a job/project_type combination with no pricing entry).
+-->
+<!-- ACTIVE PROJECTS DEBUG MODAL — shows exactly which projects the dashboard
+     tile is counting, so you can diagnose mismatched numbers without poking
+     around the database. -->
+<div class="modal-overlay" id="active-list-modal">
+  <div class="modal" style="max-width:780px;width:95%">
+    <div class="modal-header" style="position:sticky;top:0;flex-shrink:0;z-index:2">
+      <span class="modal-title">Active Projects (counted by dashboard tile)</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('active-list-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="active-list-body" style="flex:1;overflow-y:auto;min-height:0"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:920px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-tag" style="color:var(--primary)"></i> Pricing List</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 14px 0;color:var(--text-muted);font-size:13px">
+        Pricing defaults pulled when creating projects. You can still override the rate per project.
+        Entries with billing codes (like "g-1-B-4") let the CSV importer auto-detect the job from your timesheet rows.
+      </p>
+
+      <!-- Add new entry form -->
+      <div style="background:var(--gray-light);padding:12px 14px;border-radius:8px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Add new pricing entry</div>
+        <div class="form-row" style="gap:8px">
+          <div class="form-group">
+            <label style="font-size:11px">Project Type *</label>
+            <select id="new-pe-type" style="font-size:13px"></select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px">Job *</label>
+            <select id="new-pe-job" style="font-size:13px"></select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px">Billing Code</label>
+            <input type="text" id="new-pe-code" placeholder="e.g. g-1-B-4" style="font-size:13px">
+          </div>
+        </div>
+        <div class="form-row" style="gap:8px;margin-top:8px">
+          <div class="form-group">
+            <label style="font-size:11px">Type</label>
+            <select id="new-pe-billing-type" style="font-size:13px">
+              <option value="hourly">Hourly ($/hr)</option>
+              <option value="footage">Footage ($/mile)</option>
+              <option value="permitting">Permitting (special calc)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px">Rate *</label>
+            <input type="number" id="new-pe-rate" placeholder="0.00" step="0.01" style="font-size:13px">
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px">Notes</label>
+            <input type="text" id="new-pe-notes" placeholder="Optional description" style="font-size:13px">
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <button class="btn btn-primary btn-sm" onclick="savePricingEntry()" style="margin-top:18px"><i class="fa-solid fa-plus"></i> Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing entries grouped by project type -->
+      <div id="pricing-list-body" style="font-size:13px"><div class="empty-state">Loading...</div></div>
+
+      <!-- ── Jobs management ── -->
+      <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Jobs</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Add Job</button>
+        </div>
+        <div id="jobs-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row" style="gap:6px">
+            <div class="form-group"><label style="font-size:11px">Job Name</label><input type="text" id="new-job-name" placeholder="e.g. Surveyor" style="font-size:13px"></div>
+            <div class="form-group"><label style="font-size:11px">Default Type</label><select id="new-job-bt" style="font-size:13px"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
+            <div class="form-group"><label style="font-size:11px">Default Rate</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
+            <div class="form-group" style="justify-content:flex-end"><label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="saveNewJob()"><i class="fa-solid fa-check"></i> Save</button>
+          </div>
+        </div>
+        <div id="jobs-list-body" style="font-size:13px"></div>
+      </div>
+
+      <!-- ── Project Types management ── -->
+      <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Project Types</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="new-pt-name" placeholder="e.g. Custom" style="font-size:13px;padding:4px 8px;border:1px solid var(--gray-border);border-radius:4px">
+            <button class="btn btn-secondary btn-sm" onclick="saveNewProjectType()"><i class="fa-solid fa-plus"></i> Add</button>
+          </div>
+        </div>
+        <div id="project-types-list-body" style="font-size:13px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span id="pricing-gaps-summary" style="font-size:12px;color:var(--text-muted);flex:1"></span>
+      <button class="btn btn-primary" onclick="closeModal('settings-modal')">Done</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════
 let clients = [], staff = [], contracts = [], projects = [], allProjects = [];
-const STAGES = ['potential','started','submitted','approved','checklist','billed'];
-const STAGE_LABELS = {potential:'Potential',started:'Started',submitted:'Submitted',approved:'Approved',checklist:'Checklist',billed:'Billed'};
+const STAGES = ['potential','started','submitted','approved','checklist'];
+const STAGE_LABELS = {potential:'Potential',started:'Started',submitted:'Submitted',approved:'Approved',checklist:'Checklist'};
 const TYPE_LABELS = {inspection:'Inspection',re:'Resident Engineer',permitting:'Permitting',design:'Design',other:'Other'};
 const TYPE_RATES = {inspection:90,re:100};
 let currentPermitProjectId = null;
@@ -961,8 +1146,9 @@ async function init() {
   });
   document.getElementById('hrs-month').value = now.getMonth()+1;
 
-  await Promise.all([loadClients(), loadStaff(), loadConcentrators()]);
+  await Promise.all([loadClients(), loadStaff(), loadConcentrators(), loadJobs(), loadProjectTypes()]);
   await loadDashboard();
+  refreshSettingsDot();
 }
 
 async function api(path, method='GET', body=null) {
@@ -1182,6 +1368,42 @@ async function quickAddBudgetCode() {
 // ═══════════════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════
+// Click handler for the Active Projects tile — shows EXACTLY which projects
+// are counted, so you can spot anything that shouldn't be there. From the
+// list, click any row to open its detail popup, or use the trash button to
+// delete (or move to completed) right from here.
+async function showActiveList() {
+  document.getElementById('active-list-body').innerHTML = '<div style="padding:40px;text-align:center"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--text-muted)"></i></div>';
+  openModal('active-list-modal');
+  try {
+    const data = await api('/api/dashboard/active-list');
+    const rows = data.projects || [];
+    document.getElementById('active-list-body').innerHTML = `
+      <div style="padding:14px 18px;background:var(--gray-light);font-size:13px;color:var(--text-muted);margin-bottom:8px">
+        <strong style="color:var(--text);font-size:14px">${data.count} project${data.count === 1 ? '' : 's'} counted.</strong>
+        Counts only leaf projects with status=active and a real Job (not "Other"). If something here shouldn't be active, click it to open and change its status, or delete it.
+      </div>
+      <table style="width:100%;font-size:13px">
+        <thead><tr style="background:var(--white);border-bottom:1px solid var(--gray-border)">
+          <th style="padding:8px 12px;text-align:left">Project</th>
+          <th style="padding:8px 12px;text-align:left">Client</th>
+          <th style="padding:8px 12px;text-align:left">Parent</th>
+          <th style="padding:8px 12px;text-align:left">Job</th>
+          <th style="padding:8px 12px;text-align:left">WO #</th>
+        </tr></thead>
+        <tbody>${rows.map(r => `<tr style="border-bottom:1px solid var(--gray-border);cursor:pointer" onclick="closeModal('active-list-modal');showProjectDetail('${r.id}')">
+          <td style="padding:8px 12px;font-weight:600">${esc(r.name)}</td>
+          <td style="padding:8px 12px">${esc(r.client_name || '—')}</td>
+          <td style="padding:8px 12px;color:var(--text-muted)">${esc(r.parent_name || '—')}</td>
+          <td style="padding:8px 12px">${esc(r.job_name || '—')}</td>
+          <td style="padding:8px 12px;font-family:monospace">${esc(r.work_order_number || '—')}</td>
+        </tr>`).join('') || '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text-muted)">No projects match.</td></tr>'}</tbody>
+      </table>`;
+  } catch (e) {
+    document.getElementById('active-list-body').innerHTML = '<div style="padding:24px;color:var(--danger)">Failed: ' + esc(e.message) + '</div>';
+  }
+}
+
 async function loadDashboard() {
   const d = await api('/api/dashboard');
   document.getElementById('s-active').textContent = d.active_projects;
@@ -1375,16 +1597,33 @@ function renderProjects(list, expandAll = false) {
   list.forEach(p => { if (p.parent_id && byId[p.parent_id]) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
   const roots = list.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // Recursive rollup through any depth
+  // Recursive rollup through any depth.
+  // Computes: logged hours, expected hours, expected revenue, AND ytd_revenue
+  // (sum of hourly hours × billing_rate plus footage projects' billed amounts).
   function sumTree(p) {
+    const isLeaf = !(childrenOf[p.id] || []).length;
     let logged = parseFloat(p.logged_hours) || 0;
     let expected = parseFloat(p.expected_hours) || 0;
     let revenue = parseFloat(p.expected_revenue) || 0;
+    // YTD = the realized/earning value on each leaf:
+    //   - hourly leaves: actual_hours × billing_rate
+    //   - footage leaves that are billed/completed: expected_revenue
+    //   - everything else: 0
+    let ytd = 0;
+    if (isLeaf) {
+      const rate = parseFloat(p.billing_rate) || 0;
+      const actual = parseFloat(p.actual_hours) || logged;
+      if (p.billing_type === 'footage') {
+        if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
+      } else {
+        ytd = actual * rate;
+      }
+    }
     for (const kid of (childrenOf[p.id] || [])) {
       const s = sumTree(kid);
-      logged += s.logged; expected += s.expected; revenue += s.revenue;
+      logged += s.logged; expected += s.expected; revenue += s.revenue; ytd += s.ytd;
     }
-    return { logged, expected, revenue };
+    return { logged, expected, revenue, ytd };
   }
 
   function buildProjRows(projects, depth, parentGroupClass) {
@@ -1394,6 +1633,7 @@ function renderProjects(list, expandAll = false) {
       const prefix = depth > 0 ? '<span style="color:var(--text-muted);margin-right:4px">└</span>' : '';
       const kids = childrenOf[p.id] || [];
       const expandable = kids.length > 0;
+      const isLeaf = !expandable;
       const groupKey = 'pt-' + p.id;
       const chevId = 'pc-' + p.id;
       const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
@@ -1409,13 +1649,20 @@ function renderProjects(list, expandAll = false) {
         ? `<span onclick="event.stopPropagation();ptreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
         : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
+      // Container rows show rolled-up YTD revenue. Leaf rows show their own hours/progress.
+      // This is what the user wants: Knoxville Inspecting → 25 hrs (leaf), Knoxville → $X YTD (parent).
+      // For leaves: show YTD revenue + logged hours
+      // For containers: show rolled-up YTD revenue + sub-project count
+      const ytdCell = isLeaf
+        ? `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(sums.ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${fmt(sums.logged, 'hrs')} logged</span>`
+        : `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(sums.ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${kids.length} sub-project${kids.length !== 1 ? 's' : ''} · ${fmt(sums.logged, 'hrs')}</span>`;
+
       html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
         <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
         <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
         <td class="td-mono">${esc(p.work_order_number || '—')}</td>
         <td>${typeBadge(p.project_type)}</td>
-        <td><span style="font-size:12px">${sums.expected ? fmt(sums.expected, 'hrs') : '—'}</span><br><span class="td-muted" style="font-size:11px">${sums.revenue ? fmtMoney(sums.revenue) : '—'}</span></td>
-        <td>${progressBar(sums.logged, sums.expected)}<span style="font-size:11px;color:var(--text-muted)">${fmt(sums.logged, 'hrs')} / ${fmt(sums.expected, 'hrs')}</span></td>
+        <td>${ytdCell}</td>
         <td>${statusBadge(p.status)}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -1467,8 +1714,23 @@ function openProjectModal(type='') {
   clearProjectForm();
   document.getElementById('proj-modal-title').textContent = 'New Project';
   document.getElementById('proj-delete-btn').style.display = 'none';
-  if (type) { document.getElementById('proj-type').value = type; typeChanged(); }
+  populateTypeAndJobDropdowns();
   openModal('project-modal');
+}
+
+// Populate the project_type + job dropdowns from the cached server data.
+// Called whenever the modal opens.
+function populateTypeAndJobDropdowns() {
+  const t = document.getElementById('proj-ptype');
+  const j = document.getElementById('proj-job');
+  if (t) {
+    t.innerHTML = '<option value="">Select type...</option>' +
+      projectTypesCache.map(pt => `<option value="${pt.id}">${esc(pt.name)}</option>`).join('');
+  }
+  if (j) {
+    j.innerHTML = '<option value="">Select job...</option>' +
+      jobsCache.map(job => `<option value="${job.id}">${esc(job.name)}${job.is_permitting ? ' (Permit calc)' : ''}</option>`).join('');
+  }
 }
 
 async function editProject(id) {
@@ -1478,6 +1740,7 @@ async function editProject(id) {
     allProjects = await api('/api/projects?');
   }
   populateParentDropdown(id);
+  populateTypeAndJobDropdowns();
 
   document.getElementById('proj-id').value = p.id;
   document.getElementById('proj-name').value = p.name;
@@ -1487,7 +1750,8 @@ async function editProject(id) {
   document.getElementById('proj-parent').value = p.parent_id||'';
   document.getElementById('proj-concentrator').value = p.concentrator_id||'';
   document.getElementById('proj-wo').value = p.work_order_number||'';
-  document.getElementById('proj-type').value = p.project_type;
+  document.getElementById('proj-ptype').value = p.project_type_id || '';
+  document.getElementById('proj-job').value = p.job_id || '';
   document.getElementById('proj-rate').value = p.billing_rate||'';
   document.getElementById('proj-footage').value = p.footage||'';
   document.getElementById('proj-status').value = p.status;
@@ -1498,7 +1762,7 @@ async function editProject(id) {
   document.getElementById('proj-budget-code').value = p.budget_code_id||'';
   document.getElementById('proj-modal-title').textContent = 'Edit Project';
   document.getElementById('proj-delete-btn').style.display = 'inline-flex';
-  typeChanged();
+  jobChanged(/*skipRateLookup=*/true); // reflect current job's UI without overwriting the existing rate
   openModal('project-modal');
 }
 
@@ -1510,15 +1774,25 @@ function clearProjectForm() {
   document.getElementById('proj-concentrator').value='';
   document.getElementById('proj-budget-code').innerHTML='<option value="">None — No budget link</option>';
   document.getElementById('budget-code-group').style.display='none';
-  document.getElementById('proj-type').value='';
+  document.getElementById('proj-ptype').value='';
+  document.getElementById('proj-job').value='';
   document.getElementById('proj-status').value='active';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
-  typeChanged();
+  jobChanged(/*skipRateLookup=*/true);
 }
 
-function typeChanged() {
-  const type = document.getElementById('proj-type').value;
-  const rg = document.getElementById('rate-group');
+// User changed the program category. Trigger a rate lookup (since rate depends
+// on Job × Project Type).
+function ptypeChanged() {
+  jobChanged();
+}
+
+// User changed the Job. Update UI to reflect the job's billing pattern (hourly
+// vs footage vs permitting), and look up the default rate from the pricing list
+// for this job × project_type combination.
+async function jobChanged(skipRateLookup = false) {
+  const jobId = document.getElementById('proj-job').value;
+  const ptypeId = document.getElementById('proj-ptype').value;
   const fg = document.getElementById('footage-group');
   const ed = document.getElementById('expected-display');
   const rl = document.getElementById('rate-label');
@@ -1533,62 +1807,131 @@ function typeChanged() {
   rl.textContent = 'Billing Rate ($/hr) *';
   rh.textContent = '';
 
-  if (type === 'inspection') {
-    rate.value = 90; rate.readOnly = true;
-    rh.textContent = 'Standard RUS inspection rate';
-  } else if (type === 're') {
-    rate.value = 100; rate.readOnly = true;
-    rh.textContent = 'Standard RUS Resident Engineer rate';
-  } else if (type === 'permitting') {
-    rate.value = 90; rate.readOnly = true;
+  if (!jobId) { calcExpected(); return; }
+
+  const job = jobsCache.find(j => j.id === jobId);
+  if (!job) { calcExpected(); return; }
+
+  // Show footage field for any footage-billed or permitting job
+  const isPermit = !!job.is_permitting;
+  const isFootage = job.default_billing_type === 'footage' || isPermit;
+  if (isFootage) {
     fg.style.display = 'flex';
     ed.style.display = 'grid';
+    rl.textContent = isPermit ? 'Rate ($/hr)' : 'Rate ($/mile)';
+  }
+  if (isPermit) {
     if (pm) pm.style.display = 'flex';
-    rl.textContent = 'Rate ($/hr)';
-    rh.textContent = 'Billed at 27.5 hrs/mile × $90 (15hr min)';
-  } else if (type === 'design') {
-    rate.value = '';
-    rh.textContent = '⚠ Design rates vary — confirm with client';
-  } else if (type === 'other') {
-    rate.value = '';
-    rh.textContent = '⚠ Confirm billing rate for this project type';
+    rh.textContent = 'Billed at hours × rate. Hours = miles × random(25..30 in 0.25), min 25 hrs if under a mile.';
+  }
+
+  // Look up the price-list default and pre-fill the rate
+  if (!skipRateLookup && ptypeId) {
+    try {
+      const lookup = await api(`/api/pricing/lookup?job_id=${jobId}&project_type_id=${ptypeId}`);
+      if (lookup && lookup.rate != null) {
+        rate.value = lookup.rate;
+        rh.textContent = (rh.textContent ? rh.textContent + ' · ' : '') + `Default from pricing list${lookup.billing_code ? ' (code ' + lookup.billing_code + ')' : ''}`;
+      } else {
+        // No pricing entry — leave rate empty; user must confirm
+        if (!rate.value) rh.textContent = '⚠ No default rate in pricing list — set manually';
+      }
+    } catch (e) { /* non-fatal */ }
   }
   calcExpected();
 }
 
 function calcExpected() {
-  const type = document.getElementById('proj-type').value;
+  const jobId = document.getElementById('proj-job').value;
+  const job = jobId ? jobsCache.find(j => j.id === jobId) : null;
+  const isPermit = !!job?.is_permitting;
   const footage = parseFloat(document.getElementById('proj-footage').value)||0;
   const rate = parseFloat(document.getElementById('proj-rate').value)||0;
-  if (type === 'permitting' && footage > 0) {
+  if (isPermit && footage > 0 && rate > 0) {
     const miles = footage / 5280;
-    const hrs = Math.max(miles * 27.5, 15);
-    const rev = hrs * 90;
-    document.getElementById('proj-exp-hours').value = hrs.toFixed(2) + ' hrs';
-    document.getElementById('proj-exp-rev').value = '$' + rev.toFixed(2);
+    // Display the average expectation (27.5 hrs/mile midpoint), with min 25.
+    let hrs = miles * 27.5;
+    if (miles < 1) hrs = Math.max(25, hrs);
+    const rev = hrs * rate;
+    document.getElementById('proj-exp-hours').value = '~' + hrs.toFixed(2) + ' hrs (random)';
+    document.getElementById('proj-exp-rev').value = '~' + fmtMoney(rev);
     document.getElementById('expected-display').style.display = 'grid';
   }
 }
 
+async function quickAddProjectType() {
+  const name = document.getElementById('qa-ptype-name').value.trim();
+  if (!name) return alert('Type name required');
+  try {
+    const t = await api('/api/project-types', 'POST', { name });
+    await loadProjectTypes();
+    populateTypeAndJobDropdowns();
+    document.getElementById('proj-ptype').value = t.id;
+    document.getElementById('qa-ptype-name').value = '';
+    toggleQuickAdd('ptype', false);
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function quickAddJob() {
+  const name = document.getElementById('qa-job-name').value.trim();
+  const default_rate = parseFloat(document.getElementById('qa-job-rate').value) || null;
+  const default_billing_type = document.getElementById('qa-job-billing').value;
+  const is_permitting = document.getElementById('qa-job-permit').checked;
+  if (!name) return alert('Job name required');
+  try {
+    const j = await api('/api/jobs', 'POST', { name, default_rate, default_billing_type, is_permitting });
+    await loadJobs();
+    populateTypeAndJobDropdowns();
+    document.getElementById('proj-job').value = j.id;
+    document.getElementById('qa-job-name').value = '';
+    document.getElementById('qa-job-rate').value = '';
+    document.getElementById('qa-job-permit').checked = false;
+    toggleQuickAdd('job', false);
+    jobChanged();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
 async function saveProject() {
-  const type = document.getElementById('proj-type').value;
+  const projectTypeId = document.getElementById('proj-ptype').value;
+  const jobId = document.getElementById('proj-job').value;
   const name = document.getElementById('proj-name').value.trim();
   const clientId = document.getElementById('proj-client').value;
   const rate = document.getElementById('proj-rate').value;
   if (!name) return alert('Project name is required');
   if (!clientId) return alert('Client is required');
-  if (!type) return alert('Project type is required');
-  if (!rate && type !== 'permitting') return alert('Billing rate is required. Please confirm the rate for this project.');
+  if (!projectTypeId) return alert('Project type is required');
+  if (!jobId) return alert('Job is required');
+
+  const job = jobsCache.find(j => j.id === jobId);
+  const isPermit = !!job?.is_permitting;
+  const isFootage = job?.default_billing_type === 'footage' || isPermit;
+  if (!rate) return alert('Billing rate is required');
 
   const footage = document.getElementById('proj-footage').value;
-  if (type === 'permitting' && !footage) return alert('Linear footage is required for permitting projects');
+  if (isPermit && !footage) return alert('Linear footage is required for permitting projects');
+
+  // Pick a legacy project_type tag for backward compat with code that still
+  // reads p.project_type. Map by job name when available.
+  let legacyType = 'other';
+  if (job) {
+    const n = job.name.toLowerCase();
+    if (n.includes('inspect')) legacyType = 'inspection';
+    else if (n.includes('resident') || n === 're') legacyType = 're';
+    else if (job.is_permitting) legacyType = 'permitting';
+    else if (n.includes('design')) legacyType = 'design';
+  }
 
   const body = {
     name, client_id: clientId,
     contract_id: document.getElementById('proj-contract').value || null,
     work_order_number: document.getElementById('proj-wo').value,
-    project_type: type, status: document.getElementById('proj-status').value,
-    billing_type: type==='permitting' ? 'footage' : 'hourly',
+    project_type: legacyType,
+    project_type_id: projectTypeId,
+    job_id: jobId,
+    status: document.getElementById('proj-status').value,
+    billing_type: isFootage ? 'footage' : 'hourly',
     billing_rate: parseFloat(rate)||null,
     footage: footage ? parseFloat(footage) : null,
     start_date: document.getElementById('proj-start').value,
@@ -1596,7 +1939,6 @@ async function saveProject() {
     parent_id: document.getElementById('proj-parent').value || null,
     budget_code_id: document.getElementById('proj-budget-code').value || null,
     concentrator_id: document.getElementById('proj-concentrator').value || null,
-    // Captured once at creation; used for permit pipeline tracking later
     permit_manager: (document.getElementById('proj-permit-manager')?.value || '').trim() || null
   };
   try {
@@ -1637,6 +1979,125 @@ async function confirmDeleteProject(id, name, afterDelete) {
   }
 }
 
+// ─── Bulk billing — multiple projects → one invoice ──────────────────────────
+
+function getSelectedBillRows() {
+  return [...document.querySelectorAll('.bill-row-cb:checked')].map(cb => ({
+    id: cb.dataset.id,
+    client_id: cb.dataset.clientId,
+    amount: parseFloat(cb.dataset.amount) || 0
+  }));
+}
+
+function updateBillSelectedFooter() {
+  const sel = getSelectedBillRows();
+  const bar = document.getElementById('bill-selected-bar');
+  if (!bar) return;
+  if (sel.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  const total = sel.reduce((s, r) => s + r.amount, 0);
+  document.getElementById('bill-selected-count').textContent = `${sel.length} selected`;
+  document.getElementById('bill-selected-amount').textContent = `Total: ${fmtMoney(total)}`;
+}
+
+function toggleBillSelectAll(checked) {
+  document.querySelectorAll('.bill-row-cb').forEach(cb => { cb.checked = checked; });
+  updateBillSelectedFooter();
+}
+
+function clearBillSelection() {
+  document.querySelectorAll('.bill-row-cb').forEach(cb => { cb.checked = false; });
+  document.getElementById('bill-select-all').checked = false;
+  updateBillSelectedFooter();
+}
+
+async function openBillSelectedModal() {
+  const sel = getSelectedBillRows();
+  if (sel.length === 0) return alert('Select at least one project to bill.');
+
+  // Validate same client
+  const clients = [...new Set(sel.map(r => r.client_id))];
+  if (clients.length > 1) {
+    return alert('All selected projects must belong to the same client. Please uncheck the mismatched projects.');
+  }
+
+  // Pull full project data for the selected ids so we can show a preview
+  const projDetails = await Promise.all(sel.map(r => api('/api/projects/' + r.id)));
+  const total = sel.reduce((s, r) => s + r.amount, 0);
+  const clientName = projDetails[0]?.client_name || 'Selected client';
+  const today = new Date().toISOString().split('T')[0];
+
+  document.getElementById('bill-selected-body').innerHTML = `
+    <p style="margin-bottom:14px;color:var(--text-muted);font-size:13px">
+      Combining ${sel.length} project${sel.length!==1?'s':''} into one invoice for <strong>${esc(clientName)}</strong>.
+    </p>
+    <div style="background:var(--gray-light);padding:10px 14px;border-radius:8px;margin-bottom:14px;max-height:200px;overflow-y:auto">
+      ${projDetails.map((p, i) => `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;${i > 0 ? 'border-top:1px solid var(--gray-border)' : ''}">
+          <span style="font-size:13px">${esc(p.name)}</span>
+          <strong style="font-size:13px">${fmtMoney(sel.find(s => s.id === p.id).amount)}</strong>
+        </div>
+      `).join('')}
+      <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:2px solid var(--primary)">
+        <strong>Invoice total</strong>
+        <strong style="color:var(--primary);font-size:16px">${fmtMoney(total)}</strong>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Invoice Number / Name *</label>
+        <input type="text" id="bs-invoice-num" placeholder="e.g. INV-2026-Q1-Knoxville">
+      </div>
+      <div class="form-group">
+        <label>Invoice Date</label>
+        <input type="date" id="bs-invoice-date" value="${today}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes / Description (optional)</label>
+      <input type="text" id="bs-invoice-name" placeholder="e.g. Knoxville inspection — Q1 2026">
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:14px">
+      Each project becomes a line item on the invoice. The invoice number/name is what shows in the Revenue tab.
+    </div>
+  `;
+
+  document.getElementById('bill-selected-confirm-btn').onclick = async () => {
+    const invoice_number = document.getElementById('bs-invoice-num').value.trim();
+    if (!invoice_number) return alert('Invoice number is required.');
+    const invoice_date = document.getElementById('bs-invoice-date').value || today;
+    const invoice_name = document.getElementById('bs-invoice-name').value.trim() || null;
+
+    const btn = document.getElementById('bill-selected-confirm-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Billing...';
+
+    try {
+      const res = await api('/api/billing/bill-multiple', 'POST', {
+        project_ids: sel.map(s => s.id),
+        invoice_number, invoice_date, invoice_name,
+        items: sel.map(s => ({ project_id: s.id, amount: s.amount }))
+      });
+      closeModal('bill-selected-modal');
+      alert(`Invoice ${invoice_number} created for ${fmtMoney(res.total)} (${res.line_count} line items).`);
+      clearBillSelection();
+      loadBilling();
+      loadDashboard();
+      if (currentView === 'revenue') loadRevenue();
+    } catch (e) {
+      alert('Failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Create Invoice';
+    }
+  };
+
+  openModal('bill-selected-modal');
+}
+
 async function markBilled(id) {
   // Pull the project so we can show the breakdown and decide whether to offer
   // the follow-on workflow (which only applies to active hourly work).
@@ -1665,12 +2126,15 @@ async function markBilled(id) {
         <span>Rate</span><strong>${fmtMoney(rate)}/hr</strong>
       </div>`;
   } else {
+    // Footage/permitting projects: show miles + the calculated billable amount.
+    // Internally this is `expected_revenue` (= calculated hours × rate) but we
+    // surface it as "Calculated bill" so the word "Expected" doesn't appear.
     breakdownHtml = `
       <div style="display:flex;justify-content:space-between;padding:6px 0">
         <span>Footage</span><strong>${footage.toLocaleString()} LF (${(footage/5280).toFixed(2)} mi)</strong>
       </div>
       <div style="display:flex;justify-content:space-between;padding:6px 0">
-        <span>Expected revenue</span><strong>${fmtMoney(expectedRev)}</strong>
+        <span>Calculated bill</span><strong>${fmtMoney(expectedRev)}</strong>
       </div>`;
   }
 
@@ -1797,7 +2261,6 @@ async function loadPermits() {
       <td>${esc(p.client_name||'—')}</td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
       <td style="white-space:nowrap">${p.footage ? Math.round(p.footage).toLocaleString()+' LF' : '—'}</td>
-      <td>${p.expected_revenue ? fmtMoney(p.expected_revenue) : '—'}</td>
       <td><span class="badge badge-permitting">${STAGE_LABELS[currentStageName]||currentStageName}</span></td>
       <td>${pipelineViz(currentIdx)}</td>
       <td style="white-space:nowrap">
@@ -1963,15 +2426,18 @@ async function showBudgetForProject(projectId, projectName) {
       const pct = allocated > 0 ? (spent / allocated * 100) : 0;
       const projCount = parseInt(c.project_count) || 0;
       const cls = pct > 90 ? 'danger' : pct > 70 ? 'warn' : '';
+      const jobBadge = c.job_name
+        ? `<span style="display:inline-block;padding:2px 6px;background:var(--primary-light);color:var(--primary);border-radius:10px;font-size:10px;font-weight:600;margin-left:4px">${esc(c.job_name)}</span>`
+        : '';
       return `<tr>
-        <td class="td-name" style="font-weight:600">${esc(c.code)}</td>
+        <td class="td-name" style="font-weight:600">${esc(c.code)}${jobBadge}</td>
         <td class="td-muted">${esc(c.description || '—')}</td>
         <td>${fmtMoney(allocated)}</td>
         <td style="font-weight:600">${fmtMoney(spent)}</td>
         <td style="color:${remaining < 0 ? 'var(--danger)' : 'var(--success)'};font-weight:600">${fmtMoney(remaining)}</td>
         <td><div class="progress" style="width:80px"><div class="progress-bar ${cls}" style="width:${Math.min(pct,100)}%"></div></div><span style="font-size:10px;color:var(--text-muted)">${pct.toFixed(1)}%</span></td>
         <td><span style="font-size:12px">${projCount} project${projCount !== 1 ? 's' : ''}</span></td>
-        <td><button class="btn btn-sm btn-secondary btn-icon" onclick="editBudgetCode('${c.id}','${esc(c.code)}','${esc(c.description||'')}',${allocated})"><i class="fa-solid fa-pen"></i></button></td>
+        <td><button class="btn btn-sm btn-secondary btn-icon" onclick="editBudgetCode('${c.id}','${esc(c.code)}','${esc(c.description||'')}',${allocated},'${c.job_id || ''}')"><i class="fa-solid fa-pen"></i></button></td>
       </tr>`;
     }).join('');
   }
@@ -2027,22 +2493,32 @@ async function deleteBudget() {
   currentBudgetId = null;
 }
 
+// Populate the Job dropdown for the budget-code modal from cached jobs
+function populateBudgetCodeJobDropdown(selectedJobId) {
+  const sel = document.getElementById('bc-job-id');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Any job —</option>' +
+    (jobsCache || []).map(j => `<option value="${j.id}"${j.id === selectedJobId ? ' selected' : ''}>${esc(j.name)}</option>`).join('');
+}
+
 function openBudgetCodeModal() {
   if (!currentBudgetId) return alert('Create a budget first');
   document.getElementById('bc-id').value = '';
   document.getElementById('bc-code').value = '';
   document.getElementById('bc-amount').value = '';
   document.getElementById('bc-description').value = '';
+  populateBudgetCodeJobDropdown(null);
   document.getElementById('budget-code-modal-title').textContent = 'Add Budget Code';
   document.getElementById('bc-delete-btn').style.display = 'none';
   openModal('budget-code-modal');
 }
 
-function editBudgetCode(id, code, description, amount) {
+function editBudgetCode(id, code, description, amount, jobId) {
   document.getElementById('bc-id').value = id;
   document.getElementById('bc-code').value = code;
   document.getElementById('bc-amount').value = amount;
   document.getElementById('bc-description').value = description;
+  populateBudgetCodeJobDropdown(jobId || null);
   document.getElementById('budget-code-modal-title').textContent = 'Edit Budget Code';
   document.getElementById('bc-delete-btn').style.display = 'inline-flex';
   openModal('budget-code-modal');
@@ -2059,7 +2535,8 @@ async function saveBudgetCode() {
     budget_id: currentBudgetId,
     code,
     description: document.getElementById('bc-description').value,
-    allocated_amount: parseFloat(amount)
+    allocated_amount: parseFloat(amount),
+    job_id: document.getElementById('bc-job-id').value || null
   };
 
   try {
@@ -2298,6 +2775,24 @@ async function csvImportValidate() {
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Validation failed');
     csvStageData = data;
+    // Pre-load reference caches the ledger needs:
+    //   • staff list for the per-row staff dropdown
+    //   • billing code → job map for mismatch detection
+    if (typeof loadStaff === 'function') await loadStaff();
+    if (!allProjects?.length && typeof loadProjects === 'function') await loadProjects();
+    try {
+      const staffList = await api('/api/staff');
+      window._staffCache = staffList;
+    } catch {}
+    try {
+      const pricing = await api('/api/pricing');
+      jobByCodeCache = {};
+      pricing.forEach(pe => {
+        if (pe.billing_code && pe.job_name) {
+          jobByCodeCache[pe.billing_code.toLowerCase()] = pe.job_name;
+        }
+      });
+    } catch {}
     renderImportReview(data);
     document.getElementById('import-stage-pick').style.display = 'none';
     document.getElementById('import-stage-review').style.display = 'block';
@@ -2424,6 +2919,51 @@ function renderImportReview(d) {
     </div>`;
   }
 
+  // ── Editable ledger of all valid rows ───────────────────────────────────
+  // Shows what the importer determined for each row + lets the user override
+  // any field (project, staff, job title) before committing. Rows with
+  // unknown WO or unknown staff are highlighted. Manual job overrides that
+  // disagree with the billing-code-implied job get a warning badge.
+  if (d.valid_rows && d.valid_rows.length > 0) {
+    const projOptions = (allProjects || []).map(p =>
+      `<option value="${p.id}">${esc(p.name)} (${esc(p.client_name||'—')}) — WO ${esc(p.work_order_number||'—')}</option>`
+    ).join('');
+    const staffOptions = (window._staffCache || []).map(s =>
+      `<option value="${s.id}">${esc(s.name)}</option>`
+    ).join('');
+    // Common job title suggestions — picked from cached jobs if loaded
+    const jobOptions = (jobsCache || []).map(j =>
+      `<option value="${esc(j.name)}">${esc(j.name)}</option>`
+    ).join('');
+
+    const truncated = d.valid_rows.length < (d.valid_rows_total || d.valid_rows.length);
+    html += `<datalist id="csv-job-titles">${jobOptions}</datalist>
+    <div class="card" style="margin-top:14px">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-table-list" style="color:var(--primary)"></i> Row-by-Row Ledger (${d.valid_rows_total || d.valid_rows.length})</span>
+        <span style="font-size:11px;color:var(--text-muted)">Click any field to edit. Changes save as you go.</span>
+      </div>
+      ${truncated ? `<div style="background:var(--warning);color:#fff;padding:6px 12px;font-size:12px">Showing first ${d.valid_rows.length} of ${d.valid_rows_total} rows.</div>` : ''}
+      <div style="max-height:400px;overflow:auto">
+        <table style="width:100%;font-size:12px">
+          <thead style="position:sticky;top:0;z-index:1">
+            <tr style="background:var(--gray-light)">
+              <th style="padding:8px;text-align:left">#</th>
+              <th style="padding:8px;text-align:left">Date</th>
+              <th style="padding:8px;text-align:left">Staff</th>
+              <th style="padding:8px;text-align:right">Hours</th>
+              <th style="padding:8px;text-align:left">WO</th>
+              <th style="padding:8px;text-align:left">Project</th>
+              <th style="padding:8px;text-align:left">Code</th>
+              <th style="padding:8px;text-align:left">Job</th>
+              <th style="padding:8px;text-align:left">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="csv-ledger-body">${d.valid_rows.map(r => csvLedgerRow(r, projOptions, staffOptions, jobOptions)).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
   if (readyOnly && s.ready_to_import > 0) {
     html = `<div class="alert alert-success" style="margin-bottom:14px"><i class="fa-solid fa-circle-check"></i> All ${s.ready_to_import} rows are valid and ready to import.</div>` + html;
   } else if (s.ready_to_import === 0) {
@@ -2431,6 +2971,95 @@ function renderImportReview(d) {
   }
 
   document.getElementById('import-stage-review').innerHTML = html;
+}
+
+// Render a single editable row in the CSV ledger table. The user can change
+// project, staff, hours, and job title via inline controls — each control
+// fires csvLedgerEdit() to PATCH the staged row server-side. A "mismatch"
+// warning appears when the user's manual job differs from what the billing
+// code implies (e.g. code = g-1-B-4 → Inspection but user picks "RE").
+function csvLedgerRow(r, projOptions, staffOptions, jobOptions) {
+  const woWarn = !r.wo_known;
+  const staffWarn = !r.staff_known;
+  const codeJob = r.billing_code && jobByCodeCache ? jobByCodeCache[r.billing_code.toLowerCase()] : null;
+  const jobMismatch = codeJob && r.job_title && r.job_source === 'manual' && codeJob.toLowerCase() !== r.job_title.toLowerCase();
+  const rowBg = woWarn || staffWarn ? 'background:#FFF8E1' : '';
+  // Build staff <select> options with the row's current staff_id pre-selected
+  const staffSel = `<option value="">— pick —</option>` +
+    (window._staffCache || []).map(s =>
+      `<option value="${s.id}"${s.id === r.staff_id ? ' selected' : ''}>${esc(s.name)}</option>`
+    ).join('');
+  const projSel = `<option value="">— pick —</option>` +
+    (allProjects || []).map(p =>
+      `<option value="${p.id}"${p.id === r.project_id ? ' selected' : ''}>${esc(p.name)} (${esc(p.client_name||'—')}) — WO ${esc(p.work_order_number||'—')}</option>`
+    ).join('');
+  return `<tr data-row-num="${r.row_num}" style="${rowBg};border-top:1px solid var(--gray-border)">
+    <td style="padding:6px 8px;color:var(--text-muted)">${r.row_num}</td>
+    <td style="padding:6px 8px">${esc(r.date || '—')}</td>
+    <td style="padding:6px 8px">
+      <select onchange="csvLedgerEdit(${r.row_num}, 'staff_id', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid ${staffWarn?'var(--warning)':'var(--gray-border)'};border-radius:4px;max-width:140px">
+        ${staffSel}
+      </select>
+      ${staffWarn ? `<div style="font-size:10px;color:var(--warning);margin-top:2px">Original: ${esc(r.name)}</div>` : ''}
+    </td>
+    <td style="padding:6px 8px;text-align:right">
+      <input type="number" value="${r.hours}" step="0.0001" min="0" onchange="csvLedgerEdit(${r.row_num}, 'hours', this.value)" style="width:70px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;text-align:right">
+    </td>
+    <td style="padding:6px 8px;font-family:monospace;font-size:11px">${esc(r.wo)}</td>
+    <td style="padding:6px 8px">
+      <select onchange="csvLedgerEdit(${r.row_num}, 'project_id', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid ${woWarn?'var(--warning)':'var(--gray-border)'};border-radius:4px;max-width:240px">
+        ${projSel}
+      </select>
+      ${woWarn ? `<div style="font-size:10px;color:var(--warning);margin-top:2px">No project found for WO ${esc(r.wo)}</div>` : ''}
+    </td>
+    <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:var(--text-muted)">${esc(r.billing_code || '—')}</td>
+    <td style="padding:6px 8px">
+      <input type="text" list="csv-job-titles" value="${esc(r.job_title || '')}" onchange="csvLedgerEdit(${r.row_num}, 'job_title', this.value)" style="width:130px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px">
+    </td>
+    <td style="padding:6px 8px;font-size:10px;color:var(--text-muted)">
+      ${jobMismatch ? `<span style="background:var(--warning);color:#fff;padding:2px 6px;border-radius:8px;font-weight:600">⚠ Code says "${esc(codeJob)}"</span><br>` : ''}
+      ${r.job_source === 'billing_code' ? 'from code' : r.job_source === 'manual' ? 'manual' : r.job_source === 'column' ? 'from column' : r.job_source === 'filename' ? 'from filename' : ''}
+    </td>
+  </tr>`;
+}
+
+// Cached map of billing_code (lowercase) → job name. Populated when validate
+// returns. Used by the ledger renderer to detect manual-vs-code mismatches.
+let jobByCodeCache = {};
+
+// Apply a per-field edit to a staged row. Server validates IDs.
+async function csvLedgerEdit(rowNum, field, value) {
+  if (!csvStageData?.stage_id) return;
+  // Convert empty string → null where appropriate
+  const patch = {};
+  if (field === 'project_id' || field === 'staff_id') {
+    patch[field] = value || null;
+  } else if (field === 'hours') {
+    const n = parseFloat(value);
+    if (isNaN(n) || n <= 0) { alert('Hours must be a positive number'); return; }
+    patch[field] = n;
+  } else {
+    patch[field] = value;
+  }
+  try {
+    const r = await fetch('/api/hours/csv-edit-row', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage_id: csvStageData.stage_id, row_num: rowNum, patch })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Edit failed');
+    // Light visual feedback — flash the row green briefly
+    const tr = document.querySelector(`#csv-ledger-body tr[data-row-num="${rowNum}"]`);
+    if (tr) {
+      tr.style.transition = 'background-color .3s';
+      const prev = tr.style.backgroundColor;
+      tr.style.backgroundColor = 'rgba(16,185,129,.2)';
+      setTimeout(() => { tr.style.backgroundColor = prev; }, 600);
+    }
+  } catch (e) {
+    alert('Failed to save edit: ' + e.message);
+  }
 }
 
 async function csvImportCommit() {
@@ -2494,6 +3123,30 @@ async function csvImportCommit() {
     document.getElementById('import-stage-done').innerHTML = html;
     document.getElementById('import-commit-btn').style.display = 'none';
     document.getElementById('import-done-btn').style.display = 'inline-flex';
+
+    // Switch the Hours tab to the period the import covered, so when the user
+    // closes this modal they immediately see the new entries (otherwise the
+    // imported data is filtered out by the Hours tab's current month/year).
+    if (data.period_year && data.period_month) {
+      const yEl = document.getElementById('hrs-year');
+      const mEl = document.getElementById('hrs-month');
+      // Year option may not exist yet (e.g. importing 2025 data when the dropdown
+      // only has 2024-2026); add it on the fly.
+      let yearOption = [...yEl.options].find(o => String(o.value) === String(data.period_year));
+      if (!yearOption) {
+        yearOption = new Option(data.period_year, data.period_year);
+        yEl.add(yearOption);
+      }
+      yEl.value = data.period_year;
+      mEl.value = data.period_month;
+    }
+    // Auto-refresh everything that depends on time entries — regardless of
+    // which tab the user is currently looking at. The user reported having to
+    // hit refresh manually; this should remove that need entirely.
+    loadHours();
+    loadDashboard();
+    if (typeof loadProjects === 'function') loadProjects();
+    if (typeof loadBilling === 'function' && currentView === 'billing') loadBilling();
   } catch (e) {
     alert('Import failed: ' + e.message);
   } finally {
@@ -2536,33 +3189,57 @@ async function loadBilling() {
   if (!unbilled.length) {
     tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state" style="padding:24px"><i class="fa-solid fa-check-circle" style="color:var(--success);font-size:24px"></i><p>All completed projects have been billed!</p></div></td></tr>';
   } else {
+    // Group: Client → Parent project (grandparent_name or parent_name) → Job (project_type)
     const byClient = {};
-    unbilled.forEach(p => { const c = p.client_name||'No Client'; if (!byClient[c]) byClient[c]=[]; byClient[c].push(p); });
+    unbilled.forEach(p => {
+      const c = p.client_name || 'No Client';
+      const parent = p.grandparent_name || p.parent_name || '— No parent —';
+      const jobLabel = p.project_type || 'other';
+      byClient[c] = byClient[c] || {};
+      byClient[c][parent] = byClient[c][parent] || {};
+      byClient[c][parent][jobLabel] = byClient[c][parent][jobLabel] || [];
+      byClient[c][parent][jobLabel].push(p);
+    });
 
     let html = '';
-    for (const [client, projects] of Object.entries(byClient)) {
-      const clientTotal = projects.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
+    for (const [client, byParent] of Object.entries(byClient)) {
+      // Sum across the whole client
+      let clientTotal = 0;
+      for (const byJob of Object.values(byParent)) {
+        for (const projs of Object.values(byJob)) {
+          for (const p of projs) clientTotal += parseFloat(p.earned_amount || 0);
+        }
+      }
       html += `<tr style="background:var(--primary-light)">
+        <td></td>
         <td colspan="5" style="font-weight:700;color:var(--primary);padding:10px 16px"><i class="fa-solid fa-building" style="margin-right:6px"></i>${esc(client)}</td>
-        <td style="font-weight:700;color:var(--primary)">${fmtMoney(clientTotal)}</td><td colspan="2"></td></tr>`;
-      for (const p of projects) {
-        const hrs = parseFloat(p.logged_hours)||0;
-        const rate = parseFloat(p.billing_rate)||0;
-        const earned = parseFloat(p.earned_amount)||0;
-        html += `<tr>
-          <td class="td-name" style="padding-left:24px">└ ${esc(p.name)}</td>
-          <td>${esc(p.concentrator_area||p.work_order_number||'—')}</td>
-          <td>${typeBadge(p.project_type)}</td>
-          <td>${fmt(hrs,'hrs')}</td>
-          <td>$${rate.toFixed(2)}/hr</td>
-          <td style="font-weight:600">${fmtMoney(earned)}</td>
-          <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Bill</button>
-          </td></tr>`;
+        <td style="font-weight:700;color:var(--primary)">${fmtMoney(clientTotal)}</td><td></td></tr>`;
+
+      for (const [parent, byJob] of Object.entries(byParent)) {
+        html += `<tr style="background:var(--gray-light)">
+          <td></td>
+          <td colspan="7" style="padding-left:32px;font-weight:600;color:var(--text)"><i class="fa-solid fa-folder" style="color:var(--text-muted);margin-right:6px"></i>${esc(parent)}</td></tr>`;
+        for (const [jobLabel, projs] of Object.entries(byJob)) {
+          for (const p of projs) {
+            const hrs = parseFloat(p.logged_hours)||0;
+            const rate = parseFloat(p.billing_rate)||0;
+            const earned = parseFloat(p.earned_amount)||0;
+            html += `<tr>
+              <td style="text-align:center;padding:6px"><input type="checkbox" class="bill-row-cb" data-id="${p.id}" data-client-id="${esc(p.client_id||'')}" data-amount="${earned}" onchange="updateBillSelectedFooter()"></td>
+              <td class="td-name" style="padding-left:48px">└ ${esc(p.name)}</td>
+              <td>${esc(p.concentrator_area||p.work_order_number||'—')}</td>
+              <td>${typeBadge(p.project_type)}</td>
+              <td>${fmt(hrs,'hrs')}</td>
+              <td>$${rate.toFixed(2)}/hr</td>
+              <td style="font-weight:600">${fmtMoney(earned)}</td>
+              <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+            </tr>`;
+          }
+        }
       }
     }
     tbody.innerHTML = html;
+    updateBillSelectedFooter();
   }
 
   // ── Invoice history ──
@@ -2737,7 +3414,6 @@ function renderRevenueDetail(details) {
         <td class="td-mono">${esc(p.work_order_number || '—')}</td>
         <td>${typeBadge(p.project_type)}</td>
         <td>${fmt(totals.hrs, 'hrs')}</td>
-        <td>${expected ? fmtMoney(expected) : '—'}</td>
         <td style="font-weight:600;color:${earnedColor}">${fmtMoney(totals.earned)}</td>
         <td>${statusBadge(p.status)}</td>
       </tr>`;
@@ -2823,11 +3499,6 @@ async function loadRevenue() {
 
   const periodLabel = isYTD ? 'YTD' : MONTH_NAMES[(m||1)-1];
   document.getElementById('rev-stats').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">${periodLabel} Expected</div>
-      <div class="stat-value">${fmtMoney(totalExpected)}</div>
-      <div class="stat-sub">${byClient.filter(c=>parseFloat(c.project_count)>0).length} client${byClient.filter(c=>parseFloat(c.project_count)>0).length!==1?'s':''}</div>
-    </div>
     <div class="stat-card accent">
       <div class="stat-label">${periodLabel} Earned</div>
       <div class="stat-value">${fmtMoney(isYTD ? ytdEarned : totalEarned)}</div>
@@ -2870,14 +3541,13 @@ async function loadRevenue() {
       <td class="td-name">${esc(c.client_name)}</td>
       <td>${c.project_count}</td>
       <td>${fmt(parseFloat(c.total_hours||0), 'hrs')}</td>
-      <td>${fmtMoney(c.expected_total)}</td>
       <td style="font-weight:600;color:var(--primary)">${fmtMoney(c.earned_total)}</td>
       <td style="color:var(--success)">${fmtMoney(c.billed_total)}</td>
     </tr>`).join('') + `<tr style="background:var(--gray-light);font-weight:700">
       <td>Total</td><td>${clientRows.reduce((s,c)=>s+parseInt(c.project_count||0),0)}</td>
-      <td>${fmt(totalHours,'hrs')}</td><td>${fmtMoney(totalExpected)}</td>
+      <td>${fmt(totalHours,'hrs')}</td>
       <td style="color:var(--primary)">${fmtMoney(totalEarned)}</td><td style="color:var(--success)">${fmtMoney(totalBilled)}</td>
-    </tr>` : '<tr><td colspan="6" class="empty-state">No revenue data for this period</td></tr>';
+    </tr>` : '<tr><td colspan="5" class="empty-state">No revenue data for this period</td></tr>';
 
   // ── Project detail table (hierarchical with expand/collapse) ──
   document.getElementById('rev-detail-title').textContent = isYTD ? 'Project Detail — YTD' : `Project Detail — ${MONTH_FULL[(m||1)-1]}`;
@@ -2935,6 +3605,7 @@ function renderProjectDetail(data, month, year) {
   const months_with_activity = data.months_with_activity || [];
   const lifetime = data.lifetime || { total_hours: 0, earned_hourly: 0 };
   const subtreeSize = data.subtree_size || 1;
+  const activeBillableCount = data.active_billable_count || 0;
 
   // Period label for header
   const periodLabel = month
@@ -3023,11 +3694,10 @@ function renderProjectDetail(data, month, year) {
   const showLifetime = lifetimeHrs > totalHrs || subtreeSize > 1;
 
   html += `<div class="stats-grid" style="margin-bottom:18px">
-    <div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries${subtreeSize > 1 ? ' · across ' + subtreeSize + ' projects' : ''}</div></div>
+    <div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries${activeBillableCount > 1 ? ' · ' + activeBillableCount + ' active billable projects' : ''}</div></div>
     <div class="stat-card accent"><div class="stat-label">${esc(periodLabel)} Earned</div><div class="stat-value">${fmtMoney(earned)}</div></div>
     ${showLifetime ? `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div><div class="stat-sub">all time, all sub-projects</div></div>` : ''}
     ${showLifetime && lifetimeEarned > 0 ? `<div class="stat-card"><div class="stat-label">Lifetime Earned</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div></div>` : ''}
-    ${parseFloat(p.expected_revenue) > 0 ? `<div class="stat-card"><div class="stat-label">Project Expected</div><div class="stat-value">${fmtMoney(p.expected_revenue)}</div><div class="stat-sub">${fmt(p.expected_hours || 0, 'hrs')}</div></div>` : ''}
     ${isFootage && p.footage ? `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>` : ''}
   </div>`;
 
@@ -3061,8 +3731,8 @@ function renderProjectDetail(data, month, year) {
   // about a permit.
   const permit_documents = data.permit_documents || [];
   if (stages.length > 0 || p.project_type === 'permitting') {
-    const STAGE_LABELS = { potential:'Potential', started:'Started', submitted:'Submitted', approved:'Approved', checklist:'Checklist', billed:'Billed' };
-    const STAGE_ORDER = ['potential','started','submitted','approved','checklist','billed'];
+    const STAGE_LABELS = { potential:'Potential', started:'Started', submitted:'Submitted', approved:'Approved', checklist:'Checklist' };
+    const STAGE_ORDER = ['potential','started','submitted','approved','checklist'];
     const currentStage = stages.find(s => !s.completed_at);
     const currentName = currentStage?.stage || stages[stages.length-1]?.stage || 'potential';
     const currentIdx = STAGE_ORDER.indexOf(currentName);
@@ -3074,6 +3744,15 @@ function renderProjectDetail(data, month, year) {
         ${nextStage ? `<button class="btn btn-sm btn-primary" onclick="advancePermitFromPopup('${p.id}')"><i class="fa-solid fa-arrow-right"></i> Advance to ${STAGE_LABELS[nextStage]}</button>` : '<span style="color:var(--success);font-size:12px;font-weight:600"><i class="fa-solid fa-check"></i> Pipeline complete</span>'}
       </div>
       <div class="card-body">
+        <!-- Billed status — read-only indicator pulled from projects.billed_date.
+             Set by the Billing tab when the project is invoiced. NOT a permit
+             pipeline stage anymore. -->
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:14px;background:${p.billed_date ? 'var(--primary-light)' : 'var(--gray-light)'};border-radius:6px;font-size:12px">
+          <span style="font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-size:10px">Billing Status</span>
+          ${p.billed_date
+            ? `<span style="color:var(--primary);font-weight:700">✓ Billed</span><span style="color:var(--text-muted)">on ${new Date(p.billed_date).toLocaleDateString()}</span>`
+            : `<span style="color:var(--text-muted);font-weight:600">Not yet billed</span><span style="color:var(--text-muted);font-size:11px">— bill from the Billing tab</span>`}
+        </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${STAGE_ORDER.map(s => {
           const stageRow = stages.find(x => x.stage === s);
           const done = stageRow?.completed_at;
@@ -3163,34 +3842,338 @@ async function reloadProjectDetail(projectId, month, year) {
 }
 
 async function showBillingReport() {
+  // Use revSelectedMonth if a month was clicked in the chart; otherwise current month
   const y = document.getElementById('rev-year').value;
   const m = revSelectedMonth || (new Date().getMonth() + 1);
-  const data = await api(`/api/reports/billing?month=${m}&year=${y}`);
+  const data = await api(`/api/billing/report?month=${m}&year=${y}`);
   const monthName = `${MONTH_FULL[m-1]} ${y}`;
-  document.getElementById('billing-modal-title').textContent = `Monthly Billing — ${monthName}`;
-  const byClient = {};
-  data.forEach(p => { if(!byClient[p.client_name]) byClient[p.client_name]=[]; byClient[p.client_name].push(p); });
-  let total = 0;
-  let html = `<div style="margin-bottom:20px"><strong style="font-size:16px">Launch Fiber Services</strong><br><span style="color:var(--text-muted)">Billing Period: ${monthName}</span></div>`;
-  for (const [client, items] of Object.entries(byClient)) {
-    const clientTotal = items.reduce((s,p)=>s+parseFloat(p.billable_amount||p.expected_revenue||0),0);
-    total += clientTotal;
-    html += `<div style="margin-bottom:20px">
-      <div style="font-weight:700;font-size:14px;color:var(--primary);border-bottom:2px solid var(--primary);padding-bottom:4px;margin-bottom:8px">${esc(client)}</div>
-      <table style="width:100%">
-        <thead><tr style="background:var(--gray-light)"><th style="padding:6px 8px;text-align:left;font-size:11px">Project</th><th style="padding:6px 8px;text-align:left;font-size:11px">WO #</th><th style="padding:6px 8px;text-align:left;font-size:11px">Type</th><th style="padding:6px 8px;text-align:right;font-size:11px">Qty</th><th style="padding:6px 8px;text-align:right;font-size:11px">Rate</th><th style="padding:6px 8px;text-align:right;font-size:11px">Amount</th></tr></thead>
-        <tbody>${items.map(p=>{
-          const amt = parseFloat(p.billable_amount||p.expected_revenue||0);
-          const qty = p.billing_type==='footage' ? ((p.footage/5280)*27.5).toFixed(1)+' hrs ('+Math.round(p.footage).toLocaleString()+' LF)' : (parseFloat(p.logged_hours)||0).toFixed(1)+' hrs';
-          return `<tr><td style="padding:5px 8px;font-size:12px">${esc(p.name)}</td><td style="padding:5px 8px;font-size:11px;font-family:monospace">${esc(p.work_order_number||'—')}</td><td style="padding:5px 8px;font-size:11px">${TYPE_LABELS[p.project_type]||p.project_type}</td><td style="padding:5px 8px;text-align:right;font-size:12px">${qty}</td><td style="padding:5px 8px;text-align:right;font-size:12px">$${(p.billing_rate||90).toFixed(2)}/hr</td><td style="padding:5px 8px;text-align:right;font-size:12px;font-weight:600">${fmtMoney(amt)}</td></tr>`;
-        }).join('')}</tbody>
-        <tfoot><tr><td colspan="5" style="padding:6px 8px;text-align:right;font-weight:700;font-size:13px;border-top:1px solid var(--gray-border)">Client Total:</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--primary);border-top:1px solid var(--gray-border)">${fmtMoney(clientTotal)}</td></tr></tfoot>
-      </table></div>`;
-  }
-  if (!data.length) html += '<p style="text-align:center;color:var(--text-muted);padding:24px">No billable projects for this period.</p>';
-  else html += `<div style="text-align:right;padding:12px;background:var(--primary);color:#fff;border-radius:8px;font-size:16px;font-weight:700;margin-top:16px">TOTAL BILLABLE: ${fmtMoney(total)}</div>`;
+  document.getElementById('billing-modal-title').innerHTML = `Billing Ledger — ${monthName}
+    <button class="btn btn-secondary btn-sm" onclick="printBillingReport()" style="margin-left:14px;font-weight:400"><i class="fa-solid fa-print"></i> Print / Save PDF</button>`;
+
+  let html = `<div id="billing-report-printable" style="font-family:'Inter',sans-serif">
+    <!-- Letterhead -->
+    <div style="text-align:center;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--primary)">
+      <div style="font-size:20px;font-weight:700;color:var(--primary)">Launch Fiber Services</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:2px">Billing Ledger · ${monthName}</div>
+    </div>
+
+    <!-- Top stats: monthly + YTD -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div style="padding:14px 18px;background:var(--primary);color:#fff;border-radius:8px">
+        <div style="font-size:11px;text-transform:uppercase;opacity:.8">Monthly Revenue</div>
+        <div style="font-size:24px;font-weight:700;margin-top:4px">${fmtMoney(data.monthly_revenue || 0)}</div>
+      </div>
+      <div style="padding:14px 18px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:8px">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted)">YTD Revenue</div>
+        <div style="font-size:24px;font-weight:700;margin-top:4px;color:var(--primary)">${fmtMoney(data.ytd_revenue || 0)}</div>
+      </div>
+    </div>
+
+    <!-- Invoice ledger -->
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:var(--gray-light);border-bottom:2px solid var(--primary)">
+          <th style="padding:8px 10px;text-align:left">Invoice #</th>
+          <th style="padding:8px 10px;text-align:left">Date</th>
+          <th style="padding:8px 10px;text-align:left">Client</th>
+          <th style="padding:8px 10px;text-align:left">Description</th>
+          <th style="padding:8px 10px;text-align:right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.invoices.length ? data.invoices.map(inv => `
+          <tr style="border-bottom:1px solid var(--gray-border)">
+            <td style="padding:8px 10px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}</td>
+            <td style="padding:8px 10px">${inv.invoice_date ? new Date(inv.invoice_date+'T00:00:00').toLocaleDateString() : '—'}</td>
+            <td style="padding:8px 10px">${esc(inv.client_name || '—')}</td>
+            <td style="padding:8px 10px;color:var(--text-muted)">${esc(inv.notes || '')}</td>
+            <td style="padding:8px 10px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount || 0)}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--text-muted)">No invoices for this period</td></tr>'}
+      </tbody>
+      ${data.invoices.length ? `<tfoot>
+        <tr style="border-top:2px solid var(--primary);background:var(--gray-light)">
+          <td colspan="4" style="padding:10px;text-align:right;font-weight:700">Total ${monthName}</td>
+          <td style="padding:10px;text-align:right;font-weight:700;color:var(--primary);font-size:15px">${fmtMoney(data.monthly_revenue || 0)}</td>
+        </tr>
+      </tfoot>` : ''}
+    </table>
+
+    <div style="margin-top:24px;font-size:11px;color:var(--text-muted);text-align:center">
+      Generated ${new Date().toLocaleDateString()} · ${data.invoices.length} invoice${data.invoices.length !== 1 ? 's' : ''}
+    </div>
+  </div>`;
+
   document.getElementById('billing-modal-body').innerHTML = html;
   openModal('billing-modal');
+}
+
+// Open the browser's print dialog scoped to the report content. The user
+// can choose "Save as PDF" from the destination dropdown.
+function printBillingReport() {
+  const reportEl = document.getElementById('billing-report-printable');
+  if (!reportEl) return;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Billing Ledger</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:40px;color:#222}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      th,td{border-bottom:1px solid #ddd;padding:8px 10px;text-align:left}
+      th{background:#f3f3f3}
+      .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+      .summary-card{padding:14px 18px;border-radius:8px;border:1px solid #ddd}
+      .summary-card.primary{background:#0846a8;color:#fff;border-color:#0846a8}
+      h1{color:#0846a8;text-align:center;margin-bottom:0}
+      h2{color:#666;text-align:center;font-weight:400;margin-top:4px;font-size:15px}
+      @media print { body { padding: 20px; } }
+    </style>
+  </head><body>${reportEl.innerHTML}<script>window.onload=()=>window.print();</` + `script></body></html>`);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════
+// JOBS, PROJECT TYPES, PRICING LIST
+// ═══════════════════════════════════════════════════════════
+let jobsCache = [];
+let projectTypesCache = [];
+let pricingCache = [];
+
+async function loadJobs() {
+  jobsCache = await api('/api/jobs');
+  return jobsCache;
+}
+async function loadProjectTypes() {
+  projectTypesCache = await api('/api/project-types');
+  return projectTypesCache;
+}
+
+// Open the settings modal — loads everything fresh and renders.
+async function openSettings() {
+  openModal('settings-modal');
+  document.getElementById('pricing-list-body').innerHTML = '<div class="empty-state">Loading...</div>';
+  await Promise.all([loadJobs(), loadProjectTypes()]);
+  pricingCache = await api('/api/pricing');
+  populatePricingFormDropdowns();
+  renderPricingList();
+  renderJobsList();
+  renderProjectTypesList();
+  refreshSettingsDot();
+}
+
+// Render the Jobs management list inside the Settings modal.
+function renderJobsList() {
+  const root = document.getElementById('jobs-list-body');
+  if (!root) return;
+  if (!jobsCache.length) { root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No jobs yet.</div>'; return; }
+  root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
+    <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
+      <th style="text-align:left;padding:6px 8px">Name</th>
+      <th style="text-align:left;padding:6px 8px">Default Billing</th>
+      <th style="text-align:right;padding:6px 8px">Default Rate</th>
+      <th style="text-align:center;padding:6px 8px">Permit Calc</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${jobsCache.map(j => `<tr style="border-top:1px solid var(--gray-border)">
+      <td style="padding:6px 8px;font-weight:600">${esc(j.name)}</td>
+      <td style="padding:6px 8px">${esc(j.default_billing_type || 'hourly')}</td>
+      <td style="padding:6px 8px;text-align:right">${j.default_rate != null ? fmtMoney(j.default_rate) : '—'}</td>
+      <td style="padding:6px 8px;text-align:center">${j.is_permitting ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '—'}</td>
+      <td style="padding:6px 8px;text-align:right">
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteJob('${j.id}','${esc(j.name)}')" title="Delete (preserves history)"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function saveNewJob() {
+  const name = document.getElementById('new-job-name').value.trim();
+  const default_billing_type = document.getElementById('new-job-bt').value;
+  const default_rate = parseFloat(document.getElementById('new-job-rate').value);
+  const is_permitting = document.getElementById('new-job-perm').checked;
+  if (!name) return alert('Job name is required');
+  try {
+    await api('/api/jobs', 'POST', {
+      name,
+      default_billing_type,
+      default_rate: isNaN(default_rate) ? null : default_rate,
+      is_permitting
+    });
+    document.getElementById('new-job-name').value = '';
+    document.getElementById('new-job-rate').value = '';
+    document.getElementById('new-job-perm').checked = false;
+    document.getElementById('jobs-add-form').style.display = 'none';
+    await loadJobs();
+    populatePricingFormDropdowns();
+    renderJobsList();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function deleteJob(id, name) {
+  if (!confirm(`Delete job "${name}"?\n\nExisting projects keep their history. The job will just be hidden from new selections.`)) return;
+  try {
+    await api('/api/jobs/' + id, 'DELETE');
+    await loadJobs();
+    populatePricingFormDropdowns();
+    renderJobsList();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// Render the Project Types as removable chips
+function renderProjectTypesList() {
+  const root = document.getElementById('project-types-list-body');
+  if (!root) return;
+  if (!projectTypesCache.length) { root.innerHTML = '<span style="color:var(--text-muted);font-size:12px">None.</span>'; return; }
+  root.innerHTML = projectTypesCache.map(pt => `
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--primary-light);color:var(--primary);border-radius:14px;font-size:12px;font-weight:600">
+      ${esc(pt.name)}
+      <button onclick="deleteProjectType('${pt.id}','${esc(pt.name)}')" style="background:transparent;border:none;color:var(--primary);cursor:pointer;padding:0;font-size:14px;line-height:1">×</button>
+    </span>
+  `).join('');
+}
+
+async function saveNewProjectType() {
+  const name = document.getElementById('new-pt-name').value.trim();
+  if (!name) return alert('Name required');
+  try {
+    await api('/api/project-types', 'POST', { name });
+    document.getElementById('new-pt-name').value = '';
+    await loadProjectTypes();
+    populatePricingFormDropdowns();
+    renderProjectTypesList();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function deleteProjectType(id, name) {
+  if (!confirm(`Delete project type "${name}"?\n\nExisting projects keep their type. The type will just be hidden from new selections.`)) return;
+  try {
+    await api('/api/project-types/' + id, 'DELETE');
+    await loadProjectTypes();
+    populatePricingFormDropdowns();
+    renderProjectTypesList();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function populatePricingFormDropdowns() {
+  const tSel = document.getElementById('new-pe-type');
+  const jSel = document.getElementById('new-pe-job');
+  if (tSel) {
+    tSel.innerHTML = '<option value="">Select type...</option>' +
+      projectTypesCache.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  }
+  if (jSel) {
+    jSel.innerHTML = '<option value="">Select job...</option>' +
+      jobsCache.map(j => `<option value="${j.id}">${esc(j.name)}${j.is_permitting ? ' (Permitting)' : ''}</option>`).join('');
+  }
+}
+
+function renderPricingList() {
+  const root = document.getElementById('pricing-list-body');
+  if (!pricingCache.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No pricing entries yet. Add one above.</div>';
+    return;
+  }
+
+  // Group by project type for readability
+  const byType = {};
+  pricingCache.forEach(pe => {
+    const k = pe.project_type_name || '— No type —';
+    (byType[k] = byType[k] || []).push(pe);
+  });
+
+  let html = '';
+  for (const [typeName, entries] of Object.entries(byType)) {
+    html += `<div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--primary);padding:6px 0;border-bottom:2px solid var(--primary-light);margin-bottom:6px">${esc(typeName)}</div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
+          <th style="text-align:left;padding:6px 8px">Job</th>
+          <th style="text-align:left;padding:6px 8px">Code</th>
+          <th style="text-align:left;padding:6px 8px">Type</th>
+          <th style="text-align:right;padding:6px 8px">Rate</th>
+          <th style="text-align:left;padding:6px 8px">Notes</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${entries.map(pe => `<tr style="border-top:1px solid var(--gray-border)">
+          <td style="padding:6px 8px;font-weight:600">${esc(pe.job_name || '—')}${pe.is_permitting ? ' <span style="color:var(--warning);font-size:10px;margin-left:4px">⚡ permit calc</span>' : ''}</td>
+          <td style="padding:6px 8px;font-family:monospace;font-size:12px">${esc(pe.billing_code || '—')}</td>
+          <td style="padding:6px 8px">${esc(pe.billing_type)}</td>
+          <td style="padding:6px 8px;text-align:right;font-weight:600">${pe.rate != null ? fmtMoney(pe.rate) : '—'}${pe.billing_type === 'hourly' ? '/hr' : pe.billing_type === 'footage' ? '/mi' : ''}</td>
+          <td style="padding:6px 8px;color:var(--text-muted)">${esc(pe.notes || '')}</td>
+          <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+            <button class="btn btn-sm btn-secondary btn-icon" onclick="editPricingEntry('${pe.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deletePricingEntry('${pe.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+  root.innerHTML = html;
+}
+
+async function savePricingEntry() {
+  const project_type_id = document.getElementById('new-pe-type').value;
+  const job_id = document.getElementById('new-pe-job').value;
+  const billing_code = document.getElementById('new-pe-code').value.trim() || null;
+  const billing_type = document.getElementById('new-pe-billing-type').value;
+  const rate = parseFloat(document.getElementById('new-pe-rate').value);
+  const notes = document.getElementById('new-pe-notes').value.trim() || null;
+
+  if (!project_type_id || !job_id) return alert('Project type and job are required.');
+  if (isNaN(rate) || rate < 0) return alert('Enter a valid non-negative rate.');
+
+  try {
+    await api('/api/pricing', 'POST', { project_type_id, job_id, billing_code, billing_type, rate, notes });
+    document.getElementById('new-pe-code').value = '';
+    document.getElementById('new-pe-rate').value = '';
+    document.getElementById('new-pe-notes').value = '';
+    pricingCache = await api('/api/pricing');
+    renderPricingList();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function editPricingEntry(id) {
+  const pe = pricingCache.find(p => p.id === id);
+  if (!pe) return;
+  const newRate = prompt(`Update rate for ${pe.job_name} (${pe.project_type_name})\nCurrent: ${pe.rate}`, pe.rate);
+  if (newRate === null) return;
+  const r = parseFloat(newRate);
+  if (isNaN(r) || r < 0) return alert('Invalid rate.');
+  try {
+    await api('/api/pricing/' + id, 'PUT', { rate: r });
+    pricingCache = await api('/api/pricing');
+    renderPricingList();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function deletePricingEntry(id) {
+  if (!confirm('Delete this pricing entry?')) return;
+  try {
+    await api('/api/pricing/' + id, 'DELETE');
+    pricingCache = await api('/api/pricing');
+    renderPricingList();
+    refreshSettingsDot();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// Show/hide the red dot on the Settings header button.
+// The dot indicates there are job/project_type combos with no pricing entry.
+async function refreshSettingsDot() {
+  try {
+    const r = await api('/api/pricing/gaps');
+    const dot = document.getElementById('settings-dot');
+    if (!dot) return;
+    dot.style.display = (r.count > 0) ? 'block' : 'none';
+    const sum = document.getElementById('pricing-gaps-summary');
+    if (sum) {
+      sum.textContent = r.count > 0
+        ? `${r.count} job × type combination${r.count !== 1 ? 's' : ''} need pricing`
+        : 'All job × type combinations have pricing';
+    }
+  } catch (e) { /* silently ignore — non-critical */ }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3443,6 +4426,14 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 // ═══════════════════════════════════════════════════════════
 function fmtMoney(n) { return '$' + (parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmt(n, unit='') { const v=parseFloat(n)||0; return v.toFixed(1)+(unit?' '+unit:''); }
+// Display hours WITHOUT rounding — strips trailing zeros and dot.
+// 11.5 → "11.5", 12 → "12", 11.745 → "11.745".
+function fmtHours(n) {
+  const v = parseFloat(n);
+  if (isNaN(v) || v === 0) return '0';
+  // toFixed(4) then strip trailing zeros and trailing dot
+  return v.toFixed(4).replace(/\.?0+$/, '');
+}
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function statusBadge(s) { const m={active:'badge-active',completed:'badge-completed',billed:'badge-billed',on_hold:'badge-hold'}; return `<span class="badge ${m[s]||''}">${s?.replace('_',' ')}</span>`; }
 function typeBadge(t) { const m={inspection:'badge-inspection',re:'badge-re',permitting:'badge-permitting',design:'badge-design',other:'badge-other'}; return `<span class="badge ${m[t]||''}">${TYPE_LABELS[t]||t}</span>`; }
