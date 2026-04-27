@@ -1385,10 +1385,10 @@ app.get('/api/projects/:id/detail', async (req, res) => {
              ) as effective_rate,
              -- Compute subtree revenue for this child
              COALESCE((
-               WITH RECURSIVE desc AS (
+               WITH RECURSIVE descendants AS (
                  SELECT c.id AS did
                  UNION ALL
-                 SELECT p.id FROM projects p JOIN desc d ON p.parent_id = d.did
+                 SELECT p.id FROM projects p JOIN descendants d ON p.parent_id = d.did
                )
                SELECT SUM(
                  CASE
@@ -1401,7 +1401,7 @@ app.get('/api/projects/:id/detail', async (req, res) => {
                        END)
                  END
                ) FROM projects leaf
-               WHERE leaf.id IN (SELECT did FROM desc)
+               WHERE leaf.id IN (SELECT did FROM descendants)
                  AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = leaf.id)
              ), 0) as subtree_revenue
        FROM projects c WHERE c.parent_id = $1 ORDER BY c.name`,
