@@ -426,3 +426,18 @@ BEGIN
       (LOWER(p.project_type) = 'other' AND j.name = 'Other')
     );
 END $$;
+
+-- ─────────────────────────────────────────
+-- BACKFILL: Set billing_rate on existing projects that have NULL
+-- This ensures revenue calculations work for previously created projects
+-- ─────────────────────────────────────────
+UPDATE projects SET billing_rate = 90
+  WHERE billing_rate IS NULL AND LOWER(project_type) = 'inspection';
+UPDATE projects SET billing_rate = 100
+  WHERE billing_rate IS NULL AND LOWER(project_type) IN ('re', 'resident engineer');
+UPDATE projects SET billing_rate = 90
+  WHERE billing_rate IS NULL AND LOWER(project_type) = 'permitting';
+UPDATE projects SET billing_type = 'hourly'
+  WHERE billing_type IS NULL AND LOWER(project_type) IN ('inspection', 're', 'resident engineer');
+UPDATE projects SET billing_type = 'footage'
+  WHERE billing_type IS NULL AND LOWER(project_type) = 'permitting';

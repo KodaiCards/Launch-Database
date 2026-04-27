@@ -1538,19 +1538,26 @@ async function loadProjects() {
 }
 
 // Build the parent-project dropdown with proper indentation showing hierarchy.
-// Excludes the project being edited (and its descendants) so a project can't
-// become its own ancestor. Supports unlimited nesting depth.
-function populateParentDropdown(editingId) {
+// Always fetches ALL projects (unfiltered) so new sub-projects appear immediately.
+async function populateParentDropdown(editingId) {
   const pp = document.getElementById('proj-parent');
   if (!pp) return;
   while (pp.options.length > 1) pp.remove(1);
+
+  // Always fetch full unfiltered list for the dropdown
+  let dropdownProjects;
+  try {
+    dropdownProjects = await api('/api/projects');
+  } catch (e) {
+    dropdownProjects = allProjects; // fallback
+  }
 
   // Build descendant set for editing project
   const excluded = new Set();
   if (editingId) {
     excluded.add(editingId);
     const kidMap = {};
-    allProjects.forEach(p => { if (p.parent_id) { (kidMap[p.parent_id] = kidMap[p.parent_id] || []).push(p.id); } });
+    dropdownProjects.forEach(p => { if (p.parent_id) { (kidMap[p.parent_id] = kidMap[p.parent_id] || []).push(p.id); } });
     const stack = [editingId];
     while (stack.length) {
       const id = stack.pop();
@@ -1558,11 +1565,10 @@ function populateParentDropdown(editingId) {
     }
   }
 
-  // Build children map and walk recursively for indented options
-  const byId = Object.fromEntries(allProjects.map(p => [p.id, p]));
+  // Walk recursively for indented options
   const childrenOf = {};
-  allProjects.forEach(p => { if (p.parent_id) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
-  const roots = allProjects.filter(p => !p.parent_id);
+  dropdownProjects.forEach(p => { if (p.parent_id) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
+  const roots = dropdownProjects.filter(p => !p.parent_id);
 
   function addOptions(projects, depth) {
     for (const p of projects) {
