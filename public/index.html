@@ -1430,23 +1430,26 @@ async function loadDashboard() {
   }
 
   // Recursive YTD revenue rollup through any depth.
-  // Uses own_hours (this project's direct time entries only) to avoid
-  // double-counting. Parent projects can have their own hours AND children.
+  // ONLY leaf projects (no children) generate revenue from their hours.
+  // Parent/container projects ONLY aggregate from their children — never
+  // from their own hours, since parent types are usually "Other" with no rate.
   function sumTree(p) {
-    // own_hours = only this project's direct time entries (from server query)
-    // Falls back to actual_hours for leaf projects if own_hours not available
     const kids = childrenOf[p.id] || [];
     const isLeaf = kids.length === 0;
     let hours = parseFloat(p.own_hours) || (isLeaf ? (parseFloat(p.actual_hours) || 0) : 0);
     let ytd = 0;
-    // Calculate this project's own revenue from its own direct hours
-    const rate = inferRate(p);
-    if ((p.billing_type || '').toLowerCase() === 'footage') {
-      if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
-    } else if (hours > 0 && rate > 0) {
-      ytd = hours * rate;
+
+    if (isLeaf) {
+      // Leaf: calculate revenue from this project's hours × rate
+      const rate = inferRate(p);
+      if ((p.billing_type || '').toLowerCase() === 'footage') {
+        if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
+      } else if (hours > 0 && rate > 0) {
+        ytd = hours * rate;
+      }
     }
-    // Add children's values
+
+    // Aggregate children (parents get revenue ONLY from this rollup)
     for (const kid of kids) {
       const s = sumTree(kid);
       ytd += s.ytd; hours += s.hours;
@@ -1624,21 +1627,25 @@ function renderProjects(list, expandAll = false) {
     return 0;
   }
 
-  // Recursive rollup — uses logged_hours (direct time entries only, not rolled up)
-  // so parent projects with their own entries AND children both count correctly.
+  // Recursive rollup — only leaf projects generate revenue from their hours.
+  // Parent/container projects aggregate from children only.
   function sumTree(p) {
     const kids = childrenOf[p.id] || [];
-    // logged_hours = direct time entries for this project only (from SQL JOIN)
+    const isLeaf = kids.length === 0;
     let logged = parseFloat(p.logged_hours) || 0;
     let revenue = parseFloat(p.expected_revenue) || 0;
     let ytd = 0;
-    const rate = inferRate(p);
-    if ((p.billing_type || '').toLowerCase() === 'footage') {
-      if (['completed','billed'].includes(p.status)) ytd = revenue;
-    } else if (logged > 0 && rate > 0) {
-      ytd = logged * rate;
+
+    if (isLeaf) {
+      const rate = inferRate(p);
+      if ((p.billing_type || '').toLowerCase() === 'footage') {
+        if (['completed','billed'].includes(p.status)) ytd = revenue;
+      } else if (logged > 0 && rate > 0) {
+        ytd = logged * rate;
+      }
     }
-    // Add children's values
+
+    // Aggregate children
     for (const kid of kids) {
       const s = sumTree(kid);
       logged += s.logged; revenue += s.revenue; ytd += s.ytd;

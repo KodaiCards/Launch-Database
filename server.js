@@ -2091,7 +2091,14 @@ app.get('/api/revenue/details', async (req, res) => {
              co.contract_number,
              COALESCE(te_sum.hrs, 0) as period_hours,
              CASE
-               WHEN p.billing_type = 'hourly' THEN COALESCE(te_sum.hrs, 0) * p.billing_rate
+               WHEN p.billing_type = 'hourly' THEN COALESCE(te_sum.hrs, 0) * COALESCE(p.billing_rate,
+                 CASE LOWER(p.project_type)
+                   WHEN 'inspection' THEN 90
+                   WHEN 're' THEN 100
+                   WHEN 'resident engineer' THEN 100
+                   WHEN 'permitting' THEN 90
+                   ELSE 0
+                 END)
                WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN p.expected_revenue
                ELSE 0
              END as earned
@@ -2453,7 +2460,8 @@ app.post('/api/billing/bill-multiple', async (req, res) => {
       const override = itemMap.get(p.id) || {};
       const isFootage = p.billing_type === 'footage';
       const hours = parseFloat(p.actual_hours) || 0;
-      const rate = parseFloat(p.billing_rate) || 0;
+      const inferredRate = parseFloat(p.billing_rate) || ({'inspection':90,'re':100,'resident engineer':100,'permitting':90}[(p.project_type||'').toLowerCase()] || 0);
+      const rate = inferredRate;
       const expected = parseFloat(p.expected_revenue) || 0;
       const amount = override.amount != null ? parseFloat(override.amount)
         : isFootage ? expected : hours * rate;
