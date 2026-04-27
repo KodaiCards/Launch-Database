@@ -400,7 +400,32 @@ app.get('/api/projects', async (req, res) => {
         co.name as contract_name,
         pp.name as parent_name,
         COALESCE(SUM(te.hours),0) as logged_hours,
-        (SELECT COUNT(*) FROM projects ch WHERE ch.parent_id = p.id) as child_count
+        (SELECT COUNT(*) FROM projects ch WHERE ch.parent_id = p.id) as child_count,
+        -- Server-computed YTD revenue for this project + all descendants
+        COALESCE((
+          WITH RECURSIVE tree AS (
+            SELECT p.id AS tid
+            UNION ALL
+            SELECT c.id FROM projects c JOIN tree t ON c.parent_id = t.tid
+          )
+          SELECT SUM(
+            CASE
+              WHEN leaf.billing_type = 'footage' AND leaf.status IN ('completed','billed')
+                THEN COALESCE(leaf.expected_revenue, 0)
+              ELSE COALESCE((
+                SELECT SUM(te2.hours) FROM time_entries te2
+                WHERE te2.project_id = leaf.id
+                  AND EXTRACT(YEAR FROM te2.entry_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+              ), 0) * COALESCE(leaf.billing_rate,
+                CASE LOWER(leaf.project_type)
+                  WHEN 'inspection' THEN 90 WHEN 're' THEN 100 WHEN 'resident engineer' THEN 100 WHEN 'permitting' THEN 90 ELSE 0
+                END)
+            END
+          )
+          FROM projects leaf
+          WHERE leaf.id IN (SELECT tid FROM tree)
+            AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = leaf.id)
+        ), 0) as ytd_revenue
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
@@ -1942,7 +1967,31 @@ app.get('/api/dashboard', async (req, res) => {
                p.billing_rate, p.billing_type,
                pp.name as parent_name, pp.parent_id as grandparent_id,
                con.area_name as concentrator_area,
-               COALESCE((SELECT SUM(te.hours) FROM time_entries te WHERE te.project_id = p.id), 0) as own_hours
+               COALESCE((SELECT SUM(te.hours) FROM time_entries te WHERE te.project_id = p.id), 0) as own_hours,
+               COALESCE((
+                 WITH RECURSIVE tree AS (
+                   SELECT p.id AS tid
+                   UNION ALL
+                   SELECT c.id FROM projects c JOIN tree t ON c.parent_id = t.tid
+                 )
+                 SELECT SUM(
+                   CASE
+                     WHEN leaf.billing_type = 'footage' AND leaf.status IN ('completed','billed')
+                       THEN COALESCE(leaf.expected_revenue, 0)
+                     ELSE COALESCE((
+                       SELECT SUM(te2.hours) FROM time_entries te2
+                       WHERE te2.project_id = leaf.id
+                         AND EXTRACT(YEAR FROM te2.entry_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+                     ), 0) * COALESCE(leaf.billing_rate,
+                       CASE LOWER(leaf.project_type)
+                         WHEN 'inspection' THEN 90 WHEN 're' THEN 100 WHEN 'resident engineer' THEN 100 WHEN 'permitting' THEN 90 ELSE 0
+                       END)
+                   END
+                 )
+                 FROM projects leaf
+                 WHERE leaf.id IN (SELECT tid FROM tree)
+                   AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = leaf.id)
+               ), 0) as ytd_revenue
         FROM projects p
         LEFT JOIN clients cl ON cl.id=p.client_id
         LEFT JOIN projects pp ON pp.id=p.parent_id
