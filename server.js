@@ -1792,18 +1792,11 @@ app.get('/api/dashboard', async (req, res) => {
     const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
 
     const [activeR, unbilledR, monthRevR, ytdRevR, recentR, alertR] = await Promise.all([
-      // Active = leaf projects with a real work job (Inspection / RE / Permitting / Design / etc).
-      // Exclude:
-      //   • container projects (anything with children — file-management buckets)
-      //   • projects whose job is "Other" (or no job linked) since those are
-      //     parking-lot organizational projects, not real billable work
+      // Active = leaf projects (anything without children). Counts all active work.
       pool.query(`
         SELECT COUNT(*) FROM projects p
-        LEFT JOIN jobs j ON j.id = p.job_id
         WHERE p.status='active'
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
-          AND p.job_id IS NOT NULL
-          AND LOWER(COALESCE(j.name, '')) <> 'other'
       `),
       pool.query(`
         SELECT COUNT(*), COALESCE(SUM(expected_revenue),0) as total

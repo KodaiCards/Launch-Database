@@ -248,17 +248,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="stats-grid" id="dash-stats">
         <div class="stat-card" style="cursor:pointer" onclick="showActiveList()" title="Click to see which projects are counted"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
         <div class="stat-card accent"><div class="stat-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
-        <div class="stat-card warn"><div class="stat-label">Unbilled Completed</div><div class="stat-value" id="s-unbilled-count">—</div><div class="stat-sub" id="s-unbilled-amt"></div></div>
         <div class="stat-card"><div class="stat-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
       </div>
-      <!-- Unbilled alert -->
-      <div id="unbilled-alert" style="display:none"></div>
       <!-- Active projects table -->
       <div class="card">
         <div class="card-header"><span class="card-title">Active Projects</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>Hours</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>YTD Revenue</th><th>Status</th><th></th></tr></thead>
             <tbody id="dash-projects-body"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -1408,13 +1405,7 @@ async function loadDashboard() {
   const d = await api('/api/dashboard');
   document.getElementById('s-active').textContent = d.active_projects;
   document.getElementById('s-month-rev').textContent = fmtMoney(d.month_revenue);
-  document.getElementById('s-unbilled-count').textContent = d.unbilled_count;
-  document.getElementById('s-unbilled-amt').textContent = fmtMoney(d.unbilled_total);
   document.getElementById('s-ytd').textContent = fmtMoney(d.ytd_revenue);
-  if (d.unbilled_count > 0) {
-    document.getElementById('unbilled-alert').style.display='block';
-    document.getElementById('unbilled-alert').innerHTML = `<div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>${d.unbilled_count} completed project${d.unbilled_count>1?'s':''}</strong> not yet billed (${fmtMoney(d.unbilled_total)}). <a href="#" onclick="showView('revenue')" style="color:inherit;font-weight:600">Review →</a></div>`;
-  }
 
   const tbody = document.getElementById('dash-projects-body');
   const all = d.recent_projects || [];
@@ -1427,15 +1418,24 @@ async function loadDashboard() {
   all.forEach(p => { if (p.parent_id) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
   const roots = all.filter(p => !p.parent_id || !byId[p.parent_id]);
 
-  // Recursive hours rollup through any depth
+  // Recursive YTD revenue rollup through any depth
   function sumTree(p) {
-    let actual = parseFloat(p.actual_hours) || 0;
-    let expected = parseFloat(p.expected_hours) || 0;
+    const isLeaf = !(childrenOf[p.id] || []).length;
+    let ytd = 0;
+    let hours = parseFloat(p.actual_hours) || 0;
+    if (isLeaf) {
+      const rate = parseFloat(p.billing_rate) || 0;
+      if (p.billing_type === 'footage') {
+        if (['completed','billed'].includes(p.status)) ytd = parseFloat(p.expected_revenue) || 0;
+      } else {
+        ytd = hours * rate;
+      }
+    }
     for (const kid of (childrenOf[p.id] || [])) {
       const s = sumTree(kid);
-      actual += s.actual; expected += s.expected;
+      ytd += s.ytd; hours += s.hours;
     }
-    return { actual, expected };
+    return { ytd, hours };
   }
 
   // Build rows recursively
@@ -1462,7 +1462,7 @@ async function loadDashboard() {
         <td>${esc(p.client_name||'—')}</td>
         <td class="td-mono">${esc(p.work_order_number||'—')}</td>
         <td>${typeBadge(p.project_type)}</td>
-        <td><div style="display:flex;align-items:center;gap:6px;min-width:100px"><div style="flex:1">${progressBar(sums.actual, sums.expected)}</div><span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmt(sums.actual,'hrs')}/${fmt(sums.expected,'hrs')}</span></div></td>
+        <td style="font-weight:600;color:var(--primary)">${fmtMoney(sums.ytd)}${sums.hours > 0 ? '<br><span style="font-size:10px;color:var(--text-muted);font-weight:400">'+fmt(sums.hours,'hrs')+'</span>' : ''}</td>
         <td>${statusBadge(p.status)}</td>
         <td><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')"><i class="fa-solid fa-pen"></i></button></td>
       </tr>`;
@@ -3686,36 +3686,39 @@ function renderProjectDetail(data, month, year) {
     </div>
   </div>`;
 
-  // ── Summary stats: period view + lifetime totals side-by-side so the user
-  // can see "this month" and "all time" together. Lifetime is rolled up from
-  // the whole subtree (so a parent/grandparent sees its descendants' totals).
+  // ── Summary stats: focus on revenue. For parent/container projects,
+  // show rolled-up revenue. For leaf projects, show hours + revenue.
   const lifetimeHrs = parseFloat(lifetime.total_hours) || 0;
   const lifetimeEarned = parseFloat(lifetime.earned_hourly) || 0;
-  const showLifetime = lifetimeHrs > totalHrs || subtreeSize > 1;
+  const isContainer = subtreeSize > 1;
 
   html += `<div class="stats-grid" style="margin-bottom:18px">
-    <div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries${activeBillableCount > 1 ? ' · ' + activeBillableCount + ' active billable projects' : ''}</div></div>
-    <div class="stat-card accent"><div class="stat-label">${esc(periodLabel)} Earned</div><div class="stat-value">${fmtMoney(earned)}</div></div>
-    ${showLifetime ? `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div><div class="stat-sub">all time, all sub-projects</div></div>` : ''}
-    ${showLifetime && lifetimeEarned > 0 ? `<div class="stat-card"><div class="stat-label">Lifetime Earned</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div></div>` : ''}
+    <div class="stat-card accent"><div class="stat-label">${esc(periodLabel)} Revenue</div><div class="stat-value">${fmtMoney(earned)}</div>${isContainer ? `<div class="stat-sub">${subtreeSize} projects</div>` : ''}</div>
+    ${!isContainer ? `<div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries</div></div>` : ''}
+    ${lifetimeEarned > 0 ? `<div class="stat-card"><div class="stat-label">Lifetime Revenue</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div><div class="stat-sub">all time, all sub-projects</div></div>` : ''}
+    ${lifetimeHrs > 0 && !isContainer ? `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>` : ''}
     ${isFootage && p.footage ? `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>` : ''}
   </div>`;
 
   // ── Children (if this is a parent/grandparent)
   if (children.length > 0) {
     html += `<div class="card" style="margin-bottom:14px"><div class="card-header"><span class="card-title">Sub-projects (${children.length})</span></div>
-      <table style="width:100%;font-size:13px"><thead><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Name</th><th style="padding:8px 12px;text-align:left">Type</th><th style="padding:8px 12px;text-align:left">Status</th><th style="padding:8px 12px;text-align:right">Hours</th><th style="padding:8px 12px;text-align:right">Expected</th></tr></thead>
-      <tbody>${children.map(c => `<tr class="clickable" onclick="showProjectDetail('${c.id}')" style="cursor:pointer">
+      <table style="width:100%;font-size:13px"><thead><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Name</th><th style="padding:8px 12px;text-align:left">Type</th><th style="padding:8px 12px;text-align:left">Status</th><th style="padding:8px 12px;text-align:right">Hours</th><th style="padding:8px 12px;text-align:right">Revenue</th></tr></thead>
+      <tbody>${children.map(c => {
+        const cRate = parseFloat(c.billing_rate) || 0;
+        const cHrs = parseFloat(c.actual_hours) || 0;
+        const cRev = c.billing_type === 'footage' && ['completed','billed'].includes(c.status) ? parseFloat(c.expected_revenue)||0 : cHrs * cRate;
+        return `<tr class="clickable" onclick="showProjectDetail('${c.id}')" style="cursor:pointer">
         <td style="padding:8px 12px;font-weight:600">${esc(c.name)}</td>
         <td style="padding:8px 12px">${typeBadge(c.project_type)}</td>
         <td style="padding:8px 12px">${statusBadge(c.status)}</td>
-        <td style="padding:8px 12px;text-align:right">${fmt(c.actual_hours || 0)}</td>
-        <td style="padding:8px 12px;text-align:right">${fmtMoney(c.expected_revenue || 0)}</td>
-      </tr>`).join('')}</tbody></table></div>`;
+        <td style="padding:8px 12px;text-align:right">${fmt(cHrs)}</td>
+        <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(cRev)}</td>
+      </tr>`;}).join('')}</tbody></table></div>`;
   }
 
-  // ── Hours by staff
-  if (staffRows.length > 0) {
+  // ── Hours by staff (only for leaf projects with actual time entries)
+  if (staffRows.length > 0 && !isContainer) {
     html += `<div class="card" style="margin-bottom:14px"><div class="card-header"><span class="card-title">Hours by Staff (${periodLabel})</span></div>
       <table style="width:100%;font-size:13px"><thead><tr style="background:var(--gray-light)"><th style="padding:8px 12px;text-align:left">Staff</th><th style="padding:8px 12px;text-align:right">Entries</th><th style="padding:8px 12px;text-align:right">Hours</th><th style="padding:8px 12px;text-align:right">Earned (@ rate)</th></tr></thead>
       <tbody>${staffRows.map(([name, s]) => `<tr>
@@ -4160,20 +4163,16 @@ async function deletePricingEntry(id) {
 }
 
 // Show/hide the red dot on the Settings header button.
-// The dot indicates there are job/project_type combos with no pricing entry.
+// Only shows if there are jobs explicitly flagged as needs_review.
 async function refreshSettingsDot() {
   try {
-    const r = await api('/api/pricing/gaps');
     const dot = document.getElementById('settings-dot');
     if (!dot) return;
-    dot.style.display = (r.count > 0) ? 'block' : 'none';
-    const sum = document.getElementById('pricing-gaps-summary');
-    if (sum) {
-      sum.textContent = r.count > 0
-        ? `${r.count} job × type combination${r.count !== 1 ? 's' : ''} need pricing`
-        : 'All job × type combinations have pricing';
-    }
-  } catch (e) { /* silently ignore — non-critical */ }
+    // Only show dot for jobs explicitly marked needs_review
+    const jobs = await api('/api/jobs');
+    const needsReview = jobs.filter(j => j.needs_review === true);
+    dot.style.display = needsReview.length > 0 ? 'block' : 'none';
+  } catch (e) { /* silently ignore */ }
 }
 
 // ═══════════════════════════════════════════════════════════
