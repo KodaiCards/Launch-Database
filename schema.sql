@@ -314,10 +314,15 @@ INSERT INTO project_types (name) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Pre-load the standard work jobs. Permitting uses a special calc explained above.
+-- "Permitting" is the standard DOT/County permit. "Permitting (RR)" is the
+-- railroad variant — uses the same hours-per-mile calc but with a custom rate
+-- you can set later (default left null so projects can be created before the
+-- rate is finalized).
 INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting) VALUES
-  ('Inspection',          'hourly',  90,  FALSE),
-  ('Resident Engineer',   'hourly', 100,  FALSE),
-  ('Permitting',          'footage', 90,  TRUE),
+  ('Inspection',          'hourly',  90,   FALSE),
+  ('Resident Engineer',   'hourly', 100,   FALSE),
+  ('Permitting',          'footage', 90,   TRUE),
+  ('Permitting (RR)',     'footage', NULL, TRUE),
   ('Design',              'hourly',  NULL, FALSE),
   ('Other',               'hourly',  NULL, FALSE)
 ON CONFLICT (name) DO NOTHING;
@@ -381,6 +386,19 @@ BEGIN
   INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
   VALUES (perm_id, rus_id, 'a-2-D', 'permitting', 90)
   ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
+
+  -- Permitting (RR): same calc, but rate is intentionally NULL — railroad
+  -- permits are priced case-by-case. User sets the rate in Settings → Pricing
+  -- when they have it. Project creation shouldn't block on the missing rate.
+  IF (SELECT id FROM jobs WHERE name = 'Permitting (RR)') IS NOT NULL THEN
+    INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
+    SELECT (SELECT id FROM jobs WHERE name = 'Permitting (RR)'), rus_id, NULL, 'permitting', NULL
+    WHERE NOT EXISTS (
+      SELECT 1 FROM pricing_entries pe
+      WHERE pe.job_id = (SELECT id FROM jobs WHERE name = 'Permitting (RR)')
+        AND pe.project_type_id = rus_id
+    );
+  END IF;
 
   -- $850 per mile codes (per-mile fixed billing). Mapped to "Other" job
   -- since they don't fit cleanly into Inspection/RE/Permitting/Design.

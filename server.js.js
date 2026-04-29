@@ -60,8 +60,11 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride) {
   // "Permitting" is now triggered by either the legacy project_type='permitting'
   // OR an explicit hoursPerMileOverride (set when a Job with is_permitting=true
-  // is selected). Same rate ($90/hr by default).
-  const PERMITTING_RATE = parseFloat(billingRate) || 90;
+  // is selected). Rate defaults to $90/hr for DOT permits but for RR permits
+  // (where the rate is intentionally NULL until the user sets it in Settings →
+  // Pricing) we leave revenue as NULL — only hours calc.
+  const ratePresent = billingRate !== null && billingRate !== undefined && billingRate !== '' && !isNaN(parseFloat(billingRate));
+  const PERMITTING_RATE = ratePresent ? parseFloat(billingRate) : null;
 
   if (type === 'permitting' && footage) {
     const miles = footage / 5280;
@@ -82,7 +85,7 @@ function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride)
     totalHours = Math.round(totalHours * 4) / 4;
     return {
       expectedHours: totalHours,
-      expectedRevenue: +(totalHours * PERMITTING_RATE).toFixed(2),
+      expectedRevenue: PERMITTING_RATE != null ? +(totalHours * PERMITTING_RATE).toFixed(2) : null,
       miles: +miles.toFixed(4),
       permittingHoursPerMile: hoursPerMile
     };
@@ -128,6 +131,41 @@ app.post('/api/clients', async (req, res) => {
       [name, is_rus || false, notes]
     );
     res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/clients/:id', async (req, res) => {
+  const { name, is_rus, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE clients SET
+         name = COALESCE($2, name),
+         is_rus = COALESCE($3, is_rus),
+         notes = $4
+       WHERE id = $1 RETURNING *`,
+      [req.params.id, name, is_rus, notes ?? null]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete a client. Cascades to contracts, projects, time entries, invoices.
+// Returns counts of what would be deleted as a confirmation aid (preview=true).
+app.delete('/api/clients/:id', async (req, res) => {
+  try {
+    if (req.query.preview === 'true') {
+      const counts = await pool.query(`
+        SELECT
+          (SELECT COUNT(*) FROM contracts WHERE client_id=$1)::int AS contracts,
+          (SELECT COUNT(*) FROM projects WHERE client_id=$1)::int AS projects,
+          (SELECT COUNT(*) FROM invoices WHERE client_id=$1)::int AS invoices
+      `, [req.params.id]);
+      return res.json(counts.rows[0]);
+    }
+    const r = await pool.query('DELETE FROM clients WHERE id=$1 RETURNING name', [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Client not found' });
+    res.json({ ok: true, deleted_name: r.rows[0].name });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -2687,7 +2725,7 @@ const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services,
 RATE STRUCTURE:
 - Inspection: $90/hr (RUS work only, PSC client)
 - Resident Engineer (RE): $100/hr (RUS/PSC only)
-- Permitting: $90/hr billed at 27.5 hours/mile (15 hour minimum), billing_type = 'footage'
+- Permitting: $90/hr at random 25-30 hrs/mile (0.25 increments), with a 25-hour minimum when the project is under one mile. The hours-per-mile factor is randomized per-project at create time and stored. The "Permitting" job is the standard DOT/County variant ($90/hr). The "Permitting (RR)" job is the railroad variant — uses the same hours calc but with a custom rate the user sets in Settings → Pricing (rate may be NULL until set, in which case expected_revenue is also NULL).
 - Design: VARIABLE - always ask for billing rate
 - Other: VARIABLE - always ask for billing rate
 
@@ -2884,6 +2922,31 @@ const AI_TOOLS = [
         notes: { type: 'string' }
       },
       required: ['name']
+    }
+  },
+  {
+    name: 'update_client',
+    description: 'Update an existing client. Only provided fields are changed.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id: { type: 'string', description: 'Client UUID to update' },
+        name: { type: 'string', description: 'New name (optional)' },
+        is_rus: { type: 'boolean', description: 'RUS flag (optional)' },
+        notes: { type: 'string', description: 'New notes (optional, pass empty string to clear)' }
+      },
+      required: ['client_id']
+    }
+  },
+  {
+    name: 'delete_client',
+    description: 'Delete a client. WARNING: this cascade-deletes all the client\'s contracts and projects, which in turn deletes their time entries, invoices, and budgets. Use with care. ALWAYS confirm with the user before calling this.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id: { type: 'string', description: 'Client UUID to delete' }
+      },
+      required: ['client_id']
     }
   },
   {
@@ -3122,6 +3185,33 @@ async function executeTool(toolName, toolInput) {
           [toolInput.name, toolInput.is_rus || false, toolInput.notes || null]
         );
         return { success: true, client: rows[0] };
+      }
+
+      case 'update_client': {
+        // COALESCE pattern so undefined fields don't overwrite existing values
+        const { rows } = await pool.query(
+          `UPDATE clients SET
+            name = COALESCE($2, name),
+            is_rus = COALESCE($3, is_rus),
+            notes = CASE WHEN $4::text IS NULL THEN notes ELSE $4 END
+          WHERE id = $1 RETURNING *`,
+          [
+            toolInput.client_id,
+            toolInput.name === undefined ? null : toolInput.name,
+            toolInput.is_rus === undefined ? null : toolInput.is_rus,
+            toolInput.notes === undefined ? null : toolInput.notes
+          ]
+        );
+        if (!rows[0]) return { success: false, error: 'Client not found' };
+        return { success: true, client: rows[0] };
+      }
+
+      case 'delete_client': {
+        // Confirm we found it first so the AI can give a meaningful response
+        const r0 = await pool.query('SELECT name FROM clients WHERE id = $1', [toolInput.client_id]);
+        if (!r0.rows[0]) return { success: false, error: 'Client not found' };
+        await pool.query('DELETE FROM clients WHERE id = $1', [toolInput.client_id]);
+        return { success: true, deleted_name: r0.rows[0].name };
       }
 
       case 'create_staff': {
@@ -3489,7 +3579,8 @@ app.post('/api/ai/chat', async (req, res) => {
     // the case where Claude says "I've logged the entries" without actually
     // calling log_time_entries.
     const MODIFYING_TOOLS = ['log_time_entries', 'create_project', 'update_project',
-      'delete_project', 'create_client', 'create_staff', 'create_contract',
+      'delete_project', 'create_client', 'update_client', 'delete_client',
+      'create_staff', 'create_contract',
       'update_project_status', 'advance_permit_stage', 'create_budget',
       'create_budget_code', 'update_budget_code'];
     const successfulModifications = toolResults.filter(
