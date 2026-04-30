@@ -72,11 +72,16 @@ async function isDuplicateProject(pool, name, parentId, excludeId = null) {
 async function ensureRollupChain(pool, { client_id, concentrator_id, project_type_id, job_id }) {
   if (!client_id) return null;
 
+  // Two-level rollup hierarchy: Client → Team → (project goes here).
+  // Service Area and Project Type levels were removed at user request — they
+  // were creating too much nesting noise. concentrator_id and project_type_id
+  // are still accepted in the function signature for API compatibility but
+  // are intentionally ignored when building the folder chain.
+
   // 1) Client folder
-  const cli = await pool.query('SELECT name, is_rus FROM clients WHERE id = $1', [client_id]);
+  const cli = await pool.query('SELECT name FROM clients WHERE id = $1', [client_id]);
   if (!cli.rows.length) return null;
   const clientName = cli.rows[0].name;
-  const clientIsRus = cli.rows[0].is_rus === true;
 
   let folder = await findOrCreateRollup(pool, {
     parent_id: null,
@@ -86,33 +91,9 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, project_typ
     extras: { client_id }
   });
 
-  // 2) Service Area folder (only if concentrator is set)
-  if (concentrator_id) {
-    const con = await pool.query('SELECT area_name FROM concentrators WHERE id = $1', [concentrator_id]);
-    const areaName = con.rows[0]?.area_name || 'Service Area';
-    folder = await findOrCreateRollup(pool, {
-      parent_id: folder,
-      rollup_level: 'service_area',
-      rollup_key: concentrator_id,
-      name: areaName,
-      extras: { client_id, concentrator_id }
-    });
-  }
-
-  // 3) Project Type folder (only when client is PSC-class AND project_type_id present)
-  if (clientIsRus && project_type_id) {
-    const pt = await pool.query('SELECT name FROM project_types WHERE id = $1', [project_type_id]);
-    const ptName = pt.rows[0]?.name || 'Project Type';
-    folder = await findOrCreateRollup(pool, {
-      parent_id: folder,
-      rollup_level: 'project_type',
-      rollup_key: project_type_id,
-      name: ptName,
-      extras: { client_id, concentrator_id, project_type_id }
-    });
-  }
-
-  // 4) Team folder (always — derived from job's team field)
+  // 2) Team folder (always — derived from job's team field). The project
+  // itself sits underneath this. Job name shows on the project row, not as
+  // a folder, so the user sees: Client → Team → Project (job: ...).
   let teamName = 'shared';
   if (job_id) {
     const jr = await pool.query('SELECT team FROM jobs WHERE id = $1', [job_id]);
@@ -130,7 +111,7 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, project_typ
     rollup_level: 'team',
     rollup_key: teamName,
     name: teamLabel,
-    extras: { client_id, concentrator_id, project_type_id }
+    extras: { client_id }
   });
 
   return folder;

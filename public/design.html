@@ -36,15 +36,27 @@ html[data-theme="dark"] .modal,
 html[data-theme="dark"] input,
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea{background:var(--white);color:var(--text);border-color:var(--gray-border)}
-/* Dropdown <option> elements need EXPLICIT bg+color in dark mode. Browsers
-   render them at OS level with their own defaults — without this rule, the
-   dropdown panel that drops down when you click a <select> shows white text
-   on white background and is unreadable. Applies to ALL selects, not just
-   ones we styled inline. */
+/* The OS-level dropdown popup (the panel that appears when you click a
+   <select>) is rendered by the browser/OS, NOT inside the page's CSS scope.
+   On Chrome Windows/Linux, no amount of `option { ... !important }` will
+   color it because the popup lives in a separate compositing layer with
+   its own theming. The fix is `color-scheme: dark` — that hint tells the
+   OS to render its native controls in dark mode. Pair it with explicit
+   option styling for browsers that DO honor option CSS (Firefox, Safari). */
+html[data-theme="dark"] select,
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea{
+  color-scheme: dark;
+}
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
-  background:var(--white)!important;
-  color:var(--text)!important;
+  background:#242B36!important;
+  color:#E8EAED!important;
+}
+html[data-theme="dark"] select option:checked,
+html[data-theme="dark"] select option:hover{
+  background:#1B5FA0!important;
+  color:#fff!important;
 }
 html[data-theme="dark"] thead{background:var(--gray-light) !important}
 html[data-theme="dark"] thead th{color:var(--text-muted)!important}
