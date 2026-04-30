@@ -4387,8 +4387,104 @@ app.get('*', (req, res) => {
 // START
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// V3 SCHEMA BOOTSTRAP — runs every startup, idempotent
+//
+// schema.sql is supposed to apply these via initSchema(), but in practice
+// pool.query() runs the entire file as a single multi-statement batch and any
+// earlier failure aborts the rest. This bootstrap re-applies the v3 additions
+// statement-by-statement so a failure on one doesn't cascade. Every
+// statement gets its own try/catch and a console log line.
+// ─────────────────────────────────────────────────────────────────────────────
+async function bootstrapV3Schema() {
+  console.log('───── v3 schema bootstrap ─────');
+
+  const ddl = [
+    `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS billing_code VARCHAR(40)`,
+    `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS for_psc_client BOOLEAN DEFAULT TRUE`,
+    `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS for_generic_client BOOLEAN DEFAULT TRUE`,
+    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_rollup BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_level VARCHAR(20)`,
+    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_key TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_rollup ON projects (rollup_level, parent_id, rollup_key) WHERE is_rollup = TRUE`,
+  ];
+  for (const sql of ddl) {
+    try {
+      await pool.query(sql);
+      console.log('  ✓', sql.replace(/\s+/g, ' ').substring(0, 90));
+    } catch (e) {
+      console.error('  ✗', sql.substring(0, 80), '→', e.message);
+    }
+  }
+
+  // Per-job upsert. Each in its own query so a single failure doesn't cascade.
+  // Default rate is intentionally NOT updated on conflict so admin's manual
+  // tweaks survive re-runs. Other identifying columns (billing_code, team,
+  // applicability flags) DO get updated to match the canonical spec.
+  const jobsToSeed = [
+    // 9 PSC jobs (3 of which also surface for non-PSC)
+    { name: 'County Permitting',             bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
+    { name: 'DOT Permitting',                bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
+    { name: 'RR Permitting',                 bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
+    { name: 'Resident Engineer',             bt: 'hourly',  rate: 100,  perm: false, code: 'g-1-B-1',    team: 'both',       psc: true,  generic: false },
+    { name: 'Inspection',                    bt: 'hourly',  rate: 90,   perm: false, code: 'g-1-B-4',    team: 'both',       psc: true,  generic: false },
+    { name: 'Update Plant Records',          bt: 'footage', rate: 850,  perm: false, code: 'a-4',        team: 'design',     psc: true,  generic: false },
+    { name: 'OSP Staking Aerial',            bt: 'footage', rate: 850,  perm: false, code: 'e-2-A-1(N)', team: 'design',     psc: true,  generic: false },
+    { name: 'OSP Staking Underground',       bt: 'footage', rate: 850,  perm: false, code: 'e-2-A-2(N)', team: 'design',     psc: true,  generic: false },
+    { name: 'Construction Progress Reports', bt: 'footage', rate: 850,  perm: false, code: 'g-1-I-3',    team: 'both',       psc: true,  generic: false },
+    // 3 non-PSC-only jobs (admin sets rate manually)
+    { name: 'OSP Design & Fiber Assignments',bt: 'hourly',  rate: null, perm: false, code: null,         team: 'design',     psc: false, generic: true  },
+    { name: 'Staking Fiber Assignments',     bt: 'hourly',  rate: null, perm: false, code: null,         team: 'design',     psc: false, generic: true  },
+    { name: 'Records Management',            bt: 'hourly',  rate: null, perm: false, code: null,         team: 'both',       psc: false, generic: true  },
+  ];
+
+  let okCount = 0, failCount = 0;
+  for (const j of jobsToSeed) {
+    try {
+      await pool.query(
+        `INSERT INTO jobs (
+           name, default_billing_type, default_rate, is_permitting,
+           billing_code, team, for_psc_client, for_generic_client, active
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+         ON CONFLICT (name) DO UPDATE SET
+           default_billing_type = EXCLUDED.default_billing_type,
+           is_permitting        = EXCLUDED.is_permitting,
+           billing_code         = COALESCE(EXCLUDED.billing_code, jobs.billing_code),
+           team                 = EXCLUDED.team,
+           for_psc_client       = EXCLUDED.for_psc_client,
+           for_generic_client   = EXCLUDED.for_generic_client,
+           active               = TRUE`,
+        [j.name, j.bt, j.rate, j.perm, j.code, j.team, j.psc, j.generic]
+      );
+      okCount++;
+      console.log('  ✓ Job:', j.name);
+    } catch (e) {
+      failCount++;
+      console.error('  ✗ Job FAILED:', j.name, '→', e.message);
+    }
+  }
+
+  // Deactivate legacy seeded jobs that aren't in the new spec.
+  try {
+    const r = await pool.query(
+      `UPDATE jobs SET active = FALSE
+       WHERE name IN ('Permitting', 'Permitting (RR)', 'Design', 'Other')
+         AND name NOT IN ('County Permitting','DOT Permitting','RR Permitting',
+                          'Resident Engineer','Inspection','Update Plant Records',
+                          'OSP Staking Aerial','OSP Staking Underground','Construction Progress Reports',
+                          'OSP Design & Fiber Assignments','Staking Fiber Assignments','Records Management')`
+    );
+    console.log(`  ✓ Legacy jobs deactivated: ${r.rowCount}`);
+  } catch (e) {
+    console.error('  ✗ Legacy deactivation failed:', e.message);
+  }
+
+  console.log(`───── v3 bootstrap complete: ${okCount} OK, ${failCount} failed ─────`);
+}
+
 async function start() {
   await initSchema();
+  await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   app.listen(PORT, () => console.log(`✓ Launch Fiber Services running on port ${PORT}`));
 }
 

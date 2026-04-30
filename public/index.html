@@ -24,6 +24,28 @@
   --text-muted:#6C757D;
   --font:'Inter',sans-serif;
 }
+
+/* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode(). */
+html[data-theme="dark"]{
+  --gray-light:#1A1F26;
+  --gray-border:#2D3540;
+  --white:#242B36;
+  --text:#E8EAED;
+  --text-muted:#9BA1A8;
+  --primary-light:#1E3A5C;
+}
+html[data-theme="dark"] body{background:#0F1419}
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+html[data-theme="dark"] thead{background:var(--gray-light) !important}
+html[data-theme="dark"] .header{background:var(--white);border-bottom-color:var(--gray-border)}
+html[data-theme="dark"] .btn-secondary{background:#3A4250;color:var(--text);border:1px solid var(--gray-border)}
+html[data-theme="dark"] .btn-secondary:hover{background:#4A5260}
+html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.7)}
+
 /* Page-level scrolling — whole document scrolls like a normal website.
    Header and nav stay sticky at the top. Views just flow inline. */
 html,body{height:auto;min-height:100vh}
@@ -217,6 +239,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <span class="header-title">Project Management System</span>
   <div class="header-right">
     <span id="hdr-date" style="font-size:12px;color:var(--text-muted)"></span>
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" id="dm-toggle" title="Toggle dark mode" style="margin-right:6px"><i class="fa-solid fa-moon" id="dm-icon"></i></button>
     <button class="btn btn-secondary btn-sm" id="settings-btn" onclick="openSettings()" style="position:relative" title="Settings & Pricing">
       <i class="fa-solid fa-gear"></i> Settings
       <span id="settings-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--danger);border-radius:50%;border:2px solid var(--white)"></span>
@@ -1266,6 +1289,27 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </div>
 
 <script>
+
+// Dark-mode toggle. Persists across reloads via localStorage.
+function applyDarkMode(on){
+  document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
+  const icon = document.getElementById('dm-icon');
+  if (icon) icon.className = on ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+function toggleDarkMode(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = !isDark;
+  try { localStorage.setItem('lfs-dark-mode', next ? '1' : '0'); } catch(e){}
+  applyDarkMode(next);
+}
+// Apply saved preference on load (before first paint to avoid flash)
+(function(){
+  try {
+    const saved = localStorage.getItem('lfs-dark-mode');
+    if (saved === '1') applyDarkMode(true);
+  } catch(e){}
+})();
+
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════

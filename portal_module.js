@@ -499,16 +499,24 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     const userFilter = filters.length ? ' AND ' + filters.join(' AND ') : '';
 
     try {
+      // We only filter rollups out if the column exists. The COALESCE guard
+      // means a missing column would error the whole query, so we check
+      // first via information_schema. This makes the portal resilient if the
+      // v3 bootstrap hasn't run yet.
+      const { rows: rollupCol } = await pool.query(
+        `SELECT 1 FROM information_schema.columns
+         WHERE table_name = 'projects' AND column_name = 'is_rollup'`
+      );
+      const rollupGuard = rollupCol.length ? `AND COALESCE(p.is_rollup, false) = false` : ``;
+
       const { rows } = await pool.query(`
-        WITH RECURSIVE
-        team_match AS (
+        WITH team_match AS (
           -- Real (non-rollup) projects whose job belongs to this portal's team.
-          -- Rollup folders are admin-only organizational scaffolding; portals
-          -- show a flat list of their own real projects.
           SELECT p.id
           FROM projects p
           LEFT JOIN jobs j ON j.id = p.job_id
-          WHERE COALESCE(p.is_rollup, false) = false
+          WHERE 1=1
+            ${rollupGuard}
             AND (j.team = ${portalParam} OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)
             ${userFilter}
         )
