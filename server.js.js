@@ -284,6 +284,18 @@ app.get('/api/jobs', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Fetch a single job by id regardless of active state. The list endpoint
+// excludes inactive jobs, but the project-edit modal still needs to be
+// able to surface a now-deactivated job that's referenced by an existing
+// project so the user can save without being forced to re-pick the job.
+app.get('/api/jobs/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Job not found' });
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/jobs', async (req, res) => {
   const {
     name, default_billing_type = 'hourly', default_rate = null,

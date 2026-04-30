@@ -502,20 +502,15 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
       const { rows } = await pool.query(`
         WITH RECURSIVE
         team_match AS (
-          -- Projects whose job belongs to this portal's team (or 'both' / unassigned)
+          -- Real (non-rollup) projects whose job belongs to this portal's team.
+          -- Rollup folders are admin-only organizational scaffolding; portals
+          -- show a flat list of their own real projects.
           SELECT p.id
           FROM projects p
           LEFT JOIN jobs j ON j.id = p.job_id
-          WHERE (j.team = ${portalParam} OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)
+          WHERE COALESCE(p.is_rollup, false) = false
+            AND (j.team = ${portalParam} OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)
             ${userFilter}
-        ),
-        ancestors AS (
-          -- Walk up the parent chain so the user sees the full nest context
-          SELECT id, parent_id FROM projects WHERE id IN (SELECT id FROM team_match)
-          UNION
-          SELECT p.id, p.parent_id
-          FROM projects p
-          JOIN ancestors a ON a.parent_id = p.id
         )
         SELECT p.*,
           cl.name AS client_name,
@@ -529,9 +524,9 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         LEFT JOIN contracts co ON co.id = p.contract_id
         LEFT JOIN projects pp ON pp.id = p.parent_id
         LEFT JOIN time_entries te ON te.project_id = p.id
-        WHERE p.id IN (SELECT id FROM ancestors)
+        WHERE p.id IN (SELECT id FROM team_match)
         GROUP BY p.id, cl.name, co.contract_number, co.name, pp.name
-        ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
+        ORDER BY p.created_at DESC
       `, params);
       res.json(rows.map(stripMoneyFromProject));
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -539,16 +534,14 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
 
   app.get('/api/projects/:id', async (req, res) => {
     try {
-      // Visibility: must be in team_match OR be an ancestor of one.
+      // Visibility check: must be a real project on this portal's team.
+      // Rollups are admin-only and aren't returned to portals.
       const vis = await pool.query(`
-        WITH RECURSIVE descendants AS (
-          SELECT id, job_id FROM projects WHERE id = $1
-          UNION ALL
-          SELECT p.id, p.job_id FROM projects p JOIN descendants d ON p.parent_id = d.id
-        )
-        SELECT 1 FROM descendants d
-        LEFT JOIN jobs j ON j.id = d.job_id
-        WHERE (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR d.job_id IS NULL)
+        SELECT 1 FROM projects p
+        LEFT JOIN jobs j ON j.id = p.job_id
+        WHERE p.id = $1
+          AND COALESCE(p.is_rollup, false) = false
+          AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)
         LIMIT 1
       `, [req.params.id, portal]);
       if (!vis.rows.length) return res.status(404).json({ error: 'Not found' });

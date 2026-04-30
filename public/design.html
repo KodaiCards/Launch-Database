@@ -92,38 +92,22 @@ textarea{resize:vertical;min-height:60px}
 <!-- ───────── PIPELINE VIEW (also where projects are added) ───────── -->
 <div id="view-pipeline" class="view active">
   <div class="section-header">
-    <div><div class="section-title">Design Pipeline</div><div class="section-sub">Track projects: Potential → Started → Review → Completed. Auto-nested under Client → Service Area → Project Type → Team.</div></div>
+    <div><div class="section-title">Design Pipeline</div></div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="loadPipeline(); loadProjects();" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+      <button class="btn btn-secondary btn-sm" onclick="loadPipeline()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
       <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> Add Project</button>
     </div>
   </div>
   <div id="dsb" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px"></div>
-  <div class="card">
-    <div class="card-header"><span class="card-title">Pipeline</span></div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
-      <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
-    </table></div>
-  </div>
-  <!-- All projects (status filter), nested view -->
-  <div class="card">
-    <div class="card-header" style="gap:8px">
-      <span class="card-title">All Design Projects</span>
-      <div style="display:flex;gap:6px;margin-left:auto">
-        <input class="search-input" placeholder="Search..." oninput="filterProjects()" id="proj-search" style="font-size:12px;padding:4px 8px;width:160px">
-        <select class="filter" id="proj-status-filter" onchange="loadProjects()" style="font-size:12px">
-          <option value="">All statuses</option>
-          <option value="active" selected>Active</option>
-          <option value="completed">Completed</option>
-          <option value="on_hold">On Hold</option>
-        </select>
-      </div>
-    </div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Job</th><th>Stage</th><th>Status</th><th></th></tr></thead>
-      <tbody id="dpb"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
-    </table></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
+    <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+  </table></div></div>
+  <!-- Hidden compatibility shims for legacy listeners that touch these IDs -->
+  <div style="display:none">
+    <input id="proj-search">
+    <select id="proj-status-filter"><option value="active" selected>Active</option></select>
+    <tbody id="dpb"></tbody>
   </div>
 </div>
 
@@ -411,8 +395,7 @@ function sv(v){
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
-  // Pipeline tab now also hosts the All-Projects table, so load both.
-  if(v==='pipeline')   { loadPipeline(); loadProjects(); }
+  if(v==='pipeline')   loadPipeline();
   if(v==='potential')  loadPotential();
 }
 
@@ -494,7 +477,7 @@ async function editProject(id){
     document.getElementById('proj-id').value = p.id;
     document.getElementById('proj-name').value = p.name || '';
     document.getElementById('proj-client').value = p.client_id || '';
-    await clientChanged();
+    await clientChanged(p.job_id);
     document.getElementById('proj-contract').value = p.contract_id || '';
     document.getElementById('proj-wo').value = p.work_order_number || '';
     document.getElementById('proj-ptype').value = p.project_type_id || '';
@@ -528,11 +511,11 @@ function populateProjectFormDropdowns(){
 // Pull a fresh, client-filtered jobs list. Server applies for_psc_client /
 // for_generic_client based on the chosen client. Falls back to full list
 // when no client is chosen.
-async function refilterJobsDropdown(){
+async function refilterJobsDropdown(preserveJobId){
   const clientId = document.getElementById('proj-client')?.value;
   const jb = document.getElementById('proj-job');
   if (!jb) return;
-  const currentJobId = jb.value;
+  const currentJobId = preserveJobId || jb.value;
   let url = '/api/jobs';
   if (clientId) url += '?client_id=' + encodeURIComponent(clientId);
   try {
@@ -542,11 +525,29 @@ async function refilterJobsDropdown(){
     jb.innerHTML = '<option value="">— Select —</option>' + filtered.map(j =>
       `<option value="${j.id}" data-permit="${j.is_permitting?1:0}" data-bt="${j.default_billing_type||'hourly'}">${esc(j.name)}${j.billing_code ? ' (' + esc(j.billing_code) + ')' : ''}${j.is_permitting?' ⚡':''}</option>`
     ).join('');
-    if (currentJobId && filtered.some(j => j.id === currentJobId)) jb.value = currentJobId;
+    // Preserve the selection. If filter excluded the project's current job
+    // (e.g. v3 deactivated it), fetch directly via /api/jobs/:id and inject as
+    // a "(legacy)" option so editing existing projects still works.
+    if (currentJobId) {
+      if (filtered.some(j => j.id === currentJobId)) {
+        jb.value = currentJobId;
+      } else {
+        try {
+          const legacy = await api('/api/jobs/' + currentJobId);
+          if (legacy && legacy.id) {
+            const opt = new Option(legacy.name + (legacy.active === false ? ' (legacy)' : ''), legacy.id);
+            opt.dataset.permit = legacy.is_permitting ? '1' : '0';
+            opt.dataset.bt = legacy.default_billing_type || 'hourly';
+            jb.appendChild(opt);
+            jb.value = currentJobId;
+          }
+        } catch (e) { /* fallback: leave unselected */ }
+      }
+    }
   } catch (e) { /* non-fatal */ }
 }
 
-async function clientChanged(){
+async function clientChanged(preserveJobId){
   const clientId = document.getElementById('proj-client').value;
 
   // 1) Show/hide Project Type field based on client.is_rus (PSC marker)

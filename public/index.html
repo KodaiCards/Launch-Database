@@ -1386,7 +1386,7 @@ function concentratorChanged() {
   }
 }
 
-async function clientChanged() {
+async function clientChanged(preserveJobId) {
   const clientId = document.getElementById('proj-client').value;
   const csel = document.getElementById('proj-contract');
   while (csel.options.length > 1) csel.remove(1);
@@ -1406,8 +1406,9 @@ async function clientChanged() {
   }
 
   // Re-filter the Job dropdown using the client_id (server filters by
-  // for_psc_client / for_generic_client).
-  await refilterJobsDropdown();
+  // for_psc_client / for_generic_client). The preserveJobId param lets the
+  // edit-project flow keep its current job selected even if filtered out.
+  await refilterJobsDropdown(preserveJobId);
 
   if (!clientId) return;
   const ctrs = await api('/api/contracts?client_id=' + clientId);
@@ -1427,17 +1428,21 @@ async function clientChanged() {
 // Pull a fresh, client-filtered jobs list and rebuild the Job dropdown in the
 // project modal. Server applies the for_psc_client / for_generic_client filter
 // when we pass client_id. Falls back to full list when no client is chosen.
-async function refilterJobsDropdown() {
+//
+// `preserveJobId` is the explicit job id we want kept selected (used by the
+// edit-project flow). If passed, we look it up via /api/jobs/:id (which works
+// for deactivated jobs too) and append it as a "(legacy)" option when the
+// normal filter would have excluded it. Without this, editing a project whose
+// job was deactivated by the v3 reseed would silently lose its selection.
+async function refilterJobsDropdown(preserveJobId) {
   const clientId = document.getElementById('proj-client')?.value;
   const jsel = document.getElementById('proj-job');
   if (!jsel) return;
-  // Remember current selection so we can preserve it if it's still valid
-  const currentJobId = jsel.value;
+  const currentJobId = preserveJobId || jsel.value;
   let url = '/api/jobs';
   if (clientId) url += '?client_id=' + encodeURIComponent(clientId);
   try {
     const filtered = await api(url);
-    // Preserve placeholder option (first one)
     const placeholder = jsel.options[0]?.cloneNode(true);
     jsel.innerHTML = '';
     if (placeholder) jsel.appendChild(placeholder);
@@ -1447,9 +1452,23 @@ async function refilterJobsDropdown() {
       opt.dataset.bt = j.default_billing_type || 'hourly';
       jsel.appendChild(opt);
     });
-    // Re-select if still in list
-    if (currentJobId && filtered.some(j => j.id === currentJobId)) jsel.value = currentJobId;
-  } catch (e) { /* non-fatal — leave dropdown as-is */ }
+    if (currentJobId) {
+      if (filtered.some(j => j.id === currentJobId)) {
+        jsel.value = currentJobId;
+      } else {
+        try {
+          const legacy = await api('/api/jobs/' + currentJobId);
+          if (legacy && legacy.id) {
+            const opt = new Option(legacy.name + (legacy.active === false ? ' (legacy)' : ''), legacy.id);
+            opt.dataset.permit = legacy.is_permitting ? '1' : '0';
+            opt.dataset.bt = legacy.default_billing_type || 'hourly';
+            jsel.appendChild(opt);
+            jsel.value = currentJobId;
+          }
+        } catch (e) { /* fallback: leave dropdown unselected */ }
+      }
+    }
+  } catch (e) { /* leave dropdown as-is on error */ }
 }
 
 // ─── QUICK-ADD INLINE PANELS ─────────────────────────────────────────────────
@@ -2026,13 +2045,9 @@ function populateTypeAndJobDropdowns() {
   if (j) {
     j.innerHTML = '<option value="">Select job...</option>' +
       jobsCache.map(job => {
-        // Display label tweak: surface the DOT/RR distinction clearly. The plain
-        // "Permitting" job is the standard DOT/County/GDOT permit; pair it with
-        // "Permitting (RR)" by labeling the dropdown option as "Permitting (DOT)".
-        // The underlying job.name stays "Permitting" (DB stability).
-        const label = job.name === 'Permitting' ? 'Permitting (DOT)' : job.name;
+        const label = job.name + (job.billing_code ? ' (' + job.billing_code + ')' : '');
         const tag = job.is_permitting ? ' — permit calc' : '';
-        return `<option value="${job.id}">${esc(label)}${tag}</option>`;
+        return `<option value="${job.id}" data-permit="${job.is_permitting?1:0}" data-bt="${job.default_billing_type||'hourly'}">${esc(label)}${tag}</option>`;
       }).join('');
   }
 }
@@ -2049,7 +2064,11 @@ async function editProject(id) {
   document.getElementById('proj-id').value = p.id;
   document.getElementById('proj-name').value = p.name;
   document.getElementById('proj-client').value = p.client_id||'';
-  await clientChanged();
+  // Pass the project's job_id so the refilter preserves it even if v3
+  // deactivated the job. Without this, editing existing projects whose job
+  // is now legacy would silently lose the job selection and the save would
+  // 400 with "job is required".
+  await clientChanged(p.job_id);
   document.getElementById('proj-contract').value = p.contract_id||'';
   document.getElementById('proj-parent').value = p.parent_id||'';
   document.getElementById('proj-concentrator').value = p.concentrator_id||'';
@@ -4535,14 +4554,35 @@ async function loadProjectTypes() {
 // Open the settings modal — loads everything fresh and renders.
 async function openSettings() {
   openModal('settings-modal');
-  document.getElementById('pricing-list-body').innerHTML = '<div class="empty-state">Loading...</div>';
-  await Promise.all([loadJobs(), loadProjectTypes(), loadClients()]);
-  pricingCache = await api('/api/pricing');
-  populatePricingFormDropdowns();
-  renderPricingList();
-  renderJobsList();
-  renderProjectTypesList();
-  renderClientsList();
+  // The pricing-list section was removed, but legacy code still touches these
+  // IDs. We keep them as hidden no-op shims (see settings-modal HTML).
+  const pricingLoading = document.getElementById('pricing-list-body');
+  if (pricingLoading) pricingLoading.innerHTML = '<div class="empty-state">Loading...</div>';
+
+  // Critical loads first — Jobs is the universal rate source and must render
+  // even if other endpoints are slow/broken.
+  try {
+    await Promise.all([loadJobs(), loadProjectTypes(), loadClients()]);
+  } catch (e) {
+    console.error('Settings core loads failed:', e);
+  }
+
+  // Render core panels — wrapped so a single failure doesn't cascade.
+  try { renderJobsList();         } catch (e) { console.error('renderJobsList failed:', e); }
+  try { renderProjectTypesList(); } catch (e) { console.error('renderProjectTypesList failed:', e); }
+  try { renderClientsList();      } catch (e) { console.error('renderClientsList failed:', e); }
+
+  // Legacy pricing fetch — kept for backward compat but isolated. If the
+  // pricing endpoint errors or the cache is malformed, we swallow it so the
+  // rest of the panel keeps working.
+  try {
+    pricingCache = await api('/api/pricing');
+    if (typeof populatePricingFormDropdowns === 'function') populatePricingFormDropdowns();
+    if (typeof renderPricingList === 'function') renderPricingList();
+  } catch (e) {
+    console.warn('Legacy pricing load skipped:', e.message);
+  }
+
   refreshSettingsDot();
 }
 
