@@ -21,7 +21,10 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => cb(null, `${uuidv4()}_${file.originalname}`)
 });
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+// 500MB cap — large enough for full DWG drawings, ZIP'd plan sets, and
+// scanned permit packages. multer.diskStorage streams to disk so memory
+// usage stays low regardless of file size.
+const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
@@ -88,6 +91,21 @@ if (PORTAL_MODE) {
   // not on portal containers).
   const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html' : 'design.html';
   const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
+
+  // /uploads/* on a portal redirects to admin's /uploads/* — this is critical
+  // because uploaded PDFs live on admin's persistent volume, NOT on portal
+  // containers (which have ephemeral storage and lose files on every redeploy).
+  // Without this, viewing a PDF from a portal returns "File not found" because
+  // the portal's local filesystem is empty.
+  app.get('/uploads/*', (req, res) => {
+    if (!ADMIN_API_BASE) {
+      return res.status(503).json({
+        error: 'ADMIN_API_BASE env var not set on this portal — cannot resolve /uploads. Set it to your admin service URL.'
+      });
+    }
+    return res.redirect(302, ADMIN_API_BASE.replace(/\/+$/, '') + req.originalUrl);
+  });
+
   app.get('/', (req, res) => {
     try {
       const filePath = path.join(__dirname, 'public', portalFile);
@@ -227,15 +245,19 @@ app.post('/api/clients', async (req, res) => {
 });
 
 app.put('/api/clients/:id', async (req, res) => {
-  const { name, is_rus, notes } = req.body;
+  const { name, is_rus, notes, show_contract, show_work_order } = req.body;
   try {
     const { rows } = await pool.query(
       `UPDATE clients SET
-         name = COALESCE($2, name),
-         is_rus = COALESCE($3, is_rus),
-         notes = $4
+         name             = COALESCE($2, name),
+         is_rus           = COALESCE($3, is_rus),
+         notes            = $4,
+         show_contract    = COALESCE($5, show_contract),
+         show_work_order  = COALESCE($6, show_work_order)
        WHERE id = $1 RETURNING *`,
-      [req.params.id, name, is_rus, notes ?? null]
+      [req.params.id, name, is_rus, notes ?? null,
+       show_contract === undefined ? null : show_contract,
+       show_work_order === undefined ? null : show_work_order]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
     res.json(rows[0]);
@@ -2015,6 +2037,90 @@ app.post('/api/permits/:projectId/documents', upload.single('file'), async (req,
     `, [req.params.projectId, doc_type, req.file.originalname, req.file.filename, req.file.size, revision_number || 1, uploaded_by, notes]);
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Generic project documents endpoint — works for ANY project (design or permit).
+// Reuses permit_documents table since the schema is identical for our needs.
+// Used by the admin Design pipeline's "Final Map" upload UI, which doesn't
+// care about revision tracking or doc_type categorization (just a single
+// drop slot for the final drawing/PDF/DWG).
+app.post('/api/projects/:projectId/documents', upload.single('file'), async (req, res) => {
+  const { doc_type, uploaded_by, notes } = req.body;
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded — check file size (500MB max)' });
+  try {
+    const { rows } = await pool.query(`
+      INSERT INTO permit_documents (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
+      VALUES ($1,$2,$3,$4,$5,1,$6,$7) RETURNING *
+    `, [req.params.projectId, doc_type || 'document', req.file.originalname, req.file.filename, req.file.size, uploaded_by, notes]);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/projects/:projectId/documents', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM permit_documents WHERE project_id = $1 ORDER BY created_at DESC`,
+      [req.params.projectId]
+    );
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/projects/documents/:docId', async (req, res) => {
+  try {
+    // Look up file_path so we can also remove the file from disk.
+    const { rows } = await pool.query(
+      `DELETE FROM permit_documents WHERE id = $1 RETURNING file_path`,
+      [req.params.docId]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Document not found' });
+    try { fs.unlinkSync(path.join(UPLOAD_DIR, rows[0].file_path)); }
+    catch (e) { /* file may already be missing — non-fatal */ }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Diagnostic — useful when "PDF won't open" issues happen. Hit this in the
+// browser to verify (a) where the server thinks UPLOAD_DIR is, (b) whether
+// the directory actually has files, and (c) whether file_path values in the DB
+// match what's on disk. Most "file not found" issues are caused by the Railway
+// volume not being mounted at UPLOAD_DIR (so files write to ephemeral storage
+// and disappear on redeploy).
+app.get('/api/_debug/uploads', async (req, res) => {
+  try {
+    const onDisk = fs.readdirSync(UPLOAD_DIR);
+    const dbDocs = await pool.query(
+      `SELECT id, file_name, file_path, file_size, doc_type, created_at
+       FROM permit_documents ORDER BY created_at DESC LIMIT 25`
+    );
+    const dbPaths = new Set(dbDocs.rows.map(d => d.file_path));
+    const matched = onDisk.filter(f => dbPaths.has(f));
+    const orphanFiles = onDisk.filter(f => !dbPaths.has(f));
+    const missingFiles = dbDocs.rows.filter(d => !onDisk.includes(d.file_path));
+
+    res.json({
+      UPLOAD_DIR_resolved: UPLOAD_DIR,
+      env_UPLOAD_DIR: process.env.UPLOAD_DIR || '(not set — using default)',
+      __dirname,
+      total_files_on_disk: onDisk.length,
+      total_size_mb: (onDisk.reduce((s, f) => {
+        try { return s + fs.statSync(path.join(UPLOAD_DIR, f)).size; } catch { return s; }
+      }, 0) / (1024 * 1024)).toFixed(2),
+      db_doc_count_recent: dbDocs.rows.length,
+      matched_count: matched.length,
+      orphan_file_count: orphanFiles.length,
+      missing_file_count: missingFiles.length,
+      first_5_files_on_disk: onDisk.slice(0, 5),
+      missing_files_sample: missingFiles.slice(0, 5).map(d => ({
+        file_name: d.file_name, file_path: d.file_path, doc_type: d.doc_type
+      })),
+      hint: missingFiles.length > 0
+        ? '⚠ Files in DB but not on disk → Railway volume is NOT mounted at UPLOAD_DIR. Set the UPLOAD_DIR env var to your volume mount path (e.g. /data/uploads) and redeploy.'
+        : (onDisk.length === 0 ? 'No files on disk yet — upload a test file via the UI then refresh this endpoint.' : 'Looks healthy.')
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message, UPLOAD_DIR, __dirname });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4407,6 +4513,24 @@ async function bootstrapV3Schema() {
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_level VARCHAR(20)`,
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_key TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_projects_rollup ON projects (rollup_level, parent_id, rollup_key) WHERE is_rollup = TRUE`,
+    // Per-client opt-in: do we show the Contract field? the WO# field? Default
+    // computed from is_rus on the client (PSC clients show both; others default
+    // to neither). Admin can toggle in Settings.
+    `ALTER TABLE clients ADD COLUMN IF NOT EXISTS show_contract BOOLEAN`,
+    `ALTER TABLE clients ADD COLUMN IF NOT EXISTS show_work_order BOOLEAN`,
+    // Defaults for existing clients, only where NULL (idempotent backfill).
+    `UPDATE clients SET show_contract = (is_rus IS TRUE) WHERE show_contract IS NULL`,
+    `UPDATE clients SET show_work_order = (is_rus IS TRUE) WHERE show_work_order IS NULL`,
+    // Rebuild the duplicate-project unique index to EXCLUDE rollups. The old
+    // index treated rollups and real projects identically, which caused
+    // false-positive 23505 errors when a rollup auto-creation hit a real
+    // project's name (e.g. a client named "COX" colliding with a Client rollup
+    // also named "COX"). With this filter, rollups are free to share names
+    // with real projects without triggering the constraint.
+    `DROP INDEX IF EXISTS uniq_project_name_per_parent`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS uniq_project_name_per_parent
+       ON projects (COALESCE(parent_id::text, 'ROOT'), LOWER(name))
+       WHERE COALESCE(is_rollup, FALSE) = FALSE`,
   ];
   for (const sql of ddl) {
     try {

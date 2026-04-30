@@ -147,16 +147,46 @@ async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, n
   );
   if (found.rows.length) return found.rows[0].id;
 
-  // Create
+  // Create. The new partial unique index excludes rollups so this should be
+  // safe, but be defensive against pre-existing databases where the old
+  // unconditional index might still exist (bootstrap rebuilds it, but in case
+  // of timing we retry with a suffixed name).
   const e = extras || {};
-  const r = await pool.query(`
-    INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id,
-                          status, is_rollup, rollup_level, rollup_key, project_type)
-    VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
-    RETURNING id
-  `, [name, e.client_id || null, parent_id || null, e.concentrator_id || null,
-      e.project_type_id || null, rollup_level, String(rollup_key)]);
-  return r.rows[0].id;
+  try {
+    const r = await pool.query(`
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id,
+                            status, is_rollup, rollup_level, rollup_key, project_type)
+      VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
+      RETURNING id
+    `, [name, e.client_id || null, parent_id || null, e.concentrator_id || null,
+        e.project_type_id || null, rollup_level, String(rollup_key)]);
+    return r.rows[0].id;
+  } catch (err) {
+    if (err.code !== '23505') throw err;
+    // 23505 = unique_violation. Two scenarios:
+    //   (1) Concurrent insert of same rollup — re-find and return that id.
+    //   (2) Old index still includes rollups, and a real project at this
+    //       parent shares the rollup's name. In that case retry with a
+    //       prefixed name that's unlikely to collide.
+    const refound = await pool.query(
+      `SELECT id FROM projects
+         WHERE is_rollup = TRUE AND rollup_level = $1 AND rollup_key = $2
+           AND COALESCE(parent_id::text, 'ROOT') = COALESCE($3::text, 'ROOT')
+         LIMIT 1`,
+      [rollup_level, String(rollup_key), parent_id]
+    );
+    if (refound.rows.length) return refound.rows[0].id;
+    // Fallback: prefixed name to dodge collision with a real project
+    const prefixed = `[${rollup_level.replace('_', ' ')}] ${name}`;
+    const r2 = await pool.query(`
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id,
+                            status, is_rollup, rollup_level, rollup_key, project_type)
+      VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
+      RETURNING id
+    `, [prefixed, e.client_id || null, parent_id || null, e.concentrator_id || null,
+        e.project_type_id || null, rollup_level, String(rollup_key)]);
+    return r2.rows[0].id;
+  }
 }
 
 // ─── Apply an approved setting change request to the real tables ────────────
@@ -350,8 +380,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
 
   // ── JOBS ────────────────────────────────────────────────────────────────
   // GET filters by:
-  //   1) team match (this portal can use this job's team), AND
-  //   2) applicability — for the optional client_id query param, we look up
+  //   1) team match — only EXPLICIT team match or 'both'. Jobs with NULL
+  //      team (admin-only / unassigned) are excluded from portals to prevent
+  //      legacy/leftover jobs from leaking into the portal dropdowns.
+  //   2) applicability — for the optional client_id query param, look up
   //      the client's is_rus flag and filter by for_psc_client / for_generic_client.
   // Money fields stripped.
   app.get('/api/jobs', async (req, res) => {
@@ -363,15 +395,21 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         if (c.rows.length) isPsc = c.rows[0].is_rus === true;
       }
 
-      // Build query
-      const conds = [`active = true`, `(team = $1 OR team = 'both' OR team IS NULL)`];
+      // Defensive: only include applicability filters if those columns exist
+      // (in case bootstrap hasn't run yet on this service).
+      const { rows: cols } = await pool.query(
+        `SELECT column_name FROM information_schema.columns
+         WHERE table_name = 'jobs'
+           AND column_name IN ('for_psc_client', 'for_generic_client')`
+      );
+      const hasApplicability = cols.length === 2;
+
+      const conds = [`active = true`, `(team = $1 OR team = 'both')`];
       const params = [portal];
-      if (isPsc === true) {
-        conds.push(`for_psc_client = true`);
-      } else if (isPsc === false) {
-        conds.push(`for_generic_client = true`);
+      if (hasApplicability) {
+        if (isPsc === true) conds.push(`for_psc_client = true`);
+        else if (isPsc === false) conds.push(`for_generic_client = true`);
       }
-      // If no client given, return everything visible to this team (don't over-filter).
 
       const { rows } = await pool.query(
         `SELECT * FROM jobs WHERE ${conds.join(' AND ')} ORDER BY name`,
