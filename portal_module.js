@@ -69,14 +69,21 @@ async function isDuplicateProject(pool, name, parentId, excludeId = null) {
 // Builds (or finds) the Client → Service Area → Project Type → Team rollup
 // chain and returns the deepest existing rollup id, suitable for use as the
 // new project's parent_id.
-async function ensureRollupChain(pool, { client_id, concentrator_id, project_type_id, job_id }) {
+async function ensureRollupChain(pool, { client_id, concentrator_id, service_area_label, job_id }) {
   if (!client_id) return null;
 
-  // Two-level rollup hierarchy: Client → Team → (project goes here).
-  // Service Area and Project Type levels were removed at user request — they
-  // were creating too much nesting noise. concentrator_id and project_type_id
-  // are still accepted in the function signature for API compatibility but
-  // are intentionally ignored when building the folder chain.
+  // Three-level rollup hierarchy: Client → Team → Service Area → (project).
+  // Service Area resolution:
+  //   - If concentrator_id is provided (PSC clients), look up the concentrator's
+  //     area_name and use that. The rollup_key is the concentrator UUID, so
+  //     two projects with the same area_name but different concentrators stay
+  //     distinct folders.
+  //   - If concentrator_id is empty AND service_area_label is provided
+  //     (typically non-PSC clients with a free-text label), use the label
+  //     verbatim. The rollup_key is the lowercased label, so case-insensitive
+  //     matching de-dups "Buford" vs "buford" into one folder.
+  //   - If neither is provided, skip the Service Area level entirely — the
+  //     project goes directly under the Team folder.
 
   // 1) Client folder
   const cli = await pool.query('SELECT name FROM clients WHERE id = $1', [client_id]);
@@ -91,9 +98,7 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, project_typ
     extras: { client_id }
   });
 
-  // 2) Team folder (always — derived from job's team field). The project
-  // itself sits underneath this. Job name shows on the project row, not as
-  // a folder, so the user sees: Client → Team → Project (job: ...).
+  // 2) Team folder (always — derived from job's team field).
   let teamName = 'shared';
   if (job_id) {
     const jr = await pool.query('SELECT team FROM jobs WHERE id = $1', [job_id]);
@@ -113,6 +118,28 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, project_typ
     name: teamLabel,
     extras: { client_id }
   });
+
+  // 3) Service Area folder — optional. Either concentrator-based (PSC) or
+  // free-text label (non-PSC). If neither, skip this level.
+  let areaKey = null, areaLabel = null;
+  if (concentrator_id) {
+    const con = await pool.query('SELECT area_name FROM concentrators WHERE id = $1', [concentrator_id]);
+    areaKey = concentrator_id;
+    areaLabel = con.rows[0]?.area_name || 'Service Area';
+  } else if (service_area_label && service_area_label.trim()) {
+    const trimmed = service_area_label.trim();
+    areaKey = client_id + '|' + trimmed.toLowerCase();  // scoped to client to avoid cross-client collisions
+    areaLabel = trimmed;
+  }
+  if (areaKey) {
+    folder = await findOrCreateRollup(pool, {
+      parent_id: folder,
+      rollup_level: 'service_area',
+      rollup_key: areaKey,
+      name: areaLabel,
+      extras: { client_id, concentrator_id: concentrator_id || null }
+    });
+  }
 
   return folder;
 }
@@ -593,6 +620,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     const {
       name, client_id, contract_id, work_order_number,
       project_type, project_type_id, job_id,
+      service_area_label,  // free-text service area for non-PSC clients
       status = 'active',
       footage,        // for footage-billed jobs
       hours_estimate, // optional informational hours estimate (hourly jobs)
@@ -616,7 +644,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         return res.status(403).json({ error: `This job is assigned to a different team` });
       }
 
-      // 2. Auto-detect service area (concentrator) from work order # if matchable
+      // 2. Auto-detect service area (concentrator) from work order # if matchable.
+      // Only PSC clients have concentrators wired up via WO#; non-PSC clients
+      // don't have WO# at all, so this just falls through with concentrator_id=null
+      // and the chain falls back to the service_area_label free-text instead.
       let concentrator_id = null;
       if (work_order_number) {
         const con = await pool.query(
@@ -626,9 +657,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         if (con.rows.length) concentrator_id = con.rows[0].id;
       }
 
-      // 3. Build the rollup chain and use its leaf as parent_id
+      // 3. Build the rollup chain. Either concentrator_id (PSC) or
+      // service_area_label (non-PSC) gets you a Service Area folder.
       const parent_id = await ensureRollupChain(pool, {
-        client_id, concentrator_id, project_type_id, job_id
+        client_id, concentrator_id, service_area_label, job_id
       });
 
       // 4. Duplicate check (against siblings under the team rollup)

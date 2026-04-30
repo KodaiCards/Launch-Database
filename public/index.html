@@ -113,6 +113,19 @@ html[data-theme="dark"] tr[style*="background:var(--gray-light)"]{background:#1F
 html[data-theme="dark"] tr[style*="background:#f0f0f0"]{background:#1A1F26!important}
 html[data-theme="dark"] tr[style*="background:#f8f9fa"]{background:#1A1F26!important}
 html[data-theme="dark"] tr[style*="background:#f5f5f5"]{background:#1F252D!important}
+/* Cells inside nested rows: the TR-level rule above colors the row, but
+   any TD that has its own background (set by hover rules or .td-name etc)
+   wins the cascade. Force td bg to inherit so the parent row's color shows
+   through across the whole row, not just the unstyled cells. */
+html[data-theme="dark"] tr[style*="background:#f0f0f0"] td,
+html[data-theme="dark"] tr[style*="background:#f8f9fa"] td,
+html[data-theme="dark"] tr[style*="background:#f5f5f5"] td,
+html[data-theme="dark"] tr[style*="background:var(--gray-light)"] td{background:transparent!important;color:var(--text)!important}
+/* Hover state in dark mode — slightly lighter than the row bg so it's
+   visibly different but still readable (the default light-mode hover
+   color was --gray-light which becomes the SAME color as nested rows
+   in dark mode, so hover was indistinguishable). */
+html[data-theme="dark"] tbody tr:hover td{background:#2A323D!important}
 /* Quick-add inline panels (Add new contract / project type) */
 html[data-theme="dark"] [style*="background:var(--gray-light)"]{background:#1F252D!important}
 /* Dark mode: invert the logo so dark-blue text becomes light/visible */
@@ -779,6 +792,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <div class="form-group" id="proj-wo-wrap">
             <label>Work Order Number</label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
+          </div>
+          <div class="form-group" id="proj-service-area-wrap" style="display:none">
+            <label>Service Area</label>
+            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc.">
+            <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client + team.</span>
           </div>
           <div class="form-group" id="proj-ptype-wrap">
             <label>Project Type * <span style="color:var(--text-muted);font-weight:400">(program category — PSC only)</span></label>
@@ -1589,14 +1607,17 @@ async function clientChanged(preserveJobId) {
   const csel = document.getElementById('proj-contract');
   while (csel.options.length > 1) csel.remove(1);
 
-  // Show/hide Project Type, Contract, and Work Order fields based on client.
-  // Project Type is PSC-only. Contract + WO# default to PSC-only but admin
-  // can opt in per-client via Settings (show_contract / show_work_order).
+  // Field gating per client type:
+  //   PSC clients (is_rus=true): Project Type, Contract, WO# all visible.
+  //                              Service Area is auto-derived from the WO# match.
+  //   Non-PSC clients: Project Type and WO# HIDDEN entirely.
+  //                    Contract visible only if admin opted in via Settings.
+  //                    Service Area visible as a free-text input.
   const client = clientsCache.find(c => c.id === clientId);
   const isPsc = client?.is_rus === true;
   const showContract = isPsc || client?.show_contract === true;
-  const showWo       = isPsc || client?.show_work_order === true;
 
+  // Project Type — PSC only
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) {
     ptypeWrap.style.display = isPsc ? '' : 'none';
@@ -1605,6 +1626,7 @@ async function clientChanged(preserveJobId) {
       if (sel) sel.value = '';
     }
   }
+  // Contract — PSC default + per-client opt-in
   const contractWrap = document.getElementById('proj-contract-wrap');
   if (contractWrap) {
     contractWrap.style.display = showContract ? '' : 'none';
@@ -1613,12 +1635,22 @@ async function clientChanged(preserveJobId) {
       if (cSel) cSel.value = '';
     }
   }
+  // WO# — PSC ONLY (no admin opt-in)
   const woWrap = document.getElementById('proj-wo-wrap');
   if (woWrap) {
-    woWrap.style.display = showWo ? '' : 'none';
-    if (!showWo) {
+    woWrap.style.display = isPsc ? '' : 'none';
+    if (!isPsc) {
       const woIn = document.getElementById('proj-wo');
       if (woIn) woIn.value = '';
+    }
+  }
+  // Service Area — non-PSC ONLY (PSC derives from WO#)
+  const saWrap = document.getElementById('proj-service-area-wrap');
+  if (saWrap) {
+    saWrap.style.display = isPsc ? 'none' : '';
+    if (isPsc) {
+      const saIn = document.getElementById('proj-service-area');
+      if (saIn) saIn.value = '';
     }
   }
 
@@ -2601,6 +2633,7 @@ async function saveProject() {
     name, client_id: clientId,
     contract_id: document.getElementById('proj-contract').value || null,
     work_order_number: document.getElementById('proj-wo').value,
+    service_area_label: (document.getElementById('proj-service-area')?.value || '').trim() || null,
     project_type: legacyType,
     project_type_id: projectTypeId,
     job_id: jobId,

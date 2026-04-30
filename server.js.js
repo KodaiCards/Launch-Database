@@ -725,6 +725,7 @@ app.post('/api/projects', async (req, res) => {
     project_type, project_type_id, job_id,
     status = 'active', billing_type, billing_rate,
     footage, start_date, notes, parent_id, budget_code_id, concentrator_id,
+    service_area_label,    // free-text service area for non-PSC clients
     permit_manager,
     billing_cadence, projected_revenue,
     manual_invoice_amount
@@ -732,10 +733,12 @@ app.post('/api/projects', async (req, res) => {
 
   try {
     // Auto-nesting: when admin doesn't explicitly pick a parent, derive it
-    // from the rollup chain Client → Service Area → Project Type → Team.
+    // from the rollup chain Client → Team → Service Area → Project.
     // If admin DID pick a parent, respect that choice (legacy/manual nesting).
     if (!parent_id && client_id && app.locals.ensureRollupChain) {
-      // Auto-detect concentrator from work order if admin didn't pick one
+      // Auto-detect concentrator from work order if admin didn't pick one.
+      // Only fires if there IS a work_order_number — non-PSC clients won't
+      // have one, so this falls through and service_area_label is used instead.
       if (!concentrator_id && work_order_number) {
         const con = await pool.query(
           `SELECT id FROM concentrators WHERE work_order_number = $1 LIMIT 1`,
@@ -744,7 +747,7 @@ app.post('/api/projects', async (req, res) => {
         if (con.rows.length) concentrator_id = con.rows[0].id;
       }
       parent_id = await app.locals.ensureRollupChain({
-        client_id, concentrator_id, project_type_id, job_id
+        client_id, concentrator_id, service_area_label, job_id
       });
     }
 
@@ -2166,6 +2169,7 @@ const { ensureRollupChain } = require('./portal_module');
 // Returns a JSON summary with counts so you can see what moved.
 app.post('/api/_admin/migrate-nesting', async (req, res) => {
   let processed = 0, moved = 0, skipped = 0, failed = 0;
+  let obsoleteRollupsRemoved = 0;
   const errors = [];
   try {
     // Get every real project (no rollups, since rollups ARE the nesting structure)
@@ -2181,17 +2185,21 @@ app.post('/api/_admin/migrate-nesting', async (req, res) => {
         // Skip projects without a client — they can't be nested.
         if (!p.client_id) { skipped++; continue; }
 
+        // Migration can't recover service_area_label for legacy projects
+        // (the field is new). PSC projects with a concentrator_id will get
+        // a Service Area folder via that path. Non-PSC legacy projects
+        // without a concentrator will land directly under the Team folder
+        // until an admin edits them and adds a service area label.
         const correctParent = await ensureRollupChain(pool, {
-          client_id:       p.client_id,
-          concentrator_id: p.concentrator_id,
-          project_type_id: p.project_type_id,
-          job_id:          p.job_id
+          client_id:          p.client_id,
+          concentrator_id:    p.concentrator_id,
+          service_area_label: null,
+          job_id:             p.job_id
         });
 
         if (!correctParent) { skipped++; continue; }
 
         if (p.parent_id === correctParent) {
-          // Already in the right place — no-op.
           skipped++;
         } else {
           await pool.query('UPDATE projects SET parent_id = $1 WHERE id = $2',
@@ -2203,12 +2211,32 @@ app.post('/api/_admin/migrate-nesting', async (req, res) => {
         errors.push({ project_id: p.id, name: p.name, error: e.message });
       }
     }
+
+    // Cleanup pass: remove obsolete project_type rollup folders (we no longer
+    // create that level — Client → Team → Service Area is the new chain).
+    // Service area rollups are KEPT now (they're part of the new chain) so we
+    // only delete project_type orphans.
+    for (let pass = 0; pass < 10; pass++) {
+      const { rows: deleted } = await pool.query(`
+        DELETE FROM projects
+        WHERE is_rollup = TRUE
+          AND rollup_level = 'project_type'
+          AND NOT EXISTS (
+            SELECT 1 FROM projects child WHERE child.parent_id = projects.id
+          )
+        RETURNING id
+      `);
+      if (deleted.length === 0) break;
+      obsoleteRollupsRemoved += deleted.length;
+    }
+
     res.json({
       processed, moved, skipped, failed,
+      obsolete_rollups_removed: obsoleteRollupsRemoved,
       errors: errors.slice(0, 20),  // cap so response stays small
-      hint: moved === 0 && processed > 0
-        ? 'No projects needed re-nesting — they were already in their correct rollup folders.'
-        : `Re-nested ${moved} of ${processed} projects.`
+      hint: moved === 0 && obsoleteRollupsRemoved === 0 && processed > 0
+        ? 'No projects needed re-nesting and no obsolete rollups were found — the tree was already clean.'
+        : `Re-nested ${moved} of ${processed} projects` + (obsoleteRollupsRemoved > 0 ? ` and removed ${obsoleteRollupsRemoved} obsolete service-area/project-type folders.` : '.')
     });
   } catch (e) {
     res.status(500).json({ error: e.message, processed, moved, failed });
