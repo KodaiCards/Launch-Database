@@ -23,6 +23,14 @@
   --text:#212529;
   --text-muted:#6C757D;
   --font:'Inter',sans-serif;
+  /* Alternating row bg for nested project trees. Light mode: subtle gray
+     stripe (#F0F0F0). Dark mode: a slightly-lighter shade than the page
+     bg so depth-2 rows have visual separation from depth-1. Using a CSS
+     var means inline style="background:var(--row-alt)" gets the right
+     color in both modes without attribute-substring CSS overrides — which
+     was the source of the dark-mode row flicker (the override fires after
+     the inline paint so the row briefly showed the literal #f0f0f0). */
+  --row-alt:#F0F0F0;
 }
 
 /* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode(). */
@@ -33,6 +41,7 @@ html[data-theme="dark"]{
   --text:#E8EAED;
   --text-muted:#9BA1A8;
   --primary-light:#1E3A5C;
+  --row-alt:#1F2630;
   /* color-scheme on the root tells the OS-rendered controls (select popups,
      scrollbars, default form widgets) to use their dark variants. Setting
      this on individual selects causes a flicker because the popup opens
@@ -116,18 +125,21 @@ html[data-theme="dark"] #revenue-body{color:var(--text)}
 html[data-theme="dark"] tbody tr{background:var(--white);color:var(--text)}
 html[data-theme="dark"] tbody td{background:transparent;color:var(--text);border-color:var(--gray-border)}
 /* Project tree row alternating backgrounds in dark mode — soften the
-   light-gray stripes that look harsh against dark page bg */
+   light-gray stripes that look harsh against dark page bg. The depth-2
+   stripe (--row-alt) used to be a literal #f0f0f0 in inline styles;
+   now it's a CSS variable that resolves to a dark shade automatically.
+   Other inline-style stripes still need substring overrides because
+   they were baked in before the variable migration. */
 html[data-theme="dark"] tr[style*="background:var(--gray-light)"]{background:#1F252D!important}
-html[data-theme="dark"] tr[style*="background:#f0f0f0"]{background:#1A1F26!important}
 html[data-theme="dark"] tr[style*="background:#f8f9fa"]{background:#1A1F26!important}
 html[data-theme="dark"] tr[style*="background:#f5f5f5"]{background:#1F252D!important}
 /* Cells inside nested rows: the TR-level rule above colors the row, but
    any TD that has its own background (set by hover rules or .td-name etc)
    wins the cascade. Force td bg to inherit so the parent row's color shows
    through across the whole row, not just the unstyled cells. */
-html[data-theme="dark"] tr[style*="background:#f0f0f0"] td,
 html[data-theme="dark"] tr[style*="background:#f8f9fa"] td,
 html[data-theme="dark"] tr[style*="background:#f5f5f5"] td,
+html[data-theme="dark"] tr[style*="background:var(--row-alt)"] td,
 html[data-theme="dark"] tr[style*="background:var(--gray-light)"] td{background:transparent!important;color:var(--text)!important}
 /* Hover state in dark mode — slightly lighter than the row bg so it's
    visibly different but still readable (the default light-mode hover
@@ -1705,7 +1717,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 <script>
 
-// Dark-mode toggle. Persists across reloads via localStorage.
+// Dark-mode handling. Theme persists in two places:
+//   1. Server (users.theme) — survives across browsers and devices.
+//      Only writable when logged in (PUT /api/auth/me/theme).
+//   2. localStorage (lfs-theme) — fast first-paint cache used for the
+//      pre-render block below, and the only available store on the login
+//      screen before auth.
+// Both stay in sync: any toggle writes to localStorage immediately and
+// fires a server PUT in the background. On login, the server's value
+// overwrites localStorage so the user sees the same theme everywhere.
 function applyDarkMode(on){
   document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
   const icon = document.getElementById('dm-icon');
@@ -1714,16 +1734,60 @@ function applyDarkMode(on){
 function toggleDarkMode(){
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = !isDark;
-  try { localStorage.setItem('lfs-dark-mode', next ? '1' : '0'); } catch(e){}
+  const themeStr = next ? 'dark' : 'light';
+  // 1. Apply visually + write local cache for instant subsequent loads
+  try { localStorage.setItem('lfs-theme', themeStr); } catch(e){}
   applyDarkMode(next);
+  // 2. Persist to server (best-effort — UI doesn't wait on this).
+  // Failure is harmless: the local cache + apply have already happened, and
+  // next login will retry the persist on a fresh server fetch.
+  try {
+    fetch('/api/auth/me/theme', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ theme: themeStr })
+    }).catch(()=>{});
+  } catch(e) {}
 }
-// Apply saved preference on load (before first paint to avoid flash)
+// Apply saved preference BEFORE first paint to avoid flash. Order of
+// resolution: localStorage cache → system preference. Server value will
+// override on login if it's different.
 (function(){
   try {
-    const saved = localStorage.getItem('lfs-dark-mode');
-    if (saved === '1') applyDarkMode(true);
+    const saved = localStorage.getItem('lfs-theme');
+    if (saved === 'dark') applyDarkMode(true);
+    else if (saved === 'light') applyDarkMode(false);
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      applyDarkMode(true);
+    }
+    // Migrate legacy key from earlier rounds
+    const legacy = localStorage.getItem('lfs-dark-mode');
+    if (legacy && !saved) {
+      const themeFromLegacy = legacy === '1' ? 'dark' : 'light';
+      localStorage.setItem('lfs-theme', themeFromLegacy);
+      localStorage.removeItem('lfs-dark-mode');
+      applyDarkMode(themeFromLegacy === 'dark');
+    }
   } catch(e){}
 })();
+// Sync from server preference once logged-in user data is available. Called
+// after /api/auth/me returns. If server says something different from local
+// cache, server wins (it represents the user's most recent choice on any
+// device). If server has NULL (unset), we don't change anything — the local
+// preference + system fallback already chose.
+function syncThemeFromUser(user) {
+  if (!user || !user.theme) return;
+  const wantDark = user.theme === 'dark';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (wantDark !== isDark) {
+    try { localStorage.setItem('lfs-theme', user.theme); } catch(e){}
+    applyDarkMode(wantDark);
+  } else {
+    // Theme already matches but make sure local cache reflects what server has
+    try { localStorage.setItem('lfs-theme', user.theme); } catch(e){}
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // STATE
@@ -2299,7 +2363,7 @@ async function loadDashboard() {
       const expandable = kids.length > 0;
       const groupKey = 'dt-' + p.id;
       const chevId = 'dc-' + p.id;
-      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:var(--row-alt)';
 
       // Visibility flows from parent's expanded state (root rows always visible).
       const isVisible = depth === 0 || parentExpanded;
@@ -2551,7 +2615,7 @@ function renderProjects(list, expandAll = false) {
       const isLeaf = !expandable;
       const groupKey = 'pt-' + p.id;
       const chevId = 'pc-' + p.id;
-      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:var(--row-alt)';
 
       // A row is visible if every ancestor is currently expanded. This is
       // the persistent-state replacement for the old "startHidden" logic
@@ -4998,7 +5062,7 @@ function renderRevenueDetail(details) {
       const expandable = kids.length > 0;
       const groupKey = 'rv-' + p.id;
       const chevId = 'rc-' + p.id;
-      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+      const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:var(--row-alt)';
 
       // Persistent visibility
       const isVisible = depth === 0 || parentExpanded;
@@ -6553,6 +6617,9 @@ async function loadCurrentUser() {
     const r = await fetch('/api/auth/me', { credentials: 'include' });
     if (r.ok) {
       currentUser = await r.json();
+      // Apply server-stored theme preference (overrides local cache).
+      // Defined in the dark-mode block near the top of this script.
+      if (typeof syncThemeFromUser === 'function') syncThemeFromUser(currentUser);
       applyUserScopedUI();
     } else {
       currentUser = null;

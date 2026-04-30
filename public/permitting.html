@@ -189,7 +189,10 @@ textarea{resize:vertical;min-height:60px}
 </style>
 <script>
 
-// Dark-mode toggle. Persists across reloads via localStorage.
+// Dark mode handling. See admin index.html for the full doc-block; this is
+// the same logic minus the syncThemeFromUser auto-call (portals don't have a
+// loadCurrentUser flow yet — they read auth via cookie only). Toggle still
+// persists to server when logged in.
 function applyDarkMode(on){
   document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
   const icon = document.getElementById('dm-icon');
@@ -198,16 +201,52 @@ function applyDarkMode(on){
 function toggleDarkMode(){
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = !isDark;
-  try { localStorage.setItem('lfs-dark-mode', next ? '1' : '0'); } catch(e){}
+  const themeStr = next ? 'dark' : 'light';
+  try { localStorage.setItem('lfs-theme', themeStr); } catch(e){}
   applyDarkMode(next);
+  try {
+    fetch('/api/auth/me/theme', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ theme: themeStr })
+    }).catch(()=>{});
+  } catch(e) {}
 }
-// Apply saved preference on load (before first paint to avoid flash)
+function syncThemeFromUser(user) {
+  if (!user || !user.theme) return;
+  const wantDark = user.theme === 'dark';
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (wantDark !== isDark) {
+    try { localStorage.setItem('lfs-theme', user.theme); } catch(e){}
+    applyDarkMode(wantDark);
+  } else {
+    try { localStorage.setItem('lfs-theme', user.theme); } catch(e){}
+  }
+}
 (function(){
   try {
-    const saved = localStorage.getItem('lfs-dark-mode');
-    if (saved === '1') applyDarkMode(true);
+    const saved = localStorage.getItem('lfs-theme');
+    if (saved === 'dark') applyDarkMode(true);
+    else if (saved === 'light') applyDarkMode(false);
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      applyDarkMode(true);
+    }
+    const legacy = localStorage.getItem('lfs-dark-mode');
+    if (legacy && !saved) {
+      const themeFromLegacy = legacy === '1' ? 'dark' : 'light';
+      localStorage.setItem('lfs-theme', themeFromLegacy);
+      localStorage.removeItem('lfs-dark-mode');
+      applyDarkMode(themeFromLegacy === 'dark');
+    }
   } catch(e){}
 })();
+// On portal load, pull current user's saved theme from server.
+fetch('/api/auth/me', { credentials: 'include' })
+  .then(r => r.ok ? r.json() : null)
+  .then(u => { if (u) syncThemeFromUser(u); })
+  .catch(()=>{});
+
 
   // Set by server.js portal-mode HTML inject. Falls back to same-origin if unset
   // (which means uploads/PDFs won't work — see ADMIN_API_BASE warning in logs).

@@ -86,6 +86,10 @@ async function bootstrapAuthSchema(pool) {
     `ALTER TABLE projects        ADD COLUMN IF NOT EXISTS updated_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL`,
     `ALTER TABLE time_entries    ADD COLUMN IF NOT EXISTS user_id            UUID REFERENCES users(id) ON DELETE SET NULL`,
     `ALTER TABLE permit_documents ADD COLUMN IF NOT EXISTS uploaded_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL`,
+    // User-level UI preferences. theme: 'light' | 'dark' | NULL (NULL = follow
+    // system preference). Persisted server-side so it follows the user across
+    // browsers and devices instead of being trapped in one localStorage.
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(10)`,
   ];
   for (const sql of ddl) {
     try {
@@ -231,7 +235,7 @@ function installAuthRoutes(app, pool) {
     }
     try {
       const { rows } = await pool.query(
-        `SELECT id, username, password_hash, role, team, full_name, email, active
+        `SELECT id, username, password_hash, role, team, full_name, email, active, theme
          FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1`,
         [username]
       );
@@ -259,7 +263,7 @@ function installAuthRoutes(app, pool) {
         token,
         user: {
           id: user.id, username: user.username, role: user.role, team: user.team,
-          full_name: user.full_name, email: user.email
+          full_name: user.full_name, email: user.email, theme: user.theme
         }
       });
     } catch (e) {
@@ -275,13 +279,40 @@ function installAuthRoutes(app, pool) {
   });
 
   // GET /api/auth/me — returns the current user. Frontend calls this on page
-  // load to decide which UI to render. 401 if not logged in.
-  app.get('/api/auth/me', (req, res) => {
+  // load to decide which UI to render. 401 if not logged in. We do a fresh DB
+  // read so theme + any other persisted preferences are current (the JWT only
+  // has id/username/role baked in for performance — preferences live in the
+  // users table and are read on demand).
+  app.get('/api/auth/me', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
-    res.json({
-      id: req.user.id, username: req.user.username, role: req.user.role,
-      team: req.user.team, full_name: req.user.full_name, email: req.user.email
-    });
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, username, role, team, full_name, email, theme FROM users WHERE id = $1`,
+        [req.user.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+      res.json(rows[0]);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // PUT /api/auth/me/theme — persist current user's theme preference.
+  // Body: { theme: 'light' | 'dark' | null }. NULL clears the preference and
+  // the frontend falls back to system/OS preference. Persisted server-side so
+  // the choice follows the user across browsers and devices.
+  app.put('/api/auth/me/theme', requireAuth(), async (req, res) => {
+    const { theme } = req.body || {};
+    if (theme !== null && theme !== 'light' && theme !== 'dark') {
+      return res.status(400).json({ error: 'theme must be "light", "dark", or null' });
+    }
+    try {
+      await pool.query(`UPDATE users SET theme = $1, updated_at = NOW() WHERE id = $2`,
+        [theme, req.user.id]);
+      res.json({ ok: true, theme });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
   // POST /api/auth/change-password — current user updates their own password.

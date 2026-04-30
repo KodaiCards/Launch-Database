@@ -99,19 +99,49 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
 </div>
 
 <script>
-// Apply saved theme before paint
+// Apply saved theme before paint. Resolution order:
+//   1. lfs-theme (set by toggle on this screen or any other screen the user
+//      has visited in this browser)
+//   2. lfs-dark-mode (legacy key from earlier rounds — migrate forward)
+//   3. system preference (prefers-color-scheme)
+// Login screen has no logged-in user yet so we can't read the server value;
+// once login succeeds we apply user.theme from the response and overwrite
+// localStorage if it's different.
 (function(){
-  try { if (localStorage.getItem('lfs-dark-mode') === '1') document.documentElement.setAttribute('data-theme','dark'); } catch(e){}
+  try {
+    const saved = localStorage.getItem('lfs-theme');
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
+    else if (saved === 'light') document.documentElement.setAttribute('data-theme','light');
+    else {
+      const legacy = localStorage.getItem('lfs-dark-mode');
+      if (legacy === '1') {
+        document.documentElement.setAttribute('data-theme','dark');
+        localStorage.setItem('lfs-theme', 'dark');
+        localStorage.removeItem('lfs-dark-mode');
+      } else if (legacy === '0') {
+        document.documentElement.setAttribute('data-theme','light');
+        localStorage.setItem('lfs-theme', 'light');
+        localStorage.removeItem('lfs-dark-mode');
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme','dark');
+      }
+    }
+  } catch(e){}
   const icon = document.getElementById('dm-icon');
   if (document.documentElement.getAttribute('data-theme') === 'dark' && icon) icon.className = 'fa-solid fa-sun';
 })();
 function toggleDark(){
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = !isDark;
+  const themeStr = next ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-  try { localStorage.setItem('lfs-dark-mode', next ? '1' : '0'); } catch(e){}
+  try { localStorage.setItem('lfs-theme', themeStr); } catch(e){}
   const icon = document.getElementById('dm-icon');
   if (icon) icon.className = next ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  // No server PUT here — login screen has no auth yet. The next login will
+  // sync any local choice to the server via the user record (login response
+  // may carry a different value if the user picked one elsewhere — in that
+  // case the post-login redirect picks it up from the user.theme echo).
 }
 
 // Where to redirect after successful login. The login page lives on each
@@ -145,6 +175,11 @@ async function doLogin(ev){
     // a backup for environments that block cookies (some Cloudflare setups).
     if (data.token) {
       try { sessionStorage.setItem('lfs_token', data.token); } catch(e){}
+    }
+    // If the server returned a saved theme on the user record, cache it locally
+    // so the redirected page applies it pre-paint without a server round-trip.
+    if (data.user && data.user.theme) {
+      try { localStorage.setItem('lfs-theme', data.user.theme); } catch(e){}
     }
     window.location.href = getRedirectTarget();
   } catch (e) {
