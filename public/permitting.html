@@ -28,6 +28,8 @@ html[data-theme="dark"]{
   --text:#E8EAED;
   --text-muted:#9BA1A8;
   --primary-light:#1E3A5C;
+  /* color-scheme:dark on the root prevents flicker on native select popups */
+  color-scheme: dark;
 }
 html[data-theme="dark"] body{background:#0F1419}
 html[data-theme="dark"] .card,
@@ -36,18 +38,9 @@ html[data-theme="dark"] .modal,
 html[data-theme="dark"] input,
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea{background:var(--white);color:var(--text);border-color:var(--gray-border)}
-/* The OS-level dropdown popup (the panel that appears when you click a
-   <select>) is rendered by the browser/OS, NOT inside the page's CSS scope.
-   On Chrome Windows/Linux, no amount of `option { ... !important }` will
-   color it because the popup lives in a separate compositing layer with
-   its own theming. The fix is `color-scheme: dark` — that hint tells the
-   OS to render its native controls in dark mode. Pair it with explicit
-   option styling for browsers that DO honor option CSS (Firefox, Safari). */
-html[data-theme="dark"] select,
-html[data-theme="dark"] input,
-html[data-theme="dark"] textarea{
-  color-scheme: dark;
-}
+/* Option styling for browsers that allow CSS to reach the popup (Firefox).
+   Chrome/Edge ignore option CSS for the OS popup, but the html-level
+   color-scheme:dark covers them. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
   background:#242B36!important;
@@ -857,15 +850,25 @@ async function saveProject(){
   }
 }
 
-async function ensureCachesLoaded(){
-  if (!jobsCache.length || !clientsCache.length || !projectTypesCache.length) {
-    [jobsCache, clientsCache, projectTypesCache] = await Promise.all([
-      api('/api/jobs'), api('/api/clients'), api('/api/project-types')
-    ]);
+async function ensureCachesLoaded(force){
+  if (force || !jobsCache.length || !clientsCache.length || !projectTypesCache.length) {
+    try {
+      const [j, c, pt] = await Promise.all([
+        api('/api/jobs'), api('/api/clients'), api('/api/project-types')
+      ]);
+      jobsCache = j; clientsCache = c; projectTypesCache = pt;
+    } catch (e) { /* keep stale caches if a fetch fails */ }
   }
-  // Always refresh projects (so Parent dropdown is current)
-  if (!projectsCache.length) projectsCache = await api('/api/projects');
+  // Always refresh projects on force; otherwise lazy
+  if (force || !projectsCache.length) {
+    try { projectsCache = await api('/api/projects'); } catch(e){}
+  }
 }
+// Force-refresh shim used by polling — re-fetches even if caches are populated.
+// Called every 4th poll tick (~6 seconds) so admin-side changes (job renames,
+// rate edits, new clients, contract additions) propagate to portal users
+// without a manual refresh.
+async function refreshCaches(){ return ensureCachesLoaded(true); }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PIPELINE — Permit pipeline (potential → ... → billed)
@@ -1224,35 +1227,42 @@ function _isModalOpen(id) {
   const el = document.getElementById(id);
   return el && (el.classList.contains('active') || getComputedStyle(el).display !== 'none' && el.style.display !== 'none' && (el.style.display === 'flex' || el.classList.contains('show')));
 }
+let _pollTickCount = 0;
+function _modalIsOpen(id) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  return el.classList.contains('open') || el.classList.contains('active') ||
+         (el.style && el.style.display === 'flex');
+}
 async function _pollTick(){
   if (document.hidden) return;
-
-  // Skip ALL refreshes if user is typing/editing somewhere. Without this
-  // guard, the 1.5s polling would re-render the active view and steal focus
-  // mid-edit (or worse, wipe an input value the user was halfway through).
   if (_isUserTyping()) return;
 
-  // Active view
+  _pollTickCount++;
+
   const active = document.querySelector('.view.active');
   const viewId = active?.id || '';
-
-  // Map view ID → refresh function name (graceful if function missing)
   const callIfExists = (name) => { try { if (typeof window[name] === 'function') return window[name](); } catch(e){} };
 
-  if (viewId === 'view-projects')  callIfExists('loadProjects');
-  if (viewId === 'view-pipeline')  callIfExists('loadPipeline');
-  if (viewId === 'view-potential') callIfExists('loadPotential');
-  if (viewId === 'view-dashboard') callIfExists('loadDashboard');
-  if (viewId === 'view-billing')   callIfExists('loadBilling');
-  if (viewId === 'view-revenue')   callIfExists('loadRevenue');
-  if (viewId === 'view-invoices')  callIfExists('loadInvoices');
-  if (viewId === 'view-hours')     callIfExists('loadHours');
+  if (viewId === 'view-projects')   callIfExists('loadProjects');
+  if (viewId === 'view-pipeline')   callIfExists('loadPipeline');
+  if (viewId === 'view-potential')  callIfExists('loadPotential');
+  if (viewId === 'view-dashboard')  callIfExists('loadDashboard');
+  if (viewId === 'view-billing')    callIfExists('loadBilling');
+  if (viewId === 'view-revenue')    callIfExists('loadRevenue');
+  if (viewId === 'view-invoices')   callIfExists('loadInvoices');
+  if (viewId === 'view-hours')      callIfExists('loadHours');
 
-  // Settings modal — refresh its lists if the modal is open AND user isn't typing.
-  // (Refreshing while typing would clobber input value.)
-  const settingsOpen = document.getElementById('settings-modal')?.classList.contains('active') ||
-                       document.getElementById('settings-modal')?.style?.display === 'flex';
-  if (settingsOpen && !_isUserTyping()) {
+  // Every 4th tick (~6 seconds), refresh underlying data caches that the
+  // project modal & filters depend on. Without this, when admin changes a
+  // job's rate or adds a new client, the portal user keeps seeing the old
+  // values until they hard-refresh.
+  if (_pollTickCount % 4 === 0) {
+    callIfExists('refreshCaches');
+  }
+
+  // Settings modal — uses .open class on .modal-overlay (function om)
+  if (_modalIsOpen('settings-modal')) {
     callIfExists('loadJobs');
     callIfExists('loadProjectTypes');
     callIfExists('loadClients');
@@ -1261,8 +1271,11 @@ async function _pollTick(){
       callIfExists('renderJobsList');
       callIfExists('renderProjectTypesList');
       callIfExists('renderClientsList');
-    }, 100);
+    }, 120);
   }
+
+  // Settings-pending badge — count of pending change requests admin needs to review
+  callIfExists('refreshSettingsBadge');
 }
 function startPolling(){
   if (_pollTimer) return;

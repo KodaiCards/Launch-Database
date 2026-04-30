@@ -33,6 +33,12 @@ html[data-theme="dark"]{
   --text:#E8EAED;
   --text-muted:#9BA1A8;
   --primary-light:#1E3A5C;
+  /* color-scheme on the root tells the OS-rendered controls (select popups,
+     scrollbars, default form widgets) to use their dark variants. Setting
+     this on individual selects causes a flicker because the popup opens
+     before the OS color-scheme inheritance kicks in. Setting it on html
+     means every native widget renders dark from the very first paint. */
+  color-scheme: dark;
 }
 html[data-theme="dark"] body{background:#0F1419}
 html[data-theme="dark"] .card,
@@ -41,18 +47,9 @@ html[data-theme="dark"] .modal,
 html[data-theme="dark"] input,
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea{background:var(--white);color:var(--text);border-color:var(--gray-border)}
-/* The OS-level dropdown popup (the panel that appears when you click a
-   <select>) is rendered by the browser/OS, NOT inside the page's CSS scope.
-   On Chrome Windows/Linux, no amount of `option { ... !important }` will
-   color it because the popup lives in a separate compositing layer with
-   its own theming. The fix is `color-scheme: dark` — that hint tells the
-   OS to render its native controls in dark mode. Pair it with explicit
-   option styling for browsers that DO honor option CSS (Firefox, Safari). */
-html[data-theme="dark"] select,
-html[data-theme="dark"] input,
-html[data-theme="dark"] textarea{
-  color-scheme: dark;
-}
+/* Option elements explicitly styled for browsers that DO let CSS reach the
+   popup panel (Firefox). Chrome/Edge ignore these for the popup itself but
+   the html-level color-scheme: dark covers them via OS theming. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
   background:#242B36!important;
@@ -6117,21 +6114,30 @@ init();
 // focus inside an input/textarea, so typing isn't interrupted.
 const POLL_MS = 1500;
 let _pollTimer = null;
+let _pollTickCount = 0;
 function _isUserTyping() {
   const ae = document.activeElement;
   return ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT');
 }
-function _isModalOpen(id) {
+function _modalIsOpen(id) {
+  // Admin uses .open on .modal-overlay (set by openModal). Some legacy
+  // codepaths may use .active or set inline display:flex. Check all three
+  // so the poll is robust regardless of which path opened the modal.
   const el = document.getElementById(id);
-  return el && (el.classList.contains('active') || getComputedStyle(el).display !== 'none' && el.style.display !== 'none' && (el.style.display === 'flex' || el.classList.contains('show')));
+  if (!el) return false;
+  if (el.classList.contains('open')) return true;
+  if (el.classList.contains('active')) return true;
+  if (el.style && el.style.display === 'flex') return true;
+  return false;
 }
 async function _pollTick(){
   if (document.hidden) return;
 
   // Skip ALL refreshes if user is actively typing/editing somewhere — re-rendering
   // the active view would steal focus or wipe the input value mid-keystroke.
-  // This is the universal protection against polling clobbering user edits.
   if (_isUserTyping()) return;
+
+  _pollTickCount++;
 
   // Active view
   const active = document.querySelector('.view.active');
@@ -6140,20 +6146,29 @@ async function _pollTick(){
   // Map view ID → refresh function name (graceful if function missing)
   const callIfExists = (name) => { try { if (typeof window[name] === 'function') return window[name](); } catch(e){} };
 
-  if (viewId === 'view-projects')  callIfExists('loadProjects');
-  if (viewId === 'view-pipeline')  callIfExists('loadPipeline');
-  if (viewId === 'view-potential') callIfExists('loadPotential');
-  if (viewId === 'view-dashboard') callIfExists('loadDashboard');
-  if (viewId === 'view-billing')   callIfExists('loadBilling');
-  if (viewId === 'view-revenue')   callIfExists('loadRevenue');
-  if (viewId === 'view-invoices')  callIfExists('loadInvoices');
-  if (viewId === 'view-hours')     callIfExists('loadHours');
+  if (viewId === 'view-projects')   callIfExists('loadProjects');
+  if (viewId === 'view-pipeline')   callIfExists('loadPipeline');
+  if (viewId === 'view-potential')  callIfExists('loadPotential');
+  if (viewId === 'view-dashboard')  callIfExists('loadDashboard');
+  if (viewId === 'view-billing')    callIfExists('loadBilling');
+  if (viewId === 'view-revenue')    callIfExists('loadRevenue');
+  if (viewId === 'view-invoices')   callIfExists('loadInvoices');
+  if (viewId === 'view-hours')      callIfExists('loadHours');
+  if (viewId === 'view-design')     callIfExists('loadDesign');
+  if (viewId === 'view-permitting') callIfExists('loadPermits');
 
-  // Settings modal — refresh its lists if the modal is open. We already
-  // bailed at the top if user is typing, so settings panel updates safely.
-  const settingsOpen = document.getElementById('settings-modal')?.classList.contains('active') ||
-                       document.getElementById('settings-modal')?.style?.display === 'flex';
-  if (settingsOpen) {
+  // Every 4th tick (~6 seconds), invalidate caches that downstream views
+  // depend on. Without this, jobs/clients/contracts settings changes don't
+  // surface in the project modals or pipeline filters until a hard refresh.
+  if (_pollTickCount % 4 === 0) {
+    callIfExists('loadClients');
+    callIfExists('loadJobs');
+    callIfExists('loadContracts');
+    callIfExists('loadProjectTypes');
+  }
+
+  // Settings modal — refresh its lists if the modal is open.
+  if (_modalIsOpen('settings-modal')) {
     callIfExists('loadJobs');
     callIfExists('loadProjectTypes');
     callIfExists('loadClients');
@@ -6162,8 +6177,18 @@ async function _pollTick(){
       callIfExists('renderJobsList');
       callIfExists('renderProjectTypesList');
       callIfExists('renderClientsList');
-    }, 100);
+    }, 120);
   }
+
+  // Project detail modal — if it's open and shows a specific project,
+  // refresh that project's details. The renderProjectDetail function
+  // already exists in admin and reads from currentProjectId.
+  if (_modalIsOpen('project-detail-modal') && typeof window.currentProjectId !== 'undefined' && window.currentProjectId) {
+    callIfExists('refreshProjectDetail');
+  }
+
+  // Approvals badge — count of pending settings change requests
+  callIfExists('refreshApprovalsBadge');
 }
 function startPolling(){
   if (_pollTimer) return;

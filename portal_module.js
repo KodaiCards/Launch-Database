@@ -73,17 +73,29 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
   if (!client_id) return null;
 
   // Three-level rollup hierarchy: Client → Team → Service Area → (project).
+  //
+  // Team resolution rules — there are exactly THREE possible team folders
+  // under any client, never more:
+  //   - 'design'     → "Design Team" folder
+  //   - 'permitting' → "Permitting Team" folder
+  //   - 'both' or NULL or anything else → "Shared / Other" folder
+  // Importantly, 'both' collapses to 'shared'. The reason: the user wants
+  // ONE Shared folder per client that holds ONLY projects whose jobs are
+  // explicitly cross-team or unassigned. Without this collapse, a project
+  // with team='both' would create a separate "Shared (Design + Permitting)"
+  // folder distinct from a project with team=NULL — visible to the user as
+  // duplicate-looking team folders. By normalizing to 'shared', the rollup_key
+  // is always one of three values, so findOrCreateRollup returns the same
+  // folder for every project that should share it.
+  //
   // Service Area resolution:
-  //   - If concentrator_id is provided (PSC clients), look up the concentrator's
-  //     area_name and use that. The rollup_key is the concentrator UUID, so
-  //     two projects with the same area_name but different concentrators stay
-  //     distinct folders.
-  //   - If concentrator_id is empty AND service_area_label is provided
-  //     (typically non-PSC clients with a free-text label), use the label
-  //     verbatim. The rollup_key is the lowercased label, so case-insensitive
-  //     matching de-dups "Buford" vs "buford" into one folder.
-  //   - If neither is provided, skip the Service Area level entirely — the
-  //     project goes directly under the Team folder.
+  //   - PSC clients: concentrator_id (looked up from WO# match) → folder named
+  //     after the concentrator's area_name. rollup_key = concentrator UUID.
+  //   - Non-PSC clients: service_area_label (free text) → folder named that
+  //     label. rollup_key = client_id|lowercased_label so case-insensitive
+  //     dedup happens but cross-client collisions are avoided.
+  //   - Neither provided → Service Area level skipped; project lands directly
+  //     under the Team folder.
 
   // 1) Client folder
   const cli = await pool.query('SELECT name FROM clients WHERE id = $1', [client_id]);
@@ -98,23 +110,30 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
     extras: { client_id }
   });
 
-  // 2) Team folder (always — derived from job's team field).
-  let teamName = 'shared';
+  // 2) Team folder — normalize anything that isn't 'design' or 'permitting'
+  // into 'shared'. This guarantees only three possible team folders per client.
+  let rawTeam = null;
   if (job_id) {
     const jr = await pool.query('SELECT team FROM jobs WHERE id = $1', [job_id]);
-    teamName = jr.rows[0]?.team || 'shared';
+    rawTeam = jr.rows[0]?.team || null;
   }
-  const teamLabel = ({
-    design:     'Design Team',
-    permitting: 'Permitting Team',
-    both:       'Shared (Design + Permitting)',
-    shared:     'Shared / Unassigned'
-  })[teamName] || 'Shared / Unassigned';
+  let teamKey, teamLabel;
+  if (rawTeam === 'design') {
+    teamKey = 'design';
+    teamLabel = 'Design Team';
+  } else if (rawTeam === 'permitting') {
+    teamKey = 'permitting';
+    teamLabel = 'Permitting Team';
+  } else {
+    // 'both', NULL, 'shared', or any unrecognized value all collapse here.
+    teamKey = 'shared';
+    teamLabel = 'Shared / Other';
+  }
 
   folder = await findOrCreateRollup(pool, {
     parent_id: folder,
     rollup_level: 'team',
-    rollup_key: teamName,
+    rollup_key: teamKey,
     name: teamLabel,
     extras: { client_id }
   });

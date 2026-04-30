@@ -2212,19 +2212,24 @@ app.post('/api/_admin/migrate-nesting', async (req, res) => {
       }
     }
 
-    // Cleanup pass: remove obsolete project_type rollup folders (we no longer
-    // create that level — Client → Team → Service Area is the new chain).
-    // Service area rollups are KEPT now (they're part of the new chain) so we
-    // only delete project_type orphans.
+    // Cleanup pass — delete any rollup folder that no longer has children.
+    // This catches:
+    //   - project_type rollups from the very first nesting attempt
+    //   - obsolete team rollups using the old labels ('Shared (Design + Permitting)',
+    //     'Shared / Unassigned') after the team-key collapse normalized everything
+    //     to 'design' / 'permitting' / 'shared'
+    //   - service_area rollups whose underlying projects moved away
+    //   - empty client rollups left after their last project moved
+    // Loop because deleting a leaf rollup can make its parent become empty too.
+    // Bound at 10 passes for safety.
     for (let pass = 0; pass < 10; pass++) {
       const { rows: deleted } = await pool.query(`
         DELETE FROM projects
         WHERE is_rollup = TRUE
-          AND rollup_level = 'project_type'
           AND NOT EXISTS (
             SELECT 1 FROM projects child WHERE child.parent_id = projects.id
           )
-        RETURNING id
+        RETURNING id, rollup_level, name
       `);
       if (deleted.length === 0) break;
       obsoleteRollupsRemoved += deleted.length;
