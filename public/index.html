@@ -1155,6 +1155,91 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </div>
 
 <!-- BUDGET MODAL -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="user-modal-title">New User</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('user-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="user-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username *</label>
+          <input type="text" id="user-username" placeholder="e.g. jsmith" autocapitalize="off" autocomplete="off">
+          <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Used for sign-in. Cannot contain spaces.</span>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="user-fullname" placeholder="e.g. Jane Smith">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="user-email" placeholder="optional">
+        </div>
+        <div class="form-group">
+          <label>Role *</label>
+          <select id="user-role">
+            <option value="admin">Admin (full access)</option>
+            <option value="design_manager">Design Manager (sees Design team data + revenue)</option>
+            <option value="permitting_manager">Permitting Manager (sees Permitting team data + revenue)</option>
+            <option value="design_engineer">Design Engineer (own hours only, no revenue)</option>
+            <option value="permitting_engineer">Permitting Engineer (own hours only, no revenue)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label id="user-password-label">Password *</label>
+          <input type="password" id="user-password" placeholder="min 6 characters" autocomplete="new-password">
+          <span class="form-hint" style="font-size:11px;color:var(--text-muted)" id="user-password-hint">Will be required at first sign-in. Tell the user their password — there's no email reset yet.</span>
+        </div>
+      </div>
+      <div class="form-row" id="user-active-row" style="display:none">
+        <div class="form-group">
+          <label><input type="checkbox" id="user-active" checked> Active</label>
+          <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Uncheck to deactivate (user can no longer sign in, but their history stays).</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL — for the current user to change their own password -->
+<div class="modal-overlay" id="change-password-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Change Password</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('change-password-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="cp-current" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="cp-new" autocomplete="new-password" placeholder="min 6 characters">
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="cp-confirm" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('change-password-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitChangePassword()"><i class="fa-solid fa-key"></i> Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET MODAL -->
 <div class="modal-overlay" id="budget-modal">
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
@@ -1409,6 +1494,16 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div id="clients-list-body" style="font-size:13px"></div>
       </div>
 
+      <!-- ── User Management ── -->
+      <div class="settings-section" style="margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-users-gear" style="margin-right:6px;color:var(--text-muted)"></i>Users &amp; Roles</h4>
+          <button class="btn btn-primary btn-sm" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Manage logins for everyone who accesses the system. Admins see everything; managers see their team's data; engineers see only their own time entries.</p>
+        <div id="users-list-body" style="font-size:13px"></div>
+      </div>
+
       <!-- ── Migration tools — once-per-data-state housekeeping ── -->
       <div class="settings-section" style="margin-top:24px">
         <h4 style="font-size:14px;font-weight:600;margin:0 0 4px 0"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px;color:var(--text-muted)"></i>Migration Tools</h4>
@@ -1512,9 +1607,25 @@ async function init() {
 }
 
 async function api(path, method='GET', body=null) {
-  const opts = { method, headers:{'Content-Type':'application/json'} };
+  const opts = {
+    method,
+    headers: {'Content-Type':'application/json'},
+    credentials: 'include',  // send cookies for JWT session
+  };
+  // Backup: also send token from sessionStorage in Authorization header.
+  // Useful when cookies are blocked by Cloudflare/browser settings.
+  try {
+    const tok = sessionStorage.getItem('lfs_token');
+    if (tok) opts.headers['Authorization'] = 'Bearer ' + tok;
+  } catch(e){}
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(path, opts);
+  if (r.status === 401) {
+    // Session expired or never existed. Bounce to login.
+    try { sessionStorage.removeItem('lfs_token'); } catch(e){}
+    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+    throw new Error('Session expired');
+  }
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
@@ -5829,6 +5940,246 @@ async function rejectRequest(id) {
 setInterval(refreshApprovalsBadge, 30000);
 // And on initial page load
 window.addEventListener('load', () => setTimeout(refreshApprovalsBadge, 1000));
+
+// ═══════════════════════════════════════════════════════════
+// AUTH — current user, login state, user management
+// ═══════════════════════════════════════════════════════════
+let currentUser = null;
+
+// Loads the current user from /api/auth/me. If not logged in (401), the
+// auth middleware on the server already redirected to /login for HTML pages,
+// so by the time this runs we're either logged in or running with the legacy
+// APP_PASSWORD (which sets HTTP Basic Auth, no JWT). In the legacy case
+// currentUser stays null and we treat the session as "admin" for backward
+// compat — anyone with the password could already see everything.
+async function loadCurrentUser() {
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    if (r.ok) {
+      currentUser = await r.json();
+      applyUserScopedUI();
+    } else {
+      currentUser = null;
+    }
+  } catch (e) { currentUser = null; }
+}
+
+// Toggle UI elements based on current user's role. Called once after auth/me.
+// Admin sees everything (default); managers and engineers get parts of the UI
+// hidden. The data filtering still happens server-side — this is just visual.
+function applyUserScopedUI() {
+  if (!currentUser) return;  // legacy basic-auth mode — show everything
+
+  // Inject a small "signed in as ..." pill into the header next to settings
+  const headerRight = document.querySelector('.header-right');
+  if (headerRight && !document.getElementById('user-pill')) {
+    const pill = document.createElement('div');
+    pill.id = 'user-pill';
+    pill.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);padding:0 8px;border-right:1px solid var(--gray-border);margin-right:6px;cursor:pointer';
+    pill.innerHTML = `<i class="fa-solid fa-user-circle" style="font-size:16px"></i><span><strong style="color:var(--text)">${esc(currentUser.full_name || currentUser.username)}</strong><br><span style="font-size:10px;text-transform:uppercase;letter-spacing:.04em">${currentUser.role.replace('_',' ')}</span></span>`;
+    pill.title = 'Click for account options';
+    pill.onclick = showAccountMenu;
+    headerRight.insertBefore(pill, headerRight.firstChild);
+  }
+
+  // Role-based view hiding. We hide nav-tabs by data-view attribute.
+  const role = currentUser.role;
+  const team = currentUser.team;
+
+  // Engineers: hide Revenue, Billing, Invoices nav tabs
+  if (role === 'design_engineer' || role === 'permitting_engineer') {
+    ['view-revenue', 'view-billing', 'view-invoices'].forEach(v => {
+      const tab = document.querySelector(`[data-view="${v.replace('view-','')}"]`);
+      if (tab) tab.style.display = 'none';
+    });
+  }
+
+  // Managers (non-admin): hide the Approvals badge button (admin-only review queue)
+  if (role !== 'admin') {
+    const approvalsBtn = document.getElementById('approvals-btn');
+    if (approvalsBtn) approvalsBtn.style.display = 'none';
+    // Also hide the user management section even if Settings is opened
+    document.querySelectorAll('.settings-section').forEach(s => {
+      if (s.querySelector('#users-list-body') || s.querySelector('#renest-result')) {
+        s.style.display = 'none';
+      }
+    });
+  }
+}
+
+function showAccountMenu() {
+  // Simple dropdown: change password / sign out
+  const existing = document.getElementById('account-menu');
+  if (existing) { existing.remove(); return; }
+  const menu = document.createElement('div');
+  menu.id = 'account-menu';
+  menu.style.cssText = 'position:absolute;top:55px;right:120px;background:var(--white);border:1px solid var(--gray-border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:6px;z-index:100;min-width:180px';
+  menu.innerHTML = `
+    <button class="btn btn-secondary btn-sm" style="width:100%;text-align:left;justify-content:flex-start;margin-bottom:4px" onclick="document.getElementById('account-menu').remove();openModal('change-password-modal')"><i class="fa-solid fa-key" style="margin-right:6px"></i>Change Password</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;text-align:left;justify-content:flex-start" onclick="signOut()"><i class="fa-solid fa-right-from-bracket" style="margin-right:6px"></i>Sign Out</button>
+  `;
+  document.body.appendChild(menu);
+  // Click outside to close
+  setTimeout(() => {
+    document.addEventListener('click', function close(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', close);
+      }
+    });
+  }, 50);
+}
+
+async function signOut() {
+  try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch(e){}
+  try { sessionStorage.removeItem('lfs_token'); } catch(e){}
+  window.location.href = '/login';
+}
+
+async function submitChangePassword() {
+  const cur = document.getElementById('cp-current').value;
+  const newp = document.getElementById('cp-new').value;
+  const conf = document.getElementById('cp-confirm').value;
+  if (!cur || !newp) return alert('Both passwords required');
+  if (newp !== conf) return alert('New passwords do not match');
+  if (newp.length < 6) return alert('New password must be at least 6 characters');
+  try {
+    const r = await fetch('/api/auth/change-password', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ current_password: cur, new_password: newp })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Change failed');
+    closeModal('change-password-modal');
+    document.getElementById('cp-current').value = '';
+    document.getElementById('cp-new').value = '';
+    document.getElementById('cp-confirm').value = '';
+    alert('Password updated.');
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// ─── User management (admin only) ──────────────────────────────────────────
+let usersCache = [];
+async function loadUsers() {
+  try {
+    usersCache = await api('/api/users');
+    renderUsersList();
+  } catch (e) {
+    // Non-admins get 403 — that's fine, just hide the list
+    const root = document.getElementById('users-list-body');
+    if (root) root.innerHTML = '';
+  }
+}
+
+function renderUsersList() {
+  const root = document.getElementById('users-list-body');
+  if (!root) return;
+  if (!usersCache.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No users yet.</div>';
+    return;
+  }
+  const ROLE_LABELS = {
+    admin: 'Admin', design_manager: 'Design Mgr', permitting_manager: 'Permit Mgr',
+    design_engineer: 'Design Eng', permitting_engineer: 'Permit Eng'
+  };
+  root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
+    <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
+      <th style="text-align:left;padding:6px 8px">Username</th>
+      <th style="text-align:left;padding:6px 8px">Full Name</th>
+      <th style="text-align:left;padding:6px 8px">Role</th>
+      <th style="text-align:left;padding:6px 8px">Last Login</th>
+      <th style="text-align:center;padding:6px 8px">Active</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${usersCache.map(u => {
+      const last = u.last_login ? new Date(u.last_login).toLocaleDateString() : '—';
+      return `<tr style="border-top:1px solid var(--gray-border);${u.active ? '' : 'opacity:0.55'}">
+        <td style="padding:6px 8px;font-family:monospace;font-weight:600">${esc(u.username)}</td>
+        <td style="padding:6px 8px">${esc(u.full_name || '—')}</td>
+        <td style="padding:6px 8px"><span class="badge" style="background:var(--primary-light);color:var(--primary);font-size:10px">${ROLE_LABELS[u.role] || u.role}</span></td>
+        <td style="padding:6px 8px;color:var(--text-muted);font-size:11px">${last}</td>
+        <td style="padding:6px 8px;text-align:center">${u.active ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '<i class="fa-solid fa-pause" style="color:var(--text-muted)"></i>'}</td>
+        <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+          <button class="btn btn-sm btn-secondary btn-icon" onclick="openEditUserModal('${u.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          ${currentUser && currentUser.id === u.id ? '' : `<button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deactivateUser('${u.id}','${esc(u.username)}')" title="Deactivate"><i class="fa-solid fa-ban"></i></button>`}
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function openCreateUserModal() {
+  document.getElementById('user-modal-title').textContent = 'New User';
+  document.getElementById('user-id').value = '';
+  document.getElementById('user-username').value = '';
+  document.getElementById('user-fullname').value = '';
+  document.getElementById('user-email').value = '';
+  document.getElementById('user-role').value = 'design_engineer';
+  document.getElementById('user-password').value = '';
+  document.getElementById('user-password-label').innerHTML = 'Password *';
+  document.getElementById('user-password').required = true;
+  document.getElementById('user-password-hint').textContent = 'Will be required at first sign-in. Tell the user their password — there\'s no email reset yet.';
+  document.getElementById('user-active-row').style.display = 'none';
+  openModal('user-modal');
+}
+
+function openEditUserModal(id) {
+  const u = usersCache.find(x => x.id === id);
+  if (!u) return;
+  document.getElementById('user-modal-title').textContent = 'Edit User: ' + u.username;
+  document.getElementById('user-id').value = u.id;
+  document.getElementById('user-username').value = u.username;
+  document.getElementById('user-fullname').value = u.full_name || '';
+  document.getElementById('user-email').value = u.email || '';
+  document.getElementById('user-role').value = u.role;
+  document.getElementById('user-password').value = '';
+  document.getElementById('user-password-label').innerHTML = 'New Password <span style="color:var(--text-muted);font-weight:400">(leave blank to keep current)</span>';
+  document.getElementById('user-password').required = false;
+  document.getElementById('user-password-hint').textContent = 'Only fill this in if you want to reset their password.';
+  document.getElementById('user-active').checked = !!u.active;
+  document.getElementById('user-active-row').style.display = '';
+  openModal('user-modal');
+}
+
+async function saveUser() {
+  const id = document.getElementById('user-id').value;
+  const username = document.getElementById('user-username').value.trim();
+  const password = document.getElementById('user-password').value;
+  const role = document.getElementById('user-role').value;
+  const full_name = document.getElementById('user-fullname').value.trim() || null;
+  const email = document.getElementById('user-email').value.trim() || null;
+  const active = document.getElementById('user-active').checked;
+  if (!username) return alert('Username is required');
+  if (/\s/.test(username)) return alert('Username cannot contain spaces');
+  if (!id && !password) return alert('Password is required for new users');
+  if (password && password.length < 6) return alert('Password must be at least 6 characters');
+  try {
+    if (id) {
+      const body = { username, role, full_name, email, active };
+      if (password) body.password = password;
+      await api('/api/users/' + id, 'PUT', body);
+    } else {
+      await api('/api/users', 'POST', { username, password, role, full_name, email });
+    }
+    closeModal('user-modal');
+    loadUsers();
+  } catch (e) { alert('Save failed: ' + e.message); }
+}
+
+async function deactivateUser(id, username) {
+  if (!confirm(`Deactivate user "${username}"?\n\nThey will no longer be able to sign in. Their history and time entries are preserved.`)) return;
+  try {
+    await api('/api/users/' + id, 'DELETE');
+    loadUsers();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// Load users when settings modal opens (admin only — silently fails for non-admin)
+window.addEventListener('load', () => {
+  loadCurrentUser().then(() => {
+    if (currentUser?.role === 'admin') loadUsers();
+  });
+});
 
 // ═══════════════════════════════════════════════════════════
 // AI CHAT

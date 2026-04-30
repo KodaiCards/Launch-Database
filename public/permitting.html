@@ -216,6 +216,10 @@ function toggleDarkMode(){
     <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" id="dm-toggle" title="Toggle dark mode">
       <i class="fa-solid fa-moon" id="dm-icon"></i>
     </button>
+    <div id="user-pill" style="display:none;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);padding:0 8px;border-right:1px solid var(--gray-border);margin-right:6px;cursor:pointer" onclick="signOut()" title="Click to sign out">
+      <i class="fa-solid fa-user-circle" style="font-size:14px"></i>
+      <span id="user-pill-text"></span>
+    </div>
     <button class="btn btn-secondary btn-sm" onclick="openSettings()" id="settings-btn" style="position:relative">
       <i class="fa-solid fa-gear"></i> Settings
       <span id="settings-pending-badge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 4px;background:var(--warning);color:#000;border-radius:9px;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--white);box-sizing:content-box">0</span>
@@ -522,7 +526,8 @@ function escUrl(s) { return encodeURIComponent(String(s||'')).replace(/%2F/g, '/
 function om(id){document.getElementById(id).classList.add('open')}
 function cm(id){document.getElementById(id).classList.remove('open')}
 async function api(p,m='GET',b=null){
-  const o={method:m,headers:{'Content-Type':'application/json'}};
+  const o={method:m,headers:{'Content-Type':'application/json'},credentials:'include'};
+  try{const tok=sessionStorage.getItem('lfs_token');if(tok)o.headers['Authorization']='Bearer '+tok;}catch(e){}
   if(b)o.body=JSON.stringify(b);
   const ctrl=new AbortController();
   const tid=setTimeout(()=>ctrl.abort(),15000);
@@ -530,6 +535,7 @@ async function api(p,m='GET',b=null){
     o.signal=ctrl.signal;
     const r=await fetch(p,o);
     clearTimeout(tid);
+    if(r.status===401){try{sessionStorage.removeItem('lfs_token');}catch(e){}window.location.href='/login?next='+encodeURIComponent(window.location.pathname);throw new Error('Session expired');}
     if(!r.ok){let msg=r.statusText;try{const j=await r.json();msg=j.error||msg}catch{};throw new Error(msg)}
     return r.json();
   }catch(e){
@@ -1211,6 +1217,31 @@ loadPotential();
 ensureCachesLoaded();
 refreshSettingsBadge();
 setInterval(refreshSettingsBadge, 30000);
+
+
+// ─── AUTH (portal-side) ──────────────────────────────────────────────────
+let currentUser = null;
+async function loadCurrentUser() {
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    if (r.ok) {
+      currentUser = await r.json();
+      const pill = document.getElementById('user-pill');
+      const pillText = document.getElementById('user-pill-text');
+      if (pill && pillText) {
+        pillText.innerHTML = `<strong style="color:var(--text)">${esc(currentUser.full_name || currentUser.username)}</strong> · sign out`;
+        pill.style.display = 'flex';
+      }
+    }
+  } catch(e){}
+}
+async function signOut() {
+  if (!confirm('Sign out?')) return;
+  try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch(e){}
+  try { sessionStorage.removeItem('lfs_token'); } catch(e){}
+  window.location.href = '/login';
+}
+window.addEventListener('load', loadCurrentUser);
 
 // ─── AUTO-POLLING ────────────────────────────────────────────────────────────
 // Refreshes the active view and any open modal data every POLL_MS while the

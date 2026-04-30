@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — Launch Fiber Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --gray-light:#F5F7FA;--gray-border:#DEE2E6;--white:#FFF;
+  --success:#28A745;--warning:#FFC107;--danger:#DC3545;
+  --text:#212529;--text-muted:#6C757D;--font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --gray-light:#1A1F26;--gray-border:#2D3540;--white:#242B36;
+  --text:#E8EAED;--text-muted:#9BA1A8;--primary-light:#1E3A5C;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font);background:var(--gray-light);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.login-card{
+  background:var(--white);border:1px solid var(--gray-border);border-radius:14px;
+  padding:32px;max-width:420px;width:100%;
+  box-shadow:0 4px 24px rgba(0,0,0,.06);
+}
+.logo{display:flex;justify-content:center;margin-bottom:20px}
+.logo img{height:60px;object-fit:contain}
+html[data-theme="dark"] .logo img{filter:brightness(0) invert(1) opacity(0.92)}
+h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:24px}
+label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:6px}
+input{
+  width:100%;padding:10px 12px;font-size:14px;font-family:inherit;
+  background:var(--white);color:var(--text);
+  border:1px solid var(--gray-border);border-radius:8px;
+}
+input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.field{margin-bottom:16px}
+.btn-primary{
+  width:100%;padding:11px;font-size:14px;font-weight:600;font-family:inherit;
+  background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;
+  transition:background .15s;
+}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.error{
+  background:#FEE;color:var(--danger);border:1px solid #FCC;
+  padding:9px 12px;border-radius:8px;font-size:13px;margin-bottom:16px;
+  display:none;
+}
+html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8B4BD}
+.error.show{display:block}
+.footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:18px}
+.theme-toggle{
+  position:absolute;top:16px;right:16px;background:none;border:1px solid var(--gray-border);
+  width:36px;height:36px;border-radius:8px;cursor:pointer;color:var(--text-muted);
+  display:flex;align-items:center;justify-content:center;
+}
+.theme-toggle:hover{border-color:var(--primary);color:var(--primary)}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <i class="fa-solid fa-moon" id="dm-icon"></i>
+</button>
+
+<div class="login-card">
+  <div class="logo">
+    <!-- Logo gets injected here on load via fetch — keeps the file small. -->
+    <i class="fa-solid fa-bolt" style="font-size:48px;color:var(--primary)"></i>
+  </div>
+  <h1>Launch Fiber Services</h1>
+  <p class="subtitle">Sign in to continue</p>
+
+  <div class="error" id="error-msg"></div>
+
+  <form id="login-form" onsubmit="return doLogin(event)">
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="btn-primary" id="submit-btn">
+      <i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i>Sign in
+    </button>
+  </form>
+
+  <p class="footer" id="footer-text">Need access? Contact your administrator.</p>
+</div>
+
+<script>
+// Apply saved theme before paint
+(function(){
+  try { if (localStorage.getItem('lfs-dark-mode') === '1') document.documentElement.setAttribute('data-theme','dark'); } catch(e){}
+  const icon = document.getElementById('dm-icon');
+  if (document.documentElement.getAttribute('data-theme') === 'dark' && icon) icon.className = 'fa-solid fa-sun';
+})();
+function toggleDark(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = !isDark;
+  document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+  try { localStorage.setItem('lfs-dark-mode', next ? '1' : '0'); } catch(e){}
+  const icon = document.getElementById('dm-icon');
+  if (icon) icon.className = next ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+// Where to redirect after successful login. The login page lives on each
+// service (admin / design / permitting), so "after login go to /" sends the
+// user to that service's main page. The ?next= query param overrides this
+// for cases like "you tried to access /something but weren't logged in".
+function getRedirectTarget() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('next') || '/';
+}
+
+async function doLogin(ev){
+  ev.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errEl = document.getElementById('error-msg');
+  const btn = document.getElementById('submit-btn');
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i>Signing in...';
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include',  // ensure cookie is set + sent
+      body: JSON.stringify({ username, password })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Login failed');
+    // Cookie was set server-side; also stash the token in sessionStorage as
+    // a backup for environments that block cookies (some Cloudflare setups).
+    if (data.token) {
+      try { sessionStorage.setItem('lfs_token', data.token); } catch(e){}
+    }
+    window.location.href = getRedirectTarget();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i>Sign in';
+  }
+  return false;
+}
+</script>
+
+</body>
+</html>

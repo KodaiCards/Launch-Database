@@ -64,23 +64,64 @@ if (PORTAL_MODE) {
 // routes first-match, so portal_module's overrides win in portal mode.
 installPortalExtensions(app, pool, PORTAL_MODE);
 
-// ─── Password Protection ─────────────────────────────────────────────────────
-if (process.env.APP_PASSWORD) {
-  const realm = PORTAL_MODE ? `Launch Fiber - ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}` : 'Launch Fiber Services';
-  app.use((req, res, next) => {
+// ─── Authentication (JWT-based) ──────────────────────────────────────────────
+// auth.js bootstraps users table, exposes /api/auth/* routes, and provides
+// an authMiddleware that decodes the JWT cookie or Authorization header into
+// req.user. Login page lives at /login (or /login.html).
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin } = require('./auth');
+installAuthRoutes(app, pool);
+
+// Public routes (no login needed): /login page itself, /api/auth/login,
+// any /api/auth/me check, and static assets needed by the login page.
+// Everything else requires a logged-in user.
+//
+// Transition support: if APP_PASSWORD env var is set, accept HTTP Basic Auth
+// as a fallback. This keeps existing portals working during rollout — once
+// every user has a real account, unset APP_PASSWORD to enforce JWT-only.
+const APP_PASSWORD = process.env.APP_PASSWORD;
+function pageRequiresAuth(reqPath) {
+  // Allow login page, auth API, and a few static asset paths
+  if (reqPath === '/login' || reqPath === '/login.html') return false;
+  if (reqPath.startsWith('/api/auth/')) return false;
+  if (reqPath.startsWith('/uploads/')) return false;  // file serving handles its own auth-check
+  // Block everything else (HTML pages and API endpoints) until logged in
+  return true;
+}
+
+app.use((req, res, next) => {
+  // Already authenticated via JWT cookie/header? Pass.
+  if (req.user) return next();
+
+  // Public path? Pass.
+  if (!pageRequiresAuth(req.path)) return next();
+
+  // Transition: HTTP Basic Auth fallback if APP_PASSWORD is set.
+  // This keeps the legacy portal credentials working during user rollout.
+  if (APP_PASSWORD) {
     const auth = req.headers.authorization;
     if (auth) {
       const [scheme, encoded] = auth.split(' ');
       if (scheme === 'Basic') {
         const [user, pass] = Buffer.from(encoded, 'base64').toString().split(':');
-        if (pass === process.env.APP_PASSWORD) return next();
+        if (pass === APP_PASSWORD) return next();
       }
     }
-    res.set('WWW-Authenticate', `Basic realm="${realm}"`);
-    res.status(401).send('Authentication required');
-  });
-  console.log('✓ Password protection enabled');
-}
+    // No basic auth header. For HTML pages, redirect to /login;
+    // for API endpoints, return 401 challenge so the browser prompts.
+    if (req.path.startsWith('/api/')) {
+      const realm = PORTAL_MODE ? `Launch Fiber - ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}` : 'Launch Fiber Services';
+      res.set('WWW-Authenticate', `Basic realm="${realm}"`);
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    return res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
+  }
+
+  // No basic-auth fallback. JWT-only mode.
+  if (req.path.startsWith('/api/')) {
+    return res.status(401).json({ error: 'Login required' });
+  }
+  return res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
+});
 
 // ─── Portal endpoint restrictions ────────────────────────────────────────────
 // Must be BEFORE express.static so blocked endpoints return 403 before static files
@@ -151,6 +192,14 @@ if (PORTAL_MODE) {
     console.log('✓ Portal will route file uploads + /uploads/* PDFs to:', ADMIN_API_BASE);
   }
 }
+
+// Login page — public, no auth required (handled by the public-path check above).
+// Looks in public/ first (production layout), then root (dev layout).
+app.get(['/login', '/login.html'], (req, res) => {
+  const inPublic = path.join(__dirname, 'public', 'login.html');
+  const inRoot = path.join(__dirname, 'login.html');
+  res.sendFile(fs.existsSync(inPublic) ? inPublic : inRoot);
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -2167,7 +2216,7 @@ const { ensureRollupChain } = require('./portal_module');
 // team rollup we'd assign).
 //
 // Returns a JSON summary with counts so you can see what moved.
-app.post('/api/_admin/migrate-nesting', async (req, res) => {
+app.post('/api/_admin/migrate-nesting', requireAdmin, async (req, res) => {
   let processed = 0, moved = 0, skipped = 0, failed = 0;
   let obsoleteRollupsRemoved = 0;
   const errors = [];
@@ -2257,7 +2306,7 @@ app.post('/api/_admin/migrate-nesting', async (req, res) => {
 // surfaces the orphans. POSTing with { project_id, file_path } adopts a single
 // orphan file by inserting a permit_documents row for it. Use the GET first
 // to see what's available, then POST one per file you want to attach.
-app.get('/api/_admin/orphan-files', async (req, res) => {
+app.get('/api/_admin/orphan-files', requireAdmin, async (req, res) => {
   try {
     const onDisk = fs.readdirSync(UPLOAD_DIR);
     const { rows: dbDocs } = await pool.query(
@@ -2292,7 +2341,7 @@ app.get('/api/_admin/orphan-files', async (req, res) => {
   }
 });
 
-app.post('/api/_admin/adopt-orphan', async (req, res) => {
+app.post('/api/_admin/adopt-orphan', requireAdmin, async (req, res) => {
   const { project_id, file_path, doc_type, uploaded_by } = req.body;
   if (!project_id || !file_path) {
     return res.status(400).json({ error: 'project_id and file_path required' });
@@ -2331,7 +2380,7 @@ app.post('/api/_admin/adopt-orphan', async (req, res) => {
 // when files were uploaded for a specific project but the DB rows got lost.
 // More commonly, use /api/_admin/orphan-files + targeted POSTs to /adopt-orphan
 // for each file individually.
-app.post('/api/_admin/adopt-orphans-bulk', async (req, res) => {
+app.post('/api/_admin/adopt-orphans-bulk', requireAdmin, async (req, res) => {
   const { project_id, doc_type, uploaded_by } = req.body;
   if (!project_id) return res.status(400).json({ error: 'project_id required' });
   try {
@@ -2742,7 +2791,7 @@ app.put('/api/design/:projectId/advance', async (req, res) => {
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.get('/api/dashboard', async (req, res) => {
+app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
   try {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -4725,6 +4774,28 @@ const SPA_FILE = PORTAL_MODE === 'permitting' ? 'permitting.html'
                : 'index.html';
 
 app.get('*', (req, res) => {
+  // Admin-only enforcement: when the admin HTML is being served (no PORTAL_MODE),
+  // only allow logged-in users with role='admin'. Logged-in non-admins get
+  // redirected to a portal-style 403 page that explains they don't have
+  // admin access. Anyone not logged in was already caught by the public-
+  // path middleware above.
+  if (!PORTAL_MODE && req.user && req.user.role !== 'admin') {
+    return res.status(403).send(`
+      <!DOCTYPE html><html><head><title>Access Denied</title>
+      <style>body{font-family:'Inter',sans-serif;background:#F5F7FA;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}
+      .card{background:#fff;border:1px solid #DEE2E6;border-radius:14px;padding:32px;max-width:420px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+      h1{font-size:22px;color:#DC3545;margin:0 0 12px 0}
+      p{color:#6C757D;font-size:14px;line-height:1.5;margin:0 0 16px 0}
+      a{color:#1B5FA0;text-decoration:none;font-weight:500}
+      a:hover{text-decoration:underline}</style></head><body>
+      <div class="card">
+        <h1>Admin Access Required</h1>
+        <p>You're signed in as <strong>${req.user.username}</strong> with role <strong>${req.user.role}</strong>.</p>
+        <p>This page requires the <strong>admin</strong> role. Ask your administrator if you need broader access.</p>
+        <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
+      </div></body></html>
+    `);
+  }
   res.sendFile(path.join(__dirname, 'public', SPA_FILE));
 });
 
@@ -4848,6 +4919,7 @@ async function bootstrapV3Schema() {
 async function start() {
   await initSchema();
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
+  await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
   // Extend timeouts to 30 minutes — needed for multi-GB uploads. The
   // platform's load balancer (Railway) may still cap at 5 minutes, but
   // setting these here at least removes Node as the bottleneck.
