@@ -488,3 +488,42 @@ BEGIN
     i := i + 1;
   END LOOP;
 END $$;
+
+-- ─────────────────────────────────────────
+-- BILLING CADENCE — distinguishes one-time projects (permitting, fixed-fee
+-- design jobs) from ongoing monthly projects (Inspection contracts that bill
+-- hours every month). Drives:
+--   • the Billing tab queue (one row per unbilled month for monthly projects,
+--     vs one row total for one-time projects)
+--   • whether billing closes the project (one_time → status=billed, monthly
+--     → project stays active and reappears next month)
+--   • CSV importer warns when adding hours to a month that's already invoiced
+-- ─────────────────────────────────────────
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS billing_cadence VARCHAR(20) DEFAULT 'one_time';
+
+-- Backfill: any project whose Job is "Inspection" gets cadence='monthly'.
+-- Done idempotently — re-running the schema won't blow away manual changes
+-- because we only update rows that still have the default value.
+UPDATE projects p SET billing_cadence = 'monthly'
+  FROM jobs j
+  WHERE p.job_id = j.id
+    AND j.name = 'Inspection'
+    AND (p.billing_cadence IS NULL OR p.billing_cadence = 'one_time');
+
+-- ─────────────────────────────────────────
+-- PROJECTED REVENUE — the project's contract value / projected total earnings.
+-- For footage projects this defaults to expected_revenue (already computed).
+-- For hourly projects it's user-entered (nullable; not required).
+-- IMPORTANT: rollup uses leaves only. Containers don't carry their own
+-- projected_revenue; their displayed total is SUM(descendant_leaves). That
+-- prevents double counting when both a parent and its leaves have a value.
+-- ─────────────────────────────────────────
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS projected_revenue NUMERIC(14,2);
+
+-- Backfill footage projects: copy their already-calculated expected_revenue.
+-- Hourly projects stay NULL until the user sets a value manually.
+UPDATE projects
+  SET projected_revenue = expected_revenue
+  WHERE projected_revenue IS NULL
+    AND billing_type = 'footage'
+    AND expected_revenue IS NOT NULL;

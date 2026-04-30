@@ -502,7 +502,8 @@ app.post('/api/projects', async (req, res) => {
     project_type, project_type_id, job_id,
     status = 'active', billing_type, billing_rate,
     footage, start_date, notes, parent_id, budget_code_id, concentrator_id,
-    permit_manager
+    permit_manager,
+    billing_cadence, projected_revenue
   } = req.body;
 
   try {
@@ -512,10 +513,12 @@ app.post('/api/projects', async (req, res) => {
     let isPermitting = project_type === 'permitting';
     let effectiveBillingType = billing_type;
     let effectiveRate = billing_rate;
+    let jobName = null;
     if (job_id) {
       const jr = await pool.query('SELECT * FROM jobs WHERE id = $1', [job_id]);
       const j = jr.rows[0];
       if (j) {
+        jobName = j.name;
         if (j.is_permitting) {
           isPermitting = true;
           effectiveBillingType = 'footage';
@@ -529,9 +532,20 @@ app.post('/api/projects', async (req, res) => {
       }
     }
 
+    // Cadence: caller can set explicitly, otherwise default to 'monthly' for
+    // Inspection jobs (matches the schema backfill rule), 'one_time' otherwise.
+    const effectiveCadence = billing_cadence
+      || (jobName === 'Inspection' ? 'monthly' : 'one_time');
+
     // For the financials calc, treat is_permitting as the trigger
     const finType = isPermitting ? 'permitting' : (project_type || 'other');
     const fin = calcProjectFinancials(finType, effectiveRate, footage);
+
+    // Projected revenue: caller's value if provided, else fall back to the
+    // calculated expected_revenue (the auto-derived value for footage projects).
+    const effectiveProjected = projected_revenue !== undefined && projected_revenue !== null && projected_revenue !== ''
+      ? parseFloat(projected_revenue)
+      : (fin.expectedRevenue != null ? fin.expectedRevenue : null);
 
     const { rows } = await pool.query(`
       INSERT INTO projects (
@@ -540,8 +554,8 @@ app.post('/api/projects', async (req, res) => {
         status, billing_type, billing_rate,
         footage, miles, expected_hours, expected_revenue,
         start_date, notes, parent_id, budget_code_id, concentrator_id,
-        permitting_hours_per_mile
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+        permitting_hours_per_mile, billing_cadence, projected_revenue
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
       RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
@@ -549,7 +563,7 @@ app.post('/api/projects', async (req, res) => {
       status, effectiveBillingType, effectiveRate || null,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
       start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
-      fin.permittingHoursPerMile || null
+      fin.permittingHoursPerMile || null, effectiveCadence, effectiveProjected
     ]);
 
     // Auto-create permit stage for permitting projects
@@ -569,7 +583,8 @@ app.put('/api/projects/:id', async (req, res) => {
     name, client_id, contract_id, work_order_number,
     project_type, project_type_id, job_id,
     status, billing_type, billing_rate,
-    footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id
+    footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id,
+    billing_cadence, projected_revenue
   } = req.body;
 
   try {
@@ -591,10 +606,16 @@ app.put('/api/projects/:id', async (req, res) => {
 
     // For permitting, reuse the random hours-per-mile factor stored at create-time
     // so editing footage doesn't generate a new random rate every save.
-    const existing = await pool.query('SELECT permitting_hours_per_mile FROM projects WHERE id=$1', [req.params.id]);
+    const existing = await pool.query('SELECT permitting_hours_per_mile, billing_cadence, projected_revenue FROM projects WHERE id=$1', [req.params.id]);
     const existingHpm = existing.rows[0]?.permitting_hours_per_mile;
     const finType = isPermitting ? 'permitting' : (project_type || 'other');
     const fin = calcProjectFinancials(finType, effectiveRate, footage, existingHpm);
+
+    // Cadence + projected_revenue: if not in payload, preserve existing values.
+    const newCadence = billing_cadence !== undefined ? billing_cadence : existing.rows[0]?.billing_cadence;
+    const newProjected = projected_revenue !== undefined
+      ? (projected_revenue === null || projected_revenue === '' ? null : parseFloat(projected_revenue))
+      : existing.rows[0]?.projected_revenue;
 
     const { rows } = await pool.query(`
       UPDATE projects SET
@@ -604,8 +625,9 @@ app.put('/api/projects/:id', async (req, res) => {
         footage=$11, miles=$12, expected_hours=$13, expected_revenue=$14,
         start_date=$15, completed_date=$16, billed_date=$17,
         notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=$21,
-        permitting_hours_per_mile=$22
-      WHERE id=$23 RETURNING *
+        permitting_hours_per_mile=$22,
+        billing_cadence=$23, projected_revenue=$24
+      WHERE id=$25 RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, project_type_id || null, job_id || null,
@@ -614,6 +636,7 @@ app.put('/api/projects/:id', async (req, res) => {
       start_date || null, completed_date || null, billed_date || null,
       notes, parent_id || null, budget_code_id || null, concentrator_id || null,
       fin.permittingHoursPerMile || existingHpm || null,
+      newCadence, newProjected,
       req.params.id
     ]);
     res.json(rows[0]);
@@ -1186,6 +1209,50 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
 
     // Stage data so /commit doesn't need to re-parse the file
     const stage_id = uuidv4();
+    // ── Already-billed-month conflict detection ──
+    // For each unique (project_id, year, month) in the staged data, check
+    // whether an invoice line item already exists with a matching date.
+    // If so, importing more hours into that month risks under/over-billing.
+    // We tag the offending rows so the UI can surface a clear warning, but
+    // we let the user proceed if they're knowingly correcting something.
+    const periodKeys = new Set();
+    for (const r of validRows) {
+      if (r.project_id && r.date) {
+        const [y, mo] = r.date.split('-');
+        periodKeys.add(`${r.project_id}|${parseInt(y)}|${parseInt(mo)}`);
+      }
+    }
+    const billedPeriods = new Set();
+    if (periodKeys.size > 0) {
+      // One-shot lookup: pull all (project_id, year, month) combos with invoices
+      const projectIdsInRows = [...new Set(validRows.filter(r => r.project_id).map(r => r.project_id))];
+      if (projectIdsInRows.length > 0) {
+        const billedR = await pool.query(`
+          SELECT DISTINCT ii.project_id,
+                 EXTRACT(YEAR FROM inv.invoice_date)::int AS y,
+                 EXTRACT(MONTH FROM inv.invoice_date)::int AS mo
+          FROM invoice_items ii
+          JOIN invoices inv ON inv.id = ii.invoice_id
+          WHERE ii.project_id = ANY($1::uuid[])
+        `, [projectIdsInRows]);
+        billedR.rows.forEach(b => {
+          billedPeriods.add(`${b.project_id}|${b.y}|${b.mo}`);
+        });
+      }
+    }
+    // Tag rows that hit a billed period
+    let billedConflictCount = 0;
+    for (const r of validRows) {
+      r.already_billed_period = false;
+      if (r.project_id && r.date) {
+        const [y, mo] = r.date.split('-').map(Number);
+        if (billedPeriods.has(`${r.project_id}|${y}|${mo}`)) {
+          r.already_billed_period = true;
+          billedConflictCount++;
+        }
+      }
+    }
+
     csvStage.set(stage_id, {
       validRows,
       expiresAt: Date.now() + CSV_STAGE_TTL_MS
@@ -1205,6 +1272,7 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
         ready_to_import: validRows.filter(r => r.staff_known && r.wo_known).length,
         rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
         rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
+        rows_in_billed_periods: billedConflictCount,
         invalid: invalidRows.length
       },
       unknown_staff: [...unknownStaff.values()].map(name => ({
@@ -1297,7 +1365,7 @@ app.post('/api/hours/csv-edit-row', async (req, res) => {
 });
 
 app.post('/api/hours/csv-commit', async (req, res) => {
-  const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true, apply_job_title = null } = req.body;
+  const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true, apply_job_title = null, skip_billed_period_rows = false } = req.body;
   if (!stage_id) return res.status(400).json({ error: 'Missing stage_id' });
   const staged = csvStage.get(stage_id);
   if (!staged) return res.status(400).json({ error: 'Staged data expired or not found. Re-validate the file.' });
@@ -1330,16 +1398,20 @@ app.post('/api/hours/csv-commit', async (req, res) => {
 
     // 2. Walk staged rows. Insert ones that have a project_id AND a resolvable staff_id.
     //    Skip rows where WO is unknown (front-end already required acknowledgment).
+    //    If skip_billed_period_rows is set, also skip rows that hit an already-billed
+    //    month (the user opted to NOT import these to avoid double-billing).
     const importBatch = `csv_import_${Date.now()}`;
     let inserted = 0;
     let skipped_unknown_wo = 0;
     let skipped_unresolved_staff = 0;
+    let skipped_billed_period = 0;
     const projectIds = new Set();
 
     for (const r of staged.validRows) {
       if (!r.wo_known) { skipped_unknown_wo++; continue; }
       const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
       if (!staffId) { skipped_unresolved_staff++; continue; }
+      if (skip_billed_period_rows && r.already_billed_period) { skipped_billed_period++; continue; }
 
       // Final job title: row's existing value (which may already be inferred
       // from the filename) → operator-supplied apply_job_title → null
@@ -1367,6 +1439,7 @@ app.post('/api/hours/csv-commit', async (req, res) => {
       inserted,
       skipped_unknown_wo,
       skipped_unresolved_staff,
+      skipped_billed_period,
       created_staff: createdStaff,
       affected_projects: projectIds.size
     });
@@ -1535,6 +1608,56 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       ORDER BY year DESC, month DESC
     `, [subtreeIds]);
 
+    // Per-month breakdown for the popup table: hours, earned, and whether the
+    // month has been invoiced. Earned uses each entry's leaf billing_rate so
+    // mixed-job containers compute correctly. The billed flag fires when ANY
+    // project in this subtree has an invoice_items row dated within that month.
+    const monthlyBreakdownR = await pool.query(`
+      WITH agg AS (
+        SELECT EXTRACT(YEAR FROM te.entry_date)::int AS y,
+               EXTRACT(MONTH FROM te.entry_date)::int AS mo,
+               SUM(te.hours)::float AS hours,
+               SUM(te.hours * COALESCE(pr.billing_rate, 0))::float AS earned
+        FROM time_entries te
+        JOIN projects pr ON pr.id = te.project_id
+        WHERE te.project_id = ANY($1::uuid[])
+          AND COALESCE(pr.billing_type, 'hourly') = 'hourly'
+        GROUP BY y, mo
+      ),
+      billed AS (
+        SELECT EXTRACT(YEAR FROM inv.invoice_date)::int AS y,
+               EXTRACT(MONTH FROM inv.invoice_date)::int AS mo,
+               SUM(ii.amount)::float AS billed_amount,
+               COUNT(DISTINCT inv.id)::int AS invoice_count
+        FROM invoice_items ii
+        JOIN invoices inv ON inv.id = ii.invoice_id
+        WHERE ii.project_id = ANY($1::uuid[])
+        GROUP BY y, mo
+      )
+      SELECT a.y AS year, a.mo AS month, a.hours, a.earned,
+             COALESCE(b.billed_amount, 0) AS billed_amount,
+             COALESCE(b.invoice_count, 0) AS invoice_count,
+             (b.invoice_count IS NOT NULL AND b.invoice_count > 0) AS is_billed
+      FROM agg a
+      LEFT JOIN billed b ON a.y = b.y AND a.mo = b.mo
+      ORDER BY a.y DESC, a.mo DESC
+    `, [subtreeIds]);
+
+    // Projected revenue rollup: sum projected_revenue from LEAVES only in the
+    // subtree (containers ignored to prevent double-count). Plus subtract billed
+    // and earned so we can show "remaining" / "left to earn".
+    const projectedR = await pool.query(`
+      WITH leaves AS (
+        SELECT p.id, p.projected_revenue
+        FROM projects p
+        WHERE p.id = ANY($1::uuid[])
+          AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+      )
+      SELECT COALESCE(SUM(projected_revenue), 0)::float AS projected_total,
+             COUNT(*) FILTER (WHERE projected_revenue IS NOT NULL)::int AS projected_count
+      FROM leaves
+    `, [subtreeIds]);
+
     // Lifetime totals — total hours and earned regardless of period filter.
     const lifetimeR = await pool.query(`
       SELECT COALESCE(SUM(te.hours), 0)::float AS total_hours,
@@ -1565,6 +1688,8 @@ app.get('/api/projects/:id/detail', async (req, res) => {
       children: childrenR.rows,
       invoices: invoicesR.rows,
       months_with_activity: periodsR.rows,
+      monthly_breakdown: monthlyBreakdownR.rows,
+      projected: projectedR.rows[0],
       lifetime: lifetimeR.rows[0],
       subtree_size: subtreeIds.length,
       active_billable_count: activeBillableCount
@@ -2241,20 +2366,65 @@ app.get('/api/revenue/details', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/revenue/projected-total', async (req, res) => {
+  try {
+    // Total = sum of projected_revenue from LEAVES only (no double-counting).
+    // Also returns count of leaves with a projected value vs. without, so the
+    // UI can show "X of Y projects" coverage if needed.
+    const totalR = await pool.query(`
+      SELECT
+        COALESCE(SUM(projected_revenue), 0)::float AS total,
+        COUNT(*) FILTER (WHERE projected_revenue IS NOT NULL)::int AS with_projected,
+        COUNT(*) FILTER (WHERE projected_revenue IS NULL)::int AS without_projected
+      FROM projects p
+      WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        AND p.status IN ('active', 'completed')
+    `);
+    // Per-client breakdown
+    const byClientR = await pool.query(`
+      SELECT cl.name AS client_name,
+             COALESCE(SUM(p.projected_revenue), 0)::float AS projected
+      FROM projects p
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        AND p.status IN ('active', 'completed')
+        AND p.projected_revenue IS NOT NULL
+      GROUP BY cl.name
+      ORDER BY projected DESC
+    `);
+    res.json({
+      total: parseFloat(totalR.rows[0].total) || 0,
+      with_projected: totalR.rows[0].with_projected,
+      without_projected: totalR.rows[0].without_projected,
+      by_client: byClientR.rows
+    });
+  } catch (e) {
+    console.error('projected-total error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/revenue/unbilled', async (req, res) => {
   try {
-    const { rows } = await pool.query(`
-      SELECT p.*,
+    // ── ONE-TIME projects: one row per project (existing logic) ──
+    // Filter out monthly-cadence projects since they're handled below.
+    const oneTimeR = await pool.query(`
+      SELECT p.id, p.id::text as queue_key, p.name, p.project_type, p.status,
+        p.billing_type, p.billing_rate, p.footage, p.expected_revenue,
+        p.actual_hours, p.work_order_number, p.parent_id, p.billing_cadence,
+        p.bill_hold_until,
         cl.name as client_name,
         co.contract_number,
         con.area_name as concentrator_area,
+        pp.name as parent_name,
+        gp.name as grandparent_name,
+        NULL::int as period_year, NULL::int as period_month,
         COALESCE(SUM(te.hours),0) as logged_hours,
         CASE
           WHEN p.billing_type = 'hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
           WHEN p.billing_type = 'footage' THEN p.expected_revenue
           ELSE 0
         END as earned_amount,
-        -- Categorize for the UI: footage finals vs ongoing hourly
         CASE
           WHEN p.status = 'completed' THEN 'completed'
           WHEN p.billing_type = 'hourly' AND p.status = 'active' THEN 'in_progress'
@@ -2265,28 +2435,85 @@ app.get('/api/revenue/unbilled', async (req, res) => {
       LEFT JOIN contracts co ON co.id = p.contract_id
       LEFT JOIN time_entries te ON te.project_id = p.id
       LEFT JOIN concentrators con ON con.id = p.concentrator_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
+      LEFT JOIN projects gp ON gp.id = pp.parent_id
       WHERE p.billed_date IS NULL
+        AND (p.billing_cadence IS NULL OR p.billing_cadence = 'one_time')
         AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
         AND (
-          -- Completed projects that haven't been billed yet (existing logic)
           p.status = 'completed'
-          OR
-          -- Active hourly projects with at least one hour logged.
-          -- These are "in-progress" inspections/RE work that can be billed
-          -- for the period covered, with a new follow-on project for ongoing work.
-          (p.status = 'active' AND p.billing_type = 'hourly' AND EXISTS (
+          OR (p.status = 'active' AND p.billing_type = 'hourly' AND EXISTS (
             SELECT 1 FROM time_entries WHERE project_id = p.id
           ))
         )
-      GROUP BY p.id, cl.name, co.contract_number, con.area_name
+      GROUP BY p.id, cl.name, co.contract_number, con.area_name, pp.name, gp.name
       HAVING (
         p.billing_type = 'footage'
         OR COALESCE(SUM(te.hours),0) > 0
       )
-      ORDER BY cl.name, p.project_type, p.completed_date NULLS LAST
     `);
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+
+    // ── MONTHLY projects: one row per (project, year, month) that has hours
+    // but no matching invoice line item dated in that period.
+    const monthlyR = await pool.query(`
+      WITH project_months AS (
+        SELECT
+          p.id as project_id,
+          EXTRACT(YEAR FROM te.entry_date)::int AS y,
+          EXTRACT(MONTH FROM te.entry_date)::int AS mo,
+          SUM(te.hours)::float AS hrs
+        FROM projects p
+        JOIN time_entries te ON te.project_id = p.id
+        WHERE p.billing_cadence = 'monthly'
+          AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        GROUP BY p.id, y, mo
+      )
+      SELECT p.id, (p.id::text || '-' || pm.y::text || '-' || pm.mo::text) as queue_key,
+        p.name, p.project_type, p.status,
+        p.billing_type, p.billing_rate, p.footage, p.expected_revenue,
+        p.actual_hours, p.work_order_number, p.parent_id, p.billing_cadence,
+        p.bill_hold_until,
+        cl.name as client_name, co.contract_number,
+        con.area_name as concentrator_area,
+        pp.name as parent_name, gp.name as grandparent_name,
+        pm.y as period_year, pm.mo as period_month,
+        pm.hrs as logged_hours,
+        pm.hrs * p.billing_rate as earned_amount,
+        'monthly' as bill_kind
+      FROM project_months pm
+      JOIN projects p ON p.id = pm.project_id
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN contracts co ON co.id = p.contract_id
+      LEFT JOIN concentrators con ON con.id = p.concentrator_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
+      LEFT JOIN projects gp ON gp.id = pp.parent_id
+      WHERE NOT EXISTS (
+        SELECT 1 FROM invoice_items ii
+        JOIN invoices inv ON inv.id = ii.invoice_id
+        WHERE ii.project_id = pm.project_id
+          AND EXTRACT(YEAR FROM inv.invoice_date)::int = pm.y
+          AND EXTRACT(MONTH FROM inv.invoice_date)::int = pm.mo
+      )
+    `);
+
+    // Union and sort: client → parent → name → period
+    const all = [...oneTimeR.rows, ...monthlyR.rows];
+    all.sort((a, b) => {
+      const ca = a.client_name || '', cb = b.client_name || '';
+      if (ca !== cb) return ca.localeCompare(cb);
+      const pa = a.parent_name || '', pb = b.parent_name || '';
+      if (pa !== pb) return pa.localeCompare(pb);
+      const na = a.name || '', nb = b.name || '';
+      if (na !== nb) return na.localeCompare(nb);
+      const ya = a.period_year || 0, yb = b.period_year || 0;
+      if (ya !== yb) return ya - yb;
+      return (a.period_month || 0) - (b.period_month || 0);
+    });
+    res.json(all);
+  } catch (e) {
+    console.error('unbilled queue error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2422,16 +2649,20 @@ app.get('/api/reports/billing', async (req, res) => {
   const m = month || new Date().getMonth() + 1;
   const y = year || new Date().getFullYear();
   try {
-    const { rows } = await pool.query(`
-      SELECT p.*,
-        cl.name as client_name,
-        cl.is_rus,
-        co.contract_number,
-        COALESCE(SUM(te.hours),0) as logged_hours,
-        CASE
-          WHEN p.billing_type='footage' THEN p.expected_revenue
-          WHEN p.billing_type='hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
-        END as billable_amount
+    // ── PART 1: One-time projects ──
+    // Same shape as before — one row per project. Excludes containers.
+    // Includes monthly_year, monthly_month columns set to NULL so the union works.
+    const oneTimeR = await pool.query(`
+      SELECT p.id, p.id as queue_key, p.name, p.project_type, p.billing_type, p.billing_rate,
+             p.footage, p.miles, p.expected_revenue, p.expected_hours, p.actual_hours,
+             p.status, p.work_order_number, p.bill_hold_until, p.billing_cadence,
+             cl.name as client_name, cl.is_rus, co.contract_number,
+             NULL::int as period_year, NULL::int as period_month,
+             COALESCE(SUM(te.hours),0) as logged_hours,
+             CASE
+               WHEN p.billing_type='footage' THEN p.expected_revenue
+               WHEN p.billing_type='hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
+             END as billable_amount
       FROM projects p
       LEFT JOIN clients cl ON cl.id = p.client_id
       LEFT JOIN contracts co ON co.id = p.contract_id
@@ -2439,15 +2670,74 @@ app.get('/api/reports/billing', async (req, res) => {
         AND EXTRACT(MONTH FROM te.entry_date)=$1
         AND EXTRACT(YEAR FROM te.entry_date)=$2
       WHERE p.billed_date IS NULL
+        AND (p.billing_cadence IS NULL OR p.billing_cadence = 'one_time')
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
         AND (p.status = 'completed'
           OR EXISTS(SELECT 1 FROM time_entries te2 WHERE te2.project_id=p.id
             AND EXTRACT(MONTH FROM te2.entry_date)=$1
             AND EXTRACT(YEAR FROM te2.entry_date)=$2))
       GROUP BY p.id, cl.name, cl.is_rus, co.contract_number
-      ORDER BY cl.name, p.project_type
     `, [m, y]);
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+
+    // ── PART 2: Monthly projects — one row per UNBILLED month ──
+    // For each monthly project, find every (year, month) that has time entries
+    // but NO matching invoice_items row (where the invoice_date falls in that
+    // same month). Each such (project, month) becomes a queue row.
+    const monthlyR = await pool.query(`
+      WITH project_months AS (
+        SELECT
+          p.id as project_id,
+          EXTRACT(YEAR FROM te.entry_date)::int AS y,
+          EXTRACT(MONTH FROM te.entry_date)::int AS mo,
+          SUM(te.hours) AS hrs
+        FROM projects p
+        JOIN time_entries te ON te.project_id = p.id
+        WHERE p.billing_cadence = 'monthly'
+          AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        GROUP BY p.id, y, mo
+      )
+      SELECT p.id, (p.id::text || '-' || pm.y::text || '-' || pm.mo::text) as queue_key,
+             p.name, p.project_type, p.billing_type, p.billing_rate,
+             p.footage, p.miles, p.expected_revenue, p.expected_hours, p.actual_hours,
+             p.status, p.work_order_number, p.bill_hold_until, p.billing_cadence,
+             cl.name as client_name, cl.is_rus, co.contract_number,
+             pm.y as period_year, pm.mo as period_month,
+             pm.hrs as logged_hours,
+             pm.hrs * p.billing_rate as billable_amount
+      FROM project_months pm
+      JOIN projects p ON p.id = pm.project_id
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN contracts co ON co.id = p.contract_id
+      WHERE NOT EXISTS (
+        -- "Already invoiced for this month" check: any invoice line item where
+        -- the invoice's date falls in the same (y, mo) as the entries.
+        SELECT 1 FROM invoice_items ii
+        JOIN invoices inv ON inv.id = ii.invoice_id
+        WHERE ii.project_id = pm.project_id
+          AND EXTRACT(YEAR FROM inv.invoice_date)::int = pm.y
+          AND EXTRACT(MONTH FROM inv.invoice_date)::int = pm.mo
+      )
+      ORDER BY p.client_id, p.name, pm.y, pm.mo
+    `);
+
+    // Union and sort. One-time rows first (they're status='completed' and
+    // typically more urgent), then monthly rows by client/project/period.
+    const all = [...oneTimeR.rows, ...monthlyR.rows];
+    all.sort((a, b) => {
+      const ca = a.client_name || '', cb = b.client_name || '';
+      if (ca !== cb) return ca.localeCompare(cb);
+      const na = a.name || '', nb = b.name || '';
+      if (na !== nb) return na.localeCompare(nb);
+      // monthly rows by year/month
+      const ya = a.period_year || 0, yb = b.period_year || 0;
+      if (ya !== yb) return ya - yb;
+      return (a.period_month || 0) - (b.period_month || 0);
+    });
+    res.json(all);
+  } catch (e) {
+    console.error('billing queue error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.put('/api/projects/:id/mark-billed', async (req, res) => {
@@ -2480,12 +2770,16 @@ app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    // 1. Mark current project as billed
+    // 1. Mark current project as billed — but ONLY for one-time projects.
+    // For monthly projects we keep status='active' and don't stamp billed_date;
+    // the invoice line item itself is the record that this month was billed.
     const billDate = invoice_date || new Date().toISOString().split('T')[0];
-    await client.query(
-      `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
-      [billDate, req.params.id]
-    );
+    if ((orig.billing_cadence || 'one_time') !== 'monthly') {
+      await client.query(
+        `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
+        [billDate, req.params.id]
+      );
+    }
 
     // 2. Snapshot an invoice (using the existing invoices + invoice_items tables)
     let invoiceId = null;
@@ -2578,27 +2872,73 @@ app.post('/api/billing/bill-multiple', async (req, res) => {
 
     // Build line items. If the caller supplied per-project line item overrides
     // (rate / amount / description), use them; otherwise derive from the project.
+    // For monthly cadence projects, the override should also include
+    // period_year / period_month — we sum hours just from that month.
     const itemMap = new Map((items || []).map(it => [it.project_id, it]));
     let total = 0;
     const lineItems = [];
     for (const p of projR.rows) {
       const override = itemMap.get(p.id) || {};
       const isFootage = p.billing_type === 'footage';
-      const hours = parseFloat(p.actual_hours) || 0;
+      const isMonthly = p.billing_cadence === 'monthly';
       const inferredRate = parseFloat(p.billing_rate) || ({'inspection':90,'re':100,'resident engineer':100,'permitting':90}[(p.project_type||'').toLowerCase()] || 0);
       const rate = inferredRate;
       const expected = parseFloat(p.expected_revenue) || 0;
+
+      // Hours: for monthly with a specified period, sum only that period's
+      // entries. Otherwise use lifetime actual_hours (one_time semantics).
+      let hours = parseFloat(p.actual_hours) || 0;
+      let periodLabel = null;
+      if (isMonthly && override.period_year && override.period_month) {
+        const sumR = await client.query(`
+          SELECT COALESCE(SUM(hours), 0)::float AS h
+          FROM time_entries
+          WHERE project_id = $1
+            AND EXTRACT(YEAR FROM entry_date)::int = $2
+            AND EXTRACT(MONTH FROM entry_date)::int = $3
+        `, [p.id, override.period_year, override.period_month]);
+        hours = parseFloat(sumR.rows[0].h) || 0;
+        const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][override.period_month - 1];
+        periodLabel = `${monthName} ${override.period_year}`;
+      }
+
       const amount = override.amount != null ? parseFloat(override.amount)
         : isFootage ? expected : hours * rate;
       const qty = override.quantity != null ? parseFloat(override.quantity)
         : isFootage ? p.footage : hours;
       const unit = override.unit || (isFootage ? 'lf' : 'hours');
-      const description = override.description || p.name;
-      lineItems.push({ project_id: p.id, description, quantity: qty, unit, rate, amount });
+      const description = override.description || (periodLabel ? `${p.name} — ${periodLabel}` : p.name);
+      lineItems.push({
+        project_id: p.id, description, quantity: qty, unit, rate, amount,
+        // pass through to the bill-out loop so it knows which (year, month)
+        // this line item represents (drives the invoice_date stamping)
+        period_year: override.period_year || null,
+        period_month: override.period_month || null
+      });
       total += amount;
     }
 
-    const billDate = invoice_date || new Date().toISOString().split('T')[0];
+    // Determine invoice_date. If all monthly line items share a single (year,
+    // month), the invoice_date goes in that month so the "already billed" check
+    // on the queue endpoint matches correctly. Mixed periods aren't supported
+    // — the user should bill them as separate invoices.
+    const monthlyPeriods = lineItems
+      .filter(li => li.period_year && li.period_month)
+      .map(li => `${li.period_year}-${li.period_month}`);
+    const uniquePeriods = [...new Set(monthlyPeriods)];
+    if (uniquePeriods.length > 1) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        error: 'Selected items span multiple months — bill each month as a separate invoice.'
+      });
+    }
+    let billDate = invoice_date || new Date().toISOString().split('T')[0];
+    if (!invoice_date && uniquePeriods.length === 1) {
+      // Stamp the invoice on the 1st of the period so the
+      // "already-billed-for-this-month" detection on the queue is accurate.
+      const [py, pm] = uniquePeriods[0].split('-').map(Number);
+      billDate = `${py}-${String(pm).padStart(2, '0')}-01`;
+    }
     const invR = await client.query(
       `INSERT INTO invoices (client_id, invoice_number, invoice_date, total_amount, status, notes)
        VALUES ($1, $2, $3, $4, 'sent', $5) RETURNING id`,
@@ -2612,11 +2952,21 @@ app.post('/api/billing/bill-multiple', async (req, res) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [invoiceId, li.project_id, li.description, li.quantity, li.unit, li.rate, li.amount]
       );
-      // Mark each project billed
-      await client.query(
-        `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
-        [billDate, li.project_id]
-      );
+      // Cadence-aware close-out:
+      //   • one_time projects close fully — billed_date set, status='billed'
+      //   • monthly projects stay active so they reappear in next month's queue.
+      //     The invoice line item itself records what was billed for which period.
+      const proj = projR.rows.find(p => p.id === li.project_id);
+      const cadence = proj?.billing_cadence || 'one_time';
+      if (cadence === 'monthly') {
+        // Don't change status. Don't set billed_date. The invoice line item
+        // (with its date) is the source of truth for "this month was billed".
+      } else {
+        await client.query(
+          `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
+          [billDate, li.project_id]
+        );
+      }
       // Permit pipeline ends at 'checklist'. Billing status is reflected by
       // projects.billed_date — no need to write a 'billed' permit_stages row.
     }
@@ -2731,6 +3081,10 @@ RATE STRUCTURE:
 
 CLIENTS: PSC (RUS), COX, IFT, TRI-CO
 RUS work is PSC only. Contracts and work orders are managed manually or through the AI.
+
+BILLING CADENCE: Each project is either "one_time" (default — single invoice when complete; permitting, fixed-fee design jobs) or "monthly" (bills hours every month, project stays active across cycles; typical Inspection contracts). When a one-time project is billed, status becomes 'billed' and it closes. When a monthly project is billed, it stays active and reappears in next month's queue. Inspection-job projects default to monthly. Use set_billing_cadence to flip a project between modes.
+
+PROJECTED REVENUE: Each project may have a projected_revenue (contract value / projected total earnings). For footage projects this is auto-derived from miles × rate. For hourly projects the user enters it manually — it's optional. Containers (parents/grandparents) don't carry their own projected_revenue; their displayed total is summed from descendant LEAVES only (no double counting).
 
 YOUR CAPABILITIES — you can do ALL of the following:
 1. CREATE, UPDATE, and DELETE projects (including nested sub-projects)
@@ -2895,9 +3249,23 @@ const AI_TOOLS = [
         notes: { type: 'string' },
         parent_id: { type: ['string', 'null'], description: 'UUID of parent project, or null to make it top-level' },
         budget_code_id: { type: ['string', 'null'], description: 'UUID of budget code this project bills against, or null to unlink' },
-        concentrator_id: { type: ['string', 'null'], description: 'UUID of concentrator/service area, or null to unlink' }
+        concentrator_id: { type: ['string', 'null'], description: 'UUID of concentrator/service area, or null to unlink' },
+        billing_cadence: { type: 'string', enum: ['one_time', 'monthly'], description: 'one_time = single invoice when complete (permitting, fixed-fee). monthly = bills hours each month, project stays active across cycles (typical Inspection contracts).' },
+        projected_revenue: { type: ['number', 'null'], description: 'Total projected revenue / contract value. Optional. For footage projects this is auto-derived; for hourly projects user enters manually.' }
       },
       required: ['project_id']
+    }
+  },
+  {
+    name: 'set_billing_cadence',
+    description: 'Quick way to flip a project between one-time and monthly billing. Use when the user says things like "make X a monthly project" or "this should bill each month".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: 'UUID of the project' },
+        cadence: { type: 'string', enum: ['one_time', 'monthly'] }
+      },
+      required: ['project_id', 'cadence']
     }
   },
   {
@@ -3154,22 +3522,38 @@ async function executeTool(toolName, toolInput) {
         const parent_id = toolInput.parent_id !== undefined ? toolInput.parent_id : p.parent_id;
         const budget_code_id = toolInput.budget_code_id !== undefined ? toolInput.budget_code_id : p.budget_code_id;
         const concentrator_id = toolInput.concentrator_id !== undefined ? toolInput.concentrator_id : p.concentrator_id;
+        const billing_cadence = toolInput.billing_cadence ?? p.billing_cadence;
+        const projected_revenue = toolInput.projected_revenue !== undefined ? toolInput.projected_revenue : p.projected_revenue;
 
-        const fin = calcProjectFinancials(project_type, billing_rate, footage);
+        const fin = calcProjectFinancials(project_type, billing_rate, footage, p.permitting_hours_per_mile);
         const { rows } = await pool.query(`
           UPDATE projects SET
             name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
             project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
             footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-            start_date=$13, completed_date=$14, notes=$15, parent_id=$16, budget_code_id=$17, concentrator_id=$18
-          WHERE id=$19 RETURNING *
+            start_date=$13, completed_date=$14, notes=$15, parent_id=$16, budget_code_id=$17, concentrator_id=$18,
+            billing_cadence=$19, projected_revenue=$20
+          WHERE id=$21 RETURNING *
         `, [
           name, client_id, contract_id, work_order_number,
           project_type, status, billing_type, billing_rate,
           footage, fin.miles, fin.expectedHours, fin.expectedRevenue,
           start_date, completed_date, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
+          billing_cadence, projected_revenue,
           toolInput.project_id
         ]);
+        return { success: true, project: rows[0] };
+      }
+
+      case 'set_billing_cadence': {
+        if (!['one_time', 'monthly'].includes(toolInput.cadence)) {
+          return { success: false, error: 'cadence must be one_time or monthly' };
+        }
+        const { rows } = await pool.query(
+          `UPDATE projects SET billing_cadence=$1 WHERE id=$2 RETURNING id, name, billing_cadence`,
+          [toolInput.cadence, toolInput.project_id]
+        );
+        if (!rows.length) return { success: false, error: 'Project not found' };
         return { success: true, project: rows[0] };
       }
 
@@ -3582,7 +3966,7 @@ app.post('/api/ai/chat', async (req, res) => {
       'delete_project', 'create_client', 'update_client', 'delete_client',
       'create_staff', 'create_contract',
       'update_project_status', 'advance_permit_stage', 'create_budget',
-      'create_budget_code', 'update_budget_code'];
+      'create_budget_code', 'update_budget_code', 'set_billing_cadence'];
     const successfulModifications = toolResults.filter(
       tr => MODIFYING_TOOLS.includes(tr.tool) && tr.result?.success === true
     );

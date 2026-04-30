@@ -292,7 +292,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="projects-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -687,6 +687,29 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div id="expected-display" style="display:none">
           <input type="hidden" id="proj-exp-hours">
           <input type="hidden" id="proj-exp-rev">
+        </div>
+
+        <!-- Billing cadence + projected revenue. Cadence drives billing flow
+             (one-time vs monthly recurring). Projected revenue is the
+             total contract value — used by the Revenue tab and rolled up
+             at parent levels. Optional. -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Billing Cadence</label>
+            <select id="proj-cadence" style="width:100%">
+              <option value="one_time">One-time (single invoice when complete)</option>
+              <option value="monthly">Monthly (bills hours each month, project stays active)</option>
+            </select>
+            <span class="form-hint">Inspection projects default to monthly. Permitting / fixed-fee jobs are usually one-time.</span>
+          </div>
+          <div class="form-group">
+            <label>Projected Revenue <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <div class="input-group">
+              <span class="input-addon">$</span>
+              <input type="number" id="proj-projected" placeholder="0.00" step="0.01">
+            </div>
+            <span class="form-hint">Total contract value. Auto-fills for footage projects.</span>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1669,7 +1692,9 @@ function renderProjects(list, expandAll = false) {
     let logged = parseFloat(p.logged_hours) || 0;
     let revenue = parseFloat(p.expected_revenue) || 0;
     let ytd = 0;
-
+    // Projected = SUM of leaves' projected_revenue. Containers don't carry
+    // their own projected_revenue value — that's how we avoid double-counting.
+    let projected = 0;
     if (isLeaf) {
       const rate = inferRate(p);
       if ((p.billing_type || '').toLowerCase() === 'footage') {
@@ -1677,14 +1702,16 @@ function renderProjects(list, expandAll = false) {
       } else if (logged > 0 && rate > 0) {
         ytd = logged * rate;
       }
+      projected = parseFloat(p.projected_revenue) || 0;
     }
 
     // Aggregate children
     for (const kid of kids) {
       const s = sumTree(kid);
       logged += s.logged; revenue += s.revenue; ytd += s.ytd;
+      projected += s.projected;
     }
-    return { logged, revenue, ytd };
+    return { logged, revenue, ytd, projected };
   }
 
   function buildProjRows(projects, depth, parentGroupClass) {
@@ -1717,11 +1744,20 @@ function renderProjects(list, expandAll = false) {
         ? `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${fmt(logged, 'hrs')} logged</span>`
         : `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${kids.length} sub-project${kids.length !== 1 ? 's' : ''}</span>`;
 
+      // Projected: leaves show their own projected_revenue; containers show
+      // rolled-up sum from descendant leaves only (sums.projected handles this,
+      // computed in sumTree above with no double-counting).
+      const projAmount = sums.projected || 0;
+      const projCell = projAmount > 0
+        ? `<strong style="color:var(--text);font-size:14px">${fmtMoney(projAmount)}</strong>${!isLeaf && ytd > 0 ? `<br><span style="font-size:11px;color:var(--text-muted)">${Math.round((ytd / projAmount) * 100)}% earned</span>` : ''}`
+        : '<span style="color:var(--text-muted);font-size:12px">—</span>';
+
       html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
         <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
         <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
         <td class="td-mono">${esc(p.work_order_number || '—')}</td>
         <td>${typeBadge(p.project_type)}</td>
+        <td>${projCell}</td>
         <td>${ytdCell}</td>
         <td>${statusBadge(p.status)}</td>
         <td style="white-space:nowrap">
@@ -1825,6 +1861,13 @@ async function editProject(id) {
   document.getElementById('proj-status').value = p.status;
   document.getElementById('proj-start').value = p.start_date?.split('T')[0]||'';
   document.getElementById('proj-notes').value = p.notes||'';
+  // Cadence + projected revenue
+  if (document.getElementById('proj-cadence')) {
+    document.getElementById('proj-cadence').value = p.billing_cadence || 'one_time';
+  }
+  if (document.getElementById('proj-projected')) {
+    document.getElementById('proj-projected').value = p.projected_revenue ?? '';
+  }
   // Load budget codes if project has a parent with a budget
   await loadBudgetCodesForProject(p.parent_id || p.id);
   document.getElementById('proj-budget-code').value = p.budget_code_id||'';
@@ -1835,7 +1878,7 @@ async function editProject(id) {
 }
 
 function clearProjectForm() {
-  ['proj-id','proj-name','proj-wo','proj-rate','proj-footage','proj-notes'].forEach(id => document.getElementById(id).value='');
+  ['proj-id','proj-name','proj-wo','proj-rate','proj-footage','proj-notes','proj-projected'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
   document.getElementById('proj-parent').value='';
@@ -1846,6 +1889,8 @@ function clearProjectForm() {
   document.getElementById('proj-job').value='';
   document.getElementById('proj-status').value='active';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
+  // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
+  if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
   jobChanged(/*skipRateLookup=*/true);
 }
 
@@ -1906,6 +1951,17 @@ async function jobChanged(skipRateLookup = false) {
       }
     } catch (e) { /* non-fatal */ }
   }
+
+  // Default the cadence dropdown when adding a new project. Inspection → monthly,
+  // everything else → one_time. We only override when adding (proj-id empty);
+  // editing keeps whatever the user previously chose.
+  const cadEl = document.getElementById('proj-cadence');
+  const isAdding = !document.getElementById('proj-id').value;
+  if (cadEl && isAdding) {
+    if (job.name === 'Inspection') cadEl.value = 'monthly';
+    else cadEl.value = 'one_time';
+  }
+
   calcExpected();
 }
 
@@ -1924,6 +1980,13 @@ function calcExpected() {
     document.getElementById('proj-exp-hours').value = '~' + hrs.toFixed(2) + ' hrs (random)';
     document.getElementById('proj-exp-rev').value = '~' + fmtMoney(rev);
     document.getElementById('expected-display').style.display = 'grid';
+    // Auto-fill projected revenue with the calculated expected for footage —
+    // user can override before save. Only when adding (don't blow away an
+    // explicit value the user typed for an edit).
+    const projEl = document.getElementById('proj-projected');
+    if (projEl && !document.getElementById('proj-id').value && !projEl.value) {
+      projEl.value = rev.toFixed(2);
+    }
   }
 }
 
@@ -2007,7 +2070,14 @@ async function saveProject() {
     parent_id: document.getElementById('proj-parent').value || null,
     budget_code_id: document.getElementById('proj-budget-code').value || null,
     concentrator_id: document.getElementById('proj-concentrator').value || null,
-    permit_manager: (document.getElementById('proj-permit-manager')?.value || '').trim() || null
+    permit_manager: (document.getElementById('proj-permit-manager')?.value || '').trim() || null,
+    billing_cadence: document.getElementById('proj-cadence')?.value || 'one_time',
+    projected_revenue: (() => {
+      const v = document.getElementById('proj-projected')?.value;
+      if (v === '' || v == null) return null;
+      const n = parseFloat(v);
+      return isNaN(n) ? null : n;
+    })()
   };
   try {
     const id = document.getElementById('proj-id').value;
@@ -2052,8 +2122,11 @@ async function confirmDeleteProject(id, name, afterDelete) {
 function getSelectedBillRows() {
   return [...document.querySelectorAll('.bill-row-cb:checked')].map(cb => ({
     id: cb.dataset.id,
+    queue_key: cb.dataset.queueKey,
     client_id: cb.dataset.clientId,
-    amount: parseFloat(cb.dataset.amount) || 0
+    amount: parseFloat(cb.dataset.amount) || 0,
+    period_year: cb.dataset.periodYear ? parseInt(cb.dataset.periodYear) : null,
+    period_month: cb.dataset.periodMonth ? parseInt(cb.dataset.periodMonth) : null
   }));
 }
 
@@ -2092,23 +2165,30 @@ async function openBillSelectedModal() {
     return alert('All selected projects must belong to the same client. Please uncheck the mismatched projects.');
   }
 
-  // Pull full project data for the selected ids so we can show a preview
-  const projDetails = await Promise.all(sel.map(r => api('/api/projects/' + r.id)));
+  // Pull full project data for the distinct ids so we can show a preview
+  const distinctIds = [...new Set(sel.map(r => r.id))];
+  const projDetails = await Promise.all(distinctIds.map(id => api('/api/projects/' + id)));
+  const projById = Object.fromEntries(projDetails.map(p => [p.id, p]));
   const total = sel.reduce((s, r) => s + r.amount, 0);
   const clientName = projDetails[0]?.client_name || 'Selected client';
   const today = new Date().toISOString().split('T')[0];
 
   document.getElementById('bill-selected-body').innerHTML = `
     <p style="margin-bottom:14px;color:var(--text-muted);font-size:13px">
-      Combining ${sel.length} project${sel.length!==1?'s':''} into one invoice for <strong>${esc(clientName)}</strong>.
+      Combining ${sel.length} line${sel.length!==1?'s':''} into one invoice for <strong>${esc(clientName)}</strong>.
     </p>
     <div style="background:var(--gray-light);padding:10px 14px;border-radius:8px;margin-bottom:14px;max-height:200px;overflow-y:auto">
-      ${projDetails.map((p, i) => `
+      ${sel.map((s, i) => {
+        const p = projById[s.id];
+        const periodLabel = (s.period_year && s.period_month)
+          ? ` <span style="color:var(--text-muted);font-size:11px">— ${MONTH_NAMES[s.period_month-1]} ${s.period_year}</span>`
+          : '';
+        return `
         <div style="display:flex;justify-content:space-between;padding:6px 0;${i > 0 ? 'border-top:1px solid var(--gray-border)' : ''}">
-          <span style="font-size:13px">${esc(p.name)}</span>
-          <strong style="font-size:13px">${fmtMoney(sel.find(s => s.id === p.id).amount)}</strong>
-        </div>
-      `).join('')}
+          <span style="font-size:13px">${esc(p?.name || '?')}${periodLabel}</span>
+          <strong style="font-size:13px">${fmtMoney(s.amount)}</strong>
+        </div>`;
+      }).join('')}
       <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:8px;border-top:2px solid var(--primary)">
         <strong>Invoice total</strong>
         <strong style="color:var(--primary);font-size:16px">${fmtMoney(total)}</strong>
@@ -2144,10 +2224,18 @@ async function openBillSelectedModal() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Billing...';
 
     try {
+      // Send DISTINCT project_ids and per-row items with period info.
+      // The server resolves billing per (project, period) using items.
+      const distinctIds = [...new Set(sel.map(s => s.id))];
       const res = await api('/api/billing/bill-multiple', 'POST', {
-        project_ids: sel.map(s => s.id),
+        project_ids: distinctIds,
         invoice_number, invoice_date, invoice_name,
-        items: sel.map(s => ({ project_id: s.id, amount: s.amount }))
+        items: sel.map(s => ({
+          project_id: s.id,
+          amount: s.amount,
+          period_year: s.period_year,
+          period_month: s.period_month
+        }))
       });
       closeModal('bill-selected-modal');
       alert(`Invoice ${invoice_number} created for ${fmtMoney(res.total)} (${res.line_count} line items).`);
@@ -2888,8 +2976,24 @@ function renderImportReview(d) {
     <div class="stat-card accent"><div class="stat-label">Ready to Import</div><div class="stat-value">${s.ready_to_import}</div></div>
     ${s.rows_with_unknown_staff > 0 ? `<div class="stat-card warn"><div class="stat-label">Unknown Staff</div><div class="stat-value">${s.rows_with_unknown_staff}</div></div>` : ''}
     ${s.rows_with_unknown_wo > 0 ? `<div class="stat-card warn"><div class="stat-label">Unknown WO#</div><div class="stat-value">${s.rows_with_unknown_wo}</div></div>` : ''}
+    ${s.rows_in_billed_periods > 0 ? `<div class="stat-card warn"><div class="stat-label">In Billed Months</div><div class="stat-value">${s.rows_in_billed_periods}</div></div>` : ''}
     ${s.invalid > 0 ? `<div class="stat-card warn"><div class="stat-label">Invalid Rows</div><div class="stat-value">${s.invalid}</div></div>` : ''}
   </div>`;
+
+  // Already-billed warning banner
+  if (s.rows_in_billed_periods > 0) {
+    html += `<div style="background:#FFF3CD;border-left:4px solid var(--warning);padding:12px 16px;margin-bottom:14px;border-radius:6px;font-size:13px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i>
+        <strong>${s.rows_in_billed_periods} row${s.rows_in_billed_periods!==1?'s':''} land in already-invoiced months</strong>
+      </div>
+      <div style="color:var(--text);margin-bottom:8px">These rows reference (project, month) combinations that already have an invoice. Importing more hours into a billed month means the original invoice underbilled. Review the ledger below — affected rows are flagged in the Notes column. Uncheck this if you want to skip them at import time.</div>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="csv-allow-billed-period" checked style="width:auto">
+        <span>Import these anyway (proceed with the conflicts)</span>
+      </label>
+    </div>`;
+  }
 
   // Detected columns
   html += `<div style="background:var(--gray-light);padding:10px 14px;border-radius:8px;margin-bottom:18px;font-size:12px">
@@ -3085,6 +3189,7 @@ function csvLedgerRow(r, projOptions, staffOptions, jobOptions) {
       <input type="text" list="csv-job-titles" value="${esc(r.job_title || '')}" onchange="csvLedgerEdit(${r.row_num}, 'job_title', this.value)" style="width:130px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px">
     </td>
     <td style="padding:6px 8px;font-size:10px;color:var(--text-muted)">
+      ${r.already_billed_period ? `<span style="background:var(--warning);color:#fff;padding:2px 6px;border-radius:8px;font-weight:600">⚠ Month already billed</span><br>` : ''}
       ${jobMismatch ? `<span style="background:var(--warning);color:#fff;padding:2px 6px;border-radius:8px;font-weight:600">⚠ Code says "${esc(codeJob)}"</span><br>` : ''}
       ${r.job_source === 'billing_code' ? 'from code' : r.job_source === 'manual' ? 'manual' : r.job_source === 'column' ? 'from column' : r.job_source === 'filename' ? 'from filename' : ''}
     </td>
@@ -3165,16 +3270,21 @@ async function csvImportCommit() {
       }
     }
 
+    // Already-billed-month override: if checkbox exists & is unchecked, skip those rows
+    const billedChk = document.getElementById('csv-allow-billed-period');
+    const skip_billed_period_rows = billedChk ? !billedChk.checked : false;
+
     const r = await fetch('/api/hours/csv-commit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage_id: csvStageData.stage_id, create_staff, map_staff, apply_job_title })
+      body: JSON.stringify({ stage_id: csvStageData.stage_id, create_staff, map_staff, apply_job_title, skip_billed_period_rows })
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Import failed');
 
     // Show summary
-    const skipped = data.skipped_unknown_wo + data.skipped_unresolved_staff;
+    const skippedBilled = data.skipped_billed_period || 0;
+    const skipped = data.skipped_unknown_wo + data.skipped_unresolved_staff + skippedBilled;
     let html = `<div class="alert alert-success" style="margin-bottom:14px">
       <i class="fa-solid fa-circle-check"></i>
       <strong>Imported ${data.inserted} time entries</strong> across ${data.affected_projects} project${data.affected_projects !== 1 ? 's' : ''}.
@@ -3183,7 +3293,11 @@ async function csvImportCommit() {
       html += `<p style="font-size:13px;margin-bottom:8px"><strong>Created ${data.created_staff.length} new staff:</strong> ${data.created_staff.map(s => esc(s.name)).join(', ')}</p>`;
     }
     if (skipped > 0) {
-      html += `<p style="font-size:13px;color:var(--text-muted)">Skipped ${skipped} row${skipped !== 1 ? 's' : ''}: ${data.skipped_unknown_wo} for unknown WO, ${data.skipped_unresolved_staff} for unresolved staff.</p>`;
+      const parts = [];
+      if (data.skipped_unknown_wo > 0) parts.push(`${data.skipped_unknown_wo} for unknown WO`);
+      if (data.skipped_unresolved_staff > 0) parts.push(`${data.skipped_unresolved_staff} for unresolved staff`);
+      if (skippedBilled > 0) parts.push(`${skippedBilled} in already-billed months`);
+      html += `<p style="font-size:13px;color:var(--text-muted)">Skipped ${skipped} row${skipped !== 1 ? 's' : ''}: ${parts.join(', ')}.</p>`;
     }
     html += `<p style="font-size:12px;color:var(--text-muted);margin-top:10px">Batch ID: <code>${esc(data.batch)}</code></p>`;
     document.getElementById('import-stage-review').style.display = 'none';
@@ -3292,15 +3406,32 @@ async function loadBilling() {
             const hrs = parseFloat(p.logged_hours)||0;
             const rate = parseFloat(p.billing_rate)||0;
             const earned = parseFloat(p.earned_amount)||0;
-            html += `<tr>
-              <td style="text-align:center;padding:6px"><input type="checkbox" class="bill-row-cb" data-id="${p.id}" data-client-id="${esc(p.client_id||'')}" data-amount="${earned}" onchange="updateBillSelectedFooter()"></td>
-              <td class="td-name" style="padding-left:48px">└ ${esc(p.name)}</td>
+            const isMonthly = p.billing_cadence === 'monthly';
+            // queue_key is unique per row — for monthly it's "<project_id>-<y>-<m>";
+            // for one-time it's just the project_id. Used as the checkbox identity
+            // so the user can select multiple months of the same project (or not).
+            const periodLabel = (p.period_year && p.period_month)
+              ? `${MONTH_NAMES[p.period_month-1]} ${p.period_year}`
+              : (p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—');
+            const cadenceTag = isMonthly
+              ? `<span style="background:var(--primary-light);color:var(--primary);padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;margin-left:4px">monthly</span>`
+              : '';
+            html += `<tr data-queue-key="${esc(p.queue_key)}">
+              <td style="text-align:center;padding:6px"><input type="checkbox" class="bill-row-cb"
+                data-id="${p.id}"
+                data-queue-key="${esc(p.queue_key)}"
+                data-client-id="${esc(p.client_id||'')}"
+                data-amount="${earned}"
+                data-period-year="${p.period_year || ''}"
+                data-period-month="${p.period_month || ''}"
+                onchange="updateBillSelectedFooter()"></td>
+              <td class="td-name" style="padding-left:48px">└ ${esc(p.name)}${cadenceTag}</td>
               <td>${esc(p.concentrator_area||p.work_order_number||'—')}</td>
               <td>${typeBadge(p.project_type)}</td>
               <td>${fmt(hrs,'hrs')}</td>
               <td>$${rate.toFixed(2)}/hr</td>
               <td style="font-weight:600">${fmtMoney(earned)}</td>
-              <td>${p.completed_date ? new Date(p.completed_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+              <td>${periodLabel}</td>
             </tr>`;
           }
         }
@@ -3526,11 +3657,12 @@ async function loadRevenue() {
   document.getElementById('rev-ytd-btn').className = 'btn btn-sm ' + (isYTD ? 'btn-primary' : 'btn-secondary');
 
   // Load all data
-  const [monthly, byClient, details, unbilled] = await Promise.all([
+  const [monthly, byClient, details, unbilled, projectedTotal] = await Promise.all([
     api('/api/revenue/monthly-summary?year=' + y),
     api('/api/revenue/by-client?year=' + y + (m ? '&month=' + m : '')),
     api('/api/revenue/details?year=' + y + (m ? '&month=' + m : '')),
-    api('/api/revenue/unbilled')
+    api('/api/revenue/unbilled'),
+    api('/api/revenue/projected-total')
   ]);
   revMonthlySummary = monthly;
 
@@ -3566,6 +3698,9 @@ async function loadRevenue() {
   const ytdHours = monthly.reduce((s, mo) => s + (parseFloat(mo.hours) || 0), 0);
 
   const periodLabel = isYTD ? 'YTD' : MONTH_NAMES[(m||1)-1];
+  const projTotal = parseFloat(projectedTotal?.total) || 0;
+  const ytdEarnedNum = ytdEarned;
+  const projPctEarned = projTotal > 0 ? Math.min(100, (ytdEarnedNum / projTotal) * 100) : 0;
   document.getElementById('rev-stats').innerHTML = `
     <div class="stat-card accent">
       <div class="stat-label">${periodLabel} Earned</div>
@@ -3581,6 +3716,11 @@ async function loadRevenue() {
       <div class="stat-value">${fmtMoney(totalUnbilled)}</div>
       <div class="stat-sub">${unbilled.length} project${unbilled.length!==1?'s':''}</div>
     </div>
+    ${projTotal > 0 ? `<div class="stat-card">
+      <div class="stat-label">Projected Revenue</div>
+      <div class="stat-value">${fmtMoney(projTotal)}</div>
+      <div class="stat-sub">${projPctEarned.toFixed(0)}% earned · ${projectedTotal.with_projected} project${projectedTotal.with_projected!==1?'s':''}</div>
+    </div>` : ''}
   `;
 
   // ── Monthly trend chart ──
@@ -3673,6 +3813,8 @@ function renderProjectDetail(data, month, year) {
   const months_with_activity = data.months_with_activity || [];
   const lifetime = data.lifetime || { total_hours: 0, earned_hourly: 0 };
   const subtreeSize = data.subtree_size || 1;
+  const monthlyBreakdown = data.monthly_breakdown || [];
+  const projected = data.projected || { projected_total: 0, projected_count: 0 };
   const activeBillableCount = data.active_billable_count || 0;
 
   // Period label for header
@@ -3765,8 +3907,62 @@ function renderProjectDetail(data, month, year) {
     ${!isContainer ? `<div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries</div></div>` : ''}
     ${lifetimeEarned > 0 ? `<div class="stat-card"><div class="stat-label">Lifetime Revenue</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div><div class="stat-sub">all time, all sub-projects</div></div>` : ''}
     ${lifetimeHrs > 0 && !isContainer ? `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>` : ''}
+    ${(() => {
+      const projTotal = parseFloat(projected.projected_total) || 0;
+      if (projTotal <= 0) return '';
+      const remaining = projTotal - lifetimeEarned;
+      const pct = projTotal > 0 ? Math.min(100, (lifetimeEarned / projTotal) * 100) : 0;
+      const remColor = remaining < 0 ? 'var(--danger)' : remaining < projTotal * 0.2 ? 'var(--warning)' : 'var(--success)';
+      return `
+        <div class="stat-card"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${projected.projected_count} leaf project${projected.projected_count !== 1 ? 's' : ''} · ${pct.toFixed(0)}% earned</div></div>
+        <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:${remColor}">${fmtMoney(remaining)}</div><div class="stat-sub">projected − earned</div></div>
+      `;
+    })()}
     ${isFootage && p.footage ? `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>` : ''}
   </div>`;
+
+  // ── Monthly breakdown table (always visible when there's any monthly data).
+  // Shows hours / earned / billed-status per month, plus a lifetime total row.
+  // Especially useful for monthly-cadence projects so the user can see at a
+  // glance which months are still owed and which have been invoiced.
+  if (monthlyBreakdown.length > 0) {
+    const totalRowHrs = monthlyBreakdown.reduce((s, m) => s + (parseFloat(m.hours) || 0), 0);
+    const totalRowEarned = monthlyBreakdown.reduce((s, m) => s + (parseFloat(m.earned) || 0), 0);
+    const totalRowBilled = monthlyBreakdown.reduce((s, m) => s + (parseFloat(m.billed_amount) || 0), 0);
+    html += `<div class="card" style="margin-bottom:14px">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar-days" style="color:var(--primary)"></i> By Month</span>${p.billing_cadence === 'monthly' ? '<span style="font-size:11px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;font-weight:600">monthly project</span>' : ''}</div>
+      <table style="width:100%;font-size:13px">
+        <thead><tr style="background:var(--gray-light)">
+          <th style="padding:8px 12px;text-align:left">Month</th>
+          <th style="padding:8px 12px;text-align:right">Hours</th>
+          <th style="padding:8px 12px;text-align:right">Earned</th>
+          <th style="padding:8px 12px;text-align:right">Billed</th>
+          <th style="padding:8px 12px;text-align:left">Status</th>
+        </tr></thead>
+        <tbody>${monthlyBreakdown.map(m => {
+          const hrs = parseFloat(m.hours) || 0;
+          const earned_m = parseFloat(m.earned) || 0;
+          const billed_m = parseFloat(m.billed_amount) || 0;
+          const isBilled = m.is_billed;
+          return `<tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="reloadProjectDetail('${p.id}', ${m.month}, ${m.year})">
+            <td style="padding:8px 12px;font-weight:600">${MONTH_NAMES[m.month-1]} ${m.year}</td>
+            <td style="padding:8px 12px;text-align:right">${fmt(hrs)}</td>
+            <td style="padding:8px 12px;text-align:right">${fmtMoney(earned_m)}</td>
+            <td style="padding:8px 12px;text-align:right${billed_m > 0 ? ';color:var(--success);font-weight:600' : ';color:var(--text-muted)'}">${billed_m > 0 ? fmtMoney(billed_m) : '—'}</td>
+            <td style="padding:8px 12px">${isBilled ? '<span style="background:var(--success);color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">✓ Invoiced</span>' : '<span style="background:var(--warning);color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">Not yet</span>'}</td>
+          </tr>`;
+        }).join('')}
+        <tr style="background:var(--gray-light);font-weight:700;border-top:2px solid var(--gray-border)">
+          <td style="padding:8px 12px">Lifetime</td>
+          <td style="padding:8px 12px;text-align:right">${fmt(totalRowHrs)}</td>
+          <td style="padding:8px 12px;text-align:right;color:var(--primary)">${fmtMoney(totalRowEarned)}</td>
+          <td style="padding:8px 12px;text-align:right;color:var(--success)">${fmtMoney(totalRowBilled)}</td>
+          <td style="padding:8px 12px;color:var(--text-muted);font-size:11px">click row to filter</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>`;
+  }
 
   // ── Children (if this is a parent/grandparent)
   if (children.length > 0) {
