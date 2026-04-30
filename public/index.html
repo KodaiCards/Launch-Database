@@ -104,6 +104,17 @@ html[data-theme="dark"] #design-body,
 html[data-theme="dark"] #permits-body,
 html[data-theme="dark"] #projects-body,
 html[data-theme="dark"] #revenue-body{color:var(--text)}
+/* UNIVERSAL DEFAULT for dark mode tbody rows. Apply BEFORE the more
+   specific inline-style overrides below. This catches rows that don't
+   have any inline `background:` style — most importantly, the ROOT level
+   of nested project trees (depth=0) which the row builder leaves with no
+   inline background. Without this rule those rows would render with the
+   page's default white background and look "white" against the dark UI.
+   Setting bg here gives every row a sane dark color regardless of inline
+   style, and the more specific tr[style*="..."] rules below override for
+   the alternating-stripe levels. */
+html[data-theme="dark"] tbody tr{background:var(--white);color:var(--text)}
+html[data-theme="dark"] tbody td{background:transparent;color:var(--text);border-color:var(--gray-border)}
 /* Project tree row alternating backgrounds in dark mode — soften the
    light-gray stripes that look harsh against dark page bg */
 html[data-theme="dark"] tr[style*="background:var(--gray-light)"]{background:#1F252D!important}
@@ -316,6 +327,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 /* RESPONSIVE */
 @media(max-width:900px){.ai-panel{display:none}.ai-toggle{display:flex;align-items:center;justify-content:center}}
+
+/* User requested: remove the small explanatory text under manual fields.
+   We hide all .form-hint via CSS rather than deleting them so screen readers
+   still get the help text and we can re-enable them later by removing this
+   single rule. */
+.form-hint{display:none !important}
 </style>
 </head>
 <body>
@@ -346,6 +363,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
   <a class="nav-tab" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature"></i> Permitting</a>
   <a class="nav-tab" data-view="design" onclick="showView('design')"><i class="fa-solid fa-drafting-compass"></i> Design</a>
+  <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> Inspection</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
   <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
@@ -359,13 +377,26 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
     <div id="view-dashboard" class="view active">
       <div class="section-header">
-        <div><div class="section-title">Dashboard</div><div class="section-sub">Live project overview</div></div>
-        <button class="btn btn-primary" onclick="showView('projects');openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
+        <div><div class="section-title">Dashboard</div><div class="section-sub" id="dash-period-label">Live project overview</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="filter" id="dash-period" onchange="loadDashboard()">
+            <option value="ytd">Year to Date</option>
+            <option value="month">Specific Month</option>
+          </select>
+          <select class="filter" id="dash-month" style="display:none" onchange="loadDashboard()">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+          <select class="filter" id="dash-year" onchange="loadDashboard()"></select>
+          <button class="btn btn-primary" onclick="showView('projects');openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
+        </div>
       </div>
       <div class="stats-grid" id="dash-stats">
         <div class="stat-card" style="cursor:pointer" onclick="showActiveList()" title="Click to see which projects are counted"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
-        <div class="stat-card accent"><div class="stat-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
-        <div class="stat-card"><div class="stat-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
+        <div class="stat-card accent"><div class="stat-label" id="s-period-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
+        <div class="stat-card"><div class="stat-label" id="s-year-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
       </div>
       <!-- Active projects table -->
       <div class="card">
@@ -485,6 +516,67 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
     </div>
 
+    <!-- ═══════════════════ INSPECTION ═══════════════════
+         No pipeline. Just a project list with YTD + Month tiles. The month
+         picker filters the project hours and revenue tile downstream. Inspector
+         projects are typically ongoing (don't auto-close) so they roll over
+         between months until manually marked completed. -->
+    <div id="view-inspection" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Inspection</div><div class="section-sub">Inspector projects with monthly hours and revenue rollups</div></div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <label style="font-size:12px;color:var(--text-muted)">Period:</label>
+          <select id="insp-period" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+            <option value="ytd">Year to Date</option>
+            <option value="month" selected>Specific Month</option>
+          </select>
+          <input type="month" id="insp-month" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+          <button class="btn btn-primary btn-sm" onclick="openProjectModal('inspection')"><i class="fa-solid fa-plus"></i> New Project</button>
+        </div>
+      </div>
+
+      <!-- KPI tiles — recompute from /api/inspection on every load/poll -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+        <div class="card" style="padding:14px;background:linear-gradient(135deg,#1B5FA0,#134880);color:#fff">
+          <div style="font-size:11px;text-transform:uppercase;opacity:.85">Hours (period)</div>
+          <div style="font-size:28px;font-weight:700;margin-top:4px" id="insp-tile-hours">0</div>
+          <div style="font-size:11px;opacity:.85" id="insp-tile-hours-sub">—</div>
+        </div>
+        <div class="card" style="padding:14px;background:linear-gradient(135deg,#28A745,#1E7A33);color:#fff">
+          <div style="font-size:11px;text-transform:uppercase;opacity:.85">Revenue (period)</div>
+          <div style="font-size:28px;font-weight:700;margin-top:4px" id="insp-tile-revenue">$0</div>
+          <div style="font-size:11px;opacity:.85" id="insp-tile-revenue-sub">—</div>
+        </div>
+        <div class="card" style="padding:14px;background:linear-gradient(135deg,#6F42C1,#4E2D8A);color:#fff">
+          <div style="font-size:11px;text-transform:uppercase;opacity:.85">Active Projects</div>
+          <div style="font-size:28px;font-weight:700;margin-top:4px" id="insp-tile-projects">0</div>
+          <div style="font-size:11px;opacity:.85" id="insp-tile-projects-sub">ongoing carry month-to-month</div>
+        </div>
+        <div class="card" style="padding:14px;background:linear-gradient(135deg,#FD7E14,#C2570B);color:#fff">
+          <div style="font-size:11px;text-transform:uppercase;opacity:.85">Inspectors</div>
+          <div style="font-size:28px;font-weight:700;margin-top:4px" id="insp-tile-inspectors">0</div>
+          <div style="font-size:11px;opacity:.85" id="insp-tile-inspectors-sub">staff with hours</div>
+        </div>
+      </div>
+
+      <!-- Projects list — no pipeline column, with hours+revenue per project -->
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Project</th><th>Client</th><th>WO #</th><th>Service Area</th>
+              <th style="text-align:right">Hours (period)</th>
+              <th style="text-align:right">Revenue (period)</th>
+              <th style="text-align:center">Ongoing</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="inspection-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══════════════════ POTENTIAL PERMITS ═══════════════════ -->
     <div id="view-potential-permits" class="view">
       <div class="section-header">
@@ -527,6 +619,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="section-header">
         <div><div class="section-title">Hours</div></div>
         <div style="display:flex;gap:8px;align-items:center">
+          <select class="filter" id="hrs-period" onchange="loadHours()">
+            <option value="month" selected>Specific Month</option>
+            <option value="ytd">Year to Date</option>
+          </select>
           <select class="filter" id="hrs-month">
             <option value="1">January</option><option value="2">February</option><option value="3">March</option>
             <option value="4">April</option><option value="5">May</option><option value="6">June</option>
@@ -567,9 +663,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <table>
             <thead><tr>
               <th style="width:36px;text-align:center"><input type="checkbox" id="bill-select-all" onchange="toggleBillSelectAll(this.checked)" title="Select all"></th>
-              <th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th>
+              <th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th><th style="text-align:right">Actions</th>
             </tr></thead>
-            <tbody id="billing-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+            <tbody id="billing-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -766,7 +862,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" id="proj-concentrator-wrap">
             <label>Service Area / Concentrator</label>
             <div style="display:flex;gap:6px">
               <select id="proj-concentrator" onchange="concentratorChanged()" style="flex:1">
@@ -1440,7 +1536,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <div class="form-group"><label style="font-size:11px" id="new-job-rate-label">Default Rate ($/hr)</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
-            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="both">Both (explicit)</option></select></div>
+            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="inspection">Inspection only</option><option value="both">Both (explicit)</option></select></div>
             <div class="form-group" style="align-items:flex-start;padding-top:18px">
               <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-applied to permitting jobs"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label>
             </div>
@@ -1662,6 +1758,7 @@ function showView(view) {
   if (view==='projects') loadProjects();
   if (view==='permitting') loadPermits();
   if (view==='design') loadDesign();
+  if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
   if (view==='billing') loadBilling();
@@ -1778,6 +1875,16 @@ async function clientChanged(preserveJobId) {
     if (isPsc) {
       const saIn = document.getElementById('proj-service-area');
       if (saIn) saIn.value = '';
+    }
+  }
+  // Concentrator dropdown — PSC ONLY (non-PSC clients have no concentrator
+  // records — Service Area free-text replaces it for them).
+  const concWrap = document.getElementById('proj-concentrator-wrap');
+  if (concWrap) {
+    concWrap.style.display = isPsc ? '' : 'none';
+    if (!isPsc) {
+      const cIn = document.getElementById('proj-concentrator');
+      if (cIn) cIn.value = '';
     }
   }
 
@@ -2047,7 +2154,41 @@ async function showProjectedList() {
 }
 
 async function loadDashboard() {
-  const d = await api('/api/dashboard');
+  // Initialize dashboard period controls on first load.
+  const yEl = document.getElementById('dash-year');
+  const pEl = document.getElementById('dash-period');
+  const mEl = document.getElementById('dash-month');
+  if (yEl && yEl.options.length === 0) {
+    const cy = new Date().getFullYear();
+    for (let y = cy + 1; y >= cy - 3; y--) {
+      const o = new Option(y, y);
+      if (y === cy) o.selected = true;
+      yEl.add(o);
+    }
+  }
+  if (mEl && !mEl.value) {
+    mEl.value = String(new Date().getMonth() + 1);
+  }
+  // Show/hide month picker based on period mode
+  const period = pEl?.value || 'ytd';
+  if (mEl) mEl.style.display = period === 'month' ? '' : 'none';
+
+  // Build API query
+  const params = new URLSearchParams();
+  params.set('period', period);
+  if (yEl?.value) params.set('year', yEl.value);
+  if (period === 'month' && mEl?.value) params.set('month', mEl.value);
+
+  const d = await api('/api/dashboard?' + params.toString());
+
+  // Update tile labels to reflect the chosen period
+  const periodLabel = d.period?.label || 'YTD';
+  document.getElementById('dash-period-label').textContent = `Project overview · ${periodLabel}`;
+  document.getElementById('s-period-label').textContent = period === 'month'
+    ? `Earned ${periodLabel}`
+    : 'Earned YTD';
+  document.getElementById('s-year-label').textContent = `Year (${d.period?.year || new Date().getFullYear()})`;
+
   document.getElementById('s-active').textContent = d.active_projects;
   document.getElementById('s-month-rev').textContent = fmtMoney(d.month_revenue);
   document.getElementById('s-ytd').textContent = fmtMoney(d.ytd_revenue);
@@ -2119,7 +2260,19 @@ async function loadDashboard() {
       const isVisible = depth === 0 || parentExpanded;
       const thisExpanded = expandedRollups.has(p.id);
       const display = !isVisible ? 'display:none;' : '';
-      const cls = parentGroupClass ? `class="dtree dtree-${parentGroupClass}" style="${display}${bg}"` : `style="${bg}"`;
+      // Build the row attributes as a single contiguous string. Previously
+      // we had TWO style="" attributes on the row — one inside ${cls} and a
+      // second `style="cursor:pointer;${bg}"` after the onclick. Browsers
+      // honor only the FIRST style attribute and silently ignore subsequent
+      // ones, which meant the cursor:pointer was being lost AND for root
+      // rows the bg was empty so the row had no inline background to match
+      // against the dark-mode CSS rules. Result: in dark mode, the deepest
+      // (root) row level rendered with no inline-style match → no dark-mode
+      // override applied → it stayed light. Fix: collapse to ONE style attr.
+      const inlineStyle = `cursor:pointer;${display}${bg}`;
+      const cls = parentGroupClass
+        ? `class="dtree dtree-${parentGroupClass}"`
+        : '';
 
       const ytd = parseFloat(p.ytd_revenue) || 0;
       const hours = parseFloat(p.actual_hours) || 0;
@@ -2130,7 +2283,7 @@ async function loadDashboard() {
         ? `<span onclick="event.stopPropagation();dtreeToggle('${p.id}','${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
         : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
-      html += `<tr ${cls} onclick="showProjectDetail('${p.id}')" style="cursor:pointer;${bg}">
+      html += `<tr ${cls} onclick="showProjectDetail('${p.id}')" style="${inlineStyle}">
         <td class="td-name" style="padding-left:${12+indent}px">${chevron}${prefix}${esc(p.name)}${area}${badge}</td>
         <td>${esc(p.client_name||'—')}</td>
         <td class="td-mono">${esc(p.work_order_number||'—')}</td>
@@ -3143,6 +3296,7 @@ async function loadPermits() {
       <td><span class="badge badge-permitting">${STAGE_LABELS[currentStageName]||currentStageName}</span></td>
       <td>${pipelineViz(currentIdx)}</td>
       <td style="white-space:nowrap">
+        ${currentIdx > 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();regressPermit('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>` : ''}
         ${currentIdx < STAGES.length-1 ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();advancePermit('${p.id}')">→ ${STAGE_LABELS[STAGES[currentIdx+1]]}</button>` : '<span style="color:var(--success);font-size:12px"><i class="fa-solid fa-check"></i> Done</span>'}
         <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openPermitDocs('${p.id}','${esc(p.name)}')" title="Documents"><i class="fa-solid fa-paperclip"></i></button>
         <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -3597,16 +3751,38 @@ async function loadDesign() {
       <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div><span style="font-size:10px;color:var(--text-muted)">${DESIGN_LABELS[stage]}</span></td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openDesignDocs('${p.id}','${esc(p.name)}')" title="Final Map / DWG"><i class="fa-solid fa-paperclip"></i></button>
+        ${stage!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>` : ''}
         ${stage!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')"><i class="fa-solid fa-forward"></i> Advance</button>`:'<span style="color:var(--success);font-weight:600"><i class="fa-solid fa-check"></i> Done</span>'}
       </td>
     </tr>`;
   }).join('');
 }
 
-async function advanceDesign(projectId) {
-  const by = prompt('Your name (optional):') || '';
+
+// Regress (back up) a design pipeline project by one stage.
+async function regressDesign(projectId, projectName) {
+  if (!confirm(`Move "${projectName||''}" back one stage in the design pipeline?`)) return;
   try {
-    const r = await api(`/api/design/${projectId}/advance`, 'PUT', { updated_by: by });
+    await api(`/api/design/${projectId}/regress`, 'PUT', {});
+    if (typeof loadDesign === 'function') loadDesign();
+    if (typeof loadDashboard === 'function') loadDashboard();
+  } catch (e) { alert('Regress failed: ' + e.message); }
+}
+
+// Regress (back up) a permitting pipeline project by one stage.
+async function regressPermit(projectId, projectName) {
+  if (!confirm(`Move "${projectName||''}" back one stage in the permit pipeline?`)) return;
+  try {
+    await api(`/api/permits/${projectId}/regress`, 'PUT', {});
+    if (typeof loadPermits === 'function') loadPermits();
+    if (typeof loadDashboard === 'function') loadDashboard();
+  } catch (e) { alert('Regress failed: ' + e.message); }
+}
+
+async function advanceDesign(projectId) {
+  // No name prompt — server uses the logged-in user (req.user) automatically.
+  try {
+    const r = await api(`/api/design/${projectId}/advance`, 'PUT', {});
     if (r.current === 'completed') alert('Design completed! It will appear in your Billing tab.');
     loadDesign(); loadDashboard();
   } catch(e) { alert('Error: '+e.message); }
@@ -3683,14 +3859,109 @@ async function deletePotentialPermit(id) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// INSPECTION VIEW
+// No pipeline. Project list with KPI tiles for the selected period
+// (YTD or specific month). Renders period-scoped hours and revenue
+// per project so admin can see how much each inspector project
+// generated in a given month/YTD window.
+// ═══════════════════════════════════════════════════════════
+async function loadInspection() {
+  // Default the month picker to the current month on first load
+  const monthInput = document.getElementById('insp-month');
+  if (monthInput && !monthInput.value) {
+    const now = new Date();
+    monthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  }
+  const period = document.getElementById('insp-period').value;
+  const month = monthInput?.value || '';
+  const qs = period === 'month' && month ? `?period=month&month=${month}` : `?period=ytd`;
+
+  let data;
+  try {
+    data = await api('/api/inspection' + qs);
+  } catch (e) {
+    document.getElementById('inspection-body').innerHTML =
+      `<tr><td colspan="9" class="empty-state" style="color:var(--danger)">Failed to load: ${esc(e.message)}</td></tr>`;
+    return;
+  }
+
+  // KPI tiles
+  const t = data.totals || {};
+  const periodLabel = period === 'month'
+    ? new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+    : 'Year to Date';
+  document.getElementById('insp-tile-hours').textContent = fmtHours(t.hours || 0);
+  document.getElementById('insp-tile-hours-sub').textContent = periodLabel;
+  document.getElementById('insp-tile-revenue').textContent = fmtMoney(t.revenue || 0);
+  document.getElementById('insp-tile-revenue-sub').textContent = periodLabel;
+  document.getElementById('insp-tile-projects').textContent = t.active_projects || 0;
+  document.getElementById('insp-tile-inspectors').textContent = t.inspector_count || 0;
+
+  // Project rows
+  const tbody = document.getElementById('inspection-body');
+  if (!data.projects?.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fa-solid fa-helmet-safety"></i><p>No inspector projects yet${period==='month'?' for '+periodLabel:''}.</p><p style="font-size:12px;color:var(--text-muted)">Create one with a job set to the Inspection team, or flag any project as "ongoing" to surface it here.</p></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.projects.map(p => `
+    <tr style="${p.is_ongoing ? 'background:rgba(253,126,20,0.05)' : ''}">
+      <td>
+        <div style="font-weight:600">${esc(p.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${esc(p.job_name || '—')}</div>
+      </td>
+      <td>${esc(p.client_name || '—')}</td>
+      <td style="font-family:monospace;font-size:12px">${esc(p.work_order_number || '—')}</td>
+      <td>${esc(p.service_area || '—')}</td>
+      <td style="text-align:right;font-weight:600">${fmtHours(p.hours_in_period)}</td>
+      <td style="text-align:right;font-weight:600;color:var(--success)">${fmtMoney(p.revenue_in_period)}</td>
+      <td style="text-align:center">
+        <input type="checkbox" ${p.is_ongoing ? 'checked' : ''}
+          onchange="toggleOngoing('${p.id}', this.checked)"
+          title="Ongoing projects roll over month-to-month and don't auto-close until you mark them complete">
+      </td>
+      <td>${statusBadge(p.status)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-icon btn-secondary" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-sm btn-icon btn-secondary" onclick="showProjectDetail('${p.id}')" title="Details"><i class="fa-solid fa-eye"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Toggle ongoing flag — updates the row inline via the API.
+async function toggleOngoing(projectId, isOngoing) {
+  try {
+    await api(`/api/projects/${projectId}/ongoing`, 'PUT', { is_ongoing: isOngoing });
+    loadInspection();
+  } catch (e) {
+    alert('Failed: ' + e.message);
+    loadInspection();  // restore checkbox to actual server state
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 // HOURS
 // ═══════════════════════════════════════════════════════════
 async function loadHours() {
+  const period = document.getElementById('hrs-period')?.value || 'month';
   const m = document.getElementById('hrs-month').value;
   const y = document.getElementById('hrs-year').value;
-  const entries = await api(`/api/time-entries?month=${m}&year=${y}`);
-  const monthName = new Date(y,m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  document.getElementById('hrs-report-title').textContent = `Hours Report — ${monthName}`;
+  // Hide month picker in YTD mode
+  const mEl = document.getElementById('hrs-month');
+  if (mEl) mEl.style.display = period === 'ytd' ? 'none' : '';
+
+  // Build query — month+year if month mode, year only for YTD
+  let qs;
+  if (period === 'ytd') {
+    qs = `year=${y}`;
+  } else {
+    qs = `month=${m}&year=${y}`;
+  }
+  const entries = await api(`/api/time-entries?${qs}`);
+  const periodLabel = period === 'ytd'
+    ? `YTD ${y}`
+    : new Date(y, m-1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('hrs-report-title').textContent = `Hours Report — ${periodLabel}`;
 
   const total = entries.reduce((s,e)=>s+parseFloat(e.hours),0);
   const byType = {};
@@ -4014,14 +4285,48 @@ function renderImportReview(d) {
     </div>`;
   }
 
-  // Unknown WO section (these rows will always be skipped — operator must create projects manually)
+  // Unknown WO section — admin can either skip or create new projects on the fly.
   if (d.unknown_wos.length > 0) {
+    // Build client option list once (defaults to first PSC client if any)
+    const clientOptions = (clientsCache || []).map(c =>
+      `<option value="${c.id}"${c.is_rus ? ' data-rus="1"' : ''}>${esc(c.name)}${c.is_rus ? ' (PSC)' : ''}</option>`
+    ).join('');
+    const jobOpts2 = (jobsCache || []).map(j =>
+      `<option value="${j.id}">${esc(j.name)}${j.billing_code ? ' (' + esc(j.billing_code) + ')' : ''}</option>`
+    ).join('');
     html += `<div class="card" style="margin-bottom:14px">
-      <div class="card-header"><span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Unknown Work Orders (${d.unknown_wos.length})</span></div>
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-folder-plus" style="color:var(--warning)"></i> Unknown Work Orders (${d.unknown_wos.length})</span></div>
       <div class="card-body" style="font-size:13px">
-        <p style="margin-bottom:10px">These work order numbers don't match any existing project. <strong>Rows for these WOs will be skipped.</strong> Create the projects in the Projects tab, then re-upload to import their hours.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${d.unknown_wos.map(wo => `<span class="td-mono" style="background:var(--gray-light);padding:4px 10px;border-radius:14px;font-size:12px">${esc(wo)}</span>`).join('')}
+        <p style="margin-bottom:10px">These WO#s don't match any existing project. Choose <strong>Skip</strong> to leave their rows out of this import, or <strong>Create</strong> to spin up a new project on the fly. Created projects land under their client + team rollup.</p>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--gray-light);text-align:left">
+            <th style="padding:6px 8px;width:120px">WO#</th>
+            <th style="padding:6px 8px;width:100px">Action</th>
+            <th style="padding:6px 8px">New Project Name</th>
+            <th style="padding:6px 8px">Client</th>
+            <th style="padding:6px 8px">Job</th>
+            <th style="padding:6px 8px">Service Area</th>
+          </tr></thead>
+          <tbody>
+            ${d.unknown_wos.map((wo, i) => `
+              <tr style="border-top:1px solid var(--gray-border)" data-unknown-wo="${esc(wo)}">
+                <td style="padding:6px 8px;font-family:monospace;font-weight:600">${esc(wo)}</td>
+                <td style="padding:6px 8px">
+                  <select class="csv-wo-action" data-i="${i}" onchange="csvToggleWoCreate(${i})" style="width:100%;padding:4px;font-size:11px">
+                    <option value="skip">Skip rows</option>
+                    <option value="create">Create new project</option>
+                  </select>
+                </td>
+                <td style="padding:6px 8px"><input type="text" class="csv-wo-name" data-i="${i}" placeholder="WO ${esc(wo)}" disabled style="width:100%;padding:4px;font-size:11px"></td>
+                <td style="padding:6px 8px"><select class="csv-wo-client" data-i="${i}" disabled style="width:100%;padding:4px;font-size:11px"><option value="">— Pick client —</option>${clientOptions}</select></td>
+                <td style="padding:6px 8px"><select class="csv-wo-job" data-i="${i}" disabled style="width:100%;padding:4px;font-size:11px"><option value="">— Pick job —</option>${jobOpts2}</select></td>
+                <td style="padding:6px 8px"><input type="text" class="csv-wo-area" data-i="${i}" placeholder="optional" disabled style="width:100%;padding:4px;font-size:11px"></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:8px;padding:8px;background:var(--gray-light);border-radius:6px;font-size:11px;color:var(--text-muted)">
+          <strong>Bulk shortcut:</strong> When you set a client + job for the FIRST row, those values copy down to any other rows with the same Action that are still blank. Saves typing on big batches.
         </div>
       </div>
     </div>`;
@@ -4186,6 +4491,42 @@ async function csvLedgerEdit(rowNum, field, value) {
   }
 }
 
+// Toggle a row in the Unknown WO table between Skip and Create modes.
+// When Create is picked: enable the input fields, auto-suggest a name from
+// the WO#, and copy down client/job from the first Create row if blank.
+function csvToggleWoCreate(i) {
+  const action = document.querySelector(`.csv-wo-action[data-i="${i}"]`).value;
+  const enabled = action === 'create';
+  ['name','client','job','area'].forEach(f => {
+    const el = document.querySelector(`.csv-wo-${f}[data-i="${i}"]`);
+    if (el) el.disabled = !enabled;
+  });
+  if (enabled) {
+    // Auto-suggest project name from WO# if blank
+    const nameEl = document.querySelector(`.csv-wo-name[data-i="${i}"]`);
+    if (nameEl && !nameEl.value) {
+      const woRow = nameEl.closest('tr');
+      const wo = woRow?.dataset.unknownWo || '';
+      nameEl.value = `WO ${wo}`;
+    }
+    // Copy-down: find the first OTHER row with action=create that has client+job set
+    const allRows = document.querySelectorAll('.csv-wo-action');
+    for (const a of allRows) {
+      const ai = a.dataset.i;
+      if (ai === String(i) || a.value !== 'create') continue;
+      const cliSrc = document.querySelector(`.csv-wo-client[data-i="${ai}"]`);
+      const jobSrc = document.querySelector(`.csv-wo-job[data-i="${ai}"]`);
+      if (cliSrc?.value && jobSrc?.value) {
+        const cliDst = document.querySelector(`.csv-wo-client[data-i="${i}"]`);
+        const jobDst = document.querySelector(`.csv-wo-job[data-i="${i}"]`);
+        if (cliDst && !cliDst.value) cliDst.value = cliSrc.value;
+        if (jobDst && !jobDst.value) jobDst.value = jobSrc.value;
+        break;
+      }
+    }
+  }
+}
+
 async function csvImportCommit() {
   if (!csvStageData) return;
   const btn = document.getElementById('import-commit-btn');
@@ -4225,10 +4566,38 @@ async function csvImportCommit() {
     const billedChk = document.getElementById('csv-allow-billed-period');
     const skip_billed_period_rows = billedChk ? !billedChk.checked : false;
 
+    // Gather Unknown WO decisions — any row with Action='create' becomes a
+    // create_projects entry. Skipped WOs just get omitted; their staged rows
+    // are skipped server-side because wo_known stays false.
+    const create_projects = [];
+    document.querySelectorAll('.csv-wo-action').forEach(actEl => {
+      if (actEl.value !== 'create') return;
+      const i = actEl.dataset.i;
+      const woRow = actEl.closest('tr');
+      const wo = woRow?.dataset.unknownWo;
+      const name = document.querySelector(`.csv-wo-name[data-i="${i}"]`)?.value?.trim();
+      const client_id = document.querySelector(`.csv-wo-client[data-i="${i}"]`)?.value;
+      const job_id = document.querySelector(`.csv-wo-job[data-i="${i}"]`)?.value;
+      const area_label = document.querySelector(`.csv-wo-area[data-i="${i}"]`)?.value?.trim() || null;
+      if (!wo || !client_id) return;  // need at least client to create
+      create_projects.push({
+        wo,
+        name: name || `WO ${wo}`,
+        client_id,
+        job_id: job_id || null,
+        area_label,
+      });
+    });
+
     const r = await fetch('/api/hours/csv-commit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage_id: csvStageData.stage_id, create_staff, map_staff, apply_job_title, skip_billed_period_rows })
+      body: JSON.stringify({
+        stage_id: csvStageData.stage_id,
+        create_staff, map_staff,
+        apply_job_title, skip_billed_period_rows,
+        create_projects
+      })
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Import failed');
@@ -4242,6 +4611,12 @@ async function csvImportCommit() {
     </div>`;
     if (data.created_staff.length > 0) {
       html += `<p style="font-size:13px;margin-bottom:8px"><strong>Created ${data.created_staff.length} new staff:</strong> ${data.created_staff.map(s => esc(s.name)).join(', ')}</p>`;
+    }
+    if (data.created_projects && data.created_projects.length > 0) {
+      html += `<p style="font-size:13px;margin-bottom:8px"><strong>Created ${data.created_projects.length} new project${data.created_projects.length !== 1 ? 's' : ''}:</strong> ${data.created_projects.map(p => esc(p.name) + (p.work_order_number ? ' (WO ' + esc(p.work_order_number) + ')' : '')).join(', ')}</p>`;
+    }
+    if (data.created_jobs && data.created_jobs.length > 0) {
+      html += `<p style="font-size:13px;margin-bottom:8px"><strong>Created ${data.created_jobs.length} new job${data.created_jobs.length !== 1 ? 's' : ''}:</strong> ${data.created_jobs.map(j => esc(j.name)).join(', ')}</p>`;
     }
     if (skipped > 0) {
       const parts = [];
@@ -4291,6 +4666,31 @@ async function csvImportCommit() {
 // ═══════════════════════════════════════════════════════════
 // BILLING
 // ═══════════════════════════════════════════════════════════
+// Quick-edit handler for the Billable Amount cell in the Billing tab.
+// Prompts for a new manual invoice amount and PUTs it on the project.
+// Setting it to blank (or 0) clears the override and reverts to the
+// auto-calculated amount (hours × rate, or footage × rate).
+async function editInvoiceAmount(projectId, projectName, currentAmount) {
+  const input = prompt(
+    `Override invoice amount for "${projectName}".\n\nLeave blank to clear the override and use the auto-calculated amount.\nOtherwise enter a dollar amount (no $ sign needed):`,
+    currentAmount > 0 ? currentAmount.toFixed(2) : ''
+  );
+  if (input === null) return;  // user cancelled
+  const trimmed = input.trim();
+  let manual_invoice_amount;
+  if (trimmed === '' || trimmed === '0') {
+    manual_invoice_amount = null;  // clear override
+  } else {
+    const parsed = parseFloat(trimmed);
+    if (isNaN(parsed) || parsed < 0) return alert('Please enter a valid positive number, or leave blank to clear.');
+    manual_invoice_amount = parsed;
+  }
+  try {
+    await api(`/api/projects/${projectId}`, 'PUT', { manual_invoice_amount });
+    loadBilling();  // refresh row + totals
+  } catch (e) { alert('Update failed: ' + e.message); }
+}
+
 async function loadBilling() {
   // Populate year dropdown if empty
   const yrSel = document.getElementById('billing-year');
@@ -4320,7 +4720,7 @@ async function loadBilling() {
 
   const tbody = document.getElementById('billing-body');
   if (!unbilled.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state" style="padding:24px"><i class="fa-solid fa-check-circle" style="color:var(--success);font-size:24px"></i><p>All completed projects have been billed!</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state" style="padding:24px"><i class="fa-solid fa-check-circle" style="color:var(--success);font-size:24px"></i><p>All completed projects have been billed!</p></div></td></tr>';
   } else {
     // Group: Client → Parent project (grandparent_name or parent_name) → Job (project_type)
     const byClient = {};
@@ -4346,12 +4746,12 @@ async function loadBilling() {
       html += `<tr style="background:var(--primary-light)">
         <td></td>
         <td colspan="5" style="font-weight:700;color:var(--primary);padding:10px 16px"><i class="fa-solid fa-building" style="margin-right:6px"></i>${esc(client)}</td>
-        <td style="font-weight:700;color:var(--primary)">${fmtMoney(clientTotal)}</td><td></td></tr>`;
+        <td style="font-weight:700;color:var(--primary)">${fmtMoney(clientTotal)}</td><td></td><td></td></tr>`;
 
       for (const [parent, byJob] of Object.entries(byParent)) {
         html += `<tr style="background:var(--gray-light)">
           <td></td>
-          <td colspan="7" style="padding-left:32px;font-weight:600;color:var(--text)"><i class="fa-solid fa-folder" style="color:var(--text-muted);margin-right:6px"></i>${esc(parent)}</td></tr>`;
+          <td colspan="8" style="padding-left:32px;font-weight:600;color:var(--text)"><i class="fa-solid fa-folder" style="color:var(--text-muted);margin-right:6px"></i>${esc(parent)}</td></tr>`;
         for (const [jobLabel, projs] of Object.entries(byJob)) {
           for (const p of projs) {
             const hrs = parseFloat(p.logged_hours)||0;
@@ -4367,6 +4767,10 @@ async function loadBilling() {
             const cadenceTag = isMonthly
               ? `<span style="background:var(--primary-light);color:var(--primary);padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;margin-left:4px">monthly</span>`
               : '';
+            // Manual override indicator — show a yellow pin if billing has been overridden
+            const overridePin = p.manual_invoice_amount != null
+              ? '<i class="fa-solid fa-thumbtack" style="color:var(--warning);font-size:9px;margin-left:4px" title="Invoice amount manually overridden — click amount to edit"></i>'
+              : '';
             html += `<tr data-queue-key="${esc(p.queue_key)}">
               <td style="text-align:center;padding:6px"><input type="checkbox" class="bill-row-cb"
                 data-id="${p.id}"
@@ -4381,8 +4785,12 @@ async function loadBilling() {
               <td>${typeBadge(p.project_type)}</td>
               <td>${fmt(hrs,'hrs')}</td>
               <td>$${rate.toFixed(2)}/hr</td>
-              <td style="font-weight:600">${fmtMoney(earned)}</td>
+              <td style="font-weight:600;cursor:pointer;color:var(--primary);text-decoration:underline dotted" onclick="editInvoiceAmount('${p.id}','${esc(p.name).replace(/'/g,"\\'")}', ${earned})" title="Click to override invoice amount">${fmtMoney(earned)}${overridePin}</td>
               <td>${periodLabel}</td>
+              <td style="white-space:nowrap;text-align:right">
+                <button class="btn btn-sm btn-icon btn-secondary" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name).replace(/'/g,"\\'")}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
+              </td>
             </tr>`;
           }
         }
@@ -4870,30 +5278,86 @@ function renderProjectDetail(data, month, year) {
     </div>
   </div>`;
 
-  // ── Summary stats: focus on revenue. For parent/container projects,
-  // show rolled-up revenue. For leaf projects, show hours + revenue.
+  // ── Summary stats. Tile composition depends on billing_cadence:
+  //   ONE-TIME projects (permits, footage projects, fixed-fee work):
+  //     • Projected Revenue (always — what we expect to bill)
+  //     • Earned (hours × rate, or footage × rate when complete)
+  //     • Footage (when billed by foot)
+  //     • Hours (regardless of billing type — always informational)
+  //     YTD/period revenue is NOT shown — one-time work doesn't have a
+  //     monthly-flow concept; it's bill-once-when-done.
+  //
+  //   MONTHLY projects (inspection, ongoing recurring work):
+  //     • Period Revenue (this month/year — the meaningful flow metric)
+  //     • Period Hours (driving the period revenue)
+  //     • Lifetime Revenue & Lifetime Hours (cumulative reference)
+  //
+  //   CONTAINER projects (have sub-projects):
+  //     • Period Revenue (rolled up across all leaves)
+  //     • Projected (sum of leaf projections)
+  //     • Remaining (projected − earned)
   const lifetimeHrs = parseFloat(lifetime.total_hours) || 0;
   const lifetimeEarned = parseFloat(lifetime.earned_hourly) || 0;
   const isContainer = subtreeSize > 1;
+  const isMonthly = p.billing_cadence === 'monthly';
+  const isOneTime = !isMonthly && !isContainer;
 
-  html += `<div class="stats-grid" style="margin-bottom:18px">
-    <div class="stat-card accent"><div class="stat-label">${esc(periodLabel)} Revenue</div><div class="stat-value">${fmtMoney(earned)}</div>${isContainer ? `<div class="stat-sub">${subtreeSize} projects</div>` : ''}</div>
-    ${!isContainer ? `<div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries</div></div>` : ''}
-    ${lifetimeEarned > 0 ? `<div class="stat-card"><div class="stat-label">Lifetime Revenue</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div><div class="stat-sub">all time, all sub-projects</div></div>` : ''}
-    ${lifetimeHrs > 0 && !isContainer ? `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>` : ''}
-    ${(() => {
-      const projTotal = parseFloat(projected.projected_total) || 0;
-      if (projTotal <= 0) return '';
+  const projTotal = parseFloat(projected.projected_total) || parseFloat(p.expected_revenue) || 0;
+
+  html += `<div class="stats-grid" style="margin-bottom:18px">`;
+
+  if (isOneTime) {
+    // ── ONE-TIME tile set ───────────────────────────────────────────────
+    // Show the work-as-a-whole, not period slices. "Earned" sums all-time
+    // hours×rate (or footage×rate at completion). Projected is what we
+    // committed to. Remaining is the gap.
+    const earnedAllTime = isFootage
+      ? (['completed', 'billed'].includes(p.status) ? parseFloat(p.expected_revenue || 0) : lifetimeHrs * rate)
+      : lifetimeHrs * rate;
+    const remaining = projTotal - earnedAllTime;
+    const pct = projTotal > 0 ? Math.min(100, (earnedAllTime / projTotal) * 100) : 0;
+    const remColor = remaining < 0 ? 'var(--danger)' : remaining < projTotal * 0.2 ? 'var(--warning)' : 'var(--success)';
+
+    if (projTotal > 0) {
+      html += `<div class="stat-card accent"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${pct.toFixed(0)}% earned</div></div>`;
+    }
+    html += `<div class="stat-card"><div class="stat-label">Earned</div><div class="stat-value">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">${earnedAllTime > 0 && projTotal > 0 ? 'against ' + fmtMoney(projTotal) : 'all time'}</div></div>`;
+    if (projTotal > 0 && Math.abs(remaining) > 0.01) {
+      html += `<div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:${remColor}">${fmtMoney(remaining)}</div><div class="stat-sub">projected − earned</div></div>`;
+    }
+    if (isFootage && p.footage) {
+      html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
+    }
+    // Hours tile is ALWAYS shown for one-time projects regardless of billing
+    // type — even for footage-billed permits, you still want to see how many
+    // hours staff logged so you know the labor cost vs the per-foot revenue.
+    html += `<div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value">${fmt(lifetimeHrs || totalHrs)}</div><div class="stat-sub">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div>`;
+
+  } else {
+    // ── MONTHLY / CONTAINER tile set (existing behavior) ────────────────
+    html += `<div class="stat-card accent"><div class="stat-label">${esc(periodLabel)} Revenue</div><div class="stat-value">${fmtMoney(earned)}</div>${isContainer ? `<div class="stat-sub">${subtreeSize} projects</div>` : ''}</div>`;
+    if (!isContainer) {
+      html += `<div class="stat-card"><div class="stat-label">${esc(periodLabel)} Hours</div><div class="stat-value">${fmt(totalHrs)}</div><div class="stat-sub">${entries.length} entries</div></div>`;
+    }
+    if (lifetimeEarned > 0) {
+      html += `<div class="stat-card"><div class="stat-label">Lifetime Revenue</div><div class="stat-value">${fmtMoney(lifetimeEarned)}</div><div class="stat-sub">all time, all sub-projects</div></div>`;
+    }
+    if (lifetimeHrs > 0 && !isContainer) {
+      html += `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>`;
+    }
+    if (projTotal > 0) {
       const remaining = projTotal - lifetimeEarned;
       const pct = projTotal > 0 ? Math.min(100, (lifetimeEarned / projTotal) * 100) : 0;
       const remColor = remaining < 0 ? 'var(--danger)' : remaining < projTotal * 0.2 ? 'var(--warning)' : 'var(--success)';
-      return `
-        <div class="stat-card"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${projected.projected_count} leaf project${projected.projected_count !== 1 ? 's' : ''} · ${pct.toFixed(0)}% earned</div></div>
-        <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:${remColor}">${fmtMoney(remaining)}</div><div class="stat-sub">projected − earned</div></div>
-      `;
-    })()}
-    ${isFootage && p.footage ? `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>` : ''}
-  </div>`;
+      html += `<div class="stat-card"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${projected.projected_count} leaf project${projected.projected_count !== 1 ? 's' : ''} · ${pct.toFixed(0)}% earned</div></div>
+        <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:${remColor}">${fmtMoney(remaining)}</div><div class="stat-sub">projected − earned</div></div>`;
+    }
+    if (isFootage && p.footage) {
+      html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
+    }
+  }
+
+  html += `</div>`;
 
   // ── Monthly breakdown table (always visible when there's any monthly data).
   // Shows hours / earned / billed-status per month, plus a lifetime total row.
@@ -5540,6 +6004,7 @@ function renderJobsList() {
           <option value="" ${!j.team ? 'selected':''}>—</option>
           <option value="design" ${j.team==='design' ? 'selected':''}>Design</option>
           <option value="permitting" ${j.team==='permitting' ? 'selected':''}>Permitting</option>
+          <option value="inspection" ${j.team==='inspection' ? 'selected':''}>Inspection</option>
           <option value="both" ${j.team==='both' ? 'selected':''}>Both</option>
         </select>
       </td>
@@ -5916,6 +6381,7 @@ function formatRequestCard(sr, isPending) {
             <option value="">Both / Unassigned</option>
             <option value="design"${payload.team==='design'?' selected':''}>Design only</option>
             <option value="permitting"${payload.team==='permitting'?' selected':''}>Permitting only</option>
+            <option value="inspection"${payload.team==='inspection'?' selected':''}>Inspection only</option>
             <option value="both"${payload.team==='both'?' selected':''}>Both (explicit)</option>
           </select>
         </div>
@@ -6595,6 +7061,7 @@ async function _pollTick(){
   if (viewId === 'view-hours')      callIfExists('loadHours');
   if (viewId === 'view-design')     callIfExists('loadDesign');
   if (viewId === 'view-permitting') callIfExists('loadPermits');
+  if (viewId === 'view-inspection') callIfExists('loadInspection');
 
   // Every 4th tick (~6 seconds), invalidate caches that downstream views
   // depend on. Without this, jobs/clients/contracts settings changes don't

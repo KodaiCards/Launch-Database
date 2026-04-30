@@ -97,6 +97,10 @@ html[data-theme="dark"] #projects-body,
 html[data-theme="dark"] #revenue-body{color:var(--text)}
 /* Project tree row alternating backgrounds in dark mode — soften the
    light-gray stripes that look harsh against dark page bg */
+/* Universal default for tbody rows in dark mode — catches root-level
+   rows that have no inline background style, so they don't render white. */
+html[data-theme="dark"] tbody tr{background:var(--white);color:var(--text)}
+html[data-theme="dark"] tbody td{background:transparent;color:var(--text);border-color:var(--gray-border)}
 html[data-theme="dark"] tr[style*="background:var(--gray-light)"]{background:#1F252D!important}
 html[data-theme="dark"] tr[style*="background:#f0f0f0"]{background:#1A1F26!important}
 html[data-theme="dark"] tr[style*="background:#f8f9fa"]{background:#1A1F26!important}
@@ -172,6 +176,12 @@ textarea{resize:vertical;min-height:60px}
   .header{padding:0 10px;gap:8px}
   .header-spacer{display:none}
 }
+
+/* User requested: remove the small explanatory text under manual fields.
+   We hide all .form-hint via CSS rather than deleting them so screen readers
+   still get the help text and we can re-enable them later by removing this
+   single rule. */
+.form-hint{display:none !important}
 </style>
 <script>
 
@@ -901,6 +911,7 @@ async function loadPipeline(){
         <td><span class="badge" style="background:${DC[s]};color:#fff">${DL[s]}</span></td>
         <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
         <td style="white-space:nowrap;text-align:right">
+          ${s!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>`:''}
           ${s!=='billed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:#28A745;font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
           <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${p.id}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
@@ -921,10 +932,19 @@ async function deleteProjectFromPipeline(id, name){
   } catch (e) { alert('Delete failed: ' + e.message); }
 }
 
-async function advanceDesign(id){
-  const by = prompt('Your name (optional):'); if (by === null) return;
+
+async function regressDesign(id, name){
+  if (!confirm(`Move "${name||''}" back one stage in the permit pipeline?`)) return;
   try {
-    await api('/api/permits/' + id + '/advance', 'PUT', { updated_by: by || 'Permitting Portal' });
+    await api('/api/permits/' + id + '/regress', 'PUT', {});
+    loadPipeline();
+  } catch (e) { alert('Regress failed: ' + e.message); }
+}
+
+async function advanceDesign(id){
+  // No name prompt — server uses the logged-in user (req.user) automatically.
+  try {
+    await api('/api/permits/' + id + '/advance', 'PUT', { _: 'Permitting Portal' });
     loadPipeline(); loadProjects();
   } catch (e) { alert(e.message); }
 }

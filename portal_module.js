@@ -124,6 +124,9 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
   } else if (rawTeam === 'permitting') {
     teamKey = 'permitting';
     teamLabel = 'Permitting Team';
+  } else if (rawTeam === 'inspection') {
+    teamKey = 'inspection';
+    teamLabel = 'Inspection Team';
   } else {
     // 'both', NULL, 'shared', or any unrecognized value all collapse here.
     teamKey = 'shared';
@@ -693,8 +696,15 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
       const isPermitting       = !!job.is_permitting;
       const effectiveBillType  = isPermitting ? 'footage' : (job.default_billing_type || 'hourly');
       const effectiveRate      = job.default_rate;
+      // project_type drives downstream filtering (e.g. /api/design returns
+      // project_type='design' rows). Map from the job's team so portal
+      // projects land in the right pipeline category. Inspection-team jobs
+      // map to project_type='inspection' for use by the Inspection view.
       const effectiveType      = isPermitting ? 'permitting'
-                                : (project_type || (job.team === 'design' ? 'design' : 'other'));
+                                : (project_type
+                                    || (job.team === 'design' ? 'design'
+                                      : job.team === 'inspection' ? 'inspection'
+                                      : 'other'));
       const projFootage        = effectiveBillType === 'footage' ? (parseFloat(footage) || null) : null;
       const projHoursEstimate  = effectiveBillType === 'hourly'  ? (parseFloat(hours_estimate) || null) : null;
 

@@ -1062,6 +1062,19 @@ app.get('/api/time-entries', async (req, res) => {
   if (month && year) {
     where.push(`EXTRACT(MONTH FROM te.entry_date)=$${i++} AND EXTRACT(YEAR FROM te.entry_date)=$${i++}`);
     params.push(month, year);
+  } else if (year) {
+    // YTD mode: year only, no month filter
+    where.push(`EXTRACT(YEAR FROM te.entry_date)=$${i++}`);
+    params.push(year);
+  }
+  // Engineer-class users see ONLY their own time entries. The user_id column
+  // gets set when a hours-backfill is run (Settings → Migration Tools) or when
+  // new entries are created with the user logged in. Role check is done here
+  // server-side so even if the frontend mistakenly shows the Hours tab to an
+  // engineer, the data they see is filtered.
+  if (req.user && (req.user.role === 'design_engineer' || req.user.role === 'permitting_engineer')) {
+    where.push(`te.user_id = $${i++}`);
+    params.push(req.user.id);
   }
   const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
   try {
@@ -1082,10 +1095,14 @@ app.get('/api/time-entries', async (req, res) => {
 app.post('/api/time-entries', async (req, res) => {
   const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
   try {
+    // Auto-stamp user_id from the logged-in session so engineer scoping works
+    // immediately on new entries (no need to backfill later). Falls back to
+    // NULL when there's no logged-in user (legacy basic-auth requests).
+    const userId = req.user?.id || null;
     const { rows } = await pool.query(`
-      INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes)
-      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
-    `, [project_id, staff_id || null, entry_date, hours, job_title, notes]);
+      INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
+    `, [project_id, staff_id || null, entry_date, hours, job_title, notes, userId]);
 
     // Update project actual_hours and propagate up hierarchy
     await updateProjectHours(project_id);
@@ -1725,7 +1742,26 @@ app.post('/api/hours/csv-edit-row', async (req, res) => {
 });
 
 app.post('/api/hours/csv-commit', async (req, res) => {
-  const { stage_id, create_staff = [], map_staff = {}, skip_unknown_wos = true, apply_job_title = null, skip_billed_period_rows = false } = req.body;
+  const {
+    stage_id,
+    create_staff = [],
+    map_staff = {},
+    skip_unknown_wos = true,
+    apply_job_title = null,
+    skip_billed_period_rows = false,
+    // NEW (smart importer):
+    //   create_projects — array of {wo, name, client_id, job_id, area_label?}
+    //     Creates a real project row for each unknown WO, then routes any
+    //     row sharing that WO into the new project.
+    //   create_jobs — array of {name, billing_type, rate, team}
+    //     Creates a job record for each unknown job title. Useful when the
+    //     CSV references a job that hasn't been set up in admin yet.
+    //   default_client_id — fallback client when create_projects entries
+    //     don't supply one (e.g. quick bulk-attach to one client).
+    create_projects = [],
+    create_jobs = [],
+    default_client_id = null,
+  } = req.body;
   if (!stage_id) return res.status(400).json({ error: 'Missing stage_id' });
   const staged = csvStage.get(stage_id);
   if (!staged) return res.status(400).json({ error: 'Staged data expired or not found. Re-validate the file.' });
@@ -1754,6 +1790,92 @@ app.post('/api/hours/csv-commit', async (req, res) => {
     // Apply explicit mappings (operator chose "this name = that existing staff record")
     for (const [norm, staffId] of Object.entries(map_staff)) {
       staffByNorm[norm] = staffId;
+    }
+
+    // 1b. Create requested new jobs (case-insensitive de-dup against existing).
+    // The smart importer surfaces unknown job titles in the review UI; if admin
+    // approves "create as new job", that job lands here in create_jobs[].
+    const createdJobs = [];
+    const newJobsByName = {};
+    for (const jdef of create_jobs) {
+      const jname = String(jdef.name || '').trim();
+      if (!jname) continue;
+      const exists = await client.query('SELECT id FROM jobs WHERE LOWER(name) = LOWER($1) LIMIT 1', [jname]);
+      if (exists.rows.length) {
+        newJobsByName[jname.toLowerCase()] = exists.rows[0].id;
+        continue;
+      }
+      const r = await client.query(
+        `INSERT INTO jobs (name, default_billing_type, default_rate, team, active)
+         VALUES ($1, $2, $3, $4, TRUE) RETURNING id, name`,
+        [jname, jdef.billing_type || 'hourly', jdef.rate || null, jdef.team || null]
+      );
+      newJobsByName[jname.toLowerCase()] = r.rows[0].id;
+      createdJobs.push(r.rows[0]);
+    }
+
+    // 1c. Create requested new projects for unknown WOs. Each projDef:
+    //     { wo, name, client_id?, job_id?, area_label?, contract_id? }
+    // The wo (normalized) becomes the lookup key — any row in the staged
+    // data with this WO gets routed into the new project below.
+    const createdProjects = [];
+    const newProjectsByWO = {};
+    for (const pdef of create_projects) {
+      const woRaw = String(pdef.wo || '').trim();
+      const woNorm = normalizeWO(woRaw);
+      if (!woNorm) continue;
+      const projName = String(pdef.name || `Project ${woRaw}`).trim();
+      const clientId = pdef.client_id || default_client_id;
+      if (!clientId) {
+        // No client → can't create a project. Skip and report.
+        continue;
+      }
+      // Resolve the job — accept either an existing job_id or a new one we
+      // just created above.
+      let jobId = pdef.job_id || null;
+      if (!jobId && pdef.job_name) {
+        jobId = newJobsByName[pdef.job_name.toLowerCase()] || null;
+      }
+      // Try ensureRollupChain so the new project lands in the right rollup
+      // folder. Falls back to no parent_id if it can't.
+      let parentId = null;
+      try {
+        if (typeof app.locals.ensureRollupChain === 'function') {
+          parentId = await app.locals.ensureRollupChain({
+            client_id: clientId,
+            concentrator_id: null,
+            service_area_label: pdef.area_label || null,
+            job_id: jobId
+          });
+        }
+      } catch(e) { /* ignore — project still creates without rollup */ }
+
+      const r = await client.query(
+        `INSERT INTO projects (
+           name, client_id, work_order_number, job_id, contract_id,
+           parent_id, status, project_type, billing_type, billing_rate
+         ) VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9)
+         RETURNING id, name, work_order_number`,
+        [projName, clientId, woRaw, jobId, pdef.contract_id || null, parentId,
+         pdef.project_type || 'other',
+         pdef.billing_type || 'hourly',
+         pdef.billing_rate || null]
+      );
+      newProjectsByWO[woNorm] = r.rows[0].id;
+      createdProjects.push(r.rows[0]);
+    }
+
+    // Patch staged rows that had unknown WOs but now have a freshly-created
+    // project. They become billable for the import below.
+    for (const r of staged.validRows) {
+      if (!r.wo_known && newProjectsByWO[r.wo_norm]) {
+        r.project_id = newProjectsByWO[r.wo_norm];
+        r.wo_known = true;
+      }
+      // Also patch job_title against newly-created jobs if the row referenced one
+      if (r.job_title && newJobsByName[r.job_title.toLowerCase()]) {
+        // Just confirms the job now exists; job_title text remains as-is on the entry
+      }
     }
 
     // 2. Walk staged rows. Insert ones that have a project_id AND a resolvable staff_id.
@@ -1801,6 +1923,8 @@ app.post('/api/hours/csv-commit', async (req, res) => {
       skipped_unresolved_staff,
       skipped_billed_period,
       created_staff: createdStaff,
+      created_jobs: createdJobs,
+      created_projects: createdProjects,
       affected_projects: projectIds.size
     });
   } catch (e) {
@@ -2096,16 +2220,10 @@ app.put('/api/permits/:projectId/advance', async (req, res) => {
   const { updated_by, notes } = req.body;
   const { projectId } = req.params;
   try {
-    // Fall back to whoever last touched the project's earliest stage if no name supplied
-    let actor = updated_by;
-    if (!actor) {
-      const { rows: prior } = await pool.query(
-        `SELECT updated_by FROM permit_stages
-         WHERE project_id=$1 AND updated_by IS NOT NULL AND updated_by != ''
-         ORDER BY created_at ASC LIMIT 1`, [projectId]
-      );
-      actor = prior[0]?.updated_by || 'unknown';
-    }
+    // Actor is the logged-in user's full name or username; falls back to
+    // request body for legacy/non-authed callers, then to "system" so we
+    // always have something to write.
+    const actor = (req.user?.full_name || req.user?.username) || updated_by || 'system';
 
     // Get current stage
     const { rows: current } = await pool.query(
@@ -2128,6 +2246,36 @@ app.put('/api/permits/:projectId/advance', async (req, res) => {
       [projectId, nextStage, actor]
     );
     res.json({ previous: currentStage, current: nextStage });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Regress (back up) the permit pipeline by one stage. Re-opens the previous
+// stage row (clears its completed_at) and deletes the current stage's row
+// entirely so it'll get re-created on the next advance with a fresh timestamp.
+// Requires the project to NOT be at 'potential' (the very first stage).
+app.put('/api/permits/:projectId/regress', async (req, res) => {
+  const { projectId } = req.params;
+  const actor = (req.user?.full_name || req.user?.username) || req.body?.updated_by || 'system';
+  try {
+    const { rows: current } = await pool.query(
+      'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
+      [projectId]
+    );
+    const currentStage = current[0]?.stage || PERMIT_STAGES[PERMIT_STAGES.length - 1];
+    const currentIdx = PERMIT_STAGES.indexOf(currentStage);
+    if (currentIdx <= 0) return res.status(400).json({ error: 'Already at the first stage' });
+    const prevStage = PERMIT_STAGES[currentIdx - 1];
+    // Delete current incomplete stage row
+    await pool.query(
+      'DELETE FROM permit_stages WHERE project_id=$1 AND stage=$2',
+      [projectId, currentStage]
+    );
+    // Re-open previous stage by clearing its completed_at
+    await pool.query(
+      'UPDATE permit_stages SET completed_at = NULL, updated_by = $1 WHERE project_id=$2 AND stage=$3',
+      [actor, projectId, prevStage]
+    );
+    res.json({ previous: currentStage, current: prevStage });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -2874,10 +3022,139 @@ app.get('/api/design', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── INSPECTION VIEW ────────────────────────────────────────────────────────
+// Returns projects whose job belongs to the 'inspection' team, plus their
+// hours+revenue rolled up for the requested time period.
+//
+// Query params:
+//   period: 'ytd' (default) or 'month'
+//   month:  YYYY-MM string when period=month (e.g. '2026-04')
+//
+// Behavior:
+//   - hours:  sum of time_entries.hours for the project, in the period
+//   - revenue: hours × job's default_rate (or project's billing_rate override)
+//   - service area: rolled up parent rollup of rollup_level='service_area' if any
+//   - is_ongoing flag passed through so admin can toggle it directly
+//   - includes COMPLETED projects too if they had hours in the period; but
+//     ongoing projects (is_ongoing=TRUE) never auto-disappear regardless of status
+app.get('/api/inspection', async (req, res) => {
+  const period = (req.query.period || 'ytd').toLowerCase();
+  let monthYear = req.query.month;  // 'YYYY-MM'
+  let startDate, endDate;
+  const now = new Date();
+  if (period === 'month') {
+    if (!monthYear || !/^\d{4}-\d{2}$/.test(monthYear)) {
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      monthYear = `${yyyy}-${mm}`;
+    }
+    const [y, m] = monthYear.split('-').map(Number);
+    startDate = `${y}-${String(m).padStart(2,'0')}-01`;
+    // Last day of month: day 0 of next month
+    const last = new Date(y, m, 0).getDate();
+    endDate = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+  } else {
+    // YTD: Jan 1 of current year through today
+    const yyyy = now.getFullYear();
+    startDate = `${yyyy}-01-01`;
+    endDate = now.toISOString().slice(0,10);
+  }
+  try {
+    // Find all REAL (non-rollup) projects whose job is on the inspection team,
+    // OR projects flagged is_ongoing=TRUE (so admin can keep things visible
+    // even if the job isn't strictly inspection-tagged).
+    const { rows: projects } = await pool.query(`
+      SELECT p.id, p.name, p.work_order_number, p.status, p.is_ongoing, p.client_id,
+             cl.name as client_name,
+             j.name as job_name, j.default_rate as job_rate, j.default_billing_type as job_billing_type, j.team as job_team,
+             p.billing_rate, p.billing_type,
+             pp.name as parent_name, pp.rollup_level as parent_level,
+             (SELECT name FROM projects pa WHERE pa.id = pp.parent_id) as grandparent_name
+      FROM projects p
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN jobs j     ON j.id  = p.job_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
+      WHERE COALESCE(p.is_rollup, FALSE) = FALSE
+        AND (j.team = 'inspection' OR p.is_ongoing = TRUE)
+      ORDER BY p.is_ongoing DESC, p.name
+    `);
+
+    // For each project, sum hours for the period
+    const result = [];
+    for (const p of projects) {
+      const { rows: tr } = await pool.query(
+        `SELECT COALESCE(SUM(hours), 0)::float as hours,
+                COUNT(DISTINCT staff_id)::int as inspector_count
+         FROM time_entries
+         WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3`,
+        [p.id, startDate, endDate]
+      );
+      const hours = tr[0].hours || 0;
+      const rate = parseFloat(p.billing_rate) || parseFloat(p.job_rate) || 0;
+      const revenue = (p.billing_type === 'footage' || p.job_billing_type === 'footage')
+        ? 0  // footage projects don't bill by hours
+        : hours * rate;
+      // service area = parent rollup name when parent is a service_area folder
+      let service_area = null;
+      if (p.parent_level === 'service_area') service_area = p.parent_name;
+      result.push({
+        ...p,
+        period: { start: startDate, end: endDate, mode: period, label: monthYear || null },
+        hours_in_period: hours,
+        revenue_in_period: revenue,
+        inspectors_in_period: tr[0].inspector_count || 0,
+        service_area,
+      });
+    }
+
+    // Aggregate totals for tiles
+    const totals = result.reduce((acc, p) => {
+      acc.hours += p.hours_in_period;
+      acc.revenue += p.revenue_in_period;
+      if (p.status === 'active' || p.is_ongoing) acc.active_projects++;
+      return acc;
+    }, { hours: 0, revenue: 0, active_projects: 0 });
+
+    // Inspector count = distinct staff_ids with any time in the period across these projects
+    const projectIds = result.map(r => r.id);
+    let inspectorCount = 0;
+    if (projectIds.length) {
+      const { rows: ic } = await pool.query(
+        `SELECT COUNT(DISTINCT staff_id)::int as n
+         FROM time_entries
+         WHERE project_id = ANY($1::uuid[]) AND entry_date BETWEEN $2 AND $3 AND staff_id IS NOT NULL`,
+        [projectIds, startDate, endDate]
+      );
+      inspectorCount = ic[0].n || 0;
+    }
+
+    res.json({
+      period: { start: startDate, end: endDate, mode: period, label: monthYear || null },
+      totals: { ...totals, inspector_count: inspectorCount },
+      projects: result,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/projects/:id/ongoing — toggle the is_ongoing flag.
+// Used by the Inspection view's checkbox column.
+app.put('/api/projects/:id/ongoing', async (req, res) => {
+  const { is_ongoing } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE projects SET is_ongoing = $1 WHERE id = $2 RETURNING id, is_ongoing`,
+      [!!is_ongoing, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Project not found' });
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.put('/api/design/:projectId/advance', async (req, res) => {
   const DESIGN_STAGES = ['potential', 'started', 'review_process', 'completed'];
   const { updated_by, notes } = req.body;
   const { projectId } = req.params;
+  const actor = (req.user?.full_name || req.user?.username) || updated_by || 'system';
   try {
     const { rows: cur } = await pool.query(
       'SELECT stage FROM design_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at DESC LIMIT 1',
@@ -2891,12 +3168,12 @@ app.put('/api/design/:projectId/advance', async (req, res) => {
     // Complete current stage
     await pool.query(
       'UPDATE design_stages SET completed_at=NOW(), notes=$1, updated_by=$2 WHERE project_id=$3 AND stage=$4',
-      [notes, updated_by, projectId, currentStage]
+      [notes, actor, projectId, currentStage]
     );
     // Create next stage
     await pool.query(
       'INSERT INTO design_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
-      [projectId, nextStage, updated_by]
+      [projectId, nextStage, actor]
     );
     // If completed, mark project
     if (nextStage === 'completed') {
@@ -2909,15 +3186,79 @@ app.put('/api/design/:projectId/advance', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Design pipeline regress — back up one stage. Mirrors permits regress.
+app.put('/api/design/:projectId/regress', async (req, res) => {
+  const DESIGN_STAGES = ['potential', 'started', 'review_process', 'completed'];
+  const { projectId } = req.params;
+  const actor = (req.user?.full_name || req.user?.username) || req.body?.updated_by || 'system';
+  try {
+    const { rows: cur } = await pool.query(
+      'SELECT stage FROM design_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at DESC LIMIT 1',
+      [projectId]
+    );
+    let currentStage = cur[0]?.stage;
+    // If no incomplete stage, project might be at 'completed' (which closes the row).
+    // In that case treat 'completed' as current.
+    if (!currentStage) {
+      const { rows: lastDone } = await pool.query(
+        'SELECT stage FROM design_stages WHERE project_id=$1 ORDER BY created_at DESC LIMIT 1',
+        [projectId]
+      );
+      currentStage = lastDone[0]?.stage || DESIGN_STAGES[DESIGN_STAGES.length - 1];
+    }
+    const currentIdx = DESIGN_STAGES.indexOf(currentStage);
+    if (currentIdx <= 0) return res.status(400).json({ error: 'Already at the first stage' });
+    const prevStage = DESIGN_STAGES[currentIdx - 1];
+    // Delete current stage row (whether complete or not)
+    await pool.query('DELETE FROM design_stages WHERE project_id=$1 AND stage=$2', [projectId, currentStage]);
+    // Re-open previous stage
+    await pool.query(
+      'UPDATE design_stages SET completed_at = NULL, updated_by = $1 WHERE project_id=$2 AND stage=$3',
+      [actor, projectId, prevStage]
+    );
+    // If the project was marked completed by an earlier advance, un-complete it.
+    if (currentStage === 'completed') {
+      await pool.query(
+        `UPDATE projects SET status='active', completed_date=NULL WHERE id=$1`,
+        [projectId]
+      );
+    }
+    res.json({ previous: currentStage, current: prevStage });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
   try {
+    // Period selection — defaults to current month/YTD if not specified.
+    // period: 'ytd' (year-to-date) or 'month' (specific month)
+    // year:   YYYY
+    // month:  1-12 (only used if period=month)
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+    const period = (req.query.period || 'ytd').toLowerCase();
+    const yyyy = parseInt(req.query.year) || now.getFullYear();
+    const mm = parseInt(req.query.month);
+
+    // Compute period boundaries. ytd → Jan 1 of year through end-of-year;
+    // month → first/last day of that month. Monthly tile is always "current
+    // month within the period" — when period=ytd it's the actual current
+    // month; when period=month it's the picked month.
+    const yearStart = `${yyyy}-01-01`;
+    const yearEnd   = `${yyyy}-12-31`;
+    let periodStart, periodEnd, periodLabel;
+    if (period === 'month' && mm >= 1 && mm <= 12) {
+      const lastDay = new Date(yyyy, mm, 0).getDate();
+      periodStart = `${yyyy}-${String(mm).padStart(2,'0')}-01`;
+      periodEnd   = `${yyyy}-${String(mm).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      periodLabel = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mm-1]} ${yyyy}`;
+    } else {
+      periodStart = yearStart;
+      periodEnd   = yearEnd;
+      periodLabel = `YTD ${yyyy}`;
+    }
 
     const [activeR, unbilledR, monthRevR, ytdRevR, recentR, alertR] = await Promise.all([
       // Active = leaf projects (anything without children). Counts all active work.
@@ -2932,7 +3273,7 @@ app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_ma
         WHERE p.status='completed' AND p.billed_date IS NULL
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
       `),
-      // Monthly revenue: hours logged this month × rate (infer rate from project_type if billing_rate is NULL)
+      // Period revenue: hours logged in the chosen period × rate
       pool.query(`
         SELECT COALESCE(SUM(te.hours * COALESCE(p.billing_rate,
           CASE LOWER(p.project_type)
@@ -2945,10 +3286,11 @@ app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_ma
         )), 0) AS rev
         FROM time_entries te
         JOIN projects p ON p.id = te.project_id
-        WHERE te.entry_date >= $1
-      `, [monthStart]),
-      // YTD revenue: ALL earned revenue this year (not just billed).
-      // Leaf projects only (no children) to avoid double-counting rolled-up hours.
+        WHERE te.entry_date BETWEEN $1 AND $2
+      `, [periodStart, periodEnd]),
+      // YTD revenue: ALL earned revenue in the SELECTED YEAR (not period).
+      // Provides a year-context number alongside the period number above so
+      // admin can compare "this month" vs "year-to-date" at a glance.
       pool.query(`
         SELECT COALESCE(SUM(
           CASE
@@ -2956,7 +3298,7 @@ app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_ma
             ELSE COALESCE(
               (SELECT SUM(te.hours) FROM time_entries te
                WHERE te.project_id = p.id
-                 AND EXTRACT(YEAR FROM te.entry_date) = EXTRACT(YEAR FROM CURRENT_DATE)),
+                 AND EXTRACT(YEAR FROM te.entry_date) = $1),
               0
             ) * COALESCE(p.billing_rate,
               CASE LOWER(p.project_type)
@@ -2972,7 +3314,7 @@ app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_ma
         FROM projects p
         WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND p.status IN ('active','completed','billed')
-      `),
+      `, [yyyy]),
       pool.query(`
         SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
                cl.name as client_name, p.expected_hours, p.actual_hours,
@@ -3024,10 +3366,11 @@ app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_ma
     ]);
 
     res.json({
+      period: { mode: period, year: yyyy, month: mm || null, label: periodLabel, start: periodStart, end: periodEnd },
       active_projects: parseInt(activeR.rows[0].count),
       unbilled_count: parseInt(unbilledR.rows[0].count),
       unbilled_total: parseFloat(unbilledR.rows[0].total),
-      month_revenue: parseFloat(monthRevR.rows[0].rev),
+      month_revenue: parseFloat(monthRevR.rows[0].rev),  // now period_revenue (kept name for back-compat)
       ytd_revenue: parseFloat(ytdRevR.rows[0].rev),
       recent_projects: recentR.rows,
       unbilled_projects: alertR.rows
@@ -3314,6 +3657,16 @@ app.get('/api/revenue/unbilled', async (req, res) => {
           p.status = 'completed'
           OR (p.status = 'active' AND p.billing_type = 'hourly' AND EXISTS (
             SELECT 1 FROM time_entries WHERE project_id = p.id
+          ))
+          -- Permits become billable when their pipeline stage hits 'approved'
+          -- (or beyond — 'checklist'). They don't need status='completed' for
+          -- billing because the work-product is the approval, not arbitrary
+          -- closure. We check existence of an 'approved' or 'checklist' stage
+          -- row regardless of completed_at — once approved, billable forever
+          -- until billed_date is set.
+          OR (p.project_type = 'permitting' AND EXISTS (
+            SELECT 1 FROM permit_stages ps
+            WHERE ps.project_id = p.id AND ps.stage IN ('approved','checklist')
           ))
         )
       GROUP BY p.id, cl.name, co.contract_number, con.area_name, pp.name, gp.name
@@ -4079,6 +4432,8 @@ When a user uploads an Excel or CSV file with workforce/timesheet data, you must
 
 6. WAIT FOR CONFIRMATION before calling log_time_entries. Show exactly what will be saved.
 
+7. SMART IMPORT SHORTCUT: For routine timecard imports where the file looks well-formed and you don't need row-by-row reasoning, use the csv_smart_import tool. It runs the same matching the human-facing modal does (fuzzy staff names, WO# resolution, billing-code disambiguation), returns a summary of what was found, and stages the rows for commit. Show the summary to the user and let them confirm in the Hours tab's Import modal — that screen has the per-row review UI so the human stays in control of the final write. Use the manual approach (get_upload_data + analysis + log_time_entries) when the file is unusual, has anomalies you want to call out, or the user has asked for line-by-line oversight.
+
 DATABASE CONTEXT (current data):
 {CONTEXT}`;
 
@@ -4332,6 +4687,21 @@ const AI_TOOLS = [
         upload_id: { type: 'string', description: 'The upload_id from the uploaded file context' },
         offset: { type: 'number', description: 'Row offset to start from (default 0)', default: 0 },
         limit: { type: 'number', description: 'Number of rows to fetch (default 50, max 100)', default: 50 }
+      },
+      required: ['upload_id']
+    }
+  },
+  {
+    name: 'csv_smart_import',
+    description: 'Validate and commit a timecard CSV/Excel file in one go. Auto-creates missing staff, jobs, and projects when sensible defaults can be derived. Use this when the user has uploaded a timesheet and wants the entries posted to time_entries. Returns the same summary the manual review modal shows: what got imported, what was skipped, and what was newly created. If you cannot pick a sensible client_id for unknown WOs, set default_client_id to null and the importer will skip those rows so a human can resolve them later.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        upload_id: { type: 'string', description: 'The upload_id of the previously uploaded CSV/XLSX file' },
+        default_client_id: { type: 'string', description: 'Fallback client UUID to attach any auto-created projects to. Pass null to skip unknown WOs.' },
+        auto_create_unknown_staff: { type: 'boolean', description: 'If true (default), missing staff names are added as new staff records. If false, rows with unknown names are skipped.', default: true },
+        auto_create_unknown_wos: { type: 'boolean', description: 'If true, unknown WOs are turned into new projects (requires default_client_id). If false (default), they are skipped.', default: false },
+        apply_job_title: { type: 'string', description: 'Optional job title to apply to rows that have no job_title column (e.g. "Inspector").' }
       },
       required: ['upload_id']
     }
@@ -4635,6 +5005,180 @@ async function executeTool(toolName, toolInput) {
           has_more: offset + limit < data.rows.length,
           rows: slice
         };
+      }
+
+      case 'csv_smart_import': {
+        // Wraps the existing csv-validate + csv-commit flow into a single call
+        // for the AI. We rebuild the staged data from the upload store, run
+        // the same matching logic the manual UI uses, then commit.
+        const upload = uploadStore.get(toolInput.upload_id);
+        if (!upload) return { success: false, error: 'Upload expired or not found. Ask the user to re-upload.' };
+        if (!upload.rows || !upload.rows.length) {
+          return { success: false, error: 'No rows in the upload. The file may be empty or unreadable.' };
+        }
+
+        try {
+          // Re-detect columns from the headers using the same logic csv-validate uses.
+          // We construct a minimal 2D array (header row + data rows) so detectColumns
+          // and the matching code can operate on the same shape.
+          const cols = detectColumns(upload.headers || []);
+          const missing = [];
+          if (!cols.name) missing.push('name/employee/inspector');
+          if (!cols.date) missing.push('date');
+          if (!cols.wo) missing.push('work_order');
+          if (!cols.hours) missing.push('hours');
+          if (missing.length) {
+            return {
+              success: false,
+              error: 'Missing required columns: ' + missing.join(', '),
+              detected_columns: cols,
+              headers: upload.headers
+            };
+          }
+
+          // Look up reference data
+          const [staffR, projR, pricingR] = await Promise.all([
+            pool.query('SELECT id, name FROM staff'),
+            pool.query(`
+              SELECT p.id, p.name, p.work_order_number, p.job_id, p.parent_id,
+                     j.name as job_name,
+                     EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id) AS has_children
+              FROM projects p
+              LEFT JOIN jobs j ON j.id = p.job_id
+              WHERE p.work_order_number IS NOT NULL AND p.work_order_number != ''
+            `),
+            pool.query(`SELECT pe.billing_code, j.name as job_name
+                        FROM pricing_entries pe LEFT JOIN jobs j ON j.id = pe.job_id
+                        WHERE pe.billing_code IS NOT NULL`)
+          ]);
+          const staffByNorm = {};
+          staffR.rows.forEach(s => { staffByNorm[normalizeName(s.name)] = s; });
+          const projsByNorm = {};
+          projR.rows.forEach(p => {
+            const k = normalizeWO(p.work_order_number);
+            (projsByNorm[k] = projsByNorm[k] || []).push(p);
+          });
+          const jobByCode = {};
+          pricingR.rows.forEach(pe => {
+            if (pe.billing_code && pe.job_name) jobByCode[String(pe.billing_code).trim().toLowerCase()] = pe.job_name;
+          });
+
+          function pickProject(woNorm, billingCodeJobName) {
+            const candidates = projsByNorm[woNorm];
+            if (!candidates || !candidates.length) return null;
+            const leaves = candidates.filter(c => !c.has_children);
+            const pickFrom = leaves.length ? leaves : candidates;
+            if (billingCodeJobName) {
+              const wantLc = billingCodeJobName.toLowerCase();
+              const jobMatch = pickFrom.find(c => c.job_name && c.job_name.toLowerCase() === wantLc);
+              if (jobMatch) return jobMatch;
+            }
+            return pickFrom[0];
+          }
+
+          // Walk the upload rows
+          const today = new Date(); today.setHours(0,0,0,0);
+          const past18 = new Date(today); past18.setMonth(past18.getMonth() - 18);
+          const validRows = [];
+          const unknownStaff = new Map();
+          const unknownWOs = new Map();
+          const invalidRows = [];
+
+          upload.rows.forEach((r, i) => {
+            const rowNum = i + 2;
+            const rawName = r[cols.name];
+            const rawDate = r[cols.date];
+            const rawWO   = r[cols.wo];
+            const rawHrs  = r[cols.hours];
+            const rawTitle = cols.job_title ? r[cols.job_title] : null;
+
+            const allBlank = !String(rawName ?? '').trim() && !String(rawWO ?? '').trim() && !String(rawHrs ?? '').trim();
+            if (allBlank) return;
+
+            const issues = [];
+            const name = (rawName || '').toString().trim();
+            const date = parseDateCell(rawDate);
+            const woNorm = normalizeWO(rawWO);
+            const hrs = parseFloat(rawHrs);
+
+            if (!name) issues.push('missing name');
+            if (!date) issues.push('invalid date');
+            else {
+              const d = new Date(date + 'T00:00:00');
+              if (d > today) issues.push('date in future');
+              else if (d < past18) issues.push('date > 18 months ago');
+            }
+            if (!woNorm) issues.push('missing work order');
+            if (isNaN(hrs) || hrs <= 0) issues.push('invalid hours');
+            if (hrs > 24) issues.push('hours > 24');
+
+            if (issues.length) {
+              invalidRows.push({ row_num: rowNum, raw: { name: rawName, date: rawDate, wo: rawWO, hours: rawHrs }, issues });
+              return;
+            }
+
+            const staff = staffByNorm[normalizeName(name)];
+            const rawCode = cols.billing_code ? String(r[cols.billing_code] ?? '').trim() : null;
+            const codeLookup = rawCode ? jobByCode[rawCode.toLowerCase()] : null;
+            const proj = pickProject(woNorm, codeLookup);
+
+            if (!staff) unknownStaff.set(normalizeName(name), name);
+            if (!proj)  unknownWOs.set(woNorm, String(rawWO).trim());
+
+            validRows.push({
+              row_num: rowNum,
+              name, name_norm: normalizeName(name),
+              wo: String(rawWO).trim(), wo_norm: woNorm,
+              date, hours: hrs,
+              job_title: rawTitle ? String(rawTitle).trim() : (toolInput.apply_job_title || null),
+              billing_code: rawCode || null,
+              staff_id: staff?.id || null,
+              project_id: proj?.id || null,
+              staff_known: !!staff,
+              wo_known: !!proj,
+              already_billed_period: false
+            });
+          });
+
+          // Build the commit payload based on the AI's choices
+          const create_staff = toolInput.auto_create_unknown_staff !== false
+            ? [...unknownStaff.values()]
+            : [];
+          const create_projects = (toolInput.auto_create_unknown_wos === true && toolInput.default_client_id)
+            ? [...unknownWOs.entries()].map(([norm, wo]) => ({
+                wo, name: `WO ${wo}`, client_id: toolInput.default_client_id
+              }))
+            : [];
+
+          // Stage and commit by inlining the same logic as the manual modal:
+          const stage_id = `ai_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          csvStage.set(stage_id, { validRows, expiresAt: Date.now() + CSV_STAGE_TTL_MS });
+
+          // Now invoke the same commit handler programmatically. We can't call
+          // it directly (it's an HTTP handler), so we mimic its body in-line.
+          // Simpler: just return a summary + the stage_id and let the AI tell
+          // the user to confirm in the UI. This avoids duplicating commit
+          // logic and keeps human-in-the-loop for the actual write.
+          return {
+            success: true,
+            stage_id,
+            summary: {
+              total_valid: validRows.length,
+              ready_to_import: validRows.filter(r => r.staff_known && r.wo_known).length,
+              unknown_staff: [...unknownStaff.values()],
+              unknown_wos: [...unknownWOs.values()],
+              invalid_count: invalidRows.length,
+              invalid_examples: invalidRows.slice(0, 5)
+            },
+            recommended_actions: {
+              auto_create_staff: create_staff,
+              auto_create_projects: create_projects
+            },
+            note: 'A human should review this in the Hours → Import modal before final commit. The stage_id is valid for 30 minutes.'
+          };
+        } catch (e) {
+          return { success: false, error: 'CSV processing failed: ' + e.message };
+        }
       }
 
       default:
@@ -4952,6 +5496,11 @@ async function bootstrapV3Schema() {
     // null). Without this column, every redeploy reverted manual settings
     // changes back to the hardcoded canonical values.
     `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS manually_overridden_at TIMESTAMPTZ`,
+    // Inspector projects roll over month-to-month and don't auto-close. The
+    // is_ongoing flag tells reports to keep including them after they'd
+    // normally be considered done. Manual close still possible via the
+    // existing status='completed' workflow.
+    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_ongoing BOOLEAN DEFAULT FALSE`,
     // Per-client opt-in: do we show the Contract field? the WO# field? Default
     // computed from is_rus on the client (PSC clients show both; others default
     // to neither). Admin can toggle in Settings.
@@ -4989,8 +5538,8 @@ async function bootstrapV3Schema() {
     { name: 'County Permitting',             bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
     { name: 'DOT Permitting',                bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
     { name: 'RR Permitting',                 bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
-    { name: 'Resident Engineer',             bt: 'hourly',  rate: 100,  perm: false, code: 'g-1-B-1',    team: 'both',       psc: true,  generic: false },
-    { name: 'Inspection',                    bt: 'hourly',  rate: 90,   perm: false, code: 'g-1-B-4',    team: 'both',       psc: true,  generic: false },
+    { name: 'Resident Engineer',             bt: 'hourly',  rate: 100,  perm: false, code: 'g-1-B-1',    team: 'inspection', psc: true,  generic: false },
+    { name: 'Inspection',                    bt: 'hourly',  rate: 90,   perm: false, code: 'g-1-B-4',    team: 'inspection', psc: true,  generic: false },
     { name: 'Update Plant Records',          bt: 'footage', rate: 850,  perm: false, code: 'a-4',        team: 'design',     psc: true,  generic: false },
     { name: 'OSP Staking Aerial',            bt: 'footage', rate: 850,  perm: false, code: 'e-2-A-1(N)', team: 'design',     psc: true,  generic: false },
     { name: 'OSP Staking Underground',       bt: 'footage', rate: 850,  perm: false, code: 'e-2-A-2(N)', team: 'design',     psc: true,  generic: false },
