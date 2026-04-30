@@ -134,6 +134,16 @@ html[data-theme="dark"] tr[style*="background:var(--gray-light)"] td{background:
    color was --gray-light which becomes the SAME color as nested rows
    in dark mode, so hover was indistinguishable). */
 html[data-theme="dark"] tbody tr:hover td{background:#2A323D!important}
+/* Anchor table containers to the dark bg so mid-render polling rebuilds
+   don't flash a white background between innerHTML wipe and inline-style
+   reapplication. The polling tick replaces tbody.innerHTML every 1.5s;
+   for a single frame the new TR elements exist but their inline styles
+   haven't been computed yet, and the browser shows the table's underlying
+   bg (which was inherited from .card → white). With these rules the
+   underlying bg is already dark, so no flash. */
+html[data-theme="dark"] table,
+html[data-theme="dark"] .table-wrap,
+html[data-theme="dark"] tbody{background:var(--white)}
 /* Quick-add inline panels (Add new contract / project type) */
 html[data-theme="dark"] [style*="background:var(--gray-light)"]{background:#1F252D!important}
 /* Dark mode: invert the logo so dark-blue text becomes light/visible */
@@ -141,8 +151,32 @@ html[data-theme="dark"] .header-logo{filter:brightness(0) invert(1) opacity(0.92
 /* Anchor links (View buttons inside doc lists, etc) */
 html[data-theme="dark"] a{color:#7AB3F0}
 html[data-theme="dark"] a.btn{color:var(--text)}
-/* Badges in dark mode — keep their accent color but force readable text */
-html[data-theme="dark"] .badge{color:#fff}
+/* Badges in dark mode — replace pastel light bg with saturated dark-friendly
+   bg so they read properly against the dark page. Each badge uses a darker
+   shade of its semantic color with white text. The previous rule only set
+   color:#fff but kept the light pastel backgrounds, which had poor contrast
+   on dark pages — the "active" green pill blended into the row, the
+   "Permitting" tan pill looked washed out. These overrides give every badge
+   a strong saturated bg with bright text. */
+html[data-theme="dark"] .badge{color:#fff !important}
+html[data-theme="dark"] .badge-active{background:#1F8A3A !important}
+html[data-theme="dark"] .badge-completed{background:#0F6E80 !important}
+html[data-theme="dark"] .badge-billed{background:#0B5BCC !important}
+html[data-theme="dark"] .badge-hold{background:#B8860B !important}
+html[data-theme="dark"] .badge-inspection{background:#5C5F66 !important}
+html[data-theme="dark"] .badge-re{background:#3E40C2 !important}
+html[data-theme="dark"] .badge-permitting{background:#C76326 !important}
+html[data-theme="dark"] .badge-design{background:#1B7CB0 !important}
+html[data-theme="dark"] .badge-other{background:#7340B5 !important}
+/* Stage pills in dark mode — saturated bgs to match the new dark-friendly
+   palette. Targets the .badge-stage-* classes that statusBadge wrapper
+   applies to permit pipeline rows. */
+html[data-theme="dark"] .badge-stage-potential{background:#5C5F66 !important;color:#fff !important}
+html[data-theme="dark"] .badge-stage-started{background:#1F8A3A !important;color:#fff !important}
+html[data-theme="dark"] .badge-stage-submitted{background:#0F6E80 !important;color:#fff !important}
+html[data-theme="dark"] .badge-stage-approved{background:#C76326 !important;color:#fff !important}
+html[data-theme="dark"] .badge-stage-checklist{background:#3E40C2 !important;color:#fff !important}
+html[data-theme="dark"] .badge-stage-billed{background:#0B5BCC !important;color:#fff !important}
 
 
 /* Page-level scrolling — whole document scrolls like a normal website.
@@ -212,6 +246,17 @@ tbody tr:hover td{background:var(--gray-light)}
 .badge-permitting{background:#FDE3D0;color:#7C3810}
 .badge-design{background:#D0F0FD;color:#086A8C}
 .badge-other{background:#F0E6FF;color:#5B2D8E}
+/* Per-stage badge colors for the permit pipeline. Each stage gets its own
+   semantic color so admin can read the pipeline at a glance: gray=potential
+   (untouched), green=started (in-progress), teal=submitted (waiting),
+   orange=approved (ready to bill), purple=checklist (final wrap-up),
+   blue=billed (done). */
+.badge-stage-potential{background:#E2E3E5;color:#383D41}
+.badge-stage-started{background:#D4EDDA;color:#155724}
+.badge-stage-submitted{background:#D1ECF1;color:#0C5460}
+.badge-stage-approved{background:#FDE3D0;color:#7C3810}
+.badge-stage-checklist{background:#D6D8FF;color:#2D2F8E}
+.badge-stage-billed{background:#CCE5FF;color:#004085}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none;font-family:var(--font)}
@@ -3293,7 +3338,7 @@ async function loadPermits() {
       <td>${esc(p.client_name||'—')}</td>
       <td class="td-mono">${esc(p.work_order_number||'—')}</td>
       <td style="white-space:nowrap">${p.footage ? Math.round(p.footage).toLocaleString()+' LF' : '—'}</td>
-      <td><span class="badge badge-permitting">${STAGE_LABELS[currentStageName]||currentStageName}</span></td>
+      <td><span class="badge badge-stage-${currentStageName}">${STAGE_LABELS[currentStageName]||currentStageName}</span></td>
       <td>${pipelineViz(currentIdx)}</td>
       <td style="white-space:nowrap">
         ${currentIdx > 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();regressPermit('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>` : ''}
@@ -5308,30 +5353,27 @@ function renderProjectDetail(data, month, year) {
 
   if (isOneTime) {
     // ── ONE-TIME tile set ───────────────────────────────────────────────
-    // Show the work-as-a-whole, not period slices. "Earned" sums all-time
-    // hours×rate (or footage×rate at completion). Projected is what we
-    // committed to. Remaining is the gap.
+    // Per user request: just three tiles for one-time projects:
+    //   • Projected Revenue — what we expect to bill (job rate × footage,
+    //     or hours_estimate × rate, or expected_revenue stored on row).
+    //   • Hours — total hours logged against this project. Always shown
+    //     regardless of billing type (footage permits still need to see
+    //     how much labor was spent).
+    //   • Revenue — what's been earned so far (hours × rate for hourly,
+    //     expected_revenue once the footage project is marked complete).
+    // Footage tile is added as a 4th when applicable.
     const earnedAllTime = isFootage
       ? (['completed', 'billed'].includes(p.status) ? parseFloat(p.expected_revenue || 0) : lifetimeHrs * rate)
       : lifetimeHrs * rate;
-    const remaining = projTotal - earnedAllTime;
-    const pct = projTotal > 0 ? Math.min(100, (earnedAllTime / projTotal) * 100) : 0;
-    const remColor = remaining < 0 ? 'var(--danger)' : remaining < projTotal * 0.2 ? 'var(--warning)' : 'var(--success)';
 
     if (projTotal > 0) {
-      html += `<div class="stat-card accent"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${pct.toFixed(0)}% earned</div></div>`;
+      html += `<div class="stat-card accent"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${isFootage ? 'permit calc' : 'job rate × estimate'}</div></div>`;
     }
-    html += `<div class="stat-card"><div class="stat-label">Earned</div><div class="stat-value">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">${earnedAllTime > 0 && projTotal > 0 ? 'against ' + fmtMoney(projTotal) : 'all time'}</div></div>`;
-    if (projTotal > 0 && Math.abs(remaining) > 0.01) {
-      html += `<div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:${remColor}">${fmtMoney(remaining)}</div><div class="stat-sub">projected − earned</div></div>`;
-    }
+    html += `<div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value">${fmt(lifetimeHrs || totalHrs)}</div><div class="stat-sub">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div>`;
+    html += `<div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" style="color:var(--success)">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">${projTotal > 0 ? Math.round((earnedAllTime / projTotal) * 100) + '% of projected' : 'no projection set'}</div></div>`;
     if (isFootage && p.footage) {
       html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
     }
-    // Hours tile is ALWAYS shown for one-time projects regardless of billing
-    // type — even for footage-billed permits, you still want to see how many
-    // hours staff logged so you know the labor cost vs the per-foot revenue.
-    html += `<div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value">${fmt(lifetimeHrs || totalHrs)}</div><div class="stat-sub">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div>`;
 
   } else {
     // ── MONTHLY / CONTAINER tile set (existing behavior) ────────────────
