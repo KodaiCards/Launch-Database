@@ -54,11 +54,8 @@ if (process.env.APP_PASSWORD) {
   console.log('✓ Password protection enabled');
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(UPLOAD_DIR));
-
 // ─── Portal endpoint restrictions ────────────────────────────────────────────
-// Block endpoints that portals should NOT access (revenue, billing, AI, hours)
+// Must be BEFORE express.static so blocked endpoints return 403 before static files
 if (PORTAL_MODE) {
   const blocked = ['/api/revenue', '/api/invoices', '/api/billing', '/api/ai', '/api/hours', '/api/dashboard'];
   app.use((req, res, next) => {
@@ -67,7 +64,20 @@ if (PORTAL_MODE) {
     }
     next();
   });
+
+  // Serve portal HTML at root — BEFORE express.static grabs index.html
+  const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html' : 'design.html';
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', portalFile));
+  });
+  // Block direct access to the main app in portal mode
+  app.get('/index.html', (req, res) => {
+    res.redirect('/');
+  });
 }
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // ─── Anthropic client ─────────────────────────────────────────────────────────
 if (!process.env.ANTHROPIC_API_KEY) {
