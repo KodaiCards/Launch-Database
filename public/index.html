@@ -37,16 +37,79 @@ html[data-theme="dark"]{
 html[data-theme="dark"] body{background:#0F1419}
 html[data-theme="dark"] .card,
 html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .modal,
 html[data-theme="dark"] input,
 html[data-theme="dark"] select,
 html[data-theme="dark"] textarea{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+/* Dropdown <option> elements need EXPLICIT bg+color in dark mode. Browsers
+   render them at OS level with their own defaults — without this rule, the
+   dropdown panel that drops down when you click a <select> shows white text
+   on white background and is unreadable. Applies to ALL selects, not just
+   ones we styled inline. */
+html[data-theme="dark"] select option,
+html[data-theme="dark"] datalist option{
+  background:var(--white)!important;
+  color:var(--text)!important;
+}
 html[data-theme="dark"] thead{background:var(--gray-light) !important}
+html[data-theme="dark"] thead th{color:var(--text-muted)!important}
+html[data-theme="dark"] tbody tr{background:transparent;color:var(--text)}
+html[data-theme="dark"] tbody td{border-color:var(--gray-border)}
 html[data-theme="dark"] .header{background:var(--white);border-bottom-color:var(--gray-border)}
 html[data-theme="dark"] .btn-secondary{background:#3A4250;color:var(--text);border:1px solid var(--gray-border)}
 html[data-theme="dark"] .btn-secondary:hover{background:#4A5260}
 html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.7)}
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer{background:var(--white);border-color:var(--gray-border)}
+html[data-theme="dark"] .empty-state{color:var(--text-muted)}
+html[data-theme="dark"] .form-hint{color:var(--text-muted)}
+html[data-theme="dark"] label{color:var(--text)}
+/* Override any inline style="background:#fff" on selects/inputs. The !important
+   here intentionally beats inline styles because we have ~12 places in the
+   admin source where a <select style="background:#fff"> was hardcoded for
+   light-mode legibility — inline styles win unless we !important. */
+html[data-theme="dark"] select[style*="background:#fff"],
+html[data-theme="dark"] select[style*="background: #fff"],
+html[data-theme="dark"] select[style*="background:white"],
+html[data-theme="dark"] input[style*="background:#fff"],
+html[data-theme="dark"] input[style*="background: #fff"]{
+  background:var(--white)!important;
+  color:var(--text)!important;
+}
+/* Filter selects in admin headers — same inline-style problem */
+html[data-theme="dark"] .filter{background:var(--white)!important;color:var(--text)!important;border-color:var(--gray-border)!important}
+/* Stat cards / tile bg fix */
+html[data-theme="dark"] .stat-card{background:var(--white);border-color:var(--gray-border);color:var(--text)}
+html[data-theme="dark"] .stat-label{color:var(--text-muted)}
+/* Settings modal lists (jobs/clients/contracts/types) */
+html[data-theme="dark"] #jobs-list-body,
+html[data-theme="dark"] #clients-list-body,
+html[data-theme="dark"] #contract-list,
+html[data-theme="dark"] #project-types-list-body,
+html[data-theme="dark"] #settings-modal table{color:var(--text)}
+html[data-theme="dark"] #jobs-list-body input[type="text"],
+html[data-theme="dark"] #jobs-list-body input[type="number"],
+html[data-theme="dark"] #jobs-list-body select{background:var(--white)!important;color:var(--text)!important}
+/* Pipeline tables in admin design + permits */
+html[data-theme="dark"] #design-body,
+html[data-theme="dark"] #permits-body,
+html[data-theme="dark"] #projects-body,
+html[data-theme="dark"] #revenue-body{color:var(--text)}
+/* Project tree row alternating backgrounds in dark mode — soften the
+   light-gray stripes that look harsh against dark page bg */
+html[data-theme="dark"] tr[style*="background:var(--gray-light)"]{background:#1F252D!important}
+html[data-theme="dark"] tr[style*="background:#f0f0f0"]{background:#1A1F26!important}
+html[data-theme="dark"] tr[style*="background:#f8f9fa"]{background:#1A1F26!important}
+html[data-theme="dark"] tr[style*="background:#f5f5f5"]{background:#1F252D!important}
+/* Quick-add inline panels (Add new contract / project type) */
+html[data-theme="dark"] [style*="background:var(--gray-light)"]{background:#1F252D!important}
 /* Dark mode: invert the logo so dark-blue text becomes light/visible */
 html[data-theme="dark"] .header-logo{filter:brightness(0) invert(1) opacity(0.92)}
+/* Anchor links (View buttons inside doc lists, etc) */
+html[data-theme="dark"] a{color:#7AB3F0}
+html[data-theme="dark"] a.btn{color:var(--text)}
+/* Badges in dark mode — keep their accent color but force readable text */
+html[data-theme="dark"] .badge{color:#fff}
 
 
 /* Page-level scrolling — whole document scrolls like a normal website.
@@ -1317,6 +1380,38 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <div id="clients-list-body" style="font-size:13px"></div>
+      </div>
+
+      <!-- ── Migration tools — once-per-data-state housekeeping ── -->
+      <div class="settings-section" style="margin-top:24px">
+        <h4 style="font-size:14px;font-weight:600;margin:0 0 4px 0"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px;color:var(--text-muted)"></i>Migration Tools</h4>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">One-time housekeeping for data created before recent system updates. Safe to run multiple times — both operations are idempotent.</p>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <!-- Re-nest projects -->
+          <div style="border:1px solid var(--gray-border);border-radius:8px;padding:12px;background:var(--gray-light)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+              <div>
+                <strong style="font-size:13px">Re-nest existing projects</strong>
+                <p style="font-size:11px;color:var(--text-muted);margin:4px 0 0 0">Projects created before auto-nesting was wired up sit flat at the root with no rollup folders. This walks every project and moves it under <code>Client → Service Area → Project Type → Team</code>. Already-nested projects are skipped.</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="runRenestMigration()" style="white-space:nowrap"><i class="fa-solid fa-folder-tree"></i> Run</button>
+            </div>
+            <div id="renest-result" style="display:none;margin-top:10px;padding:8px;background:var(--white);border-radius:6px;font-size:12px;font-family:monospace;white-space:pre-wrap"></div>
+          </div>
+
+          <!-- Adopt orphan files -->
+          <div style="border:1px solid var(--gray-border);border-radius:8px;padding:12px;background:var(--gray-light)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+              <div>
+                <strong style="font-size:13px">Adopt orphan files</strong>
+                <p style="font-size:11px;color:var(--text-muted);margin:4px 0 0 0">Files on disk that have no matching <code>permit_documents</code> row. Click <b>Scan</b> to list them, then attach each to a specific project. (Or attach all at once to one project via Bulk.)</p>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="scanOrphanFiles()" style="white-space:nowrap"><i class="fa-solid fa-magnifying-glass"></i> Scan</button>
+            </div>
+            <div id="orphan-result" style="display:none;margin-top:10px"></div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -4991,11 +5086,114 @@ function renderClientsList() {
 }
 
 // Inline toggle for show_contract / show_work_order on a single client.
+// Inline toggle for show_contract / show_work_order on a single client.
 async function setClientFlag(clientId, flagName, checked) {
   try {
     await api('/api/clients/' + clientId, 'PUT', { [flagName]: !!checked });
     await loadClients();
   } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// ─── MIGRATION HANDLERS ────────────────────────────────────────────────────
+// Re-nest legacy projects: walks every real project and moves it under the
+// correct rollup chain (Client → Service Area → Project Type → Team).
+async function runRenestMigration() {
+  const result = document.getElementById('renest-result');
+  result.style.display = 'block';
+  result.style.color = 'var(--text-muted)';
+  result.textContent = 'Running… this can take a moment for large project sets.';
+  try {
+    const r = await api('/api/_admin/migrate-nesting', 'POST');
+    result.style.color = r.failed > 0 ? 'var(--warning)' : 'var(--success)';
+    let summary = `Processed: ${r.processed}\nMoved:     ${r.moved}\nSkipped:   ${r.skipped}\nFailed:    ${r.failed}\n\n${r.hint || ''}`;
+    if (r.errors && r.errors.length) {
+      summary += '\n\nErrors:\n' + r.errors.map(e => `  • ${e.name}: ${e.error}`).join('\n');
+    }
+    result.textContent = summary;
+    if (r.moved > 0) {
+      // Refresh the projects table so the new structure shows immediately
+      if (typeof loadProjects === 'function') loadProjects();
+      if (typeof loadDashboard === 'function') loadDashboard();
+    }
+  } catch (e) {
+    result.style.color = 'var(--danger)';
+    result.textContent = 'Failed: ' + e.message;
+  }
+}
+
+// Scan disk for orphan files (no matching permit_documents row). Renders a
+// list with per-file project pickers + a single "Bulk attach all to one
+// project" option for the common case where everything was for one project.
+async function scanOrphanFiles() {
+  const result = document.getElementById('orphan-result');
+  result.style.display = 'block';
+  result.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">Scanning…</div>';
+  try {
+    const r = await api('/api/_admin/orphan-files');
+    if (r.orphan_count === 0) {
+      result.innerHTML = `<div style="padding:8px;background:var(--white);border-radius:6px;font-size:12px;color:var(--success)"><i class="fa-solid fa-circle-check"></i> ${esc(r.hint)}</div>`;
+      return;
+    }
+    // Build a project picker (excluding rollups). We need allProjects loaded.
+    if (!allProjects || !allProjects.length) {
+      try { allProjects = await api('/api/projects'); } catch(e){}
+    }
+    const realProjects = (allProjects || []).filter(p => !p.is_rollup);
+    const projectOptions = '<option value="">— choose a project —</option>' +
+      realProjects.map(p => `<option value="${p.id}">${esc(p.name)}${p.client_name ? ' · ' + esc(p.client_name) : ''}</option>`).join('');
+
+    const fmtSize = (b) => b > 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + ' MB' : (b / 1024).toFixed(0) + ' KB';
+
+    result.innerHTML = `
+      <div style="padding:8px;background:var(--primary-light);border-radius:6px;font-size:12px;margin-bottom:10px">
+        <strong>${r.orphan_count} orphan file${r.orphan_count !== 1 ? 's' : ''} found.</strong> Pick a project for each, or use Bulk Attach to send all to one project.
+      </div>
+      <details style="margin-bottom:10px;padding:10px;background:var(--gray-light);border-radius:6px">
+        <summary style="cursor:pointer;font-size:12px;font-weight:600">Bulk attach: send all ${r.orphan_count} to one project</summary>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <select id="orphan-bulk-project" style="flex:1;font-size:12px;padding:4px 6px">${projectOptions}</select>
+          <button class="btn btn-primary btn-sm" onclick="adoptOrphansBulk()">Attach All</button>
+        </div>
+      </details>
+      <div style="max-height:300px;overflow-y:auto;border:1px solid var(--gray-border);border-radius:6px">
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead style="position:sticky;top:0;background:var(--gray-light)">
+            <tr><th style="text-align:left;padding:6px 8px">File</th><th style="padding:6px 8px">Size</th><th style="text-align:left;padding:6px 8px">Project</th><th></th></tr>
+          </thead>
+          <tbody>${r.orphans.map((o, i) => `
+            <tr style="border-top:1px solid var(--gray-border)">
+              <td style="padding:6px 8px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(o.file_name)}">${esc(o.file_name)}</td>
+              <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${fmtSize(o.file_size)}</td>
+              <td style="padding:6px 8px"><select id="orphan-proj-${i}" style="font-size:11px;padding:2px 4px;width:100%">${projectOptions}</select></td>
+              <td style="padding:6px 8px"><button class="btn btn-sm btn-primary" onclick="adoptOrphan('${esc(o.file_path)}', ${i})"><i class="fa-solid fa-link"></i></button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (e) {
+    result.innerHTML = `<div style="padding:8px;color:var(--danger);font-size:12px">Scan failed: ${esc(e.message)}</div>`;
+  }
+}
+
+async function adoptOrphan(filePath, idx) {
+  const projectId = document.getElementById('orphan-proj-' + idx).value;
+  if (!projectId) return alert('Pick a project for this file first.');
+  try {
+    await api('/api/_admin/adopt-orphan', 'POST', { project_id: projectId, file_path: filePath });
+    // Re-scan to remove the row that was just adopted
+    scanOrphanFiles();
+  } catch (e) { alert('Adopt failed: ' + e.message); }
+}
+
+async function adoptOrphansBulk() {
+  const projectId = document.getElementById('orphan-bulk-project').value;
+  if (!projectId) return alert('Pick a project first.');
+  if (!confirm('Attach ALL orphan files to this project?')) return;
+  try {
+    const r = await api('/api/_admin/adopt-orphans-bulk', 'POST', { project_id: projectId });
+    alert(`Attached ${r.adopted} files to "${r.project_name}".`);
+    scanOrphanFiles();
+  } catch (e) { alert('Bulk adopt failed: ' + e.message); }
 }
 
 async function saveNewClient() {

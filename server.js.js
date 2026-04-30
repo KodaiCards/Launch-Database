@@ -2148,6 +2148,188 @@ app.get('/api/_debug/uploads', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MIGRATION ENDPOINTS — admin tools to fix legacy data
+// ─────────────────────────────────────────────────────────────────────────────
+const { ensureRollupChain } = require('./portal_module');
+
+// Re-nest existing real (non-rollup) projects under their proper rollup
+// hierarchy. Use this once after the v3 schema arrives — projects created
+// before auto-nesting was wired up are still flat at root with no parent_id.
+// This walks every real project, calls ensureRollupChain to find/create
+// the correct Client → Service Area → Project Type → Team folder chain,
+// and updates parent_id to point at the team-level rollup.
+//
+// IDEMPOTENT: running it twice is safe — projects already nested under the
+// correct team folder are skipped (we check if the current parent is the
+// team rollup we'd assign).
+//
+// Returns a JSON summary with counts so you can see what moved.
+app.post('/api/_admin/migrate-nesting', async (req, res) => {
+  let processed = 0, moved = 0, skipped = 0, failed = 0;
+  const errors = [];
+  try {
+    // Get every real project (no rollups, since rollups ARE the nesting structure)
+    const { rows: projects } = await pool.query(
+      `SELECT id, name, client_id, concentrator_id, project_type_id, job_id, parent_id
+       FROM projects
+       WHERE COALESCE(is_rollup, false) = false
+       ORDER BY created_at ASC`
+    );
+    for (const p of projects) {
+      processed++;
+      try {
+        // Skip projects without a client — they can't be nested.
+        if (!p.client_id) { skipped++; continue; }
+
+        const correctParent = await ensureRollupChain(pool, {
+          client_id:       p.client_id,
+          concentrator_id: p.concentrator_id,
+          project_type_id: p.project_type_id,
+          job_id:          p.job_id
+        });
+
+        if (!correctParent) { skipped++; continue; }
+
+        if (p.parent_id === correctParent) {
+          // Already in the right place — no-op.
+          skipped++;
+        } else {
+          await pool.query('UPDATE projects SET parent_id = $1 WHERE id = $2',
+            [correctParent, p.id]);
+          moved++;
+        }
+      } catch (e) {
+        failed++;
+        errors.push({ project_id: p.id, name: p.name, error: e.message });
+      }
+    }
+    res.json({
+      processed, moved, skipped, failed,
+      errors: errors.slice(0, 20),  // cap so response stays small
+      hint: moved === 0 && processed > 0
+        ? 'No projects needed re-nesting — they were already in their correct rollup folders.'
+        : `Re-nested ${moved} of ${processed} projects.`
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message, processed, moved, failed });
+  }
+});
+
+// Adopt orphan files — files that exist on disk in UPLOAD_DIR but have no
+// matching row in permit_documents. Common causes:
+//   - Files uploaded under an older system that didn't write to permit_documents
+//   - Files that survived a DB wipe/restore but the DB lost its records
+//
+// This endpoint scans UPLOAD_DIR, compares to permit_documents.file_path, and
+// surfaces the orphans. POSTing with { project_id, file_path } adopts a single
+// orphan file by inserting a permit_documents row for it. Use the GET first
+// to see what's available, then POST one per file you want to attach.
+app.get('/api/_admin/orphan-files', async (req, res) => {
+  try {
+    const onDisk = fs.readdirSync(UPLOAD_DIR);
+    const { rows: dbDocs } = await pool.query(
+      `SELECT file_path FROM permit_documents`
+    );
+    const dbPaths = new Set(dbDocs.map(d => d.file_path));
+    const orphans = onDisk
+      .filter(f => !dbPaths.has(f))
+      .map(f => {
+        const stat = fs.statSync(path.join(UPLOAD_DIR, f));
+        // Recover the original filename — our naming convention is
+        // ${uuid}_${originalname}, so split on the first underscore after
+        // the uuid (uuids are 36 chars).
+        const original = f.length > 37 && f[36] === '_' ? f.substring(37) : f;
+        return {
+          file_path: f,
+          file_name: original,
+          file_size: stat.size,
+          modified: stat.mtime.toISOString()
+        };
+      })
+      .sort((a, b) => b.modified.localeCompare(a.modified));
+    res.json({
+      orphan_count: orphans.length,
+      orphans,
+      hint: orphans.length === 0
+        ? 'No orphan files — every file on disk is accounted for in the database.'
+        : `${orphans.length} files on disk have no matching permit_documents row. POST {project_id, file_path} to /api/_admin/adopt-orphan to attach one.`
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/_admin/adopt-orphan', async (req, res) => {
+  const { project_id, file_path, doc_type, uploaded_by } = req.body;
+  if (!project_id || !file_path) {
+    return res.status(400).json({ error: 'project_id and file_path required' });
+  }
+  try {
+    // Verify the file actually exists on disk
+    const fullPath = path.join(UPLOAD_DIR, file_path);
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ error: 'File not found on disk: ' + file_path });
+    }
+    const stat = fs.statSync(fullPath);
+    // Verify project exists
+    const proj = await pool.query('SELECT name FROM projects WHERE id = $1', [project_id]);
+    if (!proj.rows.length) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    // Recover original filename from our uuid-prefixed naming convention
+    const original = file_path.length > 37 && file_path[36] === '_'
+      ? file_path.substring(37)
+      : file_path;
+    const { rows } = await pool.query(`
+      INSERT INTO permit_documents
+        (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
+      VALUES ($1, $2, $3, $4, $5, 1, $6, $7)
+      RETURNING *`,
+      [project_id, doc_type || 'document', original, file_path, stat.size,
+       uploaded_by || 'migrated', 'Adopted from disk via migration tool']
+    );
+    res.json({ adopted: rows[0], project_name: proj.rows[0].name });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Bulk adopt — assigns ALL orphan files to a single project at once. Useful
+// when files were uploaded for a specific project but the DB rows got lost.
+// More commonly, use /api/_admin/orphan-files + targeted POSTs to /adopt-orphan
+// for each file individually.
+app.post('/api/_admin/adopt-orphans-bulk', async (req, res) => {
+  const { project_id, doc_type, uploaded_by } = req.body;
+  if (!project_id) return res.status(400).json({ error: 'project_id required' });
+  try {
+    const proj = await pool.query('SELECT name FROM projects WHERE id = $1', [project_id]);
+    if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
+
+    const onDisk = fs.readdirSync(UPLOAD_DIR);
+    const { rows: dbDocs } = await pool.query(`SELECT file_path FROM permit_documents`);
+    const dbPaths = new Set(dbDocs.map(d => d.file_path));
+    const orphans = onDisk.filter(f => !dbPaths.has(f));
+
+    let adopted = 0;
+    for (const f of orphans) {
+      const stat = fs.statSync(path.join(UPLOAD_DIR, f));
+      const original = f.length > 37 && f[36] === '_' ? f.substring(37) : f;
+      await pool.query(`
+        INSERT INTO permit_documents
+          (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
+        VALUES ($1, $2, $3, $4, $5, 1, $6, $7)`,
+        [project_id, doc_type || 'document', original, f, stat.size,
+         uploaded_by || 'migrated', 'Bulk-adopted from disk via migration tool']
+      );
+      adopted++;
+    }
+    res.json({ adopted, project_name: proj.rows[0].name });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // BUDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 

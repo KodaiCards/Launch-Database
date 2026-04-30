@@ -793,3 +793,5 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
 module.exports = installPortalExtensions;
 module.exports.isDuplicateProject = isDuplicateProject;
 module.exports.stripMoneyFromProject = stripMoneyFromProject;
+module.exports.ensureRollupChain = ensureRollupChain;
+module.exports.findOrCreateRollup = findOrCreateRollup;
