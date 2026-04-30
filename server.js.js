@@ -503,7 +503,8 @@ app.post('/api/projects', async (req, res) => {
     status = 'active', billing_type, billing_rate,
     footage, start_date, notes, parent_id, budget_code_id, concentrator_id,
     permit_manager,
-    billing_cadence, projected_revenue
+    billing_cadence, projected_revenue,
+    manual_invoice_amount
   } = req.body;
 
   try {
@@ -541,11 +542,19 @@ app.post('/api/projects', async (req, res) => {
     const finType = isPermitting ? 'permitting' : (project_type || 'other');
     const fin = calcProjectFinancials(finType, effectiveRate, footage);
 
-    // Projected revenue: caller's value if provided, else fall back to the
+    // Manual invoice amount: a flat dollar override. When set, the bill flow
+    // uses this number instead of (hours × rate) or (footage × rate).
+    const effectiveManual = manual_invoice_amount !== undefined && manual_invoice_amount !== null && manual_invoice_amount !== ''
+      ? parseFloat(manual_invoice_amount)
+      : null;
+
+    // Projected revenue: caller's value if provided, else manual_invoice_amount
+    // (since that's the real contract value when set), else fall back to the
     // calculated expected_revenue (the auto-derived value for footage projects).
     const effectiveProjected = projected_revenue !== undefined && projected_revenue !== null && projected_revenue !== ''
       ? parseFloat(projected_revenue)
-      : (fin.expectedRevenue != null ? fin.expectedRevenue : null);
+      : (effectiveManual != null ? effectiveManual
+         : (fin.expectedRevenue != null ? fin.expectedRevenue : null));
 
     const { rows } = await pool.query(`
       INSERT INTO projects (
@@ -554,8 +563,9 @@ app.post('/api/projects', async (req, res) => {
         status, billing_type, billing_rate,
         footage, miles, expected_hours, expected_revenue,
         start_date, notes, parent_id, budget_code_id, concentrator_id,
-        permitting_hours_per_mile, billing_cadence, projected_revenue
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+        permitting_hours_per_mile, billing_cadence, projected_revenue,
+        manual_invoice_amount
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
       RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
@@ -563,7 +573,8 @@ app.post('/api/projects', async (req, res) => {
       status, effectiveBillingType, effectiveRate || null,
       footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
       start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
-      fin.permittingHoursPerMile || null, effectiveCadence, effectiveProjected
+      fin.permittingHoursPerMile || null, effectiveCadence, effectiveProjected,
+      effectiveManual
     ]);
 
     // Auto-create permit stage for permitting projects
@@ -584,7 +595,7 @@ app.put('/api/projects/:id', async (req, res) => {
     project_type, project_type_id, job_id,
     status, billing_type, billing_rate,
     footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id,
-    billing_cadence, projected_revenue
+    billing_cadence, projected_revenue, manual_invoice_amount
   } = req.body;
 
   try {
@@ -606,16 +617,19 @@ app.put('/api/projects/:id', async (req, res) => {
 
     // For permitting, reuse the random hours-per-mile factor stored at create-time
     // so editing footage doesn't generate a new random rate every save.
-    const existing = await pool.query('SELECT permitting_hours_per_mile, billing_cadence, projected_revenue FROM projects WHERE id=$1', [req.params.id]);
+    const existing = await pool.query('SELECT permitting_hours_per_mile, billing_cadence, projected_revenue, manual_invoice_amount FROM projects WHERE id=$1', [req.params.id]);
     const existingHpm = existing.rows[0]?.permitting_hours_per_mile;
     const finType = isPermitting ? 'permitting' : (project_type || 'other');
     const fin = calcProjectFinancials(finType, effectiveRate, footage, existingHpm);
 
-    // Cadence + projected_revenue: if not in payload, preserve existing values.
+    // Preserve existing values when payload doesn't include the field
     const newCadence = billing_cadence !== undefined ? billing_cadence : existing.rows[0]?.billing_cadence;
     const newProjected = projected_revenue !== undefined
       ? (projected_revenue === null || projected_revenue === '' ? null : parseFloat(projected_revenue))
       : existing.rows[0]?.projected_revenue;
+    const newManual = manual_invoice_amount !== undefined
+      ? (manual_invoice_amount === null || manual_invoice_amount === '' ? null : parseFloat(manual_invoice_amount))
+      : existing.rows[0]?.manual_invoice_amount;
 
     const { rows } = await pool.query(`
       UPDATE projects SET
@@ -626,8 +640,9 @@ app.put('/api/projects/:id', async (req, res) => {
         start_date=$15, completed_date=$16, billed_date=$17,
         notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=$21,
         permitting_hours_per_mile=$22,
-        billing_cadence=$23, projected_revenue=$24
-      WHERE id=$25 RETURNING *
+        billing_cadence=$23, projected_revenue=$24,
+        manual_invoice_amount=$25
+      WHERE id=$26 RETURNING *
     `, [
       name, client_id, contract_id || null, work_order_number,
       project_type, project_type_id || null, job_id || null,
@@ -636,7 +651,7 @@ app.put('/api/projects/:id', async (req, res) => {
       start_date || null, completed_date || null, billed_date || null,
       notes, parent_id || null, budget_code_id || null, concentrator_id || null,
       fin.permittingHoursPerMile || existingHpm || null,
-      newCadence, newProjected,
+      newCadence, newProjected, newManual,
       req.params.id
     ]);
     res.json(rows[0]);
@@ -2392,11 +2407,30 @@ app.get('/api/revenue/projected-total', async (req, res) => {
       GROUP BY cl.name
       ORDER BY projected DESC
     `);
+    // Per-project list: every leaf that has a projected_revenue, with parent
+    // ancestry so the user can see which contracts are contributing.
+    const projectsR = await pool.query(`
+      SELECT p.id, p.name, p.projected_revenue, p.status, p.work_order_number,
+             cl.name AS client_name,
+             pp.name AS parent_name,
+             gp.name AS grandparent_name,
+             j.name AS job_name
+      FROM projects p
+      LEFT JOIN clients cl ON cl.id = p.client_id
+      LEFT JOIN projects pp ON pp.id = p.parent_id
+      LEFT JOIN projects gp ON gp.id = pp.parent_id
+      LEFT JOIN jobs j ON j.id = p.job_id
+      WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+        AND p.status IN ('active', 'completed')
+        AND p.projected_revenue IS NOT NULL
+      ORDER BY cl.name, gp.name NULLS LAST, pp.name NULLS LAST, p.name
+    `);
     res.json({
       total: parseFloat(totalR.rows[0].total) || 0,
       with_projected: totalR.rows[0].with_projected,
       without_projected: totalR.rows[0].without_projected,
-      by_client: byClientR.rows
+      by_client: byClientR.rows,
+      projects: projectsR.rows
     });
   } catch (e) {
     console.error('projected-total error:', e);
@@ -2421,6 +2455,7 @@ app.get('/api/revenue/unbilled', async (req, res) => {
         NULL::int as period_year, NULL::int as period_month,
         COALESCE(SUM(te.hours),0) as logged_hours,
         CASE
+          WHEN p.manual_invoice_amount IS NOT NULL THEN p.manual_invoice_amount
           WHEN p.billing_type = 'hourly' THEN COALESCE(SUM(te.hours),0) * p.billing_rate
           WHEN p.billing_type = 'footage' THEN p.expected_revenue
           ELSE 0
@@ -2902,11 +2937,21 @@ app.post('/api/billing/bill-multiple', async (req, res) => {
         periodLabel = `${monthName} ${override.period_year}`;
       }
 
+      // Amount priority:
+      //   1. caller's per-line override.amount (UI / bulk-bill flow)
+      //   2. project's manual_invoice_amount (flat fee override stored on project)
+      //   3. calculated: footage → expected_revenue, hourly → hours × rate
+      const projManual = parseFloat(p.manual_invoice_amount);
+      const hasManual = !isNaN(projManual) && projManual >= 0;
       const amount = override.amount != null ? parseFloat(override.amount)
-        : isFootage ? expected : hours * rate;
+        : hasManual ? projManual
+        : isFootage ? expected
+        : hours * rate;
       const qty = override.quantity != null ? parseFloat(override.quantity)
-        : isFootage ? p.footage : hours;
-      const unit = override.unit || (isFootage ? 'lf' : 'hours');
+        : hasManual ? 1
+        : isFootage ? p.footage
+        : hours;
+      const unit = override.unit || (hasManual ? 'flat' : (isFootage ? 'lf' : 'hours'));
       const description = override.description || (periodLabel ? `${p.name} — ${periodLabel}` : p.name);
       lineItems.push({
         project_id: p.id, description, quantity: qty, unit, rate, amount,

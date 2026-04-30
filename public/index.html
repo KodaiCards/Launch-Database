@@ -666,19 +666,27 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <!-- Rate section — shown/hidden by type -->
         <div id="rate-section" class="form-row">
           <div class="form-group" id="rate-group">
-            <label id="rate-label">Billing Rate ($/hr) *</label>
+            <label id="rate-label">Billing Rate ($/hr)</label>
             <div class="input-group">
               <input type="number" id="proj-rate" placeholder="0.00" step="0.01" oninput="calcExpected()">
               <span class="input-addon">/hr</span>
             </div>
-            <span class="form-hint" id="rate-hint"></span>
+            <span class="form-hint" id="rate-hint">Optional. Leave blank if billing by flat amount instead.</span>
           </div>
           <div class="form-group" id="footage-group" style="display:none">
-            <label>Linear Footage *</label>
+            <label>Linear Footage</label>
             <div class="input-group">
               <input type="number" id="proj-footage" placeholder="0" oninput="calcExpected()">
               <span class="input-addon">LF</span>
             </div>
+          </div>
+          <div class="form-group" id="manual-amount-group">
+            <label>Flat Invoice Amount <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <div class="input-group">
+              <span class="input-addon">$</span>
+              <input type="number" id="proj-manual-amount" placeholder="0.00" step="0.01">
+            </div>
+            <span class="form-hint">When set, this overrides the calculated amount on bills.</span>
           </div>
         </div>
         <!-- Hidden: expected_hours / expected_revenue still get computed
@@ -1040,6 +1048,20 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <button class="btn btn-icon btn-secondary" onclick="closeModal('active-list-modal')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body" id="active-list-body" style="flex:1;overflow-y:auto;min-height:0"></div>
+  </div>
+</div>
+
+<!-- PROJECTED REVENUE LIST MODAL — opens from the Revenue tab Projected tile.
+     Lists every leaf project contributing to the projected total, with parent
+     ancestry, so the user can see what the number is built from. Click any
+     row to drill into that project's detail popup. -->
+<div class="modal-overlay" id="projected-list-modal">
+  <div class="modal" style="max-width:880px;width:95%">
+    <div class="modal-header" style="position:sticky;top:0;flex-shrink:0;z-index:2">
+      <span class="modal-title"><i class="fa-solid fa-list-check" style="color:var(--primary)"></i> Projected Revenue Breakdown</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('projected-list-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="projected-list-body" style="flex:1;overflow-y:auto;min-height:0"></div>
   </div>
 </div>
 
@@ -1448,6 +1470,57 @@ async function showActiveList() {
       </table>`;
   } catch (e) {
     document.getElementById('active-list-body').innerHTML = '<div style="padding:24px;color:var(--danger)">Failed: ' + esc(e.message) + '</div>';
+  }
+}
+
+// Click handler for the Revenue tab Projected Revenue tile. Lists every leaf
+// project that has a projected_revenue value set, grouped by client → contract
+// for readability. Each row links to that project's detail popup. The bottom
+// row totals the column for sanity (should match the tile).
+async function showProjectedList() {
+  document.getElementById('projected-list-body').innerHTML = '<div style="padding:40px;text-align:center"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--text-muted)"></i></div>';
+  openModal('projected-list-modal');
+  try {
+    const data = await api('/api/revenue/projected-total');
+    const projects = data.projects || [];
+    if (!projects.length) {
+      document.getElementById('projected-list-body').innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">No projects have a projected revenue set yet. Edit a project to add one.</div>';
+      return;
+    }
+    // Group by client for readability
+    const byClient = {};
+    projects.forEach(p => {
+      const c = p.client_name || '(no client)';
+      (byClient[c] = byClient[c] || []).push(p);
+    });
+    let html = `<div style="padding:14px 18px;background:var(--gray-light);font-size:13px;color:var(--text-muted);margin-bottom:8px">
+      <strong style="color:var(--text);font-size:14px">${projects.length} project${projects.length !== 1 ? 's' : ''} contributing.</strong>
+      Total: <strong style="color:var(--primary)">${fmtMoney(data.total)}</strong>${data.without_projected > 0 ? ` · <span style="color:var(--text-muted)">${data.without_projected} project${data.without_projected !== 1 ? 's' : ''} without a projected value (not counted)</span>` : ''}
+    </div>`;
+    for (const [client, list] of Object.entries(byClient)) {
+      const clientTotal = list.reduce((s, p) => s + (parseFloat(p.projected_revenue) || 0), 0);
+      html += `<div style="padding:10px 16px;background:var(--primary-light);font-weight:700;color:var(--primary);display:flex;justify-content:space-between"><span>${esc(client)}</span><span>${fmtMoney(clientTotal)}</span></div>`;
+      html += `<table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="background:var(--white);border-bottom:1px solid var(--gray-border)">
+          <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-size:11px;text-transform:uppercase">Project</th>
+          <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-size:11px;text-transform:uppercase">Job</th>
+          <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-size:11px;text-transform:uppercase">Status</th>
+          <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-size:11px;text-transform:uppercase">Projected</th>
+        </tr></thead>
+        <tbody>${list.map(p => {
+          const ancestry = [p.grandparent_name, p.parent_name].filter(Boolean).join(' › ');
+          return `<tr style="border-bottom:1px solid var(--gray-border);cursor:pointer" onclick="closeModal('projected-list-modal');showProjectDetail('${p.id}')">
+            <td style="padding:8px 12px"><div style="font-weight:600">${esc(p.name)}</div>${ancestry ? `<div style="color:var(--text-muted);font-size:11px;margin-top:2px">${esc(ancestry)}</div>` : ''}${p.work_order_number ? `<div style="color:var(--text-muted);font-size:11px;margin-top:2px;font-family:monospace">WO ${esc(p.work_order_number)}</div>` : ''}</td>
+            <td style="padding:8px 12px">${esc(p.job_name || '—')}</td>
+            <td style="padding:8px 12px">${statusBadge(p.status)}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(p.projected_revenue)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    }
+    document.getElementById('projected-list-body').innerHTML = html;
+  } catch (e) {
+    document.getElementById('projected-list-body').innerHTML = '<div style="padding:24px;color:var(--danger)">Failed: ' + esc(e.message) + '</div>';
   }
 }
 
@@ -1868,6 +1941,9 @@ async function editProject(id) {
   if (document.getElementById('proj-projected')) {
     document.getElementById('proj-projected').value = p.projected_revenue ?? '';
   }
+  if (document.getElementById('proj-manual-amount')) {
+    document.getElementById('proj-manual-amount').value = p.manual_invoice_amount ?? '';
+  }
   // Load budget codes if project has a parent with a budget
   await loadBudgetCodesForProject(p.parent_id || p.id);
   document.getElementById('proj-budget-code').value = p.budget_code_id||'';
@@ -1878,7 +1954,7 @@ async function editProject(id) {
 }
 
 function clearProjectForm() {
-  ['proj-id','proj-name','proj-wo','proj-rate','proj-footage','proj-notes','proj-projected'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+  ['proj-id','proj-name','proj-wo','proj-rate','proj-footage','proj-notes','proj-projected','proj-manual-amount'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
   document.getElementById('proj-parent').value='';
@@ -2038,10 +2114,11 @@ async function saveProject() {
   const job = jobsCache.find(j => j.id === jobId);
   const isPermit = !!job?.is_permitting;
   const isFootage = job?.default_billing_type === 'footage' || isPermit;
-  if (!rate) return alert('Billing rate is required');
+  // Billing rate and footage are now OPTIONAL. Server stores NULL when blank
+  // and projects can be edited later to fill them in. Footage projects without
+  // a rate just won't compute expected_revenue until the rate is set.
 
   const footage = document.getElementById('proj-footage').value;
-  if (isPermit && !footage) return alert('Linear footage is required for permitting projects');
 
   // Pick a legacy project_type tag for backward compat with code that still
   // reads p.project_type. Map by job name when available.
@@ -2074,6 +2151,12 @@ async function saveProject() {
     billing_cadence: document.getElementById('proj-cadence')?.value || 'one_time',
     projected_revenue: (() => {
       const v = document.getElementById('proj-projected')?.value;
+      if (v === '' || v == null) return null;
+      const n = parseFloat(v);
+      return isNaN(n) ? null : n;
+    })(),
+    manual_invoice_amount: (() => {
+      const v = document.getElementById('proj-manual-amount')?.value;
       if (v === '' || v == null) return null;
       const n = parseFloat(v);
       return isNaN(n) ? null : n;
@@ -3716,10 +3799,9 @@ async function loadRevenue() {
       <div class="stat-value">${fmtMoney(totalUnbilled)}</div>
       <div class="stat-sub">${unbilled.length} project${unbilled.length!==1?'s':''}</div>
     </div>
-    ${projTotal > 0 ? `<div class="stat-card">
+    ${isYTD && projTotal > 0 ? `<div class="stat-card" onclick="showProjectedList()" style="cursor:pointer" title="Click to see which projects make up this number">
       <div class="stat-label">Projected Revenue</div>
       <div class="stat-value">${fmtMoney(projTotal)}</div>
-      <div class="stat-sub">${projPctEarned.toFixed(0)}% earned · ${projectedTotal.with_projected} project${projectedTotal.with_projected!==1?'s':''}</div>
     </div>` : ''}
   `;
 
@@ -4042,7 +4124,7 @@ function renderProjectDetail(data, month, year) {
             </tr></thead>
             <tbody>${permit_documents.map(d => `<tr>
               <td style="padding:6px 12px"><span class="badge badge-permitting">${esc(d.doc_type)}</span></td>
-              <td style="padding:6px 12px"><a href="/${esc(d.file_path)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(d.file_name||'file')}</a></td>
+              <td style="padding:6px 12px"><a href="/uploads/${esc(d.file_path)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(d.file_name||'file')}</a></td>
               <td style="padding:6px 12px;text-align:right">${d.revision_number || 1}</td>
               <td style="padding:6px 12px;color:var(--text-muted);font-size:12px">${d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'}<br>${esc(d.uploaded_by || '')}</td>
               <td style="padding:6px 12px;color:var(--text-muted);font-size:12px">${esc(d.notes || '')}</td>

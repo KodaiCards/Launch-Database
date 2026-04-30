@@ -527,3 +527,12 @@ UPDATE projects
   WHERE projected_revenue IS NULL
     AND billing_type = 'footage'
     AND expected_revenue IS NOT NULL;
+
+-- ─────────────────────────────────────────
+-- MANUAL INVOICE AMOUNT — overrides the calculated billing amount.
+-- When set on a project, the Billing tab and bill flows use this flat amount
+-- instead of (hours × rate) or footage expected_revenue. Useful for
+-- fixed-fee jobs where the contract is for a specific dollar amount that
+-- doesn't fit the hourly or per-mile model. NULL = use the calculated value.
+-- ─────────────────────────────────────────
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS manual_invoice_amount NUMERIC(14,2);
