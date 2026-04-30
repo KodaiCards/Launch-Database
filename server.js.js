@@ -472,9 +472,17 @@ app.put('/api/jobs/:id', async (req, res) => {
   const allowed = ['name', 'default_billing_type', 'default_rate', 'is_permitting',
                    'notes', 'active', 'team', 'billing_code', 'for_psc_client',
                    'for_generic_client'];
+  // These fields, when changed, mark the job as manually-overridden so the
+  // bootstrap reseed won't revert them on next deploy. Excludes 'notes' and
+  // 'active' (those are bookkeeping, don't represent a config decision worth
+  // pinning) and 'name' (renames are name-changes, not config overrides).
+  const overrideTriggers = ['default_billing_type', 'default_rate', 'team',
+                             'billing_code', 'for_psc_client', 'for_generic_client',
+                             'is_permitting'];
   const setClauses = [];
   const values = [req.params.id];
   let i = 2;
+  let stampOverride = false;
   for (const field of allowed) {
     if (Object.prototype.hasOwnProperty.call(req.body, field)) {
       let v = req.body[field];
@@ -483,16 +491,36 @@ app.put('/api/jobs/:id', async (req, res) => {
       setClauses.push(`${field} = $${i}`);
       values.push(v);
       i++;
+      if (overrideTriggers.includes(field)) stampOverride = true;
     }
   }
   if (!setClauses.length) {
     return res.status(400).json({ error: 'No fields to update' });
   }
+  // Stamp manually_overridden_at when the admin changes a canonical config
+  // field. After this, the next bootstrap reseed will preserve admin's
+  // choices instead of reverting to the hardcoded canonical values.
+  if (stampOverride) setClauses.push(`manually_overridden_at = NOW()`);
   try {
     const sql = `UPDATE jobs SET ${setClauses.join(', ')} WHERE id = $1 RETURNING *`;
     const { rows } = await pool.query(sql, values);
     if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
     res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Reset a job's manual-override flag. After this, the next bootstrap reseed
+// will overwrite the job's canonical fields back to the hardcoded defaults.
+// This is the escape hatch when admin overrode something by mistake or wants
+// to opt back in to system-managed defaults.
+app.post('/api/jobs/:id/reset-override', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE jobs SET manually_overridden_at = NULL WHERE id = $1 RETURNING id, name`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
+    res.json({ ok: true, name: rows[0].name });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -2406,6 +2434,100 @@ app.post('/api/_admin/adopt-orphans-bulk', requireAdmin, async (req, res) => {
       adopted++;
     }
     res.json({ adopted, project_name: proj.rows[0].name });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── Backfill hours: link existing time_entries to user accounts by name ─────
+// Workflow:
+//   - GET /api/_admin/hours-backfill-preview → returns who would match what.
+//     Lets admin sanity-check before committing. Shows matched, ambiguous,
+//     and unmatched groups.
+//   - POST /api/_admin/hours-backfill → actually writes user_id on time_entries.
+//
+// Match rule: case-insensitive equality between staff.name and users.full_name.
+// We also try matching against username as a fallback (in case "jsmith" is
+// what got typed in the time entry instead of "Jane Smith").
+//
+// This only updates rows where time_entries.user_id IS NULL — so re-running
+// after admin manually fixed a few never overwrites their corrections.
+
+app.get('/api/_admin/hours-backfill-preview', requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      WITH staff_with_user AS (
+        SELECT
+          s.id as staff_id,
+          s.name as staff_name,
+          (SELECT u.id FROM users u
+            WHERE LOWER(u.full_name) = LOWER(s.name)
+               OR LOWER(u.username)  = LOWER(s.name)
+            LIMIT 1) as matched_user_id,
+          (SELECT u.username FROM users u
+            WHERE LOWER(u.full_name) = LOWER(s.name)
+               OR LOWER(u.username)  = LOWER(s.name)
+            LIMIT 1) as matched_username,
+          (SELECT COUNT(*)::int FROM users u
+            WHERE LOWER(u.full_name) = LOWER(s.name)
+               OR LOWER(u.username)  = LOWER(s.name)) as match_count
+        FROM staff s
+      )
+      SELECT
+        sw.staff_name,
+        sw.matched_username,
+        sw.match_count,
+        (SELECT COUNT(*)::int FROM time_entries te
+          WHERE te.staff_id = sw.staff_id AND te.user_id IS NULL) as entries_to_link
+      FROM staff_with_user sw
+      ORDER BY sw.staff_name
+    `);
+    const matched   = rows.filter(r => r.match_count === 1 && r.entries_to_link > 0);
+    const ambiguous = rows.filter(r => r.match_count > 1);
+    const unmatched = rows.filter(r => r.match_count === 0 && r.entries_to_link > 0);
+    const noEntries = rows.filter(r => r.entries_to_link === 0);
+    const totalEntries = matched.reduce((s, r) => s + r.entries_to_link, 0);
+    res.json({
+      summary: {
+        staff_total: rows.length,
+        staff_with_user_match: matched.length,
+        staff_ambiguous: ambiguous.length,
+        staff_unmatched: unmatched.length,
+        time_entries_to_link: totalEntries,
+      },
+      matched, ambiguous, unmatched, noEntries
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/_admin/hours-backfill', requireAdmin, async (req, res) => {
+  try {
+    // Single UPDATE that links every NULL-user_id time entry to a user whose
+    // full_name (or username) matches the staff name on the entry. We only
+    // do this when the match is unambiguous (count = 1) so we don't blindly
+    // assign hours to the wrong person if two users happen to share a name.
+    const result = await pool.query(`
+      UPDATE time_entries te SET user_id = matched.user_id
+      FROM (
+        SELECT s.id as staff_id, u.id as user_id
+        FROM staff s
+        JOIN users u
+          ON LOWER(u.full_name) = LOWER(s.name)
+          OR LOWER(u.username)  = LOWER(s.name)
+        GROUP BY s.id, u.id
+        HAVING COUNT(*) OVER (PARTITION BY s.id) = 1
+      ) matched
+      WHERE te.staff_id = matched.staff_id AND te.user_id IS NULL
+    `);
+    res.json({
+      ok: true,
+      time_entries_updated: result.rowCount,
+      hint: result.rowCount === 0
+        ? 'No entries needed linking — either everything was already linked, or no staff names match a user full_name. Use the Preview button to see why.'
+        : `Linked ${result.rowCount} time entries to user accounts based on matching name/full_name.`
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -4823,6 +4945,13 @@ async function bootstrapV3Schema() {
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_level VARCHAR(20)`,
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_key TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_projects_rollup ON projects (rollup_level, parent_id, rollup_key) WHERE is_rollup = TRUE`,
+    // Track admin's manual edits to canonical jobs. When this column is set,
+    // the bootstrap respects the admin's choices (team, billing type, rate,
+    // applicability flags) and ONLY upserts identifying metadata that's safe
+    // to refresh (the name itself for legacy job_id refs, billing_code if
+    // null). Without this column, every redeploy reverted manual settings
+    // changes back to the hardcoded canonical values.
+    `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS manually_overridden_at TIMESTAMPTZ`,
     // Per-client opt-in: do we show the Contract field? the WO# field? Default
     // computed from is_rus on the client (PSC clients show both; others default
     // to neither). Admin can toggle in Settings.
@@ -4875,18 +5004,33 @@ async function bootstrapV3Schema() {
   let okCount = 0, failCount = 0;
   for (const j of jobsToSeed) {
     try {
+      // Upsert that respects admin's manual edits.
+      //
+      // When INSERT (new job): all canonical values land as expected.
+      // When CONFLICT (job exists):
+      //   - If jobs.manually_overridden_at IS NULL → admin hasn't touched this
+      //     job through the Settings UI, so keep refreshing the canonical
+      //     values. This ensures my hardcoded job spec stays authoritative
+      //     for never-edited jobs across deploys.
+      //   - If jobs.manually_overridden_at IS NOT NULL → admin has edited
+      //     this job. Preserve their choices for team, billing_type, rate,
+      //     billing_code, applicability flags. Only refresh `active=TRUE`
+      //     to make sure deactivated-then-restored jobs come back online.
+      //
+      // The COALESCE(jobs.manually_overridden_at, ...) trick: if the column
+      // is NULL, EXCLUDED wins; if it's NOT NULL, the existing value wins.
       await pool.query(
         `INSERT INTO jobs (
            name, default_billing_type, default_rate, is_permitting,
            billing_code, team, for_psc_client, for_generic_client, active
          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
          ON CONFLICT (name) DO UPDATE SET
-           default_billing_type = EXCLUDED.default_billing_type,
-           is_permitting        = EXCLUDED.is_permitting,
-           billing_code         = COALESCE(EXCLUDED.billing_code, jobs.billing_code),
-           team                 = EXCLUDED.team,
-           for_psc_client       = EXCLUDED.for_psc_client,
-           for_generic_client   = EXCLUDED.for_generic_client,
+           default_billing_type = CASE WHEN jobs.manually_overridden_at IS NULL THEN EXCLUDED.default_billing_type ELSE jobs.default_billing_type END,
+           is_permitting        = CASE WHEN jobs.manually_overridden_at IS NULL THEN EXCLUDED.is_permitting ELSE jobs.is_permitting END,
+           billing_code         = COALESCE(jobs.billing_code, EXCLUDED.billing_code),
+           team                 = CASE WHEN jobs.manually_overridden_at IS NULL THEN EXCLUDED.team ELSE jobs.team END,
+           for_psc_client       = CASE WHEN jobs.manually_overridden_at IS NULL THEN EXCLUDED.for_psc_client ELSE jobs.for_psc_client END,
+           for_generic_client   = CASE WHEN jobs.manually_overridden_at IS NULL THEN EXCLUDED.for_generic_client ELSE jobs.for_generic_client END,
            active               = TRUE`,
         [j.name, j.bt, j.rate, j.perm, j.code, j.team, j.psc, j.generic]
       );

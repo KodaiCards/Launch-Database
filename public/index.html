@@ -1155,7 +1155,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </div>
 
 <!-- BUDGET MODAL -->
-<div class="modal-overlay" id="user-modal">
+<!-- Layered modals: user-modal and change-password-modal get z-index above
+     the standard 1000. They're often opened from inside Settings (which is
+     itself a modal at z-index 1000), so without this they'd render BEHIND
+     the Settings modal because of DOM stacking order. -->
+<div class="modal-overlay" id="user-modal" style="z-index:1100">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
       <span class="modal-title" id="user-modal-title">New User</span>
@@ -1212,7 +1216,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </div>
 
 <!-- CHANGE PASSWORD MODAL — for the current user to change their own password -->
-<div class="modal-overlay" id="change-password-modal">
+<div class="modal-overlay" id="change-password-modal" style="z-index:1100">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
       <span class="modal-title">Change Password</span>
@@ -1532,6 +1536,21 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <button class="btn btn-secondary btn-sm" onclick="scanOrphanFiles()" style="white-space:nowrap"><i class="fa-solid fa-magnifying-glass"></i> Scan</button>
             </div>
             <div id="orphan-result" style="display:none;margin-top:10px"></div>
+          </div>
+
+          <!-- Backfill hours: link existing time entries to user accounts -->
+          <div style="border:1px solid var(--gray-border);border-radius:8px;padding:12px;background:var(--gray-light)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+              <div>
+                <strong style="font-size:13px">Backfill hours to user accounts</strong>
+                <p style="font-size:11px;color:var(--text-muted);margin:4px 0 0 0">Existing time entries are tagged with a staff name, not a user account. This links them to user accounts where the staff name matches a user's <code>full_name</code> (or <code>username</code>) exactly. Required so engineers see "their" hours when role-based filtering is on.</p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;white-space:nowrap">
+                <button class="btn btn-secondary btn-sm" onclick="previewHoursBackfill()"><i class="fa-solid fa-eye"></i> Preview</button>
+                <button class="btn btn-primary btn-sm" onclick="runHoursBackfill()"><i class="fa-solid fa-link"></i> Backfill</button>
+              </div>
+            </div>
+            <div id="backfill-result" style="display:none;margin-top:10px"></div>
           </div>
         </div>
       </div>
@@ -5349,6 +5368,63 @@ async function adoptOrphansBulk() {
   } catch (e) { alert('Bulk adopt failed: ' + e.message); }
 }
 
+// ─── Backfill hours: link existing time_entries to user accounts ────────────
+async function previewHoursBackfill() {
+  const result = document.getElementById('backfill-result');
+  result.style.display = 'block';
+  result.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">Scanning…</div>';
+  try {
+    const r = await api('/api/_admin/hours-backfill-preview');
+    const s = r.summary;
+    let html = `<div style="padding:10px;background:var(--white);border:1px solid var(--gray-border);border-radius:6px;font-size:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><strong style="color:var(--success)">${s.staff_with_user_match}</strong> staff names match a user</div>
+        <div><strong style="color:var(--primary)">${s.time_entries_to_link}</strong> time entries ready to link</div>
+        <div><strong style="color:var(--warning)">${s.staff_ambiguous}</strong> ambiguous (skip until resolved)</div>
+        <div><strong style="color:var(--text-muted)">${s.staff_unmatched}</strong> have no matching user</div>
+      </div>`;
+    if (r.matched.length) {
+      html += `<details style="margin-bottom:6px"><summary style="cursor:pointer;font-weight:600;color:var(--success)">✓ Will link (${r.matched.length})</summary>
+        <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:6px">
+          <tbody>${r.matched.map(m => `<tr style="border-top:1px solid var(--gray-border)"><td style="padding:3px 6px"><b>${esc(m.staff_name)}</b></td><td style="padding:3px 6px;color:var(--text-muted)">→</td><td style="padding:3px 6px;font-family:monospace">${esc(m.matched_username)}</td><td style="padding:3px 6px;text-align:right;color:var(--primary)">${m.entries_to_link} entries</td></tr>`).join('')}</tbody>
+        </table></details>`;
+    }
+    if (r.ambiguous.length) {
+      html += `<details style="margin-bottom:6px"><summary style="cursor:pointer;font-weight:600;color:var(--warning)">⚠ Ambiguous (${r.ambiguous.length}) — multiple users match this name</summary>
+        <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:6px">
+          <tbody>${r.ambiguous.map(m => `<tr style="border-top:1px solid var(--gray-border)"><td style="padding:3px 6px"><b>${esc(m.staff_name)}</b></td><td style="padding:3px 6px;color:var(--warning)">${m.match_count} matches</td><td style="padding:3px 6px;text-align:right">${m.entries_to_link} entries</td></tr>`).join('')}</tbody>
+        </table>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Resolve by renaming users (Settings → Users) so only one user matches this staff name exactly.</div></details>`;
+    }
+    if (r.unmatched.length) {
+      html += `<details><summary style="cursor:pointer;font-weight:600;color:var(--text-muted)">— No user match (${r.unmatched.length})</summary>
+        <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:6px">
+          <tbody>${r.unmatched.map(m => `<tr style="border-top:1px solid var(--gray-border)"><td style="padding:3px 6px">${esc(m.staff_name)}</td><td style="padding:3px 6px;text-align:right;color:var(--text-muted)">${m.entries_to_link} entries</td></tr>`).join('')}</tbody>
+        </table>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Create a user with full_name set to the staff name, then re-run the preview.</div></details>`;
+    }
+    html += '</div>';
+    result.innerHTML = html;
+  } catch (e) {
+    result.innerHTML = `<div style="padding:8px;color:var(--danger);font-size:12px">Preview failed: ${esc(e.message)}</div>`;
+  }
+}
+
+async function runHoursBackfill() {
+  if (!confirm('Backfill hours to user accounts?\n\nThis links time entries to users where the staff name matches a user\'s full_name (or username) exactly. Ambiguous matches (more than one user with the same name) are skipped.\n\nSafe to run multiple times — only blank user_id rows get updated.')) return;
+  const result = document.getElementById('backfill-result');
+  result.style.display = 'block';
+  result.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">Linking…</div>';
+  try {
+    const r = await api('/api/_admin/hours-backfill', 'POST');
+    result.innerHTML = `<div style="padding:10px;background:var(--white);border:1px solid var(--success);border-radius:6px;font-size:12px;color:var(--success)">
+      <i class="fa-solid fa-check-circle"></i> ${esc(r.hint)}
+    </div>`;
+  } catch (e) {
+    result.innerHTML = `<div style="padding:8px;color:var(--danger);font-size:12px">Backfill failed: ${esc(e.message)}</div>`;
+  }
+}
+
 async function saveNewClient() {
   const name = document.getElementById('new-client-name').value.trim();
   const is_rus = document.getElementById('new-client-rus').checked;
@@ -5471,13 +5547,14 @@ function renderJobsList() {
       <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_psc_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_psc_client',this.checked)" title="Show for PSC clients"></td>
       <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_generic_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_generic_client',this.checked)" title="Show for non-PSC clients"></td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+        ${j.manually_overridden_at ? `<button class="btn btn-sm btn-icon" style="color:var(--warning);background:transparent;border:1px solid var(--gray-border)" onclick="resetJobOverride('${j.id}','${esc(j.name)}')" title="Manual override active — click to reset to system default on next deploy"><i class="fa-solid fa-thumbtack"></i></button>` : ''}
         <button class="btn btn-sm btn-icon" style="color:var(--primary);background:transparent;border:1px solid var(--gray-border)" onclick="propagateJobRate('${j.id}','${esc(j.name)}')" title="Apply current rate to all existing projects using this job"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
         <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteJob('${j.id}','${esc(j.name)}')" title="Deactivate (preserves history)"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;
     }).join('')}</tbody></table>
     <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px;line-height:1.5">
-      <i class="fa-solid fa-circle-info"></i> <b>Rate</b> is the universal default for new projects using this job. Edit inline to update. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job. <b>Team</b> controls portal visibility. <b>PSC / Other</b> control which client class sees the job.
+      <i class="fa-solid fa-circle-info"></i> Inline edits to <b>Billing</b>, <b>Rate</b>, <b>Team</b>, or PSC/Other flags become a <b>manual override</b> — they survive deploys and the system stops trying to revert them. A <i class="fa-solid fa-thumbtack" style="color:var(--warning)"></i> pin appears on overridden rows; click it to reset to system defaults. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job.
     </div>`;
 }
 
@@ -5510,6 +5587,17 @@ async function setJobBillingType(jobId, billingType) {
     await loadJobs();
     renderJobsList();
   } catch (e) { alert('Failed to set billing type: ' + e.message); }
+}
+
+// Clear the manual-override pin. Warns the admin that the next deploy will
+// reset team/billing/rate/etc. back to the system canonical values.
+async function resetJobOverride(jobId, jobName) {
+  if (!confirm(`Reset "${jobName}" to system defaults?\n\nThis removes the manual-override lock. On the next deploy, the system will reset team, billing type, rate (if it has a canonical value), and PSC/Other flags back to the hardcoded canonical values.\n\nUseful if you overrode something by mistake. Your current values stay until the next deploy.`)) return;
+  try {
+    await api('/api/jobs/' + jobId + '/reset-override', 'POST');
+    await loadJobs();
+    renderJobsList();
+  } catch (e) { alert('Failed: ' + e.message); }
 }
 
 // Generic inline edit for any job property (name, billing_code, is_permitting,
