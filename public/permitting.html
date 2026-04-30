@@ -8,11 +8,11 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#B85C1F;--primary-dark:#8C4517;--primary-light:#FFF3E8;
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
   --gray-light:#F5F7FA;--gray-border:#DEE2E6;--white:#FFF;
   --success:#28A745;--warning:#FFC107;--danger:#DC3545;
   --text:#212529;--text-muted:#6C757D;--font:'Inter',sans-serif;
-  --portal-color:#B85C1F; /* Permitting = orange */
+  --portal-color:#1B5FA0; /* matched to admin blue */
 }
 body{font-family:var(--font);background:var(--gray-light);color:var(--text);font-size:14px}
 .view{display:none;padding:20px;flex-direction:column;gap:18px}.view.active{display:flex}
@@ -85,43 +85,46 @@ textarea{resize:vertical;min-height:60px}
 </header>
 
 <nav class="nav">
-  <a class="nav-tab active" data-view="projects" onclick="sv('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
-  <a class="nav-tab" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-file-signature"></i> Permit Pipeline</a>
+  <a class="nav-tab active" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-file-signature"></i> Permit Pipeline</a>
   <a class="nav-tab" data-view="potential" onclick="sv('potential')"><i class="fa-solid fa-lightbulb"></i> Review Submissions</a>
 </nav>
 
-<!-- ───────── PROJECTS VIEW ───────── -->
-<div id="view-projects" class="view active">
+<!-- ───────── PIPELINE VIEW (also where projects are added) ───────── -->
+<div id="view-pipeline" class="view active">
   <div class="section-header">
-    <div><div class="section-title">Permitting Projects</div><div class="section-sub">Projects assigned to the Permitting team (or shared)</div></div>
+    <div><div class="section-title">Permit Pipeline</div><div class="section-sub">Track permits: Potential → Started → Submitted → Approved → Checklist → Billed. Auto-nested under Client → Service Area → Project Type → Team.</div></div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="loadProjects()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadPipeline(); loadProjects();" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+      <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> Add Project</button>
     </div>
   </div>
-  <div class="toolbar">
-    <input class="search-input" placeholder="Search projects..." oninput="filterProjects()" id="proj-search">
-    <select class="filter" id="proj-status-filter" onchange="loadProjects()">
-      <option value="">All statuses</option>
-      <option value="active" selected>Active</option>
-      <option value="completed">Completed</option>
-      <option value="on_hold">On Hold</option>
-    </select>
-  </div>
-  <div class="card"><div class="table-wrap"><table>
-    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Job</th><th>Stage</th><th>Status</th><th></th></tr></thead>
-    <tbody id="dpb"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
-  </table></div></div>
-</div>
-
-<!-- ───────── PIPELINE VIEW ───────── -->
-<div id="view-pipeline" class="view">
-  <div class="section-header"><div><div class="section-title">Permit Pipeline</div><div class="section-sub">Track permits: Potential → Started → Submitted → Approved → Checklist → Billed</div></div></div>
   <div id="dsb" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px"></div>
-  <div class="card"><div class="table-wrap"><table>
-    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
-    <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
-  </table></div></div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Pipeline</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
+      <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
+  <!-- All projects (status filter), nested view -->
+  <div class="card">
+    <div class="card-header" style="gap:8px">
+      <span class="card-title">All Permitting Projects</span>
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <input class="search-input" placeholder="Search..." oninput="filterProjects()" id="proj-search" style="font-size:12px;padding:4px 8px;width:160px">
+        <select class="filter" id="proj-status-filter" onchange="loadProjects()" style="font-size:12px">
+          <option value="">All statuses</option>
+          <option value="active" selected>Active</option>
+          <option value="completed">Completed</option>
+          <option value="on_hold">On Hold</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Job</th><th>Stage</th><th>Status</th><th></th></tr></thead>
+      <tbody id="dpb"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+    </table></div>
+  </div>
 </div>
 
 <!-- ───────── REVIEW SUBMISSIONS VIEW ───────── -->
@@ -175,31 +178,25 @@ textarea{resize:vertical;min-height:60px}
             <select id="proj-contract"><option value="">None / N/A</option></select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(optional, for nesting)</span></label>
-            <select id="proj-parent"><option value="">None — top-level</option></select>
-          </div>
-          <div class="form-group">
-            <label>Concentrator</label>
-            <select id="proj-concentrator"><option value="">None</option></select>
-          </div>
-        </div>
+        <!-- Parent Project + Concentrator removed — server auto-nests under
+             Client → Service Area (auto from WO#) → Project Type → Team. -->
         <div class="form-row">
           <div class="form-group">
             <label>Work Order Number</label>
-            <input type="text" id="proj-wo" placeholder="e.g. WO-12345">
+            <input type="text" id="proj-wo" placeholder="e.g. 16316">
+            <span class="form-hint">If this WO# matches a known service area, the project gets auto-grouped under it.</span>
           </div>
-          <div class="form-group">
-            <label>Project Type</label>
+          <div class="form-group" id="proj-ptype-wrap" style="display:none">
+            <label>Project Type <span style="font-weight:400;color:var(--text-muted)">(PSC only)</span></label>
             <select id="proj-ptype"><option value="">— Select —</option></select>
+            <span class="form-hint">Only required for PSC clients</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Job *</label>
             <select id="proj-job" onchange="jobChanged()"><option value="">— Select —</option></select>
-            <span class="form-hint">Only jobs assigned to the Permitting team are shown</span>
+            <span class="form-hint">Filtered by client (PSC vs other) and the Permitting team</span>
           </div>
           <div class="form-group">
             <label id="proj-amount-label">Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
@@ -406,8 +403,8 @@ function sv(v){
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
-  if(v==='projects')   loadProjects();
-  if(v==='pipeline')   loadPipeline();
+  // Pipeline tab now also hosts the All-Projects table, so load both.
+  if(v==='pipeline')   { loadPipeline(); loadProjects(); }
   if(v==='potential')  loadPotential();
 }
 
@@ -491,8 +488,6 @@ async function editProject(id){
     document.getElementById('proj-client').value = p.client_id || '';
     await clientChanged();
     document.getElementById('proj-contract').value = p.contract_id || '';
-    document.getElementById('proj-parent').value = p.parent_id || '';
-    document.getElementById('proj-concentrator').value = p.concentrator_id || '';
     document.getElementById('proj-wo').value = p.work_order_number || '';
     document.getElementById('proj-ptype').value = p.project_type_id || '';
     document.getElementById('proj-job').value = p.job_id || '';
@@ -514,25 +509,52 @@ async function editProject(id){
 function populateProjectFormDropdowns(){
   // Clients
   const cl = document.getElementById('proj-client');
-  cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}" data-rus="${c.is_rus?1:0}">${esc(c.name)}</option>`).join('');
   // Project types
   const pt = document.getElementById('proj-ptype');
   pt.innerHTML = '<option value="">— Select —</option>' + projectTypesCache.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
-  // Jobs (already filtered server-side to this portal's team)
+  // Jobs (will be re-filtered by client when a client is picked)
+  refilterJobsDropdown();
+}
+
+// Pull a fresh, client-filtered jobs list. Server applies for_psc_client /
+// for_generic_client based on the chosen client.
+async function refilterJobsDropdown(){
+  const clientId = document.getElementById('proj-client')?.value;
   const jb = document.getElementById('proj-job');
-  jb.innerHTML = '<option value="">— Select —</option>' + jobsCache.map(j => `<option value="${j.id}" data-permit="${j.is_permitting?1:0}" data-bt="${j.default_billing_type||'hourly'}">${esc(j.name)}${j.is_permitting?' (Permit calc)':''}</option>`).join('');
-  // Parent projects (only those visible to this portal, exclude self when editing)
-  const editingId = document.getElementById('proj-id').value;
-  const pa = document.getElementById('proj-parent');
-  pa.innerHTML = '<option value="">None — top-level</option>' + projectsCache
-    .filter(p => p.id !== editingId)
-    .map(p => `<option value="${p.id}">${esc(p.name)}${p.client_name ? ' — ' + esc(p.client_name) : ''}</option>`).join('');
-  // Concentrators - leave empty unless we wire in /api/concentrators (skipped to keep portals lean)
-  document.getElementById('proj-concentrator').innerHTML = '<option value="">None</option>';
+  if (!jb) return;
+  const currentJobId = jb.value;
+  let url = '/api/jobs';
+  if (clientId) url += '?client_id=' + encodeURIComponent(clientId);
+  try {
+    const filtered = await api(url);
+    jobsCache = filtered;
+    jb.innerHTML = '<option value="">— Select —</option>' + filtered.map(j =>
+      `<option value="${j.id}" data-permit="${j.is_permitting?1:0}" data-bt="${j.default_billing_type||'hourly'}">${esc(j.name)}${j.billing_code ? ' (' + esc(j.billing_code) + ')' : ''}${j.is_permitting?' ⚡':''}</option>`
+    ).join('');
+    if (currentJobId && filtered.some(j => j.id === currentJobId)) jb.value = currentJobId;
+  } catch (e) { /* non-fatal */ }
 }
 
 async function clientChanged(){
   const clientId = document.getElementById('proj-client').value;
+
+  // 1) Show/hide Project Type field based on client.is_rus (PSC marker)
+  const ptypeWrap = document.getElementById('proj-ptype-wrap');
+  if (ptypeWrap) {
+    const opt = document.getElementById('proj-client').selectedOptions[0];
+    const isPsc = opt?.dataset.rus === '1';
+    ptypeWrap.style.display = isPsc ? '' : 'none';
+    if (!isPsc) {
+      const ptSel = document.getElementById('proj-ptype');
+      if (ptSel) ptSel.value = '';
+    }
+  }
+
+  // 2) Refilter jobs dropdown
+  await refilterJobsDropdown();
+
+  // 3) Refresh contracts dropdown
   const sel = document.getElementById('proj-contract');
   if (!clientId) { sel.innerHTML = '<option value="">None / N/A</option>'; return; }
   try {
@@ -574,10 +596,11 @@ async function saveProject(){
   const opt = document.getElementById('proj-job').selectedOptions[0];
   const isFootage = opt && (opt.dataset.permit === '1' || opt.dataset.bt === 'footage');
   const amount = parseFloat(document.getElementById('proj-amount').value);
+
+  // NOTE: parent_id and concentrator_id are NOT sent — server auto-nests.
   const payload = {
     name, client_id, job_id,
     contract_id: document.getElementById('proj-contract').value || null,
-    parent_id: document.getElementById('proj-parent').value || null,
     project_type_id: document.getElementById('proj-ptype').value || null,
     work_order_number: document.getElementById('proj-wo').value.trim() || null,
     status: document.getElementById('proj-status').value,
@@ -595,6 +618,7 @@ async function saveProject(){
     else    await api('/api/projects', 'POST', payload);
     cm('project-modal');
     loadProjects();
+    loadPipeline();
   } catch (e) {
     if (/duplicate|already exists/i.test(e.message)) {
       alert('Duplicate: ' + e.message);

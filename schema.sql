@@ -744,3 +744,200 @@ CREATE INDEX IF NOT EXISTS idx_scr_pending
 -- ═══════════════════════════════════════════════════════════════════════════
 -- End of v2 additions
 -- ═══════════════════════════════════════════════════════════════════════════
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SCHEMA v3 ADDITIONS — Job applicability filters, billing codes, rollup
+--                       projects (auto-nesting), universal-rate propagation,
+--                       and seeded job set per latest spec.
+--
+-- Idempotent. Safe to run on every startup.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─── 1. Jobs: billing_code + applicability flags + soft-rebrand-friendly ──
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS billing_code        VARCHAR(40);
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS for_psc_client      BOOLEAN DEFAULT TRUE;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS for_generic_client  BOOLEAN DEFAULT TRUE;
+-- Defaults are TRUE so any pre-existing custom job stays visible everywhere
+-- until the admin tightens its scope explicitly.
+
+-- ─── 2. Projects: rollup-folder columns ───────────────────────────────────
+-- A "rollup" is a synthetic parent project that exists only to organize the
+-- tree (Client / Service Area / Project Type / Team folders). They have
+-- is_rollup=TRUE and rollup_level set to one of the four enum values below.
+-- Real projects always have is_rollup=FALSE and rollup_level=NULL.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_rollup     BOOLEAN DEFAULT FALSE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_level  VARCHAR(20);  -- 'client'|'service_area'|'project_type'|'team'
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS rollup_key    TEXT;         -- canonical key for find-or-create (e.g. client_id, concentrator_id, project_type_id, team name)
+
+-- Find-or-create lookups on rollups need to be fast.
+CREATE INDEX IF NOT EXISTS idx_projects_rollup
+  ON projects (rollup_level, parent_id, rollup_key)
+  WHERE is_rollup = TRUE;
+
+
+-- ─── 3. Reseed jobs to match the latest spec ──────────────────────────────
+-- Strategy: insert the canonical 9 + 3 jobs, on conflict update billing_code
+-- and applicability so admin's prior tweaks aren't clobbered. Old auto-seeded
+-- jobs that are no longer in the spec are deactivated, NOT deleted, so any
+-- existing project history is preserved.
+
+-- 3a. The 9 PSC jobs (also surface for non-PSC where flagged below)
+INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, billing_code, team, for_psc_client, for_generic_client) VALUES
+  ('County Permitting',            'footage', NULL, TRUE,  'a-2-D',      'permitting', TRUE, TRUE),
+  ('DOT Permitting',               'footage', NULL, TRUE,  'a-2-D',      'permitting', TRUE, TRUE),
+  ('RR Permitting',                'footage', NULL, TRUE,  'a-2-D',      'permitting', TRUE, TRUE),
+  ('Resident Engineer',            'hourly',  100,  FALSE, 'g-1-B-1',    'both',       TRUE, FALSE),
+  ('Inspection',                   'hourly',  90,   FALSE, 'g-1-B-4',    'both',       TRUE, FALSE),
+  ('Update Plant Records',         'footage', 850,  FALSE, 'a-4',        'design',     TRUE, FALSE),
+  ('OSP Staking Aerial',           'footage', 850,  FALSE, 'e-2-A-1(N)', 'design',     TRUE, FALSE),
+  ('OSP Staking Underground',      'footage', 850,  FALSE, 'e-2-A-2(N)', 'design',     TRUE, FALSE),
+  ('Construction Progress Reports','footage', 850,  FALSE, 'g-1-I-3',    'both',       TRUE, FALSE)
+ON CONFLICT (name) DO UPDATE SET
+  default_billing_type = EXCLUDED.default_billing_type,
+  is_permitting        = EXCLUDED.is_permitting,
+  billing_code         = EXCLUDED.billing_code,
+  team                 = EXCLUDED.team,
+  for_psc_client       = EXCLUDED.for_psc_client,
+  for_generic_client   = EXCLUDED.for_generic_client,
+  active               = TRUE;
+-- NOTE: default_rate is NOT updated on conflict — admin's manual rate edits stick.
+
+-- 3b. The 3 non-PSC-only jobs (admin sets rates manually after seed)
+INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, billing_code, team, for_psc_client, for_generic_client) VALUES
+  ('OSP Design & Fiber Assignments', 'hourly', NULL, FALSE, NULL, 'design', FALSE, TRUE),
+  ('Staking Fiber Assignments',      'hourly', NULL, FALSE, NULL, 'design', FALSE, TRUE),
+  ('Records Management',             'hourly', NULL, FALSE, NULL, 'both',   FALSE, TRUE)
+ON CONFLICT (name) DO UPDATE SET
+  default_billing_type = EXCLUDED.default_billing_type,
+  team                 = EXCLUDED.team,
+  for_psc_client       = EXCLUDED.for_psc_client,
+  for_generic_client   = EXCLUDED.for_generic_client,
+  active               = TRUE;
+
+-- 3c. Deactivate legacy seeded jobs that aren't in the new spec (preserves
+-- foreign keys on existing projects, just hides from new selections).
+UPDATE jobs SET active = FALSE
+WHERE name IN ('Permitting', 'Permitting (RR)', 'Design', 'Resident Engineer 2', 'Other')
+  AND name NOT IN (
+    'County Permitting','DOT Permitting','RR Permitting',
+    'Resident Engineer','Inspection','Update Plant Records',
+    'OSP Staking Aerial','OSP Staking Underground','Construction Progress Reports',
+    'OSP Design & Fiber Assignments','Staking Fiber Assignments','Records Management'
+  );
+
+
+-- ─── 4. Auto-nesting migration: re-parent existing real projects ──────────
+-- Runs once. Walks every active "real" project (is_rollup=FALSE) whose
+-- parent_id is currently NULL, and re-points it under its proper Team rollup
+-- (creating the Client / Service Area / Project Type / Team rollup chain
+-- on demand). Projects that already had a parent are LEFT ALONE so manual
+-- sub-project chains aren't flattened — only the top of each chain moves.
+
+DO $migration_v3$
+DECLARE
+  pj            RECORD;
+  client_row    RECORD;
+  client_folder UUID;
+  area_folder   UUID;
+  type_folder   UUID;
+  team_folder   UUID;
+  team_name     TEXT;
+  team_label    TEXT;
+BEGIN
+  -- Only run if migration hasn't already happened (presence of any rollup
+  -- means we've run this before).
+  IF EXISTS (SELECT 1 FROM projects WHERE is_rollup = TRUE LIMIT 1) THEN
+    RAISE NOTICE 'Auto-nest migration already applied (rollups exist) — skipping.';
+    RETURN;
+  END IF;
+
+  FOR pj IN
+    SELECT p.*, c.name AS client_name, c.is_rus AS client_is_rus
+    FROM projects p
+    LEFT JOIN clients c ON c.id = p.client_id
+    WHERE p.is_rollup = FALSE
+      AND p.parent_id IS NULL
+      AND p.client_id IS NOT NULL
+  LOOP
+    -- (1) CLIENT folder
+    SELECT id INTO client_folder
+    FROM projects
+    WHERE is_rollup = TRUE AND rollup_level = 'client' AND rollup_key = pj.client_id::text
+    LIMIT 1;
+    IF client_folder IS NULL THEN
+      INSERT INTO projects (name, client_id, status, is_rollup, rollup_level, rollup_key, project_type)
+      VALUES (pj.client_name, pj.client_id, 'active', TRUE, 'client', pj.client_id::text, 'rollup')
+      RETURNING id INTO client_folder;
+    END IF;
+
+    -- (2) SERVICE AREA folder (only if concentrator_id present)
+    area_folder := client_folder;
+    IF pj.concentrator_id IS NOT NULL THEN
+      SELECT id INTO area_folder
+      FROM projects
+      WHERE is_rollup = TRUE AND rollup_level = 'service_area' AND rollup_key = pj.concentrator_id::text
+        AND parent_id = client_folder
+      LIMIT 1;
+      IF area_folder IS NULL THEN
+        INSERT INTO projects (name, client_id, parent_id, concentrator_id, status, is_rollup, rollup_level, rollup_key, project_type)
+        SELECT
+          COALESCE(con.area_name, 'Service Area'),
+          pj.client_id, client_folder, pj.concentrator_id, 'active', TRUE, 'service_area', pj.concentrator_id::text, 'rollup'
+        FROM concentrators con WHERE con.id = pj.concentrator_id
+        RETURNING id INTO area_folder;
+        IF area_folder IS NULL THEN area_folder := client_folder; END IF;
+      END IF;
+    END IF;
+
+    -- (3) PROJECT TYPE folder (only when client is PSC-class AND project_type_id present)
+    type_folder := area_folder;
+    IF pj.client_is_rus = TRUE AND pj.project_type_id IS NOT NULL THEN
+      SELECT id INTO type_folder
+      FROM projects
+      WHERE is_rollup = TRUE AND rollup_level = 'project_type' AND rollup_key = pj.project_type_id::text
+        AND parent_id = area_folder
+      LIMIT 1;
+      IF type_folder IS NULL THEN
+        INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id, status, is_rollup, rollup_level, rollup_key, project_type)
+        SELECT
+          COALESCE(pt.name, 'Project Type'),
+          pj.client_id, area_folder, pj.concentrator_id, pj.project_type_id, 'active', TRUE, 'project_type', pj.project_type_id::text, 'rollup'
+        FROM project_types pt WHERE pt.id = pj.project_type_id
+        RETURNING id INTO type_folder;
+        IF type_folder IS NULL THEN type_folder := area_folder; END IF;
+      END IF;
+    END IF;
+
+    -- (4) TEAM folder (always — derived from job)
+    SELECT COALESCE(j.team, 'shared') INTO team_name FROM jobs j WHERE j.id = pj.job_id;
+    IF team_name IS NULL THEN team_name := 'shared'; END IF;
+    team_label := CASE team_name
+      WHEN 'design'     THEN 'Design Team'
+      WHEN 'permitting' THEN 'Permitting Team'
+      WHEN 'both'       THEN 'Shared (Design + Permitting)'
+      ELSE 'Shared / Unassigned' END;
+
+    SELECT id INTO team_folder
+    FROM projects
+    WHERE is_rollup = TRUE AND rollup_level = 'team' AND rollup_key = team_name
+      AND parent_id = type_folder
+    LIMIT 1;
+    IF team_folder IS NULL THEN
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id, status, is_rollup, rollup_level, rollup_key, project_type)
+      VALUES (team_label, pj.client_id, type_folder, pj.concentrator_id, pj.project_type_id, 'active', TRUE, 'team', team_name, 'rollup')
+      RETURNING id INTO team_folder;
+    END IF;
+
+    -- (5) Re-parent the real project under its Team folder
+    UPDATE projects SET parent_id = team_folder WHERE id = pj.id;
+
+  END LOOP;
+  RAISE NOTICE 'Auto-nest migration: complete.';
+END
+$migration_v3$;
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- End of v3 additions
+-- ═══════════════════════════════════════════════════════════════════════════

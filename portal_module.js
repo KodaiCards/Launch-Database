@@ -65,6 +65,100 @@ async function isDuplicateProject(pool, name, parentId, excludeId = null) {
   return r.rows.length > 0;
 }
 
+// ─── Auto-nesting: ensure rollup chain exists, return team-folder id ────────
+// Builds (or finds) the Client → Service Area → Project Type → Team rollup
+// chain and returns the deepest existing rollup id, suitable for use as the
+// new project's parent_id.
+async function ensureRollupChain(pool, { client_id, concentrator_id, project_type_id, job_id }) {
+  if (!client_id) return null;
+
+  // 1) Client folder
+  const cli = await pool.query('SELECT name, is_rus FROM clients WHERE id = $1', [client_id]);
+  if (!cli.rows.length) return null;
+  const clientName = cli.rows[0].name;
+  const clientIsRus = cli.rows[0].is_rus === true;
+
+  let folder = await findOrCreateRollup(pool, {
+    parent_id: null,
+    rollup_level: 'client',
+    rollup_key: client_id,
+    name: clientName,
+    extras: { client_id }
+  });
+
+  // 2) Service Area folder (only if concentrator is set)
+  if (concentrator_id) {
+    const con = await pool.query('SELECT area_name FROM concentrators WHERE id = $1', [concentrator_id]);
+    const areaName = con.rows[0]?.area_name || 'Service Area';
+    folder = await findOrCreateRollup(pool, {
+      parent_id: folder,
+      rollup_level: 'service_area',
+      rollup_key: concentrator_id,
+      name: areaName,
+      extras: { client_id, concentrator_id }
+    });
+  }
+
+  // 3) Project Type folder (only when client is PSC-class AND project_type_id present)
+  if (clientIsRus && project_type_id) {
+    const pt = await pool.query('SELECT name FROM project_types WHERE id = $1', [project_type_id]);
+    const ptName = pt.rows[0]?.name || 'Project Type';
+    folder = await findOrCreateRollup(pool, {
+      parent_id: folder,
+      rollup_level: 'project_type',
+      rollup_key: project_type_id,
+      name: ptName,
+      extras: { client_id, concentrator_id, project_type_id }
+    });
+  }
+
+  // 4) Team folder (always — derived from job's team field)
+  let teamName = 'shared';
+  if (job_id) {
+    const jr = await pool.query('SELECT team FROM jobs WHERE id = $1', [job_id]);
+    teamName = jr.rows[0]?.team || 'shared';
+  }
+  const teamLabel = ({
+    design:     'Design Team',
+    permitting: 'Permitting Team',
+    both:       'Shared (Design + Permitting)',
+    shared:     'Shared / Unassigned'
+  })[teamName] || 'Shared / Unassigned';
+
+  folder = await findOrCreateRollup(pool, {
+    parent_id: folder,
+    rollup_level: 'team',
+    rollup_key: teamName,
+    name: teamLabel,
+    extras: { client_id, concentrator_id, project_type_id }
+  });
+
+  return folder;
+}
+
+async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, name, extras }) {
+  // Try find first
+  const found = await pool.query(
+    `SELECT id FROM projects
+       WHERE is_rollup = TRUE AND rollup_level = $1 AND rollup_key = $2
+         AND COALESCE(parent_id::text, 'ROOT') = COALESCE($3::text, 'ROOT')
+       LIMIT 1`,
+    [rollup_level, String(rollup_key), parent_id]
+  );
+  if (found.rows.length) return found.rows[0].id;
+
+  // Create
+  const e = extras || {};
+  const r = await pool.query(`
+    INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id,
+                          status, is_rollup, rollup_level, rollup_key, project_type)
+    VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
+    RETURNING id
+  `, [name, e.client_id || null, parent_id || null, e.concentrator_id || null,
+      e.project_type_id || null, rollup_level, String(rollup_key)]);
+  return r.rows[0].id;
+}
+
 // ─── Apply an approved setting change request to the real tables ────────────
 // Called by the admin approve endpoint. Translates JSON payload → SQL.
 async function applySettingChange(pool, sr) {
@@ -144,9 +238,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   const isPortal = !!PORTAL_MODE;
   const portal   = PORTAL_MODE; // 'design' or 'permitting'
 
-  // Make the duplicate check accessible to server.js's admin POST/PUT.
+  // Make helpers accessible to server.js's admin POST/PUT.
   app.locals.isDuplicateProject = (name, parentId, excludeId) =>
     isDuplicateProject(pool, name, parentId, excludeId);
+  app.locals.ensureRollupChain = (params) => ensureRollupChain(pool, params);
 
   // ─── Setting-request endpoints (work in BOTH portal and admin mode) ─────
 
@@ -254,15 +349,33 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   });
 
   // ── JOBS ────────────────────────────────────────────────────────────────
-  // GET filtered to this portal's team. Money fields stripped.
+  // GET filters by:
+  //   1) team match (this portal can use this job's team), AND
+  //   2) applicability — for the optional client_id query param, we look up
+  //      the client's is_rus flag and filter by for_psc_client / for_generic_client.
+  // Money fields stripped.
   app.get('/api/jobs', async (req, res) => {
     try {
+      const clientId = req.query.client_id || null;
+      let isPsc = null;
+      if (clientId) {
+        const c = await pool.query('SELECT is_rus FROM clients WHERE id = $1', [clientId]);
+        if (c.rows.length) isPsc = c.rows[0].is_rus === true;
+      }
+
+      // Build query
+      const conds = [`active = true`, `(team = $1 OR team = 'both' OR team IS NULL)`];
+      const params = [portal];
+      if (isPsc === true) {
+        conds.push(`for_psc_client = true`);
+      } else if (isPsc === false) {
+        conds.push(`for_generic_client = true`);
+      }
+      // If no client given, return everything visible to this team (don't over-filter).
+
       const { rows } = await pool.query(
-        `SELECT * FROM jobs
-          WHERE active = true
-            AND (team = $1 OR team = 'both' OR team IS NULL)
-          ORDER BY name`,
-        [portal]
+        `SELECT * FROM jobs WHERE ${conds.join(' AND ')} ORDER BY name`,
+        params
       );
       res.json(rows.map(stripMoneyFromJob));
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -463,7 +576,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
       status = 'active',
       footage,        // for footage-billed jobs
       hours_estimate, // optional informational hours estimate (hourly jobs)
-      start_date, notes, parent_id, concentrator_id, permit_manager
+      start_date, notes, permit_manager
+      // NOTE: parent_id and concentrator_id are deliberately NOT destructured —
+      // portal users don't pick the nest. We auto-derive concentrator from the
+      // work order (if there's a match), and auto-nest under the rollup chain.
     } = req.body;
 
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'Project name required' });
@@ -480,19 +596,34 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         return res.status(403).json({ error: `This job is assigned to a different team` });
       }
 
-      // 2. Duplicate check
+      // 2. Auto-detect service area (concentrator) from work order # if matchable
+      let concentrator_id = null;
+      if (work_order_number) {
+        const con = await pool.query(
+          `SELECT id FROM concentrators WHERE work_order_number = $1 LIMIT 1`,
+          [String(work_order_number).trim()]
+        );
+        if (con.rows.length) concentrator_id = con.rows[0].id;
+      }
+
+      // 3. Build the rollup chain and use its leaf as parent_id
+      const parent_id = await ensureRollupChain(pool, {
+        client_id, concentrator_id, project_type_id, job_id
+      });
+
+      // 4. Duplicate check (against siblings under the team rollup)
       if (await isDuplicateProject(pool, name, parent_id)) {
         return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
       }
 
-      // 3. Derive billing fields server-side from the job's defaults.
-      //    Portal NEVER sees these values, but we still need to populate the
+      // 5. Derive billing fields server-side from the job's defaults.
+      //    Portal NEVER sees these values, but they have to populate the
       //    columns so admin reports work correctly.
       const isPermitting       = !!job.is_permitting;
       const effectiveBillType  = isPermitting ? 'footage' : (job.default_billing_type || 'hourly');
       const effectiveRate      = job.default_rate;
       const effectiveType      = isPermitting ? 'permitting'
-                                : (project_type || (job.name === 'Design' ? 'design' : 'other'));
+                                : (project_type || (job.team === 'design' ? 'design' : 'other'));
       const projFootage        = effectiveBillType === 'footage' ? (parseFloat(footage) || null) : null;
       const projHoursEstimate  = effectiveBillType === 'hourly'  ? (parseFloat(hours_estimate) || null) : null;
 
@@ -503,6 +634,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         if (effectiveRate) expectedRevenue = expectedHours * effectiveRate;
       } else if (effectiveBillType === 'hourly' && projHoursEstimate && effectiveRate) {
         expectedRevenue = projHoursEstimate * effectiveRate;
+      } else if (effectiveBillType === 'footage' && projFootage && effectiveRate) {
+        // Non-permit footage (e.g. OSP Staking — $850/mile)
+        miles           = projFootage / 5280;
+        expectedRevenue = miles * effectiveRate;
       }
 
       const { rows } = await pool.query(`
@@ -520,7 +655,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         effectiveType, project_type_id || null, job_id,
         status, effectiveBillType, effectiveRate,
         projFootage, miles, expectedHours, expectedRevenue,
-        start_date || null, notes || null, parent_id || null, concentrator_id || null,
+        start_date || null, notes || null, parent_id, concentrator_id,
         isPermitting ? 27.5 : null,
         job.name === 'Inspection' ? 'monthly' : 'one_time'
       ]);
@@ -533,7 +668,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
           [rows[0].id, 'potential', permit_manager || null]
         );
       }
-      if (effectiveType === 'design') {
+      if (job.team === 'design') {
         await pool.query(
           `INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
           [rows[0].id, 'potential']

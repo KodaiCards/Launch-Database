@@ -679,8 +679,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <label>Work Order Number</label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
           </div>
-          <div class="form-group">
-            <label>Project Type * <span style="color:var(--text-muted);font-weight:400">(program category)</span></label>
+          <div class="form-group" id="proj-ptype-wrap">
+            <label>Project Type * <span style="color:var(--text-muted);font-weight:400">(program category — PSC only)</span></label>
             <div style="display:flex;gap:6px">
               <select id="proj-ptype" onchange="ptypeChanged()" style="flex:1">
                 <option value="">Select type...</option>
@@ -1165,71 +1165,51 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <div class="modal-overlay" id="settings-modal">
   <div class="modal" style="max-width:920px;width:95%">
     <div class="modal-header">
-      <span class="modal-title"><i class="fa-solid fa-tag" style="color:var(--primary)"></i> Pricing List</span>
+      <span class="modal-title"><i class="fa-solid fa-gear" style="color:var(--primary)"></i> Settings</span>
       <button class="btn btn-icon btn-secondary" onclick="closeModal('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
       <p style="margin:0 0 14px 0;color:var(--text-muted);font-size:13px">
-        Pricing defaults pulled when creating projects. You can still override the rate per project.
-        Entries with billing codes (like "g-1-B-4") let the CSV importer auto-detect the job from your timesheet rows.
+        Jobs are the single source of truth for rates. The default rate set on a job applies to every new project that uses it. Use <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:11px"></i> to push a rate change to all existing projects too.
       </p>
 
-      <!-- Add new entry form -->
-      <div style="background:var(--gray-light);padding:12px 14px;border-radius:8px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Add new pricing entry</div>
-        <div class="form-row" style="gap:8px">
-          <div class="form-group">
-            <label style="font-size:11px">Project Type *</label>
-            <select id="new-pe-type" style="font-size:13px"></select>
-          </div>
-          <div class="form-group">
-            <label style="font-size:11px">Job *</label>
-            <select id="new-pe-job" style="font-size:13px"></select>
-          </div>
-          <div class="form-group">
-            <label style="font-size:11px">Billing Code</label>
-            <input type="text" id="new-pe-code" placeholder="e.g. g-1-B-4" style="font-size:13px">
-          </div>
-        </div>
-        <div class="form-row" style="gap:8px;margin-top:8px">
-          <div class="form-group">
-            <label style="font-size:11px">Type</label>
-            <select id="new-pe-billing-type" style="font-size:13px">
-              <option value="hourly">Hourly ($/hr)</option>
-              <option value="footage">Footage ($/mile)</option>
-              <option value="permitting">Permitting (special calc)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label style="font-size:11px">Rate *</label>
-            <input type="number" id="new-pe-rate" placeholder="0.00" step="0.01" style="font-size:13px">
-          </div>
-          <div class="form-group">
-            <label style="font-size:11px">Notes</label>
-            <input type="text" id="new-pe-notes" placeholder="Optional description" style="font-size:13px">
-          </div>
-          <div class="form-group" style="justify-content:flex-end">
-            <button class="btn btn-primary btn-sm" onclick="savePricingEntry()" style="margin-top:18px"><i class="fa-solid fa-plus"></i> Add</button>
-          </div>
-        </div>
+      <!-- (Pricing-list section removed — Jobs management below is the universal rate source.) -->
+
+      <!-- Hidden compatibility shims so legacy JS that touches these IDs doesn't crash -->
+      <div style="display:none">
+        <select id="new-pe-type"></select>
+        <select id="new-pe-job"></select>
+        <input id="new-pe-code">
+        <select id="new-pe-billing-type"><option value="hourly">Hourly</option></select>
+        <input id="new-pe-rate">
+        <input id="new-pe-notes">
+        <div id="pricing-list-body"></div>
       </div>
 
-      <!-- Pricing entries grouped by project type -->
-      <div id="pricing-list-body" style="font-size:13px"><div class="empty-state">Loading...</div></div>
-
       <!-- ── Jobs management ── -->
-      <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
+      <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Jobs</span>
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Jobs <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— rate source for all projects</span></span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Add Job</button>
         </div>
         <div id="jobs-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row" style="gap:6px">
             <div class="form-group"><label style="font-size:11px">Job Name</label><input type="text" id="new-job-name" placeholder="e.g. Surveyor" style="font-size:13px"></div>
-            <div class="form-group"><label style="font-size:11px">Default Type</label><select id="new-job-bt" style="font-size:13px"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
-            <div class="form-group"><label style="font-size:11px">Default Rate</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
+            <div class="form-group"><label style="font-size:11px">Billing Code</label><input type="text" id="new-job-code" placeholder="e.g. g-1-B-4" style="font-size:13px"></div>
+            <div class="form-group"><label style="font-size:11px">Default Type</label><select id="new-job-bt" style="font-size:13px" onchange="updateRateLabel()"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
+            <div class="form-group"><label style="font-size:11px" id="new-job-rate-label">Default Rate ($/hr)</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
+          </div>
+          <div class="form-row" style="gap:6px;margin-top:6px">
             <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="both">Both (explicit)</option></select></div>
-            <div class="form-group" style="justify-content:flex-end"><label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-set when Team = Permitting; can be toggled independently"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label></div>
+            <div class="form-group" style="align-items:flex-start;padding-top:18px">
+              <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-applied to permitting jobs"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label>
+            </div>
+            <div class="form-group" style="align-items:flex-start;padding-top:18px">
+              <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Show this job for PSC clients"><input type="checkbox" id="new-job-for-psc" checked style="width:auto"> Show for PSC clients</label>
+            </div>
+            <div class="form-group" style="align-items:flex-start;padding-top:18px">
+              <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Show this job for non-PSC clients"><input type="checkbox" id="new-job-for-generic" checked style="width:auto"> Show for other clients</label>
+            </div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='none'">Cancel</button>
@@ -1410,6 +1390,25 @@ async function clientChanged() {
   const clientId = document.getElementById('proj-client').value;
   const csel = document.getElementById('proj-contract');
   while (csel.options.length > 1) csel.remove(1);
+
+  // Show/hide the Project Type field based on whether this client is PSC-class.
+  // is_rus = TRUE on the client record marks PSC-style billing.
+  const ptypeWrap = document.getElementById('proj-ptype-wrap');
+  if (ptypeWrap) {
+    const client = clientsCache.find(c => c.id === clientId);
+    const isPsc = client?.is_rus === true;
+    ptypeWrap.style.display = isPsc ? '' : 'none';
+    if (!isPsc) {
+      // clear selection so we don't accidentally save a stale type
+      const sel = document.getElementById('proj-ptype');
+      if (sel) sel.value = '';
+    }
+  }
+
+  // Re-filter the Job dropdown using the client_id (server filters by
+  // for_psc_client / for_generic_client).
+  await refilterJobsDropdown();
+
   if (!clientId) return;
   const ctrs = await api('/api/contracts?client_id=' + clientId);
   // De-dup by display name. If multiple contract records share the same name
@@ -1423,6 +1422,34 @@ async function clientChanged() {
     seen.add(display);
     csel.add(new Option(display, c.id));
   });
+}
+
+// Pull a fresh, client-filtered jobs list and rebuild the Job dropdown in the
+// project modal. Server applies the for_psc_client / for_generic_client filter
+// when we pass client_id. Falls back to full list when no client is chosen.
+async function refilterJobsDropdown() {
+  const clientId = document.getElementById('proj-client')?.value;
+  const jsel = document.getElementById('proj-job');
+  if (!jsel) return;
+  // Remember current selection so we can preserve it if it's still valid
+  const currentJobId = jsel.value;
+  let url = '/api/jobs';
+  if (clientId) url += '?client_id=' + encodeURIComponent(clientId);
+  try {
+    const filtered = await api(url);
+    // Preserve placeholder option (first one)
+    const placeholder = jsel.options[0]?.cloneNode(true);
+    jsel.innerHTML = '';
+    if (placeholder) jsel.appendChild(placeholder);
+    filtered.forEach(j => {
+      const opt = new Option(j.name + (j.billing_code ? ' (' + j.billing_code + ')' : ''), j.id);
+      opt.dataset.permit = j.is_permitting ? '1' : '0';
+      opt.dataset.bt = j.default_billing_type || 'hourly';
+      jsel.appendChild(opt);
+    });
+    // Re-select if still in list
+    if (currentJobId && filtered.some(j => j.id === currentJobId)) jsel.value = currentJobId;
+  } catch (e) { /* non-fatal — leave dropdown as-is */ }
 }
 
 // ─── QUICK-ADD INLINE PANELS ─────────────────────────────────────────────────
@@ -4624,42 +4651,50 @@ function renderJobsList() {
   if (!root) return;
   if (!jobsCache.length) { root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No jobs yet.</div>'; return; }
   const teamLabel = (t) => t === 'design' ? 'Design only' : t === 'permitting' ? 'Permitting only' : t === 'both' ? 'Both' : 'Both / Unassigned';
-  const teamBadge = (t) => {
-    const color = t === 'design' ? '#0D7377' : t === 'permitting' ? '#FF9800' : t === 'both' ? '#28A745' : '#6C757D';
-    return `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${color};color:#fff;font-weight:600">${teamLabel(t)}</span>`;
-  };
   root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
     <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
       <th style="text-align:left;padding:6px 8px">Name</th>
-      <th style="text-align:left;padding:6px 8px">Default Billing</th>
-      <th style="text-align:right;padding:6px 8px">Default Rate</th>
+      <th style="text-align:left;padding:6px 8px">Code</th>
+      <th style="text-align:left;padding:6px 8px">Billing</th>
+      <th style="text-align:right;padding:6px 8px">Rate</th>
       <th style="text-align:center;padding:6px 8px">Team</th>
-      <th style="text-align:center;padding:6px 8px">Permit Calc</th>
+      <th style="text-align:center;padding:6px 8px;white-space:nowrap">Permit<br>Calc</th>
+      <th style="text-align:center;padding:6px 8px;white-space:nowrap">PSC</th>
+      <th style="text-align:center;padding:6px 8px;white-space:nowrap">Other</th>
       <th></th>
     </tr></thead>
     <tbody>${jobsCache.map(j => {
-      const label = j.name === 'Permitting' ? 'Permitting (DOT)' : j.name;
+      const label = j.name;
       const rateNullish = j.default_rate === null || j.default_rate === undefined || j.default_rate === '';
+      const billLabel = j.default_billing_type === 'footage' ? 'footage' : 'hourly';
+      const rateUnit = j.default_billing_type === 'footage' ? '/mile' : '/hr';
       return `<tr style="border-top:1px solid var(--gray-border)">
       <td style="padding:6px 8px;font-weight:600">${esc(label)}</td>
-      <td style="padding:6px 8px">${esc(j.default_billing_type || 'hourly')}</td>
-      <td style="padding:6px 8px;text-align:right">${rateNullish ? '<span style="color:var(--text-muted)">— TBD</span>' : fmtMoney(j.default_rate)}</td>
+      <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:var(--text-muted)">${esc(j.billing_code || '—')}</td>
+      <td style="padding:6px 8px">${billLabel}</td>
+      <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+        <input type="number" step="0.01" placeholder="—" value="${rateNullish ? '' : j.default_rate}" data-job-id="${j.id}" onchange="setJobRate('${j.id}', this.value)" style="width:80px;text-align:right;font-size:12px;padding:2px 6px;border:1px solid var(--gray-border);border-radius:4px">
+        <span style="font-size:11px;color:var(--text-muted)">${rateUnit}</span>
+      </td>
       <td style="padding:6px 8px;text-align:center">
-        <select onchange="setJobTeam('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:#fff" title="Controls which portal can pick this job">
-          <option value="" ${!j.team ? 'selected':''}>Both / Unassigned</option>
-          <option value="design" ${j.team==='design' ? 'selected':''}>Design only</option>
-          <option value="permitting" ${j.team==='permitting' ? 'selected':''}>Permitting only</option>
-          <option value="both" ${j.team==='both' ? 'selected':''}>Both (explicit)</option>
+        <select onchange="setJobTeam('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:#fff">
+          <option value="" ${!j.team ? 'selected':''}>—</option>
+          <option value="design" ${j.team==='design' ? 'selected':''}>Design</option>
+          <option value="permitting" ${j.team==='permitting' ? 'selected':''}>Permitting</option>
+          <option value="both" ${j.team==='both' ? 'selected':''}>Both</option>
         </select>
       </td>
       <td style="padding:6px 8px;text-align:center">${j.is_permitting ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '—'}</td>
-      <td style="padding:6px 8px;text-align:right">
-        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteJob('${j.id}','${esc(j.name)}')" title="Delete (preserves history)"><i class="fa-solid fa-trash"></i></button>
+      <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_psc_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_psc_client',this.checked)" title="Show for PSC clients"></td>
+      <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_generic_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_generic_client',this.checked)" title="Show for non-PSC clients"></td>
+      <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+        <button class="btn btn-sm btn-icon" style="color:var(--primary);background:transparent;border:1px solid var(--gray-border)" onclick="propagateJobRate('${j.id}','${esc(j.name)}')" title="Apply current rate to all existing projects using this job"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteJob('${j.id}','${esc(j.name)}')" title="Deactivate (preserves history)"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;
     }).join('')}</tbody></table>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px">
-      <i class="fa-solid fa-circle-info"></i> Team controls which portal sees the job in their New Project dropdown. Permit Calc is independent — it controls billing math (footage × hrs/mile) and is auto-applied to permitting jobs but can be toggled per-job.
+    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px;line-height:1.5">
+      <i class="fa-solid fa-circle-info"></i> <b>Rate</b> is the universal default for new projects using this job. Edit inline to update. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job. <b>Team</b> controls portal visibility. <b>PSC / Other</b> control which client class sees the job.
     </div>`;
 }
 
@@ -4672,28 +4707,70 @@ async function setJobTeam(jobId, team) {
   } catch (e) { alert('Failed to set team: ' + e.message); }
 }
 
+// Inline rate change — saves the new default_rate to the job.
+async function setJobRate(jobId, value) {
+  const rate = value === '' ? null : parseFloat(value);
+  if (value !== '' && (isNaN(rate) || rate < 0)) return alert('Enter a valid non-negative rate.');
+  try {
+    await api('/api/jobs/' + jobId, 'PUT', { default_rate: rate });
+    await loadJobs();
+    // No re-render needed — the input keeps its value and other rows aren't affected.
+  } catch (e) { alert('Failed to set rate: ' + e.message); }
+}
+
+// Toggle for_psc_client / for_generic_client flags.
+async function setJobFlag(jobId, flagName, checked) {
+  try {
+    await api('/api/jobs/' + jobId, 'PUT', { [flagName]: !!checked });
+    await loadJobs();
+  } catch (e) { alert('Failed to update flag: ' + e.message); }
+}
+
+// Push the job's current default_rate to every existing project using this job.
+async function propagateJobRate(jobId, jobName) {
+  if (!confirm(`Apply the current default rate of "${jobName}" to ALL existing projects that use this job?\n\nThis updates billing_rate on every matching project. Cannot be undone individually.`)) return;
+  try {
+    const r = await api('/api/jobs/' + jobId + '/propagate-rate', 'PUT');
+    alert(`✓ Updated ${r.updated} project${r.updated === 1 ? '' : 's'} to rate ${r.applied_rate ?? '(null)'}.`);
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// Toggle Add-Job rate label between $/hr and $/mile based on selected billing type.
+function updateRateLabel() {
+  const bt = document.getElementById('new-job-bt').value;
+  const lbl = document.getElementById('new-job-rate-label');
+  if (lbl) lbl.textContent = bt === 'footage' ? 'Default Rate ($/mile)' : 'Default Rate ($/hr)';
+}
+
 async function saveNewJob() {
   const name = document.getElementById('new-job-name').value.trim();
+  const billing_code = document.getElementById('new-job-code').value.trim() || null;
   const default_billing_type = document.getElementById('new-job-bt').value;
   const default_rate = parseFloat(document.getElementById('new-job-rate').value);
   const is_permitting = document.getElementById('new-job-perm').checked;
   const team = document.getElementById('new-job-team').value || null;
+  const for_psc_client = document.getElementById('new-job-for-psc').checked;
+  const for_generic_client = document.getElementById('new-job-for-generic').checked;
   if (!name) return alert('Job name is required');
   try {
     await api('/api/jobs', 'POST', {
       name,
+      billing_code,
       default_billing_type,
       default_rate: isNaN(default_rate) ? null : default_rate,
       is_permitting,
-      team
+      team,
+      for_psc_client,
+      for_generic_client
     });
-    document.getElementById('new-job-name').value = '';
-    document.getElementById('new-job-rate').value = '';
+    ['new-job-name','new-job-code','new-job-rate'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('new-job-perm').checked = false;
     document.getElementById('new-job-team').value = '';
+    document.getElementById('new-job-for-psc').checked = true;
+    document.getElementById('new-job-for-generic').checked = true;
     document.getElementById('jobs-add-form').style.display = 'none';
     await loadJobs();
-    populatePricingFormDropdowns();
+    if (typeof populatePricingFormDropdowns === 'function') populatePricingFormDropdowns();
     renderJobsList();
     refreshSettingsDot();
   } catch (e) { alert('Failed: ' + e.message); }

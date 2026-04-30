@@ -83,7 +83,27 @@ if (PORTAL_MODE) {
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(UPLOAD_DIR));
+
+// Serve uploads with correct Content-Type so PDFs render inline instead of
+// downloading as octet-stream, and 404 instead of falling through to the
+// SPA catch-all (which used to return the HTML page when a file was missing).
+app.use('/uploads', express.static(UPLOAD_DIR, {
+  setHeaders: (res, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline');
+    }
+  },
+  fallthrough: false  // <-- hard 404 instead of next() to the SPA route
+}));
+// If express.static throws ENOENT, send a clean 404 (don't render SPA HTML).
+app.use('/uploads', (err, req, res, next) => {
+  if (err && (err.code === 'ENOENT' || err.statusCode === 404)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+  return next(err);
+});
 
 // ─── Anthropic client ─────────────────────────────────────────────────────────
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -245,44 +265,93 @@ app.post('/api/contracts', async (req, res) => {
 
 app.get('/api/jobs', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM jobs WHERE active = true ORDER BY name');
+    // Optional client_id filter — when set, only return jobs whose
+    // for_psc_client / for_generic_client flag matches the client's class.
+    // This makes the admin and portal job dropdowns behave consistently.
+    const clientId = req.query.client_id || null;
+    let isPsc = null;
+    if (clientId) {
+      const c = await pool.query('SELECT is_rus FROM clients WHERE id = $1', [clientId]);
+      if (c.rows.length) isPsc = c.rows[0].is_rus === true;
+    }
+    const conds = [`active = true`];
+    if (isPsc === true) conds.push(`for_psc_client = true`);
+    else if (isPsc === false) conds.push(`for_generic_client = true`);
+    const { rows } = await pool.query(
+      `SELECT * FROM jobs WHERE ${conds.join(' AND ')} ORDER BY name`
+    );
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/jobs', async (req, res) => {
-  const { name, default_billing_type = 'hourly', default_rate = null, is_permitting = false, notes = null, team = null } = req.body;
+  const {
+    name, default_billing_type = 'hourly', default_rate = null,
+    is_permitting = false, notes = null, team = null,
+    billing_code = null, for_psc_client = true, for_generic_client = true
+  } = req.body;
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
   try {
     const teamVal = team === '' ? null : team;
     const { rows } = await pool.query(
-      `INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, notes, team)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (name) DO UPDATE SET active = true, team = COALESCE(EXCLUDED.team, jobs.team) RETURNING *`,
-      [String(name).trim(), default_billing_type, default_rate, is_permitting, notes, teamVal]
+      `INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting,
+                         notes, team, billing_code, for_psc_client, for_generic_client)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       ON CONFLICT (name) DO UPDATE SET
+         active = true,
+         team = COALESCE(EXCLUDED.team, jobs.team)
+       RETURNING *`,
+      [String(name).trim(), default_billing_type, default_rate, is_permitting,
+       notes, teamVal, billing_code, for_psc_client, for_generic_client]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.put('/api/jobs/:id', async (req, res) => {
-  const { name, default_billing_type, default_rate, is_permitting, notes, active, team } = req.body;
+  const {
+    name, default_billing_type, default_rate, is_permitting, notes, active, team,
+    billing_code, for_psc_client, for_generic_client
+  } = req.body;
   try {
     // team is nullable — empty string from UI maps to NULL ("Both / Unassigned")
     const teamVal = team === '' ? null : team;
     const { rows } = await pool.query(
       `UPDATE jobs SET
-         name = COALESCE($2, name),
+         name                 = COALESCE($2, name),
          default_billing_type = COALESCE($3, default_billing_type),
-         default_rate = $4,
-         is_permitting = COALESCE($5, is_permitting),
-         notes = $6,
-         active = COALESCE($7, active),
-         team = $8
+         default_rate         = $4,
+         is_permitting        = COALESCE($5, is_permitting),
+         notes                = $6,
+         active               = COALESCE($7, active),
+         team                 = $8,
+         billing_code         = COALESCE($9, billing_code),
+         for_psc_client       = COALESCE($10, for_psc_client),
+         for_generic_client   = COALESCE($11, for_generic_client)
        WHERE id = $1 RETURNING *`,
-      [req.params.id, name, default_billing_type, default_rate, is_permitting, notes, active, teamVal]
+      [req.params.id, name, default_billing_type, default_rate, is_permitting,
+       notes, active, teamVal, billing_code, for_psc_client, for_generic_client]
     );
     res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Universal rate propagation: apply this job's current default_rate to ALL
+// existing real (non-rollup) projects that use this job. Useful when the
+// admin updates a job's rate and wants the change to flow through to
+// historical projects rather than only affecting new ones.
+app.put('/api/jobs/:id/propagate-rate', async (req, res) => {
+  try {
+    const j = await pool.query('SELECT default_rate FROM jobs WHERE id = $1', [req.params.id]);
+    if (!j.rows.length) return res.status(404).json({ error: 'Job not found' });
+    const rate = j.rows[0].default_rate;
+    const r = await pool.query(
+      `UPDATE projects
+         SET billing_rate = $2
+       WHERE job_id = $1 AND COALESCE(is_rollup, false) = false`,
+      [req.params.id, rate]
+    );
+    res.json({ ok: true, updated: r.rowCount, applied_rate: rate });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -540,7 +609,7 @@ app.get('/api/projects/:id', async (req, res) => {
 });
 
 app.post('/api/projects', async (req, res) => {
-  const {
+  let {
     name, client_id, contract_id, work_order_number,
     project_type, project_type_id, job_id,
     status = 'active', billing_type, billing_rate,
@@ -551,6 +620,23 @@ app.post('/api/projects', async (req, res) => {
   } = req.body;
 
   try {
+    // Auto-nesting: when admin doesn't explicitly pick a parent, derive it
+    // from the rollup chain Client → Service Area → Project Type → Team.
+    // If admin DID pick a parent, respect that choice (legacy/manual nesting).
+    if (!parent_id && client_id && app.locals.ensureRollupChain) {
+      // Auto-detect concentrator from work order if admin didn't pick one
+      if (!concentrator_id && work_order_number) {
+        const con = await pool.query(
+          `SELECT id FROM concentrators WHERE work_order_number = $1 LIMIT 1`,
+          [String(work_order_number).trim()]
+        );
+        if (con.rows.length) concentrator_id = con.rows[0].id;
+      }
+      parent_id = await app.locals.ensureRollupChain({
+        client_id, concentrator_id, project_type_id, job_id
+      });
+    }
+
     // Duplicate-project guard (same name under same parent rejected)
     if (await app.locals.isDuplicateProject(name, parent_id)) {
       return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
