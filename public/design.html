@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Launch Fiber — Design Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#0D7377;--primary-dark:#095456;--primary-light:#E0F5F5;--gray-light:#F5F7FA;--gray-border:#DEE2E6;--white:#FFF;--success:#28A745;--warning:#FFC107;--danger:#DC3545;--text:#212529;--text-muted:#6C757D;--font:'Inter',sans-serif}
+body{font-family:var(--font);background:var(--gray-light);color:var(--text);font-size:14px}
+.view{display:none;padding:24px;flex-direction:column;gap:20px}.view.active{display:flex}
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600}
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 24px;display:flex;align-items:center;gap:20px;height:58px;position:sticky;top:0;z-index:20;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.nav{background:var(--primary);display:flex;padding:0 24px;position:sticky;top:58px;z-index:19;overflow-x:auto}
+.nav-tab{color:rgba(255,255,255,.7);padding:0 18px;height:42px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.08)}.nav-tab.active{color:#fff;border-bottom-color:#fff}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.stat-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:16px 18px}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:700;line-height:1}.stat-sub{font-size:12px;color:var(--text-muted);margin-top:4px}
+.stat-card.accent{background:var(--primary);border-color:var(--primary)}.stat-card.accent .stat-label,.stat-card.accent .stat-sub{color:rgba(255,255,255,.7)}.stat-card.accent .stat-value{color:#fff}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--gray-light);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+tbody td{padding:10px 12px;border-bottom:1px solid #F0F0F0;vertical-align:middle}
+tbody tr:hover td{background:var(--gray-light)}
+.td-name{font-weight:500}.td-mono{font-family:monospace;font-size:12px}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.badge-active{background:#D4EDDA;color:#155724}.badge-completed{background:#D1ECF1;color:#0C5460}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:var(--font)}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--white);color:var(--text);border:1px solid var(--gray-border)}.btn-secondary:hover{background:var(--gray-light)}
+.btn-success{background:var(--success);color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px}.btn-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:6px}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.section-title{font-size:18px;font-weight:700}.section-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}.empty-state i{font-size:36px;margin-bottom:12px;opacity:.3}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}.modal-title{font-size:16px;font-weight:600}
+.modal-body{padding:22px}.modal-footer{padding:14px 22px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+label{font-size:12px;font-weight:600;color:var(--text-muted)}
+input,select,textarea{border:1px solid var(--gray-border);border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--font);width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)}
+textarea{resize:vertical;min-height:60px}
+</style>
+</head>
+<body>
+<header class="header">
+  <div style="font-size:20px;font-weight:700;color:var(--primary)"><i class="fa-solid fa-drafting-compass" style="margin-right:8px"></i>Design Portal</div>
+  <div style="margin-left:auto;font-size:12px;color:var(--text-muted)">Launch Fiber Services</div>
+</header>
+<nav class="nav">
+  <a class="nav-tab active" data-view="projects" onclick="sv('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
+  <a class="nav-tab" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-drafting-compass"></i> Design Pipeline</a>
+  <a class="nav-tab" data-view="potential" onclick="sv('potential')"><i class="fa-solid fa-lightbulb"></i> Submit Potential Permits</a>
+</nav>
+
+<div id="view-projects" class="view active">
+  <div class="section-header"><div><div class="section-title">Design Projects</div></div>
+    <button class="btn btn-secondary btn-sm" onclick="ldp()"><i class="fa-solid fa-rotate"></i></button>
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Status</th></tr></thead>
+    <tbody id="dpb"></tbody>
+  </table></div></div>
+</div>
+
+<div id="view-pipeline" class="view">
+  <div class="section-header"><div><div class="section-title">Design Pipeline</div><div class="section-sub">Track projects: Potential → Started → Review → Completed</div></div></div>
+  <div id="dsb" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
+    <tbody id="dplb"></tbody>
+  </table></div></div>
+</div>
+
+<div id="view-potential" class="view">
+  <div class="section-header"><div><div class="section-title">Submit Potential Permits</div><div class="section-sub">Permitting team will review your submissions</div></div>
+    <button class="btn btn-primary btn-sm" onclick="om('ppm')"><i class="fa-solid fa-plus"></i> Submit New</button>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Your Submissions</span></div><div class="table-wrap"><table>
+    <thead><tr><th>SR/HWY</th><th>County</th><th>Route</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody id="ppb"></tbody>
+  </table></div></div>
+</div>
+
+<div class="modal-overlay" id="ppm">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-lightbulb"></i> Submit Potential Permit</span><button class="btn btn-icon btn-secondary" onclick="cm('ppm')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>SR/HWY *</label><input id="ps" placeholder="e.g. SR 49, HWY 240"></div>
+      <div class="form-group"><label>County</label><input id="pc" placeholder="e.g. Peach County"></div>
+      <div class="form-group"><label>Route</label><input id="pr" placeholder="Route description"></div>
+      <div class="form-group"><label>Your Name</label><input id="pn" placeholder="Your name"></div>
+      <div class="form-group"><label>Notes</label><textarea id="pno" placeholder="Additional details..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="cm('ppm')">Cancel</button><button class="btn btn-primary" onclick="spp()"><i class="fa-solid fa-paper-plane"></i> Submit</button></div>
+  </div>
+</div>
+
+<script>
+const DS=['potential','started','review_process','completed'];
+const DL={potential:'Potential',started:'Started',review_process:'Review Process',completed:'Completed'};
+const DC={potential:'#6c757d',started:'var(--primary)',review_process:'#ff9800',completed:'#28A745'};
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function om(id){document.getElementById(id).classList.add('open')}
+function cm(id){document.getElementById(id).classList.remove('open')}
+async function api(p,m='GET',b=null){const o={method:m,headers:{'Content-Type':'application/json'}};if(b)o.body=JSON.stringify(b);const r=await fetch(p,o);if(!r.ok)throw new Error(await r.text());return r.json()}
+
+function sv(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  if(v==='projects')ldp();if(v==='pipeline')ldpl();if(v==='potential')lpp();
+}
+
+async function ldp(){
+  const d=await api('/api/projects?type=design');
+  document.getElementById('dpb').innerHTML=d.length?d.map(p=>`<tr>
+    <td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
+    <td><span class="badge" style="background:var(--primary-light);color:var(--primary)">${DL[p.current_stage]||'—'}</span></td>
+    <td><span class="badge badge-${p.status}">${p.status}</span></td>
+  </tr>`).join(''):'<tr><td colspan="5" class="empty-state">No design projects</td></tr>';
+}
+
+async function ldpl(){
+  const d=await api('/api/design');
+  const ct={};DS.forEach(s=>ct[s]=0);d.forEach(p=>{if(p.current_stage)ct[p.current_stage]++});
+  document.getElementById('dsb').innerHTML=DS.map(s=>`<div style="background:${DC[s]};color:#fff;padding:14px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:700">${ct[s]}</div><div style="font-size:11px;text-transform:uppercase;opacity:.85">${DL[s]}</div></div>`).join('');
+  document.getElementById('dplb').innerHTML=d.length?d.map(p=>{
+    const s=p.current_stage||'potential',si=DS.indexOf(s);
+    const pipe=DS.map((x,i)=>`<div style="flex:1;height:8px;border-radius:4px;background:${i<si?'#28A745':i===si?'var(--primary)':'#ddd'}" title="${DL[x]}"></div>`).join('');
+    return `<tr><td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
+      <td><span class="badge" style="background:${DC[s]};color:#fff">${DL[s]}</span></td>
+      <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
+      <td>${s!=='completed'?`<button class="btn btn-sm btn-primary" onclick="ad('${p.id}')"><i class="fa-solid fa-forward-step"></i> Advance</button>`:'<span style="color:#28A745;font-size:12px;font-weight:600"><i class="fa-solid fa-check-double"></i> Done</span>'}</td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty-state">No design projects</td></tr>';
+}
+
+async function ad(id){
+  const b=prompt('Your name (optional):');if(b===null)return;
+  try{const r=await api('/api/design/'+id+'/advance','PUT',{updated_by:b||'Design Portal'});
+    if(r.current==='completed')alert('Design completed! It will appear in the billing dashboard.');
+    ldpl();ldp();
+  }catch(e){alert(e.message);}
+}
+
+async function lpp(){
+  const d=await api('/api/potential-permits');
+  document.getElementById('ppb').innerHTML=d.length?d.map(p=>{
+    const c={pending:'var(--primary)',accepted:'#28A745',rejected:'#DC3545'}[p.status]||'#ccc';
+    return `<tr><td class="td-name">${esc(p.sr_hwy||'—')}</td><td>${esc(p.county||'—')}</td><td>${esc(p.route||'—')}</td>
+      <td><span style="background:${c};color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600">${p.status}</span></td>
+      <td style="font-size:12px;color:var(--text-muted)">${new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td></tr>`;
+  }).join(''):'<tr><td colspan="5" class="empty-state">No submissions yet</td></tr>';
+}
+
+async function spp(){
+  const s=document.getElementById('ps').value.trim();if(!s)return alert('SR/HWY required');
+  try{
+    await api('/api/potential-permits','POST',{sr_hwy:s,county:document.getElementById('pc').value.trim(),
+      route:document.getElementById('pr').value.trim(),submitted_by:document.getElementById('pn').value.trim(),
+      notes:document.getElementById('pno').value.trim()});
+    cm('ppm');lpp();['ps','pc','pr','pn','pno'].forEach(id=>document.getElementById(id).value='');
+    alert('Submitted! The Permitting team will review it.');
+  }catch(e){alert(e.message);}
+}
+
+ldp();
+</script>
+</body>
+</html>

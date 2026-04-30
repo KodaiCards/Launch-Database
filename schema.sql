@@ -536,3 +536,39 @@ UPDATE projects
 -- doesn't fit the hourly or per-mile model. NULL = use the calculated value.
 -- ─────────────────────────────────────────
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS manual_invoice_amount NUMERIC(14,2);
+
+-- ─────────────────────────────────────────
+-- PERMIT SUBTYPE: DOT or RR
+-- ─────────────────────────────────────────
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS permit_subtype VARCHAR(20);
+
+-- ─────────────────────────────────────────
+-- POTENTIAL PERMITS (submitted by Design, reviewed by Permitting)
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS potential_permits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sr_hwy VARCHAR(200),
+  county VARCHAR(200),
+  route VARCHAR(200),
+  notes TEXT,
+  status VARCHAR(50) DEFAULT 'pending',
+  submitted_by VARCHAR(100),
+  reviewed_by VARCHAR(100),
+  project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─────────────────────────────────────────
+-- DESIGN STAGES (potential → started → review_process → completed)
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS design_stages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  stage VARCHAR(50) NOT NULL,
+  completed_at TIMESTAMPTZ,
+  notes TEXT,
+  updated_by VARCHAR(100),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(project_id, stage)
+);

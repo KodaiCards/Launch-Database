@@ -26,8 +26,19 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// ─── Portal Mode ─────────────────────────────────────────────────────────────
+// When PORTAL_MODE is set ('permitting' or 'design'), this instance serves
+// only that portal's HTML and blocks access to revenue/billing/AI endpoints.
+// Deploy 3 services from the same repo with different PORTAL_MODE values.
+const PORTAL_MODE = (process.env.PORTAL_MODE || '').toLowerCase(); // '' | 'permitting' | 'design'
+const PORTAL_NAMES = { permitting: 'Permitting Portal', design: 'Design Portal' };
+if (PORTAL_MODE) {
+  console.log(`✓ Running in PORTAL MODE: ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}`);
+}
+
 // ─── Password Protection ─────────────────────────────────────────────────────
 if (process.env.APP_PASSWORD) {
+  const realm = PORTAL_MODE ? `Launch Fiber - ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}` : 'Launch Fiber Services';
   app.use((req, res, next) => {
     const auth = req.headers.authorization;
     if (auth) {
@@ -37,7 +48,7 @@ if (process.env.APP_PASSWORD) {
         if (pass === process.env.APP_PASSWORD) return next();
       }
     }
-    res.set('WWW-Authenticate', 'Basic realm="Launch Fiber Services"');
+    res.set('WWW-Authenticate', `Basic realm="${realm}"`);
     res.status(401).send('Authentication required');
   });
   console.log('✓ Password protection enabled');
@@ -45,6 +56,18 @@ if (process.env.APP_PASSWORD) {
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOAD_DIR));
+
+// ─── Portal endpoint restrictions ────────────────────────────────────────────
+// Block endpoints that portals should NOT access (revenue, billing, AI, hours)
+if (PORTAL_MODE) {
+  const blocked = ['/api/revenue', '/api/invoices', '/api/billing', '/api/ai', '/api/hours', '/api/dashboard'];
+  app.use((req, res, next) => {
+    if (blocked.some(b => req.path.startsWith(b))) {
+      return res.status(403).json({ error: 'Not available in this portal' });
+    }
+    next();
+  });
+}
 
 // ─── Anthropic client ─────────────────────────────────────────────────────────
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -582,6 +605,14 @@ app.post('/api/projects', async (req, res) => {
       await pool.query(
         'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
         [rows[0].id, 'potential', permit_manager || null]
+      );
+    }
+
+    // Auto-create design stage for design projects
+    if (project_type === 'design') {
+      await pool.query(
+        'INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+        [rows[0].id, 'potential']
       );
     }
 
@@ -2071,6 +2102,106 @@ app.get('/api/budgets/:id/by-area', async (req, res) => {
       total_remaining: budgetTotal - totalSpent,
       areas: rows
     });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POTENTIAL PERMITS (submitted by Design, reviewed by Permitting)
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/potential-permits', async (req, res) => {
+  const { status } = req.query;
+  try {
+    const q = status
+      ? 'SELECT * FROM potential_permits WHERE status=$1 ORDER BY created_at DESC'
+      : 'SELECT * FROM potential_permits ORDER BY created_at DESC';
+    const { rows } = await pool.query(q, status ? [status] : []);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/potential-permits', async (req, res) => {
+  const { sr_hwy, county, route, notes, submitted_by } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO potential_permits (sr_hwy, county, route, notes, submitted_by)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [sr_hwy || null, county || null, route || null, notes || null, submitted_by || null]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/potential-permits/:id', async (req, res) => {
+  const { status, reviewed_by, project_id, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE potential_permits SET status=$1, reviewed_by=$2, project_id=$3, notes=COALESCE($4,notes), updated_at=NOW()
+       WHERE id=$5 RETURNING *`,
+      [status || 'pending', reviewed_by || null, project_id || null, notes, req.params.id]
+    );
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/potential-permits/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM potential_permits WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DESIGN PIPELINE — stages: potential → started → review_process → completed
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/design', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.*, cl.name as client_name, co.contract_number,
+        (SELECT stage FROM design_stages WHERE project_id=p.id AND completed_at IS NULL ORDER BY created_at DESC LIMIT 1) as current_stage
+      FROM projects p
+      LEFT JOIN clients cl ON cl.id=p.client_id
+      LEFT JOIN contracts co ON co.id=p.contract_id
+      WHERE p.project_type='design'
+      ORDER BY p.created_at DESC
+    `);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/design/:projectId/advance', async (req, res) => {
+  const DESIGN_STAGES = ['potential', 'started', 'review_process', 'completed'];
+  const { updated_by, notes } = req.body;
+  const { projectId } = req.params;
+  try {
+    const { rows: cur } = await pool.query(
+      'SELECT stage FROM design_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at DESC LIMIT 1',
+      [projectId]
+    );
+    const currentStage = cur[0]?.stage || 'potential';
+    const nextIdx = DESIGN_STAGES.indexOf(currentStage) + 1;
+    if (nextIdx >= DESIGN_STAGES.length) return res.json({ message: 'Already at final stage' });
+    const nextStage = DESIGN_STAGES[nextIdx];
+
+    // Complete current stage
+    await pool.query(
+      'UPDATE design_stages SET completed_at=NOW(), notes=$1, updated_by=$2 WHERE project_id=$3 AND stage=$4',
+      [notes, updated_by, projectId, currentStage]
+    );
+    // Create next stage
+    await pool.query(
+      'INSERT INTO design_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+      [projectId, nextStage, updated_by]
+    );
+    // If completed, mark project
+    if (nextStage === 'completed') {
+      await pool.query(
+        `UPDATE projects SET status='completed', completed_date=CURRENT_DATE WHERE id=$1`,
+        [projectId]
+      );
+    }
+    res.json({ previous: currentStage, current: nextStage });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -4049,11 +4180,19 @@ app.post('/api/ai/chat', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SPA FALLBACK
+// PORTAL ROUTES
+app.get('/permitting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'permitting.html')));
+app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'design.html')));
+
+// SPA FALLBACK — serve the portal HTML or main app depending on PORTAL_MODE
 // ─────────────────────────────────────────────────────────────────────────────
 
+const SPA_FILE = PORTAL_MODE === 'permitting' ? 'permitting.html'
+               : PORTAL_MODE === 'design' ? 'design.html'
+               : 'index.html';
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', SPA_FILE));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

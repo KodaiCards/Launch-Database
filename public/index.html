@@ -230,6 +230,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab active" data-view="dashboard" onclick="showView('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
   <a class="nav-tab" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
   <a class="nav-tab" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature"></i> Permitting</a>
+  <a class="nav-tab" data-view="design" onclick="showView('design')"><i class="fa-solid fa-drafting-compass"></i> Design</a>
+  <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
   <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
   <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
@@ -348,6 +350,59 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Footage</th><th>Stage</th><th>Pipeline</th><th>Actions</th></tr></thead>
             <tbody id="permits-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ DESIGN ═══════════════════ -->
+    <div id="view-design" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Design Pipeline</div><div class="section-sub">Track design projects through stages</div></div>
+      </div>
+      <div id="design-stage-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th>Actions</th></tr></thead>
+            <tbody id="design-body"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ POTENTIAL PERMITS ═══════════════════ -->
+    <div id="view-potential-permits" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Potential Permits</div><div class="section-sub">Submitted by Design team, reviewed by Permitting</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openPotentialPermitModal()"><i class="fa-solid fa-plus"></i> Submit New</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>SR/HWY</th><th>County</th><th>Route</th><th>Submitted By</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="potential-permits-body"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- POTENTIAL PERMIT SUBMIT MODAL -->
+    <div class="modal-overlay" id="pp-modal">
+      <div class="modal" style="max-width:500px">
+        <div class="modal-header">
+          <span class="modal-title"><i class="fa-solid fa-lightbulb"></i> Submit Potential Permit</span>
+          <button class="btn btn-icon btn-secondary" onclick="closeModal('pp-modal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group"><label>SR/HWY *</label><input type="text" id="pp-sr-hwy" placeholder="e.g. SR 49, HWY 240"></div>
+          <div class="form-group"><label>County</label><input type="text" id="pp-county" placeholder="e.g. Peach County"></div>
+          <div class="form-group"><label>Route</label><input type="text" id="pp-route" placeholder="Route description"></div>
+          <div class="form-group"><label>Submitted By</label><input type="text" id="pp-submitted-by" placeholder="Your name"></div>
+          <div class="form-group"><label>Notes</label><textarea id="pp-notes" placeholder="Additional details..."></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('pp-modal')">Cancel</button>
+          <button class="btn btn-primary" onclick="savePotentialPermit()"><i class="fa-solid fa-paper-plane"></i> Submit</button>
         </div>
       </div>
     </div>
@@ -1240,6 +1295,8 @@ function showView(view) {
   if (view==='dashboard') loadDashboard();
   if (view==='projects') loadProjects();
   if (view==='permitting') loadPermits();
+  if (view==='design') loadDesign();
+  if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
@@ -2812,6 +2869,117 @@ async function loadBudgetCodesForProject(projectId) {
 
   grp.style.display = 'flex';
   codes.forEach(c => sel.add(new Option(`${c.code} (${fmtMoney(c.allocated_amount)})`, c.id)));
+}
+
+// ═══════════════════════════════════════════════════════════
+// DESIGN PIPELINE
+// ═══════════════════════════════════════════════════════════
+const DESIGN_STAGES = ['potential', 'started', 'review_process', 'completed'];
+const DESIGN_LABELS = { potential:'Potential', started:'Started', review_process:'Review Process', completed:'Completed' };
+
+async function loadDesign() {
+  const projects = await api('/api/design');
+  const counts = {}; DESIGN_STAGES.forEach(s => counts[s]=0);
+  projects.forEach(p => { if(p.current_stage) counts[p.current_stage]++; });
+  document.getElementById('design-stage-bar').innerHTML = DESIGN_STAGES.map(s => {
+    const c = {potential:'#6c757d',started:'var(--primary)',review_process:'#ff9800',completed:'var(--success)'}[s];
+    return `<div style="background:${c};color:#fff;padding:12px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:700">${counts[s]}</div><div style="font-size:11px;text-transform:uppercase">${DESIGN_LABELS[s]}</div></div>`;
+  }).join('');
+
+  const tbody = document.getElementById('design-body');
+  if (!projects.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-drafting-compass"></i><p>No design projects</p></div></td></tr>'; return; }
+  tbody.innerHTML = projects.map(p => {
+    const stage = p.current_stage || 'potential';
+    const si = DESIGN_STAGES.indexOf(stage);
+    const pipe = DESIGN_STAGES.map((s,i)=>`<div style="flex:1;height:8px;border-radius:4px;background:${i<si?'var(--success)':i===si?'var(--primary)':'#ddd'}" title="${DESIGN_LABELS[s]}"></div>`).join('');
+    return `<tr>
+      <td class="td-name">${esc(p.name)}</td>
+      <td>${esc(p.client_name||'—')}</td>
+      <td class="td-mono">${esc(p.work_order_number||'—')}</td>
+      <td>${statusBadge(stage)}</td>
+      <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div><span style="font-size:10px;color:var(--text-muted)">${DESIGN_LABELS[stage]}</span></td>
+      <td>${stage!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')"><i class="fa-solid fa-forward"></i> Advance</button>`:'<span style="color:var(--success);font-weight:600"><i class="fa-solid fa-check"></i> Done</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function advanceDesign(projectId) {
+  const by = prompt('Your name (optional):') || '';
+  try {
+    const r = await api(`/api/design/${projectId}/advance`, 'PUT', { updated_by: by });
+    if (r.current === 'completed') alert('Design completed! It will appear in your Billing tab.');
+    loadDesign(); loadDashboard();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// POTENTIAL PERMITS
+// ═══════════════════════════════════════════════════════════
+async function loadPotentialPermits() {
+  const permits = await api('/api/potential-permits');
+  const tbody = document.getElementById('potential-permits-body');
+  if (!permits.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-lightbulb"></i><p>No potential permits submitted yet</p></div></td></tr>'; return; }
+  tbody.innerHTML = permits.map(p => {
+    const sc = {pending:'var(--primary)',accepted:'var(--success)',rejected:'var(--danger)'}[p.status]||'#ccc';
+    return `<tr>
+      <td class="td-name">${esc(p.sr_hwy||'—')}</td>
+      <td>${esc(p.county||'—')}</td>
+      <td>${esc(p.route||'—')}</td>
+      <td>${esc(p.submitted_by||'—')}</td>
+      <td><span style="background:${sc};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
+      <td style="font-size:12px;color:var(--text-muted)">${new Date(p.created_at).toLocaleDateString()}</td>
+      <td style="white-space:nowrap">
+        ${p.status==='pending'?`<button class="btn btn-sm btn-success" onclick="acceptPotentialPermit('${p.id}','${esc(p.sr_hwy||'')}','${esc(p.county||'')}','${esc(p.route||'')}')"><i class="fa-solid fa-plus"></i> Create Permit</button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="rejectPotentialPermit('${p.id}')"><i class="fa-solid fa-xmark"></i></button>`:''}
+        ${p.status==='accepted'&&p.project_id?`<button class="btn btn-sm btn-secondary" onclick="showProjectDetail('${p.project_id}')"><i class="fa-solid fa-eye"></i> View</button>`:''}
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent" onclick="deletePotentialPermit('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openPotentialPermitModal() {
+  ['pp-sr-hwy','pp-county','pp-route','pp-submitted-by','pp-notes'].forEach(id=>document.getElementById(id).value='');
+  openModal('pp-modal');
+}
+
+async function savePotentialPermit() {
+  const sr = document.getElementById('pp-sr-hwy').value.trim();
+  if (!sr) return alert('SR/HWY is required');
+  try {
+    await api('/api/potential-permits','POST',{
+      sr_hwy:sr, county:document.getElementById('pp-county').value.trim(),
+      route:document.getElementById('pp-route').value.trim(),
+      submitted_by:document.getElementById('pp-submitted-by').value.trim(),
+      notes:document.getElementById('pp-notes').value.trim()
+    });
+    closeModal('pp-modal'); loadPotentialPermits();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function acceptPotentialPermit(ppId, srHwy, county, route) {
+  // Pre-fill the project creation modal for a new permit
+  openProjectModal();
+  document.getElementById('proj-name').value = (srHwy||'') + ' Permitting';
+  document.getElementById('proj-notes').value = `From potential permit. SR/HWY: ${srHwy||'N/A'}, County: ${county||'N/A'}, Route: ${route||'N/A'}`;
+  // Store ppId for linking after save
+  window._pendingPotentialPermitId = ppId;
+}
+
+async function rejectPotentialPermit(id) {
+  if (!confirm('Reject this potential permit?')) return;
+  try {
+    await api('/api/potential-permits/'+id,'PUT',{status:'rejected',reviewed_by:'Admin'});
+    loadPotentialPermits();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function deletePotentialPermit(id) {
+  if (!confirm('Delete this potential permit?')) return;
+  try {
+    await api('/api/potential-permits/'+id,'DELETE');
+    loadPotentialPermits();
+  } catch(e) { alert('Error: '+e.message); }
 }
 
 // ═══════════════════════════════════════════════════════════
