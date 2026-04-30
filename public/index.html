@@ -1979,6 +1979,12 @@ function filterProjects() {
   renderProjects(allProjects.filter(p => keep.has(p.id)), true);
 }
 
+// Tracks which rollup nodes the user has expanded. Persists across
+// re-renders triggered by polling — without this, the 1.5s auto-refresh
+// rebuilds the tbody and collapses every expanded rollup, making it
+// impossible to keep one open while reviewing children.
+const expandedRollups = new Set();
+
 function renderProjects(list, expandAll = false) {
   const tbody = document.getElementById('projects-body');
   if (!list.length) {
@@ -2034,7 +2040,7 @@ function renderProjects(list, expandAll = false) {
     return { logged, revenue, ytd, projected };
   }
 
-  function buildProjRows(projects, depth, parentGroupClass) {
+  function buildProjRows(projects, depth, parentGroupClass, parentExpanded) {
     let html = '';
     for (const p of projects) {
       const indent = depth * 28;
@@ -2045,16 +2051,26 @@ function renderProjects(list, expandAll = false) {
       const groupKey = 'pt-' + p.id;
       const chevId = 'pc-' + p.id;
       const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
-      const startHidden = parentGroupClass && !expandAll;
+
+      // A row is visible if every ancestor is currently expanded. This is
+      // the persistent-state replacement for the old "startHidden" logic
+      // that just hid everything below depth 0 by default.
+      const isVisible = depth === 0 || parentExpanded;
+
+      // For this node: if expanded (or expandAll override), its descendants
+      // get parentExpanded=true.
+      const thisExpanded = expandAll || expandedRollups.has(p.id);
+
+      const startHidden = !isVisible;
       const display = startHidden ? 'display:none;' : '';
       const trAttrs = parentGroupClass
         ? `class="ptree ptree-${parentGroupClass}" style="${display}${bg};cursor:pointer"`
         : `style="${bg};cursor:pointer"`;
       const sums = sumTree(p);
       const badge = expandable ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kids.length}</span>` : '';
-      const chevRotation = expandable && expandAll ? 'transform:rotate(90deg);' : '';
+      const chevRotation = expandable && thisExpanded ? 'transform:rotate(90deg);' : '';
       const chevron = expandable
-        ? `<span onclick="event.stopPropagation();ptreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
+        ? `<span onclick="event.stopPropagation();ptreeToggle('${p.id}','${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
         : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
       // Use server-computed ytd_revenue — no frontend calculation needed
@@ -2087,21 +2103,48 @@ function renderProjects(list, expandAll = false) {
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
         </td>
       </tr>`;
-      if (expandable) html += buildProjRows(kids, depth + 1, groupKey);
+      if (expandable) html += buildProjRows(kids, depth + 1, groupKey, thisExpanded);
     }
     return html;
   }
 
-  tbody.innerHTML = buildProjRows(roots, 0, null);
+  tbody.innerHTML = buildProjRows(roots, 0, null, true);
 }
 
-function ptreeToggle(groupKey, chevId) {
+// Toggle a rollup's expanded state. We track state in the expandedRollups
+// Set (kept across re-renders) and let renderProjects handle the actual
+// row visibility on next render. We also do an immediate DOM update so the
+// UI feels responsive — without that, the click would only visibly take
+// effect on the next polling tick (up to 1.5s later).
+function ptreeToggle(projectId, groupKey, chevId) {
+  const wasExpanded = expandedRollups.has(projectId);
+  if (wasExpanded) {
+    // Collapse this node AND every descendant rollup so we don't end up with
+    // orphan-expanded grandchildren when the parent collapses.
+    expandedRollups.delete(projectId);
+    // Find all descendants in allProjects and remove them too
+    const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
+    const collectDescendants = (parentId, acc) => {
+      list.filter(p => p.parent_id === parentId).forEach(c => {
+        acc.add(c.id);
+        collectDescendants(c.id, acc);
+      });
+    };
+    const descs = new Set();
+    collectDescendants(projectId, descs);
+    descs.forEach(id => expandedRollups.delete(id));
+  } else {
+    expandedRollups.add(projectId);
+  }
+
+  // Immediate visual feedback. The next renderProjects() call (manual or
+  // from polling) will rebuild from expandedRollups so the state survives.
   const rows = document.querySelectorAll('.ptree-' + groupKey);
   const chev = document.getElementById(chevId);
-  const showing = rows[0] && rows[0].style.display !== 'none';
   rows.forEach(r => {
-    r.style.display = showing ? 'none' : 'table-row';
-    if (showing) {
+    r.style.display = wasExpanded ? 'none' : 'table-row';
+    if (wasExpanded) {
+      // Collapsing: also reset descendant chevrons + hide their children
       const nestedChevs = r.querySelectorAll('[id^="pc-"]');
       nestedChevs.forEach(nc => {
         nc.style.transform = 'rotate(0deg)';
@@ -2110,11 +2153,18 @@ function ptreeToggle(groupKey, chevId) {
       });
     }
   });
-  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
+  if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
 // Show or hide every branch in the projects tree at once.
 function ptreeExpandAll(expand) {
+  // Update persistent state so the polling re-render reflects this.
+  if (expand) {
+    const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
+    list.forEach(p => expandedRollups.add(p.id));
+  } else {
+    expandedRollups.clear();
+  }
   document.querySelectorAll('#projects-body tr.ptree').forEach(r => {
     r.style.display = expand ? 'table-row' : 'none';
   });
@@ -4958,8 +5008,12 @@ function renderJobsList() {
       const billType = j.default_billing_type === 'footage' ? 'footage' : 'hourly';
       const rateUnit = billType === 'footage' ? '/mile' : '/hr';
       return `<tr style="border-top:1px solid var(--gray-border)">
-      <td style="padding:6px 8px;font-weight:600">${esc(label)}</td>
-      <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:var(--text-muted)">${esc(j.billing_code || '—')}</td>
+      <td style="padding:6px 8px">
+        <input type="text" value="${esc(label)}" onchange="setJobField('${j.id}','name',this.value)" style="width:100%;font-weight:600;font-size:13px;padding:3px 6px;border:1px solid transparent;border-radius:4px;background:transparent" onfocus="this.style.borderColor='var(--gray-border)';this.style.background='#fff'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" title="Click to rename">
+      </td>
+      <td style="padding:6px 8px">
+        <input type="text" value="${esc(j.billing_code || '')}" placeholder="—" onchange="setJobField('${j.id}','billing_code',this.value)" style="width:90px;font-family:monospace;font-size:11px;color:var(--text-muted);padding:2px 6px;border:1px solid transparent;border-radius:4px;background:transparent" onfocus="this.style.borderColor='var(--gray-border)';this.style.background='#fff'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" title="RUS billing code">
+      </td>
       <td style="padding:6px 8px">
         <select onchange="setJobBillingType('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:#fff" title="Switch hourly vs footage billing">
           <option value="hourly"  ${billType==='hourly'  ? 'selected':''}>hourly</option>
@@ -4978,7 +5032,7 @@ function renderJobsList() {
           <option value="both" ${j.team==='both' ? 'selected':''}>Both</option>
         </select>
       </td>
-      <td style="padding:6px 8px;text-align:center">${j.is_permitting ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '—'}</td>
+      <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.is_permitting ? 'checked' : ''} onchange="setJobField('${j.id}','is_permitting',this.checked)" title="Counts toward permit calc when checked"></td>
       <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_psc_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_psc_client',this.checked)" title="Show for PSC clients"></td>
       <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_generic_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_generic_client',this.checked)" title="Show for non-PSC clients"></td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
@@ -5021,6 +5075,30 @@ async function setJobBillingType(jobId, billingType) {
     await loadJobs();
     renderJobsList();
   } catch (e) { alert('Failed to set billing type: ' + e.message); }
+}
+
+// Generic inline edit for any job property (name, billing_code, is_permitting,
+// notes, etc). Validates name is not empty before saving.
+async function setJobField(jobId, fieldName, value) {
+  if (fieldName === 'name') {
+    const trimmed = (value || '').trim();
+    if (!trimmed) {
+      alert('Job name cannot be empty.');
+      await loadJobs(); renderJobsList();  // restore old value
+      return;
+    }
+    value = trimmed;
+  }
+  try {
+    await api('/api/jobs/' + jobId, 'PUT', { [fieldName]: value });
+    await loadJobs();
+    // Only re-render the whole list when name/code change (visual order or
+    // labels affected). For boolean flags or rates, in-place input keeps its
+    // value and we skip re-render to avoid losing focus on adjacent edits.
+    if (fieldName === 'name' || fieldName === 'billing_code' || fieldName === 'is_permitting') {
+      renderJobsList();
+    }
+  } catch (e) { alert('Failed to update ' + fieldName + ': ' + e.message); }
 }
 
 // Toggle for_psc_client / for_generic_client flags.
@@ -5718,6 +5796,11 @@ function _isModalOpen(id) {
 async function _pollTick(){
   if (document.hidden) return;
 
+  // Skip ALL refreshes if user is actively typing/editing somewhere — re-rendering
+  // the active view would steal focus or wipe the input value mid-keystroke.
+  // This is the universal protection against polling clobbering user edits.
+  if (_isUserTyping()) return;
+
   // Active view
   const active = document.querySelector('.view.active');
   const viewId = active?.id || '';
@@ -5734,11 +5817,11 @@ async function _pollTick(){
   if (viewId === 'view-invoices')  callIfExists('loadInvoices');
   if (viewId === 'view-hours')     callIfExists('loadHours');
 
-  // Settings modal — refresh its lists if the modal is open AND user isn't typing.
-  // (Refreshing while typing would clobber input value.)
+  // Settings modal — refresh its lists if the modal is open. We already
+  // bailed at the top if user is typing, so settings panel updates safely.
   const settingsOpen = document.getElementById('settings-modal')?.classList.contains('active') ||
                        document.getElementById('settings-modal')?.style?.display === 'flex';
-  if (settingsOpen && !_isUserTyping()) {
+  if (settingsOpen) {
     callIfExists('loadJobs');
     callIfExists('loadProjectTypes');
     callIfExists('loadClients');

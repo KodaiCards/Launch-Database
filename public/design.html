@@ -676,12 +676,23 @@ async function clientChanged(preserveJobId){
   // 2) Refilter jobs dropdown
   await refilterJobsDropdown();
 
-  // 3) Refresh contracts dropdown
+  // 3) Refresh contracts dropdown — de-dupe by display label so repeats
+  //    don't pile up. The contracts table can accumulate duplicate rows
+  //    when projects auto-create them; the dropdown only needs one entry
+  //    per unique (contract #, name) combo for selection purposes.
   const sel = document.getElementById('proj-contract');
   if (!clientId) { sel.innerHTML = '<option value="">None / N/A</option>'; return; }
   try {
     const r = await api('/api/contracts?client_id=' + encodeURIComponent(clientId));
-    sel.innerHTML = '<option value="">None / N/A</option>' + r.map(c => `<option value="${c.id}">${esc(c.contract_number)}${c.name ? ' — ' + esc(c.name) : ''}</option>`).join('');
+    const seen = new Set();
+    const unique = [];
+    for (const c of r) {
+      const label = (c.contract_number || '') + '|' + (c.name || '');
+      if (seen.has(label)) continue;
+      seen.add(label);
+      unique.push(c);
+    }
+    sel.innerHTML = '<option value="">None / N/A</option>' + unique.map(c => `<option value="${c.id}">${esc(c.contract_number)}${c.name ? ' — ' + esc(c.name) : ''}</option>`).join('');
   } catch (e) { /* non-fatal */ }
 }
 
@@ -775,11 +786,27 @@ async function loadPipeline(){
       return `<tr><td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
         <td><span class="badge" style="background:${DC[s]};color:#fff">${DL[s]}</span></td>
         <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
-        <td>${s!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')"><i class="fa-solid fa-forward-step"></i> Advance</button>`:'<span style="color:#28A745;font-size:12px;font-weight:600"><i class="fa-solid fa-check-double"></i> Done</span>'}</td></tr>`;
+        <td style="white-space:nowrap;text-align:right">
+          ${s!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:#28A745;font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
+          <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${p.id}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
+        </td></tr>`;
     }).join('') : '<tr><td colspan="6" class="empty-state">No design projects</td></tr>';
   } catch (e) {
     document.getElementById('dplb').innerHTML = '<tr><td colspan="6" class="empty-state">Error: ' + esc(e.message) + '</td></tr>';
   }
+}
+
+// Delete a project from the pipeline view. Project deletion cascades server-side
+// (time entries, permit docs, child rollups) — so the confirmation message has
+// to be specific about what's going away.
+async function deleteProjectFromPipeline(id, name){
+  if (!confirm(`Delete "${name}"?\n\nThis is permanent and will also remove:\n  • All time entries logged to this project\n  • All uploaded documents\n  • Any child sub-projects\n\nThe project's history cannot be recovered.`)) return;
+  try {
+    await api('/api/projects/' + id, 'DELETE');
+    loadPipeline();
+    if (typeof loadPotential === 'function') loadPotential();
+  } catch (e) { alert('Delete failed: ' + e.message); }
 }
 
 async function advanceDesign(id){
@@ -1049,6 +1076,11 @@ function _isModalOpen(id) {
 }
 async function _pollTick(){
   if (document.hidden) return;
+
+  // Skip ALL refreshes if user is typing/editing somewhere. Without this
+  // guard, the 1.5s polling would re-render the active view and steal focus
+  // mid-edit (or worse, wipe an input value the user was halfway through).
+  if (_isUserTyping()) return;
 
   // Active view
   const active = document.querySelector('.view.active');

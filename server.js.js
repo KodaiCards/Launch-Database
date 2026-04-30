@@ -21,10 +21,14 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => cb(null, `${uuidv4()}_${file.originalname}`)
 });
-// 500MB cap — large enough for full DWG drawings, ZIP'd plan sets, and
-// scanned permit packages. multer.diskStorage streams to disk so memory
-// usage stays low regardless of file size.
-const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
+// 3GB cap. Multer streams multipart uploads to disk so RAM stays low even
+// for huge files. The practical ceiling on a single HTTP POST upload is
+// usually set by the cloud platform's request timeout (Railway: 5 minutes
+// by default), not by Node. A 3GB file at 100Mbps upload takes ~4 minutes,
+// at 50Mbps takes ~8 minutes — so very large files may need to be uploaded
+// over a fast connection or split into a ZIP per drawing pack.
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024 * 1024;  // 3 GB
+const upload = multer({ storage, limits: { fileSize: MAX_UPLOAD_BYTES } });
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
@@ -396,29 +400,34 @@ app.post('/api/jobs', async (req, res) => {
 });
 
 app.put('/api/jobs/:id', async (req, res) => {
-  const {
-    name, default_billing_type, default_rate, is_permitting, notes, active, team,
-    billing_code, for_psc_client, for_generic_client
-  } = req.body;
+  // Only update fields explicitly present in the request body. This makes
+  // partial updates safe — e.g. PUT {name:"X"} only changes name, leaves
+  // default_rate and notes alone. The previous version always wrote $4/$6
+  // unconditionally, which meant any partial update wiped rate and notes
+  // back to NULL.
+  const allowed = ['name', 'default_billing_type', 'default_rate', 'is_permitting',
+                   'notes', 'active', 'team', 'billing_code', 'for_psc_client',
+                   'for_generic_client'];
+  const setClauses = [];
+  const values = [req.params.id];
+  let i = 2;
+  for (const field of allowed) {
+    if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+      let v = req.body[field];
+      // team: empty string maps to NULL ("Both / Unassigned")
+      if (field === 'team' && v === '') v = null;
+      setClauses.push(`${field} = $${i}`);
+      values.push(v);
+      i++;
+    }
+  }
+  if (!setClauses.length) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
   try {
-    // team is nullable — empty string from UI maps to NULL ("Both / Unassigned")
-    const teamVal = team === '' ? null : team;
-    const { rows } = await pool.query(
-      `UPDATE jobs SET
-         name                 = COALESCE($2, name),
-         default_billing_type = COALESCE($3, default_billing_type),
-         default_rate         = $4,
-         is_permitting        = COALESCE($5, is_permitting),
-         notes                = $6,
-         active               = COALESCE($7, active),
-         team                 = $8,
-         billing_code         = COALESCE($9, billing_code),
-         for_psc_client       = COALESCE($10, for_psc_client),
-         for_generic_client   = COALESCE($11, for_generic_client)
-       WHERE id = $1 RETURNING *`,
-      [req.params.id, name, default_billing_type, default_rate, is_permitting,
-       notes, active, teamVal, billing_code, for_psc_client, for_generic_client]
-    );
+    const sql = `UPDATE jobs SET ${setClauses.join(', ')} WHERE id = $1 RETURNING *`;
+    const { rows } = await pool.query(sql, values);
+    if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -4609,7 +4618,13 @@ async function bootstrapV3Schema() {
 async function start() {
   await initSchema();
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
-  app.listen(PORT, () => console.log(`✓ Launch Fiber Services running on port ${PORT}`));
+  // Extend timeouts to 30 minutes — needed for multi-GB uploads. The
+  // platform's load balancer (Railway) may still cap at 5 minutes, but
+  // setting these here at least removes Node as the bottleneck.
+  const server = app.listen(PORT, () => console.log(`✓ Launch Fiber Services running on port ${PORT}`));
+  server.timeout = 30 * 60 * 1000;            // overall socket timeout
+  server.keepAliveTimeout = 30 * 60 * 1000;   // keep-alive
+  server.headersTimeout = 30 * 60 * 1000 + 1000; // must be > keepAliveTimeout
 }
 
 start().catch(console.error);
