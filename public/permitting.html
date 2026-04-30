@@ -7,21 +7,26 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--primary:#B85C1F;--primary-dark:#8C4517;--primary-light:#FFF3E8;--gray-light:#F5F7FA;--gray-border:#DEE2E6;--white:#FFF;--success:#28A745;--warning:#FFC107;--danger:#DC3545;--text:#212529;--text-muted:#6C757D;--font:'Inter',sans-serif}
+:root{
+  --primary:#B85C1F;--primary-dark:#8C4517;--primary-light:#FFF3E8;
+  --gray-light:#F5F7FA;--gray-border:#DEE2E6;--white:#FFF;
+  --success:#28A745;--warning:#FFC107;--danger:#DC3545;
+  --text:#212529;--text-muted:#6C757D;--font:'Inter',sans-serif;
+  --portal-color:#B85C1F; /* Permitting = orange */
+}
 body{font-family:var(--font);background:var(--gray-light);color:var(--text);font-size:14px}
-.view{display:none;padding:24px;flex-direction:column;gap:20px}.view.active{display:flex}
+.view{display:none;padding:20px;flex-direction:column;gap:18px}.view.active{display:flex}
 .card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px}
 .card-header{padding:14px 18px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}
 .card-title{font-size:14px;font-weight:600}
-.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 24px;display:flex;align-items:center;gap:20px;height:58px;position:sticky;top:0;z-index:20;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.nav{background:var(--primary);display:flex;padding:0 24px;position:sticky;top:58px;z-index:19;overflow-x:auto}
-.nav-tab{color:rgba(255,255,255,.7);padding:0 18px;height:42px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none}
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 20px;display:flex;align-items:center;gap:14px;height:58px;position:sticky;top:0;z-index:20;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.nav{background:var(--portal-color);display:flex;padding:0 20px;position:sticky;top:58px;z-index:19;overflow-x:auto}
+.nav-tab{color:rgba(255,255,255,.78);padding:0 18px;height:42px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none}
 .nav-tab:hover{color:#fff;background:rgba(255,255,255,.08)}.nav-tab.active{color:#fff;border-bottom-color:#fff}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
-.stat-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:16px 18px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.stat-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px}
 .stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px}
-.stat-value{font-size:26px;font-weight:700;line-height:1}.stat-sub{font-size:12px;color:var(--text-muted);margin-top:4px}
-.stat-card.accent{background:var(--primary);border-color:var(--primary)}.stat-card.accent .stat-label,.stat-card.accent .stat-sub{color:rgba(255,255,255,.7)}.stat-card.accent .stat-value{color:#fff}
+.stat-value{font-size:24px;font-weight:700;line-height:1}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);background:var(--gray-light);border-bottom:1px solid var(--gray-border);white-space:nowrap}
@@ -29,169 +34,889 @@ tbody td{padding:10px 12px;border-bottom:1px solid #F0F0F0;vertical-align:middle
 tbody tr:hover td{background:var(--gray-light)}
 .td-name{font-weight:500}.td-mono{font-family:monospace;font-size:12px}
 .badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
-.badge-active{background:#D4EDDA;color:#155724}.badge-completed{background:#D1ECF1;color:#0C5460}.badge-billed{background:#CCE5FF;color:#004085}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:var(--font)}
-.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.badge-active{background:#D4EDDA;color:#155724}.badge-completed{background:#D1ECF1;color:#0C5460}
+.badge-on_hold{background:#FFF3CD;color:#856404}.badge-billed{background:#E2E3E5;color:#383D41}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:var(--font)}
+.btn-primary{background:var(--portal-color);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
 .btn-secondary{background:var(--white);color:var(--text);border:1px solid var(--gray-border)}.btn-secondary:hover{background:var(--gray-light)}
-.btn-success{background:var(--success);color:#fff}.btn-danger{background:#fff;color:var(--danger);border:1px solid #F5C6CB}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
 .btn-sm{padding:4px 10px;font-size:12px}.btn-icon{width:30px;height:30px;padding:0;justify-content:center;border-radius:6px}
 .section-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .section-title{font-size:18px;font-weight:700}.section-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
-.pipeline{display:flex;align-items:center}.pipeline-step{display:flex;align-items:center}
-.pipeline-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--gray-border);background:var(--white);flex-shrink:0}
-.pipeline-dot.done{background:var(--success);border-color:var(--success)}.pipeline-dot.current{background:var(--primary);border-color:var(--primary);box-shadow:0 0 0 3px rgba(184,92,31,.2)}
-.pipeline-line{width:16px;height:2px;background:var(--gray-border)}.pipeline-line.done{background:var(--success)}
 .empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}.empty-state i{font-size:36px;margin-bottom:12px;opacity:.3}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}.modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:12px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal-header{padding:18px 22px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}.modal-title{font-size:16px;font-weight:600}
-.modal-body{padding:22px}.modal-footer{padding:14px 22px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px}
-.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:14px}.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}.modal-title{font-size:16px;font-weight:600}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px;flex-shrink:0}
+.form-grid{display:flex;flex-direction:column;gap:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.span2{grid-column:1/-1}
 label{font-size:12px;font-weight:600;color:var(--text-muted)}
-input,select,textarea{border:1px solid var(--gray-border);border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--font);width:100%}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)}
+input,select,textarea{border:1px solid var(--gray-border);border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--font);width:100%;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--portal-color)}
 textarea{resize:vertical;min-height:60px}
-select.filter{padding:7px 10px;font-size:13px;background:var(--white);cursor:pointer;border:1px solid var(--gray-border);border-radius:7px}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:2px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search-input{flex:1;min-width:160px}
+.filter{padding:6px 10px;font-size:13px}
+@media (max-width:600px){
+  .form-row,.form-row.three{grid-template-columns:1fr}
+  .nav{padding:0 8px}.nav-tab{padding:0 12px;font-size:12px}
+  .header{padding:0 10px;gap:8px}
+  .header-spacer{display:none}
+}
 </style>
 </head>
 <body>
+
 <header class="header">
-  <div style="font-size:20px;font-weight:700;color:var(--primary)"><i class="fa-solid fa-file-signature" style="margin-right:8px"></i>Permitting Portal</div>
-  <div style="margin-left:auto;font-size:12px;color:var(--text-muted)">Launch Fiber Services</div>
+  <div style="font-size:18px;font-weight:700;color:var(--portal-color)">
+    <i class="fa-solid fa-file-signature" style="margin-right:6px"></i>Permitting Portal
+  </div>
+  <div class="header-spacer" style="margin-left:auto;font-size:12px;color:var(--text-muted)">Launch Fiber Services</div>
+  <button class="btn btn-secondary btn-sm" onclick="openSettings()" id="settings-btn" style="position:relative">
+    <i class="fa-solid fa-gear"></i> Settings
+    <span id="settings-pending-badge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 4px;background:var(--warning);color:#000;border-radius:9px;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--white);box-sizing:content-box">0</span>
+  </button>
 </header>
+
 <nav class="nav">
   <a class="nav-tab active" data-view="projects" onclick="sv('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
-  <a class="nav-tab" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-file-signature"></i> Pipeline</a>
-  <a class="nav-tab" data-view="potential" onclick="sv('potential')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
+  <a class="nav-tab" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-file-signature"></i> Permit Pipeline</a>
+  <a class="nav-tab" data-view="potential" onclick="sv('potential')"><i class="fa-solid fa-lightbulb"></i> Review Submissions</a>
 </nav>
 
+<!-- ───────── PROJECTS VIEW ───────── -->
 <div id="view-projects" class="view active">
-  <div class="section-header"><div><div class="section-title">Permitting Projects</div></div>
-    <div style="display:flex;gap:8px"><select class="filter" id="pf" onchange="lp()"><option value="active">Active</option><option value="">All</option><option value="completed">Completed</option></select>
-    <button class="btn btn-secondary btn-sm" onclick="lp()"><i class="fa-solid fa-rotate"></i></button></div>
-  </div>
-  <div class="card"><div class="table-wrap"><table>
-    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Footage</th><th>Hours</th><th>Status</th></tr></thead>
-    <tbody id="pb"></tbody>
-  </table></div></div>
-</div>
-
-<div id="view-pipeline" class="view">
-  <div class="section-header"><div><div class="section-title">Permit Pipeline</div></div></div>
-  <div id="sb" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px"></div>
-  <div class="card"><div class="table-wrap"><table>
-    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Footage</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
-    <tbody id="plb"></tbody>
-  </table></div></div>
-</div>
-
-<div id="view-potential" class="view">
-  <div class="section-header"><div><div class="section-title">Potential Permits</div><div class="section-sub">Submitted by Design</div></div>
-    <select class="filter" id="ppf" onchange="lpp()"><option value="">All</option><option value="pending" selected>Pending</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option></select>
-  </div>
-  <div class="card"><div class="table-wrap"><table>
-    <thead><tr><th>SR/HWY</th><th>County</th><th>Route</th><th>By</th><th>Status</th><th>Date</th><th></th></tr></thead>
-    <tbody id="ppb"></tbody>
-  </table></div></div>
-</div>
-
-<div class="modal-overlay" id="cpm">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-plus"></i> Create Permit</span><button class="btn btn-icon btn-secondary" onclick="cm('cpm')"><i class="fa-solid fa-xmark"></i></button></div>
-    <div class="modal-body">
-      <div class="form-row"><div class="form-group"><label>Name *</label><input id="cn"></div><div class="form-group"><label>Client</label><select id="cc"></select></div></div>
-      <div class="form-row"><div class="form-group"><label>WO #</label><input id="cw"></div><div class="form-group"><label>Footage</label><input type="number" id="cf" placeholder="0"></div></div>
-      <div class="form-row"><div class="form-group"><label>Permit Type</label><select id="cs"><option value="DOT">DOT</option><option value="RR">RR (Railroad)</option></select></div><div class="form-group"><label>Parent</label><select id="cpa"></select></div></div>
-      <div class="form-group"><label>Notes</label><textarea id="cno"></textarea></div>
-      <input type="hidden" id="cpid">
+  <div class="section-header">
+    <div><div class="section-title">Permitting Projects</div><div class="section-sub">Projects assigned to the Permitting team (or shared)</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="loadProjects()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+      <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="cm('cpm')">Cancel</button><button class="btn btn-success" onclick="snp()"><i class="fa-solid fa-check"></i> Create</button></div>
+  </div>
+  <div class="toolbar">
+    <input class="search-input" placeholder="Search projects..." oninput="filterProjects()" id="proj-search">
+    <select class="filter" id="proj-status-filter" onchange="loadProjects()">
+      <option value="">All statuses</option>
+      <option value="active" selected>Active</option>
+      <option value="completed">Completed</option>
+      <option value="on_hold">On Hold</option>
+    </select>
+  </div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Job</th><th>Stage</th><th>Status</th><th></th></tr></thead>
+    <tbody id="dpb"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+  </table></div></div>
+</div>
+
+<!-- ───────── PIPELINE VIEW ───────── -->
+<div id="view-pipeline" class="view">
+  <div class="section-header"><div><div class="section-title">Permit Pipeline</div><div class="section-sub">Track permits: Potential → Started → Submitted → Approved → Checklist → Billed</div></div></div>
+  <div id="dsb" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px"></div>
+  <div class="card"><div class="table-wrap"><table>
+    <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
+    <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+  </table></div></div>
+</div>
+
+<!-- ───────── REVIEW SUBMISSIONS VIEW ───────── -->
+<div id="view-potential" class="view">
+  <div class="section-header">
+    <div><div class="section-title">Review Submissions from Design</div><div class="section-sub">Accept and convert into a permitting project, or reject</div></div>
+    <select class="filter" id="ppf" onchange="loadPotential()">
+      <option value="pending" selected>Pending</option>
+      <option value="">All</option>
+      <option value="accepted">Accepted</option>
+      <option value="rejected">Rejected</option>
+    </select>
+  </div>
+  <div class="card"><div class="card-header"><span class="card-title">Submissions</span></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>SR/HWY</th><th>County</th><th>Route</th><th>Submitted by</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="ppb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
+    </table></div>
   </div>
 </div>
+
+<!-- ─────────────────────────────────────────────────────────────────
+     PROJECT MODAL — clone of admin's New Project, money fields removed.
+     Job dropdown is filtered server-side to this portal's team.
+     The single optional Footage / Hours field shows the right unit
+     based on the chosen Job's billing type.
+───────────────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <span class="modal-title" id="proj-modal-title">New Project</span>
+      <button class="btn btn-icon btn-secondary" onclick="cm('project-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="proj-id">
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-group span2">
+            <label>Project Name *</label>
+            <input type="text" id="proj-name" placeholder="e.g. SR 49 Fiber Design">
+            <span class="form-hint">Must be unique under its parent project (no duplicates allowed)</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Client *</label>
+            <select id="proj-client" onchange="clientChanged()"><option value="">Select...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Contract</label>
+            <select id="proj-contract"><option value="">None / N/A</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(optional, for nesting)</span></label>
+            <select id="proj-parent"><option value="">None — top-level</option></select>
+          </div>
+          <div class="form-group">
+            <label>Concentrator</label>
+            <select id="proj-concentrator"><option value="">None</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Work Order Number</label>
+            <input type="text" id="proj-wo" placeholder="e.g. WO-12345">
+          </div>
+          <div class="form-group">
+            <label>Project Type</label>
+            <select id="proj-ptype"><option value="">— Select —</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Job *</label>
+            <select id="proj-job" onchange="jobChanged()"><option value="">— Select —</option></select>
+            <span class="form-hint">Only jobs assigned to the Permitting team are shown</span>
+          </div>
+          <div class="form-group">
+            <label id="proj-amount-label">Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+            <input type="number" id="proj-amount" step="0.01" placeholder="0">
+            <span class="form-hint" id="proj-amount-hint">Pick a job to see the right unit</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="proj-status">
+              <option value="active">Active</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" id="proj-start">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="proj-notes" placeholder="Any additional notes..."></textarea>
+        </div>
+        <div class="form-group" style="background:var(--primary-light);padding:8px 12px;border-radius:6px;margin-top:4px">
+          <span style="font-size:12px;color:var(--primary-dark)"><i class="fa-solid fa-circle-info"></i> Billing rates and budget allocations are managed by admin — not visible here.</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cm('project-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()"><i class="fa-solid fa-floppy-disk"></i> Save Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────
+     SETTINGS MODAL — Jobs / Project Types / Clients / Contracts
+     All changes are submitted as proposals for admin to approve.
+     Bottom: My Pending Requests + collapsible Change Log.
+───────────────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:880px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-gear" style="color:var(--portal-color)"></i> Settings</span>
+      <button class="btn btn-icon btn-secondary" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#FFF8E1;border:1px solid #FFE082;color:#5D4037;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
+        <i class="fa-solid fa-circle-info"></i> All changes here become <b>pending proposals</b> reviewed by admin. Money fields and team assignments are admin-only.
+      </div>
+
+      <!-- Tabs inside settings -->
+      <div style="display:flex;gap:4px;border-bottom:2px solid var(--gray-border);margin-bottom:14px;overflow-x:auto">
+        <button class="settings-tab active" data-tab="jobs" onclick="setStab('jobs')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--portal-color);border-bottom:2px solid var(--portal-color);margin-bottom:-2px">Jobs</button>
+        <button class="settings-tab" data-tab="ptypes" onclick="setStab('ptypes')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Project Types</button>
+        <button class="settings-tab" data-tab="clients" onclick="setStab('clients')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Clients</button>
+        <button class="settings-tab" data-tab="contracts" onclick="setStab('contracts')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Contracts</button>
+      </div>
+
+      <!-- JOBS pane -->
+      <div id="stab-jobs" class="stab" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--text-muted)">Jobs available to the Permitting team. Add a new one to propose it for admin review.</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Job</button>
+        </div>
+        <div id="jobs-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row">
+            <div class="form-group"><label>Job Name *</label><input type="text" id="njob-name" placeholder="e.g. CAD Drafting"></div>
+            <div class="form-group"><label>Default Type</label><select id="njob-bt"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><input type="checkbox" id="njob-perm" style="width:auto;margin-right:6px"> Uses permit calc (for permitting jobs)</label>
+            </div>
+            <div class="form-group"><label>Your Name</label><input type="text" id="njob-by" placeholder="So admin knows who proposed this"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="proposeJob()"><i class="fa-solid fa-paper-plane"></i> Submit for Approval</button>
+          </div>
+        </div>
+        <div id="jobs-list" style="font-size:13px"><div class="empty-state" style="padding:14px">Loading...</div></div>
+      </div>
+
+      <!-- PROJECT TYPES pane -->
+      <div id="stab-ptypes" class="stab" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--text-muted)">Program categories used when classifying projects.</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ptype-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Type</button>
+        </div>
+        <div id="ptype-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row">
+            <div class="form-group"><label>Type Name *</label><input type="text" id="nptype-name" placeholder="e.g. Construction"></div>
+            <div class="form-group"><label>Your Name</label><input type="text" id="nptype-by" placeholder="Who's proposing"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ptype-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="proposePtype()"><i class="fa-solid fa-paper-plane"></i> Submit for Approval</button>
+          </div>
+        </div>
+        <div id="ptype-list" style="font-size:13px"><div class="empty-state" style="padding:14px">Loading...</div></div>
+      </div>
+
+      <!-- CLIENTS pane -->
+      <div id="stab-clients" class="stab" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--text-muted)">Clients available across the firm.</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('client-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Client</button>
+        </div>
+        <div id="client-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row">
+            <div class="form-group"><label>Client Name *</label><input type="text" id="nclient-name" placeholder="e.g. Cox Communications"></div>
+            <div class="form-group"><label>Your Name</label><input type="text" id="nclient-by" placeholder="Who's proposing"></div>
+          </div>
+          <div class="form-group"><label>Notes</label><textarea id="nclient-notes" placeholder="Optional context..."></textarea></div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('client-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="proposeClient()"><i class="fa-solid fa-paper-plane"></i> Submit for Approval</button>
+          </div>
+        </div>
+        <div id="client-list" style="font-size:13px"><div class="empty-state" style="padding:14px">Loading...</div></div>
+      </div>
+
+      <!-- CONTRACTS pane -->
+      <div id="stab-contracts" class="stab" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--text-muted)">Contracts under each client.</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contract-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Contract</button>
+        </div>
+        <div id="contract-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row">
+            <div class="form-group"><label>Client *</label><select id="ncontract-client"><option value="">Select...</option></select></div>
+            <div class="form-group"><label>Contract # *</label><input type="text" id="ncontract-num" placeholder="e.g. C-2025-001"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Name / Description</label><input type="text" id="ncontract-name" placeholder="Optional friendly name"></div>
+            <div class="form-group"><label>Your Name</label><input type="text" id="ncontract-by" placeholder="Who's proposing"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contract-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="proposeContract()"><i class="fa-solid fa-paper-plane"></i> Submit for Approval</button>
+          </div>
+        </div>
+        <div id="contract-list" style="font-size:13px"><div class="empty-state" style="padding:14px">Loading...</div></div>
+      </div>
+
+      <!-- Pending requests + collapsible change log -->
+      <div style="border-top:2px solid var(--gray-border);padding-top:14px;margin-top:18px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:10px">My Pending Requests <span id="my-pending-count" style="color:var(--text-muted);font-weight:500">(0)</span></div>
+        <div id="my-pending-body" style="font-size:12px"><div class="empty-state" style="padding:10px">None</div></div>
+
+        <div style="margin-top:14px;cursor:pointer" onclick="toggleChangeLog()">
+          <span style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted)">
+            <i id="changelog-chevron" class="fa-solid fa-chevron-right" style="margin-right:6px;transition:transform .15s"></i>
+            Change Log <span style="color:var(--text-muted);font-weight:500;text-transform:none">(approved/rejected history)</span>
+          </span>
+        </div>
+        <div id="changelog-body" style="display:none;font-size:11px;margin-top:8px"><div class="empty-state" style="padding:10px">Loading...</div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="cm('settings-modal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- (Permitting portal does not submit potential permits — it reviews them) -->
 
 <script>
-const ST=['potential','started','submitted','approved','checklist','billed'];
-const SL={potential:'Potential',started:'Started',submitted:'Submitted',approved:'Approved',checklist:'Checklist',billed:'Billed'};
-const SC={potential:'#6c757d',started:'#1B5FA0',submitted:'#ff9800',approved:'#28A745',checklist:'#17a2b8',billed:'#6f42c1'};
-function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function sb(s){return `<span class="badge badge-${s}">${s}</span>`}
+// ═══════════════════════════════════════════════════════════════════════════
+// PORTAL TYPE — change this single value when adapting for Permitting portal.
+// Drives labels, the team filter for jobs, and the portal color theme.
+// ═══════════════════════════════════════════════════════════════════════════
+const PORTAL_NAME = 'permitting'; // 'design' or 'permitting'
+
+// ─── Stage labels (Permitting pipeline) ─────────────────────────────────────
+const DS = ['potential','started','submitted','approved','checklist','billed'];
+const DL = { potential:'Potential', started:'Started', submitted:'Submitted', approved:'Approved', checklist:'Checklist', billed:'Billed' };
+const DC = { potential:'#6c757d', started:'#1B5FA0', submitted:'#ff9800', approved:'#28A745', checklist:'#17a2b8', billed:'#6f42c1' };
+
+// ─── Caches ────────────────────────────────────────────────────────────────
+let jobsCache = [];
+let projectTypesCache = [];
+let clientsCache = [];
+let contractsCache = [];
+let projectsCache = [];
+
+// ─── Tiny utilities ─────────────────────────────────────────────────────────
+function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
 function om(id){document.getElementById(id).classList.add('open')}
 function cm(id){document.getElementById(id).classList.remove('open')}
-async function api(p,m='GET',b=null){const o={method:m,headers:{'Content-Type':'application/json'}};if(b)o.body=JSON.stringify(b);const r=await fetch(p,o);if(!r.ok)throw new Error(await r.text());return r.json()}
+async function api(p,m='GET',b=null){
+  const o={method:m,headers:{'Content-Type':'application/json'}};
+  if(b)o.body=JSON.stringify(b);
+  const r=await fetch(p,o);
+  if(!r.ok){let msg=r.statusText;try{const j=await r.json();msg=j.error||msg}catch{};throw new Error(msg)}
+  return r.json();
+}
 
+// View switching
 function sv(v){
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
-  if(v==='projects')lp();if(v==='pipeline')lpl();if(v==='potential')lpp();
+  if(v==='projects')   loadProjects();
+  if(v==='pipeline')   loadPipeline();
+  if(v==='potential')  loadPotential();
 }
 
-async function lp(){
-  const s=document.getElementById('pf').value;
-  let u='/api/projects?type=permitting';if(s)u+='&status='+s;
-  const d=await api(u);
-  document.getElementById('pb').innerHTML=d.length?d.map(p=>`<tr>
-    <td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
-    <td>${p.footage?parseFloat(p.footage).toLocaleString()+' LF':'—'}</td><td>${parseFloat(p.actual_hours||0).toFixed(1)}</td><td>${sb(p.status)}</td>
-  </tr>`).join(''):'<tr><td colspan="6" class="empty-state">No projects</td></tr>';
+// Settings sub-tabs
+function setStab(name){
+  document.querySelectorAll('.settings-tab').forEach(t=>{
+    const active = t.dataset.tab===name;
+    t.style.color = active ? 'var(--portal-color)' : 'var(--text-muted)';
+    t.style.borderBottom = active ? '2px solid var(--portal-color)' : 'none';
+    t.style.fontWeight = active ? '600' : '500';
+    t.style.marginBottom = active ? '-2px' : '0';
+  });
+  document.querySelectorAll('.stab').forEach(p=>p.style.display='none');
+  document.getElementById('stab-'+name).style.display='block';
 }
 
-async function lpl(){
-  const d=await api('/api/permits');
-  const ct={};ST.forEach(s=>ct[s]=0);d.forEach(p=>{if(p.current_stage)ct[p.current_stage]++});
-  document.getElementById('sb').innerHTML=ST.map(s=>`<div style="background:${SC[s]};color:#fff;padding:14px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:700">${ct[s]}</div><div style="font-size:11px;text-transform:uppercase;opacity:.85">${SL[s]}</div></div>`).join('');
-  document.getElementById('plb').innerHTML=d.length?d.map(p=>{
-    const s=p.current_stage||'potential',si=ST.indexOf(s);
-    const pipe=ST.map((x,i)=>`<div class="pipeline-step">${i>0?`<div class="pipeline-line${i<si?' done':''}"></div>`:''}<div class="pipeline-dot${i<si?' done':''}${i===si?' current':''}" title="${SL[x]}"></div></div>`).join('');
-    return `<tr><td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
-      <td>${p.footage?parseFloat(p.footage).toLocaleString()+' LF':'—'}</td><td>${sb(s)}</td><td><div class="pipeline" style="min-width:140px">${pipe}</div></td>
-      <td>${s!=='billed'?`<button class="btn btn-sm btn-primary" onclick="ap('${p.id}')"><i class="fa-solid fa-forward-step"></i></button>`:''}</td></tr>`;
-  }).join(''):'<tr><td colspan="7" class="empty-state">No permits</td></tr>';
+// ═══════════════════════════════════════════════════════════════════════════
+// PROJECTS — list, filter, create
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadProjects(){
+  const status = document.getElementById('proj-status-filter')?.value || '';
+  const url = '/api/projects' + (status ? '?status=' + encodeURIComponent(status) : '');
+  try {
+    projectsCache = await api(url);
+    renderProjects(projectsCache);
+  } catch (e) {
+    document.getElementById('dpb').innerHTML = '<tr><td colspan="7" class="empty-state">Error loading: ' + esc(e.message) + '</td></tr>';
+  }
 }
 
-async function ap(id){const b=prompt('Your name:');if(b===null)return;try{await api('/api/permits/'+id+'/advance','PUT',{updated_by:b||'Permitting'});lpl();lp();}catch(e){alert(e.message);}}
-
-async function lpp(){
-  const s=document.getElementById('ppf').value;
-  let u='/api/potential-permits';if(s)u+='?status='+s;
-  const d=await api(u);
-  document.getElementById('ppb').innerHTML=d.length?d.map(p=>{
-    const c={pending:'var(--primary)',accepted:'var(--success)',rejected:'var(--danger)'}[p.status]||'#ccc';
-    return `<tr><td class="td-name">${esc(p.sr_hwy||'—')}</td><td>${esc(p.county||'—')}</td><td>${esc(p.route||'—')}</td><td>${esc(p.submitted_by||'—')}</td>
-      <td><span style="background:${c};color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600">${p.status}</span></td>
-      <td style="font-size:12px;color:var(--text-muted)">${new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td>
-      <td style="white-space:nowrap">${p.status==='pending'?`<button class="btn btn-sm btn-success" onclick="ocp('${p.id}','${esc(p.sr_hwy||'')}','${esc(p.county||'')}','${esc(p.route||'')}')"><i class="fa-solid fa-plus"></i> Create Permit</button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="rpp('${p.id}')" style="margin-left:4px"><i class="fa-solid fa-xmark"></i></button>`:''}</td></tr>`;
-  }).join(''):'<tr><td colspan="7" class="empty-state">No potential permits</td></tr>';
+function renderProjects(list){
+  const body = document.getElementById('dpb');
+  if (!list.length) { body.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fa-solid fa-folder-open"></i><br>No projects yet. Click "New Project" to add one.</td></tr>'; return; }
+  body.innerHTML = list.map(p => {
+    const stage = p.current_stage ? `<span class="badge" style="background:var(--primary-light);color:var(--portal-color)">${DL[p.current_stage] || p.current_stage}</span>` : '—';
+    const job = jobsCache.find(j => j.id === p.job_id)?.name || '—';
+    return `<tr>
+      <td class="td-name">${p.parent_name ? '<span style="color:var(--text-muted);font-size:11px">↳ </span>' : ''}${esc(p.name)}</td>
+      <td>${esc(p.client_name || '—')}</td>
+      <td class="td-mono">${esc(p.work_order_number || '—')}</td>
+      <td>${esc(job)}</td>
+      <td>${stage}</td>
+      <td><span class="badge badge-${p.status}">${esc(p.status)}</span></td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button></td>
+    </tr>`;
+  }).join('');
 }
 
-async function ocp(id,sr,co,rt){
-  document.getElementById('cpid').value=id;
-  document.getElementById('cn').value=(sr||'')+ ' Permitting';
-  document.getElementById('cno').value=`SR/HWY: ${sr||'N/A'}, County: ${co||'N/A'}, Route: ${rt||'N/A'}`;
-  document.getElementById('cw').value='';document.getElementById('cf').value='';document.getElementById('cs').value='DOT';
-  const [cl,pr]=await Promise.all([api('/api/clients'),api('/api/projects')]);
-  const cs=document.getElementById('cc');cs.innerHTML='<option value="">Select...</option>';cl.forEach(c=>cs.add(new Option(c.name,c.id)));
-  const ps=document.getElementById('cpa');ps.innerHTML='<option value="">None</option>';pr.forEach(p=>ps.add(new Option(p.name,p.id)));
-  om('cpm');
+function filterProjects(){
+  const q = (document.getElementById('proj-search').value || '').toLowerCase();
+  if (!q) return renderProjects(projectsCache);
+  renderProjects(projectsCache.filter(p =>
+    (p.name||'').toLowerCase().includes(q) ||
+    (p.client_name||'').toLowerCase().includes(q) ||
+    (p.work_order_number||'').toLowerCase().includes(q)
+  ));
 }
 
-async function snp(){
-  const n=document.getElementById('cn').value.trim();if(!n)return alert('Name required');
-  const ppId=document.getElementById('cpid').value;
-  try{
-    const p=await api('/api/projects','POST',{name:n,client_id:document.getElementById('cc').value||null,work_order_number:document.getElementById('cw').value||null,
-      project_type:'permitting',billing_type:'footage',billing_rate:document.getElementById('cs').value==='RR'?null:90,
-      footage:parseFloat(document.getElementById('cf').value)||null,notes:document.getElementById('cno').value||null,
-      parent_id:document.getElementById('cpa').value||null,permit_subtype:document.getElementById('cs').value,permit_manager:'Permitting Portal'});
-    if(ppId)await api('/api/potential-permits/'+ppId,'PUT',{status:'accepted',reviewed_by:'Permitting Portal',project_id:p.id});
-    cm('cpm');lpp();lp();lpl();
-  }catch(e){alert(e.message);}
+// Open the project modal blank (or pre-filled when editing).
+async function openProjectModal(){
+  await ensureCachesLoaded();
+  document.getElementById('proj-modal-title').textContent = 'New Project';
+  document.getElementById('proj-id').value = '';
+  ['proj-name','proj-wo','proj-amount','proj-notes'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('proj-status').value = 'active';
+  document.getElementById('proj-start').value = new Date().toISOString().split('T')[0];
+  populateProjectFormDropdowns();
+  document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
+  document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+  om('project-modal');
 }
 
-async function rpp(id){if(!confirm('Reject?'))return;try{await api('/api/potential-permits/'+id,'PUT',{status:'rejected',reviewed_by:'Permitting Portal'});lpp();}catch(e){alert(e.message);}}
+async function editProject(id){
+  await ensureCachesLoaded();
+  try {
+    const p = await api('/api/projects/' + id);
+    populateProjectFormDropdowns();
+    document.getElementById('proj-modal-title').textContent = 'Edit Project';
+    document.getElementById('proj-id').value = p.id;
+    document.getElementById('proj-name').value = p.name || '';
+    document.getElementById('proj-client').value = p.client_id || '';
+    await clientChanged();
+    document.getElementById('proj-contract').value = p.contract_id || '';
+    document.getElementById('proj-parent').value = p.parent_id || '';
+    document.getElementById('proj-concentrator').value = p.concentrator_id || '';
+    document.getElementById('proj-wo').value = p.work_order_number || '';
+    document.getElementById('proj-ptype').value = p.project_type_id || '';
+    document.getElementById('proj-job').value = p.job_id || '';
+    // Show footage OR expected_hours in the single field, depending on billing type
+    const job = jobsCache.find(j => j.id === p.job_id);
+    if (job && (job.is_permitting || job.default_billing_type === 'footage')) {
+      document.getElementById('proj-amount').value = p.footage || '';
+    } else {
+      document.getElementById('proj-amount').value = p.expected_hours || '';
+    }
+    jobChanged(); // refresh hint label
+    document.getElementById('proj-status').value = p.status || 'active';
+    document.getElementById('proj-start').value = p.start_date ? p.start_date.split('T')[0] : '';
+    document.getElementById('proj-notes').value = p.notes || '';
+    om('project-modal');
+  } catch (e) { alert('Failed to load project: ' + e.message); }
+}
 
-lp();
+function populateProjectFormDropdowns(){
+  // Clients
+  const cl = document.getElementById('proj-client');
+  cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  // Project types
+  const pt = document.getElementById('proj-ptype');
+  pt.innerHTML = '<option value="">— Select —</option>' + projectTypesCache.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  // Jobs (already filtered server-side to this portal's team)
+  const jb = document.getElementById('proj-job');
+  jb.innerHTML = '<option value="">— Select —</option>' + jobsCache.map(j => `<option value="${j.id}" data-permit="${j.is_permitting?1:0}" data-bt="${j.default_billing_type||'hourly'}">${esc(j.name)}${j.is_permitting?' (Permit calc)':''}</option>`).join('');
+  // Parent projects (only those visible to this portal, exclude self when editing)
+  const editingId = document.getElementById('proj-id').value;
+  const pa = document.getElementById('proj-parent');
+  pa.innerHTML = '<option value="">None — top-level</option>' + projectsCache
+    .filter(p => p.id !== editingId)
+    .map(p => `<option value="${p.id}">${esc(p.name)}${p.client_name ? ' — ' + esc(p.client_name) : ''}</option>`).join('');
+  // Concentrators - leave empty unless we wire in /api/concentrators (skipped to keep portals lean)
+  document.getElementById('proj-concentrator').innerHTML = '<option value="">None</option>';
+}
+
+async function clientChanged(){
+  const clientId = document.getElementById('proj-client').value;
+  const sel = document.getElementById('proj-contract');
+  if (!clientId) { sel.innerHTML = '<option value="">None / N/A</option>'; return; }
+  try {
+    const r = await api('/api/contracts?client_id=' + encodeURIComponent(clientId));
+    sel.innerHTML = '<option value="">None / N/A</option>' + r.map(c => `<option value="${c.id}">${esc(c.contract_number)}${c.name ? ' — ' + esc(c.name) : ''}</option>`).join('');
+  } catch (e) { /* non-fatal */ }
+}
+
+// When the job changes, swap the Footage/Hours label & hint
+function jobChanged(){
+  const opt = document.getElementById('proj-job').selectedOptions[0];
+  const label = document.getElementById('proj-amount-label');
+  const hint  = document.getElementById('proj-amount-hint');
+  if (!opt || !opt.value) {
+    label.innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+    hint.textContent = 'Pick a job to see the right unit';
+    return;
+  }
+  const isPermit = opt.dataset.permit === '1';
+  const billType = opt.dataset.bt;
+  if (isPermit || billType === 'footage') {
+    label.innerHTML = 'Footage <span style="font-weight:400;color:var(--text-muted)">(in feet, optional)</span>';
+    hint.textContent = isPermit ? 'Permit calc auto-applies: hours = footage ÷ 5280 × 27.5 (min 25 hrs)' : 'Footage in linear feet';
+  } else {
+    label.innerHTML = 'Hours Estimate <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+    hint.textContent = 'Estimated total hours for this project';
+  }
+}
+
+async function saveProject(){
+  const name = document.getElementById('proj-name').value.trim();
+  const client_id = document.getElementById('proj-client').value;
+  const job_id = document.getElementById('proj-job').value;
+  if (!name) return alert('Project name is required');
+  if (!client_id) return alert('Client is required');
+  if (!job_id) return alert('Job is required');
+
+  // Map the single Footage/Hours field to the right backend field
+  const opt = document.getElementById('proj-job').selectedOptions[0];
+  const isFootage = opt && (opt.dataset.permit === '1' || opt.dataset.bt === 'footage');
+  const amount = parseFloat(document.getElementById('proj-amount').value);
+  const payload = {
+    name, client_id, job_id,
+    contract_id: document.getElementById('proj-contract').value || null,
+    parent_id: document.getElementById('proj-parent').value || null,
+    project_type_id: document.getElementById('proj-ptype').value || null,
+    work_order_number: document.getElementById('proj-wo').value.trim() || null,
+    status: document.getElementById('proj-status').value,
+    start_date: document.getElementById('proj-start').value || null,
+    notes: document.getElementById('proj-notes').value.trim() || null
+  };
+  if (!isNaN(amount)) {
+    if (isFootage) payload.footage = amount;
+    else           payload.hours_estimate = amount;
+  }
+
+  const id = document.getElementById('proj-id').value;
+  try {
+    if (id) await api('/api/projects/' + id, 'PUT', payload);
+    else    await api('/api/projects', 'POST', payload);
+    cm('project-modal');
+    loadProjects();
+  } catch (e) {
+    if (/duplicate|already exists/i.test(e.message)) {
+      alert('Duplicate: ' + e.message);
+    } else {
+      alert('Save failed: ' + e.message);
+    }
+  }
+}
+
+async function ensureCachesLoaded(){
+  if (!jobsCache.length || !clientsCache.length || !projectTypesCache.length) {
+    [jobsCache, clientsCache, projectTypesCache] = await Promise.all([
+      api('/api/jobs'), api('/api/clients'), api('/api/project-types')
+    ]);
+  }
+  // Always refresh projects (so Parent dropdown is current)
+  if (!projectsCache.length) projectsCache = await api('/api/projects');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PIPELINE — Permit pipeline (potential → ... → billed)
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadPipeline(){
+  try {
+    const d = await api('/api/permits');
+    const ct = {}; DS.forEach(s => ct[s] = 0); d.forEach(p => { if (p.current_stage) ct[p.current_stage]++; });
+    document.getElementById('dsb').innerHTML = DS.map(s => `<div style="background:${DC[s]};color:#fff;padding:12px 8px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:700">${ct[s]}</div><div style="font-size:10px;text-transform:uppercase;opacity:.85">${DL[s]}</div></div>`).join('');
+    document.getElementById('dplb').innerHTML = d.length ? d.map(p => {
+      const s = p.current_stage || 'potential', si = DS.indexOf(s);
+      const pipe = DS.map((x,i) => `<div style="flex:1;height:8px;border-radius:4px;background:${i<si?'#28A745':i===si?'var(--portal-color)':'#ddd'}" title="${DL[x]}"></div>`).join('');
+      return `<tr><td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
+        <td><span class="badge" style="background:${DC[s]};color:#fff">${DL[s]}</span></td>
+        <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
+        <td>${s!=='billed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')"><i class="fa-solid fa-forward-step"></i> Advance</button>`:'<span style="color:#28A745;font-size:12px;font-weight:600"><i class="fa-solid fa-check-double"></i> Done</span>'}</td></tr>`;
+    }).join('') : '<tr><td colspan="6" class="empty-state">No permitting projects</td></tr>';
+  } catch (e) {
+    document.getElementById('dplb').innerHTML = '<tr><td colspan="6" class="empty-state">Error: ' + esc(e.message) + '</td></tr>';
+  }
+}
+
+async function advanceDesign(id){
+  const by = prompt('Your name (optional):'); if (by === null) return;
+  try {
+    await api('/api/permits/' + id + '/advance', 'PUT', { updated_by: by || 'Permitting Portal' });
+    loadPipeline(); loadProjects();
+  } catch (e) { alert(e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REVIEW SUBMISSIONS (potential permits submitted by Design portal)
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadPotential(){
+  const status = document.getElementById('ppf')?.value || '';
+  let url = '/api/potential-permits';
+  if (status) url += '?status=' + encodeURIComponent(status);
+  try {
+    const d = await api(url);
+    document.getElementById('ppb').innerHTML = d.length ? d.map(p => {
+      const c = { pending:'var(--portal-color)', accepted:'#28A745', rejected:'#DC3545' }[p.status] || '#ccc';
+      const actions = p.status === 'pending'
+        ? `<button class="btn btn-sm btn-success" onclick="acceptPotential('${p.id}', '${esc(p.sr_hwy||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-check"></i> Accept</button>
+           <button class="btn btn-sm btn-danger" onclick="rejectPotential('${p.id}')" style="margin-left:4px"><i class="fa-solid fa-xmark"></i> Reject</button>`
+        : `<span style="font-size:11px;color:var(--text-muted)">Reviewed by ${esc(p.reviewed_by||'—')}</span>`;
+      return `<tr>
+        <td class="td-name">${esc(p.sr_hwy||'—')}</td>
+        <td>${esc(p.county||'—')}</td>
+        <td>${esc(p.route||'—')}</td>
+        <td>${esc(p.submitted_by||'—')}</td>
+        <td><span style="background:${c};color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600">${p.status}</span></td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="6" class="empty-state">No submissions match the filter</td></tr>';
+  } catch (e) {
+    document.getElementById('ppb').innerHTML = '<tr><td colspan="6" class="empty-state">Error: ' + esc(e.message) + '</td></tr>';
+  }
+}
+
+// Accept turns the submission into a permitting project + marks it accepted.
+// We open the New Project modal pre-filled, and after the project saves we
+// link it back to the submission via the potential_permits.project_id.
+let pendingPotentialId = null;
+async function acceptPotential(id, srHwy){
+  pendingPotentialId = id;
+  await ensureCachesLoaded();
+  // Open project modal with project name suggestion
+  document.getElementById('proj-modal-title').textContent = 'Accept Submission → New Permitting Project';
+  document.getElementById('proj-id').value = '';
+  ['proj-wo','proj-amount','proj-notes'].forEach(idx => document.getElementById(idx).value='');
+  document.getElementById('proj-name').value = srHwy || 'Permit';
+  document.getElementById('proj-status').value = 'active';
+  document.getElementById('proj-start').value = new Date().toISOString().split('T')[0];
+  populateProjectFormDropdowns();
+  // Pre-select the first permit-calc job if available
+  const permJob = jobsCache.find(j => j.is_permitting);
+  if (permJob) document.getElementById('proj-job').value = permJob.id;
+  jobChanged();
+  om('project-modal');
+}
+
+async function rejectPotential(id){
+  if (!confirm('Reject this submission?')) return;
+  try {
+    await api('/api/potential-permits/' + id, 'PUT', { status:'rejected', reviewed_by:'Permitting Portal' });
+    loadPotential();
+  } catch (e) { alert(e.message); }
+}
+
+// Hook saveProject so that when we're accepting a submission, we mark it
+// accepted + linked after the project is saved.
+const _origSaveProject = saveProject;
+saveProject = async function() {
+  const wasPending = pendingPotentialId;
+  await _origSaveProject();
+  if (wasPending && !document.getElementById('project-modal').classList.contains('open')) {
+    // Save succeeded (modal closed). Find the just-created project to link it.
+    try {
+      const projs = await api('/api/projects');
+      const newest = projs[0]; // ordered by created_at DESC server-side... but only within parent groups; safer to fetch by name+wo
+      // Mark the potential permit as accepted, link to project we believe is newest
+      await api('/api/potential-permits/' + wasPending, 'PUT', {
+        status: 'accepted', reviewed_by: 'Permitting Portal', project_id: newest?.id || null
+      });
+    } catch (e) { /* non-fatal */ }
+    pendingPotentialId = null;
+    loadPotential();
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SETTINGS — proposals (jobs, project types, clients, contracts)
+// ═══════════════════════════════════════════════════════════════════════════
+async function openSettings(){
+  om('settings-modal');
+  await Promise.all([loadJobsList(), loadPtypeList(), loadClientList(), loadContractList()]);
+  loadMyRequests();
+}
+
+async function loadJobsList(){
+  try {
+    jobsCache = await api('/api/jobs');
+    document.getElementById('jobs-list').innerHTML = jobsCache.length
+      ? `<table style="width:100%;border-collapse:collapse">
+          <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
+            <th style="text-align:left;padding:6px 8px">Name</th>
+            <th style="text-align:left;padding:6px 8px">Type</th>
+            <th style="text-align:center;padding:6px 8px">Permit Calc</th>
+          </tr></thead>
+          <tbody>${jobsCache.map(j => `<tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 8px;font-weight:600">${esc(j.name)}</td>
+            <td style="padding:6px 8px">${esc(j.default_billing_type||'hourly')}</td>
+            <td style="padding:6px 8px;text-align:center">${j.is_permitting ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '—'}</td>
+          </tr>`).join('')}</tbody></table>`
+      : '<div class="empty-state" style="padding:14px">No jobs yet</div>';
+  } catch (e) { document.getElementById('jobs-list').innerHTML = '<div class="empty-state" style="padding:14px;color:var(--danger)">Error: ' + esc(e.message) + '</div>'; }
+}
+
+async function loadPtypeList(){
+  try {
+    projectTypesCache = await api('/api/project-types');
+    document.getElementById('ptype-list').innerHTML = projectTypesCache.length
+      ? projectTypesCache.map(t => `<div style="padding:6px 10px;border-bottom:1px solid var(--gray-border);font-weight:500">${esc(t.name)}</div>`).join('')
+      : '<div class="empty-state" style="padding:14px">No project types yet</div>';
+  } catch (e) { /* silent */ }
+}
+
+async function loadClientList(){
+  try {
+    clientsCache = await api('/api/clients');
+    document.getElementById('client-list').innerHTML = clientsCache.length
+      ? clientsCache.map(c => `<div style="padding:6px 10px;border-bottom:1px solid var(--gray-border);font-weight:500">${esc(c.name)}${c.notes ? '<span style="color:var(--text-muted);font-weight:400;font-size:11px;margin-left:8px">' + esc(c.notes) + '</span>' : ''}</div>`).join('')
+      : '<div class="empty-state" style="padding:14px">No clients yet</div>';
+    // Refresh contract-add client dropdown
+    const sel = document.getElementById('ncontract-client');
+    sel.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  } catch (e) { /* silent */ }
+}
+
+async function loadContractList(){
+  try {
+    contractsCache = await api('/api/contracts');
+    document.getElementById('contract-list').innerHTML = contractsCache.length
+      ? `<table style="width:100%;border-collapse:collapse">
+          <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
+            <th style="text-align:left;padding:6px 8px">Contract #</th>
+            <th style="text-align:left;padding:6px 8px">Client</th>
+            <th style="text-align:left;padding:6px 8px">Name</th>
+          </tr></thead>
+          <tbody>${contractsCache.map(c => `<tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 8px;font-family:monospace;font-weight:600">${esc(c.contract_number)}</td>
+            <td style="padding:6px 8px">${esc(c.client_name||'—')}</td>
+            <td style="padding:6px 8px">${esc(c.name||'—')}</td>
+          </tr>`).join('')}</tbody></table>`
+      : '<div class="empty-state" style="padding:14px">No contracts yet</div>';
+  } catch (e) { /* silent */ }
+}
+
+// Each propose* function POSTs to the matching endpoint. Server (in portal mode)
+// stages it as a setting_change_request and returns { pending: true, ... }.
+async function proposeJob(){
+  const name = document.getElementById('njob-name').value.trim();
+  if (!name) return alert('Job name required');
+  try {
+    const r = await api('/api/jobs', 'POST', {
+      name,
+      default_billing_type: document.getElementById('njob-bt').value,
+      is_permitting: document.getElementById('njob-perm').checked,
+      proposed_by: document.getElementById('njob-by').value.trim() || null
+    });
+    notifyProposal(r);
+    document.getElementById('jobs-add-form').style.display='none';
+    ['njob-name','njob-by'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('njob-perm').checked = false;
+    loadMyRequests();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function proposePtype(){
+  const name = document.getElementById('nptype-name').value.trim();
+  if (!name) return alert('Type name required');
+  try {
+    const r = await api('/api/project-types', 'POST', { name, proposed_by: document.getElementById('nptype-by').value.trim() || null });
+    notifyProposal(r);
+    document.getElementById('ptype-add-form').style.display='none';
+    ['nptype-name','nptype-by'].forEach(id => document.getElementById(id).value='');
+    loadMyRequests();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function proposeClient(){
+  const name = document.getElementById('nclient-name').value.trim();
+  if (!name) return alert('Client name required');
+  try {
+    const r = await api('/api/clients', 'POST', {
+      name,
+      notes: document.getElementById('nclient-notes').value.trim() || null,
+      proposed_by: document.getElementById('nclient-by').value.trim() || null
+    });
+    notifyProposal(r);
+    document.getElementById('client-add-form').style.display='none';
+    ['nclient-name','nclient-by','nclient-notes'].forEach(id => document.getElementById(id).value='');
+    loadMyRequests();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function proposeContract(){
+  const client_id = document.getElementById('ncontract-client').value;
+  const contract_number = document.getElementById('ncontract-num').value.trim();
+  if (!client_id) return alert('Client required');
+  if (!contract_number) return alert('Contract # required');
+  try {
+    const r = await api('/api/contracts', 'POST', {
+      client_id, contract_number,
+      name: document.getElementById('ncontract-name').value.trim() || null,
+      proposed_by: document.getElementById('ncontract-by').value.trim() || null
+    });
+    notifyProposal(r);
+    document.getElementById('contract-add-form').style.display='none';
+    ['ncontract-num','ncontract-name','ncontract-by'].forEach(id => document.getElementById(id).value='');
+    loadMyRequests();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function notifyProposal(r){
+  if (r && r.pending) {
+    alert('✓ ' + (r.message || 'Submitted to admin for approval'));
+  }
+}
+
+// My pending + change log
+async function loadMyRequests(){
+  try {
+    const all = await api('/api/setting-requests');
+    const pending = all.filter(r => r.status === 'pending');
+    const reviewed = all.filter(r => r.status !== 'pending');
+    document.getElementById('my-pending-count').textContent = `(${pending.length})`;
+    document.getElementById('my-pending-body').innerHTML = pending.length
+      ? pending.map(formatRequestRow).join('')
+      : '<div style="color:var(--text-muted);padding:6px 0">None — admin sees no pending requests from you.</div>';
+    document.getElementById('changelog-body').innerHTML = reviewed.length
+      ? reviewed.slice(0, 80).map(formatRequestRow).join('')
+      : '<div style="color:var(--text-muted);padding:6px 0">No history yet.</div>';
+    refreshSettingsBadge();
+  } catch (e) { /* silent */ }
+}
+
+function formatRequestRow(sr){
+  const colors = { pending:'#FFC107', approved:'#28A745', rejected:'#DC3545' };
+  const entityLabel = ({ job:'Job', project_type:'Project Type', client:'Client', contract:'Contract' })[sr.entity_type] || sr.entity_type;
+  const payload = typeof sr.payload === 'string' ? JSON.parse(sr.payload) : (sr.payload || {});
+  const summary = payload.name || payload.contract_number || sr.entity_id || '';
+  const time = new Date(sr.created_at).toLocaleString();
+  const reviewedBit = sr.status !== 'pending'
+    ? `<span style="color:var(--text-muted)"> · ${sr.status} by ${esc(sr.reviewed_by||'—')}${sr.review_notes ? ' — "' + esc(sr.review_notes) + '"' : ''}</span>`
+    : '';
+  return `<div style="padding:6px 10px;border-left:3px solid ${colors[sr.status]};background:var(--gray-light);margin-bottom:4px;border-radius:4px;font-size:12px">
+    <span style="font-weight:600;text-transform:uppercase;color:${colors[sr.status]}">${sr.status}</span> ·
+    <span>${esc(sr.action)} ${esc(entityLabel)}: <b>${esc(summary)}</b></span>
+    <span style="color:var(--text-muted)"> · ${esc(sr.proposed_by||'—')} · ${time}</span>${reviewedBit}
+  </div>`;
+}
+
+function toggleChangeLog(){
+  const body = document.getElementById('changelog-body');
+  const chev = document.getElementById('changelog-chevron');
+  if (body.style.display === 'none') { body.style.display='block'; chev.style.transform='rotate(90deg)'; }
+  else { body.style.display='none'; chev.style.transform='rotate(0deg)'; }
+}
+
+async function refreshSettingsBadge(){
+  try {
+    const r = await api('/api/setting-requests/count');
+    const badge = document.getElementById('settings-pending-badge');
+    if (r.pending > 0) { badge.textContent = r.pending; badge.style.display='block'; }
+    else badge.style.display='none';
+  } catch (e) { /* silent */ }
+}
+
+// Init
+loadProjects();
+ensureCachesLoaded();
+refreshSettingsBadge();
+setInterval(refreshSettingsBadge, 30000);
 </script>
 </body>
 </html>

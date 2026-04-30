@@ -221,6 +221,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <i class="fa-solid fa-gear"></i> Settings
       <span id="settings-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--danger);border-radius:50%;border:2px solid var(--white)"></span>
     </button>
+    <button class="btn btn-secondary btn-sm" id="approvals-btn" onclick="openApprovals()" style="position:relative" title="Pending portal change requests & change log">
+      <i class="fa-solid fa-clipboard-check"></i> Approvals
+      <span id="approvals-badge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 4px;background:var(--danger);color:#fff;border-radius:9px;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--white);box-sizing:content-box">0</span>
+    </button>
     <button class="btn btn-secondary btn-sm" onclick="toggleAI()"><i class="fa-solid fa-robot"></i> AI Assistant</button>
   </div>
 </header>
@@ -1120,6 +1124,44 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   </div>
 </div>
 
+<!-- ─── APPROVALS / CHANGE LOG MODAL ───
+     Shows pending change requests submitted by portal users (Design,
+     Permitting). Admin can approve or reject each one. Below the pending
+     list, the change log section shows historical activity from both ends —
+     this is collapsible to keep it from crowding.
+-->
+<div class="modal-overlay" id="approvals-modal">
+  <div class="modal" style="max-width:880px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-clipboard-check" style="color:var(--primary)"></i> Approvals & Change Log</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('approvals-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <!-- Pending requests -->
+      <div style="margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Pending requests <span id="pending-count" style="color:var(--text-muted);font-weight:500">(0)</span></span>
+          <button class="btn btn-secondary btn-sm" onclick="loadApprovals()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+        <div id="approvals-pending-body" style="font-size:13px"><div class="empty-state" style="padding:20px;text-align:center;color:var(--text-muted)">Loading...</div></div>
+      </div>
+      <!-- Collapsible change log -->
+      <div style="border-top:2px solid var(--gray-border);padding-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer" onclick="toggleChangeLog()">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text-muted)">
+            <i id="changelog-chevron" class="fa-solid fa-chevron-right" style="margin-right:6px;transition:transform .15s"></i>
+            Change Log <span style="color:var(--text-muted);font-weight:500;text-transform:none">(history of approved &amp; rejected requests)</span>
+          </span>
+        </div>
+        <div id="changelog-body" style="display:none;font-size:12px"><div class="empty-state" style="padding:14px;text-align:center;color:var(--text-muted)">Loading...</div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('approvals-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settings-modal">
   <div class="modal" style="max-width:920px;width:95%">
     <div class="modal-header">
@@ -1186,7 +1228,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <div class="form-group"><label style="font-size:11px">Job Name</label><input type="text" id="new-job-name" placeholder="e.g. Surveyor" style="font-size:13px"></div>
             <div class="form-group"><label style="font-size:11px">Default Type</label><select id="new-job-bt" style="font-size:13px"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
             <div class="form-group"><label style="font-size:11px">Default Rate</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
-            <div class="form-group" style="justify-content:flex-end"><label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label></div>
+            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="both">Both (explicit)</option></select></div>
+            <div class="form-group" style="justify-content:flex-end"><label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-set when Team = Permitting; can be toggled independently"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='none'">Cancel</button>
@@ -4580,11 +4623,17 @@ function renderJobsList() {
   const root = document.getElementById('jobs-list-body');
   if (!root) return;
   if (!jobsCache.length) { root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No jobs yet.</div>'; return; }
+  const teamLabel = (t) => t === 'design' ? 'Design only' : t === 'permitting' ? 'Permitting only' : t === 'both' ? 'Both' : 'Both / Unassigned';
+  const teamBadge = (t) => {
+    const color = t === 'design' ? '#0D7377' : t === 'permitting' ? '#FF9800' : t === 'both' ? '#28A745' : '#6C757D';
+    return `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${color};color:#fff;font-weight:600">${teamLabel(t)}</span>`;
+  };
   root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
     <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
       <th style="text-align:left;padding:6px 8px">Name</th>
       <th style="text-align:left;padding:6px 8px">Default Billing</th>
       <th style="text-align:right;padding:6px 8px">Default Rate</th>
+      <th style="text-align:center;padding:6px 8px">Team</th>
       <th style="text-align:center;padding:6px 8px">Permit Calc</th>
       <th></th>
     </tr></thead>
@@ -4595,12 +4644,32 @@ function renderJobsList() {
       <td style="padding:6px 8px;font-weight:600">${esc(label)}</td>
       <td style="padding:6px 8px">${esc(j.default_billing_type || 'hourly')}</td>
       <td style="padding:6px 8px;text-align:right">${rateNullish ? '<span style="color:var(--text-muted)">— TBD</span>' : fmtMoney(j.default_rate)}</td>
+      <td style="padding:6px 8px;text-align:center">
+        <select onchange="setJobTeam('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:#fff" title="Controls which portal can pick this job">
+          <option value="" ${!j.team ? 'selected':''}>Both / Unassigned</option>
+          <option value="design" ${j.team==='design' ? 'selected':''}>Design only</option>
+          <option value="permitting" ${j.team==='permitting' ? 'selected':''}>Permitting only</option>
+          <option value="both" ${j.team==='both' ? 'selected':''}>Both (explicit)</option>
+        </select>
+      </td>
       <td style="padding:6px 8px;text-align:center">${j.is_permitting ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '—'}</td>
       <td style="padding:6px 8px;text-align:right">
         <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteJob('${j.id}','${esc(j.name)}')" title="Delete (preserves history)"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>`;
-    }).join('')}</tbody></table>`;
+    }).join('')}</tbody></table>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px">
+      <i class="fa-solid fa-circle-info"></i> Team controls which portal sees the job in their New Project dropdown. Permit Calc is independent — it controls billing math (footage × hrs/mile) and is auto-applied to permitting jobs but can be toggled per-job.
+    </div>`;
+}
+
+// Inline team change from the Jobs table — updates immediately.
+async function setJobTeam(jobId, team) {
+  try {
+    await api('/api/jobs/' + jobId, 'PUT', { team: team || null });
+    await loadJobs();
+    renderJobsList();
+  } catch (e) { alert('Failed to set team: ' + e.message); }
 }
 
 async function saveNewJob() {
@@ -4608,17 +4677,20 @@ async function saveNewJob() {
   const default_billing_type = document.getElementById('new-job-bt').value;
   const default_rate = parseFloat(document.getElementById('new-job-rate').value);
   const is_permitting = document.getElementById('new-job-perm').checked;
+  const team = document.getElementById('new-job-team').value || null;
   if (!name) return alert('Job name is required');
   try {
     await api('/api/jobs', 'POST', {
       name,
       default_billing_type,
       default_rate: isNaN(default_rate) ? null : default_rate,
-      is_permitting
+      is_permitting,
+      team
     });
     document.getElementById('new-job-name').value = '';
     document.getElementById('new-job-rate').value = '';
     document.getElementById('new-job-perm').checked = false;
+    document.getElementById('new-job-team').value = '';
     document.getElementById('jobs-add-form').style.display = 'none';
     await loadJobs();
     populatePricingFormDropdowns();
@@ -4793,6 +4865,186 @@ async function refreshSettingsDot() {
     dot.style.display = needsReview.length > 0 ? 'block' : 'none';
   } catch (e) { /* silently ignore */ }
 }
+
+// ═══════════════════════════════════════════════════════════
+// APPROVALS / CHANGE LOG (portal change requests)
+// ═══════════════════════════════════════════════════════════
+
+// Refresh the count badge on the Approvals header button. Called on a
+// 30-second poll so the admin sees new portal proposals as they come in.
+async function refreshApprovalsBadge() {
+  try {
+    const r = await api('/api/setting-requests/count');
+    const badge = document.getElementById('approvals-badge');
+    if (!badge) return;
+    if (r.pending > 0) {
+      badge.textContent = r.pending;
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) { /* silently ignore */ }
+}
+
+// Open the Approvals modal and load both pending requests + history.
+function openApprovals() {
+  openModal('approvals-modal');
+  loadApprovals();
+}
+
+// Pretty-print a setting change request as a card.
+function formatRequestCard(sr, isPending) {
+  const portalColor = sr.source_portal === 'design' ? '#0D7377' : '#FF9800';
+  const portalLabel = sr.source_portal === 'design' ? 'Design Portal' : 'Permitting Portal';
+  const actionColor = sr.action === 'create' ? '#28A745' : sr.action === 'update' ? '#0D7377' : '#DC3545';
+  const entityLabel = ({ job:'Job', project_type:'Project Type', client:'Client', contract:'Contract' })[sr.entity_type] || sr.entity_type;
+  const payload = typeof sr.payload === 'string' ? JSON.parse(sr.payload) : (sr.payload || {});
+  const snapshot = sr.current_snapshot ? (typeof sr.current_snapshot === 'string' ? JSON.parse(sr.current_snapshot) : sr.current_snapshot) : null;
+
+  // Render diff: payload vs snapshot
+  let diff = '';
+  if (sr.action === 'update' && snapshot) {
+    const changes = [];
+    for (const k of Object.keys(payload)) {
+      if (payload[k] === undefined || payload[k] === null) continue;
+      const before = snapshot[k];
+      const after  = payload[k];
+      if (String(before) !== String(after)) {
+        changes.push(`<div style="font-size:12px;margin:2px 0"><b>${esc(k)}:</b> <span style="color:var(--danger);text-decoration:line-through">${esc(String(before ?? '—'))}</span> → <span style="color:var(--success)">${esc(String(after))}</span></div>`);
+      }
+    }
+    diff = changes.length ? changes.join('') : '<div style="font-size:12px;color:var(--text-muted)">No actual field changes (no-op).</div>';
+  } else if (sr.action === 'create') {
+    diff = Object.entries(payload).filter(([k,v]) => v !== null && v !== undefined && v !== '').map(([k,v]) =>
+      `<div style="font-size:12px;margin:2px 0"><b>${esc(k)}:</b> ${esc(String(v))}</div>`
+    ).join('');
+  } else if (sr.action === 'delete' && snapshot) {
+    diff = `<div style="font-size:12px;color:var(--danger)">Will deactivate: <b>${esc(snapshot.name || snapshot.contract_number || sr.entity_id)}</b></div>`;
+  }
+
+  // For pending Job CREATE requests, give admin a chance to override team & rate at approval time
+  let overrideUI = '';
+  if (isPending && sr.entity_type === 'job' && sr.action === 'create') {
+    overrideUI = `<div style="margin-top:10px;padding:8px 10px;background:var(--gray-light);border-radius:6px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Set on approval (admin)</div>
+      <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+        <div><label style="font-size:11px;display:block">Team</label>
+          <select id="ovr-team-${sr.id}" style="font-size:12px;padding:3px 6px">
+            <option value="">Both / Unassigned</option>
+            <option value="design"${payload.team==='design'?' selected':''}>Design only</option>
+            <option value="permitting"${payload.team==='permitting'?' selected':''}>Permitting only</option>
+            <option value="both"${payload.team==='both'?' selected':''}>Both (explicit)</option>
+          </select>
+        </div>
+        <div><label style="font-size:11px;display:block">Default Rate</label>
+          <input type="number" id="ovr-rate-${sr.id}" step="0.01" placeholder="0.00" style="font-size:12px;padding:3px 6px;width:80px" value="${payload.default_rate ?? ''}">
+        </div>
+      </div>
+    </div>`;
+  }
+
+  let actions = '';
+  if (isPending) {
+    actions = `<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="rejectRequest('${sr.id}')"><i class="fa-solid fa-xmark"></i> Reject</button>
+      <button class="btn btn-success btn-sm" onclick="approveRequest('${sr.id}', '${sr.entity_type}', '${sr.action}')"><i class="fa-solid fa-check"></i> Approve</button>
+    </div>`;
+  } else {
+    const statusColor = sr.status === 'approved' ? '#28A745' : '#DC3545';
+    const reviewedTime = sr.reviewed_at ? new Date(sr.reviewed_at).toLocaleString() : '—';
+    actions = `<div style="font-size:11px;color:var(--text-muted);margin-top:6px"><span style="color:${statusColor};font-weight:600;text-transform:uppercase">${sr.status}</span> by ${esc(sr.reviewed_by || '—')} on ${reviewedTime}${sr.review_notes ? ' · "' + esc(sr.review_notes) + '"' : ''}</div>`;
+  }
+
+  return `<div style="border:1px solid var(--gray-border);border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+      <div>
+        <span style="background:${portalColor};color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">${portalLabel}</span>
+        <span style="background:${actionColor};color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:4px">${esc(sr.action.toUpperCase())} ${esc(entityLabel)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);text-align:right">
+        by <b>${esc(sr.proposed_by || 'Unknown')}</b><br>
+        ${new Date(sr.created_at).toLocaleString()}
+      </div>
+    </div>
+    <div>${diff || '<div style="color:var(--text-muted);font-size:12px">(no payload details)</div>'}</div>
+    ${overrideUI}
+    ${actions}
+  </div>`;
+}
+
+async function loadApprovals() {
+  const pendingBody = document.getElementById('approvals-pending-body');
+  pendingBody.innerHTML = '<div class="empty-state" style="padding:20px;text-align:center;color:var(--text-muted)">Loading...</div>';
+  try {
+    const all = await api('/api/setting-requests');
+    const pending  = all.filter(r => r.status === 'pending');
+    const reviewed = all.filter(r => r.status !== 'pending');
+    document.getElementById('pending-count').textContent = `(${pending.length})`;
+    pendingBody.innerHTML = pending.length
+      ? pending.map(sr => formatRequestCard(sr, true)).join('')
+      : '<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No pending requests. The portals are quiet.</div>';
+
+    const logBody = document.getElementById('changelog-body');
+    logBody.innerHTML = reviewed.length
+      ? reviewed.slice(0, 100).map(sr => formatRequestCard(sr, false)).join('')
+      : '<div class="empty-state" style="padding:14px;text-align:center;color:var(--text-muted)">No history yet.</div>';
+  } catch (e) {
+    pendingBody.innerHTML = `<div class="empty-state" style="padding:20px;text-align:center;color:var(--danger)">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+function toggleChangeLog() {
+  const body = document.getElementById('changelog-body');
+  const chev = document.getElementById('changelog-chevron');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    chev.style.transform = 'rotate(90deg)';
+  } else {
+    body.style.display = 'none';
+    chev.style.transform = 'rotate(0deg)';
+  }
+}
+
+async function approveRequest(id, entityType, action) {
+  const reviewer = prompt('Your name (recorded in audit trail):', '');
+  if (reviewer === null) return;
+  const body = { reviewed_by: reviewer || 'Admin' };
+  // For job creates, gather override team + rate from the inline UI
+  if (entityType === 'job' && action === 'create') {
+    const teamEl = document.getElementById('ovr-team-' + id);
+    const rateEl = document.getElementById('ovr-rate-' + id);
+    body.payload_overrides = {};
+    if (teamEl) body.payload_overrides.team = teamEl.value || null;
+    if (rateEl && rateEl.value !== '') body.payload_overrides.default_rate = parseFloat(rateEl.value);
+  }
+  try {
+    await api('/api/setting-requests/' + id + '/approve', 'PUT', body);
+    await loadApprovals();
+    refreshApprovalsBadge();
+    // If a Job was approved, jobs cache is now stale
+    if (entityType === 'job' || entityType === 'project_type') {
+      if (typeof loadJobs === 'function') await loadJobs();
+      if (typeof loadProjectTypes === 'function') await loadProjectTypes();
+    }
+  } catch (e) { alert('Approve failed: ' + e.message); }
+}
+
+async function rejectRequest(id) {
+  const reviewer = prompt('Your name (recorded in audit trail):', '');
+  if (reviewer === null) return;
+  const reason = prompt('Reason for rejection (optional):', '');
+  try {
+    await api('/api/setting-requests/' + id + '/reject', 'PUT',
+      { reviewed_by: reviewer || 'Admin', review_notes: reason || null });
+    await loadApprovals();
+    refreshApprovalsBadge();
+  } catch (e) { alert('Reject failed: ' + e.message); }
+}
+
+// Poll the badge every 30s so admin sees new requests without refreshing
+setInterval(refreshApprovalsBadge, 30000);
+// And on initial page load
+window.addEventListener('load', () => setTimeout(refreshApprovalsBadge, 1000));
 
 // ═══════════════════════════════════════════════════════════
 // AI CHAT

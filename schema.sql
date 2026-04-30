@@ -572,3 +572,175 @@ CREATE TABLE IF NOT EXISTS design_stages (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(project_id, stage)
 );
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SCHEMA v2 ADDITIONS — Portal/Team support, propose-and-approve flow,
+--                       and project duplicate prevention.
+--
+-- This file is IDEMPOTENT — safe to append to schema.sql so it runs on
+-- every startup, or run once manually with `psql ... -f schema_v2_additions.sql`.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. Team assignment for jobs.
+--    Admin assigns each job to a team in admin Settings. The team controls
+--    which portal can see/use that job when creating projects.
+--      'design'     → only the Design portal can pick this job
+--      'permitting' → only the Permitting portal can pick this job
+--      'both'       → both portals can pick this job
+--      NULL         → unassigned; both portals see it (admin should assign)
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS team VARCHAR(20);
+
+-- Sensible defaults for the seeded jobs (only sets where NULL — won't override
+-- anything the admin has already configured).
+UPDATE jobs SET team = 'permitting' WHERE name IN ('Permitting','Permitting (RR)') AND team IS NULL;
+UPDATE jobs SET team = 'design'     WHERE name = 'Design' AND team IS NULL;
+UPDATE jobs SET team = 'both'       WHERE name IN ('Inspection','Resident Engineer','Other') AND team IS NULL;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. Duplicate-project prevention.
+--    Rule: same project NAME under the same PARENT is a duplicate.
+--    Top-level projects (no parent) are bucketed under a synthetic 'ROOT'
+--    sentinel so the index covers them too.
+--
+--    Wrapped in DO/EXCEPTION because if existing rows already violate the
+--    rule, the index creation will fail. We log a warning and continue —
+--    the application layer also enforces the rule, so new dupes are still
+--    blocked. To find existing duplicates, run the query in the warning.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $migration$
+BEGIN
+  BEGIN
+    EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS uniq_project_name_per_parent
+             ON projects (COALESCE(parent_id::text, ''ROOT''), LOWER(name))';
+  EXCEPTION WHEN unique_violation THEN
+    RAISE WARNING 'Existing duplicate projects detected — unique index NOT created. '
+                  'Find dupes with: SELECT parent_id, LOWER(name), COUNT(*) FROM projects '
+                  'GROUP BY parent_id, LOWER(name) HAVING COUNT(*) > 1; '
+                  'Then re-run this migration after cleanup.';
+  END;
+END
+$migration$;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 3. Setting change requests (the propose-and-approve queue).
+--    When a portal user adds/edits/deletes a Job, Project Type, Client, or
+--    Contract, the change is staged here as 'pending'. Admin sees a badge
+--    in Settings, reviews each request, and approves or rejects it.
+--    Approval applies the change; rejection drops it. Either way, an audit
+--    trail (proposed_by, source_portal, reviewed_by, reviewed_at) is kept.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS setting_change_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  entity_type      VARCHAR(30) NOT NULL,    -- 'job' | 'project_type' | 'client' | 'contract'
+  action           VARCHAR(20) NOT NULL,    -- 'create' | 'update' | 'delete'
+  entity_id        UUID,                    -- NULL for create
+  payload          JSONB NOT NULL,          -- proposed values (full row for create, partial for update)
+  current_snapshot JSONB,                   -- snapshot of admin's current value at time of proposal
+                                            -- (lets the admin UI show "currently X, proposed Y")
+  source_portal    VARCHAR(20) NOT NULL,    -- 'design' | 'permitting'
+  proposed_by      VARCHAR(100),            -- name entered by portal user
+  status           VARCHAR(20) DEFAULT 'pending', -- 'pending' | 'approved' | 'rejected'
+  reviewed_by      VARCHAR(100),
+  reviewed_at      TIMESTAMPTZ,
+  review_notes     TEXT,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Fast path for the badge count query
+CREATE INDEX IF NOT EXISTS idx_scr_pending
+  ON setting_change_requests (created_at DESC)
+  WHERE status = 'pending';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- End of v2 additions
+-- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SCHEMA v2 ADDITIONS — Portal/Team support, propose-and-approve flow,
+--                       and project duplicate prevention.
+--
+-- This file is IDEMPOTENT — safe to append to schema.sql so it runs on
+-- every startup, or run once manually with `psql ... -f schema_v2_additions.sql`.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. Team assignment for jobs.
+--    Admin assigns each job to a team in admin Settings. The team controls
+--    which portal can see/use that job when creating projects.
+--      'design'     → only the Design portal can pick this job
+--      'permitting' → only the Permitting portal can pick this job
+--      'both'       → both portals can pick this job
+--      NULL         → unassigned; both portals see it (admin should assign)
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS team VARCHAR(20);
+
+-- Sensible defaults for the seeded jobs (only sets where NULL — won't override
+-- anything the admin has already configured).
+UPDATE jobs SET team = 'permitting' WHERE name IN ('Permitting','Permitting (RR)') AND team IS NULL;
+UPDATE jobs SET team = 'design'     WHERE name = 'Design' AND team IS NULL;
+UPDATE jobs SET team = 'both'       WHERE name IN ('Inspection','Resident Engineer','Other') AND team IS NULL;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. Duplicate-project prevention.
+--    Rule: same project NAME under the same PARENT is a duplicate.
+--    Top-level projects (no parent) are bucketed under a synthetic 'ROOT'
+--    sentinel so the index covers them too.
+--
+--    Wrapped in DO/EXCEPTION because if existing rows already violate the
+--    rule, the index creation will fail. We log a warning and continue —
+--    the application layer also enforces the rule, so new dupes are still
+--    blocked. To find existing duplicates, run the query in the warning.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $migration$
+BEGIN
+  BEGIN
+    EXECUTE 'CREATE UNIQUE INDEX IF NOT EXISTS uniq_project_name_per_parent
+             ON projects (COALESCE(parent_id::text, ''ROOT''), LOWER(name))';
+  EXCEPTION WHEN unique_violation THEN
+    RAISE WARNING 'Existing duplicate projects detected — unique index NOT created. '
+                  'Find dupes with: SELECT parent_id, LOWER(name), COUNT(*) FROM projects '
+                  'GROUP BY parent_id, LOWER(name) HAVING COUNT(*) > 1; '
+                  'Then re-run this migration after cleanup.';
+  END;
+END
+$migration$;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 3. Setting change requests (the propose-and-approve queue).
+--    When a portal user adds/edits/deletes a Job, Project Type, Client, or
+--    Contract, the change is staged here as 'pending'. Admin sees a badge
+--    in Settings, reviews each request, and approves or rejects it.
+--    Approval applies the change; rejection drops it. Either way, an audit
+--    trail (proposed_by, source_portal, reviewed_by, reviewed_at) is kept.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS setting_change_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  entity_type      VARCHAR(30) NOT NULL,    -- 'job' | 'project_type' | 'client' | 'contract'
+  action           VARCHAR(20) NOT NULL,    -- 'create' | 'update' | 'delete'
+  entity_id        UUID,                    -- NULL for create
+  payload          JSONB NOT NULL,          -- proposed values (full row for create, partial for update)
+  current_snapshot JSONB,                   -- snapshot of admin's current value at time of proposal
+                                            -- (lets the admin UI show "currently X, proposed Y")
+  source_portal    VARCHAR(20) NOT NULL,    -- 'design' | 'permitting'
+  proposed_by      VARCHAR(100),            -- name entered by portal user
+  status           VARCHAR(20) DEFAULT 'pending', -- 'pending' | 'approved' | 'rejected'
+  reviewed_by      VARCHAR(100),
+  reviewed_at      TIMESTAMPTZ,
+  review_notes     TEXT,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Fast path for the badge count query
+CREATE INDEX IF NOT EXISTS idx_scr_pending
+  ON setting_change_requests (created_at DESC)
+  WHERE status = 'pending';
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- End of v2 additions
+-- ═══════════════════════════════════════════════════════════════════════════

@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const Anthropic = require('@anthropic-ai/sdk');
 const XLSX = require('xlsx');
 const { pool, initSchema } = require('./db');
+const installPortalExtensions = require('./portal_module');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,11 @@ const PORTAL_NAMES = { permitting: 'Permitting Portal', design: 'Design Portal' 
 if (PORTAL_MODE) {
   console.log(`✓ Running in PORTAL MODE: ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}`);
 }
+
+// Wire up portal-mode route overrides + setting-approval flow.
+// MUST run before the existing route definitions below — Express picks
+// routes first-match, so portal_module's overrides win in portal mode.
+installPortalExtensions(app, pool, PORTAL_MODE);
 
 // ─── Password Protection ─────────────────────────────────────────────────────
 if (process.env.APP_PASSWORD) {
@@ -245,22 +251,25 @@ app.get('/api/jobs', async (req, res) => {
 });
 
 app.post('/api/jobs', async (req, res) => {
-  const { name, default_billing_type = 'hourly', default_rate = null, is_permitting = false, notes = null } = req.body;
+  const { name, default_billing_type = 'hourly', default_rate = null, is_permitting = false, notes = null, team = null } = req.body;
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
   try {
+    const teamVal = team === '' ? null : team;
     const { rows } = await pool.query(
-      `INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, notes)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (name) DO UPDATE SET active = true RETURNING *`,
-      [String(name).trim(), default_billing_type, default_rate, is_permitting, notes]
+      `INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, notes, team)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (name) DO UPDATE SET active = true, team = COALESCE(EXCLUDED.team, jobs.team) RETURNING *`,
+      [String(name).trim(), default_billing_type, default_rate, is_permitting, notes, teamVal]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.put('/api/jobs/:id', async (req, res) => {
-  const { name, default_billing_type, default_rate, is_permitting, notes, active } = req.body;
+  const { name, default_billing_type, default_rate, is_permitting, notes, active, team } = req.body;
   try {
+    // team is nullable — empty string from UI maps to NULL ("Both / Unassigned")
+    const teamVal = team === '' ? null : team;
     const { rows } = await pool.query(
       `UPDATE jobs SET
          name = COALESCE($2, name),
@@ -268,9 +277,10 @@ app.put('/api/jobs/:id', async (req, res) => {
          default_rate = $4,
          is_permitting = COALESCE($5, is_permitting),
          notes = $6,
-         active = COALESCE($7, active)
+         active = COALESCE($7, active),
+         team = $8
        WHERE id = $1 RETURNING *`,
-      [req.params.id, name, default_billing_type, default_rate, is_permitting, notes, active]
+      [req.params.id, name, default_billing_type, default_rate, is_permitting, notes, active, teamVal]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -541,6 +551,11 @@ app.post('/api/projects', async (req, res) => {
   } = req.body;
 
   try {
+    // Duplicate-project guard (same name under same parent rejected)
+    if (await app.locals.isDuplicateProject(name, parent_id)) {
+      return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
+    }
+
     // If a job is selected with is_permitting=true, treat this as a permitting
     // project regardless of legacy project_type. This is how permitting
     // becomes universal across program types (BAU/GF(R)/RUS/Other).
@@ -640,6 +655,18 @@ app.put('/api/projects/:id', async (req, res) => {
   } = req.body;
 
   try {
+    // Duplicate-project guard — only check if name OR parent is being changed
+    if (name !== undefined || parent_id !== undefined) {
+      const cur = await pool.query('SELECT name, parent_id FROM projects WHERE id = $1', [req.params.id]);
+      if (cur.rows.length) {
+        const checkName   = (name !== undefined ? name : cur.rows[0].name);
+        const checkParent = (parent_id !== undefined ? parent_id : cur.rows[0].parent_id);
+        if (await app.locals.isDuplicateProject(checkName, checkParent, req.params.id)) {
+          return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
+        }
+      }
+    }
+
     // Re-derive permitting status from job (if job specified) or legacy project_type
     let isPermitting = project_type === 'permitting';
     let effectiveBillingType = billing_type;
