@@ -63,23 +63,56 @@ if (process.env.APP_PASSWORD) {
 // ─── Portal endpoint restrictions ────────────────────────────────────────────
 // Must be BEFORE express.static so blocked endpoints return 403 before static files
 if (PORTAL_MODE) {
+  // Generic API blocks (entire endpoint families admin-only).
   const blocked = ['/api/revenue', '/api/invoices', '/api/billing', '/api/ai', '/api/hours', '/api/dashboard'];
+  // Specific upload endpoints — Option B: all file uploads route through the
+  // admin service, never hit portal containers (which have ephemeral storage).
+  // The portal frontend POSTs cross-origin to ADMIN_API_BASE for these.
+  const blockedExact = [
+    /^\/api\/permits\/[^\/]+\/documents$/i,   // PUT/POST permit doc uploads
+    /^\/api\/hours\/csv-validate$/i,          // CSV bulk-import (already covered by /api/hours block, kept explicit)
+  ];
   app.use((req, res, next) => {
     if (blocked.some(b => req.path.startsWith(b))) {
       return res.status(403).json({ error: 'Not available in this portal' });
     }
+    if (req.method === 'POST' && blockedExact.some(rx => rx.test(req.path))) {
+      return res.status(403).json({ error: 'File uploads route through admin service. Set ADMIN_API_BASE in portal config.' });
+    }
     next();
   });
 
-  // Serve portal HTML at root — BEFORE express.static grabs index.html
+  // Serve portal HTML at root — BEFORE express.static grabs index.html. Inject
+  // ADMIN_API_BASE so the portal frontend knows where to POST file uploads
+  // and where to read /uploads/* PDFs (since those live on admin's volume,
+  // not on portal containers).
   const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html' : 'design.html';
+  const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', portalFile));
+    try {
+      const filePath = path.join(__dirname, 'public', portalFile);
+      let html = fs.readFileSync(filePath, 'utf8');
+      // Inject admin URL right after <head> so it's available to all scripts
+      const inject = `<script>window.ADMIN_API_BASE = ${JSON.stringify(ADMIN_API_BASE)};</script>`;
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', inject + '</head>');
+      } else {
+        html = inject + html;  // fallback
+      }
+      res.set('Content-Type', 'text/html; charset=utf-8').send(html);
+    } catch (e) {
+      res.status(500).send('Portal HTML load failed: ' + e.message);
+    }
   });
   // Block direct access to the main app in portal mode
   app.get('/index.html', (req, res) => {
     res.redirect('/');
   });
+  if (!ADMIN_API_BASE) {
+    console.warn('⚠ ADMIN_API_BASE env var not set — portal upload routing and PDF viewing will fall back to relative URLs (which will 404 on this portal). Set ADMIN_API_BASE to your admin service URL like "https://launch-database-production-xyz.up.railway.app".');
+  } else {
+    console.log('✓ Portal will route file uploads + /uploads/* PDFs to:', ADMIN_API_BASE);
+  }
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -294,6 +327,26 @@ app.get('/api/jobs/:id', async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Job not found' });
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DIAGNOSTIC — dumps raw job rows including inactive, with full column list.
+// Use this to verify schema migration actually applied. Returns JSON like:
+//   { count: 12, columns: [...], rows: [...] }
+// Hit it via: https://your-admin-url/api/_debug/jobs
+app.get('/api/_debug/jobs', async (req, res) => {
+  try {
+    const cols = await pool.query(
+      `SELECT column_name, data_type FROM information_schema.columns
+       WHERE table_name = 'jobs' ORDER BY ordinal_position`
+    );
+    const rows = await pool.query('SELECT * FROM jobs ORDER BY active DESC, name');
+    res.json({
+      count: rows.rows.length,
+      active_count: rows.rows.filter(r => r.active).length,
+      columns: cols.rows,
+      rows: rows.rows
+    });
+  } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
 });
 
 app.post('/api/jobs', async (req, res) => {

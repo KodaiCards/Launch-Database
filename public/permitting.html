@@ -70,6 +70,15 @@ textarea{resize:vertical;min-height:60px}
   .header-spacer{display:none}
 }
 </style>
+<script>
+  // Set by server.js portal-mode HTML inject. Falls back to same-origin if unset
+  // (which means uploads/PDFs won't work — see ADMIN_API_BASE warning in logs).
+  window.adminUrl = function(path) {
+    const base = window.ADMIN_API_BASE || '';
+    if (!path) return base;
+    return base + (path.startsWith('/') ? path : '/' + path);
+  };
+</script>
 </head>
 <body>
 
@@ -461,32 +470,46 @@ async function openProjectModal(){
 }
 
 async function editProject(id){
-  await ensureCachesLoaded();
+  // STEP 1 — open the modal IMMEDIATELY. If population fails partway through,
+  // the user still sees the modal (with whatever fields did populate) instead
+  // of clicking the edit button and seeing nothing happen.
+  document.getElementById('proj-modal-title').textContent = 'Edit Project';
+  om('project-modal');
+
+  try { await ensureCachesLoaded(); } catch (e) { console.error('caches load failed:', e); }
+
+  let p;
+  try { p = await api('/api/projects/' + id); }
+  catch (e) { alert('Failed to load project: ' + e.message); return; }
+
+  // STEP 2 — set independent fields immediately
+  document.getElementById('proj-id').value     = p.id;
+  document.getElementById('proj-name').value   = p.name || '';
+  document.getElementById('proj-wo').value     = p.work_order_number || '';
+  document.getElementById('proj-status').value = p.status || 'active';
+  document.getElementById('proj-start').value  = p.start_date ? p.start_date.split('T')[0] : '';
+  document.getElementById('proj-notes').value  = p.notes || '';
+
+  // STEP 3 — populate dropdowns defensively
+  try { populateProjectFormDropdowns(); } catch (e) { console.error('dropdowns failed:', e); }
+
   try {
-    const p = await api('/api/projects/' + id);
-    populateProjectFormDropdowns();
-    document.getElementById('proj-modal-title').textContent = 'Edit Project';
-    document.getElementById('proj-id').value = p.id;
-    document.getElementById('proj-name').value = p.name || '';
     document.getElementById('proj-client').value = p.client_id || '';
-    await clientChanged(p.job_id);
+    await clientChanged(p.job_id);   // threads job_id so legacy/deactivated jobs survive the refilter
+    document.getElementById('proj-job').value    = p.job_id || '';
     document.getElementById('proj-contract').value = p.contract_id || '';
-    document.getElementById('proj-wo').value = p.work_order_number || '';
-    document.getElementById('proj-ptype').value = p.project_type_id || '';
-    document.getElementById('proj-job').value = p.job_id || '';
-    // Show footage OR expected_hours in the single field, depending on billing type
-    const job = jobsCache.find(j => j.id === p.job_id);
+    document.getElementById('proj-ptype').value  = p.project_type_id || '';
+  } catch (e) { console.error('client/job hookup failed:', e); }
+
+  try {
+    const job = (jobsCache || []).find(j => j.id === p.job_id);
     if (job && (job.is_permitting || job.default_billing_type === 'footage')) {
       document.getElementById('proj-amount').value = p.footage || '';
     } else {
       document.getElementById('proj-amount').value = p.expected_hours || '';
     }
-    jobChanged(); // refresh hint label
-    document.getElementById('proj-status').value = p.status || 'active';
-    document.getElementById('proj-start').value = p.start_date ? p.start_date.split('T')[0] : '';
-    document.getElementById('proj-notes').value = p.notes || '';
-    om('project-modal');
-  } catch (e) { alert('Failed to load project: ' + e.message); }
+    jobChanged();
+  } catch (e) { /* non-fatal */ }
 }
 
 function populateProjectFormDropdowns(){

@@ -777,54 +777,88 @@ CREATE INDEX IF NOT EXISTS idx_projects_rollup
 
 
 -- ─── 3. Reseed jobs to match the latest spec ──────────────────────────────
--- Strategy: insert the canonical 9 + 3 jobs, on conflict update billing_code
--- and applicability so admin's prior tweaks aren't clobbered. Old auto-seeded
--- jobs that are no longer in the spec are deactivated, NOT deleted, so any
--- existing project history is preserved.
+-- Strategy: insert each job in its own DO/EXCEPTION block so a failure on one
+-- row doesn't roll back the others. Multi-row INSERT in PG is atomic; if
+-- any single row violates a constraint, the whole statement aborts and
+-- nothing is inserted. Per-row blocks isolate failures and log them.
 
--- 3a. The 9 PSC jobs (also surface for non-PSC where flagged below)
-INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, billing_code, team, for_psc_client, for_generic_client) VALUES
-  ('County Permitting',            'footage', NULL, TRUE,  'a-2-D',      'permitting', TRUE, TRUE),
-  ('DOT Permitting',               'footage', NULL, TRUE,  'a-2-D',      'permitting', TRUE, TRUE),
-  ('RR Permitting',                'footage', NULL, TRUE,  'a-2-D',      'permitting', TRUE, TRUE),
-  ('Resident Engineer',            'hourly',  100,  FALSE, 'g-1-B-1',    'both',       TRUE, FALSE),
-  ('Inspection',                   'hourly',  90,   FALSE, 'g-1-B-4',    'both',       TRUE, FALSE),
-  ('Update Plant Records',         'footage', 850,  FALSE, 'a-4',        'design',     TRUE, FALSE),
-  ('OSP Staking Aerial',           'footage', 850,  FALSE, 'e-2-A-1(N)', 'design',     TRUE, FALSE),
-  ('OSP Staking Underground',      'footage', 850,  FALSE, 'e-2-A-2(N)', 'design',     TRUE, FALSE),
-  ('Construction Progress Reports','footage', 850,  FALSE, 'g-1-I-3',    'both',       TRUE, FALSE)
-ON CONFLICT (name) DO UPDATE SET
-  default_billing_type = EXCLUDED.default_billing_type,
-  is_permitting        = EXCLUDED.is_permitting,
-  billing_code         = EXCLUDED.billing_code,
-  team                 = EXCLUDED.team,
-  for_psc_client       = EXCLUDED.for_psc_client,
-  for_generic_client   = EXCLUDED.for_generic_client,
-  active               = TRUE;
--- NOTE: default_rate is NOT updated on conflict — admin's manual rate edits stick.
-
--- 3b. The 3 non-PSC-only jobs (admin sets rates manually after seed)
-INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting, billing_code, team, for_psc_client, for_generic_client) VALUES
-  ('OSP Design & Fiber Assignments', 'hourly', NULL, FALSE, NULL, 'design', FALSE, TRUE),
-  ('Staking Fiber Assignments',      'hourly', NULL, FALSE, NULL, 'design', FALSE, TRUE),
-  ('Records Management',             'hourly', NULL, FALSE, NULL, 'both',   FALSE, TRUE)
-ON CONFLICT (name) DO UPDATE SET
-  default_billing_type = EXCLUDED.default_billing_type,
-  team                 = EXCLUDED.team,
-  for_psc_client       = EXCLUDED.for_psc_client,
-  for_generic_client   = EXCLUDED.for_generic_client,
-  active               = TRUE;
+DO $jobseed$
+DECLARE
+  jobs_to_seed CONSTANT TEXT[][] := ARRAY[
+    -- name, billing_type, default_rate, is_permitting, billing_code, team, for_psc, for_generic
+    ARRAY['County Permitting',             'footage', NULL,  'true',  'a-2-D',      'permitting', 'true',  'true'],
+    ARRAY['DOT Permitting',                'footage', NULL,  'true',  'a-2-D',      'permitting', 'true',  'true'],
+    ARRAY['RR Permitting',                 'footage', NULL,  'true',  'a-2-D',      'permitting', 'true',  'true'],
+    ARRAY['Resident Engineer',             'hourly',  '100', 'false', 'g-1-B-1',    'both',       'true',  'false'],
+    ARRAY['Inspection',                    'hourly',  '90',  'false', 'g-1-B-4',    'both',       'true',  'false'],
+    ARRAY['Update Plant Records',          'footage', '850', 'false', 'a-4',        'design',     'true',  'false'],
+    ARRAY['OSP Staking Aerial',            'footage', '850', 'false', 'e-2-A-1(N)', 'design',     'true',  'false'],
+    ARRAY['OSP Staking Underground',       'footage', '850', 'false', 'e-2-A-2(N)', 'design',     'true',  'false'],
+    ARRAY['Construction Progress Reports', 'footage', '850', 'false', 'g-1-I-3',    'both',       'true',  'false'],
+    ARRAY['OSP Design & Fiber Assignments','hourly',  NULL,  'false', NULL,         'design',     'false', 'true'],
+    ARRAY['Staking Fiber Assignments',     'hourly',  NULL,  'false', NULL,         'design',     'false', 'true'],
+    ARRAY['Records Management',            'hourly',  NULL,  'false', NULL,         'both',       'false', 'true']
+  ];
+  j TEXT[];
+  inserted_count INT := 0;
+  updated_count  INT := 0;
+  failed_count   INT := 0;
+BEGIN
+  FOREACH j SLICE 1 IN ARRAY jobs_to_seed LOOP
+    BEGIN
+      INSERT INTO jobs (
+        name, default_billing_type, default_rate, is_permitting,
+        billing_code, team, for_psc_client, for_generic_client, active
+      ) VALUES (
+        j[1], j[2],
+        CASE WHEN j[3] IS NULL THEN NULL ELSE j[3]::numeric END,
+        j[4]::boolean,
+        j[5], j[6],
+        j[7]::boolean, j[8]::boolean,
+        TRUE
+      )
+      ON CONFLICT (name) DO UPDATE SET
+        default_billing_type = EXCLUDED.default_billing_type,
+        is_permitting        = EXCLUDED.is_permitting,
+        billing_code         = COALESCE(EXCLUDED.billing_code, jobs.billing_code),
+        team                 = EXCLUDED.team,
+        for_psc_client       = EXCLUDED.for_psc_client,
+        for_generic_client   = EXCLUDED.for_generic_client,
+        active               = TRUE;
+      -- We can't tell whether it was insert vs update from a single-row INSERT
+      -- without a RETURNING clause + xmax check, but the count is enough:
+      inserted_count := inserted_count + 1;
+      RAISE NOTICE 'Job seed OK: %', j[1];
+    EXCEPTION WHEN OTHERS THEN
+      failed_count := failed_count + 1;
+      RAISE WARNING 'Job seed FAILED for "%" — % (%)', j[1], SQLERRM, SQLSTATE;
+    END;
+  END LOOP;
+  RAISE NOTICE 'Job seed complete: % succeeded, % failed (out of %)',
+               inserted_count, failed_count, array_length(jobs_to_seed, 1);
+END
+$jobseed$;
 
 -- 3c. Deactivate legacy seeded jobs that aren't in the new spec (preserves
 -- foreign keys on existing projects, just hides from new selections).
-UPDATE jobs SET active = FALSE
-WHERE name IN ('Permitting', 'Permitting (RR)', 'Design', 'Resident Engineer 2', 'Other')
-  AND name NOT IN (
-    'County Permitting','DOT Permitting','RR Permitting',
-    'Resident Engineer','Inspection','Update Plant Records',
-    'OSP Staking Aerial','OSP Staking Underground','Construction Progress Reports',
-    'OSP Design & Fiber Assignments','Staking Fiber Assignments','Records Management'
-  );
+DO $deactivate$
+DECLARE
+  rows_affected INT;
+BEGIN
+  UPDATE jobs SET active = FALSE
+  WHERE name IN ('Permitting', 'Permitting (RR)', 'Design', 'Resident Engineer 2', 'Other')
+    AND name NOT IN (
+      'County Permitting','DOT Permitting','RR Permitting',
+      'Resident Engineer','Inspection','Update Plant Records',
+      'OSP Staking Aerial','OSP Staking Underground','Construction Progress Reports',
+      'OSP Design & Fiber Assignments','Staking Fiber Assignments','Records Management'
+    );
+  GET DIAGNOSTICS rows_affected = ROW_COUNT;
+  RAISE NOTICE 'Legacy job deactivation: % rows affected', rows_affected;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'Legacy deactivation FAILED — % (%)', SQLERRM, SQLSTATE;
+END
+$deactivate$;
 
 
 -- ─── 4. Auto-nesting migration: re-parent existing real projects ──────────
