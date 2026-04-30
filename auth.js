@@ -96,24 +96,60 @@ async function bootstrapAuthSchema(pool) {
     }
   }
 
-  // Seed an initial admin if no admin exists. Password from ADMIN_PASSWORD env
-  // var, falling back to 'admin' (which the user MUST change on first login —
-  // the response guides them to do so).
+  // Seed/refresh the default admin account.
+  //
+  // Behavior:
+  //   - If no admin user exists at all → create one with the env password
+  //   - If admin user exists but ADMIN_PASSWORD env var is set → REFRESH the
+  //     password from env. This makes the env var always authoritative for
+  //     the default 'admin' username, so if you forget the password, you can
+  //     just set ADMIN_PASSWORD on Railway, redeploy, and sign back in.
+  //   - If admin user exists and ADMIN_PASSWORD is unset → leave it alone
+  //     (the user has presumably set their own password via the UI)
+  //
+  // We always log what happened so deploy logs are diagnostic. The previous
+  // version silently no-op'd if any admin existed, which made it impossible
+  // to recover from a partial-run state where the row existed but no one
+  // knew the password.
   try {
-    const { rows } = await pool.query(`SELECT COUNT(*)::int AS n FROM users WHERE role = 'admin' AND active = TRUE`);
-    if (rows[0].n === 0) {
-      const initialPw = process.env.ADMIN_PASSWORD || 'admin';
+    const envPw = process.env.ADMIN_PASSWORD;
+    const { rows: existing } = await pool.query(
+      `SELECT id, active FROM users WHERE LOWER(username) = 'admin' LIMIT 1`
+    );
+
+    if (existing.length === 0) {
+      // No admin row at all — create from env (or fallback to 'admin')
+      const initialPw = envPw || 'admin';
       const hash = await bcrypt.hash(initialPw, BCRYPT_ROUNDS);
       await pool.query(
-        `INSERT INTO users (username, password_hash, role, full_name, email)
-         VALUES ('admin', $1, 'admin', 'Default Admin', NULL)
-         ON CONFLICT (username) DO NOTHING`,
+        `INSERT INTO users (username, password_hash, role, team, full_name, email, active)
+         VALUES ('admin', $1, 'admin', NULL, 'Default Admin', NULL, TRUE)`,
         [hash]
       );
-      console.log(`  ✓ Default admin created: username='admin', password='${initialPw}' (CHANGE IT)`);
+      console.log(`  ✓ Default admin CREATED — username='admin', password='${initialPw}' (CHANGE IT)`);
+    } else if (envPw) {
+      // Admin exists and env wants to override the password. Always refresh.
+      const hash = await bcrypt.hash(envPw, BCRYPT_ROUNDS);
+      await pool.query(
+        `UPDATE users SET password_hash = $1, role = 'admin', active = TRUE, updated_at = NOW()
+         WHERE LOWER(username) = 'admin'`,
+        [hash]
+      );
+      console.log(`  ✓ Admin password REFRESHED from ADMIN_PASSWORD env var (username='admin')`);
+    } else {
+      // Admin exists, no env override. Leave password alone but ensure account active.
+      if (!existing[0].active) {
+        await pool.query(
+          `UPDATE users SET active = TRUE, updated_at = NOW() WHERE id = $1`,
+          [existing[0].id]
+        );
+        console.log(`  ✓ Admin account REACTIVATED (username='admin')`);
+      } else {
+        console.log(`  · Admin account exists, ADMIN_PASSWORD env var not set — leaving password unchanged`);
+      }
     }
   } catch (e) {
-    console.error('  ✗ Initial admin seed failed:', e.message);
+    console.error('  ✗ Admin seed/refresh failed:', e.message);
   }
 
   console.log('───── auth bootstrap complete ─────');
