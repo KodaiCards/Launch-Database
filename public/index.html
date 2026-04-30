@@ -1352,6 +1352,15 @@ function toggleDarkMode(){
 // STATE
 // ═══════════════════════════════════════════════════════════
 let clients = [], staff = [], contracts = [], projects = [], allProjects = [];
+
+// Tracks which rollup nodes the user has expanded across the various tree
+// views (Dashboard, Projects, Revenue). Persists across re-renders triggered
+// by polling — without this, the 1.5s auto-refresh rebuilds tbody and
+// collapses every expanded rollup, making it impossible to keep one open
+// while reviewing children. Shared across all *treeToggle functions because
+// project IDs are globally unique, so a parent expanded in Dashboard stays
+// expanded if you flip to Projects too.
+const expandedRollups = new Set();
 const STAGES = ['potential','started','submitted','approved','checklist'];
 const STAGE_LABELS = {potential:'Potential',started:'Started',submitted:'Submitted',approved:'Approved',checklist:'Checklist'};
 const TYPE_LABELS = {inspection:'Inspection',re:'Resident Engineer',permitting:'Permitting',design:'Design',other:'Other'};
@@ -1827,8 +1836,9 @@ async function loadDashboard() {
     return { ytd, hours };
   }
 
-  // Build rows recursively — use server-computed ytd_revenue
-  function buildRows(projects, depth, parentGroupClass) {
+  // Build rows recursively — use server-computed ytd_revenue. Reads
+  // expandedRollups so user-expanded nodes survive polling re-renders.
+  function buildRows(projects, depth, parentGroupClass, parentExpanded) {
     let html = '';
     for (const p of projects) {
       const indent = depth * 28;
@@ -1838,13 +1848,20 @@ async function loadDashboard() {
       const groupKey = 'dt-' + p.id;
       const chevId = 'dc-' + p.id;
       const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
-      const cls = parentGroupClass ? `class="dtree dtree-${parentGroupClass}" style="display:none;${bg}"` : `style="${bg}"`;
+
+      // Visibility flows from parent's expanded state (root rows always visible).
+      const isVisible = depth === 0 || parentExpanded;
+      const thisExpanded = expandedRollups.has(p.id);
+      const display = !isVisible ? 'display:none;' : '';
+      const cls = parentGroupClass ? `class="dtree dtree-${parentGroupClass}" style="${display}${bg}"` : `style="${bg}"`;
+
       const ytd = parseFloat(p.ytd_revenue) || 0;
       const hours = parseFloat(p.actual_hours) || 0;
       const area = p.concentrator_area ? `<span style="font-size:10px;color:var(--text-muted);margin-left:4px">(${esc(p.concentrator_area)})</span>` : '';
       const badge = expandable ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kids.length}</span>` : '';
+      const chevRotation = expandable && thisExpanded ? 'transform:rotate(90deg);' : '';
       const chevron = expandable
-        ? `<span onclick="event.stopPropagation();dtreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></span>`
+        ? `<span onclick="event.stopPropagation();dtreeToggle('${p.id}','${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
         : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
       html += `<tr ${cls} onclick="showProjectDetail('${p.id}')" style="cursor:pointer;${bg}">
@@ -1859,23 +1876,45 @@ async function loadDashboard() {
 
       // Recurse into children
       if (expandable) {
-        html += buildRows(kids, depth + 1, groupKey);
+        html += buildRows(kids, depth + 1, groupKey, thisExpanded);
       }
     }
     return html;
   }
 
-  tbody.innerHTML = buildRows(roots, 0, null);
+  tbody.innerHTML = buildRows(roots, 0, null, true);
 }
 
-function dtreeToggle(groupKey, chevId) {
+// Dashboard tree toggle — uses the shared expandedRollups state so that
+// polling re-renders preserve the user's expansion. The id-prefix scheme
+// (dt-/dc-) is dashboard-specific to avoid collisions with the Projects
+// view's pt-/pc- ids when both trees might co-exist in the DOM.
+function dtreeToggle(projectId, groupKey, chevId) {
+  const wasExpanded = expandedRollups.has(projectId);
+  if (wasExpanded) {
+    expandedRollups.delete(projectId);
+    // Cascade-collapse descendants so re-render doesn't show grandchildren
+    // of a node we just collapsed.
+    const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
+    const collectDescendants = (parentId, acc) => {
+      list.filter(p => p.parent_id === parentId).forEach(c => {
+        acc.add(c.id);
+        collectDescendants(c.id, acc);
+      });
+    };
+    const descs = new Set();
+    collectDescendants(projectId, descs);
+    descs.forEach(id => expandedRollups.delete(id));
+  } else {
+    expandedRollups.add(projectId);
+  }
+
+  // Immediate visual feedback
   const rows = document.querySelectorAll('.dtree-' + groupKey);
   const chev = document.getElementById(chevId);
-  const showing = rows[0] && rows[0].style.display !== 'none';
   rows.forEach(r => {
-    r.style.display = showing ? 'none' : 'table-row';
-    if (showing) {
-      // Recursively collapse all nested children
+    r.style.display = wasExpanded ? 'none' : 'table-row';
+    if (wasExpanded) {
       const nestedChevs = r.querySelectorAll('[id^="dc-"]');
       nestedChevs.forEach(nc => {
         nc.style.transform = 'rotate(0deg)';
@@ -1884,7 +1923,7 @@ function dtreeToggle(groupKey, chevId) {
       });
     }
   });
-  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
+  if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1979,11 +2018,9 @@ function filterProjects() {
   renderProjects(allProjects.filter(p => keep.has(p.id)), true);
 }
 
-// Tracks which rollup nodes the user has expanded. Persists across
-// re-renders triggered by polling — without this, the 1.5s auto-refresh
-// rebuilds the tbody and collapses every expanded rollup, making it
-// impossible to keep one open while reviewing children.
-const expandedRollups = new Set();
+// Note: expandedRollups is declared at top of file — shared across all
+// tree views (Dashboard, Projects, Revenue) so polling re-renders don't
+// collapse what the user expanded.
 
 function renderProjects(list, expandAll = false) {
   const tbody = document.getElementById('projects-body');
@@ -2808,6 +2845,20 @@ async function loadPermits() {
     return incomplete?.stage === stageFilter;
   }) : permits;
 
+  // Sort: further-along stages on top. Items at "billed" go above "approved",
+  // approved above "submitted", etc. Within a stage, most-recently-updated first.
+  const stageOf = (p) => {
+    const stages = p.stages||[];
+    const incomplete = stages.find(s => !s.completed_at);
+    return incomplete?.stage || stages[stages.length-1]?.stage || 'potential';
+  };
+  filtered.sort((a, b) => {
+    const sa = STAGES.indexOf(stageOf(a));
+    const sb = STAGES.indexOf(stageOf(b));
+    if (sa !== sb) return sb - sa;
+    return (b.updated_at || '').localeCompare(a.updated_at || '');
+  });
+
   const tbody = document.getElementById('permits-body');
   if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-file-signature"></i><p>No permits found</p></div></td></tr>'; return; }
 
@@ -2890,8 +2941,8 @@ async function loadPermitDocs(projectId) {
     const sizeMb = d.file_size ? (d.file_size / 1024 / 1024).toFixed(1) + ' MB' : '';
     // DWG/DXF can't render in browser — offer Download instead of View
     const action = (ext === 'dwg' || ext === 'dxf' || ext === 'zip')
-      ? `<a href="/uploads/${esc(d.file_path)}" download="${esc(d.file_name)}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-download"></i></a>`
-      : `<a href="/uploads/${esc(d.file_path)}" target="_blank" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
+      ? `<a href="/uploads/${escUrl(d.file_path)}" download="${esc(d.file_name)}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-download"></i></a>`
+      : `<a href="/uploads/${escUrl(d.file_path)}" target="_blank" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
     return `
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
       <i class="fa-solid ${iconCls}" style="color:${iconColor};font-size:18px"></i>
@@ -2956,8 +3007,8 @@ async function loadDesignDocs(projectId) {
         : 'var(--text-muted)';
       const sizeMb = d.file_size ? (d.file_size / 1024 / 1024).toFixed(1) + ' MB' : '';
       const action = (ext === 'dwg' || ext === 'dxf' || ext === 'zip')
-        ? `<a href="/uploads/${esc(d.file_path)}" download="${esc(d.file_name)}" class="btn btn-sm btn-secondary" title="Download (browser cannot preview ${ext.toUpperCase()})"><i class="fa-solid fa-download"></i></a>`
-        : `<a href="/uploads/${esc(d.file_path)}" target="_blank" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
+        ? `<a href="/uploads/${escUrl(d.file_path)}" download="${esc(d.file_name)}" class="btn btn-sm btn-secondary" title="Download (browser cannot preview ${ext.toUpperCase()})"><i class="fa-solid fa-download"></i></a>`
+        : `<a href="/uploads/${escUrl(d.file_path)}" target="_blank" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
       return `
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
         <i class="fa-solid ${iconCls}" style="color:${iconColor};font-size:20px"></i>
@@ -3258,7 +3309,16 @@ async function loadDesign() {
 
   const tbody = document.getElementById('design-body');
   if (!projects.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-drafting-compass"></i><p>No design projects</p></div></td></tr>'; return; }
-  tbody.innerHTML = projects.map(p => {
+
+  // Sort: further-along stages on top. Within a stage, newest updated_at first.
+  const sortedProjects = [...projects].sort((a, b) => {
+    const sa = DESIGN_STAGES.indexOf(a.current_stage || 'potential');
+    const sb = DESIGN_STAGES.indexOf(b.current_stage || 'potential');
+    if (sa !== sb) return sb - sa;
+    return (b.updated_at || '').localeCompare(a.updated_at || '');
+  });
+
+  tbody.innerHTML = sortedProjects.map(p => {
     const stage = p.current_stage || 'potential';
     const si = DESIGN_STAGES.indexOf(stage);
     const pipe = DESIGN_STAGES.map((s,i)=>`<div style="flex:1;height:8px;border-radius:4px;background:${i<si?'var(--success)':i===si?'var(--primary)':'#ddd'}" title="${DESIGN_LABELS[s]}"></div>`).join('');
@@ -4209,7 +4269,7 @@ function renderRevenueDetail(details) {
     return { hrs, earned };
   }
 
-  function buildRevRows(projects, depth, parentGroupClass) {
+  function buildRevRows(projects, depth, parentGroupClass, parentExpanded) {
     let html = '';
     for (const p of projects) {
       const indent = depth * 28;
@@ -4219,16 +4279,22 @@ function renderRevenueDetail(details) {
       const groupKey = 'rv-' + p.id;
       const chevId = 'rc-' + p.id;
       const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:#f0f0f0';
+
+      // Persistent visibility
+      const isVisible = depth === 0 || parentExpanded;
+      const thisExpanded = expandedRollups.has(p.id);
+
       const trClass = ['clickable'];
       if (parentGroupClass) trClass.push('rtree', 'rtree-' + parentGroupClass);
-      const trStyle = parentGroupClass ? `display:none;${bg}` : bg;
+      const trStyle = parentGroupClass ? `${!isVisible ? 'display:none;' : ''}${bg}` : bg;
       const trAttrs = `class="${trClass.join(' ')}" style="${trStyle}"`;
       const totals = sumTree(p);
       const expected = parseFloat(p.expected_revenue) || 0;
       const earnedColor = totals.earned > 0 ? 'var(--primary)' : 'var(--text-muted)';
       const badge = expandable ? `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${kids.length}</span>` : '';
+      const chevRotation = expandable && thisExpanded ? 'transform:rotate(90deg);' : '';
       const chevron = expandable
-        ? `<span onclick="event.stopPropagation();rtreeToggle('${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></span>`
+        ? `<span onclick="event.stopPropagation();rtreeToggle('${p.id}','${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
         : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
       html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
@@ -4240,21 +4306,39 @@ function renderRevenueDetail(details) {
         <td style="font-weight:600;color:${earnedColor}">${fmtMoney(totals.earned)}</td>
         <td>${statusBadge(p.status)}</td>
       </tr>`;
-      if (expandable) html += buildRevRows(kids, depth + 1, groupKey);
+      if (expandable) html += buildRevRows(kids, depth + 1, groupKey, thisExpanded);
     }
     return html;
   }
 
-  tbody.innerHTML = buildRevRows(roots, 0, null);
+  tbody.innerHTML = buildRevRows(roots, 0, null, true);
 }
 
-function rtreeToggle(groupKey, chevId) {
+// Revenue tree toggle — uses shared expandedRollups state. Same pattern
+// as dtreeToggle, just operates on the rtree-/rc- DOM hierarchy.
+function rtreeToggle(projectId, groupKey, chevId) {
+  const wasExpanded = expandedRollups.has(projectId);
+  if (wasExpanded) {
+    expandedRollups.delete(projectId);
+    const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
+    const collectDescendants = (parentId, acc) => {
+      list.filter(p => p.parent_id === parentId).forEach(c => {
+        acc.add(c.id);
+        collectDescendants(c.id, acc);
+      });
+    };
+    const descs = new Set();
+    collectDescendants(projectId, descs);
+    descs.forEach(id => expandedRollups.delete(id));
+  } else {
+    expandedRollups.add(projectId);
+  }
+
   const rows = document.querySelectorAll('.rtree-' + groupKey);
   const chev = document.getElementById(chevId);
-  const showing = rows[0] && rows[0].style.display !== 'none';
   rows.forEach(r => {
-    r.style.display = showing ? 'none' : 'table-row';
-    if (showing) {
+    r.style.display = wasExpanded ? 'none' : 'table-row';
+    if (wasExpanded) {
       const nestedChevs = r.querySelectorAll('[id^="rc-"]');
       nestedChevs.forEach(nc => {
         nc.style.transform = 'rotate(0deg)';
@@ -4263,7 +4347,7 @@ function rtreeToggle(groupKey, chevId) {
       });
     }
   });
-  if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
+  if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
 async function loadRevenue() {
@@ -4665,7 +4749,7 @@ function renderProjectDetail(data, month, year) {
             </tr></thead>
             <tbody>${permit_documents.map(d => `<tr>
               <td style="padding:6px 12px"><span class="badge badge-permitting">${esc(d.doc_type)}</span></td>
-              <td style="padding:6px 12px"><a href="/uploads/${esc(d.file_path)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(d.file_name||'file')}</a></td>
+              <td style="padding:6px 12px"><a href="/uploads/${escUrl(d.file_path)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(d.file_name||'file')}</a></td>
               <td style="padding:6px 12px;text-align:right">${d.revision_number || 1}</td>
               <td style="padding:6px 12px;color:var(--text-muted);font-size:12px">${d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'}<br>${esc(d.uploaded_by || '')}</td>
               <td style="padding:6px 12px;color:var(--text-muted);font-size:12px">${esc(d.notes || '')}</td>
@@ -5765,6 +5849,11 @@ function fmtHours(n) {
   return v.toFixed(4).replace(/\.?0+$/, '');
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// URL-safe path encoding for /uploads/<file>. Browser strips '#'/'?' as
+// fragment/query separators, and spaces become '+' or fail outright. esc()
+// does HTML-entity escaping which is wrong for URLs. Use this for any
+// /uploads/<path> link.
+function escUrl(s) { return encodeURIComponent(String(s||'')).replace(/%2F/g, '/'); }
 function statusBadge(s) { const m={active:'badge-active',completed:'badge-completed',billed:'badge-billed',on_hold:'badge-hold'}; return `<span class="badge ${m[s]||''}">${s?.replace('_',' ')}</span>`; }
 function typeBadge(t) { const m={inspection:'badge-inspection',re:'badge-re',permitting:'badge-permitting',design:'badge-design',other:'badge-other'}; return `<span class="badge ${m[t]||''}">${TYPE_LABELS[t]||t}</span>`; }
 function progressBar(actual, expected) {

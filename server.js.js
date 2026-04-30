@@ -17,9 +17,24 @@ const PORT = process.env.PORT || 3000;
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
+// Sanitize filename for URL-safe storage. The biggest culprit is '#' — it's
+// valid on disk but in URLs it's the fragment separator, so the browser
+// silently strips everything after it before sending the request. A file
+// stored as 'abc_Permit_#U-207.pdf' becomes inaccessible because the browser
+// requests '/uploads/abc_Permit_' and the rest is treated as a fragment.
+// '?' has the same problem (query string separator). We replace these and
+// also collapse whitespace runs to single underscores so URLs stay clean.
+function sanitizeFilename(name) {
+  return name
+    .replace(/[#?]/g, '_')          // URL fragment / query separators
+    .replace(/[\\/]/g, '_')         // path separators
+    .replace(/\s+/g, ' ')           // collapse repeated whitespace
+    .trim();
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => cb(null, `${uuidv4()}_${file.originalname}`)
+  filename: (req, file, cb) => cb(null, `${uuidv4()}_${sanitizeFilename(file.originalname)}`)
 });
 // 3GB cap. Multer streams multipart uploads to disk so RAM stays low even
 // for huge files. The practical ceiling on a single HTTP POST upload is

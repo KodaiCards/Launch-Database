@@ -445,6 +445,7 @@ let projectsCache = [];
 
 // ─── Tiny utilities ─────────────────────────────────────────────────────────
 function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+function escUrl(s) { return encodeURIComponent(String(s||'')).replace(/%2F/g, '/'); }
 function om(id){document.getElementById(id).classList.add('open')}
 function cm(id){document.getElementById(id).classList.remove('open')}
 async function api(p,m='GET',b=null){
@@ -780,7 +781,17 @@ async function loadPipeline(){
     const d = await api('/api/design');
     const ct = {}; DS.forEach(s => ct[s] = 0); d.forEach(p => { if (p.current_stage) ct[p.current_stage]++; });
     document.getElementById('dsb').innerHTML = DS.map(s => `<div style="background:${DC[s]};color:#fff;padding:14px;border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:700">${ct[s]}</div><div style="font-size:11px;text-transform:uppercase;opacity:.85">${DL[s]}</div></div>`).join('');
-    document.getElementById('dplb').innerHTML = d.length ? d.map(p => {
+    // Sort: further-along stages on top. Within the same stage, newest
+    // updated_at first (so freshly-advanced items pop to the top of their
+    // bucket). Stage index is descending — completed > review_process >
+    // started > potential.
+    const sorted = [...d].sort((a, b) => {
+      const sa = DS.indexOf(a.current_stage || 'potential');
+      const sb = DS.indexOf(b.current_stage || 'potential');
+      if (sa !== sb) return sb - sa;  // higher stage index = further along = higher on page
+      return (b.updated_at || '').localeCompare(a.updated_at || '');
+    });
+    document.getElementById('dplb').innerHTML = sorted.length ? sorted.map(p => {
       const s = p.current_stage || 'potential', si = DS.indexOf(s);
       const pipe = DS.map((x,i) => `<div style="flex:1;height:8px;border-radius:4px;background:${i<si?'#28A745':i===si?'var(--portal-color)':'#ddd'}" title="${DL[x]}"></div>`).join('');
       return `<tr><td class="td-name">${esc(p.name)}</td><td>${esc(p.client_name||'—')}</td><td class="td-mono">${esc(p.work_order_number||'—')}</td>
