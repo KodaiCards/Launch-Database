@@ -53,7 +53,38 @@ function teamForRole(role) {
   if (!role) return null;
   if (role.startsWith('design_')) return 'design';
   if (role.startsWith('permitting_')) return 'permitting';
+  if (role.startsWith('inspection_')) return 'inspection';
   return null;  // admin sees all
+}
+
+// Helper: ALL teams a user can access. Combines their primary role's team
+// with any extra_teams they've been granted. Returns array of team strings:
+// 'design' | 'permitting' | 'inspection'. Empty array means no team-scoped
+// access (admin sees everything regardless, so this only matters for
+// non-admin users in portal contexts).
+//
+// Example: a design_engineer with extra_teams=['permitting'] returns
+// ['design','permitting'] — they can use either portal and see both teams'
+// data inside whichever one they're viewing.
+function teamsForUser(user) {
+  if (!user) return [];
+  if (user.role === 'admin') return ['design','permitting','inspection'];
+  const primary = teamForRole(user.role);
+  const extras = Array.isArray(user.extra_teams) ? user.extra_teams : [];
+  const set = new Set();
+  if (primary) set.add(primary);
+  for (const t of extras) {
+    if (t === 'design' || t === 'permitting' || t === 'inspection') set.add(t);
+  }
+  return [...set];
+}
+
+// Helper: can the given user access the given portal mode? Wraps teamsForUser
+// with PORTAL_MODE convention. Returns true for admin always.
+function canAccessPortal(user, portalMode) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  return teamsForUser(user).includes(portalMode);
 }
 
 // Helper: is this user a manager-or-higher? Used for revenue/billing access.
@@ -90,6 +121,12 @@ async function bootstrapAuthSchema(pool) {
     // system preference). Persisted server-side so it follows the user across
     // browsers and devices instead of being trapped in one localStorage.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(10)`,
+    // Multi-team access. extra_teams is a TEXT[] of additional teams the user
+    // can access beyond their primary role's team. E.g. a design_engineer with
+    // extra_teams = '{permitting}' can use the permitting portal and see
+    // permitting data alongside their design work. Empty array = single-team
+    // access (the default). Admins always see everything regardless.
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS extra_teams TEXT[] DEFAULT '{}'`,
   ];
   for (const sql of ddl) {
     try {
@@ -193,7 +230,7 @@ function authMiddleware(pool) {
     // Verify user is still active in DB (don't trust an old token if account was deactivated)
     try {
       const { rows } = await pool.query(
-        `SELECT id, username, role, team, full_name, email, active
+        `SELECT id, username, role, team, extra_teams, full_name, email, active
          FROM users WHERE id = $1 LIMIT 1`,
         [payload.id]
       );
@@ -235,7 +272,7 @@ function installAuthRoutes(app, pool) {
     }
     try {
       const { rows } = await pool.query(
-        `SELECT id, username, password_hash, role, team, full_name, email, active, theme
+        `SELECT id, username, password_hash, role, team, extra_teams, full_name, email, active, theme
          FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1`,
         [username]
       );
@@ -263,7 +300,8 @@ function installAuthRoutes(app, pool) {
         token,
         user: {
           id: user.id, username: user.username, role: user.role, team: user.team,
-          full_name: user.full_name, email: user.email, theme: user.theme
+          full_name: user.full_name, email: user.email, theme: user.theme,
+          extra_teams: user.extra_teams || []
         }
       });
     } catch (e) {
@@ -287,7 +325,7 @@ function installAuthRoutes(app, pool) {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     try {
       const { rows } = await pool.query(
-        `SELECT id, username, role, team, full_name, email, theme FROM users WHERE id = $1`,
+        `SELECT id, username, role, team, extra_teams, full_name, email, theme FROM users WHERE id = $1`,
         [req.user.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
@@ -348,7 +386,7 @@ function installAuthRoutes(app, pool) {
   app.get('/api/users', requireAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query(`
-        SELECT id, username, role, team, full_name, email, active, created_at, last_login
+        SELECT id, username, role, team, extra_teams, full_name, email, active, created_at, last_login
         FROM users ORDER BY active DESC, username ASC
       `);
       res.json(rows);
@@ -357,7 +395,7 @@ function installAuthRoutes(app, pool) {
 
   // POST /api/users — create user (admin only)
   app.post('/api/users', requireAdmin, async (req, res) => {
-    const { username, password, role, full_name, email } = req.body || {};
+    const { username, password, role, full_name, email, extra_teams } = req.body || {};
     if (!username || !password || !role) {
       return res.status(400).json({ error: 'username, password, and role required' });
     }
@@ -367,14 +405,18 @@ function installAuthRoutes(app, pool) {
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
+    // Validate extra_teams if provided
+    const cleanExtras = Array.isArray(extra_teams)
+      ? extra_teams.filter(t => ['design','permitting','inspection'].includes(t))
+      : [];
     try {
       const team = teamForRole(role);
       const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
       const { rows } = await pool.query(
-        `INSERT INTO users (username, password_hash, role, team, full_name, email)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, username, role, team, full_name, email, active, created_at`,
-        [username, hash, role, team, full_name || null, email || null]
+        `INSERT INTO users (username, password_hash, role, team, full_name, email, extra_teams)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id, username, role, team, extra_teams, full_name, email, active, created_at`,
+        [username, hash, role, team, full_name || null, email || null, cleanExtras]
       );
       res.json(rows[0]);
     } catch (e) {
@@ -385,7 +427,7 @@ function installAuthRoutes(app, pool) {
 
   // PUT /api/users/:id — update user (admin only). Optional password reset via 'password' field.
   app.put('/api/users/:id', requireAdmin, async (req, res) => {
-    const { username, role, full_name, email, active, password } = req.body || {};
+    const { username, role, full_name, email, active, password, extra_teams } = req.body || {};
     if (role && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
     }
@@ -408,6 +450,12 @@ function installAuthRoutes(app, pool) {
       if (full_name !== undefined) { sets.push(`full_name = $${i++}`); vals.push(full_name); }
       if (email !== undefined)     { sets.push(`email = $${i++}`); vals.push(email); }
       if (active !== undefined)    { sets.push(`active = $${i++}`); vals.push(!!active); }
+      if (extra_teams !== undefined) {
+        const cleanExtras = Array.isArray(extra_teams)
+          ? extra_teams.filter(t => ['design','permitting','inspection'].includes(t))
+          : [];
+        sets.push(`extra_teams = $${i++}`); vals.push(cleanExtras);
+      }
       if (password) {
         const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
         sets.push(`password_hash = $${i++}`); vals.push(hash);
@@ -416,7 +464,7 @@ function installAuthRoutes(app, pool) {
       sets.push(`updated_at = NOW()`);
       const { rows } = await pool.query(
         `UPDATE users SET ${sets.join(', ')} WHERE id = $1
-         RETURNING id, username, role, team, full_name, email, active, last_login`,
+         RETURNING id, username, role, team, extra_teams, full_name, email, active, last_login`,
         vals
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
@@ -453,6 +501,8 @@ module.exports = {
   signToken,
   verifyToken,
   teamForRole,
+  teamsForUser,
+  canAccessPortal,
   isManagerOrAdmin,
   VALID_ROLES,
 };

@@ -31,6 +31,12 @@
      was the source of the dark-mode row flicker (the override fires after
      the inline paint so the row briefly showed the literal #f0f0f0). */
   --row-alt:#F0F0F0;
+  /* Chart bar bg for the Monthly Earnings Trend on the Revenue tab. In
+     light mode we use the brand light-blue. In dark mode we override to a
+     much brighter shade so bars are visible against the dark page bg
+     (the original --primary-light is too close to the dark page color
+     to register visually). */
+  --chart-bar:#BBDEFB;
 }
 
 /* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode(). */
@@ -42,6 +48,11 @@ html[data-theme="dark"]{
   --text-muted:#9BA1A8;
   --primary-light:#1E3A5C;
   --row-alt:#1F2630;
+  /* Chart bars in dark mode need to stand out against the dark page bg.
+     A muted blue-gray works visually distinct from both the page (very
+     dark blue-gray) and the brand primary (saturated blue) used for the
+     selected/highlighted bar. */
+  --chart-bar:#3D4A5C;
   /* color-scheme on the root tells the OS-rendered controls (select popups,
      scrollbars, default form widgets) to use their dark variants. Setting
      this on individual selects causes a flicker because the popup opens
@@ -356,6 +367,17 @@ body.ai-open .main{padding-right:360px}
 .alert-warning,.alert-warn{background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800}
 .alert-info{background:var(--primary-light);border:1px solid #BBDEFB;color:#1B4F72}
 .alert-success{background:#E8F5E9;border:1px solid #81C784;color:#1B5E20}
+/* Dark mode: light pastel backgrounds become unreadable on dark page bg.
+   Use saturated dark-mode-friendly bgs with light text for proper contrast.
+   Border colors get dimmed too so they don't dominate against the new bg. */
+html[data-theme="dark"] .alert-info{background:#1E3A5C !important;border-color:#2D4A6C !important;color:#BBDEFB !important}
+html[data-theme="dark"] .alert-info strong{color:#E3F2FD !important}
+html[data-theme="dark"] .alert-warning,
+html[data-theme="dark"] .alert-warn{background:#3D2F0F !important;border-color:#5C4520 !important;color:#FFE082 !important}
+html[data-theme="dark"] .alert-warning strong,
+html[data-theme="dark"] .alert-warn strong{color:#FFF3CD !important}
+html[data-theme="dark"] .alert-success{background:#1B3D24 !important;border-color:#2D5C36 !important;color:#A5D6A7 !important}
+html[data-theme="dark"] .alert-success strong{color:#C8E6C9 !important}
 .empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}
 .empty-state i{font-size:36px;margin-bottom:12px;opacity:.3}
 .empty-state p{font-size:14px}
@@ -1338,13 +1360,30 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="form-group">
           <label>Role *</label>
-          <select id="user-role">
+          <select id="user-role" onchange="userRoleChanged()">
             <option value="admin">Admin (full access)</option>
             <option value="design_manager">Design Manager (sees Design team data + revenue)</option>
             <option value="permitting_manager">Permitting Manager (sees Permitting team data + revenue)</option>
             <option value="design_engineer">Design Engineer (own hours only, no revenue)</option>
             <option value="permitting_engineer">Permitting Engineer (own hours only, no revenue)</option>
           </select>
+        </div>
+      </div>
+      <div class="form-row" id="user-extra-teams-row">
+        <div class="form-group" style="flex:1">
+          <label>Additional Portal Access <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional — grants access to other portals beyond their primary role's team)</span></label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;padding:8px 0">
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:400">
+              <input type="checkbox" class="user-extra-team" value="design"> Design portal
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:400">
+              <input type="checkbox" class="user-extra-team" value="permitting"> Permitting portal
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:400">
+              <input type="checkbox" class="user-extra-team" value="inspection"> Inspection (admin tab only)
+            </label>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted)">Hidden when the role is Admin (admins already see everything).</span>
         </div>
       </div>
       <div class="form-row">
@@ -5226,7 +5265,7 @@ async function loadRevenue() {
     return `<div onclick="selectRevMonth(${mn})" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;opacity:${isFuture?'0.3':'1'}">
       <span style="font-size:10px;font-weight:600;color:var(--text-muted)">${earned > 0 ? fmtMoney(earned) : ''}</span>
       <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:80px">
-        <div style="width:100%;background:${isSelected ? 'var(--primary)' : billed > 0 ? 'var(--success)' : 'var(--primary-light)'};border-radius:4px 4px 0 0;min-height:${earned > 0 ? '4' : '0'}px;height:${pct}%;transition:height .3s"></div>
+        <div style="width:100%;background:${isSelected ? 'var(--primary)' : billed > 0 ? 'var(--success)' : 'var(--chart-bar)'};border-radius:4px 4px 0 0;min-height:${earned > 0 ? '4' : '0'}px;height:${pct}%;transition:height .3s"></div>
       </div>
       <span style="font-size:10px;font-weight:${isSelected?'700':'500'};color:${isSelected?'var(--primary)':'var(--text-muted)'}">${MONTH_NAMES[i]}</span>
     </div>`;
@@ -6671,26 +6710,66 @@ function applyUserScopedUI() {
 }
 
 function showAccountMenu() {
-  // Simple dropdown: change password / sign out
-  const existing = document.getElementById('account-menu');
+  // Centered modal — replaces the previous dropdown which was hard to reach
+  // and got clipped on smaller screens. Re-uses the standard modal styles
+  // (.modal-overlay + .modal-content) so it gets dark-mode treatment for
+  // free. Re-creating the DOM each time keeps the structure simple — the
+  // modal's lifecycle is "open or absent", no persistent state.
+  const existing = document.getElementById('account-modal');
   if (existing) { existing.remove(); return; }
-  const menu = document.createElement('div');
-  menu.id = 'account-menu';
-  menu.style.cssText = 'position:absolute;top:55px;right:120px;background:var(--white);border:1px solid var(--gray-border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:6px;z-index:100;min-width:180px';
-  menu.innerHTML = `
-    <button class="btn btn-secondary btn-sm" style="width:100%;text-align:left;justify-content:flex-start;margin-bottom:4px" onclick="document.getElementById('account-menu').remove();openModal('change-password-modal')"><i class="fa-solid fa-key" style="margin-right:6px"></i>Change Password</button>
-    <button class="btn btn-secondary btn-sm" style="width:100%;text-align:left;justify-content:flex-start" onclick="signOut()"><i class="fa-solid fa-right-from-bracket" style="margin-right:6px"></i>Sign Out</button>
+  const u = currentUser || {};
+  const teams = [];
+  // Show all team access. Primary team comes from role; extra_teams adds more.
+  const primary = u.role === 'admin' ? null
+                : u.role && u.role.startsWith('design_') ? 'design'
+                : u.role && u.role.startsWith('permitting_') ? 'permitting'
+                : u.role && u.role.startsWith('inspection_') ? 'inspection'
+                : null;
+  if (primary) teams.push(primary);
+  for (const t of (u.extra_teams || [])) {
+    if (!teams.includes(t)) teams.push(t);
+  }
+  const teamPills = u.role === 'admin'
+    ? '<span style="background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600">Admin (all teams)</span>'
+    : teams.length
+      ? teams.map(t => `<span style="background:var(--primary-light);color:var(--primary);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:capitalize">${t}</span>`).join(' ')
+      : '<span style="color:var(--text-muted);font-size:11px">no team access</span>';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'account-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:420px;width:90%">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-user-circle" style="margin-right:8px"></i>Account</span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('account-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
+          <div style="font-size:18px;font-weight:600;margin-bottom:4px">${esc(u.full_name || u.username || 'Unknown')}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${esc(u.email || u.username || '')}</div>
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <span style="background:var(--gray-light);color:var(--text);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:capitalize">${esc((u.role || '').replace('_', ' '))}</span>
+            ${teamPills}
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;margin-bottom:8px;padding:12px" onclick="document.getElementById('account-modal').remove();openModal('change-password-modal')">
+          <i class="fa-solid fa-key" style="margin-right:10px;color:var(--primary)"></i>
+          <span>Change Password</span>
+        </button>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
+          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </div>
   `;
-  document.body.appendChild(menu);
-  // Click outside to close
-  setTimeout(() => {
-    document.addEventListener('click', function close(e) {
-      if (!menu.contains(e.target)) {
-        menu.remove();
-        document.removeEventListener('click', close);
-      }
-    });
-  }, 50);
+  document.body.appendChild(overlay);
+  // Click outside the modal-content (on the overlay backdrop) closes it
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.remove();
+  });
 }
 
 async function signOut() {
@@ -6783,6 +6862,8 @@ function openCreateUserModal() {
   document.getElementById('user-password').required = true;
   document.getElementById('user-password-hint').textContent = 'Will be required at first sign-in. Tell the user their password — there\'s no email reset yet.';
   document.getElementById('user-active-row').style.display = 'none';
+  document.querySelectorAll('.user-extra-team').forEach(cb => cb.checked = false);
+  userRoleChanged();
   openModal('user-modal');
 }
 
@@ -6801,7 +6882,24 @@ function openEditUserModal(id) {
   document.getElementById('user-password-hint').textContent = 'Only fill this in if you want to reset their password.';
   document.getElementById('user-active').checked = !!u.active;
   document.getElementById('user-active-row').style.display = '';
+  // Load extra_teams checkboxes from the user record. Server returns
+  // extra_teams as a real Postgres TEXT[] which the JSON parser turns into
+  // a JS array — but legacy users (who never had extra_teams set) come
+  // through as null, so default to empty array.
+  const extras = Array.isArray(u.extra_teams) ? u.extra_teams : [];
+  document.querySelectorAll('.user-extra-team').forEach(cb => {
+    cb.checked = extras.includes(cb.value);
+  });
+  userRoleChanged();
   openModal('user-modal');
+}
+
+// Show/hide the extra-teams row based on role. Admin already sees everything,
+// so showing extra-teams checkboxes for them would be confusing.
+function userRoleChanged() {
+  const role = document.getElementById('user-role').value;
+  const row = document.getElementById('user-extra-teams-row');
+  if (row) row.style.display = role === 'admin' ? 'none' : '';
 }
 
 async function saveUser() {
@@ -6812,17 +6910,26 @@ async function saveUser() {
   const full_name = document.getElementById('user-fullname').value.trim() || null;
   const email = document.getElementById('user-email').value.trim() || null;
   const active = document.getElementById('user-active').checked;
+  // Gather extra teams. We exclude the user's primary team from the array
+  // (server stores them separately and would silently dedupe anyway, but
+  // sending a clean payload is good hygiene).
+  const primaryTeam = role.startsWith('design_') ? 'design'
+                    : role.startsWith('permitting_') ? 'permitting'
+                    : null;
+  const extra_teams = [...document.querySelectorAll('.user-extra-team:checked')]
+    .map(cb => cb.value)
+    .filter(t => t !== primaryTeam);
   if (!username) return alert('Username is required');
   if (/\s/.test(username)) return alert('Username cannot contain spaces');
   if (!id && !password) return alert('Password is required for new users');
   if (password && password.length < 6) return alert('Password must be at least 6 characters');
   try {
     if (id) {
-      const body = { username, role, full_name, email, active };
+      const body = { username, role, full_name, email, active, extra_teams };
       if (password) body.password = password;
       await api('/api/users/' + id, 'PUT', body);
     } else {
-      await api('/api/users', 'POST', { username, password, role, full_name, email });
+      await api('/api/users', 'POST', { username, password, role, full_name, email, extra_teams });
     }
     closeModal('user-modal');
     loadUsers();

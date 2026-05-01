@@ -409,9 +409,6 @@ fetch('/api/auth/me', { credentials: 'include' })
           <label>Notes</label>
           <textarea id="proj-notes" placeholder="Any additional notes..."></textarea>
         </div>
-        <div class="form-group" style="background:var(--primary-light);padding:8px 12px;border-radius:6px;margin-top:4px">
-          <span style="font-size:12px;color:var(--primary-dark)"><i class="fa-solid fa-circle-info"></i> Billing rates and budget allocations are managed by admin — not visible here.</span>
-        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -562,9 +559,13 @@ fetch('/api/auth/me', { credentials: 'include' })
 const PORTAL_NAME = 'permitting'; // 'design' or 'permitting'
 
 // ─── Stage labels (Permitting pipeline) ─────────────────────────────────────
-const DS = ['potential','started','submitted','approved','checklist','billed'];
-const DL = { potential:'Potential', started:'Started', submitted:'Submitted', approved:'Approved', checklist:'Checklist', billed:'Billed' };
-const DC = { potential:'#6c757d', started:'#1B5FA0', submitted:'#ff9800', approved:'#28A745', checklist:'#17a2b8', billed:'#6f42c1' };
+// Permitting pipeline stages — billed is intentionally NOT shown here.
+// Engineers only push permits through to checklist; admin marks projects
+// as billed when the invoice goes out (handled automatically when admin
+// creates an invoice line item, no human stage transition needed).
+const DS = ['potential','started','submitted','approved','checklist'];
+const DL = { potential:'Potential', started:'Started', submitted:'Submitted', approved:'Approved', checklist:'Checklist' };
+const DC = { potential:'#6c757d', started:'#1B5FA0', submitted:'#ff9800', approved:'#28A745', checklist:'#17a2b8' };
 
 // ─── Caches ────────────────────────────────────────────────────────────────
 let jobsCache = [];
@@ -955,7 +956,7 @@ async function loadPipeline(){
         <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
         <td style="white-space:nowrap;text-align:right">
           ${s!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>`:''}
-          ${s!=='billed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:#28A745;font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
+          ${s!=='checklist'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:#28A745;font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
           <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${p.id}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
         </td></tr>`;
@@ -1292,19 +1293,75 @@ async function loadCurrentUser() {
       const pill = document.getElementById('user-pill');
       const pillText = document.getElementById('user-pill-text');
       if (pill && pillText) {
-        pillText.innerHTML = `<strong style="color:var(--text)">${esc(currentUser.full_name || currentUser.username)}</strong> · sign out`;
+        pillText.innerHTML = `<strong style="color:var(--text)">${esc(currentUser.full_name || currentUser.username)}</strong>`;
         pill.style.display = 'flex';
+        pill.removeAttribute('onclick');
+        pill.removeAttribute('title');
+        pill.style.cursor = 'pointer';
+        pill.onclick = showAccountMenu;
       }
     }
   } catch(e){}
 }
+// Centered profile modal (matches admin). Re-creates on each open.
+function showAccountMenu() {
+  const existing = document.getElementById('account-modal');
+  if (existing) { existing.remove(); return; }
+  const u = currentUser || {};
+  const teams = [];
+  const primary = u.role === 'admin' ? null
+                : u.role && u.role.startsWith('design_') ? 'design'
+                : u.role && u.role.startsWith('permitting_') ? 'permitting'
+                : u.role && u.role.startsWith('inspection_') ? 'inspection'
+                : null;
+  if (primary) teams.push(primary);
+  for (const t of (u.extra_teams || [])) {
+    if (!teams.includes(t)) teams.push(t);
+  }
+  const teamPills = u.role === 'admin'
+    ? '<span style="background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600">Admin (all teams)</span>'
+    : teams.length
+      ? teams.map(t => `<span style="background:var(--primary-light);color:var(--primary);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:capitalize">${t}</span>`).join(' ')
+      : '<span style="color:var(--text-muted);font-size:11px">no team access</span>';
+  const overlay = document.createElement('div');
+  overlay.id = 'account-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:420px;width:90%">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-user-circle" style="margin-right:8px"></i>Account</span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('account-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
+          <div style="font-size:18px;font-weight:600;margin-bottom:4px">${esc(u.full_name || u.username || 'Unknown')}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${esc(u.email || u.username || '')}</div>
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <span style="background:var(--gray-light);color:var(--text);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:capitalize">${esc((u.role || '').replace('_', ' '))}</span>
+            ${teamPills}
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
+          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
 async function signOut() {
-  if (!confirm('Sign out?')) return;
+  // No confirm — modal already counts as the deliberate action.
   try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch(e){}
   try { sessionStorage.removeItem('lfs_token'); } catch(e){}
   window.location.href = '/login';
 }
 window.addEventListener('load', loadCurrentUser);
+
 
 // ─── AUTO-POLLING ────────────────────────────────────────────────────────────
 // Refreshes the active view and any open modal data every POLL_MS while the

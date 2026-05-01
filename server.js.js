@@ -3060,9 +3060,16 @@ app.get('/api/inspection', async (req, res) => {
     endDate = now.toISOString().slice(0,10);
   }
   try {
-    // Find all REAL (non-rollup) projects whose job is on the inspection team,
-    // OR projects flagged is_ongoing=TRUE (so admin can keep things visible
-    // even if the job isn't strictly inspection-tagged).
+    // Find inspection-relevant projects. A project surfaces here if ANY of:
+    //   1. Its assigned job is on the 'inspection' team (the clean case)
+    //   2. It's flagged is_ongoing=TRUE (admin manually pinned it)
+    //   3. It has time_entries logged with an inspection-related job_title
+    //      (e.g. "Inspection", "Inspector", "Resident Engineer") — this
+    //      catches existing projects whose hours were imported BEFORE the
+    //      inspection-team migration and whose project still uses a non-
+    //      inspection job. Without this branch, those entries are invisible
+    //      until admin manually edits each project's job. The text match
+    //      is case-insensitive and tolerates suffixes/abbreviations.
     const { rows: projects } = await pool.query(`
       SELECT p.id, p.name, p.work_order_number, p.status, p.is_ongoing, p.client_id,
              cl.name as client_name,
@@ -3075,22 +3082,54 @@ app.get('/api/inspection', async (req, res) => {
       LEFT JOIN jobs j     ON j.id  = p.job_id
       LEFT JOIN projects pp ON pp.id = p.parent_id
       WHERE COALESCE(p.is_rollup, FALSE) = FALSE
-        AND (j.team = 'inspection' OR p.is_ongoing = TRUE)
+        AND (
+          j.team = 'inspection'
+          OR p.is_ongoing = TRUE
+          OR EXISTS (
+            SELECT 1 FROM time_entries te
+            WHERE te.project_id = p.id
+              AND te.entry_date BETWEEN $1 AND $2
+              AND (
+                LOWER(te.job_title) LIKE '%inspect%'
+                OR LOWER(te.job_title) LIKE '%resident eng%'
+                OR LOWER(te.job_title) = 're'
+              )
+          )
+        )
       ORDER BY p.is_ongoing DESC, p.name
-    `);
+    `, [startDate, endDate]);
 
-    // For each project, sum hours for the period
+    // For each project, sum hours for the period. If the project's assigned
+    // job is on the inspection team OR it's flagged ongoing, count ALL
+    // hours (the project IS an inspection project). Otherwise the project
+    // only surfaces here because of the job_title heuristic — in that
+    // case we only count hours whose job_title looks inspection-y, so
+    // we don't overcount mixed projects (e.g. a design project with one
+    // inspector entry should only show that one entry's hours, not all).
     const result = [];
     for (const p of projects) {
-      const { rows: tr } = await pool.query(
-        `SELECT COALESCE(SUM(hours), 0)::float as hours,
-                COUNT(DISTINCT staff_id)::int as inspector_count
-         FROM time_entries
-         WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3`,
-        [p.id, startDate, endDate]
-      );
+      const isInspectionPrimary = (p.job_team === 'inspection' || p.is_ongoing);
+      const hoursSql = isInspectionPrimary
+        ? `SELECT COALESCE(SUM(hours), 0)::float as hours,
+                  COUNT(DISTINCT staff_id)::int as inspector_count
+           FROM time_entries
+           WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3`
+        : `SELECT COALESCE(SUM(hours), 0)::float as hours,
+                  COUNT(DISTINCT staff_id)::int as inspector_count
+           FROM time_entries
+           WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3
+             AND (
+               LOWER(job_title) LIKE '%inspect%'
+               OR LOWER(job_title) LIKE '%resident eng%'
+               OR LOWER(job_title) = 're'
+             )`;
+      const { rows: tr } = await pool.query(hoursSql, [p.id, startDate, endDate]);
       const hours = tr[0].hours || 0;
-      const rate = parseFloat(p.billing_rate) || parseFloat(p.job_rate) || 0;
+      // Skip projects with zero matching hours (UNLESS they're explicitly
+      // pinned via is_ongoing or are inspection-team — those still show
+      // for visibility even if zero hours this period).
+      if (hours === 0 && !isInspectionPrimary) continue;
+      const rate = parseFloat(p.billing_rate) || parseFloat(p.job_rate) || 90;
       const revenue = (p.billing_type === 'footage' || p.job_billing_type === 'footage')
         ? 0  // footage projects don't bill by hours
         : hours * rate;
@@ -5461,6 +5500,35 @@ app.get('*', (req, res) => {
         <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
       </div></body></html>
     `);
+  }
+  // Portal-mode enforcement: when PORTAL_MODE is set, the user must have
+  // access to that team — either via their primary role's team OR via
+  // extra_teams[]. Admin users always pass. This is the gate that lets a
+  // design_engineer with extra_teams=['permitting'] log in to the
+  // permitting portal and have it work.
+  if (PORTAL_MODE && req.user && req.user.role !== 'admin') {
+    const primaryTeam = req.user.role.startsWith('design_') ? 'design'
+                      : req.user.role.startsWith('permitting_') ? 'permitting'
+                      : req.user.role.startsWith('inspection_') ? 'inspection'
+                      : null;
+    const extras = Array.isArray(req.user.extra_teams) ? req.user.extra_teams : [];
+    const accessible = new Set([primaryTeam, ...extras].filter(Boolean));
+    if (!accessible.has(PORTAL_MODE)) {
+      return res.status(403).send(`
+        <!DOCTYPE html><html><head><title>Access Denied</title>
+        <style>body{font-family:'Inter',sans-serif;background:#F5F7FA;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}
+        .card{background:#fff;border:1px solid #DEE2E6;border-radius:14px;padding:32px;max-width:420px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+        h1{font-size:22px;color:#DC3545;margin:0 0 12px 0}
+        p{color:#6C757D;font-size:14px;line-height:1.5;margin:0 0 16px 0}
+        a{color:#1B5FA0;text-decoration:none;font-weight:500}</style></head><body>
+        <div class="card">
+          <h1>Portal Access Required</h1>
+          <p>You're signed in as <strong>${req.user.username}</strong>.</p>
+          <p>This portal requires <strong>${PORTAL_MODE}</strong> team access. Ask your administrator to add it to your account.</p>
+          <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
+        </div></body></html>
+      `);
+    }
   }
   res.sendFile(path.join(__dirname, 'public', SPA_FILE));
 });
