@@ -445,6 +445,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> Inspection</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
+  <a class="nav-tab" data-view="audit" onclick="showView('audit')"><i class="fa-solid fa-history"></i> Time Audit</a>
   <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
   <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
 </nav>
@@ -719,6 +720,86 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="card-header"><span class="card-title" id="hrs-report-title">Hours Report</span></div>
         <div id="hours-tree-body" style="padding:0"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ TIME AUDIT ═══════════════════
+         Shows every change to time_entries: who did it, when, what changed.
+         Filterable by user, project, date range, and meaningful-only flag
+         (which surfaces hours/project/job changes only, hiding trivial
+         notes-only edits). Sourced from /api/_admin/timeclock-audit. -->
+    <div id="view-audit" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Time Clock Audit Log</div><div class="section-sub">Every save, edit, and delete on time entries — with full before/after history</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="loadAuditLog()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-body" style="padding:12px 14px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+            <div style="flex:1;min-width:160px">
+              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">USER</label>
+              <select id="audit-filter-user" class="filter" style="width:100%" onchange="loadAuditLog()">
+                <option value="">All users</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:160px">
+              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">FROM DATE</label>
+              <input type="date" id="audit-filter-from" class="filter" style="width:100%" onchange="loadAuditLog()">
+            </div>
+            <div style="flex:1;min-width:160px">
+              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">TO DATE</label>
+              <input type="date" id="audit-filter-to" class="filter" style="width:100%" onchange="loadAuditLog()">
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--gray-light);border-radius:6px">
+              <input type="checkbox" id="audit-filter-meaningful" onchange="loadAuditLog()">
+              <label for="audit-filter-meaningful" style="font-size:12px;font-weight:600;color:var(--text);margin:0;cursor:pointer">Meaningful only</label>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+            <i class="fa-solid fa-circle-info"></i> "Meaningful" = hours, project, job, or date changed. Hides notes-only edits.
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit log table -->
+      <div class="card">
+        <div class="card-header"><span class="card-title" id="audit-results-title">Audit Entries</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:140px">When</th>
+                <th style="width:140px">Actor</th>
+                <th style="width:80px">Action</th>
+                <th>Change Summary</th>
+                <th>Project</th>
+                <th style="width:90px">Source</th>
+                <th style="width:80px"></th>
+              </tr>
+            </thead>
+            <tbody id="audit-body">
+              <tr><td colspan="7" class="empty-state">Click Refresh to load the audit log.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ AUDIT DETAIL MODAL ═══════════════════
+         Triggered by clicking the eye icon on an audit row. Shows the full
+         before/after JSON diff and the entire history for that one entry. -->
+    <div class="modal-overlay" id="audit-detail-modal">
+      <div class="modal-content" style="max-width:760px">
+        <div class="modal-header">
+          <span class="modal-title" id="audit-detail-title">Audit Detail</span>
+          <button class="btn btn-icon btn-secondary" onclick="closeAuditDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="audit-detail-body">Loading…</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeAuditDetailModal()">Close</button>
+        </div>
       </div>
     </div>
 
@@ -1393,6 +1474,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <span class="form-hint" style="font-size:11px;color:var(--text-muted)" id="user-password-hint">Will be required at first sign-in. Tell the user their password — there's no email reset yet.</span>
         </div>
       </div>
+      <div class="form-row" id="user-staff-link-row">
+        <div class="form-group" style="flex:1">
+          <label>Linked Staff Record <span style="font-weight:400;color:var(--text-muted);font-size:11px">(required for Time Clock portal access)</span></label>
+          <select id="user-staff-id">
+            <option value="">— Not linked —</option>
+          </select>
+          <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Time entries created via Time Clock get attributed to this staff record. Without a link, the user can sign in to the Time Clock portal but cannot clock in.</span>
+        </div>
+      </div>
       <div class="form-row" id="user-active-row" style="display:none">
         <div class="form-group">
           <label><input type="checkbox" id="user-active" checked> Active</label>
@@ -1909,8 +1999,187 @@ function showView(view) {
   if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
+  if (view==='audit') loadAuditLog();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
+}
+
+// ═══════════════════════════════════════════════════════════
+// TIME CLOCK AUDIT LOG
+// ═══════════════════════════════════════════════════════════
+//
+// Renders /api/_admin/timeclock-audit results. Filters: user, date range,
+// meaningful-only. Rows are click-to-expand → modal with full before/after
+// JSON diff and the entire history of that one entry. The row's actor +
+// change_summary tell most of the story; the detail modal is for forensics.
+//
+// User filter dropdown is populated from the existing usersCache (loaded by
+// loadUsers when admin opens Settings) — if it's empty we fetch /api/users
+// once on first audit-view open.
+
+let auditUsersLoaded = false;
+
+async function loadAuditLog() {
+  // First load: populate the user filter dropdown
+  if (!auditUsersLoaded) {
+    try {
+      if (!usersCache.length) usersCache = await api('/api/users');
+      const sel = document.getElementById('audit-filter-user');
+      while (sel.options.length > 1) sel.remove(1);
+      // Sort users alphabetically by display name for easier scanning.
+      [...usersCache].sort((a,b) => (a.full_name||a.username).localeCompare(b.full_name||b.username))
+        .forEach(u => sel.add(new Option(u.full_name || u.username, u.id)));
+      auditUsersLoaded = true;
+    } catch(e) { /* leave dropdown with just "All users" if load fails */ }
+  }
+
+  // Build query string from active filters
+  const params = new URLSearchParams();
+  const userFilter = document.getElementById('audit-filter-user').value;
+  const fromFilter = document.getElementById('audit-filter-from').value;
+  const toFilter = document.getElementById('audit-filter-to').value;
+  const meaningfulOnly = document.getElementById('audit-filter-meaningful').checked;
+  if (userFilter) params.set('user_id', userFilter);
+  if (fromFilter) params.set('from', fromFilter);
+  // 'to' filter is end-of-day inclusive — append T23:59:59 so the day is fully covered
+  if (toFilter) params.set('to', toFilter + 'T23:59:59');
+  if (meaningfulOnly) params.set('meaningful_only', 'true');
+  params.set('limit', '200');
+
+  const tbody = document.getElementById('audit-body');
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading…</td></tr>';
+
+  let rows;
+  try {
+    rows = await api('/api/_admin/timeclock-audit?' + params.toString());
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:var(--danger)">Failed: ${esc(e.message)}</td></tr>`;
+    return;
+  }
+
+  document.getElementById('audit-results-title').textContent =
+    `Audit Entries · ${rows.length}${rows.length === 200 ? '+' : ''} shown`;
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No audit entries match the current filters.</td></tr>';
+    return;
+  }
+
+  // Action color coding — created=green, updated=blue, deleted=red.
+  // Helps admin scan the column at a glance.
+  const ACTION_STYLES = {
+    created: 'background:#E8F5E9;color:#1B5E20',
+    updated: 'background:#E3F2FD;color:#0D47A1',
+    deleted: 'background:#FFEBEE;color:#B71C1C',
+    restored: 'background:#FFF3E0;color:#E65100',
+  };
+  const ACTION_DARK = {
+    created: 'background:#1B3D24;color:#A5D6A7',
+    updated: 'background:#1E3A5C;color:#90CAF9',
+    deleted: 'background:#3D1F23;color:#F8B4BD',
+    restored: 'background:#3D2F0F;color:#FFCC80',
+  };
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const styles = isDark ? ACTION_DARK : ACTION_STYLES;
+
+  tbody.innerHTML = rows.map(r => {
+    const when = new Date(r.at);
+    const whenStr = when.toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' ' +
+                    when.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+    const actor = esc(r.actor_full_name || r.actor_username || 'unknown');
+    const meaningful = r.meaningful
+      ? '<i class="fa-solid fa-circle" style="color:var(--warning);font-size:7px;margin-right:5px" title="Meaningful change"></i>'
+      : '';
+    const summary = esc(r.change_summary || '');
+    const project = esc(r.project_name || '—');
+    const source = esc(r.source || 'api');
+    const actionStyle = styles[r.action] || 'background:var(--gray-light);color:var(--text)';
+    return `<tr>
+      <td style="font-size:12px;white-space:nowrap">${esc(whenStr)}</td>
+      <td style="font-size:12px">${actor}</td>
+      <td><span style="${actionStyle};padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase">${esc(r.action)}</span></td>
+      <td style="font-size:12px">${meaningful}${summary}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${project}</td>
+      <td><span style="background:var(--gray-light);padding:2px 8px;border-radius:8px;font-size:10px;color:var(--text-muted);text-transform:uppercase">${source}</span></td>
+      <td style="text-align:right">
+        <button class="btn btn-sm btn-secondary btn-icon" onclick="viewAuditDetail('${esc(r.time_entry_id)}', '${esc(r.id)}')" title="View full history"><i class="fa-solid fa-eye"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Open the detail modal — fetches all audit rows for this one time entry
+// and renders them as a chronological history with before/after diffs.
+async function viewAuditDetail(timeEntryId, focusedAuditId) {
+  document.getElementById('audit-detail-modal').style.display = 'flex';
+  const body = document.getElementById('audit-detail-body');
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Loading history…</div>';
+
+  let history;
+  try {
+    history = await api('/api/_admin/timeclock-audit/' + encodeURIComponent(timeEntryId));
+  } catch (e) {
+    body.innerHTML = `<div style="color:var(--danger);padding:12px">Failed to load: ${esc(e.message)}</div>`;
+    return;
+  }
+
+  document.getElementById('audit-detail-title').textContent =
+    `Time Entry History · ${history.length} change${history.length === 1 ? '' : 's'}`;
+
+  if (!history.length) {
+    body.innerHTML = '<div class="empty-state">No history found.</div>';
+    return;
+  }
+
+  // Render each event as a card. The card focused-on (the row admin clicked)
+  // gets highlighted so admin can see which entry triggered the drilldown.
+  body.innerHTML = history.map(h => {
+    const isFocus = String(h.id) === String(focusedAuditId);
+    const when = new Date(h.at);
+    const whenStr = when.toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'});
+    const actor = esc(h.actor_full_name || h.actor_username || 'unknown');
+
+    // Diff rendering — show before/after side by side for updates only;
+    // creates/deletes show just the new/old state respectively.
+    let diffHtml = '';
+    if (h.action === 'updated' && h.before_data && h.after_data) {
+      diffHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">BEFORE</div>
+          <pre style="background:var(--gray-light);padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;margin:0">${esc(JSON.stringify(h.before_data, null, 2))}</pre>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">AFTER</div>
+          <pre style="background:var(--gray-light);padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;margin:0">${esc(JSON.stringify(h.after_data, null, 2))}</pre>
+        </div>
+      </div>`;
+    } else if (h.before_data || h.after_data) {
+      const data = h.after_data || h.before_data;
+      diffHtml = `<div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">${h.after_data ? 'NEW STATE' : 'DELETED STATE'}</div>
+        <pre style="background:var(--gray-light);padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;margin:0">${esc(JSON.stringify(data, null, 2))}</pre>
+      </div>`;
+    }
+
+    return `<div style="border:${isFocus ? '2px solid var(--primary)' : '1px solid var(--gray-border)'};border-radius:8px;padding:12px;margin-bottom:10px;${isFocus ? 'background:var(--primary-light)' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase">${esc(h.action)}</span>
+          ${h.meaningful ? '<span style="background:var(--warning);color:#000;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600">MEANINGFUL</span>' : ''}
+          <strong style="font-size:13px">${esc(h.change_summary || '')}</strong>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);text-align:right">
+          <div>${esc(whenStr)}</div>
+          <div>by <strong>${actor}</strong> · via ${esc(h.source || 'api')}</div>
+        </div>
+      </div>
+      ${diffHtml}
+    </div>`;
+  }).join('');
+}
+
+function closeAuditDetailModal() {
+  document.getElementById('audit-detail-modal').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6830,16 +7099,24 @@ function renderUsersList() {
       <th style="text-align:left;padding:6px 8px">Username</th>
       <th style="text-align:left;padding:6px 8px">Full Name</th>
       <th style="text-align:left;padding:6px 8px">Role</th>
+      <th style="text-align:left;padding:6px 8px">Linked Staff</th>
       <th style="text-align:left;padding:6px 8px">Last Login</th>
       <th style="text-align:center;padding:6px 8px">Active</th>
       <th></th>
     </tr></thead>
     <tbody>${usersCache.map(u => {
       const last = u.last_login ? new Date(u.last_login).toLocaleDateString() : '—';
+      // Linked staff shown as a green check + name, or muted "—" if not linked.
+      // The check icon makes it scannable at a glance — admin can see which
+      // users are ready to use Time Clock vs which still need linking.
+      const staffCell = u.staff_name
+        ? `<span style="color:var(--text)"><i class="fa-solid fa-link" style="color:var(--success);font-size:10px;margin-right:4px"></i>${esc(u.staff_name)}</span>`
+        : `<span style="color:var(--text-muted);font-size:11px"><i class="fa-solid fa-link-slash" style="margin-right:4px"></i>not linked</span>`;
       return `<tr style="border-top:1px solid var(--gray-border);${u.active ? '' : 'opacity:0.55'}">
         <td style="padding:6px 8px;font-family:monospace;font-weight:600">${esc(u.username)}</td>
         <td style="padding:6px 8px">${esc(u.full_name || '—')}</td>
         <td style="padding:6px 8px"><span class="badge" style="background:var(--primary-light);color:var(--primary);font-size:10px">${ROLE_LABELS[u.role] || u.role}</span></td>
+        <td style="padding:6px 8px;font-size:12px">${staffCell}</td>
         <td style="padding:6px 8px;color:var(--text-muted);font-size:11px">${last}</td>
         <td style="padding:6px 8px;text-align:center">${u.active ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '<i class="fa-solid fa-pause" style="color:var(--text-muted)"></i>'}</td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
@@ -6848,6 +7125,40 @@ function renderUsersList() {
         </td>
       </tr>`;
     }).join('')}</tbody></table>`;
+}
+
+// Cached staff list for the user-modal staff link dropdown. Loaded once on
+// first modal open + refreshed when admin reopens it (handles staff added
+// since last load). Small enough that we keep the whole list in memory.
+let staffListCache = null;
+async function ensureStaffListLoaded() {
+  if (staffListCache) return staffListCache;
+  try {
+    staffListCache = await api('/api/staff');
+    return staffListCache;
+  } catch (e) {
+    staffListCache = [];
+    return [];
+  }
+}
+async function populateStaffDropdown(selectedStaffId) {
+  const sel = document.getElementById('user-staff-id');
+  if (!sel) return;
+  const list = await ensureStaffListLoaded();
+  // Sort alphabetically — long lists are easier to scan when ordered.
+  // Filter inactive staff out of the picker (admin can re-activate first
+  // if they need to link to one). Selected staff always shown even if
+  // inactive, so existing links don't disappear.
+  const sorted = [...list].sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '')
+  );
+  const opts = ['<option value="">— Not linked —</option>'];
+  for (const s of sorted) {
+    if (s.active === false && s.id !== selectedStaffId) continue;
+    const isSelected = s.id === selectedStaffId ? ' selected' : '';
+    opts.push(`<option value="${esc(s.id)}"${isSelected}>${esc(s.name)}${s.active === false ? ' (inactive)' : ''}</option>`);
+  }
+  sel.innerHTML = opts.join('');
 }
 
 function openCreateUserModal() {
@@ -6863,6 +7174,7 @@ function openCreateUserModal() {
   document.getElementById('user-password-hint').textContent = 'Will be required at first sign-in. Tell the user their password — there\'s no email reset yet.';
   document.getElementById('user-active-row').style.display = 'none';
   document.querySelectorAll('.user-extra-team').forEach(cb => cb.checked = false);
+  populateStaffDropdown(null);
   userRoleChanged();
   openModal('user-modal');
 }
@@ -6890,6 +7202,7 @@ function openEditUserModal(id) {
   document.querySelectorAll('.user-extra-team').forEach(cb => {
     cb.checked = extras.includes(cb.value);
   });
+  populateStaffDropdown(u.staff_id || null);
   userRoleChanged();
   openModal('user-modal');
 }
@@ -6910,6 +7223,7 @@ async function saveUser() {
   const full_name = document.getElementById('user-fullname').value.trim() || null;
   const email = document.getElementById('user-email').value.trim() || null;
   const active = document.getElementById('user-active').checked;
+  const staff_id = document.getElementById('user-staff-id').value || null;
   // Gather extra teams. We exclude the user's primary team from the array
   // (server stores them separately and would silently dedupe anyway, but
   // sending a clean payload is good hygiene).
@@ -6925,13 +7239,15 @@ async function saveUser() {
   if (password && password.length < 6) return alert('Password must be at least 6 characters');
   try {
     if (id) {
-      const body = { username, role, full_name, email, active, extra_teams };
+      const body = { username, role, full_name, email, active, extra_teams, staff_id };
       if (password) body.password = password;
       await api('/api/users/' + id, 'PUT', body);
     } else {
-      await api('/api/users', 'POST', { username, password, role, full_name, email, extra_teams });
+      await api('/api/users', 'POST', { username, password, role, full_name, email, extra_teams, staff_id });
     }
     closeModal('user-modal');
+    // Refresh the staff list cache too in case the admin will edit another user
+    staffListCache = null;
     loadUsers();
   } catch (e) { alert('Save failed: ' + e.message); }
 }

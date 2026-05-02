@@ -386,8 +386,12 @@ function installAuthRoutes(app, pool) {
   app.get('/api/users', requireAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query(`
-        SELECT id, username, role, team, extra_teams, full_name, email, active, created_at, last_login
-        FROM users ORDER BY active DESC, username ASC
+        SELECT u.id, u.username, u.role, u.team, u.extra_teams, u.staff_id,
+               u.full_name, u.email, u.active, u.created_at, u.last_login,
+               s.name as staff_name
+        FROM users u
+        LEFT JOIN staff s ON s.id = u.staff_id
+        ORDER BY u.active DESC, u.username ASC
       `);
       res.json(rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -427,7 +431,7 @@ function installAuthRoutes(app, pool) {
 
   // PUT /api/users/:id — update user (admin only). Optional password reset via 'password' field.
   app.put('/api/users/:id', requireAdmin, async (req, res) => {
-    const { username, role, full_name, email, active, password, extra_teams } = req.body || {};
+    const { username, role, full_name, email, active, password, extra_teams, staff_id } = req.body || {};
     if (role && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
     }
@@ -456,6 +460,13 @@ function installAuthRoutes(app, pool) {
           : [];
         sets.push(`extra_teams = $${i++}`); vals.push(cleanExtras);
       }
+      // staff_id — links the user to a specific staff record. Required for
+      // Time Clock portal access. NULL clears the link. Validation could
+      // verify the staff record exists, but a bad UUID just produces a NULL
+      // FK on update which is harmless.
+      if (staff_id !== undefined) {
+        sets.push(`staff_id = $${i++}`); vals.push(staff_id || null);
+      }
       if (password) {
         const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
         sets.push(`password_hash = $${i++}`); vals.push(hash);
@@ -464,7 +475,7 @@ function installAuthRoutes(app, pool) {
       sets.push(`updated_at = NOW()`);
       const { rows } = await pool.query(
         `UPDATE users SET ${sets.join(', ')} WHERE id = $1
-         RETURNING id, username, role, team, extra_teams, full_name, email, active, last_login`,
+         RETURNING id, username, role, team, extra_teams, staff_id, full_name, email, active, last_login`,
         vals
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });

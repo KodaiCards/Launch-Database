@@ -50,11 +50,19 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // ─── Portal Mode ─────────────────────────────────────────────────────────────
-// When PORTAL_MODE is set ('permitting' or 'design'), this instance serves
-// only that portal's HTML and blocks access to revenue/billing/AI endpoints.
-// Deploy 3 services from the same repo with different PORTAL_MODE values.
-const PORTAL_MODE = (process.env.PORTAL_MODE || '').toLowerCase(); // '' | 'permitting' | 'design'
-const PORTAL_NAMES = { permitting: 'Permitting Portal', design: 'Design Portal' };
+// When PORTAL_MODE is set, this instance serves only that portal's HTML and
+// blocks access to revenue/billing/AI endpoints. Deploy multiple services from
+// the same repo with different PORTAL_MODE values.
+//   ''           — admin portal (full UI)
+//   'design'     — design team portal
+//   'permitting' — permitting team portal
+//   'timeclock'  — Launch Time Clock (clock-in/out for hourly tracking)
+const PORTAL_MODE = (process.env.PORTAL_MODE || '').toLowerCase();
+const PORTAL_NAMES = {
+  permitting: 'Permitting Portal',
+  design: 'Design Portal',
+  timeclock: 'Launch Time Clock',
+};
 if (PORTAL_MODE) {
   console.log(`✓ Running in PORTAL MODE: ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}`);
 }
@@ -70,6 +78,14 @@ installPortalExtensions(app, pool, PORTAL_MODE);
 // req.user. Login page lives at /login (or /login.html).
 const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin } = require('./auth');
 installAuthRoutes(app, pool);
+
+// Time Clock module — exposes /api/timeclock/* routes for the Launch Time
+// Clock portal AND wires audit logging for time_entries mutations across
+// the whole app (admin, portals, CSV imports). Audit logger is built once
+// here and reused by the time_entries POST/PUT/DELETE handlers below.
+const timeclockModule = require('./timeclock_module');
+timeclockModule.installTimeClockRoutes(app, pool, requireAuth);
+const auditTimeEntry = timeclockModule.makeAuditLogger(pool);
 
 // Public routes (no login needed): /login page itself, /api/auth/login,
 // any /api/auth/me check, and static assets needed by the login page.
@@ -149,7 +165,9 @@ if (PORTAL_MODE) {
   // ADMIN_API_BASE so the portal frontend knows where to POST file uploads
   // and where to read /uploads/* PDFs (since those live on admin's volume,
   // not on portal containers).
-  const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html' : 'design.html';
+  const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
+                   : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
+                   : 'design.html';
   const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
 
   // /uploads/* on a portal redirects to admin's /uploads/* — this is critical
@@ -1076,13 +1094,32 @@ app.get('/api/time-entries', async (req, res) => {
     where.push(`te.user_id = $${i++}`);
     params.push(req.user.id);
   }
+  // Manager-class users see ONLY hours tied to projects on their team. The
+  // project's team is determined via its job (jobs.team). Projects whose job
+  // is 'both' or NULL are considered shared and visible to both managers.
+  // Inspection projects (team='inspection') are admin-only since the
+  // Inspection tab lives in admin. CSV-imported entries inherit the project's
+  // team automatically because they're attached to existing projects (or to
+  // newly-created projects whose job team is set at creation time).
+  if (req.user && (req.user.role === 'design_manager' || req.user.role === 'permitting_manager')) {
+    const team = req.user.role === 'design_manager' ? 'design' : 'permitting';
+    where.push(`te.project_id IN (
+      SELECT p.id FROM projects p
+      LEFT JOIN jobs j ON j.id = p.job_id
+      WHERE j.team = $${i} OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL
+    )`);
+    params.push(team);
+    i++;
+  }
   const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
   try {
     const { rows } = await pool.query(`
       SELECT te.*, p.name as project_name, p.work_order_number, p.project_type,
-             s.name as staff_name, cl.name as client_name
+             s.name as staff_name, cl.name as client_name,
+             j.team as project_team
       FROM time_entries te
       LEFT JOIN projects p ON p.id = te.project_id
+      LEFT JOIN jobs j ON j.id = p.job_id
       LEFT JOIN staff s ON s.id = te.staff_id
       LEFT JOIN clients cl ON cl.id = p.client_id
       ${whereStr}
@@ -1106,6 +1143,16 @@ app.post('/api/time-entries', async (req, res) => {
 
     // Update project actual_hours and propagate up hierarchy
     await updateProjectHours(project_id);
+
+    // Audit log — captures who created the entry. Source distinguishes
+    // admin (admin UI) from portal (design/permitting/timeclock portal direct
+    // POST). The timeclock portal's own clock-out endpoint logs separately
+    // with source='timeclock', so this catches everything else.
+    await auditTimeEntry({
+      req, timeEntryId: rows[0].id, action: 'created',
+      before: null, after: rows[0],
+      source: PORTAL_MODE || 'admin',
+    });
 
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -1143,11 +1190,85 @@ app.post('/api/time-entries/bulk', async (req, res) => {
   }
 });
 
+// PUT /api/time-entries/:id — edit an existing entry. Used by:
+//   - Admin Hours tab (manual corrections)
+//   - Time Clock portal (employees fixing their own past cards)
+//   - Eventually: portal Hours tabs (managers fixing team entries)
+//
+// Engineers can ONLY edit their own entries (server enforces user_id match).
+// Managers can edit entries on their team's projects. Admin can edit anything.
+// All edits write to the audit log with before/after state.
+app.put('/api/time-entries/:id', async (req, res) => {
+  const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
+  try {
+    // Fetch existing for audit + permission check
+    const { rows: existing } = await pool.query(
+      'SELECT * FROM time_entries WHERE id=$1', [req.params.id]
+    );
+    const before = existing[0];
+    if (!before) return res.status(404).json({ error: 'Entry not found' });
+
+    // Ownership check for engineers — they can only edit their own
+    if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+      if (String(before.user_id) !== String(req.user.id)) {
+        return res.status(403).json({ error: 'You can only edit your own time entries' });
+      }
+    }
+
+    // Build the update — only set fields that were sent (allows partial updates)
+    const sets = [];
+    const params = [req.params.id];
+    let i = 2;
+    if (project_id !== undefined) { sets.push(`project_id = $${i++}`); params.push(project_id); }
+    if (staff_id !== undefined)   { sets.push(`staff_id = $${i++}`);   params.push(staff_id || null); }
+    if (entry_date !== undefined) { sets.push(`entry_date = $${i++}`); params.push(entry_date); }
+    if (hours !== undefined)      { sets.push(`hours = $${i++}`);      params.push(hours); }
+    if (job_title !== undefined)  { sets.push(`job_title = $${i++}`);  params.push(job_title); }
+    if (notes !== undefined)      { sets.push(`notes = $${i++}`);      params.push(notes); }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+
+    const { rows } = await pool.query(
+      `UPDATE time_entries SET ${sets.join(', ')} WHERE id=$1 RETURNING *`,
+      params
+    );
+
+    // If project changed, update both old and new project hours rollups
+    await updateProjectHours(before.project_id);
+    if (project_id && String(project_id) !== String(before.project_id)) {
+      await updateProjectHours(project_id);
+    }
+
+    await auditTimeEntry({
+      req, timeEntryId: req.params.id, action: 'updated',
+      before, after: rows[0],
+      source: PORTAL_MODE || 'admin',
+    });
+
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.delete('/api/time-entries/:id', async (req, res) => {
   try {
+    // Fetch the full row BEFORE deleting so we can capture before_data in
+    // the audit log. Tradeoff: one extra query per delete, but admin's
+    // ability to see exactly what was deleted is worth it.
+    const { rows: existing } = await pool.query(
+      'SELECT * FROM time_entries WHERE id=$1', [req.params.id]
+    );
+    const before = existing[0] || null;
+
     const { rows } = await pool.query('DELETE FROM time_entries WHERE id=$1 RETURNING project_id', [req.params.id]);
     if (rows[0]) {
       await updateProjectHours(rows[0].project_id);
+    }
+
+    if (before) {
+      await auditTimeEntry({
+        req, timeEntryId: req.params.id, action: 'deleted',
+        before, after: null,
+        source: PORTAL_MODE || 'admin',
+      });
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -5476,6 +5597,7 @@ app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'de
 
 const SPA_FILE = PORTAL_MODE === 'permitting' ? 'permitting.html'
                : PORTAL_MODE === 'design' ? 'design.html'
+               : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
                : 'index.html';
 
 app.get('*', (req, res) => {
@@ -5506,7 +5628,13 @@ app.get('*', (req, res) => {
   // extra_teams[]. Admin users always pass. This is the gate that lets a
   // design_engineer with extra_teams=['permitting'] log in to the
   // permitting portal and have it work.
-  if (PORTAL_MODE && req.user && req.user.role !== 'admin') {
+  //
+  // SPECIAL CASE: PORTAL_MODE='timeclock' is open to all logged-in users
+  // regardless of role/team. The time clock is a universal hours-tracking
+  // surface — every employee should be able to use it. Access to specific
+  // PROJECTS is still scoped via /api/projects, and audit + edit history
+  // is still per-user, so there's no data leak risk in opening the portal.
+  if (PORTAL_MODE && req.user && req.user.role !== 'admin' && PORTAL_MODE !== 'timeclock') {
     const primaryTeam = req.user.role.startsWith('design_') ? 'design'
                       : req.user.role.startsWith('permitting_') ? 'permitting'
                       : req.user.role.startsWith('inspection_') ? 'inspection'
@@ -5681,6 +5809,7 @@ async function start() {
   await initSchema();
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
+  await timeclockModule.bootstrapTimeClockSchema(pool);  // staff_id + sessions + audit log
   // Extend timeouts to 30 minutes — needed for multi-GB uploads. The
   // platform's load balancer (Railway) may still cap at 5 minutes, but
   // setting these here at least removes Node as the bottleneck.
