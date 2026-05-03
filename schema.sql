@@ -873,6 +873,23 @@ CREATE TABLE IF NOT EXISTS invoice_templates (
 CREATE INDEX IF NOT EXISTS idx_invoice_templates_job_client
   ON invoice_templates (job_id, client_id);
 
+-- ─────────────────────────────────────────
+-- CUSTOMER PORTAL — per-client external login
+-- ─────────────────────────────────────────
+-- customer_clients links a customer-role user to one or more clients.
+-- The customer portal scopes everything (projects, progress, invoices)
+-- through this table so a customer never sees data from a client they
+-- weren't granted. Many-to-many supports clients with multiple billing
+-- contacts AND a single rep covering several customer accounts.
+CREATE TABLE IF NOT EXISTS customer_clients (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, client_id)
+);
+CREATE INDEX IF NOT EXISTS idx_customer_clients_client
+  ON customer_clients (client_id);
+
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- End of v2 additions

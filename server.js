@@ -121,6 +121,10 @@ const PORTAL_NAMES = {
   permitting: 'Permitting Portal',
   design: 'Design Portal',
   timeclock: 'Launch Time Clock',
+  // Customer portal: external users (clients) see ONLY their own
+  // projects, progress, and invoices. Backed by customer_clients
+  // table + the 'customer' role.
+  customer: 'Client Portal',
 };
 if (PORTAL_MODE) {
   console.log(`✓ Running in PORTAL MODE: ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}`);
@@ -238,6 +242,7 @@ if (PORTAL_MODE) {
   // not on portal containers).
   const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
                    : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
+                   : PORTAL_MODE === 'customer' ? 'customer.html'
                    : 'design.html';
   const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
 
@@ -1261,6 +1266,13 @@ require('./routes/invoice_templates')(app, pool, {
   requireManagerOrAdmin,
   uploadDir: UPLOAD_DIR,
 });
+
+// Customer portal — read-only API for external (customer-role) users.
+// Each user is linked to one or more clients via customer_clients;
+// every endpoint in this module scopes through that link table so a
+// customer can only see their own data. Admin endpoints to manage the
+// links live in the same module.
+require('./routes/customer_portal')(app, pool, { requireAuth, requireAdmin });
 
 // Project lifecycle billing endpoints (unbill, mark-billed, bill-and-clone)
 // extracted to routes/project_billing.js (Track 1.3).
@@ -3138,6 +3150,18 @@ async function bootstrapV3Schema() {
     `CREATE TRIGGER invoice_templates_updated_at
        BEFORE UPDATE ON invoice_templates
        FOR EACH ROW EXECUTE FUNCTION set_updated_at()`,
+
+    // ─── customer_clients: per-client login link table ───────────────────
+    // Maps customer-role users to the clients they can see. The customer
+    // portal scopes every endpoint through this junction so a customer
+    // can never read another client's data.
+    `CREATE TABLE IF NOT EXISTS customer_clients (
+       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+       client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       PRIMARY KEY (user_id, client_id)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_customer_clients_client ON customer_clients (client_id)`,
 
     // Add engineering_contract_id to contracts (umbrella reference)
     `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL`,

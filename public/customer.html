@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Launch Fiber Services — Client Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Token system mirrors the admin app + 3 internal portals. Surfaces,
+   text, status colors, and brand all flip in dark mode without per-
+   component overrides. Legacy aliases preserved for inline styles. */
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;--primary-text:#FFFFFF;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
+  --gray-light:#F5F7FA;--white:#FFFFFF;--row-alt:#F0F0F0;
+  --border-strong:#DEE2E6;--border-weak:#EEF1F5;--gray-border:#DEE2E6;--gray:#6B6B6B;
+  --text:#212529;--text-secondary:#495057;--text-muted:#6C757D;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#B71C1C;
+  --info:#1B5FA0;--info-light:#E8F0FB;--info-text:#0D47A1;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;--primary-text:#FFFFFF;
+  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;
+  --gray-light:#1A1F26;--white:#242B36;--row-alt:#1F2630;
+  --border-strong:#2D3540;--border-weak:#252A33;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#EF5350;--danger-light:#3D1F23;--danger-text:#F8B4BD;
+  --info:#4A90D9;--info-light:#1E3A5C;--info-text:#90CAF9;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--surface-1);color:var(--text);min-height:100vh}
+html[data-theme="dark"] body{background:#0F1419}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* Header */
+.header{background:var(--surface-2);border-bottom:1px solid var(--gray-border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-title{font-size:14px;font-weight:600;color:var(--text)}
+.header-right{display:flex;align-items:center;gap:8px}
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;transition:all .15s;text-decoration:none;color:inherit}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--surface-2);color:var(--text);border-color:var(--gray-border)}
+.btn-secondary:hover{background:var(--surface-1)}
+.btn-icon{padding:6px 8px}
+.btn-sm{padding:6px 10px;font-size:12px}
+
+.account-pill{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-muted);border:1px solid var(--gray-border);background:var(--surface-2)}
+.account-pill:hover{background:var(--surface-1)}
+.account-pill strong{color:var(--text)}
+
+/* Main */
+.container{max-width:1100px;margin:20px auto;padding:0 16px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--gray-border);margin-bottom:14px}
+.tabs button{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text-muted);border-bottom:2px solid transparent}
+.tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+.card{background:var(--surface-2);border:1px solid var(--gray-border);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--gray-border);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+
+/* Stat tiles */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.stat-card{padding:14px;background:var(--surface-2);border:1px solid var(--gray-border);border-radius:10px}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:24px;font-weight:700;color:var(--text);margin-top:4px}
+
+/* Project rows */
+.proj-row{padding:12px 14px;border-bottom:1px solid var(--gray-border);display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;cursor:pointer}
+.proj-row:hover{background:var(--surface-1)}
+.proj-row:last-child{border-bottom:none}
+.proj-name{font-weight:600;color:var(--text)}
+.proj-sub{font-size:11px;color:var(--text-muted)}
+.status-pill{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
+.status-active{background:var(--info-light);color:var(--info-text)}
+.status-completed{background:var(--success-light);color:var(--success-text)}
+.status-billed{background:var(--success);color:#fff}
+.status-on_hold{background:var(--warning-light);color:var(--warning-text)}
+
+/* Progress bar */
+.progress-track{width:140px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-dark))}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:14px}
+.modal-content{background:var(--surface-2);border-radius:10px;max-width:680px;width:100%;max-height:90vh;display:flex;flex-direction:column}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--gray-border);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:16px;font-weight:600;color:var(--text)}
+.modal-body{padding:18px;flex:1;overflow:auto}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px}
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-muted)}
+.empty-state i{font-size:36px;margin-bottom:10px;opacity:.3}
+</style>
+<link rel="stylesheet" href="/app-shell.css">
+<script src="/toast.js" defer></script>
+<script src="/js/change_password_modal.js" defer></script>
+</head>
+<body>
+
+<header class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="header-title">Launch Fiber Services</span>
+    <span style="font-size:12px;color:var(--text-muted)">Client Portal</span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" title="Toggle dark mode">
+      <i class="fa-solid fa-moon" id="dm-icon"></i>
+    </button>
+    <div class="account-pill" id="user-pill" style="display:none" onclick="showAccountMenu()">
+      <i class="fa-solid fa-user-circle"></i>
+      <span id="user-pill-text"></span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="tabs" id="cp-tabs">
+    <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
+    <button data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
+  </div>
+
+  <!-- Projects tab -->
+  <div id="cp-tab-projects" class="cp-tab">
+    <div class="stats-grid" id="cp-stats"></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-folder-open"></i> Active &amp; Recent Projects</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadCustomerData()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+      <div id="cp-projects-body">
+        <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoices tab -->
+  <div id="cp-tab-invoices" class="cp-tab" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices</span>
+        <button class="btn btn-secondary btn-sm" onclick="cpLoadInvoices()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+      <div id="cp-invoices-body">
+        <div class="empty-state"><i class="fa-solid fa-receipt"></i><p>Loading…</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Project detail modal — opens on row click -->
+<div class="modal-overlay" id="cp-detail-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-detail-title">Project</span>
+      <button class="btn btn-icon btn-secondary" onclick="document.getElementById('cp-detail-modal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="cp-detail-body"></div>
+  </div>
+</div>
+
+<script>
+// ─── Dark mode (mirrors other portals) ────────────────────────────────
+function applyDarkMode(on){
+  document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
+  const icon = document.getElementById('dm-icon');
+  if (icon) icon.className = on ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+function toggleDarkMode(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = !isDark;
+  try { localStorage.setItem('lfs-theme', next ? 'dark' : 'light'); } catch(e){}
+  applyDarkMode(next);
+  fetch('/api/auth/me/theme', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ theme: next ? 'dark' : 'light' })
+  }).catch(()=>{});
+}
+(function(){
+  try {
+    const saved = localStorage.getItem('lfs-theme');
+    if (saved === 'dark') applyDarkMode(true);
+    else if (saved === 'light') applyDarkMode(false);
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      applyDarkMode(true);
+    }
+  } catch(e){}
+})();
+
+function esc(s){ if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtMoney(n){ return '$' + (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtHours(n){ return (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' hrs'; }
+function fmtDate(d){ if (!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+
+async function api(url, opts){
+  const r = await fetch(url, Object.assign({ credentials: 'same-origin' }, opts || {}));
+  if (r.status === 401){ window.location.href = '/login'; return; }
+  if (!r.ok){ const j = await r.json().catch(() => ({})); throw new Error(j.error || `HTTP ${r.status}`); }
+  return r.json();
+}
+
+let _customerProjects = [];
+let _currentUser = null;
+
+async function loadCurrentUser(){
+  try {
+    const r = await api('/api/customer/me');
+    _currentUser = r.user;
+    const pill = document.getElementById('user-pill');
+    if (pill) {
+      pill.style.display = '';
+      pill.querySelector('span').textContent = (r.user.full_name || r.user.username) +
+        (r.clients && r.clients.length ? ` · ${r.clients.map(c => c.name).join(', ')}` : '');
+    }
+  } catch (e) { /* login redirect happens in api() */ }
+}
+
+async function loadCustomerData(){
+  try {
+    _customerProjects = await api('/api/customer/projects');
+    renderCustomerProjects();
+  } catch (e) {
+    document.getElementById('cp-projects-body').innerHTML =
+      `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderCustomerProjects(){
+  const body = document.getElementById('cp-projects-body');
+  const stats = document.getElementById('cp-stats');
+  if (!_customerProjects.length){
+    stats.innerHTML = '';
+    body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No projects yet.</p></div>';
+    return;
+  }
+  // Stat tiles: active count, completed count, total hours
+  const activeCount = _customerProjects.filter(p => p.status === 'active').length;
+  const completedCount = _customerProjects.filter(p => p.status === 'completed' || p.status === 'billed').length;
+  const totalHours = _customerProjects.reduce((s, p) => s + (parseFloat(p.actual_hours) || 0), 0);
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value">${activeCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value">${completedCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value">${(Number(totalHours)||0).toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1})}</div></div>
+  `;
+  body.innerHTML = _customerProjects.map(p => {
+    const status = String(p.status || 'active').toLowerCase();
+    const statusClass = 'status-' + status;
+    const pctNote = p.completion_pct != null
+      ? `<span style="color:var(--text-muted);margin-left:8px">${p.completion_pct}% complete</span>`
+      : '';
+    const dsa = p.days_since_activity == null ? '' :
+      p.days_since_activity === 0 ? 'today' :
+      p.days_since_activity === 1 ? 'yesterday' :
+      `${p.days_since_activity} days ago`;
+    return `<div class="proj-row" onclick="cpOpenDetail('${esc(p.id)}')">
+      <div>
+        <div class="proj-name">${esc(p.name)}</div>
+        <div class="proj-sub">
+          ${p.work_order_number ? `<span style="font-family:monospace;margin-right:8px">WO# ${esc(p.work_order_number)}</span>` : ''}
+          ${esc(p.job_name || '—')} ${pctNote}
+          ${dsa ? `<span style="margin-left:8px">last activity: ${esc(dsa)}</span>` : ''}
+          ${p.pipeline_stage ? `<span style="margin-left:8px">pipeline: ${esc(p.pipeline_stage)}</span>` : ''}
+        </div>
+        ${p.completion_pct != null ? `<div class="progress-track"><div class="progress-fill" style="width:${p.completion_pct}%"></div></div>` : ''}
+      </div>
+      <div style="text-align:right">
+        <span class="status-pill ${statusClass}">${esc(status.replace('_',' '))}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function cpOpenDetail(id){
+  const m = document.getElementById('cp-detail-modal');
+  const body = document.getElementById('cp-detail-body');
+  document.getElementById('cp-detail-title').textContent = 'Loading…';
+  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  m.style.display = 'flex';
+  try {
+    const p = await api('/api/customer/projects/' + encodeURIComponent(id));
+    document.getElementById('cp-detail-title').textContent = p.name || 'Project';
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px;margin-bottom:18px">
+        <div style="color:var(--text-muted)">Client</div><div>${esc(p.client_name || '—')}</div>
+        <div style="color:var(--text-muted)">Job</div><div>${esc(p.job_name || '—')}</div>
+        ${p.work_order_number ? `<div style="color:var(--text-muted)">Work Order</div><div style="font-family:monospace">${esc(p.work_order_number)}</div>` : ''}
+        <div style="color:var(--text-muted)">Status</div><div><span class="status-pill status-${esc(String(p.status||'active'))}">${esc(String(p.status||'active').replace('_',' '))}</span></div>
+        <div style="color:var(--text-muted)">Started</div><div>${fmtDate(p.start_date)}</div>
+        <div style="color:var(--text-muted)">Completed</div><div>${fmtDate(p.completed_date)}</div>
+        ${p.expected_hours ? `<div style="color:var(--text-muted)">Hours</div><div>${fmtHours(p.actual_hours)} of ${fmtHours(p.expected_hours)} expected ${p.completion_pct != null ? `(${p.completion_pct}%)` : ''}</div>` : ''}
+        ${p.footage ? `<div style="color:var(--text-muted)">Footage</div><div>${(Number(p.footage)||0).toLocaleString('en-US', {maximumFractionDigits:0})} ft</div>` : ''}
+        ${p.notes ? `<div style="color:var(--text-muted)">Notes</div><div style="white-space:pre-wrap">${esc(p.notes)}</div>` : ''}
+      </div>
+      ${(p.weekly_hours || []).length ? `
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">RECENT ACTIVITY (LAST 12 WEEKS)</div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--surface-1)">
+            <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Week starting</th>
+            <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
+          </tr></thead>
+          <tbody>
+            ${p.weekly_hours.map(w => `<tr style="border-top:1px solid var(--gray-border)">
+              <td style="padding:6px 10px">${fmtDate(w.week_start)}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:600">${fmtHours(w.hours)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      ` : '<div style="font-size:12px;color:var(--text-muted)">No recent activity logged.</div>'}
+    `;
+  } catch (e) {
+    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+async function cpLoadInvoices(){
+  const body = document.getElementById('cp-invoices-body');
+  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  try {
+    const rows = await api('/api/customer/invoices');
+    if (!rows.length){
+      body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices yet.</p></div>';
+      return;
+    }
+    body.innerHTML = `
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--surface-1);border-bottom:1px solid var(--gray-border)">
+            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Invoice #</th>
+            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Date</th>
+            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Description</th>
+            <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:8px 12px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}</td>
+            <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}</td>
+            <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || '—')}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function cpSelectTab(name){
+  document.querySelectorAll('#cp-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.cp-tab').forEach(d => d.style.display = (d.id === 'cp-tab-' + name) ? '' : 'none');
+  if (name === 'invoices') cpLoadInvoices();
+}
+
+function showAccountMenu(){
+  const existing = document.getElementById('account-modal');
+  if (existing){ existing.remove(); return; }
+  const u = _currentUser || {};
+  const overlay = document.createElement('div');
+  overlay.id = 'account-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:380px">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-user-circle"></i> Account</span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('account-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
+          <div style="font-size:18px;font-weight:600;margin-bottom:4px">${esc(u.full_name || u.username || '')}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${esc(u.email || u.username || '')}</div>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
+          <i class="fa-solid fa-key" style="margin-right:10px"></i><span>Change Password</span>
+        </button>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
+          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i><span>Sign Out</span>
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+async function signOut(){
+  try { await fetch('/api/auth/logout', {method:'POST', credentials:'same-origin'}); } catch(e){}
+  window.location.href = '/login';
+}
+
+(async function init(){
+  await loadCurrentUser();
+  await loadCustomerData();
+})();
+</script>
+</body>
+</html>
