@@ -370,6 +370,18 @@ fetch('/api/auth/me', { credentials: 'include' })
             <select id="proj-contract"><option value="">None / N/A</option></select>
           </div>
         </div>
+        <!-- Existing-project lookup: once a client is chosen, surface
+             matching leaf projects (with WO# inline). Picking one swaps
+             the modal into Edit mode for that project; leaving blank keeps
+             this as a fresh create. Helps the team avoid duplicating a
+             project that's already in the system. -->
+        <div class="form-row" id="proj-existing-wrap" style="display:none">
+          <div class="form-group span2">
+            <label>Existing Project for this Client <span style="font-weight:400;color:var(--text-muted)">(optional — pick to edit instead of creating new)</span></label>
+            <select id="proj-existing" onchange="existingProjectPicked(this.value)"><option value="">— Create new below —</option></select>
+            <span class="form-hint" id="proj-existing-hint">Showing existing leaf projects under this client — with WO# in label when applicable.</span>
+          </div>
+        </div>
         <!-- Parent Project + Concentrator removed — server auto-nests under
              Client → Team → Service Area → Project. PSC clients drive Service
              Area via Work Order # match; non-PSC clients type a free-text
@@ -845,6 +857,11 @@ async function clientChanged(preserveJobId){
   // 2) Refilter jobs dropdown
   await refilterJobsDropdown();
 
+  // 2b) Load existing leaf projects for this client into the optional
+  //     pick-to-edit dropdown. Helps avoid duplicates and matches the
+  //     "Client → Type → Existing Project (with WO#) → Job" cascade.
+  await loadExistingProjectsForClient();
+
   // 3) Refresh contracts dropdown — de-dupe by display label so repeats
   //    don't pile up. The contracts table can accumulate duplicate rows
   //    when projects auto-create them; the dropdown only needs one entry
@@ -865,8 +882,59 @@ async function clientChanged(preserveJobId){
   } catch (e) { /* non-fatal */ }
 }
 
-// When the job changes, swap the Footage/Hours label & hint
-function jobChanged(){
+// Fetch the leaf projects for the current client + type and stuff them
+// into the optional pick-to-edit dropdown. WO# is included in the label
+// when set so the operator can spot the right one fast ("Crossroad
+// School - WO#1234"). Empty list → keep the wrapper hidden.
+async function loadExistingProjectsForClient() {
+  const wrap = document.getElementById('proj-existing-wrap');
+  const sel = document.getElementById('proj-existing');
+  if (!wrap || !sel) return;
+  const clientId = document.getElementById('proj-client')?.value;
+  if (!clientId) {
+    wrap.style.display = 'none';
+    sel.innerHTML = '<option value="">— Create new below —</option>';
+    return;
+  }
+  let url = '/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active';
+  // Project Type filter (PSC only — for non-PSC the type field is hidden)
+  const ptype = document.getElementById('proj-ptype')?.value;
+  if (ptype) url += '&project_type=' + encodeURIComponent(ptype);
+  try {
+    const rows = await api(url);
+    // Leaves only — rollups are folders.
+    const leaves = (rows || []).filter(p => !p.is_rollup);
+    if (!leaves.length) {
+      wrap.style.display = 'none';
+      sel.innerHTML = '<option value="">— Create new below —</option>';
+      return;
+    }
+    leaves.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const opts = ['<option value="">— Create new below —</option>'];
+    for (const p of leaves) {
+      const wo = p.work_order_number ? ' — WO#' + esc(p.work_order_number) : '';
+      opts.push(`<option value="${esc(p.id)}">${esc(p.name)}${wo}</option>`);
+    }
+    sel.innerHTML = opts.join('');
+    wrap.style.display = '';
+  } catch (e) {
+    wrap.style.display = 'none';
+  }
+}
+
+// Picking an existing project pivots the modal into Edit mode: pre-fill
+// every field from that project's row. Leaving the dropdown empty is the
+// "create new" path — no behaviour change. Hide the existing-picker
+// while editing (avoid recursive selection confusion).
+function existingProjectPicked(id) {
+  if (!id) return;
+  const wrap = document.getElementById('proj-existing-wrap');
+  if (wrap) wrap.style.display = 'none';
+  // editProject loads + populates without re-opening the modal.
+  editProject(id);
+}
+
+
   const opt = document.getElementById('proj-job').selectedOptions[0];
   const label = document.getElementById('proj-amount-label');
   const hint  = document.getElementById('proj-amount-hint');

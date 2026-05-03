@@ -862,6 +862,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
       </div>
       <div class="stats-grid" id="hrs-stats"></div>
+      <!-- Held-timecard surface: any time_entries row with project_id=NULL
+           (typically because an engineer logged time against a pending
+           "Add New Project" request that hasn't been approved or has been
+           rejected). Each row gets [Assign Project] (opens edit modal) or
+           [Delete]. Hidden when no held rows exist. -->
+      <div id="held-timecards-panel" class="card" style="display:none;margin-bottom:14px;border-left:4px solid var(--warning,#FFC107)">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning,#FFC107)"></i> Needs Project Assignment <span id="held-timecards-count" style="margin-left:8px;color:var(--text-muted);font-weight:400"></span></span>
+        </div>
+        <div id="held-timecards-body" style="padding:0"></div>
+      </div>
       <div class="card">
         <div class="card-header"><span class="card-title" id="hrs-report-title">Hours Report</span></div>
         <div id="hours-tree-body" style="padding:0"></div>
@@ -5705,7 +5716,7 @@ async function loadHours() {
   } else {
     qs = `month=${m}&year=${y}`;
   }
-  const entries = await api(`/api/time-entries?${qs}`);
+  let entries = await api(`/api/time-entries?${qs}`);
   const periodLabel = period === 'ytd'
     ? `YTD ${y}`
     : new Date(y, m-1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -5723,6 +5734,15 @@ async function loadHours() {
   const container = document.getElementById('hours-tree-body');
   const grouped = document.getElementById('hours-grouped-body');
   const groupBy = document.getElementById('hrs-groupby')?.value || 'project';
+
+  // Held timecards: rows with no real project (engineer logged time
+  // against a "+ Add New" request that's still pending or got rejected).
+  // Surface them in the warning panel above the tree so admin can assign
+  // a real project or delete the row. Filter them out of the regular
+  // entries list so they don't also appear under a "No Project" group.
+  const heldEntries = entries.filter(e => !e.project_id);
+  renderHeldTimecardsPanel(heldEntries);
+  entries = entries.filter(e => !!e.project_id);
 
   if (!entries.length) {
     container.style.display = '';
@@ -6071,6 +6091,56 @@ async function deleteTimeEntry(id) {
   await api('/api/time-entries/'+id, 'DELETE');
   loadHours();
   loadDashboard();
+}
+
+// Render the "Needs Project Assignment" warning panel above the Hours
+// tree. Sources: time_entries rows where project_id IS NULL — typically
+// because an engineer logged time against a "+ Add New" request that's
+// either still pending admin approval or got rejected. Each row gets a
+// pencil (opens the time-entry edit modal so admin can pick a real
+// project) and a trash button (delete the orphan row). The panel hides
+// itself when no held rows are present.
+function renderHeldTimecardsPanel(heldEntries) {
+  const panel = document.getElementById('held-timecards-panel');
+  const body = document.getElementById('held-timecards-body');
+  const count = document.getElementById('held-timecards-count');
+  if (!panel || !body) return;
+  if (!heldEntries || !heldEntries.length) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = '';
+  if (count) count.textContent = `(${heldEntries.length} timecard${heldEntries.length === 1 ? '' : 's'})`;
+  // Sort newest entry_date first so freshly-rejected requests bubble up.
+  const sorted = heldEntries.slice().sort((a, b) =>
+    String(b.entry_date || '').localeCompare(String(a.entry_date || '')));
+  body.innerHTML = `
+    <table style="width:100%;font-size:13px">
+      <thead>
+        <tr style="background:var(--gray-light)">
+          <th style="padding:8px 10px;text-align:left">Date</th>
+          <th style="padding:8px 10px;text-align:left">Staff</th>
+          <th style="padding:8px 10px;text-align:right">Hours</th>
+          <th style="padding:8px 10px;text-align:left">Notes</th>
+          <th style="padding:8px 10px;text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map(e => `
+          <tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 10px">${esc(String(e.entry_date || '').slice(0,10))}</td>
+            <td style="padding:6px 10px">${esc(e.staff_name || '—')}</td>
+            <td style="padding:6px 10px;text-align:right;font-weight:600">${e.hours}</td>
+            <td style="padding:6px 10px;color:var(--text-muted);font-size:12px">${esc(e.notes || '')}</td>
+            <td style="padding:6px 10px;text-align:right;white-space:nowrap">
+              <button class="btn btn-sm btn-secondary btn-icon" onclick="openEditTimeEntryModal('${e.id}')" title="Assign project + edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 async function deleteAllHoursForStaff(staffId, name) {
