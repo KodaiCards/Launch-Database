@@ -22,18 +22,22 @@
   if (!document.getElementById(STYLE_ID)) {
     var style = document.createElement('style');
     style.id = STYLE_ID;
+    // Tokens with hex fallbacks: pages that haven't loaded the token
+    // system (login screen, plain-static pages) still render readable
+    // toasts. Pages that DO have the tokens (admin + 4 portals) get
+    // automatic dark-mode contrast.
     style.textContent = [
       '#lfs-toast-stack{position:fixed;top:14px;right:14px;z-index:99999;display:flex;flex-direction:column;gap:8px;max-width:360px;pointer-events:none;font-family:Inter,system-ui,sans-serif}',
-      '.lfs-toast{pointer-events:auto;background:#fff;border:1px solid #DEE2E6;border-left:4px solid #6C757D;border-radius:8px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.08);font-size:14px;line-height:1.4;color:#212529;animation:lfsToastIn .18s ease-out;display:flex;align-items:flex-start;gap:10px}',
-      '.lfs-toast.lfs-toast-success{border-left-color:#28A745}',
-      '.lfs-toast.lfs-toast-info{border-left-color:#1B5FA0}',
-      '.lfs-toast.lfs-toast-warn{border-left-color:#F0A500}',
-      '.lfs-toast.lfs-toast-error{border-left-color:#DC3545}',
+      '.lfs-toast{pointer-events:auto;background:var(--surface-2,#fff);border:1px solid var(--gray-border,#DEE2E6);border-left:4px solid var(--text-muted,#6C757D);border-radius:8px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.18);font-size:14px;line-height:1.4;color:var(--text,#212529);animation:lfsToastIn .18s ease-out;display:flex;align-items:flex-start;gap:10px}',
+      '.lfs-toast.lfs-toast-success{border-left-color:var(--success,#28A745)}',
+      '.lfs-toast.lfs-toast-info{border-left-color:var(--info,#1B5FA0)}',
+      '.lfs-toast.lfs-toast-warn{border-left-color:var(--warning,#F0A500)}',
+      '.lfs-toast.lfs-toast-error{border-left-color:var(--danger,#DC3545)}',
       '.lfs-toast.lfs-toast-leaving{animation:lfsToastOut .15s ease-in forwards}',
       '.lfs-toast-msg{flex:1;word-break:break-word}',
-      '.lfs-toast-btn{background:transparent;border:0;color:#1B5FA0;font-weight:500;cursor:pointer;padding:0;font-size:13px}',
+      '.lfs-toast-btn{background:transparent;border:0;color:var(--primary,#1B5FA0);font-weight:500;cursor:pointer;padding:0;font-size:13px}',
       '.lfs-toast-btn:hover{text-decoration:underline}',
-      '.lfs-toast-close{background:transparent;border:0;color:#6C757D;cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 4px;margin-left:auto}',
+      '.lfs-toast-close{background:transparent;border:0;color:var(--text-muted,#6C757D);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 4px;margin-left:auto}',
       '@keyframes lfsToastIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}',
       '@keyframes lfsToastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(20px);opacity:0}}',
       // Mobile: full-width at top, easier to read on phones

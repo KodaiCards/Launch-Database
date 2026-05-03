@@ -532,6 +532,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> PSC RUS</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
+  <a class="nav-tab" data-view="clients" onclick="showView('clients')"><i class="fa-solid fa-handshake"></i> Clients</a>
   <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
   <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
 </nav>
@@ -1009,6 +1010,30 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <button class="btn btn-secondary" onclick="closeAuditDetailModal()">Close</button>
         </div>
       </div>
+    </div>
+
+    <!-- ═══════════════════ CLIENTS (PROGRESS) ═══════════════════
+         Internal mirror of the customer portal's data. Groups every
+         project by its client and surfaces completion %, hours used vs
+         expected, days since last activity, and the latest pipeline
+         stage. Backed by /api/admin/client-progress. -->
+    <div id="view-clients" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Client Progress</div><div class="section-sub">Per-client portfolio of projects with completion % and stale-activity flagging</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="search" id="cp-search" placeholder="Filter…" oninput="renderClientProgress()" style="padding:6px 10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--surface-2);color:var(--text);font-size:13px">
+          <select id="cp-status-filter" class="filter" onchange="renderClientProgress()">
+            <option value="">All statuses</option>
+            <option value="active">Active only</option>
+            <option value="stale">Stale active (&gt; 30 days)</option>
+            <option value="completed">Completed</option>
+            <option value="billed">Billed</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="loadClientProgress()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+      </div>
+      <div class="stats-grid" id="cp-stats"></div>
+      <div id="cp-clients-body"></div>
     </div>
 
     <!-- ═══════════════════ BILLING ═══════════════════ -->
@@ -2629,6 +2654,7 @@ function showView(view) {
   if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
+  if (view==='clients') loadClientProgress();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
 }
@@ -3962,6 +3988,30 @@ function applyDashboardLayout() {
       el.style.display = '';
     }
   });
+  // Reorder: walk widgets in their stored order and re-append to their
+  // shared parent in that sequence. Widgets without a stored order keep
+  // their original document order at the end (sort is stable).
+  const widgets = [...document.querySelectorAll('.lfs-widget')];
+  if (!widgets.length) return;
+  // Group widgets by parent node — different siblings may live in
+  // different containers (e.g. inside .stats-grid vs .card siblings)
+  // and we don't want to mix them across containers.
+  const byParent = new Map();
+  widgets.forEach(el => {
+    const parent = el.parentElement;
+    if (!byParent.has(parent)) byParent.set(parent, []);
+    byParent.get(parent).push(el);
+  });
+  for (const [parent, els] of byParent) {
+    els.sort((a, b) => {
+      const ao = (_dashLayout[a.getAttribute('data-widget-id')] || {}).order;
+      const bo = (_dashLayout[b.getAttribute('data-widget-id')] || {}).order;
+      const av = (ao == null) ? Number.POSITIVE_INFINITY : ao;
+      const bv = (bo == null) ? Number.POSITIVE_INFINITY : bo;
+      return av - bv;
+    });
+    for (const el of els) parent.appendChild(el);
+  }
 }
 async function saveDashboardLayout() {
   try {
@@ -3973,15 +4023,23 @@ async function saveDashboardLayout() {
 function toggleDashboardCustomize() {
   _dashCustomizeOn = !_dashCustomizeOn;
   if (_dashCustomizeOn) {
-    if (window.LFS && window.LFS.toast) window.LFS.toast.info('Click any widget to hide / show. Click Customize again when done.');
+    if (window.LFS && window.LFS.toast) window.LFS.toast.info('Drag widgets to reorder. Click the eye icon to hide / show. Click Customize again when done.');
     document.querySelectorAll('.lfs-widget').forEach(el => {
       const id = el.getAttribute('data-widget-id');
-      el.style.outline = '2px dashed var(--primary,#1B5FA0)';
+      el.style.outline = '2px dashed var(--primary)';
       el.style.outlineOffset = '4px';
-      el.style.cursor = 'pointer';
+      el.style.cursor = 'grab';
       el.style.opacity = (_dashLayout[id] && _dashLayout[id].hidden) ? '0.4' : '1';
       el.style.display = '';  // show even hidden ones in customize mode
-      el.addEventListener('click', _dashCustomizeClick);
+      el.draggable = true;
+      // Inject a small toolbar at the top-right of the widget so the
+      // hide/show toggle is unambiguous (clicking the bg used to toggle
+      // visibility, which made dragging hard).
+      _dashEnsureToolbar(el);
+      el.addEventListener('dragstart', _dashDragStart);
+      el.addEventListener('dragover', _dashDragOver);
+      el.addEventListener('drop', _dashDrop);
+      el.addEventListener('dragend', _dashDragEnd);
     });
   } else {
     document.querySelectorAll('.lfs-widget').forEach(el => {
@@ -3989,20 +4047,92 @@ function toggleDashboardCustomize() {
       el.style.outlineOffset = '';
       el.style.cursor = '';
       el.style.opacity = '';
-      el.removeEventListener('click', _dashCustomizeClick);
+      el.draggable = false;
+      el.removeEventListener('dragstart', _dashDragStart);
+      el.removeEventListener('dragover', _dashDragOver);
+      el.removeEventListener('drop', _dashDrop);
+      el.removeEventListener('dragend', _dashDragEnd);
+      _dashRemoveToolbar(el);
     });
     applyDashboardLayout();
     saveDashboardLayout();
   }
 }
-function _dashCustomizeClick(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  const el = e.currentTarget;
+
+function _dashEnsureToolbar(el) {
+  if (el.querySelector('.lfs-widget-toolbar')) return;
   const id = el.getAttribute('data-widget-id');
-  if (!_dashLayout[id]) _dashLayout[id] = {};
-  _dashLayout[id].hidden = !_dashLayout[id].hidden;
-  el.style.opacity = _dashLayout[id].hidden ? '0.4' : '1';
+  const isHidden = _dashLayout[id] && _dashLayout[id].hidden;
+  const tb = document.createElement('div');
+  tb.className = 'lfs-widget-toolbar';
+  tb.style.cssText = 'position:absolute;top:6px;right:6px;z-index:5;display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--gray-border);border-radius:6px;padding:2px';
+  tb.innerHTML = `
+    <button title="${isHidden ? 'Show' : 'Hide'}" style="background:transparent;border:0;cursor:pointer;padding:4px 6px;color:var(--text);font-size:12px"><i class="fa-solid fa-${isHidden ? 'eye-slash' : 'eye'}"></i></button>
+    <span style="color:var(--text-muted);font-size:11px;align-self:center;padding:0 4px"><i class="fa-solid fa-grip-vertical"></i> drag</span>
+  `;
+  // Make sure the parent is positioned so absolute placement anchors right.
+  const pos = window.getComputedStyle(el).position;
+  if (pos === 'static') el.style.position = 'relative';
+  tb.querySelector('button').addEventListener('click', (e) => {
+    e.stopPropagation(); e.preventDefault();
+    if (!_dashLayout[id]) _dashLayout[id] = {};
+    _dashLayout[id].hidden = !_dashLayout[id].hidden;
+    el.style.opacity = _dashLayout[id].hidden ? '0.4' : '1';
+    const ic = tb.querySelector('i');
+    ic.className = _dashLayout[id].hidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  });
+  el.appendChild(tb);
+}
+function _dashRemoveToolbar(el) {
+  const tb = el.querySelector('.lfs-widget-toolbar');
+  if (tb) tb.remove();
+}
+
+let _dashDraggingId = null;
+function _dashDragStart(e) {
+  const id = e.currentTarget.getAttribute('data-widget-id');
+  _dashDraggingId = id;
+  e.currentTarget.style.opacity = '0.4';
+  try { e.dataTransfer.setData('text/plain', id); e.dataTransfer.effectAllowed = 'move'; } catch {}
+}
+function _dashDragOver(e) {
+  // preventDefault is required to allow drop. The visual cue is the
+  // outline change on the dragover target.
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.outline = '2px solid var(--primary)';
+}
+function _dashDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  const targetId = target.getAttribute('data-widget-id');
+  target.style.outline = '2px dashed var(--primary)';
+  if (!_dashDraggingId || _dashDraggingId === targetId) return;
+  // Reorder DOM: insert dragging element before target (or after if it
+  // was already before). Persist the resulting order in _dashLayout.
+  const dragging = document.querySelector(`.lfs-widget[data-widget-id="${_dashDraggingId}"]`);
+  if (!dragging || !target) return;
+  if (dragging.parentElement !== target.parentElement) return; // can't cross containers
+  const siblings = [...target.parentElement.children].filter(el => el.classList.contains('lfs-widget'));
+  const draggingIndex = siblings.indexOf(dragging);
+  const targetIndex = siblings.indexOf(target);
+  if (draggingIndex < targetIndex) {
+    target.parentElement.insertBefore(dragging, target.nextSibling);
+  } else {
+    target.parentElement.insertBefore(dragging, target);
+  }
+  // Re-stamp order on every sibling to keep the numbers dense.
+  const updated = [...target.parentElement.children].filter(el => el.classList.contains('lfs-widget'));
+  updated.forEach((el, idx) => {
+    const id = el.getAttribute('data-widget-id');
+    if (!_dashLayout[id]) _dashLayout[id] = {};
+    _dashLayout[id].order = idx;
+  });
+}
+function _dashDragEnd(e) {
+  e.currentTarget.style.opacity = (_dashLayout[e.currentTarget.getAttribute('data-widget-id')] || {}).hidden ? '0.4' : '1';
+  document.querySelectorAll('.lfs-widget').forEach(el => { el.style.outline = '2px dashed var(--primary)'; });
+  _dashDraggingId = null;
 }
 window.addEventListener('load', () => loadDashboardLayout());
 
@@ -6027,6 +6157,134 @@ async function toggleOngoing(projectId, isOngoing) {
 // ═══════════════════════════════════════════════════════════
 // HOURS
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// CLIENT PROGRESS (admin internal view)
+// ═══════════════════════════════════════════════════════════
+//
+// Mirrors /api/customer/projects but unscoped — admin sees every
+// client. Each client gets a collapsible card with stat tiles at the
+// top of the tab and a project list inside. Supports text search +
+// status filter (active / stale / completed / billed).
+
+let _clientProgressData = null;
+
+async function loadClientProgress() {
+  const root = document.getElementById('cp-clients-body');
+  if (root && !_clientProgressData) {
+    root.innerHTML = '<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+  }
+  try {
+    _clientProgressData = await api('/api/admin/client-progress');
+    renderClientProgress();
+  } catch (e) {
+    if (root) root.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderClientProgress() {
+  if (!_clientProgressData) return;
+  const root = document.getElementById('cp-clients-body');
+  const stats = document.getElementById('cp-stats');
+  const search = (document.getElementById('cp-search')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('cp-status-filter')?.value || '';
+
+  // Apply filters at the project level so a client with no matching
+  // projects is hidden entirely.
+  const groups = (_clientProgressData.clients || []).map(g => {
+    let projects = g.projects;
+    if (statusFilter === 'stale') {
+      projects = projects.filter(p => p.status === 'active' && p.days_since_activity != null && p.days_since_activity > 30);
+    } else if (statusFilter) {
+      projects = projects.filter(p => p.status === statusFilter);
+    }
+    if (search) {
+      projects = projects.filter(p =>
+        (p.name || '').toLowerCase().includes(search) ||
+        (p.work_order_number || '').toLowerCase().includes(search) ||
+        (g.client_name || '').toLowerCase().includes(search)
+      );
+    }
+    return { ...g, projects };
+  }).filter(g => g.projects.length);
+
+  // Tab-level totals
+  const totals = groups.reduce((acc, g) => {
+    acc.clients += 1;
+    acc.projects += g.projects.length;
+    acc.active += g.projects.filter(p => p.status === 'active').length;
+    acc.stale += g.projects.filter(p => p.status === 'active' && p.days_since_activity != null && p.days_since_activity > 30).length;
+    acc.hours += g.projects.reduce((s, p) => s + (parseFloat(p.actual_hours) || 0), 0);
+    acc.expected_hours += g.projects.reduce((s, p) => s + (parseFloat(p.expected_hours) || 0), 0);
+    return acc;
+  }, { clients: 0, projects: 0, active: 0, stale: 0, hours: 0, expected_hours: 0 });
+  const overallPct = totals.expected_hours > 0
+    ? Math.min(100, Math.round((totals.hours / totals.expected_hours) * 100))
+    : null;
+
+  if (stats) stats.innerHTML = [
+    `<div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value">${totals.clients}</div></div>`,
+    `<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">${totals.active}</div><div class="stat-sub" style="font-size:11px;color:var(--text-muted)">of ${totals.projects} total</div></div>`,
+    `<div class="stat-card${totals.stale ? '' : ''}" style="${totals.stale ? 'border-left:4px solid var(--warning)' : ''}"><div class="stat-label">Stale (&gt; 30d)</div><div class="stat-value">${totals.stale}</div></div>`,
+    `<div class="stat-card"><div class="stat-label">Hours used</div><div class="stat-value">${(totals.hours||0).toLocaleString('en-US',{maximumFractionDigits:0})}</div>${overallPct != null ? `<div style="font-size:11px;color:var(--text-muted)">${overallPct}% of expected</div>` : ''}</div>`,
+  ].join('');
+
+  if (!groups.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-handshake"></i><p>No projects match the current filters.</p></div>';
+    return;
+  }
+
+  root.innerHTML = groups.map(g => {
+    const pct = g.total_expected_hours > 0
+      ? Math.min(100, Math.round((g.total_hours / g.total_expected_hours) * 100))
+      : null;
+    const staleBadge = g.stale_count
+      ? `<span style="background:var(--warning-light);color:var(--warning-text);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;margin-left:8px">${g.stale_count} stale</span>`
+      : '';
+    return `<div class="card" style="margin-bottom:14px">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-building" style="color:var(--text-muted);margin-right:6px"></i>${esc(g.client_name)}${staleBadge}</span>
+        <span style="font-size:12px;color:var(--text-muted)">${g.projects.length} project${g.projects.length === 1 ? '' : 's'} · ${g.total_hours.toLocaleString('en-US',{maximumFractionDigits:1})} hrs${pct != null ? ` · ${pct}% of expected` : ''}</span>
+      </div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="background:var(--surface-1)">
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Status</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Pipeline</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">% Done</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Last Activity</th>
+        </tr></thead>
+        <tbody>
+          ${g.projects.map(p => {
+            const status = String(p.status || 'active').toLowerCase();
+            const statusClass =
+              status === 'active' ? 'background:var(--info-light);color:var(--info-text)' :
+              status === 'completed' ? 'background:var(--success-light);color:var(--success-text)' :
+              status === 'billed' ? 'background:var(--success);color:#fff' :
+              status === 'on_hold' ? 'background:var(--warning-light);color:var(--warning-text)' :
+              'background:var(--surface-1);color:var(--text)';
+            const isStale = status === 'active' && p.days_since_activity != null && p.days_since_activity > 30;
+            const dsa = p.days_since_activity == null ? '—' :
+              p.days_since_activity === 0 ? 'today' :
+              p.days_since_activity === 1 ? 'yesterday' :
+              `${p.days_since_activity} days ago`;
+            return `<tr style="border-top:1px solid var(--gray-border);${isStale ? 'background:var(--warning-light)' : ''};cursor:pointer" onclick="showProjectDetail('${esc(p.id)}')">
+              <td style="padding:6px 10px;font-weight:500">${esc(p.name)}${p.work_order_number ? `<br><span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(p.work_order_number)}</span>` : ''}</td>
+              <td style="padding:6px 10px">${esc(p.job_name || '—')}</td>
+              <td style="padding:6px 10px"><span style="${statusClass};padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase">${esc(status.replace('_',' '))}</span></td>
+              <td style="padding:6px 10px;color:var(--text-muted);font-size:12px">${esc(p.pipeline_stage || '—')}</td>
+              <td style="padding:6px 10px;text-align:right">${(parseFloat(p.actual_hours)||0).toLocaleString('en-US',{maximumFractionDigits:1})}${p.expected_hours ? ` <span style="color:var(--text-muted);font-size:11px">/ ${(parseFloat(p.expected_hours)||0).toLocaleString('en-US',{maximumFractionDigits:0})}</span>` : ''}</td>
+              <td style="padding:6px 10px;text-align:right">${p.completion_pct != null ? `<span style="font-weight:600">${p.completion_pct}%</span>` : '—'}</td>
+              <td style="padding:6px 10px;text-align:right;color:${isStale ? 'var(--warning-text)' : 'var(--text-muted)'};font-size:12px">${esc(dsa)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
 async function loadHours() {
   const period = document.getElementById('hrs-period')?.value || 'month';
   const m = document.getElementById('hrs-month').value;
@@ -6686,6 +6944,24 @@ function renderImportReview(d) {
     ${s.rows_in_billed_periods > 0 ? `<div class="stat-card warn"><div class="stat-label">In Billed Months</div><div class="stat-value">${s.rows_in_billed_periods}</div></div>` : ''}
     ${s.invalid > 0 ? `<div class="stat-card warn"><div class="stat-label">Invalid Rows</div><div class="stat-value">${s.invalid}</div></div>` : ''}
   </div>`;
+
+  // Would-modify preview banner — surfaces matches against existing
+  // time_entries on (staff_id, project_id, entry_date). The numbers
+  // help the operator spot accidental re-imports of last week's CSV
+  // before any data lands.
+  const wouldTotal = (s.would_add||0) + (s.would_skip_duplicate||0) + (s.would_modify||0) + (s.would_conflict||0);
+  if (wouldTotal > 0) {
+    html += `<div class="alert alert-info" style="margin-bottom:14px;padding:10px 14px;font-size:13px">
+      <strong>Match preview:</strong>
+      <span style="margin-left:8px">${s.would_add||0} new</span>
+      ${s.would_skip_duplicate ? `<span style="margin-left:12px;color:var(--text-muted)">${s.would_skip_duplicate} duplicate (will skip)</span>` : ''}
+      ${s.would_modify ? `<span style="margin-left:12px;color:var(--warning-text)">${s.would_modify} would change existing hours</span>` : ''}
+      ${s.would_conflict ? `<span style="margin-left:12px;color:var(--danger-text)">${s.would_conflict} ambiguous (multiple existing rows)</span>` : ''}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+        <i class="fa-solid fa-circle-info"></i> Match = same staff + project + date as an existing row. Duplicates (same hours and job) are auto-skipped on commit; modify and conflict rows still insert and produce a second row — review them in the ledger below.
+      </div>
+    </div>`;
+  }
 
   // Already-billed warning banner
   if (s.rows_in_billed_periods > 0) {

@@ -242,6 +242,91 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
+  // ─── Admin: Client Progress view ──────────────────────────────────────
+  // Internal mirror of the customer portal's data, but unscoped so admin
+  // sees every client. The data shape matches /api/customer/projects so
+  // both UIs can share render code if useful in the future. Returned as
+  // a clients-grouped tree instead of a flat project list because the
+  // admin tab groups by client at the top level.
+  app.get('/api/admin/client-progress', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT
+          p.id, p.name, p.work_order_number, p.status, p.project_type,
+          p.start_date, p.completed_date, p.billed_date,
+          p.actual_hours,
+          p.expected_hours,
+          p.expected_revenue,
+          p.footage,
+          p.client_id,
+          cl.name AS client_name,
+          j.name AS job_name,
+          (SELECT MAX(entry_date)
+             FROM time_entries WHERE project_id = p.id) AS last_activity_date,
+          ds.stage AS design_stage,
+          ps.stage AS permit_stage
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN jobs j ON j.id = p.job_id
+        LEFT JOIN LATERAL (
+          SELECT stage FROM design_stages WHERE project_id = p.id ORDER BY created_at DESC LIMIT 1
+        ) ds ON TRUE
+        LEFT JOIN LATERAL (
+          SELECT stage FROM permit_stages WHERE project_id = p.id ORDER BY created_at DESC LIMIT 1
+        ) ps ON TRUE
+        WHERE COALESCE(p.is_rollup, FALSE) = FALSE
+          AND p.client_id IS NOT NULL
+        ORDER BY cl.name, p.name
+      `);
+
+      const today = new Date();
+      const byClient = new Map();
+      for (const p of rows) {
+        const expected = parseFloat(p.expected_hours || 0);
+        const actual = parseFloat(p.actual_hours || 0);
+        const completionPct = expected > 0 ? Math.min(100, Math.round((actual / expected) * 100)) : null;
+        let daysSince = null;
+        if (p.last_activity_date) {
+          const last = new Date(p.last_activity_date);
+          daysSince = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+        }
+        const enriched = {
+          ...p,
+          completion_pct: completionPct,
+          days_since_activity: daysSince,
+          pipeline_stage: p.permit_stage || p.design_stage || null,
+        };
+        if (!byClient.has(p.client_id)) {
+          byClient.set(p.client_id, {
+            client_id: p.client_id,
+            client_name: p.client_name,
+            project_count: 0,
+            active_count: 0,
+            total_hours: 0,
+            total_expected_hours: 0,
+            total_expected_revenue: 0,
+            stale_count: 0,        // > 30 days since activity AND status=active
+            projects: [],
+          });
+        }
+        const grp = byClient.get(p.client_id);
+        grp.projects.push(enriched);
+        grp.project_count += 1;
+        if (p.status === 'active') grp.active_count += 1;
+        grp.total_hours += actual;
+        grp.total_expected_hours += expected;
+        grp.total_expected_revenue += parseFloat(p.expected_revenue || 0);
+        if (p.status === 'active' && daysSince != null && daysSince > 30) grp.stale_count += 1;
+      }
+      const groups = [...byClient.values()].sort((a, b) =>
+        (a.client_name || '').localeCompare(b.client_name || ''));
+      res.json({ clients: groups });
+    } catch (e) {
+      console.error('[admin:client-progress]', e && e.message);
+      res.status(500).json({ error: 'Failed to load client progress.' });
+    }
+  });
+
   // ─── Admin endpoints — manage customer ↔ client links ────────────────
   app.get('/api/customer-clients/:user_id', requireAdmin, async (req, res) => {
     try {

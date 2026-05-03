@@ -891,6 +891,79 @@ app.post('/api/hours/csv-validate', requireAdmin, upload.single('file'), async (
       }
     }
 
+    // ── Would-modify preview ─────────────────────────────────────────────
+    // Match each staged row against existing time_entries on the
+    // (staff_id, project_id, entry_date) tuple. Classification:
+    //   'new'       — no existing row
+    //   'duplicate' — exact match on hours + job_title (commit skips)
+    //   'modify'    — same key but hours / job_title differ (commit
+    //                 still inserts, creating an additional row; the
+    //                 operator should review)
+    //   'conflict'  — multiple existing rows on the same key (rare;
+    //                 surfaces a manual-review case)
+    // Only computed for rows with staff_id + project_id + date set;
+    // others stay 'new' (the WO/staff resolver will catch them).
+    const matchKeys = [];
+    for (const r of validRows) {
+      if (r.staff_id && r.project_id && r.date) {
+        matchKeys.push({ staff_id: r.staff_id, project_id: r.project_id, entry_date: r.date });
+        r.match_key = `${r.staff_id}|${r.project_id}|${r.date}`;
+      } else {
+        r.csv_classification = 'new';
+      }
+    }
+    if (matchKeys.length) {
+      // One ANY-style query per CSV — cheaper than N round-trips. We pull
+      // every existing row whose (staff_id, project_id, entry_date) tuple
+      // appears in the staged set, then bucket in JS.
+      const staffArr = matchKeys.map(k => k.staff_id);
+      const projArr = matchKeys.map(k => k.project_id);
+      const dateArr = matchKeys.map(k => k.entry_date);
+      const { rows: existing } = await pool.query(`
+        SELECT id, staff_id, project_id, entry_date::text AS entry_date,
+               hours::float AS hours, job_title
+          FROM time_entries
+         WHERE staff_id = ANY($1::uuid[])
+           AND project_id = ANY($2::uuid[])
+           AND entry_date = ANY($3::date[])
+      `, [staffArr, projArr, dateArr]);
+      const byKey = new Map();
+      for (const e of existing) {
+        const k = `${e.staff_id}|${e.project_id}|${e.entry_date}`;
+        if (!byKey.has(k)) byKey.set(k, []);
+        byKey.get(k).push(e);
+      }
+      for (const r of validRows) {
+        if (r.csv_classification === 'new') continue;
+        const matches = byKey.get(r.match_key) || [];
+        if (matches.length === 0) {
+          r.csv_classification = 'new';
+        } else if (matches.length > 1) {
+          r.csv_classification = 'conflict';
+          r.csv_existing_count = matches.length;
+        } else {
+          const m = matches[0];
+          const sameHours = Math.abs((parseFloat(r.hours) || 0) - (parseFloat(m.hours) || 0)) < 1e-6;
+          const sameJob = String(r.job_title || '').trim() === String(m.job_title || '').trim();
+          if (sameHours && sameJob) {
+            r.csv_classification = 'duplicate';
+            r.csv_existing_id = m.id;
+          } else {
+            r.csv_classification = 'modify';
+            r.csv_existing_id = m.id;
+            r.csv_existing_hours = m.hours;
+            r.csv_existing_job_title = m.job_title || '';
+          }
+        }
+      }
+    }
+    // Tally for the summary banner.
+    const csvClassTally = { new: 0, duplicate: 0, modify: 0, conflict: 0 };
+    for (const r of validRows) {
+      const c = r.csv_classification || 'new';
+      csvClassTally[c] = (csvClassTally[c] || 0) + 1;
+    }
+
     csvStage.set(stage_id, {
       validRows,
       expiresAt: Date.now() + CSV_STAGE_TTL_MS
@@ -911,7 +984,13 @@ app.post('/api/hours/csv-validate', requireAdmin, upload.single('file'), async (
         rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
         rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
         rows_in_billed_periods: billedConflictCount,
-        invalid: invalidRows.length
+        invalid: invalidRows.length,
+        // Would-modify preview: how many of the staged rows match an
+        // existing time_entry on (staff_id, project_id, entry_date).
+        would_add: csvClassTally.new || 0,
+        would_skip_duplicate: csvClassTally.duplicate || 0,
+        would_modify: csvClassTally.modify || 0,
+        would_conflict: csvClassTally.conflict || 0,
       },
       unknown_staff: [...unknownStaff.values()].map(name => ({
         name,
@@ -1148,14 +1227,24 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
     let skipped_unknown_wo = 0;
     let skipped_unresolved_staff = 0;
     let skipped_billed_period = 0;
+    let skipped_duplicate = 0;
     const projectIds = new Set();
     const insertedRows = [];   // collected for post-commit audit logging
+    const skipDuplicates = req.body?.skip_duplicates !== false;  // default ON
 
     for (const r of staged.validRows) {
       if (!r.wo_known) { skipped_unknown_wo++; continue; }
       const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
       if (!staffId) { skipped_unresolved_staff++; continue; }
       if (skip_billed_period_rows && r.already_billed_period) { skipped_billed_period++; continue; }
+      // Skip true duplicates (same staff_id+project_id+entry_date AND
+      // same hours+job_title). Defaults ON because the alternative is
+      // double-counting hours on every re-import. The operator can
+      // override by passing skip_duplicates=false in the commit body.
+      if (skipDuplicates && r.csv_classification === 'duplicate') {
+        skipped_duplicate++;
+        continue;
+      }
 
       // Final job title: row's existing value (which may already be inferred
       // from the filename) → operator-supplied apply_job_title → null
@@ -1200,6 +1289,7 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
       skipped_unknown_wo,
       skipped_unresolved_staff,
       skipped_billed_period,
+      skipped_duplicate,
       created_staff: createdStaff,
       created_jobs: createdJobs,
       created_projects: createdProjects,
@@ -3329,6 +3419,17 @@ async function start(opts = {}) {
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
   await timeclockModule.bootstrapTimeClockSchema(pool);  // staff_id + sessions + audit log
+  // Versioned migrations runner (Track 1.4) — applies anything in
+  // /migrations that isn't recorded in schema_migrations yet. Coexists
+  // with bootstrapV3Schema until the v3 ALTER soup is gradually moved
+  // into numbered migration files. Failure logs but doesn't crash boot.
+  try {
+    const { runMigrations } = require('./db_migrations');
+    const out = await runMigrations(pool);
+    if (out.applied > 0) console.log(`[migrations] applied ${out.applied} new (skipped ${out.skipped})`);
+  } catch (mErr) {
+    console.error('[migrations] failed:', mErr && mErr.message);
+  }
   // Automation scheduler — surfaces stale permits + budget burn + daily
   // digest to console; the same data is exposed via /api/automation/* for
   // the UI. Started AFTER all schemas are bootstrapped so the queries
