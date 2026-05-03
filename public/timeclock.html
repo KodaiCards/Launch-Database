@@ -168,6 +168,7 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
 </style>
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
+<script src="/keyboard.js" defer></script>
 </head>
 <body>
 
@@ -573,12 +574,15 @@ function renderClockCard(){
       }, 1000);
     }
   } else {
-    // CLOCKED OUT — show project + job picker + Clock In button
+    // CLOCKED OUT — show project + job picker + Clock In button. Quick-clock
+    // buttons render asynchronously above the picker once the recents API
+    // returns; the picker itself is the always-available fallback.
     if (timerInterval){ clearInterval(timerInterval); timerInterval = null; }
     card.innerHTML = `
       <div class="clock-status-label">Ready to Clock In</div>
       <div class="clock-time" style="font-size:28px">Select Project</div>
       <div class="clock-time-sub">Choose what you'll be working on, then clock in.</div>
+      <div id="quick-clock-row"></div>
       <div class="pre-clock-form">
         <div class="form-group">
           <label>Project *</label>
@@ -594,6 +598,59 @@ function renderClockCard(){
       </div>
     `;
     populateProjectSelect(document.getElementById('ci-project'));
+    renderQuickClockButtons();
+  }
+}
+
+// ─── QUICK-CLOCK BUTTONS ────────────────────────────────────────────────────
+// Top 3 projects this user has clocked into in the last 14 days, rendered
+// as one-tap buttons above the project picker. Cuts clock-in from
+// "scroll dropdown → find project → pick job → clock in" to one tap.
+let _quickClockCache = null;
+async function renderQuickClockButtons(){
+  const slot = document.getElementById('quick-clock-row');
+  if (!slot) return;
+  // Use cache for instant render, then refresh in background
+  if (_quickClockCache) renderQuickClockSlot(slot, _quickClockCache);
+  try {
+    const recents = await api('/api/timeclock/recent');
+    _quickClockCache = recents;
+    renderQuickClockSlot(slot, recents);
+  } catch(e){
+    if (!_quickClockCache) slot.innerHTML = '';
+  }
+}
+function renderQuickClockSlot(slot, recents){
+  if (!recents || !recents.length){
+    slot.innerHTML = '';
+    return;
+  }
+  slot.innerHTML = `
+    <div style="margin:14px 0 6px 0;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;text-align:left">Recent</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${recents.map(r => {
+        const sub = [r.client_name, r.work_order_number ? 'WO# '+r.work_order_number : null, r.job_title].filter(Boolean).join(' · ');
+        return `<button type="button" class="btn" style="text-align:left;padding:10px 12px;background:var(--gray-light,#f1f3f5);border:1px solid var(--gray-border,#dee2e6);border-radius:8px;font-weight:500" onclick="quickClockIn('${esc(r.project_id)}','${esc(r.job_id||'')}','${esc(r.job_title||'')}')">
+          <i class="fa-solid fa-bolt" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>
+          ${esc(r.project_name)}
+          ${sub ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;font-weight:400">${esc(sub)}</div>` : ''}
+        </button>`;
+      }).join('')}
+    </div>
+  `;
+}
+async function quickClockIn(projectId, jobId, jobTitle){
+  try {
+    const body = { project_id: projectId };
+    if (jobId) body.job_id = jobId;
+    if (jobTitle) body.job_title = jobTitle;
+    await api('/api/timeclock/clock-in', { method:'POST', body: JSON.stringify(body) });
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success('Clocked in.');
+    await loadActiveSession();
+    await loadWeek();
+  } catch (e){
+    if (window.LFS && window.LFS.toast) window.LFS.toast.error('Clock-in failed: ' + (e.message||e));
+    else alert('Clock-in failed: ' + (e.message||e));
   }
 }
 

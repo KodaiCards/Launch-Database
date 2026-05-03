@@ -415,6 +415,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </style>
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
+<script src="/keyboard.js" defer></script>
 </head>
 <body>
 
@@ -480,6 +481,22 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="stat-card accent"><div class="stat-label" id="s-period-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
         <div class="stat-card"><div class="stat-label" id="s-year-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
       </div>
+
+      <!-- Needs Attention — surfaces the /api/automation/* alerts so admin
+           sees stale permits, billing draft availability, and flagged
+           clock-out sessions without having to navigate elsewhere. Hidden
+           by default; loadNeedsAttention() shows it only when there's
+           actually something to attend to. -->
+      <div id="needs-attention-card" class="card" style="margin-bottom:14px;display:none;border-left:4px solid var(--warning,#F0A500)">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title"><i class="fa-solid fa-bell" style="color:var(--warning,#F0A500);margin-right:6px"></i>Needs Attention</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadNeedsAttention()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+        <div class="card-body" id="needs-attention-body" style="padding:0">
+          <div style="padding:16px;color:var(--text-muted)">Loading…</div>
+        </div>
+      </div>
+
       <!-- Active projects table -->
       <div class="card">
         <div class="card-header"><span class="card-title">Active Projects</span></div>
@@ -519,11 +536,23 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(true)" title="Expand all"><i class="fa-solid fa-angles-down"></i></button>
         <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(false)" title="Collapse all"><i class="fa-solid fa-angles-up"></i></button>
       </div>
+      <!-- Bulk-action bar — appears only when at least one project row is
+           selected. The bar exposes high-leverage multi-row actions that
+           previously required clicking each row individually. -->
+      <div id="bulk-action-bar" style="display:none;background:var(--primary-light,#E3F2FD);border:1px solid var(--primary,#1B5FA0);border-radius:8px;padding:10px 14px;margin-bottom:10px;display:none;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-weight:600"><i class="fa-solid fa-check-square" style="margin-right:6px"></i><span id="bulk-count">0</span> selected</span>
+        <span style="flex:1"></span>
+        <button class="btn btn-sm btn-secondary" onclick="bulkClearSelection()">Clear</button>
+        <button class="btn btn-sm btn-secondary" onclick="bulkSetStatus('on_hold')"><i class="fa-solid fa-pause"></i> On hold</button>
+        <button class="btn btn-sm btn-secondary" onclick="bulkSetStatus('active')"><i class="fa-solid fa-play"></i> Activate</button>
+        <button class="btn btn-sm btn-secondary" onclick="bulkSetStatus('completed')"><i class="fa-solid fa-check"></i> Complete</button>
+        <button class="btn btn-sm btn-primary" onclick="bulkBill()"><i class="fa-solid fa-file-invoice-dollar"></i> Bill selected</button>
+      </div>
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="projects-body"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)"></th><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="projects-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1934,6 +1963,86 @@ let clients = [], staff = [], contracts = [], projects = [], allProjects = [];
 // expanded if you flip to Projects too.
 const expandedRollups = new Set();
 
+// ─── Bulk-selection state for Projects table ──────────────────────────────
+// Tracked across re-renders so polling doesn't wipe what the user picked.
+// Holds project IDs (leaf only — see render code).
+const bulkSelected = new Set();
+function bulkOnChange() {
+  // Sync state from the rendered checkboxes (in case re-render added rows)
+  document.querySelectorAll('.bulk-row-cb').forEach(cb => {
+    const id = cb.getAttribute('data-id');
+    if (cb.checked) bulkSelected.add(id);
+    else bulkSelected.delete(id);
+  });
+  bulkRefreshBar();
+}
+function bulkRefreshBar() {
+  const bar = document.getElementById('bulk-action-bar');
+  const count = document.getElementById('bulk-count');
+  if (!bar || !count) return;
+  count.textContent = String(bulkSelected.size);
+  bar.style.display = bulkSelected.size ? 'flex' : 'none';
+}
+function bulkClearSelection() {
+  bulkSelected.clear();
+  document.querySelectorAll('.bulk-row-cb').forEach(cb => cb.checked = false);
+  const all = document.getElementById('bulk-select-all');
+  if (all) all.checked = false;
+  bulkRefreshBar();
+}
+function bulkToggleAll(check) {
+  // Only act on currently-rendered (visible, leaf) rows.
+  document.querySelectorAll('.bulk-row-cb').forEach(cb => {
+    cb.checked = !!check;
+    const id = cb.getAttribute('data-id');
+    if (check) bulkSelected.add(id); else bulkSelected.delete(id);
+  });
+  bulkRefreshBar();
+}
+async function bulkSetStatus(newStatus) {
+  if (!bulkSelected.size) return;
+  const ids = [...bulkSelected];
+  const ok = confirm(`Set ${ids.length} project(s) to status "${newStatus}"?`);
+  if (!ok) return;
+  let okCount = 0, failCount = 0;
+  for (const id of ids) {
+    try {
+      await api(`/api/projects/${id}`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
+      okCount++;
+    } catch (e) { failCount++; console.error('bulk status', id, e); }
+  }
+  const msg = `${okCount} updated${failCount ? `, ${failCount} failed` : ''}.`;
+  if (window.LFS && window.LFS.toast) {
+    failCount ? window.LFS.toast.warn(msg) : window.LFS.toast.success(msg);
+  }
+  bulkClearSelection();
+  if (typeof loadProjects === 'function') loadProjects();
+}
+async function bulkBill() {
+  if (!bulkSelected.size) return;
+  // Defer to the existing bill-multiple flow if it's already wired up;
+  // otherwise just open the billing view with the selection pre-filled.
+  if (typeof openBulkBillModal === 'function') {
+    openBulkBillModal([...bulkSelected]);
+    return;
+  }
+  const ok = confirm(`Bill ${bulkSelected.size} project(s) now? You'll get one combined invoice per client.`);
+  if (!ok) return;
+  try {
+    const res = await api('/api/billing/bill-multiple', {
+      method: 'POST',
+      body: JSON.stringify({ project_ids: [...bulkSelected] }),
+    });
+    const msg = `Created ${res.invoices_created || res.created || '?'} invoice(s).`;
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success(msg);
+    bulkClearSelection();
+    if (typeof loadProjects === 'function') loadProjects();
+  } catch (e) {
+    if (window.LFS && window.LFS.toast) window.LFS.toast.error('Bulk bill failed: ' + (e.message||e));
+    else alert('Bulk bill failed: ' + (e.message||e));
+  }
+}
+
 // ─── Render-cache: skip identical innerHTML writes ─────────────────────────
 // Polling rebuilds these tables every few seconds. If the content hasn't
 // changed, writing it back into innerHTML still destroys + recreates every
@@ -2596,7 +2705,102 @@ async function showProjectedList() {
   }
 }
 
+// ─── Needs Attention card ────────────────────────────────────────────────
+// Pulls from the /api/automation/* endpoints in parallel and renders a
+// compact "stuff worth fixing" panel. Only shows when there's actually
+// something flagged (zero alerts → card stays hidden).
+async function loadNeedsAttention() {
+  const card = document.getElementById('needs-attention-card');
+  const body = document.getElementById('needs-attention-body');
+  if (!card || !body) return;
+
+  // Run all checks in parallel — failures on one shouldn't kill the card.
+  const settled = await Promise.allSettled([
+    api('/api/automation/stale-permits?days=30'),
+    api('/api/automation/permits-awaiting-invoice'),
+    api('/api/automation/budget-burn?threshold=0.8'),
+  ]);
+  const stale  = settled[0].status === 'fulfilled' ? (settled[0].value.permits || []) : [];
+  const await_ = settled[1].status === 'fulfilled' ? (settled[1].value.permits || []) : [];
+  const burns  = settled[2].status === 'fulfilled' ? (settled[2].value.alerts  || []) : [];
+
+  const total = stale.length + await_.length + burns.length;
+  if (total === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+
+  // Compact list rendering — each row is one actionable item with a "Go"
+  // button that jumps to the relevant view.
+  const rows = [];
+  for (const p of stale.slice(0, 5)) {
+    rows.push({
+      icon: 'fa-clock', color: '#F0A500',
+      title: `Permit stale ${p.days_in_stage}d in submitted`,
+      sub: `${p.client_name || '—'} · ${p.project_name}${p.work_order_number ? ' · WO# ' + p.work_order_number : ''}`,
+      action: () => showProjectDetail(p.project_id),
+      actionLabel: 'Open',
+    });
+  }
+  for (const p of await_.slice(0, 5)) {
+    rows.push({
+      icon: 'fa-file-invoice', color: '#1B5FA0',
+      title: 'Permit at "billed" stage but no invoice yet',
+      sub: `${p.client_name || '—'} · ${p.project_name} · ${fmtMoney(p.expected_revenue || 0)} expected`,
+      action: () => showProjectDetail(p.project_id),
+      actionLabel: 'Open',
+    });
+  }
+  for (const b of burns.slice(0, 5)) {
+    const pct = Math.round((b.burn_ratio || 0) * 100);
+    rows.push({
+      icon: 'fa-wallet', color: '#DC3545',
+      title: `Budget code ${b.code} at ${pct}%`,
+      sub: `${b.budget_name || '—'} · ${b.project_name || '—'} · ${fmtMoney(b.billed)} of ${fmtMoney(b.allocated)}`,
+      action: () => b.project_id && showProjectDetail(b.project_id),
+      actionLabel: 'Open',
+    });
+  }
+
+  body.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <tbody>
+        ${rows.map((r, i) => `
+          <tr style="border-bottom:1px solid var(--gray-border)">
+            <td style="padding:10px 14px;width:32px;text-align:center"><i class="fa-solid ${r.icon}" style="color:${r.color}"></i></td>
+            <td style="padding:10px 8px">
+              <div style="font-weight:500">${esc(r.title)}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${esc(r.sub)}</div>
+            </td>
+            <td style="padding:10px 14px;text-align:right">
+              <button class="btn btn-sm btn-secondary" data-na-idx="${i}">${esc(r.actionLabel)}</button>
+            </td>
+          </tr>
+        `).join('')}
+        ${total > rows.length ? `
+          <tr><td colspan="3" style="padding:10px 14px;text-align:center;color:var(--text-muted);font-size:12px">+ ${total - rows.length} more — see automation endpoints for the full list</td></tr>
+        ` : ''}
+      </tbody>
+    </table>
+  `;
+  // Wire the Open buttons. Inline onclick would need to escape the
+  // closure, so we attach handlers after render.
+  body.querySelectorAll('button[data-na-idx]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.getAttribute('data-na-idx'), 10);
+      const row = rows[idx];
+      if (row && typeof row.action === 'function') row.action();
+    });
+  });
+}
+
 async function loadDashboard() {
+  // Run the Needs Attention card in parallel with the dashboard load.
+  // Wrapped in try/catch so non-admin viewers (who get 403 on the
+  // automation endpoints) don't see an error toast on every refresh.
+  loadNeedsAttention().catch(() => {});
+
   // Initialize dashboard period controls on first load.
   const yEl = document.getElementById('dash-year');
   const pEl = document.getElementById('dash-period');
@@ -2890,7 +3094,7 @@ function filterProjects() {
 function renderProjects(list, expandAll = false) {
   const tbody = document.getElementById('projects-body');
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No projects found</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No projects found</p></div></td></tr>';
     return;
   }
 
@@ -2990,7 +3194,14 @@ function renderProjects(list, expandAll = false) {
         ? `<strong style="color:var(--text);font-size:14px">${fmtMoney(projAmount)}</strong>${!isLeaf && ytd > 0 ? `<br><span style="font-size:11px;color:var(--text-muted)">${Math.round((ytd / projAmount) * 100)}% earned</span>` : ''}`
         : '<span style="color:var(--text-muted);font-size:12px">—</span>';
 
+      // Only LEAF projects are bulk-selectable — rollups don't have hours
+      // to bill or status worth toggling on their own; selecting a parent
+      // would imply selecting all descendants which is a footgun.
+      const checkbox = isLeaf
+        ? `<input type="checkbox" class="bulk-row-cb" data-id="${p.id}" data-status="${esc(p.status||'')}" onclick="event.stopPropagation();bulkOnChange()" ${bulkSelected.has(p.id) ? 'checked' : ''}>`
+        : '';
       html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
+        <td style="text-align:center" onclick="event.stopPropagation()">${checkbox}</td>
         <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
         <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
         <td class="td-mono">${esc(p.work_order_number || '—')}</td>

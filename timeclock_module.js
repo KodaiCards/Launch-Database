@@ -284,6 +284,44 @@ function installTimeClockRoutes(app, pool, requireAuth) {
   // Used by the portal on page load + every poll tick to render Clock In
   // vs Clock Out + Switch + elapsed timer.
   // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/timeclock/recent — top-N projects this user has clocked into
+  // recently. Powers the "quick clock-in" buttons on the timeclock home
+  // (one tap to resume yesterday's project). Defaults to last 14 days,
+  // top 3 unique projects ordered by most-recent activity.
+  app.get('/api/timeclock/recent', requireAuth(), async (req, res) => {
+    const days = Math.max(1, Math.min(90, parseInt(req.query.days || '14', 10) || 14));
+    const limit = Math.max(1, Math.min(10, parseInt(req.query.limit || '3', 10) || 3));
+    try {
+      const { rows } = await pool.query(`
+        SELECT DISTINCT ON (s.project_id)
+          s.project_id,
+          s.job_id,
+          s.job_title,
+          MAX(s.started_at) OVER (PARTITION BY s.project_id) AS last_started,
+          p.name AS project_name,
+          p.work_order_number,
+          j.name AS job_name,
+          cl.name AS client_name
+        FROM time_clock_sessions s
+        LEFT JOIN projects p ON p.id = s.project_id
+        LEFT JOIN jobs j ON j.id = s.job_id
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        WHERE s.user_id = $1
+          AND s.started_at > NOW() - ($2 || ' days')::interval
+          AND p.id IS NOT NULL
+        ORDER BY s.project_id, s.started_at DESC
+        LIMIT $3
+      `, [req.user.id, String(days), limit]);
+      // The DISTINCT ON above doesn't sort across projects — re-sort by
+      // last_started so the most recent comes first in the UI.
+      rows.sort((a, b) => new Date(b.last_started) - new Date(a.last_started));
+      res.json(rows);
+    } catch (e) {
+      console.error('[timeclock:recent]', e && e.message);
+      res.status(500).json({ error: 'Failed to load recent projects.' });
+    }
+  });
+
   app.get('/api/timeclock/active', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(`
