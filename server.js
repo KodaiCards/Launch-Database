@@ -532,6 +532,34 @@ app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// DELETE /api/contracts/:id — admin-only. Refuses if any project references
+// this contract; the admin must detach those projects first. The schema
+// has projects.contract_id REFERENCES contracts(id) with no CASCADE, so
+// Postgres would also reject — the pre-check just gives a friendlier error
+// (and a count) than the raw FK message.
+app.delete('/api/contracts/:id', requireAdmin, async (req, res) => {
+  try {
+    const { rows: kids } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM projects WHERE contract_id = $1`,
+      [req.params.id]
+    );
+    if (kids[0].n > 0) {
+      return res.status(409).json({
+        error: `Cannot delete — ${kids[0].n} project(s) still reference this contract. Detach or reassign them first.`,
+      });
+    }
+    const { rows } = await pool.query(
+      `DELETE FROM contracts WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[contracts:delete]', e && e.message);
+    res.status(500).json({ error: 'Failed to delete contract.' });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ENGINEERING CONTRACTS — umbrella above one or more billing contracts.
 // Used when a single agreement (e.g. "RUS 217 Engineering Contract GA 1706

@@ -3013,8 +3013,12 @@ function renderPrintPdfBody(result) {
       <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}${m.job_billing_code ? ` <span style="font-family:monospace;color:var(--text-muted)">${esc(m.job_billing_code)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:#E3F2FD;color:#0d47a1;padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:#E8F5E9;color:#1b5e20;padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
       <div style="color:var(--text-muted)">Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
-      <div style="color:var(--text-muted)">Period</div><div>${m.inferred_period_start ? `${m.inferred_period_start} → ${m.inferred_period_end}` : '<span style="color:var(--text-muted)">No date range (footage)</span>'}</div>
       <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
+      <div style="color:var(--text-muted)">Billing Month</div>
+      <div>
+        <input type="month" id="print-pdf-billing-month" value="${defaultBillingMonth(m)}" style="padding:4px 8px;border:1px solid var(--gray-border);border-radius:4px;font-size:13px">
+        <span style="color:var(--text-muted);font-size:11px;margin-left:8px">Shown on the PDF; also filters time entries to this month for hourly jobs.${m.inferred_period_start ? ` Detected range: ${m.inferred_period_start} → ${m.inferred_period_end}` : ''}</span>
+      </div>
     </div>
   </div>`;
 
@@ -3050,9 +3054,40 @@ function renderPrintPdfBody(result) {
   `;
 }
 
+// Default the billing-month picker to the inferred end-of-period when we
+// have one (covers hourly invoices billed retroactively for last month),
+// otherwise the current month (covers footage/permitting where there are
+// no time entries to infer from).
+function defaultBillingMonth(m) {
+  const src = (m && m.inferred_period_end) || (m && m.inferred_period_start) || null;
+  if (src) {
+    const parts = String(src).split('-');
+    if (parts.length >= 2) return `${parts[0]}-${parts[1]}`;
+  }
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// Convert a YYYY-MM month string into {start: 'YYYY-MM-01', end: 'YYYY-MM-DD'}
+// where end is the last day of that month. Used when sending the billing
+// month from the picker to the server as a period_start/period_end pair.
+function billingMonthToRange(yyyymm) {
+  const [yStr, mStr] = String(yyyymm).split('-');
+  const y = parseInt(yStr, 10), m = parseInt(mStr, 10);
+  if (!y || !m) return null;
+  const lastDay = new Date(y, m, 0).getDate();   // day 0 of next month = last day this month
+  const mm = String(m).padStart(2, '0');
+  const dd = String(lastDay).padStart(2, '0');
+  return { start: `${y}-${mm}-01`, end: `${y}-${mm}-${dd}` };
+}
+
 async function printPdfGenerate() {
   const state = window._printPdfState || {};
   if (!state.project_ids) return;
+  const monthInput = document.getElementById('print-pdf-billing-month');
+  const monthVal = monthInput && monthInput.value ? monthInput.value : null;
+  const range = monthVal ? billingMonthToRange(monthVal) : null;
+  if (!range) return alert('Pick a billing month first.');
   const btn = document.querySelector('#print-pdf-footer .btn-primary');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…'; }
   try {
@@ -3060,7 +3095,11 @@ async function printPdfGenerate() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ project_ids: state.project_ids }),
+      body: JSON.stringify({
+        project_ids: state.project_ids,
+        period_start: range.start,
+        period_end: range.end,
+      }),
     });
     if (!resp.ok) {
       let msg = 'PDF generation failed.';
@@ -7906,12 +7945,27 @@ function renderContractsList() {
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.friendly_label || '—')}</td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
           <button class="btn btn-sm btn-secondary" onclick="editContract('${c.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteContract('${c.id}', '${esc(c.contract_number).replace(/'/g, "\\'")}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
         </td>
       </tr>`;
     }
     html += `</tbody></table></div>`;
   }
   root.innerHTML = html;
+}
+
+// Delete a contract from the Settings list. Server refuses if any project
+// references the contract (returns 409 with a count); we surface that
+// message so the admin knows which projects to fix first.
+async function deleteContract(id, contractNumber) {
+  if (!confirm(`Delete contract "${contractNumber}"? This cannot be undone. Any project still pointing at this contract will block the delete.`)) return;
+  try {
+    await api('/api/contracts/' + id, 'DELETE');
+    await loadContractList();
+    renderContractsList();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
 }
 
 // Open the Add Contract form. ALWAYS re-fetches engineering contracts

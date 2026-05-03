@@ -62,8 +62,9 @@ const FONT = {
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // Path to the Launch Fiber Services logo. Loaded if present, gracefully
-// skipped if missing — never throws on absent logo.
-const LOGO_PATH = path.join(__dirname, 'public', 'img', 'launch-logo.png');
+// skipped if missing — never throws on absent logo. Filename matches the
+// asset committed under public/img/.
+const LOGO_PATH = path.join(__dirname, 'public', 'img', 'Launch Fiber PNG.png');
 
 // ─── Number formatters ────────────────────────────────────────────────────
 function fmtMoney(n) {
@@ -285,6 +286,11 @@ async function buildInvoiceData(pool, opts) {
       job_name: job.name,
       job_billing_code: job.billing_code,
       job_billing_type: isFootage ? 'footage' : 'hourly',
+      // Permitting jobs are footage-billed but the customer-facing rate is
+      // $/hr (hours derived from miles via the documented calc). Renderer
+      // uses this flag to pick the Hours+$/hr column layout instead of the
+      // Footage+$/mi one.
+      is_permitting: !!job.is_permitting,
       rate,
       period_start,
       period_end,
@@ -340,48 +346,47 @@ function renderSummaryPage(doc, data, isFootage) {
   const m = data.meta;
   const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
-  // ── Logo (if present) ──────────────────────────────────────────────
-  // Top-left, sized to roughly 140px wide. If the file's missing we just
-  // skip — never throw on no-logo since some deploys may not have it yet.
+  // Permitting jobs render with Hours+$/hr columns and footage as a sub-info
+  // line in the Description cell. Pure footage jobs (non-permitting) keep
+  // the original Footage+$/mi layout.
+  const isPermitting = !!m.is_permitting;
+
+  // ── Logo (centered at top) ─────────────────────────────────────────
+  // ~180px wide, horizontally centered. Skipped silently if the asset is
+  // missing so the PDF still renders during early dev / fresh deploys.
   const startY = doc.y;
+  const logoWidth = 180;
+  const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
+  let postLogoY = startY;
   if (fs.existsSync(LOGO_PATH)) {
     try {
-      doc.image(LOGO_PATH, doc.page.margins.left, startY, { width: 140 });
+      doc.image(LOGO_PATH, logoX, startY, { width: logoWidth });
+      // PDFKit doesn't auto-advance doc.y after image() — estimate logo
+      // height from typical aspect (≈ 3:1 for the Launch wordmark).
+      postLogoY = startY + (logoWidth / 3) + 8;
     } catch (e) { /* corrupt or unsupported image format — silently skip */ }
   }
+  doc.y = postLogoY;
 
-  // ── Title block (right side, aligned with logo) ────────────────────
-  // "{Job Name} Summary" + "{Month Year}" subtitle.
-  const titleX = doc.page.margins.left + 160;
-  doc.font(FONT.BODY_BOLD).fontSize(22).fillColor('#000');
-  doc.text(`${m.job_name} Summary`, titleX, startY + 4, { width: pageWidth - 160, align: 'left' });
-  doc.font(FONT.ITALIC).fontSize(12).fillColor('#444');
-  doc.text(m.month_year, titleX, doc.y + 2, { width: pageWidth - 160, align: 'left' });
-
-  // Drop down past the logo region
-  doc.y = Math.max(doc.y + 4, startY + 70);
-
-  // ── Engineering contract metadata block ────────────────────────────
-  doc.font(FONT.BODY).fontSize(10).fillColor('#333');
-  doc.text(`Client: ${m.client_name}`, doc.page.margins.left);
-  if (m.engineering_contract.contract_number) {
-    doc.text(`Engineering Contract: ${m.engineering_contract.name}`);
-  } else {
-    doc.text(`Engineering Contract: ${m.engineering_contract.name}`);
-  }
-  if (m.engineering_contract.loan_name) {
-    doc.text(`Loan: ${m.engineering_contract.loan_name}`);
-  }
-  doc.text(`Period: ${m.period_start}  to  ${m.period_end}`);
-  doc.moveDown(0.8);
+  // ── Title + month (centered, small — replaces the old metadata block) ──
+  // "Permitting Summary" for any permitting job; "{Job Name} Summary" else.
+  // Sized to read as section headers, not page titles — the logo IS the
+  // page identity now.
+  const titleText = isPermitting ? 'Permitting Summary' : `${m.job_name} Summary`;
+  doc.font(FONT.BODY_BOLD).fontSize(16).fillColor('#000');
+  doc.text(titleText, doc.page.margins.left, doc.y, { width: pageWidth, align: 'center' });
+  doc.font(FONT.ITALIC).fontSize(11).fillColor('#444');
+  doc.text(m.month_year, doc.page.margins.left, doc.y + 2, { width: pageWidth, align: 'center' });
+  doc.moveDown(1);
 
   // ── Table ──────────────────────────────────────────────────────────
-  // 5 columns. Widths chosen to match the source Excel proportions.
-  // Cols: Item (95) | Description (235) | Hrs/Footage (75) | Rate (70) | Amount (90) = 565
+  // 5 columns. Permitting uses Hours+$/hr (footage shown as sub-info in
+  // Description); pure footage uses Footage+$/mi.
+  const qtyLabel = isPermitting ? 'Hours' : (isFootage ? 'Footage' : 'Hours');
   const cols = [
     { key: 'item',  label: 'Item',        width: 95,  align: 'left'  },
     { key: 'desc',  label: 'Description', width: 235, align: 'left'  },
-    { key: 'qty',   label: isFootage ? 'Footage' : 'Hours', width: 75, align: 'right' },
+    { key: 'qty',   label: qtyLabel,      width: 75,  align: 'right' },
     { key: 'rate',  label: 'Rate',        width: 70,  align: 'right' },
     { key: 'amt',   label: 'Amount',      width: 90,  align: 'right' },
   ];
@@ -438,23 +443,47 @@ function renderSummaryPage(doc, data, isFootage) {
         item: cs.friendly_label,
       }, { bg: COL.CONTRACT_BG, bold: true });
     }
-    // WO rows — billing code on first WO row only
+    // WO rows — billing code on first WO row only.
+    // For permitting: derive hours from amount/rate (the calc that produced
+    // the amount in the first place: hours = miles * 27.5, capped at 25
+    // when miles<1) and put footage as a sub-info line in Description.
     let firstWo = true;
     for (const wo of cs.wos) {
+      let qtyText, rateText, descText;
+      if (isPermitting) {
+        const derivedHours = m.rate > 0 ? wo.amount / m.rate : 0;
+        qtyText = fmtHours(derivedHours);
+        rateText = fmtMoney(m.rate) + '/hr';
+        descText = `WO# ${wo.work_order_number}` +
+          (wo.footage > 0 ? `   (${fmtFootage(wo.footage)})` : '');
+      } else if (isFootage) {
+        qtyText = fmtFootage(wo.footage);
+        rateText = fmtMoney(m.rate) + '/mi';
+        descText = `WO# ${wo.work_order_number}`;
+      } else {
+        qtyText = fmtHours(wo.hours);
+        rateText = fmtMoney(m.rate) + '/hr';
+        descText = `WO# ${wo.work_order_number}`;
+      }
       drawRow({
         item: firstWo ? (m.job_billing_code || '') : '',
-        desc: `WO# ${wo.work_order_number}`,
-        qty: isFootage ? fmtFootage(wo.footage) : fmtHours(wo.hours),
-        rate: fmtMoney(m.rate) + (isFootage ? '/mi' : '/hr'),
+        desc: descText,
+        qty: qtyText,
+        rate: rateText,
         amt: fmtMoney(wo.amount),
       });
       firstWo = false;
     }
     // Per-contract subtotal — only if multi-contract
     if (showContractHeaders) {
+      // Hours derived for permitting subtotal too (amount / rate aggregates
+      // the same way since it's a linear function of amount).
+      const subQty = isPermitting
+        ? fmtHours(m.rate > 0 ? cs.contract_amount / m.rate : 0)
+        : (isFootage ? fmtFootage(cs.contract_footage) : fmtHours(cs.contract_hours));
       drawRow({
         desc: `${cs.friendly_label} Subtotal`,
-        qty: isFootage ? fmtFootage(cs.contract_footage) : fmtHours(cs.contract_hours),
+        qty: subQty,
         amt: fmtMoney(cs.contract_amount),
       }, { bg: COL.CONTRACT_SUBTOTAL_BG, bold: true });
     }
@@ -462,11 +491,14 @@ function renderSummaryPage(doc, data, isFootage) {
 
   // Loan-wide subtotal — black bg, white text. The owner's screenshot has
   // this even on single-contract invoices.
+  const totalQty = isPermitting
+    ? fmtHours(m.rate > 0 ? data.totals.amount / m.rate : 0)
+    : (isFootage ? fmtFootage(data.totals.footage) : fmtHours(data.totals.hours));
   drawRow({
     desc: m.engineering_contract.loan_name
       ? `${m.engineering_contract.loan_name} Subtotal`
       : 'Subtotal',
-    qty: isFootage ? fmtFootage(data.totals.footage) : fmtHours(data.totals.hours),
+    qty: totalQty,
     amt: fmtMoney(data.totals.amount),
   }, { bg: COL.LOAN_SUBTOTAL_BG, textColor: COL.LOAN_SUBTOTAL_TEXT, bold: true });
 
@@ -475,7 +507,7 @@ function renderSummaryPage(doc, data, isFootage) {
   doc.moveDown(0.2);
   drawRow({
     desc: 'Summary',
-    qty: isFootage ? fmtFootage(data.totals.footage) : fmtHours(data.totals.hours),
+    qty: totalQty,
     amt: fmtMoney(data.totals.amount),
   }, { bg: COL.SUMMARY_BG, textColor: COL.SUMMARY_TEXT, bold: true });
 }
