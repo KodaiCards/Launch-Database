@@ -472,7 +472,12 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   });
 
   // ─── Below this line: portal-mode-only routes ─────────────────────────────
-  if (!isPortal) return;
+  // Customer portal has its own dedicated route module
+  // (routes/customer_portal.js) and shouldn't inherit the design /
+  // permitting team-scoped jobs/projects/clients routes — those would
+  // pollute the customer's API surface with team-shaped filters that
+  // don't apply to external clients.
+  if (!isPortal || PORTAL_MODE === 'customer') return;
 
   // Helper: stage a change as a pending proposal.
   async function proposeChange(entityType, action, entityId, payload, proposedBy, currentSnapshot = null) {

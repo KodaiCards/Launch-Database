@@ -312,7 +312,7 @@ function authMiddleware(pool) {
     try {
       const { rows } = await pool.query(
         `SELECT id, username, role, team, extra_teams, full_name, email, active,
-                tokens_invalid_after
+                staff_id, tokens_invalid_after
          FROM users WHERE id = $1 LIMIT 1`,
         [payload.id]
       );

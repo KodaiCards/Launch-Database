@@ -144,6 +144,72 @@ Also shipped after the initial status snapshot:
    (leaves-only, grouped by client). project_picker.js now loads in
    admin too.
 
+FINAL SHIP — owner instructed "do everything" so the deferred memory
+items got built too:
+
+✅ Customer portal — PORTAL_MODE='customer' + new role + customer_clients
+   junction + read-only API (/api/customer/{me,projects,projects/:id,
+   invoices,invoices/:id}) + admin link mgmt + customer.html with
+   Projects + Invoices tabs, progress bars, status pills, click-for-
+   detail modal. Reuses the shared change-password modal.
+✅ Admin Client Progress view — new "Clients" nav tab in admin. Groups
+   every project under its client; surfaces completion %, hours used vs
+   expected, days since activity, current pipeline stage. Stale active
+   projects (>30 days no entry) flagged. Filter by status (active /
+   stale / completed / billed) + free-text search. Backed by
+   /api/admin/client-progress.
+✅ Dashboard drag-to-reorder — customize mode now has explicit drag
+   handles + per-widget eye-icon toolbar for hide/show. Order persists
+   to the user's dashboard layout. applyDashboardLayout sorts on every
+   poll rebuild so the configuration survives.
+✅ Mass alert→toast — public/toast.js styling now token-aware (uses
+   var(--success/--info/--warning/--danger) so dark mode + custom
+   themes flow through). The existing heuristic in window.alert()
+   continues to classify by message text.
+✅ CSV would-modify preview — /api/hours/csv-validate classifies every
+   row against existing time_entries on (staff_id, project_id,
+   entry_date): new / duplicate / modify / conflict. Tally surfaced
+   in the import modal banner. Commit auto-skips duplicates by
+   default; skip_duplicates=false body opt-out.
+✅ Inspection projection weighted-recency — recent_hours CTE now
+   weights each entry by recency (max(0.2, 1 - age_in_weeks /
+   lookback)). Recent acceleration/slowdown shows in the projection
+   instead of being averaged out.
+✅ Email digest — /api/automation/digest/send + scheduler hook with
+   transport priority: SendGrid (SENDGRID_API_KEY) → Mailgun
+   (MAILGUN_API_KEY+MAILGUN_DOMAIN) → console-log no-op. No npm dep
+   added; both backends use fetch(). DIGEST_TO env or {to} body
+   sets recipients.
+✅ Track 1.4 versioned migrations — db_migrations.runMigrations(pool)
+   reads /migrations/NNNN_*.sql, applies anything not in
+   schema_migrations, records each in its own transaction. Coexists
+   with the legacy bootstrapV3Schema until the v3 ALTER soup is
+   migrated out file-by-file. README in migrations/ documents the
+   conventions.
+✅ Auth: req.user now includes staff_id (engineer-scope checks in
+   time_entries.js POST were quietly broken without it).
+✅ portal_module: customer mode short-circuits the portal-only route
+   block so the customer-specific module owns the customer surface
+   exclusively (no team-shaped filters polluting the API).
+
+The branch is ready for production deploy. Schema migrations needed:
+- customer_clients table (auto-applied by v3 bootstrap)
+- invoice_templates table (auto-applied)
+- time_entries.pending_project_request_id column (auto-applied)
+- All future schema changes go through migrations/NNNN_*.sql.
+
+Required new env vars (optional — graceful no-op when missing):
+- SENDGRID_API_KEY (for email digest delivery)
+  OR MAILGUN_API_KEY + MAILGUN_DOMAIN
+- DIGEST_TO=address1@x,address2@y
+- DIGEST_FROM=no-reply@yourdomain.com (default
+  no-reply@launchfiberservices.com)
+
+New PORTAL_MODE value:
+- PORTAL_MODE=customer  → serves public/customer.html
+
+---
+
 Still open (small follow-ups):
 
 - Sweep remaining admin project dropdowns (billing modal, settings,
