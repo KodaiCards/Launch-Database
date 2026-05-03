@@ -1318,7 +1318,11 @@ RATE STRUCTURE:
 - Design: VARIABLE - always ask for billing rate
 - Other: VARIABLE - always ask for billing rate
 
-CLIENTS: PSC (RUS), COX, IFT, TRI-CO
+CLIENTS: PSC, COX, IFT, TRI-CO
+The PSC client is the RUS-eligible one (clients.is_rus=TRUE). When a user
+says "PSC", "PSC RUS", or "RUS", they mean the PSC client. Always use the
+PSC client_id from the database context — never ask to create a "PSC RUS"
+client (it would be a duplicate).
 RUS work is PSC only. Contracts and work orders are managed manually or through the AI.
 
 BILLING CADENCE: Each project is either "one_time" (default — single invoice when complete; permitting, fixed-fee design jobs) or "monthly" (bills hours every month, project stays active across cycles; typical Inspection contracts). When a one-time project is billed, status becomes 'billed' and it closes. When a monthly project is billed, it stays active and reappears in next month's queue. Inspection-job projects default to monthly. Use set_billing_cadence to flip a project between modes.
@@ -1511,13 +1515,25 @@ const AI_TOOLS = [
   },
   {
     name: 'delete_project',
-    description: 'Delete a project and all its associated data. Call ONLY after user explicitly confirms deletion.',
+    description: 'Delete a single project and all its associated data. Call ONLY after user explicitly confirms deletion.',
     input_schema: {
       type: 'object',
       properties: {
         project_id: { type: 'string', description: 'UUID of the project to delete' }
       },
       required: ['project_id']
+    }
+  },
+  {
+    name: 'bulk_delete_projects',
+    description: 'Delete MULTIPLE projects in a single approval round. Use when the user asks to mass-delete projects matching a filter or list. Each project is deleted in the same path as delete_project (cleans up time entries, invoice items, billing batch items, permits). Returns a per-id status report. Call ONLY after the user has explicitly confirmed the delete list.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_ids: { type: 'array', items: { type: 'string' }, description: 'UUIDs of projects to delete' },
+        reason: { type: 'string', description: 'Short reason / justification (shown on the approval card)' }
+      },
+      required: ['project_ids']
     }
   },
   {
@@ -1828,6 +1844,26 @@ async function executeTool(toolName, toolInput) {
   try {
     switch (toolName) {
       case 'create_project': {
+        // Resilient client resolution: if the AI passes a name like "PSC RUS"
+        // (a colloquial alias) or "PSC" instead of a UUID, look up the row.
+        // The system prompt already disambiguates, but the database context
+        // can drift and the failure mode (FK violation → 500 → opaque error
+        // bubbled to chat) is bad UX. Aliases match the names users actually
+        // say in the wild; case-insensitive comparison.
+        let resolvedClientId = toolInput.client_id;
+        const _looksLikeUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        if (resolvedClientId && !_looksLikeUuid(resolvedClientId)) {
+          const _aliasMap = { 'psc rus': 'PSC', 'rus': 'PSC' };
+          const _key = String(resolvedClientId).trim().toLowerCase();
+          const _canonical = _aliasMap[_key] || resolvedClientId;
+          const r0 = await pool.query(
+            'SELECT id FROM clients WHERE LOWER(name) = LOWER($1) LIMIT 1', [_canonical]
+          );
+          if (!r0.rows[0]) {
+            return { success: false, error: `Client "${toolInput.client_id}" not found. Use the UUID from database context, not a name.` };
+          }
+          resolvedClientId = r0.rows[0].id;
+        }
         const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
         const { rows } = await pool.query(`
           INSERT INTO projects (
@@ -1839,7 +1875,7 @@ async function executeTool(toolName, toolInput) {
           RETURNING *
         `, [
           toolInput.name,
-          toolInput.client_id,
+          resolvedClientId,
           toolInput.contract_id || null,
           toolInput.work_order_number || null,
           toolInput.project_type,
@@ -1923,9 +1959,52 @@ async function executeTool(toolName, toolInput) {
       }
 
       case 'delete_project': {
+        // Match the route-level DELETE /api/projects/:id behavior: pull from
+        // pending billing batches first so the FK RESTRICT doesn't block.
+        await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [toolInput.project_id]);
         const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [toolInput.project_id]);
         if (!rows.length) return { success: false, error: 'Project not found' };
         return { success: true, deleted: rows[0].name };
+      }
+
+      case 'bulk_delete_projects': {
+        const ids = Array.isArray(toolInput.project_ids) ? toolInput.project_ids : [];
+        if (!ids.length) return { success: false, error: 'No project_ids provided' };
+        const results = [];
+        const deleted = [];
+        const failed = [];
+        // Best-effort per-id deletion — keep going on individual failures so the
+        // user gets a complete status report. Each success removes batch items
+        // first (RESTRICT FK) before the project row itself. We don't wrap the
+        // whole thing in a transaction: AI mass-deletes are typically across
+        // unrelated projects, and failing all because one had children would
+        // be more frustrating than skipping the bad one.
+        for (const id of ids) {
+          try {
+            await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [id]);
+            const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [id]);
+            if (rows.length) {
+              deleted.push({ id, name: rows[0].name });
+              results.push({ id, status: 'deleted', name: rows[0].name });
+            } else {
+              failed.push({ id, error: 'not found' });
+              results.push({ id, status: 'not_found' });
+            }
+          } catch (e) {
+            // Common cases: child projects (RESTRICT on parent_id), time
+            // entries (RESTRICT on project_id), or a confirmed billing batch
+            // we couldn't clear.
+            failed.push({ id, error: e.message });
+            results.push({ id, status: 'failed', error: e.message });
+          }
+        }
+        return {
+          success: failed.length === 0,
+          deleted_count: deleted.length,
+          failed_count: failed.length,
+          results,
+          reason: toolInput.reason || null,
+        };
       }
 
       case 'create_client': {
@@ -2456,7 +2535,7 @@ async function executeTool(toolName, toolInput) {
 // a "preview" payload to the frontend, and waits for the admin to click
 // Apply on each proposed action.
 const DESTRUCTIVE_AI_TOOLS = new Set([
-  'create_project', 'update_project', 'delete_project', 'update_project_status',
+  'create_project', 'update_project', 'delete_project', 'bulk_delete_projects', 'update_project_status',
   'log_time_entries',
   'create_client', 'update_client', 'delete_client',
   'create_staff', 'create_contract', 'update_contract_umbrella',
@@ -2492,6 +2571,7 @@ function summarizeToolCall(toolName, toolInput) {
     case 'create_project':            return `Create project "${i.name}"`;
     case 'update_project':            return `Update project ${i.project_id}`;
     case 'delete_project':            return `Delete project ${i.project_id}`;
+    case 'bulk_delete_projects':      return `BULK DELETE ${(i.project_ids || []).length} project${(i.project_ids || []).length === 1 ? '' : 's'}${i.reason ? ` — ${i.reason}` : ''}`;
     case 'update_project_status':     return `Set project ${i.project_id} status → "${i.status}"`;
     case 'log_time_entries':          return `Log ${(i.entries || []).length} time entries`;
     case 'create_client':             return `Create client "${i.name}"`;
