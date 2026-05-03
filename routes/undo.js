@@ -14,7 +14,14 @@ const { popUndoBucket, updateProjectHours } = require('./_helpers');
 module.exports = function installUndoRoutes(app, pool, mw) {
   const { requireAuth } = mw;
 
-  app.post('/api/undo/:token', requireAuth, async (req, res) => {
+  // requireAuth is a factory — calling it bare passes the factory itself
+  // as middleware, and Express invokes it with (req, res, next), which
+  // returns a new middleware that's never registered. The endpoint was
+  // silently auth-bypassed for weeks (HANDOFF.md flagged this). Fixed
+  // by calling with the empty role set, which means "any authenticated
+  // user" — the undo replay's safety comes from the short TTL on tokens
+  // and the per-user attribution in saveUndoBucket.
+  app.post('/api/undo/:token', requireAuth(), async (req, res) => {
     let bucket;
     try {
       bucket = await popUndoBucket(req.params.token);

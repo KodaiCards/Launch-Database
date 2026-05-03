@@ -1120,11 +1120,17 @@ async function saveEntry(){
 async function deleteEntry(){
   const id = document.getElementById('entry-id').value;
   if (!id) return;
-  if (!confirm('Delete this time entry? This action is logged but cannot be undone.')) return;
+  if (!confirm('Delete this time entry? You\'ll get a 15-second undo window.')) return;
   try {
-    await api('/api/time-entries/' + id, 'DELETE');
+    const resp = await api('/api/time-entries/' + id, 'DELETE');
     closeEntryModal();
     await loadWeek();
+    // Surface the shared undo bar (loaded via /js/undo_bar.js in the
+    // portal head). Falls back to a plain toast if the bar module is
+    // unavailable for any reason.
+    if (resp && resp.undo_token && typeof showUndoBar === 'function') {
+      showUndoBar('Time entry deleted.', resp.undo_token);
+    }
   } catch(e){
     alert('Delete failed: ' + e.message);
   }

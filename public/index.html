@@ -2448,26 +2448,117 @@ async function bulkSetStatus(newStatus) {
 }
 async function bulkBill() {
   if (!bulkSelected.size) return;
-  // Defer to the existing bill-multiple flow if it's already wired up;
-  // otherwise just open the billing view with the selection pre-filled.
-  if (typeof openBulkBillModal === 'function') {
-    openBulkBillModal([...bulkSelected]);
-    return;
-  }
-  const ok = confirm(`Bill ${bulkSelected.size} project(s) now? You'll get one combined invoice per client.`);
-  if (!ok) return;
+  await openBulkBillModal([...bulkSelected]);
+}
+
+// Real review modal for the Projects-tab bulk-bill action — replaces
+// the old confirm() prompt. Shows the inferred makeup (client, eng
+// contract, projects, amounts) and gathers invoice number / date /
+// name before POSTing /api/billing/bill-multiple. Mirrors the same
+// flow the Billing tab's bill-selected-modal uses, but driven from a
+// project_ids array instead of pre-staged line items.
+async function openBulkBillModal(projectIds) {
+  if (!Array.isArray(projectIds) || !projectIds.length) return;
+  // Fetch makeup so the review shows real numbers.
+  let makeup = null;
   try {
-    const res = await api('/api/billing/bill-multiple', {
-      method: 'POST',
-      body: JSON.stringify({ project_ids: [...bulkSelected] }),
+    makeup = await api('/api/invoices/preview-makeup', 'POST', { project_ids: projectIds });
+  } catch (e) {
+    return alert('Failed to assemble bill: ' + e.message);
+  }
+  const m = (makeup && makeup.makeup) || {};
+  const conflicts = (makeup && makeup.conflicts) || [];
+  const projects = (makeup && makeup.projects) || [];
+  const total = projects.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+
+  const today = new Date().toISOString().split('T')[0];
+  const existing = document.getElementById('bulk-bill-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'bulk-bill-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-file-invoice-dollar"></i> Bill ${projectIds.length} project${projectIds.length === 1 ? '' : 's'} as one invoice</span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('bulk-bill-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        ${conflicts.length ? `
+          <div style="background:var(--warning-light,#FFF3E0);border-left:4px solid var(--warning,#F0A500);padding:10px 14px;border-radius:6px;margin-bottom:14px">
+            <div style="font-weight:600;color:var(--warning-text,#e65100);margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't bill yet — fix these first:</div>
+            <ul style="margin:6px 0 0 20px;padding:0;font-size:13px">
+              ${conflicts.map(c => `<li>${esc(c)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        <div style="background:var(--gray-light);padding:12px 14px;border-radius:8px;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px">
+            <div style="color:var(--text-muted)">Client</div><div><strong>${esc(m.client_name || '—')}</strong></div>
+            <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}</div>
+            <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}</div>
+            <div style="color:var(--text-muted)">Projects</div><div>${projects.length}</div>
+            <div style="color:var(--text-muted)">Total</div><div style="font-weight:700;color:var(--success-text,var(--success))">${fmtMoney(total)}</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Invoice Number *</label>
+              <input type="text" id="bbm-inv-number" placeholder="e.g. 2026-04-001">
+            </div>
+            <div class="form-group">
+              <label>Invoice Date</label>
+              <input type="date" id="bbm-inv-date" value="${today}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Invoice Name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <input type="text" id="bbm-inv-name" placeholder="e.g. Construction Inspection — April 2026">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('bulk-bill-modal').remove()">Cancel</button>
+        <button class="btn btn-primary" id="bbm-confirm-btn" onclick="confirmBulkBill(${JSON.stringify(projectIds).replace(/"/g, '&quot;')})" ${conflicts.length ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+          <i class="fa-solid fa-check"></i> Create Invoice
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  setTimeout(() => document.getElementById('bbm-inv-number')?.focus(), 50);
+}
+
+async function confirmBulkBill(projectIds) {
+  const invoice_number = document.getElementById('bbm-inv-number').value.trim();
+  const invoice_date = document.getElementById('bbm-inv-date').value || new Date().toISOString().split('T')[0];
+  const invoice_name = document.getElementById('bbm-inv-name').value.trim() || null;
+  if (!invoice_number) return alert('Invoice number is required.');
+  const btn = document.getElementById('bbm-confirm-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Billing...';
+  try {
+    const res = await api('/api/billing/bill-multiple', 'POST', {
+      project_ids: projectIds,
+      invoice_number, invoice_date, invoice_name,
     });
-    const msg = `Created ${res.invoices_created || res.created || '?'} invoice(s).`;
-    if (window.LFS && window.LFS.toast) window.LFS.toast.success(msg);
+    document.getElementById('bulk-bill-modal').remove();
+    if (window.LFS && window.LFS.toast) {
+      window.LFS.toast.success(`Invoice ${invoice_number} created${res.total ? ' for ' + fmtMoney(res.total) : ''}.`);
+    } else {
+      alert(`Invoice ${invoice_number} created.`);
+    }
     bulkClearSelection();
     if (typeof loadProjects === 'function') loadProjects();
+    if (typeof loadBilling === 'function') loadBilling();
+    if (typeof loadDashboard === 'function') loadDashboard();
   } catch (e) {
-    if (window.LFS && window.LFS.toast) window.LFS.toast.error('Bulk bill failed: ' + (e.message||e));
-    else alert('Bulk bill failed: ' + (e.message||e));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Create Invoice';
+    alert('Bulk bill failed: ' + (e.message || e));
   }
 }
 
@@ -6055,7 +6146,17 @@ async function loadHours() {
       })();
       if (isFuture) { bg = '#fafafa'; }
       const entryCount = (entriesByDay[dateKey] || []).length;
-      html += `<div style="background:${bg};border:${border};border-radius:6px;padding:8px;min-height:78px;display:flex;flex-direction:column" title="${dateKey}">
+      // Future cells are read-only (nothing to edit); cells with entries
+      // are click-to-drilldown; empty past cells offer "+ Add" via the
+      // existing time-entry modal pre-filled with the picked date.
+      const isClickable = !isFuture;
+      const cursor = isClickable ? 'cursor:pointer' : 'cursor:default';
+      const handler = isFuture
+        ? ''
+        : entryCount > 0
+        ? `onclick="openCalendarDayDetail('${dateKey}')"`
+        : `onclick="openTimeEntryModalForDate('${dateKey}')"`;
+      html += `<div ${handler} style="background:${bg};border:${border};border-radius:6px;padding:8px;min-height:78px;display:flex;flex-direction:column;${cursor};transition:transform .1s" title="${dateKey}${isClickable ? (entryCount > 0 ? ' — click to view ' + entryCount + ' entr' + (entryCount === 1 ? 'y' : 'ies') : ' — click to add hours') : ''}" ${isClickable ? 'onmouseover="this.style.transform=\'scale(1.02)\'" onmouseout="this.style.transform=\'\'"' : ''}>
         <div style="font-size:11px;color:var(--text-muted);font-weight:600">${d}</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
           ${hours > 0 ? `<div style="font-size:18px;font-weight:600;color:var(--text)">${hours.toFixed(1)}<span style="font-size:11px;color:var(--text-muted);margin-left:2px">h</span></div>` :
@@ -6280,6 +6381,79 @@ function openTimeEntryModal() {
   openModal('time-modal');
 }
 
+// Calendar grid click handlers (Hours tab → calendar group-by). Empty
+// past cells open the create modal pre-filled with the picked date;
+// cells with entries open a small day-detail modal that lists each
+// entry with [edit] / [delete] actions, then offers "+ Add another".
+function openTimeEntryModalForDate(dateKey) {
+  openTimeEntryModal();
+  if (dateKey) document.getElementById('te-date').value = dateKey;
+}
+
+function openCalendarDayDetail(dateKey) {
+  // Pull entries for this date from the in-memory map populated by
+  // loadHours. Avoids a re-fetch and keeps the day modal cheap.
+  const matches = [];
+  for (const e of _hoursEntriesById.values()) {
+    if (String(e.entry_date || '').slice(0, 10) === dateKey) matches.push(e);
+  }
+  matches.sort((a, b) => (a.staff_name || '').localeCompare(b.staff_name || '')
+                       || String(a.created_at || '').localeCompare(String(b.created_at || '')));
+  const total = matches.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+  // Build a one-shot inline modal — no markup commitment, just a
+  // dynamic overlay. Keeps the HTML uncluttered.
+  const existing = document.getElementById('cal-day-detail-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'cal-day-detail-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  const dateLabel = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US',
+    { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:680px">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-regular fa-calendar"></i> ${esc(dateLabel)} <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'}</span></span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('cal-day-detail-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="max-height:60vh;overflow:auto">
+        ${matches.length ? `
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="background:var(--gray-light);border-bottom:1px solid var(--gray-border)">
+              <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Staff</th>
+              <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+              <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job / Notes</th>
+              <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
+              <th style="padding:8px;text-align:right"></th>
+            </tr></thead>
+            <tbody>
+              ${matches.map(e => `
+                <tr style="border-top:1px solid var(--gray-border)">
+                  <td style="padding:6px 8px">${esc(e.staff_name || '—')}</td>
+                  <td style="padding:6px 8px">${esc(e.project_name || '—')}${e.work_order_number ? `<br><span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(e.work_order_number)}</span>` : ''}</td>
+                  <td style="padding:6px 8px;color:var(--text-muted);font-size:12px">${esc(e.job_title || '')}${e.notes ? '<br>' + esc(e.notes) : ''}</td>
+                  <td style="padding:6px 8px;text-align:right;font-weight:600">${e.hours}</td>
+                  <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+                    <button class="btn btn-sm btn-secondary btn-icon" onclick="document.getElementById('cal-day-detail-modal').remove();openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="document.getElementById('cal-day-detail-modal').remove();deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No entries on this day.</div>`}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('cal-day-detail-modal').remove()">Close</button>
+        <button class="btn btn-primary" onclick="document.getElementById('cal-day-detail-modal').remove();openTimeEntryModalForDate('${dateKey}')"><i class="fa-solid fa-plus"></i> Add Hours</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  // Click outside to dismiss.
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
 // Edit existing entry — entry comes from _hoursEntriesById (populated by
 // loadHours). Falls back to a fetch if the id isn't in the map (e.g.
 // after a polling refresh dropped it).
@@ -6341,9 +6515,14 @@ async function saveTimeEntry() {
 
 async function deleteTimeEntry(id) {
   if (!confirm('Delete this time entry?')) return;
-  await api('/api/time-entries/'+id, 'DELETE');
+  const resp = await api('/api/time-entries/'+id, 'DELETE');
   loadHours();
   loadDashboard();
+  // Server returns an undo_token snapshot of the deleted row; surface
+  // the standard 15s undo bar so accidental clicks are recoverable.
+  if (resp && resp.undo_token && typeof showUndoBar === 'function') {
+    showUndoBar('Time entry deleted.', resp.undo_token);
+  }
 }
 
 // Render the "Needs Project Assignment" warning panel above the Hours
