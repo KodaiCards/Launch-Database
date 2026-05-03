@@ -2048,6 +2048,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
      the inline code begins executing. See CLEANUP_PLAN.md Track 1.2. -->
 <script src="/js/api.js"></script>
 <script src="/js/undo_bar.js"></script>
+<script src="/js/tree_state.js"></script>
 
 <script>
 
@@ -2128,14 +2129,15 @@ function syncThemeFromUser(user) {
 // ═══════════════════════════════════════════════════════════
 let clients = [], staff = [], contracts = [], projects = [], allProjects = [];
 
-// Tracks which rollup nodes the user has expanded across the various tree
-// views (Dashboard, Projects, Revenue). Persists across re-renders triggered
-// by polling — without this, the 1.5s auto-refresh rebuilds tbody and
-// collapses every expanded rollup, making it impossible to keep one open
-// while reviewing children. Shared across all *treeToggle functions because
-// project IDs are globally unique, so a parent expanded in Dashboard stays
-// expanded if you flip to Projects too.
-const expandedRollups = new Set();
+// Tree expand/collapse state lives in projectsTreeState (rollups across
+// Dashboard / Projects / Revenue tabs) and hoursTreeState (Hours-tab
+// hierarchical keys), declared in /js/tree_state.js (loaded synchronously
+// above this <script>). Both expose the same API:
+//   isExpanded(id), expand(id), collapse(id), toggle(id),
+//   expandAll(ids), collapseAll(ids), collapseChildren(parentKey),
+//   clear(), keys()
+// State persists across the 8-second polling rebuild because each instance
+// closes over its own Set.
 
 // ─── Bulk-selection state for Projects table ──────────────────────────────
 // Tracked across re-renders so polling doesn't wipe what the user picked.
@@ -3702,7 +3704,7 @@ async function loadDashboard() {
   }
 
   // Build rows recursively — use server-computed ytd_revenue. Reads
-  // expandedRollups so user-expanded nodes survive polling re-renders.
+  // projectsTreeState so user-expanded nodes survive polling re-renders.
   function buildRows(projects, depth, parentGroupClass, parentExpanded) {
     let html = '';
     for (const p of projects) {
@@ -3716,7 +3718,7 @@ async function loadDashboard() {
 
       // Visibility flows from parent's expanded state (root rows always visible).
       const isVisible = depth === 0 || parentExpanded;
-      const thisExpanded = expandedRollups.has(p.id);
+      const thisExpanded = projectsTreeState.isExpanded(p.id);
       const display = !isVisible ? 'display:none;' : '';
       // Build the row attributes as a single contiguous string. Previously
       // we had TWO style="" attributes on the row — one inside ${cls} and a
@@ -3765,14 +3767,14 @@ async function loadDashboard() {
   setHtmlIfChanged(tbody, buildRows(roots, 0, null, true));
 }
 
-// Dashboard tree toggle — uses the shared expandedRollups state so that
+// Dashboard tree toggle — uses the shared projectsTreeState state so that
 // polling re-renders preserve the user's expansion. The id-prefix scheme
 // (dt-/dc-) is dashboard-specific to avoid collisions with the Projects
 // view's pt-/pc- ids when both trees might co-exist in the DOM.
 function dtreeToggle(projectId, groupKey, chevId) {
-  const wasExpanded = expandedRollups.has(projectId);
+  const wasExpanded = projectsTreeState.isExpanded(projectId);
   if (wasExpanded) {
-    expandedRollups.delete(projectId);
+    projectsTreeState.collapse(projectId);
     // Cascade-collapse descendants so re-render doesn't show grandchildren
     // of a node we just collapsed.
     const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
@@ -3784,9 +3786,9 @@ function dtreeToggle(projectId, groupKey, chevId) {
     };
     const descs = new Set();
     collectDescendants(projectId, descs);
-    descs.forEach(id => expandedRollups.delete(id));
+    projectsTreeState.collapseAll([...descs]);
   } else {
-    expandedRollups.add(projectId);
+    projectsTreeState.expand(projectId);
   }
 
   // Immediate visual feedback
@@ -3913,7 +3915,7 @@ function filterProjects() {
   renderProjects(allProjects.filter(p => keep.has(p.id)), true);
 }
 
-// Note: expandedRollups is declared at top of file — shared across all
+// Note: projectsTreeState is declared at top of file — shared across all
 // tree views (Dashboard, Projects, Revenue) so polling re-renders don't
 // collapse what the user expanded.
 
@@ -3991,7 +3993,7 @@ function renderProjects(list, expandAll = false) {
 
       // For this node: if expanded (or expandAll override), its descendants
       // get parentExpanded=true.
-      const thisExpanded = expandAll || expandedRollups.has(p.id);
+      const thisExpanded = expandAll || projectsTreeState.isExpanded(p.id);
 
       const startHidden = !isVisible;
       const display = startHidden ? 'display:none;' : '';
@@ -4052,17 +4054,17 @@ function renderProjects(list, expandAll = false) {
   setHtmlIfChanged(tbody, buildProjRows(roots, 0, null, true));
 }
 
-// Toggle a rollup's expanded state. We track state in the expandedRollups
+// Toggle a rollup's expanded state. We track state in the projectsTreeState
 // Set (kept across re-renders) and let renderProjects handle the actual
 // row visibility on next render. We also do an immediate DOM update so the
 // UI feels responsive — without that, the click would only visibly take
 // effect on the next polling tick (up to 1.5s later).
 function ptreeToggle(projectId, groupKey, chevId) {
-  const wasExpanded = expandedRollups.has(projectId);
+  const wasExpanded = projectsTreeState.isExpanded(projectId);
   if (wasExpanded) {
     // Collapse this node AND every descendant rollup so we don't end up with
     // orphan-expanded grandchildren when the parent collapses.
-    expandedRollups.delete(projectId);
+    projectsTreeState.collapse(projectId);
     // Find all descendants in allProjects and remove them too
     const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
     const collectDescendants = (parentId, acc) => {
@@ -4073,13 +4075,13 @@ function ptreeToggle(projectId, groupKey, chevId) {
     };
     const descs = new Set();
     collectDescendants(projectId, descs);
-    descs.forEach(id => expandedRollups.delete(id));
+    projectsTreeState.collapseAll([...descs]);
   } else {
-    expandedRollups.add(projectId);
+    projectsTreeState.expand(projectId);
   }
 
   // Immediate visual feedback. The next renderProjects() call (manual or
-  // from polling) will rebuild from expandedRollups so the state survives.
+  // from polling) will rebuild from projectsTreeState so the state survives.
   const rows = document.querySelectorAll('.ptree-' + groupKey);
   const chev = document.getElementById(chevId);
   rows.forEach(r => {
@@ -4102,9 +4104,9 @@ function ptreeExpandAll(expand) {
   // Update persistent state so the polling re-render reflects this.
   if (expand) {
     const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
-    list.forEach(p => expandedRollups.add(p.id));
+    projectsTreeState.expandAll(list.map(p => p.id));
   } else {
-    expandedRollups.clear();
+    projectsTreeState.clear();
   }
   document.querySelectorAll('#projects-body tr.ptree').forEach(r => {
     r.style.display = expand ? 'table-row' : 'none';
@@ -5856,10 +5858,12 @@ async function loadHours() {
   if (typeof restoreHrsExpandedState === 'function') restoreHrsExpandedState();
 }
 
-// Hours-tab tree state. Without persistence, every poll-driven loadHours()
-// rebuild collapsed back to the default closed state, which felt like a
-// bug to anyone with a section open while data refreshed.
-const expandedHrsKeys = new Set();
+// Hours-tab tree state lives in hoursTreeState (shared instance from
+// /js/tree_state.js). Without it, every poll-driven loadHours() rebuild
+// collapsed back to the default closed state, which felt like a bug to
+// anyone with a section open while data refreshed. Keys are hierarchy
+// paths like 'jane-2026-04' / 'jane-2026-04-WO123', so collapsing a
+// parent also has to drop matching children — see collapseChildren().
 
 function htreeToggle(key) {
   const rows = document.querySelectorAll('.htree-' + key);
@@ -5877,10 +5881,10 @@ function htreeToggle(key) {
     // closed across the next render.
     const allNested = document.querySelectorAll(`[class*="htree-${key}-"]`);
     allNested.forEach(n => n.style.display = 'none');
-    expandedHrsKeys.forEach(k => { if (k.startsWith(key + '-')) expandedHrsKeys.delete(k); });
-    expandedHrsKeys.delete(key);
+    hoursTreeState.collapseChildren(key);
+    hoursTreeState.collapse(key);
   } else {
-    expandedHrsKeys.add(key);
+    hoursTreeState.expand(key);
   }
   if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
 }
@@ -5889,7 +5893,7 @@ function htreeToggle(key) {
 // at the end of loadHours() so polling refreshes don't visually collapse
 // rows the user had open.
 function restoreHrsExpandedState() {
-  for (const key of expandedHrsKeys) {
+  for (const key of hoursTreeState.keys()) {
     const rows = document.querySelectorAll('.htree-' + key);
     rows.forEach(r => { r.style.display = 'block'; });
     const chev = document.getElementById('hc-' + key);
@@ -6813,7 +6817,7 @@ function renderRevenueDetail(details) {
 
       // Persistent visibility
       const isVisible = depth === 0 || parentExpanded;
-      const thisExpanded = expandedRollups.has(p.id);
+      const thisExpanded = projectsTreeState.isExpanded(p.id);
 
       const trClass = ['clickable'];
       if (parentGroupClass) trClass.push('rtree', 'rtree-' + parentGroupClass);
@@ -6845,12 +6849,12 @@ function renderRevenueDetail(details) {
   tbody.innerHTML = buildRevRows(roots, 0, null, true);
 }
 
-// Revenue tree toggle — uses shared expandedRollups state. Same pattern
+// Revenue tree toggle — uses shared projectsTreeState state. Same pattern
 // as dtreeToggle, just operates on the rtree-/rc- DOM hierarchy.
 function rtreeToggle(projectId, groupKey, chevId) {
-  const wasExpanded = expandedRollups.has(projectId);
+  const wasExpanded = projectsTreeState.isExpanded(projectId);
   if (wasExpanded) {
-    expandedRollups.delete(projectId);
+    projectsTreeState.collapse(projectId);
     const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
     const collectDescendants = (parentId, acc) => {
       list.filter(p => p.parent_id === parentId).forEach(c => {
@@ -6860,9 +6864,9 @@ function rtreeToggle(projectId, groupKey, chevId) {
     };
     const descs = new Set();
     collectDescendants(projectId, descs);
-    descs.forEach(id => expandedRollups.delete(id));
+    projectsTreeState.collapseAll([...descs]);
   } else {
-    expandedRollups.add(projectId);
+    projectsTreeState.expand(projectId);
   }
 
   const rows = document.querySelectorAll('.rtree-' + groupKey);
