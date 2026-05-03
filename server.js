@@ -46,8 +46,67 @@ const MAX_UPLOAD_BYTES = 3 * 1024 * 1024 * 1024;  // 3 GB
 const upload = multer({ storage, limits: { fileSize: MAX_UPLOAD_BYTES } });
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors());
+// Trust the first proxy hop (Railway's load balancer) so req.ip and
+// req.protocol see the real client, not the proxy. This must be set BEFORE
+// any middleware that reads req.ip / req.protocol — otherwise rate limiting
+// buckets every caller into one IP and the same-origin CSRF check breaks.
+app.set('trust proxy', 1);
+
+// CORS — locked down to the origins listed in ALLOWED_ORIGINS (comma-separated).
+// In dev, falls back to allowing localhost. Anything else is rejected.
+// Multi-service setups (admin + portals on different domains): list every
+// origin that needs to talk to this service.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+const isProd = process.env.NODE_ENV === 'production';
+if (isProd && ALLOWED_ORIGINS.length === 0) {
+  console.warn('⚠ ALLOWED_ORIGINS env var is empty in production — cross-origin requests will be rejected. Set it to a comma-separated list of your portal/admin URLs if you need cross-origin.');
+}
+app.use(cors({
+  origin: (origin, cb) => {
+    // No Origin header (server-to-server, curl, same-origin GET): allow.
+    if (!origin) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    // Allow localhost in dev so the dev workflow keeps working without env var.
+    if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return cb(null, true);
+    }
+    return cb(new Error('CORS: origin not allowed'));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
+
+// CSRF defense via Origin/Referer validation. Cookie-auth + a cross-site form
+// POST is the classic CSRF vector. For any state-changing request, require
+// either no Origin (same-origin browser navigation) or an Origin/Referer
+// matching ALLOWED_ORIGINS / our own host. Auth-header callers are still
+// safe (the header isn't sent automatically by browsers cross-site).
+app.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  // Login is allowed cross-origin (otherwise legit users on portal subdomains
+  // couldn't authenticate). Rate limiting in auth.js prevents abuse.
+  if (req.path === '/api/auth/login') return next();
+  // If the caller authenticated via Authorization header, no CSRF risk.
+  const hasBearer = (req.headers.authorization || '').startsWith('Bearer ');
+  if (hasBearer) return next();
+  let origin = req.headers.origin;
+  if (!origin && req.headers.referer) {
+    try { origin = new URL(req.headers.referer).origin; } catch {}
+  }
+  if (!origin) return next();  // some legitimate clients omit Origin entirely
+  if (ALLOWED_ORIGINS.includes(origin)) return next();
+  if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return next();
+  // Same-origin: Origin matches the request's own host. Behind Railway/most
+  // proxies the request hits us on https://<host>; trust the X-Forwarded-Proto
+  // header (we set trust proxy below) so this comparison is accurate.
+  const reqHost = req.headers.host;
+  const reqProto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  if (reqHost && origin === `${reqProto}://${reqHost}`) return next();
+  console.warn(`[csrf] rejected ${req.method} ${req.path} from origin=${origin} (host=${reqHost})`);
+  return res.status(403).json({ error: 'Cross-site request blocked' });
+});
+
 
 // ─── Portal Mode ─────────────────────────────────────────────────────────────
 // When PORTAL_MODE is set, this instance serves only that portal's HTML and
@@ -67,17 +126,22 @@ if (PORTAL_MODE) {
   console.log(`✓ Running in PORTAL MODE: ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}`);
 }
 
-// Wire up portal-mode route overrides + setting-approval flow.
-// MUST run before the existing route definitions below — Express picks
-// routes first-match, so portal_module's overrides win in portal mode.
-installPortalExtensions(app, pool, PORTAL_MODE);
-
 // ─── Authentication (JWT-based) ──────────────────────────────────────────────
 // auth.js bootstraps users table, exposes /api/auth/* routes, and provides
 // an authMiddleware that decodes the JWT cookie or Authorization header into
 // req.user. Login page lives at /login (or /login.html).
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin } = require('./auth');
+//
+// IMPORTANT: installAuthRoutes registers cookieParser + authMiddleware as
+// global middleware. It MUST run BEFORE installPortalExtensions so that
+// portal routes can read req.user / req.cookies. Express middleware runs in
+// registration order, so a route registered before authMiddleware never
+// sees req.user.
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin } = require('./auth');
 installAuthRoutes(app, pool);
+
+// Wire up portal-mode route overrides + setting-approval flow. Now that
+// authMiddleware is installed, portal_module routes can use requireAuth/Admin.
+installPortalExtensions(app, pool, PORTAL_MODE, { requireAuth, requireAdmin });
 
 // Time Clock module — exposes /api/timeclock/* routes for the Launch Time
 // Clock portal AND wires audit logging for time_entries mutations across
@@ -86,6 +150,13 @@ installAuthRoutes(app, pool);
 const timeclockModule = require('./timeclock_module');
 timeclockModule.installTimeClockRoutes(app, pool, requireAuth);
 const auditTimeEntry = timeclockModule.makeAuditLogger(pool);
+
+// Automation hub — surfaces "needs attention" data (stale permits, budget
+// burn, monthly billing drafts, daily digest) plus a console-logging
+// scheduler. Endpoints are admin/manager-gated; nothing auto-commits
+// invoices. Scheduler is started after schema bootstrap (see start()).
+const automationModule = require('./automation');
+automationModule.installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmin });
 
 // Public routes (no login needed): /login page itself, /api/auth/login,
 // any /api/auth/me check, and static assets needed by the login page.
@@ -253,6 +324,18 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// HTML-escape any value before interpolating into a server-rendered HTML
+// string. Used by 403/error pages so a username like
+// `<script>...</script>` can't be reflected back to the browser.
+function escapeHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride) {
   // "Permitting" is now triggered by either the legacy project_type='permitting'
   // OR an explicit hoursPerMileOverride (set when a Job with is_permitting=true
@@ -290,9 +373,25 @@ function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride)
 }
 
 // Recalculate actual_hours for a project (own entries + children's hours)
-// then propagate up through parent chain
-async function updateProjectHours(projectId) {
-  // Update this project: own time entries + sum of children's actual_hours
+// then propagate up through parent chain.
+//
+// Cycle guard: a corrupted parent_id chain (project pointing to itself, or
+// any cycle A→B→A) used to stack-overflow the entire process. We track the
+// visited ids and bail with a console warning if we'd revisit one. Also
+// hard-cap at 50 levels deep — real project trees are at most a handful
+// deep, so anything past that is data corruption.
+async function updateProjectHours(projectId, _visited) {
+  const visited = _visited || new Set();
+  if (visited.has(projectId)) {
+    console.warn(`[updateProjectHours] Cycle detected at project ${projectId} — aborting propagation. Investigate parent_id chain.`);
+    return;
+  }
+  if (visited.size >= 50) {
+    console.warn(`[updateProjectHours] Depth limit reached at project ${projectId} — aborting propagation.`);
+    return;
+  }
+  visited.add(projectId);
+
   await pool.query(`
     UPDATE projects SET actual_hours = (
       SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
@@ -301,10 +400,9 @@ async function updateProjectHours(projectId) {
     ) WHERE id=$1
   `, [projectId]);
 
-  // Propagate up to parent
   const { rows } = await pool.query('SELECT parent_id FROM projects WHERE id=$1', [projectId]);
   if (rows[0] && rows[0].parent_id) {
-    await updateProjectHours(rows[0].parent_id);
+    await updateProjectHours(rows[0].parent_id, visited);
   }
 }
 
@@ -352,7 +450,7 @@ app.put('/api/clients/:id', async (req, res) => {
 
 // Delete a client. Cascades to contracts, projects, time entries, invoices.
 // Returns counts of what would be deleted as a confirmation aid (preview=true).
-app.delete('/api/clients/:id', async (req, res) => {
+app.delete('/api/clients/:id', requireAdmin, async (req, res) => {
   try {
     if (req.query.preview === 'true') {
       const counts = await pool.query(`
@@ -923,7 +1021,7 @@ app.post('/api/projects', async (req, res) => {
     // Auto-create permit stage for permitting projects
     if (isPermitting) {
       await pool.query(
-        'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+        'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
         [rows[0].id, 'potential', permit_manager || null]
       );
     }
@@ -931,7 +1029,7 @@ app.post('/api/projects', async (req, res) => {
     // Auto-create design stage for design projects
     if (project_type === 'design') {
       await pool.query(
-        'INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+        'INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
         [rows[0].id, 'potential']
       );
     }
@@ -1021,7 +1119,7 @@ app.put('/api/projects/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/projects/:id', async (req, res) => {
+app.delete('/api/projects/:id', requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
@@ -1038,7 +1136,7 @@ app.post('/api/projects/:id/recalc-hours', async (req, res) => {
 });
 
 // Recalculate ALL projects' actual_hours from time_entries (bottom-up)
-app.post('/api/projects/recalc-all', async (req, res) => {
+app.post('/api/projects/recalc-all', requireAdmin, async (req, res) => {
   try {
     // First, set all to their own direct hours
     await pool.query(`
@@ -1131,31 +1229,32 @@ app.get('/api/time-entries', async (req, res) => {
 
 app.post('/api/time-entries', async (req, res) => {
   const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
+  let inserted;
   try {
-    // Auto-stamp user_id from the logged-in session so engineer scoping works
-    // immediately on new entries (no need to backfill later). Falls back to
-    // NULL when there's no logged-in user (legacy basic-auth requests).
     const userId = req.user?.id || null;
     const { rows } = await pool.query(`
       INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id)
       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
     `, [project_id, staff_id || null, entry_date, hours, job_title, notes, userId]);
-
-    // Update project actual_hours and propagate up hierarchy
+    inserted = rows[0];
     await updateProjectHours(project_id);
-
-    // Audit log — captures who created the entry. Source distinguishes
-    // admin (admin UI) from portal (design/permitting/timeclock portal direct
-    // POST). The timeclock portal's own clock-out endpoint logs separately
-    // with source='timeclock', so this catches everything else.
+  } catch (e) {
+    console.error('[time-entries:create]', e && e.message);
+    return res.status(500).json({ error: 'Failed to create entry.' });
+  }
+  // Audit AFTER the entry is durable. Audit failures must not turn a
+  // successful insert into a 500 — the previous version did, and users
+  // would retry, double-inserting hours. We log audit failures and move on.
+  try {
     await auditTimeEntry({
-      req, timeEntryId: rows[0].id, action: 'created',
-      before: null, after: rows[0],
+      req, timeEntryId: inserted.id, action: 'created',
+      before: null, after: inserted,
       source: PORTAL_MODE || 'admin',
     });
-
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (auditErr) {
+    console.error('[time-entries:create-audit]', auditErr && auditErr.message);
+  }
+  res.json(inserted);
 });
 
 app.post('/api/time-entries/bulk', async (req, res) => {
@@ -1227,51 +1326,68 @@ app.put('/api/time-entries/:id', async (req, res) => {
     if (notes !== undefined)      { sets.push(`notes = $${i++}`);      params.push(notes); }
     if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
 
-    const { rows } = await pool.query(
-      `UPDATE time_entries SET ${sets.join(', ')} WHERE id=$1 RETURNING *`,
-      params
-    );
-
-    // If project changed, update both old and new project hours rollups
-    await updateProjectHours(before.project_id);
-    if (project_id && String(project_id) !== String(before.project_id)) {
-      await updateProjectHours(project_id);
+    let updated;
+    try {
+      const { rows } = await pool.query(
+        `UPDATE time_entries SET ${sets.join(', ')} WHERE id=$1 RETURNING *`,
+        params
+      );
+      updated = rows[0];
+      await updateProjectHours(before.project_id);
+      if (project_id && String(project_id) !== String(before.project_id)) {
+        await updateProjectHours(project_id);
+      }
+    } catch (e) {
+      console.error('[time-entries:update]', e && e.message);
+      return res.status(500).json({ error: 'Failed to update entry.' });
     }
-
-    await auditTimeEntry({
-      req, timeEntryId: req.params.id, action: 'updated',
-      before, after: rows[0],
-      source: PORTAL_MODE || 'admin',
-    });
-
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    // Audit isolated — never let a logging hiccup make the user think their
+    // (already committed) edit failed. A retry would double-write.
+    try {
+      await auditTimeEntry({
+        req, timeEntryId: req.params.id, action: 'updated',
+        before, after: updated,
+        source: PORTAL_MODE || 'admin',
+      });
+    } catch (auditErr) {
+      console.error('[time-entries:update-audit]', auditErr && auditErr.message);
+    }
+    res.json(updated);
+  } catch (e) {
+    console.error('[time-entries:update-outer]', e && e.message);
+    res.status(500).json({ error: 'Failed to update entry.' });
+  }
 });
 
 app.delete('/api/time-entries/:id', async (req, res) => {
+  let before;
   try {
-    // Fetch the full row BEFORE deleting so we can capture before_data in
-    // the audit log. Tradeoff: one extra query per delete, but admin's
-    // ability to see exactly what was deleted is worth it.
     const { rows: existing } = await pool.query(
       'SELECT * FROM time_entries WHERE id=$1', [req.params.id]
     );
-    const before = existing[0] || null;
+    before = existing[0] || null;
 
     const { rows } = await pool.query('DELETE FROM time_entries WHERE id=$1 RETURNING project_id', [req.params.id]);
     if (rows[0]) {
       await updateProjectHours(rows[0].project_id);
     }
-
-    if (before) {
+  } catch (e) {
+    console.error('[time-entries:delete]', e && e.message);
+    return res.status(500).json({ error: 'Failed to delete entry.' });
+  }
+  // Audit isolated — see comments on POST/PUT above.
+  if (before) {
+    try {
       await auditTimeEntry({
         req, timeEntryId: req.params.id, action: 'deleted',
         before, after: null,
         source: PORTAL_MODE || 'admin',
       });
+    } catch (auditErr) {
+      console.error('[time-entries:delete-audit]', auditErr && auditErr.message);
     }
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  }
+  res.json({ ok: true });
 });
 
 // Bulk delete: all time entries for a given staff member, optionally filtered
@@ -1496,7 +1612,7 @@ function inferJobTitle(filename, rows2d, headerIdx) {
   return null;
 }
 
-app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
+app.post('/api/hours/csv-validate', requireAdmin, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const overrideYear = req.body.override_year ? parseInt(req.body.override_year, 10) : null;
 
@@ -1812,7 +1928,7 @@ app.post('/api/hours/csv-validate', upload.single('file'), async (req, res) => {
 // Patch keys: project_id, staff_id, job_title, hours.
 // We validate IDs exist; the row's "known" flags get re-evaluated so the
 // summary stays consistent.
-app.post('/api/hours/csv-edit-row', async (req, res) => {
+app.post('/api/hours/csv-edit-row', requireAdmin, async (req, res) => {
   const { stage_id, row_num, patch } = req.body;
   if (!stage_id || !row_num || !patch) return res.status(400).json({ error: 'stage_id, row_num, patch required' });
   const staged = csvStage.get(stage_id);
@@ -1862,7 +1978,7 @@ app.post('/api/hours/csv-edit-row', async (req, res) => {
   }
 });
 
-app.post('/api/hours/csv-commit', async (req, res) => {
+app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
   const {
     stage_id,
     create_staff = [],
@@ -2363,7 +2479,7 @@ app.put('/api/permits/:projectId/advance', async (req, res) => {
     );
     // Create next stage
     await pool.query(
-      'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+      'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
       [projectId, nextStage, actor]
     );
     res.json({ previous: currentStage, current: nextStage });
@@ -3332,7 +3448,7 @@ app.put('/api/design/:projectId/advance', async (req, res) => {
     );
     // Create next stage
     await pool.query(
-      'INSERT INTO design_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+      'INSERT INTO design_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
       [projectId, nextStage, actor]
     );
     // If completed, mark project
@@ -3543,7 +3659,7 @@ app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_ma
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Monthly summary — all months for a given year
-app.get('/api/revenue/monthly-summary', async (req, res) => {
+app.get('/api/revenue/monthly-summary', requireManagerOrAdmin, async (req, res) => {
   const year = req.query.year || new Date().getFullYear();
   try {
     const { rows } = await pool.query(`
@@ -3598,7 +3714,7 @@ app.get('/api/revenue/monthly-summary', async (req, res) => {
 });
 
 // Revenue by client — filterable by month/year
-app.get('/api/revenue/by-client', async (req, res) => {
+app.get('/api/revenue/by-client', requireManagerOrAdmin, async (req, res) => {
   const year = req.query.year || new Date().getFullYear();
   const month = req.query.month; // optional
   try {
@@ -3663,7 +3779,7 @@ app.get('/api/revenue/by-client', async (req, res) => {
 });
 
 // Detailed project breakdown for a specific month
-app.get('/api/revenue/details', async (req, res) => {
+app.get('/api/revenue/details', requireManagerOrAdmin, async (req, res) => {
   const year = req.query.year || new Date().getFullYear();
   const month = req.query.month;
   try {
@@ -3719,7 +3835,7 @@ app.get('/api/revenue/details', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/revenue/projected-total', async (req, res) => {
+app.get('/api/revenue/projected-total', requireManagerOrAdmin, async (req, res) => {
   try {
     // Total = sum of projected_revenue from LEAVES only (no double-counting).
     // Also returns count of leaves with a projected value vs. without, so the
@@ -3776,7 +3892,7 @@ app.get('/api/revenue/projected-total', async (req, res) => {
   }
 });
 
-app.get('/api/revenue/unbilled', async (req, res) => {
+app.get('/api/revenue/unbilled', requireManagerOrAdmin, async (req, res) => {
   try {
     // ── ONE-TIME projects: one row per project (existing logic) ──
     // Filter out monthly-cadence projects since they're handled below.
@@ -3904,7 +4020,7 @@ app.get('/api/revenue/unbilled', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // List invoices with items, grouped by month
-app.get('/api/invoices', async (req, res) => {
+app.get('/api/invoices', requireManagerOrAdmin, async (req, res) => {
   const year = req.query.year || new Date().getFullYear();
   try {
     const { rows } = await pool.query(`
@@ -3931,7 +4047,7 @@ app.get('/api/invoices', async (req, res) => {
 });
 
 // Delete an invoice and optionally wipe associated hours + unbill projects
-app.delete('/api/invoices/:id', async (req, res) => {
+app.delete('/api/invoices/:id', requireManagerOrAdmin, async (req, res) => {
   const { wipe_hours } = req.query; // ?wipe_hours=true
   try {
     // Get invoice items to find linked projects
@@ -3964,7 +4080,7 @@ app.delete('/api/invoices/:id', async (req, res) => {
 });
 
 // Unbill a single project (reverse billing, keep hours)
-app.post('/api/projects/:id/unbill', async (req, res) => {
+app.post('/api/projects/:id/unbill', requireManagerOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `UPDATE projects SET status='completed', billed_date=NULL WHERE id=$1 RETURNING *`,
@@ -3978,7 +4094,7 @@ app.post('/api/projects/:id/unbill', async (req, res) => {
 });
 
 // Delete a billed project entirely (removes from revenue, hours, everything)
-app.delete('/api/projects/:id/with-hours', async (req, res) => {
+app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
   try {
     // Delete time entries first
     await pool.query('DELETE FROM time_entries WHERE project_id=$1', [req.params.id]);
@@ -4123,7 +4239,7 @@ app.get('/api/reports/billing', async (req, res) => {
   }
 });
 
-app.put('/api/projects/:id/mark-billed', async (req, res) => {
+app.put('/api/projects/:id/mark-billed', requireManagerOrAdmin, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `UPDATE projects SET billed_date=NOW(), status='billed' WHERE id=$1 RETURNING *`,
@@ -4139,7 +4255,7 @@ app.put('/api/projects/:id/mark-billed', async (req, res) => {
 // and creates a follow-on project for the next billing period so ongoing hourly
 // work (inspection, RE) can keep accumulating without re-entering all the metadata.
 // Body: { invoice_number?, invoice_date?, billed_amount, create_follow_on?, follow_on_name? }
-app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
+app.post('/api/projects/:id/bill-and-clone', requireManagerOrAdmin, async (req, res) => {
   const { invoice_number, invoice_date, billed_amount, create_follow_on, follow_on_name } = req.body;
   const client = await pool.connect();
   try {
@@ -4226,7 +4342,7 @@ app.post('/api/projects/:id/bill-and-clone', async (req, res) => {
 // Body: { project_ids: [...], invoice_number, invoice_date, invoice_name, items: [{project_id, description, amount}] }
 // Each project gets a line item; the invoice gets one invoice_number.
 // ─────────────────────────────────────────────────────────────────────────────
-app.post('/api/billing/bill-multiple', async (req, res) => {
+app.post('/api/billing/bill-multiple', requireManagerOrAdmin, async (req, res) => {
   const { project_ids, invoice_number, invoice_date, invoice_name, items } = req.body;
   if (!Array.isArray(project_ids) || project_ids.length === 0) {
     return res.status(400).json({ error: 'project_ids must be a non-empty array' });
@@ -4380,7 +4496,7 @@ app.post('/api/billing/bill-multiple', async (req, res) => {
 // Returns: { period, monthly_revenue, ytd_revenue, invoices: [...] }
 // One row per invoice (not per project), sorted by date.
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/billing/report', async (req, res) => {
+app.get('/api/billing/report', requireManagerOrAdmin, async (req, res) => {
   const month = req.query.month ? parseInt(req.query.month, 10) : null;
   const year = req.query.year ? parseInt(req.query.year, 10) : new Date().getFullYear();
   try {
@@ -4903,7 +5019,7 @@ async function executeTool(toolName, toolInput) {
         ]);
         if (toolInput.project_type === 'permitting') {
           await pool.query(
-            'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+            'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
             [rows[0].id, 'potential']
           );
         }
@@ -5084,26 +5200,44 @@ async function executeTool(toolName, toolInput) {
           [toolInput.updated_by || 'AI', toolInput.notes || null, toolInput.project_id, currentStage]
         );
         await pool.query(
-          'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING',
+          'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
           [toolInput.project_id, nextStage, toolInput.updated_by || 'AI']
         );
         return { success: true, previous: currentStage, current: nextStage };
       }
 
       case 'query_database': {
-        // Safety: only allow SELECT queries
-        const sqlClean = toolInput.sql.trim().replace(/;+$/, '');
+        // Safety in depth:
+        //   1. Disallow multi-statement strings (semicolons inside the body) —
+        //      these can sneak DML past keyword regex via `SELECT 1; DELETE …`.
+        //   2. Require the first keyword to be SELECT or WITH.
+        //   3. Run inside a READ ONLY transaction so even writable CTEs
+        //      (`WITH x AS (DELETE … RETURNING *) SELECT …`) get rejected by
+        //      Postgres itself, not just by our regex.
+        //   4. Cap result set to 100 rows.
+        const sqlClean = toolInput.sql.trim().replace(/;+\s*$/, '');
+        if (sqlClean.includes(';')) {
+          return { success: false, error: 'Multiple statements are not allowed. Submit one SELECT at a time.' };
+        }
         const firstWord = sqlClean.split(/\s+/)[0].toUpperCase();
         if (firstWord !== 'SELECT' && firstWord !== 'WITH') {
-          return { success: false, error: 'Only SELECT queries are allowed. Use the specific action tools for modifications.' };
+          return { success: false, error: 'Only SELECT/WITH queries are allowed. Use the specific action tools for modifications.' };
         }
-        // Extra safety: reject dangerous keywords
-        const upper = sqlClean.toUpperCase();
-        if (/\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|CREATE|GRANT|REVOKE)\b/.test(upper)) {
-          return { success: false, error: 'Modifying queries are not allowed through query_database. Use the specific tools instead.' };
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          await client.query('SET TRANSACTION READ ONLY');
+          const { rows } = await client.query(sqlClean);
+          await client.query('COMMIT');
+          return { success: true, row_count: rows.length, rows: rows.slice(0, 100) };
+        } catch (e) {
+          try { await client.query('ROLLBACK'); } catch {}
+          // Postgres returns a clear error if the read-only transaction caught
+          // a write attempt; surface it to the AI for self-correction.
+          return { success: false, error: 'Query failed: ' + e.message };
+        } finally {
+          client.release();
         }
-        const { rows } = await pool.query(sqlClean);
-        return { success: true, row_count: rows.length, rows: rows.slice(0, 100) };
       }
 
       case 'create_budget': {
@@ -5360,7 +5494,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
+app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   try {
@@ -5429,7 +5563,7 @@ app.post('/api/ai/upload', upload.single('file'), async (req, res) => {
 });
 
 // AI fetches rows in batches from stored upload
-app.get('/api/ai/upload/:id', async (req, res) => {
+app.get('/api/ai/upload/:id', requireAdmin, async (req, res) => {
   const data = uploadStore.get(req.params.id);
   if (!data) return res.status(404).json({ error: 'Upload expired or not found' });
   if (data.raw_text) return res.json({ rows: [], raw_text: data.raw_text, row_count: 0 });
@@ -5451,7 +5585,7 @@ app.get('/api/ai/upload/:id', async (req, res) => {
 });
 
 // ─── AI CHAT ENDPOINT ────────────────────────────────────────────────────────
-app.post('/api/ai/chat', async (req, res) => {
+app.post('/api/ai/chat', requireAdmin, async (req, res) => {
   const { messages, session_id } = req.body;
   if (!messages || !messages.length) return res.status(400).json({ error: 'No messages' });
 
@@ -5617,7 +5751,7 @@ app.get('*', (req, res) => {
       a:hover{text-decoration:underline}</style></head><body>
       <div class="card">
         <h1>Admin Access Required</h1>
-        <p>You're signed in as <strong>${req.user.username}</strong> with role <strong>${req.user.role}</strong>.</p>
+        <p>You're signed in as <strong>${escapeHtml(req.user.username)}</strong> with role <strong>${escapeHtml(req.user.role)}</strong>.</p>
         <p>This page requires the <strong>admin</strong> role. Ask your administrator if you need broader access.</p>
         <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
       </div></body></html>
@@ -5651,8 +5785,8 @@ app.get('*', (req, res) => {
         a{color:#1B5FA0;text-decoration:none;font-weight:500}</style></head><body>
         <div class="card">
           <h1>Portal Access Required</h1>
-          <p>You're signed in as <strong>${req.user.username}</strong>.</p>
-          <p>This portal requires <strong>${PORTAL_MODE}</strong> team access. Ask your administrator to add it to your account.</p>
+          <p>You're signed in as <strong>${escapeHtml(req.user.username)}</strong>.</p>
+          <p>This portal requires <strong>${escapeHtml(PORTAL_MODE)}</strong> team access. Ask your administrator to add it to your account.</p>
           <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
         </div></body></html>
       `);
@@ -5715,6 +5849,31 @@ async function bootstrapV3Schema() {
     `CREATE UNIQUE INDEX IF NOT EXISTS uniq_project_name_per_parent
        ON projects (COALESCE(parent_id::text, 'ROOT'), LOWER(name))
        WHERE COALESCE(is_rollup, FALSE) = FALSE`,
+    // Switch destructive cascades to RESTRICT so a mis-clicked delete on a
+    // rollup doesn't silently nuke every child project + their billing
+    // history. Deletes that intend to take hours go through the explicit
+    // /api/projects/:id/with-hours endpoint. Postgres has no
+    // ALTER FK ... ON DELETE in one shot — drop and re-add.
+    `ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_parent_id_fkey`,
+    `ALTER TABLE projects ADD CONSTRAINT projects_parent_id_fkey
+       FOREIGN KEY (parent_id) REFERENCES projects(id) ON DELETE RESTRICT`,
+    `ALTER TABLE time_entries DROP CONSTRAINT IF EXISTS time_entries_project_id_fkey`,
+    `ALTER TABLE time_entries ADD CONSTRAINT time_entries_project_id_fkey
+       FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT`,
+    // Foreign-key indexes — without these, the FK lookups during
+    // delete/update do full table scans and the dashboard slows badly as
+    // time_entries grows. Idempotent.
+    `CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries (project_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_time_entries_staff_id ON time_entries (staff_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_time_entries_entry_date ON time_entries (entry_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_parent_id ON projects (parent_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects (client_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_contract_id ON projects (contract_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_projects_billed_date ON projects (billed_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON invoice_items (invoice_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_invoice_items_project_id ON invoice_items (project_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_permit_stages_project_id ON permit_stages (project_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_permit_documents_project_id ON permit_documents (project_id)`,
   ];
   for (const sql of ddl) {
     try {
@@ -5810,6 +5969,11 @@ async function start() {
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
   await timeclockModule.bootstrapTimeClockSchema(pool);  // staff_id + sessions + audit log
+  // Automation scheduler — surfaces stale permits + budget burn + daily
+  // digest to console; the same data is exposed via /api/automation/* for
+  // the UI. Started AFTER all schemas are bootstrapped so the queries
+  // don't race against missing tables.
+  automationModule.startScheduler(pool);
   // Extend timeouts to 30 minutes — needed for multi-GB uploads. The
   // platform's load balancer (Railway) may still cap at 5 minutes, but
   // setting these here at least removes Node as the bottleneck.

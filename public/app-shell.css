@@ -1,0 +1,106 @@
+/* Launch Fiber Services — App-shell responsive baseline.
+ *
+ * The existing HTML files were desktop-only (zero @media queries). This
+ * stylesheet adds a mobile-friendly baseline WITHOUT changing the desktop
+ * layout, so it's safe to drop in on every page. Strategy:
+ *
+ *   - On wide screens (>= 901px): no rules apply, layout is whatever the
+ *     page already styled.
+ *   - On medium/small screens: tables become horizontally scrollable so
+ *     they don't break the page; nav scrolls horizontally instead of
+ *     wrapping into a tall blob; tap targets bump up to 44px (Apple HIG /
+ *     Material guidance); modal padding shrinks; alert/confirm spacing
+ *     improves.
+ *
+ * NONE of these rules name specific app classes (e.g. `.dashboard-card`)
+ * because the existing HTML doesn't share a consistent class system. They
+ * target standard elements + a few widely-used class hints (`.nav`,
+ * `.card`, `.modal`).
+ */
+
+/* ─── Baseline that helps everywhere ───────────────────────────────────── */
+
+/* Make sure the viewport meta isn't being ignored — applies even on desktop
+   if a touch laptop is in use. */
+html, body { -webkit-text-size-adjust: 100%; }
+
+/* Tables: when content overflows on narrow screens we need a wrapper that
+   scrolls. The HTML doesn't have one, so we apply the scroll on the table
+   itself and let it overflow horizontally. */
+@media (max-width: 900px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  /* Force minimum cell padding so cramped data is still tappable */
+  th, td { padding: 8px 10px !important; }
+}
+
+/* ─── Phone breakpoint ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Nav bar: scrollable horizontally instead of wrapping into a tall blob.
+     The existing HTML uses `.nav` for the top tab strip across all 5 pages. */
+  .nav, nav, .tabs, .tab-strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    flex-wrap: nowrap !important;
+  }
+  .nav > *, nav > *, .tabs > *, .tab-strip > * { flex-shrink: 0; }
+
+  /* Inputs and buttons: 44px min height for touch targets. The existing
+     desktop styling uses smaller controls; we bump them only when they're
+     plain HTML (no inline height already set). */
+  button:not([style*="height"]),
+  input:not([type="checkbox"]):not([type="radio"]):not([style*="height"]),
+  select:not([style*="height"]),
+  textarea {
+    min-height: 38px;
+    font-size: 16px;  /* prevents iOS zoom on focus */
+  }
+
+  /* Cards / modals — let them breathe on narrow screens */
+  .card, .modal, .modal-content {
+    padding: 14px !important;
+    margin: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Generic page wrappers — kill any forced wide min-widths so nothing
+     forces horizontal page scroll */
+  body, main, .container, .page, .content {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Long file/project names shouldn't break out of cells */
+  td, .project-name, .file-name { word-break: break-word; }
+
+  /* Stat cards on dashboards — flex into a single column for readability */
+  .stats, .stat-row, .dashboard-cards {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+}
+
+/* ─── Tablet breakpoint — middle ground ────────────────────────────────── */
+@media (min-width: 641px) and (max-width: 900px) {
+  /* Slightly larger inputs without going to phone-mode */
+  button, input, select, textarea { font-size: 15px; }
+}
+
+/* ─── Reduced-motion respect ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ─── Print-friendly invoices/reports ──────────────────────────────────── */
+@media print {
+  .no-print, nav, .nav, .tabs, button, .modal-backdrop { display: none !important; }
+  body { background: #fff !important; }
+}

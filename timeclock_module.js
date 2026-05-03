@@ -28,6 +28,44 @@
 // rather than auto-linking by name.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── Business timezone ─────────────────────────────────────────────────────
+// Day boundaries (entry_date), week boundaries (Mon–Sun grid), and the
+// "did this shift cross midnight" check all need to happen in the BUSINESS's
+// local time, not UTC. Railway containers run in UTC, so a shift started at
+// 6 PM Central was being attributed to the NEXT day's payroll because
+// new Date(...).toISOString() converts to UTC first.
+//
+// Override with BUSINESS_TZ env var (IANA name like 'America/New_York') if
+// the business operates in a different zone.
+const BUSINESS_TZ = process.env.BUSINESS_TZ || 'America/Chicago';
+
+// Convert a Date (or ISO string) into the business-local 'YYYY-MM-DD' for use
+// as time_entries.entry_date. Uses Intl rather than manual offset math so DST
+// transitions are handled automatically.
+function dateInBusinessTz(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  // 'en-CA' formats as YYYY-MM-DD by default — the format we want.
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: BUSINESS_TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(date);
+}
+
+// Add N days to a 'YYYY-MM-DD' string without ever crossing the
+// JS-Date / timezone boundary. Used for building the Mon–Sun week grid keys
+// so the keys exactly match time_entries.entry_date (which is already a
+// 'YYYY-MM-DD' string thanks to db.js's pg type parser).
+function addDaysToDateString(dateStr, n) {
+  // Parse YYYY-MM-DD as a UTC date so adding days is pure arithmetic with no
+  // DST ambiguity, then re-stringify the UTC value. Both source and result
+  // are pure date strings, so the UTC roundtrip is safe — DST only matters
+  // when there's a time-of-day component.
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const t = Date.UTC(y, m - 1, d) + n * 24 * 3600 * 1000;
+  const dt = new Date(t);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SCHEMA BOOTSTRAP — runs every startup, idempotent
 // ═══════════════════════════════════════════════════════════════════════════
@@ -90,6 +128,12 @@ async function bootstrapTimeClockSchema(pool) {
     `CREATE INDEX IF NOT EXISTS idx_audit_actor ON time_entry_audit (actor_user_id, at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_audit_at ON time_entry_audit (at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_audit_meaningful ON time_entry_audit (meaningful, at DESC) WHERE meaningful = TRUE`,
+    // forgot_clock_out — TRUE when the session ran longer than the soft cap
+    // (see CLOCK_OUT_REVIEW_THRESHOLD_HOURS below). The session is closed
+    // and the time entry is created either way, but the flag drives an
+    // admin "needs review" badge so misclicks/forgotten clock-outs aren't
+    // silently truncated to 24 hours like the previous version did.
+    `ALTER TABLE time_clock_sessions ADD COLUMN IF NOT EXISTS forgot_clock_out BOOLEAN DEFAULT FALSE`,
   ];
 
   for (const stmt of ddl) {
@@ -200,6 +244,15 @@ function makeAuditLogger(pool) {
 // ROUTES
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Soft cap: a session longer than this gets `forgot_clock_out=true` and
+// admin attention, but the actual hours are still recorded. The previous
+// 24-hour HARD cap silently destroyed wages — a 26-hour session became 24.
+// We never lose hours; we flag them for review.
+const CLOCK_OUT_REVIEW_THRESHOLD_HOURS = 12;
+// Absolute cap — anything above this is almost certainly clock skew or a
+// bug, not a real shift. Refuse to insert; admin must edit manually.
+const CLOCK_OUT_HARD_LIMIT_HOURS = 36;
+
 function installTimeClockRoutes(app, pool, requireAuth) {
   const audit = makeAuditLogger(pool);
 
@@ -246,7 +299,10 @@ function installTimeClockRoutes(app, pool, requireAuth) {
         ORDER BY s.started_at DESC LIMIT 1
       `, [req.user.id]);
       res.json(rows[0] || null);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[timeclock:active]', e && e.message);
+      res.status(500).json({ error: 'Failed to load active session.' });
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -295,7 +351,8 @@ function installTimeClockRoutes(app, pool, requireAuth) {
       if (e.code === '23505') {
         return res.status(409).json({ error: 'You are already clocked in (race condition detected).' });
       }
-      res.status(500).json({ error: e.message });
+      console.error('[timeclock:clock-in]', e && e.stack || e);
+      res.status(500).json({ error: 'Clock-in failed. Try again.' });
     }
   });
 
@@ -333,21 +390,34 @@ function installTimeClockRoutes(app, pool, requireAuth) {
 
       const endedAt = new Date();
       const durationMs = endedAt - new Date(session.started_at);
-      // Refuse to log negative time (clock skew) or absurdly long sessions
-      // (forgot to clock out for 3 days). Cap at 24 hours; admin can edit
-      // the resulting entry afterward to whatever the real time was.
-      let hours = durationMs / 3600000;
-      if (hours < 0) hours = 0;
-      if (hours > 24) hours = 24;
-      hours = Math.round(hours * 100) / 100;
+      let rawHours = durationMs / 3600000;
+      if (rawHours < 0) rawHours = 0;
+      // HARD limit: anything above 36h is almost certainly a clock-skew bug
+      // or stuck timer. Refuse and tell the user to clean it up manually so
+      // we don't write a clearly-wrong entry that downstream payroll uses.
+      if (rawHours > CLOCK_OUT_HARD_LIMIT_HOURS) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: `Session is ${Math.round(rawHours)} hours long (limit ${CLOCK_OUT_HARD_LIMIT_HOURS}). This is almost certainly a forgotten clock-out. Ask an administrator to close this session and create the correct hours manually.`,
+          session_id: session.id,
+          started_at: session.started_at,
+        });
+      }
+      const needsReview = rawHours > CLOCK_OUT_REVIEW_THRESHOLD_HOURS;
+      const hours = Math.round(rawHours * 100) / 100;
 
       // Combine session notes + clock-out notes
-      const finalNotes = [session.notes, notes].filter(Boolean).join(' | ') || null;
+      const finalNotes = [
+        session.notes,
+        notes,
+        needsReview ? `[auto-flag: long shift (${hours.toFixed(2)}h) — likely forgot to clock out]` : null,
+      ].filter(Boolean).join(' | ') || null;
 
-      // Create the time_entries row. user_id set so engineer scoping works.
-      // entry_date uses the START date (a session that crosses midnight is
-      // attributed to the day it began — matches most payroll conventions).
-      const entryDate = new Date(session.started_at).toISOString().slice(0, 10);
+      // entry_date uses the START date in the BUSINESS timezone — a session
+      // that crosses midnight is attributed to the day it began (matches
+      // most payroll conventions). The previous toISOString().slice(0,10)
+      // used UTC, which broke for any shift after ~5–7 PM local.
+      const entryDate = dateInBusinessTz(session.started_at);
       const { rows: te } = await client.query(`
         INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id)
         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
@@ -356,30 +426,38 @@ function installTimeClockRoutes(app, pool, requireAuth) {
         session.job_title, finalNotes, req.user.id
       ]);
 
-      // Close the session
+      // Close the session, recording the review flag for admin triage.
       await client.query(
         `UPDATE time_clock_sessions
-         SET ended_at = $1, notes = $2, created_time_entry_id = $3
-         WHERE id = $4`,
-        [endedAt, finalNotes, te[0].id, session.id]
+         SET ended_at = $1, notes = $2, created_time_entry_id = $3, forgot_clock_out = $4
+         WHERE id = $5`,
+        [endedAt, finalNotes, te[0].id, needsReview, session.id]
       );
 
       await client.query('COMMIT');
 
-      // Audit (outside transaction — failure here doesn't roll back the entry)
-      await audit({
-        req, timeEntryId: te[0].id, action: 'created',
-        before: null, after: te[0], source: 'timeclock',
-      });
+      // Audit OUTSIDE the transaction — wrapped in its own try/catch in the
+      // logger, but extra-belt-and-suspenders here so a logging hiccup never
+      // appears as a 500 to the user (the entry IS already committed).
+      try {
+        await audit({
+          req, timeEntryId: te[0].id, action: 'created',
+          before: null, after: te[0], source: 'timeclock',
+        });
+      } catch (auditErr) {
+        console.error('[timeclock] post-commit audit failed:', auditErr && auditErr.message);
+      }
 
       res.json({
-        session: { ...session, ended_at: endedAt },
+        session: { ...session, ended_at: endedAt, forgot_clock_out: needsReview },
         time_entry: te[0],
         hours,
+        needs_review: needsReview,
       });
     } catch (e) {
-      await client.query('ROLLBACK');
-      res.status(500).json({ error: e.message });
+      try { await client.query('ROLLBACK'); } catch {}
+      console.error('[timeclock:clock-out]', e && e.stack || e);
+      res.status(500).json({ error: 'Clock-out failed. Try again or ask an administrator.' });
     } finally {
       client.release();
     }
@@ -415,22 +493,35 @@ function installTimeClockRoutes(app, pool, requireAuth) {
       if (oldSession) {
         const endedAt = new Date();
         const durationMs = endedAt - new Date(oldSession.started_at);
-        let hours = Math.max(0, Math.min(24, durationMs / 3600000));
-        hours = Math.round(hours * 100) / 100;
+        let rawHours = Math.max(0, durationMs / 3600000);
+        if (rawHours > CLOCK_OUT_HARD_LIMIT_HOURS) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            error: `Current session is ${Math.round(rawHours)} hours long (limit ${CLOCK_OUT_HARD_LIMIT_HOURS}). Close it manually before switching projects.`,
+            session_id: oldSession.id,
+          });
+        }
+        const needsReview = rawHours > CLOCK_OUT_REVIEW_THRESHOLD_HOURS;
+        const hours = Math.round(rawHours * 100) / 100;
 
         if (hours > 0) {
-          const entryDate = new Date(oldSession.started_at).toISOString().slice(0, 10);
+          // Same tz-correct entry_date logic as clock-out.
+          const entryDate = dateInBusinessTz(oldSession.started_at);
+          const noteAddon = needsReview
+            ? `[auto-flag: long shift (${hours.toFixed(2)}h) — likely forgot to clock out]`
+            : null;
+          const finalNotes = [oldSession.notes, noteAddon].filter(Boolean).join(' | ') || null;
           const { rows: te } = await client.query(`
             INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id)
             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
           `, [
             oldSession.project_id, oldSession.staff_id, entryDate, hours,
-            oldSession.job_title, oldSession.notes, req.user.id
+            oldSession.job_title, finalNotes, req.user.id
           ]);
           createdEntry = te[0];
           await client.query(
-            `UPDATE time_clock_sessions SET ended_at = $1, created_time_entry_id = $2 WHERE id = $3`,
-            [endedAt, te[0].id, oldSession.id]
+            `UPDATE time_clock_sessions SET ended_at = $1, created_time_entry_id = $2, forgot_clock_out = $3 WHERE id = $4`,
+            [endedAt, te[0].id, needsReview, oldSession.id]
           );
         } else {
           // Zero-hour session — close without creating an entry
@@ -455,10 +546,14 @@ function installTimeClockRoutes(app, pool, requireAuth) {
       await client.query('COMMIT');
 
       if (createdEntry) {
-        await audit({
-          req, timeEntryId: createdEntry.id, action: 'created',
-          before: null, after: createdEntry, source: 'timeclock',
-        });
+        try {
+          await audit({
+            req, timeEntryId: createdEntry.id, action: 'created',
+            before: null, after: createdEntry, source: 'timeclock',
+          });
+        } catch (auditErr) {
+          console.error('[timeclock] post-commit audit failed:', auditErr && auditErr.message);
+        }
       }
 
       res.json({
@@ -467,8 +562,9 @@ function installTimeClockRoutes(app, pool, requireAuth) {
         new_session: newSession[0],
       });
     } catch (e) {
-      await client.query('ROLLBACK');
-      res.status(500).json({ error: e.message });
+      try { await client.query('ROLLBACK'); } catch {}
+      console.error('[timeclock:switch]', e && e.stack || e);
+      res.status(500).json({ error: 'Switch failed. Try again or ask an administrator.' });
     } finally {
       client.release();
     }
@@ -481,15 +577,24 @@ function installTimeClockRoutes(app, pool, requireAuth) {
   // your own time clock data).
   // ─────────────────────────────────────────────────────────────────────────
   app.get('/api/timeclock/week', requireAuth(), async (req, res) => {
-    const offset = parseInt(req.query.week_offset || '0', 10);
+    // Validate week_offset: must be a finite integer in a sane range.
+    // Without this, parseInt returned NaN for garbage input which then went
+    // to Postgres as the string "NaN" and the interval cast errored out.
+    const rawOffset = req.query.week_offset;
+    const offset = parseInt(rawOffset == null ? '0' : String(rawOffset), 10);
+    if (!Number.isFinite(offset) || offset < -260 || offset > 260) {
+      return res.status(400).json({ error: 'week_offset must be an integer between -260 and 260' });
+    }
     try {
-      // Compute Mon-Sun bounds in the server's local timezone. Postgres'
-      // date_trunc('week', ...) returns Monday by default, which is what we want.
+      // Compute Mon-Sun bounds in the BUSINESS timezone, not the Postgres
+      // server's timezone (which on Railway is UTC). Otherwise the week grid
+      // is off by one day for any user east of UTC working past midnight, or
+      // west of UTC starting before noon.
       const { rows: bounds } = await pool.query(`
         SELECT
-          (date_trunc('week', CURRENT_DATE) + ($1 || ' weeks')::interval)::date AS week_start,
-          (date_trunc('week', CURRENT_DATE) + ($1 || ' weeks')::interval + interval '6 days')::date AS week_end
-      `, [String(offset)]);
+          (date_trunc('week', (NOW() AT TIME ZONE $2)::date) + ($1 || ' weeks')::interval)::date AS week_start,
+          (date_trunc('week', (NOW() AT TIME ZONE $2)::date) + ($1 || ' weeks')::interval + interval '6 days')::date AS week_end
+      `, [String(offset), BUSINESS_TZ]);
       const { week_start, week_end } = bounds[0];
 
       const { rows: entries } = await pool.query(`
@@ -508,31 +613,43 @@ function installTimeClockRoutes(app, pool, requireAuth) {
         ORDER BY te.entry_date ASC, te.created_at ASC
       `, [req.user.id, week_start, week_end]);
 
-      // Aggregate by day for the week grid (Mon=0 ... Sun=6)
+      // Aggregate by day. Use STRING addition (addDaysToDateString) instead
+      // of JS Date math — the previous code did `new Date(week_start);
+      // d.setDate(...); d.toISOString().slice(0,10)`, which round-tripped
+      // through UTC and produced keys that didn't match entry_date for
+      // half the week in any non-UTC zone.
       const byDay = {};
       for (let i = 0; i < 7; i++) {
-        const d = new Date(week_start);
-        d.setDate(d.getDate() + i);
-        byDay[d.toISOString().slice(0, 10)] = { hours: 0, entry_count: 0 };
+        const key = addDaysToDateString(String(week_start), i);
+        byDay[key] = { hours: 0, entry_count: 0 };
       }
       let totalHours = 0;
+      // Sum unrounded ms-derived hours per day, round ONCE at the end —
+      // summing already-rounded entries can lose pennies on big weeks.
+      const rawByDay = {};
       for (const e of entries) {
         const key = String(e.entry_date).slice(0, 10);
-        if (byDay[key]) {
-          byDay[key].hours += parseFloat(e.hours || 0);
-          byDay[key].entry_count++;
-        }
-        totalHours += parseFloat(e.hours || 0);
+        const h = parseFloat(e.hours || 0);
+        rawByDay[key] = (rawByDay[key] || 0) + h;
+        if (byDay[key]) byDay[key].entry_count++;
+        totalHours += h;
+      }
+      for (const key of Object.keys(byDay)) {
+        byDay[key].hours = Math.round((rawByDay[key] || 0) * 100) / 100;
       }
 
       res.json({
         week_offset: offset,
         week_start, week_end,
+        business_tz: BUSINESS_TZ,
         entries,
         by_day: byDay,
         total_hours: Math.round(totalHours * 100) / 100,
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[timeclock:week]', e && e.stack || e);
+      res.status(500).json({ error: 'Failed to load week.' });
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -558,7 +675,10 @@ function installTimeClockRoutes(app, pool, requireAuth) {
       where.push(`tea.meaningful = TRUE`);
     }
     const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    const lim = Math.min(500, Math.max(10, parseInt(limit || '100', 10)));
+    let lim = parseInt(limit || '100', 10);
+    if (!Number.isFinite(lim)) lim = 100;
+    lim = Math.min(500, Math.max(10, lim));
+    params.push(lim);
 
     try {
       const { rows } = await pool.query(`
@@ -571,10 +691,13 @@ function installTimeClockRoutes(app, pool, requireAuth) {
                                                  (tea.before_data->>'project_id')::uuid)
         ${whereStr}
         ORDER BY tea.at DESC
-        LIMIT ${lim}
+        LIMIT $${i++}
       `, params);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[timeclock:audit-list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load audit log.' });
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -592,7 +715,10 @@ function installTimeClockRoutes(app, pool, requireAuth) {
         ORDER BY tea.at ASC
       `, [req.params.entry_id]);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[timeclock:audit-by-entry]', e && e.message);
+      res.status(500).json({ error: 'Failed to load audit history.' });
+    }
   });
 }
 
