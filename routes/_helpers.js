@@ -92,10 +92,48 @@ async function collectProjectTree(rootId) {
   return all;
 }
 
+// Pure-math: compute expected hours / expected revenue / miles for a
+// project from its type, rate, and footage. Permitting uses a randomized
+// hours-per-mile factor between 25 and 30 (in 0.25 steps) with a 25-hour
+// minimum if under a mile. Caller may pass a previously-saved factor via
+// hoursPerMileOverride so re-renders of the same project don't draw a new
+// random number every time.
+function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride) {
+  const ratePresent = billingRate !== null && billingRate !== undefined && billingRate !== '' && !isNaN(parseFloat(billingRate));
+  const PERMITTING_RATE = ratePresent ? parseFloat(billingRate) : null;
+
+  if (type === 'permitting' && footage) {
+    const miles = footage / 5280;
+    let hoursPerMile, totalHours;
+    if (hoursPerMileOverride && hoursPerMileOverride > 0) {
+      // Caller supplied a previously-saved random factor — re-use it
+      hoursPerMile = +parseFloat(hoursPerMileOverride);
+      totalHours = miles * hoursPerMile;
+    } else {
+      // Random between 25.00 and 30.00 in 0.25 increments → 21 possible values
+      const steps = Math.floor(Math.random() * 21);
+      hoursPerMile = 25 + steps * 0.25;
+      totalHours = miles * hoursPerMile;
+    }
+    // Minimum 25 hours if project is under a mile
+    if (miles < 1) totalHours = Math.max(25, totalHours);
+    // Snap to 0.25 increments
+    totalHours = Math.round(totalHours * 4) / 4;
+    return {
+      expectedHours: totalHours,
+      expectedRevenue: PERMITTING_RATE != null ? +(totalHours * PERMITTING_RATE).toFixed(2) : null,
+      miles: +miles.toFixed(4),
+      permittingHoursPerMile: hoursPerMile
+    };
+  }
+  return { expectedHours: null, expectedRevenue: null, miles: null, permittingHoursPerMile: null };
+}
+
 module.exports = {
   updateProjectHours,
   saveUndoBucket,
   popUndoBucket,
   collectProjectTree,
+  calcProjectFinancials,
   UNDO_TTL_SECONDS,
 };
