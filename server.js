@@ -382,32 +382,8 @@ require('./routes/jobs')(app, pool, {});
 // PROJECT TYPES — program categories (BAU / GF(R) / RUS / Other / custom)
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.get('/api/project-types', async (req, res) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM project_types WHERE active = true ORDER BY name');
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/project-types', async (req, res) => {
-  const { name } = req.body;
-  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO project_types (name) VALUES ($1)
-       ON CONFLICT (name) DO UPDATE SET active = true RETURNING *`,
-      [String(name).trim()]
-    );
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.delete('/api/project-types/:id', async (req, res) => {
-  try {
-    await pool.query('UPDATE project_types SET active = false WHERE id = $1', [req.params.id]);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
+// Project types extracted to routes/project_types.js (Track 1.3).
+require('./routes/project_types')(app, pool, {});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRICING LIST — Job × Project Type × Billing Code → rate
@@ -526,22 +502,8 @@ function calcPermittingHours(miles) {
   return { hours_per_mile: hoursPerMile, total_hours: totalHours };
 }
 
-app.get('/api/staff', async (req, res) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM staff WHERE active=true ORDER BY name');
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/staff', async (req, res) => {
-  const { name } = req.body;
-  try {
-    const { rows } = await pool.query(
-      'INSERT INTO staff (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET active=true RETURNING *', [name]
-    );
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
+// Staff extracted to routes/staff.js (Track 1.3).
+require('./routes/staff')(app, pool, {});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECTS — core CRUD + recalc + tree/with-hours delete extracted to
