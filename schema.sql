@@ -843,6 +843,37 @@ CREATE INDEX IF NOT EXISTS idx_scr_pending
   WHERE status = 'pending';
 
 
+-- ─────────────────────────────────────────
+-- INVOICE TEMPLATES — reference-PDF-driven invoice generator
+-- ─────────────────────────────────────────
+-- Owner uploads a PDF sample of how the invoice should look for a given
+-- (job, client) pair. Claude vision analyses the PDF once and produces
+-- an HTML template with {{placeholders}} (mustache-style) for the
+-- variable data. At invoice time the system substitutes real data and
+-- renders to PDF via puppeteer. Owner can edit the HTML in Settings or
+-- per-invoice before the final PDF download. Falls back to the hardcoded
+-- PSC RUS pdfkit layout when no template is uploaded for a (job, client).
+CREATE TABLE IF NOT EXISTS invoice_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  name VARCHAR(160),
+  reference_pdf_path TEXT,
+  reference_pdf_filename VARCHAR(260),
+  generated_html TEXT,
+  notes TEXT,
+  analysis_status VARCHAR(20) DEFAULT 'pending',
+  analysis_error TEXT,
+  analyzed_at TIMESTAMPTZ,
+  created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (job_id, client_id)
+);
+CREATE INDEX IF NOT EXISTS idx_invoice_templates_job_client
+  ON invoice_templates (job_id, client_id);
+
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- End of v2 additions
 -- ═══════════════════════════════════════════════════════════════════════════

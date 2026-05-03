@@ -1252,6 +1252,16 @@ require('./routes/revenue')(app, pool, { requireManagerOrAdmin });
 // ─────────────────────────────────────────────────────────────────────────────
 require('./routes/invoices')(app, pool, { requireManagerOrAdmin });
 
+// Reference-PDF-driven invoice templates: owner uploads a sample PDF for
+// each (job, client) pair, Claude vision analyses it once, and the system
+// renders future invoices to PDF via puppeteer using the resulting HTML
+// template. Coexists with the hardcoded PSC RUS pdfkit path above; the
+// template wins when one's available, the legacy path is the fallback.
+require('./routes/invoice_templates')(app, pool, {
+  requireManagerOrAdmin,
+  uploadDir: UPLOAD_DIR,
+});
+
 // Project lifecycle billing endpoints (unbill, mark-billed, bill-and-clone)
 // extracted to routes/project_billing.js (Track 1.3).
 require('./routes/project_billing')(app, pool, { requireManagerOrAdmin });
@@ -3100,6 +3110,33 @@ async function bootstrapV3Schema() {
     `DROP TRIGGER IF EXISTS engineering_contracts_updated_at ON engineering_contracts`,
     `CREATE TRIGGER engineering_contracts_updated_at
        BEFORE UPDATE ON engineering_contracts
+       FOR EACH ROW EXECUTE FUNCTION set_updated_at()`,
+
+    // ─── invoice_templates: reference-PDF-driven invoice generator ───────
+    // One template per (job, client). The reference PDF is uploaded once;
+    // Claude vision analyses it to produce an HTML template with
+    // {{placeholders}}; the system fills + renders to PDF on demand.
+    `CREATE TABLE IF NOT EXISTS invoice_templates (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+       client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+       name VARCHAR(160),
+       reference_pdf_path TEXT,
+       reference_pdf_filename VARCHAR(260),
+       generated_html TEXT,
+       notes TEXT,
+       analysis_status VARCHAR(20) DEFAULT 'pending',
+       analysis_error TEXT,
+       analyzed_at TIMESTAMPTZ,
+       created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW(),
+       UNIQUE (job_id, client_id)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_invoice_templates_job_client ON invoice_templates (job_id, client_id)`,
+    `DROP TRIGGER IF EXISTS invoice_templates_updated_at ON invoice_templates`,
+    `CREATE TRIGGER invoice_templates_updated_at
+       BEFORE UPDATE ON invoice_templates
        FOR EACH ROW EXECUTE FUNCTION set_updated_at()`,
 
     // Add engineering_contract_id to contracts (umbrella reference)
