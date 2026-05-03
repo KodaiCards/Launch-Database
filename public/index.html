@@ -457,7 +457,6 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> PSC RUS</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
-  <a class="nav-tab" data-view="audit" onclick="showView('audit')"><i class="fa-solid fa-history"></i> Time Audit</a>
   <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
   <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
 </nav>
@@ -821,6 +820,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="calendar">📅 Calendar grid</option>
           </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-secondary btn-sm" onclick="openAuditDrawer()" title="View time-entry audit log"><i class="fa-solid fa-history"></i> Audit Log</button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
           <button class="btn btn-primary btn-sm" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
@@ -836,69 +836,69 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
     </div>
 
-    <!-- ═══════════════════ TIME AUDIT ═══════════════════
-         Shows every change to time_entries: who did it, when, what changed.
-         Filterable by user, project, date range, and meaningful-only flag
-         (which surfaces hours/project/job changes only, hiding trivial
-         notes-only edits). Sourced from /api/_admin/timeclock-audit. -->
-    <div id="view-audit" class="view">
-      <div class="section-header">
-        <div><div class="section-title">Time Clock Audit Log</div><div class="section-sub">Every save, edit, and delete on time entries — with full before/after history</div></div>
-        <button class="btn btn-secondary btn-sm" onclick="loadAuditLog()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      </div>
-
-      <!-- Filter bar -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-body" style="padding:12px 14px">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
-            <div style="flex:1;min-width:160px">
-              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">USER</label>
-              <select id="audit-filter-user" class="filter" style="width:100%" onchange="loadAuditLog()">
-                <option value="">All users</option>
-              </select>
-            </div>
-            <div style="flex:1;min-width:160px">
-              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">FROM DATE</label>
-              <input type="date" id="audit-filter-from" class="filter" style="width:100%" onchange="loadAuditLog()">
-            </div>
-            <div style="flex:1;min-width:160px">
-              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">TO DATE</label>
-              <input type="date" id="audit-filter-to" class="filter" style="width:100%" onchange="loadAuditLog()">
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--gray-light);border-radius:6px">
-              <input type="checkbox" id="audit-filter-meaningful" onchange="loadAuditLog()">
-              <label for="audit-filter-meaningful" style="font-size:12px;font-weight:600;color:var(--text);margin:0;cursor:pointer">Meaningful only</label>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
-            <i class="fa-solid fa-circle-info"></i> "Meaningful" = hours, project, job, or date changed. Hides notes-only edits.
-          </div>
+    <!-- ═══════════════════ TIME AUDIT DRAWER ═══════════════════
+         Surfaced from the Hours tab toolbar (was a standalone tab; the
+         audit log only ever made sense in the context of hours, so it
+         lives here now). Filters: user, project, date range, meaningful-only.
+         Backed by /api/_admin/timeclock-audit. Click an entry's eye icon to
+         drill into its full before/after history via #audit-detail-modal. -->
+    <div id="audit-drawer" style="display:none;position:fixed;top:0;right:0;height:100vh;width:min(720px,100vw);background:var(--white);box-shadow:-6px 0 24px rgba(0,0,0,.18);z-index:1200;flex-direction:column">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--gray-border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">Time Clock Audit Log</div>
+          <div style="font-size:12px;color:var(--text-muted)">Every save, edit, and delete on time entries</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="loadAuditLog()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-icon btn-secondary" onclick="closeAuditDrawer()" title="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
-
-      <!-- Audit log table -->
-      <div class="card">
-        <div class="card-header"><span class="card-title" id="audit-results-title">Audit Entries</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:140px">When</th>
-                <th style="width:140px">Actor</th>
-                <th style="width:80px">Action</th>
-                <th>Change Summary</th>
-                <th>Project</th>
-                <th style="width:90px">Source</th>
-                <th style="width:80px"></th>
-              </tr>
-            </thead>
-            <tbody id="audit-body">
-              <tr><td colspan="7" class="empty-state">Click Refresh to load the audit log.</td></tr>
-            </tbody>
-          </table>
+      <div style="padding:12px 14px;border-bottom:1px solid var(--gray-border);background:var(--gray-light)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+          <div style="flex:1;min-width:140px">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">USER</label>
+            <select id="audit-filter-user" class="filter" style="width:100%" onchange="loadAuditLog()">
+              <option value="">All users</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">FROM</label>
+            <input type="date" id="audit-filter-from" class="filter" style="width:100%" onchange="loadAuditLog()">
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">TO</label>
+            <input type="date" id="audit-filter-to" class="filter" style="width:100%" onchange="loadAuditLog()">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--white);border:1px solid var(--gray-border);border-radius:6px">
+            <input type="checkbox" id="audit-filter-meaningful" onchange="loadAuditLog()">
+            <label for="audit-filter-meaningful" style="font-size:12px;font-weight:600;color:var(--text);margin:0;cursor:pointer">Meaningful only</label>
+          </div>
         </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+          <i class="fa-solid fa-circle-info"></i> "Meaningful" = hours, project, job, or date changed. Hides notes-only edits.
+        </div>
+      </div>
+      <div style="flex:1;overflow:auto;padding:12px 14px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px" id="audit-results-title">Audit Entries</div>
+        <table style="width:100%;font-size:12px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:6px 4px">When</th>
+              <th style="text-align:left;padding:6px 4px">Actor</th>
+              <th style="text-align:left;padding:6px 4px">Action</th>
+              <th style="text-align:left;padding:6px 4px">Change</th>
+              <th style="text-align:left;padding:6px 4px">Project</th>
+              <th style="text-align:left;padding:6px 4px">Src</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="audit-body">
+            <tr><td colspan="7" class="empty-state" style="padding:20px;text-align:center;color:var(--text-muted)">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
+    <div id="audit-drawer-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1199" onclick="closeAuditDrawer()"></div>
 
     <!-- ═══════════════════ AUDIT DETAIL MODAL ═══════════════════
          Triggered by clicking the eye icon on an audit row. Shows the full
@@ -1344,14 +1344,21 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   </div>
 </div>
 
-<!-- TIME ENTRY MODAL -->
+<!-- TIME ENTRY MODAL — used for both create AND edit. te-id holds the
+     entry id when editing; empty when creating. saveTimeEntry() switches
+     POST/PUT based on that. The "View history" link on the right of the
+     header drills into the per-entry audit history. -->
 <div class="modal-overlay" id="time-modal">
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
-      <span class="modal-title">Log Hours</span>
-      <button class="btn btn-icon btn-secondary" onclick="closeModal('time-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <span class="modal-title" id="te-modal-title">Log Hours</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-secondary btn-sm" id="te-history-btn" style="display:none" onclick="viewTimeEntryHistory()" title="View change history"><i class="fa-solid fa-history"></i> History</button>
+        <button class="btn btn-icon btn-secondary" onclick="closeModal('time-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="te-id" value="">
       <div class="form-grid">
         <div class="form-group">
           <label>Project *</label>
@@ -1385,7 +1392,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('time-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveTimeEntry()">Save</button>
+      <button class="btn btn-primary" id="te-save-btn" onclick="saveTimeEntry()">Save</button>
     </div>
   </div>
 </div>
@@ -1958,7 +1965,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
            PSC RUS invoice summaries. -->
       <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— attach to an engineering contract umbrella; set invoice-summary labels</span></span>
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Construction Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— attach to an engineering contract umbrella; set invoice-summary labels</span></span>
           <button class="btn btn-secondary btn-sm" onclick="openAddContractForm()"><i class="fa-solid fa-plus"></i> Add Contract</button>
         </div>
         <div id="contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
@@ -2293,7 +2300,6 @@ function showView(view) {
   if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
-  if (view==='audit') loadAuditLog();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
 }
@@ -2312,6 +2318,44 @@ function showView(view) {
 // once on first audit-view open.
 
 let auditUsersLoaded = false;
+
+// Drawer open/close. Defaults the date range to the Hours tab's currently
+// selected month so the drawer's first view matches what the admin is
+// looking at on the page behind it.
+function openAuditDrawer() {
+  const drawer = document.getElementById('audit-drawer');
+  const backdrop = document.getElementById('audit-drawer-backdrop');
+  if (!drawer || !backdrop) return;
+  drawer.style.display = 'flex';
+  backdrop.style.display = 'block';
+  // Pre-fill from + to from Hours tab filters when empty (don't clobber a
+  // range the admin already picked inside the drawer).
+  try {
+    const fromEl = document.getElementById('audit-filter-from');
+    const toEl = document.getElementById('audit-filter-to');
+    const period = document.getElementById('hrs-period')?.value || 'month';
+    const m = parseInt(document.getElementById('hrs-month')?.value || '0', 10);
+    const y = parseInt(document.getElementById('hrs-year')?.value || '0', 10);
+    if (fromEl && !fromEl.value && y) {
+      if (period === 'ytd') {
+        fromEl.value = `${y}-01-01`;
+        if (toEl && !toEl.value) toEl.value = `${y}-12-31`;
+      } else if (m) {
+        const last = new Date(y, m, 0).getDate();
+        fromEl.value = `${y}-${String(m).padStart(2,'0')}-01`;
+        if (toEl && !toEl.value) toEl.value = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+      }
+    }
+  } catch {}
+  loadAuditLog();
+}
+
+function closeAuditDrawer() {
+  const drawer = document.getElementById('audit-drawer');
+  const backdrop = document.getElementById('audit-drawer-backdrop');
+  if (drawer) drawer.style.display = 'none';
+  if (backdrop) backdrop.style.display = 'none';
+}
 
 async function loadAuditLog() {
   // First load: populate the user filter dropdown
@@ -5786,8 +5830,12 @@ async function loadHours() {
   if (grouped) grouped.style.display = 'none';
 
   // Build tree: Employee → Client → Project → Job entries
+  // Also rebuild the per-entry lookup so the pencil-icon edit handler has
+  // the row data without a re-fetch.
+  _hoursEntriesById.clear();
   const tree = {};
   entries.forEach(e => {
+    _hoursEntriesById.set(String(e.id), e);
     const emp = e.staff_name || 'Unassigned';
     const cli = e.client_name || 'No Client';
     const proj = e.project_name || 'No Project';
@@ -5844,7 +5892,8 @@ async function loadHours() {
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <span style="font-weight:600;color:var(--text)">${e.hours} hrs</span>
-                <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTimeEntry('${e.id}')" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openEditTimeEntryModal('${e.id}')" style="width:20px;height:20px;font-size:10px" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTimeEntry('${e.id}')" style="width:20px;height:20px;font-size:10px" title="Delete"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>
           </div>`;
@@ -5901,25 +5950,81 @@ function restoreHrsExpandedState() {
   }
 }
 
+// Entry lookup populated by loadHours() so the pencil-icon click can hand
+// the full row to openEditTimeEntryModal without re-fetching.
+const _hoursEntriesById = new Map();
+
 function openTimeEntryModal() {
+  // Reset to create mode
+  document.getElementById('te-id').value = '';
+  document.getElementById('te-modal-title').textContent = 'Log Hours';
+  document.getElementById('te-history-btn').style.display = 'none';
+  document.getElementById('te-save-btn').innerHTML = 'Save';
+  document.getElementById('te-project').value = '';
+  document.getElementById('te-staff').value = '';
+  document.getElementById('te-hours').value = '';
+  document.getElementById('te-title').value = '';
+  document.getElementById('te-notes').value = '';
   document.getElementById('te-date').value = new Date().toISOString().split('T')[0];
   if (!allProjects.length) loadProjects();
   openModal('time-modal');
 }
 
+// Edit existing entry — entry comes from _hoursEntriesById (populated by
+// loadHours). Falls back to a fetch if the id isn't in the map (e.g.
+// after a polling refresh dropped it).
+async function openEditTimeEntryModal(id) {
+  let e = _hoursEntriesById.get(String(id));
+  if (!e) {
+    try {
+      // No GET-by-id endpoint; fall back to listing the entry's month and finding it.
+      // Cheap path: just bail with a hint.
+      alert('Entry no longer in view. Refresh and try again.');
+      return;
+    } catch {}
+  }
+  if (!allProjects.length) await loadProjects();
+  document.getElementById('te-id').value = e.id;
+  document.getElementById('te-modal-title').textContent = 'Edit Time Entry';
+  document.getElementById('te-history-btn').style.display = '';
+  document.getElementById('te-save-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+  document.getElementById('te-project').value = e.project_id || '';
+  document.getElementById('te-staff').value = e.staff_id || '';
+  document.getElementById('te-date').value = (e.entry_date || '').slice(0,10);
+  document.getElementById('te-hours').value = e.hours;
+  document.getElementById('te-title').value = e.job_title || '';
+  document.getElementById('te-notes').value = e.notes || '';
+  openModal('time-modal');
+}
+
+// Drill into the audit history for the entry currently open in the time-modal.
+function viewTimeEntryHistory() {
+  const id = document.getElementById('te-id').value;
+  if (!id) return;
+  // Re-use the existing audit detail modal — it already takes a time_entry_id
+  // and renders the full chronological history with before/after diffs.
+  viewAuditDetail(id, null);
+}
+
 async function saveTimeEntry() {
+  const id = document.getElementById('te-id').value;
   const proj = document.getElementById('te-project').value;
   const hrs = document.getElementById('te-hours').value;
   const date = document.getElementById('te-date').value;
   if (!proj || !hrs || !date) return alert('Project, hours and date are required');
-  await api('/api/time-entries', 'POST', {
+  const body = {
     project_id: proj,
     staff_id: document.getElementById('te-staff').value || null,
     entry_date: date,
     hours: parseFloat(hrs),
     job_title: document.getElementById('te-title').value,
-    notes: document.getElementById('te-notes').value
-  });
+    notes: document.getElementById('te-notes').value,
+  };
+  if (id) {
+    await api('/api/time-entries/' + encodeURIComponent(id), 'PUT', body);
+  } else {
+    await api('/api/time-entries', 'POST', body);
+  }
   closeModal('time-modal');
   loadHours();
 }

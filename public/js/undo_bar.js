@@ -61,3 +61,18 @@ async function lfsUndoClick() {
     alert('Undo failed: ' + (e.message || e));
   }
 }
+
+// On every page load the in-memory state is null, but the bar's HTML may still
+// be visible (e.g. browser restored a previous state, or showUndoBar fired
+// before something cleared the message). Force-hide and clear the message
+// text so a refresh / login never paints an empty undo strip.
+if (typeof document !== 'undefined') {
+  const _init = () => {
+    const bar = document.getElementById('lfs-undo-bar');
+    const msg = document.getElementById('lfs-undo-message');
+    if (bar) bar.style.display = 'none';
+    if (msg) msg.textContent = '';
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _init);
+  else _init();
+}

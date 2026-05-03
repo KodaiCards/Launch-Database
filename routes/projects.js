@@ -306,6 +306,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
   app.delete('/api/projects/:id', requireAdmin, async (req, res) => {
     try {
+      // Remove from any pending billing batches first — billing_batch_items
+      // has ON DELETE RESTRICT on project_id, so leaving stale rows here would
+      // make the project undeletable AND keep it visible in the batch UI.
+      await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [req.params.id]);
       await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -356,6 +360,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       await pool.query('DELETE FROM time_entries WHERE project_id=$1', [req.params.id]);
       // Delete invoice items
       await pool.query('DELETE FROM invoice_items WHERE project_id=$1', [req.params.id]);
+      // Pull from any pending billing batches (RESTRICT FK)
+      await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [req.params.id]);
       // Get parent before deleting
       const { rows: proj } = await pool.query('SELECT parent_id FROM projects WHERE id=$1', [req.params.id]);
       // Delete the project
@@ -398,12 +404,18 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       let pdRes = { rows: [] };
       try { pdRes = await client.query('SELECT * FROM permit_documents WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
 
+      // Snapshot pending billing batch memberships so undo can restore them.
+      let bbiRes = { rows: [] };
+      try { bbiRes = await client.query('SELECT * FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+
       // Delete in dependency order: leaf rows first, then projects from
       // deepest to shallowest (so parent_id references stay valid).
       await client.query('DELETE FROM time_entries WHERE project_id = ANY($1::uuid[])', [projectIds]);
       try { await client.query('DELETE FROM invoice_items WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
       try { await client.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
       try { await client.query('DELETE FROM permit_stages WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+      // Pull from any pending billing batches so RESTRICT FK doesn't block.
+      try { await client.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
       const byDepth = [...projects].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
       for (const p of byDepth) {
         await client.query('DELETE FROM projects WHERE id = $1', [p.id]);
@@ -420,6 +432,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         invoice_items: iiRes.rows,
         permit_stages: psRes.rows,
         permit_documents: pdRes.rows,
+        billing_batch_items: bbiRes.rows,
       });
       res.json({
         ok: true,

@@ -47,7 +47,7 @@ module.exports = function installUndoRoutes(app, pool, mw) {
       }
 
       if (bucket.kind === 'project_tree') {
-        const { projects = [], time_entries = [], invoice_items = [], permit_stages = [], permit_documents = [] } = bucket.payload;
+        const { projects = [], time_entries = [], invoice_items = [], permit_stages = [], permit_documents = [], billing_batch_items = [] } = bucket.payload;
         // Insert projects parents-first (sort by depth ascending). Each
         // project row carries an explicit depth field captured at delete time.
         const ordered = [...projects].sort((a, b) => (a.__depth || 0) - (b.__depth || 0));
@@ -87,6 +87,19 @@ module.exports = function installUndoRoutes(app, pool, mw) {
             `INSERT INTO permit_documents (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
             cols.map(k => r[k])
           );
+        }
+        // billing_batch_items has no PK so ON CONFLICT can't dedupe; the
+        // delete already happened, so a plain INSERT is correct here.
+        for (const r of billing_batch_items) {
+          const cols = Object.keys(r);
+          try {
+            await client.query(
+              `INSERT INTO billing_batch_items (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')})`,
+              cols.map(k => r[k])
+            );
+          } catch (bbiErr) {
+            // Batch may have been confirmed/deleted in the meantime — skip.
+          }
         }
         await client.query('COMMIT');
         return res.json({

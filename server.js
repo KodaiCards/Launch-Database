@@ -1144,6 +1144,7 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
     let skipped_unresolved_staff = 0;
     let skipped_billed_period = 0;
     const projectIds = new Set();
+    const insertedRows = [];   // collected for post-commit audit logging
 
     for (const r of staged.validRows) {
       if (!r.wo_known) { skipped_unknown_wo++; continue; }
@@ -1155,11 +1156,12 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
       // from the filename) → operator-supplied apply_job_title → null
       const finalJobTitle = r.job_title || apply_job_title || null;
 
-      await client.query(
+      const { rows: insRows } = await client.query(
         `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
         [r.project_id, staffId, r.date, r.hours, finalJobTitle, importBatch]
       );
+      if (insRows[0]) insertedRows.push(insRows[0]);
       inserted++;
       projectIds.add(r.project_id);
     }
@@ -1169,6 +1171,21 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
     csvStage.delete(stage_id);
     for (const pid of projectIds) {
       await updateProjectHours(pid);
+    }
+
+    // 4. Audit each insert AFTER the commit so a logging hiccup never
+    //    rolls back valid time entries. Source = 'csv' so the audit log
+    //    can distinguish CSV imports from manual / portal entries.
+    for (const row of insertedRows) {
+      try {
+        await auditTimeEntry({
+          req, timeEntryId: row.id, action: 'created',
+          before: null, after: row,
+          source: 'csv',
+        });
+      } catch (auditErr) {
+        console.error('[csv-commit:audit]', auditErr && auditErr.message);
+      }
     }
 
     res.json({
