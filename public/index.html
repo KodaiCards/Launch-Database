@@ -2043,6 +2043,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   </div>
 </div>
 
+<!-- Extracted modules. Loaded synchronously (no defer/async) right before
+     the main inline <script> so their global functions are defined when
+     the inline code begins executing. See CLEANUP_PLAN.md Track 1.2. -->
+<script src="/js/api.js"></script>
+<script src="/js/undo_bar.js"></script>
+
 <script>
 
 // Dark-mode handling. Theme persists in two places:
@@ -2262,85 +2268,12 @@ async function init() {
   refreshSettingsDot();
 }
 
-async function api(path, method='GET', body=null) {
-  const opts = {
-    method,
-    headers: {'Content-Type':'application/json'},
-    credentials: 'include',  // send cookies for JWT session
-  };
-  // Backup: also send token from sessionStorage in Authorization header.
-  // Useful when cookies are blocked by Cloudflare/browser settings.
-  try {
-    const tok = sessionStorage.getItem('lfs_token');
-    if (tok) opts.headers['Authorization'] = 'Bearer ' + tok;
-  } catch(e){}
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(path, opts);
-  if (r.status === 401) {
-    // Session expired or never existed. Bounce to login.
-    try { sessionStorage.removeItem('lfs_token'); } catch(e){}
-    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
-    throw new Error('Session expired');
-  }
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
+// api() lives in /js/api.js (extracted as part of CLEANUP_PLAN.md Track 1.2).
+// Loaded synchronously above this script, so it's globally available here.
 
-// ─── Undo bar ──────────────────────────────────────────────────────────────
-// Server-issued undo tokens (from bulk hours delete, project tree delete,
-// contract cascade, etc.) drop a snapshot in the undo_buckets table with a
-// short TTL. The UI bar shows for 15 seconds, displays a countdown, and
-// posts to /api/undo/:token on click. Auto-dismisses after the countdown
-// completes; user can also dismiss manually with the × button. Only one
-// bar can be active at a time — a new showUndoBar replaces the previous.
-let _lfsUndoState = null;   // { token, message, deadlineMs, intervalId }
-
-function showUndoBar(message, undoToken, durationSeconds) {
-  if (!undoToken) return;   // nothing to undo — show a toast instead
-  hideUndoBar();             // clear any previous bar
-  const dur = durationSeconds || 15;
-  const bar = document.getElementById('lfs-undo-bar');
-  const msg = document.getElementById('lfs-undo-message');
-  const cd  = document.getElementById('lfs-undo-countdown');
-  if (!bar || !msg || !cd) return;
-  msg.textContent = message;
-  cd.textContent = dur + 's';
-  bar.style.display = 'flex';
-  const deadline = Date.now() + dur * 1000;
-  const intervalId = setInterval(() => {
-    const remaining = Math.max(0, Math.round((deadline - Date.now()) / 1000));
-    cd.textContent = remaining + 's';
-    if (remaining <= 0) hideUndoBar();
-  }, 250);
-  _lfsUndoState = { token: undoToken, message, deadlineMs: deadline, intervalId };
-}
-
-function hideUndoBar() {
-  if (_lfsUndoState && _lfsUndoState.intervalId) clearInterval(_lfsUndoState.intervalId);
-  _lfsUndoState = null;
-  const bar = document.getElementById('lfs-undo-bar');
-  if (bar) bar.style.display = 'none';
-}
-
-async function lfsUndoClick() {
-  if (!_lfsUndoState) return;
-  const token = _lfsUndoState.token;
-  const btn = document.getElementById('lfs-undo-btn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restoring…'; }
-  try {
-    await api('/api/undo/' + token, 'POST', {});
-    hideUndoBar();
-    if (window.LFS && window.LFS.toast) window.LFS.toast.success('Restored.');
-    // Refresh whatever views we can — undo can touch hours, projects, contracts
-    if (typeof loadHours === 'function')   try { loadHours(); }   catch {}
-    if (typeof loadProjects === 'function')try { loadProjects(); }catch {}
-    if (typeof loadDashboard === 'function')try { loadDashboard(); }catch {}
-    if (typeof loadContractList === 'function') try { loadContractList(); renderContractsList(); } catch {}
-  } catch (e) {
-    if (btn) { btn.disabled = false; btn.innerHTML = 'Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">—</span>'; }
-    alert('Undo failed: ' + (e.message || e));
-  }
-}
+// Undo bar (showUndoBar / hideUndoBar / lfsUndoClick) lives in /js/undo_bar.js
+// (extracted as part of CLEANUP_PLAN.md Track 1.2.4). Loaded synchronously
+// above this script so the functions are globally available.
 
 // ═══════════════════════════════════════════════════════════
 // NAVIGATION
