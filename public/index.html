@@ -1952,11 +1952,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— attach to an engineering contract umbrella; set invoice-summary labels</span></span>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contracts-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Add Contract</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAddContractForm()"><i class="fa-solid fa-plus"></i> Add Contract</button>
         </div>
         <div id="contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row" style="gap:6px">
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-contract-client" style="font-size:13px"><option value="">— Select —</option></select></div>
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-contract-client" style="font-size:13px" onchange="filterContractEcDropdown()"><option value="">— Select —</option></select></div>
             <div class="form-group" style="flex:1"><label style="font-size:11px">Contract Number *</label><input type="text" id="new-contract-number" placeholder="e.g. 515-3" style="font-size:13px"></div>
             <div class="form-group" style="flex:1"><label style="font-size:11px">Name</label><input type="text" id="new-contract-name" placeholder="Optional descriptive name" style="font-size:13px"></div>
           </div>
@@ -7914,6 +7914,33 @@ function renderContractsList() {
   root.innerHTML = html;
 }
 
+// Open the Add Contract form. ALWAYS re-fetches engineering contracts
+// first so the dropdown can't be stale (the previous bug: user added an
+// EC, opened the form, but the dropdown options were built from a cache
+// that didn't include the new row, so saving sent an EC id that didn't
+// exist server-side and Postgres rejected with an FK error).
+async function openAddContractForm() {
+  document.getElementById('contracts-add-form').style.display = 'block';
+  await loadEngineeringContracts();   // refresh cache
+  renderContractsList();              // re-renders the form's dropdowns from fresh cache
+}
+
+// When the client changes, narrow the EC dropdown to ECs belonging to
+// that client. Saves the user from picking an EC that doesn't match.
+function filterContractEcDropdown() {
+  const ecSel = document.getElementById('new-contract-ec');
+  const clientId = document.getElementById('new-contract-client').value;
+  if (!ecSel) return;
+  while (ecSel.options.length > 1) ecSel.remove(1);
+  const filtered = clientId
+    ? engineeringContractsCache.filter(ec => ec.client_id === clientId)
+    : engineeringContractsCache;
+  filtered
+    .slice()
+    .sort((a, b) => (a.client_name || '').localeCompare(b.client_name || '') || a.name.localeCompare(b.name))
+    .forEach(ec => ecSel.add(new Option(`${ec.client_name || '?'} · ${ec.name}`, ec.id)));
+}
+
 async function saveNewContract() {
   const client_id = document.getElementById('new-contract-client').value;
   const contract_number = document.getElementById('new-contract-number').value.trim();
@@ -7922,6 +7949,22 @@ async function saveNewContract() {
   const friendly_label = document.getElementById('new-contract-label').value.trim() || null;
   if (!client_id) return alert('Client required');
   if (!contract_number) return alert('Contract number required');
+
+  // Defensive double-check before sending: if an EC was picked, verify
+  // it's still in the live engineering_contracts table. Catches the
+  // race where the EC was deleted in another tab between the dropdown
+  // populate and the save click.
+  if (engineering_contract_id) {
+    try {
+      await loadEngineeringContracts();
+      const stillThere = engineeringContractsCache.find(e => e.id === engineering_contract_id);
+      if (!stillThere) {
+        renderContractsList();
+        return alert('The selected engineering contract is no longer available — the dropdown was refreshed. Please pick again.');
+      }
+    } catch (e) { /* if the refresh fails, proceed and let the server FK do its job */ }
+  }
+
   try {
     await api('/api/contracts', 'POST', { client_id, contract_number, name, engineering_contract_id, friendly_label });
     document.getElementById('new-contract-number').value = '';
@@ -7930,7 +7973,16 @@ async function saveNewContract() {
     document.getElementById('contracts-add-form').style.display = 'none';
     await loadContractList();
     renderContractsList();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) {
+    // FK error → friendlier message + auto-refresh so the user can retry
+    if (e.message && e.message.includes('engineering_contract_id_fkey')) {
+      await loadEngineeringContracts();
+      renderContractsList();
+      alert('The engineering contract you picked no longer exists. The dropdown has been refreshed — please pick again and Save.');
+    } else {
+      alert('Failed: ' + e.message);
+    }
+  }
 }
 
 function editContract(id) {
