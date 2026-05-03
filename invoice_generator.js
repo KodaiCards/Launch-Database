@@ -586,8 +586,160 @@ function suggestedFilename(data) {
   return parts.join(' ') + '.pdf';
 }
 
+// ─── From-projects entry path ─────────────────────────────────────────
+//
+// New billing UX (2026-05-03): user selects projects in the Billing tab
+// → clicks Print PDF → server infers EC + job + period from the selection.
+// Returns either an "unambiguous" verdict (one EC, one job, periods OK)
+// → ready to render, OR a "conflict" verdict the modal can use to prompt
+// the user to resolve before generating.
+//
+// `inferInvoiceMakeup(pool, project_ids)` is the data layer — pure
+// inspection, no PDF, no errors thrown for ambiguous selection. Returns
+// { ok, conflicts, makeup, projects }.
+async function inferInvoiceMakeup(pool, projectIds) {
+  if (!Array.isArray(projectIds) || !projectIds.length) {
+    return { ok: false, conflicts: ['No projects selected'], makeup: null, projects: [] };
+  }
+  // One round trip: pull every project + its client + contract + EC + job
+  const { rows } = await pool.query(
+    `SELECT p.id, p.name AS project_name, p.work_order_number,
+            p.billing_type, p.billing_rate::float AS rate,
+            p.actual_hours::float AS actual_hours,
+            p.footage::float AS footage,
+            p.expected_revenue::float AS expected_revenue,
+            p.status, p.billed_date, p.billing_cadence,
+            cl.id AS client_id, cl.name AS client_name, cl.is_rus,
+            c.id AS contract_id, c.contract_number, c.friendly_label AS contract_label,
+            ec.id AS engineering_contract_id, ec.name AS engineering_contract_name,
+            ec.contract_number AS engineering_contract_number, ec.loan_name,
+            j.id AS job_id, j.name AS job_name, j.billing_code,
+            j.default_billing_type, j.is_permitting,
+            (SELECT MIN(entry_date)::text FROM time_entries WHERE project_id = p.id) AS first_entry_date,
+            (SELECT MAX(entry_date)::text FROM time_entries WHERE project_id = p.id) AS last_entry_date
+       FROM projects p
+       LEFT JOIN clients cl ON cl.id = p.client_id
+       LEFT JOIN contracts c ON c.id = p.contract_id
+       LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+       LEFT JOIN jobs j ON j.id = p.job_id
+       WHERE p.id = ANY($1::uuid[])`,
+    [projectIds]
+  );
+  if (!rows.length) {
+    return { ok: false, conflicts: ['None of the selected projects exist'], makeup: null, projects: [] };
+  }
+
+  // Collapse into distinct sets to detect conflicts
+  const clients = new Set(rows.map(r => r.client_id).filter(Boolean));
+  const ecs = new Set(rows.map(r => r.engineering_contract_id).filter(Boolean));
+  const jobs = new Set(rows.map(r => r.job_id).filter(Boolean));
+
+  const conflicts = [];
+  if (clients.size === 0) conflicts.push('No client on any selected project');
+  if (clients.size > 1)   conflicts.push(`Selection spans ${clients.size} clients — pick one client at a time`);
+  if (ecs.size === 0)     conflicts.push('No engineering contract attached — assign one in Settings → Contracts before invoicing');
+  if (ecs.size > 1)       conflicts.push(`Selection spans ${ecs.size} engineering contracts — pick one umbrella at a time`);
+  if (jobs.size === 0)    conflicts.push('No job on any selected project');
+  if (jobs.size > 1) {
+    const names = [...new Set(rows.map(r => r.job_name).filter(Boolean))];
+    conflicts.push(`Selection spans ${jobs.size} jobs (${names.join(', ')}) — one job per invoice`);
+  }
+  // RUS-only check on the unambiguous case
+  const firstRow = rows[0];
+  if (clients.size === 1 && !firstRow.is_rus) {
+    conflicts.push(`Client "${firstRow.client_name}" is not RUS — this template is exclusive to PSC RUS work`);
+  }
+
+  // Period inference: take the min/max entry_date across all selected
+  // hourly projects. Footage projects have no entry dates, so they default
+  // to "any". Caller can override via period_start/period_end.
+  let inferredStart = null, inferredEnd = null;
+  for (const r of rows) {
+    if (r.first_entry_date && (!inferredStart || r.first_entry_date < inferredStart)) inferredStart = r.first_entry_date;
+    if (r.last_entry_date && (!inferredEnd || r.last_entry_date > inferredEnd)) inferredEnd = r.last_entry_date;
+  }
+
+  // Distinct contracts — used by the modal to show "this invoice covers
+  // contracts: 515-3, 515-4" so the user sees the multi-contract grouping.
+  const contractMap = new Map();
+  for (const r of rows) {
+    if (!r.contract_id || contractMap.has(r.contract_id)) continue;
+    contractMap.set(r.contract_id, {
+      id: r.contract_id,
+      contract_number: r.contract_number,
+      friendly_label: r.contract_label || r.contract_number,
+    });
+  }
+
+  return {
+    ok: conflicts.length === 0,
+    conflicts,
+    makeup: {
+      client_id: clients.size === 1 ? [...clients][0] : null,
+      client_name: firstRow.client_name,
+      engineering_contract_id: ecs.size === 1 ? [...ecs][0] : null,
+      engineering_contract_name: firstRow.engineering_contract_name,
+      engineering_contract_number: firstRow.engineering_contract_number,
+      loan_name: firstRow.loan_name,
+      job_id: jobs.size === 1 ? [...jobs][0] : null,
+      job_name: firstRow.job_name,
+      job_billing_code: firstRow.billing_code,
+      job_billing_type: firstRow.is_permitting || firstRow.default_billing_type === 'footage' ? 'footage' : 'hourly',
+      contracts: [...contractMap.values()],
+      inferred_period_start: inferredStart,
+      inferred_period_end: inferredEnd,
+      project_count: rows.length,
+    },
+    projects: rows.map(r => ({
+      id: r.id,
+      name: r.project_name,
+      wo: r.work_order_number,
+      contract_id: r.contract_id,
+      contract_number: r.contract_number,
+      job_id: r.job_id,
+      job_name: r.job_name,
+      client_id: r.client_id,
+      engineering_contract_id: r.engineering_contract_id,
+      hours: r.actual_hours,
+      footage: r.footage,
+    })),
+  };
+}
+
+// Build the same InvoiceData shape as buildInvoiceData but driven by an
+// explicit project_ids list. Caller can supply period_start/period_end
+// to override what we infer from time_entries (useful when billing for a
+// specific month even if some entries fall outside it).
+async function buildInvoiceDataFromProjects(pool, opts) {
+  const { project_ids, period_start, period_end } = opts;
+  const inf = await inferInvoiceMakeup(pool, project_ids);
+  if (!inf.ok) {
+    const err = new Error(inf.conflicts.join('; '));
+    err.conflicts = inf.conflicts;
+    err.makeup = inf.makeup;
+    throw err;
+  }
+  // Period: prefer explicit override; otherwise use inferred range; if
+  // there were no time entries (footage-only) default to a wide window.
+  const start = period_start || inf.makeup.inferred_period_start || '1970-01-01';
+  const end   = period_end   || inf.makeup.inferred_period_end   || '2099-12-31';
+  // Limit to ONLY the contracts that are actually represented in the
+  // selection — otherwise buildInvoiceData would scan every contract under
+  // the engineering contract and possibly include WOs the user didn't pick.
+  const contract_ids = inf.makeup.contracts.map(c => c.id);
+  return await buildInvoiceData(pool, {
+    engineering_contract_id: inf.makeup.engineering_contract_id,
+    job_id: inf.makeup.job_id,
+    period_start: start,
+    period_end: end,
+    contract_ids,
+  });
+}
+
 module.exports = {
   buildInvoiceData,
+  buildInvoiceDataFromProjects,
+  inferInvoiceMakeup,
   renderInvoicePdf,
   suggestedFilename,
 };

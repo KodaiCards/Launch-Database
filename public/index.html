@@ -489,10 +489,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div id="bill-now-card" class="card lfs-widget" data-widget-id="bill-now" style="margin-bottom:14px;display:none">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
           <span class="card-title"><i class="fa-solid fa-coins" style="color:var(--success,#28A745);margin-right:6px"></i>If I Billed Today</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:11px;color:var(--text-muted)" id="bill-now-total"></span>
-            <button class="btn btn-secondary btn-sm" onclick="openPscRusPdfModal()" title="Generate a PSC RUS invoice PDF for any engineering contract + job + period"><i class="fa-solid fa-file-pdf"></i> PSC RUS PDF</button>
-          </div>
+          <span style="font-size:11px;color:var(--text-muted)" id="bill-now-total"></span>
         </div>
         <div class="card-body" id="bill-now-body" style="padding:0">
           <div style="padding:16px;color:var(--text-muted)">Loading…</div>
@@ -951,9 +948,38 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <span id="bill-selected-count" style="font-size:14px;font-weight:600">0 selected</span>
           <span id="bill-selected-amount" style="margin-left:14px;opacity:.85"></span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" onclick="clearBillSelection()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)">Clear</button>
+          <button class="btn btn-secondary btn-sm" onclick="openPrintPdfModal()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)" title="Generate the invoice PDF first; bill or save as batch afterward"><i class="fa-solid fa-file-pdf"></i> Print PDF</button>
           <button class="btn btn-success btn-sm" onclick="openBillSelectedModal()"><i class="fa-solid fa-file-invoice-dollar"></i> Bill Selected as One Invoice</button>
+        </div>
+      </div>
+
+      <!-- Saved batches section — visible only when at least one batch exists.
+           Each batch is a frozen group of selected projects the user can come
+           back to and either confirm-bill or break apart. -->
+      <div class="card" id="batches-card" style="margin-top:8px;display:none">
+        <div class="card-header"><span class="card-title"><i class="fa-solid fa-box-archive" style="color:var(--text-muted);margin-right:6px"></i>Saved Batches</span></div>
+        <div id="batches-body" style="padding:0"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ PRINT PDF MODAL ═══════════════════
+         Opens from the billing-bar Print PDF button. Shows the
+         makeup of the selected projects (client, engineering contract,
+         job, period), warns about conflicts, generates the PDF, then
+         offers Confirm Billed or Save Batch. -->
+    <div class="modal-overlay" id="print-pdf-modal">
+      <div class="modal-content" style="max-width:680px">
+        <div class="modal-header">
+          <span class="modal-title"><i class="fa-solid fa-file-pdf" style="color:var(--primary)"></i> Print Invoice PDF</span>
+          <button class="btn btn-icon btn-secondary" onclick="closeModal('print-pdf-modal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="print-pdf-body">
+          <div style="padding:14px;color:var(--text-muted)">Loading makeup…</div>
+        </div>
+        <div class="modal-footer" id="print-pdf-footer">
+          <button class="btn btn-secondary" onclick="closeModal('print-pdf-modal')">Close</button>
         </div>
       </div>
     </div>
@@ -1915,6 +1941,35 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <div id="eng-contracts-list-body" style="font-size:13px"></div>
+      </div>
+
+      <!-- ── Contracts management ── -->
+      <!-- Lists every billing contract with its client + (optional)
+           engineering contract umbrella + friendly label. Inline edit
+           lets the admin attach contracts to engineering contracts and
+           set the "Contract 3" / "Contract 4" friendly labels used on
+           PSC RUS invoice summaries. -->
+      <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— attach to an engineering contract umbrella; set invoice-summary labels</span></span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contracts-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Add Contract</button>
+        </div>
+        <div id="contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row" style="gap:6px">
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-contract-client" style="font-size:13px"><option value="">— Select —</option></select></div>
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Contract Number *</label><input type="text" id="new-contract-number" placeholder="e.g. 515-3" style="font-size:13px"></div>
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Name</label><input type="text" id="new-contract-name" placeholder="Optional descriptive name" style="font-size:13px"></div>
+          </div>
+          <div class="form-row" style="gap:6px;margin-top:6px">
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Engineering Contract <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><select id="new-contract-ec" style="font-size:13px"><option value="">— None (standalone) —</option></select></div>
+            <div class="form-group" style="flex:1" title="Friendly label shown on PSC RUS invoice summaries (e.g. 'Contract 3' for 515-3)"><label style="font-size:11px">Friendly Label <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" id="new-contract-label" placeholder="e.g. Contract 3" style="font-size:13px"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contracts-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="saveNewContract()"><i class="fa-solid fa-check"></i> Save</button>
+          </div>
+        </div>
+        <div id="contracts-list-body" style="font-size:13px"></div>
       </div>
 
       <!-- ── User Management ── -->
@@ -2899,6 +2954,269 @@ async function loadNeedsAttention() {
       if (row && typeof row.action === 'function') row.action();
     });
   });
+}
+
+// ─── Print PDF modal (selection-driven) ────────────────────────────────
+// Opens from the billing-bar "Print PDF" button. Flow:
+//   1. Pull makeup from /api/invoices/preview-makeup using selected ids.
+//   2. Render: client, engineering contract, job, period, contracts list,
+//      project list with hours/footage. If conflicts, list them and
+//      block Generate.
+//   3. Generate PDF → opens in new tab. Modal then morphs to show
+//      "Confirm Billed" / "Save as Batch" / "Cancel" actions.
+async function openPrintPdfModal() {
+  const sel = getSelectedBillRows();
+  if (!sel.length) return alert('Select at least one project first.');
+  openModal('print-pdf-modal');
+  document.getElementById('print-pdf-body').innerHTML =
+    '<div style="padding:14px;color:var(--text-muted)">Loading makeup…</div>';
+  document.getElementById('print-pdf-footer').innerHTML =
+    '<button class="btn btn-secondary" onclick="closeModal(\'print-pdf-modal\')">Close</button>';
+
+  // Cache the project ID list for the post-PDF actions
+  const projectIds = [...new Set(sel.map(s => s.id))];
+  window._printPdfState = { project_ids: projectIds, items: sel };
+
+  let makeup;
+  try {
+    makeup = await api('/api/invoices/preview-makeup', 'POST', { project_ids: projectIds });
+  } catch (e) {
+    document.getElementById('print-pdf-body').innerHTML =
+      `<div style="padding:14px;color:var(--danger)">Failed to load makeup: ${esc(e.message)}</div>`;
+    return;
+  }
+
+  renderPrintPdfBody(makeup);
+}
+
+function renderPrintPdfBody(result) {
+  const body = document.getElementById('print-pdf-body');
+  const footer = document.getElementById('print-pdf-footer');
+  const m = result.makeup || {};
+
+  let html = '';
+  // Conflicts (if any) — block PDF generation
+  if (result.conflicts && result.conflicts.length) {
+    html += `<div style="background:#FFF3E0;border-left:4px solid #F0A500;padding:10px 14px;border-radius:6px;margin-bottom:14px">
+      <div style="font-weight:600;color:#e65100;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't generate yet — fix these first:</div>
+      <ul style="margin:6px 0 0 20px;padding:0;font-size:13px;color:#222">
+        ${result.conflicts.map(c => `<li>${esc(c)}</li>`).join('')}
+      </ul>
+    </div>`;
+  }
+
+  // Makeup summary card
+  html += `<div style="background:var(--gray-light);padding:12px 14px;border-radius:8px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px">
+      <div style="color:var(--text-muted)">Client</div><div><strong>${esc(m.client_name || '—')}</strong></div>
+      <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}${m.loan_name ? ` <span style="color:var(--text-muted)">· loan: ${esc(m.loan_name)}</span>` : ''}</div>
+      <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}${m.job_billing_code ? ` <span style="font-family:monospace;color:var(--text-muted)">${esc(m.job_billing_code)}</span>` : ''}</div>
+      <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:#E3F2FD;color:#0d47a1;padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:#E8F5E9;color:#1b5e20;padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
+      <div style="color:var(--text-muted)">Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
+      <div style="color:var(--text-muted)">Period</div><div>${m.inferred_period_start ? `${m.inferred_period_start} → ${m.inferred_period_end}` : '<span style="color:var(--text-muted)">No date range (footage)</span>'}</div>
+      <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
+    </div>
+  </div>`;
+
+  // Project list
+  if (result.projects && result.projects.length) {
+    html += `<div style="border:1px solid var(--gray-border);border-radius:6px;overflow:hidden;margin-bottom:14px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--gray-light)">
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">WO</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">${m.job_billing_type === 'footage' ? 'Footage' : 'Hours'}</th>
+        </tr></thead>
+        <tbody>
+          ${result.projects.map(p => `<tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 10px">${esc(p.name)}</td>
+            <td style="padding:6px 10px;font-family:monospace;color:var(--text-muted)">${esc(p.wo || '—')}</td>
+            <td style="padding:6px 10px;text-align:right">${m.job_billing_type === 'footage' ? (p.footage ? p.footage.toFixed(0) + ' ft' : '—') : (p.hours != null ? p.hours.toFixed(2) : '—')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  body.innerHTML = html;
+
+  // Footer: Generate PDF (disabled if conflicts), batch save, etc.
+  const blocked = result.conflicts && result.conflicts.length > 0;
+  footer.innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal('print-pdf-modal')">Close</button>
+    <button class="btn btn-primary" onclick="printPdfGenerate()" ${blocked ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+      <i class="fa-solid fa-file-pdf"></i> Generate PDF
+    </button>
+  `;
+}
+
+async function printPdfGenerate() {
+  const state = window._printPdfState || {};
+  if (!state.project_ids) return;
+  const btn = document.querySelector('#print-pdf-footer .btn-primary');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…'; }
+  try {
+    const resp = await fetch('/api/invoices/generate-pdf-from-projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ project_ids: state.project_ids }),
+    });
+    if (!resp.ok) {
+      let msg = 'PDF generation failed.';
+      try { const j = await resp.json(); msg = j.error || msg; } catch {}
+      throw new Error(msg);
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    // Morph the modal to show the after-PDF action choices
+    renderPrintPdfAfterActions();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Generate PDF'; }
+    alert('Failed: ' + e.message);
+  }
+}
+
+function renderPrintPdfAfterActions() {
+  const body = document.getElementById('print-pdf-body');
+  const footer = document.getElementById('print-pdf-footer');
+  const state = window._printPdfState || {};
+  const total = (state.items || []).reduce((s, it) => s + (it.amount || 0), 0);
+  body.innerHTML = `
+    <div style="padding:14px;background:#E8F5E9;border-radius:8px;margin-bottom:14px;border-left:4px solid #28A745">
+      <div style="font-weight:600;color:#1b5e20"><i class="fa-solid fa-circle-check"></i> PDF generated — opened in a new tab.</div>
+      <div style="margin-top:6px;font-size:13px;color:#222">${state.project_ids.length} project${state.project_ids.length !== 1 ? 's' : ''} · ${fmtMoney(total)}</div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px 0">Choose what to do with this batch:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-success" onclick="printPdfConfirmBilled()" style="padding:14px;text-align:left">
+        <div style="font-weight:600;font-size:14px"><i class="fa-solid fa-check"></i> Confirm Billed</div>
+        <div style="font-size:11px;opacity:.85;margin-top:4px;font-weight:400">Mark these projects as billed now and create the invoice.</div>
+      </button>
+      <button class="btn btn-secondary" onclick="printPdfSaveBatch()" style="padding:14px;text-align:left">
+        <div style="font-weight:600;font-size:14px"><i class="fa-solid fa-box-archive"></i> Save Batch</div>
+        <div style="font-size:11px;opacity:.85;margin-top:4px;font-weight:400">Save the selection for later. Bill or break apart from the Saved Batches section.</div>
+      </button>
+    </div>
+  `;
+  footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal('print-pdf-modal')">Close</button>`;
+}
+
+// "Confirm Billed" path — opens the existing bill-multiple flow with the
+// selection pre-populated. Reuses openBillSelectedModal which already
+// handles invoice number, date, and submission.
+function printPdfConfirmBilled() {
+  closeModal('print-pdf-modal');
+  // Selection is still in _billSelectedByKey, so just open the existing
+  // Bill Selected modal — it reads from the same Map.
+  openBillSelectedModal();
+}
+
+// "Save Batch" path — prompt for a name, POST to /api/billing/batches,
+// clear selection, reload billing. Batch becomes visible in the Saved
+// Batches card on the Billing tab.
+async function printPdfSaveBatch() {
+  const state = window._printPdfState || {};
+  if (!state.project_ids) return;
+  const defaultName = (() => {
+    const today = new Date();
+    const month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()];
+    return `${month} ${today.getFullYear()} Batch`;
+  })();
+  const name = prompt('Name this batch (helps you find it later):', defaultName);
+  if (!name) return;
+  try {
+    await api('/api/billing/batches', 'POST', {
+      name,
+      project_ids: state.project_ids,
+      items: (state.items || []).map(it => ({
+        project_id: it.id,
+        snapshot_amount: it.amount,
+        period_year: it.period_year,
+        period_month: it.period_month,
+      })),
+    });
+    closeModal('print-pdf-modal');
+    clearBillSelection();
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success('Batch saved.');
+    loadBilling();
+    loadBatches();
+  } catch (e) {
+    alert('Failed to save batch: ' + e.message);
+  }
+}
+
+// ─── Saved Batches view (Billing tab) ──────────────────────────────────
+async function loadBatches() {
+  const card = document.getElementById('batches-card');
+  const body = document.getElementById('batches-body');
+  if (!card || !body) return;
+  let batches;
+  try {
+    batches = await api('/api/billing/batches');
+  } catch (e) {
+    card.style.display = 'none';
+    return;
+  }
+  if (!batches || !batches.length) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  const html = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="background:var(--gray-light)">
+      <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
+      <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Client</th>
+      <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job</th>
+      <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Items</th>
+      <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Total</th>
+      <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Saved</th>
+      <th style="padding:8px 12px;text-align:right"></th>
+    </tr></thead>
+    <tbody>
+      ${batches.map(b => `<tr style="border-top:1px solid var(--gray-border)">
+        <td style="padding:8px 12px;font-weight:500">${esc(b.name)}</td>
+        <td style="padding:8px 12px;color:var(--text-muted)">${esc(b.client_name || '—')}</td>
+        <td style="padding:8px 12px;color:var(--text-muted)">${esc(b.job_name || '—')}</td>
+        <td style="padding:8px 12px;text-align:right">${b.item_count}</td>
+        <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(b.total_amount)}</td>
+        <td style="padding:8px 12px;color:var(--text-muted);font-size:11px">${new Date(b.created_at).toLocaleDateString()} ${b.created_by_username ? '· ' + esc(b.created_by_username) : ''}</td>
+        <td style="padding:8px 12px;text-align:right;white-space:nowrap">
+          <button class="btn btn-sm btn-success" onclick="confirmBatch('${b.id}', '${esc(b.name).replace(/'/g, "\\'")}', ${b.total_amount})" title="Bill this batch now"><i class="fa-solid fa-check"></i> Bill</button>
+          <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="breakBatch('${b.id}', '${esc(b.name).replace(/'/g, "\\'")}')" title="Break batch (return projects to unbilled queue)"><i class="fa-solid fa-trash"></i> Break</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+  setHtmlIfChanged(body, html);
+}
+
+async function confirmBatch(batchId, name, total) {
+  const invoice_number = prompt(`Invoice number for "${name}" (${fmtMoney(total)}):`);
+  if (!invoice_number) return;
+  try {
+    const res = await api(`/api/billing/batches/${batchId}/confirm`, 'POST', { invoice_number });
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success(`Invoice ${invoice_number} created · ${fmtMoney(res.total)}`);
+    loadBilling();
+    loadBatches();
+    if (currentView === 'revenue') loadRevenue();
+  } catch (e) {
+    alert('Failed: ' + e.message);
+  }
+}
+
+async function breakBatch(batchId, name) {
+  if (!confirm(`Break batch "${name}"? The projects return to the unbilled queue. No invoice is created.`)) return;
+  try {
+    await api('/api/billing/batches/' + batchId, 'DELETE');
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success('Batch broken.');
+    loadBatches();
+    loadBilling();
+  } catch (e) {
+    alert('Failed: ' + e.message);
+  }
 }
 
 // ─── PSC RUS PDF generator modal ───────────────────────────────────────
@@ -4217,18 +4535,69 @@ async function confirmDeleteProject(id, name, afterDelete) {
 // ─── Bulk billing — multiple projects → one invoice ──────────────────────────
 
 function getSelectedBillRows() {
-  return [...document.querySelectorAll('.bill-row-cb:checked')].map(cb => ({
+  // Read from the persistent Map, not the DOM. Polling re-renders blow
+  // away DOM checkboxes; the Map keeps surviving until explicitly cleared.
+  return [..._billSelectedByKey.values()];
+}
+
+// ─── Billing-tab persistent selection ────────────────────────────────────
+// Tracks which (queue_key) rows the user has checked. Survives the 8-second
+// polling rebuild — without this, every poll wiped the checkboxes and the
+// user had to restart their selection if they took more than a few seconds
+// to click everything they wanted to bill.
+//
+// Stored as Map(queue_key → row metadata) so we can render the floating
+// action bar even if the row got rebuilt and we need its data.
+const _billSelectedByKey = new Map();
+
+function _readRowDataFromCb(cb) {
+  return {
     id: cb.dataset.id,
     queue_key: cb.dataset.queueKey,
     client_id: cb.dataset.clientId,
     amount: parseFloat(cb.dataset.amount) || 0,
     period_year: cb.dataset.periodYear ? parseInt(cb.dataset.periodYear) : null,
-    period_month: cb.dataset.periodMonth ? parseInt(cb.dataset.periodMonth) : null
-  }));
+    period_month: cb.dataset.periodMonth ? parseInt(cb.dataset.periodMonth) : null,
+  };
+}
+
+// Called from the row's onchange. Snapshots the row data into the Map so
+// the next polling rebuild can reapply the checked state.
+function billRowToggled(cb) {
+  const key = cb.dataset.queueKey;
+  if (!key) return;
+  if (cb.checked) {
+    _billSelectedByKey.set(key, _readRowDataFromCb(cb));
+  } else {
+    _billSelectedByKey.delete(key);
+  }
+  updateBillSelectedFooter();
+}
+
+// Re-tick the checkboxes that match a queue_key in the persistent set.
+// Call this AFTER any tbody rerender. Safe to call repeatedly.
+function _restoreBillCheckboxes() {
+  document.querySelectorAll('.bill-row-cb').forEach(cb => {
+    const key = cb.dataset.queueKey;
+    if (key && _billSelectedByKey.has(key)) {
+      cb.checked = true;
+    }
+  });
+  // Drop entries from the Set whose row no longer exists in the table —
+  // happens when a project gets billed elsewhere or filtered out. Keeps
+  // the action bar count honest.
+  const visibleKeys = new Set(
+    [...document.querySelectorAll('.bill-row-cb')].map(cb => cb.dataset.queueKey)
+  );
+  for (const k of [..._billSelectedByKey.keys()]) {
+    if (!visibleKeys.has(k)) _billSelectedByKey.delete(k);
+  }
 }
 
 function updateBillSelectedFooter() {
-  const sel = getSelectedBillRows();
+  // Selection lives in the persistent Map (single source of truth).
+  // The DOM checkboxes are merely a UI mirror.
+  const sel = [..._billSelectedByKey.values()];
   const bar = document.getElementById('bill-selected-bar');
   if (!bar) return;
   if (sel.length === 0) {
@@ -4242,13 +4611,21 @@ function updateBillSelectedFooter() {
 }
 
 function toggleBillSelectAll(checked) {
-  document.querySelectorAll('.bill-row-cb').forEach(cb => { cb.checked = checked; });
+  document.querySelectorAll('.bill-row-cb').forEach(cb => {
+    cb.checked = checked;
+    const key = cb.dataset.queueKey;
+    if (!key) return;
+    if (checked) _billSelectedByKey.set(key, _readRowDataFromCb(cb));
+    else _billSelectedByKey.delete(key);
+  });
   updateBillSelectedFooter();
 }
 
 function clearBillSelection() {
+  _billSelectedByKey.clear();
   document.querySelectorAll('.bill-row-cb').forEach(cb => { cb.checked = false; });
-  document.getElementById('bill-select-all').checked = false;
+  const allCb = document.getElementById('bill-select-all');
+  if (allCb) allCb.checked = false;
   updateBillSelectedFooter();
 }
 
@@ -6157,7 +6534,7 @@ async function loadBilling() {
                 data-amount="${earned}"
                 data-period-year="${p.period_year || ''}"
                 data-period-month="${p.period_month || ''}"
-                onchange="updateBillSelectedFooter()"></td>
+                onchange="billRowToggled(this)"></td>
               <td class="td-name" style="padding-left:48px">└ ${esc(p.name)}${cadenceTag}</td>
               <td>${esc(p.concentrator_area||p.work_order_number||'—')}</td>
               <td>${typeBadge(p.project_type)}</td>
@@ -6174,7 +6551,12 @@ async function loadBilling() {
         }
       }
     }
-    tbody.innerHTML = html;
+    // Skip the DOM write if nothing changed — same flicker/selection-loss
+    // fix as the Projects tab. _restoreBillCheckboxes re-applies persistent
+    // selection state regardless (covers rows that were rebuilt with
+    // different content but same queue_key).
+    setHtmlIfChanged(tbody, html);
+    _restoreBillCheckboxes();
     updateBillSelectedFooter();
   }
 
@@ -6183,7 +6565,7 @@ async function loadBilling() {
   const historyContainer = document.getElementById('invoice-history-body');
 
   if (!invoices.length) {
-    historyContainer.innerHTML = '<div class="empty-state" style="padding:24px"><p>No invoices for this year</p></div>';
+    setHtmlIfChanged(historyContainer, '<div class="empty-state" style="padding:24px"><p>No invoices for this year</p></div>');
     return;
   }
 
@@ -6255,7 +6637,10 @@ async function loadBilling() {
       }
     }
   }
-  historyContainer.innerHTML = hHtml;
+  setHtmlIfChanged(historyContainer, hHtml);
+
+  // Saved batches — runs in parallel; the card stays hidden when none.
+  loadBatches().catch(() => {});
 }
 
 async function deleteInvoice(invoiceId, wipeHours) {
@@ -7036,7 +7421,7 @@ async function openSettings() {
   // Critical loads first — Jobs is the universal rate source and must render
   // even if other endpoints are slow/broken.
   try {
-    await Promise.all([loadJobs(), loadProjectTypes(), loadClients(), loadEngineeringContracts()]);
+    await Promise.all([loadJobs(), loadProjectTypes(), loadClients(), loadEngineeringContracts(), loadContractList()]);
   } catch (e) {
     console.error('Settings core loads failed:', e);
   }
@@ -7046,6 +7431,7 @@ async function openSettings() {
   try { renderProjectTypesList();          } catch (e) { console.error('renderProjectTypesList failed:', e); }
   try { renderClientsList();               } catch (e) { console.error('renderClientsList failed:', e); }
   try { renderEngineeringContractsList();  } catch (e) { console.error('renderEngineeringContractsList failed:', e); }
+  try { renderContractsList();             } catch (e) { console.error('renderContractsList failed:', e); }
 
   // Legacy pricing fetch — kept for backward compat but isolated. If the
   // pricing endpoint errors or the cache is malformed, we swallow it so the
@@ -7456,6 +7842,129 @@ async function deleteEngineeringContract(id, name, contractCount) {
     await loadEngineeringContracts();
     renderEngineeringContractsList();
   } catch (e) { alert('Delete failed: ' + e.message); }
+}
+
+// ─── Contracts (Settings) ─────────────────────────────────────────────
+// Lists every billing contract with its client + engineering contract +
+// friendly label. Inline edit lets the admin attach contracts to an
+// engineering contract umbrella and set the "Contract 3" / "Contract 4"
+// friendly labels used on PSC RUS invoice summaries.
+let contractsCache = [];
+
+async function loadContractList() {
+  try {
+    contractsCache = await api('/api/contracts');
+  } catch (e) {
+    contractsCache = [];
+  }
+}
+
+function renderContractsList() {
+  const root = document.getElementById('contracts-list-body');
+  if (!root) return;
+  // Populate client + engineering-contract dropdowns in the Add form
+  const clientSel = document.getElementById('new-contract-client');
+  if (clientSel && (clients || []).length) {
+    while (clientSel.options.length > 1) clientSel.remove(1);
+    [...clients].sort((a,b) => a.name.localeCompare(b.name))
+      .forEach(c => clientSel.add(new Option(c.name, c.id)));
+  }
+  const ecSel = document.getElementById('new-contract-ec');
+  if (ecSel && engineeringContractsCache.length) {
+    while (ecSel.options.length > 1) ecSel.remove(1);
+    [...engineeringContractsCache]
+      .sort((a,b) => (a.client_name || '').localeCompare(b.client_name || '') || a.name.localeCompare(b.name))
+      .forEach(ec => ecSel.add(new Option(`${ec.client_name || '?'} · ${ec.name}`, ec.id)));
+  }
+
+  if (!contractsCache.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No contracts yet. Add one above.</div>';
+    return;
+  }
+  // Group by client for readability
+  const byClient = {};
+  contractsCache.forEach(c => {
+    const k = c.client_name || '— No client —';
+    (byClient[k] = byClient[k] || []).push(c);
+  });
+  let html = '';
+  for (const [client, contracts] of Object.entries(byClient)) {
+    html += `<div style="margin-top:10px"><div style="font-weight:600;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${esc(client)}</div>`;
+    html += `<table style="width:100%;border-collapse:collapse"><thead>
+      <tr style="background:var(--gray-light)">
+        <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Number</th>
+        <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
+        <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Engineering Contract</th>
+        <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Label</th>
+        <th style="padding:6px 8px;text-align:right"></th>
+      </tr></thead><tbody>`;
+    for (const c of contracts) {
+      html += `<tr data-contract-id="${c.id}" style="border-top:1px solid var(--gray-border)">
+        <td style="padding:6px 8px;font-family:monospace">${esc(c.contract_number)}</td>
+        <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.name || '—')}</td>
+        <td style="padding:6px 8px">${c.engineering_contract_name ? '<i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:4px;font-size:11px"></i>' + esc(c.engineering_contract_name) : '<span style="color:var(--text-muted)">— Standalone —</span>'}</td>
+        <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.friendly_label || '—')}</td>
+        <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+          <button class="btn btn-sm btn-secondary" onclick="editContract('${c.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        </td>
+      </tr>`;
+    }
+    html += `</tbody></table></div>`;
+  }
+  root.innerHTML = html;
+}
+
+async function saveNewContract() {
+  const client_id = document.getElementById('new-contract-client').value;
+  const contract_number = document.getElementById('new-contract-number').value.trim();
+  const name = document.getElementById('new-contract-name').value.trim() || null;
+  const engineering_contract_id = document.getElementById('new-contract-ec').value || null;
+  const friendly_label = document.getElementById('new-contract-label').value.trim() || null;
+  if (!client_id) return alert('Client required');
+  if (!contract_number) return alert('Contract number required');
+  try {
+    await api('/api/contracts', 'POST', { client_id, contract_number, name, engineering_contract_id, friendly_label });
+    document.getElementById('new-contract-number').value = '';
+    document.getElementById('new-contract-name').value = '';
+    document.getElementById('new-contract-label').value = '';
+    document.getElementById('contracts-add-form').style.display = 'none';
+    await loadContractList();
+    renderContractsList();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function editContract(id) {
+  const c = contractsCache.find(x => x.id === id);
+  if (!c) return;
+  const tr = document.querySelector(`#contracts-list-body tr[data-contract-id="${id}"]`);
+  if (!tr) return;
+  // Build EC options inline
+  const ecOpts = ['<option value="">— None (standalone) —</option>']
+    .concat(engineeringContractsCache
+      .filter(ec => ec.client_id === c.client_id)
+      .map(ec => `<option value="${esc(ec.id)}"${c.engineering_contract_id === ec.id ? ' selected' : ''}>${esc(ec.name)}</option>`));
+  tr.innerHTML = `
+    <td style="padding:6px 8px;font-family:monospace"><input type="text" id="ct-edit-num-${id}" value="${esc(c.contract_number)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
+    <td style="padding:6px 8px"><input type="text" id="ct-edit-name-${id}" value="${esc(c.name || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+    <td style="padding:6px 8px"><select id="ct-edit-ec-${id}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">${ecOpts.join('')}</select></td>
+    <td style="padding:6px 8px"><input type="text" id="ct-edit-label-${id}" value="${esc(c.friendly_label || '')}" placeholder="e.g. Contract 3" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+    <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+      <button class="btn btn-sm btn-primary" onclick="saveContractEdit('${id}')"><i class="fa-solid fa-check"></i></button>
+      <button class="btn btn-sm btn-secondary" onclick="renderContractsList()"><i class="fa-solid fa-xmark"></i></button>
+    </td>`;
+}
+
+async function saveContractEdit(id) {
+  const contract_number = document.getElementById(`ct-edit-num-${id}`).value.trim();
+  const name = document.getElementById(`ct-edit-name-${id}`).value.trim() || null;
+  const engineering_contract_id = document.getElementById(`ct-edit-ec-${id}`).value || null;
+  const friendly_label = document.getElementById(`ct-edit-label-${id}`).value.trim() || null;
+  if (!contract_number) return alert('Contract number required');
+  try {
+    await api('/api/contracts/' + id, 'PUT', { contract_number, name, engineering_contract_id, friendly_label });
+    await loadContractList();
+    renderContractsList();
+  } catch (e) { alert('Failed: ' + e.message); }
 }
 
 // Render the Jobs management list inside the Settings modal.

@@ -268,6 +268,45 @@ CREATE TABLE IF NOT EXISTS budgets (
   )
 );
 
+-- ─────────────────────────────────────────
+-- BILLING BATCHES — "save for later"
+-- ─────────────────────────────────────────
+-- After generating the PDF, the admin can either confirm-bill the
+-- selection right then (creates an invoice via the existing flow) or
+-- save the batch and bill later. Saved batches can be broken (deleted
+-- without billing) so the user can re-pick the projects.
+CREATE TABLE IF NOT EXISTS billing_batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(160) NOT NULL,
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+  engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL,
+  job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+  period_start DATE,
+  period_end DATE,
+  total_amount DECIMAL(14,2) DEFAULT 0,
+  notes TEXT,
+  created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Many-to-many between batches and the projects they reserve. ON DELETE
+-- CASCADE on the batch side so breaking a batch cleans these out;
+-- RESTRICT on the project side so a project can't disappear while still
+-- locked in a batch.
+CREATE TABLE IF NOT EXISTS billing_batch_items (
+  batch_id UUID REFERENCES billing_batches(id) ON DELETE CASCADE,
+  project_id UUID REFERENCES projects(id) ON DELETE RESTRICT,
+  -- The amount + period snapshot at batch-creation time. If the project's
+  -- hours change after the batch is saved, the batch keeps the snapshot
+  -- so admin sees what they originally locked in. The "confirm batch"
+  -- flow uses the live values though, since billing should reflect
+  -- current state.
+  snapshot_amount DECIMAL(14,2),
+  snapshot_period_year INT,
+  snapshot_period_month INT,
+  PRIMARY KEY (batch_id, project_id)
+);
+
 CREATE TABLE IF NOT EXISTS budget_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   budget_id UUID REFERENCES budgets(id) ON DELETE CASCADE,

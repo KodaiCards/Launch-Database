@@ -4281,6 +4281,67 @@ app.post('/api/invoices/generate-pdf', requireManagerOrAdmin, async (req, res) =
   }
 });
 
+// POST /api/invoices/preview-makeup — given a list of project_ids,
+// returns the inferred invoice scope (client, engineering contract, job,
+// period) plus any conflicts that would block PDF generation. Used by
+// the Print PDF modal to show the user what's in the invoice before
+// clicking Generate PDF.
+app.post('/api/invoices/preview-makeup', requireManagerOrAdmin, async (req, res) => {
+  const { project_ids } = req.body || {};
+  if (!Array.isArray(project_ids) || !project_ids.length) {
+    return res.status(400).json({ error: 'project_ids array required' });
+  }
+  try {
+    const result = await invoiceGenerator.inferInvoiceMakeup(pool, project_ids);
+    res.json(result);
+  } catch (e) {
+    console.error('[invoices:preview-makeup]', e && e.message);
+    res.status(500).json({ error: 'Failed to assemble makeup.' });
+  }
+});
+
+// POST /api/invoices/generate-pdf-from-projects — same output as
+// /generate-pdf, but scope is inferred from project_ids instead of being
+// passed explicitly. Returns 422 (with the conflict list) if the
+// selection is ambiguous, so the modal can prompt the user to fix.
+app.post('/api/invoices/generate-pdf-from-projects', requireManagerOrAdmin, async (req, res) => {
+  const { project_ids, period_start, period_end } = req.body || {};
+  if (!Array.isArray(project_ids) || !project_ids.length) {
+    return res.status(400).json({ error: 'project_ids array required' });
+  }
+  let data;
+  try {
+    data = await invoiceGenerator.buildInvoiceDataFromProjects(pool, {
+      project_ids, period_start, period_end,
+    });
+  } catch (e) {
+    if (e.conflicts) {
+      // 422 = "we understand the request but it can't be processed as-is".
+      // Frontend reads e.conflicts to show the user what to fix.
+      return res.status(422).json({
+        error: e.message,
+        conflicts: e.conflicts,
+        makeup: e.makeup,
+      });
+    }
+    console.error('[invoices:generate-pdf-from-projects]', e && e.message);
+    return res.status(400).json({ error: e.message });
+  }
+  const filename = invoiceGenerator.suggestedFilename(data);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  try {
+    invoiceGenerator.renderInvoicePdf(data, res);
+  } catch (e) {
+    console.error('[invoices:generate-pdf-from-projects:render]', e && e.stack || e);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'PDF render failed.' });
+    } else {
+      res.end();
+    }
+  }
+});
+
 // GET /api/invoices/generate-pdf/preview-data — returns the assembled
 // data structure without rendering. Useful for the UI to show a "this
 // is what's in the invoice" preview before the user clicks Generate PDF.
@@ -4746,8 +4807,210 @@ app.post('/api/billing/bill-multiple', requireManagerOrAdmin, async (req, res) =
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BILLING REPORT — clean ledger of invoices for a period
-// Returns: { period, monthly_revenue, ytd_revenue, invoices: [...] }
-// One row per invoice (not per project), sorted by date.
+// ─── BILLING BATCHES ──────────────────────────────────────────────────────
+// Frozen group of selected projects the user can come back to and either
+// confirm-bill or break apart. Used by the "Save batch & bill later" path
+// off the Print PDF modal.
+
+// GET /api/billing/batches — list. Manager+admin.
+app.get('/api/billing/batches', requireManagerOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT b.*,
+              cl.name AS client_name,
+              ec.name AS engineering_contract_name,
+              j.name AS job_name,
+              u.username AS created_by_username,
+              (SELECT COUNT(*)::int FROM billing_batch_items bi WHERE bi.batch_id = b.id) AS item_count
+         FROM billing_batches b
+         LEFT JOIN clients cl ON cl.id = b.client_id
+         LEFT JOIN engineering_contracts ec ON ec.id = b.engineering_contract_id
+         LEFT JOIN jobs j ON j.id = b.job_id
+         LEFT JOIN users u ON u.id = b.created_by_user_id
+         ORDER BY b.created_at DESC`
+    );
+    res.json(rows);
+  } catch (e) {
+    console.error('[batches:list]', e && e.message);
+    res.status(500).json({ error: 'Failed to load batches.' });
+  }
+});
+
+// GET /api/billing/batches/:id — full detail with items.
+app.get('/api/billing/batches/:id', requireManagerOrAdmin, async (req, res) => {
+  try {
+    const { rows: batch } = await pool.query(
+      `SELECT b.*, cl.name AS client_name,
+              ec.name AS engineering_contract_name, ec.loan_name,
+              j.name AS job_name, j.billing_code
+         FROM billing_batches b
+         LEFT JOIN clients cl ON cl.id = b.client_id
+         LEFT JOIN engineering_contracts ec ON ec.id = b.engineering_contract_id
+         LEFT JOIN jobs j ON j.id = b.job_id
+         WHERE b.id = $1`,
+      [req.params.id]
+    );
+    if (!batch[0]) return res.status(404).json({ error: 'Batch not found' });
+    const { rows: items } = await pool.query(
+      `SELECT bi.*, p.name AS project_name, p.work_order_number,
+              p.actual_hours::float AS actual_hours, p.billing_rate::float AS billing_rate
+         FROM billing_batch_items bi
+         JOIN projects p ON p.id = bi.project_id
+         WHERE bi.batch_id = $1
+         ORDER BY p.work_order_number NULLS LAST`,
+      [req.params.id]
+    );
+    res.json({ ...batch[0], items });
+  } catch (e) {
+    console.error('[batches:get]', e && e.message);
+    res.status(500).json({ error: 'Failed to load batch.' });
+  }
+});
+
+// POST /api/billing/batches — save a batch. Body:
+//   { name, project_ids[], items?:[{project_id, snapshot_amount, period_year, period_month}] }
+// If items omitted, snapshot_amount falls back to project's current
+// earned amount. Inferred client/EC/job/period from project_ids via the
+// same logic as the PDF generator.
+app.post('/api/billing/batches', requireManagerOrAdmin, async (req, res) => {
+  const { name, project_ids, items, notes } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
+  if (!Array.isArray(project_ids) || !project_ids.length) return res.status(400).json({ error: 'project_ids array required' });
+  let inf;
+  try {
+    inf = await invoiceGenerator.inferInvoiceMakeup(pool, project_ids);
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Inferred fields can be null when the selection is ambiguous — that's
+    // fine for a batch (admin can fix before confirming). We still store
+    // whatever single values the inference picked up.
+    const totalAmount = (Array.isArray(items) ? items : []).reduce((s, it) => s + (Number(it.snapshot_amount) || 0), 0);
+    const { rows: br } = await client.query(
+      `INSERT INTO billing_batches
+         (name, client_id, engineering_contract_id, job_id, period_start, period_end, total_amount, notes, created_by_user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [
+        String(name).trim(),
+        inf.makeup ? inf.makeup.client_id : null,
+        inf.makeup ? inf.makeup.engineering_contract_id : null,
+        inf.makeup ? inf.makeup.job_id : null,
+        inf.makeup ? inf.makeup.inferred_period_start : null,
+        inf.makeup ? inf.makeup.inferred_period_end : null,
+        totalAmount,
+        notes || null,
+        req.user ? req.user.id : null,
+      ]
+    );
+    const batch = br[0];
+
+    // Map items by project_id for fast lookup
+    const itemMap = new Map();
+    (Array.isArray(items) ? items : []).forEach(it => itemMap.set(it.project_id, it));
+    for (const pid of project_ids) {
+      const it = itemMap.get(pid) || {};
+      await client.query(
+        `INSERT INTO billing_batch_items (batch_id, project_id, snapshot_amount, snapshot_period_year, snapshot_period_month)
+           VALUES ($1, $2, $3, $4, $5)`,
+        [batch.id, pid, it.snapshot_amount || null, it.period_year || null, it.period_month || null]
+      );
+    }
+    await client.query('COMMIT');
+    res.json(batch);
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[batches:create]', e && e.stack || e);
+    res.status(500).json({ error: 'Failed to save batch.' });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /api/billing/batches/:id — break a batch (does NOT bill). The
+// projects return to the unbilled queue. Items are cascade-deleted.
+app.delete('/api/billing/batches/:id', requireManagerOrAdmin, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `DELETE FROM billing_batches WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Batch not found' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[batches:delete]', e && e.message);
+    res.status(500).json({ error: 'Failed to delete batch.' });
+  }
+});
+
+// POST /api/billing/batches/:id/confirm — bill the batch (creates an
+// invoice via the same code path as bill-multiple) and then deletes the
+// batch. Body: { invoice_number, invoice_date?, invoice_name? }
+app.post('/api/billing/batches/:id/confirm', requireManagerOrAdmin, async (req, res) => {
+  const { invoice_number, invoice_date, invoice_name } = req.body || {};
+  if (!invoice_number || !String(invoice_number).trim()) {
+    return res.status(400).json({ error: 'invoice_number required' });
+  }
+  // Load the batch + items
+  const { rows: bRows } = await pool.query(
+    `SELECT * FROM billing_batches WHERE id = $1`, [req.params.id]
+  );
+  if (!bRows[0]) return res.status(404).json({ error: 'Batch not found' });
+  const { rows: itemRows } = await pool.query(
+    `SELECT * FROM billing_batch_items WHERE batch_id = $1`, [req.params.id]
+  );
+  if (!itemRows.length) return res.status(400).json({ error: 'Batch is empty' });
+
+  // Forward to bill-multiple via internal call would be ideal, but it's
+  // an HTTP handler. Easiest: replicate the minimal logic here.
+  const today = new Date().toISOString().split('T')[0];
+  const invDate = invoice_date || today;
+  const periodStart = bRows[0].period_start;
+  const periodEnd = bRows[0].period_end;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Create invoice header
+    const { rows: invRows } = await client.query(
+      `INSERT INTO invoices (client_id, invoice_number, invoice_date, billing_period_start, billing_period_end, total_amount, status, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7)
+         RETURNING *`,
+      [bRows[0].client_id, String(invoice_number).trim(), invDate, periodStart, periodEnd, bRows[0].total_amount, invoice_name || null]
+    );
+    const inv = invRows[0];
+    // One line item per batch row
+    let lineCount = 0;
+    for (const it of itemRows) {
+      const { rows: pr } = await client.query(`SELECT name FROM projects WHERE id = $1`, [it.project_id]);
+      const desc = pr[0] ? pr[0].name : 'Project';
+      await client.query(
+        `INSERT INTO invoice_items (invoice_id, project_id, description, amount)
+           VALUES ($1, $2, $3, $4)`,
+        [inv.id, it.project_id, desc, it.snapshot_amount || 0]
+      );
+      // Mark project as billed
+      await client.query(
+        `UPDATE projects SET status = 'billed', billed_date = $1 WHERE id = $2`,
+        [invDate, it.project_id]
+      );
+      lineCount++;
+    }
+    // Delete the batch (cascades items)
+    await client.query(`DELETE FROM billing_batches WHERE id = $1`, [req.params.id]);
+    await client.query('COMMIT');
+    res.json({ ok: true, invoice: inv, line_count: lineCount, total: bRows[0].total_amount });
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[batches:confirm]', e && e.stack || e);
+    res.status(500).json({ error: 'Failed to confirm batch: ' + e.message });
+  } finally {
+    client.release();
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/billing/report', requireManagerOrAdmin, async (req, res) => {
   const month = req.query.month ? parseInt(req.query.month, 10) : null;
@@ -6562,6 +6825,33 @@ async function bootstrapV3Schema() {
     // Friendly label on contracts — used on PSC RUS invoices when an
     // invoice spans multiple billing contracts (e.g. "Contract 3" for 515-3).
     `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS friendly_label VARCHAR(40)`,
+
+    // billing_batches — frozen group of selected projects the user can
+    // come back to and either confirm-bill or break apart. Used by the
+    // "Save batch & bill later" path off the Print PDF modal.
+    `CREATE TABLE IF NOT EXISTS billing_batches (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       name VARCHAR(160) NOT NULL,
+       client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+       engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL,
+       job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+       period_start DATE,
+       period_end DATE,
+       total_amount DECIMAL(14,2) DEFAULT 0,
+       notes TEXT,
+       created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
+    `CREATE TABLE IF NOT EXISTS billing_batch_items (
+       batch_id UUID REFERENCES billing_batches(id) ON DELETE CASCADE,
+       project_id UUID REFERENCES projects(id) ON DELETE RESTRICT,
+       snapshot_amount DECIMAL(14,2),
+       snapshot_period_year INT,
+       snapshot_period_month INT,
+       PRIMARY KEY (batch_id, project_id)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_billing_batches_client_id ON billing_batches (client_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_billing_batch_items_project_id ON billing_batch_items (project_id)`,
   ];
   for (const sql of ddl) {
     try {
