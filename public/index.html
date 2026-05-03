@@ -489,10 +489,49 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div id="bill-now-card" class="card lfs-widget" data-widget-id="bill-now" style="margin-bottom:14px;display:none">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
           <span class="card-title"><i class="fa-solid fa-coins" style="color:var(--success,#28A745);margin-right:6px"></i>If I Billed Today</span>
-          <span style="font-size:11px;color:var(--text-muted)" id="bill-now-total"></span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:11px;color:var(--text-muted)" id="bill-now-total"></span>
+            <button class="btn btn-secondary btn-sm" onclick="openPscRusPdfModal()" title="Generate a PSC RUS invoice PDF for any engineering contract + job + period"><i class="fa-solid fa-file-pdf"></i> PSC RUS PDF</button>
+          </div>
         </div>
         <div class="card-body" id="bill-now-body" style="padding:0">
           <div style="padding:16px;color:var(--text-muted)">Loading…</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ PSC RUS PDF GENERATOR MODAL ═══════════════════
+           Pick engineering contract + job + period; previews the
+           summary first, then "Generate PDF" hits the backend and opens
+           the PDF in a new tab. -->
+      <div class="modal-overlay" id="psc-rus-pdf-modal">
+        <div class="modal-content" style="max-width:640px">
+          <div class="modal-header">
+            <span class="modal-title"><i class="fa-solid fa-file-pdf" style="color:var(--primary)"></i> Generate PSC RUS Invoice PDF</span>
+            <button class="btn btn-icon btn-secondary" onclick="closeModal('psc-rus-pdf-modal')"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="modal-body">
+            <p style="margin:0 0 14px 0;font-size:12px;color:var(--text-muted)">Generates a summary page (with optional timecards detail for hourly jobs) for the selected engineering contract, job, and period. Format is exclusive to PSC RUS work.</p>
+            <div class="form-group">
+              <label>Engineering Contract</label>
+              <select id="prp-ec" onchange="prpReloadJobs()"><option value="">Loading…</option></select>
+            </div>
+            <div class="form-group">
+              <label>Job</label>
+              <select id="prp-job"><option value="">— Select engineering contract first —</option></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Period start</label><input type="date" id="prp-start"></div>
+              <div class="form-group"><label>Period end</label><input type="date" id="prp-end"></div>
+            </div>
+            <div id="prp-preview" style="margin-top:10px;padding:10px;background:var(--gray-light);border-radius:6px;font-size:12px;color:var(--text-muted);display:none">
+              <strong>Preview:</strong> <span id="prp-preview-text"></span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('psc-rus-pdf-modal')">Cancel</button>
+            <button class="btn btn-secondary" onclick="prpRunPreview()"><i class="fa-solid fa-eye"></i> Preview</button>
+            <button class="btn btn-primary" onclick="prpGeneratePdf()"><i class="fa-solid fa-file-pdf"></i> Generate PDF</button>
+          </div>
         </div>
       </div>
 
@@ -1864,6 +1903,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <div class="form-row" style="gap:6px">
             <div class="form-group" style="flex:2"><label style="font-size:11px">Name *</label><input type="text" id="new-ec-name" placeholder='e.g. "RUS 217 Engineering Contract GA 1706 -A72"' style="font-size:13px"></div>
             <div class="form-group" style="flex:1"><label style="font-size:11px">Contract Number</label><input type="text" id="new-ec-number" placeholder="e.g. RUS 217" style="font-size:13px"></div>
+            <div class="form-group" style="flex:1" title="Loan name shown on PSC RUS invoice summaries (e.g. 'Reconnect 3'). Leave blank for non-loan contracts."><label style="font-size:11px">Loan name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" id="new-ec-loan" placeholder="e.g. Reconnect 3" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
             <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-ec-client" style="font-size:13px"><option value="">— Select —</option></select></div>
@@ -2859,6 +2899,142 @@ async function loadNeedsAttention() {
       if (row && typeof row.action === 'function') row.action();
     });
   });
+}
+
+// ─── PSC RUS PDF generator modal ───────────────────────────────────────
+// Open the modal: load engineering contracts (filter to RUS clients), then
+// the user picks one + a job + a period, hits Preview or Generate PDF.
+async function openPscRusPdfModal() {
+  // Default period = previous month (most common case for monthly billing)
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+  const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  document.getElementById('prp-start').value = fmtDate(lastMonth);
+  document.getElementById('prp-end').value = fmtDate(lastDay);
+  document.getElementById('prp-preview').style.display = 'none';
+
+  // Load engineering contracts (already client-filtered server-side will
+  // include all; we filter to RUS clients here for clarity).
+  const ecSel = document.getElementById('prp-ec');
+  ecSel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const ecs = await api('/api/engineering-contracts');
+    // Filter to RUS clients — generator refuses non-RUS, but hiding them
+    // here saves a round-trip and confusion.
+    const rusEcs = ecs.filter(ec => {
+      const cl = (clients || []).find(c => c.id === ec.client_id);
+      return cl && cl.is_rus;
+    });
+    ecSel.innerHTML = '<option value="">— Select —</option>' +
+      rusEcs.map(ec => `<option value="${esc(ec.id)}">${esc(ec.client_name)} · ${esc(ec.name)}</option>`).join('');
+    if (!rusEcs.length) {
+      ecSel.innerHTML = '<option value="">No RUS engineering contracts yet — add one in Settings</option>';
+    }
+  } catch (e) {
+    ecSel.innerHTML = `<option value="">Failed to load: ${esc(e.message)}</option>`;
+  }
+  // Reset job picker
+  document.getElementById('prp-job').innerHTML = '<option value="">— Select engineering contract first —</option>';
+  openModal('psc-rus-pdf-modal');
+}
+
+// When the EC selection changes, reload the job picker with jobs that
+// have actual projects under this engineering contract.
+async function prpReloadJobs() {
+  const ecId = document.getElementById('prp-ec').value;
+  const jobSel = document.getElementById('prp-job');
+  if (!ecId) {
+    jobSel.innerHTML = '<option value="">— Select engineering contract first —</option>';
+    return;
+  }
+  jobSel.innerHTML = '<option value="">Loading jobs…</option>';
+  try {
+    // Pull contracts → projects → distinct jobs that have any project here
+    const contracts = await api('/api/contracts?engineering_contract_id=' + encodeURIComponent(ecId));
+    const contractIds = contracts.map(c => c.id);
+    if (!contractIds.length) {
+      jobSel.innerHTML = '<option value="">No contracts under this engineering contract</option>';
+      return;
+    }
+    // The /api/projects endpoint doesn't filter by contract directly, so
+    // we pull the broader jobs list and let the user pick — generator
+    // will return "no work orders" if there's no activity.
+    const jobs = await api('/api/jobs');
+    const psr = (jobs || []).filter(j => j.active);
+    jobSel.innerHTML = '<option value="">— Select —</option>' +
+      psr.map(j => {
+        const tag = j.is_permitting ? ' (permitting / footage)'
+                  : j.default_billing_type === 'footage' ? ' (footage)'
+                  : '';
+        return `<option value="${esc(j.id)}">${esc(j.name)}${j.billing_code ? ' · ' + esc(j.billing_code) : ''}${tag}</option>`;
+      }).join('');
+  } catch (e) {
+    jobSel.innerHTML = `<option value="">Failed: ${esc(e.message)}</option>`;
+  }
+}
+
+async function prpRunPreview() {
+  const ec = document.getElementById('prp-ec').value;
+  const job = document.getElementById('prp-job').value;
+  const start = document.getElementById('prp-start').value;
+  const end = document.getElementById('prp-end').value;
+  if (!ec || !job || !start || !end) return alert('Fill in every field first.');
+  const previewEl = document.getElementById('prp-preview');
+  const previewText = document.getElementById('prp-preview-text');
+  previewEl.style.display = '';
+  previewText.textContent = 'Loading…';
+  try {
+    const qs = `engineering_contract_id=${encodeURIComponent(ec)}&job_id=${encodeURIComponent(job)}&period_start=${start}&period_end=${end}`;
+    const data = await api('/api/invoices/generate-pdf/preview-data?' + qs);
+    const lines = [];
+    lines.push(`${data.contracts.length} contract${data.contracts.length !== 1 ? 's' : ''} with activity`);
+    const woCount = data.contracts.reduce((s, c) => s + c.wos.length, 0);
+    lines.push(`${woCount} work order${woCount !== 1 ? 's' : ''}`);
+    if (data.meta.job_billing_type === 'footage') {
+      lines.push(`Total: ${(data.totals.footage / 5280).toFixed(2)} mi`);
+    } else {
+      lines.push(`Total: ${data.totals.hours.toFixed(2)} hrs`);
+      lines.push(`${data.timecards.length} employee${data.timecards.length !== 1 ? 's' : ''}`);
+    }
+    lines.push(`<strong>${fmtMoney(data.totals.amount)}</strong>`);
+    previewText.innerHTML = lines.join(' · ');
+  } catch (e) {
+    previewText.innerHTML = `<span style="color:var(--danger)">Failed: ${esc(e.message)}</span>`;
+  }
+}
+
+async function prpGeneratePdf() {
+  const ec = document.getElementById('prp-ec').value;
+  const job = document.getElementById('prp-job').value;
+  const start = document.getElementById('prp-start').value;
+  const end = document.getElementById('prp-end').value;
+  if (!ec || !job || !start || !end) return alert('Fill in every field first.');
+  // POST returns the PDF inline. We use fetch + blob → object URL → open
+  // in new tab so the browser uses its built-in PDF viewer.
+  try {
+    const resp = await fetch('/api/invoices/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        engineering_contract_id: ec, job_id: job,
+        period_start: start, period_end: end,
+      }),
+    });
+    if (!resp.ok) {
+      let err = 'PDF generation failed.';
+      try { const j = await resp.json(); err = j.error || err; } catch {}
+      return alert(err);
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    // Revoke later so the new tab has time to load
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    alert('PDF generation failed: ' + e.message);
+  }
 }
 
 // ─── Bill-now preview card ─────────────────────────────────────────────
@@ -7194,6 +7370,7 @@ function renderEngineeringContractsList() {
           <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Client</th>
           <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
           <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Number</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Loan</th>
           <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Contracts</th>
           <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Projects</th>
           <th style="padding:8px;text-align:right"></th>
@@ -7205,6 +7382,7 @@ function renderEngineeringContractsList() {
             <td style="padding:6px 8px">${esc(ec.client_name || '—')}</td>
             <td style="padding:6px 8px;font-weight:500">${esc(ec.name)}</td>
             <td style="padding:6px 8px;font-family:monospace;color:var(--text-muted)">${esc(ec.contract_number || '—')}</td>
+            <td style="padding:6px 8px;color:var(--text-muted)">${esc(ec.loan_name || '—')}</td>
             <td style="padding:6px 8px;text-align:right">${ec.contract_count}</td>
             <td style="padding:6px 8px;text-align:right">${ec.project_count}</td>
             <td style="padding:6px 8px;text-align:right;white-space:nowrap">
@@ -7221,14 +7399,16 @@ function renderEngineeringContractsList() {
 async function saveNewEngineeringContract() {
   const name = document.getElementById('new-ec-name').value.trim();
   const contract_number = document.getElementById('new-ec-number').value.trim() || null;
+  const loan_name = document.getElementById('new-ec-loan').value.trim() || null;
   const client_id = document.getElementById('new-ec-client').value;
   const notes = document.getElementById('new-ec-notes').value.trim() || null;
   if (!client_id) return alert('Client required');
   if (!name) return alert('Name required');
   try {
-    await api('/api/engineering-contracts', 'POST', { client_id, name, contract_number, notes });
+    await api('/api/engineering-contracts', 'POST', { client_id, name, contract_number, loan_name, notes });
     document.getElementById('new-ec-name').value = '';
     document.getElementById('new-ec-number').value = '';
+    document.getElementById('new-ec-loan').value = '';
     document.getElementById('new-ec-notes').value = '';
     document.getElementById('eng-contracts-add-form').style.display = 'none';
     await loadEngineeringContracts();
@@ -7245,6 +7425,7 @@ function editEngineeringContract(id) {
     <td style="padding:6px 8px;color:var(--text-muted)">${esc(ec.client_name || '—')}</td>
     <td style="padding:6px 8px"><input type="text" id="ec-edit-name-${id}" value="${esc(ec.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
     <td style="padding:6px 8px"><input type="text" id="ec-edit-num-${id}" value="${esc(ec.contract_number || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
+    <td style="padding:6px 8px"><input type="text" id="ec-edit-loan-${id}" value="${esc(ec.loan_name || '')}" placeholder="e.g. Reconnect 3" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
     <td colspan="2" style="padding:6px 8px;text-align:right;color:var(--text-muted);font-size:11px">${ec.contract_count} contracts · ${ec.project_count} projects</td>
     <td style="padding:6px 8px;text-align:right;white-space:nowrap">
       <button class="btn btn-sm btn-primary" onclick="saveEngineeringContract('${id}')"><i class="fa-solid fa-check"></i></button>
@@ -7256,9 +7437,10 @@ function editEngineeringContract(id) {
 async function saveEngineeringContract(id) {
   const name = document.getElementById(`ec-edit-name-${id}`).value.trim();
   const contract_number = document.getElementById(`ec-edit-num-${id}`).value.trim() || null;
+  const loan_name = document.getElementById(`ec-edit-loan-${id}`).value.trim() || null;
   if (!name) return alert('Name required');
   try {
-    await api('/api/engineering-contracts/' + id, 'PUT', { name, contract_number });
+    await api('/api/engineering-contracts/' + id, 'PUT', { name, contract_number, loan_name });
     await loadEngineeringContracts();
     renderEngineeringContractsList();
   } catch (e) { alert('Failed: ' + e.message); }

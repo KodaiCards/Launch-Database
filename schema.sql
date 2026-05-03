@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS engineering_contracts (
   -- Short identifier for invoices/reports. Optional — name alone is enough
   -- for many cases. Unique per client when set.
   contract_number VARCHAR(80),
+  -- Loan name (e.g. "Reconnect 3"). Appears in the Item column of every
+  -- PSC RUS invoice summary as a top-level grouping label. NULL when the
+  -- engineering contract isn't loan-financed (most non-RUS work).
+  loan_name VARCHAR(80),
   notes TEXT,
   active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -46,6 +50,9 @@ CREATE TABLE IF NOT EXISTS contracts (
   engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL,
   contract_number VARCHAR(50) NOT NULL,
   name VARCHAR(200),
+  -- Friendly label shown on PSC RUS invoice summaries, e.g. "Contract 3"
+  -- for contract 515-3. Falls back to contract_number when null.
+  friendly_label VARCHAR(40),
   active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

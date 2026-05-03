@@ -593,14 +593,14 @@ app.get('/api/engineering-contracts/:id', async (req, res) => {
 });
 
 app.post('/api/engineering-contracts', requireAdmin, async (req, res) => {
-  const { client_id, name, contract_number, notes } = req.body || {};
+  const { client_id, name, contract_number, loan_name, notes } = req.body || {};
   if (!client_id) return res.status(400).json({ error: 'client_id required' });
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO engineering_contracts (client_id, name, contract_number, notes)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
-      [client_id, String(name).trim(), contract_number || null, notes || null]
+      `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name, notes)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [client_id, String(name).trim(), contract_number || null, loan_name || null, notes || null]
     );
     res.json(rows[0]);
   } catch (e) {
@@ -611,13 +611,14 @@ app.post('/api/engineering-contracts', requireAdmin, async (req, res) => {
 });
 
 app.put('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
-  const { name, contract_number, notes, active } = req.body || {};
+  const { name, contract_number, loan_name, notes, active } = req.body || {};
   try {
     const sets = [];
     const params = [req.params.id];
     let i = 2;
     if (name !== undefined) { sets.push(`name = $${i++}`); params.push(String(name).trim()); }
     if (contract_number !== undefined) { sets.push(`contract_number = $${i++}`); params.push(contract_number || null); }
+    if (loan_name !== undefined) { sets.push(`loan_name = $${i++}`); params.push(loan_name || null); }
     if (notes !== undefined) { sets.push(`notes = $${i++}`); params.push(notes || null); }
     if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
     if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
@@ -4230,6 +4231,75 @@ app.get('/api/invoices', requireManagerOrAdmin, async (req, res) => {
 });
 
 // Delete an invoice and optionally wipe associated hours + unbill projects
+// ─── PSC RUS PDF generator ────────────────────────────────────────────────
+// POST /api/invoices/generate-pdf — assembles the data and streams a PDF.
+// Body: { engineering_contract_id, job_id, period_start, period_end,
+//         contract_ids? (array of UUIDs to limit to specific contracts) }
+// Returns: application/pdf with Content-Disposition: attachment.
+//
+// Manager+admin only. Format is exclusive to PSC RUS work — the generator
+// throws if the engineering contract's client isn't is_rus.
+const invoiceGenerator = require('./invoice_generator');
+
+app.post('/api/invoices/generate-pdf', requireManagerOrAdmin, async (req, res) => {
+  const { engineering_contract_id, job_id, period_start, period_end, contract_ids } = req.body || {};
+  if (!engineering_contract_id) return res.status(400).json({ error: 'engineering_contract_id required' });
+  if (!job_id) return res.status(400).json({ error: 'job_id required' });
+  if (!period_start || !period_end) return res.status(400).json({ error: 'period_start and period_end required (YYYY-MM-DD)' });
+
+  let data;
+  try {
+    data = await invoiceGenerator.buildInvoiceData(pool, {
+      engineering_contract_id, job_id, period_start, period_end,
+      contract_ids: Array.isArray(contract_ids) ? contract_ids : null,
+    });
+  } catch (e) {
+    // Friendly errors for the most common cases
+    console.error('[invoices:generate-pdf:assemble]', e && e.message);
+    return res.status(400).json({ error: e.message });
+  }
+
+  // Stream the PDF directly. We never buffer the full file in memory —
+  // pdfkit pipes chunks straight to the response.
+  const filename = invoiceGenerator.suggestedFilename(data);
+  res.setHeader('Content-Type', 'application/pdf');
+  // Inline disposition so the browser opens it in a new tab (better UX
+  // than forcing a download — admin can still save from there).
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  try {
+    invoiceGenerator.renderInvoicePdf(data, res);
+  } catch (e) {
+    console.error('[invoices:generate-pdf:render]', e && e.stack || e);
+    // We may have already started writing PDF bytes — if so, the headers
+    // are already flushed and we can't change to a JSON error. Just close
+    // the stream and let the client handle the malformed PDF.
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'PDF render failed.' });
+    } else {
+      res.end();
+    }
+  }
+});
+
+// GET /api/invoices/generate-pdf/preview-data — returns the assembled
+// data structure without rendering. Useful for the UI to show a "this
+// is what's in the invoice" preview before the user clicks Generate PDF.
+app.get('/api/invoices/generate-pdf/preview-data', requireManagerOrAdmin, async (req, res) => {
+  const { engineering_contract_id, job_id, period_start, period_end } = req.query || {};
+  if (!engineering_contract_id || !job_id || !period_start || !period_end) {
+    return res.status(400).json({ error: 'engineering_contract_id, job_id, period_start, period_end required' });
+  }
+  try {
+    const data = await invoiceGenerator.buildInvoiceData(pool, {
+      engineering_contract_id, job_id, period_start, period_end,
+    });
+    res.json(data);
+  } catch (e) {
+    console.error('[invoices:generate-pdf:preview]', e && e.message);
+    res.status(400).json({ error: e.message });
+  }
+});
+
 app.delete('/api/invoices/:id', requireManagerOrAdmin, async (req, res) => {
   const { wipe_hours } = req.query; // ?wipe_hours=true
   try {
@@ -6484,6 +6554,14 @@ async function bootstrapV3Schema() {
        END IF;
      END $$`,
     `CREATE INDEX IF NOT EXISTS idx_budgets_engineering_contract_id ON budgets (engineering_contract_id)`,
+
+    // Loan name on engineering_contracts — appears on PSC RUS invoices as
+    // a top-level grouping label (e.g. "Reconnect 3"). Owner doesn't want
+    // it labeled as "Loan: ..." in the PDF, just present on its own row.
+    `ALTER TABLE engineering_contracts ADD COLUMN IF NOT EXISTS loan_name VARCHAR(80)`,
+    // Friendly label on contracts — used on PSC RUS invoices when an
+    // invoice spans multiple billing contracts (e.g. "Contract 3" for 515-3).
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS friendly_label VARCHAR(40)`,
   ];
   for (const sql of ddl) {
     try {
