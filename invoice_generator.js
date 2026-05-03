@@ -380,10 +380,22 @@ function renderSummaryPage(doc, data, isFootage) {
   doc.moveDown(1);
 
   // ── Table ──────────────────────────────────────────────────────────
-  // 5 columns. Permitting uses Hours+$/hr (footage shown as sub-info in
-  // Description); pure footage uses Footage+$/mi.
+  // Three layouts share this renderer, picked by job team:
+  //   - Permitting (is_permitting=true) — 6 cols including a dedicated
+  //     Footage column. Hours derived from amount/rate; Rate is $/hr.
+  //   - Pure footage non-permitting — 5 cols, Qty column shows Footage,
+  //     Rate is $/mi (legacy non-PSC-RUS path).
+  //   - Hourly (Inspection / Resident Engineer / etc.) — 5 cols with
+  //     Hours column and $/hr Rate.
   const qtyLabel = isPermitting ? 'Hours' : (isFootage ? 'Footage' : 'Hours');
-  const cols = [
+  const cols = isPermitting ? [
+    { key: 'item',  label: 'Item',        width: 70,  align: 'left'  },
+    { key: 'desc',  label: 'Description', width: 165, align: 'left'  },
+    { key: 'foot',  label: 'Footage',     width: 75,  align: 'right' },
+    { key: 'qty',   label: 'Hours',       width: 70,  align: 'right' },
+    { key: 'rate',  label: 'Rate',        width: 70,  align: 'right' },
+    { key: 'amt',   label: 'Amount',      width: 90,  align: 'right' },
+  ] : [
     { key: 'item',  label: 'Item',        width: 95,  align: 'left'  },
     { key: 'desc',  label: 'Description', width: 235, align: 'left'  },
     { key: 'qty',   label: qtyLabel,      width: 75,  align: 'right' },
@@ -449,34 +461,27 @@ function renderSummaryPage(doc, data, isFootage) {
       }, { bg: COL.CONTRACT_BG, bold: true });
     }
     // WO rows — billing code on first WO row only.
-    // For permitting: derive hours from amount/rate (the calc that produced
-    // the amount in the first place: hours = miles * 27.5, capped at 25
-    // when miles<1) and put footage as a sub-info line in Description.
+    // For permitting: footage gets its own column; hours derived from
+    // amount / rate (the calc that produced the amount: hours = miles*27.5,
+    // floored at 25 when miles<1).
     let firstWo = true;
     for (const wo of cs.wos) {
-      let qtyText, rateText, descText;
+      const cells = { item: firstWo ? (m.job_billing_code || '') : '',
+                      desc: `WO# ${wo.work_order_number}`,
+                      amt:  fmtMoney(wo.amount) };
       if (isPermitting) {
         const derivedHours = m.rate > 0 ? wo.amount / m.rate : 0;
-        qtyText = fmtHours(derivedHours);
-        rateText = fmtMoney(m.rate) + '/hr';
-        descText = `WO# ${wo.work_order_number}` +
-          (wo.footage > 0 ? `   (${fmtFootage(wo.footage)})` : '');
+        cells.foot = wo.footage > 0 ? fmtFootage(wo.footage) : '';
+        cells.qty  = fmtHours(derivedHours);
+        cells.rate = fmtMoney(m.rate) + '/hr';
       } else if (isFootage) {
-        qtyText = fmtFootage(wo.footage);
-        rateText = fmtMoney(m.rate) + '/mi';
-        descText = `WO# ${wo.work_order_number}`;
+        cells.qty  = fmtFootage(wo.footage);
+        cells.rate = fmtMoney(m.rate) + '/mi';
       } else {
-        qtyText = fmtHours(wo.hours);
-        rateText = fmtMoney(m.rate) + '/hr';
-        descText = `WO# ${wo.work_order_number}`;
+        cells.qty  = fmtHours(wo.hours);
+        cells.rate = fmtMoney(m.rate) + '/hr';
       }
-      drawRow({
-        item: firstWo ? (m.job_billing_code || '') : '',
-        desc: descText,
-        qty: qtyText,
-        rate: rateText,
-        amt: fmtMoney(wo.amount),
-      });
+      drawRow(cells);
       firstWo = false;
     }
     // Per-contract subtotal — only if multi-contract
@@ -486,11 +491,13 @@ function renderSummaryPage(doc, data, isFootage) {
       const subQty = isPermitting
         ? fmtHours(m.rate > 0 ? cs.contract_amount / m.rate : 0)
         : (isFootage ? fmtFootage(cs.contract_footage) : fmtHours(cs.contract_hours));
-      drawRow({
+      const subCells = {
         desc: `${cs.friendly_label} Subtotal`,
         qty: subQty,
         amt: fmtMoney(cs.contract_amount),
-      }, { bg: COL.CONTRACT_SUBTOTAL_BG, bold: true });
+      };
+      if (isPermitting) subCells.foot = fmtFootage(cs.contract_footage);
+      drawRow(subCells, { bg: COL.CONTRACT_SUBTOTAL_BG, bold: true });
     }
   }
 
@@ -499,22 +506,26 @@ function renderSummaryPage(doc, data, isFootage) {
   const totalQty = isPermitting
     ? fmtHours(m.rate > 0 ? data.totals.amount / m.rate : 0)
     : (isFootage ? fmtFootage(data.totals.footage) : fmtHours(data.totals.hours));
-  drawRow({
+  const loanCells = {
     desc: m.engineering_contract.loan_name
       ? `${m.engineering_contract.loan_name} Subtotal`
       : 'Subtotal',
     qty: totalQty,
     amt: fmtMoney(data.totals.amount),
-  }, { bg: COL.LOAN_SUBTOTAL_BG, textColor: COL.LOAN_SUBTOTAL_TEXT, bold: true });
+  };
+  if (isPermitting) loanCells.foot = fmtFootage(data.totals.footage);
+  drawRow(loanCells, { bg: COL.LOAN_SUBTOTAL_BG, textColor: COL.LOAN_SUBTOTAL_TEXT, bold: true });
 
-  // Final summary row — blue bg, white text. Same numbers as the loan
-  // subtotal in single-loan invoices, but a separate row matches the Excel.
+  // Final total row — blue bg, white text. Renamed "Summary" → "Total"
+  // to match the customer-facing template.
   doc.moveDown(0.2);
-  drawRow({
-    desc: 'Summary',
+  const totalCells = {
+    desc: 'Total',
     qty: totalQty,
     amt: fmtMoney(data.totals.amount),
-  }, { bg: COL.SUMMARY_BG, textColor: COL.SUMMARY_TEXT, bold: true });
+  };
+  if (isPermitting) totalCells.foot = fmtFootage(data.totals.footage);
+  drawRow(totalCells, { bg: COL.SUMMARY_BG, textColor: COL.SUMMARY_TEXT, bold: true });
 }
 
 // ─── Timecards detail pages (hourly only) ──────────────────────────────
