@@ -483,6 +483,19 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="stat-card"><div class="stat-label" id="s-year-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
       </div>
 
+      <!-- "If I billed today" preview — sums every unbilled hour × rate
+           (hourly projects) plus every completed-but-unbilled footage
+           project's expected_revenue, grouped by client. Admin/manager. -->
+      <div id="bill-now-card" class="card lfs-widget" data-widget-id="bill-now" style="margin-bottom:14px;display:none">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title"><i class="fa-solid fa-coins" style="color:var(--success,#28A745);margin-right:6px"></i>If I Billed Today</span>
+          <span style="font-size:11px;color:var(--text-muted)" id="bill-now-total"></span>
+        </div>
+        <div class="card-body" id="bill-now-body" style="padding:0">
+          <div style="padding:16px;color:var(--text-muted)">Loading…</div>
+        </div>
+      </div>
+
       <!-- Inspection revenue projection — admin only. Shows per-project
            pace-vs-budget projection and rolls up to a total. Hidden when
            the API returns 403 (non-admin viewer) or no inspection data. -->
@@ -762,6 +775,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="wo">By WO #</option>
             <option value="staff">By staff</option>
             <option value="job">By job</option>
+            <option value="calendar">📅 Calendar grid</option>
           </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
@@ -2821,6 +2835,52 @@ async function loadNeedsAttention() {
   });
 }
 
+// ─── Bill-now preview card ─────────────────────────────────────────────
+async function loadBillNowPreview() {
+  const card = document.getElementById('bill-now-card');
+  const body = document.getElementById('bill-now-body');
+  const totalEl = document.getElementById('bill-now-total');
+  if (!card || !body) return;
+  let data;
+  try {
+    data = await api('/api/automation/bill-now-preview');
+  } catch (e) {
+    card.style.display = 'none';
+    return;
+  }
+  if (!data.by_client || !data.by_client.length) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  totalEl.textContent = `${fmtMoney(data.total_unbilled)} across ${data.project_count} project${data.project_count !== 1 ? 's' : ''}`;
+  body.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--gray-light)">
+          <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Client</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Projects</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">If billed today</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.by_client.map(c => `
+          <tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="showView('billing')">
+            <td style="padding:8px 12px;font-weight:500">${esc(c.client_name || '— No client —')}</td>
+            <td style="padding:8px 12px;text-align:right;color:var(--text-muted)">${c.projects.length}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--success,#28A745)">${fmtMoney(c.subtotal)}</td>
+          </tr>
+        `).join('')}
+        <tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);font-weight:600">
+          <td style="padding:10px 12px">Total</td>
+          <td style="padding:10px 12px;text-align:right">${data.project_count}</td>
+          <td style="padding:10px 12px;text-align:right;color:var(--success,#28A745)">${fmtMoney(data.total_unbilled)}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+}
+
 // ─── Inspection revenue projection card ────────────────────────────────
 // Admin-only — the API itself returns 403 to non-admins, so this just
 // silently bails on those calls. Compact table per project + a total.
@@ -2950,6 +3010,7 @@ async function loadDashboard() {
   // get 403 on the automation endpoints) don't see an error toast.
   loadNeedsAttention().catch(() => {});
   loadInspectionProjection().catch(() => {});
+  loadBillNowPreview().catch(() => {});
 
   // Initialize dashboard period controls on first load.
   const yEl = document.getElementById('dash-year');
@@ -4913,6 +4974,82 @@ async function loadHours() {
     container.style.display = '';
     if (grouped) grouped.style.display = 'none';
     container.innerHTML='<div class="empty-state" style="padding:40px"><i class="fa-regular fa-clock"></i><p>No hours logged for this period</p></div>';
+    return;
+  }
+
+  // Calendar grid: month view with one cell per day, hours total per day,
+  // empty days highlighted in red so missing time entries are obvious.
+  // YTD mode falls back to the table view (calendar over a full year is
+  // too dense to be useful at a glance).
+  if (groupBy === 'calendar' && period !== 'ytd') {
+    container.style.display = 'none';
+    grouped.style.display = '';
+    const yr = parseInt(y, 10);
+    const mo = parseInt(m, 10);  // 1-12
+    const firstDay = new Date(yr, mo - 1, 1);
+    const lastDay = new Date(yr, mo, 0);
+    const daysInMonth = lastDay.getDate();
+    const firstWeekday = firstDay.getDay();  // 0=Sun
+    // Bucket hours per YYYY-MM-DD in business-tz (entry_date already that)
+    const byDay = {};
+    const entriesByDay = {};
+    for (const e of entries) {
+      const k = String(e.entry_date).slice(0, 10);
+      byDay[k] = (byDay[k] || 0) + parseFloat(e.hours || 0);
+      (entriesByDay[k] = entriesByDay[k] || []).push(e);
+    }
+    let html = `<div style="padding:14px">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;text-align:center">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">`;
+    // Pad with empty cells for days before the 1st
+    for (let i = 0; i < firstWeekday; i++) html += `<div style="min-height:78px"></div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = `${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const hours = byDay[dateKey] || 0;
+      const dayOfWeek = (firstWeekday + d - 1) % 7;
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isToday = (() => {
+        const t = new Date();
+        return t.getFullYear() === yr && (t.getMonth() + 1) === mo && t.getDate() === d;
+      })();
+      // Highlight: weekday with no hours = red flag (likely forgotten),
+      // weekday with low hours = yellow, normal = white, today gets a border.
+      let bg = '#fff', border = '1px solid var(--gray-border)';
+      if (!isWeekend && hours === 0) { bg = '#FDECEA'; }
+      else if (!isWeekend && hours < 4) { bg = '#FFF8E1'; }
+      else if (hours > 0) { bg = '#E8F5E9'; }
+      if (isToday) border = '2px solid var(--primary,#1B5FA0)';
+      const isFuture = (() => {
+        const cellD = new Date(yr, mo - 1, d);
+        const today = new Date(); today.setHours(0,0,0,0);
+        return cellD > today;
+      })();
+      if (isFuture) { bg = '#fafafa'; }
+      const entryCount = (entriesByDay[dateKey] || []).length;
+      html += `<div style="background:${bg};border:${border};border-radius:6px;padding:8px;min-height:78px;display:flex;flex-direction:column" title="${dateKey}">
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600">${d}</div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center">
+          ${hours > 0 ? `<div style="font-size:18px;font-weight:600;color:var(--text)">${hours.toFixed(1)}<span style="font-size:11px;color:var(--text-muted);margin-left:2px">h</span></div>` :
+           isFuture ? '' :
+           isWeekend ? '<div style="font-size:11px;color:var(--text-muted)">—</div>' :
+           '<div style="font-size:11px;color:#c62828;font-weight:600">no entries</div>'}
+        </div>
+        ${entryCount > 0 ? `<div style="font-size:10px;color:var(--text-muted);text-align:right">${entryCount} entr${entryCount === 1 ? 'y' : 'ies'}</div>` : ''}
+      </div>`;
+    }
+    html += `</div>
+      <div style="margin-top:14px;padding:10px;background:var(--gray-light);border-radius:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px">
+        <span><strong>${total.toFixed(1)} hrs</strong> · ${entries.length} entries</span>
+        <span style="display:flex;gap:14px;color:var(--text-muted)">
+          <span><span style="display:inline-block;width:12px;height:12px;background:#FDECEA;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>No hours (weekday)</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:#FFF8E1;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>Under 4h</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:#E8F5E9;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>OK</span>
+        </span>
+      </div>
+    </div>`;
+    grouped.innerHTML = html;
     return;
   }
 

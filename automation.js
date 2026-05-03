@@ -297,6 +297,85 @@ async function buildInspectionRevenueProjection(pool, opts) {
   };
 }
 
+// "What if I billed today?" — preview of revenue if every unbilled hour
+// were invoiced right now at current rates. Sums:
+//   - Hourly projects: unbilled_hours × billing_rate
+//   - Footage projects: expected_revenue for any project not yet billed
+// Grouped by client so admin can see "if I closed the books today, here's
+// what each client would owe." Unlike the monthly draft, this ignores
+// billing_cadence — every dollar of work-done-but-not-billed counts.
+async function buildBillNowPreview(pool) {
+  const { rows } = await pool.query(
+    `WITH unbilled_hourly AS (
+       SELECT
+         p.id AS project_id,
+         p.name AS project_name,
+         p.client_id,
+         cl.name AS client_name,
+         p.billing_rate::float AS rate,
+         COALESCE(p.actual_hours, 0)::float AS hours_done,
+         COALESCE((
+           SELECT SUM(ii.amount)
+           FROM invoice_items ii
+           WHERE ii.project_id = p.id
+         ), 0)::float AS already_billed,
+         COALESCE(p.actual_hours, 0)::float * COALESCE(p.billing_rate, 0)::float AS earned,
+         (COALESCE(p.actual_hours, 0)::float * COALESCE(p.billing_rate, 0)::float)
+           - COALESCE((
+               SELECT SUM(ii.amount) FROM invoice_items ii WHERE ii.project_id = p.id
+             ), 0)::float AS unbilled_amount
+       FROM projects p
+       LEFT JOIN clients cl ON cl.id = p.client_id
+       WHERE p.billing_type = 'hourly'
+         AND p.status IN ('active', 'completed')
+         AND COALESCE(p.is_rollup, FALSE) = FALSE
+         AND COALESCE(p.actual_hours, 0) > 0
+         AND COALESCE(p.billing_rate, 0) > 0
+     ),
+     unbilled_footage AS (
+       SELECT
+         p.id AS project_id,
+         p.name AS project_name,
+         p.client_id,
+         cl.name AS client_name,
+         p.billing_rate::float AS rate,
+         0::float AS hours_done,
+         0::float AS already_billed,
+         COALESCE(p.expected_revenue, 0)::float AS earned,
+         COALESCE(p.expected_revenue, 0)::float AS unbilled_amount
+       FROM projects p
+       LEFT JOIN clients cl ON cl.id = p.client_id
+       WHERE p.billing_type = 'footage'
+         AND p.status = 'completed'
+         AND p.billed_date IS NULL
+         AND COALESCE(p.is_rollup, FALSE) = FALSE
+     )
+     SELECT * FROM unbilled_hourly WHERE unbilled_amount > 0.01
+     UNION ALL
+     SELECT * FROM unbilled_footage WHERE unbilled_amount > 0.01
+     ORDER BY client_name, project_name`
+  );
+
+  const byClient = {};
+  let total = 0;
+  for (const r of rows) {
+    const k = r.client_id || 'no-client';
+    if (!byClient[k]) byClient[k] = {
+      client_id: r.client_id, client_name: r.client_name,
+      projects: [], subtotal: 0,
+    };
+    byClient[k].projects.push(r);
+    byClient[k].subtotal += r.unbilled_amount;
+    total += r.unbilled_amount;
+  }
+  return {
+    as_of: new Date().toISOString(),
+    project_count: rows.length,
+    total_unbilled: +total.toFixed(2),
+    by_client: Object.values(byClient).sort((a, b) => b.subtotal - a.subtotal),
+  };
+}
+
 // Build a draft of monthly invoices: every project with billing_cadence='monthly'
 // that has hours in the given period and has NOT already been invoiced for
 // that period. Returns a "ready to bill" list grouped by client. Admin
@@ -413,6 +492,17 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
     }
   });
 
+  // "What if I billed today?" — admin/manager. Manager-or-admin so a
+  // permitting manager can see their pending pipeline.
+  app.get('/api/automation/bill-now-preview', requireManagerOrAdmin, async (req, res) => {
+    try {
+      res.json(await buildBillNowPreview(pool));
+    } catch (e) {
+      console.error('[automation:bill-now-preview]', e && e.message);
+      res.status(500).json({ error: 'Failed to build bill-now preview.' });
+    }
+  });
+
   // Inspection revenue projection — ADMIN ONLY (financial). Returns the
   // pace-vs-budget projection per inspection project plus a rolled-up total.
   app.get('/api/automation/inspection-projection', requireAdmin, async (req, res) => {
@@ -511,5 +601,6 @@ module.exports = {
   findBudgetBurn,
   findPermitsAwaitingInvoice,
   buildInspectionRevenueProjection,
+  buildBillNowPreview,
   buildMonthlyBillingDraft,
 };
