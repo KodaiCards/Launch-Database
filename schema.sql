@@ -37,7 +37,13 @@ CREATE TABLE IF NOT EXISTS staff (
 
 CREATE TABLE IF NOT EXISTS projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  parent_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  -- ON DELETE RESTRICT: deleting a rollup parent must fail loudly if it
+  -- still has child projects. The previous CASCADE silently nuked every
+  -- descendant project plus their time_entries (also CASCADE) — one mis-
+  -- click on a rollup folder erased billing history. Callers that intend
+  -- to delete a tree must explicitly delete children first (or use the
+  -- /api/projects/:id/with-hours admin endpoint, which is intentional).
+  parent_id UUID REFERENCES projects(id) ON DELETE RESTRICT,
   name VARCHAR(200) NOT NULL,
   client_id UUID REFERENCES clients(id),
   contract_id UUID REFERENCES contracts(id),
@@ -81,7 +87,12 @@ CREATE TABLE IF NOT EXISTS projects (
 
 CREATE TABLE IF NOT EXISTS time_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  -- ON DELETE RESTRICT: time entries are billing audit trail. Deleting a
+  -- project must explicitly handle its hours first (the
+  -- /api/projects/:id/with-hours endpoint deletes them in a single
+  -- transaction; ordinary DELETE refuses if hours exist). Previous
+  -- CASCADE silently destroyed billing history when a project was deleted.
+  project_id UUID REFERENCES projects(id) ON DELETE RESTRICT,
   staff_id UUID REFERENCES staff(id),
   entry_date DATE NOT NULL,
   hours DECIMAL(5,2) NOT NULL,

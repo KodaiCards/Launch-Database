@@ -294,9 +294,25 @@ async function applySettingChange(pool, sr) {
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN INSTALLER
 // ═══════════════════════════════════════════════════════════════════════════
-function installPortalExtensions(app, pool, PORTAL_MODE) {
+//
+// authHelpers: { requireAuth, requireAdmin } from auth.js. REQUIRED — every
+// route registered here is wrapped in requireAuth, and admin-only flows
+// (approve/reject) use requireAdmin. The previous version had no auth at
+// all, which let any caller approve their own setting requests.
+function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   const isPortal = !!PORTAL_MODE;
   const portal   = PORTAL_MODE; // 'design' or 'permitting'
+
+  // Defensive: legacy callers omitted authHelpers and got silent no-auth
+  // routes. Reject that loudly instead.
+  if (!authHelpers || !authHelpers.requireAuth || !authHelpers.requireAdmin) {
+    throw new Error('installPortalExtensions: authHelpers { requireAuth, requireAdmin } is required');
+  }
+  const requireAuth  = authHelpers.requireAuth;
+  const requireAdmin = authHelpers.requireAdmin;
+  // Convenience: the actor for proposed_by / updated_by columns. Falls back
+  // to req.body.proposed_by for callers that haven't been migrated yet.
+  const actorOf = (req) => (req.user && (req.user.username || req.user.id)) || req.body?.proposed_by || null;
 
   // Make helpers accessible to server.js's admin POST/PUT.
   app.locals.isDuplicateProject = (name, parentId, excludeId) =>
@@ -307,7 +323,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
 
   // List requests. Admin sees all (filterable by status). Portal sees only
   // requests submitted from THIS portal (so users can track their own).
-  app.get('/api/setting-requests', async (req, res) => {
+  app.get('/api/setting-requests', requireAuth(), async (req, res) => {
     try {
       const { status } = req.query;
       const where = [];
@@ -325,7 +341,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   });
 
   // Pending count — used for the red badge on the Settings button.
-  app.get('/api/setting-requests/count', async (req, res) => {
+  app.get('/api/setting-requests/count', requireAuth(), async (req, res) => {
     try {
       const params = [];
       let where = `status = 'pending'`;
@@ -338,10 +354,14 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Approve — applies the change, marks approved. Admin only.
-  app.put('/api/setting-requests/:id/approve', async (req, res) => {
+  // Approve — applies the change, marks approved. Admin only — enforced
+  // BOTH by requireAdmin (rejects portal users + non-admins) and by the
+  // isPortal short-circuit (portal services run with limited permissions
+  // anyway and shouldn't even register this surface).
+  app.put('/api/setting-requests/:id/approve', requireAdmin, async (req, res) => {
     if (isPortal) return res.status(403).json({ error: 'Admin only' });
-    const { reviewed_by, payload_overrides } = req.body || {};
+    const { payload_overrides } = req.body || {};
+    const reviewed_by = (req.user && req.user.username) || req.body?.reviewed_by || null;
     try {
       const r = await pool.query(
         `SELECT * FROM setting_change_requests WHERE id = $1 AND status = 'pending'`,
@@ -371,9 +391,10 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/setting-requests/:id/reject', async (req, res) => {
+  app.put('/api/setting-requests/:id/reject', requireAdmin, async (req, res) => {
     if (isPortal) return res.status(403).json({ error: 'Admin only' });
-    const { reviewed_by, review_notes } = req.body || {};
+    const { review_notes } = req.body || {};
+    const reviewed_by = (req.user && req.user.username) || req.body?.reviewed_by || null;
     try {
       await pool.query(
         `UPDATE setting_change_requests
@@ -416,7 +437,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   //   2) applicability — for the optional client_id query param, look up
   //      the client's is_rus flag and filter by for_psc_client / for_generic_client.
   // Money fields stripped.
-  app.get('/api/jobs', async (req, res) => {
+  app.get('/api/jobs', requireAuth(), async (req, res) => {
     try {
       const clientId = req.query.client_id || null;
       let isPsc = null;
@@ -449,8 +470,8 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/jobs', async (req, res) => {
-    const { name, default_billing_type, is_permitting, notes, proposed_by } = req.body;
+  app.post('/api/jobs', requireAuth(), async (req, res) => {
+    const { name, default_billing_type, is_permitting, notes } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'Name required' });
     try {
       const sr = await proposeChange('job', 'create', null, {
@@ -459,27 +480,27 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
         is_permitting: !!is_permitting,
         notes: notes || null,
         team: portal // hint — admin can change at approval time
-      }, proposed_by);
+      }, actorOf(req));
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/jobs/:id', async (req, res) => {
-    const { name, default_billing_type, is_permitting, notes, active, proposed_by } = req.body;
+  app.put('/api/jobs/:id', requireAuth(), async (req, res) => {
+    const { name, default_billing_type, is_permitting, notes, active } = req.body;
     try {
       const cur = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Job not found' });
       const sr = await proposeChange('job', 'update', req.params.id,
-        { name, default_billing_type, is_permitting, notes, active }, proposed_by, cur.rows[0]);
+        { name, default_billing_type, is_permitting, notes, active }, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/jobs/:id', async (req, res) => {
+  app.delete('/api/jobs/:id', requireAuth(), async (req, res) => {
     try {
       const cur = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Job not found' });
-      const sr = await proposeChange('job', 'delete', req.params.id, {}, req.body?.proposed_by, cur.rows[0]);
+      const sr = await proposeChange('job', 'delete', req.params.id, {}, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr, 'Deletion submitted'));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -487,66 +508,66 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   // ── PROJECT TYPES ──────────────────────────────────────────────────────
   // GET stays via the existing route (no team filter needed — types apply
   // across both teams). Only writes are intercepted.
-  app.post('/api/project-types', async (req, res) => {
-    const { name, proposed_by } = req.body;
+  app.post('/api/project-types', requireAuth(), async (req, res) => {
+    const { name } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'Name required' });
     try {
       const sr = await proposeChange('project_type', 'create', null,
-        { name: String(name).trim() }, proposed_by);
+        { name: String(name).trim() }, actorOf(req));
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
-  app.delete('/api/project-types/:id', async (req, res) => {
+  app.delete('/api/project-types/:id', requireAuth(), async (req, res) => {
     try {
       const cur = await pool.query('SELECT * FROM project_types WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
       const sr = await proposeChange('project_type', 'delete', req.params.id,
-        {}, req.body?.proposed_by, cur.rows[0]);
+        {}, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr, 'Deletion submitted'));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   // ── CLIENTS ────────────────────────────────────────────────────────────
   // GET stays via existing route.
-  app.post('/api/clients', async (req, res) => {
-    const { name, notes, proposed_by } = req.body;
+  app.post('/api/clients', requireAuth(), async (req, res) => {
+    const { name, notes } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'Name required' });
     try {
       const sr = await proposeChange('client', 'create', null,
-        { name: String(name).trim(), is_rus: false, notes: notes || null }, proposed_by);
+        { name: String(name).trim(), is_rus: false, notes: notes || null }, actorOf(req));
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
-  app.put('/api/clients/:id', async (req, res) => {
-    const { name, notes, proposed_by } = req.body;
+  app.put('/api/clients/:id', requireAuth(), async (req, res) => {
+    const { name, notes } = req.body;
     try {
       const cur = await pool.query('SELECT * FROM clients WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Client not found' });
       const sr = await proposeChange('client', 'update', req.params.id,
-        { name, notes }, proposed_by, cur.rows[0]);
+        { name, notes }, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
-  app.delete('/api/clients/:id', async (req, res) => {
+  app.delete('/api/clients/:id', requireAuth(), async (req, res) => {
     try {
       const cur = await pool.query('SELECT * FROM clients WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Client not found' });
       const sr = await proposeChange('client', 'delete', req.params.id,
-        {}, req.body?.proposed_by, cur.rows[0]);
+        {}, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr, 'Deletion submitted'));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   // ── CONTRACTS ──────────────────────────────────────────────────────────
   // GET stays via existing route.
-  app.post('/api/contracts', async (req, res) => {
-    const { client_id, contract_number, name, proposed_by } = req.body;
+  app.post('/api/contracts', requireAuth(), async (req, res) => {
+    const { client_id, contract_number, name } = req.body;
     if (!client_id || !contract_number) {
       return res.status(400).json({ error: 'client_id and contract_number required' });
     }
     try {
       const sr = await proposeChange('contract', 'create', null,
-        { client_id, contract_number, name: name || null }, proposed_by);
+        { client_id, contract_number, name: name || null }, actorOf(req));
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -554,7 +575,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   // ── PROJECTS ───────────────────────────────────────────────────────────
   // Filtered list: projects whose job is this portal's team (or 'both' or
   // unassigned), PLUS all of their ancestors for nest context. Money stripped.
-  app.get('/api/projects', async (req, res) => {
+  app.get('/api/projects', requireAuth(), async (req, res) => {
     const { status, client_id, type } = req.query;
     const filters = [];
     const params  = [];
@@ -608,7 +629,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/projects/:id', async (req, res) => {
+  app.get('/api/projects/:id', requireAuth(), async (req, res) => {
     try {
       // Visibility check: must be a real project on this portal's team.
       // Rollups are admin-only and aren't returned to portals.
@@ -638,7 +659,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   });
 
   // Create project from portal — validates team, blocks duplicates, strips money.
-  app.post('/api/projects', async (req, res) => {
+  app.post('/api/projects', requireAuth(), async (req, res) => {
     const {
       name, client_id, contract_id, work_order_number,
       project_type, project_type_id, job_id,
@@ -745,13 +766,13 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
       if (isPermitting) {
         await pool.query(
           `INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3)
-           ON CONFLICT DO NOTHING`,
+           ON CONFLICT (project_id, stage) DO NOTHING`,
           [rows[0].id, 'potential', permit_manager || null]
         );
       }
       if (job.team === 'design') {
         await pool.query(
-          `INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+          `INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING`,
           [rows[0].id, 'potential']
         );
       }
@@ -767,7 +788,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
   });
 
   // Limited PUT — portal can only edit non-financial fields, can't change job/team.
-  app.put('/api/projects/:id', async (req, res) => {
+  app.put('/api/projects/:id', requireAuth(), async (req, res) => {
     const ALLOWED = ['name', 'work_order_number', 'status', 'footage', 'hours_estimate',
                      'start_date', 'notes', 'concentrator_id', 'contract_id', 'parent_id'];
     const filtered = {};
@@ -817,7 +838,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE) {
     }
   });
 
-  app.delete('/api/projects/:id', async (req, res) => {
+  app.delete('/api/projects/:id', requireAuth(), async (req, res) => {
     try {
       const vis = await pool.query(`
         SELECT p.id FROM projects p
