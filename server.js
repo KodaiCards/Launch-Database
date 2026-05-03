@@ -2227,32 +2227,8 @@ app.delete('/api/budget-codes/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONCENTRATORS / SERVICE AREAS
-// ─────────────────────────────────────────────────────────────────────────────
-
-app.get('/api/concentrators', async (req, res) => {
-  const { contract_label } = req.query;
-  try {
-    const q = contract_label
-      ? 'SELECT * FROM concentrators WHERE contract_label=$1 AND active=true ORDER BY area_name'
-      : 'SELECT * FROM concentrators WHERE active=true ORDER BY contract_label, area_name';
-    const { rows } = await pool.query(q, contract_label ? [contract_label] : []);
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/concentrators', async (req, res) => {
-  const { contract_label, area_name, work_order_number, notes } = req.body;
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO concentrators (contract_label, area_name, work_order_number, notes)
-       VALUES ($1,$2,$3,$4) RETURNING *`,
-      [contract_label, area_name, work_order_number || null, notes || null]
-    );
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
+// Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
+require('./routes/concentrators')(app, pool, {});
 
 // Debug: returns the exact list of projects counted as "active" by the
 // dashboard tile. Visible from the dashboard for troubleshooting.
