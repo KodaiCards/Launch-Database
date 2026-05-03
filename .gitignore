@@ -1,0 +1,21 @@
+# Node / npm
+node_modules/
+npm-debug.log*
+
+# Environment / secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# Local uploads (Railway uses /data/uploads via volume; local dev keeps them here)
+uploads/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Claude Code session/worktree state — local-only, never goes to GitHub
+.claude/
