@@ -265,7 +265,6 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
       <div class="form-group">
         <label>Job</label>
         <select id="entry-job"><option value="">— Select project first —</option></select>
-        <small style="color:var(--text-muted);font-size:11px">Job determines billing rate. Leave blank for hourly default.</small>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -514,9 +513,35 @@ async function loadActiveSession(){
   renderClockCard();
 }
 
+// Cache the last rendered "shape" of the clock card so we don't blow away
+// open <select> dropdowns / focused inputs every poll tick. The shape is
+// the small set of fields that actually drive what the card looks like —
+// if those haven't changed we skip the innerHTML rebuild entirely.
+let _lastClockCardShape = null;
+function _clockCardShape() {
+  if (!activeSession) return 'idle';
+  // started_at is the only thing that uniquely identifies an active session
+  // shape; the running timer ticks via a separate setInterval that updates
+  // just the elapsed-display text node, not the whole card.
+  return [
+    'active',
+    activeSession.id,
+    activeSession.started_at,
+    activeSession.project_name,
+    activeSession.work_order_number,
+    activeSession.job_title,
+  ].join('|');
+}
+
 function renderClockCard(){
   const card = document.getElementById('clock-content');
   if (!card) return;
+
+  // Skip the innerHTML rebuild if nothing meaningful changed — otherwise
+  // we destroy any open <select> dropdown the user is interacting with.
+  const shape = _clockCardShape();
+  if (shape === _lastClockCardShape) return;
+  _lastClockCardShape = shape;
 
   if (activeSession){
     // CLOCKED IN — show running timer + Switch + Clock Out
@@ -561,7 +586,7 @@ function renderClockCard(){
         </div>
         <div class="form-group">
           <label>Job</label>
-          <select id="ci-job"><option value="">— Default (hourly) —</option></select>
+          <select id="ci-job"><option value="">— Select a job —</option></select>
         </div>
       </div>
       <div class="clock-controls" style="margin-top:18px">

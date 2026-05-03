@@ -1933,6 +1933,30 @@ let clients = [], staff = [], contracts = [], projects = [], allProjects = [];
 // project IDs are globally unique, so a parent expanded in Dashboard stays
 // expanded if you flip to Projects too.
 const expandedRollups = new Set();
+
+// ─── Render-cache: skip identical innerHTML writes ─────────────────────────
+// Polling rebuilds these tables every few seconds. If the content hasn't
+// changed, writing it back into innerHTML still destroys + recreates every
+// child node — which closes any open <select> dropdown, kills row-hover
+// state, and causes a visible flicker on slower devices. Cache the last
+// HTML by element id and short-circuit when identical.
+const _domRenderCache = new Map();
+function setHtmlIfChanged(el, html) {
+  if (!el) return false;
+  const key = el.id || el;
+  if (_domRenderCache.get(key) === html) return false;
+  _domRenderCache.set(key, html);
+  el.innerHTML = html;
+  return true;
+}
+// If the user is interacting with a <select> in this element (clicked open),
+// don't even bother computing — that interaction is the most fragile thing
+// to clobber.
+function elementHasOpenSelect(el) {
+  if (!el) return false;
+  const ae = document.activeElement;
+  return ae && ae.tagName === 'SELECT' && el.contains(ae);
+}
 const STAGES = ['potential','started','submitted','approved','checklist'];
 const STAGE_LABELS = {potential:'Potential',started:'Started',submitted:'Submitted',approved:'Approved',checklist:'Checklist'};
 const TYPE_LABELS = {inspection:'Inspection',re:'Resident Engineer',permitting:'Permitting',design:'Design',other:'Other'};
@@ -2720,7 +2744,10 @@ async function loadDashboard() {
     return html;
   }
 
-  tbody.innerHTML = buildRows(roots, 0, null, true);
+  // Skip the DOM write if the rendered HTML is identical to last tick.
+  // Avoids the destroy+recreate flicker that closed open dropdowns and
+  // wiped focus/hover state inside the dashboard tree.
+  setHtmlIfChanged(tbody, buildRows(roots, 0, null, true));
 }
 
 // Dashboard tree toggle — uses the shared expandedRollups state so that
@@ -2983,7 +3010,9 @@ function renderProjects(list, expandAll = false) {
     return html;
   }
 
-  tbody.innerHTML = buildProjRows(roots, 0, null, true);
+  // Skip the DOM write if nothing changed — same flicker/dropdown fix as
+  // the dashboard tree above.
+  setHtmlIfChanged(tbody, buildProjRows(roots, 0, null, true));
 }
 
 // Toggle a rollup's expanded state. We track state in the expandedRollups
