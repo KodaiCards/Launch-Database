@@ -1212,6 +1212,10 @@ require('./routes/admin')(app, pool, { requireAdmin, uploadDir: UPLOAD_DIR });
 // Budgets + budget_codes + by-area summary extracted to routes/budgets.js (Track 1.3).
 require('./routes/budgets')(app, pool, {});
 
+// Potential permits (design-submitted candidates) extracted to
+// routes/potential_permits.js (Track 1.3).
+require('./routes/potential_permits')(app, pool, {});
+
 // Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
 require('./routes/concentrators')(app, pool, {});
 
