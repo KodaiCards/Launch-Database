@@ -2158,6 +2158,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/api.js"></script>
 <script src="/js/undo_bar.js"></script>
 <script src="/js/tree_state.js"></script>
+<script src="/js/project_picker.js"></script>
 
 <script>
 
@@ -3967,10 +3968,22 @@ async function loadProjects() {
   if (type) q += `type=${type}&`;
   allProjects = await api(q);
   renderProjects(allProjects);
-  // Also populate time entry project dropdown
+  // Time entry project dropdown — leaves only via the shared picker
+  // helper. Picking a rollup never made sense (you can't log time
+  // against a folder); restricting to leaves is the same UX the
+  // portals have used since the start.
   const tp = document.getElementById('te-project');
-  while (tp.options.length > 1) tp.remove(1);
-  allProjects.forEach(p => tp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+  if (tp && typeof populateProjectPicker === 'function') {
+    populateProjectPicker(tp, allProjects, {
+      placeholder: 'Select project...',
+      group_by_client: true,
+    });
+  } else if (tp) {
+    // Fallback if the helper hasn't loaded — keep the legacy behavior
+    // rather than break the modal.
+    while (tp.options.length > 1) tp.remove(1);
+    allProjects.forEach(p => tp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+  }
   // Populate parent project dropdown — allow top-level AND mid-level as parents
   populateParentDropdown(null);
 }

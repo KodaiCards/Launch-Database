@@ -120,25 +120,45 @@ Six commits on the branch, ready to merge. Items shipped:
 ✅ Design + Permitting portal deletes routed through admin approval (HTTP
    202 + setting_change_request).
 
-Still open (deferred to follow-up branches):
+Also shipped after the initial status snapshot:
 
-- Design/Permitting add-project Client → Type → Existing-Project (with
-  WO# label) → Job cascade. The data is there (project_picker.js +
-  filtered /api/projects endpoints) — just need the UI rework on the
-  two portal HTMLs. Owner ambiguity to resolve first: when picking an
-  "existing project" in the New Project modal, does that PRE-FILL the
-  rest of the form (treat as "add detail to existing"), or just SHOW a
-  duplicate-warning so the user knows the project already exists?
-- Admin Hours tab: surface held timecards (rows where
-  `pending_project_request_id IS NOT NULL` and request status =
-  'rejected') in a "Needs project assignment" panel. Half-day. Once
-  shipped, owner can dismiss/reassign each row manually.
-- Admin project dropdowns refactor to use leaves-only via
-  populateProjectPicker. The portal pickers already do this; the admin
-  ones still show all rows. Mostly mechanical — pilot 2-3 high-traffic
-  pickers (Hours entry, billing) first, then sweep the rest.
-- Color token system rework (Branch 5). Owner approved full token
-  rework as a separate branch. Don't bundle into a feature batch.
+✅ Design + Permitting "Existing Project for this Client" dropdown.
+   Auto-loads when client is selected; picking an entry pivots the
+   modal into Edit mode (pre-fills every field via editProject).
+   Doubles as duplicate-detection AND as an "add detail to existing"
+   affordance.
+✅ Admin Hours tab "Needs Project Assignment" panel above the tree.
+   Lists every time_entries row with project_id IS NULL (held against
+   a pending or rejected project request). Each row has [Assign +
+   Edit] (opens edit modal) and [Delete]. Held entries are filtered
+   out of the regular tree to avoid duplication.
+✅ Color token system rework. Every dark-mode token now defined
+   (--primary, --primary-dark, --primary-light, --primary-text,
+   --surface-1/2/3, --border-strong/weak, --text/--text-secondary/
+   --text-muted, --success/-light/-text, --warning/-light/-text,
+   --danger/-light/-text, --info/-light/-text). Status colors get
+   brighter shades + deep tinted backgrounds in dark mode (WCAG AA on
+   #1A1F26). Tokens added to admin + all 3 portals; legacy aliases
+   preserved so inline styles don't break.
+✅ Admin Hours tab time-entry picker uses populateProjectPicker
+   (leaves-only, grouped by client). project_picker.js now loads in
+   admin too.
+
+Still open (small follow-ups):
+
+- Sweep remaining admin project dropdowns (billing modal, settings,
+  PSC RUS new-project) to use populateProjectPicker. Each is one or
+  two lines once the helper is loaded; not worth rolling into this
+  branch.
+- Inline hex literals across the 10000-line index.html. With the
+  dark-mode tokens now defined, those literals look correct in light
+  mode and dark variants dominate via the cascade where rules exist.
+  A full sweep is its own follow-up.
+- Make portal undo bar emit on actions that return undo tokens. Today
+  the bar is wired in (markup + module load) but no portal endpoint
+  returns tokens yet. When delete-with-notification rolls out fully
+  (admin clicks approve → /api/projects/:id/with-tree → undo token),
+  surface the token in the portal too.
 
 ---
 
