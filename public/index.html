@@ -10,54 +10,110 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
+  /* ── Brand ────────────────────────────────────────────────── */
   --primary:#1B5FA0;
   --primary-dark:#134880;
   --primary-light:#E8F0FB;
+  --primary-text:#FFFFFF;          /* text on primary backgrounds */
+
+  /* ── Surfaces ─────────────────────────────────────────────────
+     surface-1 = page canvas, surface-2 = cards / modals,
+     surface-3 = subtle band (e.g. alternating rows, table headers).
+     The legacy --white alias is preserved so existing inline styles
+     continue to work; new code should use --surface-2 instead. */
+  --surface-1:#F5F7FA;
+  --surface-2:#FFFFFF;
+  --surface-3:#F0F0F0;
+  --white:#FFFFFF;                  /* legacy alias for --surface-2 */
+  --gray-light:#F5F7FA;             /* legacy alias for --surface-1 */
+  --row-alt:#F0F0F0;                /* legacy alias for --surface-3 */
+
+  /* ── Borders / dividers ──────────────────────────────────────
+     border-strong = visible separator; border-weak = subtle. */
+  --border-strong:#DEE2E6;
+  --border-weak:#EEF1F5;
+  --gray-border:#DEE2E6;            /* legacy alias for --border-strong */
   --gray:#6B6B6B;
-  --gray-light:#F5F7FA;
-  --gray-border:#DEE2E6;
-  --white:#FFFFFF;
-  --success:#28A745;
-  --warning:#FFC107;
-  --danger:#DC3545;
+
+  /* ── Text ────────────────────────────────────────────────────
+     text = primary, text-secondary = de-emphasized but readable,
+     text-muted = supporting captions. */
   --text:#212529;
+  --text-secondary:#495057;
   --text-muted:#6C757D;
-  --font:'Inter',sans-serif;
-  /* Alternating row bg for nested project trees. Light mode: subtle gray
-     stripe (#F0F0F0). Dark mode: a slightly-lighter shade than the page
-     bg so depth-2 rows have visual separation from depth-1. Using a CSS
-     var means inline style="background:var(--row-alt)" gets the right
-     color in both modes without attribute-substring CSS overrides — which
-     was the source of the dark-mode row flicker (the override fires after
-     the inline paint so the row briefly showed the literal #f0f0f0). */
-  --row-alt:#F0F0F0;
-  /* Chart bar bg for the Monthly Earnings Trend on the Revenue tab. In
-     light mode we use the brand light-blue. In dark mode we override to a
-     much brighter shade so bars are visible against the dark page bg
-     (the original --primary-light is too close to the dark page color
-     to register visually). */
+
+  /* ── Status colors ───────────────────────────────────────────
+     Each has a -light tinted background and a -text color sized for
+     contrast on that tint. The plain token (--success etc.) is the
+     bold/CTA color suitable for borders, badges, fills. */
+  --success:#28A745;
+  --success-light:#E8F5E9;
+  --success-text:#1B5E20;
+  --warning:#FFC107;
+  --warning-light:#FFF8E1;
+  --warning-text:#7A4F0E;
+  --danger:#DC3545;
+  --danger-light:#FDECEA;
+  --danger-text:#B71C1C;
+  --info:#1B5FA0;                   /* alias of --primary for info contexts */
+  --info-light:#E8F0FB;
+  --info-text:#0D47A1;
+
+  /* ── Misc ────────────────────────────────────────────────────
+     Chart bar bg for the Monthly Earnings Trend on the Revenue tab.
+     In light mode we use the brand light-blue. In dark mode we override
+     to a much brighter shade so bars are visible against the dark page
+     bg. */
   --chart-bar:#BBDEFB;
+  --font:'Inter',sans-serif;
 }
 
-/* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode(). */
+/* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode().
+   Every semantic token has a dark variant so contrast works without per-
+   component overrides. The status colors shift to lighter shades that
+   read on dark backgrounds (per WCAG AA on a #1A1F26 surface). */
 html[data-theme="dark"]{
-  --gray-light:#1A1F26;
-  --gray-border:#2D3540;
-  --white:#242B36;
-  --text:#E8EAED;
-  --text-muted:#9BA1A8;
+  /* Brand */
+  --primary:#4A90D9;
+  --primary-dark:#1B5FA0;
   --primary-light:#1E3A5C;
-  --row-alt:#1F2630;
-  /* Chart bars in dark mode need to stand out against the dark page bg.
-     A muted blue-gray works visually distinct from both the page (very
-     dark blue-gray) and the brand primary (saturated blue) used for the
-     selected/highlighted bar. */
+  --primary-text:#FFFFFF;
+
+  /* Surfaces */
+  --surface-1:#1A1F26;
+  --surface-2:#242B36;
+  --surface-3:#1F2630;
+  --white:#242B36;                  /* legacy alias */
+  --gray-light:#1A1F26;             /* legacy alias */
+  --row-alt:#1F2630;                /* legacy alias */
+
+  /* Borders */
+  --border-strong:#2D3540;
+  --border-weak:#252A33;
+  --gray-border:#2D3540;            /* legacy alias */
+
+  /* Text */
+  --text:#E8EAED;
+  --text-secondary:#C2C7CD;
+  --text-muted:#9BA1A8;
+
+  /* Status — brighter shades on dark, with deep tinted backgrounds */
+  --success:#5DD27A;
+  --success-light:#1B3D24;
+  --success-text:#A5D6A7;
+  --warning:#FFCA28;
+  --warning-light:#3D2F0F;
+  --warning-text:#FFCC80;
+  --danger:#EF5350;
+  --danger-light:#3D1F23;
+  --danger-text:#F8B4BD;
+  --info:#4A90D9;
+  --info-light:#1E3A5C;
+  --info-text:#90CAF9;
+
   --chart-bar:#3D4A5C;
   /* color-scheme on the root tells the OS-rendered controls (select popups,
-     scrollbars, default form widgets) to use their dark variants. Setting
-     this on individual selects causes a flicker because the popup opens
-     before the OS color-scheme inheritance kicks in. Setting it on html
-     means every native widget renders dark from the very first paint. */
+     scrollbars, default form widgets) to use their dark variants. */
   color-scheme: dark;
 }
 html[data-theme="dark"] body{background:#0F1419}
