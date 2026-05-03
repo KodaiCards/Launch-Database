@@ -8256,6 +8256,137 @@ async function sendAI() {
   callAI(aiMessages);
 }
 
+// ─── AI approval card ─────────────────────────────────────────────────
+// Renders the bundle of proposed actions Claude wants to take. Each action
+// is a row with a checkbox (defaults checked), a one-line summary, and an
+// expandable JSON view of the raw input. Footer has Apply Selected and
+// Reject All. On Apply, posts decisions back to /api/ai/chat with the
+// approval_id; the chat loop resumes from there.
+function renderApprovalCard(res) {
+  const msgs = document.getElementById('ai-messages');
+  const card = document.createElement('div');
+  card.className = 'ai-msg assistant';
+  card.style.background = 'var(--white,#fff)';
+  card.style.border = '2px solid var(--primary,#1B5FA0)';
+  card.style.padding = '0';
+  card.style.overflow = 'hidden';
+
+  const actions = res.proposed_actions || [];
+  const header = `
+    <div style="background:var(--primary-light,#E3F2FD);padding:10px 14px;font-weight:600;display:flex;align-items:center;gap:8px">
+      <i class="fa-solid fa-shield-halved" style="color:var(--primary,#1B5FA0)"></i>
+      <span>Claude wants to do ${actions.length} thing${actions.length !== 1 ? 's' : ''}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-muted);font-weight:500">Review and apply</span>
+    </div>`;
+
+  const rows = actions.map((a, i) => {
+    const summary = esc(a.summary || a.tool_name);
+    const inputJson = esc(JSON.stringify(a.tool_input, null, 2));
+    const danger = a.is_destructive ? 'background:#FFF8E1;' : '';
+    return `<div data-action-id="${esc(a.id)}" style="${danger}border-top:1px solid var(--gray-border);padding:10px 14px">
+      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+        <input type="checkbox" class="ai-approve-cb" data-id="${esc(a.id)}" checked style="margin-top:3px">
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:13px">${summary}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;font-family:monospace">${esc(a.tool_name)}</div>
+          <details style="margin-top:6px">
+            <summary style="font-size:11px;color:var(--primary,#1B5FA0);cursor:pointer">Show raw input</summary>
+            <pre style="margin:6px 0 0 0;padding:8px;background:var(--gray-light);border-radius:4px;font-size:11px;white-space:pre-wrap;word-break:break-word">${inputJson}</pre>
+          </details>
+        </div>
+      </label>
+    </div>`;
+  }).join('');
+
+  const footer = `
+    <div style="padding:10px 14px;display:flex;gap:8px;justify-content:flex-end;background:var(--gray-light)">
+      <button class="btn btn-sm btn-secondary" data-act="reject-all">Reject all</button>
+      <button class="btn btn-sm btn-primary" data-act="apply"><i class="fa-solid fa-check"></i> Apply selected</button>
+    </div>`;
+
+  card.innerHTML = header + rows + footer;
+  msgs.appendChild(card);
+  scrollAI();
+
+  card.querySelector('[data-act="reject-all"]').addEventListener('click', () => {
+    card.querySelectorAll('.ai-approve-cb').forEach(cb => { cb.checked = false; });
+    submitApproval(card, res.approval_id);
+  });
+  card.querySelector('[data-act="apply"]').addEventListener('click', () => {
+    submitApproval(card, res.approval_id);
+  });
+}
+
+async function submitApproval(cardEl, approvalId) {
+  const decisions = {};
+  cardEl.querySelectorAll('.ai-approve-cb').forEach(cb => {
+    decisions[cb.getAttribute('data-id')] = !!cb.checked;
+  });
+  // Lock the card so duplicate clicks don't double-fire
+  cardEl.querySelectorAll('button, input').forEach(el => { el.disabled = true; });
+  cardEl.style.opacity = '0.7';
+  const approvedCount = Object.values(decisions).filter(Boolean).length;
+  const totalCount = Object.keys(decisions).length;
+
+  // Reuse the same chat endpoint with approval_id + decisions
+  const thinking = document.createElement('div');
+  thinking.className = 'ai-thinking';
+  thinking.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('ai-messages').appendChild(thinking);
+  scrollAI();
+
+  try {
+    const res = await api('/api/ai/chat', 'POST', { approval_id: approvalId, decisions });
+    thinking.remove();
+    // Visual receipt on the card
+    const status = document.createElement('div');
+    status.style.cssText = 'padding:8px 14px;background:var(--gray-light);border-top:1px solid var(--gray-border);font-size:12px;color:var(--text-muted)';
+    status.textContent = `Applied ${approvedCount} of ${totalCount} action${totalCount !== 1 ? 's' : ''}.`;
+    cardEl.appendChild(status);
+
+    // Then handle the resumed response — same branching as initial callAI
+    if (res.kind === 'pending_approval') {
+      if (res.preamble_text) appendAIMessage('assistant', res.preamble_text);
+      renderApprovalCard(res);
+      return;
+    }
+    const content = res.content || '';
+    appendAIMessage('assistant', content);
+    aiMessages.push({ role: 'assistant', content });
+    if (res.toolResults && res.toolResults.length) renderToolReceipts(res.toolResults);
+  } catch (e) {
+    thinking.remove();
+    appendAIMessage('assistant', '⚠ Approval failed: ' + e.message);
+  }
+}
+
+// Pulled out of callAI so submitApproval can reuse it for resumed responses.
+function renderToolReceipts(toolResults) {
+  for (const tr of toolResults) {
+    if (tr.tool === 'query_database') continue;
+    const successDiv = document.createElement('div');
+    successDiv.className = 'ai-msg assistant';
+    if (tr.result && tr.result.success) {
+      successDiv.style.background = '#D4EDDA';
+      successDiv.style.color = '#155724';
+      successDiv.innerHTML = '<strong>✓ ' + esc(tr.tool) + '</strong>';
+      // Trigger any view refreshes that match the tool
+      if (['create_project','update_project','delete_project','update_project_status','bulk_update_projects'].includes(tr.tool)) {
+        if (typeof loadProjects === 'function') loadProjects();
+        if (typeof loadDashboard === 'function') loadDashboard();
+      }
+      if (tr.tool === 'create_client' && typeof loadClients === 'function') loadClients();
+      if (tr.tool === 'create_engineering_contract' && typeof loadEngineeringContracts === 'function') loadEngineeringContracts();
+    } else if (tr.result && !tr.result.success) {
+      successDiv.style.background = '#F8D7DA';
+      successDiv.style.color = '#721C24';
+      successDiv.innerHTML = '<strong>✗ ' + esc(tr.tool) + ':</strong> ' + esc(tr.result.error || 'Unknown error');
+    }
+    document.getElementById('ai-messages').appendChild(successDiv);
+  }
+  scrollAI();
+}
+
 async function callAI(messages) {
   const thinking = document.createElement('div');
   thinking.className = 'ai-thinking';
@@ -8266,6 +8397,17 @@ async function callAI(messages) {
   try {
     const res = await api('/api/ai/chat', 'POST', { messages, session_id: aiSessionId });
     thinking.remove();
+
+    // ─── Branch on response kind ─────────────────────────────────────
+    // kind='pending_approval' → AI proposed destructive actions; render
+    // an approval card with one toggle per action plus Apply/Reject all.
+    // kind='final' (or omitted, for backwards compat) → normal text response.
+    if (res.kind === 'pending_approval') {
+      if (res.preamble_text) appendAIMessage('assistant', res.preamble_text);
+      renderApprovalCard(res);
+      return;
+    }
+
     const content = res.content || '';
 
     // Show the text response

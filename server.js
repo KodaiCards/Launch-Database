@@ -5164,6 +5164,115 @@ const AI_TOOLS = [
       },
       required: ['upload_id']
     }
+  },
+
+  // ─── EXPANDED CAPABILITIES (admin-confirmed) ──────────────────────────────
+  // The tools below either operate at higher leverage (bulk) or touch
+  // sensitive surface area (users, raw SQL, invoices). Each is gated by the
+  // approval mechanism — Claude proposes the action, the admin reviews
+  // exactly what will run, and clicks Apply before any DB write happens.
+  // See DESTRUCTIVE_TOOLS in the chat handler for which tools require approval.
+
+  {
+    name: 'create_engineering_contract',
+    description: 'Create an engineering-contract umbrella above one or more billing contracts. Use when the user has a master agreement (e.g. "RUS 217 Engineering Contract GA 1706 -A72") that contains multiple billing contracts (515-3, 515-4, 515-5). The umbrella is where shared budgets attach. After creation, you can attach existing contracts via update_contract_umbrella.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id: { type: 'string', description: 'Client UUID' },
+        name: { type: 'string', description: 'Display name (e.g. "RUS 217 Engineering Contract GA 1706 -A72")' },
+        contract_number: { type: 'string', description: 'Optional short identifier (e.g. "RUS 217")' },
+        notes: { type: 'string', description: 'Optional free-form notes' }
+      },
+      required: ['client_id', 'name']
+    }
+  },
+
+  {
+    name: 'update_contract_umbrella',
+    description: 'Move a billing contract under (or out of) an engineering-contract umbrella. Pass engineering_contract_id=null to detach. Use after create_engineering_contract to wire existing contracts up.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        contract_id: { type: 'string', description: 'Billing contract UUID' },
+        engineering_contract_id: { type: ['string', 'null'], description: 'Engineering contract UUID, or null to detach' }
+      },
+      required: ['contract_id']
+    }
+  },
+
+  {
+    name: 'bulk_update_projects',
+    description: 'Update one field on many projects matching a filter. High-leverage operation — always preview the affected count first by running query_database before calling this. Filter and patch are both required. Returns rowCount of affected projects.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        filter: {
+          type: 'object',
+          description: 'Match conditions. Supported keys: client_id, contract_id, engineering_contract_id, status, project_type. Any combination AND-ed together.',
+          properties: {
+            client_id: { type: 'string' },
+            contract_id: { type: 'string' },
+            engineering_contract_id: { type: 'string' },
+            status: { type: 'string' },
+            project_type: { type: 'string' }
+          }
+        },
+        patch: {
+          type: 'object',
+          description: 'Fields to set. Supported: status, billing_cadence, notes, billing_rate, contract_id, parent_id.',
+          properties: {
+            status: { type: 'string', enum: ['active', 'completed', 'billed', 'on_hold'] },
+            billing_cadence: { type: 'string', enum: ['one_time', 'monthly'] },
+            notes: { type: 'string' },
+            billing_rate: { type: ['number', 'null'] },
+            contract_id: { type: ['string', 'null'] }
+          }
+        }
+      },
+      required: ['filter', 'patch']
+    }
+  },
+
+  {
+    name: 'write_sql',
+    description: 'Execute arbitrary SQL (INSERT/UPDATE/DELETE/DDL). Use ONLY when no specific tool exists for the operation — e.g. one-off data migrations, complex multi-table updates. Always preview the impact first via query_database. Single statement only (no semicolons inside the body).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        sql: { type: 'string', description: 'SQL to execute (single statement, no trailing semicolon)' },
+        params: { type: 'array', items: {}, description: 'Parameterized values for $1, $2, ... — strongly preferred over inline values to avoid injection.' }
+      },
+      required: ['sql']
+    }
+  },
+
+  {
+    name: 'create_user',
+    description: 'Create a new user account. Used to onboard new employees so they can log in. Roles: admin, design_manager, permitting_manager, design_engineer, permitting_engineer.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        username: { type: 'string', description: 'Login name (case-insensitive unique)' },
+        password: { type: 'string', description: 'Initial password — minimum 10 characters. Tell the user the value so they can pass it on.' },
+        role: { type: 'string', enum: ['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer'] },
+        full_name: { type: 'string', description: 'Display name' },
+        email: { type: 'string', description: 'Email (optional)' },
+        staff_id: { type: 'string', description: 'Optional staff record UUID to link this user to (required for time clock access)' },
+        extra_teams: { type: 'array', items: { type: 'string' }, description: 'Additional teams beyond their primary role: design, permitting, inspection. Empty by default.' }
+      },
+      required: ['username', 'password', 'role']
+    }
+  },
+
+  {
+    name: 'deactivate_user',
+    description: 'Deactivate a user account. Their existing JWTs are immediately invalidated. Reversible by setting active=true via update later.',
+    input_schema: {
+      type: 'object',
+      properties: { user_id: { type: 'string' } },
+      required: ['user_id']
+    }
   }
 ];
 
@@ -5658,11 +5767,204 @@ async function executeTool(toolName, toolInput) {
         }
       }
 
+      // ─── EXPANDED TOOLS ─────────────────────────────────────────────
+      case 'create_engineering_contract': {
+        const { client_id, name, contract_number, notes } = toolInput;
+        if (!client_id || !name) return { success: false, error: 'client_id and name required' };
+        try {
+          const { rows } = await pool.query(
+            `INSERT INTO engineering_contracts (client_id, name, contract_number, notes)
+             VALUES ($1,$2,$3,$4) RETURNING *`,
+            [client_id, String(name).trim(), contract_number || null, notes || null]
+          );
+          return { success: true, engineering_contract: rows[0] };
+        } catch (e) {
+          if (e.code === '23505') return { success: false, error: 'Engineering contract with this name already exists for this client' };
+          return { success: false, error: e.message };
+        }
+      }
+
+      case 'update_contract_umbrella': {
+        const { contract_id, engineering_contract_id } = toolInput;
+        if (!contract_id) return { success: false, error: 'contract_id required' };
+        const { rows } = await pool.query(
+          `UPDATE contracts SET engineering_contract_id = $1 WHERE id = $2 RETURNING *`,
+          [engineering_contract_id || null, contract_id]
+        );
+        if (!rows[0]) return { success: false, error: 'Contract not found' };
+        return { success: true, contract: rows[0] };
+      }
+
+      case 'bulk_update_projects': {
+        const { filter, patch } = toolInput;
+        if (!filter || !patch) return { success: false, error: 'filter and patch both required' };
+
+        // Build WHERE — only allow known filter keys, parameterize values
+        const ALLOWED_FILTER = new Set(['client_id', 'contract_id', 'engineering_contract_id', 'status', 'project_type']);
+        const where = [];
+        const params = [];
+        let i = 1;
+        for (const [k, v] of Object.entries(filter)) {
+          if (!ALLOWED_FILTER.has(k)) continue;
+          if (k === 'engineering_contract_id') {
+            // No direct column on projects; resolve via contracts
+            where.push(`contract_id IN (SELECT id FROM contracts WHERE engineering_contract_id = $${i++})`);
+            params.push(v);
+          } else {
+            where.push(`${k} = $${i++}`); params.push(v);
+          }
+        }
+        if (!where.length) return { success: false, error: 'At least one filter key required' };
+
+        // Build SET — only allow known patch keys
+        const ALLOWED_PATCH = new Set(['status', 'billing_cadence', 'notes', 'billing_rate', 'contract_id', 'parent_id']);
+        const sets = [];
+        for (const [k, v] of Object.entries(patch)) {
+          if (!ALLOWED_PATCH.has(k)) continue;
+          sets.push(`${k} = $${i++}`); params.push(v);
+        }
+        if (!sets.length) return { success: false, error: 'At least one patch field required' };
+        sets.push(`updated_at = NOW()`);
+
+        const sql = `UPDATE projects SET ${sets.join(', ')} WHERE ${where.join(' AND ')} RETURNING id`;
+        const { rows } = await pool.query(sql, params);
+        return { success: true, updated_count: rows.length, ids: rows.map(r => r.id) };
+      }
+
+      case 'write_sql': {
+        // Arbitrary write SQL — gated by approval (the chat handler stages
+        // this tool before executing). We still enforce single-statement
+        // here as a defense-in-depth measure: even with admin approval, a
+        // multi-statement string that includes a stray DROP slipped past
+        // the human reviewer's eye should fail closed.
+        const sql = String(toolInput.sql || '').trim().replace(/;+\s*$/, '');
+        const params = Array.isArray(toolInput.params) ? toolInput.params : [];
+        if (!sql) return { success: false, error: 'sql required' };
+        if (sql.includes(';')) return { success: false, error: 'Multiple statements not allowed in a single write_sql call.' };
+        try {
+          const result = await pool.query(sql, params);
+          return {
+            success: true,
+            command: result.command,
+            row_count: result.rowCount,
+            // Return up to 100 rows for the AI to confirm what changed
+            rows: (result.rows || []).slice(0, 100),
+          };
+        } catch (e) { return { success: false, error: e.message }; }
+      }
+
+      case 'create_user': {
+        const bcrypt = require('bcryptjs');
+        const { username, password, role, full_name, email, staff_id, extra_teams } = toolInput;
+        if (!username || !password || !role) return { success: false, error: 'username, password, role required' };
+        if (password.length < 10) return { success: false, error: 'Password must be at least 10 characters' };
+        const VALID_ROLES = ['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer'];
+        if (!VALID_ROLES.includes(role)) return { success: false, error: 'Invalid role' };
+        const team = role.startsWith('design_') ? 'design'
+                   : role.startsWith('permitting_') ? 'permitting'
+                   : role.startsWith('inspection_') ? 'inspection'
+                   : null;
+        const cleanExtras = Array.isArray(extra_teams)
+          ? extra_teams.filter(t => ['design', 'permitting', 'inspection'].includes(t))
+          : [];
+        try {
+          const hash = await bcrypt.hash(password, 12);
+          const { rows } = await pool.query(
+            `INSERT INTO users (username, password_hash, role, team, full_name, email, extra_teams, staff_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             RETURNING id, username, role, team, full_name, email, staff_id, extra_teams, active, created_at`,
+            [String(username).trim(), hash, role, team, full_name || null, email || null, cleanExtras, staff_id || null]
+          );
+          return { success: true, user: rows[0] };
+        } catch (e) {
+          if (e.code === '23505') return { success: false, error: 'Username already taken' };
+          return { success: false, error: e.message };
+        }
+      }
+
+      case 'deactivate_user': {
+        const { user_id } = toolInput;
+        if (!user_id) return { success: false, error: 'user_id required' };
+        const { rows } = await pool.query(
+          `UPDATE users SET active = FALSE, tokens_invalid_after = NOW(), updated_at = NOW()
+           WHERE id = $1 RETURNING id, username, active`,
+          [user_id]
+        );
+        if (!rows[0]) return { success: false, error: 'User not found' };
+        return { success: true, user: rows[0] };
+      }
+
       default:
         return { success: false, error: 'Unknown tool: ' + toolName };
     }
   } catch (err) {
     return { success: false, error: err.message };
+  }
+}
+
+// ─── AI APPROVAL GATE ─────────────────────────────────────────────────────
+// The set of tool names that REQUIRE explicit admin approval before they
+// run. Read-only tools (query_database, get_upload_data) execute
+// immediately; everything that mutates state pauses the chat loop, returns
+// a "preview" payload to the frontend, and waits for the admin to click
+// Apply on each proposed action.
+const DESTRUCTIVE_AI_TOOLS = new Set([
+  'create_project', 'update_project', 'delete_project', 'update_project_status',
+  'log_time_entries',
+  'create_client', 'update_client', 'delete_client',
+  'create_staff', 'create_contract', 'update_contract_umbrella',
+  'create_budget', 'create_budget_code', 'update_budget_code',
+  'set_billing_cadence',
+  'advance_permit_stage',
+  'csv_smart_import',
+  'create_engineering_contract',
+  'bulk_update_projects',
+  'write_sql',
+  'create_user', 'deactivate_user',
+]);
+
+// In-process pending-approval store. Each entry holds the conversation
+// state needed to resume the chat after the user approves/rejects the
+// staged actions. Single-instance only — for multi-instance deploys this
+// would need to move to Postgres.
+const _pendingApprovals = new Map();
+const APPROVAL_TTL_MS = 15 * 60 * 1000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _pendingApprovals) {
+    if (v.expires_at < now) _pendingApprovals.delete(k);
+  }
+}, 5 * 60 * 1000).unref();
+
+// Build a one-line human summary of a tool call so the approval UI doesn't
+// have to render raw JSON. The chat frontend can still show the full input
+// on demand.
+function summarizeToolCall(toolName, toolInput) {
+  const i = toolInput || {};
+  switch (toolName) {
+    case 'create_project':            return `Create project "${i.name}"`;
+    case 'update_project':            return `Update project ${i.project_id}`;
+    case 'delete_project':            return `Delete project ${i.project_id}`;
+    case 'update_project_status':     return `Set project ${i.project_id} status → "${i.status}"`;
+    case 'log_time_entries':          return `Log ${(i.entries || []).length} time entries`;
+    case 'create_client':             return `Create client "${i.name}"`;
+    case 'update_client':             return `Update client ${i.client_id}`;
+    case 'delete_client':             return `Delete client ${i.client_id}`;
+    case 'create_staff':              return `Create staff "${i.name}"`;
+    case 'create_contract':           return `Create contract "${i.contract_number}" for client ${i.client_id}`;
+    case 'update_contract_umbrella':  return `Move contract ${i.contract_id} → engineering_contract ${i.engineering_contract_id || '(detach)'}`;
+    case 'create_budget':             return `Create budget "${i.name}" on project ${i.project_id}`;
+    case 'create_budget_code':        return `Add code "${i.code}" ($${i.allocated_amount || 0}) to budget ${i.budget_id}`;
+    case 'update_budget_code':        return `Update budget code ${i.budget_code_id}`;
+    case 'set_billing_cadence':       return `Set billing cadence on project ${i.project_id} → "${i.cadence}"`;
+    case 'advance_permit_stage':      return `Advance permit stage on project ${i.project_id}`;
+    case 'csv_smart_import':          return `Smart-import CSV upload ${i.upload_id}`;
+    case 'create_engineering_contract': return `Create engineering contract "${i.name}"`;
+    case 'bulk_update_projects':      return `BULK update projects matching ${JSON.stringify(i.filter)} → ${JSON.stringify(i.patch)}`;
+    case 'write_sql':                 return `EXECUTE SQL: ${String(i.sql || '').slice(0, 200)}${(i.sql || '').length > 200 ? '…' : ''}`;
+    case 'create_user':               return `Create user "${i.username}" with role ${i.role}`;
+    case 'deactivate_user':           return `Deactivate user ${i.user_id}`;
+    default:                          return toolName;
   }
 }
 
@@ -5768,52 +6070,90 @@ app.get('/api/ai/upload/:id', requireAdmin, async (req, res) => {
 });
 
 // ─── AI CHAT ENDPOINT ────────────────────────────────────────────────────────
+//
+// Two entry shapes:
+//   1. Initial chat: body = { messages, session_id }
+//   2. Resume from approval: body = { approval_id, decisions: { tool_use_id: bool } }
+//
+// Both end up running the same loop. When Claude proposes any DESTRUCTIVE
+// tool, the loop pauses, stages the proposed actions in _pendingApprovals,
+// and returns a "pending_approval" response. The frontend renders the
+// proposed actions, the admin approves/rejects each one, and posts the
+// decisions back via the same endpoint with approval_id. Approved actions
+// run, rejected ones come back as "user declined" tool_results, and the
+// loop continues (which may produce more text, more tool calls, or another
+// approval round).
 app.post('/api/ai/chat', requireAdmin, async (req, res) => {
-  const { messages, session_id } = req.body;
-  if (!messages || !messages.length) return res.status(400).json({ error: 'No messages' });
+  const { messages, session_id, approval_id, decisions } = req.body || {};
+
+  let conversationMessages;
+  let systemBlocks;
+  let cachedTools;
+  let toolResults = [];
+  let finalText = '';
 
   try {
-    const ctx = await getDBContext();
-    // Anchor the AI to today's date so it never guesses the year wrong on imports.
-    ctx._today = new Date().toISOString().split('T')[0];
+    if (approval_id) {
+      // ── Resume path ─────────────────────────────────────────────────
+      const pending = _pendingApprovals.get(approval_id);
+      if (!pending) return res.status(404).json({ error: 'Approval expired or not found. Resend your message.' });
+      _pendingApprovals.delete(approval_id);
 
-    // Split system prompt into static rules + dynamic DB context, cache both.
-    // Static block changes only when SYSTEM_PROMPT does. DB context block is identical
-    // across all iterations within a single chat request, so it caches perfectly.
-    const [staticPromptPart] = SYSTEM_PROMPT.split('{CONTEXT}');
-    const systemBlocks = [
-      {
-        type: 'text',
-        text: staticPromptPart,
-        cache_control: { type: 'ephemeral' }
-      },
-      {
-        type: 'text',
-        text: JSON.stringify(ctx, null, 2),
-        cache_control: { type: 'ephemeral' }
+      systemBlocks = pending.systemBlocks;
+      cachedTools = pending.cachedTools;
+      conversationMessages = pending.conversationMessages;  // up to and including the assistant tool_use turn
+      toolResults = pending.toolResults || [];
+      finalText = pending.finalText || '';
+
+      // Build tool_results for the staged tool_use blocks based on user
+      // decisions. Approved → execute; rejected → synthesize "declined".
+      const stagedToolUses = pending.stagedToolUses;
+      const decisionsMap = decisions || {};
+      const toolResultContents = [];
+      for (const tu of stagedToolUses) {
+        const approved = !!decisionsMap[tu.id];
+        let result;
+        if (approved) {
+          console.log(`AI APPROVED tool: ${tu.name}`, JSON.stringify(tu.input).substring(0, 200));
+          result = await executeTool(tu.name, tu.input);
+        } else {
+          result = { success: false, error: 'User declined this action.', user_declined: true };
+        }
+        toolResults.push({ tool: tu.name, input: tu.input, result, was_approved: approved });
+        toolResultContents.push({
+          type: 'tool_result',
+          tool_use_id: tu.id,
+          content: JSON.stringify(result),
+        });
       }
-    ];
+      conversationMessages.push({ role: 'user', content: toolResultContents });
+    } else {
+      // ── Initial path ────────────────────────────────────────────────
+      if (!messages || !messages.length) return res.status(400).json({ error: 'No messages' });
 
-    // Cache all 14 tool definitions in one breakpoint by marking the last one.
-    const cachedTools = AI_TOOLS.map((t, i) =>
-      i === AI_TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t
-    );
+      const ctx = await getDBContext();
+      ctx._today = new Date().toISOString().split('T')[0];
+      const [staticPromptPart] = SYSTEM_PROMPT.split('{CONTEXT}');
+      systemBlocks = [
+        { type: 'text', text: staticPromptPart, cache_control: { type: 'ephemeral' } },
+        { type: 'text', text: JSON.stringify(ctx, null, 2), cache_control: { type: 'ephemeral' } },
+      ];
+      cachedTools = AI_TOOLS.map((t, i) =>
+        i === AI_TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t
+      );
+      conversationMessages = messages.map(m => ({ role: m.role, content: m.content }));
+    }
 
+    // ── Main loop ─────────────────────────────────────────────────────
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: systemBlocks,
       tools: cachedTools,
       tool_choice: { type: 'auto' },
-      messages: messages.map(m => ({ role: m.role, content: m.content }))
+      messages: conversationMessages,
     });
 
-    let finalText = '';
-    let toolResults = [];
-    let conversationMessages = [...messages.map(m => ({ role: m.role, content: m.content }))];
-
-    // Handle tool use in a loop (Claude may chain multiple tools).
-    // 15 leaves headroom for: paged Excel reads (4-6) + log + verification query + summary.
     let iterations = 0;
     const MAX_ITERATIONS = 15;
 
@@ -5825,6 +6165,41 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         if (tb.text.trim()) finalText += tb.text + '\n';
       }
 
+      // Approval gate: if ANY tool in this batch is destructive, stage
+      // ALL of them (including any read-only tools in the same batch — we
+      // want the admin to see exactly what Claude wants to do as one
+      // bundle, not split executions). Save state, return preview.
+      const anyDestructive = toolUseBlocks.some(tu => DESTRUCTIVE_AI_TOOLS.has(tu.name));
+      if (anyDestructive) {
+        // Push the assistant turn so on resume the conversation has it
+        conversationMessages.push({ role: 'assistant', content: response.content });
+
+        const approvalId = uuidv4();
+        _pendingApprovals.set(approvalId, {
+          systemBlocks, cachedTools, conversationMessages,
+          stagedToolUses: toolUseBlocks,
+          toolResults, finalText,
+          expires_at: Date.now() + APPROVAL_TTL_MS,
+        });
+
+        const proposed_actions = toolUseBlocks.map(tu => ({
+          id: tu.id,
+          tool_name: tu.name,
+          tool_input: tu.input,
+          summary: summarizeToolCall(tu.name, tu.input),
+          is_destructive: DESTRUCTIVE_AI_TOOLS.has(tu.name),
+        }));
+        return res.json({
+          kind: 'pending_approval',
+          approval_id: approvalId,
+          preamble_text: finalText.trim(),  // any reasoning Claude shared before the tools
+          proposed_actions,
+          tool_results_so_far: toolResults,
+          usage: response.usage,
+        });
+      }
+
+      // No destructive tools — execute all immediately
       const toolResultContents = [];
       for (const toolUseBlock of toolUseBlocks) {
         console.log(`AI Tool Call: ${toolUseBlock.name}`, JSON.stringify(toolUseBlock.input).substring(0, 200));
@@ -5834,11 +6209,9 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         toolResultContents.push({
           type: 'tool_result',
           tool_use_id: toolUseBlock.id,
-          content: JSON.stringify(toolResult)
+          content: JSON.stringify(toolResult),
         });
       }
-
-      // Continue conversation with tool results
       conversationMessages.push({ role: 'assistant', content: response.content });
       conversationMessages.push({ role: 'user', content: toolResultContents });
 
@@ -5848,7 +6221,7 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         system: systemBlocks,
         tools: cachedTools,
         tool_choice: { type: 'auto' },
-        messages: conversationMessages
+        messages: conversationMessages,
       });
     }
 
@@ -5886,9 +6259,10 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     }
 
     res.json({
+      kind: 'final',
       content: finalText.trim(),
       toolResults,
-      usage: response.usage
+      usage: response.usage,
     });
 
   } catch (e) {
