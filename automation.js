@@ -179,121 +179,254 @@ async function findPermitsAwaitingInvoice(pool) {
   return rows;
 }
 
-// Inspection revenue projection — for each active inspection-team project,
-// estimate remaining revenue based on recent burn rate, capped by the
-// project's budget allocation so we don't project beyond what PSC will
-// actually pay. Admin-only data — never exposed to managers/engineers.
+// Inspection revenue projection — UMBRELLA-FIRST.
 //
-// Math:
-//   avg_weekly_hours = SUM(hours in last N weeks) / N
-//   projected_remaining_hours = MIN(
-//     avg_weekly_hours * weeks_remaining_in_year,
-//     (budget_allocated - billed_to_date) / billing_rate
-//   )
-//   projected_remaining_revenue = projected_remaining_hours * billing_rate
+// The data model now allows a budget to attach at the engineering_contract
+// level (e.g. "RUS 217 Engineering Contract" covering contracts 515-3,
+// 515-4, 515-5). When that's the case, the inspection budget covers ALL
+// projects under ALL child contracts in aggregate — it's not split
+// per-project. The projection MUST respect that:
 //
-// "weeks_remaining_in_year" is a simple time-budget cap so projects with
-// budget headroom but no historical pace don't project unbounded revenue.
+//   - For each engineering_contract umbrella that has a budget AND has at
+//     least one inspection project underneath: roll up across the whole
+//     umbrella. ONE row in the output. Pace = sum(recent hours) / lookback,
+//     billed_to_date = sum across all child projects, budget = the
+//     umbrella's budget. Projection capped by remaining umbrella budget.
+//
+//   - Projects whose contract has NO engineering_contract OR whose
+//     engineering_contract has no budget: fall back to per-project mode
+//     (the original behavior). Each gets its own row keyed by project_id.
+//
+// Output rows have a `level` field = 'umbrella' | 'project' so the UI can
+// render them differently. Admin-only data — never exposed below admin.
+//
+// Math (same per row regardless of level):
+//   avg_weekly_hours = hours_last_n_weeks / lookback
+//   pace_hours = avg_weekly_hours × horizon_weeks
+//   budget_remaining = max(0, budget_allocated - billed_to_date)
+//   budget_hours = budget_remaining / weighted_rate
+//   projected_remaining_hours = min(pace_hours, budget_hours) — or pace
+//                               alone when there's no budget cap
+//   projected_remaining_revenue = projected_remaining_hours × weighted_rate
+//
+// weighted_rate handles the umbrella case where projects under it might
+// have different billing_rates (Resident Engineer at $100, Inspection at
+// $90). We weight by recent hours so the rate reflects what's actually
+// being billed.
 async function buildInspectionRevenueProjection(pool, opts) {
   const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
-  const horizonWeeks  = (opts && opts.horizonWeeks)  || 26;  // ~6 months default
+  const horizonWeeks  = (opts && opts.horizonWeeks)  || 26;
 
-  const { rows } = await pool.query(
+  // One row per inspection project, with its umbrella info attached.
+  // We then group by umbrella in JS — cleaner than nested CTEs and easier
+  // to reason about.
+  const { rows: projectRows } = await pool.query(
     `WITH inspection_projects AS (
-       SELECT p.id, p.name, p.client_id, p.billing_rate, p.billing_type,
-              p.expected_hours, p.actual_hours, p.expected_revenue,
-              p.status, cl.name AS client_name,
-              j.name AS job_name, j.team AS job_team
-       FROM projects p
-       LEFT JOIN clients cl ON cl.id = p.client_id
-       LEFT JOIN jobs j ON j.id = p.job_id
-       WHERE (j.team = 'inspection' OR p.project_type = 'inspection')
-         AND p.status IN ('active', 'billed')
-         AND COALESCE(p.is_rollup, FALSE) = FALSE
+       SELECT p.id, p.name, p.client_id, p.contract_id,
+              p.billing_rate::float AS billing_rate,
+              p.billing_type,
+              p.actual_hours::float AS actual_hours,
+              cl.name AS client_name,
+              j.name AS job_name,
+              c.engineering_contract_id,
+              ec.name AS engineering_contract_name
+         FROM projects p
+         LEFT JOIN clients cl ON cl.id = p.client_id
+         LEFT JOIN jobs j ON j.id = p.job_id
+         LEFT JOIN contracts c ON c.id = p.contract_id
+         LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+         WHERE (j.team = 'inspection' OR p.project_type = 'inspection')
+           AND p.status IN ('active', 'billed')
+           AND COALESCE(p.is_rollup, FALSE) = FALSE
      ),
      recent_hours AS (
-       SELECT te.project_id,
-              COALESCE(SUM(te.hours), 0)::float AS hours_recent
-       FROM time_entries te
-       WHERE te.entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
-       GROUP BY te.project_id
+       SELECT te.project_id, COALESCE(SUM(te.hours), 0)::float AS hours_recent
+         FROM time_entries te
+         WHERE te.entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
+         GROUP BY te.project_id
      ),
      billed_to_date AS (
-       SELECT ii.project_id,
-              COALESCE(SUM(ii.amount), 0)::float AS billed
-       FROM invoice_items ii
-       GROUP BY ii.project_id
+       SELECT ii.project_id, COALESCE(SUM(ii.amount), 0)::float AS billed
+         FROM invoice_items ii GROUP BY ii.project_id
      ),
-     budget_for_project AS (
-       SELECT b.project_id,
-              COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
-       FROM budgets b
-       LEFT JOIN budget_codes bc ON bc.budget_id = b.id
-       GROUP BY b.project_id
+     project_budget AS (
+       SELECT b.project_id, COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
+         FROM budgets b
+         LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+         WHERE b.project_id IS NOT NULL
+         GROUP BY b.project_id
      )
-     SELECT
-       ip.id AS project_id,
-       ip.name AS project_name,
-       ip.client_id,
-       ip.client_name,
-       ip.job_name,
-       ip.billing_rate::float AS billing_rate,
-       ip.actual_hours::float AS actual_hours,
-       COALESCE(rh.hours_recent, 0) AS hours_last_n_weeks,
-       COALESCE(bp.budget_allocated, 0) AS budget_allocated,
-       COALESCE(btd.billed, 0) AS billed_to_date
-     FROM inspection_projects ip
-     LEFT JOIN recent_hours rh   ON rh.project_id = ip.id
-     LEFT JOIN billed_to_date btd ON btd.project_id = ip.id
-     LEFT JOIN budget_for_project bp ON bp.project_id = ip.id
-     ORDER BY ip.client_name, ip.name`,
+     SELECT ip.*,
+            COALESCE(rh.hours_recent, 0) AS hours_recent,
+            COALESCE(btd.billed, 0) AS billed_to_date,
+            COALESCE(pb.budget_allocated, 0) AS project_budget_allocated
+       FROM inspection_projects ip
+       LEFT JOIN recent_hours rh ON rh.project_id = ip.id
+       LEFT JOIN billed_to_date btd ON btd.project_id = ip.id
+       LEFT JOIN project_budget pb ON pb.project_id = ip.id`,
     [String(lookbackWeeks)]
   );
 
-  // Compute projection per row in JS — cleaner than burying it in SQL,
-  // and the math is straightforward. The budget cap is the load-bearing
-  // piece: revenue projection NEVER exceeds the remaining budget.
-  let totalProjected = 0;
-  const projections = rows.map(r => {
-    const avgWeekly = lookbackWeeks > 0 ? r.hours_last_n_weeks / lookbackWeeks : 0;
-    const rate = r.billing_rate || 0;
-    // Time budget: how many hours could pace produce in horizon weeks?
+  // Engineering-contract-level budgets (aggregated across budget_codes).
+  // Returned as a map keyed by engineering_contract_id for fast lookup
+  // when grouping projects below.
+  const { rows: ecBudgetRows } = await pool.query(
+    `SELECT b.engineering_contract_id,
+            COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
+       FROM budgets b
+       LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+       WHERE b.engineering_contract_id IS NOT NULL
+       GROUP BY b.engineering_contract_id`
+  );
+  const ecBudget = Object.fromEntries(
+    ecBudgetRows.map(r => [r.engineering_contract_id, r.budget_allocated])
+  );
+
+  // Group: projects whose engineering_contract has a budget go into umbrella
+  // buckets. Everything else stays per-project.
+  const umbrellas = new Map();           // ec_id → { meta, projects[] }
+  const standaloneProjects = [];          // projects with no umbrella budget
+  for (const p of projectRows) {
+    const ecId = p.engineering_contract_id;
+    if (ecId && ecBudget[ecId] != null) {
+      if (!umbrellas.has(ecId)) {
+        umbrellas.set(ecId, {
+          engineering_contract_id: ecId,
+          engineering_contract_name: p.engineering_contract_name,
+          client_id: p.client_id,
+          client_name: p.client_name,
+          budget_allocated: ecBudget[ecId],
+          projects: [],
+        });
+      }
+      umbrellas.get(ecId).projects.push(p);
+    } else {
+      standaloneProjects.push(p);
+    }
+  }
+
+  // ─── Per-row projection math ─────────────────────────────────────────
+  function computeRow(input) {
+    // Inputs:
+    //   weighted_rate  — $/hr to apply (avg if multiple projects)
+    //   hours_recent   — sum of hours in lookback window
+    //   billed_to_date — $ billed against this scope so far
+    //   budget_allocated — $ budget cap for this scope (0 = none)
+    const { weighted_rate, hours_recent, billed_to_date, budget_allocated } = input;
+    const avgWeekly = lookbackWeeks > 0 ? hours_recent / lookbackWeeks : 0;
     const paceHours = avgWeekly * horizonWeeks;
-    // Budget budget: how many hours fit into the remaining budget?
-    const budgetRemaining = Math.max(0, r.budget_allocated - r.billed_to_date);
-    const budgetHours = rate > 0 ? budgetRemaining / rate : Infinity;
-    // Final projection: lesser of pace and budget. If no budget, cap at pace.
-    const projHours = r.budget_allocated > 0
+    const budgetRemaining = Math.max(0, budget_allocated - billed_to_date);
+    const budgetHours = weighted_rate > 0 ? budgetRemaining / weighted_rate : Infinity;
+    const projHours = budget_allocated > 0
       ? Math.min(paceHours, budgetHours)
       : paceHours;
-    const projRevenue = projHours * rate;
-    totalProjected += projRevenue;
+    const projRevenue = projHours * weighted_rate;
     return {
-      project_id: r.project_id,
-      project_name: r.project_name,
-      client_id: r.client_id,
-      client_name: r.client_name,
-      job_name: r.job_name,
-      billing_rate: rate,
-      actual_hours: r.actual_hours,
-      hours_last_n_weeks: r.hours_last_n_weeks,
       avg_weekly_hours: +avgWeekly.toFixed(2),
-      budget_allocated: r.budget_allocated,
-      billed_to_date: r.billed_to_date,
-      budget_remaining: budgetRemaining,
+      budget_remaining: +budgetRemaining.toFixed(2),
       projected_remaining_hours: +projHours.toFixed(1),
       projected_remaining_revenue: +projRevenue.toFixed(2),
-      // Flag: projected revenue would exhaust the budget within horizon
-      will_exhaust_budget: r.budget_allocated > 0 && paceHours >= budgetHours,
+      will_exhaust_budget: budget_allocated > 0 && paceHours >= budgetHours,
     };
+  }
+
+  function weightedRate(projects) {
+    // Weight billing_rate by recent hours; fall back to simple average,
+    // then to first project's rate. Prevents a project that hasn't logged
+    // hours from skewing the umbrella rate.
+    let totalHrs = 0, weighted = 0;
+    for (const p of projects) {
+      totalHrs += p.hours_recent;
+      weighted += (p.billing_rate || 0) * p.hours_recent;
+    }
+    if (totalHrs > 0) return weighted / totalHrs;
+    const rates = projects.map(p => p.billing_rate || 0).filter(r => r > 0);
+    if (!rates.length) return 0;
+    return rates.reduce((s, r) => s + r, 0) / rates.length;
+  }
+
+  let totalProjected = 0;
+  const out = [];
+
+  // Umbrella rows (one per engineering_contract with a budget)
+  for (const u of umbrellas.values()) {
+    const hoursRecent = u.projects.reduce((s, p) => s + p.hours_recent, 0);
+    const billedToDate = u.projects.reduce((s, p) => s + p.billed_to_date, 0);
+    const actualHours = u.projects.reduce((s, p) => s + p.actual_hours, 0);
+    const rate = weightedRate(u.projects);
+    const computed = computeRow({
+      weighted_rate: rate,
+      hours_recent: hoursRecent,
+      billed_to_date: billedToDate,
+      budget_allocated: u.budget_allocated,
+    });
+    totalProjected += computed.projected_remaining_revenue;
+    out.push({
+      level: 'umbrella',
+      engineering_contract_id: u.engineering_contract_id,
+      engineering_contract_name: u.engineering_contract_name,
+      client_id: u.client_id,
+      client_name: u.client_name,
+      project_count: u.projects.length,
+      // Names of constituent projects so the UI can preview without expand
+      child_project_names: u.projects.map(p => p.name),
+      // Aggregates
+      weighted_billing_rate: +rate.toFixed(2),
+      actual_hours: +actualHours.toFixed(2),
+      hours_last_n_weeks: +hoursRecent.toFixed(2),
+      budget_allocated: +u.budget_allocated.toFixed(2),
+      billed_to_date: +billedToDate.toFixed(2),
+      ...computed,
+    });
+  }
+
+  // Standalone project rows (no umbrella with a budget)
+  for (const p of standaloneProjects) {
+    const computed = computeRow({
+      weighted_rate: p.billing_rate || 0,
+      hours_recent: p.hours_recent,
+      billed_to_date: p.billed_to_date,
+      budget_allocated: p.project_budget_allocated,
+    });
+    totalProjected += computed.projected_remaining_revenue;
+    out.push({
+      level: 'project',
+      project_id: p.id,
+      project_name: p.name,
+      client_id: p.client_id,
+      client_name: p.client_name,
+      job_name: p.job_name,
+      // Surface the umbrella name even when the budget isn't there yet,
+      // so admin can see "this is part of RUS 217 but RUS 217 has no budget yet"
+      engineering_contract_id: p.engineering_contract_id || null,
+      engineering_contract_name: p.engineering_contract_name || null,
+      billing_rate: p.billing_rate || 0,
+      actual_hours: p.actual_hours,
+      hours_last_n_weeks: p.hours_recent,
+      budget_allocated: p.project_budget_allocated,
+      billed_to_date: p.billed_to_date,
+      ...computed,
+    });
+  }
+
+  // Sort: umbrellas first (highest projected first), then standalone projects.
+  out.sort((a, b) => {
+    if (a.level !== b.level) return a.level === 'umbrella' ? -1 : 1;
+    return b.projected_remaining_revenue - a.projected_remaining_revenue;
   });
 
   return {
     lookback_weeks: lookbackWeeks,
     horizon_weeks: horizonWeeks,
-    project_count: projections.length,
+    umbrella_count: umbrellas.size,
+    standalone_project_count: standaloneProjects.length,
     total_projected_revenue: +totalProjected.toFixed(2),
-    projects: projections,
+    rows: out,
+    // Backwards-compat: the previous shape had `projects` and `project_count`.
+    // Frontend that hasn't been updated yet still works (just won't see
+    // umbrella aggregation).
+    project_count: standaloneProjects.length + umbrellas.size,
+    projects: out,
   };
 }
 

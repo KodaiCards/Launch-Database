@@ -15,9 +15,35 @@ CREATE TABLE IF NOT EXISTS clients (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- engineering_contracts — umbrella above one-or-more contracts. Used when
+-- a single agreement (e.g. "RUS 217 Engineering Contract GA 1706 -A72")
+-- spans multiple billing contracts (e.g. 515-3, 515-4, 515-5). Budgets
+-- can attach at this level so they cover all child contracts/projects in
+-- aggregate, instead of being split per-project.
+--
+-- Contracts that don't belong to an umbrella just leave engineering_contract_id
+-- NULL — fully optional, doesn't disturb existing flows.
+CREATE TABLE IF NOT EXISTS engineering_contracts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  -- Free-form display name shown in the UI ("RUS 217 Engineering Contract GA 1706 -A72")
+  name VARCHAR(255) NOT NULL,
+  -- Short identifier for invoices/reports. Optional — name alone is enough
+  -- for many cases. Unique per client when set.
+  contract_number VARCHAR(80),
+  notes TEXT,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (client_id, name)
+);
+
 CREATE TABLE IF NOT EXISTS contracts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  -- Optional umbrella: a contract can belong to an engineering_contract
+  -- (e.g. 515-3 belongs to "RUS 217 Engineering Contract"). NULL = standalone.
+  engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL,
   contract_number VARCHAR(50) NOT NULL,
   name VARCHAR(200),
   active BOOLEAN DEFAULT TRUE,
@@ -216,14 +242,23 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects
 
 CREATE TABLE IF NOT EXISTS budgets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- A budget can attach to EITHER a single project OR an engineering_contract
+  -- (umbrella over multiple contracts). Exactly one of these should be set;
+  -- the CHECK below enforces that. Project-scoped budgets behave exactly as
+  -- before. Engineering-contract-scoped budgets cover every project under
+  -- every child contract — this is the case for things like "RUS 217" where
+  -- one inspection budget spans contracts 515-3, 515-4, and 515-5.
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-  -- links to the parent project
+  engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE CASCADE,
+  -- Free-form display name shown in the UI
   name VARCHAR(200) NOT NULL,
-  -- e.g. "RUS 217 Reconnect 3"
   total_amount DECIMAL(14,2) DEFAULT 0,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT budget_scope_exactly_one CHECK (
+    (project_id IS NOT NULL)::int + (engineering_contract_id IS NOT NULL)::int = 1
+  )
 );
 
 CREATE TABLE IF NOT EXISTS budget_codes (

@@ -1851,6 +1851,32 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div id="clients-list-body" style="font-size:13px"></div>
       </div>
 
+      <!-- ── Engineering Contracts ── -->
+      <!-- Umbrella above billing contracts. Used when one big agreement
+           (e.g. "RUS 217 Engineering Contract") spans multiple billing
+           contracts and a single budget covers the whole thing. -->
+      <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Engineering Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— umbrella above billing contracts; budgets attach here</span></span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('eng-contracts-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Add Engineering Contract</button>
+        </div>
+        <div id="eng-contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
+          <div class="form-row" style="gap:6px">
+            <div class="form-group" style="flex:2"><label style="font-size:11px">Name *</label><input type="text" id="new-ec-name" placeholder='e.g. "RUS 217 Engineering Contract GA 1706 -A72"' style="font-size:13px"></div>
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Contract Number</label><input type="text" id="new-ec-number" placeholder="e.g. RUS 217" style="font-size:13px"></div>
+          </div>
+          <div class="form-row" style="gap:6px;margin-top:6px">
+            <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-ec-client" style="font-size:13px"><option value="">— Select —</option></select></div>
+            <div class="form-group" style="flex:2"><label style="font-size:11px">Notes</label><input type="text" id="new-ec-notes" placeholder="Optional" style="font-size:13px"></div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('eng-contracts-add-form').style.display='none'">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="saveNewEngineeringContract()"><i class="fa-solid fa-check"></i> Save</button>
+          </div>
+        </div>
+        <div id="eng-contracts-list-body" style="font-size:13px"></div>
+      </div>
+
       <!-- ── User Management ── -->
       <div class="settings-section" style="margin-top:24px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2895,34 +2921,73 @@ async function loadInspectionProjection() {
     card.style.display = 'none';
     return;
   }
-  if (!data.projects || !data.projects.length) {
+  // Backwards-compat: API now returns rows under `rows` (with level field).
+  // Older shape was `projects`. Use whichever is present.
+  const rows = data.rows || data.projects || [];
+  if (!rows.length) {
     card.style.display = 'none';
     return;
   }
   card.style.display = '';
-  const rows = data.projects.sort((a, b) => b.projected_remaining_revenue - a.projected_remaining_revenue);
+
+  // Render umbrellas as visually distinct rows: a primary-tinted left
+  // border, the engineering contract name as the headline, child project
+  // names in a small list. Standalone projects render flat.
   body.innerHTML = `
     <table style="width:100%;border-collapse:collapse">
       <thead>
         <tr style="background:var(--gray-light)">
-          <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+          <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Scope</th>
           <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Avg/wk</th>
-          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget left</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget</th>
           <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Projected</th>
         </tr>
       </thead>
       <tbody>
-        ${rows.map(r => `
-          <tr style="border-top:1px solid var(--gray-border);${r.will_exhaust_budget?'background:#FFF3E0':''}">
+        ${rows.map(r => {
+          const exhaustBg = r.will_exhaust_budget ? 'background:#FFF3E0;' : '';
+          if (r.level === 'umbrella') {
+            // Umbrella row — emphasize, list child projects, show
+            // "$X of $Y total contract budget"
+            const headline = esc(r.engineering_contract_name || 'Engineering contract');
+            const sub = `${esc(r.client_name || '—')} · ${r.project_count} project${r.project_count !== 1 ? 's' : ''}`;
+            const childPreview = (r.child_project_names || []).slice(0, 3).join(', ')
+              + ((r.child_project_names || []).length > 3 ? `, +${r.child_project_names.length - 3} more` : '');
+            const budgetCell = r.budget_allocated > 0
+              ? `<div style="font-weight:600">${fmtMoney(r.budget_remaining)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">left</span></div>
+                 <div style="font-size:11px;color:var(--text-muted)">of ${fmtMoney(r.budget_allocated)} total</div>
+                 <div style="font-size:11px;color:var(--text-muted)">${fmtMoney(r.billed_to_date)} billed</div>`
+              : '—';
+            return `<tr style="border-top:1px solid var(--gray-border);${exhaustBg}border-left:3px solid var(--primary,#1B5FA0)">
+              <td style="padding:10px 12px">
+                <div style="font-weight:600;font-size:13px">
+                  <i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>${headline}
+                  ${r.will_exhaust_budget ? '<span style="margin-left:6px;font-size:10px;color:#e65100;background:#FFE0B2;padding:1px 6px;border-radius:8px;font-weight:600">BUDGET CAP REACHED</span>' : ''}
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${sub}</div>
+                ${childPreview ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(childPreview)}</div>` : ''}
+              </td>
+              <td style="padding:10px 12px;text-align:right">${fmt(r.avg_weekly_hours, 'hrs')}</td>
+              <td style="padding:10px 12px;text-align:right">${budgetCell}</td>
+              <td style="padding:10px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(r.projected_remaining_revenue)}</td>
+            </tr>`;
+          }
+          // Standalone project row (unchanged flat layout)
+          const subline = [
+            r.client_name,
+            r.engineering_contract_name ? `under ${r.engineering_contract_name} (no umbrella budget yet)` : null,
+            r.will_exhaust_budget ? '<strong style="color:#e65100">budget cap reached</strong>' : null,
+          ].filter(Boolean).join(' · ');
+          return `<tr style="border-top:1px solid var(--gray-border);${exhaustBg}">
             <td style="padding:8px 12px">
               <div style="font-weight:500">${esc(r.project_name)}</div>
-              <div style="font-size:11px;color:var(--text-muted)">${esc(r.client_name||'—')}${r.will_exhaust_budget?' · <strong style="color:#e65100">budget cap reached</strong>':''}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${subline}</div>
             </td>
-            <td style="padding:8px 12px;text-align:right">${fmt(r.avg_weekly_hours,'hrs')}</td>
+            <td style="padding:8px 12px;text-align:right">${fmt(r.avg_weekly_hours, 'hrs')}</td>
             <td style="padding:8px 12px;text-align:right;color:var(--text-muted)">${r.budget_allocated > 0 ? fmtMoney(r.budget_remaining) : '—'}</td>
             <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(r.projected_remaining_revenue)}</td>
-          </tr>
-        `).join('')}
+          </tr>`;
+        }).join('')}
         <tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);font-weight:600">
           <td style="padding:10px 12px" colspan="3">Projected total (${data.horizon_weeks} weeks)</td>
           <td style="padding:10px 12px;text-align:right;color:var(--primary)">${fmtMoney(data.total_projected_revenue)}</td>
@@ -6795,15 +6860,16 @@ async function openSettings() {
   // Critical loads first — Jobs is the universal rate source and must render
   // even if other endpoints are slow/broken.
   try {
-    await Promise.all([loadJobs(), loadProjectTypes(), loadClients()]);
+    await Promise.all([loadJobs(), loadProjectTypes(), loadClients(), loadEngineeringContracts()]);
   } catch (e) {
     console.error('Settings core loads failed:', e);
   }
 
   // Render core panels — wrapped so a single failure doesn't cascade.
-  try { renderJobsList();         } catch (e) { console.error('renderJobsList failed:', e); }
-  try { renderProjectTypesList(); } catch (e) { console.error('renderProjectTypesList failed:', e); }
-  try { renderClientsList();      } catch (e) { console.error('renderClientsList failed:', e); }
+  try { renderJobsList();                  } catch (e) { console.error('renderJobsList failed:', e); }
+  try { renderProjectTypesList();          } catch (e) { console.error('renderProjectTypesList failed:', e); }
+  try { renderClientsList();               } catch (e) { console.error('renderClientsList failed:', e); }
+  try { renderEngineeringContractsList();  } catch (e) { console.error('renderEngineeringContractsList failed:', e); }
 
   // Legacy pricing fetch — kept for backward compat but isolated. If the
   // pricing endpoint errors or the cache is malformed, we swallow it so the
@@ -7090,6 +7156,123 @@ This cannot be undone. Type the client name below to confirm:`;
     await api('/api/clients/' + id, 'DELETE');
     await loadClients();
     renderClientsList();
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}
+
+// ─── Engineering Contracts (Settings) ──────────────────────────────────
+// Cache + render + CRUD for the umbrella entity above billing contracts.
+// Mirrors the pattern used by renderClientsList / renderContractsList so
+// editing reads naturally alongside them.
+let engineeringContractsCache = [];
+
+async function loadEngineeringContracts() {
+  try {
+    engineeringContractsCache = await api('/api/engineering-contracts');
+  } catch (e) {
+    engineeringContractsCache = [];
+  }
+}
+
+function renderEngineeringContractsList() {
+  const root = document.getElementById('eng-contracts-list-body');
+  if (!root) return;
+  // Populate the client dropdown in the Add form (needs `clients` cache loaded)
+  const clientSel = document.getElementById('new-ec-client');
+  if (clientSel && (clients || []).length) {
+    while (clientSel.options.length > 1) clientSel.remove(1);
+    [...clients].sort((a,b) => a.name.localeCompare(b.name))
+      .forEach(c => clientSel.add(new Option(c.name, c.id)));
+  }
+  if (!engineeringContractsCache.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No engineering contracts yet. Add one above to group billing contracts under a single budget.</div>';
+    return;
+  }
+  root.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--gray-light)">
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Client</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Number</th>
+          <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Contracts</th>
+          <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Projects</th>
+          <th style="padding:8px;text-align:right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${engineeringContractsCache.map(ec => `
+          <tr data-ec-id="${ec.id}" style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 8px">${esc(ec.client_name || '—')}</td>
+            <td style="padding:6px 8px;font-weight:500">${esc(ec.name)}</td>
+            <td style="padding:6px 8px;font-family:monospace;color:var(--text-muted)">${esc(ec.contract_number || '—')}</td>
+            <td style="padding:6px 8px;text-align:right">${ec.contract_count}</td>
+            <td style="padding:6px 8px;text-align:right">${ec.project_count}</td>
+            <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+              <button class="btn btn-sm btn-secondary" onclick="editEngineeringContract('${ec.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteEngineeringContract('${ec.id}', '${esc(ec.name)}', ${ec.contract_count})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function saveNewEngineeringContract() {
+  const name = document.getElementById('new-ec-name').value.trim();
+  const contract_number = document.getElementById('new-ec-number').value.trim() || null;
+  const client_id = document.getElementById('new-ec-client').value;
+  const notes = document.getElementById('new-ec-notes').value.trim() || null;
+  if (!client_id) return alert('Client required');
+  if (!name) return alert('Name required');
+  try {
+    await api('/api/engineering-contracts', 'POST', { client_id, name, contract_number, notes });
+    document.getElementById('new-ec-name').value = '';
+    document.getElementById('new-ec-number').value = '';
+    document.getElementById('new-ec-notes').value = '';
+    document.getElementById('eng-contracts-add-form').style.display = 'none';
+    await loadEngineeringContracts();
+    renderEngineeringContractsList();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function editEngineeringContract(id) {
+  const ec = engineeringContractsCache.find(x => x.id === id);
+  if (!ec) return;
+  const tr = document.querySelector(`#eng-contracts-list-body tr[data-ec-id="${id}"]`);
+  if (!tr) return;
+  tr.innerHTML = `
+    <td style="padding:6px 8px;color:var(--text-muted)">${esc(ec.client_name || '—')}</td>
+    <td style="padding:6px 8px"><input type="text" id="ec-edit-name-${id}" value="${esc(ec.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+    <td style="padding:6px 8px"><input type="text" id="ec-edit-num-${id}" value="${esc(ec.contract_number || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
+    <td colspan="2" style="padding:6px 8px;text-align:right;color:var(--text-muted);font-size:11px">${ec.contract_count} contracts · ${ec.project_count} projects</td>
+    <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+      <button class="btn btn-sm btn-primary" onclick="saveEngineeringContract('${id}')"><i class="fa-solid fa-check"></i></button>
+      <button class="btn btn-sm btn-secondary" onclick="renderEngineeringContractsList()"><i class="fa-solid fa-xmark"></i></button>
+    </td>
+  `;
+}
+
+async function saveEngineeringContract(id) {
+  const name = document.getElementById(`ec-edit-name-${id}`).value.trim();
+  const contract_number = document.getElementById(`ec-edit-num-${id}`).value.trim() || null;
+  if (!name) return alert('Name required');
+  try {
+    await api('/api/engineering-contracts/' + id, 'PUT', { name, contract_number });
+    await loadEngineeringContracts();
+    renderEngineeringContractsList();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function deleteEngineeringContract(id, name, contractCount) {
+  if (contractCount > 0) {
+    return alert(`"${name}" has ${contractCount} contract${contractCount !== 1 ? 's' : ''} attached. Move or delete those first before deleting this engineering contract.`);
+  }
+  if (!confirm(`Delete engineering contract "${name}"? Any budget attached to it will also be deleted. This cannot be undone.`)) return;
+  try {
+    await api('/api/engineering-contracts/' + id, 'DELETE');
+    await loadEngineeringContracts();
+    renderEngineeringContractsList();
   } catch (e) { alert('Delete failed: ' + e.message); }
 }
 

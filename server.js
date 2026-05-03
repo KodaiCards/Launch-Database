@@ -472,25 +472,191 @@ app.delete('/api/clients/:id', requireAdmin, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/contracts', async (req, res) => {
-  const { client_id } = req.query;
+  const { client_id, engineering_contract_id } = req.query;
   try {
-    const q = client_id
-      ? 'SELECT c.*, cl.name as client_name FROM contracts c JOIN clients cl ON cl.id=c.client_id WHERE c.client_id=$1 ORDER BY c.contract_number'
-      : 'SELECT c.*, cl.name as client_name FROM contracts c JOIN clients cl ON cl.id=c.client_id ORDER BY cl.name, c.contract_number';
-    const { rows } = await pool.query(q, client_id ? [client_id] : []);
+    const where = [];
+    const params = [];
+    let i = 1;
+    if (client_id) { where.push(`c.client_id = $${i++}`); params.push(client_id); }
+    if (engineering_contract_id) { where.push(`c.engineering_contract_id = $${i++}`); params.push(engineering_contract_id); }
+    const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    // Include engineering contract name for display in admin lists.
+    const { rows } = await pool.query(
+      `SELECT c.*, cl.name as client_name, ec.name as engineering_contract_name
+         FROM contracts c
+         JOIN clients cl ON cl.id = c.client_id
+         LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+         ${whereStr}
+         ORDER BY cl.name, ec.name NULLS LAST, c.contract_number`,
+      params
+    );
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/contracts', async (req, res) => {
-  const { client_id, contract_number, name } = req.body;
+  const { client_id, contract_number, name, engineering_contract_id } = req.body;
   try {
     const { rows } = await pool.query(
-      'INSERT INTO contracts (client_id, contract_number, name) VALUES ($1,$2,$3) RETURNING *',
-      [client_id, contract_number, name]
+      `INSERT INTO contracts (client_id, contract_number, name, engineering_contract_id)
+         VALUES ($1,$2,$3,$4) RETURNING *`,
+      [client_id, contract_number, name, engineering_contract_id || null]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/contracts/:id — update a contract. Adds umbrella support so the
+// admin can move a contract under (or out of) an engineering_contract.
+app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
+  const { contract_number, name, engineering_contract_id, active } = req.body;
+  try {
+    const sets = [];
+    const params = [req.params.id];
+    let i = 2;
+    if (contract_number !== undefined) { sets.push(`contract_number = $${i++}`); params.push(contract_number); }
+    if (name !== undefined) { sets.push(`name = $${i++}`); params.push(name); }
+    if (engineering_contract_id !== undefined) {
+      sets.push(`engineering_contract_id = $${i++}`);
+      params.push(engineering_contract_id || null);
+    }
+    if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
+    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+    const { rows } = await pool.query(
+      `UPDATE contracts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+      params
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENGINEERING CONTRACTS — umbrella above one or more billing contracts.
+// Used when a single agreement (e.g. "RUS 217 Engineering Contract GA 1706
+// -A72") spans multiple billing contracts (e.g. 515-3, 515-4, 515-5) and you
+// want the BUDGET to live at the umbrella level rather than per-project.
+// All endpoints admin-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/engineering-contracts', async (req, res) => {
+  const { client_id } = req.query;
+  try {
+    // For each engineering contract, also surface a count of child contracts
+    // and child projects so the admin list view shows scope at a glance.
+    const where = client_id ? 'WHERE ec.client_id = $1' : '';
+    const { rows } = await pool.query(
+      `SELECT ec.*,
+              cl.name AS client_name,
+              (SELECT COUNT(*) FROM contracts c WHERE c.engineering_contract_id = ec.id)::int AS contract_count,
+              (SELECT COUNT(*) FROM projects p
+                 JOIN contracts c ON c.id = p.contract_id
+                 WHERE c.engineering_contract_id = ec.id)::int AS project_count
+         FROM engineering_contracts ec
+         JOIN clients cl ON cl.id = ec.client_id
+         ${where}
+         ORDER BY cl.name, ec.name`,
+      client_id ? [client_id] : []
+    );
+    res.json(rows);
+  } catch (e) {
+    console.error('[engineering-contracts:list]', e && e.message);
+    res.status(500).json({ error: 'Failed to load engineering contracts.' });
+  }
+});
+
+app.get('/api/engineering-contracts/:id', async (req, res) => {
+  try {
+    const { rows: ec } = await pool.query(
+      `SELECT ec.*, cl.name AS client_name
+         FROM engineering_contracts ec
+         JOIN clients cl ON cl.id = ec.client_id
+         WHERE ec.id = $1`, [req.params.id]
+    );
+    if (!ec[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+    // Include child contracts so the detail view can show the structure
+    const { rows: contracts } = await pool.query(
+      `SELECT c.*, (SELECT COUNT(*)::int FROM projects p WHERE p.contract_id = c.id) AS project_count
+         FROM contracts c WHERE c.engineering_contract_id = $1
+         ORDER BY c.contract_number`, [req.params.id]
+    );
+    // Include the umbrella's budget if it has one
+    const { rows: budgets } = await pool.query(
+      `SELECT b.*, COALESCE((SELECT SUM(allocated_amount) FROM budget_codes bc WHERE bc.budget_id = b.id), 0)::float AS allocated_total
+         FROM budgets b WHERE b.engineering_contract_id = $1`, [req.params.id]
+    );
+    res.json({ ...ec[0], contracts, budgets });
+  } catch (e) {
+    console.error('[engineering-contracts:get]', e && e.message);
+    res.status(500).json({ error: 'Failed to load engineering contract.' });
+  }
+});
+
+app.post('/api/engineering-contracts', requireAdmin, async (req, res) => {
+  const { client_id, name, contract_number, notes } = req.body || {};
+  if (!client_id) return res.status(400).json({ error: 'client_id required' });
+  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO engineering_contracts (client_id, name, contract_number, notes)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+      [client_id, String(name).trim(), contract_number || null, notes || null]
+    );
+    res.json(rows[0]);
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
+    console.error('[engineering-contracts:create]', e && e.message);
+    res.status(500).json({ error: 'Failed to create engineering contract.' });
+  }
+});
+
+app.put('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
+  const { name, contract_number, notes, active } = req.body || {};
+  try {
+    const sets = [];
+    const params = [req.params.id];
+    let i = 2;
+    if (name !== undefined) { sets.push(`name = $${i++}`); params.push(String(name).trim()); }
+    if (contract_number !== undefined) { sets.push(`contract_number = $${i++}`); params.push(contract_number || null); }
+    if (notes !== undefined) { sets.push(`notes = $${i++}`); params.push(notes || null); }
+    if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
+    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+    const { rows } = await pool.query(
+      `UPDATE engineering_contracts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+      params
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+    res.json(rows[0]);
+  } catch (e) {
+    if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
+    console.error('[engineering-contracts:update]', e && e.message);
+    res.status(500).json({ error: 'Failed to update engineering contract.' });
+  }
+});
+
+app.delete('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
+  try {
+    // Pre-check: refuse to delete if contracts still point here. RESTRICT
+    // would also catch this but the explicit message is friendlier.
+    const { rows: kids } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM contracts WHERE engineering_contract_id = $1`,
+      [req.params.id]
+    );
+    if (kids[0].n > 0) {
+      return res.status(409).json({
+        error: `Cannot delete — ${kids[0].n} contract(s) still belong to this engineering contract. Move or delete them first.`,
+      });
+    }
+    const { rows } = await pool.query(
+      `DELETE FROM engineering_contracts WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[engineering-contracts:delete]', e && e.message);
+    res.status(500).json({ error: 'Failed to delete engineering contract.' });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2923,21 +3089,28 @@ app.post('/api/_admin/hours-backfill', requireAdmin, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.get('/api/budgets', async (req, res) => {
-  const { project_id } = req.query;
+  const { project_id, engineering_contract_id } = req.query;
   try {
-    let q, params;
-    if (project_id) {
-      q = `SELECT b.*, p.name as project_name FROM budgets b
-           LEFT JOIN projects p ON p.id = b.project_id
-           WHERE b.project_id = $1 ORDER BY b.created_at DESC`;
-      params = [project_id];
-    } else {
-      q = `SELECT b.*, p.name as project_name FROM budgets b
-           LEFT JOIN projects p ON p.id = b.project_id
-           ORDER BY b.created_at DESC`;
-      params = [];
+    const where = [];
+    const params = [];
+    let i = 1;
+    if (project_id) { where.push(`b.project_id = $${i++}`); params.push(project_id); }
+    if (engineering_contract_id) {
+      where.push(`b.engineering_contract_id = $${i++}`);
+      params.push(engineering_contract_id);
     }
-    const { rows } = await pool.query(q, params);
+    const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const { rows } = await pool.query(
+      `SELECT b.*,
+              p.name AS project_name,
+              ec.name AS engineering_contract_name
+         FROM budgets b
+         LEFT JOIN projects p ON p.id = b.project_id
+         LEFT JOIN engineering_contracts ec ON ec.id = b.engineering_contract_id
+         ${whereStr}
+         ORDER BY b.created_at DESC`,
+      params
+    );
     res.json(rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -3000,12 +3173,22 @@ app.get('/api/budgets/:id/summary', async (req, res) => {
 });
 
 app.post('/api/budgets', async (req, res) => {
-  const { project_id, name, total_amount, notes } = req.body;
+  const { project_id, engineering_contract_id, name, total_amount, notes } = req.body;
+  // Exactly one of project_id / engineering_contract_id must be set — the
+  // CHECK constraint enforces this at the DB level, but rejecting up front
+  // with a clear error message is friendlier than a 500.
+  const hasProj = !!project_id;
+  const hasEng = !!engineering_contract_id;
+  if (hasProj === hasEng) {
+    return res.status(400).json({
+      error: 'A budget must scope to EXACTLY one of: project_id, engineering_contract_id',
+    });
+  }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO budgets (project_id, name, total_amount, notes)
-       VALUES ($1,$2,$3,$4) RETURNING *`,
-      [project_id, name, total_amount || 0, notes || null]
+      `INSERT INTO budgets (project_id, engineering_contract_id, name, total_amount, notes)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [project_id || null, engineering_contract_id || null, name, total_amount || 0, notes || null]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -5874,6 +6057,53 @@ async function bootstrapV3Schema() {
     `CREATE INDEX IF NOT EXISTS idx_invoice_items_project_id ON invoice_items (project_id)`,
     `CREATE INDEX IF NOT EXISTS idx_permit_stages_project_id ON permit_stages (project_id)`,
     `CREATE INDEX IF NOT EXISTS idx_permit_documents_project_id ON permit_documents (project_id)`,
+
+    // engineering_contracts — umbrella above multiple billing contracts.
+    // Used when one agreement (e.g. RUS 217) spans contracts 515-3, 515-4,
+    // 515-5. Budgets can attach here to cover all child projects in
+    // aggregate. See schema.sql for the full comment.
+    `CREATE TABLE IF NOT EXISTS engineering_contracts (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+       name VARCHAR(255) NOT NULL,
+       contract_number VARCHAR(80),
+       notes TEXT,
+       active BOOLEAN DEFAULT TRUE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW(),
+       UNIQUE (client_id, name)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_engineering_contracts_client_id ON engineering_contracts (client_id)`,
+    // Auto-update updated_at on engineering_contracts. The set_updated_at()
+    // function is created earlier in schema.sql; we DROP+CREATE so the
+    // trigger always points at the current function.
+    `DROP TRIGGER IF EXISTS engineering_contracts_updated_at ON engineering_contracts`,
+    `CREATE TRIGGER engineering_contracts_updated_at
+       BEFORE UPDATE ON engineering_contracts
+       FOR EACH ROW EXECUTE FUNCTION set_updated_at()`,
+
+    // Add engineering_contract_id to contracts (umbrella reference)
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_contracts_engineering_contract_id ON contracts (engineering_contract_id)`,
+
+    // Add engineering_contract_id to budgets so a budget can scope to an
+    // umbrella instead of (or in addition to) a single project. CHECK
+    // constraint enforces exactly-one-of so budget math stays unambiguous.
+    `ALTER TABLE budgets ADD COLUMN IF NOT EXISTS engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE CASCADE`,
+    `ALTER TABLE budgets ALTER COLUMN project_id DROP NOT NULL`,
+    // The CHECK constraint can fail if existing rows somehow violate it —
+    // guard with NOT VALID then VALIDATE so the deploy doesn't abort on
+    // legacy data, then VALIDATE separately so future inserts are checked.
+    `DO $$ BEGIN
+       IF NOT EXISTS (
+         SELECT 1 FROM pg_constraint WHERE conname = 'budget_scope_exactly_one'
+       ) THEN
+         ALTER TABLE budgets ADD CONSTRAINT budget_scope_exactly_one CHECK (
+           (project_id IS NOT NULL)::int + (engineering_contract_id IS NOT NULL)::int = 1
+         ) NOT VALID;
+       END IF;
+     END $$`,
+    `CREATE INDEX IF NOT EXISTS idx_budgets_engineering_contract_id ON budgets (engineering_contract_id)`,
   ];
   for (const sql of ddl) {
     try {
