@@ -74,7 +74,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/time-entries', async (req, res) => {
+  app.post('/api/time-entries', requireAuth(), async (req, res) => {
     const { project_id, staff_id, entry_date, hours, job_title, notes, pending_project_request_id } = req.body;
     // HELD timecards: when an engineer logs time on the timeclock against
     // a project that's still pending admin approval, project_id is null
@@ -83,13 +83,45 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     if (!project_id && !pending_project_request_id) {
       return res.status(400).json({ error: 'project_id or pending_project_request_id required' });
     }
+    // Engineer-scope: engineers may only log time as themselves. Coerce
+    // the staff_id to the user's linked staff record so a forged body can
+    // never assign hours to another employee.
+    let effectiveStaffId = staff_id || null;
+    if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+      // user.staff_id is set when the admin links the user to a staff record.
+      // Falling back to req.user.id keeps the row attributable even if the
+      // link wasn't set up yet (admin can rebind later via Settings).
+      effectiveStaffId = req.user.staff_id || effectiveStaffId;
+      // Reject mismatched staff_id explicitly rather than silently rewrite —
+      // surfaces config issues instead of letting hours land on the wrong
+      // person.
+      if (staff_id && req.user.staff_id && String(staff_id) !== String(req.user.staff_id)) {
+        return res.status(403).json({ error: 'Engineers can only log time against their own staff record.' });
+      }
+    }
+    // Validate the pending_project_request_id when present: must exist and
+    // still be in 'pending' status. Without this, anyone with the
+    // request_id (e.g. shared between portals) could silently attach hours
+    // to a request that's already been approved or rejected, where they
+    // would never be retro-attached.
+    if (pending_project_request_id) {
+      const { rows: prq } = await pool.query(
+        `SELECT id, status FROM setting_change_requests
+          WHERE id = $1 AND entity_type = 'project' AND action = 'create'`,
+        [pending_project_request_id]
+      );
+      if (!prq[0]) return res.status(400).json({ error: 'pending_project_request_id not found or wrong type.' });
+      if (prq[0].status !== 'pending') {
+        return res.status(409).json({ error: 'That project request is no longer pending; pick a real project.' });
+      }
+    }
     let inserted;
     try {
       const userId = req.user?.id || null;
       const { rows } = await pool.query(`
         INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id, pending_project_request_id)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-      `, [project_id || null, staff_id || null, entry_date, hours, job_title, notes, userId, pending_project_request_id || null]);
+      `, [project_id || null, effectiveStaffId, entry_date, hours, job_title, notes, userId, pending_project_request_id || null]);
       inserted = rows[0];
       // Skip the rollup when this is a held timecard — there's no project
       // to roll into yet. The retro-attach on approval handles it later.

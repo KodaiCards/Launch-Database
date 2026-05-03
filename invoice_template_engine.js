@@ -107,6 +107,16 @@ for a Node.js invoice generator. Look at the uploaded PDF carefully — its layo
 typography, table structure, colors, and arrangement. Produce a single self-
 contained HTML document that mimics the visual format as closely as possible.
 
+SECURITY CONSTRAINTS — these are non-negotiable:
+- Never emit <script>, <style>, <iframe>, <object>, <embed>, <form>, or any
+  on* event-handler attributes (onclick, onload, onerror, etc.).
+- Never reference external resources via <link>, javascript:, data: URIs
+  pointing at scripts, or any url(...) in CSS that isn't a plain image.
+- Use inline CSS via the style="..." attribute only.
+- The output is rendered in a sandboxed iframe with no scripting capability;
+  any <script> tags would be ignored anyway, but emitting them would still
+  poison hand-editable templates.
+
 Use inline CSS only (no external stylesheets, no <link>, no <style> blocks
 in the head — they're harder to edit later). Keep the HTML semantic
 (<table>, <thead>, <tbody>, <tfoot>, <h1>, <p>, <strong>, <span>) so the
@@ -169,7 +179,33 @@ matching its layout. Use the placeholders documented above for variable data.`;
   let html = String(textBlock.text).trim();
   // Strip accidental markdown fences if Claude wrapped in ```html ... ```
   html = html.replace(/^```(?:html)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+  // Defence-in-depth: even though the iframe is sandbox="" (no scripting),
+  // and the system prompt forbids script-like tags, we strip anything that
+  // could run code if a future change loosens the sandbox or if the HTML
+  // is exported to a context that does execute scripts. Belt + braces.
+  html = sanitizeTemplateHtml(html);
   return html;
+}
+
+// Tag-and-attribute scrubber — removes <script>, <style>, <iframe>, etc.,
+// strips on* handlers, and rewrites javascript:/data: URIs. Conservative
+// allow-list is awkward for hand-edited templates, so we use a deny-list
+// targeted at the worst exposures. Intended for HTML that came from
+// Claude OR from an admin's textarea — both are semi-trusted.
+function sanitizeTemplateHtml(html) {
+  if (typeof html !== 'string') return '';
+  let out = html;
+  // Drop dangerous tags entirely (open + close + content).
+  out = out.replace(/<\s*(script|style|iframe|object|embed|form)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
+  // Strip self-closed / unclosed dangerous tags (void).
+  out = out.replace(/<\s*(script|style|iframe|object|embed|form)\b[^>]*>/gi, '');
+  // Strip on* event handler attributes: onclick="..", onload='..', onerror=..
+  out = out.replace(/\son[a-z]+\s*=\s*"(?:[^"\\]|\\.)*"/gi, '');
+  out = out.replace(/\son[a-z]+\s*=\s*'(?:[^'\\]|\\.)*'/gi, '');
+  out = out.replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, '');
+  // Neuter javascript: URLs in href / src / action / formaction.
+  out = out.replace(/((?:href|src|action|formaction)\s*=\s*['"])\s*javascript:[^'"]*(['"])/gi, '$1#$2');
+  return out;
 }
 
 // ─── Tiny mustache-like substitution ─────────────────────────────────────────
@@ -219,8 +255,17 @@ function _isFalsy(v) {
 function substituteTemplate(template, data) {
   if (typeof template !== 'string') return '';
   const tokens = _tokenize(template);
-  const ast = _parse(tokens, 0).nodes;
-  return _render(ast, [data]);
+  const result = _parse(tokens, 0);
+  // Guard against unterminated blocks. The parser otherwise returns the
+  // partial AST and the substitution silently produces broken HTML.
+  if (result.next < tokens.length) {
+    const tail = tokens.slice(result.next).map(t => t.t).join(',');
+    throw new Error(`Template parse error: unmatched closing tag(s) at end (${tail}).`);
+  }
+  if (result.unmatchedOpen) {
+    throw new Error(`Template parse error: unterminated {{#${result.unmatchedOpen}}} block.`);
+  }
+  return _render(result.nodes, [data]);
 }
 
 // Tokenize into text, openTag (each/if), closeTag, elseTag, value, rawValue.
@@ -260,7 +305,7 @@ function _tokenize(src) {
   }
   return tokens;
 }
-function _parse(tokens, start) {
+function _parse(tokens, start, openKind) {
   const nodes = [];
   let i = start;
   while (i < tokens.length) {
@@ -269,21 +314,29 @@ function _parse(tokens, start) {
       nodes.push(tk);
       i++;
     } else if (tk.t === 'each') {
-      const inner = _parse(tokens, i + 1);
+      const inner = _parse(tokens, i + 1, 'each');
       nodes.push({ t: 'each', path: tk.v, body: inner.nodes, elseBody: inner.elseNodes });
       i = inner.next;
     } else if (tk.t === 'if') {
-      const inner = _parse(tokens, i + 1);
+      const inner = _parse(tokens, i + 1, 'if');
       nodes.push({ t: 'if', path: tk.v, body: inner.nodes, elseBody: inner.elseNodes });
       i = inner.next;
-    } else if (tk.t === 'else' || tk.t === '/each' || tk.t === '/if') {
-      // Hand back to the outer parse call.
-      return { nodes, elseNodes: tk.t === 'else' ? _parse(tokens, i + 1).nodes : null, next: i + 1 };
+    } else if (tk.t === 'else') {
+      // Recurse into the else branch; the recursive call consumes up to
+      // and including the matching {{/each}} or {{/if}}, so we return its
+      // `next` position to the outer parser.
+      const elseInner = _parse(tokens, i + 1, openKind);
+      return { nodes, elseNodes: elseInner.nodes, next: elseInner.next };
+    } else if (tk.t === '/each' || tk.t === '/if') {
+      // Closing tag — hand control back to the outer parser AFTER the tag.
+      return { nodes, elseNodes: null, next: i + 1 };
     } else {
       i++;
     }
   }
-  return { nodes, elseNodes: null, next: i };
+  // Reached end of tokens. If we were inside an open block, the outer
+  // call expected a closing tag — flag it for substituteTemplate.
+  return { nodes, elseNodes: null, next: i, unmatchedOpen: openKind || null };
 }
 function _render(nodes, scope) {
   let out = '';

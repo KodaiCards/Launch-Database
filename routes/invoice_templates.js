@@ -48,12 +48,33 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
     storage,
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-      const ok = (file.mimetype === 'application/pdf') ||
-                 String(file.originalname || '').toLowerCase().endsWith('.pdf');
-      if (!ok) return cb(new Error('Only .pdf uploads accepted'));
+      // mimetype is client-controlled; treat it as a hint only. The
+      // post-upload magic-byte check below is the authoritative gate.
+      // We still reject obvious non-PDFs at this stage to avoid wasting
+      // disk on files that will be unlinked anyway.
+      const looksLikePdf = String(file.originalname || '').toLowerCase().endsWith('.pdf');
+      if (!looksLikePdf && file.mimetype !== 'application/pdf') {
+        return cb(new Error('Only .pdf uploads accepted'));
+      }
       cb(null, true);
     },
   });
+
+  // Defence-in-depth: read the first 5 bytes and confirm the PDF magic
+  // header (%PDF-) before trusting the upload. Rejected files get
+  // unlinked and the caller sees a 400. Cheap operation (5 bytes off
+  // disk) and catches MIME-type spoofing.
+  function _verifyPdfMagic(filePath) {
+    return new Promise((resolve) => {
+      try {
+        const fd = fs.openSync(filePath, 'r');
+        const buf = Buffer.alloc(5);
+        fs.readSync(fd, buf, 0, 5, 0);
+        fs.closeSync(fd);
+        resolve(buf.toString('ascii') === '%PDF-');
+      } catch { resolve(false); }
+    });
+  }
 
   // ─── Helper: run Claude analysis + persist result ─────────────────────
   // Best-effort. On failure we keep the row with analysis_status='failed'
@@ -137,6 +158,11 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
     if (!job_id || !client_id) {
       try { fs.unlinkSync(req.file.path); } catch {}
       return res.status(400).json({ error: 'job_id and client_id are required.' });
+    }
+    // Magic-byte gate. file.mimetype was client-controlled.
+    if (!await _verifyPdfMagic(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+      return res.status(400).json({ error: 'Uploaded file is not a valid PDF (header check failed).' });
     }
     try {
       // UNIQUE (job_id, client_id) — replace existing template, archive old PDF.
@@ -275,11 +301,14 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       );
       if (!rows[0] || !rows[0].reference_pdf_path) return res.status(404).json({ error: 'Reference PDF missing.' });
       const p = rows[0].reference_pdf_path;
-      // Path-traversal guard. The path was set by us, but defensive checks
-      // catch any future bug that passes user input through. The expected
-      // root is TEMPLATE_DIR.
+      // Path-traversal guard, Windows-safe: path.relative returns a
+      // string starting with '..' or an absolute path when the resolved
+      // path escapes the base. startsWith() on raw paths is fragile
+      // across separator/casing differences.
       const resolved = path.resolve(p);
-      if (!resolved.startsWith(path.resolve(TEMPLATE_DIR))) {
+      const base = path.resolve(TEMPLATE_DIR);
+      const rel = path.relative(base, resolved);
+      if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
         return res.status(400).json({ error: 'Invalid reference path.' });
       }
       if (!fs.existsSync(resolved)) return res.status(404).json({ error: 'Reference PDF file missing on disk.' });

@@ -503,11 +503,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 <!-- Undo bar — fixed to bottom of viewport. showUndoBar() makes it visible
      with a 15s countdown; user can click Undo to replay or X to dismiss. -->
-<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:#212529;color:#fff;border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;display:flex;align-items:center;gap:14px;min-width:320px;max-width:560px">
-  <i class="fa-solid fa-trash" style="color:#FFC107"></i>
+<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
+  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)"></i>
   <span id="lfs-undo-message" style="flex:1"></span>
-  <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:#28A745;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
-  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:#fff;border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
+  <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:var(--success,#28A745);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
+  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
 </div>
 
 <!-- HEADER -->
@@ -1853,7 +1853,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
         <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Live Preview <span id="ite-preview-status" style="font-weight:400">— click Refresh after edits</span></label>
         <div style="flex:1;min-height:420px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden;background:#fff">
-          <iframe id="ite-preview" style="width:100%;height:100%;border:0" sandbox="allow-same-origin"></iframe>
+          <!-- sandbox="" denies scripts, plugins, top navigation, AND same-origin
+     access — protects against a malicious upload tricking Claude into
+     emitting <script> tags that would otherwise read parent cookies. -->
+<iframe id="ite-preview" style="width:100%;height:100%;border:0" sandbox=""></iframe>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="refreshInvoiceTemplatePreview()" type="button"><i class="fa-solid fa-rotate"></i> Refresh preview</button>
       </div>
@@ -1887,7 +1890,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
         <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Preview</label>
         <div style="flex:1;min-height:420px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden;background:#fff">
-          <iframe id="ipv-preview" style="width:100%;height:100%;border:0" sandbox="allow-same-origin"></iframe>
+          <!-- sandbox="" — see ite-preview comment; both iframes follow the same
+     no-script, no-same-origin policy. -->
+<iframe id="ipv-preview" style="width:100%;height:100%;border:0" sandbox=""></iframe>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="refreshInvoicePreviewIframe()" type="button"><i class="fa-solid fa-rotate"></i> Refresh preview</button>
       </div>
@@ -5983,7 +5988,12 @@ async function loadHours() {
   // Surface them in the warning panel above the tree so admin can assign
   // a real project or delete the row. Filter them out of the regular
   // entries list so they don't also appear under a "No Project" group.
+  // ── stash held rows in the entry-by-id map up front, BEFORE the
+  // tree-rendering loop replaces it; the held panel's [pencil] button
+  // looks up by id, and skipping this leaves held rows un-editable.
   const heldEntries = entries.filter(e => !e.project_id);
+  _hoursEntriesById.clear();
+  for (const e of heldEntries) _hoursEntriesById.set(String(e.id), e);
   renderHeldTimecardsPanel(heldEntries);
   entries = entries.filter(e => !!e.project_id);
 
@@ -6130,9 +6140,9 @@ async function loadHours() {
   if (grouped) grouped.style.display = 'none';
 
   // Build tree: Employee → Client → Project → Job entries
-  // Also rebuild the per-entry lookup so the pencil-icon edit handler has
-  // the row data without a re-fetch.
-  _hoursEntriesById.clear();
+  // Also extend the per-entry lookup with the now-filtered (project-bearing)
+  // rows. We DO NOT clear the map here — held rows were added above and
+  // need to stay reachable from the held-timecards panel's edit button.
   const tree = {};
   entries.forEach(e => {
     _hoursEntriesById.set(String(e.id), e);

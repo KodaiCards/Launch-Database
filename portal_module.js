@@ -302,31 +302,45 @@ async function applySettingChange(pool, sr) {
     // (cascade clean of children + time entries + invoice items + permit
     // stages + billing batch items, all RESTRICT-safe).
     if (action === 'create') {
-      const ins = await pool.query(
-        `INSERT INTO projects (name, client_id, work_order_number, project_type,
-                               billing_type, status, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id`,
-        [
-          p.name,
-          p.client_id || null,
-          p.work_order_number || null,
-          p.project_type || 'other',
-          p.billing_type || 'hourly',
-          'active',
-          p.notes || null,
-        ]
-      );
-      const newProjectId = ins.rows[0]?.id;
-      if (newProjectId && sr.id) {
-        // Retro-attach every held time entry pointing at this request.
-        await pool.query(
-          `UPDATE time_entries
-              SET project_id = $1,
-                  pending_project_request_id = NULL
-            WHERE pending_project_request_id = $2`,
-          [newProjectId, sr.id]
+      // Project create + retro-attach must be atomic. If we INSERT the
+      // project but then fail to UPDATE held time_entries, the operator
+      // ends up with the project visible but the held hours stuck in
+      // limbo (still pointing at the request, never resurfaced). Wrap
+      // both in a transaction so partial-success can't happen.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const ins = await client.query(
+          `INSERT INTO projects (name, client_id, work_order_number, project_type,
+                                 billing_type, status, notes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING id`,
+          [
+            p.name,
+            p.client_id || null,
+            p.work_order_number || null,
+            p.project_type || 'other',
+            p.billing_type || 'hourly',
+            'active',
+            p.notes || null,
+          ]
         );
+        const newProjectId = ins.rows[0]?.id;
+        if (newProjectId && sr.id) {
+          await client.query(
+            `UPDATE time_entries
+                SET project_id = $1,
+                    pending_project_request_id = NULL
+              WHERE pending_project_request_id = $2`,
+            [newProjectId, sr.id]
+          );
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch {}
+        throw e;
+      } finally {
+        client.release();
       }
     } else if (action === 'delete') {
       // Mirror the route-level project DELETE: pull from any pending
