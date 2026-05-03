@@ -302,11 +302,15 @@ fetch('/api/auth/me', { credentials: 'include' })
     <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
     <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
   </table></div></div>
-  <!-- Hidden compatibility shims for legacy listeners that touch these IDs -->
+  <!-- Hidden compatibility shims for legacy listeners that touch these IDs.
+       The <tbody> MUST be wrapped in a <table> — a tbody as a direct child
+       of a div is invalid HTML and Chrome's parser silently drops the tag,
+       which made getElementById('dpb') return null and crashed loadProjects'
+       catch (line 641) the moment any /api/projects call threw. -->
   <div style="display:none">
     <input id="proj-search">
     <select id="proj-status-filter"><option value="active" selected>Active</option></select>
-    <tbody id="dpb"></tbody>
+    <table><tbody id="dpb"></tbody></table>
   </div>
 </div>
 
