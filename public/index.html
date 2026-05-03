@@ -420,20 +420,13 @@ body.ai-open .main{padding-right:360px}
 
 /* ALERTS */
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px}
-.alert-warning,.alert-warn{background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800}
-.alert-info{background:var(--primary-light);border:1px solid #BBDEFB;color:#1B4F72}
-.alert-success{background:#E8F5E9;border:1px solid #81C784;color:#1B5E20}
-/* Dark mode: light pastel backgrounds become unreadable on dark page bg.
-   Use saturated dark-mode-friendly bgs with light text for proper contrast.
-   Border colors get dimmed too so they don't dominate against the new bg. */
-html[data-theme="dark"] .alert-info{background:#1E3A5C !important;border-color:#2D4A6C !important;color:#BBDEFB !important}
-html[data-theme="dark"] .alert-info strong{color:#E3F2FD !important}
-html[data-theme="dark"] .alert-warning,
-html[data-theme="dark"] .alert-warn{background:#3D2F0F !important;border-color:#5C4520 !important;color:#FFE082 !important}
-html[data-theme="dark"] .alert-warning strong,
-html[data-theme="dark"] .alert-warn strong{color:#FFF3CD !important}
-html[data-theme="dark"] .alert-success{background:#1B3D24 !important;border-color:#2D5C36 !important;color:#A5D6A7 !important}
-html[data-theme="dark"] .alert-success strong{color:#C8E6C9 !important}
+.alert-warning,.alert-warn{background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text)}
+.alert-info{background:var(--info-light);border:1px solid var(--info);color:var(--info-text)}
+.alert-success{background:var(--success-light);border:1px solid var(--success);color:var(--success-text)}
+/* Dark-mode overrides for alerts are now unnecessary — the *-light /
+   *-text tokens carry their own dark-mode values via the :root +
+   html[data-theme="dark"] cascade. Removed eight !important rules
+   that previously fought the cascade. */
 .empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}
 .empty-state i{font-size:36px;margin-bottom:12px;opacity:.3}
 .empty-state p{font-size:14px}
@@ -2739,22 +2732,16 @@ async function loadAuditLog() {
     return;
   }
 
-  // Action color coding — created=green, updated=blue, deleted=red.
-  // Helps admin scan the column at a glance.
-  const ACTION_STYLES = {
-    created: 'background:#E8F5E9;color:#1B5E20',
-    updated: 'background:#E3F2FD;color:#0D47A1',
-    deleted: 'background:#FFEBEE;color:#B71C1C',
-    restored: 'background:#FFF3E0;color:#E65100',
+  // Action color coding — created=green, updated=blue, deleted=red,
+  // restored=orange. Tokens carry their own dark-mode values, so a
+  // single style map works in both themes; the explicit ACTION_DARK
+  // override is no longer needed.
+  const styles = {
+    created: 'background:var(--success-light);color:var(--success-text)',
+    updated: 'background:var(--info-light);color:var(--info-text)',
+    deleted: 'background:var(--danger-light);color:var(--danger-text)',
+    restored: 'background:var(--warning-light);color:var(--warning-text)',
   };
-  const ACTION_DARK = {
-    created: 'background:#1B3D24;color:#A5D6A7',
-    updated: 'background:#1E3A5C;color:#90CAF9',
-    deleted: 'background:#3D1F23;color:#F8B4BD',
-    restored: 'background:#3D2F0F;color:#FFCC80',
-  };
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const styles = isDark ? ACTION_DARK : ACTION_STYLES;
 
   tbody.innerHTML = rows.map(r => {
     const when = new Date(r.at);
@@ -3375,9 +3362,9 @@ function renderPrintPdfBody(result) {
   let html = '';
   // Conflicts (if any) — block PDF generation
   if (result.conflicts && result.conflicts.length) {
-    html += `<div style="background:#FFF3E0;border-left:4px solid #F0A500;padding:10px 14px;border-radius:6px;margin-bottom:14px">
-      <div style="font-weight:600;color:#e65100;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't generate yet — fix these first:</div>
-      <ul style="margin:6px 0 0 20px;padding:0;font-size:13px;color:#222">
+    html += `<div style="background:var(--warning-light);border-left:4px solid var(--warning);padding:10px 14px;border-radius:6px;margin-bottom:14px">
+      <div style="font-weight:600;color:var(--warning-text);margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't generate yet — fix these first:</div>
+      <ul style="margin:6px 0 0 20px;padding:0;font-size:13px;color:var(--text)">
         ${result.conflicts.map(c => `<li>${esc(c)}</li>`).join('')}
       </ul>
     </div>`;
@@ -3389,7 +3376,7 @@ function renderPrintPdfBody(result) {
       <div style="color:var(--text-muted)">Client</div><div><strong>${esc(m.client_name || '—')}</strong></div>
       <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}${m.loan_name ? ` <span style="color:var(--text-muted)">· loan: ${esc(m.loan_name)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}${m.job_billing_code ? ` <span style="font-family:monospace;color:var(--text-muted)">${esc(m.job_billing_code)}</span>` : ''}</div>
-      <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:#E3F2FD;color:#0d47a1;padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:#E8F5E9;color:#1b5e20;padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
+      <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:var(--info-light);color:var(--info-text);padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:var(--success-light);color:var(--success-text);padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
       <div style="color:var(--text-muted)">Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
       <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
       <div style="color:var(--text-muted)">Billing Month</div>
@@ -3539,9 +3526,9 @@ function renderPrintPdfAfterActions() {
   const state = window._printPdfState || {};
   const total = (state.items || []).reduce((s, it) => s + (it.amount || 0), 0);
   body.innerHTML = `
-    <div style="padding:14px;background:#E8F5E9;border-radius:8px;margin-bottom:14px;border-left:4px solid #28A745">
-      <div style="font-weight:600;color:#1b5e20"><i class="fa-solid fa-circle-check"></i> PDF generated — opened in a new tab.</div>
-      <div style="margin-top:6px;font-size:13px;color:#222">${state.project_ids.length} project${state.project_ids.length !== 1 ? 's' : ''} · ${fmtMoney(total)}</div>
+    <div style="padding:14px;background:var(--success-light);border-radius:8px;margin-bottom:14px;border-left:4px solid var(--success)">
+      <div style="font-weight:600;color:var(--success-text)"><i class="fa-solid fa-circle-check"></i> PDF generated — opened in a new tab.</div>
+      <div style="margin-top:6px;font-size:13px;color:var(--text)">${state.project_ids.length} project${state.project_ids.length !== 1 ? 's' : ''} · ${fmtMoney(total)}</div>
     </div>
     <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px 0">Choose what to do with this batch:</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -3896,7 +3883,7 @@ async function loadInspectionProjection() {
       </thead>
       <tbody>
         ${rows.map(r => {
-          const exhaustBg = r.will_exhaust_budget ? 'background:#FFF3E0;' : '';
+          const exhaustBg = r.will_exhaust_budget ? 'background:var(--warning-light);' : '';
           const headline = esc(r.engineering_contract_name || 'Engineering contract');
           const subBits = [esc(r.client_name || '—')];
           if (r.loan_name) subBits.push(`loan: ${esc(r.loan_name)}`);
@@ -5276,7 +5263,7 @@ async function markBilled(id) {
       </div>
     </div>
     ${isOngoing ? `
-      <div style="background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800;padding:10px 14px;border-radius:8px;margin-top:14px;font-size:13px">
+      <div style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:13px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="bv-create-follow-on" checked style="width:auto">
           <span><strong>Create follow-on project</strong> for ongoing work after this billing</span>
@@ -6132,19 +6119,21 @@ async function loadHours() {
         const t = new Date();
         return t.getFullYear() === yr && (t.getMonth() + 1) === mo && t.getDate() === d;
       })();
-      // Highlight: weekday with no hours = red flag (likely forgotten),
-      // weekday with low hours = yellow, normal = white, today gets a border.
-      let bg = '#fff', border = '1px solid var(--gray-border)';
-      if (!isWeekend && hours === 0) { bg = '#FDECEA'; }
-      else if (!isWeekend && hours < 4) { bg = '#FFF8E1'; }
-      else if (hours > 0) { bg = '#E8F5E9'; }
-      if (isToday) border = '2px solid var(--primary,#1B5FA0)';
+      // Highlight: weekday with no hours = danger tint (likely forgotten),
+      // weekday with low hours = warning tint, normal = success tint,
+      // today gets a primary border. All via the token system so dark
+      // mode + custom themes get the right shades automatically.
+      let bg = 'var(--surface-2)', border = '1px solid var(--gray-border)';
+      if (!isWeekend && hours === 0) { bg = 'var(--danger-light)'; }
+      else if (!isWeekend && hours < 4) { bg = 'var(--warning-light)'; }
+      else if (hours > 0) { bg = 'var(--success-light)'; }
+      if (isToday) border = '2px solid var(--primary)';
       const isFuture = (() => {
         const cellD = new Date(yr, mo - 1, d);
         const today = new Date(); today.setHours(0,0,0,0);
         return cellD > today;
       })();
-      if (isFuture) { bg = '#fafafa'; }
+      if (isFuture) { bg = 'var(--surface-1)'; }
       const entryCount = (entriesByDay[dateKey] || []).length;
       // Future cells are read-only (nothing to edit); cells with entries
       // are click-to-drilldown; empty past cells offer "+ Add" via the
@@ -6162,7 +6151,7 @@ async function loadHours() {
           ${hours > 0 ? `<div style="font-size:18px;font-weight:600;color:var(--text)">${hours.toFixed(1)}<span style="font-size:11px;color:var(--text-muted);margin-left:2px">h</span></div>` :
            isFuture ? '' :
            isWeekend ? '<div style="font-size:11px;color:var(--text-muted)">—</div>' :
-           '<div style="font-size:11px;color:#c62828;font-weight:600">no entries</div>'}
+           '<div style="font-size:11px;color:var(--danger-text);font-weight:600">no entries</div>'}
         </div>
         ${entryCount > 0 ? `<div style="font-size:10px;color:var(--text-muted);text-align:right">${entryCount} entr${entryCount === 1 ? 'y' : 'ies'}</div>` : ''}
       </div>`;
@@ -6171,9 +6160,9 @@ async function loadHours() {
       <div style="margin-top:14px;padding:10px;background:var(--gray-light);border-radius:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px">
         <span><strong>${total.toFixed(1)} hrs</strong> · ${entries.length} entries</span>
         <span style="display:flex;gap:14px;color:var(--text-muted)">
-          <span><span style="display:inline-block;width:12px;height:12px;background:#FDECEA;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>No hours (weekday)</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:#FFF8E1;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>Under 4h</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:#E8F5E9;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>OK</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--danger-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>No hours (weekday)</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--warning-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>Under 4h</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--success-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>OK</span>
         </span>
       </div>
     </div>`;
@@ -6907,7 +6896,7 @@ function csvLedgerRow(r, projOptions, staffOptions, jobOptions) {
   const staffWarn = !r.staff_known;
   const codeJob = r.billing_code && jobByCodeCache ? jobByCodeCache[r.billing_code.toLowerCase()] : null;
   const jobMismatch = codeJob && r.job_title && r.job_source === 'manual' && codeJob.toLowerCase() !== r.job_title.toLowerCase();
-  const rowBg = woWarn || staffWarn ? 'background:#FFF8E1' : '';
+  const rowBg = woWarn || staffWarn ? 'background:var(--warning-light)' : '';
   // Build staff <select> options with the row's current staff_id pre-selected
   const staffSel = `<option value="">— pick —</option>` +
     (window._staffCache || []).map(s =>
@@ -7650,7 +7639,7 @@ async function loadRevenue() {
   // ── Unbilled table ──
   document.getElementById('unbilled-body').innerHTML = unbilled.length ? unbilled.map(p => {
     const kindTag = p.bill_kind === 'in_progress'
-      ? '<span style="background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">In progress</span>'
+      ? '<span style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">In progress</span>'
       : '<span style="background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">Completed</span>';
     return `<tr>
       <td class="td-name">${esc(p.name)} ${kindTag}</td>
@@ -10148,7 +10137,7 @@ function renderApprovalCard(res) {
   const rows = actions.map((a, i) => {
     const summary = esc(a.summary || a.tool_name);
     const inputJson = esc(JSON.stringify(a.tool_input, null, 2));
-    const danger = a.is_destructive ? 'background:#FFF8E1;' : '';
+    const danger = a.is_destructive ? 'background:var(--warning-light);' : '';
     return `<div data-action-id="${esc(a.id)}" style="${danger}border-top:1px solid var(--gray-border);padding:10px 14px">
       <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
         <input type="checkbox" class="ai-approve-cb" data-id="${esc(a.id)}" checked style="margin-top:3px">
