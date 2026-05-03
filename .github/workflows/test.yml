@@ -1,0 +1,83 @@
+name: Smoke tests
+
+# Block merges to main when smoke tests fail. Runs on every PR + on direct
+# pushes to main (defense for the "no PR — push straight to main" workflow
+# documented in NEXT_STEPS.md). The Postgres service container gives us a
+# real engine — silent type-coercion bugs only show up against real PG.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    name: Backend smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: launch_test
+        ports:
+          - 5432:5432
+        # The service container is unhealthy until pg_isready returns 0.
+        # Without this the test job races the DB and connections fail.
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Connection string for the Postgres service container above. Tests
+      # read this via _helpers.js which prefers TEST_DATABASE_URL when set.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/launch_test
+      # Required by auth.js bootstrapAuthSchema. Must be >= 10 chars or it
+      # refuses to seed the admin user.
+      ADMIN_PASSWORD: test_admin_password_123
+      # Stable secret so tokens minted in one test step verify in the next.
+      JWT_SECRET: ci_smoke_test_jwt_secret_${{ github.run_id }}
+      # Suppress prod-only behavior in auth.js (which refuses to boot
+      # without JWT_SECRET when NODE_ENV=production).
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # 18 is the minimum (matches package.json engines + node:test
+          # availability). Pinning major version lets the runner pick the
+          # latest patch.
+          node-version: '20'
+
+      - name: Install dependencies
+        # No package-lock.json is committed (Railway deploys via nixpacks.toml,
+        # not lockfile), so `npm install` instead of `npm ci`. --no-audit and
+        # --no-fund cut a few seconds off the install.
+        run: npm install --no-audit --no-fund
+
+      - name: Run backend smoke tests
+        run: npm test
+
+      - name: Install Playwright browsers
+        # Browser binaries (~150MB Chromium) aren't pulled by `npm install`.
+        # `--with-deps` installs the system-level libs Chromium needs on
+        # Ubuntu (libnss3, libgbm1, etc.).
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: npm run test:browser
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

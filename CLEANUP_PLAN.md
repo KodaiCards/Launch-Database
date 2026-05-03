@@ -56,7 +56,7 @@ was "this is fine because every week after is faster."
 
 ---
 
-## Track 0 — Smoke tests
+## Track 0 — Smoke tests **[COMPLETE 2026-05-03]**
 
 **Goal:** A CI-runnable test suite that catches the recurring class of bugs
 (typos in cache names, missing CSS rules, server endpoints that silently
@@ -67,34 +67,34 @@ watch for the bug report" — exactly the loop we're trying to escape.
 
 ### Steps
 
-1. **Pick a runner.** Recommend `node --test` (built-in, no deps) for backend
+1. **[x] DONE** — Pick a runner. Recommend `node --test` (built-in, no deps) for backend
    and Playwright for browser. Both work cleanly on Railway. Skip Jest —
    too much config for this repo.
-2. **Smoke test #1 — bulk hours delete + undo.**
+2. **[x] DONE** — Smoke test #1 — bulk hours delete + undo.
    - POST a known time entry, DELETE via `/api/time-entries/by-staff`, assert
      `deleted >= 1` and `undo_token` returned, POST `/api/undo/:token`,
      assert the entry is back with the original UUID.
    - File: `tests/hours_bulk_delete.test.js`
-3. **Smoke test #2 — project tree delete + undo.**
+3. **[x] DONE** — Smoke test #2 — project tree delete + undo.
    - Create a parent project with one child + one time entry on the child.
      DELETE `/api/projects/:id/with-tree`, assert tree is gone, POST undo,
      assert tree restored. Tests both undo restoration order (parents first)
      and the descendant collection logic in `collectProjectTree()`.
    - File: `tests/project_tree_delete.test.js`
-4. **Smoke test #3 — generate a PSC RUS PDF.**
+4. **[x] DONE** — Smoke test #3 — generate a PSC RUS PDF.
    - Seed an EC + contract + permitting project + footage. Hit
      `/api/invoices/generate-pdf-from-projects`. Assert response is
      `application/pdf`, status 200, byte length > 5KB. Optionally pdf-parse
      for "Permitting Summary" string check.
    - File: `tests/psc_rus_pdf.test.js`
-5. **Smoke test #4 — contract create → project assign → bill.**
+5. **[x] DONE** — Smoke test #4 — contract create → project assign → bill.
    - End-to-end: create contract with `friendly_label` (regression test for
      the silently-dropped field bug from commit `1319d37`), assign to a new
      project, generate an invoice, assert the contract's friendly_label
      appears in the invoice data.
-6. **Wire to GitHub Actions.** `.github/workflows/test.yml` runs on PR.
+6. **[x] DONE** — Wire to GitHub Actions. `.github/workflows/test.yml` runs on PR.
    Block merges if smoke tests fail.
-7. **Browser smoke test (Playwright).** Open the app, log in, click the
+7. **[x] DONE** — Browser smoke test (Playwright). Open the app, log in, click the
    PSC RUS tab, assert the projection card renders without console errors.
    Catches the `clientsCache`-class of frontend bugs that don't throw HTTP
    errors but break the UI silently.

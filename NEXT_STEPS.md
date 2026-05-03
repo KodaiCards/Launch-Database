@@ -1,7 +1,19 @@
 # NEXT_STEPS
 
 Living handoff doc for the next Claude (or human) picking up where we left off.
-Update this file as work lands or new ideas surface. Last updated 2026-05-02.
+Update this file as work lands or new ideas surface. Last updated 2026-05-03.
+
+## Track 0 (Smoke tests) — landed 2026-05-03
+
+CLEANUP_PLAN.md Track 0 is complete:
+- `tests/_helpers.js` — bootTestServer, adminLogin, request wrappers, fixture seeders, cleanup. Boots `server.js` on an ephemeral port; reads `TEST_DATABASE_URL` (or `DATABASE_URL`) from env.
+- 4 backend smoke tests: bulk-hours delete+undo, project-tree delete+undo, PSC RUS PDF render (footage path + non-RUS rejection), contract `friendly_label` round-trip including invoice preview.
+- 1 Playwright browser test: admin login + PSC RUS tab click, asserts no `pageerror` events (catches the `clientsCache`-class of typo bugs).
+- `.github/workflows/test.yml` runs both on every PR + push to main, against a Postgres 16 service container.
+- `server.js` minimally refactored: wrapped autostart in `require.main === module`; `start({ port, skipScheduler })` returns the server; exports `{ app, start }`.
+- `npm test` (backend) and `npm run test:browser` (Playwright) for local runs.
+
+Next track: Track 1 — code split (`public/index.html` and `server.js` into per-feature files).
 
 ## Currently deployed
 All commits land directly on `main` (worktrees disabled — see memory).

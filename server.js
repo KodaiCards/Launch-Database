@@ -7327,7 +7327,7 @@ async function bootstrapV3Schema() {
   console.log(`───── v3 bootstrap complete: ${okCount} OK, ${failCount} failed ─────`);
 }
 
-async function start() {
+async function start(opts = {}) {
   await initSchema();
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
@@ -7335,15 +7335,39 @@ async function start() {
   // Automation scheduler — surfaces stale permits + budget burn + daily
   // digest to console; the same data is exposed via /api/automation/* for
   // the UI. Started AFTER all schemas are bootstrapped so the queries
-  // don't race against missing tables.
-  automationModule.startScheduler(pool);
+  // don't race against missing tables. Skipped when called from tests so
+  // the bootstrap log isn't polluted with digest output and scheduler
+  // ticks don't race the test cleanup. The handle is unref'd anyway, but
+  // skipping it keeps test startup quiet.
+  if (!opts.skipScheduler) {
+    automationModule.startScheduler(pool);
+  }
+  // listenPort: pass 0 from tests to bind to an ephemeral port; pass the
+  // configured PORT in production. We log the resolved port (server.address())
+  // rather than the input so 0 → actual port is visible.
+  const listenPort = opts.port !== undefined ? opts.port : PORT;
+  const server = await new Promise((resolve, reject) => {
+    const s = app.listen(listenPort, (err) => {
+      if (err) return reject(err);
+      console.log(`✓ Launch Fiber Services running on port ${s.address().port}`);
+      resolve(s);
+    });
+    s.on('error', reject);
+  });
   // Extend timeouts to 30 minutes — needed for multi-GB uploads. The
   // platform's load balancer (Railway) may still cap at 5 minutes, but
   // setting these here at least removes Node as the bottleneck.
-  const server = app.listen(PORT, () => console.log(`✓ Launch Fiber Services running on port ${PORT}`));
   server.timeout = 30 * 60 * 1000;            // overall socket timeout
   server.keepAliveTimeout = 30 * 60 * 1000;   // keep-alive
   server.headersTimeout = 30 * 60 * 1000 + 1000; // must be > keepAliveTimeout
+  return server;
 }
 
-start().catch(console.error);
+// Only auto-start when invoked directly (`node server.js`). Tests
+// `require('./server')` and call `start({ port: 0 })` to bind an ephemeral
+// port without auto-starting on import.
+if (require.main === module) {
+  start().catch(console.error);
+}
+
+module.exports = { app, start };
