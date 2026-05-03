@@ -372,390 +372,31 @@ function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride)
   return { expectedHours: null, expectedRevenue: null, miles: null, permittingHoursPerMile: null };
 }
 
-// Recalculate actual_hours for a project (own entries + children's hours)
-// then propagate up through parent chain.
-//
-// Cycle guard: a corrupted parent_id chain (project pointing to itself, or
-// any cycle A→B→A) used to stack-overflow the entire process. We track the
-// visited ids and bail with a console warning if we'd revisit one. Also
-// hard-cap at 50 levels deep — real project trees are at most a handful
-// deep, so anything past that is data corruption.
-async function updateProjectHours(projectId, _visited) {
-  const visited = _visited || new Set();
-  if (visited.has(projectId)) {
-    console.warn(`[updateProjectHours] Cycle detected at project ${projectId} — aborting propagation. Investigate parent_id chain.`);
-    return;
-  }
-  if (visited.size >= 50) {
-    console.warn(`[updateProjectHours] Depth limit reached at project ${projectId} — aborting propagation.`);
-    return;
-  }
-  visited.add(projectId);
-
-  await pool.query(`
-    UPDATE projects SET actual_hours = (
-      SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
-    ) + (
-      SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id=$1
-    ) WHERE id=$1
-  `, [projectId]);
-
-  const { rows } = await pool.query('SELECT parent_id FROM projects WHERE id=$1', [projectId]);
-  if (rows[0] && rows[0].parent_id) {
-    await updateProjectHours(rows[0].parent_id, visited);
-  }
-}
+// Shared backend helpers (updateProjectHours, saveUndoBucket, popUndoBucket,
+// collectProjectTree) live in routes/_helpers.js as part of CLEANUP_PLAN.md
+// Track 1.3. Destructured so existing call sites in server.js + extracted
+// route modules can use the bare names.
+const {
+  updateProjectHours,
+  saveUndoBucket,
+  popUndoBucket,
+  collectProjectTree,
+} = require('./routes/_helpers');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.get('/api/clients', async (req, res) => {
-  try {
-    const { rows } = await pool.query('SELECT * FROM clients ORDER BY name');
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/clients', async (req, res) => {
-  const { name, is_rus, notes } = req.body;
-  try {
-    const { rows } = await pool.query(
-      'INSERT INTO clients (name, is_rus, notes) VALUES ($1,$2,$3) RETURNING *',
-      [name, is_rus || false, notes]
-    );
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.put('/api/clients/:id', async (req, res) => {
-  const { name, is_rus, notes, show_contract, show_work_order } = req.body;
-  try {
-    const { rows } = await pool.query(
-      `UPDATE clients SET
-         name             = COALESCE($2, name),
-         is_rus           = COALESCE($3, is_rus),
-         notes            = $4,
-         show_contract    = COALESCE($5, show_contract),
-         show_work_order  = COALESCE($6, show_work_order)
-       WHERE id = $1 RETURNING *`,
-      [req.params.id, name, is_rus, notes ?? null,
-       show_contract === undefined ? null : show_contract,
-       show_work_order === undefined ? null : show_work_order]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Delete a client. Cascades to contracts, projects, time entries, invoices.
-// Returns counts of what would be deleted as a confirmation aid (preview=true).
-app.delete('/api/clients/:id', requireAdmin, async (req, res) => {
-  try {
-    if (req.query.preview === 'true') {
-      const counts = await pool.query(`
-        SELECT
-          (SELECT COUNT(*) FROM contracts WHERE client_id=$1)::int AS contracts,
-          (SELECT COUNT(*) FROM projects WHERE client_id=$1)::int AS projects,
-          (SELECT COUNT(*) FROM invoices WHERE client_id=$1)::int AS invoices
-      `, [req.params.id]);
-      return res.json(counts.rows[0]);
-    }
-    const r = await pool.query('DELETE FROM clients WHERE id=$1 RETURNING name', [req.params.id]);
-    if (!r.rows[0]) return res.status(404).json({ error: 'Client not found' });
-    res.json({ ok: true, deleted_name: r.rows[0].name });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
+// Clients CRUD lives in routes/clients.js (extracted as part of
+// CLEANUP_PLAN.md Track 1.3).
+require('./routes/clients')(app, pool, { requireAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONTRACTS
+// CONTRACTS + ENGINEERING CONTRACTS — extracted as part of Track 1.3.
 // ─────────────────────────────────────────────────────────────────────────────
+require('./routes/contracts')(app, pool, { requireAdmin });
+require('./routes/engineering_contracts')(app, pool, { requireAdmin });
 
-app.get('/api/contracts', async (req, res) => {
-  const { client_id, engineering_contract_id } = req.query;
-  try {
-    const where = [];
-    const params = [];
-    let i = 1;
-    if (client_id) { where.push(`c.client_id = $${i++}`); params.push(client_id); }
-    if (engineering_contract_id) { where.push(`c.engineering_contract_id = $${i++}`); params.push(engineering_contract_id); }
-    const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    // Include engineering contract name for display in admin lists.
-    const { rows } = await pool.query(
-      `SELECT c.*, cl.name as client_name, ec.name as engineering_contract_name
-         FROM contracts c
-         JOIN clients cl ON cl.id = c.client_id
-         LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
-         ${whereStr}
-         ORDER BY cl.name, ec.name NULLS LAST, c.contract_number`,
-      params
-    );
-    res.json(rows);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/contracts', async (req, res) => {
-  const { client_id, contract_number, name, engineering_contract_id, friendly_label } = req.body;
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO contracts (client_id, contract_number, name, engineering_contract_id, friendly_label)
-         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [client_id, contract_number, name, engineering_contract_id || null, friendly_label || null]
-    );
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// PUT /api/contracts/:id — update a contract. Adds umbrella support so the
-// admin can move a contract under (or out of) an engineering_contract.
-app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
-  const { contract_number, name, engineering_contract_id, friendly_label, active } = req.body;
-  try {
-    const sets = [];
-    const params = [req.params.id];
-    let i = 2;
-    if (contract_number !== undefined) { sets.push(`contract_number = $${i++}`); params.push(contract_number); }
-    if (name !== undefined) { sets.push(`name = $${i++}`); params.push(name); }
-    if (engineering_contract_id !== undefined) {
-      sets.push(`engineering_contract_id = $${i++}`);
-      params.push(engineering_contract_id || null);
-    }
-    if (friendly_label !== undefined) { sets.push(`friendly_label = $${i++}`); params.push(friendly_label || null); }
-    if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
-    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
-    const { rows } = await pool.query(
-      `UPDATE contracts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
-      params
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// DELETE /api/contracts/:id — admin-only. Refuses if any project references
-// this contract; the admin must detach those projects first OR pass
-// ?cascade=1 to delete every project under it (each as a tree, with hours
-// and permit data) plus the contract itself, all in one transaction with
-// an undo bucket covering the whole cascade. The schema has
-// projects.contract_id REFERENCES contracts(id) with no CASCADE, so plain
-// DELETE without ?cascade=1 still gives a friendly message instead of a
-// raw FK error.
-app.delete('/api/contracts/:id', requireAdmin, async (req, res) => {
-  const cascade = req.query.cascade === '1' || req.query.cascade === 'true';
-  try {
-    const { rows: kids } = await pool.query(
-      `SELECT id FROM projects WHERE contract_id = $1`,
-      [req.params.id]
-    );
-    if (kids.length > 0 && !cascade) {
-      return res.status(409).json({
-        error: `Cannot delete — ${kids.length} project(s) still reference this contract. Detach them first, or retry with ?cascade=1 to delete the projects (and their hours) too.`,
-        project_count: kids.length,
-      });
-    }
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const contractRow = await client.query('SELECT * FROM contracts WHERE id = $1', [req.params.id]);
-      if (!contractRow.rows[0]) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Contract not found' });
-      }
-
-      let cascadeProjects = [];
-      let cascadeTimeEntries = [];
-      let cascadeInvoiceItems = [];
-      let cascadePermitStages = [];
-      let cascadePermitDocuments = [];
-
-      if (cascade && kids.length > 0) {
-        // Walk every direct-child project's tree (the children may also
-        // have their own descendant rollups).
-        for (const k of kids) {
-          const tree = await collectProjectTree(k.id);
-          for (const p of tree) cascadeProjects.push(p);
-        }
-        const allIds = cascadeProjects.map(p => p.id);
-        const teRes = await client.query('SELECT * FROM time_entries WHERE project_id = ANY($1::uuid[])', [allIds]);
-        cascadeTimeEntries = teRes.rows;
-        try { const r = await client.query('SELECT * FROM invoice_items WHERE project_id = ANY($1::uuid[])', [allIds]); cascadeInvoiceItems = r.rows; } catch {}
-        try { const r = await client.query('SELECT * FROM permit_stages WHERE project_id = ANY($1::uuid[])', [allIds]); cascadePermitStages = r.rows; } catch {}
-        try { const r = await client.query('SELECT * FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allIds]); cascadePermitDocuments = r.rows; } catch {}
-
-        // Delete leaf rows first
-        await client.query('DELETE FROM time_entries WHERE project_id = ANY($1::uuid[])', [allIds]);
-        try { await client.query('DELETE FROM invoice_items WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
-        try { await client.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
-        try { await client.query('DELETE FROM permit_stages WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
-        // Then projects deepest-first
-        const byDepth = [...cascadeProjects].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
-        for (const p of byDepth) {
-          await client.query('DELETE FROM projects WHERE id = $1', [p.id]);
-        }
-      }
-
-      await client.query('DELETE FROM contracts WHERE id = $1', [req.params.id]);
-      await client.query('COMMIT');
-
-      const undo = await saveUndoBucket(req.user && req.user.id, 'contract_cascade', {
-        contract: contractRow.rows[0],
-        project_tree: cascade ? {
-          projects: cascadeProjects,
-          time_entries: cascadeTimeEntries,
-          invoice_items: cascadeInvoiceItems,
-          permit_stages: cascadePermitStages,
-          permit_documents: cascadePermitDocuments,
-        } : null,
-      });
-      res.json({
-        ok: true,
-        cascade,
-        deleted_projects: cascadeProjects.length,
-        deleted_time_entries: cascadeTimeEntries.length,
-        undo_token: undo.token,
-        undo_expires_at: undo.expires_at,
-      });
-    } catch (e) {
-      try { await client.query('ROLLBACK'); } catch {}
-      throw e;
-    } finally {
-      client.release();
-    }
-  } catch (e) {
-    console.error('[contracts:delete]', e && e.message);
-    res.status(500).json({ error: 'Failed to delete contract: ' + e.message });
-  }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ENGINEERING CONTRACTS — umbrella above one or more billing contracts.
-// Used when a single agreement (e.g. "RUS 217 Engineering Contract GA 1706
-// -A72") spans multiple billing contracts (e.g. 515-3, 515-4, 515-5) and you
-// want the BUDGET to live at the umbrella level rather than per-project.
-// All endpoints admin-only.
-// ─────────────────────────────────────────────────────────────────────────────
-
-app.get('/api/engineering-contracts', async (req, res) => {
-  const { client_id } = req.query;
-  try {
-    // For each engineering contract, also surface a count of child contracts
-    // and child projects so the admin list view shows scope at a glance.
-    const where = client_id ? 'WHERE ec.client_id = $1' : '';
-    const { rows } = await pool.query(
-      `SELECT ec.*,
-              cl.name AS client_name,
-              (SELECT COUNT(*) FROM contracts c WHERE c.engineering_contract_id = ec.id)::int AS contract_count,
-              (SELECT COUNT(*) FROM projects p
-                 JOIN contracts c ON c.id = p.contract_id
-                 WHERE c.engineering_contract_id = ec.id)::int AS project_count
-         FROM engineering_contracts ec
-         JOIN clients cl ON cl.id = ec.client_id
-         ${where}
-         ORDER BY cl.name, ec.name`,
-      client_id ? [client_id] : []
-    );
-    res.json(rows);
-  } catch (e) {
-    console.error('[engineering-contracts:list]', e && e.message);
-    res.status(500).json({ error: 'Failed to load engineering contracts.' });
-  }
-});
-
-app.get('/api/engineering-contracts/:id', async (req, res) => {
-  try {
-    const { rows: ec } = await pool.query(
-      `SELECT ec.*, cl.name AS client_name
-         FROM engineering_contracts ec
-         JOIN clients cl ON cl.id = ec.client_id
-         WHERE ec.id = $1`, [req.params.id]
-    );
-    if (!ec[0]) return res.status(404).json({ error: 'Engineering contract not found' });
-    // Include child contracts so the detail view can show the structure
-    const { rows: contracts } = await pool.query(
-      `SELECT c.*, (SELECT COUNT(*)::int FROM projects p WHERE p.contract_id = c.id) AS project_count
-         FROM contracts c WHERE c.engineering_contract_id = $1
-         ORDER BY c.contract_number`, [req.params.id]
-    );
-    // Include the umbrella's budget if it has one
-    const { rows: budgets } = await pool.query(
-      `SELECT b.*, COALESCE((SELECT SUM(allocated_amount) FROM budget_codes bc WHERE bc.budget_id = b.id), 0)::float AS allocated_total
-         FROM budgets b WHERE b.engineering_contract_id = $1`, [req.params.id]
-    );
-    res.json({ ...ec[0], contracts, budgets });
-  } catch (e) {
-    console.error('[engineering-contracts:get]', e && e.message);
-    res.status(500).json({ error: 'Failed to load engineering contract.' });
-  }
-});
-
-app.post('/api/engineering-contracts', requireAdmin, async (req, res) => {
-  const { client_id, name, contract_number, loan_name, notes } = req.body || {};
-  if (!client_id) return res.status(400).json({ error: 'client_id required' });
-  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name, notes)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [client_id, String(name).trim(), contract_number || null, loan_name || null, notes || null]
-    );
-    res.json(rows[0]);
-  } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
-    console.error('[engineering-contracts:create]', e && e.message);
-    res.status(500).json({ error: 'Failed to create engineering contract.' });
-  }
-});
-
-app.put('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
-  const { name, contract_number, loan_name, notes, active } = req.body || {};
-  try {
-    const sets = [];
-    const params = [req.params.id];
-    let i = 2;
-    if (name !== undefined) { sets.push(`name = $${i++}`); params.push(String(name).trim()); }
-    if (contract_number !== undefined) { sets.push(`contract_number = $${i++}`); params.push(contract_number || null); }
-    if (loan_name !== undefined) { sets.push(`loan_name = $${i++}`); params.push(loan_name || null); }
-    if (notes !== undefined) { sets.push(`notes = $${i++}`); params.push(notes || null); }
-    if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
-    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
-    const { rows } = await pool.query(
-      `UPDATE engineering_contracts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
-      params
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
-    res.json(rows[0]);
-  } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
-    console.error('[engineering-contracts:update]', e && e.message);
-    res.status(500).json({ error: 'Failed to update engineering contract.' });
-  }
-});
-
-app.delete('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
-  try {
-    // Pre-check: refuse to delete if contracts still point here. RESTRICT
-    // would also catch this but the explicit message is friendlier.
-    const { rows: kids } = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM contracts WHERE engineering_contract_id = $1`,
-      [req.params.id]
-    );
-    if (kids[0].n > 0) {
-      return res.status(409).json({
-        error: `Cannot delete — ${kids[0].n} contract(s) still belong to this engineering contract. Move or delete them first.`,
-      });
-    }
-    const { rows } = await pool.query(
-      `DELETE FROM engineering_contracts WHERE id = $1 RETURNING id`,
-      [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
-    res.json({ ok: true });
-  } catch (e) {
-    console.error('[engineering-contracts:delete]', e && e.message);
-    res.status(500).json({ error: 'Failed to delete engineering contract.' });
-  }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STAFF
@@ -1429,39 +1070,10 @@ app.post('/api/projects/recalc-all', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// UNDO INFRASTRUCTURE
-// Destructive endpoints (bulk hours delete, project tree delete, contract
-// cascade) save a snapshot of the removed rows here BEFORE returning. The
-// UI shows an undo bar; if the user clicks Undo within the TTL, the bucket
-// is replayed via /api/undo/:token to re-insert the rows. After the TTL
-// expires the bucket is purged on the next destructive op (no separate
-// scheduler needed — pruning piggybacks on saves).
+// UNDO INFRASTRUCTURE — saveUndoBucket / popUndoBucket helpers live in
+// routes/_helpers.js; the /api/undo/:token replay handler stays here for
+// now (will move to routes/undo.js in a later step of Track 1.3).
 // ─────────────────────────────────────────────────────────────────────────────
-const UNDO_TTL_SECONDS = 60;  // UI shows 15s but server keeps a buffer
-
-async function saveUndoBucket(userId, kind, payload) {
-  // Prune expired rows opportunistically. Keeps the table small without a
-  // dedicated cron — destructive ops are infrequent enough that the cost
-  // of one DELETE alongside the INSERT is negligible.
-  try {
-    await pool.query(`DELETE FROM undo_buckets WHERE expires_at < NOW()`);
-  } catch (e) { /* not fatal — table may not exist on first boot */ }
-  const expiresAt = new Date(Date.now() + UNDO_TTL_SECONDS * 1000);
-  const { rows } = await pool.query(
-    `INSERT INTO undo_buckets (user_id, kind, payload, expires_at)
-       VALUES ($1, $2, $3::jsonb, $4) RETURNING id, expires_at`,
-    [userId || null, kind, JSON.stringify(payload), expiresAt]
-  );
-  return { token: rows[0].id, expires_at: rows[0].expires_at };
-}
-
-async function popUndoBucket(token) {
-  const { rows } = await pool.query(
-    `DELETE FROM undo_buckets WHERE id = $1 AND expires_at >= NOW() RETURNING kind, payload`,
-    [token]
-  );
-  return rows[0] || null;
-}
 
 // POST /api/undo/:token — replay an undo bucket. Dispatches by `kind`.
 // Restorers re-INSERT with the original UUIDs so foreign-key references
@@ -4706,27 +4318,7 @@ app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Walk the descendant tree of a project (BFS via parent_id). Returns each
-// project row with a __depth field so the undo restorer can re-insert
-// parents before children. Used by both the project tree-delete and the
-// contract cascade-delete below.
-async function collectProjectTree(rootId) {
-  const all = [];
-  const queue = [{ id: rootId, depth: 0 }];
-  const seen = new Set();
-  while (queue.length) {
-    const { id, depth } = queue.shift();
-    if (seen.has(id)) continue;
-    seen.add(id);
-    const { rows } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
-    if (!rows[0]) continue;
-    rows[0].__depth = depth;
-    all.push(rows[0]);
-    const { rows: kids } = await pool.query('SELECT id FROM projects WHERE parent_id = $1', [id]);
-    for (const k of kids) queue.push({ id: k.id, depth: depth + 1 });
-  }
-  return all;
-}
+// collectProjectTree is now in routes/_helpers.js (CLEANUP_PLAN.md Track 1.3).
 
 // DELETE /api/projects/:id/with-tree — delete a project AND every descendant
 // (sub-projects, sub-sub-projects, etc.) PLUS all their time entries,
