@@ -2550,7 +2550,7 @@ async function clientChanged(preserveJobId) {
   //   Non-PSC clients: Project Type and WO# HIDDEN entirely.
   //                    Contract visible only if admin opted in via Settings.
   //                    Service Area visible as a free-text input.
-  const client = clientsCache.find(c => c.id === clientId);
+  const client = clients.find(c => c.id === clientId);
   const isPsc = client?.is_rus === true;
   const showContract = isPsc || client?.show_contract === true;
 
@@ -6043,7 +6043,7 @@ function renderImportReview(d) {
   // Unknown WO section — admin can either skip or create new projects on the fly.
   if (d.unknown_wos.length > 0) {
     // Build client option list once (defaults to first PSC client if any)
-    const clientOptions = (clientsCache || []).map(c =>
+    const clientOptions = (clients || []).map(c =>
       `<option value="${c.id}"${c.is_rus ? ' data-rus="1"' : ''}>${esc(c.name)}${c.is_rus ? ' (PSC)' : ''}</option>`
     ).join('');
     const jobOpts2 = (jobsCache || []).map(j =>
@@ -7920,9 +7920,13 @@ function renderContractsList() {
 // that didn't include the new row, so saving sent an EC id that didn't
 // exist server-side and Postgres rejected with an FK error).
 async function openAddContractForm() {
+  // Refresh BEFORE showing the form. If we display the form first, the user
+  // can start interacting (picking a client, etc.) and then 200ms later the
+  // await resolves, renderContractsList() runs, and the rebuilt <option>
+  // elements wipe their selection. Fetch first → render → then reveal.
+  await loadEngineeringContracts();
+  renderContractsList();
   document.getElementById('contracts-add-form').style.display = 'block';
-  await loadEngineeringContracts();   // refresh cache
-  renderContractsList();              // re-renders the form's dropdowns from fresh cache
 }
 
 // When the client changes, narrow the EC dropdown to ECs belonging to
@@ -9396,7 +9400,7 @@ async function _pollTick(){
   if (_pollTickCount % 3 === 0) {
     callIfExists('loadClients');
     callIfExists('loadJobs');
-    callIfExists('loadContracts');
+    callIfExists('loadContractList');
     callIfExists('loadProjectTypes');
   }
 

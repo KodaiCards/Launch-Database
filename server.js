@@ -495,12 +495,12 @@ app.get('/api/contracts', async (req, res) => {
 });
 
 app.post('/api/contracts', async (req, res) => {
-  const { client_id, contract_number, name, engineering_contract_id } = req.body;
+  const { client_id, contract_number, name, engineering_contract_id, friendly_label } = req.body;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO contracts (client_id, contract_number, name, engineering_contract_id)
-         VALUES ($1,$2,$3,$4) RETURNING *`,
-      [client_id, contract_number, name, engineering_contract_id || null]
+      `INSERT INTO contracts (client_id, contract_number, name, engineering_contract_id, friendly_label)
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [client_id, contract_number, name, engineering_contract_id || null, friendly_label || null]
     );
     res.json(rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -509,7 +509,7 @@ app.post('/api/contracts', async (req, res) => {
 // PUT /api/contracts/:id — update a contract. Adds umbrella support so the
 // admin can move a contract under (or out of) an engineering_contract.
 app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
-  const { contract_number, name, engineering_contract_id, active } = req.body;
+  const { contract_number, name, engineering_contract_id, friendly_label, active } = req.body;
   try {
     const sets = [];
     const params = [req.params.id];
@@ -520,6 +520,7 @@ app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
       sets.push(`engineering_contract_id = $${i++}`);
       params.push(engineering_contract_id || null);
     }
+    if (friendly_label !== undefined) { sets.push(`friendly_label = $${i++}`); params.push(friendly_label || null); }
     if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
     if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
     const { rows } = await pool.query(
