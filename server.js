@@ -3520,10 +3520,15 @@ app.get('/api/inspection', async (req, res) => {
     //      inspection job. Without this branch, those entries are invisible
     //      until admin manually edits each project's job. The text match
     //      is case-insensitive and tolerates suffixes/abbreviations.
+    // PSC RUS scope (was inspection-only). Returns every active project
+    // under any PSC RUS client (cl.is_rus = TRUE). The tab covers the
+    // whole engineering-contract umbrella now — Inspection, RE, Permitting,
+    // and any other jobs PSC RUS work runs through. Non-PSC clients are
+    // excluded entirely (they have their own format / surfacing).
     const { rows: projects } = await pool.query(`
       SELECT p.id, p.name, p.work_order_number, p.status, p.is_ongoing, p.client_id,
              cl.name as client_name,
-             j.name as job_name, j.default_rate as job_rate, j.default_billing_type as job_billing_type, j.team as job_team,
+             j.name as job_name, j.default_rate as job_rate, j.default_billing_type as job_billing_type, j.team as job_team, j.is_permitting,
              p.billing_rate, p.billing_type,
              pp.name as parent_name, pp.rollup_level as parent_level,
              (SELECT name FROM projects pa WHERE pa.id = pp.parent_id) as grandparent_name
@@ -3532,53 +3537,29 @@ app.get('/api/inspection', async (req, res) => {
       LEFT JOIN jobs j     ON j.id  = p.job_id
       LEFT JOIN projects pp ON pp.id = p.parent_id
       WHERE COALESCE(p.is_rollup, FALSE) = FALSE
-        AND (
-          j.team = 'inspection'
-          OR p.is_ongoing = TRUE
-          OR EXISTS (
-            SELECT 1 FROM time_entries te
-            WHERE te.project_id = p.id
-              AND te.entry_date BETWEEN $1 AND $2
-              AND (
-                LOWER(te.job_title) LIKE '%inspect%'
-                OR LOWER(te.job_title) LIKE '%resident eng%'
-                OR LOWER(te.job_title) = 're'
-              )
-          )
-        )
-      ORDER BY p.is_ongoing DESC, p.name
-    `, [startDate, endDate]);
+        AND cl.is_rus = TRUE
+        AND p.status IN ('active', 'billed')
+      ORDER BY p.is_ongoing DESC, j.name NULLS LAST, p.name
+    `);
 
-    // For each project, sum hours for the period. If the project's assigned
-    // job is on the inspection team OR it's flagged ongoing, count ALL
-    // hours (the project IS an inspection project). Otherwise the project
-    // only surfaces here because of the job_title heuristic — in that
-    // case we only count hours whose job_title looks inspection-y, so
-    // we don't overcount mixed projects (e.g. a design project with one
-    // inspector entry should only show that one entry's hours, not all).
+    // Sum every hour on each project for the period — no job_title heuristic
+    // since the cl.is_rus filter already scopes us correctly. Permitting
+    // (footage) projects keep $0 in revenue because they bill by mile,
+    // not hourly; the tab is hours-driven.
     const result = [];
     for (const p of projects) {
-      const isInspectionPrimary = (p.job_team === 'inspection' || p.is_ongoing);
-      const hoursSql = isInspectionPrimary
-        ? `SELECT COALESCE(SUM(hours), 0)::float as hours,
-                  COUNT(DISTINCT staff_id)::int as inspector_count
+      const { rows: tr } = await pool.query(
+        `SELECT COALESCE(SUM(hours), 0)::float as hours,
+                COUNT(DISTINCT staff_id)::int as inspector_count
            FROM time_entries
-           WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3`
-        : `SELECT COALESCE(SUM(hours), 0)::float as hours,
-                  COUNT(DISTINCT staff_id)::int as inspector_count
-           FROM time_entries
-           WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3
-             AND (
-               LOWER(job_title) LIKE '%inspect%'
-               OR LOWER(job_title) LIKE '%resident eng%'
-               OR LOWER(job_title) = 're'
-             )`;
-      const { rows: tr } = await pool.query(hoursSql, [p.id, startDate, endDate]);
+          WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3`,
+        [p.id, startDate, endDate]
+      );
       const hours = tr[0].hours || 0;
-      // Skip projects with zero matching hours (UNLESS they're explicitly
-      // pinned via is_ongoing or are inspection-team — those still show
-      // for visibility even if zero hours this period).
-      if (hours === 0 && !isInspectionPrimary) continue;
+      // Hide rows with zero hours UNLESS they're flagged ongoing or are
+      // active permitting projects — admin still wants visibility into
+      // active permitting work (which has no hours by nature).
+      if (hours === 0 && !p.is_ongoing && !p.is_permitting && p.status !== 'active') continue;
       const rate = parseFloat(p.billing_rate) || parseFloat(p.job_rate) || 90;
       const revenue = (p.billing_type === 'footage' || p.job_billing_type === 'footage')
         ? 0  // footage projects don't bill by hours

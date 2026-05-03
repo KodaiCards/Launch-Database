@@ -313,7 +313,7 @@ textarea{resize:vertical;min-height:72px}
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:12px;width:90%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal,.modal-content{background:var(--white);border-radius:12px;width:90%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .modal-header{padding:18px 22px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1}
 .modal-title{font-size:16px;font-weight:600}
 .modal-body{padding:22px}
@@ -445,7 +445,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
   <a class="nav-tab" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature"></i> Permitting</a>
   <a class="nav-tab" data-view="design" onclick="showView('design')"><i class="fa-solid fa-drafting-compass"></i> Design</a>
-  <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> Inspection</a>
+  <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> PSC RUS</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
   <a class="nav-tab" data-view="audit" onclick="showView('audit')"><i class="fa-solid fa-history"></i> Time Audit</a>
@@ -481,6 +481,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="stat-card" style="cursor:pointer" onclick="showActiveList()" title="Click to see which projects are counted"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
         <div class="stat-card accent"><div class="stat-label" id="s-period-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
         <div class="stat-card"><div class="stat-label" id="s-year-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
+        <div class="stat-card" style="background:linear-gradient(135deg,#1B5FA0,#134880);color:#fff;cursor:pointer" onclick="document.getElementById('psc-rus-projection-card')?.scrollIntoView({behavior:'smooth'})" title="Click to jump to the projection breakdown">
+          <div class="stat-label" style="color:rgba(255,255,255,.85)">Next 90 Day Projection</div>
+          <div class="stat-value" id="s-90d-projection">—</div>
+        </div>
       </div>
 
       <!-- "If I billed today" preview — sums every unbilled hour × rate
@@ -532,15 +536,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
       </div>
 
-      <!-- Inspection revenue projection — admin only. Shows per-project
-           pace-vs-budget projection and rolls up to a total. Hidden when
-           the API returns 403 (non-admin viewer) or no inspection data. -->
-      <div id="inspection-projection-card" class="card lfs-widget" data-widget-id="inspection-projection" style="margin-bottom:14px;display:none">
+      <!-- PSC RUS revenue projection — admin only. One row per engineering
+           contract umbrella under any PSC RUS client; each row shows the
+           90-day combined projection plus a per-job (Inspection / RE /
+           Permitting / Other) breakdown. Hidden when the API returns 403
+           (non-admin viewer) or there's no PSC RUS data. -->
+      <div id="psc-rus-projection-card" class="card lfs-widget" data-widget-id="psc-rus-projection" style="margin-bottom:14px;display:none">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>Inspection Revenue Projection</span>
-          <span style="font-size:11px;color:var(--text-muted)">Pace × budget cap · 6 months</span>
+          <span class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>PSC RUS Revenue Projection</span>
+          <span style="font-size:11px;color:var(--text-muted)">90 day revenue projection</span>
         </div>
-        <div class="card-body" id="inspection-projection-body" style="padding:0">
+        <div class="card-body" id="psc-rus-projection-body" style="padding:0">
           <div style="padding:16px;color:var(--text-muted)">Loading…</div>
         </div>
       </div>
@@ -560,16 +566,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
       </div>
 
-      <!-- Active projects table -->
-      <div class="card lfs-widget" data-widget-id="active-projects">
-        <div class="card-header"><span class="card-title">Active Projects</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Type</th><th>YTD Revenue</th><th>Status</th><th></th></tr></thead>
-            <tbody id="dash-projects-body"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
+      <!-- Active Projects card removed from the dashboard — now lives only
+           on the Projects tab. The dashboard focuses on KPIs + projection. -->
     </div>
 
     <!-- ═══════════════════ PROJECTS ═══════════════════ -->
@@ -697,7 +695,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
          between months until manually marked completed. -->
     <div id="view-inspection" class="view">
       <div class="section-header">
-        <div><div class="section-title">Inspection</div><div class="section-sub">Inspector projects with monthly hours and revenue rollups</div></div>
+        <div><div class="section-title">PSC RUS</div><div class="section-sub">All PSC RUS projects with monthly hours and revenue rollups</div></div>
         <div style="display:flex;gap:10px;align-items:center">
           <label style="font-size:12px;color:var(--text-muted)">Period:</label>
           <select id="insp-period" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
@@ -727,9 +725,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <div style="font-size:11px;opacity:.85" id="insp-tile-projects-sub">ongoing carry month-to-month</div>
         </div>
         <div class="card" style="padding:14px;background:linear-gradient(135deg,#FD7E14,#C2570B);color:#fff">
-          <div style="font-size:11px;text-transform:uppercase;opacity:.85">Inspectors</div>
+          <div style="font-size:11px;text-transform:uppercase;opacity:.85">Staff</div>
           <div style="font-size:28px;font-weight:700;margin-top:4px" id="insp-tile-inspectors">0</div>
-          <div style="font-size:11px;opacity:.85" id="insp-tile-inspectors-sub">staff with hours</div>
+          <div style="font-size:11px;opacity:.85" id="insp-tile-inspectors-sub">distinct staff with hours</div>
         </div>
       </div>
 
@@ -3444,86 +3442,88 @@ async function loadBillNowPreview() {
 // Admin-only — the API itself returns 403 to non-admins, so this just
 // silently bails on those calls. Compact table per project + a total.
 async function loadInspectionProjection() {
-  const card = document.getElementById('inspection-projection-card');
-  const body = document.getElementById('inspection-projection-body');
+  const card = document.getElementById('psc-rus-projection-card');
+  const body = document.getElementById('psc-rus-projection-body');
+  const tile = document.getElementById('s-90d-projection');
   if (!card || !body) return;
   let data;
   try {
-    data = await api('/api/automation/inspection-projection');
+    data = await api('/api/automation/psc-rus-projection');
   } catch (e) {
     card.style.display = 'none';
+    if (tile) tile.textContent = '—';
     return;
   }
-  // Backwards-compat: API now returns rows under `rows` (with level field).
-  // Older shape was `projects`. Use whichever is present.
-  const rows = data.rows || data.projects || [];
+  const rows = data.rows || [];
+  // Always update the dashboard tile, even when there are no umbrellas.
+  if (tile) tile.textContent = fmtMoney(data.total_projected_revenue || 0);
   if (!rows.length) {
     card.style.display = 'none';
     return;
   }
   card.style.display = '';
 
-  // Render umbrellas as visually distinct rows: a primary-tinted left
-  // border, the engineering contract name as the headline, child project
-  // names in a small list. Standalone projects render flat.
+  // Each umbrella row carries a per-job breakdown (Inspection / RE /
+  // Permitting / Other). Render the umbrella headline + projection on top,
+  // then the breakdown rows underneath. Other-bucket projects are listed
+  // for visibility but show "Not projected" instead of a $ figure.
   body.innerHTML = `
     <table style="width:100%;border-collapse:collapse">
       <thead>
         <tr style="background:var(--gray-light)">
-          <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Scope</th>
-          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Avg/wk</th>
+          <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Engineering Contract / Job</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hrs (MTD)</th>
           <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget</th>
-          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Projected</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">90-Day Projection</th>
         </tr>
       </thead>
       <tbody>
         ${rows.map(r => {
           const exhaustBg = r.will_exhaust_budget ? 'background:#FFF3E0;' : '';
-          if (r.level === 'umbrella') {
-            // Umbrella row — emphasize, list child projects, show
-            // "$X of $Y total contract budget"
-            const headline = esc(r.engineering_contract_name || 'Engineering contract');
-            const sub = `${esc(r.client_name || '—')} · ${r.project_count} project${r.project_count !== 1 ? 's' : ''}`;
-            const childPreview = (r.child_project_names || []).slice(0, 3).join(', ')
-              + ((r.child_project_names || []).length > 3 ? `, +${r.child_project_names.length - 3} more` : '');
-            const budgetCell = r.budget_allocated > 0
-              ? `<div style="font-weight:600">${fmtMoney(r.budget_remaining)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">left</span></div>
-                 <div style="font-size:11px;color:var(--text-muted)">of ${fmtMoney(r.budget_allocated)} total</div>
-                 <div style="font-size:11px;color:var(--text-muted)">${fmtMoney(r.billed_to_date)} billed</div>`
-              : '—';
-            return `<tr style="border-top:1px solid var(--gray-border);${exhaustBg}border-left:3px solid var(--primary,#1B5FA0)">
-              <td style="padding:10px 12px">
-                <div style="font-weight:600;font-size:13px">
-                  <i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>${headline}
-                  ${r.will_exhaust_budget ? '<span style="margin-left:6px;font-size:10px;color:#e65100;background:#FFE0B2;padding:1px 6px;border-radius:8px;font-weight:600">BUDGET CAP REACHED</span>' : ''}
-                </div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${sub}</div>
-                ${childPreview ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${esc(childPreview)}</div>` : ''}
+          const headline = esc(r.engineering_contract_name || 'Engineering contract');
+          const subBits = [esc(r.client_name || '—')];
+          if (r.loan_name) subBits.push(`loan: ${esc(r.loan_name)}`);
+          subBits.push(`${r.project_count} project${r.project_count !== 1 ? 's' : ''}`);
+          const sub = subBits.join(' · ');
+          const budgetCell = r.budget_allocated > 0
+            ? `<div style="font-weight:600">${fmtMoney(r.budget_remaining)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">left</span></div>
+               <div style="font-size:11px;color:var(--text-muted)">of ${fmtMoney(r.budget_allocated)} total</div>
+               <div style="font-size:11px;color:var(--text-muted)">${fmtMoney(r.billed_to_date)} billed</div>`
+            : '—';
+          // Umbrella header row
+          let html = `<tr style="border-top:2px solid var(--gray-border);${exhaustBg}border-left:3px solid var(--primary,#1B5FA0);background:var(--gray-light)">
+            <td style="padding:10px 12px">
+              <div style="font-weight:700;font-size:13px">
+                <i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>${headline}
+                ${r.will_exhaust_budget ? '<span style="margin-left:6px;font-size:10px;color:#e65100;background:#FFE0B2;padding:1px 6px;border-radius:8px;font-weight:600">BUDGET CAP REACHED</span>' : ''}
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${sub}</div>
+            </td>
+            <td style="padding:10px 12px;text-align:right;font-weight:600">${fmt(r.mtd_hours, 'hrs')}</td>
+            <td style="padding:10px 12px;text-align:right">${budgetCell}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:700;color:var(--primary);font-size:14px">${fmtMoney(r.projected_remaining_revenue)}</td>
+          </tr>`;
+          // Per-job breakdown rows
+          for (const b of (r.breakdown || [])) {
+            const projCell = b.projectable
+              ? `<span style="font-weight:500">${fmtMoney(b.projected_remaining_revenue)}</span>`
+              : `<span style="color:var(--text-muted);font-size:11px;font-style:italic">Not projected</span>`;
+            html += `<tr style="border-top:1px solid var(--gray-border)">
+              <td style="padding:6px 12px 6px 36px;color:var(--text-muted);font-size:12px">
+                <span style="color:var(--text);font-weight:500">${esc(b.job_label)}</span>
+                <span style="margin-left:6px">· ${b.project_count} project${b.project_count !== 1 ? 's' : ''}</span>
+                ${b.billed_to_date > 0 ? `<span style="margin-left:6px">· ${fmtMoney(b.billed_to_date)} billed</span>` : ''}
               </td>
-              <td style="padding:10px 12px;text-align:right">${fmt(r.avg_weekly_hours, 'hrs')}</td>
-              <td style="padding:10px 12px;text-align:right">${budgetCell}</td>
-              <td style="padding:10px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(r.projected_remaining_revenue)}</td>
+              <td style="padding:6px 12px;text-align:right;font-size:12px">${fmt(b.mtd_hours, 'hrs')}</td>
+              <td style="padding:6px 12px;text-align:right;color:var(--text-muted);font-size:11px">—</td>
+              <td style="padding:6px 12px;text-align:right;font-size:12px">${projCell}</td>
             </tr>`;
           }
-          // Standalone project row (unchanged flat layout)
-          const subline = [
-            r.client_name,
-            r.engineering_contract_name ? `under ${r.engineering_contract_name} (no umbrella budget yet)` : null,
-            r.will_exhaust_budget ? '<strong style="color:#e65100">budget cap reached</strong>' : null,
-          ].filter(Boolean).join(' · ');
-          return `<tr style="border-top:1px solid var(--gray-border);${exhaustBg}">
-            <td style="padding:8px 12px">
-              <div style="font-weight:500">${esc(r.project_name)}</div>
-              <div style="font-size:11px;color:var(--text-muted)">${subline}</div>
-            </td>
-            <td style="padding:8px 12px;text-align:right">${fmt(r.avg_weekly_hours, 'hrs')}</td>
-            <td style="padding:8px 12px;text-align:right;color:var(--text-muted)">${r.budget_allocated > 0 ? fmtMoney(r.budget_remaining) : '—'}</td>
-            <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(r.projected_remaining_revenue)}</td>
-          </tr>`;
+          return html;
         }).join('')}
-        <tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);font-weight:600">
-          <td style="padding:10px 12px" colspan="3">Projected total (${data.horizon_weeks} weeks)</td>
-          <td style="padding:10px 12px;text-align:right;color:var(--primary)">${fmtMoney(data.total_projected_revenue)}</td>
+        <tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);font-weight:700">
+          <td style="padding:10px 12px" colspan="3">Total ${data.horizon_days || data.horizon_weeks * 7}-day projection</td>
+          <td style="padding:10px 12px;text-align:right;color:var(--primary);font-size:14px">${fmtMoney(data.total_projected_revenue)}</td>
         </tr>
       </tbody>
     </table>
@@ -3650,6 +3650,10 @@ async function loadDashboard() {
   document.getElementById('s-ytd').textContent = fmtMoney(d.ytd_revenue);
 
   const tbody = document.getElementById('dash-projects-body');
+  // The Active Projects card was removed from the dashboard (lives only on
+  // the Projects tab now). The KPI tiles above still need updating, but
+  // the project-tree render below has nothing to render into — bail.
+  if (!tbody) return;
   const all = d.recent_projects || [];
   if (!all.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-folder-open"></i><p>No active projects</p></div></td></tr>'; return; }
 
@@ -5551,7 +5555,7 @@ async function loadInspection() {
   // Project rows
   const tbody = document.getElementById('inspection-body');
   if (!data.projects?.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fa-solid fa-helmet-safety"></i><p>No inspector projects yet${period==='month'?' for '+periodLabel:''}.</p><p style="font-size:12px;color:var(--text-muted)">Create one with a job set to the Inspection team, or flag any project as "ongoing" to surface it here.</p></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fa-solid fa-helmet-safety"></i><p>No PSC RUS projects with activity${period==='month'?' for '+periodLabel:''}.</p><p style="font-size:12px;color:var(--text-muted)">Any active project under a PSC RUS client will surface here once it has logged hours, regardless of job team.</p></td></tr>`;
     return;
   }
   tbody.innerHTML = data.projects.map(p => `

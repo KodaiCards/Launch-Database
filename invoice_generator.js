@@ -390,8 +390,13 @@ function renderSummaryPage(doc, data, isFootage) {
     { key: 'rate',  label: 'Rate',        width: 70,  align: 'right' },
     { key: 'amt',   label: 'Amount',      width: 90,  align: 'right' },
   ];
-  const tableX = doc.page.margins.left;
   const tableTotalWidth = cols.reduce((s, c) => s + c.width, 0);
+  // Center the table horizontally on the page (instead of pinning to the
+  // left margin). The table is wider than the margin-bounded area, so
+  // pinning to margins.left used to leave it visibly off-center to the
+  // right. Centering keeps it visually aligned with the page-centered
+  // logo and title above.
+  const tableX = (doc.page.width - tableTotalWidth) / 2;
   const rowH = 18;
 
   // Helper to draw one row at the current y, advancing y by rowH.

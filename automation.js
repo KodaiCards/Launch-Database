@@ -179,6 +179,270 @@ async function findPermitsAwaitingInvoice(pool) {
   return rows;
 }
 
+// PSC RUS revenue projection — UMBRELLA-FIRST, all PSC RUS jobs.
+//
+// Returns one row per engineering_contract umbrella under any PSC RUS
+// client (cl.is_rus = TRUE). Each row carries:
+//   - top-level totals (umbrella name, projected_remaining_revenue, MTD
+//     hours, billed_to_date, budget if any)
+//   - a per-job breakdown (Inspection / RE / Permitting / Other) with
+//     each job's own MTD hours and projected remainder
+//
+// Projection methodology by job type:
+//   - Inspection + Resident Engineer (hourly):
+//       avg_weekly_hours = hours_in_lookback / lookback_weeks
+//       pace_revenue = avg_weekly_hours * horizon_weeks * weighted_rate
+//       cap by remaining umbrella budget if one is set
+//   - Permitting (footage / mileage):
+//       projection = sum(expected_revenue) - sum(billed_to_date)
+//       (no pace — permitting revenue is fixed-scope by footage)
+//   - Other PSC RUS jobs (Design, etc.): listed in the breakdown so the
+//     admin sees them, but projected_remaining_revenue = 0 (cannot be
+//     reliably forecast from existing data).
+//
+// `month_to_date_hours` is hours logged THIS calendar month, used for
+// the displayed hours breakdown — the lookback window (separate concept)
+// drives the pace math.
+async function buildPscRusProjection(pool, opts) {
+  const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
+  const horizonWeeks  = (opts && opts.horizonWeeks)  || 13;   // ~90 days
+
+  // ── 1. Pull every active project under a PSC RUS client ─────────────
+  // Includes all jobs (Inspection, RE, Permitting, Design, Other) —
+  // we'll bucket by job team in JS for the breakdown.
+  const { rows: projects } = await pool.query(
+    `SELECT p.id, p.name, p.client_id, p.contract_id,
+            p.billing_rate::float AS billing_rate,
+            p.billing_type,
+            p.actual_hours::float AS actual_hours,
+            p.footage::float AS footage,
+            p.expected_revenue::float AS expected_revenue,
+            p.status,
+            cl.name AS client_name,
+            j.name AS job_name,
+            j.team AS job_team,
+            j.is_permitting,
+            j.default_billing_type AS job_billing_type,
+            c.engineering_contract_id,
+            ec.name AS engineering_contract_name,
+            ec.contract_number AS engineering_contract_number,
+            ec.loan_name AS loan_name
+       FROM projects p
+       LEFT JOIN clients cl ON cl.id = p.client_id
+       LEFT JOIN jobs j ON j.id = p.job_id
+       LEFT JOIN contracts c ON c.id = p.contract_id
+       LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+      WHERE cl.is_rus = TRUE
+        AND p.status IN ('active', 'billed')
+        AND COALESCE(p.is_rollup, FALSE) = FALSE
+        AND c.engineering_contract_id IS NOT NULL`
+  );
+
+  if (!projects.length) {
+    return {
+      lookback_weeks: lookbackWeeks,
+      horizon_weeks: horizonWeeks,
+      total_projected_revenue: 0,
+      umbrella_count: 0,
+      rows: [],
+    };
+  }
+
+  const projectIds = projects.map(p => p.id);
+
+  // ── 2. Lookback hours (drives pace) ─────────────────────────────────
+  const { rows: lookbackRows } = await pool.query(
+    `SELECT project_id, COALESCE(SUM(hours), 0)::float AS hours
+       FROM time_entries
+      WHERE entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
+        AND project_id = ANY($2::uuid[])
+      GROUP BY project_id`,
+    [String(lookbackWeeks), projectIds]
+  );
+  const lookbackByProject = Object.fromEntries(lookbackRows.map(r => [r.project_id, r.hours]));
+
+  // ── 3. Month-to-date hours (displayed) ──────────────────────────────
+  const { rows: mtdRows } = await pool.query(
+    `SELECT project_id, COALESCE(SUM(hours), 0)::float AS hours
+       FROM time_entries
+      WHERE entry_date >= date_trunc('month', CURRENT_DATE)
+        AND project_id = ANY($1::uuid[])
+      GROUP BY project_id`,
+    [projectIds]
+  );
+  const mtdByProject = Object.fromEntries(mtdRows.map(r => [r.project_id, r.hours]));
+
+  // ── 4. Billed-to-date per project ───────────────────────────────────
+  const { rows: billedRows } = await pool.query(
+    `SELECT project_id, COALESCE(SUM(amount), 0)::float AS billed
+       FROM invoice_items
+      WHERE project_id = ANY($1::uuid[])
+      GROUP BY project_id`,
+    [projectIds]
+  );
+  const billedByProject = Object.fromEntries(billedRows.map(r => [r.project_id, r.billed]));
+
+  // ── 5. Engineering-contract-level budgets ──────────────────────────
+  const { rows: ecBudgetRows } = await pool.query(
+    `SELECT b.engineering_contract_id,
+            COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
+       FROM budgets b
+       LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+      WHERE b.engineering_contract_id IS NOT NULL
+      GROUP BY b.engineering_contract_id`
+  );
+  const ecBudget = Object.fromEntries(
+    ecBudgetRows.map(r => [r.engineering_contract_id, r.budget_allocated])
+  );
+
+  // ── 6. Bucket projects into umbrellas → job teams ──────────────────
+  function jobBucket(p) {
+    if (p.is_permitting) return 'permitting';
+    if (p.job_team === 'inspection') return 'inspection';
+    const n = (p.job_name || '').toLowerCase();
+    if (n.includes('resident eng') || n === 're') return 're';
+    if (n.includes('inspect')) return 'inspection';
+    if (n.includes('permit')) return 'permitting';
+    return 'other';
+  }
+  const BUCKET_LABELS = {
+    inspection: 'Inspection',
+    re: 'Resident Engineer',
+    permitting: 'Permitting',
+    other: 'Other',
+  };
+  // Buckets that get a real projection number. Everything else lists in
+  // the breakdown but contributes 0 to the projection total.
+  const PROJECTABLE = new Set(['inspection', 're', 'permitting']);
+
+  const umbrellas = new Map();   // ec_id → { meta, projects[] }
+  for (const p of projects) {
+    const ecId = p.engineering_contract_id;
+    if (!umbrellas.has(ecId)) {
+      umbrellas.set(ecId, {
+        engineering_contract_id: ecId,
+        engineering_contract_name: p.engineering_contract_name,
+        engineering_contract_number: p.engineering_contract_number,
+        loan_name: p.loan_name,
+        client_id: p.client_id,
+        client_name: p.client_name,
+        budget_allocated: ecBudget[ecId] || 0,
+        projects: [],
+      });
+    }
+    umbrellas.get(ecId).projects.push(p);
+  }
+
+  // ── 7. Per-umbrella projection ──────────────────────────────────────
+  const out = [];
+  let grandTotalProjected = 0;
+
+  for (const u of umbrellas.values()) {
+    const buckets = { inspection: [], re: [], permitting: [], other: [] };
+    for (const p of u.projects) buckets[jobBucket(p)].push(p);
+
+    let umbrellaProjected = 0;
+    let umbrellaBilled = 0;
+    let umbrellaMtdHours = 0;
+    const breakdown = [];
+
+    for (const bucketKey of ['inspection', 're', 'permitting', 'other']) {
+      const bucketProjects = buckets[bucketKey];
+      if (!bucketProjects.length) continue;
+
+      const bucketBilled = bucketProjects.reduce(
+        (s, p) => s + (billedByProject[p.id] || 0), 0);
+      const bucketMtd = bucketProjects.reduce(
+        (s, p) => s + (mtdByProject[p.id] || 0), 0);
+      umbrellaBilled += bucketBilled;
+      umbrellaMtdHours += bucketMtd;
+
+      let bucketProjection = 0;
+
+      if (bucketKey === 'permitting') {
+        // Footage projection = expected_revenue - billed_to_date,
+        // summed across permitting projects in this umbrella.
+        const expected = bucketProjects.reduce(
+          (s, p) => s + (p.expected_revenue || 0), 0);
+        bucketProjection = Math.max(0, expected - bucketBilled);
+      } else if (bucketKey === 'inspection' || bucketKey === 're') {
+        // Pace × horizon × weighted rate, weighted by lookback hours.
+        let totalLookbackHrs = 0;
+        let weightedRateNumerator = 0;
+        for (const p of bucketProjects) {
+          const h = lookbackByProject[p.id] || 0;
+          totalLookbackHrs += h;
+          weightedRateNumerator += (p.billing_rate || 0) * h;
+        }
+        let rate = 0;
+        if (totalLookbackHrs > 0) {
+          rate = weightedRateNumerator / totalLookbackHrs;
+        } else {
+          // Fall back to simple average rate so we still project rate
+          // correctly even if no hours were logged in the lookback.
+          const rates = bucketProjects.map(p => p.billing_rate || 0).filter(r => r > 0);
+          if (rates.length) rate = rates.reduce((s, r) => s + r, 0) / rates.length;
+        }
+        const avgWeekly = lookbackWeeks > 0 ? totalLookbackHrs / lookbackWeeks : 0;
+        bucketProjection = avgWeekly * horizonWeeks * rate;
+      }
+      // 'other' bucket contributes 0 — we don't pretend to forecast it.
+
+      breakdown.push({
+        job_bucket: bucketKey,
+        job_label: BUCKET_LABELS[bucketKey],
+        project_count: bucketProjects.length,
+        project_names: bucketProjects.map(p => p.name),
+        mtd_hours: +bucketMtd.toFixed(2),
+        billed_to_date: +bucketBilled.toFixed(2),
+        projected_remaining_revenue: +bucketProjection.toFixed(2),
+        projectable: PROJECTABLE.has(bucketKey),
+      });
+      umbrellaProjected += bucketProjection;
+    }
+
+    // Cap umbrella total by remaining umbrella budget when one is set.
+    const budgetRemaining = u.budget_allocated > 0
+      ? Math.max(0, u.budget_allocated - umbrellaBilled) : null;
+    const willExhaust = budgetRemaining != null && umbrellaProjected >= budgetRemaining;
+    if (budgetRemaining != null && umbrellaProjected > budgetRemaining) {
+      umbrellaProjected = budgetRemaining;
+    }
+
+    grandTotalProjected += umbrellaProjected;
+    out.push({
+      level: 'umbrella',
+      engineering_contract_id: u.engineering_contract_id,
+      engineering_contract_name: u.engineering_contract_name,
+      engineering_contract_number: u.engineering_contract_number,
+      loan_name: u.loan_name,
+      client_id: u.client_id,
+      client_name: u.client_name,
+      project_count: u.projects.length,
+      child_project_names: u.projects.map(p => p.name),
+      budget_allocated: +u.budget_allocated.toFixed(2),
+      billed_to_date: +umbrellaBilled.toFixed(2),
+      budget_remaining: budgetRemaining != null ? +budgetRemaining.toFixed(2) : null,
+      mtd_hours: +umbrellaMtdHours.toFixed(2),
+      projected_remaining_revenue: +umbrellaProjected.toFixed(2),
+      will_exhaust_budget: willExhaust,
+      breakdown,
+    });
+  }
+
+  // Sort by projection size descending (biggest opportunity at top).
+  out.sort((a, b) => b.projected_remaining_revenue - a.projected_remaining_revenue);
+
+  return {
+    lookback_weeks: lookbackWeeks,
+    horizon_weeks: horizonWeeks,
+    horizon_days: horizonWeeks * 7,
+    umbrella_count: umbrellas.size,
+    total_projected_revenue: +grandTotalProjected.toFixed(2),
+    rows: out,
+  };
+}
+
 // Inspection revenue projection — UMBRELLA-FIRST.
 //
 // The data model now allows a budget to attach at the engineering_contract
@@ -636,16 +900,33 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
     }
   });
 
-  // Inspection revenue projection — ADMIN ONLY (financial). Returns the
-  // pace-vs-budget projection per inspection project plus a rolled-up total.
+  // PSC RUS revenue projection — ADMIN ONLY. Returns the umbrella-grouped
+  // 90-day projection across all jobs (Inspection + RE + Permitting +
+  // Other) for every PSC RUS engineering contract. Replaces the older
+  // inspection-only endpoint; the dashboard card has been switched to
+  // call this one, but we keep the legacy path live as a thin alias so
+  // any external caller doesn't 404 mid-deploy.
+  app.get('/api/automation/psc-rus-projection', requireAdmin, async (req, res) => {
+    try {
+      const lookbackWeeks = Math.max(1, Math.min(52, parseInt(req.query.lookback_weeks || '8', 10) || 8));
+      const horizonWeeks  = Math.max(1, Math.min(104, parseInt(req.query.horizon_weeks || '13', 10) || 13));
+      res.json(await buildPscRusProjection(pool, { lookbackWeeks, horizonWeeks }));
+    } catch (e) {
+      console.error('[automation:psc-rus-projection]', e && e.message);
+      res.status(500).json({ error: 'Failed to build PSC RUS projection.' });
+    }
+  });
+
+  // Legacy alias — kept so any cached frontend or curl script doesn't
+  // suddenly 404. Routes to the new PSC RUS projection.
   app.get('/api/automation/inspection-projection', requireAdmin, async (req, res) => {
     try {
       const lookbackWeeks = Math.max(1, Math.min(52, parseInt(req.query.lookback_weeks || '8', 10) || 8));
-      const horizonWeeks  = Math.max(1, Math.min(104, parseInt(req.query.horizon_weeks || '26', 10) || 26));
-      res.json(await buildInspectionRevenueProjection(pool, { lookbackWeeks, horizonWeeks }));
+      const horizonWeeks  = Math.max(1, Math.min(104, parseInt(req.query.horizon_weeks || '13', 10) || 13));
+      res.json(await buildPscRusProjection(pool, { lookbackWeeks, horizonWeeks }));
     } catch (e) {
-      console.error('[automation:inspection-projection]', e && e.message);
-      res.status(500).json({ error: 'Failed to build inspection projection.' });
+      console.error('[automation:inspection-projection:legacy]', e && e.message);
+      res.status(500).json({ error: 'Failed to build PSC RUS projection.' });
     }
   });
 
@@ -734,6 +1015,7 @@ module.exports = {
   findBudgetBurn,
   findPermitsAwaitingInvoice,
   buildInspectionRevenueProjection,
+  buildPscRusProjection,
   buildBillNowPreview,
   buildMonthlyBillingDraft,
 };
