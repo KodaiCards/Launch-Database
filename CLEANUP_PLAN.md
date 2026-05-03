@@ -154,11 +154,18 @@ each. Examples already known:
 - Lines ~4421-4530: Project tree-delete with undo
 - Lines ~6717-6960: Schema bootstrap migrations
 
-### Step 1.2 — Frontend split
+### Step 1.2 — Frontend split  **[PARTIAL 2026-05-03]**
 
 Create `public/js/` directory. One module per feature area. Use plain
 `<script>` tags loaded in order from a thin `index.html` shell — don't
 introduce a bundler. Owner has Railway auto-deploy; build steps add risk.
+
+**Done:** public/js/api.js (api() wrapper), public/js/undo_bar.js
+(showUndoBar/hideUndoBar/lfsUndoClick). Loaded synchronously right
+before the main inline `<script>` so globals stay available to it.
+
+**Deferred:** tree_state.js — that's a refactor (not a relocation), needs
+UI verification across every consumer. Pending.
 
 Order of extraction (do one at a time, commit after each, run smoke tests):
 
@@ -191,9 +198,17 @@ modal shells, header, nav).
 **Verification at each step:** Smoke tests pass + manually click through
 the affected tab + check browser console for ReferenceErrors.
 
-### Step 1.3 — Backend split
+### Step 1.3 — Backend split  **[PARTIAL 2026-05-03]**
 
 Create `routes/` directory. One Express router per domain.
+
+**Done:** routes/_helpers.js (shared utilities), clients, contracts,
+engineering_contracts, projects (core + tree-delete), time_entries,
+invoices, undo. server.js: 7373 → 5927 lines.
+
+**Still pending:** project sub-endpoints (documents/detail/ongoing/unbill/
+mark-billed/bill-and-clone), billing/bill-multiple, dashboard endpoints,
+AI tools, scheduler routes.
 
 Order:
 1. `routes/clients.js`

@@ -13,7 +13,48 @@ CLEANUP_PLAN.md Track 0 is complete:
 - `server.js` minimally refactored: wrapped autostart in `require.main === module`; `start({ port, skipScheduler })` returns the server; exports `{ app, start }`.
 - `npm test` (backend) and `npm run test:browser` (Playwright) for local runs.
 
-Next track: Track 1 — code split (`public/index.html` and `server.js` into per-feature files).
+## Track 1 (Code split) — partial, 2026-05-03
+
+Frontend (Track 1.2):
+- `public/js/api.js` — extracted the `api()` fetch wrapper.
+- `public/js/undo_bar.js` — extracted the bottom-of-viewport undo bar (showUndoBar / hideUndoBar / lfsUndoClick).
+- Loaded synchronously via `<script src=>` tags right before the main inline script in `index.html` so globals stay available.
+- `tree_state.js` (Track 1.2.3) is **deferred** — it's a refactor (introduce `makeTreeState(name)` primitive replacing `expandedRollups` and `expandedHrsKeys`) touching 30+ call sites, and the smoke tests don't cover tree expand/collapse behavior. Better to do under manual UI verification.
+
+Backend (Track 1.3):
+- `routes/_helpers.js` — shared backend utilities: updateProjectHours, saveUndoBucket, popUndoBucket, collectProjectTree, calcProjectFinancials, UNDO_TTL_SECONDS.
+- `routes/clients.js` — clients CRUD.
+- `routes/contracts.js` — billing contracts CRUD + cascade delete with undo.
+- `routes/engineering_contracts.js` — umbrella CRUD.
+- `routes/projects.js` — core CRUD + recalc + with-tree + with-hours.
+- `routes/time_entries.js` — time entries CRUD + bulk-delete-by-staff with undo.
+- `routes/invoices.js` — invoice list + PSC RUS PDF generator endpoints.
+- `routes/undo.js` — POST /api/undo/:token replay.
+
+server.js dropped from 7373 lines (pre-refactor) to 5927 lines (-1446, ~20% smaller).
+
+**Still in server.js (not yet extracted):**
+- Project sub-endpoints with heavier deps: documents (multer), detail, ongoing, unbill, mark-billed, bill-and-clone.
+- Staff, jobs, project_types, concentrators, budgets, billing_batches.
+- /api/billing/bill-multiple (uses multiple helpers).
+- Dashboard, automation, AI tools, reports, audit log.
+- v3 schema bootstrap (Track 1.4 will move this to versioned migrations).
+
+Recent commits:
+- `b73f66e` Track 0 — smoke tests + CI
+- `fba9606` Track 1.2 — api.js + undo_bar.js
+- `fb93c40` Track 1.3 (1) — clients + contracts + engineering_contracts
+- `389c768` Track 1.3 (2) — projects core
+- `fd4b728` Track 1.3 (3) — time_entries
+- `c5c068a` Track 1.3 (4) — undo replay
+- `eaf9f6a` Track 1.3 (5) — invoices
+
+Next steps in order:
+1. **Verify CI is green.** First push that exercises smoke tests against the new route shape — if anything broke, Track 1.3 is where to look.
+2. **Track 1.2.3 tree_state.js** — needs manual UI verification while doing each call-site swap.
+3. **Track 1.2.5+ frontend modules** — dashboard, projects, hours, settings, psc_rus. Each has cross-tab dependencies, so do under preview observation.
+4. **Track 1.3 remainder** — billing/bill-multiple, dashboard endpoints, AI tools, scheduler routes.
+5. **Track 1.4 versioned migrations** — replace bootstrapV3Schema with `migrations/NNN_*.sql` + `schema_migrations` tracking table.
 
 ## Currently deployed
 All commits land directly on `main` (worktrees disabled — see memory).
