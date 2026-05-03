@@ -57,47 +57,67 @@ server.js dropped from 7373 lines (pre-refactor) to 5927 lines (-1446, ~20% smal
 - Dashboard, automation, AI tools, reports, audit log.
 - v3 schema bootstrap (Track 1.4 will move this to versioned migrations).
 
-Recent commits:
-- `b73f66e` Track 0 — smoke tests + CI
-- `fba9606` Track 1.2 — api.js + undo_bar.js
-- `fb93c40` Track 1.3 (1) — clients + contracts + engineering_contracts
-- `389c768` Track 1.3 (2) — projects core
-- `fd4b728` Track 1.3 (3) — time_entries
-- `c5c068a` Track 1.3 (4) — undo replay
-- `eaf9f6a` Track 1.3 (5) — invoices
-- `e492386` docs
-- `41afd2e` Track 1.2.3 (1) — Playwright tree-state regression test
-- `6bc34db` Track 1.2.3 (2) — makeTreeState() + rewrite all 21 call sites
-- `8f125cb` Track 1.3 (6) — jobs
-- `7a3bae0` Track 1.3 (7) — project_types + staff
+Recent commits (newest first):
+- `ff39dbe` Track 1.3 (15) — project_detail
+- `7de66ac` Track 1.3 (14) — permits + project_documents + uploads-debug
+- `999c2f2` Track 1.3 (13) — dashboard + design_pipeline + inspection
+- `8e90ae4` Track 1.3 (12) — admin migration / cleanup endpoints
+- `9ab7c62` Track 1.3 (11) — project_billing + billing
+- `f5c1e8a` Track 1.3 (10) — revenue + reports
+- `2895c77` Track 1.3 (9) — pricing + budgets + potential_permits
 - `7d8956e` Track 1.3 (8) — concentrators
+- `7a3bae0` Track 1.3 (7) — project_types + staff
+- `8f125cb` Track 1.3 (6) — jobs
+- `6bc34db` Track 1.2.3 (2) — makeTreeState() + rewrite all 21 call sites
+- `41afd2e` Track 1.2.3 (1) — Playwright tree-state regression test
+- `e492386` docs
+- `eaf9f6a` Track 1.3 (5) — invoices
+- `c5c068a` Track 1.3 (4) — undo replay
+- `fd4b728` Track 1.3 (3) — time_entries
+- `389c768` Track 1.3 (2) — projects core
+- `fb93c40` Track 1.3 (1) — clients + contracts + engineering_contracts
+- `fba9606` Track 1.2 — api.js + undo_bar.js
+- `b73f66e` Track 0 — smoke tests + CI
 
-server.js: 7373 (pre-refactor) → 5700 (-1673, ~23% smaller).
-public/index.html: 9650 → ~9580 lines (api/undo extracted, tree_state
-refactor was net-neutral).
+**server.js: 7373 (pre-refactor) → 3195 (-4178 lines, ~57% smaller).**
+public/index.html: 9650 → ~9580 lines (api + undo_bar extracted;
+tree_state refactor was net-neutral on size).
 
-Routes shipped: clients, contracts, engineering_contracts, projects (core
-+ tree-delete + with-hours), time_entries, invoices, undo, jobs,
-project_types, staff, concentrators. Plus `routes/_helpers.js` for
-shared utilities.
+Routes shipped (20 modules + _helpers.js):
+clients, contracts, engineering_contracts, projects, time_entries,
+invoices, undo, jobs, project_types, staff, concentrators, pricing,
+budgets, potential_permits, revenue, reports, project_billing, billing,
+admin, dashboard, design_pipeline, inspection, permits,
+project_documents, project_detail.
 
-Frontend modules shipped: api.js, undo_bar.js, tree_state.js (with
-projectsTreeState + hoursTreeState singletons).
+Frontend modules shipped: api.js, undo_bar.js, tree_state.js
+(projectsTreeState + hoursTreeState singletons).
+
+**Still inline in server.js:**
+- /api/hours/csv-validate, /csv-edit-row, /csv-commit (~755 lines —
+  intertwined with AI tools via the shared `csvStage` Map). Extract
+  together with AI tools or refactor the shared map into a module first.
+- /api/ai/upload, /api/ai/upload/:id, /api/ai/chat (~1200 lines —
+  the biggest single remaining block).
+- v3 schema bootstrap (~300 lines — Track 1.4 territory).
+- /login, /permitting, /design, /* HTML/SPA routes (small, fine to leave).
+- Top-level setup (dotenv, cors, csrf, auth wiring, multer, scheduler).
 
 Next steps in order:
-1. **Verify the tree-state refactor** in the browser (see TODO at top).
-   If any tab regresses, fix before continuing.
-2. **Track 1.3 remainder** — project sub-endpoints (documents, detail,
-   ongoing, unbill, mark-billed, bill-and-clone), billing/bill-multiple,
-   pricing, budgets, billing_batches, dashboard endpoints, AI tools,
-   scheduler routes.
+1. **Verify** anything you haven't poked at yet — every tab loads, edits
+   save, billing/budgets/reports tabs work, document uploads work, permit
+   pipeline advance/regress work. The smoke tests cover a slice; eyeballs
+   cover the rest.
+2. **Track 1.3 remainder** — AI tools (~1200 lines) + hours CSV (~755
+   lines). These two are tangled via `csvStage`; either extract both
+   together or refactor the Map into a separate `routes/_csv_stage.js`
+   module first.
 3. **Track 1.2 frontend continuation** — dashboard.js, projects.js,
    hours.js, settings.js, psc_rus.js. Heavy cross-tab deps; do under
    preview-panel observation.
 4. **Track 1.4 versioned migrations** — replace bootstrapV3Schema with
    `migrations/NNN_*.sql` + `schema_migrations` tracking table. Eliminates
-   the dual schema source of truth (schema.sql + server.js's
-   ALTER-soup).
+   the dual schema source of truth (schema.sql + server.js's ALTER-soup).
 
 ## Currently deployed
 All commits land directly on `main` (worktrees disabled — see memory).
