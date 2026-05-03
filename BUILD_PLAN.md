@@ -225,6 +225,99 @@ Still open (small follow-ups):
 
 ---
 
+## Track 1.3 remainder — AI tools + Hours CSV extraction
+
+Both ~1200 + ~755 lines of inline code in `server.js` that should
+move into route modules. They share state via the `csvStage` Map,
+which has already been pulled out to `routes/_csv_stage.js`. The full
+extraction is queued for a session that has live verification (no
+local Node here, smoke tests don't cover these paths, blind extraction
+is risky).
+
+### Hours CSV import → `routes/hours_csv.js` (~750 lines)
+
+Targets in `server.js`:
+- Lines ~449-602: Pure helper functions
+  - `normalizeWO`, `normalizeName`, `detectColumns`, `MONTH_LOOKUP`,
+    `parseDateCell`, `inferYear`, `findHeaderRow`, `arrayToObjects`.
+  - These have no DB / state dependencies — easiest to extract first.
+- Lines ~615-636: `inferJobTitle` (pure, takes filename + rows).
+- Lines ~639-1033: `POST /api/hours/csv-validate` — uses `pool`,
+  `requireAdmin`, `upload` (multer), and the (now-extracted) `csvStage`.
+- Lines ~1034-1083: `POST /api/hours/csv-edit-row` — uses `csvStage`
+  + `requireAdmin`.
+- Lines ~1084-1340: `POST /api/hours/csv-commit` — uses `pool`,
+  `requireAdmin`, `csvStage`, `updateProjectHours`, `auditTimeEntry`.
+
+Move pattern:
+```js
+// routes/hours_csv.js
+module.exports = function installHoursCsvRoutes(app, pool, mw) {
+  const { requireAdmin, upload, auditTimeEntry } = mw;
+  const { csvStage, CSV_STAGE_TTL_MS } = require('./_csv_stage');
+  const { updateProjectHours } = require('./_helpers');
+  // ...all three endpoints + helpers...
+};
+
+// server.js
+require('./routes/hours_csv')(app, pool, {
+  requireAdmin, upload, auditTimeEntry,
+});
+```
+
+Acceptance: after extraction, smoke tests still pass + a manual
+file upload through the admin Hours import UI succeeds.
+
+### AI tools → `routes/ai.js` (~1200 lines)
+
+Targets in `server.js`:
+- `SYSTEM_PROMPT` (around line 1424) — long template string.
+- `getDBContext()` (just before SYSTEM_PROMPT) — DB query that builds
+  the context payload.
+- `AI_TOOLS` array (lines 1563-1955) — every tool definition.
+- `executeTool` (lines 1955-2649) — switch statement with one case
+  per tool.
+- `DESTRUCTIVE_AI_TOOLS` Set + `summarizeToolCall` (lines 2649-2720).
+- `_pendingApprovals` Map + APPROVAL_TTL_MS sweep + `uploadStore` Map.
+- Anthropic client init (around line 318): `new Anthropic({...})`.
+- Endpoints:
+  - `POST /api/ai/upload` (multer-bounded file upload)
+  - `GET  /api/ai/upload/:id`
+  - `POST /api/ai/chat` (the long one — tool loop + approval gate)
+
+Tricky bits:
+- `anthropic` client is bound at module init so the extracted module
+  needs to receive `process.env.ANTHROPIC_API_KEY` or get the client
+  passed in via `mw.anthropic`.
+- `executeTool` calls a LOT of helpers that already live in
+  `routes/_helpers.js` (`updateProjectHours`, `calcProjectFinancials`,
+  `collectProjectTree`) and `portal_module.js` (`ensureRollupChain`,
+  `isDuplicateProject`). All accessible via require() — no
+  globals-pollution issue.
+- The `csv_smart_import` tool reaches into `csvStage`. With the
+  extraction above it now require()s the same `_csv_stage` module.
+
+Move pattern:
+```js
+// routes/ai.js
+const Anthropic = require('@anthropic-ai/sdk');
+module.exports = function installAiRoutes(app, pool, mw) {
+  const { requireAdmin, upload } = mw;
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const { csvStage } = require('./_csv_stage');
+  const { updateProjectHours, calcProjectFinancials, collectProjectTree } = require('./_helpers');
+  const portal = require('../portal_module');
+  // ...all the constants + functions + endpoints...
+};
+```
+
+Acceptance: after extraction, smoke tests pass + admin AI chat with a
+single read-only tool (e.g. `query_database` SELECT) returns sensible
+output + a destructive tool (e.g. `create_project`) goes through the
+approval gate as before.
+
+---
+
 ## §1 Build order
 
 ### Branch 1 — `claude/add-audit-log-hours-x0XCd` (this one)

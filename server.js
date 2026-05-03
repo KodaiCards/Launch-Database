@@ -604,13 +604,13 @@ function arrayToObjects(rows2d, headerIdx) {
 // Validate a parsed CSV/XLSX file. Does not write anything. Returns:
 //   { stage_id, headers, columns, valid_rows, unknown_staff, unknown_wos, invalid_rows, summary }
 // stage_id is a temp key clients pass back to /commit so we don't re-parse.
-const csvStage = new Map(); // stageId → { rows, expiresAt }
-const CSV_STAGE_TTL_MS = 30 * 60 * 1000;
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of csvStage) if (v.expiresAt < now) csvStage.delete(k);
-}, 5 * 60 * 1000);
+//
+// csvStage is the shared in-memory store keyed by stage_id. It moved
+// to routes/_csv_stage.js so the AI csv_smart_import path can import
+// it without server.js needing to expose it as a global. Both feature
+// modules require() the same Map. CSV_STAGE_TTL_MS is exported for
+// callers that want to set their own TTL (none today, kept for parity).
+const { csvStage, CSV_STAGE_TTL_MS } = require('./routes/_csv_stage');
 
 // Infer the job title from the filename and any title rows above the header.
 // Returns a string like "Inspector" or null if nothing matched.
