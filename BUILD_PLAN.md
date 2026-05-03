@@ -85,10 +85,64 @@ I'll proceed with a default if unanswered.
 
 ---
 
-## §1 Build order
+## §0.5 Status — what landed in this batch (branch claude/add-audit-log-hours-x0XCd)
 
-Branches and order I'm going to ship in. Each branch lands directly on
-`main` per `HANDOFF.md` workflow.
+Six commits on the branch, ready to merge. Items shipped:
+
+✅ Audit log surfaced as slide-out drawer from Hours toolbar; standalone
+   "Time Audit" tab removed.
+✅ Edit timecard via pencil icon → modal in admin Hours tab; portal
+   already had its own edit flow (verified, no work needed).
+✅ CSV imports now write to time_entry_audit (source='csv').
+✅ Undo bar empty-text bug fixed.
+✅ Contracts → Construction Contracts rename + restructured to group by
+   engineering contract umbrella.
+✅ Billing batch cleanup on project delete (all 3 paths + undo replay).
+✅ AI: PSC RUS create_project resolution (system prompt + alias
+   resolver) + bulk_delete_projects tool.
+✅ Portals (timeclock + design + permitting): change-password modal +
+   undo bar markup + script loads. Shared module
+   `public/js/change_password_modal.js`.
+✅ PSC RUS tab status filter (active/billed/completed/on-hold/all).
+✅ Engineering contract = top-level header on Construction Contracts page.
+✅ Global @media print stylesheet (opens rollups, kills scrollbars,
+   page-break controls). printBillingReport rewritten with document
+   styling (letterhead, fixed footer, repeating thead).
+✅ Invoice PDF dynamic row heights (no more text-on-text overlap).
+✅ Project picker helper (`public/js/project_picker.js`) with
+   leaves-only filtering + grouping + Add-New wirer.
+✅ Timeclock entry modal cascade: Client → Project (filtered by client)
+   → Job. "+ Add New" button opens Request New Project modal.
+✅ Held-timecard flow: schema column `time_entries.pending_project_request_id`,
+   POST /api/portal/projects/request-create, applySettingChange handles
+   project create + retro-attach held entries on approval, project
+   delete approval flow.
+✅ Design + Permitting portal deletes routed through admin approval (HTTP
+   202 + setting_change_request).
+
+Still open (deferred to follow-up branches):
+
+- Design/Permitting add-project Client → Type → Existing-Project (with
+  WO# label) → Job cascade. The data is there (project_picker.js +
+  filtered /api/projects endpoints) — just need the UI rework on the
+  two portal HTMLs. Owner ambiguity to resolve first: when picking an
+  "existing project" in the New Project modal, does that PRE-FILL the
+  rest of the form (treat as "add detail to existing"), or just SHOW a
+  duplicate-warning so the user knows the project already exists?
+- Admin Hours tab: surface held timecards (rows where
+  `pending_project_request_id IS NOT NULL` and request status =
+  'rejected') in a "Needs project assignment" panel. Half-day. Once
+  shipped, owner can dismiss/reassign each row manually.
+- Admin project dropdowns refactor to use leaves-only via
+  populateProjectPicker. The portal pickers already do this; the admin
+  ones still show all rows. Mostly mechanical — pilot 2-3 high-traffic
+  pickers (Hours entry, billing) first, then sweep the rest.
+- Color token system rework (Branch 5). Owner approved full token
+  rework as a separate branch. Don't bundle into a feature batch.
+
+---
+
+## §1 Build order
 
 ### Branch 1 — `claude/add-audit-log-hours-x0XCd` (this one)
 The branch name's actual scope, plus piggyback bugs that touch the
