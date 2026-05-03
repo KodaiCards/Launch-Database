@@ -28,16 +28,74 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 
-// JWT secret — env var preferred, fallback to a derived constant so the
-// system still works without explicit configuration. WARNING: the derived
-// fallback means tokens issued by one Railway service may not validate on
-// another. For production multi-service setups, set JWT_SECRET env var to
-// the SAME value on admin + both portal services.
-const JWT_SECRET = process.env.JWT_SECRET ||
-  crypto.createHash('sha256').update('launch-fiber-services-default-secret-please-set-env').digest('hex');
+// JWT secret — REQUIRED in production. In development we generate a random
+// per-process value if missing (so localhost dev works without setup), but
+// production deploys must set JWT_SECRET — refusing to boot otherwise.
+// In multi-service setups set the SAME JWT_SECRET on every service.
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: JWT_SECRET env var is required in production.');
+    console.error('Generate one with: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"');
+    console.error('Then set it in Railway → Variables → JWT_SECRET on EVERY service (admin + portals).');
+    process.exit(1);
+  }
+  JWT_SECRET = crypto.randomBytes(48).toString('hex');
+  console.warn('⚠ JWT_SECRET unset — using ephemeral random secret for this dev process. Sessions will not survive restart.');
+}
 const JWT_EXPIRY = '7d';
 const COOKIE_NAME = 'lfs_session';
-const BCRYPT_ROUNDS = 10;
+const BCRYPT_ROUNDS = 12;
+const MIN_PASSWORD_LEN = 10;
+
+// Tiny in-memory sliding-window rate limiter. Single-process only — fine for
+// Railway's default 1-instance deploy. If we ever scale horizontally this
+// needs to move to Postgres or a shared cache. Key is usually IP:username for
+// login attempts.
+const _rlBuckets = new Map();
+function rateLimitOk(key, limit, windowMs) {
+  const now = Date.now();
+  const arr = (_rlBuckets.get(key) || []).filter(t => now - t < windowMs);
+  if (arr.length >= limit) {
+    _rlBuckets.set(key, arr);
+    return false;
+  }
+  arr.push(now);
+  _rlBuckets.set(key, arr);
+  return true;
+}
+// Periodically drop empty buckets so the Map doesn't grow unbounded.
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _rlBuckets) {
+    const fresh = v.filter(t => now - t < 60 * 60 * 1000);
+    if (fresh.length === 0) _rlBuckets.delete(k);
+    else _rlBuckets.set(k, fresh);
+  }
+}, 5 * 60 * 1000).unref();
+
+// Pre-computed bcrypt hash of a never-valid password. Used to keep login
+// timing constant when the username doesn't exist (defends against username
+// enumeration via response timing).
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password-' + crypto.randomBytes(8).toString('hex'), BCRYPT_ROUNDS);
+
+// Cookie options shared by set + clear so clearCookie actually clears the
+// cookie (browsers require options to match).
+function cookieOpts() {
+  return {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+  };
+}
+
+// Generic safe error response — logs full error server-side, returns a
+// stable string to the client so we don't leak SQL errors / stack info.
+function serverError(res, e, where) {
+  console.error(`[auth:${where}]`, e && e.stack ? e.stack : e);
+  return res.status(500).json({ error: 'Internal server error' });
+}
 
 // Valid roles (used for validation when admin creates/edits a user)
 const VALID_ROLES = [
@@ -127,6 +185,11 @@ async function bootstrapAuthSchema(pool) {
     // permitting data alongside their design work. Empty array = single-team
     // access (the default). Admins always see everything regardless.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS extra_teams TEXT[] DEFAULT '{}'`,
+    // tokens_invalid_after — bumped on password change / forced logout.
+    // authMiddleware rejects any JWT whose iat is older than this timestamp,
+    // so changing your password (or an admin resetting it) invalidates every
+    // active session for that user immediately.
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens_invalid_after TIMESTAMPTZ`,
   ];
   for (const sql of ddl) {
     try {
@@ -159,15 +222,24 @@ async function bootstrapAuthSchema(pool) {
     );
 
     if (existing.length === 0) {
-      // No admin row at all — create from env (or fallback to 'admin')
-      const initialPw = envPw || 'admin';
-      const hash = await bcrypt.hash(initialPw, BCRYPT_ROUNDS);
-      await pool.query(
-        `INSERT INTO users (username, password_hash, role, team, full_name, email, active)
-         VALUES ('admin', $1, 'admin', NULL, 'Default Admin', NULL, TRUE)`,
-        [hash]
-      );
-      console.log(`  ✓ Default admin CREATED — username='admin', password='${initialPw}' (CHANGE IT)`);
+      // No admin row at all — REQUIRE ADMIN_PASSWORD env var. We refuse to
+      // seed a known/default password because it would mean a fresh deploy
+      // ships with admin/admin until someone notices.
+      if (!envPw) {
+        console.error('  ✗ No admin user exists and ADMIN_PASSWORD env var is not set.');
+        console.error('    Set ADMIN_PASSWORD in Railway → Variables (10+ chars), then redeploy.');
+        console.error('    The app will continue to boot but no one can log in until you do.');
+      } else if (envPw.length < MIN_PASSWORD_LEN) {
+        console.error(`  ✗ ADMIN_PASSWORD must be at least ${MIN_PASSWORD_LEN} characters. Refusing to seed admin.`);
+      } else {
+        const hash = await bcrypt.hash(envPw, BCRYPT_ROUNDS);
+        await pool.query(
+          `INSERT INTO users (username, password_hash, role, team, full_name, email, active)
+           VALUES ('admin', $1, 'admin', NULL, 'Default Admin', NULL, TRUE)`,
+          [hash]
+        );
+        console.log(`  ✓ Default admin CREATED — username='admin' (password from ADMIN_PASSWORD env)`);
+      }
     } else if (envPw) {
       // Admin exists and env wants to override the password. Always refresh.
       const hash = await bcrypt.hash(envPw, BCRYPT_ROUNDS);
@@ -227,17 +299,28 @@ function authMiddleware(pool) {
     if (!token) return next();
     const payload = verifyToken(token);
     if (!payload) return next();
-    // Verify user is still active in DB (don't trust an old token if account was deactivated)
     try {
       const { rows } = await pool.query(
-        `SELECT id, username, role, team, extra_teams, full_name, email, active
+        `SELECT id, username, role, team, extra_teams, full_name, email, active,
+                tokens_invalid_after
          FROM users WHERE id = $1 LIMIT 1`,
         [payload.id]
       );
-      if (rows[0] && rows[0].active) {
-        req.user = rows[0];
+      const u = rows[0];
+      if (!u || !u.active) return next();
+      // Honor forced session invalidation: if the user's
+      // tokens_invalid_after is newer than this token's iat, treat as
+      // logged-out (e.g. after password change or admin reset).
+      if (u.tokens_invalid_after && payload.iat) {
+        const tokenIssuedMs = payload.iat * 1000;
+        if (new Date(u.tokens_invalid_after).getTime() > tokenIssuedMs) {
+          return next();
+        }
       }
-    } catch (e) { /* swallow — req.user stays unset */ }
+      req.user = u;
+    } catch (e) {
+      console.error('[auth:authMiddleware] DB error reading user', e && e.message);
+    }
     next();
   };
 }
@@ -258,17 +341,29 @@ function requireAuth(roles) {
 // requireAdmin shortcut
 const requireAdmin = requireAuth('admin');
 
+// requireManagerOrAdmin — for billing/revenue/financial endpoints that
+// managers should see for their own team but engineers should not.
+const requireManagerOrAdmin = requireAuth(['admin', 'design_manager', 'permitting_manager']);
+
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
 function installAuthRoutes(app, pool) {
   app.use(cookieParser());
   app.use(authMiddleware(pool));
 
   // POST /api/auth/login — exchange username + password for a JWT.
-  // Returns 401 on bad credentials, 403 on inactive account.
+  // Single uniform 401 error message + always run bcrypt to prevent
+  // username enumeration via response or timing differences. Rate limited
+  // per-IP and per-username to slow down credential stuffing.
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
+    }
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    // 10 attempts / 15 min per IP, 5 attempts / 15 min per username.
+    if (!rateLimitOk('login:ip:' + ip, 10, 15 * 60 * 1000) ||
+        !rateLimitOk('login:user:' + String(username).toLowerCase(), 5, 15 * 60 * 1000)) {
+      return res.status(429).json({ error: 'Too many login attempts. Please wait 15 minutes.' });
     }
     try {
       const { rows } = await pool.query(
@@ -277,25 +372,23 @@ function installAuthRoutes(app, pool) {
         [username]
       );
       const user = rows[0];
-      if (!user) return res.status(401).json({ error: 'Invalid username or password' });
-      if (!user.active) return res.status(403).json({ error: 'Account is deactivated' });
-      const match = await bcrypt.compare(password, user.password_hash);
-      if (!match) return res.status(401).json({ error: 'Invalid username or password' });
+      // Always run bcrypt against SOMETHING so timing is constant whether
+      // the user exists or not. We also collapse "wrong password",
+      // "user not found", and "account deactivated" into one generic 401
+      // so an attacker can't enumerate usernames.
+      const hashToCompare = user ? user.password_hash : DUMMY_HASH;
+      const passwordOk = await bcrypt.compare(password, hashToCompare);
+      const accountOk = !!(user && user.active);
+      if (!user || !passwordOk || !accountOk) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
 
       const token = signToken(user);
-      // Set httpOnly cookie. SameSite=Lax allows the cookie on same-site nav
-      // (good UX — clicking links works) without leaking to cross-site requests.
-      // Secure flag is added in production so the cookie only travels over HTTPS.
       res.cookie(COOKIE_NAME, token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        ...cookieOpts(),
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      // Update last_login timestamp (best-effort, not critical)
       pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]).catch(()=>{});
-      // Return the user object (no password_hash) AND the token so frontend
-      // can also use Authorization header if desired.
       res.json({
         token,
         user: {
@@ -305,14 +398,15 @@ function installAuthRoutes(app, pool) {
         }
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      return serverError(res, e, 'login');
     }
   });
 
   // POST /api/auth/logout — clears the cookie. Frontend should also clear
   // any cached state and redirect to /login.
   app.post('/api/auth/logout', (req, res) => {
-    res.clearCookie(COOKIE_NAME);
+    // clearCookie attrs MUST match the set attrs or the browser won't clear it
+    res.clearCookie(COOKIE_NAME, cookieOpts());
     res.json({ ok: true });
   });
 
@@ -331,7 +425,7 @@ function installAuthRoutes(app, pool) {
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
       res.json(rows[0]);
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      return serverError(res, e, 'me');
     }
   });
 
@@ -349,20 +443,25 @@ function installAuthRoutes(app, pool) {
         [theme, req.user.id]);
       res.json({ ok: true, theme });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      return serverError(res, e, 'theme');
     }
   });
 
   // POST /api/auth/change-password — current user updates their own password.
   // Requires current password to confirm identity (defense against open-tab
   // hijacking and against helper popping a session and changing the password).
+  // Bumps tokens_invalid_after to log out every other active session.
   app.post('/api/auth/change-password', requireAuth(), async (req, res) => {
     const { current_password, new_password } = req.body || {};
     if (!current_password || !new_password) {
       return res.status(400).json({ error: 'Current and new password required' });
     }
-    if (new_password.length < 6) {
-      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    if (new_password.length < MIN_PASSWORD_LEN) {
+      return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LEN} characters` });
+    }
+    // Rate limit per user to slow current-password guessing
+    if (!rateLimitOk('changepw:' + req.user.id, 5, 5 * 60 * 1000)) {
+      return res.status(429).json({ error: 'Too many attempts. Please wait 5 minutes.' });
     }
     try {
       const { rows } = await pool.query(
@@ -373,11 +472,22 @@ function installAuthRoutes(app, pool) {
       const match = await bcrypt.compare(current_password, rows[0].password_hash);
       if (!match) return res.status(401).json({ error: 'Current password incorrect' });
       const hash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
-      await pool.query(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
-        [hash, req.user.id]);
-      res.json({ ok: true });
+      // tokens_invalid_after bump invalidates every JWT issued before NOW(),
+      // including the one in the user's other open tabs/devices.
+      await pool.query(
+        `UPDATE users SET password_hash = $1, tokens_invalid_after = NOW(), updated_at = NOW()
+         WHERE id = $2`,
+        [hash, req.user.id]
+      );
+      // Re-issue a fresh token for the current session so this caller stays logged in.
+      const newToken = signToken({ ...req.user, password_hash: hash });
+      res.cookie(COOKIE_NAME, newToken, {
+        ...cookieOpts(),
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.json({ ok: true, token: newToken });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      return serverError(res, e, 'change-password');
     }
   });
 
@@ -394,7 +504,7 @@ function installAuthRoutes(app, pool) {
         ORDER BY u.active DESC, u.username ASC
       `);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { return serverError(res, e, 'list-users'); }
   });
 
   // POST /api/users — create user (admin only)
@@ -406,8 +516,8 @@ function installAuthRoutes(app, pool) {
     if (!VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password.length < MIN_PASSWORD_LEN) {
+      return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LEN} characters` });
     }
     // Validate extra_teams if provided
     const cleanExtras = Array.isArray(extra_teams)
@@ -416,16 +526,18 @@ function installAuthRoutes(app, pool) {
     try {
       const team = teamForRole(role);
       const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      // Store username trimmed; uniqueness enforced via the LOWER() index.
+      const cleanUsername = String(username).trim();
       const { rows } = await pool.query(
         `INSERT INTO users (username, password_hash, role, team, full_name, email, extra_teams)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, username, role, team, extra_teams, full_name, email, active, created_at`,
-        [username, hash, role, team, full_name || null, email || null, cleanExtras]
+        [cleanUsername, hash, role, team, full_name || null, email || null, cleanExtras]
       );
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
-      res.status(500).json({ error: e.message });
+      return serverError(res, e, 'create-user');
     }
   });
 
@@ -435,8 +547,8 @@ function installAuthRoutes(app, pool) {
     if (role && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
     }
-    if (password && password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (password && password.length < MIN_PASSWORD_LEN) {
+      return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LEN} characters` });
     }
     // Prevent admin from deactivating themselves (lockout protection)
     if (active === false && req.user.id === req.params.id) {
@@ -470,6 +582,12 @@ function installAuthRoutes(app, pool) {
       if (password) {
         const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
         sets.push(`password_hash = $${i++}`); vals.push(hash);
+        // Admin-reset of password also kills all that user's existing sessions
+        sets.push(`tokens_invalid_after = NOW()`);
+      }
+      if (active === false) {
+        // Deactivating a user immediately invalidates their existing tokens
+        sets.push(`tokens_invalid_after = NOW()`);
       }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
       sets.push(`updated_at = NOW()`);
@@ -482,7 +600,7 @@ function installAuthRoutes(app, pool) {
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
-      res.status(500).json({ error: e.message });
+      return serverError(res, e, 'update-user');
     }
   });
 
@@ -494,12 +612,13 @@ function installAuthRoutes(app, pool) {
     }
     try {
       const { rows } = await pool.query(
-        `UPDATE users SET active = FALSE, updated_at = NOW() WHERE id = $1 RETURNING id`,
+        `UPDATE users SET active = FALSE, tokens_invalid_after = NOW(), updated_at = NOW()
+         WHERE id = $1 RETURNING id`,
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
       res.json({ ok: true, deactivated: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { return serverError(res, e, 'delete-user'); }
   });
 }
 
@@ -509,6 +628,7 @@ module.exports = {
   authMiddleware,
   requireAuth,
   requireAdmin,
+  requireManagerOrAdmin,
   signToken,
   verifyToken,
   teamForRole,

@@ -413,6 +413,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
    single rule. */
 .form-hint{display:none !important}
 </style>
+<link rel="stylesheet" href="/app-shell.css">
+<script src="/toast.js" defer></script>
 </head>
 <body>
 
@@ -7549,7 +7551,14 @@ init();
 // tab is visible. Pauses on hidden tabs (visibilitychange). Skips refresh
 // when a form modal (project, settings sub-form) is open AND the user has
 // focus inside an input/textarea, so typing isn't interrupted.
-const POLL_MS = 1500;
+//
+// 8-second cadence is a deliberate balance: fast enough that other people's
+// edits surface within ~10s, slow enough that the table re-render at 50+
+// projects doesn't drop input focus, kill battery on phones, or hammer the
+// API. Previous 1.5s value caused tbody.innerHTML to rebuild ~40x/min per
+// open tab. Visibility change + a manual "Refresh" button (if added later)
+// cover the cases where users want sooner data.
+const POLL_MS = 8000;
 let _pollTimer = null;
 let _pollTickCount = 0;
 function _isUserTyping() {
@@ -7595,10 +7604,10 @@ async function _pollTick(){
   if (viewId === 'view-permitting') callIfExists('loadPermits');
   if (viewId === 'view-inspection') callIfExists('loadInspection');
 
-  // Every 4th tick (~6 seconds), invalidate caches that downstream views
+  // Every 3rd tick (~24 seconds), invalidate caches that downstream views
   // depend on. Without this, jobs/clients/contracts settings changes don't
   // surface in the project modals or pipeline filters until a hard refresh.
-  if (_pollTickCount % 4 === 0) {
+  if (_pollTickCount % 3 === 0) {
     callIfExists('loadClients');
     callIfExists('loadJobs');
     callIfExists('loadContracts');
