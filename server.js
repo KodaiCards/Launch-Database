@@ -533,30 +533,98 @@ app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/contracts/:id — admin-only. Refuses if any project references
-// this contract; the admin must detach those projects first. The schema
-// has projects.contract_id REFERENCES contracts(id) with no CASCADE, so
-// Postgres would also reject — the pre-check just gives a friendlier error
-// (and a count) than the raw FK message.
+// this contract; the admin must detach those projects first OR pass
+// ?cascade=1 to delete every project under it (each as a tree, with hours
+// and permit data) plus the contract itself, all in one transaction with
+// an undo bucket covering the whole cascade. The schema has
+// projects.contract_id REFERENCES contracts(id) with no CASCADE, so plain
+// DELETE without ?cascade=1 still gives a friendly message instead of a
+// raw FK error.
 app.delete('/api/contracts/:id', requireAdmin, async (req, res) => {
+  const cascade = req.query.cascade === '1' || req.query.cascade === 'true';
   try {
     const { rows: kids } = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM projects WHERE contract_id = $1`,
+      `SELECT id FROM projects WHERE contract_id = $1`,
       [req.params.id]
     );
-    if (kids[0].n > 0) {
+    if (kids.length > 0 && !cascade) {
       return res.status(409).json({
-        error: `Cannot delete — ${kids[0].n} project(s) still reference this contract. Detach or reassign them first.`,
+        error: `Cannot delete — ${kids.length} project(s) still reference this contract. Detach them first, or retry with ?cascade=1 to delete the projects (and their hours) too.`,
+        project_count: kids.length,
       });
     }
-    const { rows } = await pool.query(
-      `DELETE FROM contracts WHERE id = $1 RETURNING id`,
-      [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
-    res.json({ ok: true });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const contractRow = await client.query('SELECT * FROM contracts WHERE id = $1', [req.params.id]);
+      if (!contractRow.rows[0]) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Contract not found' });
+      }
+
+      let cascadeProjects = [];
+      let cascadeTimeEntries = [];
+      let cascadeInvoiceItems = [];
+      let cascadePermitStages = [];
+      let cascadePermitDocuments = [];
+
+      if (cascade && kids.length > 0) {
+        // Walk every direct-child project's tree (the children may also
+        // have their own descendant rollups).
+        for (const k of kids) {
+          const tree = await collectProjectTree(k.id);
+          for (const p of tree) cascadeProjects.push(p);
+        }
+        const allIds = cascadeProjects.map(p => p.id);
+        const teRes = await client.query('SELECT * FROM time_entries WHERE project_id = ANY($1::uuid[])', [allIds]);
+        cascadeTimeEntries = teRes.rows;
+        try { const r = await client.query('SELECT * FROM invoice_items WHERE project_id = ANY($1::uuid[])', [allIds]); cascadeInvoiceItems = r.rows; } catch {}
+        try { const r = await client.query('SELECT * FROM permit_stages WHERE project_id = ANY($1::uuid[])', [allIds]); cascadePermitStages = r.rows; } catch {}
+        try { const r = await client.query('SELECT * FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allIds]); cascadePermitDocuments = r.rows; } catch {}
+
+        // Delete leaf rows first
+        await client.query('DELETE FROM time_entries WHERE project_id = ANY($1::uuid[])', [allIds]);
+        try { await client.query('DELETE FROM invoice_items WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
+        try { await client.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
+        try { await client.query('DELETE FROM permit_stages WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
+        // Then projects deepest-first
+        const byDepth = [...cascadeProjects].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
+        for (const p of byDepth) {
+          await client.query('DELETE FROM projects WHERE id = $1', [p.id]);
+        }
+      }
+
+      await client.query('DELETE FROM contracts WHERE id = $1', [req.params.id]);
+      await client.query('COMMIT');
+
+      const undo = await saveUndoBucket(req.user && req.user.id, 'contract_cascade', {
+        contract: contractRow.rows[0],
+        project_tree: cascade ? {
+          projects: cascadeProjects,
+          time_entries: cascadeTimeEntries,
+          invoice_items: cascadeInvoiceItems,
+          permit_stages: cascadePermitStages,
+          permit_documents: cascadePermitDocuments,
+        } : null,
+      });
+      res.json({
+        ok: true,
+        cascade,
+        deleted_projects: cascadeProjects.length,
+        deleted_time_entries: cascadeTimeEntries.length,
+        undo_token: undo.token,
+        undo_expires_at: undo.expires_at,
+      });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      throw e;
+    } finally {
+      client.release();
+    }
   } catch (e) {
     console.error('[contracts:delete]', e && e.message);
-    res.status(500).json({ error: 'Failed to delete contract.' });
+    res.status(500).json({ error: 'Failed to delete contract: ' + e.message });
   }
 });
 
@@ -1361,6 +1429,192 @@ app.post('/api/projects/recalc-all', requireAdmin, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// UNDO INFRASTRUCTURE
+// Destructive endpoints (bulk hours delete, project tree delete, contract
+// cascade) save a snapshot of the removed rows here BEFORE returning. The
+// UI shows an undo bar; if the user clicks Undo within the TTL, the bucket
+// is replayed via /api/undo/:token to re-insert the rows. After the TTL
+// expires the bucket is purged on the next destructive op (no separate
+// scheduler needed — pruning piggybacks on saves).
+// ─────────────────────────────────────────────────────────────────────────────
+const UNDO_TTL_SECONDS = 60;  // UI shows 15s but server keeps a buffer
+
+async function saveUndoBucket(userId, kind, payload) {
+  // Prune expired rows opportunistically. Keeps the table small without a
+  // dedicated cron — destructive ops are infrequent enough that the cost
+  // of one DELETE alongside the INSERT is negligible.
+  try {
+    await pool.query(`DELETE FROM undo_buckets WHERE expires_at < NOW()`);
+  } catch (e) { /* not fatal — table may not exist on first boot */ }
+  const expiresAt = new Date(Date.now() + UNDO_TTL_SECONDS * 1000);
+  const { rows } = await pool.query(
+    `INSERT INTO undo_buckets (user_id, kind, payload, expires_at)
+       VALUES ($1, $2, $3::jsonb, $4) RETURNING id, expires_at`,
+    [userId || null, kind, JSON.stringify(payload), expiresAt]
+  );
+  return { token: rows[0].id, expires_at: rows[0].expires_at };
+}
+
+async function popUndoBucket(token) {
+  const { rows } = await pool.query(
+    `DELETE FROM undo_buckets WHERE id = $1 AND expires_at >= NOW() RETURNING kind, payload`,
+    [token]
+  );
+  return rows[0] || null;
+}
+
+// POST /api/undo/:token — replay an undo bucket. Dispatches by `kind`.
+// Restorers re-INSERT with the original UUIDs so foreign-key references
+// from rows we didn't delete still resolve. Wrapped in a transaction —
+// either the whole undo succeeds or none of it lands.
+app.post('/api/undo/:token', requireAuth, async (req, res) => {
+  let bucket;
+  try {
+    bucket = await popUndoBucket(req.params.token);
+  } catch (e) {
+    return res.status(500).json({ error: 'Undo lookup failed.' });
+  }
+  if (!bucket) return res.status(404).json({ error: 'Undo window expired or already used.' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    if (bucket.kind === 'time_entries_bulk') {
+      const entries = bucket.payload.entries || [];
+      for (const e of entries) {
+        await client.query(
+          `INSERT INTO time_entries (id, project_id, staff_id, entry_date, hours, job_title, notes, import_batch, created_at, user_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             ON CONFLICT (id) DO NOTHING`,
+          [e.id, e.project_id, e.staff_id, e.entry_date, e.hours, e.job_title, e.notes, e.import_batch, e.created_at, e.user_id || null]
+        );
+      }
+      // Recompute hours on every project we touched
+      const touched = [...new Set(entries.map(e => e.project_id).filter(Boolean))];
+      for (const pid of touched) {
+        try { await updateProjectHours(pid); } catch (uerr) { /* keep going */ }
+      }
+      await client.query('COMMIT');
+      return res.json({ ok: true, restored: entries.length });
+    }
+
+    if (bucket.kind === 'project_tree') {
+      const { projects = [], time_entries = [], invoice_items = [], permit_stages = [], permit_documents = [] } = bucket.payload;
+      // Insert projects parents-first (sort by depth ascending). Each
+      // project row carries an explicit depth field captured at delete time.
+      const ordered = [...projects].sort((a, b) => (a.__depth || 0) - (b.__depth || 0));
+      for (const p of ordered) {
+        const cols = Object.keys(p).filter(k => !k.startsWith('__'));
+        const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+        const vals = cols.map(k => p[k]);
+        await client.query(
+          `INSERT INTO projects (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT (id) DO NOTHING`,
+          vals
+        );
+      }
+      for (const r of time_entries) {
+        const cols = Object.keys(r);
+        await client.query(
+          `INSERT INTO time_entries (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+          cols.map(k => r[k])
+        );
+      }
+      for (const r of invoice_items) {
+        const cols = Object.keys(r);
+        await client.query(
+          `INSERT INTO invoice_items (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+          cols.map(k => r[k])
+        );
+      }
+      for (const r of permit_stages) {
+        const cols = Object.keys(r);
+        await client.query(
+          `INSERT INTO permit_stages (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+          cols.map(k => r[k])
+        );
+      }
+      for (const r of permit_documents) {
+        const cols = Object.keys(r);
+        await client.query(
+          `INSERT INTO permit_documents (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+          cols.map(k => r[k])
+        );
+      }
+      await client.query('COMMIT');
+      return res.json({
+        ok: true,
+        restored_projects: projects.length,
+        restored_time_entries: time_entries.length,
+      });
+    }
+
+    if (bucket.kind === 'contract_cascade') {
+      const { contract, project_tree } = bucket.payload;
+      // Restore the contract first (projects reference it).
+      if (contract) {
+        const cols = Object.keys(contract);
+        await client.query(
+          `INSERT INTO contracts (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+          cols.map(k => contract[k])
+        );
+      }
+      // Then the project tree (same logic as project_tree kind).
+      if (project_tree) {
+        const { projects = [], time_entries = [], invoice_items = [], permit_stages = [], permit_documents = [] } = project_tree;
+        const ordered = [...projects].sort((a, b) => (a.__depth || 0) - (b.__depth || 0));
+        for (const p of ordered) {
+          const cols = Object.keys(p).filter(k => !k.startsWith('__'));
+          await client.query(
+            `INSERT INTO projects (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            cols.map(k => p[k])
+          );
+        }
+        for (const r of time_entries) {
+          const cols = Object.keys(r);
+          await client.query(
+            `INSERT INTO time_entries (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            cols.map(k => r[k])
+          );
+        }
+        for (const r of invoice_items) {
+          const cols = Object.keys(r);
+          await client.query(
+            `INSERT INTO invoice_items (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            cols.map(k => r[k])
+          );
+        }
+        for (const r of permit_stages) {
+          const cols = Object.keys(r);
+          await client.query(
+            `INSERT INTO permit_stages (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            cols.map(k => r[k])
+          );
+        }
+        for (const r of permit_documents) {
+          const cols = Object.keys(r);
+          await client.query(
+            `INSERT INTO permit_documents (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            cols.map(k => r[k])
+          );
+        }
+      }
+      await client.query('COMMIT');
+      return res.json({ ok: true });
+    }
+
+    await client.query('ROLLBACK');
+    return res.status(400).json({ error: `Unknown undo kind: ${bucket.kind}` });
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[undo:replay]', bucket.kind, e && e.message);
+    return res.status(500).json({ error: 'Undo failed: ' + (e.message || 'unknown error') });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TIME ENTRIES
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1587,26 +1841,42 @@ app.delete('/api/time-entries/:id', async (req, res) => {
 });
 
 // Bulk delete: all time entries for a given staff member, optionally filtered
-// by month/year. Used by the "Delete all hours for [employee]" action in the Hours tab.
-app.delete('/api/time-entries/by-staff/:staffId', async (req, res) => {
+// by month/year. Used by the "Delete all hours for [employee]" action in the
+// Hours tab. Returns an undo_token alongside the count so the UI can offer
+// a 15s undo bar — the deleted rows are snapshotted before deletion and
+// can be restored verbatim (same UUIDs) within the TTL.
+app.delete('/api/time-entries/by-staff/:staffId', requireAuth, async (req, res) => {
   const { month, year } = req.query;
   const params = [req.params.staffId];
   let where = 'staff_id = $1';
   if (month && year) {
-    where += ' AND EXTRACT(MONTH FROM entry_date)=$2 AND EXTRACT(YEAR FROM entry_date)=$3';
+    where += ' AND EXTRACT(MONTH FROM entry_date)=$2::int AND EXTRACT(YEAR FROM entry_date)=$3::int';
     params.push(month, year);
   } else if (year) {
-    where += ' AND EXTRACT(YEAR FROM entry_date)=$2';
+    where += ' AND EXTRACT(YEAR FROM entry_date)=$2::int';
     params.push(year);
   }
   try {
-    // Capture affected projects first so we can roll up afterwards
-    const affected = await pool.query(`SELECT DISTINCT project_id FROM time_entries WHERE ${where}`, params);
-    const result = await pool.query(`DELETE FROM time_entries WHERE ${where}`, params);
-    for (const r of affected.rows) {
-      if (r.project_id) await updateProjectHours(r.project_id);
+    // Snapshot the full rows BEFORE deletion so undo can re-INSERT them
+    // verbatim. We grab every column the time_entries schema exposes.
+    const snapshot = await pool.query(`SELECT * FROM time_entries WHERE ${where}`, params);
+    if (!snapshot.rows.length) {
+      return res.json({ ok: true, deleted: 0 });
     }
-    res.json({ ok: true, deleted: result.rowCount });
+    const result = await pool.query(`DELETE FROM time_entries WHERE ${where}`, params);
+    const affectedProjects = [...new Set(snapshot.rows.map(r => r.project_id).filter(Boolean))];
+    for (const pid of affectedProjects) {
+      try { await updateProjectHours(pid); } catch {}
+    }
+    const undo = await saveUndoBucket(req.user && req.user.id, 'time_entries_bulk', {
+      entries: snapshot.rows,
+    });
+    res.json({
+      ok: true,
+      deleted: result.rowCount,
+      undo_token: undo.token,
+      undo_expires_at: undo.expires_at,
+    });
   } catch (e) {
     console.error('bulk delete by staff error:', e);
     res.status(500).json({ error: e.message });
@@ -4436,6 +4706,97 @@ app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Walk the descendant tree of a project (BFS via parent_id). Returns each
+// project row with a __depth field so the undo restorer can re-insert
+// parents before children. Used by both the project tree-delete and the
+// contract cascade-delete below.
+async function collectProjectTree(rootId) {
+  const all = [];
+  const queue = [{ id: rootId, depth: 0 }];
+  const seen = new Set();
+  while (queue.length) {
+    const { id, depth } = queue.shift();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const { rows } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
+    if (!rows[0]) continue;
+    rows[0].__depth = depth;
+    all.push(rows[0]);
+    const { rows: kids } = await pool.query('SELECT id FROM projects WHERE parent_id = $1', [id]);
+    for (const k of kids) queue.push({ id: k.id, depth: depth + 1 });
+  }
+  return all;
+}
+
+// DELETE /api/projects/:id/with-tree — delete a project AND every descendant
+// (sub-projects, sub-sub-projects, etc.) PLUS all their time entries,
+// invoice items, permit stages, and permit documents. Captures the entire
+// tree in an undo bucket first so the caller gets a token they can replay
+// within ~60s. Use this for rollup deletion — the regular DELETE refuses
+// when there are children (ON DELETE RESTRICT) and even /with-hours only
+// handles a single leaf.
+app.delete('/api/projects/:id/with-tree', requireAdmin, async (req, res) => {
+  let projects;
+  try {
+    projects = await collectProjectTree(req.params.id);
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to walk project tree: ' + e.message });
+  }
+  if (!projects.length) return res.status(404).json({ error: 'Project not found.' });
+  const projectIds = projects.map(p => p.id);
+  const rootParentId = projects[0].parent_id;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Snapshot everything we're about to delete
+    const teRes = await client.query('SELECT * FROM time_entries WHERE project_id = ANY($1::uuid[])', [projectIds]);
+    let iiRes = { rows: [] };
+    try { iiRes = await client.query('SELECT * FROM invoice_items WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+    let psRes = { rows: [] };
+    try { psRes = await client.query('SELECT * FROM permit_stages WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+    let pdRes = { rows: [] };
+    try { pdRes = await client.query('SELECT * FROM permit_documents WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+
+    // Delete in dependency order: leaf rows first, then projects from
+    // deepest to shallowest (so parent_id references stay valid).
+    await client.query('DELETE FROM time_entries WHERE project_id = ANY($1::uuid[])', [projectIds]);
+    try { await client.query('DELETE FROM invoice_items WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+    try { await client.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+    try { await client.query('DELETE FROM permit_stages WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
+    const byDepth = [...projects].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
+    for (const p of byDepth) {
+      await client.query('DELETE FROM projects WHERE id = $1', [p.id]);
+    }
+    await client.query('COMMIT');
+
+    // Save undo + bump parent hours OUTSIDE the transaction (best-effort)
+    if (rootParentId) {
+      try { await updateProjectHours(rootParentId); } catch {}
+    }
+    const undo = await saveUndoBucket(req.user && req.user.id, 'project_tree', {
+      projects,
+      time_entries: teRes.rows,
+      invoice_items: iiRes.rows,
+      permit_stages: psRes.rows,
+      permit_documents: pdRes.rows,
+    });
+    res.json({
+      ok: true,
+      deleted_projects: projects.length,
+      deleted_time_entries: teRes.rows.length,
+      undo_token: undo.token,
+      undo_expires_at: undo.expires_at,
+    });
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch {}
+    console.error('[projects:with-tree:delete]', e && e.message);
+    res.status(500).json({ error: 'Tree delete failed: ' + e.message });
+  } finally {
+    client.release();
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // REPORTS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6862,6 +7223,20 @@ async function bootstrapV3Schema() {
      )`,
     `CREATE INDEX IF NOT EXISTS idx_billing_batches_client_id ON billing_batches (client_id)`,
     `CREATE INDEX IF NOT EXISTS idx_billing_batch_items_project_id ON billing_batch_items (project_id)`,
+    // Undo buckets — short-lived snapshots saved by destructive endpoints
+    // (bulk hours delete, project tree delete, contract cascade) so the
+    // operator can restore within a UI-controlled window. Payload is the
+    // exact rows that were removed, in insertion order. Expired rows are
+    // pruned lazily on each new save (cheap; runs once per destructive op).
+    `CREATE TABLE IF NOT EXISTS undo_buckets (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID,
+       kind VARCHAR(50) NOT NULL,
+       payload JSONB NOT NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       expires_at TIMESTAMPTZ NOT NULL
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_undo_buckets_expires_at ON undo_buckets (expires_at)`,
   ];
   for (const sql of ddl) {
     try {
