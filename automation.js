@@ -179,6 +179,124 @@ async function findPermitsAwaitingInvoice(pool) {
   return rows;
 }
 
+// Inspection revenue projection — for each active inspection-team project,
+// estimate remaining revenue based on recent burn rate, capped by the
+// project's budget allocation so we don't project beyond what PSC will
+// actually pay. Admin-only data — never exposed to managers/engineers.
+//
+// Math:
+//   avg_weekly_hours = SUM(hours in last N weeks) / N
+//   projected_remaining_hours = MIN(
+//     avg_weekly_hours * weeks_remaining_in_year,
+//     (budget_allocated - billed_to_date) / billing_rate
+//   )
+//   projected_remaining_revenue = projected_remaining_hours * billing_rate
+//
+// "weeks_remaining_in_year" is a simple time-budget cap so projects with
+// budget headroom but no historical pace don't project unbounded revenue.
+async function buildInspectionRevenueProjection(pool, opts) {
+  const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
+  const horizonWeeks  = (opts && opts.horizonWeeks)  || 26;  // ~6 months default
+
+  const { rows } = await pool.query(
+    `WITH inspection_projects AS (
+       SELECT p.id, p.name, p.client_id, p.billing_rate, p.billing_type,
+              p.expected_hours, p.actual_hours, p.expected_revenue,
+              p.status, cl.name AS client_name,
+              j.name AS job_name, j.team AS job_team
+       FROM projects p
+       LEFT JOIN clients cl ON cl.id = p.client_id
+       LEFT JOIN jobs j ON j.id = p.job_id
+       WHERE (j.team = 'inspection' OR p.project_type = 'inspection')
+         AND p.status IN ('active', 'billed')
+         AND COALESCE(p.is_rollup, FALSE) = FALSE
+     ),
+     recent_hours AS (
+       SELECT te.project_id,
+              COALESCE(SUM(te.hours), 0)::float AS hours_recent
+       FROM time_entries te
+       WHERE te.entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
+       GROUP BY te.project_id
+     ),
+     billed_to_date AS (
+       SELECT ii.project_id,
+              COALESCE(SUM(ii.amount), 0)::float AS billed
+       FROM invoice_items ii
+       GROUP BY ii.project_id
+     ),
+     budget_for_project AS (
+       SELECT b.project_id,
+              COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
+       FROM budgets b
+       LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+       GROUP BY b.project_id
+     )
+     SELECT
+       ip.id AS project_id,
+       ip.name AS project_name,
+       ip.client_id,
+       ip.client_name,
+       ip.job_name,
+       ip.billing_rate::float AS billing_rate,
+       ip.actual_hours::float AS actual_hours,
+       COALESCE(rh.hours_recent, 0) AS hours_last_n_weeks,
+       COALESCE(bp.budget_allocated, 0) AS budget_allocated,
+       COALESCE(btd.billed, 0) AS billed_to_date
+     FROM inspection_projects ip
+     LEFT JOIN recent_hours rh   ON rh.project_id = ip.id
+     LEFT JOIN billed_to_date btd ON btd.project_id = ip.id
+     LEFT JOIN budget_for_project bp ON bp.project_id = ip.id
+     ORDER BY ip.client_name, ip.name`,
+    [String(lookbackWeeks)]
+  );
+
+  // Compute projection per row in JS — cleaner than burying it in SQL,
+  // and the math is straightforward. The budget cap is the load-bearing
+  // piece: revenue projection NEVER exceeds the remaining budget.
+  let totalProjected = 0;
+  const projections = rows.map(r => {
+    const avgWeekly = lookbackWeeks > 0 ? r.hours_last_n_weeks / lookbackWeeks : 0;
+    const rate = r.billing_rate || 0;
+    // Time budget: how many hours could pace produce in horizon weeks?
+    const paceHours = avgWeekly * horizonWeeks;
+    // Budget budget: how many hours fit into the remaining budget?
+    const budgetRemaining = Math.max(0, r.budget_allocated - r.billed_to_date);
+    const budgetHours = rate > 0 ? budgetRemaining / rate : Infinity;
+    // Final projection: lesser of pace and budget. If no budget, cap at pace.
+    const projHours = r.budget_allocated > 0
+      ? Math.min(paceHours, budgetHours)
+      : paceHours;
+    const projRevenue = projHours * rate;
+    totalProjected += projRevenue;
+    return {
+      project_id: r.project_id,
+      project_name: r.project_name,
+      client_id: r.client_id,
+      client_name: r.client_name,
+      job_name: r.job_name,
+      billing_rate: rate,
+      actual_hours: r.actual_hours,
+      hours_last_n_weeks: r.hours_last_n_weeks,
+      avg_weekly_hours: +avgWeekly.toFixed(2),
+      budget_allocated: r.budget_allocated,
+      billed_to_date: r.billed_to_date,
+      budget_remaining: budgetRemaining,
+      projected_remaining_hours: +projHours.toFixed(1),
+      projected_remaining_revenue: +projRevenue.toFixed(2),
+      // Flag: projected revenue would exhaust the budget within horizon
+      will_exhaust_budget: r.budget_allocated > 0 && paceHours >= budgetHours,
+    };
+  });
+
+  return {
+    lookback_weeks: lookbackWeeks,
+    horizon_weeks: horizonWeeks,
+    project_count: projections.length,
+    total_projected_revenue: +totalProjected.toFixed(2),
+    projects: projections,
+  };
+}
+
 // Build a draft of monthly invoices: every project with billing_cadence='monthly'
 // that has hours in the given period and has NOT already been invoiced for
 // that period. Returns a "ready to bill" list grouped by client. Admin
@@ -295,6 +413,19 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
     }
   });
 
+  // Inspection revenue projection — ADMIN ONLY (financial). Returns the
+  // pace-vs-budget projection per inspection project plus a rolled-up total.
+  app.get('/api/automation/inspection-projection', requireAdmin, async (req, res) => {
+    try {
+      const lookbackWeeks = Math.max(1, Math.min(52, parseInt(req.query.lookback_weeks || '8', 10) || 8));
+      const horizonWeeks  = Math.max(1, Math.min(104, parseInt(req.query.horizon_weeks || '26', 10) || 26));
+      res.json(await buildInspectionRevenueProjection(pool, { lookbackWeeks, horizonWeeks }));
+    } catch (e) {
+      console.error('[automation:inspection-projection]', e && e.message);
+      res.status(500).json({ error: 'Failed to build inspection projection.' });
+    }
+  });
+
   // Monthly billing draft — admin only. Returns the candidate list grouped
   // by client. NOTHING IS COMMITTED — admin reviews, edits if needed, then
   // POSTs to the existing /api/billing/bill-multiple to create real invoices.
@@ -379,5 +510,6 @@ module.exports = {
   findStalePermits,
   findBudgetBurn,
   findPermitsAwaitingInvoice,
+  buildInspectionRevenueProjection,
   buildMonthlyBillingDraft,
 };

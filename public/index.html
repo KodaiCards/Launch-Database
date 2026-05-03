@@ -473,13 +473,27 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
           <select class="filter" id="dash-year" onchange="loadDashboard()"></select>
+          <button class="btn btn-secondary btn-sm" onclick="toggleDashboardCustomize()" title="Hide/show widgets"><i class="fa-solid fa-sliders"></i></button>
           <button class="btn btn-primary" onclick="showView('projects');openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
       </div>
-      <div class="stats-grid" id="dash-stats">
+      <div class="stats-grid lfs-widget" data-widget-id="stats" id="dash-stats">
         <div class="stat-card" style="cursor:pointer" onclick="showActiveList()" title="Click to see which projects are counted"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
         <div class="stat-card accent"><div class="stat-label" id="s-period-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
         <div class="stat-card"><div class="stat-label" id="s-year-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
+      </div>
+
+      <!-- Inspection revenue projection — admin only. Shows per-project
+           pace-vs-budget projection and rolls up to a total. Hidden when
+           the API returns 403 (non-admin viewer) or no inspection data. -->
+      <div id="inspection-projection-card" class="card lfs-widget" data-widget-id="inspection-projection" style="margin-bottom:14px;display:none">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>Inspection Revenue Projection</span>
+          <span style="font-size:11px;color:var(--text-muted)">Pace × budget cap · 6 months</span>
+        </div>
+        <div class="card-body" id="inspection-projection-body" style="padding:0">
+          <div style="padding:16px;color:var(--text-muted)">Loading…</div>
+        </div>
       </div>
 
       <!-- Needs Attention — surfaces the /api/automation/* alerts so admin
@@ -487,7 +501,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
            clock-out sessions without having to navigate elsewhere. Hidden
            by default; loadNeedsAttention() shows it only when there's
            actually something to attend to. -->
-      <div id="needs-attention-card" class="card" style="margin-bottom:14px;display:none;border-left:4px solid var(--warning,#F0A500)">
+      <div id="needs-attention-card" class="card lfs-widget" data-widget-id="needs-attention" style="margin-bottom:14px;display:none;border-left:4px solid var(--warning,#F0A500)">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
           <span class="card-title"><i class="fa-solid fa-bell" style="color:var(--warning,#F0A500);margin-right:6px"></i>Needs Attention</span>
           <button class="btn btn-secondary btn-sm" onclick="loadNeedsAttention()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
@@ -498,7 +512,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
 
       <!-- Active projects table -->
-      <div class="card">
+      <div class="card lfs-widget" data-widget-id="active-projects">
         <div class="card-header"><span class="card-title">Active Projects</span></div>
         <div class="table-wrap">
           <table>
@@ -2807,11 +2821,135 @@ async function loadNeedsAttention() {
   });
 }
 
+// ─── Inspection revenue projection card ────────────────────────────────
+// Admin-only — the API itself returns 403 to non-admins, so this just
+// silently bails on those calls. Compact table per project + a total.
+async function loadInspectionProjection() {
+  const card = document.getElementById('inspection-projection-card');
+  const body = document.getElementById('inspection-projection-body');
+  if (!card || !body) return;
+  let data;
+  try {
+    data = await api('/api/automation/inspection-projection');
+  } catch (e) {
+    card.style.display = 'none';
+    return;
+  }
+  if (!data.projects || !data.projects.length) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  const rows = data.projects.sort((a, b) => b.projected_remaining_revenue - a.projected_remaining_revenue);
+  body.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--gray-light)">
+          <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Avg/wk</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget left</th>
+          <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Projected</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr style="border-top:1px solid var(--gray-border);${r.will_exhaust_budget?'background:#FFF3E0':''}">
+            <td style="padding:8px 12px">
+              <div style="font-weight:500">${esc(r.project_name)}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${esc(r.client_name||'—')}${r.will_exhaust_budget?' · <strong style="color:#e65100">budget cap reached</strong>':''}</div>
+            </td>
+            <td style="padding:8px 12px;text-align:right">${fmt(r.avg_weekly_hours,'hrs')}</td>
+            <td style="padding:8px 12px;text-align:right;color:var(--text-muted)">${r.budget_allocated > 0 ? fmtMoney(r.budget_remaining) : '—'}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(r.projected_remaining_revenue)}</td>
+          </tr>
+        `).join('')}
+        <tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);font-weight:600">
+          <td style="padding:10px 12px" colspan="3">Projected total (${data.horizon_weeks} weeks)</td>
+          <td style="padding:10px 12px;text-align:right;color:var(--primary)">${fmtMoney(data.total_projected_revenue)}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+}
+
+// ─── Per-user dashboard layout ─────────────────────────────────────────
+// Each `.lfs-widget` element on the dashboard has a stable
+// data-widget-id. The user can toggle visibility via the Customize button;
+// the chosen layout is saved to /api/auth/me/dashboard-layout and
+// re-applied on every page load.
+let _dashLayout = {};
+let _dashCustomizeOn = false;
+async function loadDashboardLayout() {
+  try {
+    _dashLayout = await api('/api/auth/me/dashboard-layout') || {};
+  } catch (e) { _dashLayout = {}; }
+  applyDashboardLayout();
+}
+function applyDashboardLayout() {
+  document.querySelectorAll('.lfs-widget').forEach(el => {
+    const id = el.getAttribute('data-widget-id');
+    const cfg = _dashLayout[id] || {};
+    // Honor "hidden" but never override a card our load function decided to
+    // hide (e.g. needs-attention shows only when there ARE alerts) — the
+    // load function uses inline display:none which we leave alone here.
+    if (cfg.hidden) {
+      el.dataset.layoutHidden = '1';
+      el.style.display = 'none';
+    } else if (el.dataset.layoutHidden === '1') {
+      el.dataset.layoutHidden = '';
+      el.style.display = '';
+    }
+  });
+}
+async function saveDashboardLayout() {
+  try {
+    await api('/api/auth/me/dashboard-layout', { method: 'PUT', body: JSON.stringify(_dashLayout) });
+  } catch (e) {
+    if (window.LFS && window.LFS.toast) window.LFS.toast.error('Failed to save layout');
+  }
+}
+function toggleDashboardCustomize() {
+  _dashCustomizeOn = !_dashCustomizeOn;
+  if (_dashCustomizeOn) {
+    if (window.LFS && window.LFS.toast) window.LFS.toast.info('Click any widget to hide / show. Click Customize again when done.');
+    document.querySelectorAll('.lfs-widget').forEach(el => {
+      const id = el.getAttribute('data-widget-id');
+      el.style.outline = '2px dashed var(--primary,#1B5FA0)';
+      el.style.outlineOffset = '4px';
+      el.style.cursor = 'pointer';
+      el.style.opacity = (_dashLayout[id] && _dashLayout[id].hidden) ? '0.4' : '1';
+      el.style.display = '';  // show even hidden ones in customize mode
+      el.addEventListener('click', _dashCustomizeClick);
+    });
+  } else {
+    document.querySelectorAll('.lfs-widget').forEach(el => {
+      el.style.outline = '';
+      el.style.outlineOffset = '';
+      el.style.cursor = '';
+      el.style.opacity = '';
+      el.removeEventListener('click', _dashCustomizeClick);
+    });
+    applyDashboardLayout();
+    saveDashboardLayout();
+  }
+}
+function _dashCustomizeClick(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const el = e.currentTarget;
+  const id = el.getAttribute('data-widget-id');
+  if (!_dashLayout[id]) _dashLayout[id] = {};
+  _dashLayout[id].hidden = !_dashLayout[id].hidden;
+  el.style.opacity = _dashLayout[id].hidden ? '0.4' : '1';
+}
+window.addEventListener('load', () => loadDashboardLayout());
+
 async function loadDashboard() {
-  // Run the Needs Attention card in parallel with the dashboard load.
-  // Wrapped in try/catch so non-admin viewers (who get 403 on the
-  // automation endpoints) don't see an error toast on every refresh.
+  // Run the Needs Attention + Inspection projection cards in parallel with
+  // the dashboard load. Wrapped in try/catch so non-admin viewers (who
+  // get 403 on the automation endpoints) don't see an error toast.
   loadNeedsAttention().catch(() => {});
+  loadInspectionProjection().catch(() => {});
 
   // Initialize dashboard period controls on first load.
   const yEl = document.getElementById('dash-year');

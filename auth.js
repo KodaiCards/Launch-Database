@@ -190,6 +190,11 @@ async function bootstrapAuthSchema(pool) {
     // so changing your password (or an admin resetting it) invalidates every
     // active session for that user immediately.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens_invalid_after TIMESTAMPTZ`,
+    // Per-user dashboard layout / widget visibility. JSONB blob — keys are
+    // widget IDs, values are { hidden?: bool, order?: int }. Frontend
+    // owns the schema; backend just stores/returns. Lets a manager hide
+    // widgets that don't apply to their team without affecting anyone else.
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_layout JSONB DEFAULT '{}'::jsonb`,
   ];
   for (const sql of ddl) {
     try {
@@ -445,6 +450,36 @@ function installAuthRoutes(app, pool) {
     } catch (e) {
       return serverError(res, e, 'theme');
     }
+  });
+
+  // GET /api/auth/me/dashboard-layout — return this user's saved layout.
+  // Empty object means "use defaults"; the frontend doesn't need to special
+  // case anything.
+  app.get('/api/auth/me/dashboard-layout', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT dashboard_layout FROM users WHERE id = $1`, [req.user.id]
+      );
+      res.json(rows[0]?.dashboard_layout || {});
+    } catch (e) { return serverError(res, e, 'get-dashboard-layout'); }
+  });
+
+  // PUT /api/auth/me/dashboard-layout — replace the saved layout. Body is
+  // the full layout object; partial-merge isn't supported (frontend already
+  // computes the full state before sending). Validated to be an object so
+  // a malformed POST can't poison the column.
+  app.put('/api/auth/me/dashboard-layout', requireAuth(), async (req, res) => {
+    const layout = req.body;
+    if (layout == null || typeof layout !== 'object' || Array.isArray(layout)) {
+      return res.status(400).json({ error: 'layout must be a JSON object' });
+    }
+    try {
+      await pool.query(
+        `UPDATE users SET dashboard_layout = $1, updated_at = NOW() WHERE id = $2`,
+        [JSON.stringify(layout), req.user.id]
+      );
+      res.json({ ok: true, layout });
+    } catch (e) { return serverError(res, e, 'put-dashboard-layout'); }
   });
 
   // POST /api/auth/change-password — current user updates their own password.
