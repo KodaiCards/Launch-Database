@@ -868,28 +868,6 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
     }
   });
 
-  // POST /api/automation/digest/send — assemble + email the digest. Recipients
-  // come from DIGEST_TO env (comma-separated). Transport is SendGrid v3
-  // when SENDGRID_API_KEY is set; otherwise the body is logged to stderr
-  // and returned in the response so the operator still has visibility.
-  // Adding a real SMTP transport (nodemailer + SMTP_*) is straightforward
-  // — the sendDigestEmail helper picks the first configured backend.
-  app.post('/api/automation/digest/send', requireAdmin, async (req, res) => {
-    try {
-      const date = req.body?.date || null;
-      const recipients = (req.body?.to || process.env.DIGEST_TO || '')
-        .split(',').map(s => s.trim()).filter(Boolean);
-      if (!recipients.length) {
-        return res.status(400).json({ error: 'No recipients. Pass {to:"a@x,b@y"} or set DIGEST_TO env.' });
-      }
-      const digest = await buildDigest(pool, date);
-      const result = await sendDigestEmail(digest, recipients);
-      res.json({ ok: true, ...result, digest });
-    } catch (e) {
-      console.error('[automation:digest:send]', e && e.message);
-      res.status(500).json({ error: 'Failed to send digest: ' + e.message });
-    }
-  });
 
   // Stale permits — manager+admin (a permit lead should see their team's lag).
   app.get('/api/automation/stale-permits', requireManagerOrAdmin, async (req, res) => {
@@ -994,97 +972,8 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
 // timestamp so we don't have to align the scheduler with arbitrary clock
 // times. On boot, every task fires once so deploy logs immediately show
 // the current state — useful when triaging why no email/digest arrived.
-// ─── Digest email transport ───────────────────────────────────────────────
-//
-// Sends the digest via the first configured backend in this priority
-// order:
-//   1. SendGrid v3 REST API (SENDGRID_API_KEY env)
-//   2. Mailgun v3 REST API (MAILGUN_API_KEY + MAILGUN_DOMAIN)
-//   3. Console log (fallback, no email sent — useful in dev)
-// No npm dependency added — all transports go through fetch(). Adding
-// nodemailer + SMTP transport later is a single new branch in
-// _sendViaSmtp() if the owner wants raw SMTP.
-
-function _renderDigestHtml(d) {
-  const fmt = n => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
-  const money = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `<!doctype html><html><body style="font-family:Inter,Arial,sans-serif;color:#212529;max-width:680px;margin:0 auto;padding:20px">
-    <h1 style="color:#1B5FA0;font-size:22px;margin:0 0 4px 0">Launch Fiber — Daily Digest</h1>
-    <div style="color:#6C757D;font-size:13px;margin-bottom:18px">${d.date}</div>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:18px">
-      <tr><td style="padding:8px 12px;border:1px solid #DEE2E6;background:#F5F7FA;font-size:11px;color:#6C757D;text-transform:uppercase">Hours</td>
-          <td style="padding:8px 12px;border:1px solid #DEE2E6"><strong>${fmt(d.hours.total_hours)}</strong> across ${d.hours.entry_count} entries (${d.projects_touched} projects)</td></tr>
-      <tr><td style="padding:8px 12px;border:1px solid #DEE2E6;background:#F5F7FA;font-size:11px;color:#6C757D;text-transform:uppercase">Billed</td>
-          <td style="padding:8px 12px;border:1px solid #DEE2E6"><strong>${money(d.billed.billed)}</strong> across ${d.billed.invoice_count} invoice${d.billed.invoice_count === 1 ? '' : 's'}</td></tr>
-      <tr><td style="padding:8px 12px;border:1px solid #DEE2E6;background:#F5F7FA;font-size:11px;color:#6C757D;text-transform:uppercase">Permits advanced</td>
-          <td style="padding:8px 12px;border:1px solid #DEE2E6">${(d.permits_advanced && JSON.stringify(d.permits_advanced)) || '—'}</td></tr>
-      <tr><td style="padding:8px 12px;border:1px solid #DEE2E6;background:#F5F7FA;font-size:11px;color:#6C757D;text-transform:uppercase">Flagged sessions</td>
-          <td style="padding:8px 12px;border:1px solid #DEE2E6">${(d.timeclock_flags && d.timeclock_flags.needs_review) || 0} need review</td></tr>
-    </table>
-    <div style="font-size:11px;color:#6C757D">Auto-generated. View live data in the admin dashboard.</div>
-  </body></html>`;
-}
-
-async function _sendViaSendGrid(html, subject, recipients, from) {
-  const key = process.env.SENDGRID_API_KEY;
-  if (!key) return null;
-  const r = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      personalizations: [{ to: recipients.map(email => ({ email })) }],
-      from: { email: from },
-      subject,
-      content: [{ type: 'text/html', value: html }],
-    }),
-  });
-  if (!r.ok) {
-    const txt = await r.text().catch(() => '');
-    throw new Error(`SendGrid error ${r.status}: ${txt.slice(0, 200)}`);
-  }
-  return { backend: 'sendgrid', recipients };
-}
-
-async function _sendViaMailgun(html, subject, recipients, from) {
-  const key = process.env.MAILGUN_API_KEY;
-  const domain = process.env.MAILGUN_DOMAIN;
-  if (!key || !domain) return null;
-  const fd = new URLSearchParams();
-  fd.set('from', from);
-  for (const r of recipients) fd.append('to', r);
-  fd.set('subject', subject);
-  fd.set('html', html);
-  const auth = Buffer.from(`api:${key}`).toString('base64');
-  const r = await fetch(`https://api.mailgun.net/v3/${encodeURIComponent(domain)}/messages`, {
-    method: 'POST',
-    headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: fd.toString(),
-  });
-  if (!r.ok) {
-    const txt = await r.text().catch(() => '');
-    throw new Error(`Mailgun error ${r.status}: ${txt.slice(0, 200)}`);
-  }
-  return { backend: 'mailgun', recipients };
-}
-
-async function sendDigestEmail(digest, recipients) {
-  const subject = `Launch Fiber Digest — ${digest.date}`;
-  const html = _renderDigestHtml(digest);
-  const from = process.env.DIGEST_FROM || 'no-reply@launchfiberservices.com';
-  // Try transports in order; first one that's configured wins.
-  let result = await _sendViaSendGrid(html, subject, recipients, from);
-  if (!result) result = await _sendViaMailgun(html, subject, recipients, from);
-  if (!result) {
-    // No backend configured — graceful no-op. Log so the operator can
-    // wire SENDGRID_API_KEY (or MAILGUN_*) when they're ready.
-    console.log('[automation:digest:send] no email backend configured — would have sent to:', recipients);
-    return { backend: 'none', recipients, note: 'No email backend configured. Set SENDGRID_API_KEY or MAILGUN_API_KEY+MAILGUN_DOMAIN env vars to deliver.' };
-  }
-  return result;
-}
-
 function startScheduler(pool) {
-  const state = { lastDigest: 0, lastStale: 0, lastBurn: 0, lastDigestEmail: 0 };
+  const state = { lastDigest: 0, lastStale: 0, lastBurn: 0 };
 
   async function tick(reason) {
     const now = Date.now();
@@ -1098,19 +987,6 @@ function startScheduler(pool) {
           `permits:`, d.permits_advanced,
           `/ flagged sessions: ${d.timeclock_flags.needs_review}`);
         state.lastDigest = now;
-        // Auto-send the digest if recipients are configured AND a
-        // delivery backend is wired up (SENDGRID_API_KEY or MAILGUN_*).
-        // Silently skips when DIGEST_TO is empty so dev environments
-        // don't accidentally email anyone.
-        const to = (process.env.DIGEST_TO || '').split(',').map(s => s.trim()).filter(Boolean);
-        if (to.length && (process.env.SENDGRID_API_KEY || process.env.MAILGUN_API_KEY)) {
-          try {
-            const out = await sendDigestEmail(d, to);
-            console.log(`[automation:digest:emailed:${out.backend}] →`, to.join(', '));
-          } catch (mailErr) {
-            console.error('[automation:digest:email-fail]', mailErr && mailErr.message);
-          }
-        }
       } catch (e) { console.error('[automation:scheduler:digest]', e && e.message); }
     }
     // Hourly — stale permits + budget burn.

@@ -1017,23 +1017,45 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
          project by its client and surfaces completion %, hours used vs
          expected, days since last activity, and the latest pipeline
          stage. Backed by /api/admin/client-progress. -->
+    <!-- ═════════════ CLIENT PROGRESS / CLIENT PORTAL — UNDER CONSTRUCTION ═════════════
+         Owner explicitly held this back: the schema, role ('customer'),
+         customer-portal HTML, and API endpoints are all wired up below
+         (see routes/customer_portal.js + public/customer.html), but
+         the UI surface — both internal Client Progress and external
+         customer view — stays inactive until the owner finalizes what
+         data should populate. Code stays in place so flipping it on
+         later is a one-commit revert of this block + customer.html. -->
     <div id="view-clients" class="view">
       <div class="section-header">
-        <div><div class="section-title">Client Progress</div><div class="section-sub">Per-client portfolio of projects with completion % and stale-activity flagging</div></div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="search" id="cp-search" placeholder="Filter…" oninput="renderClientProgress()" style="padding:6px 10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--surface-2);color:var(--text);font-size:13px">
-          <select id="cp-status-filter" class="filter" onchange="renderClientProgress()">
-            <option value="">All statuses</option>
-            <option value="active">Active only</option>
-            <option value="stale">Stale active (&gt; 30 days)</option>
-            <option value="completed">Completed</option>
-            <option value="billed">Billed</option>
-          </select>
-          <button class="btn btn-secondary btn-sm" onclick="loadClientProgress()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-        </div>
+        <div><div class="section-title">Clients</div><div class="section-sub">Client portal &mdash; under construction</div></div>
       </div>
-      <div class="stats-grid" id="cp-stats"></div>
-      <div id="cp-clients-body"></div>
+      <div class="card" style="margin-top:14px;text-align:center;padding:48px 24px">
+        <div style="font-size:48px;color:var(--warning);margin-bottom:14px"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <h2 style="font-size:22px;color:var(--text);margin:0 0 8px 0">Under Construction</h2>
+        <p style="font-size:14px;color:var(--text-muted);max-width:520px;margin:0 auto 14px auto;line-height:1.5">
+          The client portal &mdash; both the per-client progress view here in
+          admin and the external customer-facing portal &mdash; is still being
+          designed. Schema, roles, and API endpoints are wired up; the
+          UI lights up once the owner finalizes which data should
+          surface and how.
+        </p>
+        <p style="font-size:12px;color:var(--text-muted);max-width:520px;margin:0 auto">
+          To re-enable the populated view, restore the Client Progress
+          markup &amp; the showView('clients') &rarr; loadClientProgress()
+          dispatch. Backend endpoint <code>/api/admin/client-progress</code> is
+          live and tested; <code>routes/customer_portal.js</code> handles the
+          external portal surface.
+        </p>
+      </div>
+      <!-- Hidden but kept so the existing client-progress JS doesn't
+           crash on null lookups. The data fetch runs once on first
+           click but writes into off-screen elements. -->
+      <div style="display:none">
+        <input type="search" id="cp-search">
+        <select id="cp-status-filter"></select>
+        <div id="cp-stats"></div>
+        <div id="cp-clients-body"></div>
+      </div>
     </div>
 
     <!-- ═══════════════════ BILLING ═══════════════════ -->
@@ -2654,7 +2676,10 @@ function showView(view) {
   if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
-  if (view==='clients') loadClientProgress();
+  // 'clients' tab is under construction — owner unwired the data fetch
+  // until the portal UI is finalized. Keep the dispatch line nearby so
+  // re-enabling is a one-line edit (uncomment + ship).
+  // if (view==='clients') loadClientProgress();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
 }

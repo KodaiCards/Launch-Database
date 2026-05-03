@@ -120,37 +120,44 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 </header>
 
 <main class="container">
-  <div class="tabs" id="cp-tabs">
-    <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
-    <button data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
+  <!-- ═════════════ UNDER CONSTRUCTION ═════════════
+       Owner explicitly asked that the client portal stay un-populated
+       until they finalize the UI + decide what data should surface.
+       The schema (customer_clients), the role ('customer'), the API
+       endpoints (/api/customer/*), and the admin link-management
+       endpoints are all wired up below — the only thing held back is
+       the customer-visible UI. When ready, replace this block with the
+       real Projects / Invoices tabs (the original render code lives in
+       git history at the commit just before this one). -->
+  <div class="card" style="margin-top:20px;text-align:center;padding:48px 24px">
+    <div style="font-size:48px;color:var(--warning);margin-bottom:14px"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+    <h2 style="font-size:22px;color:var(--text);margin:0 0 8px 0">Client Portal — Under Construction</h2>
+    <p style="font-size:14px;color:var(--text-muted);max-width:480px;margin:0 auto 14px auto;line-height:1.5">
+      We're still building this view. Your account is set up correctly &mdash;
+      check back soon for project status, hours, and invoices.
+    </p>
+    <p style="font-size:12px;color:var(--text-muted);max-width:480px;margin:0 auto">
+      Need something in the meantime? Email your project manager directly.
+    </p>
   </div>
-
-  <!-- Projects tab -->
-  <div id="cp-tab-projects" class="cp-tab">
-    <div class="stats-grid" id="cp-stats"></div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title"><i class="fa-solid fa-folder-open"></i> Active &amp; Recent Projects</span>
-        <button class="btn btn-secondary btn-sm" onclick="loadCustomerData()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      </div>
-      <div id="cp-projects-body">
-        <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>
-      </div>
+  <!-- Hidden but kept in DOM so the existing JS doesn't crash on null
+       lookups. The init() / loadCustomerData() / cpLoadInvoices()
+       functions still run on load (and silently fail if the user's
+       linked clients haven't been seeded yet) so the wiring is alive
+       and the API surface is exercised. -->
+  <div style="display:none">
+    <div class="tabs" id="cp-tabs">
+      <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
+      <button data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
     </div>
-  </div>
-
-  <!-- Invoices tab -->
-  <div id="cp-tab-invoices" class="cp-tab" style="display:none">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices</span>
-        <button class="btn btn-secondary btn-sm" onclick="cpLoadInvoices()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      </div>
-      <div id="cp-invoices-body">
-        <div class="empty-state"><i class="fa-solid fa-receipt"></i><p>Loading…</p></div>
-      </div>
+    <div id="cp-tab-projects" class="cp-tab">
+      <div class="stats-grid" id="cp-stats"></div>
+      <div id="cp-projects-body"></div>
     </div>
-  </div>
+    <div id="cp-tab-invoices" class="cp-tab" style="display:none">
+      <div id="cp-invoices-body"></div>
+    </div>
+  </div> <!-- /display:none wrapper closing the under-construction shim -->
 </main>
 
 <!-- Project detail modal — opens on row click -->

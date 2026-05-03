@@ -145,19 +145,23 @@ Also shipped after the initial status snapshot:
    admin too.
 
 FINAL SHIP — owner instructed "do everything" so the deferred memory
-items got built too:
+items got built. Subsequent owner clarifications:
+- Email digest fully removed (never wanted it)
+- Client portal (admin Clients tab + customer.html) labeled "Under
+  Construction" with no data populating, until owner finalizes the UI
 
-✅ Customer portal — PORTAL_MODE='customer' + new role + customer_clients
-   junction + read-only API (/api/customer/{me,projects,projects/:id,
-   invoices,invoices/:id}) + admin link mgmt + customer.html with
-   Projects + Invoices tabs, progress bars, status pills, click-for-
-   detail modal. Reuses the shared change-password modal.
-✅ Admin Client Progress view — new "Clients" nav tab in admin. Groups
-   every project under its client; surfaces completion %, hours used vs
-   expected, days since activity, current pipeline stage. Stale active
-   projects (>30 days no entry) flagged. Filter by status (active /
-   stale / completed / billed) + free-text search. Backed by
-   /api/admin/client-progress.
+✅ Customer portal (UI Under Construction) — PORTAL_MODE='customer' +
+   new 'customer' role + customer_clients junction + read-only API
+   (/api/customer/{me,projects,projects/:id,invoices,invoices/:id}) +
+   admin link-mgmt endpoints. customer.html shows a UC placeholder;
+   the Projects + Invoices render code is preserved in git history at
+   commit aa9f6d0. To re-enable: restore the markup + the populated
+   tabs.
+✅ Admin Clients tab — labeled "Under Construction" until the portal UI
+   is finalized. Backend /api/admin/client-progress is live and tested;
+   showView('clients') dispatch is commented out so no data populates.
+   To re-enable: restore the Client Progress markup + uncomment the
+   loadClientProgress() dispatch.
 ✅ Dashboard drag-to-reorder — customize mode now has explicit drag
    handles + per-widget eye-icon toolbar for hide/show. Order persists
    to the user's dashboard layout. applyDashboardLayout sorts on every
@@ -175,11 +179,6 @@ items got built too:
    weights each entry by recency (max(0.2, 1 - age_in_weeks /
    lookback)). Recent acceleration/slowdown shows in the projection
    instead of being averaged out.
-✅ Email digest — /api/automation/digest/send + scheduler hook with
-   transport priority: SendGrid (SENDGRID_API_KEY) → Mailgun
-   (MAILGUN_API_KEY+MAILGUN_DOMAIN) → console-log no-op. No npm dep
-   added; both backends use fetch(). DIGEST_TO env or {to} body
-   sets recipients.
 ✅ Track 1.4 versioned migrations — db_migrations.runMigrations(pool)
    reads /migrations/NNNN_*.sql, applies anything not in
    schema_migrations, records each in its own transaction. Coexists
@@ -198,15 +197,13 @@ The branch is ready for production deploy. Schema migrations needed:
 - time_entries.pending_project_request_id column (auto-applied)
 - All future schema changes go through migrations/NNNN_*.sql.
 
-Required new env vars (optional — graceful no-op when missing):
-- SENDGRID_API_KEY (for email digest delivery)
-  OR MAILGUN_API_KEY + MAILGUN_DOMAIN
-- DIGEST_TO=address1@x,address2@y
-- DIGEST_FROM=no-reply@yourdomain.com (default
-  no-reply@launchfiberservices.com)
+No new env vars required.
 
 New PORTAL_MODE value:
-- PORTAL_MODE=customer  → serves public/customer.html
+- PORTAL_MODE=customer  → serves public/customer.html (currently the
+  Under Construction placeholder; routes/customer_portal.js endpoints
+  are live but the UI doesn't populate until owner finalizes the
+  design).
 
 ---
 
