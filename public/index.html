@@ -396,12 +396,38 @@ html[data-theme="dark"] .alert-success strong{color:#C8E6C9 !important}
 /* DROPDOWN */
 select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 10px;font-size:13px;background:var(--white);cursor:pointer}
 
-/* PRINT */
+/* PRINT
+   Goal: when the admin prints any tab (Hours, Projects, Revenue, Billing
+   Report), the result reads like a document, not a screenshot. Force all
+   scroll containers to overflow:visible so the full content paginates,
+   open every <details>, hide chrome (nav, header, toolbars, modals,
+   drawers, undo bar, AI panel, action buttons), and let tables break
+   across pages cleanly. */
 @media print {
-  .nav,.ai-panel,.header,.btn,.modal-overlay{display:none!important}
+  .nav,.ai-panel,.header,.btn,.modal-overlay,#audit-drawer,#audit-drawer-backdrop,#lfs-undo-bar,#bill-selected-bar{display:none!important}
   .view{display:block!important;padding:0;overflow:visible}
-  .card{border:1px solid #ccc;break-inside:avoid}
-  body{background:#fff}
+  .card{border:1px solid #ccc;break-inside:avoid;box-shadow:none}
+  body{background:#fff;color:#000}
+  /* Force every scrollable region to render full content for printing —
+     scroll wheels are useless on paper / PDF. */
+  .table-wrap,.modal-body,#hours-tree-body,#hours-grouped-body{overflow:visible!important;max-height:none!important}
+  /* Force every collapsible row OPEN. The Hours / Projects / Revenue tabs
+     hide deep rows behind tree-state expand/collapse; printing should show
+     everything. Display:block beats the inline display:none. */
+  .htree,[class*="htree-"]{display:block!important}
+  details{display:block!important}
+  details > summary{list-style:none}
+  details[open]:not([open]),details:not([open]){display:block!important}
+  /* Tables: keep header rows on each page, prevent row splits, dense text. */
+  thead{display:table-header-group}
+  tr{page-break-inside:avoid}
+  table{width:100%;border-collapse:collapse;font-size:11pt}
+  /* Don't paint the header sticky / brand bands across every page edge. */
+  .section-header{display:flex;justify-content:space-between;border-bottom:1px solid #888;padding-bottom:6px;margin-bottom:10px}
+  .section-title{font-size:18pt;font-weight:700;color:#000}
+  .section-sub{font-size:9pt;color:#444}
+  /* Reasonable page margins; let the browser do the rest. */
+  @page{margin:0.5in}
 }
 
 /* RESPONSIVE */
@@ -711,6 +737,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="month" selected>Specific Month</option>
           </select>
           <input type="month" id="insp-month" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+          <label style="font-size:12px;color:var(--text-muted);margin-left:6px">Status:</label>
+          <select id="insp-status" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+            <option value="">Active + Billed</option>
+            <option value="active">Active only</option>
+            <option value="billed">Billed</option>
+            <option value="completed">Completed</option>
+            <option value="on_hold">On Hold</option>
+            <option value="all">All statuses</option>
+          </select>
           <button class="btn btn-primary btn-sm" onclick="openProjectModal('inspection')"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
       </div>
@@ -5585,7 +5620,9 @@ async function loadInspection() {
   }
   const period = document.getElementById('insp-period').value;
   const month = monthInput?.value || '';
-  const qs = period === 'month' && month ? `?period=month&month=${month}` : `?period=ytd`;
+  const statusFilter = document.getElementById('insp-status')?.value || '';
+  let qs = period === 'month' && month ? `?period=month&month=${month}` : `?period=ytd`;
+  if (statusFilter) qs += `&status=${encodeURIComponent(statusFilter)}`;
 
   let data;
   try {
@@ -7574,25 +7611,43 @@ async function showBillingReport() {
 }
 
 // Open the browser's print dialog scoped to the report content. The user
-// can choose "Save as PDF" from the destination dropdown.
+// can choose "Save as PDF" from the destination dropdown. Stylesheet is
+// document-grade — printed page header on every page (company name +
+// title), footer with page numbers + generated date, no sticky nav, no
+// scrollbars, tables paginate cleanly without splitting rows.
 function printBillingReport() {
   const reportEl = document.getElementById('billing-report-printable');
   if (!reportEl) return;
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>Billing Ledger</title>
     <style>
-      body{font-family:Arial,sans-serif;padding:40px;color:#222}
-      table{width:100%;border-collapse:collapse;font-size:13px}
-      th,td{border-bottom:1px solid #ddd;padding:8px 10px;text-align:left}
-      th{background:#f3f3f3}
-      .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+      *{box-sizing:border-box}
+      body{font-family:'Inter','Arial',sans-serif;padding:0.6in;color:#222;line-height:1.4}
+      h1{color:#1B5FA0;text-align:center;margin:0;font-size:22pt;letter-spacing:.5px}
+      h2{color:#555;text-align:center;font-weight:400;margin:4px 0 18px 0;font-size:12pt}
+      .doc-header{border-bottom:2px solid #1B5FA0;padding-bottom:14px;margin-bottom:18px}
+      .doc-footer{position:fixed;bottom:0.4in;left:0;right:0;text-align:center;font-size:9pt;color:#888;border-top:1px solid #ddd;padding-top:6px}
+      table{width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:12px}
+      thead{display:table-header-group}
+      tr{page-break-inside:avoid}
+      th,td{border-bottom:1px solid #ddd;padding:7px 10px;text-align:left;vertical-align:top}
+      th{background:#f3f3f3;font-size:9pt;text-transform:uppercase;letter-spacing:.4px;color:#555}
+      tfoot td{border-top:2px solid #1B5FA0;font-weight:700;background:#f8f9fa}
+      .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 24px 0}
       .summary-card{padding:14px 18px;border-radius:8px;border:1px solid #ddd}
-      .summary-card.primary{background:#0846a8;color:#fff;border-color:#0846a8}
-      h1{color:#0846a8;text-align:center;margin-bottom:0}
-      h2{color:#666;text-align:center;font-weight:400;margin-top:4px;font-size:15px}
-      @media print { body { padding: 20px; } }
+      .summary-card.primary{background:#1B5FA0;color:#fff;border-color:#1B5FA0}
+      .summary-card .label{font-size:9pt;text-transform:uppercase;letter-spacing:.4px;opacity:.85}
+      .summary-card .value{font-size:20pt;font-weight:700;margin-top:4px}
+      details,details[open]{display:block !important}
+      details>summary{list-style:none;cursor:default}
+      [style*="overflow:auto"],[style*="overflow:scroll"],[style*="max-height"]{overflow:visible !important;max-height:none !important}
+      @page{margin:0.5in;size:letter}
+      @media print{
+        body{padding:0}
+        .doc-footer{position:fixed;bottom:0}
+      }
     </style>
-  </head><body>${reportEl.innerHTML}<script>window.onload=()=>window.print();</` + `script></body></html>`);
+  </head><body>${reportEl.innerHTML}<div class="doc-footer">Launch Fiber Services · Billing Ledger · Generated ${new Date().toLocaleString()}</div><script>window.onload=()=>window.print();</` + `script></body></html>`);
   w.document.close();
 }
 
@@ -8083,28 +8138,48 @@ function renderContractsList() {
     root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No contracts yet. Add one above.</div>';
     return;
   }
-  // Group by client for readability
-  const byClient = {};
-  contractsCache.forEach(c => {
-    const k = c.client_name || '— No client —';
-    (byClient[k] = byClient[k] || []).push(c);
+  // Group by engineering contract — the umbrella that owns billing contracts
+  // is the natural top-level entity (matches how the owner thinks about
+  // contracts: "RUS 217 Engineering Contract" → Contract 3, Contract 4, …).
+  // Standalone contracts (no umbrella) fall into a "— Standalone —" bucket
+  // and still group by client underneath for readability.
+  const byEc = new Map();   // ec_id-or-'standalone' → { ec_meta, contracts: [] }
+  for (const c of contractsCache) {
+    const key = c.engineering_contract_id || `__standalone__${c.client_name || ''}`;
+    if (!byEc.has(key)) {
+      byEc.set(key, {
+        ec_id: c.engineering_contract_id || null,
+        ec_name: c.engineering_contract_name || null,
+        ec_number: c.engineering_contract_number || null,
+        client_name: c.client_name || null,
+        contracts: [],
+      });
+    }
+    byEc.get(key).contracts.push(c);
+  }
+  // Sort umbrellas first, standalones last; alphabetical within each group.
+  const ordered = [...byEc.values()].sort((a, b) => {
+    if (!!a.ec_id !== !!b.ec_id) return a.ec_id ? -1 : 1;
+    return String(a.ec_name || a.client_name || '').localeCompare(String(b.ec_name || b.client_name || ''));
   });
   let html = '';
-  for (const [client, contracts] of Object.entries(byClient)) {
-    html += `<div style="margin-top:10px"><div style="font-weight:600;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${esc(client)}</div>`;
+  for (const grp of ordered) {
+    const heading = grp.ec_name
+      ? `<i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>${esc(grp.ec_name)}${grp.ec_number ? ` <span style="color:var(--text-muted);font-family:monospace;font-weight:400;font-size:11px">${esc(grp.ec_number)}</span>` : ''}<span style="color:var(--text-muted);font-weight:500;font-size:11px;margin-left:8px">${esc(grp.client_name || '—')}</span>`
+      : `<span style="color:var(--text-muted);font-weight:600">— Standalone —</span><span style="color:var(--text-muted);font-weight:500;font-size:11px;margin-left:8px">${esc(grp.client_name || '—')}</span>`;
+    html += `<div style="margin-top:14px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
+      <div style="background:var(--gray-light);padding:8px 12px;font-size:13px;font-weight:600;border-bottom:1px solid var(--gray-border)">${heading}</div>`;
     html += `<table style="width:100%;border-collapse:collapse"><thead>
-      <tr style="background:var(--gray-light)">
+      <tr style="background:var(--white)">
         <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Number</th>
         <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
-        <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Engineering Contract</th>
         <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Label</th>
         <th style="padding:6px 8px;text-align:right"></th>
       </tr></thead><tbody>`;
-    for (const c of contracts) {
+    for (const c of grp.contracts) {
       html += `<tr data-contract-id="${c.id}" style="border-top:1px solid var(--gray-border)">
         <td style="padding:6px 8px;font-family:monospace">${esc(c.contract_number)}</td>
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.name || '—')}</td>
-        <td style="padding:6px 8px">${c.engineering_contract_name ? '<i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:4px;font-size:11px"></i>' + esc(c.engineering_contract_name) : '<span style="color:var(--text-muted)">— Standalone —</span>'}</td>
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.friendly_label || '—')}</td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
           <button class="btn btn-sm btn-secondary" onclick="editContract('${c.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>

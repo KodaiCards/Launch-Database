@@ -9,6 +9,9 @@
 // Query params:
 //   period: 'ytd' (default) or 'month'
 //   month:  YYYY-MM string when period=month (e.g. '2026-04')
+//   status: optional filter — 'all' (default = active+billed), 'active',
+//           'billed', 'completed', 'on_hold'. The default mirrors the
+//           original endpoint behaviour so existing callers don't change.
 //
 // Permitting (footage) projects keep $0 in revenue because they bill by
 // mile, not hourly; the tab is hours-driven.
@@ -38,12 +41,26 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
       startDate = `${yyyy}-01-01`;
       endDate = now.toISOString().slice(0,10);
     }
+    // Status filter — default keeps the historic 'active' + 'billed' scope so
+    // existing callers don't break. 'all' lifts the gate entirely.
+    const statusFilter = String(req.query.status || '').toLowerCase();
+    const VALID_STATUSES = ['active', 'billed', 'completed', 'on_hold'];
+    let statusClause = `p.status IN ('active', 'billed')`;
+    const queryParams = [];
+    if (statusFilter === 'all') {
+      statusClause = `TRUE`;
+    } else if (VALID_STATUSES.includes(statusFilter)) {
+      statusClause = `p.status = $1`;
+      queryParams.push(statusFilter);
+    }
+
     try {
-      // PSC RUS scope (was inspection-only). Returns every active project
-      // under any PSC RUS client (cl.is_rus = TRUE). The tab covers the
-      // whole engineering-contract umbrella now — Inspection, RE, Permitting,
-      // and any other jobs PSC RUS work runs through. Non-PSC clients are
-      // excluded entirely (they have their own format / surfacing).
+      // PSC RUS scope (was inspection-only). Returns every project under any
+      // PSC RUS client (cl.is_rus = TRUE) that matches the status filter.
+      // The tab covers the whole engineering-contract umbrella now —
+      // Inspection, RE, Permitting, and any other jobs PSC RUS work runs
+      // through. Non-PSC clients are excluded entirely (they have their own
+      // format / surfacing).
       const { rows: projects } = await pool.query(`
         SELECT p.id, p.name, p.work_order_number, p.status, p.is_ongoing, p.client_id,
                cl.name as client_name,
@@ -57,9 +74,9 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
         LEFT JOIN projects pp ON pp.id = p.parent_id
         WHERE COALESCE(p.is_rollup, FALSE) = FALSE
           AND cl.is_rus = TRUE
-          AND p.status IN ('active', 'billed')
+          AND ${statusClause}
         ORDER BY p.is_ongoing DESC, j.name NULLS LAST, p.name
-      `);
+      `, queryParams);
 
       // Sum every hour on each project for the period — no job_title heuristic
       // since the cl.is_rus filter already scopes us correctly. Permitting
@@ -75,10 +92,10 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
           [p.id, startDate, endDate]
         );
         const hours = tr[0].hours || 0;
-        // Hide rows with zero hours UNLESS they're flagged ongoing or are
-        // active permitting projects — admin still wants visibility into
-        // active permitting work (which has no hours by nature).
-        if (hours === 0 && !p.is_ongoing && !p.is_permitting && p.status !== 'active') continue;
+        // Hide rows with zero hours UNLESS they're flagged ongoing, are
+        // active permitting projects, or the user explicitly filtered to a
+        // status — in which case they want every project in that bucket.
+        if (hours === 0 && !p.is_ongoing && !p.is_permitting && p.status !== 'active' && !statusFilter) continue;
         const rate = parseFloat(p.billing_rate) || parseFloat(p.job_rate) || 90;
         const revenue = (p.billing_type === 'footage' || p.job_billing_type === 'footage')
           ? 0  // footage projects don't bill by hours

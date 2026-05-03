@@ -19,9 +19,13 @@ module.exports = function installContractsRoutes(app, pool, mw) {
       if (client_id) { where.push(`c.client_id = $${i++}`); params.push(client_id); }
       if (engineering_contract_id) { where.push(`c.engineering_contract_id = $${i++}`); params.push(engineering_contract_id); }
       const whereStr = where.length ? `WHERE ${where.join(' AND ')}` : '';
-      // Include engineering contract name for display in admin lists.
+      // Include engineering contract name + number so the admin Contracts
+      // list can display the umbrella as a top-level header above its
+      // child billing contracts.
       const { rows } = await pool.query(
-        `SELECT c.*, cl.name as client_name, ec.name as engineering_contract_name
+        `SELECT c.*, cl.name as client_name,
+                ec.name as engineering_contract_name,
+                ec.contract_number as engineering_contract_number
            FROM contracts c
            JOIN clients cl ON cl.id = c.client_id
            LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
