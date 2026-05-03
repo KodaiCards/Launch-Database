@@ -75,16 +75,25 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   });
 
   app.post('/api/time-entries', async (req, res) => {
-    const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
+    const { project_id, staff_id, entry_date, hours, job_title, notes, pending_project_request_id } = req.body;
+    // HELD timecards: when an engineer logs time on the timeclock against
+    // a project that's still pending admin approval, project_id is null
+    // and the row is tagged with the request id. Either a real project OR
+    // a pending request must be set — otherwise the entry is meaningless.
+    if (!project_id && !pending_project_request_id) {
+      return res.status(400).json({ error: 'project_id or pending_project_request_id required' });
+    }
     let inserted;
     try {
       const userId = req.user?.id || null;
       const { rows } = await pool.query(`
-        INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
-      `, [project_id, staff_id || null, entry_date, hours, job_title, notes, userId]);
+        INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id, pending_project_request_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
+      `, [project_id || null, staff_id || null, entry_date, hours, job_title, notes, userId, pending_project_request_id || null]);
       inserted = rows[0];
-      await updateProjectHours(project_id);
+      // Skip the rollup when this is a held timecard — there's no project
+      // to roll into yet. The retro-attach on approval handles it later.
+      if (project_id) await updateProjectHours(project_id);
     } catch (e) {
       console.error('[time-entries:create]', e && e.message);
       return res.status(500).json({ error: 'Failed to create entry.' });

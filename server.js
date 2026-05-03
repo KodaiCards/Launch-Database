@@ -3056,6 +3056,19 @@ async function bootstrapV3Schema() {
     `CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries (project_id)`,
     `CREATE INDEX IF NOT EXISTS idx_time_entries_staff_id ON time_entries (staff_id)`,
     `CREATE INDEX IF NOT EXISTS idx_time_entries_entry_date ON time_entries (entry_date)`,
+    // Held timecards: time_entries.pending_project_request_id points at a
+    // setting_change_request entity_type='project' action='create' so that
+    // when admin approves the request, all held entries can be retro-
+    // attached to the new project's id in one query. The FK lets that
+    // server.js endpoint resolve the request without a join.
+    // ON DELETE SET NULL: if the request is purged for any reason, the
+    // timecard survives as orphaned data needing manual project assignment.
+    // project_id has to drop the NOT NULL implicit on the FK definition;
+    // schema.sql already allows nulls but pre-existing v3 deploys may have
+    // tightened it via a NOT NULL added downstream — relax here just in case.
+    `ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS pending_project_request_id UUID REFERENCES setting_change_requests(id) ON DELETE SET NULL`,
+    `ALTER TABLE time_entries ALTER COLUMN project_id DROP NOT NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_time_entries_pending_request ON time_entries (pending_project_request_id) WHERE pending_project_request_id IS NOT NULL`,
     `CREATE INDEX IF NOT EXISTS idx_projects_parent_id ON projects (parent_id)`,
     `CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects (client_id)`,
     `CREATE INDEX IF NOT EXISTS idx_projects_contract_id ON projects (contract_id)`,

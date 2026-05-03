@@ -983,14 +983,21 @@ async function loadPipeline(){
   }
 }
 
-// Delete a project from the pipeline view. Cascades server-side.
+// Portal deletes don't act directly anymore — the request is queued for
+// admin approval (server stages a setting_change_request and returns
+// 202 + { pending: true }). The project stays visible in the pipeline
+// until admin approves, so the UI just shows a confirmation and reloads.
 async function deleteProjectFromPipeline(id, name){
-  if (!confirm(`Delete "${name}"?\n\nThis is permanent and will also remove:\n  • All time entries logged to this project\n  • All uploaded permit documents\n  • Any child sub-projects\n\nThe project's history cannot be recovered.`)) return;
+  if (!confirm(`Request deletion of "${name}"?\n\nThis sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded permit documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`)) return;
   try {
-    await api('/api/projects/' + id, 'DELETE');
+    const resp = await api('/api/projects/' + id, 'DELETE');
+    if (resp && resp.pending) {
+      if (window.LFS && window.LFS.toast) window.LFS.toast.info(`Delete request sent for "${name}" — admin will review.`);
+      else alert('Delete request sent — admin will review.');
+    }
     loadPipeline();
     if (typeof loadPotential === 'function') loadPotential();
-  } catch (e) { alert('Delete failed: ' + e.message); }
+  } catch (e) { alert('Delete request failed: ' + e.message); }
 }
 
 

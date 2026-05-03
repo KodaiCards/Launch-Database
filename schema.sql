@@ -125,6 +125,11 @@ CREATE TABLE IF NOT EXISTS time_entries (
   -- /api/projects/:id/with-hours endpoint deletes them in a single
   -- transaction; ordinary DELETE refuses if hours exist). Previous
   -- CASCADE silently destroyed billing history when a project was deleted.
+  -- project_id is nullable to support HELD timecards: when an engineer
+  -- clocks against a project that's still pending admin approval (see
+  -- pending_project_request_id), the row exists with no project until the
+  -- request is approved and retro-attached, OR is rejected (in which case
+  -- it surfaces in admin's "Needs project assignment" panel).
   project_id UUID REFERENCES projects(id) ON DELETE RESTRICT,
   staff_id UUID REFERENCES staff(id),
   entry_date DATE NOT NULL,
@@ -132,6 +137,11 @@ CREATE TABLE IF NOT EXISTS time_entries (
   job_title VARCHAR(100),
   notes TEXT,
   import_batch VARCHAR(200),
+  -- When set, this row is HELD against a setting_change_request of
+  -- entity_type='project' action='create'. SET NULL on delete keeps the
+  -- timecard around as orphaned-but-needs-assignment data even if the
+  -- request itself is purged.
+  pending_project_request_id UUID REFERENCES setting_change_requests(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
