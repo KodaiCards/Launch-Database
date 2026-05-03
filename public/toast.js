@@ -116,6 +116,35 @@
     error:   function (msg, opts) { return show(Object.assign({ message: msg, type: 'error'   }, opts || {})); },
   };
 
+  // Replace native alert() with toast — strictly better UX than a modal
+  // that steals focus, and lets us keep all existing call sites intact
+  // (~110 of them in index.html alone). Heuristic classifies the toast
+  // tone from the message text. Can disable per-page with
+  // window.LFS_REPLACE_ALERT = false BEFORE this script loads.
+  if (window.LFS_REPLACE_ALERT !== false && !window._lfsAlertPatched) {
+    window._lfsAlertPatched = true;
+    var _nativeAlert = window.alert.bind(window);
+    window.alert = function (msg) {
+      try {
+        var s = String(msg == null ? '' : msg);
+        var lower = s.toLowerCase();
+        var type = 'info';
+        if (/error|fail|cannot|can't|couldn't|invalid|denied|forbidden|expired/i.test(lower)) {
+          type = 'error';
+        } else if (/saved|created|deleted|updated|success|done\b|complete\b|added/i.test(lower)) {
+          type = 'success';
+        } else if (/warn|caution|missing|required|please/i.test(lower)) {
+          type = 'warn';
+        }
+        window.LFS.toast.show({ message: s, type: type, durationMs: type === 'error' ? 8000 : 5000 });
+      } catch (e) {
+        // If the toast machinery itself broke, fall back to the real alert
+        // so the user isn't left with a silent no-op.
+        _nativeAlert(msg);
+      }
+    };
+  }
+
   // Global unhandled-rejection handler. Many `await api()` calls in the
   // existing pages drop errors silently — the user sees "nothing happened"
   // when something actually failed. Surfacing those as a toast is strictly

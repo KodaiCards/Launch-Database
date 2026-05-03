@@ -741,6 +741,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
           <select class="filter" id="hrs-year"></select>
+          <select class="filter" id="hrs-groupby" onchange="loadHours()" title="Group hours by">
+            <option value="project">By project (default)</option>
+            <option value="client">By client</option>
+            <option value="contract">By contract</option>
+            <option value="wo">By WO #</option>
+            <option value="staff">By staff</option>
+            <option value="job">By job</option>
+          </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
@@ -751,6 +759,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="card-header"><span class="card-title" id="hrs-report-title">Hours Report</span></div>
         <div id="hours-tree-body" style="padding:0"></div>
+        <!-- When groupBy != 'project', this slot renders a flat grouped table
+             instead of the project-tree view. -->
+        <div id="hours-grouped-body" style="display:none;padding:0"></div>
       </div>
     </div>
 
@@ -1226,7 +1237,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger btn-sm" id="proj-delete-btn" style="display:none;margin-right:auto" onclick="deleteProject()"><i class="fa-solid fa-trash"></i> Delete</button>
-      <button class="btn btn-secondary" onclick="closeModal('project-modal')">Cancel</button>
+      <span id="proj-autosave-status" style="margin-right:auto;font-size:12px;color:var(--text-muted);align-self:center"></span>
+      <button class="btn btn-secondary" onclick="closeModal('project-modal')">Close</button>
       <button class="btn btn-primary" onclick="saveProject()"><i class="fa-solid fa-floppy-disk"></i> Save Project</button>
     </div>
   </div>
@@ -3064,15 +3076,30 @@ function filterProjects() {
   const q = document.getElementById('proj-search').value.toLowerCase().trim();
   if (!q) { renderProjects(allProjects); return; }
 
-  // Build by-id lookup so we can walk ancestor chains
   const byId = {};
   allProjects.forEach(p => byId[p.id] = p);
 
-  // Direct matches first
+  // Token-based fuzzy match: split the query on whitespace AND any
+  // non-alphanumeric character, so "psc4" matches "PSC IND #4" and
+  // "psc 4" matches the same. Each token must appear somewhere in the
+  // project's haystack — order doesn't matter, separators don't matter.
+  // This is dramatically friendlier than the previous exact-substring
+  // match, which required typing the project name in the right order.
+  const tokens = q.split(/[\s\W_]+/).filter(Boolean);
+
   const keep = new Set();
   allProjects.forEach(p => {
-    const hay = (p.name + ' ' + (p.client_name || '') + ' ' + (p.work_order_number || '') + ' ' + (p.project_type || '')).toLowerCase();
-    if (hay.includes(q)) keep.add(p.id);
+    const hayParts = [
+      p.name, p.client_name, p.contract_number, p.work_order_number,
+      p.project_type, p.notes, p.parent_name, p.concentrator_area,
+    ].filter(Boolean).join(' ').toLowerCase();
+    // Strip non-alnum from the haystack too so a query of "psc4" matches
+    // "PSC IND #4" → haystack becomes "psc ind 4" and "psc4" → "psc4"
+    // → both contain "psc" and "4" tokens.
+    const flatHay = hayParts.replace(/[\W_]+/g, ' ');
+    const flatHayTight = flatHay.replace(/\s+/g, '');  // for compact match like "psc4"
+    const allTokensMatch = tokens.every(t => flatHay.includes(t) || flatHayTight.includes(t));
+    if (allTokensMatch) keep.add(p.id);
   });
   // Pull in every ancestor of every match so the tree context isn't lost
   for (const id of [...keep]) {
@@ -3319,6 +3346,8 @@ function populateTypeAndJobDropdowns() {
 }
 
 async function editProject(id) {
+  // Reset autosave indicator state for a fresh edit session
+  if (typeof _autosaveResetForOpen === 'function') _autosaveResetForOpen();
   // STEP 1 — open the modal IMMEDIATELY. If population fails partway through,
   // the user still sees the modal (with whatever fields did populate) instead
   // of clicking the edit button and seeing nothing happen. The previous
@@ -3537,16 +3566,20 @@ async function quickAddJob() {
   } catch (e) { alert('Failed: ' + e.message); }
 }
 
-async function saveProject() {
+async function saveProject(opts) {
+  // opts.silent=true → autosave path: no alerts, no modal close, no view
+  // refresh on success. Lets us call this on every debounced field change
+  // without disrupting whatever the user is currently doing.
+  const silent = opts && opts.silent === true;
   const projectTypeId = document.getElementById('proj-ptype').value;
   const jobId = document.getElementById('proj-job').value;
   const name = document.getElementById('proj-name').value.trim();
   const clientId = document.getElementById('proj-client').value;
   const rate = document.getElementById('proj-rate').value;
-  if (!name) return alert('Project name is required');
-  if (!clientId) return alert('Client is required');
-  if (!projectTypeId) return alert('Project type is required');
-  if (!jobId) return alert('Job is required');
+  if (!name) return silent ? false : alert('Project name is required');
+  if (!clientId) return silent ? false : alert('Client is required');
+  if (!projectTypeId) return silent ? false : alert('Project type is required');
+  if (!jobId) return silent ? false : alert('Job is required');
 
   const job = jobsCache.find(j => j.id === jobId);
   const isPermit = !!job?.is_permitting;
@@ -3604,11 +3637,114 @@ async function saveProject() {
     const id = document.getElementById('proj-id').value;
     if (id) await api('/api/projects/'+id, 'PUT', body);
     else await api('/api/projects', 'POST', body);
+    if (silent) {
+      // Mark autosave succeeded; modal stays open, no view refresh.
+      _autosaveLastSavedAt = Date.now();
+      _autosaveRenderStatus();
+      return true;
+    }
     closeModal('project-modal');
     if (currentView==='projects') loadProjects();
     if (currentView==='dashboard') loadDashboard();
     if (currentView==='permitting') loadPermits();
-  } catch (e) { alert('Error: ' + e.message); }
+  } catch (e) {
+    if (silent) {
+      _autosaveError = e.message || String(e);
+      _autosaveRenderStatus();
+      return false;
+    }
+    alert('Error: ' + e.message);
+  }
+}
+
+// ─── Project edit autosave ─────────────────────────────────────────────────
+// When the project-modal is open in EDIT mode (proj-id is set), debounce
+// any field change for ~1.5s, then call saveProject({silent:true}). The
+// status line in the modal footer shows "Saving…" then "Saved 3s ago".
+//
+// Skips NEW project creation — autosave there would silently create
+// half-filled records on every keystroke. Manual Save button is still
+// the way to commit a brand-new project.
+let _autosaveTimer = null;
+let _autosaveLastSavedAt = null;
+let _autosaveLastInteractAt = null;
+let _autosaveError = null;
+let _autosaveAttached = false;
+let _autosaveTickTimer = null;
+const AUTOSAVE_DELAY_MS = 1500;
+
+function _autosaveScheduleSave() {
+  // Only autosave if we're editing an existing project
+  const id = document.getElementById('proj-id')?.value;
+  if (!id) return;
+  _autosaveError = null;
+  _autosaveLastInteractAt = Date.now();
+  _autosaveRenderStatus();
+  if (_autosaveTimer) clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(() => {
+    _autosaveTimer = null;
+    saveProject({ silent: true });
+  }, AUTOSAVE_DELAY_MS);
+}
+
+function _autosaveRenderStatus() {
+  const el = document.getElementById('proj-autosave-status');
+  if (!el) return;
+  if (_autosaveError) {
+    el.textContent = 'Save failed — ' + _autosaveError;
+    el.style.color = 'var(--danger,#DC3545)';
+    return;
+  }
+  if (_autosaveTimer) {
+    el.textContent = 'Editing…';
+    el.style.color = 'var(--text-muted)';
+    return;
+  }
+  if (_autosaveLastSavedAt) {
+    const secs = Math.max(0, Math.round((Date.now() - _autosaveLastSavedAt) / 1000));
+    el.textContent = secs < 5 ? 'Saved just now' :
+                     secs < 60 ? `Saved ${secs}s ago` :
+                                 `Saved ${Math.round(secs/60)}m ago`;
+    el.style.color = 'var(--success,#28A745)';
+    return;
+  }
+  el.textContent = '';
+}
+
+function attachProjectAutosave() {
+  // One-time event delegation on the modal. Catches input on every field.
+  if (_autosaveAttached) return;
+  const modal = document.getElementById('project-modal');
+  if (!modal) return;
+  modal.addEventListener('input', (e) => {
+    const t = e.target;
+    if (!t || !t.tagName) return;
+    if (t.id === 'proj-id') return;
+    if (['INPUT','TEXTAREA','SELECT'].includes(t.tagName)) _autosaveScheduleSave();
+  });
+  modal.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!t || !t.tagName) return;
+    if (t.tagName === 'SELECT') _autosaveScheduleSave();
+  });
+  // Tick the "Saved Xs ago" string every 5s while modal is open.
+  _autosaveTickTimer = setInterval(() => {
+    if (modal.classList.contains('open') && document.getElementById('proj-id')?.value) {
+      _autosaveRenderStatus();
+    }
+  }, 5000);
+  _autosaveAttached = true;
+}
+
+// Attach once on page load — modal exists at that point so this is safe.
+window.addEventListener('load', attachProjectAutosave);
+
+// Reset autosave indicator each time the modal opens.
+function _autosaveResetForOpen() {
+  _autosaveLastSavedAt = null;
+  _autosaveError = null;
+  if (_autosaveTimer) { clearTimeout(_autosaveTimer); _autosaveTimer = null; }
+  _autosaveRenderStatus();
 }
 
 async function deleteProject() {
@@ -4632,7 +4768,74 @@ async function loadHours() {
   ].join('');
 
   const container = document.getElementById('hours-tree-body');
-  if (!entries.length) { container.innerHTML='<div class="empty-state" style="padding:40px"><i class="fa-regular fa-clock"></i><p>No hours logged for this period</p></div>'; return; }
+  const grouped = document.getElementById('hours-grouped-body');
+  const groupBy = document.getElementById('hrs-groupby')?.value || 'project';
+
+  if (!entries.length) {
+    container.style.display = '';
+    if (grouped) grouped.style.display = 'none';
+    container.innerHTML='<div class="empty-state" style="padding:40px"><i class="fa-regular fa-clock"></i><p>No hours logged for this period</p></div>';
+    return;
+  }
+
+  // Group-by toggle: anything other than 'project' renders a flat grouped
+  // table instead of the project-tree view. Each row is one bucket with
+  // hours summed and entry count. Quick alternative views for different
+  // billing/reporting questions ("how many hours per WO?", "per staff?").
+  if (groupBy !== 'project') {
+    container.style.display = 'none';
+    grouped.style.display = '';
+    const keyFns = {
+      client:   e => e.client_name || '— No client —',
+      contract: e => e.contract_number || '— No contract —',
+      wo:       e => e.work_order_number || '— No WO# —',
+      staff:    e => e.staff_name || '— Unassigned —',
+      job:      e => e.project_job_name || e.job_title || '— No job —',
+    };
+    const labels = { client: 'Client', contract: 'Contract', wo: 'WO #', staff: 'Staff', job: 'Job' };
+    const keyFn = keyFns[groupBy];
+    const buckets = {};
+    for (const e of entries) {
+      const k = keyFn(e);
+      if (!buckets[k]) buckets[k] = { hours: 0, count: 0 };
+      buckets[k].hours += parseFloat(e.hours || 0);
+      buckets[k].count++;
+    }
+    const rows = Object.entries(buckets).sort((a,b) => b[1].hours - a[1].hours);
+    grouped.innerHTML = `
+      <table style="width:100%">
+        <thead>
+          <tr>
+            <th>${esc(labels[groupBy] || groupBy)}</th>
+            <th style="text-align:right">Hours</th>
+            <th style="text-align:right">Entries</th>
+            <th style="text-align:right">% of total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(([k, v]) => `
+            <tr>
+              <td>${esc(k)}</td>
+              <td style="text-align:right;font-weight:600">${fmt(v.hours, 'hrs')}</td>
+              <td style="text-align:right;color:var(--text-muted)">${v.count}</td>
+              <td style="text-align:right;color:var(--text-muted)">${total > 0 ? Math.round((v.hours/total)*100) : 0}%</td>
+            </tr>
+          `).join('')}
+          <tr style="border-top:2px solid var(--gray-border);font-weight:600">
+            <td>Total</td>
+            <td style="text-align:right">${fmt(total, 'hrs')}</td>
+            <td style="text-align:right">${entries.length}</td>
+            <td style="text-align:right">100%</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    return;
+  }
+
+  // 'project' groupBy → fall through to the existing project-tree render
+  container.style.display = '';
+  if (grouped) grouped.style.display = 'none';
 
   // Build tree: Employee → Client → Project → Job entries
   const tree = {};

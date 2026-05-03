@@ -149,11 +149,14 @@ html[data-theme="dark"] .tag-team-design{background:#1E3A5C;color:#90CAF9}
 html[data-theme="dark"] .tag-team-permitting{background:#3D2F0F;color:#FFCC80}
 html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
 
-/* Mobile responsive */
+/* Mobile responsive — phone-in-truck workflow.
+   Goals: big tap targets, reduce visual noise, make Clock In/Out the
+   single most prominent action on the screen. */
 @media(max-width:600px){
   .container{margin:10px auto;padding:0 10px}
-  .clock-card{padding:20px 14px}
-  .clock-time{font-size:34px}
+  .clock-card{padding:18px 12px}
+  .clock-time{font-size:32px}
+  .clock-time-sub{font-size:13px}
   .week-grid{grid-template-columns:repeat(7,1fr);gap:3px;padding:6px}
   .day-cell{padding:6px;min-height:62px}
   .day-name{font-size:9px}
@@ -161,9 +164,16 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
   .day-hours{font-size:11px}
   .header{padding:8px 12px}
   .header-title{font-size:14px}
-  .clock-controls .btn-xl{padding:16px 22px;font-size:15px;min-width:140px}
+  /* Full-width primary action on phones; secondary actions stack below */
+  .clock-controls{flex-direction:column;gap:8px;width:100%}
+  .clock-controls .btn-xl{padding:18px 22px;font-size:16px;min-width:0;width:100%;font-weight:600}
+  /* Quick-clock buttons should be thumb-friendly */
+  #quick-clock-row .btn{padding:14px 14px !important;font-size:14px;min-height:54px}
   table{font-size:12px}
   th,td{padding:8px 6px}
+  /* Form inputs in the pre-clock form should be 44px+ for thumbs */
+  .pre-clock-form select,.pre-clock-form input{padding:12px;font-size:16px}
+  .pre-clock-form .form-group{margin-bottom:12px}
 }
 </style>
 <link rel="stylesheet" href="/app-shell.css">
