@@ -1,7 +1,24 @@
 # NEXT_STEPS
 
 Living handoff doc for the next Claude (or human) picking up where we left off.
-Update this file as work lands or new ideas surface. Last updated 2026-05-03.
+Update this file as work lands or new ideas surface. Last updated 2026-05-03 (evening).
+
+## TODO: VERIFY in browser after the 2026-05-03 evening push
+
+**Most-likely-to-regress areas (smoke tests don't cover the UI side):**
+
+- **Projects tab** — click a parent rollup chevron. Children appear. Wait
+  10 seconds (one POLL_MS=8000 tick). Children should STILL be visible.
+  This is what the new Playwright `projects_tree_state.spec.js` checks.
+- **Hours tab** — expand a staff group, then a month, then a WO. Wait one
+  poll tick. State should survive. **This is NOT covered by the
+  Playwright test** — only Projects is.
+- **Dashboard tab** — same: expand a tree row, wait, still expanded?
+- **Revenue tab** — same.
+
+If any of those collapse on the poll tick, the makeTreeState refactor
+broke a call site. Inspect `public/js/tree_state.js` and the call sites
+in `public/index.html` (grep `projectsTreeState\.` and `hoursTreeState\.`).
 
 ## Track 0 (Smoke tests) — landed 2026-05-03
 
@@ -48,13 +65,39 @@ Recent commits:
 - `fd4b728` Track 1.3 (3) — time_entries
 - `c5c068a` Track 1.3 (4) — undo replay
 - `eaf9f6a` Track 1.3 (5) — invoices
+- `e492386` docs
+- `41afd2e` Track 1.2.3 (1) — Playwright tree-state regression test
+- `6bc34db` Track 1.2.3 (2) — makeTreeState() + rewrite all 21 call sites
+- `8f125cb` Track 1.3 (6) — jobs
+- `7a3bae0` Track 1.3 (7) — project_types + staff
+- `7d8956e` Track 1.3 (8) — concentrators
+
+server.js: 7373 (pre-refactor) → 5700 (-1673, ~23% smaller).
+public/index.html: 9650 → ~9580 lines (api/undo extracted, tree_state
+refactor was net-neutral).
+
+Routes shipped: clients, contracts, engineering_contracts, projects (core
++ tree-delete + with-hours), time_entries, invoices, undo, jobs,
+project_types, staff, concentrators. Plus `routes/_helpers.js` for
+shared utilities.
+
+Frontend modules shipped: api.js, undo_bar.js, tree_state.js (with
+projectsTreeState + hoursTreeState singletons).
 
 Next steps in order:
-1. **Verify CI is green.** First push that exercises smoke tests against the new route shape — if anything broke, Track 1.3 is where to look.
-2. **Track 1.2.3 tree_state.js** — needs manual UI verification while doing each call-site swap.
-3. **Track 1.2.5+ frontend modules** — dashboard, projects, hours, settings, psc_rus. Each has cross-tab dependencies, so do under preview observation.
-4. **Track 1.3 remainder** — billing/bill-multiple, dashboard endpoints, AI tools, scheduler routes.
-5. **Track 1.4 versioned migrations** — replace bootstrapV3Schema with `migrations/NNN_*.sql` + `schema_migrations` tracking table.
+1. **Verify the tree-state refactor** in the browser (see TODO at top).
+   If any tab regresses, fix before continuing.
+2. **Track 1.3 remainder** — project sub-endpoints (documents, detail,
+   ongoing, unbill, mark-billed, bill-and-clone), billing/bill-multiple,
+   pricing, budgets, billing_batches, dashboard endpoints, AI tools,
+   scheduler routes.
+3. **Track 1.2 frontend continuation** — dashboard.js, projects.js,
+   hours.js, settings.js, psc_rus.js. Heavy cross-tab deps; do under
+   preview-panel observation.
+4. **Track 1.4 versioned migrations** — replace bootstrapV3Schema with
+   `migrations/NNN_*.sql` + `schema_migrations` tracking table. Eliminates
+   the dual schema source of truth (schema.sql + server.js's
+   ALTER-soup).
 
 ## Currently deployed
 All commits land directly on `main` (worktrees disabled — see memory).
