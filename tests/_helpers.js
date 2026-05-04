@@ -279,6 +279,12 @@ async function cleanupAll(buckets = {}) {
   }
 }
 
+// Exposes the currently-listening base URL for tests that need to fetch
+// directly (e.g. multipart uploads where the request() helper's
+// JSON-stringify branch would corrupt the body). bootTestServer must
+// have been awaited before this returns a non-null value.
+function baseUrl() { return _baseUrl; }
+
 module.exports = {
   bootTestServer,
   close,
@@ -289,5 +295,6 @@ module.exports = {
   fixtures,
   deleteByIds,
   cleanupAll,
+  baseUrl,
   pool,
 };
