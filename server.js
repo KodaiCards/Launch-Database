@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 // require off the boot path so a missing dep / API key only impacts
 // the AI surface, not the rest of the app.
 const XLSX = require('xlsx');
-const { pool, initSchema } = require('./db');
+const { pool, initSchema, applyDeferredSchemaStatements } = require('./db');
 const installPortalExtensions = require('./portal_module');
 
 const app = express();
@@ -967,6 +967,11 @@ async function start(opts = {}) {
   await initSchema();
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
+  // Re-run any schema.sql statements that initSchema deferred because
+  // they reference the users table (billing_batches / invoice_templates
+  // / customer_clients have FKs to users(id)). Now that users exists
+  // they apply cleanly.
+  await applyDeferredSchemaStatements();
   await timeclockModule.bootstrapTimeClockSchema(pool);  // staff_id + sessions + audit log
   // Versioned migrations runner (Track 1.4) — applies anything in
   // /migrations that isn't recorded in schema_migrations yet. Coexists
