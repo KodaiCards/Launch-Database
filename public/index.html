@@ -2342,6 +2342,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/tree_state.js"></script>
 <script src="/js/project_picker.js"></script>
 <script src="/js/audit_drawer.js"></script>
+<script src="/js/bulk_bill_modal.js"></script>
+<script src="/js/held_timecards.js"></script>
 
 <script>
 
@@ -2486,121 +2488,6 @@ async function bulkSetStatus(newStatus) {
   }
   bulkClearSelection();
   if (typeof loadProjects === 'function') loadProjects();
-}
-async function bulkBill() {
-  if (!bulkSelected.size) return;
-  await openBulkBillModal([...bulkSelected]);
-}
-
-// Real review modal for the Projects-tab bulk-bill action — replaces
-// the old confirm() prompt. Shows the inferred makeup (client, eng
-// contract, projects, amounts) and gathers invoice number / date /
-// name before POSTing /api/billing/bill-multiple. Mirrors the same
-// flow the Billing tab's bill-selected-modal uses, but driven from a
-// project_ids array instead of pre-staged line items.
-async function openBulkBillModal(projectIds) {
-  if (!Array.isArray(projectIds) || !projectIds.length) return;
-  // Fetch makeup so the review shows real numbers.
-  let makeup = null;
-  try {
-    makeup = await api('/api/invoices/preview-makeup', 'POST', { project_ids: projectIds });
-  } catch (e) {
-    return alert('Failed to assemble bill: ' + e.message);
-  }
-  const m = (makeup && makeup.makeup) || {};
-  const conflicts = (makeup && makeup.conflicts) || [];
-  const projects = (makeup && makeup.projects) || [];
-  const total = projects.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
-
-  const today = new Date().toISOString().split('T')[0];
-  const existing = document.getElementById('bulk-bill-modal');
-  if (existing) existing.remove();
-  const overlay = document.createElement('div');
-  overlay.id = 'bulk-bill-modal';
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div class="modal" style="max-width:680px">
-      <div class="modal-header">
-        <span class="modal-title"><i class="fa-solid fa-file-invoice-dollar"></i> Bill ${projectIds.length} project${projectIds.length === 1 ? '' : 's'} as one invoice</span>
-        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('bulk-bill-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        ${conflicts.length ? `
-          <div style="background:var(--warning-light,#FFF3E0);border-left:4px solid var(--warning,#F0A500);padding:10px 14px;border-radius:6px;margin-bottom:14px">
-            <div style="font-weight:600;color:var(--warning-text,#e65100);margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't bill yet — fix these first:</div>
-            <ul style="margin:6px 0 0 20px;padding:0;font-size:13px">
-              ${conflicts.map(c => `<li>${esc(c)}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-        <div style="background:var(--gray-light);padding:12px 14px;border-radius:8px;margin-bottom:14px">
-          <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px">
-            <div style="color:var(--text-muted)">Client</div><div><strong>${esc(m.client_name || '—')}</strong></div>
-            <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}</div>
-            <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}</div>
-            <div style="color:var(--text-muted)">Projects</div><div>${projects.length}</div>
-            <div style="color:var(--text-muted)">Total</div><div style="font-weight:700;color:var(--success-text,var(--success))">${fmtMoney(total)}</div>
-          </div>
-        </div>
-        <div class="form-grid">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Invoice Number *</label>
-              <input type="text" id="bbm-inv-number" placeholder="e.g. 2026-04-001">
-            </div>
-            <div class="form-group">
-              <label>Invoice Date</label>
-              <input type="date" id="bbm-inv-date" value="${today}">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Invoice Name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
-            <input type="text" id="bbm-inv-name" placeholder="e.g. Construction Inspection — April 2026">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="document.getElementById('bulk-bill-modal').remove()">Cancel</button>
-        <button class="btn btn-primary" id="bbm-confirm-btn" onclick="confirmBulkBill(${JSON.stringify(projectIds).replace(/"/g, '&quot;')})" ${conflicts.length ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
-          <i class="fa-solid fa-check"></i> Create Invoice
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-  setTimeout(() => document.getElementById('bbm-inv-number')?.focus(), 50);
-}
-
-async function confirmBulkBill(projectIds) {
-  const invoice_number = document.getElementById('bbm-inv-number').value.trim();
-  const invoice_date = document.getElementById('bbm-inv-date').value || new Date().toISOString().split('T')[0];
-  const invoice_name = document.getElementById('bbm-inv-name').value.trim() || null;
-  if (!invoice_number) return alert('Invoice number is required.');
-  const btn = document.getElementById('bbm-confirm-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Billing...';
-  try {
-    const res = await api('/api/billing/bill-multiple', 'POST', {
-      project_ids: projectIds,
-      invoice_number, invoice_date, invoice_name,
-    });
-    document.getElementById('bulk-bill-modal').remove();
-    if (window.LFS && window.LFS.toast) {
-      window.LFS.toast.success(`Invoice ${invoice_number} created${res.total ? ' for ' + fmtMoney(res.total) : ''}.`);
-    } else {
-      alert(`Invoice ${invoice_number} created.`);
-    }
-    bulkClearSelection();
-    if (typeof loadProjects === 'function') loadProjects();
-    if (typeof loadBilling === 'function') loadBilling();
-    if (typeof loadDashboard === 'function') loadDashboard();
-  } catch (e) {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Create Invoice';
-    alert('Bulk bill failed: ' + (e.message || e));
-  }
 }
 
 // ─── Render-cache: skip identical innerHTML writes ─────────────────────────
@@ -6589,55 +6476,6 @@ async function deleteTimeEntry(id) {
   }
 }
 
-// Render the "Needs Project Assignment" warning panel above the Hours
-// tree. Sources: time_entries rows where project_id IS NULL — typically
-// because an engineer logged time against a "+ Add New" request that's
-// either still pending admin approval or got rejected. Each row gets a
-// pencil (opens the time-entry edit modal so admin can pick a real
-// project) and a trash button (delete the orphan row). The panel hides
-// itself when no held rows are present.
-function renderHeldTimecardsPanel(heldEntries) {
-  const panel = document.getElementById('held-timecards-panel');
-  const body = document.getElementById('held-timecards-body');
-  const count = document.getElementById('held-timecards-count');
-  if (!panel || !body) return;
-  if (!heldEntries || !heldEntries.length) {
-    panel.style.display = 'none';
-    return;
-  }
-  panel.style.display = '';
-  if (count) count.textContent = `(${heldEntries.length} timecard${heldEntries.length === 1 ? '' : 's'})`;
-  // Sort newest entry_date first so freshly-rejected requests bubble up.
-  const sorted = heldEntries.slice().sort((a, b) =>
-    String(b.entry_date || '').localeCompare(String(a.entry_date || '')));
-  body.innerHTML = `
-    <table style="width:100%;font-size:13px">
-      <thead>
-        <tr style="background:var(--gray-light)">
-          <th style="padding:8px 10px;text-align:left">Date</th>
-          <th style="padding:8px 10px;text-align:left">Staff</th>
-          <th style="padding:8px 10px;text-align:right">Hours</th>
-          <th style="padding:8px 10px;text-align:left">Notes</th>
-          <th style="padding:8px 10px;text-align:right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${sorted.map(e => `
-          <tr style="border-top:1px solid var(--gray-border)">
-            <td style="padding:6px 10px">${esc(String(e.entry_date || '').slice(0,10))}</td>
-            <td style="padding:6px 10px">${esc(e.staff_name || '—')}</td>
-            <td style="padding:6px 10px;text-align:right;font-weight:600">${e.hours}</td>
-            <td style="padding:6px 10px;color:var(--text-muted);font-size:12px">${esc(e.notes || '')}</td>
-            <td style="padding:6px 10px;text-align:right;white-space:nowrap">
-              <button class="btn btn-sm btn-secondary btn-icon" onclick="openEditTimeEntryModal('${e.id}')" title="Assign project + edit"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-}
 
 async function deleteAllHoursForStaff(staffId, name) {
   // Match the period the Hours tab is currently showing. In YTD mode the
