@@ -31,7 +31,7 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
   // drop slot for the final drawing/PDF/DWG).
   app.post('/api/projects/:projectId/documents', upload.single('file'), async (req, res) => {
     const { doc_type, uploaded_by, notes } = req.body;
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded — check file size (500MB max)' });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded — check file size (2 GB max)' });
     try {
       const { rows } = await pool.query(`
         INSERT INTO permit_documents (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
