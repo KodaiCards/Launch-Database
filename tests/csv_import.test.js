@@ -169,3 +169,36 @@ test('CSV row with different hours classifies as modify', async () => {
   assert.equal(v.summary.would_skip_duplicate, 0);
   assert.equal(v.summary.would_modify, 1, 'row should classify as modify (hours differ)');
 });
+
+test('CSV row with same staff/project/date but different job is "new"', async () => {
+  // Match key now includes job_title — two entries with different jobs
+  // on the same day for the same person/project are distinct, not a
+  // duplicate or modify. Owner-confirmed policy 2026-05-04.
+  const token = await adminLogin();
+  const c = await fixtures.client({ name: uniqueTag('csv-job-client'), is_rus: true });
+  trash.clients.push(c.id);
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'inspection' });
+  trash.jobs.push(j.id);
+  const p = await fixtures.project({
+    name: uniqueTag('csv-job-proj'), client_id: c.id, job_id: j.id,
+    work_order_number: 'CSVJOB' + Date.now(),
+  });
+  trash.projects.push(p.id);
+  const s = await fixtures.staff({ name: uniqueTag('Inspector Poe') });
+  trash.staff.push(s.id);
+
+  // Seed an existing entry under one job title.
+  await fixtures.timeEntry({
+    project_id: p.id, staff_id: s.id, entry_date: '2026-07-01', hours: 4,
+    job_title: 'Inspector',
+  });
+
+  // CSV row on the SAME day under a DIFFERENT job title — separate entry.
+  const csv = buildCsv([
+    { name: s.name, date: '2026-07-01', wo: p.work_order_number, hours: 4, job_title: 'Resident Engineer' },
+  ]);
+  const v = await uploadCsv(token, 'job-distinct.csv', csv);
+  assert.equal(v.summary.would_add, 1, 'different job on same day = new entry');
+  assert.equal(v.summary.would_skip_duplicate, 0);
+  assert.equal(v.summary.would_modify, 0);
+});

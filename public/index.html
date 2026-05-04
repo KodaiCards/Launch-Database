@@ -4674,7 +4674,7 @@ function renderImportReview(d) {
       ${s.would_modify ? `<span style="margin-left:12px;color:var(--warning-text)">${s.would_modify} would change existing hours</span>` : ''}
       ${s.would_conflict ? `<span style="margin-left:12px;color:var(--danger-text)">${s.would_conflict} ambiguous (multiple existing rows)</span>` : ''}
       <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
-        <i class="fa-solid fa-circle-info"></i> Match = same staff + project + date as an existing row. Duplicates (same hours and job) are auto-skipped on commit; modify and conflict rows still insert and produce a second row — review them in the ledger below.
+        <i class="fa-solid fa-circle-info"></i> Match = same staff + project + date + job as an existing row. Same-hours match → duplicate (auto-skipped on commit). Different-hours match → modify (inserts as a new row so you can review both side-by-side in the ledger below). Different job on the same day = a separate entry, not a match.
       </div>
     </div>`;
   }

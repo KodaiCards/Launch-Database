@@ -405,12 +405,20 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         }
       }
 
-      // Would-modify preview.
+      // Would-modify preview. Match key = staff + project + entry_date +
+      // job_title (normalized). Two rows logged on the same date by the
+      // same person against the same project but DIFFERENT jobs are
+      // distinct entries — this matches the per-day, per-job ledger the
+      // operator actually keeps. Duplicate vs modify within a single
+      // (staff, project, date, job) bucket comes down to hours.
+      function jobKey(j) {
+        return String(j || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      }
       const matchKeys = [];
       for (const r of validRows) {
         if (r.staff_id && r.project_id && r.date) {
           matchKeys.push({ staff_id: r.staff_id, project_id: r.project_id, entry_date: r.date });
-          r.match_key = `${r.staff_id}|${r.project_id}|${r.date}`;
+          r.match_key = `${r.staff_id}|${r.project_id}|${r.date}|${jobKey(r.job_title)}`;
         } else {
           r.csv_classification = 'new';
         }
@@ -419,6 +427,10 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const staffArr = matchKeys.map(k => k.staff_id);
         const projArr = matchKeys.map(k => k.project_id);
         const dateArr = matchKeys.map(k => k.entry_date);
+        // Pre-fetch every row matching any (staff, project, date) triple,
+        // then bucket by the four-part key including job. Keeping the
+        // SQL filter at the triple is cheaper than `WHERE … OR … OR …`
+        // per-row and lets us compute counts client-side.
         const { rows: existing } = await pool.query(`
           SELECT id, staff_id, project_id, entry_date::text AS entry_date,
                  hours::float AS hours, job_title
@@ -429,7 +441,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         `, [staffArr, projArr, dateArr]);
         const byKey = new Map();
         for (const e of existing) {
-          const k = `${e.staff_id}|${e.project_id}|${e.entry_date}`;
+          const k = `${e.staff_id}|${e.project_id}|${e.entry_date}|${jobKey(e.job_title)}`;
           if (!byKey.has(k)) byKey.set(k, []);
           byKey.get(k).push(e);
         }
@@ -444,8 +456,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           } else {
             const m = matches[0];
             const sameHours = Math.abs((parseFloat(r.hours) || 0) - (parseFloat(m.hours) || 0)) < 1e-6;
-            const sameJob = String(r.job_title || '').trim() === String(m.job_title || '').trim();
-            if (sameHours && sameJob) {
+            if (sameHours) {
               r.csv_classification = 'duplicate';
               r.csv_existing_id = m.id;
             } else {
