@@ -46,7 +46,11 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
   const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    // 50 MB cap — invoice format samples are sometimes scanned PDFs with
+    // embedded images. The previous 5 MB ceiling was too tight for those
+    // and produced an ugly HTML 500 page (no JSON error handler) — see
+    // global API error middleware in server.js for the safety net.
+    limits: { fileSize: 50 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
       // mimetype is client-controlled; treat it as a hint only. The
       // post-upload magic-byte check below is the authoritative gate.

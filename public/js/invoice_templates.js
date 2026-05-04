@@ -119,6 +119,11 @@
     errEl.style.display = 'none';
     if (!jobId || !clientId) { errEl.textContent = 'Job and Client are required.'; errEl.style.display = 'block'; return; }
     if (!file) { errEl.textContent = 'PDF file required.'; errEl.style.display = 'block'; return; }
+    if (file.size > 50 * 1024 * 1024) {
+      errEl.textContent = `File exceeds 50 MB limit (got ${(file.size / 1024 / 1024).toFixed(1)} MB).`;
+      errEl.style.display = 'block';
+      return;
+    }
     const fd = new FormData();
     fd.append('pdf', file);
     fd.append('job_id', jobId);
@@ -127,13 +132,29 @@
     if (notes) fd.append('notes', notes);
 
     const btn = document.getElementById('itu-submit-btn');
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing… (15-30s)';
+    const progWrap = document.getElementById('itu-progress-wrap');
+    const progBar = document.getElementById('itu-progress-bar');
+    const progPct = document.getElementById('itu-progress-pct');
+    const progLabel = document.getElementById('itu-progress-label');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…';
+    progWrap.style.display = '';
+    progBar.style.width = '0';
+    progPct.textContent = '0%';
+    progLabel.textContent = `Uploading ${(file.size / 1024 / 1024).toFixed(1)} MB…`;
     try {
-      const r = await fetch('/api/invoice-templates', {
-        method: 'POST', body: fd, credentials: 'include',
+      const data = await apiUpload('/api/invoice-templates', fd, {
+        onProgress: (loaded, total) => {
+          const pct = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+          progBar.style.width = pct + '%';
+          progPct.textContent = pct + '%';
+          if (pct >= 100) {
+            // Upload finished — server is now running Claude analysis (15-30s).
+            // Swap the label to make it clear we're not still pushing bytes.
+            progLabel.textContent = 'Analyzing… (15-30s)';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing…';
+          }
+        },
       });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Upload failed');
       closeModal('invoice-template-upload-modal');
       await loadInvoiceTemplates();
       renderInvoiceTemplatesList();
@@ -147,6 +168,7 @@
       errEl.style.display = 'block';
     } finally {
       btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Analyze';
+      progWrap.style.display = 'none';
     }
   }
 

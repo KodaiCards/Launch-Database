@@ -545,6 +545,34 @@ require('./routes/billing')(app, pool, { requireManagerOrAdmin, invoiceGenerator
 
 
 // ─────────────────────────────────────────────────────────────────────────────
+// API ERROR HANDLER — catches anything thrown out of an /api/* route AND
+// out of multer's pre-handler middleware (file-too-large, file-rejected),
+// and converts it to a clean JSON response. Without this, multer / Express
+// default rendering returns an HTML "<!DOCTYPE..." stack-trace page, and
+// every frontend `await r.json()` then errors with `Unexpected token '<'`.
+// Mounted AFTER all /api routes, BEFORE the SPA catch-all.
+app.use('/api', (err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  // Multer file-size errors carry a standardized code; surface a
+  // user-readable message that names the actual cap so the operator
+  // knows what to do.
+  if (err && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({
+      error: `File too large. Maximum size for this upload is ${err.field ? err.field + ' ' : ''}${err.limit ? Math.round(err.limit / 1024 / 1024) + ' MB' : 'limited'}.`,
+    });
+  }
+  if (err && err.code && String(err.code).startsWith('LIMIT_')) {
+    return res.status(400).json({ error: err.message || `Upload rejected (${err.code})` });
+  }
+  // Filter rejections (e.g. "Only .pdf uploads accepted") — multer wraps
+  // them as plain Errors. Treat any thrown error here as 400 unless it
+  // self-reports a status.
+  const status = (err && (err.status || err.statusCode)) || 500;
+  console.error('[api-error]', req.method, req.originalUrl, err && (err.stack || err.message || err));
+  res.status(status).json({ error: (err && err.message) ? err.message : 'Internal server error' });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PORTAL ROUTES
 app.get('/permitting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'permitting.html')));
 app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'design.html')));

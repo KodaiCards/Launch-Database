@@ -42,3 +42,50 @@ async function deleteProjectDoc(docId, reload) {
     if (typeof reload === 'function') reload();
   } catch (e) { alert('Delete failed: ' + e.message); }
 }
+
+// Upload a multipart/form-data POST with progress callbacks. Used by the
+// invoice-template, permit-doc, and design-doc upload flows so the
+// operator can see "uploading 42 / 50 MB" on slow connections instead of
+// staring at a spinner. fetch() can't surface upload progress; XHR can.
+//
+// Resolves with the parsed JSON body on 2xx, rejects with Error(message)
+// on anything else (including the JSON-error 413 surfaced by the global
+// /api error middleware in server.js). Sends the same auth (cookie +
+// Bearer) the api() helper uses, so endpoints behind requireAdmin /
+// requireManagerOrAdmin work the same way as a JSON POST.
+//
+// Usage:
+//   const data = await apiUpload('/api/invoice-templates', formData, {
+//     onProgress: (loaded, total) => updateBar(loaded, total),
+//   });
+function apiUpload(url, formData, { onProgress } = {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.withCredentials = true;
+    try {
+      const tok = sessionStorage.getItem('lfs_token');
+      if (tok) xhr.setRequestHeader('Authorization', 'Bearer ' + tok);
+    } catch (e) { /* sessionStorage may be disabled */ }
+    if (typeof onProgress === 'function' && xhr.upload) {
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) onProgress(e.loaded, e.total);
+      });
+    }
+    xhr.onload = () => {
+      if (xhr.status === 401) {
+        try { sessionStorage.removeItem('lfs_token'); } catch (e) {}
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+        return reject(new Error('Session expired'));
+      }
+      let body = null;
+      try { body = JSON.parse(xhr.responseText); } catch (e) { /* not JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(body || {});
+      const msg = (body && body.error) || xhr.statusText || ('HTTP ' + xhr.status);
+      reject(new Error(msg));
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.onabort = () => reject(new Error('Upload aborted'));
+    xhr.send(formData);
+  });
+}

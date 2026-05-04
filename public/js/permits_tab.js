@@ -180,15 +180,37 @@
     fd.append('doc_type', document.getElementById('doc-type').value);
     fd.append('revision_number', document.getElementById('doc-rev').value);
     fd.append('uploaded_by', document.getElementById('doc-uploader').value);
+
+    const btn = document.getElementById('permit-doc-upload-btn');
+    const wrap = document.getElementById('permit-doc-progress-wrap');
+    const bar = document.getElementById('permit-doc-progress-bar');
+    const pct = document.getElementById('permit-doc-progress-pct');
+    const lbl = document.getElementById('permit-doc-progress-label');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…'; }
+    if (wrap) {
+      wrap.style.display = '';
+      bar.style.width = '0';
+      pct.textContent = '0%';
+      lbl.textContent = `Uploading ${(file.size / 1024 / 1024).toFixed(1)} MB…`;
+    }
     try {
-      const r = await fetch('/api/permits/' + projectId + '/documents', { method: 'POST', body: fd });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({ error: 'Upload failed: ' + r.status }));
-        throw new Error(j.error || 'Upload failed');
-      }
+      await apiUpload('/api/permits/' + projectId + '/documents', fd, {
+        onProgress: (loaded, total) => {
+          if (!wrap) return;
+          const p = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+          bar.style.width = p + '%';
+          pct.textContent = p + '%';
+          if (p >= 100) lbl.textContent = 'Saving on server…';
+        },
+      });
       document.getElementById('doc-file').value = '';
       loadPermitDocs(projectId);
-    } catch (e) { alert('Upload failed: ' + e.message); }
+    } catch (e) {
+      alert('Upload failed: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload'; }
+      if (wrap) wrap.style.display = 'none';
+    }
   }
 
   window.loadPermits = loadPermits;

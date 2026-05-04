@@ -71,16 +71,38 @@
     fd.append('file', file);
     fd.append('doc_type', 'final_map');
     fd.append('uploaded_by', document.getElementById('design-doc-uploader').value || '');
+
+    const btn = document.getElementById('design-doc-upload-btn');
+    const wrap = document.getElementById('design-doc-progress-wrap');
+    const bar = document.getElementById('design-doc-progress-bar');
+    const pct = document.getElementById('design-doc-progress-pct');
+    const lbl = document.getElementById('design-doc-progress-label');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…'; }
+    if (wrap) {
+      wrap.style.display = '';
+      bar.style.width = '0';
+      pct.textContent = '0%';
+      lbl.textContent = `Uploading ${(file.size / 1024 / 1024).toFixed(1)} MB…`;
+    }
     try {
-      const r = await fetch('/api/projects/' + currentDesignProjectId + '/documents', { method: 'POST', body: fd });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({ error: 'Upload failed: ' + r.status }));
-        throw new Error(j.error || 'Upload failed');
-      }
+      await apiUpload('/api/projects/' + currentDesignProjectId + '/documents', fd, {
+        onProgress: (loaded, total) => {
+          if (!wrap) return;
+          const p = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+          bar.style.width = p + '%';
+          pct.textContent = p + '%';
+          if (p >= 100) lbl.textContent = 'Saving on server…';
+        },
+      });
       document.getElementById('design-doc-file').value = '';
       document.getElementById('design-doc-uploader').value = '';
       loadDesignDocs(currentDesignProjectId);
-    } catch (e) { alert('Upload failed: ' + e.message); }
+    } catch (e) {
+      alert('Upload failed: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload'; }
+      if (wrap) wrap.style.display = 'none';
+    }
   }
 
   function deleteDesignDoc(docId) {
