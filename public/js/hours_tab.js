@@ -91,6 +91,10 @@
     for (const e of heldEntries) _hoursEntriesById.set(String(e.id), e);
     if (typeof renderHeldTimecardsPanel === 'function') renderHeldTimecardsPanel(heldEntries);
     entries = entries.filter(e => !!e.project_id);
+    // Calendar / non-project group-by branches return before reaching the
+    // project-tree loop that normally populates the map. Pre-populate here
+    // so openCalendarDayDetail() can look up entries regardless of groupBy.
+    for (const e of entries) _hoursEntriesById.set(String(e.id), e);
 
     if (!entries.length) {
       container.style.display = '';
