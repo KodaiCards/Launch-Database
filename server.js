@@ -177,6 +177,15 @@ function pageRequiresAuth(reqPath) {
   if (reqPath === '/login' || reqPath === '/login.html') return false;
   if (reqPath.startsWith('/api/auth/')) return false;
   if (reqPath.startsWith('/uploads/')) return false;  // file serving handles its own auth-check
+  // The login page itself loads /toast.js, /keyboard.js, /app-shell.css.
+  // Without these in the allowlist the auth middleware 302s the asset
+  // request to /login, the browser fetches HTML for a script tag, and
+  // the JS parser throws SyntaxError: Unexpected token '<'. That bubbles
+  // up as a `pageerror` event in browser smoke tests.
+  // /favicon.ico is similarly noisy — let it through too.
+  if (reqPath === '/toast.js' || reqPath === '/keyboard.js') return false;
+  if (reqPath === '/app-shell.css') return false;
+  if (reqPath === '/favicon.ico') return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }
@@ -584,6 +593,14 @@ const SPA_FILE = PORTAL_MODE === 'permitting' ? 'permitting.html'
                : PORTAL_MODE === 'design' ? 'design.html'
                : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
                : 'index.html';
+
+// Hard 404 (JSON) for any /api/* path that didn't match a real route. Without
+// this guard, the SPA catch-all below returns the HTML body for unknown API
+// paths — and any frontend doing `r.json()` on the response throws
+// "Unexpected token '<'", which surfaces as a pageerror in browser tests.
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
+});
 
 app.get('*', (req, res) => {
   // Admin-only enforcement: when the admin HTML is being served (no PORTAL_MODE),
