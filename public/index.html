@@ -1769,9 +1769,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="form-row" id="user-staff-link-row">
         <div class="form-group" style="flex:1">
           <label>Linked Staff Record <span style="font-weight:400;color:var(--text-muted);font-size:11px">(required for Time Clock portal access)</span></label>
-          <select id="user-staff-id">
-            <option value="">— Not linked —</option>
-          </select>
+          <div style="display:flex;gap:6px;align-items:stretch">
+            <select id="user-staff-id" style="flex:1">
+              <option value="">— Not linked —</option>
+            </select>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addStaffInline()" title="Create a new staff record" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> New staff</button>
+          </div>
           <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Time entries created via Time Clock get attributed to this staff record. Without a link, the user can sign in to the Time Clock portal but cannot clock in.</span>
         </div>
       </div>
@@ -6094,6 +6097,26 @@ async function populateStaffDropdown(selectedStaffId) {
     opts.push(`<option value="${esc(s.id)}"${isSelected}>${esc(s.name)}${s.active === false ? ' (inactive)' : ''}</option>`);
   }
   sel.innerHTML = opts.join('');
+}
+
+// Inline-create a staff record from inside the user modal — saves admin
+// from leaving the modal, going to a Settings → Staff screen that doesn't
+// exist, then coming back. POSTs to /api/staff (which also handles the
+// "name already exists but inactive" case via ON CONFLICT DO UPDATE
+// SET active=true) and auto-selects the new row.
+async function addStaffInline() {
+  const fullnameField = document.getElementById('user-fullname');
+  const suggested = (fullnameField?.value || '').trim();
+  const name = prompt('New staff member name:', suggested);
+  if (!name || !name.trim()) return;
+  try {
+    const created = await api('/api/staff', 'POST', { name: name.trim() });
+    // Bust the cache so the new row shows up on next populate.
+    staffListCache = null;
+    await populateStaffDropdown(created.id);
+    // Also refresh the time-entry staff dropdown elsewhere on the page.
+    if (typeof loadStaff === 'function') loadStaff();
+  } catch (e) { alert('Could not create staff: ' + e.message); }
 }
 
 function openCreateUserModal() {
