@@ -30,3 +30,15 @@ async function api(path, method = 'GET', body = null) {
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
+
+// Shared delete-and-reload for project-attached documents (final maps,
+// permit attachments). Both the design-docs modal and the permit-docs
+// modal hit the same endpoint and run the same confirm/reload dance —
+// this keeps the two paths from drifting.
+async function deleteProjectDoc(docId, reload) {
+  if (!confirm('Delete this document? The file is removed from disk too.')) return;
+  try {
+    await api('/api/projects/documents/' + docId, 'DELETE');
+    if (typeof reload === 'function') reload();
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}

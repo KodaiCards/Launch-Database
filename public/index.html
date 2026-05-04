@@ -6099,11 +6099,8 @@ async function populateStaffDropdown(selectedStaffId) {
   sel.innerHTML = opts.join('');
 }
 
-// Inline-create a staff record from inside the user modal — saves admin
-// from leaving the modal, going to a Settings → Staff screen that doesn't
-// exist, then coming back. POSTs to /api/staff (which also handles the
-// "name already exists but inactive" case via ON CONFLICT DO UPDATE
-// SET active=true) and auto-selects the new row.
+// /api/staff uses ON CONFLICT (name) DO UPDATE SET active=true, so re-
+// adding a previously-deactivated name reactivates instead of erroring.
 async function addStaffInline() {
   const fullnameField = document.getElementById('user-fullname');
   const suggested = (fullnameField?.value || '').trim();
@@ -6111,10 +6108,8 @@ async function addStaffInline() {
   if (!name || !name.trim()) return;
   try {
     const created = await api('/api/staff', 'POST', { name: name.trim() });
-    // Bust the cache so the new row shows up on next populate.
     staffListCache = null;
     await populateStaffDropdown(created.id);
-    // Also refresh the time-entry staff dropdown elsewhere on the page.
     if (typeof loadStaff === 'function') loadStaff();
   } catch (e) { alert('Could not create staff: ' + e.message); }
 }

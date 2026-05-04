@@ -40,7 +40,11 @@ test('matches confirmation phrases anchored to start', () => {
   // says "go ahead"; we force a tool call.
   for (const phrase of ['yes', 'yeah', 'yep', 'yup', 'ok', 'okay', 'sure',
     'do it', 'go ahead', 'proceed', 'confirmed', 'approve', 'approved',
-    'please do', "let's do it", 'y']) {
+    'please do', "let's do it", 'y',
+    // Casual confirmations users actually type when reviewing a proposed
+    // action. Missing these would silently regress the AI fix.
+    'looks good', 'sounds good', 'that works', 'perfect', 'great',
+    'correct', 'right', 'affirmative']) {
     assert.equal(
       userWantsAction([{ role: 'user', content: phrase }]),
       true,

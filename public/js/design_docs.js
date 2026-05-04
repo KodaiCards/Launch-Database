@@ -83,13 +83,10 @@
     } catch (e) { alert('Upload failed: ' + e.message); }
   }
 
-  async function deleteDesignDoc(docId) {
-    if (!confirm('Delete this document? This removes the file from disk too.')) return;
-    try {
-      const r = await fetch('/api/projects/documents/' + docId, { method: 'DELETE' });
-      if (!r.ok) throw new Error('Delete failed: ' + r.status);
+  function deleteDesignDoc(docId) {
+    return deleteProjectDoc(docId, () => {
       if (currentDesignProjectId) loadDesignDocs(currentDesignProjectId);
-    } catch (e) { alert(e.message); }
+    });
   }
 
   window.openDesignDocs = openDesignDocs;

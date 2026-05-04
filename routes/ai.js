@@ -41,21 +41,10 @@ const { v4: uuidv4 } = require('uuid');
 
 // Detect when the user's last message asks for an action OR confirms one,
 // so the chat handler can force tool_choice='any' on the next API call.
-// With 'auto' the model is allowed to skip emitting tool_use blocks —
-// that's exactly the "I'll create that for you" → no tool call → nothing
-// happens failure mode the owner reported. Forcing 'any' makes Claude pick
-// SOME tool; for read-only intent it picks query_database (also fine),
-// and destructive tools still gate through approval before executing.
-//
-// Two patterns count:
-//   1. Confirmation phrases ("yes", "go ahead", "do it") — short
-//      replies that mean "execute the thing we just discussed".
-//   2. Action verbs ("create", "log", "update", "delete", …) — direct
-//      asks for a database change.
-// Off-topic chitchat ("how's the weather") doesn't match either, so the
-// model still gets to respond with text in those cases.
-//
-// Pure function — exported below for unit tests.
+// Without this the model can choose to skip emitting a tool_use and
+// reply with text only — that's the "AI says it's about to do something
+// and never does" bug. Confirmation regex is anchored to start so "yes"
+// alone matches but "I yes prefer that" doesn't.
 function userWantsAction(messages) {
   if (!messages || !messages.length) return false;
   const last = messages[messages.length - 1];
@@ -70,13 +59,9 @@ function userWantsAction(messages) {
   }
   const trimmed = text.trim();
   if (!trimmed) return false;
-  // Confirmation: short replies that mean "go ahead and do it".
-  // Anchored to start so "yes" alone matches but "I yes prefer that" doesn't.
-  if (/^(yes|yeah|yep|yup|ok|okay|sure|do it|go ahead|proceed|confirm(ed)?|approve(d)?|please do|let['’]?s do it|y)\b/i.test(trimmed)) {
+  if (/^(yes|yeah|yep|yup|ok|okay|sure|do it|go ahead|proceed|confirm(ed)?|approve(d)?|please do|let['‘’]?s do it|looks good|sounds good|that works|perfect|great|correct|right|affirmative|y)\b/i.test(trimmed)) {
     return true;
   }
-  // Action verb anywhere in the message — covers "create a project Foo"
-  // and "please update the WO# to 1234" alike.
   if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save)\b/i.test(trimmed)) {
     return true;
   }
@@ -1625,17 +1610,14 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     }
 
     // ── Main loop ─────────────────────────────────────────────────────
-    // When the user's last message clearly asks for an action OR confirms
-    // a previously-proposed one, force tool_choice='any' so Claude HAS to
-    // emit a tool_use rather than just promising. This is the root-cause
-    // fix for the "AI says it's about to do something and never does" bug
-    // — the previous version relied on the system prompt + a hallucination
-    // guard, both of which the model could ignore. tool_choice='any' lets
-    // Claude pick which tool to call (so it can still query_database for
-    // read-only intent), it just forces SOME tool. Destructive tools still
-    // route through the approval gate before executing.
+    // tool_choice='any' forces Claude to call a tool. We use it when the
+    // user clearly wants an action (otherwise the model can silently
+    // skip the tool_use and just reply with text). Destructive tools
+    // still gate through the approval card. Resume path stays on 'auto'
+    // because the model needs room to finalize with text after a tool
+    // already ran.
     const initialToolChoice = approval_id
-      ? { type: 'auto' }                                      // resume path: model needs to finalize text
+      ? { type: 'auto' }
       : userWantsAction(conversationMessages)
         ? { type: 'any' }
         : { type: 'auto' };
@@ -1744,14 +1726,9 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     const successfulModifications = toolResults.filter(
       tr => MODIFYING_TOOLS.includes(tr.tool) && tr.result?.success === true
     );
-    // Hallucination guard catches three failure modes where Claude says it's
-    // doing something but no tool ran:
-    //   1. Past-tense / present-perfect: "I've created", "logged"
-    //   2. Future-tense / commitment:    "I'll create", "Let me update"
-    //   3. Active progressive:           "Creating the project now"
-    // Caught early because tool_choice=auto means Claude can choose not to
-    // emit a tool_use block — and silent skips were the most-reported AI
-    // bug ("says it's going to do something then doesn't").
+    // Hallucination guard: text claims an action (past, future, or
+    // progressive tense) but no successful modifying tool ran. The
+    // tense bucket gets logged so we can see which pattern fires most.
     const claimsActionPast = /\b(I['’]?ve|I have|successfully|done|logged|added|created|updated|saved|deleted|removed|imported|inserted|marked|advanced)\b/i.test(finalText);
     const claimsActionFuture = /\b(I['’]?ll|I will|Let me|I['’]?m going to|I['’]?m about to|going ahead)\s+(create|log|add|update|delete|save|remove|insert|set up|change|mark|advance|bill|complete|run|execute|do that|do it)\b/i.test(finalText);
     const claimsActionActive = /(^|\n|\.\s+)(Creating|Logging|Adding|Updating|Deleting|Saving|Removing|Importing|Inserting|Setting up|Marking|Advancing|Billing|Running|Executing)\b/.test(finalText);
@@ -1783,9 +1760,6 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     console.error('  Status:', e?.status);
     console.error('  Type:', e?.constructor?.name);
     console.error('  Full:', JSON.stringify(e, Object.getOwnPropertyNames(e || {})));
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('  ANTHROPIC_API_KEY is NOT SET — add it in Railway Variables');
-    }
     res.status(500).json({ error: msg || 'AI request failed — check server logs' });
   }
 });

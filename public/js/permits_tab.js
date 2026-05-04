@@ -156,14 +156,10 @@
     }).join('');
   }
 
-  async function deletePermitDoc(docId) {
-    if (!confirm('Delete this document? The file is removed from disk too.')) return;
-    try {
-      const r = await fetch('/api/projects/documents/' + docId, { method: 'DELETE' });
-      if (!r.ok) throw new Error('Delete failed: ' + r.status);
-      // Re-render the docs list against the current project.
+  function deletePermitDoc(docId) {
+    return deleteProjectDoc(docId, () => {
       if (window.currentPermitProjectId) loadPermitDocs(window.currentPermitProjectId);
-    } catch (e) { alert(e.message); }
+    });
   }
 
   async function uploadDoc() {

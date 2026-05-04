@@ -74,8 +74,6 @@
     const staffCount = new Set(entries.map(e => e.staff_name).filter(Boolean)).size;
     document.getElementById('hrs-stats').innerHTML = [
       `<div class="stat-card accent"><div class="stat-label">Total Hours</div><div class="stat-value">${fmt(total, 'hrs')}</div><div class="stat-sub">${staffCount} staff member${staffCount !== 1 ? 's' : ''}</div></div>`,
-      // Per-type tiles are clickable — open a drilldown modal listing every
-      // entry for that project_type in the current period, grouped by person.
       ...Object.entries(byType).map(([t, h]) => `<div class="stat-card" style="cursor:pointer" onclick="showHoursTypeBreakdown('${esc(t)}','${esc(TYPE_LABELS[t] || t)}')" title="Click to see who logged these hours"><div class="stat-label">${TYPE_LABELS[t] || t}</div><div class="stat-value">${fmt(h, 'hrs')}</div></div>`)
     ].join('');
 
@@ -548,19 +546,38 @@
     }
   }
 
-  // Drilldown modal for the per-type stat tiles. Re-fetches entries for
-  // the current period filter so we always show fresh data, filters to
-  // the picked project_type, and groups by staff_name. Each row links
-  // back to the same edit modal as the main tree, so admin can drill
-  // straight from "Inspection: 412 hrs" → who logged what → fix a row.
-  async function showHoursTypeBreakdown(projectType, label) {
+  // Drilldown modal for the per-type stat tiles. Reads from the
+  // _hoursEntriesById map populated by loadHours — same pattern as
+  // openCalendarDayDetail — so the click is instant with no extra
+  // network round-trip. Each row's edit/delete actions reuse the
+  // existing modal handlers.
+  function showHoursTypeBreakdown(projectType, label) {
     const period = document.getElementById('hrs-period')?.value || 'month';
     const m = document.getElementById('hrs-month').value;
     const y = document.getElementById('hrs-year').value;
-    const qs = period === 'ytd' ? `year=${y}` : `month=${m}&year=${y}`;
     const periodLabel = period === 'ytd'
       ? `YTD ${y}`
       : new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const matches = [];
+    for (const e of _hoursEntriesById.values()) {
+      if (e.project_type === projectType && e.project_id) matches.push(e);
+    }
+    matches.sort((a, b) => (a.staff_name || '').localeCompare(b.staff_name || '')
+      || String(a.entry_date || '').localeCompare(String(b.entry_date || '')));
+
+    const byStaff = new Map();
+    let total = 0;
+    for (const e of matches) {
+      const name = e.staff_name || '— Unassigned —';
+      if (!byStaff.has(name)) byStaff.set(name, { hours: 0, entries: [] });
+      const bucket = byStaff.get(name);
+      const h = parseFloat(e.hours) || 0;
+      bucket.hours += h;
+      total += h;
+      bucket.entries.push(e);
+    }
+    const staffSorted = [...byStaff.entries()].sort((a, b) => b[1].hours - a[1].hours);
 
     const existing = document.getElementById('hrs-type-detail-modal');
     if (existing) existing.remove();
@@ -568,34 +585,8 @@
     overlay.id = 'hrs-type-detail-modal';
     overlay.className = 'modal-overlay';
     overlay.style.display = 'flex';
-    overlay.innerHTML = `<div class="modal-content" style="max-width:760px"><div class="modal-body" style="padding:24px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div></div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-
-    let entries;
-    try {
-      entries = await api(`/api/time-entries?${qs}`);
-    } catch (e) {
-      overlay.innerHTML = `<div class="modal-content" style="max-width:480px"><div class="modal-body" style="padding:24px;color:var(--danger)">Failed to load: ${esc(e.message)}</div></div>`;
-      return;
-    }
-    const matches = entries.filter(e => e.project_type === projectType && e.project_id);
-    matches.sort((a, b) => (a.staff_name || '').localeCompare(b.staff_name || '')
-      || String(a.entry_date || '').localeCompare(String(b.entry_date || '')));
-
-    // Group by staff. Each bucket: { hours, entries[] }.
-    const byStaff = new Map();
-    for (const e of matches) {
-      const name = e.staff_name || '— Unassigned —';
-      if (!byStaff.has(name)) byStaff.set(name, { hours: 0, entries: [] });
-      const bucket = byStaff.get(name);
-      bucket.hours += parseFloat(e.hours) || 0;
-      bucket.entries.push(e);
-      // Cache so the row's edit button can find it without a refetch.
-      _hoursEntriesById.set(String(e.id), e);
-    }
-    const total = matches.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
-    const staffSorted = [...byStaff.entries()].sort((a, b) => b[1].hours - a[1].hours);
 
     const body = matches.length
       ? staffSorted.map(([name, bucket]) => `
@@ -638,7 +629,6 @@
         </div>
       </div>
     `;
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   }
 
   window.loadHours = loadHours;
