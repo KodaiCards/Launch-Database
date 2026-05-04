@@ -50,7 +50,11 @@ test('does not split inside double-quoted identifiers', () => {
 test('does not split inside line comments', () => {
   const out = splitStatements('SELECT 1; -- ; not a split\nSELECT 2;');
   assert.equal(out.length, 2);
-  assert.match(out[1], /^SELECT 2/);
+  // The leading line comment is preserved at the start of the next statement
+  // (PG accepts comments before a statement). What matters for splitting is
+  // that the `;` inside the comment didn't trigger a split. Mirror the
+  // block-comment case below.
+  assert.match(out[1], /SELECT 2/);
 });
 
 test('does not split inside block comments', () => {

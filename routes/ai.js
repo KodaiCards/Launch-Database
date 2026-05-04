@@ -1427,13 +1427,16 @@ function summarizeToolCall(toolName, toolInput) {
 // ─── FILE UPLOAD FOR AI ──────────────────────────────────────────────────────
 // ─── IN-MEMORY UPLOAD STORE ──────────────────────────────────────────────────
 const uploadStore = new Map(); // uploadId → { rows, headers, filename, timestamp }
-// Clean up old uploads every 30 minutes
+// Clean up old uploads every 30 minutes. .unref() so the timer doesn't
+// hold the event loop alive in tests — without it, pool.end() + server.close()
+// drain successfully but the process never exits, and node:test fires
+// per-test 180s timeouts on every file.
 setInterval(() => {
   const cutoff = Date.now() - 30 * 60 * 1000;
   for (const [id, data] of uploadStore) {
     if (data.timestamp < cutoff) uploadStore.delete(id);
   }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
