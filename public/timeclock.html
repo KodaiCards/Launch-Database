@@ -183,9 +183,9 @@ tbody tr:hover{background:var(--gray-light)}
 
 /* Helpful tags */
 .tag{display:inline-block;padding:2px 8px;border-radius:10px;background:var(--gray-light);color:var(--text);font-size:11px;font-weight:600}
-.tag-team-design{background:#E3F2FD;color:#0d47a1}
-.tag-team-permitting{background:#FFF3E0;color:#e65100}
-.tag-team-inspection{background:#E8F5E9;color:#1b5e20}
+.tag-team-design{background:var(--info-light);color:var(--info-text)}
+.tag-team-permitting{background:var(--warning-light);color:var(--warning-text)}
+.tag-team-inspection{background:var(--success-light);color:var(--success-text)}
 html[data-theme="dark"] .tag-team-design{background:#1E3A5C;color:#90CAF9}
 html[data-theme="dark"] .tag-team-permitting{background:#3D2F0F;color:#FFCC80}
 html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
@@ -331,7 +331,7 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
           <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus"></i> Add New</button>
         </label>
         <select id="entry-project" onchange="entryProjectChanged()"><option value="">Loading…</option></select>
-        <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:#FFF3E0;color:#7A4F0E;border:1px solid #F4C430;border-radius:6px;font-size:11px"><i class="fa-solid fa-clock"></i> Pending project request — time will be held until admin approves.</div>
+        <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning);border-radius:6px;font-size:11px"><i class="fa-solid fa-clock"></i> Pending project request — time will be held until admin approves.</div>
       </div>
       <div class="form-group">
         <label>Job</label>

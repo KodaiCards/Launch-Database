@@ -62,7 +62,7 @@ html[data-theme="dark"] datalist option{
 }
 html[data-theme="dark"] select option:checked,
 html[data-theme="dark"] select option:hover{
-  background:#1B5FA0!important;
+  background:var(--primary)!important;
   color:#fff!important;
 }
 html[data-theme="dark"] thead{background:var(--gray-light) !important}
@@ -146,8 +146,8 @@ body{font-family:var(--font);background:var(--gray-light);color:var(--text);font
 .card-title{font-size:14px;font-weight:600}
 .header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 20px;display:flex;align-items:center;gap:14px;height:58px;position:sticky;top:0;z-index:20;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .nav{background:var(--portal-color);display:flex;padding:0 20px;position:sticky;top:58px;z-index:19;overflow-x:auto}
-.nav-tab{color:rgba(255,255,255,.78);padding:0 18px;height:42px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none}
-.nav-tab:hover{color:#fff;background:rgba(255,255,255,.08)}.nav-tab.active{color:#fff;border-bottom-color:#fff}
+.nav-tab{color:rgba(255,255,255,.92);padding:0 18px;height:42px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;text-decoration:none;text-shadow:0 1px 2px rgba(0,0,0,.18)}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.12)}.nav-tab.active{color:#fff;border-bottom-color:#fff;font-weight:600}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
 .stat-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px}
 .stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px}
@@ -468,7 +468,7 @@ fetch('/api/auth/me', { credentials: 'include' })
       <button class="btn btn-icon btn-secondary" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-      <div style="background:#FFF8E1;border:1px solid #FFE082;color:#5D4037;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
+      <div style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
         <i class="fa-solid fa-circle-info"></i> All changes here become <b>pending proposals</b> reviewed by admin. Money fields and team assignments are admin-only.
       </div>
 
@@ -1062,7 +1062,7 @@ async function loadPipeline(){
         <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
         <td style="white-space:nowrap;text-align:right">
           ${s!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>`:''}
-          ${s!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:#28A745;font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
+          ${s!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:var(--success);font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
           <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${p.id}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
         </td></tr>`;
