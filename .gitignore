@@ -19,3 +19,4 @@ Thumbs.db
 
 # Claude Code session/worktree state — local-only, never goes to GitHub
 .claude/
+package-lock.json
