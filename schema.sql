@@ -137,11 +137,10 @@ CREATE TABLE IF NOT EXISTS time_entries (
   job_title VARCHAR(100),
   notes TEXT,
   import_batch VARCHAR(200),
-  -- When set, this row is HELD against a setting_change_request of
-  -- entity_type='project' action='create'. SET NULL on delete keeps the
-  -- timecard around as orphaned-but-needs-assignment data even if the
-  -- request itself is purged.
-  pending_project_request_id UUID REFERENCES setting_change_requests(id) ON DELETE SET NULL,
+  -- pending_project_request_id (held-timecard FK to setting_change_requests)
+  -- is added by the v3 bootstrap in server.js — see ALTER TABLE block there.
+  -- It can't live here because setting_change_requests is created later in
+  -- this file, and the inline FK would abort the whole schema init.
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
