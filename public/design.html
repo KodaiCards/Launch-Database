@@ -948,7 +948,8 @@ function existingProjectPicked(id) {
   editProject(id);
 }
 
-
+// When the job changes, swap the Footage/Hours label & hint.
+function jobChanged(){
   const opt = document.getElementById('proj-job').selectedOptions[0];
   const label = document.getElementById('proj-amount-label');
   const hint  = document.getElementById('proj-amount-hint');

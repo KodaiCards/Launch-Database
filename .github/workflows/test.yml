@@ -13,7 +13,7 @@ jobs:
   smoke:
     name: Backend smoke tests
     runs-on: ubuntu-latest
-    timeout-minutes: 2460
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -44,6 +44,10 @@ jobs:
       # Suppress prod-only behavior in auth.js (which refuses to boot
       # without JWT_SECRET when NODE_ENV=production).
       NODE_ENV: test
+      # Stops apt-get inside `playwright install --with-deps` from prompting
+      # for tzdata / locale / config-file overwrites — those prompts are why
+      # the step hung past timeout on 2026-05-04.
+      DEBIAN_FRONTEND: noninteractive
 
     steps:
       - uses: actions/checkout@v4
@@ -65,13 +69,41 @@ jobs:
       - name: Run backend smoke tests
         run: npm test
 
+      # Cache the chromium binaries between runs so we don't re-download the
+      # ~150 MB tarball on every push. Key on the playwright version so the
+      # cache invalidates when we bump it.
+      - name: Get Playwright version
+        id: pw-version
+        run: |
+          echo "version=$(node -p "require('./package.json').devDependencies?.['@playwright/test'] || require('./package.json').dependencies?.['@playwright/test'] || 'unknown'")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+
+      - name: Install Playwright system deps
+        # System-level libs Chromium needs on Ubuntu (libnss3, libgbm1, etc.).
+        # Always runs (cheap when nothing is missing) so a cache hit on the
+        # browser binaries still gets the right system libs. 5-min step
+        # timeout: catches the apt-get hang from 2026-05-04 fast instead of
+        # eating the whole job timeout.
+        timeout-minutes: 5
+        run: npx playwright install-deps chromium
+
       - name: Install Playwright browsers
-        # Browser binaries (~150MB Chromium) aren't pulled by `npm install`.
-        # `--with-deps` installs the system-level libs Chromium needs on
-        # Ubuntu (libnss3, libgbm1, etc.).
-        run: npx playwright install --with-deps chromium
+        # Skip the download when the cache already has chromium for this
+        # Playwright version. 8-min step timeout: a fresh download on a
+        # cold cache should finish in ~2 min; anything past 8 means the
+        # download is wedged.
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 8
+        run: npx playwright install chromium
 
       - name: Run browser smoke tests
+        timeout-minutes: 10
         run: npm run test:browser
 
       - name: Upload Playwright report on failure
