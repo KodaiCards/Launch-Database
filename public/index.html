@@ -2348,6 +2348,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/engineering_contracts.js"></script>
 <script src="/js/invoice_templates.js"></script>
 <script src="/js/construction_contracts.js"></script>
+<script src="/js/project_types.js"></script>
 
 <script>
 
@@ -8436,42 +8437,6 @@ async function deleteJob(id, name) {
   } catch (e) { alert('Failed: ' + e.message); }
 }
 
-// Render the Project Types as removable chips
-function renderProjectTypesList() {
-  const root = document.getElementById('project-types-list-body');
-  if (!root) return;
-  if (!projectTypesCache.length) { root.innerHTML = '<span style="color:var(--text-muted);font-size:12px">None.</span>'; return; }
-  root.innerHTML = projectTypesCache.map(pt => `
-    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--primary-light);color:var(--primary);border-radius:14px;font-size:12px;font-weight:600">
-      ${esc(pt.name)}
-      <button onclick="deleteProjectType('${pt.id}','${esc(pt.name)}')" style="background:transparent;border:none;color:var(--primary);cursor:pointer;padding:0;font-size:14px;line-height:1">×</button>
-    </span>
-  `).join('');
-}
-
-async function saveNewProjectType() {
-  const name = document.getElementById('new-pt-name').value.trim();
-  if (!name) return alert('Name required');
-  try {
-    await api('/api/project-types', 'POST', { name });
-    document.getElementById('new-pt-name').value = '';
-    await loadProjectTypes();
-    populatePricingFormDropdowns();
-    renderProjectTypesList();
-    refreshSettingsDot();
-  } catch (e) { alert('Failed: ' + e.message); }
-}
-
-async function deleteProjectType(id, name) {
-  if (!confirm(`Delete project type "${name}"?\n\nExisting projects keep their type. The type will just be hidden from new selections.`)) return;
-  try {
-    await api('/api/project-types/' + id, 'DELETE');
-    await loadProjectTypes();
-    populatePricingFormDropdowns();
-    renderProjectTypesList();
-    refreshSettingsDot();
-  } catch (e) { alert('Failed: ' + e.message); }
-}
 
 function populatePricingFormDropdowns() {
   const tSel = document.getElementById('new-pe-type');
