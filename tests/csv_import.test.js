@@ -156,13 +156,15 @@ test('CSV row with different hours classifies as modify', async () => {
   trash.staff.push(s.id);
 
   // Seed an existing entry at 8h, then upload the same key with 9h.
+  // Date must be in the past — csv-validate rejects future dates and the
+  // row would never reach the modify classifier.
   await fixtures.timeEntry({
-    project_id: p.id, staff_id: s.id, entry_date: '2026-06-01', hours: 8,
+    project_id: p.id, staff_id: s.id, entry_date: '2026-04-15', hours: 8,
     job_title: 'Inspector',
   });
 
   const csv = buildCsv([
-    { name: s.name, date: '2026-06-01', wo: p.work_order_number, hours: 9 },
+    { name: s.name, date: '2026-04-15', wo: p.work_order_number, hours: 9 },
   ]);
   const v = await uploadCsv(token, 'modify.csv', csv);
   assert.equal(v.summary.would_add, 0);
@@ -187,15 +189,16 @@ test('CSV row with same staff/project/date but different job is "new"', async ()
   const s = await fixtures.staff({ name: uniqueTag('Inspector Poe') });
   trash.staff.push(s.id);
 
-  // Seed an existing entry under one job title.
+  // Seed an existing entry under one job title. Date must be in the past
+  // for csv-validate to accept the row.
   await fixtures.timeEntry({
-    project_id: p.id, staff_id: s.id, entry_date: '2026-07-01', hours: 4,
+    project_id: p.id, staff_id: s.id, entry_date: '2026-04-20', hours: 4,
     job_title: 'Inspector',
   });
 
   // CSV row on the SAME day under a DIFFERENT job title — separate entry.
   const csv = buildCsv([
-    { name: s.name, date: '2026-07-01', wo: p.work_order_number, hours: 4, job_title: 'Resident Engineer' },
+    { name: s.name, date: '2026-04-20', wo: p.work_order_number, hours: 4, job_title: 'Resident Engineer' },
   ]);
   const v = await uploadCsv(token, 'job-distinct.csv', csv);
   assert.equal(v.summary.would_add, 1, 'different job on same day = new entry');

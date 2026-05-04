@@ -38,17 +38,20 @@ test('POST /api/ai/upload stages a CSV; GET /api/ai/upload/:id returns it', asyn
   const upText = await upRes.text();
   assert.equal(upRes.status, 200, `upload failed ${upRes.status}: ${upText}`);
   const up = JSON.parse(upText);
-  assert.ok(up.id, 'response should carry an upload id');
+  // Route returns `upload_id`, not `id` — the frontend chat surface in
+  // public/index.html keys off pendingFileData.upload_id, so this is the
+  // canonical field. (Earlier draft of this test asserted `up.id`.)
+  assert.ok(up.upload_id, 'response should carry an upload_id');
   assert.equal(up.filename, 'tiny.csv');
   // The upload stages parsed rows; assert a sane shape so a future
   // refactor that drops one of these fields surfaces here.
-  assert.ok(Array.isArray(up.rows) || up.row_count != null,
-    'response should include parsed rows or row_count');
+  assert.ok(up.row_count != null || Array.isArray(up.preview),
+    'response should include row_count or preview rows');
 
   // Fetch back: the GET endpoint reads from uploadStore by id and
   // returns the parsed rows. A miss (404) here means the in-memory
   // store didn't actually retain the upload.
-  const getRes = await fetch(`${baseUrl()}/api/ai/upload/${up.id}`, {
+  const getRes = await fetch(`${baseUrl()}/api/ai/upload/${up.upload_id}`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${token}` },
   });

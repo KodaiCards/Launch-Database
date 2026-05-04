@@ -65,7 +65,14 @@ async function bootTestServer() {
 
 async function close() {
   if (_server) {
-    await new Promise((resolve) => _server.close(resolve));
+    // Server keepAliveTimeout is set to 30min in production. fetch() keeps
+    // sockets alive between requests, so server.close() waits the full 30
+    // minutes (or until the per-test 180s timeout) for them to expire.
+    // closeAllConnections() forcibly destroys idle keepalive sockets so
+    // close() resolves immediately. Available since Node 18.2.
+    const closed = new Promise((resolve) => _server.close(resolve));
+    if (typeof _server.closeAllConnections === 'function') _server.closeAllConnections();
+    await closed;
     _server = null;
     _baseUrl = null;
   }
