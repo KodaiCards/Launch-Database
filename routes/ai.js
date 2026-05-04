@@ -1555,6 +1555,15 @@ app.get('/api/ai/upload/:id', requireAdmin, async (req, res) => {
 // loop continues (which may produce more text, more tool calls, or another
 // approval round).
 app.post('/api/ai/chat', requireAdmin, async (req, res) => {
+  // Early guard: without an API key, every Anthropic SDK call below will
+  // throw with a less-obvious error. Return a clean 503 so the admin
+  // knows exactly what's missing instead of seeing a generic stack trace.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(503).json({
+      error: 'AI is unavailable: ANTHROPIC_API_KEY is not set. Add it in Railway → Variables and redeploy.',
+    });
+  }
+
   const { messages, session_id, approval_id, decisions } = req.body || {};
 
   let conversationMessages;
