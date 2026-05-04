@@ -1,304 +1,253 @@
-# Session Handoff — 2026-05-04 (afternoon update)
+# Session Handoff — 2026-05-04 (evening update)
 
-For the next Claude (or human) picking up. Read this first; then
-`HANDOFF.md` for architecture and `NEXT_STEPS.md` for the long-term
-roadmap. The PR-#9 handoff at the top of this file got rewritten —
-its contents are still relevant but are now folded into the
-"Architectural state" section below.
+For the next Claude (or human) picking up. Read this top-to-bottom;
+then skim `HANDOFF.md` (architecture) and `NEXT_STEPS.md` (long-term
+roadmap). This file replaces the previous handoff (afternoon edition);
+its salient content is folded into "Architectural state" below.
 
 ---
 
 ## TL;DR — what state things are in
 
-- **5 commits landed on `main` this afternoon** (e604698, 38bd984,
-  9356a76, 74374f4, 0a51b09). All push directly to main; Railway
-  auto-deploys all four services.
-- **CI is still broken** but in a different way than before. Latest
-  in-progress run is `25329939014`. The schema-init fix (74374f4)
-  works — server boots, 3 sanity tests pass — but `npm test` then
-  hangs for 29 minutes until the 30-min job timeout. The concurrency
-  fix (0a51b09) is in flight; if it doesn't pass, the next step is
-  isolating WHICH test hangs. See "CI hang — diagnosed but not
-  fixed" below.
-- **Live design portal works**. Logged in as admin, clicked
-  "+ Add Project" (the button that was throwing the SyntaxError
-  before this session), filled the modal, saved a project. Pipeline
-  rendered the new row. Stage-advance worked too. **Test data
-  left behind: "Claude Smoke Test 2026-05-04" project (PSC client,
-  WO# CLAUDE-SMOKE-001), currently at Started stage.** Delete it
-  before doing anything else, OR continue using it as a test fixture.
+- **CI is GREEN.** 8 commits landed this evening fixing the cascade
+  of issues that kept CI red for the whole afternoon. Latest run on
+  main: [25334405831](https://github.com/KodaiCards/Launch-Database/actions/runs/25334405831)
+  → success in 2m27s. Was hanging at 25–27 min on every prior run.
+- **All 4 Railway services auto-deploy from `main`.** No PRs in this
+  workflow — push direct.
+- **Live verification** so far is design portal only. Admin / permitting
+  / timeclock / customer portals are blocked on a Chrome-extension
+  permission issue (see "Resuming live UI testing" below).
+- **Test fixture left on PSC**: `Claude Smoke Test 2026-05-04`,
+  WO# `CLAUDE-SMOKE-001`, currently at **Started** stage. Notes field
+  has `"Edited by Claude debug 2026-05-04 PM"` from the edit-flow test.
+  Safe to delete or keep using.
 
 ---
 
-## What landed in this session — by commit
+## What landed this evening — by commit
 
-### `e604698` — Fix portal SyntaxError + CI Playwright hang
+All 8 commits push directly to `main`. Railway redeploys on each.
 
-Two unrelated fixes bundled because the user reported them together:
+### `79920e7` — test: fix teardown hang + AI upload key + CSV future-date issues
 
-1. **Portal SyntaxError**: `public/design.html` had a parse-time
-   bug. Commit `e1bf633` (Portal add-project cascade, last week)
-   accidentally deleted the `function jobChanged(){` declaration
-   line but left the function body behind. The orphan `return;` at
-   top-level made the entire `<script>` block fail to parse, which
-   meant **every** function in that block was undefined
-   (openProjectModal, loadPipeline, startPolling, …). Symptom: the
-   design portal looked stuck on "Loading…", and clicking
-   "+ Add Project" toasted "openProjectModal is not defined".
-   Restored the declaration at design.html:951.
-   permitting.html / timeclock.html / customer.html were all clean.
-2. **CI workflow hardening**: `npx playwright install --with-deps`
-   was hanging because apt-get prompted for tzdata config with no
-   noninteractive stdin. Set `DEBIAN_FRONTEND: noninteractive`,
-   split the install into `install-deps` + `install` so the
-   browser tarball can be cached separately, added per-step
-   `timeout-minutes` (5 / 8 / 10), reverted job timeout from 2460
-   min (the user's emergency workaround) to 30. Cached chromium
-   via `actions/cache@v4` keyed on Playwright version.
+Three independent test bugs in one commit because they were all surfaced
+by the same CI run.
 
-### `38bd984` — Invoice upload error + bigger cap + upload progress + brighter tabs
+1. **`tests/_helpers.js` close() hung 180s/file**.
+   `_server.close(callback)` waits for all open keep-alive sockets to
+   drain. Server's `keepAliveTimeout` is `30 * 60 * 1000` (set in
+   `server.js` for multi-GB uploads). `fetch()` reuses keep-alive
+   sockets between requests, so close() never resolved until the per-
+   test 180s timeout fired. Fix: call `_server.closeAllConnections()`
+   (Node 18.2+) alongside close() to forcibly destroy idle sockets.
+   This was *necessary but insufficient* — the actual cascade is in
+   commit `e58f885` below.
 
-Three separate user reports:
+2. **`tests/ai_upload.test.js` asserted wrong key**. Test read `up.id`
+   but `routes/ai.js`'s POST `/api/ai/upload` returns `upload_id`. The
+   admin frontend in `public/index.html:6324` keys off
+   `pendingFileData.upload_id`, so `upload_id` is the canonical
+   field — the test was wrong, not the route. Fixed both the assertion
+   and the GET URL that re-reads via `up.id`.
 
-1. **Invoice template upload "Unexpected token '<'"** — a 5 MB
-   reference PDF tripped multer's local cap (5 MB on this route);
-   without a JSON error handler Express returned the default HTML
-   500 page; frontend `await r.json()` exploded. Two fixes:
-   a. Bumped the per-route cap to 50 MB
-      ([routes/invoice_templates.js:49](routes/invoice_templates.js#L49)).
-   b. Added a global API error handler at
-      `app.use('/api', err => json)` in
-      [server.js](server.js) — converts multer / route errors on
-      every /api endpoint to `{error}` JSON. LIMIT_FILE_SIZE gets
-      a friendly message naming the actual cap. **This is the
-      safety net for every multer endpoint** (permits, design docs,
-      AI upload, hours CSV — all had the same latent HTML-error
-      ambush).
-2. **Tab text contrast** — bumped `.nav-tab` color from
-   `rgba(255,255,255,.92)` → `#fff` and strengthened text-shadow
-   from .18 → .35. Applied to admin index.html + design.html +
-   permitting.html. timeclock + customer don't have a blue strip.
-3. **Upload progress** — new `apiUpload(url, formData, { onProgress
-   })` helper in [public/js/api.js](public/js/api.js). Wraps
-   XMLHttpRequest because fetch can't surface upload progress.
-   Wired to invoice template upload, permit doc upload, design doc
-   upload. Each modal got a progress bar element. On 100% the bar
-   stays full and the label switches to "Saving on server…" or
-   "Analyzing… (15-30s)" so the user knows we're past upload but
-   server's still working.
+3. **`tests/csv_import.test.js` "modify" + "different-job" tests used
+   future dates** (`2026-06-01`, `2026-07-01`). `routes/hours_csv.js`
+   rejects future dates as `"date is in the future"` invalid rows
+   *before* they reach the classifier. Result: validRows was empty,
+   `would_modify` and `would_add` both stayed at 0. Moved both into
+   2026-04 (today is 2026-05-04). Other csv_import tests already use
+   2026-04 / 2026-05-01-02 dates and pass.
 
-### `9356a76` — CSV match key includes job
+### `e58f885` — fix: ai.js cleanup interval was missing .unref(); split_statements regex
 
-Owner-confirmed policy: CSV import's "would modify" preview now
-matches on **staff + project + entry_date + job_title** (normalized
-trim + collapse-whitespace + lowercase). Two entries with different
-jobs on the same day for the same staff/project are now treated as
-distinct entries, not a "modify". Added one new smoke test for the
-different-job-same-day case in
-[tests/csv_import.test.js](tests/csv_import.test.js). Updated the
-in-app match-preview blurb in the CSV wizard to spell out the new
-policy.
+Two issues. The first one was the actual cause of the 25-minute CI
+hangs — the closeAllConnections fix in `79920e7` shaved nothing off
+because there was a different timer keeping the event loop alive.
 
-### `74374f4` — Resilient initSchema (split + per-statement + post-auth retry)
+1. **`routes/ai.js:1431` setInterval missed `.unref()`.** It cleans
+   up the in-memory upload store every 5 minutes. Its sibling at
+   line 1387 (the `_pendingApprovals` cleanup) correctly calls
+   `.unref()`; this one was missed. Without unref, `pool.end()` and
+   `server.close()` resolve fine but the worker process never exits
+   because the timer holds the event loop alive. node:test's per-test
+   180s timeout then fires on every test FILE wrapper. Total:
+   180s × 9 files × concurrency=1 ≈ 27 min — exact match to observed
+   CI duration. **Effect of fix**: backend tests went 25m → 17 sec.
 
-Diagnosed CI hang root cause from the previous run (25321945720):
-schema bootstrap failed early with `relation "jobs" does not
-exist`. `pool.query(schema_sql)` runs the entire file as a single
-implicit transaction; PG aborts on first error. **schema.sql has
-real forward-FK references** that it relied on production already
-having the tables for — a fresh DB hits the abort. Specifically:
+2. **`tests/split_statements.test.js:53` line-comment regex.** Test
+   asserted `assert.match(out[1], /^SELECT 2/)` — but the leading
+   line comment `-- ; not a split` is preserved in front of `SELECT 2`
+   (and PG accepts comments before a statement, so that's OK). The
+   block-comment sibling test on line 59 already used `/SELECT 2/`
+   without the `^` anchor; removed the anchor here for consistency.
 
-- Line 292: `billing_batches.job_id REFERENCES jobs(id)` — jobs is
-  CREATEd at line 392 in the same file.
-- Line 297: `billing_batches.created_by_user_id REFERENCES users(id)`
-  — users is CREATEd by `bootstrapAuthSchema` in auth.js, which
-  runs AFTER initSchema.
-- Line 857 / 867: invoice_templates has both refs.
-- Line 884: customer_clients has the users(id) ref.
+### `b33b6d8` — fix: login page assets must be public; /api/* unknown returns 404 JSON
 
-Fix: rewrite `initSchema` in [db.js](db.js) to split into
-individual statements and run each in its own try/catch.
+Once backend tests went green, the browser smoke tests
+(`tests/browser/*.spec.js`) finally got to run end-to-end for the
+first time in days. Both failed with 2× `Unexpected token '<'`
+pageerrors each. Two related bugs:
 
-- New `splitStatements()` handles single-quoted strings
-  (PG-doubled-apostrophe escape), double-quoted identifiers, line
-  comments, block comments, and dollar-quoted blocks (`$$` and
-  `$tag$`). Exported for testing.
-- Two passes over schema.sql resolve forward refs WITHIN the file
-  (jobs CREATE happens in pass 1; billing_batches succeeds in
-  pass 2 once jobs exists).
-- Statements still failing after pass 2 (the user-FK ones) get
-  stashed on `pool._deferredStatements`. server.js calls a new
-  `applyDeferredSchemaStatements()` AFTER `bootstrapAuthSchema` so
-  the three user-FK tables finally apply.
+1. **Login page assets were not in the auth-public allowlist.**
+   `public/login.html` references `/toast.js`, `/keyboard.js`,
+   `/app-shell.css`. The auth middleware in `server.js`
+   (`pageRequiresAuth()`) only whitelisted `/login`, `/api/auth/*`,
+   and `/uploads/*`. For an unauthenticated browser — including the
+   playwright fixture — each asset 302'd to `/login`. The browser
+   then tried to PARSE the redirected HTML response as a `<script>`
+   body and threw `SyntaxError: Unexpected token '<'`. Two errors =
+   the two JS files; CSS load failures don't fire pageerror, which
+   is why `/app-shell.css` didn't add a third.
 
-New test: [tests/split_statements.test.js](tests/split_statements.test.js)
-— 12 cases for the splitter including a sanity pass over the real
-schema.sql to verify no CREATE TABLE statements get joined.
+   Fix: whitelist `/toast.js`, `/keyboard.js`, `/app-shell.css`,
+   `/favicon.ico` in `pageRequiresAuth()`.
 
-**Confirmed working in CI run 25325341821**: server boot logs show
-"82/88 statements ok; 6 deferred to post-auth bootstrap" then
-"6/6 deferred statements applied". Schema is fully bootstrapped.
+2. **The SPA catch-all `app.get('*')` swallowed unmatched `/api/*`
+   paths**, returning the admin index.html with status 200. Any
+   frontend doing `r.json()` on that response would also throw
+   `Unexpected token '<'`, masking real 404s. Added a `/api` 404
+   JSON handler immediately before the SPA fallback so unknown API
+   paths surface as `{error: "Not found", path: ...}` instead of
+   HTML. Defense-in-depth — this didn't show up as a specific test
+   failure but would have masked any future typo'd endpoint.
 
-### `0a51b09` — Test files run serially + 3-min per-test timeout
+### `01f57ff` — test: regression coverage for login-asset 302 + /api 404 fixes
 
-After the schema fix landed, the next CI run booted cleanly and
-passed 3 _sanity tests in 0.4s — then went silent for 29 minutes
-until the 30-min job timeout cancelled it.
+Both fixes from `b33b6d8` lacked test coverage. Added two cases to
+`tests/_sanity.test.js`:
 
-Hypothesis: by default `node --test` runs each test FILE in its
-own worker process and runs files in parallel
-(`os.availableParallelism()`). With every file's `bootTestServer()`
-re-running initSchema + bootstrapV3Schema + bootstrapAuthSchema +
-bootstrapTimeClockSchema in parallel, eight workers all pile
-ALTER TABLE statements onto the same eight tables. ACCESS
-EXCLUSIVE locks serialize them, and the per-statement queries in
-the new initSchema multiply that. `--test-concurrency=1` removes
-parallelism as a variable.
-
-Also added `--test-timeout=180000` (3 min per test) so a single
-hung test bails out instead of eating the whole 30-min job
-budget — gives a useful error pointing at the offending test
-instead of the silent timeout we had.
-
-**Status of run 25329939014 at handoff time: still in_progress at
-22m48s**. If it passes, we're done. If it times out again at
-30m, the hang is in a single test — the per-test timeout will
-print its name. See "CI hang — diagnosed but not fixed" below for
-debugging steps.
+- `login-page static assets are reachable without auth` — fetches
+  `/toast.js`, `/keyboard.js`, `/app-shell.css` with no auth and
+  asserts 200 + correct Content-Type. If the auth middleware
+  regresses and 302s an asset, the assertion catches it before the
+  browser smoke tests have to.
+- `unknown /api/* path returns JSON 404, not the SPA HTML` —
+  GETs a definitely-not-real route and asserts `404` + JSON content
+  type + `{error: "Not found"}`.
 
 ---
 
-## CI hang — diagnosed but not fixed
+## CI timeline (one of these saves you 30 minutes if you hit a similar hang)
 
-Symptom: `_sanity.test.js` 3 tests pass in 0.4s, then dead silence
-until the job-level 30-min timeout. Pattern is consistent across
-multiple runs. Schema bootstrap is NOT the cause (verified — the
-"Launch Fiber Services running on port" message means start()
-returned).
+| run | head | duration | result |
+|---|---|---|---|
+| 25329939014 | `0a51b09` (prior session, --test-concurrency=1) | 25m4s | timeout — every test file wrapper hit 180s |
+| 25331523711 | `79920e7` (closeAllConnections only) | 25m25s | same hang — closeAllConnections wasn't enough |
+| 25333821285 | `e58f885` (added unref) | 2m13s | backend GREEN in 17s; **browser tests fail with pageerrors** |
+| 25334405831 | `b33b6d8` (login-asset + /api 404) | 2m27s | **GREEN end-to-end** |
+| (after 01f57ff) | `01f57ff` (regression tests) | ~2m | GREEN |
 
-Hypotheses ranked by likelihood:
+The single most important data point: when each test FILE in `node --test`
+hits its per-test timeout despite all subtests passing, look for an
+unref'd `setInterval`/`setTimeout` somewhere in the production code
+that gets imported by the test boot.
 
-1. **Parallel boot lock contention** — multiple test workers all
-   running ALTER TABLE in parallel deadlock or serialize so badly
-   that bootstrap takes minutes. Tested in 0a51b09 by forcing
-   concurrency=1. **If 0a51b09 makes it green, this was it.**
-2. **A specific test hangs on an unmocked Anthropic call** —
-   `tests/ai_upload.test.js` uses `bootTestServer` which boots
-   the AI route; if the chat handler somehow runs and waits on
-   the SDK without an API key set, it could hang forever. (CI
-   doesn't set ANTHROPIC_API_KEY — see env block in
-   .github/workflows/test.yml.) The `--test-timeout=180000` flag
-   in 0a51b09 should bail this out and print the test name so we
-   can localize.
-3. **`pool.end()` hangs** — the new `applyDeferredSchemaStatements`
-   added a third schema-bootstrap stage between auth and
-   timeclock; if any pool client got into a stuck state during
-   those, `await pool.end()` in `close()` could deadlock. Less
-   likely but worth checking if (1) and (2) don't pan out.
+---
 
-Next debugging step if 0a51b09 still hangs:
+## Resuming live UI testing — Chrome extension permissions
+
+The "Claude in Chrome" MCP extension authorizes per-domain. The user
+authorized `launchfiberdesignportal.xyz` in the prior session via the
+extension's UI; this session's Claude (me) was never able to get the
+admin / permitting / timeclock / customer portals authorized despite
+multiple attempts. The user verbally said "you have my permission to
+access the sites within the group" and tried adding the tabs to a
+Chrome tab group — that made the tabs *visible* to MCP (tab IDs show
+up in `tabs_context_mcp`) but actions still return
+`"Permission denied for this action on this domain"` because the
+per-site permission is a separate layer.
+
+**The user thinks they may have figured out how to grant the
+permission before starting this new session.** Verify by trying:
 
 ```
-# Get the latest run ID
-gh run list --branch main --limit 1 --json databaseId --jq '.[0].databaseId'
-# Pull the log
-gh run view --log --job=$(gh run list --branch main --limit 1 --json jobs --jq '.[0].jobs[0].databaseId') | grep -E "Subtest:|ok |not ok |timeout"
+mcp__Claude_in_Chrome__list_connected_browsers
+mcp__Claude_in_Chrome__select_browser  (use the deviceId from above)
+mcp__Claude_in_Chrome__tabs_context_mcp  (createIfEmpty=true)
 ```
 
-The per-test timeout should now print which test is the culprit.
-Then look at that test file directly. If you're stuck, comment
-out tests files one at a time (rename `.test.js` → `.test.js.skip`
-in package.json glob) until it passes — bisection.
+Then attempt a screenshot of the admin tab. If it works, the
+permissions are granted and you can resume the punch list below.
+
+If still blocked: ask the user to open the Claude extension popup
+(toolbar icon) **while the active tab is on `launchfiberadminportal.xyz`** —
+there's typically a per-site toggle there. The "approved sites"
+settings page they showed me had a Revoke list but no obvious Add
+button visible in the screenshot.
 
 ---
 
-## Live verification — what's been confirmed working
+## Punch list — items NOT YET verified live
 
-These were tested via Claude in Chrome on the LIVE Railway deploy
-during this session:
+The order is the same as the prior session's handoff. Items 1-2 of
+that list (design portal Add Project + stage advance) plus an extra
+batch (edit / regress / Submit Permits / Settings tabs / dark mode)
+have been verified in this session. Items below are pending.
 
-- **Design portal / Sign in** with `admin / American1Supporter`
-  → lands on `https://launchfiberdesignportal.xyz/` with an empty
-  Design Pipeline.
-- **"+ Add Project" button** → modal opens. Console clean. The
-  SyntaxError fix is live.
-- **Cascading dropdowns**: pick PSC → Contract dropdown
-  populates with 515-3 / 515-4 / 515-5; Project Type appears with
-  BAU / GF(R) / Other / RUS; Work Order Number field appears.
-- **Save Project** → "Claude Smoke Test 2026-05-04" appears in
-  the pipeline. Counters update (Potential 0→1, then Started 0→1
-  after advance).
-- **Stage advance** (rightmost double-arrow) → moves from
-  Potential to Started. Pipeline visualization updates.
+### 3. Admin app at `https://launchfiberadminportal.xyz/`
 
-**Test artifacts to clean up or reuse:**
-- Project: "Claude Smoke Test 2026-05-04"
-  (client=PSC, WO=CLAUDE-SMOKE-001, stage=Started)
-- The `CLAUDE-SMOKE-001` WO# probably also created a Service Area
-  rollup parent on PSC (the auto-nesting behavior). Check
-  Settings or the project tree before deleting.
+- Projects tab: tree expand persists across the 8s polling tick
+  (regression net for `makeTreeState`; `tests/browser/projects_tree_state.spec.js`
+  covers this and is green, but live verify with a real-data tree)
+- Hours tab tile drilldown opens
+- Calendar grid click on a populated day opens the detail modal
+- Settings → Users → "+ New staff" inline panel
+- Account dropdown opens
 
----
+### 4. Invoice template upload — happy path + over-cap
 
-## Live verification — NOT covered yet (was working through this list)
+- Open admin → Invoice Templates → Upload
+- Pick a PDF >5 MB → progress bar fills → "Analyzing..." label
+  appears → row appears in templates list
+- Then try a PDF >50 MB → JSON error toast (not raw HTML)
+  This validates `38bd984`'s global API error handler.
 
-The user gave carte blanche ("change data as needed there's
-nothing here other than tests") and authorized:
+### 5. Permit doc upload + progress bar
 
-- gh CLI: authenticated as KodaiCards (`gh auth status` → Logged in,
-  gist+read:org+repo scopes).
-- Claude in Chrome extension: connected (Browser 1, deviceId
-  `8de96e27-d193-49cf-89df-fb78f6018119`). Site permissions granted
-  for all 4 portal domains (or at least design — others were not
-  yet exercised).
-- Admin login: `admin / American1Supporter`.
+Open any permit's paperclip, attach a file, see the bar fill.
+Same `apiUpload()` helper as invoice template upload.
 
-Punch list, in the order I was working through it:
+### 6. CSV import preview — different-job-same-day classification
 
-1. ~~Design portal — Add Project flow~~ — DONE.
-2. ~~Design portal — stage advance~~ — DONE.
-3. **Design portal — edit project, delete project, regress stage,
-   submit permit (the "Submit Permits" tab loader).**
-4. **Admin app** at `https://launchfiberadminportal.xyz/` —
-   verify: Projects tab tree expand persists across polling tick,
-   Hours tab tile drilldown opens, calendar grid click on populated
-   day opens detail modal, Settings → Users → "+ New staff" inline
-   panel, Account dropdown opens.
-5. **Invoice template upload** — pick a PDF >5 MB and verify the
-   progress bar fills, then "Analyzing…" label appears, then the
-   row appears in the templates list. Then try a >50 MB PDF and
-   verify the JSON error message comes back as a toast (no raw
-   HTML).
-6. **Permit doc upload + progress bar** — open any permit's
-   paperclip, attach a file, see the bar fill.
-7. **CSV import preview** — upload a CSV with a row that matches
-   an existing time entry on staff+project+date but a different
-   job title; classification should be "new" not "modify".
-8. **Permitting portal** at `https://launchfiberpermittingportal.xyz/`
-   — "+ Add Project" + stage advance + paperclip upload.
-9. **Timeclock portal** at `https://launchfibertimeclock.xyz/`
-   — clock in / out, switch project.
-10. **Customer portal** at `https://launchfibercustomerportal.xyz/`
-    (if it exists — it was a future feature in NEXT_STEPS;
-    public/customer.html exists but the portal subdomain may not
-    be deployed).
+Upload a CSV with a row that matches an existing time entry on
+staff+project+date but a different job title. Classification should
+be "new" (not "modify"). This is the policy from `9356a76` and the
+backend test in `csv_import.test.js` covers it; live-verify the
+match-preview blurb in the wizard spells out the new policy.
+
+### 7. Permitting portal at `https://launchfiberpermittingportal.xyz/`
+
+"+ Add Project" + stage advance + paperclip upload. Same shape as
+design portal flow but separate Railway service.
+
+### 8. Timeclock portal at `https://launchfibertimeclock.xyz/`
+
+Clock in / out, switch project.
+
+### 9. Customer portal at `https://launchfibercustomerportal.xyz/`
+
+If deployed. `public/customer.html` exists but the portal subdomain
+may not be live — the customer portal is one of the deferred
+features in the auto-memory file `feature_customer_portal.md`. Don't
+build new portal capability without explicit user OK.
 
 ---
 
-## Architectural state (rolled forward from earlier handoff)
+## Architectural state (rolled forward from earlier handoffs)
 
-These are unchanged from the morning handoff — included here so
-this file stands alone.
+These are unchanged from the morning + afternoon handoffs — included
+here so this file stands alone.
 
 ### Branch state
 - All work pushed directly to `main`. No PRs.
-- worktrees disabled (memory: `feedback_no_worktrees.md`).
+- Worktrees disabled (auto-memory: `feedback_no_worktrees.md`).
 - Working tree clean as of handoff.
 
 ### File layout
 
 ```
-public/index.html              ~6750 lines admin app
+public/index.html              ~6800 lines admin app
 public/design.html             design portal
 public/permitting.html         permitting portal
 public/timeclock.html          time clock portal
@@ -316,31 +265,56 @@ routes/_csv_stage.js           shared csvStage Map
 routes/_helpers.js             updateProjectHours, undo, financials
 routes/* (~28 modules)         the rest of the API surface
 
-server.js                      ~1010 lines — wiring + v3 bootstrap
+server.js                      ~1020 lines — wiring + v3 bootstrap
 schema.sql                     base schema (canonical-ish; v3 ALTERs in
                                server.js still authoritative for the
                                columns added at boot)
 db.js                          pool + initSchema + splitStatements +
-                               applyDeferredSchemaStatements (NEW)
+                               applyDeferredSchemaStatements
 auth.js                        JWT + bootstrapAuthSchema
 ```
+
+### Testing
+
+- `npm test` — backend smoke tests (node:test). Was hanging 25 min;
+  now runs in ~17 sec.
+- `npm run test:browser` — playwright browser smoke tests. 2 specs:
+  `psc_rus_tab.spec.js` and `projects_tree_state.spec.js`. Both pass
+  after the login-asset / /api 404 fixes.
+- CI: `.github/workflows/test.yml`. 30-min job timeout; per-step
+  timeouts on playwright deps (5 min) and browser install (8 min) +
+  browser tests (10 min).
+
+### Known unref'd timers
+
+Audit done this session. The 4 `setInterval` calls in production code
+all now have `.unref()` (or are gated behind `skipScheduler` for
+tests):
+
+- `auth.js:68` — rate-limit bucket cleanup, `.unref()` ✓
+- `automation.js:1020` — scheduler tick, only runs if `!skipScheduler`
+- `routes/ai.js:1387` — pendingApprovals cleanup, `.unref()` ✓
+- `routes/ai.js:1431` — uploadStore cleanup, **`.unref()` added in `e58f885`** ✓
+- `routes/_csv_stage.js:22` — csvStage cleanup, `.unref()` ✓
+
+If you add a new timer in module-load scope, **call `.unref()` on
+the handle** or tests will hang again.
 
 ### Critical owner preferences (auto-loaded from memory)
 - **NO worktrees** — `feedback_no_worktrees.md`.
 - **NO email digest** — owner killed in `cff591c`.
-- **PSC invoice template ≠ non-RUS template** —
-  `reference_invoice_non_rus_formats.md`.
+- **PSC invoice template ≠ non-RUS template** — `reference_invoice_non_rus_formats.md`.
 - **Deferred (don't start without explicit OK):**
   - Customer self-service portal — `feature_customer_portal.md`
   - Client progress view — `feature_client_progress_view.md`
-  - Inspection revenue projection refinements —
-    `feature_inspection_revenue_projection.md`
+  - Inspection revenue projection refinements — `feature_inspection_revenue_projection.md`
+  - Customer portal project-level completion view — `feature_client_portal_completion_view.md`
 
 ### Communication style
 Owner drops bullet lists of issues, says "go", expects autonomy.
-Bug fixes first. Don't extend cleanup unprompted. They'll
-spot-check; if something's wrong they'll say so. "Take breaks to
-check yourself, keep good notes for yourself."
+Bug fixes first. Don't extend cleanup unprompted. They'll spot-check;
+if something's wrong they'll say so. **Fix-and-push-and-keep-going**
+is the working model — no PRs needed.
 
 ---
 
@@ -352,21 +326,34 @@ git pull origin main
 
 # 2. Verify state
 git status                     # should be clean
-git log --oneline -8           # last 5 should match the commits in this doc
+git log --oneline -10          # last 8 should be the commits in this doc
 
-# 3. Check the in-flight CI run
+# 3. Confirm CI is still green
 "/c/Program Files/GitHub CLI/gh.exe" run list --branch main --limit 3
-
-# 4. If CI is green, RESUME the live verification list above.
-#    If CI is red, see "CI hang — diagnosed but not fixed" above.
 ```
 
-The user is patient with the work but expects you to keep moving.
-If a test verification reveals a bug, fix-and-push-and-keep-going.
-The `Claude Smoke Test 2026-05-04` project on PSC is your
-expendable test fixture — feel free to advance it through stages,
-attach docs to it, then delete it when you're done. The user knows
-it's there.
+Then:
 
-If you hit a permission_required error from the Chrome extension,
-the user knows what to do — they'll re-authorize.
+1. **Try the Chrome extension permissions immediately.** The user
+   said they may have figured out how to grant them. Confirm by:
+   - `mcp__Claude_in_Chrome__list_connected_browsers`
+   - `mcp__Claude_in_Chrome__select_browser` with the returned deviceId
+   - `mcp__Claude_in_Chrome__tabs_context_mcp` → look for the four
+     portal tabs in the available list
+   - Try a screenshot on the admin tab. If it succeeds → resume
+     punch list above (item 3 onward).
+2. **If still blocked**: ask the user to open the Claude extension
+   popup while on the admin tab and look for a per-site toggle.
+3. **If permissions stay blocked**: there's nothing meaningful to do
+   on the live UI side. The static review of all four portal HTMLs
+   was already done this session (all 100+ inline `onclick` handlers
+   resolve to defined functions; no missing scripts; FontAwesome
+   loads correctly). Tell the user that and stop.
+
+When you do get into the admin app, **first thing**: open the AI
+Assistant panel and verify the file-upload flow doesn't regress
+(`up.upload_id` is what the frontend keys off — see commit `79920e7`
+notes above).
+
+The user is patient with the work but expects you to keep moving.
+"Take breaks to check yourself, keep good notes for yourself."
