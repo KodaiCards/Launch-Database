@@ -189,6 +189,7 @@ QUERYING DATA:
 HONESTY — NEVER FAKE SUCCESS:
 - NEVER claim an action succeeded unless the corresponding tool was actually called AND returned success:true. No exceptions. If you say "I've logged the entries" or "I've created the project," it must be because a tool result confirmed it.
 - After any modifying tool call (log_time_entries, create_project, update_project, etc.), look at the tool result. If success:false or there's an error field, report the error to the user honestly — do not paper over it.
+- DO NOT say "I'll create that", "Let me log those", "Creating the project now", or any future/progressive phrasing followed by no action. Either CALL the tool in the same turn, or ASK a clarifying question. The frontend has a hallucination guard that surfaces a red warning to the user when text claims action without a successful tool result, so these silent skips don't go unnoticed — they look bad. Prefer "Should I create X with values Y?" (a question) over "I'll create X" (a hollow promise).
 - After log_time_entries returns success, IMMEDIATELY run a verification query like:
     SELECT COUNT(*) as cnt, SUM(hours) as total_hours FROM time_entries WHERE import_batch = 'ai_import_<batch_id>'
   and report the verified count and total to the user. This proves the data actually landed and catches any silent failures.
@@ -1676,10 +1677,22 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     const successfulModifications = toolResults.filter(
       tr => MODIFYING_TOOLS.includes(tr.tool) && tr.result?.success === true
     );
-    const claimsAction = /\b(I['’]?ve|I have|successfully|done|logged|added|created|updated|saved)\b/i.test(finalText);
+    // Hallucination guard catches three failure modes where Claude says it's
+    // doing something but no tool ran:
+    //   1. Past-tense / present-perfect: "I've created", "logged"
+    //   2. Future-tense / commitment:    "I'll create", "Let me update"
+    //   3. Active progressive:           "Creating the project now"
+    // Caught early because tool_choice=auto means Claude can choose not to
+    // emit a tool_use block — and silent skips were the most-reported AI
+    // bug ("says it's going to do something then doesn't").
+    const claimsActionPast = /\b(I['’]?ve|I have|successfully|done|logged|added|created|updated|saved|deleted|removed|imported|inserted|marked|advanced)\b/i.test(finalText);
+    const claimsActionFuture = /\b(I['’]?ll|I will|Let me|I['’]?m going to|I['’]?m about to|going ahead)\s+(create|log|add|update|delete|save|remove|insert|set up|change|mark|advance|bill|complete|run|execute|do that|do it)\b/i.test(finalText);
+    const claimsActionActive = /(^|\n|\.\s+)(Creating|Logging|Adding|Updating|Deleting|Saving|Removing|Importing|Inserting|Setting up|Marking|Advancing|Billing|Running|Executing)\b/.test(finalText);
+    const claimsAction = claimsActionPast || claimsActionFuture || claimsActionActive;
     if (claimsAction && successfulModifications.length === 0) {
-      console.warn('AI hallucination guard: text claims action but no successful modifying tool ran');
-      finalText += '\n\n⚠️ **Heads up**: I claimed to take an action but no database changes actually went through. Please ask me to retry — and if I keep saying I did something without it sticking, check the server logs.';
+      const which = claimsActionPast ? 'past-tense' : claimsActionFuture ? 'future-tense' : 'progressive';
+      console.warn(`AI hallucination guard fired (${which}): text claims action but no successful modifying tool ran. Text snippet: ${finalText.substring(0, 200).replace(/\s+/g, ' ')}`);
+      finalText += '\n\n⚠️ **No database change actually happened.** I said I was going to do something but didn\'t actually run the tool. Please rephrase or ask me to retry — and if this keeps happening, the server logs have the exact wording that tripped the guard.';
     }
 
     // Log cache performance — helpful for verifying caching is reducing token spend.
