@@ -74,17 +74,58 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/time-entries', async (req, res) => {
-    const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
+  app.post('/api/time-entries', requireAuth(), async (req, res) => {
+    const { project_id, staff_id, entry_date, hours, job_title, notes, pending_project_request_id } = req.body;
+    // HELD timecards: when an engineer logs time on the timeclock against
+    // a project that's still pending admin approval, project_id is null
+    // and the row is tagged with the request id. Either a real project OR
+    // a pending request must be set — otherwise the entry is meaningless.
+    if (!project_id && !pending_project_request_id) {
+      return res.status(400).json({ error: 'project_id or pending_project_request_id required' });
+    }
+    // Engineer-scope: engineers may only log time as themselves. Coerce
+    // the staff_id to the user's linked staff record so a forged body can
+    // never assign hours to another employee.
+    let effectiveStaffId = staff_id || null;
+    if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+      // user.staff_id is set when the admin links the user to a staff record.
+      // Falling back to req.user.id keeps the row attributable even if the
+      // link wasn't set up yet (admin can rebind later via Settings).
+      effectiveStaffId = req.user.staff_id || effectiveStaffId;
+      // Reject mismatched staff_id explicitly rather than silently rewrite —
+      // surfaces config issues instead of letting hours land on the wrong
+      // person.
+      if (staff_id && req.user.staff_id && String(staff_id) !== String(req.user.staff_id)) {
+        return res.status(403).json({ error: 'Engineers can only log time against their own staff record.' });
+      }
+    }
+    // Validate the pending_project_request_id when present: must exist and
+    // still be in 'pending' status. Without this, anyone with the
+    // request_id (e.g. shared between portals) could silently attach hours
+    // to a request that's already been approved or rejected, where they
+    // would never be retro-attached.
+    if (pending_project_request_id) {
+      const { rows: prq } = await pool.query(
+        `SELECT id, status FROM setting_change_requests
+          WHERE id = $1 AND entity_type = 'project' AND action = 'create'`,
+        [pending_project_request_id]
+      );
+      if (!prq[0]) return res.status(400).json({ error: 'pending_project_request_id not found or wrong type.' });
+      if (prq[0].status !== 'pending') {
+        return res.status(409).json({ error: 'That project request is no longer pending; pick a real project.' });
+      }
+    }
     let inserted;
     try {
       const userId = req.user?.id || null;
       const { rows } = await pool.query(`
-        INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *
-      `, [project_id, staff_id || null, entry_date, hours, job_title, notes, userId]);
+        INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id, pending_project_request_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
+      `, [project_id || null, effectiveStaffId, entry_date, hours, job_title, notes, userId, pending_project_request_id || null]);
       inserted = rows[0];
-      await updateProjectHours(project_id);
+      // Skip the rollup when this is a held timecard — there's no project
+      // to roll into yet. The retro-attach on approval handles it later.
+      if (project_id) await updateProjectHours(project_id);
     } catch (e) {
       console.error('[time-entries:create]', e && e.message);
       return res.status(500).json({ error: 'Failed to create entry.' });
@@ -206,17 +247,43 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/time-entries/:id', async (req, res) => {
+  app.delete('/api/time-entries/:id', requireAuth(), async (req, res) => {
     let before;
+    let undoToken = null, undoExpiresAt = null;
     try {
       const { rows: existing } = await pool.query(
         'SELECT * FROM time_entries WHERE id=$1', [req.params.id]
       );
       before = existing[0] || null;
+      if (!before) return res.status(404).json({ error: 'Entry not found.' });
+
+      // Engineer-scope: own entries only. Mirrors the PUT handler's check.
+      if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+        if (String(before.user_id) !== String(req.user.id)) {
+          return res.status(403).json({ error: 'You can only delete your own time entries.' });
+        }
+      }
 
       const { rows } = await pool.query('DELETE FROM time_entries WHERE id=$1 RETURNING project_id', [req.params.id]);
-      if (rows[0]) {
+      if (rows[0] && rows[0].project_id) {
         await updateProjectHours(rows[0].project_id);
+      }
+
+      // Snapshot for the 15s undo. Same kind/payload shape as the bulk
+      // delete so the existing routes/undo.js project_tree / time_entries
+      // logic can resurrect it. We use the simpler 'time_entries_bulk'
+      // kind with a single-row payload — restoreUndoBucket already
+      // re-INSERTs by id with ON CONFLICT DO NOTHING, perfect for a
+      // single-row recovery.
+      try {
+        const undo = await saveUndoBucket(req.user && req.user.id, 'time_entries_bulk', {
+          entries: [before],
+        });
+        undoToken = undo.token;
+        undoExpiresAt = undo.expires_at;
+      } catch (undoErr) {
+        // Undo bucket is best-effort. Log but don't fail the delete.
+        console.error('[time-entries:delete:undo]', undoErr && undoErr.message);
       }
     } catch (e) {
       console.error('[time-entries:delete]', e && e.message);
@@ -234,7 +301,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         console.error('[time-entries:delete-audit]', auditErr && auditErr.message);
       }
     }
-    res.json({ ok: true });
+    res.json({ ok: true, undo_token: undoToken, undo_expires_at: undoExpiresAt });
   });
 
   // Bulk delete: all time entries for a given staff member, optionally filtered
@@ -242,7 +309,13 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   // Hours tab. Returns an undo_token alongside the count so the UI can offer
   // a 15s undo bar — the deleted rows are snapshotted before deletion and
   // can be restored verbatim (same UUIDs) within the TTL.
-  app.delete('/api/time-entries/by-staff/:staffId', requireAuth, async (req, res) => {
+  //
+  // requireAuth is a factory — `requireAuth(roles)` returns the actual
+  // middleware. Passing it bare meant Express received the factory and
+  // called it with (req, res, next), which produced a middleware that
+  // never ran. The endpoint was silently auth-bypassed for weeks. Fixed
+  // by calling the factory with the manager+admin role set.
+  app.delete('/api/time-entries/by-staff/:staffId', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { month, year } = req.query;
     const params = [req.params.staffId];
     let where = 'staff_id = $1';

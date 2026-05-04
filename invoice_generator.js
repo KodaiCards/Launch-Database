@@ -409,15 +409,34 @@ function renderSummaryPage(doc, data, isFootage) {
   // right. Centering keeps it visually aligned with the page-centered
   // logo and title above.
   const tableX = (doc.page.width - tableTotalWidth) / 2;
-  const rowH = 18;
+  // Minimum row height + per-row vertical padding. Rows now grow when their
+  // text wraps onto a second/third line; they used to be clamped at a fixed
+  // 18pt and the wrapped text painted on top of the next row's bg/text.
+  const MIN_ROW_H = 22;
+  const ROW_PAD_TOP = 6;
+  const ROW_PAD_BOTTOM = 6;
 
-  // Helper to draw one row at the current y, advancing y by rowH.
+  // Helper to draw one row at the current y, advancing y by the actual
+  // height the row took up.
   function drawRow(cells, opts = {}) {
     const y = doc.y;
     const bg = opts.bg;
     const textColor = opts.textColor || COL.BODY_TEXT;
     const bold = !!opts.bold;
     const padLeft = 6, padRight = 6;
+
+    // First pass: measure the tallest cell so the row can size itself
+    // before we paint the background / borders.
+    doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(9);
+    let maxTextH = 0;
+    for (const c of cols) {
+      const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
+      const tw = c.width - padLeft - padRight;
+      const h = doc.heightOfString(cellText, { width: tw, align: c.align });
+      if (h > maxTextH) maxTextH = h;
+    }
+    const rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
+
     // Background
     if (bg) {
       doc.rect(tableX, y, tableTotalWidth, rowH).fill(bg);
@@ -425,7 +444,7 @@ function renderSummaryPage(doc, data, isFootage) {
     // Borders
     doc.strokeColor(COL.BORDER).lineWidth(0.5);
     doc.rect(tableX, y, tableTotalWidth, rowH).stroke();
-    // Text per cell
+    // Text per cell — re-set font/color (rect.fill changes the fillColor)
     let cx = tableX;
     doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(9).fillColor(textColor);
     for (let i = 0; i < cols.length; i++) {
@@ -433,7 +452,7 @@ function renderSummaryPage(doc, data, isFootage) {
       const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
       const tx = cx + padLeft;
       const tw = c.width - padLeft - padRight;
-      doc.text(cellText, tx, y + 5, {
+      doc.text(cellText, tx, y + ROW_PAD_TOP, {
         width: tw, align: c.align,
       });
       cx += c.width;
@@ -559,7 +578,12 @@ function renderTimecardSection(doc, tc, meta) {
     { key: 'hours',  label: 'Hours',       width: 60,  align: 'right' },
   ];
   const tableTotalWidth = cols.reduce((s, c) => s + c.width, 0);
-  const rowH = 16;
+  // Same dynamic-row-height approach as the summary table — minimum row +
+  // grow on wrap. Fixes overlapping text when a contract or WO label
+  // wraps to two lines.
+  const MIN_ROW_H = 18;
+  const ROW_PAD_TOP = 4;
+  const ROW_PAD_BOTTOM = 4;
 
   // Section header — employee name in bold, summary line below
   doc.font(FONT.BODY_BOLD).fontSize(13).fillColor('#000');
@@ -570,6 +594,16 @@ function renderTimecardSection(doc, tc, meta) {
 
   function drawRow(cells, opts = {}) {
     const y = doc.y;
+    // Measure tallest cell so the row sizes itself before painting bg.
+    doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(8.5);
+    let maxTextH = 0;
+    for (const c of cols) {
+      const text = cells[c.key] != null ? String(cells[c.key]) : '';
+      const h = doc.heightOfString(text, { width: c.width - 8, align: c.align });
+      if (h > maxTextH) maxTextH = h;
+    }
+    const rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
+
     if (opts.bg) {
       doc.rect(tableX, y, tableTotalWidth, rowH).fill(opts.bg);
     }
@@ -580,7 +614,7 @@ function renderTimecardSection(doc, tc, meta) {
        .fillColor(opts.textColor || COL.BODY_TEXT);
     for (const c of cols) {
       doc.text(cells[c.key] != null ? String(cells[c.key]) : '',
-        cx + 4, y + 4, { width: c.width - 8, align: c.align });
+        cx + 4, y + ROW_PAD_TOP, { width: c.width - 8, align: c.align });
       cx += c.width;
     }
     doc.y = y + rowH;
@@ -592,8 +626,10 @@ function renderTimecardSection(doc, tc, meta) {
 
   // Body rows — auto-page-break if we run out of room
   for (const e of tc.entries) {
-    // Crude page-break check: leave room for the total row at the bottom
-    if (doc.y + rowH > doc.page.height - doc.page.margins.bottom - 30) {
+    // Crude page-break check: leave room for the total row at the bottom.
+    // Use MIN_ROW_H as the worst-case lower-bound estimate; rows that wrap
+    // simply trigger an earlier page break, which is fine.
+    if (doc.y + MIN_ROW_H > doc.page.height - doc.page.margins.bottom - 30) {
       doc.addPage();
       // Reprint a slim header on continuation pages for readability
       doc.font(FONT.BODY_BOLD).fontSize(11).fillColor('#000');

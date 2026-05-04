@@ -125,6 +125,11 @@ CREATE TABLE IF NOT EXISTS time_entries (
   -- /api/projects/:id/with-hours endpoint deletes them in a single
   -- transaction; ordinary DELETE refuses if hours exist). Previous
   -- CASCADE silently destroyed billing history when a project was deleted.
+  -- project_id is nullable to support HELD timecards: when an engineer
+  -- clocks against a project that's still pending admin approval (see
+  -- pending_project_request_id), the row exists with no project until the
+  -- request is approved and retro-attached, OR is rejected (in which case
+  -- it surfaces in admin's "Needs project assignment" panel).
   project_id UUID REFERENCES projects(id) ON DELETE RESTRICT,
   staff_id UUID REFERENCES staff(id),
   entry_date DATE NOT NULL,
@@ -132,6 +137,11 @@ CREATE TABLE IF NOT EXISTS time_entries (
   job_title VARCHAR(100),
   notes TEXT,
   import_batch VARCHAR(200),
+  -- When set, this row is HELD against a setting_change_request of
+  -- entity_type='project' action='create'. SET NULL on delete keeps the
+  -- timecard around as orphaned-but-needs-assignment data even if the
+  -- request itself is purged.
+  pending_project_request_id UUID REFERENCES setting_change_requests(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -831,6 +841,54 @@ CREATE TABLE IF NOT EXISTS setting_change_requests (
 CREATE INDEX IF NOT EXISTS idx_scr_pending
   ON setting_change_requests (created_at DESC)
   WHERE status = 'pending';
+
+
+-- ─────────────────────────────────────────
+-- INVOICE TEMPLATES — reference-PDF-driven invoice generator
+-- ─────────────────────────────────────────
+-- Owner uploads a PDF sample of how the invoice should look for a given
+-- (job, client) pair. Claude vision analyses the PDF once and produces
+-- an HTML template with {{placeholders}} (mustache-style) for the
+-- variable data. At invoice time the system substitutes real data and
+-- renders to PDF via puppeteer. Owner can edit the HTML in Settings or
+-- per-invoice before the final PDF download. Falls back to the hardcoded
+-- PSC RUS pdfkit layout when no template is uploaded for a (job, client).
+CREATE TABLE IF NOT EXISTS invoice_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  name VARCHAR(160),
+  reference_pdf_path TEXT,
+  reference_pdf_filename VARCHAR(260),
+  generated_html TEXT,
+  notes TEXT,
+  analysis_status VARCHAR(20) DEFAULT 'pending',
+  analysis_error TEXT,
+  analyzed_at TIMESTAMPTZ,
+  created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (job_id, client_id)
+);
+CREATE INDEX IF NOT EXISTS idx_invoice_templates_job_client
+  ON invoice_templates (job_id, client_id);
+
+-- ─────────────────────────────────────────
+-- CUSTOMER PORTAL — per-client external login
+-- ─────────────────────────────────────────
+-- customer_clients links a customer-role user to one or more clients.
+-- The customer portal scopes everything (projects, progress, invoices)
+-- through this table so a customer never sees data from a client they
+-- weren't granted. Many-to-many supports clients with multiple billing
+-- contacts AND a single rep covering several customer accounts.
+CREATE TABLE IF NOT EXISTS customer_clients (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, client_id)
+);
+CREATE INDEX IF NOT EXISTS idx_customer_clients_client
+  ON customer_clients (client_id);
 
 
 -- ═══════════════════════════════════════════════════════════════════════════

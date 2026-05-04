@@ -9,30 +9,71 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
+/* Token system mirrors public/index.html so admin + portals share one
+   set of semantic colors. Surfaces, status colors, and text get full
+   dark-mode coverage; legacy aliases (--white, --gray-light, --row-alt,
+   --gray-border) are preserved for inline styles in this file. */
 :root{
   --primary:#1B5FA0;
   --primary-dark:#134880;
   --primary-light:#E8F0FB;
-  --gray:#6B6B6B;
-  --gray-light:#F5F7FA;
-  --gray-border:#DEE2E6;
+  --primary-text:#FFFFFF;
+  --surface-1:#F5F7FA;
+  --surface-2:#FFFFFF;
+  --surface-3:#F0F0F0;
   --white:#FFFFFF;
-  --success:#28A745;
-  --warning:#FFC107;
-  --danger:#DC3545;
-  --text:#212529;
-  --text-muted:#6C757D;
-  --font:'Inter',sans-serif;
+  --gray-light:#F5F7FA;
   --row-alt:#F0F0F0;
+  --border-strong:#DEE2E6;
+  --border-weak:#EEF1F5;
+  --gray-border:#DEE2E6;
+  --gray:#6B6B6B;
+  --text:#212529;
+  --text-secondary:#495057;
+  --text-muted:#6C757D;
+  --success:#28A745;
+  --success-light:#E8F5E9;
+  --success-text:#1B5E20;
+  --warning:#FFC107;
+  --warning-light:#FFF8E1;
+  --warning-text:#7A4F0E;
+  --danger:#DC3545;
+  --danger-light:#FDECEA;
+  --danger-text:#B71C1C;
+  --info:#1B5FA0;
+  --info-light:#E8F0FB;
+  --info-text:#0D47A1;
+  --font:'Inter',sans-serif;
 }
 html[data-theme="dark"]{
-  --gray-light:#1A1F26;
-  --gray-border:#2D3540;
-  --white:#242B36;
-  --text:#E8EAED;
-  --text-muted:#9BA1A8;
+  --primary:#4A90D9;
+  --primary-dark:#1B5FA0;
   --primary-light:#1E3A5C;
+  --primary-text:#FFFFFF;
+  --surface-1:#1A1F26;
+  --surface-2:#242B36;
+  --surface-3:#1F2630;
+  --white:#242B36;
+  --gray-light:#1A1F26;
   --row-alt:#1F2630;
+  --border-strong:#2D3540;
+  --border-weak:#252A33;
+  --gray-border:#2D3540;
+  --text:#E8EAED;
+  --text-secondary:#C2C7CD;
+  --text-muted:#9BA1A8;
+  --success:#5DD27A;
+  --success-light:#1B3D24;
+  --success-text:#A5D6A7;
+  --warning:#FFCA28;
+  --warning-light:#3D2F0F;
+  --warning-text:#FFCC80;
+  --danger:#EF5350;
+  --danger-light:#3D1F23;
+  --danger-text:#F8B4BD;
+  --info:#4A90D9;
+  --info-light:#1E3A5C;
+  --info-text:#90CAF9;
   color-scheme: dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -179,8 +220,19 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
+<script src="/js/undo_bar.js" defer></script>
+<script src="/js/change_password_modal.js" defer></script>
+<script src="/js/project_picker.js" defer></script>
 </head>
 <body>
+
+<!-- Undo bar — fires after restorable mutations that return an undo token. -->
+<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
+  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)"></i>
+  <span id="lfs-undo-message" style="flex:1"></span>
+  <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:var(--success,#28A745);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
+  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">&times;</button>
+</div>
 
 <header class="header">
   <div class="header-left">
@@ -269,9 +321,17 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
     </div>
     <div class="modal-body">
       <input type="hidden" id="entry-id">
+      <input type="hidden" id="entry-pending-request-id">
       <div class="form-group">
-        <label>Project *</label>
+        <label>Client *</label>
+        <select id="entry-client" onchange="entryClientChanged()"><option value="">— All clients —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Project *
+          <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus"></i> Add New</button>
+        </label>
         <select id="entry-project" onchange="entryProjectChanged()"><option value="">Loading…</option></select>
+        <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:#FFF3E0;color:#7A4F0E;border:1px solid #F4C430;border-radius:6px;font-size:11px"><i class="fa-solid fa-clock"></i> Pending project request — time will be held until admin approves.</div>
       </div>
       <div class="form-group">
         <label>Job</label>
@@ -299,6 +359,48 @@ html[data-theme="dark"] .tag-team-inspection{background:#1B3D24;color:#A5D6A7}
       <button class="btn btn-danger" id="entry-delete-btn" style="margin-right:auto;display:none" onclick="deleteEntry()"><i class="fa-solid fa-trash"></i> Delete</button>
       <button class="btn btn-secondary" onclick="closeEntryModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEntry()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── REQUEST NEW PROJECT MODAL ─────────────── -->
+<!-- Engineers propose a new project from the timeclock. Admin must
+     approve before it merges into the project list. The hours logged
+     against the request stay HELD (project_id=NULL, pending_project_
+     request_id=request_id) until approval; on approval, retroactively
+     attach to the new project. On rejection, the timecard surfaces in
+     a "Needs project assignment" panel for manual fix. -->
+<div class="modal-overlay" id="rnp-modal" style="display:none">
+  <div class="modal-content" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-plus"></i> Request New Project</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeRequestNewProjectModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;padding:8px;background:var(--gray-light);border-radius:6px">
+        <i class="fa-solid fa-circle-info"></i> The project doesn't merge into the system until admin approves. Any time you log against it stays HELD until then. If admin rejects, the timecard gets flagged for manual review.
+      </div>
+      <div class="form-group">
+        <label>Client *</label>
+        <select id="rnp-client"></select>
+      </div>
+      <div class="form-group">
+        <label>Project Name *</label>
+        <input type="text" id="rnp-name" placeholder="e.g. Crossroad School">
+      </div>
+      <div class="form-group">
+        <label>Work Order # <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <input type="text" id="rnp-wo" placeholder="e.g. 1234">
+      </div>
+      <div class="form-group">
+        <label>Notes <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <textarea id="rnp-notes" placeholder="Any context for admin"></textarea>
+      </div>
+      <div id="rnp-error" style="display:none;color:var(--danger);font-size:12px;margin-top:6px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRequestNewProjectModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRequestNewProject()"><i class="fa-solid fa-paper-plane"></i> Send Request</button>
     </div>
   </div>
 </div>
@@ -436,6 +538,10 @@ function showAccountMenu(){
           <div style="font-size:18px;font-weight:600;margin-bottom:4px">${esc(u.full_name || u.username || '')}</div>
           <div style="font-size:12px;color:var(--text-muted)">${esc(u.email || u.username || '')}</div>
         </div>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
+          <i class="fa-solid fa-key" style="margin-right:10px"></i>
+          <span>Change Password</span>
+        </button>
         <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
           <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i>
           <span>Sign Out</span>
@@ -480,12 +586,18 @@ async function loadJobsForProject(projectId){
   jobsCache[projectId] = jobs;
   return jobs;
 }
-function populateProjectSelect(selectEl, selectedId){
+// Populate a <select> with leaf-only projects, optionally scoped to a
+// client_id. The cascade UX (Client → Project → Job) leans on this:
+// pick a client, project list narrows; clear the client, all projects.
+function populateProjectSelect(selectEl, selectedId, opts){
   if (!selectEl) return;
-  const opts = ['<option value="">— Select project —</option>'];
-  // Show only leaf projects (no children) with a name; rollups are folders.
-  const leaves = projectsCache.filter(p => !p.is_rollup);
-  // Sort by client → name for easier scanning
+  opts = opts || {};
+  const html = ['<option value="">— Select project —</option>'];
+  // Show only leaf projects (no children); rollups are folders.
+  let leaves = projectsCache.filter(p => !p.is_rollup);
+  if (opts.client_id) {
+    leaves = leaves.filter(p => String(p.client_id) === String(opts.client_id));
+  }
   leaves.sort((a,b) => {
     const ca = (a.client_name||'').localeCompare(b.client_name||'');
     if (ca) return ca;
@@ -494,10 +606,30 @@ function populateProjectSelect(selectEl, selectedId){
   for (const p of leaves){
     const sel = String(p.id) === String(selectedId) ? ' selected' : '';
     const wo = p.work_order_number ? ` [${esc(p.work_order_number)}]` : '';
-    const cli = p.client_name ? `${esc(p.client_name)} — ` : '';
-    opts.push(`<option value="${esc(p.id)}"${sel}>${cli}${esc(p.name)}${wo}</option>`);
+    const cli = (!opts.client_id && p.client_name) ? `${esc(p.client_name)} — ` : '';
+    html.push(`<option value="${esc(p.id)}"${sel}>${cli}${esc(p.name)}${wo}</option>`);
   }
-  selectEl.innerHTML = opts.join('');
+  selectEl.innerHTML = html.join('');
+}
+
+// Populate the client filter from the distinct clients present in
+// projectsCache. Avoids a second API hit; the project list already has
+// client_id + client_name on every row.
+function populateClientSelect(selectEl, selectedId){
+  if (!selectEl) return;
+  const seen = new Map();
+  for (const p of projectsCache){
+    if (p.client_id && !seen.has(p.client_id)) {
+      seen.set(p.client_id, p.client_name || '—');
+    }
+  }
+  const items = [...seen.entries()].sort((a,b) => String(a[1]).localeCompare(String(b[1])));
+  const html = ['<option value="">— All clients —</option>'];
+  for (const [id, name] of items){
+    const sel = String(id) === String(selectedId) ? ' selected' : '';
+    html.push(`<option value="${esc(id)}"${sel}>${esc(name)}</option>`);
+  }
+  selectEl.innerHTML = html.join('');
 }
 async function populateJobSelect(selectEl, projectId, selectedId){
   if (!selectEl) return;
@@ -838,11 +970,14 @@ function renderEntries(){
 function openManualEntryModal(){
   document.getElementById('entry-modal-title').textContent = 'Add Time Entry';
   document.getElementById('entry-id').value = '';
+  document.getElementById('entry-pending-request-id').value = '';
   document.getElementById('entry-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('entry-hours').value = '';
   document.getElementById('entry-notes').value = '';
+  populateClientSelect(document.getElementById('entry-client'));
   populateProjectSelect(document.getElementById('entry-project'));
   populateJobSelect(document.getElementById('entry-job'), null);
+  document.getElementById('entry-pending-banner').style.display = 'none';
   document.getElementById('entry-edit-warning').style.display = 'none';
   document.getElementById('entry-delete-btn').style.display = 'none';
   document.getElementById('entry-modal').style.display = 'flex';
@@ -853,11 +988,17 @@ function openEditEntryModal(id){
   if (!e){ alert('Entry not found in current view'); return; }
   document.getElementById('entry-modal-title').textContent = 'Edit Time Entry';
   document.getElementById('entry-id').value = e.id;
+  document.getElementById('entry-pending-request-id').value = e.pending_project_request_id || '';
   document.getElementById('entry-date').value = String(e.entry_date).slice(0,10);
   document.getElementById('entry-hours').value = e.hours;
   document.getElementById('entry-notes').value = e.notes || '';
-  populateProjectSelect(document.getElementById('entry-project'), e.project_id);
+  // Pre-select the entry's client, then populate project filtered to that client.
+  const proj = projectsCache.find(p => String(p.id) === String(e.project_id));
+  const cid = proj?.client_id || '';
+  populateClientSelect(document.getElementById('entry-client'), cid);
+  populateProjectSelect(document.getElementById('entry-project'), e.project_id, { client_id: cid || null });
   populateJobSelect(document.getElementById('entry-job'), e.project_id, null);
+  document.getElementById('entry-pending-banner').style.display = e.pending_project_request_id ? '' : 'none';
   document.getElementById('entry-edit-warning').style.display = '';
   document.getElementById('entry-delete-btn').style.display = '';
   document.getElementById('entry-modal').style.display = 'flex';
@@ -870,37 +1011,104 @@ function closeEntryModal(){
 async function entryProjectChanged(){
   const pid = document.getElementById('entry-project').value;
   await populateJobSelect(document.getElementById('entry-job'), pid);
+  // A real project selection clears any pending-request state.
+  if (pid) {
+    document.getElementById('entry-pending-request-id').value = '';
+    document.getElementById('entry-pending-banner').style.display = 'none';
+  }
+}
+
+// Client filter narrows the project list. Empty resets to all leaves.
+function entryClientChanged(){
+  const cid = document.getElementById('entry-client').value || null;
+  populateProjectSelect(document.getElementById('entry-project'), null, { client_id: cid });
+  populateJobSelect(document.getElementById('entry-job'), null);
+}
+
+// ─── REQUEST NEW PROJECT FLOW ───────────────────────────────────────────────
+// Engineers can propose a new project from the timeclock without clobbering
+// admin's project list. The flow:
+//   1. fill in name + WO# + client (auto-filled from current Client filter)
+//   2. POST /api/portal/projects/request-create → returns { request_id }
+//   3. UI stamps entry-pending-request-id; the entry-modal saves with
+//      project_id=NULL and pending_project_request_id=request_id (held).
+//   4. Admin reviews via setting_change_requests; on approve, time entries
+//      retro-attach to the new project's id.
+function openRequestNewProjectModal(){
+  const cid = document.getElementById('entry-client').value || '';
+  const m = document.getElementById('rnp-modal');
+  if (!m) return;
+  document.getElementById('rnp-name').value = '';
+  document.getElementById('rnp-wo').value = '';
+  document.getElementById('rnp-notes').value = '';
+  document.getElementById('rnp-error').style.display = 'none';
+  populateClientSelect(document.getElementById('rnp-client'), cid);
+  m.style.display = 'flex';
+}
+function closeRequestNewProjectModal(){
+  const m = document.getElementById('rnp-modal');
+  if (m) m.style.display = 'none';
+}
+async function submitRequestNewProject(){
+  const name = document.getElementById('rnp-name').value.trim();
+  const work_order_number = document.getElementById('rnp-wo').value.trim() || null;
+  const client_id = document.getElementById('rnp-client').value || null;
+  const notes = document.getElementById('rnp-notes').value.trim() || null;
+  const errEl = document.getElementById('rnp-error');
+  errEl.style.display = 'none';
+  if (!name){ errEl.textContent = 'Project name is required.'; errEl.style.display = 'block'; return; }
+  if (!client_id){ errEl.textContent = 'Client is required.'; errEl.style.display = 'block'; return; }
+  try {
+    const resp = await api('/api/portal/projects/request-create', 'POST', { name, work_order_number, client_id, notes });
+    if (!resp || !resp.request_id) throw new Error('No request_id returned');
+    // Fold the request into the entry-modal: clear project select, stash
+    // request_id, show the banner. saveEntry will route via the held flow.
+    document.getElementById('entry-pending-request-id').value = resp.request_id;
+    document.getElementById('entry-project').value = '';
+    document.getElementById('entry-pending-banner').style.display = '';
+    document.getElementById('entry-pending-banner').innerHTML =
+      `<i class="fa-solid fa-clock"></i> Pending: <strong>${esc(name)}</strong>${work_order_number ? ' · WO# ' + esc(work_order_number) : ''} — time will be held until admin approves.`;
+    closeRequestNewProjectModal();
+  } catch(e){
+    errEl.textContent = 'Failed: ' + (e.message || e);
+    errEl.style.display = 'block';
+  }
 }
 
 async function saveEntry(){
   const id = document.getElementById('entry-id').value;
-  const project_id = document.getElementById('entry-project').value;
+  const project_id = document.getElementById('entry-project').value || null;
+  const pending_request_id = document.getElementById('entry-pending-request-id').value || null;
   const job_id = document.getElementById('entry-job').value || null;
   const entry_date = document.getElementById('entry-date').value;
   const hours = parseFloat(document.getElementById('entry-hours').value);
   const notes = document.getElementById('entry-notes').value || null;
 
-  if (!project_id){ alert('Project is required'); return; }
+  // Either a real project OR a pending-request placeholder must be set.
+  if (!project_id && !pending_request_id){ alert('Project is required (or use Add New to request one).'); return; }
   if (!entry_date){ alert('Date is required'); return; }
   if (isNaN(hours) || hours <= 0){ alert('Hours must be greater than 0'); return; }
   if (hours > 24){ alert('Hours cannot exceed 24 per entry'); return; }
 
-  // Resolve job_title from job_id (server stores the title text on the entry)
+  // Resolve job_title from job_id (server stores the title text on the entry).
+  // Skipped when no real project_id (the held timecard has no project to look up).
   let job_title = null;
-  if (job_id){
+  if (job_id && project_id){
     const jobs = await loadJobsForProject(project_id);
     const j = jobs.find(x => x.id === job_id);
     if (j) job_title = j.name;
   }
 
+  const body = { project_id, entry_date, hours, job_title, notes };
+  if (pending_request_id) body.pending_project_request_id = pending_request_id;
+
   try {
     if (id){
-      await api('/api/time-entries/' + id, 'PUT', { project_id, entry_date, hours, job_title, notes });
+      await api('/api/time-entries/' + id, 'PUT', body);
     } else {
-      // Stamp staff_id from currentUser (server uses linked staff record)
-      // staff_id is auto-derived server-side via the user's link; we only
-      // need to send the project + date + hours payload here.
-      await api('/api/time-entries', 'POST', { project_id, entry_date, hours, job_title, notes });
+      // staff_id is auto-derived server-side via the user's linked staff
+      // record; we only need to send the project + date + hours payload.
+      await api('/api/time-entries', 'POST', body);
     }
     closeEntryModal();
     await loadWeek();
@@ -912,11 +1120,17 @@ async function saveEntry(){
 async function deleteEntry(){
   const id = document.getElementById('entry-id').value;
   if (!id) return;
-  if (!confirm('Delete this time entry? This action is logged but cannot be undone.')) return;
+  if (!confirm('Delete this time entry? You\'ll get a 15-second undo window.')) return;
   try {
-    await api('/api/time-entries/' + id, 'DELETE');
+    const resp = await api('/api/time-entries/' + id, 'DELETE');
     closeEntryModal();
     await loadWeek();
+    // Surface the shared undo bar (loaded via /js/undo_bar.js in the
+    // portal head). Falls back to a plain toast if the bar module is
+    // unavailable for any reason.
+    if (resp && resp.undo_token && typeof showUndoBar === 'function') {
+      showUndoBar('Time entry deleted.', resp.undo_token);
+    }
   } catch(e){
     alert('Delete failed: ' + e.message);
   }

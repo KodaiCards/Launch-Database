@@ -103,7 +103,12 @@ const VALID_ROLES = [
   'design_manager',
   'permitting_manager',
   'design_engineer',
-  'permitting_engineer'
+  'permitting_engineer',
+  // Customers are external — they see ONLY data for the clients linked
+  // to their user via the customer_clients table. Read-only across the
+  // whole API surface; the customer portal exposes a curated subset of
+  // endpoints under /api/customer/*.
+  'customer',
 ];
 
 // Helper: which team does a role belong to? Used for filtering data per user.
@@ -112,7 +117,7 @@ function teamForRole(role) {
   if (role.startsWith('design_')) return 'design';
   if (role.startsWith('permitting_')) return 'permitting';
   if (role.startsWith('inspection_')) return 'inspection';
-  return null;  // admin sees all
+  return null;  // admin / customer sees no team scope (they're filtered differently)
 }
 
 // Helper: ALL teams a user can access. Combines their primary role's team
@@ -307,7 +312,7 @@ function authMiddleware(pool) {
     try {
       const { rows } = await pool.query(
         `SELECT id, username, role, team, extra_teams, full_name, email, active,
-                tokens_invalid_after
+                staff_id, tokens_invalid_after
          FROM users WHERE id = $1 LIMIT 1`,
         [payload.id]
       );

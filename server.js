@@ -121,6 +121,10 @@ const PORTAL_NAMES = {
   permitting: 'Permitting Portal',
   design: 'Design Portal',
   timeclock: 'Launch Time Clock',
+  // Customer portal: external users (clients) see ONLY their own
+  // projects, progress, and invoices. Backed by customer_clients
+  // table + the 'customer' role.
+  customer: 'Client Portal',
 };
 if (PORTAL_MODE) {
   console.log(`✓ Running in PORTAL MODE: ${PORTAL_NAMES[PORTAL_MODE] || PORTAL_MODE}`);
@@ -238,6 +242,7 @@ if (PORTAL_MODE) {
   // not on portal containers).
   const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
                    : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
+                   : PORTAL_MODE === 'customer' ? 'customer.html'
                    : 'design.html';
   const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
 
@@ -599,13 +604,13 @@ function arrayToObjects(rows2d, headerIdx) {
 // Validate a parsed CSV/XLSX file. Does not write anything. Returns:
 //   { stage_id, headers, columns, valid_rows, unknown_staff, unknown_wos, invalid_rows, summary }
 // stage_id is a temp key clients pass back to /commit so we don't re-parse.
-const csvStage = new Map(); // stageId → { rows, expiresAt }
-const CSV_STAGE_TTL_MS = 30 * 60 * 1000;
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of csvStage) if (v.expiresAt < now) csvStage.delete(k);
-}, 5 * 60 * 1000);
+//
+// csvStage is the shared in-memory store keyed by stage_id. It moved
+// to routes/_csv_stage.js so the AI csv_smart_import path can import
+// it without server.js needing to expose it as a global. Both feature
+// modules require() the same Map. CSV_STAGE_TTL_MS is exported for
+// callers that want to set their own TTL (none today, kept for parity).
+const { csvStage, CSV_STAGE_TTL_MS } = require('./routes/_csv_stage');
 
 // Infer the job title from the filename and any title rows above the header.
 // Returns a string like "Inspector" or null if nothing matched.
@@ -886,6 +891,79 @@ app.post('/api/hours/csv-validate', requireAdmin, upload.single('file'), async (
       }
     }
 
+    // ── Would-modify preview ─────────────────────────────────────────────
+    // Match each staged row against existing time_entries on the
+    // (staff_id, project_id, entry_date) tuple. Classification:
+    //   'new'       — no existing row
+    //   'duplicate' — exact match on hours + job_title (commit skips)
+    //   'modify'    — same key but hours / job_title differ (commit
+    //                 still inserts, creating an additional row; the
+    //                 operator should review)
+    //   'conflict'  — multiple existing rows on the same key (rare;
+    //                 surfaces a manual-review case)
+    // Only computed for rows with staff_id + project_id + date set;
+    // others stay 'new' (the WO/staff resolver will catch them).
+    const matchKeys = [];
+    for (const r of validRows) {
+      if (r.staff_id && r.project_id && r.date) {
+        matchKeys.push({ staff_id: r.staff_id, project_id: r.project_id, entry_date: r.date });
+        r.match_key = `${r.staff_id}|${r.project_id}|${r.date}`;
+      } else {
+        r.csv_classification = 'new';
+      }
+    }
+    if (matchKeys.length) {
+      // One ANY-style query per CSV — cheaper than N round-trips. We pull
+      // every existing row whose (staff_id, project_id, entry_date) tuple
+      // appears in the staged set, then bucket in JS.
+      const staffArr = matchKeys.map(k => k.staff_id);
+      const projArr = matchKeys.map(k => k.project_id);
+      const dateArr = matchKeys.map(k => k.entry_date);
+      const { rows: existing } = await pool.query(`
+        SELECT id, staff_id, project_id, entry_date::text AS entry_date,
+               hours::float AS hours, job_title
+          FROM time_entries
+         WHERE staff_id = ANY($1::uuid[])
+           AND project_id = ANY($2::uuid[])
+           AND entry_date = ANY($3::date[])
+      `, [staffArr, projArr, dateArr]);
+      const byKey = new Map();
+      for (const e of existing) {
+        const k = `${e.staff_id}|${e.project_id}|${e.entry_date}`;
+        if (!byKey.has(k)) byKey.set(k, []);
+        byKey.get(k).push(e);
+      }
+      for (const r of validRows) {
+        if (r.csv_classification === 'new') continue;
+        const matches = byKey.get(r.match_key) || [];
+        if (matches.length === 0) {
+          r.csv_classification = 'new';
+        } else if (matches.length > 1) {
+          r.csv_classification = 'conflict';
+          r.csv_existing_count = matches.length;
+        } else {
+          const m = matches[0];
+          const sameHours = Math.abs((parseFloat(r.hours) || 0) - (parseFloat(m.hours) || 0)) < 1e-6;
+          const sameJob = String(r.job_title || '').trim() === String(m.job_title || '').trim();
+          if (sameHours && sameJob) {
+            r.csv_classification = 'duplicate';
+            r.csv_existing_id = m.id;
+          } else {
+            r.csv_classification = 'modify';
+            r.csv_existing_id = m.id;
+            r.csv_existing_hours = m.hours;
+            r.csv_existing_job_title = m.job_title || '';
+          }
+        }
+      }
+    }
+    // Tally for the summary banner.
+    const csvClassTally = { new: 0, duplicate: 0, modify: 0, conflict: 0 };
+    for (const r of validRows) {
+      const c = r.csv_classification || 'new';
+      csvClassTally[c] = (csvClassTally[c] || 0) + 1;
+    }
+
     csvStage.set(stage_id, {
       validRows,
       expiresAt: Date.now() + CSV_STAGE_TTL_MS
@@ -906,7 +984,13 @@ app.post('/api/hours/csv-validate', requireAdmin, upload.single('file'), async (
         rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
         rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
         rows_in_billed_periods: billedConflictCount,
-        invalid: invalidRows.length
+        invalid: invalidRows.length,
+        // Would-modify preview: how many of the staged rows match an
+        // existing time_entry on (staff_id, project_id, entry_date).
+        would_add: csvClassTally.new || 0,
+        would_skip_duplicate: csvClassTally.duplicate || 0,
+        would_modify: csvClassTally.modify || 0,
+        would_conflict: csvClassTally.conflict || 0,
       },
       unknown_staff: [...unknownStaff.values()].map(name => ({
         name,
@@ -1143,23 +1227,35 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
     let skipped_unknown_wo = 0;
     let skipped_unresolved_staff = 0;
     let skipped_billed_period = 0;
+    let skipped_duplicate = 0;
     const projectIds = new Set();
+    const insertedRows = [];   // collected for post-commit audit logging
+    const skipDuplicates = req.body?.skip_duplicates !== false;  // default ON
 
     for (const r of staged.validRows) {
       if (!r.wo_known) { skipped_unknown_wo++; continue; }
       const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
       if (!staffId) { skipped_unresolved_staff++; continue; }
       if (skip_billed_period_rows && r.already_billed_period) { skipped_billed_period++; continue; }
+      // Skip true duplicates (same staff_id+project_id+entry_date AND
+      // same hours+job_title). Defaults ON because the alternative is
+      // double-counting hours on every re-import. The operator can
+      // override by passing skip_duplicates=false in the commit body.
+      if (skipDuplicates && r.csv_classification === 'duplicate') {
+        skipped_duplicate++;
+        continue;
+      }
 
       // Final job title: row's existing value (which may already be inferred
       // from the filename) → operator-supplied apply_job_title → null
       const finalJobTitle = r.job_title || apply_job_title || null;
 
-      await client.query(
+      const { rows: insRows } = await client.query(
         `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
         [r.project_id, staffId, r.date, r.hours, finalJobTitle, importBatch]
       );
+      if (insRows[0]) insertedRows.push(insRows[0]);
       inserted++;
       projectIds.add(r.project_id);
     }
@@ -1171,6 +1267,21 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
       await updateProjectHours(pid);
     }
 
+    // 4. Audit each insert AFTER the commit so a logging hiccup never
+    //    rolls back valid time entries. Source = 'csv' so the audit log
+    //    can distinguish CSV imports from manual / portal entries.
+    for (const row of insertedRows) {
+      try {
+        await auditTimeEntry({
+          req, timeEntryId: row.id, action: 'created',
+          before: null, after: row,
+          source: 'csv',
+        });
+      } catch (auditErr) {
+        console.error('[csv-commit:audit]', auditErr && auditErr.message);
+      }
+    }
+
     res.json({
       ok: true,
       batch: importBatch,
@@ -1178,6 +1289,7 @@ app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
       skipped_unknown_wo,
       skipped_unresolved_staff,
       skipped_billed_period,
+      skipped_duplicate,
       created_staff: createdStaff,
       created_jobs: createdJobs,
       created_projects: createdProjects,
@@ -1234,6 +1346,23 @@ require('./routes/revenue')(app, pool, { requireManagerOrAdmin });
 // INVOICE MANAGEMENT — extracted to routes/invoices.js (Track 1.3.5).
 // ─────────────────────────────────────────────────────────────────────────────
 require('./routes/invoices')(app, pool, { requireManagerOrAdmin });
+
+// Reference-PDF-driven invoice templates: owner uploads a sample PDF for
+// each (job, client) pair, Claude vision analyses it once, and the system
+// renders future invoices to PDF via puppeteer using the resulting HTML
+// template. Coexists with the hardcoded PSC RUS pdfkit path above; the
+// template wins when one's available, the legacy path is the fallback.
+require('./routes/invoice_templates')(app, pool, {
+  requireManagerOrAdmin,
+  uploadDir: UPLOAD_DIR,
+});
+
+// Customer portal — read-only API for external (customer-role) users.
+// Each user is linked to one or more clients via customer_clients;
+// every endpoint in this module scopes through that link table so a
+// customer can only see their own data. Admin endpoints to manage the
+// links live in the same module.
+require('./routes/customer_portal')(app, pool, { requireAuth, requireAdmin });
 
 // Project lifecycle billing endpoints (unbill, mark-billed, bill-and-clone)
 // extracted to routes/project_billing.js (Track 1.3).
@@ -1301,7 +1430,11 @@ RATE STRUCTURE:
 - Design: VARIABLE - always ask for billing rate
 - Other: VARIABLE - always ask for billing rate
 
-CLIENTS: PSC (RUS), COX, IFT, TRI-CO
+CLIENTS: PSC, COX, IFT, TRI-CO
+The PSC client is the RUS-eligible one (clients.is_rus=TRUE). When a user
+says "PSC", "PSC RUS", or "RUS", they mean the PSC client. Always use the
+PSC client_id from the database context — never ask to create a "PSC RUS"
+client (it would be a duplicate).
 RUS work is PSC only. Contracts and work orders are managed manually or through the AI.
 
 BILLING CADENCE: Each project is either "one_time" (default — single invoice when complete; permitting, fixed-fee design jobs) or "monthly" (bills hours every month, project stays active across cycles; typical Inspection contracts). When a one-time project is billed, status becomes 'billed' and it closes. When a monthly project is billed, it stays active and reappears in next month's queue. Inspection-job projects default to monthly. Use set_billing_cadence to flip a project between modes.
@@ -1494,13 +1627,25 @@ const AI_TOOLS = [
   },
   {
     name: 'delete_project',
-    description: 'Delete a project and all its associated data. Call ONLY after user explicitly confirms deletion.',
+    description: 'Delete a single project and all its associated data. Call ONLY after user explicitly confirms deletion.',
     input_schema: {
       type: 'object',
       properties: {
         project_id: { type: 'string', description: 'UUID of the project to delete' }
       },
       required: ['project_id']
+    }
+  },
+  {
+    name: 'bulk_delete_projects',
+    description: 'Delete MULTIPLE projects in a single approval round. Use when the user asks to mass-delete projects matching a filter or list. Each project is deleted in the same path as delete_project (cleans up time entries, invoice items, billing batch items, permits). Returns a per-id status report. Call ONLY after the user has explicitly confirmed the delete list.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_ids: { type: 'array', items: { type: 'string' }, description: 'UUIDs of projects to delete' },
+        reason: { type: 'string', description: 'Short reason / justification (shown on the approval card)' }
+      },
+      required: ['project_ids']
     }
   },
   {
@@ -1811,6 +1956,26 @@ async function executeTool(toolName, toolInput) {
   try {
     switch (toolName) {
       case 'create_project': {
+        // Resilient client resolution: if the AI passes a name like "PSC RUS"
+        // (a colloquial alias) or "PSC" instead of a UUID, look up the row.
+        // The system prompt already disambiguates, but the database context
+        // can drift and the failure mode (FK violation → 500 → opaque error
+        // bubbled to chat) is bad UX. Aliases match the names users actually
+        // say in the wild; case-insensitive comparison.
+        let resolvedClientId = toolInput.client_id;
+        const _looksLikeUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        if (resolvedClientId && !_looksLikeUuid(resolvedClientId)) {
+          const _aliasMap = { 'psc rus': 'PSC', 'rus': 'PSC' };
+          const _key = String(resolvedClientId).trim().toLowerCase();
+          const _canonical = _aliasMap[_key] || resolvedClientId;
+          const r0 = await pool.query(
+            'SELECT id FROM clients WHERE LOWER(name) = LOWER($1) LIMIT 1', [_canonical]
+          );
+          if (!r0.rows[0]) {
+            return { success: false, error: `Client "${toolInput.client_id}" not found. Use the UUID from database context, not a name.` };
+          }
+          resolvedClientId = r0.rows[0].id;
+        }
         const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
         const { rows } = await pool.query(`
           INSERT INTO projects (
@@ -1822,7 +1987,7 @@ async function executeTool(toolName, toolInput) {
           RETURNING *
         `, [
           toolInput.name,
-          toolInput.client_id,
+          resolvedClientId,
           toolInput.contract_id || null,
           toolInput.work_order_number || null,
           toolInput.project_type,
@@ -1906,9 +2071,52 @@ async function executeTool(toolName, toolInput) {
       }
 
       case 'delete_project': {
+        // Match the route-level DELETE /api/projects/:id behavior: pull from
+        // pending billing batches first so the FK RESTRICT doesn't block.
+        await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [toolInput.project_id]);
         const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [toolInput.project_id]);
         if (!rows.length) return { success: false, error: 'Project not found' };
         return { success: true, deleted: rows[0].name };
+      }
+
+      case 'bulk_delete_projects': {
+        const ids = Array.isArray(toolInput.project_ids) ? toolInput.project_ids : [];
+        if (!ids.length) return { success: false, error: 'No project_ids provided' };
+        const results = [];
+        const deleted = [];
+        const failed = [];
+        // Best-effort per-id deletion — keep going on individual failures so the
+        // user gets a complete status report. Each success removes batch items
+        // first (RESTRICT FK) before the project row itself. We don't wrap the
+        // whole thing in a transaction: AI mass-deletes are typically across
+        // unrelated projects, and failing all because one had children would
+        // be more frustrating than skipping the bad one.
+        for (const id of ids) {
+          try {
+            await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [id]);
+            const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [id]);
+            if (rows.length) {
+              deleted.push({ id, name: rows[0].name });
+              results.push({ id, status: 'deleted', name: rows[0].name });
+            } else {
+              failed.push({ id, error: 'not found' });
+              results.push({ id, status: 'not_found' });
+            }
+          } catch (e) {
+            // Common cases: child projects (RESTRICT on parent_id), time
+            // entries (RESTRICT on project_id), or a confirmed billing batch
+            // we couldn't clear.
+            failed.push({ id, error: e.message });
+            results.push({ id, status: 'failed', error: e.message });
+          }
+        }
+        return {
+          success: failed.length === 0,
+          deleted_count: deleted.length,
+          failed_count: failed.length,
+          results,
+          reason: toolInput.reason || null,
+        };
       }
 
       case 'create_client': {
@@ -2439,7 +2647,7 @@ async function executeTool(toolName, toolInput) {
 // a "preview" payload to the frontend, and waits for the admin to click
 // Apply on each proposed action.
 const DESTRUCTIVE_AI_TOOLS = new Set([
-  'create_project', 'update_project', 'delete_project', 'update_project_status',
+  'create_project', 'update_project', 'delete_project', 'bulk_delete_projects', 'update_project_status',
   'log_time_entries',
   'create_client', 'update_client', 'delete_client',
   'create_staff', 'create_contract', 'update_contract_umbrella',
@@ -2475,6 +2683,7 @@ function summarizeToolCall(toolName, toolInput) {
     case 'create_project':            return `Create project "${i.name}"`;
     case 'update_project':            return `Update project ${i.project_id}`;
     case 'delete_project':            return `Delete project ${i.project_id}`;
+    case 'bulk_delete_projects':      return `BULK DELETE ${(i.project_ids || []).length} project${(i.project_ids || []).length === 1 ? '' : 's'}${i.reason ? ` — ${i.reason}` : ''}`;
     case 'update_project_status':     return `Set project ${i.project_id} status → "${i.status}"`;
     case 'log_time_entries':          return `Log ${(i.entries || []).length} time entries`;
     case 'create_client':             return `Create client "${i.name}"`;
@@ -2959,6 +3168,19 @@ async function bootstrapV3Schema() {
     `CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries (project_id)`,
     `CREATE INDEX IF NOT EXISTS idx_time_entries_staff_id ON time_entries (staff_id)`,
     `CREATE INDEX IF NOT EXISTS idx_time_entries_entry_date ON time_entries (entry_date)`,
+    // Held timecards: time_entries.pending_project_request_id points at a
+    // setting_change_request entity_type='project' action='create' so that
+    // when admin approves the request, all held entries can be retro-
+    // attached to the new project's id in one query. The FK lets that
+    // server.js endpoint resolve the request without a join.
+    // ON DELETE SET NULL: if the request is purged for any reason, the
+    // timecard survives as orphaned data needing manual project assignment.
+    // project_id has to drop the NOT NULL implicit on the FK definition;
+    // schema.sql already allows nulls but pre-existing v3 deploys may have
+    // tightened it via a NOT NULL added downstream — relax here just in case.
+    `ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS pending_project_request_id UUID REFERENCES setting_change_requests(id) ON DELETE SET NULL`,
+    `ALTER TABLE time_entries ALTER COLUMN project_id DROP NOT NULL`,
+    `CREATE INDEX IF NOT EXISTS idx_time_entries_pending_request ON time_entries (pending_project_request_id) WHERE pending_project_request_id IS NOT NULL`,
     `CREATE INDEX IF NOT EXISTS idx_projects_parent_id ON projects (parent_id)`,
     `CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects (client_id)`,
     `CREATE INDEX IF NOT EXISTS idx_projects_contract_id ON projects (contract_id)`,
@@ -2991,6 +3213,45 @@ async function bootstrapV3Schema() {
     `CREATE TRIGGER engineering_contracts_updated_at
        BEFORE UPDATE ON engineering_contracts
        FOR EACH ROW EXECUTE FUNCTION set_updated_at()`,
+
+    // ─── invoice_templates: reference-PDF-driven invoice generator ───────
+    // One template per (job, client). The reference PDF is uploaded once;
+    // Claude vision analyses it to produce an HTML template with
+    // {{placeholders}}; the system fills + renders to PDF on demand.
+    `CREATE TABLE IF NOT EXISTS invoice_templates (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+       client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+       name VARCHAR(160),
+       reference_pdf_path TEXT,
+       reference_pdf_filename VARCHAR(260),
+       generated_html TEXT,
+       notes TEXT,
+       analysis_status VARCHAR(20) DEFAULT 'pending',
+       analysis_error TEXT,
+       analyzed_at TIMESTAMPTZ,
+       created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       updated_at TIMESTAMPTZ DEFAULT NOW(),
+       UNIQUE (job_id, client_id)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_invoice_templates_job_client ON invoice_templates (job_id, client_id)`,
+    `DROP TRIGGER IF EXISTS invoice_templates_updated_at ON invoice_templates`,
+    `CREATE TRIGGER invoice_templates_updated_at
+       BEFORE UPDATE ON invoice_templates
+       FOR EACH ROW EXECUTE FUNCTION set_updated_at()`,
+
+    // ─── customer_clients: per-client login link table ───────────────────
+    // Maps customer-role users to the clients they can see. The customer
+    // portal scopes every endpoint through this junction so a customer
+    // can never read another client's data.
+    `CREATE TABLE IF NOT EXISTS customer_clients (
+       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+       client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       PRIMARY KEY (user_id, client_id)
+     )`,
+    `CREATE INDEX IF NOT EXISTS idx_customer_clients_client ON customer_clients (client_id)`,
 
     // Add engineering_contract_id to contracts (umbrella reference)
     `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL`,
@@ -3158,6 +3419,17 @@ async function start(opts = {}) {
   await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
   await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
   await timeclockModule.bootstrapTimeClockSchema(pool);  // staff_id + sessions + audit log
+  // Versioned migrations runner (Track 1.4) — applies anything in
+  // /migrations that isn't recorded in schema_migrations yet. Coexists
+  // with bootstrapV3Schema until the v3 ALTER soup is gradually moved
+  // into numbered migration files. Failure logs but doesn't crash boot.
+  try {
+    const { runMigrations } = require('./db_migrations');
+    const out = await runMigrations(pool);
+    if (out.applied > 0) console.log(`[migrations] applied ${out.applied} new (skipped ${out.skipped})`);
+  } catch (mErr) {
+    console.error('[migrations] failed:', mErr && mErr.message);
+  }
   // Automation scheduler — surfaces stale permits + budget burn + daily
   // digest to console; the same data is exposed via /api/automation/* for
   // the UI. Started AFTER all schemas are bootstrapped so the queries

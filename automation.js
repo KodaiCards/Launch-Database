@@ -504,7 +504,22 @@ async function buildInspectionRevenueProjection(pool, opts) {
            AND COALESCE(p.is_rollup, FALSE) = FALSE
      ),
      recent_hours AS (
-       SELECT te.project_id, COALESCE(SUM(te.hours), 0)::float AS hours_recent
+       -- Weighted-recency variant: weight = MAX(1 - age_in_weeks /
+       -- lookback, 0.2). Recent weeks count fully (1.0); the oldest
+       -- week in the window contributes ~20% and entries before the
+       -- window contribute 0. Plain SUM stays available as
+       -- hours_recent_unweighted for backward-compat checks.
+       SELECT te.project_id,
+              COALESCE(SUM(te.hours), 0)::float AS hours_recent_unweighted,
+              COALESCE(SUM(
+                te.hours *
+                GREATEST(
+                  0.2,
+                  1.0 - (
+                    EXTRACT(EPOCH FROM (CURRENT_DATE - te.entry_date)) / 86400.0 / 7.0
+                  ) / NULLIF($1::float, 0)
+                )
+              ), 0)::float AS hours_recent
          FROM time_entries te
          WHERE te.entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
          GROUP BY te.project_id
@@ -852,6 +867,7 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
       res.status(500).json({ error: 'Failed to build digest.' });
     }
   });
+
 
   // Stale permits — manager+admin (a permit lead should see their team's lag).
   app.get('/api/automation/stale-permits', requireManagerOrAdmin, async (req, res) => {

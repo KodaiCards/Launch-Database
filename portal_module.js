@@ -288,6 +288,71 @@ async function applySettingChange(pool, sr) {
       );
     }
   }
+
+  else if (entity_type === 'project') {
+    // Engineers requesting a new project from the timeclock portal go
+    // through here. Time entries logged against the request stay HELD
+    // (project_id=NULL, pending_project_request_id=sr.id) until this
+    // approval lands; when it does, every held timecard retro-attaches
+    // to the new project's id.
+    //
+    // Delete (action='delete') is the design/permitting "delete with
+    // notification" flow: portal user proposes a delete; admin approves
+    // here, falling back to /api/projects/:id/with-tree's behaviour
+    // (cascade clean of children + time entries + invoice items + permit
+    // stages + billing batch items, all RESTRICT-safe).
+    if (action === 'create') {
+      // Project create + retro-attach must be atomic. If we INSERT the
+      // project but then fail to UPDATE held time_entries, the operator
+      // ends up with the project visible but the held hours stuck in
+      // limbo (still pointing at the request, never resurfaced). Wrap
+      // both in a transaction so partial-success can't happen.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const ins = await client.query(
+          `INSERT INTO projects (name, client_id, work_order_number, project_type,
+                                 billing_type, status, notes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING id`,
+          [
+            p.name,
+            p.client_id || null,
+            p.work_order_number || null,
+            p.project_type || 'other',
+            p.billing_type || 'hourly',
+            'active',
+            p.notes || null,
+          ]
+        );
+        const newProjectId = ins.rows[0]?.id;
+        if (newProjectId && sr.id) {
+          await client.query(
+            `UPDATE time_entries
+                SET project_id = $1,
+                    pending_project_request_id = NULL
+              WHERE pending_project_request_id = $2`,
+            [newProjectId, sr.id]
+          );
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch {}
+        throw e;
+      } finally {
+        client.release();
+      }
+    } else if (action === 'delete') {
+      // Mirror the route-level project DELETE: pull from any pending
+      // billing batches first, then drop the project. RESTRICT FKs
+      // (children, time_entries) will surface as a constraint error if
+      // the project isn't a clean leaf — the admin reviewer should
+      // reject the request and tell the portal user to clear those
+      // first.
+      await pool.query('DELETE FROM billing_batch_items WHERE project_id = $1', [entity_id]);
+      await pool.query('DELETE FROM projects WHERE id = $1', [entity_id]);
+    }
+  }
 }
 
 
@@ -407,7 +472,12 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   });
 
   // ─── Below this line: portal-mode-only routes ─────────────────────────────
-  if (!isPortal) return;
+  // Customer portal has its own dedicated route module
+  // (routes/customer_portal.js) and shouldn't inherit the design /
+  // permitting team-scoped jobs/projects/clients routes — those would
+  // pollute the customer's API surface with team-shaped filters that
+  // don't apply to external clients.
+  if (!isPortal || PORTAL_MODE === 'customer') return;
 
   // Helper: stage a change as a pending proposal.
   async function proposeChange(entityType, action, entityId, payload, proposedBy, currentSnapshot = null) {
@@ -569,6 +639,39 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       const sr = await proposeChange('contract', 'create', null,
         { client_id, contract_number, name: name || null }, actorOf(req));
       res.json(proposalResponse(sr));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── PROJECT REQUESTS (timeclock add-new flow) ──────────────────────────
+  // Engineer fills out a name + WO# + client on the timeclock portal; we
+  // stage it as a setting_change_request entity_type='project' action='create'.
+  // Time entries logged against the request stay HELD (project_id=NULL,
+  // pending_project_request_id=request_id) until admin approves the
+  // request, at which point applySettingChange retro-attaches them to the
+  // newly-created project's id. On rejection, held entries surface in
+  // admin's Hours tab as orphan rows needing manual project assignment.
+  app.post('/api/portal/projects/request-create', requireAuth(), async (req, res) => {
+    const { name, work_order_number, client_id, notes, project_type, billing_type } = req.body || {};
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'Project name is required' });
+    }
+    if (!client_id) {
+      return res.status(400).json({ error: 'Client is required' });
+    }
+    try {
+      const sr = await proposeChange('project', 'create', null, {
+        name: String(name).trim(),
+        work_order_number: work_order_number || null,
+        client_id,
+        notes: notes || null,
+        // Defaults — admin can adjust on approval (the apply flow honours
+        // payload_overrides from the approve endpoint).
+        project_type: project_type || 'other',
+        billing_type: billing_type || 'hourly',
+      }, actorOf(req));
+      // Return the request id so the timeclock UI can stamp it onto held
+      // time_entries via POST /api/time-entries.
+      res.json({ ...proposalResponse(sr, 'Requested'), request_id: sr.id });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -838,18 +941,46 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
     }
   });
 
+  // Portal DELETE — design/permitting routes through the propose-and-
+  // approve flow now. Owner asked for a notification + admin sign-off
+  // path instead of direct destructive deletes from the portals (the old
+  // version dropped the project the moment the portal user clicked it,
+  // with no audit trail and no admin oversight). The timeclock portal
+  // doesn't expose a project-delete UI, so this branch only fires for
+  // design + permitting.
   app.delete('/api/projects/:id', requireAuth(), async (req, res) => {
     try {
+      // Visibility check — the portal user must be allowed to see the
+      // project before they can request its deletion.
       const vis = await pool.query(`
-        SELECT p.id FROM projects p
-        LEFT JOIN jobs j ON j.id = p.job_id
-        WHERE p.id = $1
-          AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)
+        SELECT p.id, p.name, p.client_id, p.work_order_number, p.project_type
+          FROM projects p
+          LEFT JOIN jobs j ON j.id = p.job_id
+         WHERE p.id = $1
+           AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)
       `, [req.params.id, portal]);
       if (!vis.rows.length) return res.status(404).json({ error: 'Not found' });
-      await pool.query('DELETE FROM projects WHERE id = $1', [req.params.id]);
-      res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+      const snapshot = vis.rows[0];
+
+      // Stage as a setting_change_request and surface in admin's review
+      // queue. Apply happens in applySettingChange's project/delete branch.
+      const sr = await proposeChange(
+        'project', 'delete', req.params.id,
+        { name: snapshot.name, requested_by_portal: portal },
+        actorOf(req),
+        snapshot
+      );
+      // Return 202 (Accepted) so the portal UI can distinguish "deletion
+      // queued" from "deletion happened" — useful for the toast text.
+      res.status(202).json({
+        ...proposalResponse(sr, 'Delete request sent'),
+        request_id: sr.id,
+        pending: true,
+      });
+    } catch (e) {
+      console.error('[portal:projects:delete]', e && e.message);
+      res.status(500).json({ error: e.message });
+    }
   });
 }
 

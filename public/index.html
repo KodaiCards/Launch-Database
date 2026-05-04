@@ -10,54 +10,110 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
+  /* ── Brand ────────────────────────────────────────────────── */
   --primary:#1B5FA0;
   --primary-dark:#134880;
   --primary-light:#E8F0FB;
+  --primary-text:#FFFFFF;          /* text on primary backgrounds */
+
+  /* ── Surfaces ─────────────────────────────────────────────────
+     surface-1 = page canvas, surface-2 = cards / modals,
+     surface-3 = subtle band (e.g. alternating rows, table headers).
+     The legacy --white alias is preserved so existing inline styles
+     continue to work; new code should use --surface-2 instead. */
+  --surface-1:#F5F7FA;
+  --surface-2:#FFFFFF;
+  --surface-3:#F0F0F0;
+  --white:#FFFFFF;                  /* legacy alias for --surface-2 */
+  --gray-light:#F5F7FA;             /* legacy alias for --surface-1 */
+  --row-alt:#F0F0F0;                /* legacy alias for --surface-3 */
+
+  /* ── Borders / dividers ──────────────────────────────────────
+     border-strong = visible separator; border-weak = subtle. */
+  --border-strong:#DEE2E6;
+  --border-weak:#EEF1F5;
+  --gray-border:#DEE2E6;            /* legacy alias for --border-strong */
   --gray:#6B6B6B;
-  --gray-light:#F5F7FA;
-  --gray-border:#DEE2E6;
-  --white:#FFFFFF;
-  --success:#28A745;
-  --warning:#FFC107;
-  --danger:#DC3545;
+
+  /* ── Text ────────────────────────────────────────────────────
+     text = primary, text-secondary = de-emphasized but readable,
+     text-muted = supporting captions. */
   --text:#212529;
+  --text-secondary:#495057;
   --text-muted:#6C757D;
-  --font:'Inter',sans-serif;
-  /* Alternating row bg for nested project trees. Light mode: subtle gray
-     stripe (#F0F0F0). Dark mode: a slightly-lighter shade than the page
-     bg so depth-2 rows have visual separation from depth-1. Using a CSS
-     var means inline style="background:var(--row-alt)" gets the right
-     color in both modes without attribute-substring CSS overrides — which
-     was the source of the dark-mode row flicker (the override fires after
-     the inline paint so the row briefly showed the literal #f0f0f0). */
-  --row-alt:#F0F0F0;
-  /* Chart bar bg for the Monthly Earnings Trend on the Revenue tab. In
-     light mode we use the brand light-blue. In dark mode we override to a
-     much brighter shade so bars are visible against the dark page bg
-     (the original --primary-light is too close to the dark page color
-     to register visually). */
+
+  /* ── Status colors ───────────────────────────────────────────
+     Each has a -light tinted background and a -text color sized for
+     contrast on that tint. The plain token (--success etc.) is the
+     bold/CTA color suitable for borders, badges, fills. */
+  --success:#28A745;
+  --success-light:#E8F5E9;
+  --success-text:#1B5E20;
+  --warning:#FFC107;
+  --warning-light:#FFF8E1;
+  --warning-text:#7A4F0E;
+  --danger:#DC3545;
+  --danger-light:#FDECEA;
+  --danger-text:#B71C1C;
+  --info:#1B5FA0;                   /* alias of --primary for info contexts */
+  --info-light:#E8F0FB;
+  --info-text:#0D47A1;
+
+  /* ── Misc ────────────────────────────────────────────────────
+     Chart bar bg for the Monthly Earnings Trend on the Revenue tab.
+     In light mode we use the brand light-blue. In dark mode we override
+     to a much brighter shade so bars are visible against the dark page
+     bg. */
   --chart-bar:#BBDEFB;
+  --font:'Inter',sans-serif;
 }
 
-/* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode(). */
+/* Dark mode — flips backgrounds + text. Toggle via window.toggleDarkMode().
+   Every semantic token has a dark variant so contrast works without per-
+   component overrides. The status colors shift to lighter shades that
+   read on dark backgrounds (per WCAG AA on a #1A1F26 surface). */
 html[data-theme="dark"]{
-  --gray-light:#1A1F26;
-  --gray-border:#2D3540;
-  --white:#242B36;
-  --text:#E8EAED;
-  --text-muted:#9BA1A8;
+  /* Brand */
+  --primary:#4A90D9;
+  --primary-dark:#1B5FA0;
   --primary-light:#1E3A5C;
-  --row-alt:#1F2630;
-  /* Chart bars in dark mode need to stand out against the dark page bg.
-     A muted blue-gray works visually distinct from both the page (very
-     dark blue-gray) and the brand primary (saturated blue) used for the
-     selected/highlighted bar. */
+  --primary-text:#FFFFFF;
+
+  /* Surfaces */
+  --surface-1:#1A1F26;
+  --surface-2:#242B36;
+  --surface-3:#1F2630;
+  --white:#242B36;                  /* legacy alias */
+  --gray-light:#1A1F26;             /* legacy alias */
+  --row-alt:#1F2630;                /* legacy alias */
+
+  /* Borders */
+  --border-strong:#2D3540;
+  --border-weak:#252A33;
+  --gray-border:#2D3540;            /* legacy alias */
+
+  /* Text */
+  --text:#E8EAED;
+  --text-secondary:#C2C7CD;
+  --text-muted:#9BA1A8;
+
+  /* Status — brighter shades on dark, with deep tinted backgrounds */
+  --success:#5DD27A;
+  --success-light:#1B3D24;
+  --success-text:#A5D6A7;
+  --warning:#FFCA28;
+  --warning-light:#3D2F0F;
+  --warning-text:#FFCC80;
+  --danger:#EF5350;
+  --danger-light:#3D1F23;
+  --danger-text:#F8B4BD;
+  --info:#4A90D9;
+  --info-light:#1E3A5C;
+  --info-text:#90CAF9;
+
   --chart-bar:#3D4A5C;
   /* color-scheme on the root tells the OS-rendered controls (select popups,
-     scrollbars, default form widgets) to use their dark variants. Setting
-     this on individual selects causes a flicker because the popup opens
-     before the OS color-scheme inheritance kicks in. Setting it on html
-     means every native widget renders dark from the very first paint. */
+     scrollbars, default form widgets) to use their dark variants. */
   color-scheme: dark;
 }
 html[data-theme="dark"] body{background:#0F1419}
@@ -364,20 +420,13 @@ body.ai-open .main{padding-right:360px}
 
 /* ALERTS */
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px}
-.alert-warning,.alert-warn{background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800}
-.alert-info{background:var(--primary-light);border:1px solid #BBDEFB;color:#1B4F72}
-.alert-success{background:#E8F5E9;border:1px solid #81C784;color:#1B5E20}
-/* Dark mode: light pastel backgrounds become unreadable on dark page bg.
-   Use saturated dark-mode-friendly bgs with light text for proper contrast.
-   Border colors get dimmed too so they don't dominate against the new bg. */
-html[data-theme="dark"] .alert-info{background:#1E3A5C !important;border-color:#2D4A6C !important;color:#BBDEFB !important}
-html[data-theme="dark"] .alert-info strong{color:#E3F2FD !important}
-html[data-theme="dark"] .alert-warning,
-html[data-theme="dark"] .alert-warn{background:#3D2F0F !important;border-color:#5C4520 !important;color:#FFE082 !important}
-html[data-theme="dark"] .alert-warning strong,
-html[data-theme="dark"] .alert-warn strong{color:#FFF3CD !important}
-html[data-theme="dark"] .alert-success{background:#1B3D24 !important;border-color:#2D5C36 !important;color:#A5D6A7 !important}
-html[data-theme="dark"] .alert-success strong{color:#C8E6C9 !important}
+.alert-warning,.alert-warn{background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text)}
+.alert-info{background:var(--info-light);border:1px solid var(--info);color:var(--info-text)}
+.alert-success{background:var(--success-light);border:1px solid var(--success);color:var(--success-text)}
+/* Dark-mode overrides for alerts are now unnecessary — the *-light /
+   *-text tokens carry their own dark-mode values via the :root +
+   html[data-theme="dark"] cascade. Removed eight !important rules
+   that previously fought the cascade. */
 .empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}
 .empty-state i{font-size:36px;margin-bottom:12px;opacity:.3}
 .empty-state p{font-size:14px}
@@ -396,12 +445,38 @@ html[data-theme="dark"] .alert-success strong{color:#C8E6C9 !important}
 /* DROPDOWN */
 select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 10px;font-size:13px;background:var(--white);cursor:pointer}
 
-/* PRINT */
+/* PRINT
+   Goal: when the admin prints any tab (Hours, Projects, Revenue, Billing
+   Report), the result reads like a document, not a screenshot. Force all
+   scroll containers to overflow:visible so the full content paginates,
+   open every <details>, hide chrome (nav, header, toolbars, modals,
+   drawers, undo bar, AI panel, action buttons), and let tables break
+   across pages cleanly. */
 @media print {
-  .nav,.ai-panel,.header,.btn,.modal-overlay{display:none!important}
+  .nav,.ai-panel,.header,.btn,.modal-overlay,#audit-drawer,#audit-drawer-backdrop,#lfs-undo-bar,#bill-selected-bar{display:none!important}
   .view{display:block!important;padding:0;overflow:visible}
-  .card{border:1px solid #ccc;break-inside:avoid}
-  body{background:#fff}
+  .card{border:1px solid #ccc;break-inside:avoid;box-shadow:none}
+  body{background:#fff;color:#000}
+  /* Force every scrollable region to render full content for printing —
+     scroll wheels are useless on paper / PDF. */
+  .table-wrap,.modal-body,#hours-tree-body,#hours-grouped-body{overflow:visible!important;max-height:none!important}
+  /* Force every collapsible row OPEN. The Hours / Projects / Revenue tabs
+     hide deep rows behind tree-state expand/collapse; printing should show
+     everything. Display:block beats the inline display:none. */
+  .htree,[class*="htree-"]{display:block!important}
+  details{display:block!important}
+  details > summary{list-style:none}
+  details[open]:not([open]),details:not([open]){display:block!important}
+  /* Tables: keep header rows on each page, prevent row splits, dense text. */
+  thead{display:table-header-group}
+  tr{page-break-inside:avoid}
+  table{width:100%;border-collapse:collapse;font-size:11pt}
+  /* Don't paint the header sticky / brand bands across every page edge. */
+  .section-header{display:flex;justify-content:space-between;border-bottom:1px solid #888;padding-bottom:6px;margin-bottom:10px}
+  .section-title{font-size:18pt;font-weight:700;color:#000}
+  .section-sub{font-size:9pt;color:#444}
+  /* Reasonable page margins; let the browser do the rest. */
+  @page{margin:0.5in}
 }
 
 /* RESPONSIVE */
@@ -421,11 +496,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
 <!-- Undo bar — fixed to bottom of viewport. showUndoBar() makes it visible
      with a 15s countdown; user can click Undo to replay or X to dismiss. -->
-<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:#212529;color:#fff;border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;display:flex;align-items:center;gap:14px;min-width:320px;max-width:560px">
-  <i class="fa-solid fa-trash" style="color:#FFC107"></i>
+<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
+  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)"></i>
   <span id="lfs-undo-message" style="flex:1"></span>
-  <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:#28A745;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
-  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:#fff;border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
+  <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:var(--success,#28A745);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
+  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
 </div>
 
 <!-- HEADER -->
@@ -457,7 +532,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> PSC RUS</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
-  <a class="nav-tab" data-view="audit" onclick="showView('audit')"><i class="fa-solid fa-history"></i> Time Audit</a>
+  <a class="nav-tab" data-view="clients" onclick="showView('clients')"><i class="fa-solid fa-handshake"></i> Clients</a>
   <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
   <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
 </nav>
@@ -712,6 +787,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="month" selected>Specific Month</option>
           </select>
           <input type="month" id="insp-month" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+          <label style="font-size:12px;color:var(--text-muted);margin-left:6px">Status:</label>
+          <select id="insp-status" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+            <option value="">Active + Billed</option>
+            <option value="active">Active only</option>
+            <option value="billed">Billed</option>
+            <option value="completed">Completed</option>
+            <option value="on_hold">On Hold</option>
+            <option value="all">All statuses</option>
+          </select>
           <button class="btn btn-primary btn-sm" onclick="openProjectModal('inspection')"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
       </div>
@@ -821,12 +905,24 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="calendar">📅 Calendar grid</option>
           </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-secondary btn-sm" onclick="openAuditDrawer()" title="View time-entry audit log"><i class="fa-solid fa-history"></i> Audit Log</button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
           <button class="btn btn-primary btn-sm" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
         </div>
       </div>
       <div class="stats-grid" id="hrs-stats"></div>
+      <!-- Held-timecard surface: any time_entries row with project_id=NULL
+           (typically because an engineer logged time against a pending
+           "Add New Project" request that hasn't been approved or has been
+           rejected). Each row gets [Assign Project] (opens edit modal) or
+           [Delete]. Hidden when no held rows exist. -->
+      <div id="held-timecards-panel" class="card" style="display:none;margin-bottom:14px;border-left:4px solid var(--warning,#FFC107)">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning,#FFC107)"></i> Needs Project Assignment <span id="held-timecards-count" style="margin-left:8px;color:var(--text-muted);font-weight:400"></span></span>
+        </div>
+        <div id="held-timecards-body" style="padding:0"></div>
+      </div>
       <div class="card">
         <div class="card-header"><span class="card-title" id="hrs-report-title">Hours Report</span></div>
         <div id="hours-tree-body" style="padding:0"></div>
@@ -836,69 +932,69 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
     </div>
 
-    <!-- ═══════════════════ TIME AUDIT ═══════════════════
-         Shows every change to time_entries: who did it, when, what changed.
-         Filterable by user, project, date range, and meaningful-only flag
-         (which surfaces hours/project/job changes only, hiding trivial
-         notes-only edits). Sourced from /api/_admin/timeclock-audit. -->
-    <div id="view-audit" class="view">
-      <div class="section-header">
-        <div><div class="section-title">Time Clock Audit Log</div><div class="section-sub">Every save, edit, and delete on time entries — with full before/after history</div></div>
-        <button class="btn btn-secondary btn-sm" onclick="loadAuditLog()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      </div>
-
-      <!-- Filter bar -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-body" style="padding:12px 14px">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
-            <div style="flex:1;min-width:160px">
-              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">USER</label>
-              <select id="audit-filter-user" class="filter" style="width:100%" onchange="loadAuditLog()">
-                <option value="">All users</option>
-              </select>
-            </div>
-            <div style="flex:1;min-width:160px">
-              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">FROM DATE</label>
-              <input type="date" id="audit-filter-from" class="filter" style="width:100%" onchange="loadAuditLog()">
-            </div>
-            <div style="flex:1;min-width:160px">
-              <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">TO DATE</label>
-              <input type="date" id="audit-filter-to" class="filter" style="width:100%" onchange="loadAuditLog()">
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--gray-light);border-radius:6px">
-              <input type="checkbox" id="audit-filter-meaningful" onchange="loadAuditLog()">
-              <label for="audit-filter-meaningful" style="font-size:12px;font-weight:600;color:var(--text);margin:0;cursor:pointer">Meaningful only</label>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
-            <i class="fa-solid fa-circle-info"></i> "Meaningful" = hours, project, job, or date changed. Hides notes-only edits.
-          </div>
+    <!-- ═══════════════════ TIME AUDIT DRAWER ═══════════════════
+         Surfaced from the Hours tab toolbar (was a standalone tab; the
+         audit log only ever made sense in the context of hours, so it
+         lives here now). Filters: user, project, date range, meaningful-only.
+         Backed by /api/_admin/timeclock-audit. Click an entry's eye icon to
+         drill into its full before/after history via #audit-detail-modal. -->
+    <div id="audit-drawer" style="display:none;position:fixed;top:0;right:0;height:100vh;width:min(720px,100vw);background:var(--white);box-shadow:-6px 0 24px rgba(0,0,0,.18);z-index:1200;flex-direction:column">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--gray-border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">Time Clock Audit Log</div>
+          <div style="font-size:12px;color:var(--text-muted)">Every save, edit, and delete on time entries</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="loadAuditLog()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-icon btn-secondary" onclick="closeAuditDrawer()" title="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
-
-      <!-- Audit log table -->
-      <div class="card">
-        <div class="card-header"><span class="card-title" id="audit-results-title">Audit Entries</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:140px">When</th>
-                <th style="width:140px">Actor</th>
-                <th style="width:80px">Action</th>
-                <th>Change Summary</th>
-                <th>Project</th>
-                <th style="width:90px">Source</th>
-                <th style="width:80px"></th>
-              </tr>
-            </thead>
-            <tbody id="audit-body">
-              <tr><td colspan="7" class="empty-state">Click Refresh to load the audit log.</td></tr>
-            </tbody>
-          </table>
+      <div style="padding:12px 14px;border-bottom:1px solid var(--gray-border);background:var(--gray-light)">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+          <div style="flex:1;min-width:140px">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">USER</label>
+            <select id="audit-filter-user" class="filter" style="width:100%" onchange="loadAuditLog()">
+              <option value="">All users</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">FROM</label>
+            <input type="date" id="audit-filter-from" class="filter" style="width:100%" onchange="loadAuditLog()">
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px">TO</label>
+            <input type="date" id="audit-filter-to" class="filter" style="width:100%" onchange="loadAuditLog()">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--white);border:1px solid var(--gray-border);border-radius:6px">
+            <input type="checkbox" id="audit-filter-meaningful" onchange="loadAuditLog()">
+            <label for="audit-filter-meaningful" style="font-size:12px;font-weight:600;color:var(--text);margin:0;cursor:pointer">Meaningful only</label>
+          </div>
         </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+          <i class="fa-solid fa-circle-info"></i> "Meaningful" = hours, project, job, or date changed. Hides notes-only edits.
+        </div>
+      </div>
+      <div style="flex:1;overflow:auto;padding:12px 14px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px" id="audit-results-title">Audit Entries</div>
+        <table style="width:100%;font-size:12px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:6px 4px">When</th>
+              <th style="text-align:left;padding:6px 4px">Actor</th>
+              <th style="text-align:left;padding:6px 4px">Action</th>
+              <th style="text-align:left;padding:6px 4px">Change</th>
+              <th style="text-align:left;padding:6px 4px">Project</th>
+              <th style="text-align:left;padding:6px 4px">Src</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="audit-body">
+            <tr><td colspan="7" class="empty-state" style="padding:20px;text-align:center;color:var(--text-muted)">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
+    <div id="audit-drawer-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1199" onclick="closeAuditDrawer()"></div>
 
     <!-- ═══════════════════ AUDIT DETAIL MODAL ═══════════════════
          Triggered by clicking the eye icon on an audit row. Shows the full
@@ -913,6 +1009,52 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeAuditDetailModal()">Close</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ CLIENTS (PROGRESS) ═══════════════════
+         Internal mirror of the customer portal's data. Groups every
+         project by its client and surfaces completion %, hours used vs
+         expected, days since last activity, and the latest pipeline
+         stage. Backed by /api/admin/client-progress. -->
+    <!-- ═════════════ CLIENT PROGRESS / CLIENT PORTAL — UNDER CONSTRUCTION ═════════════
+         Owner explicitly held this back: the schema, role ('customer'),
+         customer-portal HTML, and API endpoints are all wired up below
+         (see routes/customer_portal.js + public/customer.html), but
+         the UI surface — both internal Client Progress and external
+         customer view — stays inactive until the owner finalizes what
+         data should populate. Code stays in place so flipping it on
+         later is a one-commit revert of this block + customer.html. -->
+    <div id="view-clients" class="view">
+      <div class="section-header">
+        <div><div class="section-title">Clients</div><div class="section-sub">Client portal &mdash; under construction</div></div>
+      </div>
+      <div class="card" style="margin-top:14px;text-align:center;padding:48px 24px">
+        <div style="font-size:48px;color:var(--warning);margin-bottom:14px"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <h2 style="font-size:22px;color:var(--text);margin:0 0 8px 0">Under Construction</h2>
+        <p style="font-size:14px;color:var(--text-muted);max-width:520px;margin:0 auto 14px auto;line-height:1.5">
+          The client portal &mdash; both the per-client progress view here in
+          admin and the external customer-facing portal &mdash; is still being
+          designed. Schema, roles, and API endpoints are wired up; the
+          UI lights up once the owner finalizes which data should
+          surface and how.
+        </p>
+        <p style="font-size:12px;color:var(--text-muted);max-width:520px;margin:0 auto">
+          To re-enable the populated view, restore the Client Progress
+          markup &amp; the showView('clients') &rarr; loadClientProgress()
+          dispatch. Backend endpoint <code>/api/admin/client-progress</code> is
+          live and tested; <code>routes/customer_portal.js</code> handles the
+          external portal surface.
+        </p>
+      </div>
+      <!-- Hidden but kept so the existing client-progress JS doesn't
+           crash on null lookups. The data fetch runs once on first
+           click but writes into off-screen elements. -->
+      <div style="display:none">
+        <input type="search" id="cp-search">
+        <select id="cp-status-filter"></select>
+        <div id="cp-stats"></div>
+        <div id="cp-clients-body"></div>
       </div>
     </div>
 
@@ -1344,14 +1486,21 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   </div>
 </div>
 
-<!-- TIME ENTRY MODAL -->
+<!-- TIME ENTRY MODAL — used for both create AND edit. te-id holds the
+     entry id when editing; empty when creating. saveTimeEntry() switches
+     POST/PUT based on that. The "View history" link on the right of the
+     header drills into the per-entry audit history. -->
 <div class="modal-overlay" id="time-modal">
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
-      <span class="modal-title">Log Hours</span>
-      <button class="btn btn-icon btn-secondary" onclick="closeModal('time-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <span class="modal-title" id="te-modal-title">Log Hours</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-secondary btn-sm" id="te-history-btn" style="display:none" onclick="viewTimeEntryHistory()" title="View change history"><i class="fa-solid fa-history"></i> History</button>
+        <button class="btn btn-icon btn-secondary" onclick="closeModal('time-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="te-id" value="">
       <div class="form-grid">
         <div class="form-group">
           <label>Project *</label>
@@ -1385,7 +1534,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('time-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveTimeEntry()">Save</button>
+      <button class="btn btn-primary" id="te-save-btn" onclick="saveTimeEntry()">Save</button>
     </div>
   </div>
 </div>
@@ -1664,6 +1813,134 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('change-password-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="submitChangePassword()"><i class="fa-solid fa-key"></i> Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INVOICE TEMPLATE UPLOAD MODAL ═══════════════════
+     Upload a PDF reference for a (Job, Client) pair. After upload, the
+     server runs Claude vision analysis on the PDF and stores the
+     resulting HTML template. Existing template for the same (job,
+     client) is replaced — UI shows a warning if it would overwrite. -->
+<div class="modal-overlay" id="invoice-template-upload-modal" style="z-index:1100">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-file-invoice"></i> Upload Invoice Template</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('invoice-template-upload-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info" style="margin-bottom:14px;padding:10px;background:var(--info-light);color:var(--info-text);border-radius:6px;font-size:12px">
+        <i class="fa-solid fa-circle-info"></i> Upload a PDF that shows the desired invoice layout for this (Job, Client). The AI will read it and generate an HTML template. Analysis takes 15–30s; you can edit the HTML afterwards.
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Job *</label>
+            <select id="itu-job"><option value="">— Select —</option></select>
+          </div>
+          <div class="form-group">
+            <label>Client *</label>
+            <select id="itu-client"><option value="">— Select —</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Template Name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <input type="text" id="itu-name" placeholder="e.g. PSC Inspection v2">
+        </div>
+        <div class="form-group">
+          <label>Reference PDF *</label>
+          <input type="file" id="itu-file" accept=".pdf,application/pdf">
+          <span class="form-hint">Max 5 MB. Should be a complete sample of the desired layout.</span>
+        </div>
+        <div class="form-group">
+          <label>Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <textarea id="itu-notes" placeholder="Anything the AI should know about this template" rows="2"></textarea>
+        </div>
+        <div id="itu-error" style="display:none;color:var(--danger);font-size:13px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('invoice-template-upload-modal')">Cancel</button>
+      <button class="btn btn-primary" id="itu-submit-btn" onclick="submitInvoiceTemplateUpload()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Analyze</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INVOICE TEMPLATE EDIT/PREVIEW MODAL ═══════════════════
+     Lets the operator review the AI-generated HTML and edit it manually.
+     The same modal also previews a filled invoice (substitute placeholders
+     with sample data) and renders to PDF on demand. -->
+<div class="modal-overlay" id="invoice-template-edit-modal" style="z-index:1100">
+  <div class="modal" style="max-width:1100px;width:96%;display:flex;flex-direction:column;max-height:90vh">
+    <div class="modal-header" style="position:sticky;top:0;flex-shrink:0;z-index:2">
+      <span class="modal-title"><i class="fa-solid fa-pen-to-square"></i> <span id="ite-title">Edit Invoice Template</span></span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" id="ite-regenerate-btn" onclick="regenerateInvoiceTemplate()" title="Re-run AI analysis on the original PDF"><i class="fa-solid fa-rotate"></i> Re-analyze PDF</button>
+        <button class="btn btn-secondary btn-sm" id="ite-reference-btn" onclick="openReferencePdf()" title="View the original sample PDF"><i class="fa-solid fa-file-pdf"></i> View Sample</button>
+        <button class="btn btn-icon btn-secondary" onclick="closeModal('invoice-template-edit-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="modal-body" style="flex:1;overflow:auto;display:flex;gap:14px;flex-wrap:wrap">
+      <input type="hidden" id="ite-id">
+      <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Template HTML <span style="font-weight:400;color:var(--text-muted)">(use {{placeholders}} — see field reference below)</span></label>
+        <textarea id="ite-html" style="flex:1;min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;padding:10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--surface-2);color:var(--text);white-space:pre"></textarea>
+        <details style="font-size:11px;color:var(--text-muted)">
+          <summary style="cursor:pointer">Available placeholders</summary>
+          <pre style="background:var(--surface-3);padding:8px;border-radius:4px;font-size:11px;white-space:pre-wrap" id="ite-schema-doc">Loading…</pre>
+        </details>
+      </div>
+      <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Live Preview <span id="ite-preview-status" style="font-weight:400">— click Refresh after edits</span></label>
+        <div style="flex:1;min-height:420px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden;background:#fff">
+          <!-- sandbox="" denies scripts, plugins, top navigation, AND same-origin
+     access — protects against a malicious upload tricking Claude into
+     emitting <script> tags that would otherwise read parent cookies. -->
+<iframe id="ite-preview" style="width:100%;height:100%;border:0" sandbox=""></iframe>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="refreshInvoiceTemplatePreview()" type="button"><i class="fa-solid fa-rotate"></i> Refresh preview</button>
+      </div>
+    </div>
+    <div class="modal-footer" style="position:sticky;bottom:0;background:var(--surface-2);border-top:1px solid var(--gray-border);flex-shrink:0">
+      <span id="ite-status" style="margin-right:auto;font-size:12px;color:var(--text-muted);align-self:center"></span>
+      <button class="btn btn-danger" id="ite-delete-btn" onclick="deleteInvoiceTemplate()"><i class="fa-solid fa-trash"></i> Delete</button>
+      <button class="btn btn-secondary" onclick="closeModal('invoice-template-edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInvoiceTemplate()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INVOICE PREVIEW + GENERATE MODAL ═══════════════════
+     Triggered from the billing flow when generating an invoice for a
+     (job, client) that has a template uploaded. Shows the filled HTML
+     in an iframe, lets the operator hand-edit before the final PDF
+     download. Falls back to the legacy PSC RUS hardcoded path when no
+     template is available. -->
+<div class="modal-overlay" id="invoice-preview-modal" style="z-index:1100">
+  <div class="modal" style="max-width:1100px;width:96%;display:flex;flex-direction:column;max-height:90vh">
+    <div class="modal-header" style="position:sticky;top:0;flex-shrink:0;z-index:2">
+      <span class="modal-title"><i class="fa-solid fa-file-invoice-dollar"></i> Invoice Preview</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('invoice-preview-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" style="flex:1;overflow:auto;display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Filled HTML <span style="font-weight:400;color:var(--text-muted)">— edit if needed before generating PDF</span></label>
+        <textarea id="ipv-html" style="flex:1;min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;padding:10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--surface-2);color:var(--text);white-space:pre"></textarea>
+      </div>
+      <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Preview</label>
+        <div style="flex:1;min-height:420px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden;background:#fff">
+          <!-- sandbox="" — see ite-preview comment; both iframes follow the same
+     no-script, no-same-origin policy. -->
+<iframe id="ipv-preview" style="width:100%;height:100%;border:0" sandbox=""></iframe>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="refreshInvoicePreviewIframe()" type="button"><i class="fa-solid fa-rotate"></i> Refresh preview</button>
+      </div>
+    </div>
+    <div class="modal-footer" style="position:sticky;bottom:0;background:var(--surface-2);border-top:1px solid var(--gray-border);flex-shrink:0">
+      <span id="ipv-status" style="margin-right:auto;font-size:12px;color:var(--text-muted);align-self:center"></span>
+      <button class="btn btn-secondary" onclick="closeModal('invoice-preview-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="downloadInvoicePdfFromPreview()"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
     </div>
   </div>
 </div>
@@ -1958,7 +2235,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
            PSC RUS invoice summaries. -->
       <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--gray-border)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— attach to an engineering contract umbrella; set invoice-summary labels</span></span>
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Construction Contracts <span style="color:var(--text-muted);font-weight:500;text-transform:none;font-size:11px">— attach to an engineering contract umbrella; set invoice-summary labels</span></span>
           <button class="btn btn-secondary btn-sm" onclick="openAddContractForm()"><i class="fa-solid fa-plus"></i> Add Contract</button>
         </div>
         <div id="contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
@@ -1987,6 +2264,20 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Manage logins for everyone who accesses the system. Admins see everything; managers see their team's data; engineers see only their own time entries.</p>
         <div id="users-list-body" style="font-size:13px"></div>
+      </div>
+
+      <!-- ── Invoice Templates ── reference-PDF-driven generator
+           Each (Job, Client) can have a PDF sample uploaded; Claude
+           vision analyses the layout once, the system fills + renders
+           via puppeteer at billing time. Falls back to the hardcoded
+           PSC RUS pdfkit layout when no template is set. -->
+      <div class="settings-section" style="margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-file-invoice" style="margin-right:6px;color:var(--text-muted)"></i>Invoice Templates</h4>
+          <button class="btn btn-primary btn-sm" onclick="openInvoiceTemplateUploadModal()"><i class="fa-solid fa-upload"></i> Upload Template</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Upload a PDF sample of how an invoice should look for a given (Job, Client). The AI analyses the layout once and stores an HTML template; subsequent invoices fill in real data and render to PDF. You can edit the HTML or re-analyse any time.</p>
+        <div id="invoice-templates-list-body" style="font-size:13px"></div>
       </div>
 
       <!-- ── Migration tools — once-per-data-state housekeeping ── -->
@@ -2049,6 +2340,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/api.js"></script>
 <script src="/js/undo_bar.js"></script>
 <script src="/js/tree_state.js"></script>
+<script src="/js/project_picker.js"></script>
 
 <script>
 
@@ -2196,26 +2488,117 @@ async function bulkSetStatus(newStatus) {
 }
 async function bulkBill() {
   if (!bulkSelected.size) return;
-  // Defer to the existing bill-multiple flow if it's already wired up;
-  // otherwise just open the billing view with the selection pre-filled.
-  if (typeof openBulkBillModal === 'function') {
-    openBulkBillModal([...bulkSelected]);
-    return;
-  }
-  const ok = confirm(`Bill ${bulkSelected.size} project(s) now? You'll get one combined invoice per client.`);
-  if (!ok) return;
+  await openBulkBillModal([...bulkSelected]);
+}
+
+// Real review modal for the Projects-tab bulk-bill action — replaces
+// the old confirm() prompt. Shows the inferred makeup (client, eng
+// contract, projects, amounts) and gathers invoice number / date /
+// name before POSTing /api/billing/bill-multiple. Mirrors the same
+// flow the Billing tab's bill-selected-modal uses, but driven from a
+// project_ids array instead of pre-staged line items.
+async function openBulkBillModal(projectIds) {
+  if (!Array.isArray(projectIds) || !projectIds.length) return;
+  // Fetch makeup so the review shows real numbers.
+  let makeup = null;
   try {
-    const res = await api('/api/billing/bill-multiple', {
-      method: 'POST',
-      body: JSON.stringify({ project_ids: [...bulkSelected] }),
+    makeup = await api('/api/invoices/preview-makeup', 'POST', { project_ids: projectIds });
+  } catch (e) {
+    return alert('Failed to assemble bill: ' + e.message);
+  }
+  const m = (makeup && makeup.makeup) || {};
+  const conflicts = (makeup && makeup.conflicts) || [];
+  const projects = (makeup && makeup.projects) || [];
+  const total = projects.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+
+  const today = new Date().toISOString().split('T')[0];
+  const existing = document.getElementById('bulk-bill-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'bulk-bill-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-solid fa-file-invoice-dollar"></i> Bill ${projectIds.length} project${projectIds.length === 1 ? '' : 's'} as one invoice</span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('bulk-bill-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        ${conflicts.length ? `
+          <div style="background:var(--warning-light,#FFF3E0);border-left:4px solid var(--warning,#F0A500);padding:10px 14px;border-radius:6px;margin-bottom:14px">
+            <div style="font-weight:600;color:var(--warning-text,#e65100);margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't bill yet — fix these first:</div>
+            <ul style="margin:6px 0 0 20px;padding:0;font-size:13px">
+              ${conflicts.map(c => `<li>${esc(c)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        <div style="background:var(--gray-light);padding:12px 14px;border-radius:8px;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px">
+            <div style="color:var(--text-muted)">Client</div><div><strong>${esc(m.client_name || '—')}</strong></div>
+            <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}</div>
+            <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}</div>
+            <div style="color:var(--text-muted)">Projects</div><div>${projects.length}</div>
+            <div style="color:var(--text-muted)">Total</div><div style="font-weight:700;color:var(--success-text,var(--success))">${fmtMoney(total)}</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Invoice Number *</label>
+              <input type="text" id="bbm-inv-number" placeholder="e.g. 2026-04-001">
+            </div>
+            <div class="form-group">
+              <label>Invoice Date</label>
+              <input type="date" id="bbm-inv-date" value="${today}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Invoice Name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <input type="text" id="bbm-inv-name" placeholder="e.g. Construction Inspection — April 2026">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('bulk-bill-modal').remove()">Cancel</button>
+        <button class="btn btn-primary" id="bbm-confirm-btn" onclick="confirmBulkBill(${JSON.stringify(projectIds).replace(/"/g, '&quot;')})" ${conflicts.length ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+          <i class="fa-solid fa-check"></i> Create Invoice
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  setTimeout(() => document.getElementById('bbm-inv-number')?.focus(), 50);
+}
+
+async function confirmBulkBill(projectIds) {
+  const invoice_number = document.getElementById('bbm-inv-number').value.trim();
+  const invoice_date = document.getElementById('bbm-inv-date').value || new Date().toISOString().split('T')[0];
+  const invoice_name = document.getElementById('bbm-inv-name').value.trim() || null;
+  if (!invoice_number) return alert('Invoice number is required.');
+  const btn = document.getElementById('bbm-confirm-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Billing...';
+  try {
+    const res = await api('/api/billing/bill-multiple', 'POST', {
+      project_ids: projectIds,
+      invoice_number, invoice_date, invoice_name,
     });
-    const msg = `Created ${res.invoices_created || res.created || '?'} invoice(s).`;
-    if (window.LFS && window.LFS.toast) window.LFS.toast.success(msg);
+    document.getElementById('bulk-bill-modal').remove();
+    if (window.LFS && window.LFS.toast) {
+      window.LFS.toast.success(`Invoice ${invoice_number} created${res.total ? ' for ' + fmtMoney(res.total) : ''}.`);
+    } else {
+      alert(`Invoice ${invoice_number} created.`);
+    }
     bulkClearSelection();
     if (typeof loadProjects === 'function') loadProjects();
+    if (typeof loadBilling === 'function') loadBilling();
+    if (typeof loadDashboard === 'function') loadDashboard();
   } catch (e) {
-    if (window.LFS && window.LFS.toast) window.LFS.toast.error('Bulk bill failed: ' + (e.message||e));
-    else alert('Bulk bill failed: ' + (e.message||e));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Create Invoice';
+    alert('Bulk bill failed: ' + (e.message || e));
   }
 }
 
@@ -2293,7 +2676,10 @@ function showView(view) {
   if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
   if (view==='hours') loadHours();
-  if (view==='audit') loadAuditLog();
+  // 'clients' tab is under construction — owner unwired the data fetch
+  // until the portal UI is finalized. Keep the dispatch line nearby so
+  // re-enabling is a one-line edit (uncomment + ship).
+  // if (view==='clients') loadClientProgress();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
 }
@@ -2312,6 +2698,44 @@ function showView(view) {
 // once on first audit-view open.
 
 let auditUsersLoaded = false;
+
+// Drawer open/close. Defaults the date range to the Hours tab's currently
+// selected month so the drawer's first view matches what the admin is
+// looking at on the page behind it.
+function openAuditDrawer() {
+  const drawer = document.getElementById('audit-drawer');
+  const backdrop = document.getElementById('audit-drawer-backdrop');
+  if (!drawer || !backdrop) return;
+  drawer.style.display = 'flex';
+  backdrop.style.display = 'block';
+  // Pre-fill from + to from Hours tab filters when empty (don't clobber a
+  // range the admin already picked inside the drawer).
+  try {
+    const fromEl = document.getElementById('audit-filter-from');
+    const toEl = document.getElementById('audit-filter-to');
+    const period = document.getElementById('hrs-period')?.value || 'month';
+    const m = parseInt(document.getElementById('hrs-month')?.value || '0', 10);
+    const y = parseInt(document.getElementById('hrs-year')?.value || '0', 10);
+    if (fromEl && !fromEl.value && y) {
+      if (period === 'ytd') {
+        fromEl.value = `${y}-01-01`;
+        if (toEl && !toEl.value) toEl.value = `${y}-12-31`;
+      } else if (m) {
+        const last = new Date(y, m, 0).getDate();
+        fromEl.value = `${y}-${String(m).padStart(2,'0')}-01`;
+        if (toEl && !toEl.value) toEl.value = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+      }
+    }
+  } catch {}
+  loadAuditLog();
+}
+
+function closeAuditDrawer() {
+  const drawer = document.getElementById('audit-drawer');
+  const backdrop = document.getElementById('audit-drawer-backdrop');
+  if (drawer) drawer.style.display = 'none';
+  if (backdrop) backdrop.style.display = 'none';
+}
 
 async function loadAuditLog() {
   // First load: populate the user filter dropdown
@@ -2359,22 +2783,16 @@ async function loadAuditLog() {
     return;
   }
 
-  // Action color coding — created=green, updated=blue, deleted=red.
-  // Helps admin scan the column at a glance.
-  const ACTION_STYLES = {
-    created: 'background:#E8F5E9;color:#1B5E20',
-    updated: 'background:#E3F2FD;color:#0D47A1',
-    deleted: 'background:#FFEBEE;color:#B71C1C',
-    restored: 'background:#FFF3E0;color:#E65100',
+  // Action color coding — created=green, updated=blue, deleted=red,
+  // restored=orange. Tokens carry their own dark-mode values, so a
+  // single style map works in both themes; the explicit ACTION_DARK
+  // override is no longer needed.
+  const styles = {
+    created: 'background:var(--success-light);color:var(--success-text)',
+    updated: 'background:var(--info-light);color:var(--info-text)',
+    deleted: 'background:var(--danger-light);color:var(--danger-text)',
+    restored: 'background:var(--warning-light);color:var(--warning-text)',
   };
-  const ACTION_DARK = {
-    created: 'background:#1B3D24;color:#A5D6A7',
-    updated: 'background:#1E3A5C;color:#90CAF9',
-    deleted: 'background:#3D1F23;color:#F8B4BD',
-    restored: 'background:#3D2F0F;color:#FFCC80',
-  };
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const styles = isDark ? ACTION_DARK : ACTION_STYLES;
 
   tbody.innerHTML = rows.map(r => {
     const when = new Date(r.at);
@@ -2995,9 +3413,9 @@ function renderPrintPdfBody(result) {
   let html = '';
   // Conflicts (if any) — block PDF generation
   if (result.conflicts && result.conflicts.length) {
-    html += `<div style="background:#FFF3E0;border-left:4px solid #F0A500;padding:10px 14px;border-radius:6px;margin-bottom:14px">
-      <div style="font-weight:600;color:#e65100;margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't generate yet — fix these first:</div>
-      <ul style="margin:6px 0 0 20px;padding:0;font-size:13px;color:#222">
+    html += `<div style="background:var(--warning-light);border-left:4px solid var(--warning);padding:10px 14px;border-radius:6px;margin-bottom:14px">
+      <div style="font-weight:600;color:var(--warning-text);margin-bottom:4px"><i class="fa-solid fa-triangle-exclamation"></i> Can't generate yet — fix these first:</div>
+      <ul style="margin:6px 0 0 20px;padding:0;font-size:13px;color:var(--text)">
         ${result.conflicts.map(c => `<li>${esc(c)}</li>`).join('')}
       </ul>
     </div>`;
@@ -3009,7 +3427,7 @@ function renderPrintPdfBody(result) {
       <div style="color:var(--text-muted)">Client</div><div><strong>${esc(m.client_name || '—')}</strong></div>
       <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}${m.loan_name ? ` <span style="color:var(--text-muted)">· loan: ${esc(m.loan_name)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}${m.job_billing_code ? ` <span style="font-family:monospace;color:var(--text-muted)">${esc(m.job_billing_code)}</span>` : ''}</div>
-      <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:#E3F2FD;color:#0d47a1;padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:#E8F5E9;color:#1b5e20;padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
+      <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:var(--info-light);color:var(--info-text);padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:var(--success-light);color:var(--success-text);padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
       <div style="color:var(--text-muted)">Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
       <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
       <div style="color:var(--text-muted)">Billing Month</div>
@@ -3087,8 +3505,45 @@ async function printPdfGenerate() {
   const range = monthVal ? billingMonthToRange(monthVal) : null;
   if (!range) return alert('Pick a billing month first.');
   const btn = document.querySelector('#print-pdf-footer .btn-primary');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking template…'; }
   try {
+    // Step 1 — check whether a (job, client) template is uploaded for this
+    // selection. If so, the operator gets the editable HTML preview path
+    // instead of the legacy hardcoded layout.
+    let tplResp = null;
+    try {
+      const r = await fetch('/api/invoices/preview-from-projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          project_ids: state.project_ids,
+          period_start: range.start,
+          period_end: range.end,
+        }),
+      });
+      if (r.ok) tplResp = await r.json();
+    } catch { /* fall through to legacy path */ }
+
+    if (tplResp && tplResp.has_template) {
+      // Open the preview modal for editing + final render. Close the
+      // current print-pdf modal so the user isn't behind two layers.
+      closeModal('print-pdf-modal');
+      document.getElementById('ipv-html').value = tplResp.html || '';
+      document.getElementById('ipv-status').textContent =
+        'Loaded from template — edit HTML if needed, then Download PDF.';
+      refreshInvoicePreviewIframe();
+      openModal('invoice-preview-modal');
+      // After the PDF renders successfully, the operator clicks Confirm
+      // Billed / Save Batch from the legacy print-pdf modal we just
+      // closed. To keep that flow alive, expose the post-actions when the
+      // user closes the preview modal.
+      window._postPreviewState = state;
+      return;
+    }
+
+    // Step 2 — legacy hardcoded path. Same call as before.
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…';
     const resp = await fetch('/api/invoices/generate-pdf-from-projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3122,9 +3577,9 @@ function renderPrintPdfAfterActions() {
   const state = window._printPdfState || {};
   const total = (state.items || []).reduce((s, it) => s + (it.amount || 0), 0);
   body.innerHTML = `
-    <div style="padding:14px;background:#E8F5E9;border-radius:8px;margin-bottom:14px;border-left:4px solid #28A745">
-      <div style="font-weight:600;color:#1b5e20"><i class="fa-solid fa-circle-check"></i> PDF generated — opened in a new tab.</div>
-      <div style="margin-top:6px;font-size:13px;color:#222">${state.project_ids.length} project${state.project_ids.length !== 1 ? 's' : ''} · ${fmtMoney(total)}</div>
+    <div style="padding:14px;background:var(--success-light);border-radius:8px;margin-bottom:14px;border-left:4px solid var(--success)">
+      <div style="font-weight:600;color:var(--success-text)"><i class="fa-solid fa-circle-check"></i> PDF generated — opened in a new tab.</div>
+      <div style="margin-top:6px;font-size:13px;color:var(--text)">${state.project_ids.length} project${state.project_ids.length !== 1 ? 's' : ''} · ${fmtMoney(total)}</div>
     </div>
     <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px 0">Choose what to do with this batch:</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -3479,7 +3934,7 @@ async function loadInspectionProjection() {
       </thead>
       <tbody>
         ${rows.map(r => {
-          const exhaustBg = r.will_exhaust_budget ? 'background:#FFF3E0;' : '';
+          const exhaustBg = r.will_exhaust_budget ? 'background:var(--warning-light);' : '';
           const headline = esc(r.engineering_contract_name || 'Engineering contract');
           const subBits = [esc(r.client_name || '—')];
           if (r.loan_name) subBits.push(`loan: ${esc(r.loan_name)}`);
@@ -3558,6 +4013,30 @@ function applyDashboardLayout() {
       el.style.display = '';
     }
   });
+  // Reorder: walk widgets in their stored order and re-append to their
+  // shared parent in that sequence. Widgets without a stored order keep
+  // their original document order at the end (sort is stable).
+  const widgets = [...document.querySelectorAll('.lfs-widget')];
+  if (!widgets.length) return;
+  // Group widgets by parent node — different siblings may live in
+  // different containers (e.g. inside .stats-grid vs .card siblings)
+  // and we don't want to mix them across containers.
+  const byParent = new Map();
+  widgets.forEach(el => {
+    const parent = el.parentElement;
+    if (!byParent.has(parent)) byParent.set(parent, []);
+    byParent.get(parent).push(el);
+  });
+  for (const [parent, els] of byParent) {
+    els.sort((a, b) => {
+      const ao = (_dashLayout[a.getAttribute('data-widget-id')] || {}).order;
+      const bo = (_dashLayout[b.getAttribute('data-widget-id')] || {}).order;
+      const av = (ao == null) ? Number.POSITIVE_INFINITY : ao;
+      const bv = (bo == null) ? Number.POSITIVE_INFINITY : bo;
+      return av - bv;
+    });
+    for (const el of els) parent.appendChild(el);
+  }
 }
 async function saveDashboardLayout() {
   try {
@@ -3569,15 +4048,23 @@ async function saveDashboardLayout() {
 function toggleDashboardCustomize() {
   _dashCustomizeOn = !_dashCustomizeOn;
   if (_dashCustomizeOn) {
-    if (window.LFS && window.LFS.toast) window.LFS.toast.info('Click any widget to hide / show. Click Customize again when done.');
+    if (window.LFS && window.LFS.toast) window.LFS.toast.info('Drag widgets to reorder. Click the eye icon to hide / show. Click Customize again when done.');
     document.querySelectorAll('.lfs-widget').forEach(el => {
       const id = el.getAttribute('data-widget-id');
-      el.style.outline = '2px dashed var(--primary,#1B5FA0)';
+      el.style.outline = '2px dashed var(--primary)';
       el.style.outlineOffset = '4px';
-      el.style.cursor = 'pointer';
+      el.style.cursor = 'grab';
       el.style.opacity = (_dashLayout[id] && _dashLayout[id].hidden) ? '0.4' : '1';
       el.style.display = '';  // show even hidden ones in customize mode
-      el.addEventListener('click', _dashCustomizeClick);
+      el.draggable = true;
+      // Inject a small toolbar at the top-right of the widget so the
+      // hide/show toggle is unambiguous (clicking the bg used to toggle
+      // visibility, which made dragging hard).
+      _dashEnsureToolbar(el);
+      el.addEventListener('dragstart', _dashDragStart);
+      el.addEventListener('dragover', _dashDragOver);
+      el.addEventListener('drop', _dashDrop);
+      el.addEventListener('dragend', _dashDragEnd);
     });
   } else {
     document.querySelectorAll('.lfs-widget').forEach(el => {
@@ -3585,20 +4072,92 @@ function toggleDashboardCustomize() {
       el.style.outlineOffset = '';
       el.style.cursor = '';
       el.style.opacity = '';
-      el.removeEventListener('click', _dashCustomizeClick);
+      el.draggable = false;
+      el.removeEventListener('dragstart', _dashDragStart);
+      el.removeEventListener('dragover', _dashDragOver);
+      el.removeEventListener('drop', _dashDrop);
+      el.removeEventListener('dragend', _dashDragEnd);
+      _dashRemoveToolbar(el);
     });
     applyDashboardLayout();
     saveDashboardLayout();
   }
 }
-function _dashCustomizeClick(e) {
-  e.stopPropagation();
-  e.preventDefault();
-  const el = e.currentTarget;
+
+function _dashEnsureToolbar(el) {
+  if (el.querySelector('.lfs-widget-toolbar')) return;
   const id = el.getAttribute('data-widget-id');
-  if (!_dashLayout[id]) _dashLayout[id] = {};
-  _dashLayout[id].hidden = !_dashLayout[id].hidden;
-  el.style.opacity = _dashLayout[id].hidden ? '0.4' : '1';
+  const isHidden = _dashLayout[id] && _dashLayout[id].hidden;
+  const tb = document.createElement('div');
+  tb.className = 'lfs-widget-toolbar';
+  tb.style.cssText = 'position:absolute;top:6px;right:6px;z-index:5;display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--gray-border);border-radius:6px;padding:2px';
+  tb.innerHTML = `
+    <button title="${isHidden ? 'Show' : 'Hide'}" style="background:transparent;border:0;cursor:pointer;padding:4px 6px;color:var(--text);font-size:12px"><i class="fa-solid fa-${isHidden ? 'eye-slash' : 'eye'}"></i></button>
+    <span style="color:var(--text-muted);font-size:11px;align-self:center;padding:0 4px"><i class="fa-solid fa-grip-vertical"></i> drag</span>
+  `;
+  // Make sure the parent is positioned so absolute placement anchors right.
+  const pos = window.getComputedStyle(el).position;
+  if (pos === 'static') el.style.position = 'relative';
+  tb.querySelector('button').addEventListener('click', (e) => {
+    e.stopPropagation(); e.preventDefault();
+    if (!_dashLayout[id]) _dashLayout[id] = {};
+    _dashLayout[id].hidden = !_dashLayout[id].hidden;
+    el.style.opacity = _dashLayout[id].hidden ? '0.4' : '1';
+    const ic = tb.querySelector('i');
+    ic.className = _dashLayout[id].hidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  });
+  el.appendChild(tb);
+}
+function _dashRemoveToolbar(el) {
+  const tb = el.querySelector('.lfs-widget-toolbar');
+  if (tb) tb.remove();
+}
+
+let _dashDraggingId = null;
+function _dashDragStart(e) {
+  const id = e.currentTarget.getAttribute('data-widget-id');
+  _dashDraggingId = id;
+  e.currentTarget.style.opacity = '0.4';
+  try { e.dataTransfer.setData('text/plain', id); e.dataTransfer.effectAllowed = 'move'; } catch {}
+}
+function _dashDragOver(e) {
+  // preventDefault is required to allow drop. The visual cue is the
+  // outline change on the dragover target.
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.outline = '2px solid var(--primary)';
+}
+function _dashDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  const targetId = target.getAttribute('data-widget-id');
+  target.style.outline = '2px dashed var(--primary)';
+  if (!_dashDraggingId || _dashDraggingId === targetId) return;
+  // Reorder DOM: insert dragging element before target (or after if it
+  // was already before). Persist the resulting order in _dashLayout.
+  const dragging = document.querySelector(`.lfs-widget[data-widget-id="${_dashDraggingId}"]`);
+  if (!dragging || !target) return;
+  if (dragging.parentElement !== target.parentElement) return; // can't cross containers
+  const siblings = [...target.parentElement.children].filter(el => el.classList.contains('lfs-widget'));
+  const draggingIndex = siblings.indexOf(dragging);
+  const targetIndex = siblings.indexOf(target);
+  if (draggingIndex < targetIndex) {
+    target.parentElement.insertBefore(dragging, target.nextSibling);
+  } else {
+    target.parentElement.insertBefore(dragging, target);
+  }
+  // Re-stamp order on every sibling to keep the numbers dense.
+  const updated = [...target.parentElement.children].filter(el => el.classList.contains('lfs-widget'));
+  updated.forEach((el, idx) => {
+    const id = el.getAttribute('data-widget-id');
+    if (!_dashLayout[id]) _dashLayout[id] = {};
+    _dashLayout[id].order = idx;
+  });
+}
+function _dashDragEnd(e) {
+  e.currentTarget.style.opacity = (_dashLayout[e.currentTarget.getAttribute('data-widget-id')] || {}).hidden ? '0.4' : '1';
+  document.querySelectorAll('.lfs-widget').forEach(el => { el.style.outline = '2px dashed var(--primary)'; });
+  _dashDraggingId = null;
 }
 window.addEventListener('load', () => loadDashboardLayout());
 
@@ -3821,10 +4380,22 @@ async function loadProjects() {
   if (type) q += `type=${type}&`;
   allProjects = await api(q);
   renderProjects(allProjects);
-  // Also populate time entry project dropdown
+  // Time entry project dropdown — leaves only via the shared picker
+  // helper. Picking a rollup never made sense (you can't log time
+  // against a folder); restricting to leaves is the same UX the
+  // portals have used since the start.
   const tp = document.getElementById('te-project');
-  while (tp.options.length > 1) tp.remove(1);
-  allProjects.forEach(p => tp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+  if (tp && typeof populateProjectPicker === 'function') {
+    populateProjectPicker(tp, allProjects, {
+      placeholder: 'Select project...',
+      group_by_client: true,
+    });
+  } else if (tp) {
+    // Fallback if the helper hasn't loaded — keep the legacy behavior
+    // rather than break the modal.
+    while (tp.options.length > 1) tp.remove(1);
+    allProjects.forEach(p => tp.add(new Option(`${p.name} (${p.client_name||''})`, p.id)));
+  }
   // Populate parent project dropdown — allow top-level AND mid-level as parents
   populateParentDropdown(null);
 }
@@ -4847,7 +5418,7 @@ async function markBilled(id) {
       </div>
     </div>
     ${isOngoing ? `
-      <div style="background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800;padding:10px 14px;border-radius:8px;margin-top:14px;font-size:13px">
+      <div style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:10px 14px;border-radius:8px;margin-top:14px;font-size:13px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="bv-create-follow-on" checked style="width:auto">
           <span><strong>Create follow-on project</strong> for ongoing work after this billing</span>
@@ -5541,7 +6112,9 @@ async function loadInspection() {
   }
   const period = document.getElementById('insp-period').value;
   const month = monthInput?.value || '';
-  const qs = period === 'month' && month ? `?period=month&month=${month}` : `?period=ytd`;
+  const statusFilter = document.getElementById('insp-status')?.value || '';
+  let qs = period === 'month' && month ? `?period=month&month=${month}` : `?period=ytd`;
+  if (statusFilter) qs += `&status=${encodeURIComponent(statusFilter)}`;
 
   let data;
   try {
@@ -5609,6 +6182,134 @@ async function toggleOngoing(projectId, isOngoing) {
 // ═══════════════════════════════════════════════════════════
 // HOURS
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// CLIENT PROGRESS (admin internal view)
+// ═══════════════════════════════════════════════════════════
+//
+// Mirrors /api/customer/projects but unscoped — admin sees every
+// client. Each client gets a collapsible card with stat tiles at the
+// top of the tab and a project list inside. Supports text search +
+// status filter (active / stale / completed / billed).
+
+let _clientProgressData = null;
+
+async function loadClientProgress() {
+  const root = document.getElementById('cp-clients-body');
+  if (root && !_clientProgressData) {
+    root.innerHTML = '<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+  }
+  try {
+    _clientProgressData = await api('/api/admin/client-progress');
+    renderClientProgress();
+  } catch (e) {
+    if (root) root.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderClientProgress() {
+  if (!_clientProgressData) return;
+  const root = document.getElementById('cp-clients-body');
+  const stats = document.getElementById('cp-stats');
+  const search = (document.getElementById('cp-search')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('cp-status-filter')?.value || '';
+
+  // Apply filters at the project level so a client with no matching
+  // projects is hidden entirely.
+  const groups = (_clientProgressData.clients || []).map(g => {
+    let projects = g.projects;
+    if (statusFilter === 'stale') {
+      projects = projects.filter(p => p.status === 'active' && p.days_since_activity != null && p.days_since_activity > 30);
+    } else if (statusFilter) {
+      projects = projects.filter(p => p.status === statusFilter);
+    }
+    if (search) {
+      projects = projects.filter(p =>
+        (p.name || '').toLowerCase().includes(search) ||
+        (p.work_order_number || '').toLowerCase().includes(search) ||
+        (g.client_name || '').toLowerCase().includes(search)
+      );
+    }
+    return { ...g, projects };
+  }).filter(g => g.projects.length);
+
+  // Tab-level totals
+  const totals = groups.reduce((acc, g) => {
+    acc.clients += 1;
+    acc.projects += g.projects.length;
+    acc.active += g.projects.filter(p => p.status === 'active').length;
+    acc.stale += g.projects.filter(p => p.status === 'active' && p.days_since_activity != null && p.days_since_activity > 30).length;
+    acc.hours += g.projects.reduce((s, p) => s + (parseFloat(p.actual_hours) || 0), 0);
+    acc.expected_hours += g.projects.reduce((s, p) => s + (parseFloat(p.expected_hours) || 0), 0);
+    return acc;
+  }, { clients: 0, projects: 0, active: 0, stale: 0, hours: 0, expected_hours: 0 });
+  const overallPct = totals.expected_hours > 0
+    ? Math.min(100, Math.round((totals.hours / totals.expected_hours) * 100))
+    : null;
+
+  if (stats) stats.innerHTML = [
+    `<div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value">${totals.clients}</div></div>`,
+    `<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">${totals.active}</div><div class="stat-sub" style="font-size:11px;color:var(--text-muted)">of ${totals.projects} total</div></div>`,
+    `<div class="stat-card${totals.stale ? '' : ''}" style="${totals.stale ? 'border-left:4px solid var(--warning)' : ''}"><div class="stat-label">Stale (&gt; 30d)</div><div class="stat-value">${totals.stale}</div></div>`,
+    `<div class="stat-card"><div class="stat-label">Hours used</div><div class="stat-value">${(totals.hours||0).toLocaleString('en-US',{maximumFractionDigits:0})}</div>${overallPct != null ? `<div style="font-size:11px;color:var(--text-muted)">${overallPct}% of expected</div>` : ''}</div>`,
+  ].join('');
+
+  if (!groups.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-handshake"></i><p>No projects match the current filters.</p></div>';
+    return;
+  }
+
+  root.innerHTML = groups.map(g => {
+    const pct = g.total_expected_hours > 0
+      ? Math.min(100, Math.round((g.total_hours / g.total_expected_hours) * 100))
+      : null;
+    const staleBadge = g.stale_count
+      ? `<span style="background:var(--warning-light);color:var(--warning-text);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;margin-left:8px">${g.stale_count} stale</span>`
+      : '';
+    return `<div class="card" style="margin-bottom:14px">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-building" style="color:var(--text-muted);margin-right:6px"></i>${esc(g.client_name)}${staleBadge}</span>
+        <span style="font-size:12px;color:var(--text-muted)">${g.projects.length} project${g.projects.length === 1 ? '' : 's'} · ${g.total_hours.toLocaleString('en-US',{maximumFractionDigits:1})} hrs${pct != null ? ` · ${pct}% of expected` : ''}</span>
+      </div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="background:var(--surface-1)">
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Status</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Pipeline</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">% Done</th>
+          <th style="padding:6px 10px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Last Activity</th>
+        </tr></thead>
+        <tbody>
+          ${g.projects.map(p => {
+            const status = String(p.status || 'active').toLowerCase();
+            const statusClass =
+              status === 'active' ? 'background:var(--info-light);color:var(--info-text)' :
+              status === 'completed' ? 'background:var(--success-light);color:var(--success-text)' :
+              status === 'billed' ? 'background:var(--success);color:#fff' :
+              status === 'on_hold' ? 'background:var(--warning-light);color:var(--warning-text)' :
+              'background:var(--surface-1);color:var(--text)';
+            const isStale = status === 'active' && p.days_since_activity != null && p.days_since_activity > 30;
+            const dsa = p.days_since_activity == null ? '—' :
+              p.days_since_activity === 0 ? 'today' :
+              p.days_since_activity === 1 ? 'yesterday' :
+              `${p.days_since_activity} days ago`;
+            return `<tr style="border-top:1px solid var(--gray-border);${isStale ? 'background:var(--warning-light)' : ''};cursor:pointer" onclick="showProjectDetail('${esc(p.id)}')">
+              <td style="padding:6px 10px;font-weight:500">${esc(p.name)}${p.work_order_number ? `<br><span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(p.work_order_number)}</span>` : ''}</td>
+              <td style="padding:6px 10px">${esc(p.job_name || '—')}</td>
+              <td style="padding:6px 10px"><span style="${statusClass};padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase">${esc(status.replace('_',' '))}</span></td>
+              <td style="padding:6px 10px;color:var(--text-muted);font-size:12px">${esc(p.pipeline_stage || '—')}</td>
+              <td style="padding:6px 10px;text-align:right">${(parseFloat(p.actual_hours)||0).toLocaleString('en-US',{maximumFractionDigits:1})}${p.expected_hours ? ` <span style="color:var(--text-muted);font-size:11px">/ ${(parseFloat(p.expected_hours)||0).toLocaleString('en-US',{maximumFractionDigits:0})}</span>` : ''}</td>
+              <td style="padding:6px 10px;text-align:right">${p.completion_pct != null ? `<span style="font-weight:600">${p.completion_pct}%</span>` : '—'}</td>
+              <td style="padding:6px 10px;text-align:right;color:${isStale ? 'var(--warning-text)' : 'var(--text-muted)'};font-size:12px">${esc(dsa)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
 async function loadHours() {
   const period = document.getElementById('hrs-period')?.value || 'month';
   const m = document.getElementById('hrs-month').value;
@@ -5624,7 +6325,7 @@ async function loadHours() {
   } else {
     qs = `month=${m}&year=${y}`;
   }
-  const entries = await api(`/api/time-entries?${qs}`);
+  let entries = await api(`/api/time-entries?${qs}`);
   const periodLabel = period === 'ytd'
     ? `YTD ${y}`
     : new Date(y, m-1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -5642,6 +6343,20 @@ async function loadHours() {
   const container = document.getElementById('hours-tree-body');
   const grouped = document.getElementById('hours-grouped-body');
   const groupBy = document.getElementById('hrs-groupby')?.value || 'project';
+
+  // Held timecards: rows with no real project (engineer logged time
+  // against a "+ Add New" request that's still pending or got rejected).
+  // Surface them in the warning panel above the tree so admin can assign
+  // a real project or delete the row. Filter them out of the regular
+  // entries list so they don't also appear under a "No Project" group.
+  // ── stash held rows in the entry-by-id map up front, BEFORE the
+  // tree-rendering loop replaces it; the held panel's [pencil] button
+  // looks up by id, and skipping this leaves held rows un-editable.
+  const heldEntries = entries.filter(e => !e.project_id);
+  _hoursEntriesById.clear();
+  for (const e of heldEntries) _hoursEntriesById.set(String(e.id), e);
+  renderHeldTimecardsPanel(heldEntries);
+  entries = entries.filter(e => !!e.project_id);
 
   if (!entries.length) {
     container.style.display = '';
@@ -5687,27 +6402,39 @@ async function loadHours() {
         const t = new Date();
         return t.getFullYear() === yr && (t.getMonth() + 1) === mo && t.getDate() === d;
       })();
-      // Highlight: weekday with no hours = red flag (likely forgotten),
-      // weekday with low hours = yellow, normal = white, today gets a border.
-      let bg = '#fff', border = '1px solid var(--gray-border)';
-      if (!isWeekend && hours === 0) { bg = '#FDECEA'; }
-      else if (!isWeekend && hours < 4) { bg = '#FFF8E1'; }
-      else if (hours > 0) { bg = '#E8F5E9'; }
-      if (isToday) border = '2px solid var(--primary,#1B5FA0)';
+      // Highlight: weekday with no hours = danger tint (likely forgotten),
+      // weekday with low hours = warning tint, normal = success tint,
+      // today gets a primary border. All via the token system so dark
+      // mode + custom themes get the right shades automatically.
+      let bg = 'var(--surface-2)', border = '1px solid var(--gray-border)';
+      if (!isWeekend && hours === 0) { bg = 'var(--danger-light)'; }
+      else if (!isWeekend && hours < 4) { bg = 'var(--warning-light)'; }
+      else if (hours > 0) { bg = 'var(--success-light)'; }
+      if (isToday) border = '2px solid var(--primary)';
       const isFuture = (() => {
         const cellD = new Date(yr, mo - 1, d);
         const today = new Date(); today.setHours(0,0,0,0);
         return cellD > today;
       })();
-      if (isFuture) { bg = '#fafafa'; }
+      if (isFuture) { bg = 'var(--surface-1)'; }
       const entryCount = (entriesByDay[dateKey] || []).length;
-      html += `<div style="background:${bg};border:${border};border-radius:6px;padding:8px;min-height:78px;display:flex;flex-direction:column" title="${dateKey}">
+      // Future cells are read-only (nothing to edit); cells with entries
+      // are click-to-drilldown; empty past cells offer "+ Add" via the
+      // existing time-entry modal pre-filled with the picked date.
+      const isClickable = !isFuture;
+      const cursor = isClickable ? 'cursor:pointer' : 'cursor:default';
+      const handler = isFuture
+        ? ''
+        : entryCount > 0
+        ? `onclick="openCalendarDayDetail('${dateKey}')"`
+        : `onclick="openTimeEntryModalForDate('${dateKey}')"`;
+      html += `<div ${handler} style="background:${bg};border:${border};border-radius:6px;padding:8px;min-height:78px;display:flex;flex-direction:column;${cursor};transition:transform .1s" title="${dateKey}${isClickable ? (entryCount > 0 ? ' — click to view ' + entryCount + ' entr' + (entryCount === 1 ? 'y' : 'ies') : ' — click to add hours') : ''}" ${isClickable ? 'onmouseover="this.style.transform=\'scale(1.02)\'" onmouseout="this.style.transform=\'\'"' : ''}>
         <div style="font-size:11px;color:var(--text-muted);font-weight:600">${d}</div>
         <div style="flex:1;display:flex;align-items:center;justify-content:center">
           ${hours > 0 ? `<div style="font-size:18px;font-weight:600;color:var(--text)">${hours.toFixed(1)}<span style="font-size:11px;color:var(--text-muted);margin-left:2px">h</span></div>` :
            isFuture ? '' :
            isWeekend ? '<div style="font-size:11px;color:var(--text-muted)">—</div>' :
-           '<div style="font-size:11px;color:#c62828;font-weight:600">no entries</div>'}
+           '<div style="font-size:11px;color:var(--danger-text);font-weight:600">no entries</div>'}
         </div>
         ${entryCount > 0 ? `<div style="font-size:10px;color:var(--text-muted);text-align:right">${entryCount} entr${entryCount === 1 ? 'y' : 'ies'}</div>` : ''}
       </div>`;
@@ -5716,9 +6443,9 @@ async function loadHours() {
       <div style="margin-top:14px;padding:10px;background:var(--gray-light);border-radius:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px">
         <span><strong>${total.toFixed(1)} hrs</strong> · ${entries.length} entries</span>
         <span style="display:flex;gap:14px;color:var(--text-muted)">
-          <span><span style="display:inline-block;width:12px;height:12px;background:#FDECEA;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>No hours (weekday)</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:#FFF8E1;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>Under 4h</span>
-          <span><span style="display:inline-block;width:12px;height:12px;background:#E8F5E9;border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>OK</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--danger-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>No hours (weekday)</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--warning-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>Under 4h</span>
+          <span><span style="display:inline-block;width:12px;height:12px;background:var(--success-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>OK</span>
         </span>
       </div>
     </div>`;
@@ -5786,8 +6513,12 @@ async function loadHours() {
   if (grouped) grouped.style.display = 'none';
 
   // Build tree: Employee → Client → Project → Job entries
+  // Also extend the per-entry lookup with the now-filtered (project-bearing)
+  // rows. We DO NOT clear the map here — held rows were added above and
+  // need to stay reachable from the held-timecards panel's edit button.
   const tree = {};
   entries.forEach(e => {
+    _hoursEntriesById.set(String(e.id), e);
     const emp = e.staff_name || 'Unassigned';
     const cli = e.client_name || 'No Client';
     const proj = e.project_name || 'No Project';
@@ -5844,7 +6575,8 @@ async function loadHours() {
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <span style="font-weight:600;color:var(--text)">${e.hours} hrs</span>
-                <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTimeEntry('${e.id}')" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openEditTimeEntryModal('${e.id}')" style="width:20px;height:20px;font-size:10px" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTimeEntry('${e.id}')" style="width:20px;height:20px;font-size:10px" title="Delete"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>
           </div>`;
@@ -5901,34 +6633,218 @@ function restoreHrsExpandedState() {
   }
 }
 
+// Entry lookup populated by loadHours() so the pencil-icon click can hand
+// the full row to openEditTimeEntryModal without re-fetching.
+const _hoursEntriesById = new Map();
+
 function openTimeEntryModal() {
+  // Reset to create mode
+  document.getElementById('te-id').value = '';
+  document.getElementById('te-modal-title').textContent = 'Log Hours';
+  document.getElementById('te-history-btn').style.display = 'none';
+  document.getElementById('te-save-btn').innerHTML = 'Save';
+  document.getElementById('te-project').value = '';
+  document.getElementById('te-staff').value = '';
+  document.getElementById('te-hours').value = '';
+  document.getElementById('te-title').value = '';
+  document.getElementById('te-notes').value = '';
   document.getElementById('te-date').value = new Date().toISOString().split('T')[0];
   if (!allProjects.length) loadProjects();
   openModal('time-modal');
 }
 
+// Calendar grid click handlers (Hours tab → calendar group-by). Empty
+// past cells open the create modal pre-filled with the picked date;
+// cells with entries open a small day-detail modal that lists each
+// entry with [edit] / [delete] actions, then offers "+ Add another".
+function openTimeEntryModalForDate(dateKey) {
+  openTimeEntryModal();
+  if (dateKey) document.getElementById('te-date').value = dateKey;
+}
+
+function openCalendarDayDetail(dateKey) {
+  // Pull entries for this date from the in-memory map populated by
+  // loadHours. Avoids a re-fetch and keeps the day modal cheap.
+  const matches = [];
+  for (const e of _hoursEntriesById.values()) {
+    if (String(e.entry_date || '').slice(0, 10) === dateKey) matches.push(e);
+  }
+  matches.sort((a, b) => (a.staff_name || '').localeCompare(b.staff_name || '')
+                       || String(a.created_at || '').localeCompare(String(b.created_at || '')));
+  const total = matches.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+  // Build a one-shot inline modal — no markup commitment, just a
+  // dynamic overlay. Keeps the HTML uncluttered.
+  const existing = document.getElementById('cal-day-detail-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'cal-day-detail-modal';
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  const dateLabel = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US',
+    { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:680px">
+      <div class="modal-header">
+        <span class="modal-title"><i class="fa-regular fa-calendar"></i> ${esc(dateLabel)} <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'}</span></span>
+        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('cal-day-detail-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="max-height:60vh;overflow:auto">
+        ${matches.length ? `
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead><tr style="background:var(--gray-light);border-bottom:1px solid var(--gray-border)">
+              <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Staff</th>
+              <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+              <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job / Notes</th>
+              <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
+              <th style="padding:8px;text-align:right"></th>
+            </tr></thead>
+            <tbody>
+              ${matches.map(e => `
+                <tr style="border-top:1px solid var(--gray-border)">
+                  <td style="padding:6px 8px">${esc(e.staff_name || '—')}</td>
+                  <td style="padding:6px 8px">${esc(e.project_name || '—')}${e.work_order_number ? `<br><span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(e.work_order_number)}</span>` : ''}</td>
+                  <td style="padding:6px 8px;color:var(--text-muted);font-size:12px">${esc(e.job_title || '')}${e.notes ? '<br>' + esc(e.notes) : ''}</td>
+                  <td style="padding:6px 8px;text-align:right;font-weight:600">${e.hours}</td>
+                  <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+                    <button class="btn btn-sm btn-secondary btn-icon" onclick="document.getElementById('cal-day-detail-modal').remove();openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="document.getElementById('cal-day-detail-modal').remove();deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No entries on this day.</div>`}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('cal-day-detail-modal').remove()">Close</button>
+        <button class="btn btn-primary" onclick="document.getElementById('cal-day-detail-modal').remove();openTimeEntryModalForDate('${dateKey}')"><i class="fa-solid fa-plus"></i> Add Hours</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  // Click outside to dismiss.
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+// Edit existing entry — entry comes from _hoursEntriesById (populated by
+// loadHours). Falls back to a fetch if the id isn't in the map (e.g.
+// after a polling refresh dropped it).
+async function openEditTimeEntryModal(id) {
+  let e = _hoursEntriesById.get(String(id));
+  if (!e) {
+    try {
+      // No GET-by-id endpoint; fall back to listing the entry's month and finding it.
+      // Cheap path: just bail with a hint.
+      alert('Entry no longer in view. Refresh and try again.');
+      return;
+    } catch {}
+  }
+  if (!allProjects.length) await loadProjects();
+  document.getElementById('te-id').value = e.id;
+  document.getElementById('te-modal-title').textContent = 'Edit Time Entry';
+  document.getElementById('te-history-btn').style.display = '';
+  document.getElementById('te-save-btn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+  document.getElementById('te-project').value = e.project_id || '';
+  document.getElementById('te-staff').value = e.staff_id || '';
+  document.getElementById('te-date').value = (e.entry_date || '').slice(0,10);
+  document.getElementById('te-hours').value = e.hours;
+  document.getElementById('te-title').value = e.job_title || '';
+  document.getElementById('te-notes').value = e.notes || '';
+  openModal('time-modal');
+}
+
+// Drill into the audit history for the entry currently open in the time-modal.
+function viewTimeEntryHistory() {
+  const id = document.getElementById('te-id').value;
+  if (!id) return;
+  // Re-use the existing audit detail modal — it already takes a time_entry_id
+  // and renders the full chronological history with before/after diffs.
+  viewAuditDetail(id, null);
+}
+
 async function saveTimeEntry() {
+  const id = document.getElementById('te-id').value;
   const proj = document.getElementById('te-project').value;
   const hrs = document.getElementById('te-hours').value;
   const date = document.getElementById('te-date').value;
   if (!proj || !hrs || !date) return alert('Project, hours and date are required');
-  await api('/api/time-entries', 'POST', {
+  const body = {
     project_id: proj,
     staff_id: document.getElementById('te-staff').value || null,
     entry_date: date,
     hours: parseFloat(hrs),
     job_title: document.getElementById('te-title').value,
-    notes: document.getElementById('te-notes').value
-  });
+    notes: document.getElementById('te-notes').value,
+  };
+  if (id) {
+    await api('/api/time-entries/' + encodeURIComponent(id), 'PUT', body);
+  } else {
+    await api('/api/time-entries', 'POST', body);
+  }
   closeModal('time-modal');
   loadHours();
 }
 
 async function deleteTimeEntry(id) {
   if (!confirm('Delete this time entry?')) return;
-  await api('/api/time-entries/'+id, 'DELETE');
+  const resp = await api('/api/time-entries/'+id, 'DELETE');
   loadHours();
   loadDashboard();
+  // Server returns an undo_token snapshot of the deleted row; surface
+  // the standard 15s undo bar so accidental clicks are recoverable.
+  if (resp && resp.undo_token && typeof showUndoBar === 'function') {
+    showUndoBar('Time entry deleted.', resp.undo_token);
+  }
+}
+
+// Render the "Needs Project Assignment" warning panel above the Hours
+// tree. Sources: time_entries rows where project_id IS NULL — typically
+// because an engineer logged time against a "+ Add New" request that's
+// either still pending admin approval or got rejected. Each row gets a
+// pencil (opens the time-entry edit modal so admin can pick a real
+// project) and a trash button (delete the orphan row). The panel hides
+// itself when no held rows are present.
+function renderHeldTimecardsPanel(heldEntries) {
+  const panel = document.getElementById('held-timecards-panel');
+  const body = document.getElementById('held-timecards-body');
+  const count = document.getElementById('held-timecards-count');
+  if (!panel || !body) return;
+  if (!heldEntries || !heldEntries.length) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = '';
+  if (count) count.textContent = `(${heldEntries.length} timecard${heldEntries.length === 1 ? '' : 's'})`;
+  // Sort newest entry_date first so freshly-rejected requests bubble up.
+  const sorted = heldEntries.slice().sort((a, b) =>
+    String(b.entry_date || '').localeCompare(String(a.entry_date || '')));
+  body.innerHTML = `
+    <table style="width:100%;font-size:13px">
+      <thead>
+        <tr style="background:var(--gray-light)">
+          <th style="padding:8px 10px;text-align:left">Date</th>
+          <th style="padding:8px 10px;text-align:left">Staff</th>
+          <th style="padding:8px 10px;text-align:right">Hours</th>
+          <th style="padding:8px 10px;text-align:left">Notes</th>
+          <th style="padding:8px 10px;text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map(e => `
+          <tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 10px">${esc(String(e.entry_date || '').slice(0,10))}</td>
+            <td style="padding:6px 10px">${esc(e.staff_name || '—')}</td>
+            <td style="padding:6px 10px;text-align:right;font-weight:600">${e.hours}</td>
+            <td style="padding:6px 10px;color:var(--text-muted);font-size:12px">${esc(e.notes || '')}</td>
+            <td style="padding:6px 10px;text-align:right;white-space:nowrap">
+              <button class="btn btn-sm btn-secondary btn-icon" onclick="openEditTimeEntryModal('${e.id}')" title="Assign project + edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 async function deleteAllHoursForStaff(staffId, name) {
@@ -6053,6 +6969,24 @@ function renderImportReview(d) {
     ${s.rows_in_billed_periods > 0 ? `<div class="stat-card warn"><div class="stat-label">In Billed Months</div><div class="stat-value">${s.rows_in_billed_periods}</div></div>` : ''}
     ${s.invalid > 0 ? `<div class="stat-card warn"><div class="stat-label">Invalid Rows</div><div class="stat-value">${s.invalid}</div></div>` : ''}
   </div>`;
+
+  // Would-modify preview banner — surfaces matches against existing
+  // time_entries on (staff_id, project_id, entry_date). The numbers
+  // help the operator spot accidental re-imports of last week's CSV
+  // before any data lands.
+  const wouldTotal = (s.would_add||0) + (s.would_skip_duplicate||0) + (s.would_modify||0) + (s.would_conflict||0);
+  if (wouldTotal > 0) {
+    html += `<div class="alert alert-info" style="margin-bottom:14px;padding:10px 14px;font-size:13px">
+      <strong>Match preview:</strong>
+      <span style="margin-left:8px">${s.would_add||0} new</span>
+      ${s.would_skip_duplicate ? `<span style="margin-left:12px;color:var(--text-muted)">${s.would_skip_duplicate} duplicate (will skip)</span>` : ''}
+      ${s.would_modify ? `<span style="margin-left:12px;color:var(--warning-text)">${s.would_modify} would change existing hours</span>` : ''}
+      ${s.would_conflict ? `<span style="margin-left:12px;color:var(--danger-text)">${s.would_conflict} ambiguous (multiple existing rows)</span>` : ''}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+        <i class="fa-solid fa-circle-info"></i> Match = same staff + project + date as an existing row. Duplicates (same hours and job) are auto-skipped on commit; modify and conflict rows still insert and produce a second row — review them in the ledger below.
+      </div>
+    </div>`;
+  }
 
   // Already-billed warning banner
   if (s.rows_in_billed_periods > 0) {
@@ -6263,7 +7197,7 @@ function csvLedgerRow(r, projOptions, staffOptions, jobOptions) {
   const staffWarn = !r.staff_known;
   const codeJob = r.billing_code && jobByCodeCache ? jobByCodeCache[r.billing_code.toLowerCase()] : null;
   const jobMismatch = codeJob && r.job_title && r.job_source === 'manual' && codeJob.toLowerCase() !== r.job_title.toLowerCase();
-  const rowBg = woWarn || staffWarn ? 'background:#FFF8E1' : '';
+  const rowBg = woWarn || staffWarn ? 'background:var(--warning-light)' : '';
   // Build staff <select> options with the row's current staff_id pre-selected
   const staffSel = `<option value="">— pick —</option>` +
     (window._staffCache || []).map(s =>
@@ -7006,7 +7940,7 @@ async function loadRevenue() {
   // ── Unbilled table ──
   document.getElementById('unbilled-body').innerHTML = unbilled.length ? unbilled.map(p => {
     const kindTag = p.bill_kind === 'in_progress'
-      ? '<span style="background:#FFF8E1;border:1px solid #FFD54F;color:#7B5800;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">In progress</span>'
+      ? '<span style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">In progress</span>'
       : '<span style="background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">Completed</span>';
     return `<tr>
       <td class="td-name">${esc(p.name)} ${kindTag}</td>
@@ -7469,25 +8403,43 @@ async function showBillingReport() {
 }
 
 // Open the browser's print dialog scoped to the report content. The user
-// can choose "Save as PDF" from the destination dropdown.
+// can choose "Save as PDF" from the destination dropdown. Stylesheet is
+// document-grade — printed page header on every page (company name +
+// title), footer with page numbers + generated date, no sticky nav, no
+// scrollbars, tables paginate cleanly without splitting rows.
 function printBillingReport() {
   const reportEl = document.getElementById('billing-report-printable');
   if (!reportEl) return;
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>Billing Ledger</title>
     <style>
-      body{font-family:Arial,sans-serif;padding:40px;color:#222}
-      table{width:100%;border-collapse:collapse;font-size:13px}
-      th,td{border-bottom:1px solid #ddd;padding:8px 10px;text-align:left}
-      th{background:#f3f3f3}
-      .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+      *{box-sizing:border-box}
+      body{font-family:'Inter','Arial',sans-serif;padding:0.6in;color:#222;line-height:1.4}
+      h1{color:#1B5FA0;text-align:center;margin:0;font-size:22pt;letter-spacing:.5px}
+      h2{color:#555;text-align:center;font-weight:400;margin:4px 0 18px 0;font-size:12pt}
+      .doc-header{border-bottom:2px solid #1B5FA0;padding-bottom:14px;margin-bottom:18px}
+      .doc-footer{position:fixed;bottom:0.4in;left:0;right:0;text-align:center;font-size:9pt;color:#888;border-top:1px solid #ddd;padding-top:6px}
+      table{width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:12px}
+      thead{display:table-header-group}
+      tr{page-break-inside:avoid}
+      th,td{border-bottom:1px solid #ddd;padding:7px 10px;text-align:left;vertical-align:top}
+      th{background:#f3f3f3;font-size:9pt;text-transform:uppercase;letter-spacing:.4px;color:#555}
+      tfoot td{border-top:2px solid #1B5FA0;font-weight:700;background:#f8f9fa}
+      .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 24px 0}
       .summary-card{padding:14px 18px;border-radius:8px;border:1px solid #ddd}
-      .summary-card.primary{background:#0846a8;color:#fff;border-color:#0846a8}
-      h1{color:#0846a8;text-align:center;margin-bottom:0}
-      h2{color:#666;text-align:center;font-weight:400;margin-top:4px;font-size:15px}
-      @media print { body { padding: 20px; } }
+      .summary-card.primary{background:#1B5FA0;color:#fff;border-color:#1B5FA0}
+      .summary-card .label{font-size:9pt;text-transform:uppercase;letter-spacing:.4px;opacity:.85}
+      .summary-card .value{font-size:20pt;font-weight:700;margin-top:4px}
+      details,details[open]{display:block !important}
+      details>summary{list-style:none;cursor:default}
+      [style*="overflow:auto"],[style*="overflow:scroll"],[style*="max-height"]{overflow:visible !important;max-height:none !important}
+      @page{margin:0.5in;size:letter}
+      @media print{
+        body{padding:0}
+        .doc-footer{position:fixed;bottom:0}
+      }
     </style>
-  </head><body>${reportEl.innerHTML}<script>window.onload=()=>window.print();</` + `script></body></html>`);
+  </head><body>${reportEl.innerHTML}<div class="doc-footer">Launch Fiber Services · Billing Ledger · Generated ${new Date().toLocaleString()}</div><script>window.onload=()=>window.print();</` + `script></body></html>`);
   w.document.close();
 }
 
@@ -7529,6 +8481,11 @@ async function openSettings() {
   try { renderClientsList();               } catch (e) { console.error('renderClientsList failed:', e); }
   try { renderEngineeringContractsList();  } catch (e) { console.error('renderEngineeringContractsList failed:', e); }
   try { renderContractsList();             } catch (e) { console.error('renderContractsList failed:', e); }
+  // Invoice Templates — best-effort load + render (manager+admin gated
+  // server-side; non-managers get a 403 and the panel stays empty,
+  // which is fine).
+  try { await loadInvoiceTemplates(); renderInvoiceTemplatesList(); }
+  catch (e) { console.warn('invoice templates load skipped:', e.message); }
 
   // Legacy pricing fetch — kept for backward compat but isolated. If the
   // pricing endpoint errors or the cache is malformed, we swallow it so the
@@ -7818,6 +8775,291 @@ This cannot be undone. Type the client name below to confirm:`;
   } catch (e) { alert('Delete failed: ' + e.message); }
 }
 
+// ─── Invoice Templates (Settings) ──────────────────────────────────────
+// Reference-PDF-driven invoice generator. Owner uploads a PDF sample
+// per (job, client); Claude vision analyses the layout once and stores
+// the resulting HTML template (with mustache placeholders). At billing
+// time the system fills + renders to PDF via puppeteer. Falls back to
+// the hardcoded PSC RUS pdfkit layout when no template exists.
+
+let invoiceTemplatesCache = [];
+const INVOICE_TEMPLATE_FIELDS = [
+  '{{client.name}}', '{{job.name}}', '{{job.billing_code}}',
+  '{{period.start}}', '{{period.end}}', '{{period.month_year}}',
+  '{{rate.amount}}', '{{rate.formatted}}',
+  '{{engineering_contract.name}}', '{{engineering_contract.number}}',
+  '{{engineering_contract.loan_name}}',
+  '{{totals.hours}}', '{{totals.footage}}', '{{totals.amount}}',
+  '{{generated_at}}', '{{is_footage}}', '{{is_permitting}}',
+  '{{#each contracts}} … {{friendly_label}} {{contract_amount}} {{#each wos}} {{work_order_number}} {{hours}} {{amount}} {{/each}} {{/each}}',
+  '{{#each timecards}} … {{staff_name}} {{total_hours}} {{#each entries}} {{date}} {{wo}} {{hours}} {{/each}} {{/each}}',
+];
+
+async function loadInvoiceTemplates() {
+  try {
+    invoiceTemplatesCache = await api('/api/invoice-templates');
+  } catch (e) {
+    invoiceTemplatesCache = [];
+    throw e;
+  }
+}
+
+function renderInvoiceTemplatesList() {
+  const root = document.getElementById('invoice-templates-list-body');
+  if (!root) return;
+  const list = invoiceTemplatesCache || [];
+  if (!list.length) {
+    root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No invoice templates yet. Upload a PDF sample for a (Job, Client) to get started.</div>';
+    return;
+  }
+  root.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--gray-light)">
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Client</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Status</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Updated</th>
+          <th style="padding:8px;text-align:right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(t => {
+          const status = t.analysis_status === 'ready'
+            ? `<span style="background:var(--success-light);color:var(--success-text);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600">Ready</span>`
+            : t.analysis_status === 'failed'
+            ? `<span style="background:var(--danger-light);color:var(--danger-text);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600" title="${esc(t.analysis_error || '')}">Failed</span>`
+            : `<span style="background:var(--warning-light);color:var(--warning-text);padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600">Pending</span>`;
+          const updated = t.updated_at ? new Date(t.updated_at).toLocaleDateString() : '—';
+          return `<tr style="border-top:1px solid var(--gray-border)">
+            <td style="padding:6px 8px;font-weight:500">${esc(t.job_name || '—')}</td>
+            <td style="padding:6px 8px">${esc(t.client_name || '—')}</td>
+            <td style="padding:6px 8px;color:var(--text-muted)">${esc(t.name || '—')}</td>
+            <td style="padding:6px 8px">${status}</td>
+            <td style="padding:6px 8px;color:var(--text-muted);font-size:11px">${esc(updated)}</td>
+            <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+              <button class="btn btn-sm btn-secondary" onclick="openInvoiceTemplateEdit('${esc(t.id)}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// Upload modal — populates Job + Client dropdowns from existing caches.
+function openInvoiceTemplateUploadModal() {
+  // Populate Job + Client dropdowns from the in-memory caches loaded by
+  // the Settings modal. Fall back to a fresh fetch if those caches are
+  // stale or empty (admin opens Upload before Settings finished loading).
+  const jobSel = document.getElementById('itu-job');
+  const cliSel = document.getElementById('itu-client');
+  if (jobSel) {
+    jobSel.innerHTML = '<option value="">— Select —</option>';
+    const jobs = (typeof jobsCache !== 'undefined' && Array.isArray(jobsCache)) ? jobsCache : [];
+    [...jobs].sort((a,b) => (a.name||'').localeCompare(b.name||''))
+      .forEach(j => jobSel.add(new Option(j.name, j.id)));
+  }
+  if (cliSel) {
+    cliSel.innerHTML = '<option value="">— Select —</option>';
+    const cls = (typeof clients !== 'undefined' && Array.isArray(clients)) ? clients : [];
+    [...cls].sort((a,b) => (a.name||'').localeCompare(b.name||''))
+      .forEach(c => cliSel.add(new Option(c.name, c.id)));
+  }
+  document.getElementById('itu-name').value = '';
+  document.getElementById('itu-notes').value = '';
+  document.getElementById('itu-file').value = '';
+  document.getElementById('itu-error').style.display = 'none';
+  openModal('invoice-template-upload-modal');
+}
+
+async function submitInvoiceTemplateUpload() {
+  const jobId = document.getElementById('itu-job').value;
+  const clientId = document.getElementById('itu-client').value;
+  const name = document.getElementById('itu-name').value.trim();
+  const notes = document.getElementById('itu-notes').value.trim();
+  const file = document.getElementById('itu-file').files[0];
+  const errEl = document.getElementById('itu-error');
+  errEl.style.display = 'none';
+  if (!jobId || !clientId) { errEl.textContent = 'Job and Client are required.'; errEl.style.display = 'block'; return; }
+  if (!file) { errEl.textContent = 'PDF file required.'; errEl.style.display = 'block'; return; }
+  const fd = new FormData();
+  fd.append('pdf', file);
+  fd.append('job_id', jobId);
+  fd.append('client_id', clientId);
+  if (name) fd.append('name', name);
+  if (notes) fd.append('notes', notes);
+
+  const btn = document.getElementById('itu-submit-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing… (15-30s)';
+  try {
+    const r = await fetch('/api/invoice-templates', {
+      method: 'POST', body: fd, credentials: 'include',
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Upload failed');
+    closeModal('invoice-template-upload-modal');
+    await loadInvoiceTemplates();
+    renderInvoiceTemplatesList();
+    if (data.analysis && data.analysis.ok === false) {
+      alert(`Template saved, but AI analysis failed: ${data.analysis.error || 'unknown'}.\nYou can re-analyze from the template detail.`);
+    } else if (window.LFS && window.LFS.toast) {
+      window.LFS.toast.success('Template uploaded and analyzed.');
+    }
+  } catch (e) {
+    errEl.textContent = 'Failed: ' + (e.message || e);
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload &amp; Analyze';
+  }
+}
+
+// Edit/preview modal — fetches full template detail (including HTML).
+async function openInvoiceTemplateEdit(id) {
+  let t;
+  try { t = await api('/api/invoice-templates/' + id); }
+  catch (e) { alert('Failed to load: ' + e.message); return; }
+  document.getElementById('ite-id').value = t.id;
+  document.getElementById('ite-title').textContent =
+    `Edit Template — ${t.job_name || '?'} · ${t.client_name || '?'}`;
+  document.getElementById('ite-html').value = t.generated_html || '';
+  document.getElementById('ite-status').textContent =
+    t.analysis_status === 'ready' ? `Ready · last analyzed ${t.analyzed_at ? new Date(t.analyzed_at).toLocaleString() : '—'}`
+    : t.analysis_status === 'failed' ? `Analysis failed: ${t.analysis_error || 'unknown'}`
+    : 'Pending analysis';
+  document.getElementById('ite-schema-doc').textContent = INVOICE_TEMPLATE_FIELDS.join('\n');
+  refreshInvoiceTemplatePreview();
+  openModal('invoice-template-edit-modal');
+}
+
+function refreshInvoiceTemplatePreview() {
+  const html = document.getElementById('ite-html').value || '<div style="color:#888;padding:20px">No HTML yet.</div>';
+  const iframe = document.getElementById('ite-preview');
+  if (!iframe) return;
+  // The HTML still has {{placeholders}} — in the Settings preview we
+  // intentionally show them un-substituted so the operator can see what
+  // the template structure looks like. The full filled preview happens
+  // in the billing flow's Invoice Preview modal.
+  iframe.srcdoc = html;
+}
+
+async function saveInvoiceTemplate() {
+  const id = document.getElementById('ite-id').value;
+  const generated_html = document.getElementById('ite-html').value;
+  try {
+    await api('/api/invoice-templates/' + id, 'PUT', { generated_html });
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success('Template saved.');
+    document.getElementById('ite-status').textContent = 'Saved · ' + new Date().toLocaleTimeString();
+    await loadInvoiceTemplates(); renderInvoiceTemplatesList();
+  } catch (e) { alert('Save failed: ' + e.message); }
+}
+
+async function regenerateInvoiceTemplate() {
+  const id = document.getElementById('ite-id').value;
+  if (!id) return;
+  if (!confirm('Re-analyze the original PDF? This overwrites your current template HTML and takes 15-30s.')) return;
+  const btn = document.getElementById('ite-regenerate-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing…';
+  try {
+    const data = await api('/api/invoice-templates/' + id + '/regenerate', 'POST');
+    if (data.analysis && data.analysis.ok === false) {
+      alert('Re-analysis failed: ' + (data.analysis.error || 'unknown'));
+    } else {
+      // Refresh the modal contents
+      const t = await api('/api/invoice-templates/' + id);
+      document.getElementById('ite-html').value = t.generated_html || '';
+      document.getElementById('ite-status').textContent =
+        `Ready · re-analyzed ${new Date().toLocaleString()}`;
+      refreshInvoiceTemplatePreview();
+      await loadInvoiceTemplates(); renderInvoiceTemplatesList();
+    }
+  } catch (e) {
+    alert('Re-analysis failed: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Re-analyze PDF';
+  }
+}
+
+async function deleteInvoiceTemplate() {
+  const id = document.getElementById('ite-id').value;
+  if (!id) return;
+  if (!confirm('Delete this invoice template? The reference PDF will also be removed. The hardcoded fallback path will resume for this (job, client) until a new template is uploaded.')) return;
+  try {
+    await api('/api/invoice-templates/' + id, 'DELETE');
+    closeModal('invoice-template-edit-modal');
+    await loadInvoiceTemplates(); renderInvoiceTemplatesList();
+    if (window.LFS && window.LFS.toast) window.LFS.toast.success('Template deleted.');
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}
+
+function openReferencePdf() {
+  const id = document.getElementById('ite-id').value;
+  if (!id) return;
+  // Open in a new tab; auth is cookie-based so the GET works without
+  // additional headers. The route streams the PDF inline.
+  window.open('/api/invoice-templates/' + id + '/reference', '_blank', 'noopener');
+}
+
+// ── Invoice Preview (billing flow) ──────────────────────────────────────
+// Called from the bill-selected flow when the system has a template for
+// the invoice's (job, client) pair. Shows the filled HTML in an iframe;
+// admin can edit before downloading the final PDF.
+
+async function openInvoicePreviewFromTemplate(payload) {
+  // payload: { engineering_contract_id, job_id, period_start, period_end, contract_ids? }
+  let resp;
+  try {
+    resp = await api('/api/invoices/preview-template', 'POST', payload);
+  } catch (e) {
+    alert('Preview failed: ' + e.message);
+    return null;
+  }
+  if (!resp.has_template) {
+    return resp;   // caller decides whether to fall back to legacy generator
+  }
+  document.getElementById('ipv-html').value = resp.html || '';
+  document.getElementById('ipv-status').textContent = 'Loaded from template — edit if needed before downloading.';
+  refreshInvoicePreviewIframe();
+  openModal('invoice-preview-modal');
+  return resp;
+}
+
+function refreshInvoicePreviewIframe() {
+  const html = document.getElementById('ipv-html').value || '';
+  const iframe = document.getElementById('ipv-preview');
+  if (iframe) iframe.srcdoc = html;
+}
+
+async function downloadInvoicePdfFromPreview() {
+  const html = document.getElementById('ipv-html').value;
+  if (!html) { alert('No HTML to render.'); return; }
+  const status = document.getElementById('ipv-status');
+  status.textContent = 'Rendering PDF…';
+  try {
+    const r = await fetch('/api/invoices/render-pdf-from-html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ html, filename: 'invoice.pdf' }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    // Open in a new tab — cleaner than forcing download; user can
+    // browser-print or save from there.
+    window.open(url, '_blank', 'noopener');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    status.textContent = 'Rendered.';
+  } catch (e) {
+    status.textContent = 'Render failed: ' + (e.message || e);
+    alert('Render failed: ' + e.message);
+  }
+}
+
 // ─── Engineering Contracts (Settings) ──────────────────────────────────
 // Cache + render + CRUD for the umbrella entity above billing contracts.
 // Mirrors the pattern used by renderClientsList / renderContractsList so
@@ -7978,28 +9220,48 @@ function renderContractsList() {
     root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No contracts yet. Add one above.</div>';
     return;
   }
-  // Group by client for readability
-  const byClient = {};
-  contractsCache.forEach(c => {
-    const k = c.client_name || '— No client —';
-    (byClient[k] = byClient[k] || []).push(c);
+  // Group by engineering contract — the umbrella that owns billing contracts
+  // is the natural top-level entity (matches how the owner thinks about
+  // contracts: "RUS 217 Engineering Contract" → Contract 3, Contract 4, …).
+  // Standalone contracts (no umbrella) fall into a "— Standalone —" bucket
+  // and still group by client underneath for readability.
+  const byEc = new Map();   // ec_id-or-'standalone' → { ec_meta, contracts: [] }
+  for (const c of contractsCache) {
+    const key = c.engineering_contract_id || `__standalone__${c.client_name || ''}`;
+    if (!byEc.has(key)) {
+      byEc.set(key, {
+        ec_id: c.engineering_contract_id || null,
+        ec_name: c.engineering_contract_name || null,
+        ec_number: c.engineering_contract_number || null,
+        client_name: c.client_name || null,
+        contracts: [],
+      });
+    }
+    byEc.get(key).contracts.push(c);
+  }
+  // Sort umbrellas first, standalones last; alphabetical within each group.
+  const ordered = [...byEc.values()].sort((a, b) => {
+    if (!!a.ec_id !== !!b.ec_id) return a.ec_id ? -1 : 1;
+    return String(a.ec_name || a.client_name || '').localeCompare(String(b.ec_name || b.client_name || ''));
   });
   let html = '';
-  for (const [client, contracts] of Object.entries(byClient)) {
-    html += `<div style="margin-top:10px"><div style="font-weight:600;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${esc(client)}</div>`;
+  for (const grp of ordered) {
+    const heading = grp.ec_name
+      ? `<i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>${esc(grp.ec_name)}${grp.ec_number ? ` <span style="color:var(--text-muted);font-family:monospace;font-weight:400;font-size:11px">${esc(grp.ec_number)}</span>` : ''}<span style="color:var(--text-muted);font-weight:500;font-size:11px;margin-left:8px">${esc(grp.client_name || '—')}</span>`
+      : `<span style="color:var(--text-muted);font-weight:600">— Standalone —</span><span style="color:var(--text-muted);font-weight:500;font-size:11px;margin-left:8px">${esc(grp.client_name || '—')}</span>`;
+    html += `<div style="margin-top:14px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
+      <div style="background:var(--gray-light);padding:8px 12px;font-size:13px;font-weight:600;border-bottom:1px solid var(--gray-border)">${heading}</div>`;
     html += `<table style="width:100%;border-collapse:collapse"><thead>
-      <tr style="background:var(--gray-light)">
+      <tr style="background:var(--white)">
         <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Number</th>
         <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Name</th>
-        <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Engineering Contract</th>
         <th style="padding:6px 8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Label</th>
         <th style="padding:6px 8px;text-align:right"></th>
       </tr></thead><tbody>`;
-    for (const c of contracts) {
+    for (const c of grp.contracts) {
       html += `<tr data-contract-id="${c.id}" style="border-top:1px solid var(--gray-border)">
         <td style="padding:6px 8px;font-family:monospace">${esc(c.contract_number)}</td>
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.name || '—')}</td>
-        <td style="padding:6px 8px">${c.engineering_contract_name ? '<i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:4px;font-size:11px"></i>' + esc(c.engineering_contract_name) : '<span style="color:var(--text-muted)">— Standalone —</span>'}</td>
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.friendly_label || '—')}</td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
           <button class="btn btn-sm btn-secondary" onclick="editContract('${c.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -9176,7 +10438,7 @@ function renderApprovalCard(res) {
   const rows = actions.map((a, i) => {
     const summary = esc(a.summary || a.tool_name);
     const inputJson = esc(JSON.stringify(a.tool_input, null, 2));
-    const danger = a.is_destructive ? 'background:#FFF8E1;' : '';
+    const danger = a.is_destructive ? 'background:var(--warning-light);' : '';
     return `<div data-action-id="${esc(a.id)}" style="${danger}border-top:1px solid var(--gray-border);padding:10px 14px">
       <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
         <input type="checkbox" class="ai-approve-cb" data-id="${esc(a.id)}" checked style="margin-top:3px">
