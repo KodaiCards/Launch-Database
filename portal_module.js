@@ -477,7 +477,14 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   // permitting team-scoped jobs/projects/clients routes — those would
   // pollute the customer's API surface with team-shaped filters that
   // don't apply to external clients.
-  if (!isPortal || PORTAL_MODE === 'customer') return;
+  //
+  // Timeclock skips them too. The timeclock is open to all logged-in users
+  // (server.js SPA fallback comment "SPECIAL CASE: PORTAL_MODE='timeclock'
+  // is open to all logged-in users"), so its project / job dropdowns must
+  // surface every leaf project regardless of team. The team-scoped
+  // /api/projects below would have filtered everything out (no jobs have
+  // team = 'timeclock'), leaving the dropdown empty and clock-in unusable.
+  if (!isPortal || PORTAL_MODE === 'customer' || PORTAL_MODE === 'timeclock') return;
 
   // Helper: stage a change as a pending proposal.
   async function proposeChange(entityType, action, entityId, payload, proposedBy, currentSnapshot = null) {
