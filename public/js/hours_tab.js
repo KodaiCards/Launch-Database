@@ -396,58 +396,41 @@
     matches.sort((a, b) => (a.staff_name || '').localeCompare(b.staff_name || '')
       || String(a.created_at || '').localeCompare(String(b.created_at || '')));
     const total = matches.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
-    // Build a one-shot inline modal — no markup commitment, just a
-    // dynamic overlay. Keeps the HTML uncluttered.
-    const existing = document.getElementById('cal-day-detail-modal');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'cal-day-detail-modal';
-    overlay.className = 'modal-overlay';
-    overlay.style.display = 'flex';
     const dateLabel = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US',
       { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    overlay.innerHTML = `
-      <div class="modal-content" style="max-width:680px">
-        <div class="modal-header">
-          <span class="modal-title"><i class="fa-regular fa-calendar"></i> ${esc(dateLabel)} <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'}</span></span>
-          <button class="btn btn-icon btn-secondary" onclick="document.getElementById('cal-day-detail-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="modal-body" style="max-height:60vh;overflow:auto">
-          ${matches.length ? `
-            <table style="width:100%;border-collapse:collapse;font-size:13px">
-              <thead><tr style="background:var(--gray-light);border-bottom:1px solid var(--gray-border)">
-                <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Staff</th>
-                <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
-                <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job / Notes</th>
-                <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
-                <th style="padding:8px;text-align:right"></th>
-              </tr></thead>
-              <tbody>
-                ${matches.map(e => `
-                  <tr style="border-top:1px solid var(--gray-border)">
-                    <td style="padding:6px 8px">${esc(e.staff_name || '—')}</td>
-                    <td style="padding:6px 8px">${esc(e.project_name || '—')}${e.work_order_number ? `<br><span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(e.work_order_number)}</span>` : ''}</td>
-                    <td style="padding:6px 8px;color:var(--text-muted);font-size:12px">${esc(e.job_title || '')}${e.notes ? '<br>' + esc(e.notes) : ''}</td>
-                    <td style="padding:6px 8px;text-align:right;font-weight:600">${e.hours}</td>
-                    <td style="padding:6px 8px;text-align:right;white-space:nowrap">
-                      <button class="btn btn-sm btn-secondary btn-icon" onclick="document.getElementById('cal-day-detail-modal').remove();openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                      <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="document.getElementById('cal-day-detail-modal').remove();deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          ` : `<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No entries on this day.</div>`}
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="document.getElementById('cal-day-detail-modal').remove()">Close</button>
-          <button class="btn btn-primary" onclick="document.getElementById('cal-day-detail-modal').remove();openTimeEntryModalForDate('${dateKey}')"><i class="fa-solid fa-plus"></i> Add Hours</button>
-        </div>
-      </div>
+
+    const id = 'cal-day-detail-modal';
+    const titleHTML = `<i class="fa-regular fa-calendar"></i> ${esc(dateLabel)} <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'}</span>`;
+    const bodyHTML = matches.length ? `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:var(--gray-light);border-bottom:1px solid var(--gray-border)">
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Staff</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Project</th>
+          <th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Job / Notes</th>
+          <th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hours</th>
+          <th style="padding:8px;text-align:right"></th>
+        </tr></thead>
+        <tbody>
+          ${matches.map(e => `
+            <tr style="border-top:1px solid var(--gray-border)">
+              <td style="padding:6px 8px">${esc(e.staff_name || '—')}</td>
+              <td style="padding:6px 8px">${esc(e.project_name || '—')}${e.work_order_number ? `<br><span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(e.work_order_number)}</span>` : ''}</td>
+              <td style="padding:6px 8px;color:var(--text-muted);font-size:12px">${esc(e.job_title || '')}${e.notes ? '<br>' + esc(e.notes) : ''}</td>
+              <td style="padding:6px 8px;text-align:right;font-weight:600">${e.hours}</td>
+              <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+                <button class="btn btn-sm btn-secondary btn-icon" onclick="closeOverlayModal('${id}');openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="closeOverlayModal('${id}');deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state" style="padding:24px;text-align:center;color:var(--text-muted)">No entries on this day.</div>`;
+    const footerHTML = `
+      <button class="btn btn-secondary" onclick="closeOverlayModal('${id}')">Close</button>
+      <button class="btn btn-primary" onclick="closeOverlayModal('${id}');openTimeEntryModalForDate('${dateKey}')"><i class="fa-solid fa-plus"></i> Add Hours</button>
     `;
-    document.body.appendChild(overlay);
-    // Click outside to dismiss.
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    openOverlayModal({ id, titleHTML, bodyHTML, footerHTML });
   }
 
   // Edit existing entry — entry comes from _hoursEntriesById (populated by
@@ -579,16 +562,10 @@
     }
     const staffSorted = [...byStaff.entries()].sort((a, b) => b[1].hours - a[1].hours);
 
-    const existing = document.getElementById('hrs-type-detail-modal');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'hrs-type-detail-modal';
-    overlay.className = 'modal-overlay';
-    overlay.style.display = 'flex';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-
-    const body = matches.length
+    const id = 'hrs-type-detail-modal';
+    const titleHTML = `<i class="fa-solid fa-helmet-safety"></i> ${esc(label)} — ${esc(periodLabel)}
+      <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'} · ${byStaff.size} staff</span>`;
+    const bodyHTML = matches.length
       ? staffSorted.map(([name, bucket]) => `
         <div style="border-top:1px solid var(--gray-border)">
           <div style="padding:10px 14px;background:var(--gray-light);font-weight:700;display:flex;justify-content:space-between;align-items:center">
@@ -604,8 +581,8 @@
                   <td style="padding:6px 8px;color:var(--text-muted);font-size:12px">${esc(e.job_title || '')}${e.notes ? ' · ' + esc(e.notes) : ''}</td>
                   <td style="padding:6px 8px;text-align:right;font-weight:600;width:60px">${e.hours}</td>
                   <td style="padding:6px 14px;text-align:right;white-space:nowrap;width:74px">
-                    <button class="btn btn-sm btn-secondary btn-icon" onclick="document.getElementById('hrs-type-detail-modal').remove();openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="document.getElementById('hrs-type-detail-modal').remove();deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn btn-sm btn-secondary btn-icon" onclick="closeOverlayModal('${id}');openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="closeOverlayModal('${id}');deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
                   </td>
                 </tr>
               `).join('')}
@@ -614,21 +591,8 @@
         </div>
       `).join('')
       : `<div class="empty-state" style="padding:32px;text-align:center;color:var(--text-muted)">No entries of this type for ${esc(periodLabel)}.</div>`;
-
-    overlay.innerHTML = `
-      <div class="modal-content" style="max-width:880px;max-height:85vh;display:flex;flex-direction:column">
-        <div class="modal-header">
-          <span class="modal-title"><i class="fa-solid fa-helmet-safety"></i> ${esc(label)} — ${esc(periodLabel)}
-            <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'} · ${byStaff.size} staff</span>
-          </span>
-          <button class="btn btn-icon btn-secondary" onclick="document.getElementById('hrs-type-detail-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="modal-body" style="overflow:auto;padding:0">${body}</div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="document.getElementById('hrs-type-detail-modal').remove()">Close</button>
-        </div>
-      </div>
-    `;
+    const footerHTML = `<button class="btn btn-secondary" onclick="closeOverlayModal('${id}')">Close</button>`;
+    openOverlayModal({ id, titleHTML, bodyHTML, footerHTML, maxWidth: '880px', bodyStyle: 'overflow:auto;padding:0' });
   }
 
   window.loadHours = loadHours;
