@@ -64,8 +64,8 @@
   async function uploadDesignDoc() {
     const file = document.getElementById('design-doc-file').files[0];
     if (!file || !currentDesignProjectId) return alert('Select a file first');
-    if (file.size > 500 * 1024 * 1024)
-      return alert('File exceeds 500 MB limit (got ' + (file.size / 1024 / 1024).toFixed(1) + ' MB)');
+    if (file.size > 2 * 1024 * 1024 * 1024)
+      return alert('File exceeds 2 GB limit (got ' + (file.size / 1024 / 1024 / 1024).toFixed(2) + ' GB)');
 
     const fd = new FormData();
     fd.append('file', file);
@@ -83,13 +83,10 @@
     } catch (e) { alert('Upload failed: ' + e.message); }
   }
 
-  async function deleteDesignDoc(docId) {
-    if (!confirm('Delete this document? This removes the file from disk too.')) return;
-    try {
-      const r = await fetch('/api/projects/documents/' + docId, { method: 'DELETE' });
-      if (!r.ok) throw new Error('Delete failed: ' + r.status);
+  function deleteDesignDoc(docId) {
+    return deleteProjectDoc(docId, () => {
       if (currentDesignProjectId) loadDesignDocs(currentDesignProjectId);
-    } catch (e) { alert(e.message); }
+    });
   }
 
   window.openDesignDocs = openDesignDocs;

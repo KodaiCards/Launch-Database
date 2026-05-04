@@ -20,7 +20,7 @@
 //
 // Functions exposed on window:
 //   loadPermits, advancePermit, advancePermitFromPopup,
-//   openPermitDocs, loadPermitDocs, uploadDoc
+//   openPermitDocs, loadPermitDocs, uploadDoc, deletePermitDoc
 
 (function () {
   // Local helper — only loadPermits reads this.
@@ -144,22 +144,37 @@
         ? `<a href="/uploads/${escUrl(d.file_path)}" download="${esc(d.file_name)}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-download"></i></a>`
         : `<a href="/uploads/${escUrl(d.file_path)}" target="_blank" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
       return `
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
+      <div data-doc-id="${esc(d.id)}" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
         <i class="fa-solid ${iconCls}" style="color:${iconColor};font-size:18px"></i>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.file_name)}</div>
           <div style="font-size:11px;color:var(--text-muted)">${esc(d.doc_type)} · Rev ${d.revision_number} · ${sizeMb} · ${esc(d.uploaded_by || 'Unknown')} · ${new Date(d.created_at).toLocaleDateString()}</div>
         </div>
         ${action}
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deletePermitDoc('${d.id}')" title="Delete file"><i class="fa-solid fa-trash"></i></button>
       </div>`;
     }).join('');
+  }
+
+  // After delete, just remove that one row from the DOM. Avoids
+  // re-fetching /api/permits (which pulls every project's stages and
+  // documents) just to render this modal one row shorter.
+  function deletePermitDoc(docId) {
+    return deleteProjectDoc(docId, () => {
+      const list = document.getElementById('permit-doc-list');
+      const row = list && list.querySelector('[data-doc-id="' + CSS.escape(docId) + '"]');
+      if (row) row.remove();
+      if (list && !list.querySelector('[data-doc-id]')) {
+        list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>';
+      }
+    });
   }
 
   async function uploadDoc() {
     const file = document.getElementById('doc-file').files[0];
     const projectId = window.currentPermitProjectId;
     if (!file || !projectId) return alert('Select a file first');
-    if (file.size > 500 * 1024 * 1024) return alert('File exceeds 500 MB limit (got ' + (file.size / 1024 / 1024).toFixed(1) + ' MB)');
+    if (file.size > 2 * 1024 * 1024 * 1024) return alert('File exceeds 2 GB limit (got ' + (file.size / 1024 / 1024 / 1024).toFixed(2) + ' GB)');
     const fd = new FormData();
     fd.append('file', file);
     fd.append('doc_type', document.getElementById('doc-type').value);
@@ -182,4 +197,5 @@
   window.openPermitDocs = openPermitDocs;
   window.loadPermitDocs = loadPermitDocs;
   window.uploadDoc = uploadDoc;
+  window.deletePermitDoc = deletePermitDoc;
 })();

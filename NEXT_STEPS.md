@@ -1,24 +1,47 @@
 # NEXT_STEPS
 
 Living handoff doc for the next Claude (or human) picking up where we left off.
-Update this file as work lands or new ideas surface. Last updated 2026-05-03 (evening).
+Update this file as work lands or new ideas surface. Last updated 2026-05-04.
 
-## TODO: VERIFY in browser after the 2026-05-03 evening push
+## TODO: VERIFY in browser after the 2026-05-04 push
 
 **Most-likely-to-regress areas (smoke tests don't cover the UI side):**
 
-- **Projects tab** — click a parent rollup chevron. Children appear. Wait
-  10 seconds (one POLL_MS=8000 tick). Children should STILL be visible.
-  This is what the new Playwright `projects_tree_state.spec.js` checks.
-- **Hours tab** — expand a staff group, then a month, then a WO. Wait one
-  poll tick. State should survive. **This is NOT covered by the
-  Playwright test** — only Projects is.
-- **Dashboard tab** — same: expand a tree row, wait, still expanded?
-- **Revenue tab** — same.
+The 2026-05-04 sprint extracted every remaining tab loader from
+`public/index.html` into `public/js/*.js` modules (Track 1.2 /23). All
+modules use the IIFE + `window.X` pattern so existing inline `onclick=`
+handlers keep working. Smoke against:
 
-If any of those collapse on the poll tick, the makeTreeState refactor
-broke a call site. Inspect `public/js/tree_state.js` and the call sites
-in `public/index.html` (grep `projectsTreeState\.` and `hoursTreeState\.`).
+- **Projects tab** — filters, search ("psc4"), tree expand/collapse
+  persistence across the 1.5s polling tick. Loader now in
+  `public/js/projects_tab.js`.
+- **Hours tab** — period switch (month / YTD), groupBy switch (project /
+  client / contract / wo / staff / job / calendar), calendar-day click
+  → entry detail modal, per-type stat tile click → who-logged-what
+  drilldown (new in this sprint), edit/delete via undo bar. Loader in
+  `public/js/hours_tab.js`.
+- **Dashboard tab** — KPI tiles, project tree expand/collapse, Needs
+  Attention card, Bill-Now Preview, PSC RUS 90-day projection.
+  Loader in `public/js/dashboard_views.js`.
+- **Revenue tab** — month tile selection, KPI tiles, by-client table,
+  project detail tree, unbilled queue. Loader in
+  `public/js/revenue_tab.js`.
+- **Billing tab** — unbilled queue with bill-selection checkboxes,
+  invoice history tree (Month → Client → Invoice → line items), per-
+  invoice delete with optional hours wipe. Loader in
+  `public/js/billing_tab.js`.
+- **AI panel** — confirmation phrases ("yes", "go ahead") and action
+  verbs now force `tool_choice='any'` so Claude has to call a tool.
+  Verify: ask "create a project Foo for PSC" → expect a create_project
+  tool_use (approval card appears), not a "I'll create that for you"
+  text reply.
+
+If a tree collapses on the poll tick: the makeTreeState refactor broke
+a call site. Grep `projectsTreeState\.` and `hoursTreeState\.`.
+
+If a tab's `onclick=` handler throws "X is not a function": a window.X
+export got dropped from one of the modules. Tail of each module file
+has the export block.
 
 ## Track 0 (Smoke tests) — landed 2026-05-03
 
@@ -173,21 +196,18 @@ Railway auto-deploys all 4 services from `main`. Recent commits:
 
 ### High-leverage, ready to build
 - **Customer self-service portal** (memory file:
-  `feature_customer_portal.md`). Owner has confirmed long-term goal but
-  not for immediate build. Likely scope: PORTAL_MODE='customer', new
-  `customer` role in VALID_ROLES, per-client login. Ask owner before
-  starting — open questions in the memory file.
+  `feature_customer_portal.md`). Owner-confirmed deferred. Schema/role/
+  routes are wired but the public/customer.html body is the "Under
+  Construction" placeholder until the owner designs the UI. Don't
+  populate it without explicit go-ahead.
 - **Client progress view (admin)** (memory file:
-  `feature_client_progress_view.md`). Build this BEFORE the customer
-  portal — it's the internal version of the same data. Group projects
-  by client, show completion %, hours used vs expected, days since last
-  activity, current pipeline stage. Probably a tab on the existing
-  client detail or a `/clients/:id/progress` route.
-- **Daily/weekly digest email** — endpoints exist (`/api/automation/digest`
-  + the scheduler logs it). Adding nodemailer + a SMTP env (SendGrid or
-  Mailgun) gets you "Monday morning summary in inbox." CLAUDE.md says
-  no new external services without a clear reason — email service IS
-  arguably justified by the automation goal.
+  `feature_client_progress_view.md`). Endpoint exists at
+  `/api/admin/client-progress` and the inline `loadClientProgress()`
+  loader renders it. Owner deferred this view. Don't link it from the
+  nav; don't extend it.
+- ~~**Daily/weekly digest email**~~ — KILLED. Owner: "Remove the email
+  digest I don't want that as a thing and never did" (commit `cff591c`).
+  Don't re-suggest unless the owner brings it up.
 - **CSV import "would modify" preview**. The current `csv-validate`
   returns row-level data and a summary count. To show "would add 12,
   modify 3, conflict with 1" requires deduplication logic — pick a
@@ -212,9 +232,10 @@ Railway auto-deploys all 4 services from `main`. Recent commits:
   weighted-recency (last week counts more), seasonality, per-staff pace
   (some inspectors faster than others). Talk to owner about whether the
   simple version is good enough first.
-- **Calendar grid → Click a day to see entries**. Currently the
-  calendar cells are read-only. Click should open a modal with the
-  entries for that day, with edit/delete. ~30 min addition.
+- ~~**Calendar grid → Click a day to see entries**~~ — DONE. Hours tab
+  calendar grid cells now open `openCalendarDayDetail` which lists each
+  entry for that day with edit/delete; empty past cells open the create
+  modal pre-filled with the date. Lives in `public/js/hours_tab.js`.
 - **Per-user dashboard layout: order, not just hide.** Current implementation
   only does hide/show. Add drag-to-reorder using stable widget IDs.
 

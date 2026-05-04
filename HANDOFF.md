@@ -294,27 +294,33 @@ Owner deploys via Railway nixpacks; build steps add risk.
 ## Known open items / latent risks
 
 ### Code-shape items
-- **AI tools + hours CSV inline in server.js** (~2000 lines combined). They
-  share an in-memory `csvStage` Map. To extract: either move them together
-  or refactor the Map into `routes/_csv_stage.js` first.
+- ~~**AI tools + hours CSV inline in server.js**~~ — DONE. AI tools live in
+  `routes/ai.js` (~1700 lines, uses `routes/_csv_stage.js` shared store);
+  hours CSV in `routes/hours_csv.js`. server.js is down to <1000 lines.
 - **Schema bootstrap inline** (~300 lines in `server.js`'s
   `bootstrapV3Schema()` — ALTER soup). Track 1.4 in `CLEANUP_PLAN.md`
   plans `migrations/NNN_*.sql` + a `schema_migrations` table. Important:
   `schema.sql` claims to be the canonical schema but it isn't — half the
   columns get ALTERed in at boot. Two sources of truth, one to fix.
-- **Frontend admin not yet split**. Dashboard, projects, hours, settings,
-  psc_rus tabs still inline. Heavy cross-tab dependencies; do under
-  preview-panel observation.
+  Note: `schema.sql:144` had an inline FK to `setting_change_requests`
+  that broke schema init in 2026-05-04 CI; fixed by removing the inline
+  FK (the v3 ALTER block at server.js:702 adds it correctly later).
+  Watch for similar forward-references when consolidating.
+- ~~**Frontend admin not yet split**~~ — DONE. 23 modules under `public/js/`
+  cover every tab loader (dashboard, projects, hours, billing, revenue,
+  permits, design, inspection, etc.) and the supporting modals (audit
+  drawer, undo bar, project picker, held timecards, settings panels,
+  …). What remains inline is the project create/edit modal + autosave,
+  bulk-billing selection state, the Print PDF / PSC RUS PDF / Saved
+  Batches generators, and showProjectDetail — all heavily interdependent.
+  Splitting them further would create more cross-file plumbing than it
+  removes. Leave them inline unless a specific feature touches them.
 
 ### Latent bugs to be aware of
-- **bare `requireAuth` (factory) used as middleware** at `/api/undo/:token`
-  and `/api/time-entries/by-staff/:staffId`. The function signature is
-  `requireAuth(roles)` returning a middleware — passing it without parens
-  means Express receives the factory, calls it as middleware with
-  `(req, res, next)`, and the inner middleware never runs. Looks like
-  these endpoints have been silently auth-bypassed for weeks without
-  complaint. Can't tell whether to fix without owner sign-off (fixing
-  might break tests that assumed no auth check).
+- ~~**bare `requireAuth` (factory) used as middleware**~~ — FIXED. Both
+  `/api/undo/:token` (routes/undo.js:24) and `/api/time-entries/by-staff/:staffId`
+  (routes/time_entries.js:318) now correctly call `requireAuth()` (with
+  parens) so the middleware actually runs.
 - **toast.js global `unhandledrejection` handler** turns ANY unhandled
   async error into a popup. If a user reports a confusing error toast,
   the actual stack is in the browser console (F12) — not the toast text.
@@ -326,14 +332,29 @@ Owner deploys via Railway nixpacks; build steps add risk.
   the correct usage at `/api/dashboard` — pass the call result (the
   middleware), not the factory.
 
+### AI behavior notes (for the next person tuning the chat loop)
+- `tool_choice` flips to `'any'` when `userWantsAction(messages)` returns
+  true — that classifier matches confirmation phrases anchored to start
+  ("yes", "go ahead") and action verbs anywhere ("create", "log",
+  "update", …). Off-topic chitchat falls through to `'auto'`. Pure
+  function, exported from `routes/ai.js` and unit-tested in
+  `tests/ai_user_wants_action.test.js` (10 cases). If you change the
+  regex, run those tests first.
+- A hallucination guard fires if the final text claims an action
+  (past/future/progressive tense) but no successful modifying tool ran.
+  It appends a red warning to the response. Logs the offending wording
+  to server console with the matching tense bucket.
+- Loop iterations after the first stay on `tool_choice: 'auto'` so
+  Claude can finalize with text after running a tool.
+
 ### Endpoints by role gate
 - `requireAdmin`: clients delete, contracts PUT/DELETE, engineering_contracts
   POST/PUT/DELETE, projects DELETE/recalc-all, /api/_admin/*
 - `requireManagerOrAdmin`: invoices, billing/*, project_billing, revenue/*
 - `requireAuth(['admin','design_manager','permitting_manager'])`:
   /api/dashboard
-- bare `requireAuth` (suspect bug): /api/undo/:token,
-  /api/time-entries/by-staff/:staffId
+- `requireAuth()` (any logged-in user): /api/undo/:token,
+  /api/time-entries/by-staff/:staffId, /api/time-entries (POST/PUT/DELETE)
 
 ---
 

@@ -39,6 +39,35 @@ const path = require('path');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
+// Detect when the user's last message asks for an action OR confirms one,
+// so the chat handler can force tool_choice='any' on the next API call.
+// Without this the model can choose to skip emitting a tool_use and
+// reply with text only — that's the "AI says it's about to do something
+// and never does" bug. Confirmation regex is anchored to start so "yes"
+// alone matches but "I yes prefer that" doesn't.
+function userWantsAction(messages) {
+  if (!messages || !messages.length) return false;
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'user') return false;
+  // content can be a plain string or an array of blocks (text + image).
+  let text = '';
+  if (typeof last.content === 'string') {
+    text = last.content;
+  } else if (Array.isArray(last.content)) {
+    const tb = last.content.find(c => c && c.type === 'text');
+    text = tb?.text || '';
+  }
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  if (/^(yes|yeah|yep|yup|ok|okay|sure|do it|go ahead|proceed|confirm(ed)?|approve(d)?|please do|let['‘’]?s do it|looks good|sounds good|that works|perfect|great|correct|right|affirmative|y)\b/i.test(trimmed)) {
+    return true;
+  }
+  if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save)\b/i.test(trimmed)) {
+    return true;
+  }
+  return false;
+}
+
 module.exports = function installAiRoutes(app, pool, mw) {
   const { requireAdmin, upload } = mw;
 
@@ -189,6 +218,7 @@ QUERYING DATA:
 HONESTY — NEVER FAKE SUCCESS:
 - NEVER claim an action succeeded unless the corresponding tool was actually called AND returned success:true. No exceptions. If you say "I've logged the entries" or "I've created the project," it must be because a tool result confirmed it.
 - After any modifying tool call (log_time_entries, create_project, update_project, etc.), look at the tool result. If success:false or there's an error field, report the error to the user honestly — do not paper over it.
+- DO NOT say "I'll create that", "Let me log those", "Creating the project now", or any future/progressive phrasing followed by no action. Either CALL the tool in the same turn, or ASK a clarifying question. The frontend has a hallucination guard that surfaces a red warning to the user when text claims action without a successful tool result, so these silent skips don't go unnoticed — they look bad. Prefer "Should I create X with values Y?" (a question) over "I'll create X" (a hollow promise).
 - After log_time_entries returns success, IMMEDIATELY run a verification query like:
     SELECT COUNT(*) as cnt, SUM(hours) as total_hours FROM time_entries WHERE import_batch = 'ai_import_<batch_id>'
   and report the verified count and total to the user. This proves the data actually landed and catches any silent failures.
@@ -1510,6 +1540,15 @@ app.get('/api/ai/upload/:id', requireAdmin, async (req, res) => {
 // loop continues (which may produce more text, more tool calls, or another
 // approval round).
 app.post('/api/ai/chat', requireAdmin, async (req, res) => {
+  // Early guard: without an API key, every Anthropic SDK call below will
+  // throw with a less-obvious error. Return a clean 503 so the admin
+  // knows exactly what's missing instead of seeing a generic stack trace.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(503).json({
+      error: 'AI is unavailable: ANTHROPIC_API_KEY is not set. Add it in Railway → Variables and redeploy.',
+    });
+  }
+
   const { messages, session_id, approval_id, decisions } = req.body || {};
 
   let conversationMessages;
@@ -1571,12 +1610,23 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     }
 
     // ── Main loop ─────────────────────────────────────────────────────
+    // tool_choice='any' forces Claude to call a tool. We use it when the
+    // user clearly wants an action (otherwise the model can silently
+    // skip the tool_use and just reply with text). Destructive tools
+    // still gate through the approval card. Resume path stays on 'auto'
+    // because the model needs room to finalize with text after a tool
+    // already ran.
+    const initialToolChoice = approval_id
+      ? { type: 'auto' }
+      : userWantsAction(conversationMessages)
+        ? { type: 'any' }
+        : { type: 'auto' };
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: systemBlocks,
       tools: cachedTools,
-      tool_choice: { type: 'auto' },
+      tool_choice: initialToolChoice,
       messages: conversationMessages,
     });
 
@@ -1676,10 +1726,17 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     const successfulModifications = toolResults.filter(
       tr => MODIFYING_TOOLS.includes(tr.tool) && tr.result?.success === true
     );
-    const claimsAction = /\b(I['’]?ve|I have|successfully|done|logged|added|created|updated|saved)\b/i.test(finalText);
+    // Hallucination guard: text claims an action (past, future, or
+    // progressive tense) but no successful modifying tool ran. The
+    // tense bucket gets logged so we can see which pattern fires most.
+    const claimsActionPast = /\b(I['’]?ve|I have|successfully|done|logged|added|created|updated|saved|deleted|removed|imported|inserted|marked|advanced)\b/i.test(finalText);
+    const claimsActionFuture = /\b(I['’]?ll|I will|Let me|I['’]?m going to|I['’]?m about to|going ahead)\s+(create|log|add|update|delete|save|remove|insert|set up|change|mark|advance|bill|complete|run|execute|do that|do it)\b/i.test(finalText);
+    const claimsActionActive = /(^|\n|\.\s+)(Creating|Logging|Adding|Updating|Deleting|Saving|Removing|Importing|Inserting|Setting up|Marking|Advancing|Billing|Running|Executing)\b/.test(finalText);
+    const claimsAction = claimsActionPast || claimsActionFuture || claimsActionActive;
     if (claimsAction && successfulModifications.length === 0) {
-      console.warn('AI hallucination guard: text claims action but no successful modifying tool ran');
-      finalText += '\n\n⚠️ **Heads up**: I claimed to take an action but no database changes actually went through. Please ask me to retry — and if I keep saying I did something without it sticking, check the server logs.';
+      const which = claimsActionPast ? 'past-tense' : claimsActionFuture ? 'future-tense' : 'progressive';
+      console.warn(`AI hallucination guard fired (${which}): text claims action but no successful modifying tool ran. Text snippet: ${finalText.substring(0, 200).replace(/\s+/g, ' ')}`);
+      finalText += '\n\n⚠️ **No database change actually happened.** I said I was going to do something but didn\'t actually run the tool. Please rephrase or ask me to retry — and if this keeps happening, the server logs have the exact wording that tripped the guard.';
     }
 
     // Log cache performance — helpful for verifying caching is reducing token spend.
@@ -1703,11 +1760,13 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     console.error('  Status:', e?.status);
     console.error('  Type:', e?.constructor?.name);
     console.error('  Full:', JSON.stringify(e, Object.getOwnPropertyNames(e || {})));
-    if (!process.env.ANTHROPIC_API_KEY) {
-      console.error('  ANTHROPIC_API_KEY is NOT SET — add it in Railway Variables');
-    }
     res.status(500).json({ error: msg || 'AI request failed — check server logs' });
   }
 });
 
 };
+
+// Pure helpers exported for unit tests. Not used by callers of the
+// installer — they're documented here so the test file can import them
+// without booting Express.
+module.exports.userWantsAction = userWantsAction;

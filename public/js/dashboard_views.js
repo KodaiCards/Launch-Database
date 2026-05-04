@@ -468,46 +468,15 @@
     setHtmlIfChanged(tbody, buildRows(roots, 0, null, true));
   }
 
-  // Dashboard tree toggle — uses the shared projectsTreeState state so that
-  // polling re-renders preserve the user's expansion. The id-prefix scheme
-  // (dt-/dc-) is dashboard-specific to avoid collisions with the Projects
-  // view's pt-/pc- ids when both trees might co-exist in the DOM.
-  function dtreeToggle(projectId, groupKey, chevId) {
-    const wasExpanded = projectsTreeState.isExpanded(projectId);
-    if (wasExpanded) {
-      projectsTreeState.collapse(projectId);
-      // Cascade-collapse descendants so re-render doesn't show grandchildren
-      // of a node we just collapsed.
-      const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
-      const collectDescendants = (parentId, acc) => {
-        list.filter(p => p.parent_id === parentId).forEach(c => {
-          acc.add(c.id);
-          collectDescendants(c.id, acc);
-        });
-      };
-      const descs = new Set();
-      collectDescendants(projectId, descs);
-      projectsTreeState.collapseAll([...descs]);
-    } else {
-      projectsTreeState.expand(projectId);
-    }
-
-    // Immediate visual feedback
-    const rows = document.querySelectorAll('.dtree-' + groupKey);
-    const chev = document.getElementById(chevId);
-    rows.forEach(r => {
-      r.style.display = wasExpanded ? 'none' : 'table-row';
-      if (wasExpanded) {
-        const nestedChevs = r.querySelectorAll('[id^="dc-"]');
-        nestedChevs.forEach(nc => {
-          nc.style.transform = 'rotate(0deg)';
-          const nestedKey = 'dt-' + nc.id.replace('dc-', '');
-          document.querySelectorAll('.dtree-' + nestedKey).forEach(n => n.style.display = 'none');
-        });
-      }
-    });
-    if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
-  }
+  // Dashboard tree toggle. Dashboard-specific dt-/dc- prefixes avoid
+  // colliding with the Projects view's pt-/pc- ids when both trees
+  // might co-exist in the DOM. See makeTreeToggle in tree_state.js.
+  const dtreeToggle = makeTreeToggle({
+    state: projectsTreeState,
+    chevIdPrefix: 'dc-',
+    groupKeyPrefix: 'dt-',
+    rowClassPrefix: 'dtree-',
+  });
 
   window.showActiveList = showActiveList;
   window.showProjectedList = showProjectedList;

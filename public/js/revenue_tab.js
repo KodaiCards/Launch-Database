@@ -106,41 +106,15 @@
     tbody.innerHTML = buildRevRows(roots, 0, null, true);
   }
 
-  // Revenue tree toggle — uses shared projectsTreeState state. Same pattern
-  // as dtreeToggle, just operates on the rtree-/rc- DOM hierarchy.
-  function rtreeToggle(projectId, groupKey, chevId) {
-    const wasExpanded = projectsTreeState.isExpanded(projectId);
-    if (wasExpanded) {
-      projectsTreeState.collapse(projectId);
-      const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
-      const collectDescendants = (parentId, acc) => {
-        list.filter(p => p.parent_id === parentId).forEach(c => {
-          acc.add(c.id);
-          collectDescendants(c.id, acc);
-        });
-      };
-      const descs = new Set();
-      collectDescendants(projectId, descs);
-      projectsTreeState.collapseAll([...descs]);
-    } else {
-      projectsTreeState.expand(projectId);
-    }
-
-    const rows = document.querySelectorAll('.rtree-' + groupKey);
-    const chev = document.getElementById(chevId);
-    rows.forEach(r => {
-      r.style.display = wasExpanded ? 'none' : 'table-row';
-      if (wasExpanded) {
-        const nestedChevs = r.querySelectorAll('[id^="rc-"]');
-        nestedChevs.forEach(nc => {
-          nc.style.transform = 'rotate(0deg)';
-          const nestedKey = 'rv-' + nc.id.replace('rc-', '');
-          document.querySelectorAll('.rtree-' + nestedKey).forEach(n => n.style.display = 'none');
-        });
-      }
-    });
-    if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
-  }
+  // Revenue tree toggle. The groupKey prefix is rv- (not rt-) for
+  // historical reasons; chev ids are rc-. See makeTreeToggle in
+  // tree_state.js for the shared implementation.
+  const rtreeToggle = makeTreeToggle({
+    state: projectsTreeState,
+    chevIdPrefix: 'rc-',
+    groupKeyPrefix: 'rv-',
+    rowClassPrefix: 'rtree-',
+  });
 
   async function loadRevenue() {
     const y = document.getElementById('rev-year').value;
