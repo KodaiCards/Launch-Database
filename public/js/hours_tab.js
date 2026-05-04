@@ -40,7 +40,7 @@
 //   openTimeEntryModal, openTimeEntryModalForDate,
 //   openCalendarDayDetail, openEditTimeEntryModal,
 //   viewTimeEntryHistory, saveTimeEntry, deleteTimeEntry,
-//   deleteAllHoursForStaff
+//   deleteAllHoursForStaff, showHoursTypeBreakdown
 
 (function () {
   // Entry lookup populated by loadHours() so the pencil-icon click can hand
@@ -74,7 +74,9 @@
     const staffCount = new Set(entries.map(e => e.staff_name).filter(Boolean)).size;
     document.getElementById('hrs-stats').innerHTML = [
       `<div class="stat-card accent"><div class="stat-label">Total Hours</div><div class="stat-value">${fmt(total, 'hrs')}</div><div class="stat-sub">${staffCount} staff member${staffCount !== 1 ? 's' : ''}</div></div>`,
-      ...Object.entries(byType).map(([t, h]) => `<div class="stat-card"><div class="stat-label">${TYPE_LABELS[t] || t}</div><div class="stat-value">${fmt(h, 'hrs')}</div></div>`)
+      // Per-type tiles are clickable — open a drilldown modal listing every
+      // entry for that project_type in the current period, grouped by person.
+      ...Object.entries(byType).map(([t, h]) => `<div class="stat-card" style="cursor:pointer" onclick="showHoursTypeBreakdown('${esc(t)}','${esc(TYPE_LABELS[t] || t)}')" title="Click to see who logged these hours"><div class="stat-label">${TYPE_LABELS[t] || t}</div><div class="stat-value">${fmt(h, 'hrs')}</div></div>`)
     ].join('');
 
     const container = document.getElementById('hours-tree-body');
@@ -546,6 +548,99 @@
     }
   }
 
+  // Drilldown modal for the per-type stat tiles. Re-fetches entries for
+  // the current period filter so we always show fresh data, filters to
+  // the picked project_type, and groups by staff_name. Each row links
+  // back to the same edit modal as the main tree, so admin can drill
+  // straight from "Inspection: 412 hrs" → who logged what → fix a row.
+  async function showHoursTypeBreakdown(projectType, label) {
+    const period = document.getElementById('hrs-period')?.value || 'month';
+    const m = document.getElementById('hrs-month').value;
+    const y = document.getElementById('hrs-year').value;
+    const qs = period === 'ytd' ? `year=${y}` : `month=${m}&year=${y}`;
+    const periodLabel = period === 'ytd'
+      ? `YTD ${y}`
+      : new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const existing = document.getElementById('hrs-type-detail-modal');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'hrs-type-detail-modal';
+    overlay.className = 'modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `<div class="modal-content" style="max-width:760px"><div class="modal-body" style="padding:24px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div></div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    let entries;
+    try {
+      entries = await api(`/api/time-entries?${qs}`);
+    } catch (e) {
+      overlay.innerHTML = `<div class="modal-content" style="max-width:480px"><div class="modal-body" style="padding:24px;color:var(--danger)">Failed to load: ${esc(e.message)}</div></div>`;
+      return;
+    }
+    const matches = entries.filter(e => e.project_type === projectType && e.project_id);
+    matches.sort((a, b) => (a.staff_name || '').localeCompare(b.staff_name || '')
+      || String(a.entry_date || '').localeCompare(String(b.entry_date || '')));
+
+    // Group by staff. Each bucket: { hours, entries[] }.
+    const byStaff = new Map();
+    for (const e of matches) {
+      const name = e.staff_name || '— Unassigned —';
+      if (!byStaff.has(name)) byStaff.set(name, { hours: 0, entries: [] });
+      const bucket = byStaff.get(name);
+      bucket.hours += parseFloat(e.hours) || 0;
+      bucket.entries.push(e);
+      // Cache so the row's edit button can find it without a refetch.
+      _hoursEntriesById.set(String(e.id), e);
+    }
+    const total = matches.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+    const staffSorted = [...byStaff.entries()].sort((a, b) => b[1].hours - a[1].hours);
+
+    const body = matches.length
+      ? staffSorted.map(([name, bucket]) => `
+        <div style="border-top:1px solid var(--gray-border)">
+          <div style="padding:10px 14px;background:var(--gray-light);font-weight:700;display:flex;justify-content:space-between;align-items:center">
+            <div><i class="fa-solid fa-user" style="color:var(--primary);margin-right:6px"></i>${esc(name)}</div>
+            <div style="color:var(--primary);font-size:14px">${fmt(bucket.hours, 'hrs')} <span style="color:var(--text-muted);font-size:11px;font-weight:500;margin-left:6px">${bucket.entries.length} entr${bucket.entries.length === 1 ? 'y' : 'ies'}</span></div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <tbody>
+              ${bucket.entries.map(e => `
+                <tr style="border-top:1px solid var(--gray-border)">
+                  <td style="padding:6px 14px;color:var(--text-muted);width:90px;white-space:nowrap">${new Date(e.entry_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                  <td style="padding:6px 8px">${esc(e.project_name || '—')}${e.work_order_number ? ` <span style="font-family:monospace;font-size:11px;color:var(--text-muted)">WO# ${esc(e.work_order_number)}</span>` : ''}</td>
+                  <td style="padding:6px 8px;color:var(--text-muted);font-size:12px">${esc(e.job_title || '')}${e.notes ? ' · ' + esc(e.notes) : ''}</td>
+                  <td style="padding:6px 8px;text-align:right;font-weight:600;width:60px">${e.hours}</td>
+                  <td style="padding:6px 14px;text-align:right;white-space:nowrap;width:74px">
+                    <button class="btn btn-sm btn-secondary btn-icon" onclick="document.getElementById('hrs-type-detail-modal').remove();openEditTimeEntryModal('${e.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="document.getElementById('hrs-type-detail-modal').remove();deleteTimeEntry('${e.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `).join('')
+      : `<div class="empty-state" style="padding:32px;text-align:center;color:var(--text-muted)">No entries of this type for ${esc(periodLabel)}.</div>`;
+
+    overlay.innerHTML = `
+      <div class="modal-content" style="max-width:880px;max-height:85vh;display:flex;flex-direction:column">
+        <div class="modal-header">
+          <span class="modal-title"><i class="fa-solid fa-helmet-safety"></i> ${esc(label)} — ${esc(periodLabel)}
+            <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'} · ${byStaff.size} staff</span>
+          </span>
+          <button class="btn btn-icon btn-secondary" onclick="document.getElementById('hrs-type-detail-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="overflow:auto;padding:0">${body}</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="document.getElementById('hrs-type-detail-modal').remove()">Close</button>
+        </div>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  }
+
   window.loadHours = loadHours;
   window.htreeToggle = htreeToggle;
   window.restoreHrsExpandedState = restoreHrsExpandedState;
@@ -557,4 +652,5 @@
   window.saveTimeEntry = saveTimeEntry;
   window.deleteTimeEntry = deleteTimeEntry;
   window.deleteAllHoursForStaff = deleteAllHoursForStaff;
+  window.showHoursTypeBreakdown = showHoursTypeBreakdown;
 })();
