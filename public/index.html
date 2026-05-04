@@ -291,6 +291,11 @@ body{font-family:var(--font);background:var(--gray-light);color:var(--text);font
 .nav-tab:hover{color:#fff;background:rgba(255,255,255,.12)}
 .nav-tab.active{color:#fff;border-bottom-color:#fff;font-weight:600}
 .nav-tab i{font-size:13px}
+/* Dark mode: --primary becomes a lighter blue (#4A90D9) so buttons / accents
+   read on dark surfaces, but a saturated medium blue is too low-contrast for
+   white nav text — inactive tabs end up looking washed-out gray. Darken just
+   the nav strip so the white tab text pops. */
+html[data-theme="dark"] .nav{background:var(--primary-dark)}
 
 /* STAT CARDS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
