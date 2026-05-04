@@ -61,7 +61,7 @@ html[data-theme="dark"] datalist option{
 }
 html[data-theme="dark"] select option:checked,
 html[data-theme="dark"] select option:hover{
-  background:#1B5FA0!important;
+  background:var(--primary)!important;
   color:#fff!important;
 }
 html[data-theme="dark"] thead{background:var(--gray-light) !important}
@@ -472,7 +472,7 @@ fetch('/api/auth/me', { credentials: 'include' })
       <button class="btn btn-icon btn-secondary" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-      <div style="background:#FFF8E1;border:1px solid #FFE082;color:#5D4037;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
+      <div style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
         <i class="fa-solid fa-circle-info"></i> All changes here become <b>pending proposals</b> reviewed by admin. Money fields and team assignments are admin-only.
       </div>
 
@@ -1051,7 +1051,7 @@ async function loadPipeline(){
         <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
         <td style="white-space:nowrap;text-align:right">
           ${s!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>`:''}
-          ${s!=='checklist'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:#28A745;font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
+          ${s!=='checklist'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:var(--success);font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
           <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${p.id}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
         </td></tr>`;
