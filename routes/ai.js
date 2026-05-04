@@ -1362,6 +1362,48 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000).unref();
 
+// Detect when the user's last message asks for an action OR confirms one,
+// so we can force tool_choice='any' on the next API call. With 'auto' the
+// model is allowed to skip emitting tool_use blocks — that's exactly the
+// "I'll create that for you" → no tool call → nothing happens failure mode
+// the owner reported. Forcing 'any' makes Claude pick SOME tool; for
+// read-only intent it'll pick query_database (also fine), and destructive
+// tools still gate through approval before executing.
+//
+// Two patterns count:
+//   1. Confirmation phrases ("yes", "go ahead", "do it") — short
+//      replies that mean "execute the thing we just discussed".
+//   2. Action verbs ("create", "log", "update", "delete", …) — direct
+//      asks for a database change.
+// Off-topic chitchat ("how's the weather") doesn't match either, so the
+// model still gets to respond with text in those cases.
+function userWantsAction(messages) {
+  if (!messages || !messages.length) return false;
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'user') return false;
+  // content can be a plain string or an array of blocks (text + image).
+  let text = '';
+  if (typeof last.content === 'string') {
+    text = last.content;
+  } else if (Array.isArray(last.content)) {
+    const tb = last.content.find(c => c && c.type === 'text');
+    text = tb?.text || '';
+  }
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  // Confirmation: short replies that mean "go ahead and do it".
+  // Anchored to start so "yes" alone matches but "I yes prefer that" doesn't.
+  if (/^(yes|yeah|yep|yup|ok|okay|sure|do it|go ahead|proceed|confirm(ed)?|approve(d)?|please do|let['’]?s do it|y)\b/i.test(trimmed)) {
+    return true;
+  }
+  // Action verb anywhere in the message — covers "create a project Foo"
+  // and "please update the WO# to 1234" alike.
+  if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save)\b/i.test(trimmed)) {
+    return true;
+  }
+  return false;
+}
+
 // Build a one-line human summary of a tool call so the approval UI doesn't
 // have to render raw JSON. The chat frontend can still show the full input
 // on demand.
@@ -1572,12 +1614,26 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     }
 
     // ── Main loop ─────────────────────────────────────────────────────
+    // When the user's last message clearly asks for an action OR confirms
+    // a previously-proposed one, force tool_choice='any' so Claude HAS to
+    // emit a tool_use rather than just promising. This is the root-cause
+    // fix for the "AI says it's about to do something and never does" bug
+    // — the previous version relied on the system prompt + a hallucination
+    // guard, both of which the model could ignore. tool_choice='any' lets
+    // Claude pick which tool to call (so it can still query_database for
+    // read-only intent), it just forces SOME tool. Destructive tools still
+    // route through the approval gate before executing.
+    const initialToolChoice = approval_id
+      ? { type: 'auto' }                                      // resume path: model needs to finalize text
+      : userWantsAction(conversationMessages)
+        ? { type: 'any' }
+        : { type: 'auto' };
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: systemBlocks,
       tools: cachedTools,
-      tool_choice: { type: 'auto' },
+      tool_choice: initialToolChoice,
       messages: conversationMessages,
     });
 
