@@ -290,49 +290,13 @@
     setHtmlIfChanged(tbody, buildProjRows(roots, 0, null, true));
   }
 
-  // Toggle a rollup's expanded state. We track state in projectsTreeState
-  // (kept across re-renders) and let renderProjects handle row visibility
-  // on next render. Also do an immediate DOM update so the UI feels
-  // responsive — without that, the click would only visibly take effect
-  // on the next polling tick (up to 1.5s later).
-  function ptreeToggle(projectId, groupKey, chevId) {
-    const wasExpanded = projectsTreeState.isExpanded(projectId);
-    if (wasExpanded) {
-      // Collapse this node AND every descendant rollup so we don't end up
-      // with orphan-expanded grandchildren when the parent collapses.
-      projectsTreeState.collapse(projectId);
-      const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
-      const collectDescendants = (parentId, acc) => {
-        list.filter(p => p.parent_id === parentId).forEach(c => {
-          acc.add(c.id);
-          collectDescendants(c.id, acc);
-        });
-      };
-      const descs = new Set();
-      collectDescendants(projectId, descs);
-      projectsTreeState.collapseAll([...descs]);
-    } else {
-      projectsTreeState.expand(projectId);
-    }
-
-    // Immediate visual feedback. The next renderProjects() call (manual or
-    // from polling) will rebuild from projectsTreeState so the state survives.
-    const rows = document.querySelectorAll('.ptree-' + groupKey);
-    const chev = document.getElementById(chevId);
-    rows.forEach(r => {
-      r.style.display = wasExpanded ? 'none' : 'table-row';
-      if (wasExpanded) {
-        // Collapsing: also reset descendant chevrons + hide their children
-        const nestedChevs = r.querySelectorAll('[id^="pc-"]');
-        nestedChevs.forEach(nc => {
-          nc.style.transform = 'rotate(0deg)';
-          const nestedKey = 'pt-' + nc.id.replace('pc-', '');
-          document.querySelectorAll('.ptree-' + nestedKey).forEach(n => n.style.display = 'none');
-        });
-      }
-    });
-    if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
-  }
+  // Shared toggle: see makeTreeToggle in tree_state.js.
+  const ptreeToggle = makeTreeToggle({
+    state: projectsTreeState,
+    chevIdPrefix: 'pc-',
+    groupKeyPrefix: 'pt-',
+    rowClassPrefix: 'ptree-',
+  });
 
   // Show or hide every branch in the projects tree at once.
   function ptreeExpandAll(expand) {

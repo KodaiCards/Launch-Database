@@ -144,7 +144,7 @@
         ? `<a href="/uploads/${escUrl(d.file_path)}" download="${esc(d.file_name)}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-download"></i></a>`
         : `<a href="/uploads/${escUrl(d.file_path)}" target="_blank" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> View</a>`;
       return `
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
+      <div data-doc-id="${esc(d.id)}" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
         <i class="fa-solid ${iconCls}" style="color:${iconColor};font-size:18px"></i>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.file_name)}</div>
@@ -156,9 +156,17 @@
     }).join('');
   }
 
+  // After delete, just remove that one row from the DOM. Avoids
+  // re-fetching /api/permits (which pulls every project's stages and
+  // documents) just to render this modal one row shorter.
   function deletePermitDoc(docId) {
     return deleteProjectDoc(docId, () => {
-      if (window.currentPermitProjectId) loadPermitDocs(window.currentPermitProjectId);
+      const list = document.getElementById('permit-doc-list');
+      const row = list && list.querySelector('[data-doc-id="' + CSS.escape(docId) + '"]');
+      if (row) row.remove();
+      if (list && !list.querySelector('[data-doc-id]')) {
+        list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>';
+      }
     });
   }
 

@@ -57,3 +57,68 @@ function makeTreeState(name) {
 // allocate their own `makeTreeState()` instance — don't reuse these.
 const projectsTreeState = makeTreeState('projects');
 const hoursTreeState    = makeTreeState('hours');
+
+// Shared chevron-toggle for the three project-tree views (Projects,
+// Dashboard, Revenue) that all reuse projectsTreeState. Each view picks
+// its own DOM prefixes so two trees can co-exist on the same page
+// without their CSS classes / chevron ids colliding.
+//
+// Returns a function with the same signature each tab was using before
+// (projectId, groupKey, chevId). Behavior:
+//   - Flip state in projectsTreeState.
+//   - On collapse, cascade-collapse every descendant in projectsTreeState
+//     (looked up via the global `allProjects` cache, same as the inline
+//     versions did) so a re-render doesn't leave orphan-expanded grandkids.
+//   - Apply the visual change to currently-rendered rows so the click
+//     feels immediate, ahead of the next polling re-render.
+//
+// Config:
+//   state            — required, usually projectsTreeState.
+//   chevIdPrefix     — e.g. 'pc-' (project), 'dc-' (dashboard), 'rc-' (revenue).
+//   groupKeyPrefix   — e.g. 'pt-', 'dt-', 'rv-'. Must match the prefix used
+//                      when rendering the rows.
+//   rowClassPrefix   — e.g. 'ptree-', 'dtree-', 'rtree-'. The class on every
+//                      child row, suffixed with the parent's groupKey.
+function makeTreeToggle({ state, chevIdPrefix, groupKeyPrefix, rowClassPrefix }) {
+  return function treeToggle(projectId, groupKey, chevId) {
+    const wasExpanded = state.isExpanded(projectId);
+    if (wasExpanded) {
+      state.collapse(projectId);
+      // Cascade-collapse descendants. Reads window.allProjects (the cache
+      // populated by loadProjects); when not present, the cascade is a
+      // no-op and the next re-render still does the right thing because
+      // the parent itself is collapsed.
+      const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
+      const collectDescendants = (parentId, acc) => {
+        list.filter(p => p.parent_id === parentId).forEach(c => {
+          acc.add(c.id);
+          collectDescendants(c.id, acc);
+        });
+      };
+      const descs = new Set();
+      collectDescendants(projectId, descs);
+      state.collapseAll([...descs]);
+    } else {
+      state.expand(projectId);
+    }
+
+    // Immediate visual feedback on rows already in the DOM. The next
+    // re-render rebuilds from state and will be consistent regardless.
+    const rows = document.querySelectorAll('.' + rowClassPrefix + groupKey);
+    const chev = document.getElementById(chevId);
+    rows.forEach(r => {
+      r.style.display = wasExpanded ? 'none' : 'table-row';
+      if (wasExpanded) {
+        const nestedChevs = r.querySelectorAll('[id^="' + chevIdPrefix + '"]');
+        nestedChevs.forEach(nc => {
+          nc.style.transform = 'rotate(0deg)';
+          const nestedKey = groupKeyPrefix + nc.id.slice(chevIdPrefix.length);
+          document.querySelectorAll('.' + rowClassPrefix + nestedKey).forEach(n => {
+            n.style.display = 'none';
+          });
+        });
+      }
+    });
+    if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+  };
+}

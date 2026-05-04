@@ -1773,7 +1773,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <select id="user-staff-id" style="flex:1">
               <option value="">— Not linked —</option>
             </select>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="addStaffInline()" title="Create a new staff record" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> New staff</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('staff')" title="Create a new staff record" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> New staff</button>
+          </div>
+          <div id="qa-staff" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
+            <input type="text" id="qa-staff-name" placeholder="Staff member name (e.g. Jane Smith)" style="width:100%;margin-bottom:6px">
+            <div style="display:flex;gap:6px;justify-content:flex-end">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('staff', false)">Cancel</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="quickAddStaff()"><i class="fa-solid fa-check"></i> Add</button>
+            </div>
           </div>
           <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Time entries created via Time Clock get attributed to this staff record. Without a link, the user can sign in to the Time Clock portal but cannot clock in.</span>
         </div>
@@ -2791,11 +2798,18 @@ async function refilterJobsDropdown(preserveJobId) {
 // the affected dropdown, and auto-selects the new option.
 
 function toggleQuickAdd(which, force) {
-  const ids = { client:'qa-client', contract:'qa-contract', conc:'qa-conc', parent:'qa-parent', bcode:'qa-bcode' };
+  const ids = { client:'qa-client', contract:'qa-contract', conc:'qa-conc', parent:'qa-parent', bcode:'qa-bcode', staff:'qa-staff' };
   const el = document.getElementById(ids[which]);
   if (!el) return;
   const open = force === undefined ? el.style.display === 'none' : force;
   el.style.display = open ? 'block' : 'none';
+  // Pre-fill the staff name from the user's full-name field if open and empty.
+  if (open && which === 'staff') {
+    const inp = document.getElementById('qa-staff-name');
+    const full = document.getElementById('user-fullname')?.value.trim();
+    if (inp && !inp.value && full) inp.value = full;
+    inp?.focus();
+  }
 }
 
 async function quickAddClient() {
@@ -6101,16 +6115,17 @@ async function populateStaffDropdown(selectedStaffId) {
 
 // /api/staff uses ON CONFLICT (name) DO UPDATE SET active=true, so re-
 // adding a previously-deactivated name reactivates instead of erroring.
-async function addStaffInline() {
-  const fullnameField = document.getElementById('user-fullname');
-  const suggested = (fullnameField?.value || '').trim();
-  const name = prompt('New staff member name:', suggested);
-  if (!name || !name.trim()) return;
+async function quickAddStaff() {
+  const inp = document.getElementById('qa-staff-name');
+  const name = (inp?.value || '').trim();
+  if (!name) return alert('Staff name is required.');
   try {
-    const created = await api('/api/staff', 'POST', { name: name.trim() });
+    const created = await api('/api/staff', 'POST', { name });
     staffListCache = null;
     await populateStaffDropdown(created.id);
     if (typeof loadStaff === 'function') loadStaff();
+    inp.value = '';
+    toggleQuickAdd('staff', false);
   } catch (e) { alert('Could not create staff: ' + e.message); }
 }
 
