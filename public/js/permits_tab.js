@@ -20,7 +20,7 @@
 //
 // Functions exposed on window:
 //   loadPermits, advancePermit, advancePermitFromPopup,
-//   openPermitDocs, loadPermitDocs, uploadDoc
+//   openPermitDocs, loadPermitDocs, uploadDoc, deletePermitDoc
 
 (function () {
   // Local helper — only loadPermits reads this.
@@ -151,8 +151,19 @@
           <div style="font-size:11px;color:var(--text-muted)">${esc(d.doc_type)} · Rev ${d.revision_number} · ${sizeMb} · ${esc(d.uploaded_by || 'Unknown')} · ${new Date(d.created_at).toLocaleDateString()}</div>
         </div>
         ${action}
+        <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deletePermitDoc('${d.id}')" title="Delete file"><i class="fa-solid fa-trash"></i></button>
       </div>`;
     }).join('');
+  }
+
+  async function deletePermitDoc(docId) {
+    if (!confirm('Delete this document? The file is removed from disk too.')) return;
+    try {
+      const r = await fetch('/api/projects/documents/' + docId, { method: 'DELETE' });
+      if (!r.ok) throw new Error('Delete failed: ' + r.status);
+      // Re-render the docs list against the current project.
+      if (window.currentPermitProjectId) loadPermitDocs(window.currentPermitProjectId);
+    } catch (e) { alert(e.message); }
   }
 
   async function uploadDoc() {
@@ -182,4 +193,5 @@
   window.openPermitDocs = openPermitDocs;
   window.loadPermitDocs = loadPermitDocs;
   window.uploadDoc = uploadDoc;
+  window.deletePermitDoc = deletePermitDoc;
 })();
