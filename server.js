@@ -145,6 +145,23 @@ if (PORTAL_MODE) {
 const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin } = require('./auth');
 installAuthRoutes(app, pool);
 
+// Customer scope guard. Per auth.js's role doc: "Customers are external —
+// they see ONLY data for the clients linked to their user via the
+// customer_clients table. Read-only across the whole API surface; the
+// customer portal exposes a curated subset of endpoints under
+// /api/customer/*." That intent wasn't enforced — a customer JWT could
+// hit /api/projects, /api/time-entries, /api/clients, /api/staff, etc.
+// directly and see every row in the DB. Block any /api/* path other than
+// the explicit auth + customer-portal surfaces for customer-role users.
+app.use((req, res, next) => {
+  if (!req.user || req.user.role !== 'customer') return next();
+  const p = req.path || req.url || '';
+  if (!p.startsWith('/api/')) return next();
+  if (p.startsWith('/api/auth/')) return next();
+  if (p.startsWith('/api/customer/')) return next();
+  return res.status(403).json({ error: 'Customer accounts can only access the customer portal API.' });
+});
+
 // Wire up portal-mode route overrides + setting-approval flow. Now that
 // authMiddleware is installed, portal_module routes can use requireAuth/Admin.
 installPortalExtensions(app, pool, PORTAL_MODE, { requireAuth, requireAdmin });

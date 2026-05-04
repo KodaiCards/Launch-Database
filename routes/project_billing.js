@@ -98,20 +98,27 @@ module.exports = function installProjectBillingRoutes(app, pool, mw) {
       let followOn = null;
       if (create_follow_on) {
         const newName = follow_on_name || `${orig.name} (continued)`;
+        // Inherit job_id and billing_cadence from the original. Without
+        // job_id, the follow-on can't be picked up by the PSC RUS PDF
+        // generator (which scopes by job). Without billing_cadence, a
+        // monthly project's clone resets to 'one_time' and the next
+        // bill-and-clone marks it billed instead of continuing the
+        // month-after-month pattern. Both columns existed pre-extraction
+        // but were missed when bill-and-clone moved into this module.
         const followR = await client.query(
           `INSERT INTO projects (
              parent_id, name, client_id, contract_id, work_order_number,
              project_type, status, billing_type, billing_rate, footage,
              expected_hours, expected_revenue, start_date, notes,
-             budget_code_id, concentrator_id
+             budget_code_id, concentrator_id, job_id, billing_cadence
            ) VALUES (
-             $1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $10, $11, $12, $13, $14, $15
+             $1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
            ) RETURNING *`,
           [
             orig.parent_id, newName, orig.client_id, orig.contract_id, orig.work_order_number,
             orig.project_type, orig.billing_type, orig.billing_rate, orig.footage,
             orig.expected_hours, orig.expected_revenue, billDate, orig.notes,
-            orig.budget_code_id, orig.concentrator_id
+            orig.budget_code_id, orig.concentrator_id, orig.job_id, orig.billing_cadence
           ]
         );
         followOn = followR.rows[0];
