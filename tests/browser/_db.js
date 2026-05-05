@@ -28,11 +28,14 @@ const tracked = {
   contracts: [], engineering_contracts: [],
 };
 
-async function seedClient({ name, is_rus = false } = {}) {
+async function seedClient({ name } = {}) {
+  // Path B (2026-05-04): is_rus dropped from clients. Program lives on
+  // engineering contracts. This helper takes only `name` now; callers can
+  // safely keep passing is_rus — it's silently ignored.
   const n = name || uniqueTag('client');
   const { rows } = await pool.query(
-    `INSERT INTO clients (name, is_rus) VALUES ($1, $2) RETURNING *`,
-    [n, is_rus]
+    `INSERT INTO clients (name) VALUES ($1) RETURNING *`,
+    [n]
   );
   tracked.clients.push(rows[0].id);
   return rows[0];

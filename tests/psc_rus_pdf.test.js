@@ -36,9 +36,9 @@ test('POST /api/invoices/generate-pdf-from-projects returns a real PDF for a per
   // Full RUS chain: client → RUS-program engineering contract → contract →
   // job + project with footage. Footage projects don't need time entries,
   // so this is the leanest end-to-end path through the renderer. The PDF
-  // generator gates on engineering_contracts.program='rus', not on the
-  // client's deprecated is_rus hint flag — see Path B refactor.
-  const client = await fixtures.client({ is_rus: true });
+  // generator gates on engineering_contracts.program='rus' — see Path B
+  // refactor. clients.is_rus has since been dropped entirely.
+  const client = await fixtures.client();
   cleanup.clients.push(client.id);
   const ec = await fixtures.engineeringContract({
     client_id: client.id,
@@ -101,17 +101,14 @@ test('POST with empty project_ids returns 400', async () => {
 
 test('POST for a non-RUS-program engineering contract returns 422 with conflicts', async () => {
   // Regression: the PSC RUS template is exclusive to engineering contracts
-  // whose program='rus'. After Path B, gating moved off the deprecated
-  // clients.is_rus flag and onto engineering_contracts.program. Trying to
-  // bill a project under a BAU/GFR/Other (or unclassified) engineering
-  // contract should fail loudly with a conflicts payload, not silently
-  // generate a malformed PDF (see memory file
-  // reference_invoice_non_rus_formats.md).
+  // whose program='rus'. Trying to bill a project under a BAU/GFR/Other
+  // (or unclassified) engineering contract should fail loudly with a
+  // conflicts payload, not silently generate a malformed PDF (see memory
+  // file reference_invoice_non_rus_formats.md).
   //
-  // Important: client.is_rus stays TRUE here intentionally — that's
-  // realistic of PSC, which has BOTH RUS and BAU work. The test verifies
-  // the new gate uses program (not is_rus) by giving the EC program='bau'.
-  const client = await fixtures.client({ is_rus: true });
+  // The test verifies the gate uses engineering_contracts.program by
+  // giving the EC program='bau'.
+  const client = await fixtures.client();
   cleanup.clients.push(client.id);
   const ec = await fixtures.engineeringContract({
     client_id: client.id,

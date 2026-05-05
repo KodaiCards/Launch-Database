@@ -799,9 +799,12 @@ async function editProject(id){
 }
 
 function populateProjectFormDropdowns(){
-  // Clients
+  // Clients. Path B: drop the deprecated data-rus attribute (was driven
+  // by clients.is_rus). Field-gating now derives "is RUS-class client"
+  // from window.engineeringContractsCache by checking program='rus'
+  // ECs at the time clientChanged fires.
   const cl = document.getElementById('proj-client');
-  cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}" data-rus="${c.is_rus?1:0}" data-show-contract="${c.show_contract?1:0}" data-show-wo="${c.show_work_order?1:0}">${esc(c.name)}</option>`).join('');
+  cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}" data-show-contract="${c.show_contract?1:0}" data-show-wo="${c.show_work_order?1:0}">${esc(c.name)}</option>`).join('');
   // Project types
   const pt = document.getElementById('proj-ptype');
   pt.innerHTML = '<option value="">— Select —</option>' + projectTypesCache.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
@@ -851,15 +854,22 @@ async function refilterJobsDropdown(preserveJobId){
 async function clientChanged(preserveJobId){
   const clientId = document.getElementById('proj-client').value;
 
-  // Field gating per client type:
-  //   PSC clients (is_rus=true): Project Type, Contract, WO# all visible.
-  //                              Service Area is auto-derived from the WO# match.
-  //   Non-PSC clients: Project Type and WO# HIDDEN entirely.
-  //                    Contract visible only if admin opted in via Settings.
-  //                    Service Area visible as a free-text input (the user
-  //                    types the area name; rollup folder is created from it).
+  // Field gating per client + program (Path B 2026-05-04):
+  //   "RUS-class" clients (have at least one engineering contract with
+  //   program='rus'): Project Type, Contract, WO# all visible. Service
+  //   Area is auto-derived from the WO# match.
+  //
+  //   Non-RUS-class clients: Project Type and WO# HIDDEN entirely.
+  //                          Contract visible only if admin opted in via Settings.
+  //                          Service Area visible as a free-text input (the user
+  //                          types the area name; rollup folder is created from it).
+  //
+  // The legacy data-rus attribute on the option element was driven by
+  // clients.is_rus and was dropped in Path B. We now compute RUS-class
+  // by scanning window.engineeringContractsCache for any program='rus' EC.
   const opt = document.getElementById('proj-client').selectedOptions[0];
-  const isPsc = opt?.dataset.rus === '1';
+  const ecCache = window.engineeringContractsCache || [];
+  const isPsc = !!clientId && ecCache.some(ec => ec.client_id === clientId && ec.program === 'rus');
   const showContract = isPsc || opt?.dataset.showContract === '1';
 
   // Project Type — PSC only, no admin-opt-in
@@ -1051,10 +1061,16 @@ async function saveProject(){
 async function ensureCachesLoaded(force){
   if (force || !jobsCache.length || !clientsCache.length || !projectTypesCache.length) {
     try {
-      const [j, c, pt] = await Promise.all([
-        api('/api/jobs'), api('/api/clients'), api('/api/project-types')
+      const [j, c, pt, ecs] = await Promise.all([
+        api('/api/jobs'),
+        api('/api/clients'),
+        api('/api/project-types'),
+        // Engineering contracts power the field-gating logic post-Path B:
+        // a client is "RUS-class" iff it has any EC with program='rus'.
+        api('/api/engineering-contracts').catch(() => [])
       ]);
       jobsCache = j; clientsCache = c; projectTypesCache = pt;
+      window.engineeringContractsCache = ecs;
     } catch (e) { /* keep stale caches if a fetch fails */ }
   }
   // Always refresh projects on force; otherwise lazy

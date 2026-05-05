@@ -81,7 +81,7 @@ test('friendly_label appears in invoice preview data for an assigned project', a
   // Full chain: RUS client → EC → contract (with friendly_label) → permitting
   // job → project with footage. Preview endpoint runs buildInvoiceData and
   // returns JSON; we assert friendly_label survives into the contract scope.
-  const client = await fixtures.client({ is_rus: true });
+  const client = await fixtures.client();
   cleanup.clients.push(client.id);
   const ec = await fixtures.engineeringContract({
     client_id: client.id,

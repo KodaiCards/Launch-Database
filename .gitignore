@@ -17,6 +17,12 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Word lockfiles + Word exports of repo docs (owner sometimes opens
+# PROJECT_NORTH_STAR.md / README.md in Word; the .docx exports and
+# ~$*.md/~$*.docx lockfiles are local-only artifacts).
+~$*
+*.docx
+
 # Claude Code session/worktree state — local-only, never goes to GitHub
 .claude/
 package-lock.json

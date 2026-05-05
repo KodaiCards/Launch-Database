@@ -266,9 +266,10 @@ async function applySettingChange(pool, sr) {
 
   else if (entity_type === 'client') {
     if (action === 'create') {
+      // Path B: no is_rus on creation. Program lives on engineering contracts.
       await pool.query(
-        `INSERT INTO clients (name, is_rus, notes) VALUES ($1,$2,$3)`,
-        [p.name, !!p.is_rus, p.notes ?? null]
+        `INSERT INTO clients (name, notes) VALUES ($1,$2)`,
+        [p.name, p.notes ?? null]
       );
     } else if (action === 'update') {
       await pool.query(
@@ -645,7 +646,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'Name required' });
     try {
       const sr = await proposeChange('client', 'create', null,
-        { name: String(name).trim(), is_rus: false, notes: notes || null }, actorOf(req));
+        { name: String(name).trim(), notes: notes || null }, actorOf(req));
       res.json(proposalResponse(sr));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

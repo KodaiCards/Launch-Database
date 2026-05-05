@@ -50,7 +50,7 @@ module.exports = function installReportsRoutes(app, pool, mw) {
         SELECT p.id, p.id as queue_key, p.name, p.project_type, p.billing_type, p.billing_rate,
                p.footage, p.miles, p.expected_revenue, p.expected_hours, p.actual_hours,
                p.status, p.work_order_number, p.bill_hold_until, p.billing_cadence,
-               cl.name as client_name, cl.is_rus, co.contract_number,
+               cl.name as client_name, co.contract_number,
                NULL::int as period_year, NULL::int as period_month,
                COALESCE(SUM(te.hours),0) as logged_hours,
                CASE
@@ -70,7 +70,7 @@ module.exports = function installReportsRoutes(app, pool, mw) {
             OR EXISTS(SELECT 1 FROM time_entries te2 WHERE te2.project_id=p.id
               AND EXTRACT(MONTH FROM te2.entry_date)=$1
               AND EXTRACT(YEAR FROM te2.entry_date)=$2))
-        GROUP BY p.id, cl.name, cl.is_rus, co.contract_number
+        GROUP BY p.id, cl.name, co.contract_number
       `, [m, y]);
 
       // ── PART 2: Monthly projects — one row per UNBILLED month ──
@@ -94,7 +94,7 @@ module.exports = function installReportsRoutes(app, pool, mw) {
                p.name, p.project_type, p.billing_type, p.billing_rate,
                p.footage, p.miles, p.expected_revenue, p.expected_hours, p.actual_hours,
                p.status, p.work_order_number, p.bill_hold_until, p.billing_cadence,
-               cl.name as client_name, cl.is_rus, co.contract_number,
+               cl.name as client_name, co.contract_number,
                pm.y as period_year, pm.mo as period_month,
                pm.hrs as logged_hours,
                pm.hrs * p.billing_rate as billable_amount

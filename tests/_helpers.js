@@ -148,11 +148,15 @@ function uniqueTag(label = 'fx') {
 // being tested the only API surface exercised. Each helper returns the full
 // inserted row so the test can grab the generated UUID.
 const fixtures = {
-  async client({ name, is_rus = true } = {}) {
+  async client({ name } = {}) {
+    // Path B (2026-05-04): is_rus dropped from clients. Program lives on
+    // engineering contracts via fixtures.engineeringContract({ program: 'rus' }).
+    // The `is_rus` arg is silently ignored if callers still pass it (the
+    // column-drop migration finalizes the removal).
     const n = name || uniqueTag('client');
     const { rows } = await pool.query(
-      `INSERT INTO clients (name, is_rus) VALUES ($1, $2) RETURNING *`,
-      [n, is_rus]
+      `INSERT INTO clients (name) VALUES ($1) RETURNING *`,
+      [n]
     );
     return rows[0];
   },

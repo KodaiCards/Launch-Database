@@ -3,12 +3,17 @@
 // Extracted from public/index.html as part of CLEANUP_PLAN.md Track 1.2.
 //
 // Inline-editable Clients table inside the Settings modal. Each row has
-// inline edit (name + RUS toggle + notes), per-client opt-in toggles
-// for "Show Contract" + "Show WO#" on new-project forms, and a delete
-// button. Delete previews the cascade impact (contracts / projects /
-// invoices / time entries) and requires the operator to type the name
-// to confirm — so a fat-fingered click can't nuke a client and its
-// entire billing history.
+// inline edit (name + notes), per-client opt-in toggles for "Show
+// Contract" + "Show WO#" on new-project forms, and a delete button.
+// Delete previews the cascade impact (contracts / projects / invoices /
+// time entries) and requires the operator to type the name to confirm —
+// so a fat-fingered click can't nuke a client and its entire billing
+// history.
+//
+// Path B (2026-05-04): the RUS column + checkbox were removed from this
+// panel. Program classification now lives on engineering contracts via
+// `engineering_contracts.program`, set in the Engineering Contracts
+// settings panel. The `clients.is_rus` column is being phased out.
 //
 // Globals this module reads:
 //   api(), esc()        — global helpers
@@ -31,7 +36,6 @@
     root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
       <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
         <th style="text-align:left;padding:6px 8px">Name</th>
-        <th style="text-align:center;padding:6px 8px">RUS</th>
         <th style="text-align:center;padding:6px 8px;white-space:nowrap" title="Show the Contract field on new-project forms for this client">Show<br>Contract</th>
         <th style="text-align:center;padding:6px 8px;white-space:nowrap" title="Show the Work Order # field on new-project forms for this client">Show<br>WO#</th>
         <th style="text-align:left;padding:6px 8px">Notes</th>
@@ -39,7 +43,6 @@
       </tr></thead>
       <tbody>${list.map(c => `<tr data-client-id="${c.id}" style="border-top:1px solid var(--gray-border)">
         <td style="padding:6px 8px;font-weight:600">${esc(c.name)}</td>
-        <td style="padding:6px 8px;text-align:center">${c.is_rus ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '—'}</td>
         <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${c.show_contract ? 'checked' : ''} onchange="setClientFlag('${c.id}','show_contract',this.checked)"></td>
         <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${c.show_work_order ? 'checked' : ''} onchange="setClientFlag('${c.id}','show_work_order',this.checked)"></td>
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.notes || '—')}</td>
@@ -49,7 +52,7 @@
         </td>
       </tr>`).join('')}</tbody></table>
       <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px;line-height:1.5">
-        <i class="fa-solid fa-circle-info"></i> <b>Show Contract</b> / <b>Show WO#</b> control whether those fields appear on the New Project form for this client. PSC clients default to both on; non-PSC default to both off. Toggle here to opt in per client.
+        <i class="fa-solid fa-circle-info"></i> <b>Show Contract</b> / <b>Show WO#</b> control whether those fields appear on the New Project form for this client. Toggle here to opt in per client. Program classification (RUS / BAU / GFR / Other) lives on each engineering contract — see the Engineering Contracts panel.
       </div>`;
   }
 
@@ -63,13 +66,11 @@
 
   async function saveNewClient() {
     const name = document.getElementById('new-client-name').value.trim();
-    const is_rus = document.getElementById('new-client-rus').checked;
     const notes = document.getElementById('new-client-notes').value.trim() || null;
     if (!name) return alert('Client name required');
     try {
-      await api('/api/clients', 'POST', { name, is_rus, notes });
+      await api('/api/clients', 'POST', { name, notes });
       document.getElementById('new-client-name').value = '';
-      document.getElementById('new-client-rus').checked = false;
       document.getElementById('new-client-notes').value = '';
       document.getElementById('clients-add-form').style.display = 'none';
       await loadClients();
@@ -85,7 +86,7 @@
     if (!tr) return;
     tr.innerHTML = `
       <td style="padding:6px 8px"><input type="text" id="ec-name-${id}" value="${esc(client.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
-      <td style="padding:6px 8px;text-align:center"><input type="checkbox" id="ec-rus-${id}"${client.is_rus ? ' checked' : ''}></td>
+      <td colspan="2" style="padding:6px 8px;text-align:center;color:var(--text-muted);font-size:11px">— preserved —</td>
       <td style="padding:6px 8px"><input type="text" id="ec-notes-${id}" value="${esc(client.notes || '')}" placeholder="Optional" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
         <button class="btn btn-sm btn-primary" onclick="saveClient('${id}')"><i class="fa-solid fa-check"></i></button>
@@ -95,11 +96,10 @@
 
   async function saveClient(id) {
     const name = document.getElementById(`ec-name-${id}`).value.trim();
-    const is_rus = document.getElementById(`ec-rus-${id}`).checked;
     const notes = document.getElementById(`ec-notes-${id}`).value.trim() || null;
     if (!name) return alert('Name required');
     try {
-      await api('/api/clients/' + id, 'PUT', { name, is_rus, notes });
+      await api('/api/clients/' + id, 'PUT', { name, notes });
       await loadClients();
       renderClientsList();
     } catch (e) { alert('Failed: ' + e.message); }

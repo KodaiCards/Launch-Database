@@ -49,8 +49,8 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
   //         contract_ids? (array of UUIDs to limit to specific contracts) }
   // Returns: application/pdf with Content-Disposition: attachment.
   //
-  // Manager+admin only. Format is exclusive to PSC RUS work — the generator
-  // throws if the engineering contract's client isn't is_rus.
+  // Manager+admin only. Format is exclusive to RUS-program work — the
+  // generator throws if the engineering contract's program isn't 'rus'.
   app.post('/api/invoices/generate-pdf', requireManagerOrAdmin, async (req, res) => {
     const { engineering_contract_id, job_id, period_start, period_end, contract_ids } = req.body || {};
     if (!engineering_contract_id) return res.status(400).json({ error: 'engineering_contract_id required' });

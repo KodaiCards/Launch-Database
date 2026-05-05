@@ -19,29 +19,33 @@ module.exports = function installClientsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Path B (2026-05-04): the is_rus field is no longer accepted by these
+  // endpoints. Program classification lives on engineering_contracts.program.
+  // The clients.is_rus column is being phased out; an incoming `is_rus` in
+  // the body is silently ignored to keep older clients/portals working
+  // through the deploy window — the column-drop migration finalizes things.
   app.post('/api/clients', async (req, res) => {
-    const { name, is_rus, notes } = req.body;
+    const { name, notes } = req.body;
     try {
       const { rows } = await pool.query(
-        'INSERT INTO clients (name, is_rus, notes) VALUES ($1,$2,$3) RETURNING *',
-        [name, is_rus || false, notes]
+        'INSERT INTO clients (name, notes) VALUES ($1,$2) RETURNING *',
+        [name, notes]
       );
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   app.put('/api/clients/:id', async (req, res) => {
-    const { name, is_rus, notes, show_contract, show_work_order } = req.body;
+    const { name, notes, show_contract, show_work_order } = req.body;
     try {
       const { rows } = await pool.query(
         `UPDATE clients SET
            name             = COALESCE($2, name),
-           is_rus           = COALESCE($3, is_rus),
-           notes            = $4,
-           show_contract    = COALESCE($5, show_contract),
-           show_work_order  = COALESCE($6, show_work_order)
+           notes            = $3,
+           show_contract    = COALESCE($4, show_contract),
+           show_work_order  = COALESCE($5, show_work_order)
          WHERE id = $1 RETURNING *`,
-        [req.params.id, name, is_rus, notes ?? null,
+        [req.params.id, name, notes ?? null,
          show_contract === undefined ? null : show_contract,
          show_work_order === undefined ? null : show_work_order]
       );

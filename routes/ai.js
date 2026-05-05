@@ -112,12 +112,11 @@ module.exports = function installAiRoutes(app, pool, mw) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function getDBContext() {
-  // is_rus is kept on clients as a deprecated hint ("does this client do
-  // ANY RUS work"). The source of truth for program classification is
-  // engineering_contracts.program — surfaced separately below so the AI
-  // can reason about RUS vs BAU/GFR/Other at the right level.
+  // Program classification lives on engineering_contracts.program (surfaced
+  // below) — clients carry only identity, not program. The legacy
+  // clients.is_rus column has been retired.
   const [clients, projects, staff, contracts, engineeringContracts, budgets, concentrators] = await Promise.all([
-    pool.query('SELECT id, name, is_rus FROM clients ORDER BY name'),
+    pool.query('SELECT id, name FROM clients ORDER BY name'),
     pool.query(`
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
              p.billing_type, p.billing_rate, p.footage, p.miles,
@@ -453,7 +452,6 @@ const AI_TOOLS = [
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Client name' },
-        is_rus: { type: 'boolean', description: 'DEPRECATED hint flag — set true if the client does any RUS work. Source of truth for program classification is engineering_contracts.program, not this flag.' },
         notes: { type: 'string' }
       },
       required: ['name']
@@ -467,7 +465,6 @@ const AI_TOOLS = [
       properties: {
         client_id: { type: 'string', description: 'Client UUID to update' },
         name: { type: 'string', description: 'New name (optional)' },
-        is_rus: { type: 'boolean', description: 'DEPRECATED hint flag (optional). Use create/update_engineering_contract.program to classify work, not this.' },
         notes: { type: 'string', description: 'New notes (optional, pass empty string to clear)' }
       },
       required: ['client_id']
@@ -1120,9 +1117,10 @@ async function executeTool(toolName, toolInput) {
       }
 
       case 'create_client': {
+        // Path B: program lives on engineering contracts, not clients.
         const { rows } = await pool.query(
-          'INSERT INTO clients (name, is_rus, notes) VALUES ($1,$2,$3) RETURNING *',
-          [toolInput.name, toolInput.is_rus || false, toolInput.notes || null]
+          'INSERT INTO clients (name, notes) VALUES ($1,$2) RETURNING *',
+          [toolInput.name, toolInput.notes || null]
         );
         return { success: true, client: rows[0] };
       }
@@ -1132,13 +1130,11 @@ async function executeTool(toolName, toolInput) {
         const { rows } = await pool.query(
           `UPDATE clients SET
             name = COALESCE($2, name),
-            is_rus = COALESCE($3, is_rus),
-            notes = CASE WHEN $4::text IS NULL THEN notes ELSE $4 END
+            notes = CASE WHEN $3::text IS NULL THEN notes ELSE $3 END
           WHERE id = $1 RETURNING *`,
           [
             toolInput.client_id,
             toolInput.name === undefined ? null : toolInput.name,
-            toolInput.is_rus === undefined ? null : toolInput.is_rus,
             toolInput.notes === undefined ? null : toolInput.notes
           ]
         );
