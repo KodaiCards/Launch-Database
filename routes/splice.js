@@ -191,7 +191,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -237,6 +237,12 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             WHERE l.project_id = $1
             ORDER BY g.created_at
           `, [projectId]),
+          pool.query(`
+            SELECT s.* FROM splice_strand_states s
+            JOIN splice_cables c ON c.id = s.cable_id
+            WHERE c.project_id = $1
+            ORDER BY c.name, s.location_id, s.strand_position
+          `, [projectId]),
         ]);
 
       const hydrate = {
@@ -249,6 +255,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         trays:        trays.rows,
         splices:      splices.rows,
         ribbon_groups: ribbonGroups.rows,
+        strand_states: strandStates.rows,
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
@@ -890,6 +897,112 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Strand states (ring-cut three-lane model) ───────────────────────────
+  // Each strand at a location is express / spliced / stored. Splice rows
+  // are the source of truth for 'spliced'; this table holds explicit
+  // overrides for 'express' and 'stored' decisions. See migration
+  // 0007_splice_strand_state.sql for the rationale.
+
+  app.get('/api/splice/projects/:id/strand-states', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT s.*
+         FROM splice_strand_states s
+         JOIN splice_cables c ON c.id = s.cable_id
+         WHERE c.project_id = $1
+         ORDER BY c.name, s.location_id, s.strand_position`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Bulk upsert: pass an array of { strand_position, state, stored_length_inches?, notes? }
+  // for a given cable + location. Idempotent — repeated calls overwrite
+  // prior decisions for the same (cable, location, strand_position).
+  app.post('/api/splice/cables/:cableId/locations/:locationId/strand-states', requireAuth(), async (req, res) => {
+    const { strands } = req.body;
+    if (!Array.isArray(strands) || !strands.length) {
+      return res.status(400).json({ error: 'strands array is required' });
+    }
+    for (const s of strands) {
+      if (!s || typeof s.strand_position !== 'number') {
+        return res.status(400).json({ error: 'Each strand must have a numeric strand_position' });
+      }
+      if (!['express', 'spliced', 'stored'].includes(s.state)) {
+        return res.status(400).json({ error: `Invalid state "${s.state}" — must be express, spliced, or stored` });
+      }
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Verify cable + location are in the same project (don't let a
+      // request silently scope-cross).
+      const { rows: cable } = await client.query(
+        `SELECT project_id FROM splice_cables WHERE id = $1`,
+        [req.params.cableId]
+      );
+      const { rows: loc } = await client.query(
+        `SELECT project_id FROM splice_locations WHERE id = $1`,
+        [req.params.locationId]
+      );
+      if (!cable.length || !loc.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Cable or location not found' });
+      }
+      if (cable[0].project_id !== loc[0].project_id) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Cable and location belong to different projects' });
+      }
+      const inserted = [];
+      for (const s of strands) {
+        const { rows } = await client.query(
+          `INSERT INTO splice_strand_states
+             (cable_id, location_id, strand_position, state, stored_length_inches, notes)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (cable_id, location_id, strand_position) DO UPDATE SET
+             state = EXCLUDED.state,
+             stored_length_inches = EXCLUDED.stored_length_inches,
+             notes = EXCLUDED.notes,
+             updated_at = NOW()
+           RETURNING *`,
+          [req.params.cableId, req.params.locationId, s.strand_position, s.state,
+           s.stored_length_inches ?? null, s.notes ?? null]
+        );
+        inserted.push(rows[0]);
+      }
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, cable[0].project_id);
+      _broadcast(cable[0].project_id, 'strand_states_updated', {
+        cable_id: req.params.cableId, location_id: req.params.locationId,
+        count: inserted.length,
+      });
+      res.json({ ok: true, strand_states: inserted });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.delete('/api/splice/strand-states/:id', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT s.id, c.project_id
+         FROM splice_strand_states s
+         JOIN splice_cables c ON c.id = s.cable_id
+         WHERE s.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Strand state not found' });
+      await pool.query(`DELETE FROM splice_strand_states WHERE id = $1`, [req.params.id]);
+      _bumpProjectMtime(pool, cur.rows[0].project_id);
+      _broadcast(cur.rows[0].project_id, 'strand_state_deleted', { id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure models picklist ─────────────────────────────────────────────
   // Empty by design — fills as designers type model names. No seed.
 
@@ -1030,7 +1143,7 @@ function _computeWarnings({ fibers, splices, trays, closures }) {
 async function _loadProjectForExport(pool, projectId) {
   const proj = await pool.query(`SELECT * FROM splice_projects WHERE id = $1`, [projectId]);
   if (!proj.rows.length) return null;
-  const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups] =
+  const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates] =
     await Promise.all([
       pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
       pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY name`, [projectId]),
@@ -1077,6 +1190,12 @@ async function _loadProjectForExport(pool, projectId) {
         WHERE l.project_id = $1
         ORDER BY g.created_at
       `, [projectId]),
+      pool.query(`
+        SELECT s.* FROM splice_strand_states s
+        JOIN splice_cables c ON c.id = s.cable_id
+        WHERE c.project_id = $1
+        ORDER BY c.name, s.location_id, s.strand_position
+      `, [projectId]),
     ]);
   return {
     project: proj.rows[0],
@@ -1088,6 +1207,7 @@ async function _loadProjectForExport(pool, projectId) {
     trays:        trays.rows,
     splices:      splices.rows,
     ribbon_groups: ribbonGroups.rows,
+    strand_states: strandStates.rows,
   };
 }
 
@@ -1224,11 +1344,71 @@ async function _renderSpliceHtml(data, pageSize) {
       </tr>`;
     }).join('') || `<tr><td colspan="5" class="empty">No locations</td></tr>`;
 
+  // Index strand states by closure (via location_id) so each per-closure
+  // page can render its own stored / express counts.
+  const strandStatesByLocation = new Map();
+  for (const ss of (data.strand_states || [])) {
+    if (!strandStatesByLocation.has(ss.location_id)) strandStatesByLocation.set(ss.location_id, []);
+    strandStatesByLocation.get(ss.location_id).push(ss);
+  }
+
   // Per-closure pages.
   const closurePages = closures.map(cl => {
     const loc = locationById.get(cl.location_id);
     const trayList = (traysByClosure.get(cl.id) || []).sort((a, b) => a.position - b.position);
     const qr = qrByClosureId.get(cl.id) || '';
+
+    // Stored strands at this location, grouped by cable. The PDF needs
+    // these prominently — splicers cut + coil these strands without
+    // splicing. Phase 2A #3 ring-cut model.
+    const ssAtLoc = (strandStatesByLocation.get(cl.location_id) || [])
+      .filter(s => s.state === 'stored');
+    const storedByCableId = new Map();
+    for (const s of ssAtLoc) {
+      if (!storedByCableId.has(s.cable_id)) storedByCableId.set(s.cable_id, []);
+      storedByCableId.get(s.cable_id).push(s);
+    }
+    const storedSection = storedByCableId.size ? `
+      <div class="stored-section">
+        <div class="section-title">Stored strands at this closure
+          <span class="muted">— cut and coiled, do NOT splice</span>
+        </div>
+        ${[...storedByCableId.entries()].map(([cableId, list]) => {
+          const cable = cableById.get(cableId);
+          const sorted = list.sort((a, b) => a.strand_position - b.strand_position);
+          return `
+            <table class="stored-table">
+              <thead><tr>
+                <th>Cable</th>
+                <th class="num">Strand</th>
+                <th>Tube color</th>
+                <th>Fiber color</th>
+                <th class="num">Slack (in)</th>
+                <th>Notes</th>
+                <th class="markup-loss">Confirmed</th>
+              </tr></thead>
+              <tbody>
+                ${sorted.map(s => {
+                  const tubePos = Math.floor((s.strand_position - 1) / 12) + 1;
+                  const fiberPos = ((s.strand_position - 1) % 12) + 1;
+                  const tubeColor = TIA_598_COLORS[(tubePos - 1) % 12];
+                  const fiberColor = TIA_598_COLORS[fiberPos - 1];
+                  return `<tr>
+                    <td><b>${_esc(cable?.name || '?')}</b></td>
+                    <td class="num">${s.strand_position}</td>
+                    <td>${colorChip(tubeColor)} <span class="muted">${tubePos}</span></td>
+                    <td>${colorChip(fiberColor)} <span class="muted">${fiberPos}</span></td>
+                    <td class="num">${s.stored_length_inches ?? '—'}</td>
+                    <td>${_esc(s.notes || '')}</td>
+                    <td class="markup-loss">&nbsp;</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          `;
+        }).join('')}
+      </div>
+    ` : '';
 
     const trayBlocks = trayList.map(t => {
       const inTray = (splicesByTray.get(t.id) || []);
@@ -1306,6 +1486,7 @@ async function _renderSpliceHtml(data, pageSize) {
           </div>
           ${qr ? `<div class="qr">${qr}<div class="qr-cap">scan to upload<br>field markup</div></div>` : ''}
         </header>
+        ${storedSection}
         ${trayBlocks || '<div class="empty">No trays</div>'}
         <div class="signoff">
           <div class="signoff-row">
@@ -1397,6 +1578,13 @@ async function _renderSpliceHtml(data, pageSize) {
   .qr{text-align:center;flex-shrink:0}
   .qr svg{display:block;width:84px;height:84px}
   .qr-cap{font-size:8px;color:#6C757D;margin-top:2px;text-transform:uppercase;letter-spacing:0.4px;line-height:1.2}
+
+  /* Stored-strands section above the tray blocks. */
+  .stored-section{margin-bottom:14px;page-break-inside:avoid;border:1px solid #FFC107;border-radius:4px;padding:8px;background:#FFFAEC}
+  .stored-section .section-title{font-size:13px;font-weight:700;color:#856404;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px}
+  .stored-section .section-title .muted{font-weight:500;text-transform:none;letter-spacing:0;color:#6C757D}
+  .stored-table{margin-bottom:6px}
+  .stored-table th{background:#FFF3CD}
 
   .tray-block{margin-bottom:14px;page-break-inside:avoid}
   .tray-header{font-size:13px;font-weight:700;margin-bottom:0;padding:5px 10px;background:#1B5FA0;color:#fff;border-radius:3px 3px 0 0;display:flex;justify-content:space-between;align-items:center}

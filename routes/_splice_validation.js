@@ -249,6 +249,74 @@ function ruleClosureNoIncomingCable(h) {
   return issues;
 }
 
+function ruleStrandStateConflicts(h) {
+  // Phase 2A #3 — three-lane ring-cut model. A strand_state row that
+  // says 'express' or 'stored' conflicts with the existence of a splice
+  // row at the same (cable, location). Vice-versa for 'spliced' rows.
+  // Splices are the source of truth; explicit strand_states override
+  // only when there's no splice.
+  const issues = [];
+  const ss = h.strand_states || [];
+  if (!ss.length) return issues;
+
+  // Build a set of (cable_id|location_id|strand_position) keys that have
+  // a splice row at this location. A splice's location is found via
+  // tray → closure → location.
+  const splicedKeys = new Set();
+  for (const s of h.splices) {
+    const tray = h.trays.find(t => t.id === s.tray_id);
+    if (!tray) continue;
+    const closure = h.closures.find(c => c.id === tray.closure_id);
+    if (!closure) continue;
+    const locId = closure.location_id;
+    for (const fid of [s.fiber_a_id, s.fiber_b_id]) {
+      const f = h.fibers.find(x => x.id === fid);
+      if (!f) continue;
+      const tube = h.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+      if (!tube) continue;
+      // Strand position across the cable = (tube.position - 1) * 12 + fiber.position
+      const strandPos = (tube.position - 1) * 12 + f.position;
+      splicedKeys.add(`${tube.cable_id}|${locId}|${strandPos}`);
+    }
+  }
+
+  for (const row of ss) {
+    const key = `${row.cable_id}|${row.location_id}|${row.strand_position}`;
+    const isSpliced = splicedKeys.has(key);
+    if (row.state === 'express' && isSpliced) {
+      issues.push({
+        severity: 'error',
+        code: 'strand_express_with_splice',
+        message: `Strand ${row.strand_position} marked 'express' at this location but a splice exists for it. The splicer would receive contradictory instructions.`,
+        cable_id: row.cable_id,
+        location_id: row.location_id,
+        strand_position: row.strand_position,
+      });
+    }
+    if (row.state === 'stored' && isSpliced) {
+      issues.push({
+        severity: 'error',
+        code: 'strand_stored_with_splice',
+        message: `Strand ${row.strand_position} marked 'stored' at this location but a splice exists for it. Stored strands should be coiled, not spliced.`,
+        cable_id: row.cable_id,
+        location_id: row.location_id,
+        strand_position: row.strand_position,
+      });
+    }
+    if (row.state === 'spliced' && !isSpliced) {
+      issues.push({
+        severity: 'warning',
+        code: 'strand_spliced_no_splice_row',
+        message: `Strand ${row.strand_position} marked 'spliced' at this location but no splice row exists for it. The strand_state row says one thing and the splice graph says another.`,
+        cable_id: row.cable_id,
+        location_id: row.location_id,
+        strand_position: row.strand_position,
+      });
+    }
+  }
+  return issues;
+}
+
 function ruleStandardColorOrder(h) {
   // Sanity check: every cable's buffer tubes and fibers should follow
   // TIA-598 order. If they don't, something hand-edited the schema and
@@ -282,6 +350,7 @@ const RULES = [
   ruleEmptyClosure,
   ruleEmptyLocation,
   ruleClosureNoIncomingCable,
+  ruleStrandStateConflicts,
   ruleStandardColorOrder,
 ];
 

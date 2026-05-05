@@ -248,9 +248,10 @@ Slots allocated, in order:
 - 0004 drop_project_types_table (Path B)
 - 0005 rus_pricing_seed_program (Path B)
 - 0006 jobs_program_scope (Path B)
-- 0007 splice_pdf_templates (Phase 2A #1)
-- 0008 splice_strand_state (Phase 2A #3)
-- 0009 splice_strand_metadata (Phase 2A #4)
+- 0007 splice_strand_state (Phase 2A #3, shipped — pdf_templates was
+  deferred since multi-template support didn't need a table for v2)
+- 0008 splice_strand_metadata (Phase 2A #4)
+- 0009 splice_pdf_templates (deferred until multi-client templates)
 - 0010 splice_templates (Phase 2B #5)
 - 0011 splice_versions (Phase 2B #6)
 - 0012 splice_field_markup (Phase 2B #7)

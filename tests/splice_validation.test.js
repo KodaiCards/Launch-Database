@@ -133,6 +133,50 @@ test('TIA-598 order violation fires error (caught DB tampering)', () => {
   assert.ok(v.errors.find(e => e.code === 'tube_color_out_of_order'));
 });
 
+test('strand_state express+splice conflict fires error', () => {
+  // Strand 1 of cable cA at location l1 has both a splice row AND a
+  // strand_state row marking it 'express'. The splicer would see
+  // contradictory instructions — error.
+  const h = emptyHydrate();
+  h.locations = [{ id: 'l1', name: 'L', sequence_index: 0, type: 'splice_point' }];
+  h.cables = [
+    { id: 'cA', name: 'A', fiber_count: 12, construction_type: 'ribbon' },
+    { id: 'cB', name: 'B', fiber_count: 12, construction_type: 'ribbon' },
+  ];
+  h.buffer_tubes = [
+    { id: 'tA', cable_id: 'cA', position: 1, color: 'blue' },
+    { id: 'tB', cable_id: 'cB', position: 1, color: 'blue' },
+  ];
+  h.fibers = [
+    { id: 'fA1', buffer_tube_id: 'tA', position: 1, color: 'blue' },
+    { id: 'fB1', buffer_tube_id: 'tB', position: 1, color: 'blue' },
+  ];
+  h.closures = [{ id: 'c1', location_id: 'l1', model: 'M', tray_count: 1, tray_capacity: 12 }];
+  h.trays = [{ id: 't1', closure_id: 'c1', position: 1 }];
+  h.splices = [
+    { id: 's1', tray_id: 't1', fiber_a_id: 'fA1', fiber_b_id: 'fB1', splice_type: 'fusion', ribbon_group_id: null },
+  ];
+  // Strand 1 (tube 1, fiber 1) → strand_position 1 — but designer marked it 'express'
+  h.strand_states = [
+    { id: 'ss1', cable_id: 'cA', location_id: 'l1', strand_position: 1, state: 'express' },
+  ];
+  const v = validateProject(h);
+  assert.ok(v.errors.find(e => e.code === 'strand_express_with_splice'));
+});
+
+test('strand_state stored without splice is fine, no errors', () => {
+  const h = emptyHydrate();
+  h.locations = [{ id: 'l1', name: 'L', sequence_index: 0, type: 'splice_point' }];
+  h.cables = [{ id: 'cA', name: 'A', fiber_count: 12, construction_type: 'ribbon' }];
+  // No splices anywhere; strand_state says strand 5 is stored.
+  h.strand_states = [
+    { id: 'ss1', cable_id: 'cA', location_id: 'l1', strand_position: 5, state: 'stored', stored_length_inches: 36 },
+  ];
+  const v = validateProject(h);
+  // No conflict between splices (none exist) and the stored strand.
+  assert.equal(v.errors.filter(e => e.code.startsWith('strand_')).length, 0);
+});
+
 test('clean project blocks nothing', () => {
   // Two real cables, one closure with one tray, one clean splice.
   const h = emptyHydrate();

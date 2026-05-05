@@ -1059,12 +1059,15 @@ function renderClosureInspector(closureId) {
   const loc = state.data.locations.find(l => l.id === cl.location_id);
   const trayList = state.data.trays.filter(t => t.closure_id === closureId).sort((a,b)=>a.position-b.position);
   const splicesByTray = (tid) => state.data.splices.filter(s => s.tray_id === tid);
+  // Stored strands at this closure's location.
+  const storedAtLoc = (state.data.strand_states || [])
+    .filter(s => s.location_id === cl.location_id && s.state === 'stored');
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
     <h3>${esc(cl.model || 'Closure')} <span class="small">${trayList.length}×${cl.tray_capacity}</span></h3>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">at ${esc(loc?.name || '?')}</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
       <button class="btn btn-sm btn-danger" onclick="deleteClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
@@ -1082,7 +1085,88 @@ function renderClosureInspector(closureId) {
         }).join('')}
       </tbody>
     </table>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        Stored strands <span class="small">${storedAtLoc.length}</span>
+      </h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Strands cut and coiled here without splicing. Splicer documentation
+        lists these explicitly so a tube isn't cut by mistake.
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="btn btn-sm" onclick="openAddStoredStrand('${cl.location_id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Mark strand stored</button>
+      </div>
+      ${storedAtLoc.length ? `
+        <table class="table">
+          <thead><tr><th>Cable</th><th>Strand</th><th>Slack</th><th></th></tr></thead>
+          <tbody>
+            ${storedAtLoc.map(s => {
+              const cable = state.data.cables.find(c => c.id === s.cable_id);
+              return `<tr>
+                <td>${esc(cable?.name || '?')}</td>
+                <td>#${s.strand_position}</td>
+                <td>${s.stored_length_inches != null ? s.stored_length_inches + '"' : '—'}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="clearStrandState('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>` : '<div class="empty-pane" style="padding:8px">None marked yet.</div>'}
+    </div>
   `;
+}
+
+function openAddStoredStrand(locationId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const cableOpts = state.data.cables.map(c => `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f)</option>`).join('');
+  showModal({
+    title: 'Mark strand as stored',
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        The strand will be cut and coiled at this closure's location, but NOT spliced.
+        The splicer's PDF will list it in the "stored strands" section.
+      </p>
+      <div class="field"><label>Cable</label>
+        <select id="m-ss-cable">${cableOpts}</select></div>
+      <div class="row">
+        <div class="field"><label>Strand position (1-based)</label>
+          <input id="m-ss-pos" type="number" min="1" value="1"></div>
+        <div class="field"><label>Slack length (inches)</label>
+          <input id="m-ss-len" type="number" min="0" placeholder="e.g. 36"></div>
+      </div>
+      <div class="field"><label>Notes (optional)</label>
+        <textarea id="m-ss-notes" placeholder="What this strand is reserved for"></textarea></div>
+    `,
+    submitText: 'Save',
+    onSubmit: async (close) => {
+      const cableId = document.getElementById('m-ss-cable').value;
+      const pos = parseInt(document.getElementById('m-ss-pos').value, 10);
+      const len = document.getElementById('m-ss-len').value;
+      const notes = document.getElementById('m-ss-notes').value.trim();
+      if (!cableId || !pos) { toast('Cable and strand position required', 'error'); return; }
+      try {
+        await api(`/api/splice/cables/${cableId}/locations/${locationId}/strand-states`, 'POST', {
+          strands: [{
+            strand_position: pos,
+            state: 'stored',
+            stored_length_inches: len ? parseInt(len, 10) : null,
+            notes: notes || null,
+          }],
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function clearStrandState(stateId) {
+  if (isReadOnly()) return;
+  if (!confirm('Clear this strand state (revert to default)?')) return;
+  try {
+    await api('/api/splice/strand-states/' + stateId, 'DELETE');
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderTrayInspector(trayId) {
