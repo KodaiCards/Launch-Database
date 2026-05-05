@@ -381,7 +381,7 @@ const AI_TOOLS = [
   },
   {
     name: 'bulk_create_projects',
-    description: 'Create a TREE of projects in a single approval round. Use this whenever the user asks to scaffold more than ~5 projects at once (full PSC tree, all WO containers under a contract, all permitting sub-rollups under an area, etc.) instead of firing many small create_project calls across many approval cards. Each spec carries a `local_id` string the AI invents — referencing it as another spec\'s `parent_local_id` lets the tool resolve parent UUIDs server-side after creating each row in dependency order. Use `is_rollup: true` for container/folder projects (Contract, Service Area, Team) — they show as collapsible folders in the tree. Set `is_rollup: false` (or omit) for actual leaves that hold hours / footage / invoices. Returns a map of local_id → created UUID so the AI can reference the new ids in follow-up tool calls. ONLY call after the user has explicitly confirmed the full plan.',
+    description: 'Create a TREE of projects in a single approval round. Use this whenever the user asks to scaffold more than ~5 projects at once (full PSC tree, all WO containers under a contract, all permitting sub-rollups under an area, etc.) instead of firing many small create_project calls across many approval cards. Each spec carries a `local_id` string the AI invents — referencing it as another spec\'s `parent_local_id` lets the tool resolve parent UUIDs server-side after creating each row in dependency order. Use `is_rollup: true` for container/folder projects (Contract, Service Area, Team) — they show as collapsible folders in the tree. Set `is_rollup: false` (or omit) for actual leaves that hold hours / footage / invoices. Returns a map of local_id → created UUID so the AI can reference the new ids in follow-up tool calls. ONLY call after the user has explicitly confirmed the full plan. INHERITANCE: a spec without an explicit client_id / contract_id / concentrator_id inherits the value from its nearest ancestor (via parent_local_id chain). Set those three UUIDs ONCE at the root or contract level — DO NOT repeat them on every spec. Repeating UUIDs on every row blows up the token cost and risks hitting the model\'s output cap on a tree of 50+ specs.',
     input_schema: {
       type: 'object',
       properties: {
@@ -409,7 +409,7 @@ const AI_TOOLS = [
               work_order_number: { type: 'string' },
               notes:           { type: 'string' },
             },
-            required: ['local_id', 'name', 'client_id'],
+            required: ['local_id', 'name'],
           },
         },
       },
@@ -935,8 +935,32 @@ async function executeTool(toolName, toolInput) {
         const idMap = {};        // local_id → real UUID
         const created = [];
         const failed = [];
+        // Parent-inheritance: a spec without an explicit client_id /
+        // contract_id / concentrator_id inherits whichever the closest
+        // ancestor (via parent_local_id chain) has set. This lets the
+        // AI emit much shorter JSON — set those three UUIDs once at
+        // the contract level and every nested spec just references
+        // parent_local_id. Critical because the non-stream SDK caps
+        // max_tokens around 8k and 99 specs × repeated UUIDs blew past
+        // that. Inheritance halves token cost per spec.
+        const resolveInherit = (spec, field) => {
+          if (spec[field] !== undefined && spec[field] !== null && spec[field] !== '') return spec[field];
+          let cur = spec.parent_local_id ? byLocal[spec.parent_local_id] : null;
+          while (cur) {
+            if (cur[field] !== undefined && cur[field] !== null && cur[field] !== '') return cur[field];
+            cur = cur.parent_local_id ? byLocal[cur.parent_local_id] : null;
+          }
+          return null;
+        };
         for (const s of order) {
           try {
+            const clientId = resolveInherit(s, 'client_id');
+            const contractId = resolveInherit(s, 'contract_id');
+            const concentratorId = resolveInherit(s, 'concentrator_id');
+            if (!clientId) {
+              failed.push({ local_id: s.local_id, name: s.name, error: 'no client_id (set on this spec or any ancestor via parent_local_id)' });
+              continue;
+            }
             const fin = calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
             const realParent = s.parent_local_id
               ? idMap[s.parent_local_id]
@@ -952,8 +976,8 @@ async function executeTool(toolName, toolInput) {
               RETURNING id, name`,
               [
                 s.name,
-                s.client_id,
-                s.contract_id || null,
+                clientId,
+                contractId || null,
                 s.work_order_number || null,
                 s.project_type || 'other',
                 s.status || 'active',
@@ -966,7 +990,7 @@ async function executeTool(toolName, toolInput) {
                 s.start_date || null,
                 s.notes || null,
                 realParent,
-                s.concentrator_id || null,
+                concentratorId || null,
                 s.is_rollup === true,
                 s.billing_cadence || 'one_time',
               ]
@@ -1831,19 +1855,21 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       : userWantsAction(conversationMessages)
         ? { type: 'any' }
         : { type: 'auto' };
-    // max_tokens=32000 — bulk_create_projects tool inputs for a full
-    // PSC RUS tree (3 contracts × 12 areas × ~7 nodes each ≈ 99 specs)
-    // are bigger than the original measurement suggested. Each spec
-    // carries a name + 3 UUIDs + project_type + booleans + several
-    // optional fields, and Sonnet 4.6 tends to emit every optional
-    // even when undefined. 16k still hit the cap mid-generation and
-    // returned an empty response (stop_reason='max_tokens', no
-    // tool_use, kind:'final', text:''). Bumped to 32k which fits with
-    // wide margin. Sonnet 4.6 supports up to 64000 output tokens so
-    // there's still headroom if the schema grows.
+    // max_tokens=8192 — Anthropic SDK refuses non-streaming requests
+    // with max_tokens high enough to potentially run >10 min (it
+    // returns "Streaming is strongly recommended for operations that
+    // may take longer than 10 minutes" as a 500). 32k crossed that
+    // threshold immediately. 8192 is the safe ceiling for non-stream
+    // calls; bulk_create_projects payloads are kept under that by the
+    // parent-inheritance logic in executeTool (children inherit
+    // client_id/contract_id/concentrator_id from their parent_local_id
+    // spec rather than repeating UUIDs on every row). 99 specs ×
+    // ~50 tokens each (post-inheritance) = ~5000 tokens, fits.
+    // Long-term: switch to streaming so we can use higher caps; for
+    // now, inheritance + 8k is enough for the typical PSC RUS scaffold.
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 32000,
+      max_tokens: 8192,
       system: systemBlocks,
       tools: cachedTools,
       tool_choice: initialToolChoice,
@@ -1913,7 +1939,7 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
 
       response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 32000,
+        max_tokens: 8192,
         system: systemBlocks,
         tools: cachedTools,
         tool_choice: { type: 'auto' },
