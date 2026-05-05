@@ -788,12 +788,62 @@ async function executeTool(toolName, toolInput) {
       }
 
       case 'delete_project': {
-        // Match the route-level DELETE /api/projects/:id behavior: pull from
-        // pending billing batches first so the FK RESTRICT doesn't block.
-        await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [toolInput.project_id]);
-        const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [toolInput.project_id]);
-        if (!rows.length) return { success: false, error: 'Project not found' };
-        return { success: true, deleted: rows[0].name };
+        // Earlier this case ran two raw DELETEs (billing_batch_items +
+        // projects) and called it a day. That works for an isolated leaf
+        // project, but FAILS the moment the project is part of a rollup
+        // chain or has hours / invoice items / permit docs / permit
+        // stages — every one of those tables has a FK back to projects.id
+        // and the FK is RESTRICT, not CASCADE, so the DELETE projects
+        // statement raises:
+        //
+        //   "update or delete on table \"projects\" violates foreign key
+        //    constraint \"<x>_project_id_fkey\" on table \"<x>\""
+        //
+        // The catch handler returns that message as { success:false }, the
+        // AI sees the error, retries the same delete, fails the same way,
+        // and the chat loop (with the Anthropic API call between iterations)
+        // racks up serial Anthropic latency until the entire HTTP request
+        // exceeds Railway's proxy timeout (~5 min). The user then sees a
+        // burst of 502 "Application failed to respond" toasts as the
+        // browser retries.
+        //
+        // The fix: walk the same dependency-deletion path that
+        // /api/projects/:id/with-tree does — collect the project subtree,
+        // delete dependent rows in order, then projects deepest-first.
+        // For a single-leaf delete this collapses to the same behavior
+        // as before; for a rollup-with-children it actually succeeds.
+        const id = toolInput.project_id;
+        if (!id) return { success: false, error: 'project_id required' };
+        let tree;
+        try {
+          tree = await collectProjectTree(id);
+        } catch (e) {
+          return { success: false, error: 'Failed to walk project tree: ' + e.message };
+        }
+        if (!tree.length) return { success: false, error: 'Project not found' };
+        const allIds = tree.map(p => p.id);
+        try {
+          await pool.query('DELETE FROM time_entries        WHERE project_id = ANY($1::uuid[])', [allIds]);
+          await pool.query('DELETE FROM invoice_items       WHERE project_id = ANY($1::uuid[])', [allIds]);
+          try { await pool.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
+          try { await pool.query('DELETE FROM permit_stages    WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
+          try { await pool.query('DELETE FROM design_stages    WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
+          await pool.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [allIds]);
+          // Delete projects deepest-first so parent_id references stay valid.
+          const byDepth = [...tree].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
+          for (const p of byDepth) {
+            await pool.query('DELETE FROM projects WHERE id = $1', [p.id]);
+          }
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+        const root = tree.find(p => p.id === id);
+        return {
+          success: true,
+          deleted: root ? root.name : id,
+          deleted_count: tree.length,
+          included_descendants: tree.length - 1,
+        };
       }
 
       case 'bulk_delete_projects': {
@@ -803,26 +853,32 @@ async function executeTool(toolName, toolInput) {
         const deleted = [];
         const failed = [];
         // Best-effort per-id deletion — keep going on individual failures so the
-        // user gets a complete status report. Each success removes batch items
-        // first (RESTRICT FK) before the project row itself. We don't wrap the
-        // whole thing in a transaction: AI mass-deletes are typically across
-        // unrelated projects, and failing all because one had children would
-        // be more frustrating than skipping the bad one.
+        // user gets a complete status report. Each delete walks the project's
+        // subtree and removes all FK-dependent rows so that rollup-with-children
+        // deletes succeed cleanly (same fix pattern as delete_project above).
         for (const id of ids) {
           try {
-            await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [id]);
-            const { rows } = await pool.query('DELETE FROM projects WHERE id=$1 RETURNING name', [id]);
-            if (rows.length) {
-              deleted.push({ id, name: rows[0].name });
-              results.push({ id, status: 'deleted', name: rows[0].name });
-            } else {
+            const subtree = await collectProjectTree(id);
+            if (!subtree.length) {
               failed.push({ id, error: 'not found' });
               results.push({ id, status: 'not_found' });
+              continue;
             }
+            const subIds = subtree.map(p => p.id);
+            await pool.query('DELETE FROM time_entries        WHERE project_id = ANY($1::uuid[])', [subIds]);
+            await pool.query('DELETE FROM invoice_items       WHERE project_id = ANY($1::uuid[])', [subIds]);
+            try { await pool.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [subIds]); } catch {}
+            try { await pool.query('DELETE FROM permit_stages    WHERE project_id = ANY($1::uuid[])', [subIds]); } catch {}
+            try { await pool.query('DELETE FROM design_stages    WHERE project_id = ANY($1::uuid[])', [subIds]); } catch {}
+            await pool.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [subIds]);
+            const byDepth = [...subtree].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
+            const root = subtree.find(p => p.id === id);
+            for (const p of byDepth) {
+              await pool.query('DELETE FROM projects WHERE id = $1', [p.id]);
+            }
+            deleted.push({ id, name: root ? root.name : id, included_descendants: subtree.length - 1 });
+            results.push({ id, status: 'deleted', name: root ? root.name : id, included_descendants: subtree.length - 1 });
           } catch (e) {
-            // Common cases: child projects (RESTRICT on parent_id), time
-            // entries (RESTRICT on project_id), or a confirmed billing batch
-            // we couldn't clear.
             failed.push({ id, error: e.message });
             results.push({ id, status: 'failed', error: e.message });
           }
