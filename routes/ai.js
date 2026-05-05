@@ -190,8 +190,12 @@ CLIENTS vs PROGRAMS — CRITICAL DISTINCTION:
   scoping — another client could have RUS work too.
 - NEVER create a "PSC RUS" client. PSC is the client; RUS lives at the
   engineering-contract level via the program field.
-- clients.is_rus is a DEPRECATED hint flag — do not rely on it for program
-  classification. Use engineering_contracts.program instead.
+- The clients table does NOT carry a program flag. The legacy is_rus
+  column was retired in migration 0003 — don't reference it.
+- Each engineering contract carries a program (rus|bau|gfr|other|NULL).
+  Each project also carries a program (auto-derived from its EC at
+  create time, falls back to caller-supplied or NULL). The pricing list
+  keys on (job × program × billing_code).
 Contracts and work orders are managed manually or through the AI.
 
 BILLING CADENCE: Each project is either "one_time" (default — single invoice when complete; permitting, fixed-fee design jobs) or "monthly" (bills hours every month, project stays active across cycles; typical Inspection contracts). When a one-time project is billed, status becomes 'billed' and it closes. When a monthly project is billed, it stays active and reappears in next month's queue. Inspection-job projects default to monthly. Use set_billing_cadence to flip a project between modes.
@@ -329,9 +333,10 @@ const AI_TOOLS = [
       properties: {
         name: { type: 'string', description: 'Project name' },
         client_id: { type: 'string', description: 'Client UUID from database context' },
-        contract_id: { type: 'string', description: 'Contract UUID (optional, for PSC/RUS)' },
+        contract_id: { type: 'string', description: 'Contract UUID (optional). Setting this auto-derives `program` from the contract\'s engineering contract.' },
         work_order_number: { type: 'string', description: 'Work order number' },
-        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'] },
+        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'], description: 'Legacy JOB-CATEGORY tag (inspection/re/permitting/design/other). Distinct from `program` — see that field.' },
+        program: { type: 'string', enum: ['rus', 'bau', 'gfr', 'other'], description: 'Program classification. Auto-derived from contract_id\'s engineering contract when set; pass explicitly to override or for projects without a contract.' },
         billing_type: { type: 'string', enum: ['hourly', 'footage'] },
         billing_rate: { type: 'number', description: 'Hourly rate in dollars' },
         footage: { type: 'number', description: 'Linear footage (permitting projects only)' },
@@ -354,9 +359,10 @@ const AI_TOOLS = [
         project_id: { type: 'string', description: 'UUID of the project to update' },
         name: { type: 'string' },
         client_id: { type: 'string' },
-        contract_id: { type: 'string' },
+        contract_id: { type: 'string', description: 'New contract UUID. If supplied AND program isn\'t in the same patch, program auto-derives from the new contract\'s engineering contract.' },
         work_order_number: { type: 'string' },
-        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'] },
+        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'], description: 'Legacy JOB-CATEGORY tag.' },
+        program: { type: ['string', 'null'], enum: ['rus', 'bau', 'gfr', 'other', null], description: 'Program classification (rus|bau|gfr|other). Pass null to clear.' },
         status: { type: 'string', enum: ['active', 'completed', 'on_hold', 'billed'] },
         billing_type: { type: 'string', enum: ['hourly', 'footage'] },
         billing_rate: { type: 'number' },
@@ -425,9 +431,10 @@ const AI_TOOLS = [
               parent_id:       { type: 'string',  description: 'UUID of an existing project to nest under. Mutually exclusive with parent_local_id. Leave both empty for root.' },
               name:            { type: 'string' },
               client_id:       { type: 'string' },
-              contract_id:     { type: 'string' },
+              contract_id:     { type: 'string', description: 'When set, program auto-derives from the contract\'s engineering contract.' },
               concentrator_id: { type: 'string' },
-              project_type:    { type: 'string', description: "rollup / other / inspection / re / permitting / design" },
+              project_type:    { type: 'string', description: "Legacy job-category tag: rollup / other / inspection / re / permitting / design" },
+              program:         { type: 'string', description: "Program enum: rus / bau / gfr / other. Auto-derived from contract_id when set; pass explicitly to override." },
               is_rollup:       { type: 'boolean', description: 'TRUE for container/folder projects (default FALSE)' },
               status:          { type: 'string', description: 'active / completed / billed (default active)' },
               billing_type:    { type: 'string', description: 'hourly / footage' },
@@ -702,24 +709,26 @@ const AI_TOOLS = [
       properties: {
         filter: {
           type: 'object',
-          description: 'Match conditions. Supported keys: client_id, contract_id, engineering_contract_id, status, project_type. Any combination AND-ed together.',
+          description: 'Match conditions. Supported keys: client_id, contract_id, engineering_contract_id, status, project_type, program. Any combination AND-ed together.',
           properties: {
             client_id: { type: 'string' },
             contract_id: { type: 'string' },
             engineering_contract_id: { type: 'string' },
             status: { type: 'string' },
-            project_type: { type: 'string' }
+            project_type: { type: 'string' },
+            program: { type: 'string', enum: ['rus', 'bau', 'gfr', 'other'] }
           }
         },
         patch: {
           type: 'object',
-          description: 'Fields to set. Supported: status, billing_cadence, notes, billing_rate, contract_id, parent_id.',
+          description: 'Fields to set. Supported: status, billing_cadence, notes, billing_rate, contract_id, parent_id, program.',
           properties: {
             status: { type: 'string', enum: ['active', 'completed', 'billed', 'on_hold'] },
             billing_cadence: { type: 'string', enum: ['one_time', 'monthly'] },
             notes: { type: 'string' },
             billing_rate: { type: ['number', 'null'] },
-            contract_id: { type: ['string', 'null'] }
+            contract_id: { type: ['string', 'null'] },
+            program: { type: ['string', 'null'], enum: ['rus', 'bau', 'gfr', 'other', null] }
           }
         }
       },
@@ -795,13 +804,38 @@ async function executeTool(toolName, toolInput) {
           resolvedClientId = r0.rows[0].id;
         }
         const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
+
+        // program: prefer the explicit input; otherwise derive from the
+        // contract's engineering contract (mirrors the admin route).
+        // Validate against the same enum the migration's CHECK constraint
+        // enforces — surfacing a clear error here beats a Postgres 23514.
+        const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+        let resolvedProgram = null;
+        if (toolInput.program !== undefined && toolInput.program !== null && toolInput.program !== '') {
+          const v = String(toolInput.program).trim().toLowerCase();
+          if (!ALLOWED_PROGRAMS.includes(v)) {
+            return { success: false, error: `Invalid program "${toolInput.program}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.` };
+          }
+          resolvedProgram = v;
+        } else if (toolInput.contract_id) {
+          const ecLookup = await pool.query(
+            `SELECT ec.program
+               FROM contracts c
+               JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+              WHERE c.id = $1`, [toolInput.contract_id]
+          );
+          if (ecLookup.rows.length && ecLookup.rows[0].program) {
+            resolvedProgram = ecLookup.rows[0].program;
+          }
+        }
+
         const { rows } = await pool.query(`
           INSERT INTO projects (
             name, client_id, contract_id, work_order_number,
-            project_type, status, billing_type, billing_rate,
+            project_type, program, status, billing_type, billing_rate,
             footage, miles, expected_hours, expected_revenue,
             start_date, notes, parent_id, budget_code_id, concentrator_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
           RETURNING *
         `, [
           toolInput.name,
@@ -809,6 +843,7 @@ async function executeTool(toolName, toolInput) {
           toolInput.contract_id || null,
           toolInput.work_order_number || null,
           toolInput.project_type,
+          resolvedProgram,
           toolInput.status || 'active',
           toolInput.billing_type,
           toolInput.billing_rate,
@@ -856,18 +891,47 @@ async function executeTool(toolName, toolInput) {
         const billing_cadence = toolInput.billing_cadence ?? p.billing_cadence;
         const projected_revenue = toolInput.projected_revenue !== undefined ? toolInput.projected_revenue : p.projected_revenue;
 
+        // Program merge: explicit input > derived from new contract > existing.
+        const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+        let mergedProgram = p.program;
+        if (toolInput.program !== undefined) {
+          if (toolInput.program === null || toolInput.program === '') {
+            mergedProgram = null;
+          } else {
+            const v = String(toolInput.program).trim().toLowerCase();
+            if (!ALLOWED_PROGRAMS.includes(v)) {
+              return { success: false, error: `Invalid program "${toolInput.program}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.` };
+            }
+            mergedProgram = v;
+          }
+        } else if (toolInput.contract_id !== undefined && toolInput.contract_id !== p.contract_id) {
+          // Contract changed in this same patch and program wasn't explicit
+          // — re-derive from the new contract's engineering contract.
+          if (toolInput.contract_id) {
+            const ecLookup = await pool.query(
+              `SELECT ec.program
+                 FROM contracts c
+                 JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+                WHERE c.id = $1`, [toolInput.contract_id]
+            );
+            if (ecLookup.rows.length && ecLookup.rows[0].program) {
+              mergedProgram = ecLookup.rows[0].program;
+            }
+          }
+        }
+
         const fin = calcProjectFinancials(project_type, billing_rate, footage, p.permitting_hours_per_mile);
         const { rows } = await pool.query(`
           UPDATE projects SET
             name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
-            project_type=$5, status=$6, billing_type=$7, billing_rate=$8,
-            footage=$9, miles=$10, expected_hours=$11, expected_revenue=$12,
-            start_date=$13, completed_date=$14, notes=$15, parent_id=$16, budget_code_id=$17, concentrator_id=$18,
-            billing_cadence=$19, projected_revenue=$20
-          WHERE id=$21 RETURNING *
+            project_type=$5, program=$6, status=$7, billing_type=$8, billing_rate=$9,
+            footage=$10, miles=$11, expected_hours=$12, expected_revenue=$13,
+            start_date=$14, completed_date=$15, notes=$16, parent_id=$17, budget_code_id=$18, concentrator_id=$19,
+            billing_cadence=$20, projected_revenue=$21
+          WHERE id=$22 RETURNING *
         `, [
           name, client_id, contract_id, work_order_number,
-          project_type, status, billing_type, billing_rate,
+          project_type, mergedProgram, status, billing_type, billing_rate,
           footage, fin.miles, fin.expectedHours, fin.expectedRevenue,
           start_date, completed_date, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
           billing_cadence, projected_revenue,
@@ -1002,6 +1066,23 @@ async function executeTool(toolName, toolInput) {
           }
           return null;
         };
+        const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+        // Cache contract_id → program lookups so a tree of 50 specs all
+        // pointing at the same contract resolves the EC join exactly once.
+        const programByContract = new Map();
+        async function programForContract(cid) {
+          if (!cid) return null;
+          if (programByContract.has(cid)) return programByContract.get(cid);
+          const r = await pool.query(
+            `SELECT ec.program FROM contracts c
+               JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+              WHERE c.id = $1`, [cid]
+          );
+          const pgm = r.rows[0]?.program || null;
+          programByContract.set(cid, pgm);
+          return pgm;
+        }
+
         for (const s of order) {
           try {
             const clientId = resolveInherit(s, 'client_id');
@@ -1011,6 +1092,21 @@ async function executeTool(toolName, toolInput) {
               failed.push({ local_id: s.local_id, name: s.name, error: 'no client_id (set on this spec or any ancestor via parent_local_id)' });
               continue;
             }
+
+            // Program: explicit input on the spec or any ancestor wins;
+            // otherwise derive from contractId's engineering contract.
+            let program = resolveInherit(s, 'program');
+            if (program) {
+              const v = String(program).trim().toLowerCase();
+              if (!ALLOWED_PROGRAMS.includes(v)) {
+                failed.push({ local_id: s.local_id, name: s.name, error: `Invalid program "${program}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.` });
+                continue;
+              }
+              program = v;
+            } else {
+              program = await programForContract(contractId);
+            }
+
             const fin = calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
             const realParent = s.parent_local_id
               ? idMap[s.parent_local_id]
@@ -1018,11 +1114,11 @@ async function executeTool(toolName, toolInput) {
             const { rows } = await pool.query(`
               INSERT INTO projects (
                 name, client_id, contract_id, work_order_number,
-                project_type, status, billing_type, billing_rate,
+                project_type, program, status, billing_type, billing_rate,
                 footage, miles, expected_hours, expected_revenue,
                 start_date, notes, parent_id, concentrator_id,
                 is_rollup, billing_cadence
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
               RETURNING id, name`,
               [
                 s.name,
@@ -1030,6 +1126,7 @@ async function executeTool(toolName, toolInput) {
                 contractId || null,
                 s.work_order_number || null,
                 s.project_type || 'other',
+                program,
                 s.status || 'active',
                 s.billing_type || 'hourly',
                 s.billing_rate ?? 0,
@@ -1591,7 +1688,7 @@ async function executeTool(toolName, toolInput) {
         if (!filter || !patch) return { success: false, error: 'filter and patch both required' };
 
         // Build WHERE — only allow known filter keys, parameterize values
-        const ALLOWED_FILTER = new Set(['client_id', 'contract_id', 'engineering_contract_id', 'status', 'project_type']);
+        const ALLOWED_FILTER = new Set(['client_id', 'contract_id', 'engineering_contract_id', 'status', 'project_type', 'program']);
         const where = [];
         const params = [];
         let i = 1;
@@ -1608,10 +1705,20 @@ async function executeTool(toolName, toolInput) {
         if (!where.length) return { success: false, error: 'At least one filter key required' };
 
         // Build SET — only allow known patch keys
-        const ALLOWED_PATCH = new Set(['status', 'billing_cadence', 'notes', 'billing_rate', 'contract_id', 'parent_id']);
+        const ALLOWED_PATCH = new Set(['status', 'billing_cadence', 'notes', 'billing_rate', 'contract_id', 'parent_id', 'program']);
+        const ALLOWED_PROGRAMS_BU = ['rus', 'bau', 'gfr', 'other'];
         const sets = [];
         for (const [k, v] of Object.entries(patch)) {
           if (!ALLOWED_PATCH.has(k)) continue;
+          // Validate program against the enum so the DB CHECK doesn't 23514.
+          if (k === 'program' && v !== null && v !== undefined && v !== '') {
+            const pv = String(v).trim().toLowerCase();
+            if (!ALLOWED_PROGRAMS_BU.includes(pv)) {
+              return { success: false, error: `Invalid program "${v}" — allowed: ${ALLOWED_PROGRAMS_BU.join(', ')}.` };
+            }
+            sets.push(`${k} = $${i++}`); params.push(pv);
+            continue;
+          }
           sets.push(`${k} = $${i++}`); params.push(v);
         }
         if (!sets.length) return { success: false, error: 'At least one patch field required' };

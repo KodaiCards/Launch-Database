@@ -404,24 +404,13 @@ CREATE TABLE IF NOT EXISTS jobs (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- DEPRECATED — Phase 3b (2026-05-04): the project_types table is dropped
--- by migration 0004. The block below still runs on a fresh database to
--- populate the legacy schema (the per-statement retry in db.js makes
--- that safe), and migration 0004 then backfills the new `program`
--- column on pricing_entries from project_types.name and drops the
--- table. End state: program enum (rus|bau|gfr|other) on
--- engineering_contracts + projects + pricing_entries.
--- Project program categories (BAU, GF(R), RUS, Other).
-CREATE TABLE IF NOT EXISTS project_types (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(100) NOT NULL UNIQUE,
-  active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-INSERT INTO project_types (name) VALUES
-  ('BAU'), ('GF(R)'), ('RUS'), ('Other')
-ON CONFLICT (name) DO NOTHING;
+-- DEPRECATED — Phase 3b (migration 0004) retired the project_types table
+-- in favor of the program enum (rus|bau|gfr|other) on
+-- engineering_contracts + projects + pricing_entries. The original
+-- table-create + 4-row seed used to live here; both were removed
+-- because IF NOT EXISTS was resurrecting the dropped table on every
+-- post-migration boot. End state: program is a fixed enum, owned by
+-- the migrations runner.
 
 -- Pre-load the standard work jobs. Permitting uses a special calc explained above.
 -- "Permitting" is the standard DOT/County permit. "Permitting (RR)" is the
@@ -437,9 +426,13 @@ INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting) VALUE
   ('Other',               'hourly',  NULL, FALSE)
 ON CONFLICT (name) DO NOTHING;
 
--- Link projects to a job (the work category) and a project_type (the program category).
+-- Link projects to a job (the work category). The program classification
+-- (formerly project_type_id → project_types FK) was retired in
+-- migration 0004; projects.program is added by that migration as a
+-- text enum column. The legacy ALTER for project_type_id was removed
+-- here because IF NOT EXISTS was re-adding the column on every boot
+-- after migration 0004 dropped it.
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS job_id UUID REFERENCES jobs(id) ON DELETE SET NULL;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_type_id UUID REFERENCES project_types(id) ON DELETE SET NULL;
 
 -- For permitting projects we now need to remember the randomized hours-per-mile
 -- factor so re-displays show the same "expected hours" the project was created with.
@@ -451,17 +444,21 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS permitting_hours_per_mile NUMERIC(
 -- A red dot appears in the settings button when there are jobs / types / codes
 -- that don't yet have a price entry.
 -- ─────────────────────────────────────────
+-- pricing_entries (Job × Program × Billing Code → rate). The Phase 3b
+-- migration 0004 added the `program` column, dropped the old
+-- project_type_id FK, and rebuilt the UNIQUE constraint to use program
+-- via a partial index. The CREATE TABLE here only creates the column
+-- shape on a fresh DB; migration 0004 still runs to add the program
+-- column + indexes (no-ops if they already exist).
 CREATE TABLE IF NOT EXISTS pricing_entries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
-  project_type_id UUID REFERENCES project_types(id) ON DELETE CASCADE,
   billing_code VARCHAR(100), -- e.g. "g-1-B-4" (nullable: not every entry has one)
   billing_type VARCHAR(20) DEFAULT 'hourly', -- 'hourly' | 'footage' | 'permitting'
   rate NUMERIC(10,2),         -- $/hr or $/mile depending on billing_type
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE (job_id, project_type_id, billing_code)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 DROP TRIGGER IF EXISTS pricing_entries_updated_at ON pricing_entries;
@@ -469,57 +466,19 @@ CREATE TRIGGER pricing_entries_updated_at
   BEFORE UPDATE ON pricing_entries
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- Pre-load RUS billing codes the user gave me.
--- Permitting code (a-2-D) is intentionally configured as 'permitting' billing_type
--- so the special hours-per-mile logic applies. Rate stays at $90/hr.
-DO $$
-DECLARE
-  rus_id UUID;
-  insp_id UUID; re_id UUID; perm_id UUID; other_id UUID;
-BEGIN
-  SELECT id INTO rus_id FROM project_types WHERE name = 'RUS';
-  SELECT id INTO insp_id FROM jobs WHERE name = 'Inspection';
-  SELECT id INTO re_id   FROM jobs WHERE name = 'Resident Engineer';
-  SELECT id INTO perm_id FROM jobs WHERE name = 'Permitting';
-  SELECT id INTO other_id FROM jobs WHERE name = 'Other';
-
-  -- Hourly RUS codes
-  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
-  VALUES (insp_id, rus_id, 'g-1-B-4', 'hourly', 90)
-  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
-
-  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
-  VALUES (re_id, rus_id, 'g-1-B-1', 'hourly', 100)
-  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
-
-  -- Permitting: $90/hr, special calc applied at project create
-  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
-  VALUES (perm_id, rus_id, 'a-2-D', 'permitting', 90)
-  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
-
-  -- Permitting (RR): same calc, but rate is intentionally NULL — railroad
-  -- permits are priced case-by-case. User sets the rate in Settings → Pricing
-  -- when they have it. Project creation shouldn't block on the missing rate.
-  IF (SELECT id FROM jobs WHERE name = 'Permitting (RR)') IS NOT NULL THEN
-    INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate)
-    SELECT (SELECT id FROM jobs WHERE name = 'Permitting (RR)'), rus_id, NULL, 'permitting', NULL
-    WHERE NOT EXISTS (
-      SELECT 1 FROM pricing_entries pe
-      WHERE pe.job_id = (SELECT id FROM jobs WHERE name = 'Permitting (RR)')
-        AND pe.project_type_id = rus_id
-    );
-  END IF;
-
-  -- $850 per mile codes (per-mile fixed billing). Mapped to "Other" job
-  -- since they don't fit cleanly into Inspection/RE/Permitting/Design.
-  INSERT INTO pricing_entries (job_id, project_type_id, billing_code, billing_type, rate, notes)
-  VALUES
-    (other_id, rus_id, 'a-4',         'footage', 850, 'Update Plant Records'),
-    (other_id, rus_id, 'e-2-A-2(N)',  'footage', 850, 'OSP Staking Underground'),
-    (other_id, rus_id, 'e-2-A-1(N)',  'footage', 850, 'OSP Staking Aerial'),
-    (other_id, rus_id, 'g-1-I-3',     'footage', 850, 'Construction Progress Reports')
-  ON CONFLICT (job_id, project_type_id, billing_code) DO NOTHING;
-END $$;
+-- RUS billing-code seeding moved to migration 0005 (Phase 3b polish).
+--
+-- The original seed in this slot used pricing_entries.project_type_id, which
+-- migration 0004 dropped. After that migration ran, this DO block fired on
+-- every boot and silently failed inside db.js's per-statement try/catch —
+-- harmless to runtime but it polluted the Railway logs and re-running the
+-- file made the warning louder over time. The seed is now in
+-- migrations/0005_rus_pricing_seed_program.sql, keyed on program (text)
+-- instead of project_type_id (UUID FK to a now-deleted table).
+--
+-- This stub is intentionally empty so a fresh-DB bootstrap order remains:
+--   schema.sql → migration 0005 (the new RUS pricing seed)
+-- Both produce the same end state.
 
 -- ─────────────────────────────────────────
 -- INVOICE GROUPING (multiple projects → one invoice)
@@ -1087,28 +1046,14 @@ BEGIN
       END IF;
     END IF;
 
-    -- (3) PROJECT TYPE folder (only when project_type_id is set).
-    -- Was previously gated on client_is_rus too; that column has been
-    -- retired (Path B). The remaining gate (project_type_id presence)
-    -- correctly limits this folder to projects that have an explicit
-    -- type set — which legacy seed data only did for PSC RUS work.
+    -- (3) PROJECT TYPE folder — RETIRED. The legacy auto-nest used to add
+    -- a PROJECT TYPE rollup gated on project_type_id; both that column
+    -- and the project_types table were dropped in migration 0004. The
+    -- block was a one-time backfill anyway (the IF EXISTS rollups guard
+    -- at the top of this DO block prevents it from re-firing on an
+    -- existing DB), so removing it has no effect on production data.
+    -- For posterity, the chain is now: Client → Service Area → Team.
     type_folder := area_folder;
-    IF pj.project_type_id IS NOT NULL THEN
-      SELECT id INTO type_folder
-      FROM projects
-      WHERE is_rollup = TRUE AND rollup_level = 'project_type' AND rollup_key = pj.project_type_id::text
-        AND parent_id = area_folder
-      LIMIT 1;
-      IF type_folder IS NULL THEN
-        INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id, status, is_rollup, rollup_level, rollup_key, project_type)
-        SELECT
-          COALESCE(pt.name, 'Project Type'),
-          pj.client_id, area_folder, pj.concentrator_id, pj.project_type_id, 'active', TRUE, 'project_type', pj.project_type_id::text, 'rollup'
-        FROM project_types pt WHERE pt.id = pj.project_type_id
-        RETURNING id INTO type_folder;
-        IF type_folder IS NULL THEN type_folder := area_folder; END IF;
-      END IF;
-    END IF;
 
     -- (4) TEAM folder (always — derived from job)
     SELECT COALESCE(j.team, 'shared') INTO team_name FROM jobs j WHERE j.id = pj.job_id;
@@ -1125,8 +1070,8 @@ BEGIN
       AND parent_id = type_folder
     LIMIT 1;
     IF team_folder IS NULL THEN
-      INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id, status, is_rollup, rollup_level, rollup_key, project_type)
-      VALUES (team_label, pj.client_id, type_folder, pj.concentrator_id, pj.project_type_id, 'active', TRUE, 'team', team_name, 'rollup')
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, status, is_rollup, rollup_level, rollup_key, project_type)
+      VALUES (team_label, pj.client_id, type_folder, pj.concentrator_id, 'active', TRUE, 'team', team_name, 'rollup')
       RETURNING id INTO team_folder;
     END IF;
 

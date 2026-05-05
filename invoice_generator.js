@@ -1,22 +1,75 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// invoice_generator.js
+// invoice_generator.js — RUS-PROGRAM INVOICE GENERATOR
+// ═══════════════════════════════════════════════════════════════════════════
 //
-// PDF invoice generator for PSC RUS work — pixel-faithful match of the
-// owner's existing Excel summary template + a timecards detail page for
-// hourly jobs.
+//                              ★ READ THIS FIRST ★
 //
-// Two variants, picked by the JOB's billing_type:
-//   - 'hourly'  → Inspector, Resident Engineer, anything PSC RUS hourly.
-//                 Summary page (Hours/Rate/Amount columns) + one timecards
-//                 page section per employee.
-//   - 'footage' → Permitting, footage-billed PSC RUS work. Summary page
-//                 with a Footage column (auto-formatted as miles when
-//                 ≥ 1 mile, feet when below); NO timecards pages.
+// This module exclusively handles RUS-program work — invoices for
+// engineering contracts whose `engineering_contracts.program = 'rus'`.
+// It is gated to refuse non-RUS work because the format is RUS-specific
+// and silently mis-formatting an invoice would be worse than failing.
 //
-// All other invoice formats (non-PSC-RUS clients, future templates) are
-// out of scope here — see memory file `reference_invoice_non_rus_formats.md`.
+// RUS work is materially more complicated than ordinary (BAU/GFR/Other)
+// work. This file is dense for that reason. The complications, in order:
 //
-// Public surface:
+//   1. UMBRELLA STRUCTURE. Ordinary invoices are project → invoice. RUS
+//      goes:  Engineering Contract (umbrella, e.g. "RUS 217 Engineering
+//      Contract GA 1706 -A72") → multiple billing contracts (e.g. 515-3,
+//      515-4, 515-5) → multiple service-area work orders → per-team work.
+//      One invoice covers ONE engineering contract umbrella + ONE job
+//      across all child contracts. Friendly contract labels ("Contract 3"
+//      for 515-3) live on contracts.friendly_label.
+//
+//   2. LOAN NAME BANNER. RUS work is loan-financed by USDA. The loan
+//      name (e.g. "Reconnect 3") prints as a top-level grouping label on
+//      every page. Stored on engineering_contracts.loan_name. Other
+//      programs leave it NULL.
+//
+//   3. TWO DELIVERABLE FORMATS, PICKED BY THE JOB:
+//
+//      a. HOURLY — Inspector, Resident Engineer, Records Management,
+//         anything billed by hours × rate.
+//         Summary page: Hours / Rate / Amount columns per WO, contract
+//         subtotals, umbrella subtotal, grand total.
+//         + DETAIL PAGES: one per employee, listing every time entry
+//         (date, week-ending Sunday, WO, contract, hours). USDA wants
+//         the audit trail; ordinary clients don't.
+//
+//      b. FOOTAGE — DOT/County/RR Permitting, OSP Staking (Aerial /
+//         Underground), Update Plant Records, Construction Progress
+//         Reports. Billed by miles × rate (with the special permitting
+//         hours-per-mile randomization handled at project create).
+//         Summary page only: Footage column auto-formatted as miles
+//         (≥ 5280 ft → "X.XX mi" 2dp) or feet ("X,XXX ft" comma-grouped).
+//         NO timecards pages.
+//
+//   4. RUS BILLING CODES. Each job has a specific RUS code (g-1-B-4 for
+//      Inspection, g-1-B-1 for RE, a-2-D for Permitting, etc.) that
+//      prints on the invoice. Lives on jobs.billing_code; pricing
+//      defaults live on pricing_entries keyed on (job_id, program,
+//      billing_code).
+//
+//   5. PERIOD HANDLING. Hourly invoices respect period_start/period_end
+//      and only include time entries inside the window. Footage invoices
+//      include any project under the contract+job — footage doesn't
+//      accumulate over time the way hours do.
+//
+//   6. ZERO-ACTIVITY ROWS. Sub-contracts with no activity in the period
+//      are dropped silently (keeps the PDF clean when 515-4 had nothing
+//      this month but 515-3 and 515-5 did). WOs with zero hours/footage
+//      are also dropped.
+//
+//   7. FAIL-LOUD GATING. The first thing buildInvoiceData() does after
+//      loading the engineering contract is verify ec.program === 'rus'.
+//      Any other value (or NULL) throws a clear error pointing at the
+//      memory file `reference_invoice_non_rus_formats.md`. This was a
+//      Path B safety net (2026-05-04): before the refactor, the gate
+//      checked clients.is_rus, which mistakenly grouped PSC's BAU work
+//      with its RUS work. PSC has both, so client-level gating produced
+//      mis-formatted invoices for BAU contracts. Don't loosen this gate.
+//
+// PUBLIC SURFACE
+// ──────────────
 //   buildInvoiceData(pool, opts)  → assemble the data structure (testable
 //                                   without PDF — useful for the API
 //                                   preview endpoint and unit tests)
@@ -25,6 +78,13 @@
 // The two are split deliberately so the data assembly can be unit-tested
 // without spinning up pdfkit, and so an HTML-preview endpoint can reuse
 // the same data.
+//
+// NON-RUS PROGRAMS
+// ────────────────
+// BAU, GFR, and Other engineering contracts each need their own template.
+// Owner expects to provide samples for each later. When that happens,
+// branch off this file rather than mutating it — see
+// `reference_invoice_non_rus_formats.md` for the playbook.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const PDFDocument = require('pdfkit');
@@ -112,9 +172,12 @@ async function buildInvoiceData(pool, opts) {
   if (!period_start || !period_end) throw new Error('period_start and period_end required');
 
   // 1. Engineering contract + client + loan info
-  // NOTE: program lives at the engineering-contract level, not the client.
-  // PSC has both RUS work (program='rus') and ordinary work — the gate
-  // below uses program, not the deprecated cl.is_rus flag.
+  //
+  // The engineering contract is the umbrella we're billing. We pull its
+  // program here for the gate below — that's the source of truth for
+  // "is this RUS work?" Path B (2026-05-04) replaced the old
+  // clients.is_rus check, which incorrectly grouped PSC's BAU work
+  // with its RUS work (PSC has both). See the file header for context.
   const ecRes = await pool.query(
     `SELECT ec.id, ec.name, ec.contract_number, ec.loan_name, ec.program,
             cl.id AS client_id, cl.name AS client_name
@@ -126,12 +189,20 @@ async function buildInvoiceData(pool, opts) {
   if (!ecRes.rows[0]) throw new Error('Engineering contract not found');
   const ec = ecRes.rows[0];
 
-  // Refuse to render for non-RUS work — this template is exclusive to RUS
-  // billing. Better to fail loudly than to mis-format a real invoice for
-  // BAU/GFR/Other work, which need their own templates.
+  // ─────────────── RUS-ONLY GATE ────────────────────────────────────────
+  // This template is exclusive to RUS-program work because:
+  //   • Format is matched to the USDA RUS reporting style (loan name
+  //     banner, friendly contract labels, RUS billing codes, timecards
+  //     audit trail for hourly).
+  //   • BAU/GFR/Other clients use their own (yet-to-be-built) templates.
+  // Failing loudly here is intentional — silently mis-formatting an
+  // invoice would be worse than refusing.
+  // To bill non-RUS work: change the EC's program to 'rus' (only if it
+  // really is RUS work — usually a misclassification), or build a new
+  // template module. See `reference_invoice_non_rus_formats.md`.
   if (ec.program !== 'rus') {
     const programLabel = ec.program ? `program "${ec.program}"` : 'no program set';
-    throw new Error(`Engineering contract "${ec.name}" (${ec.client_name}) has ${programLabel} — the PSC RUS PDF template is exclusive to engineering contracts with program='rus'. Other programs need their own template (see reference_invoice_non_rus_formats memory).`);
+    throw new Error(`Cannot render RUS invoice: engineering contract "${ec.name}" (client "${ec.client_name}") has ${programLabel}, not 'rus'. This PDF template is exclusive to RUS-program work. To use it, set the engineering contract's Program to RUS in Settings → Engineering Contracts. Other programs need their own template (see memory: reference_invoice_non_rus_formats).`);
   }
 
   // 2. Job info — billing code, rate, hourly vs footage
@@ -320,9 +391,14 @@ async function buildInvoiceData(pool, opts) {
 
 // ─── PDF rendering ────────────────────────────────────────────────────────
 //
-// Renders the assembled `data` into the given writable stream. Caller is
-// responsible for setting Content-Type and finalizing the response after
-// the PDF stream `end` event.
+// Renders the assembled RUS-program `data` into the given writable stream.
+// Caller is responsible for setting Content-Type and finalizing the
+// response after the PDF stream `end` event.
+//
+// This renderer assumes `data` came from buildInvoiceData(), which has
+// already verified ec.program='rus'. It does NOT re-check the gate —
+// don't call this directly with hand-crafted data unless you've matched
+// the RUS format spec described in the file header.
 function renderInvoicePdf(data, stream) {
   const isFootage = data.meta.job_billing_type === 'footage';
   const doc = new PDFDocument({
@@ -331,7 +407,7 @@ function renderInvoicePdf(data, stream) {
     info: {
       Title: `${data.meta.job_name} Summary - ${data.meta.month_year}`,
       Author: 'Launch Fiber Services',
-      Subject: 'PSC RUS Invoice',
+      Subject: 'RUS Invoice',
     },
   });
   doc.pipe(stream);

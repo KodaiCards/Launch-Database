@@ -16,10 +16,22 @@
 --   3. Drops UNIQUE/FK constraints and the project_type_id columns.
 --   4. Drops the project_types table.
 --
--- The free-text `projects.project_type` column STAYS — it's been around
--- since v1 and many legacy queries / display paths still read it. Going
--- forward, code populates it lower-cased to mirror the program enum, so
--- new rows have project_type and program in lock-step.
+-- The free-text `projects.project_type` column STAYS — but DON'T confuse
+-- it with the new program enum. Historically `project_type` carried
+-- legacy JOB-CATEGORY strings ('inspection', 'permitting', 're',
+-- 'design', 'other') while `project_type_id` carried the program FK.
+-- Confusing naming. After this migration:
+--   • `program` (rus|bau|gfr|other) is the program classification.
+--   • `project_type` (text) keeps its legacy job-category meaning and
+--      is still read by legacy display paths and a couple of filters.
+-- New rows: program is auto-derived from EC; project_type is a job-
+-- category tag set by the project create flow based on the chosen job.
+-- They are NOT lock-step.
+--
+-- The backfill below opportunistically reads project_type to recover
+-- program for OLD rows where the user typed the program name into the
+-- legacy column (rare but possible) — that's the only place these two
+-- columns ever overlap.
 --
 -- Idempotent. Safe to re-run.
 
