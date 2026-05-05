@@ -1364,6 +1364,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
           </div>
         </div>
+        <!-- ROW 1: Client | Program -->
         <div class="form-row">
           <div class="form-group">
             <label>Client *</label>
@@ -1382,6 +1383,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               </div>
             </div>
           </div>
+          <div class="form-group" id="proj-ptype-wrap">
+            <label>Program * <span style="color:var(--text-muted);font-weight:400">(drives which fields populate)</span></label>
+            <select id="proj-ptype" onchange="ptypeChanged()">
+              <option value="">Select program...</option>
+            </select>
+          </div>
+        </div>
+        <!-- ROW 2: Contract | Service Area -->
+        <div class="form-row">
           <div class="form-group" id="proj-contract-wrap">
             <label>Contract</label>
             <div style="display:flex;gap:6px">
@@ -1400,19 +1410,20 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               </div>
             </div>
           </div>
-        </div>
-        <div class="form-row">
+          <!-- Service Area: concentrator dropdown for RUS / GF(R), free-text otherwise.
+               Both wrappers live in the same form-row column slot — gating shows
+               exactly one at a time (or neither if no program signal yet). -->
           <div class="form-group" id="proj-concentrator-wrap">
-            <label>Service Area / Concentrator</label>
+            <label>Service Area</label>
             <div style="display:flex;gap:6px">
               <select id="proj-concentrator" onchange="concentratorChanged()" style="flex:1">
-                <option value="">None — enter WO# manually</option>
+                <option value="">— Pick contract first —</option>
               </select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('conc')" title="Add new concentrator"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-conc" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Reconnect 3)" style="flex:1">
+                <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Contract 3)" style="flex:1">
                 <input type="text" id="qa-conc-area" placeholder="Area name (e.g. Mt. Paran)" style="flex:1">
                 <input type="text" id="qa-conc-wo" placeholder="WO# (optional)" style="flex:1">
               </div>
@@ -1422,30 +1433,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               </div>
             </div>
           </div>
-          <div class="form-group" id="proj-wo-wrap">
-            <label>Work Order Number</label>
-            <input type="text" id="proj-wo" placeholder="e.g. 16316">
-          </div>
           <div class="form-group" id="proj-service-area-wrap" style="display:none">
             <label>Service Area</label>
             <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc.">
             <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client + team.</span>
           </div>
-          <div class="form-group" id="proj-ptype-wrap">
-            <label>Program * <span style="color:var(--text-muted);font-weight:400">(RUS / BAU / GFR / Other — drives which fields appear)</span></label>
-            <div style="display:flex;gap:6px">
-              <select id="proj-ptype" onchange="ptypeChanged()" style="flex:1">
-                <option value="">Select program...</option>
-              </select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('ptype')" title="Add new project type"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div id="qa-ptype" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <input type="text" id="qa-ptype-name" placeholder="Type name (e.g. Custom Program)" style="margin-bottom:6px">
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('ptype', false)">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddProjectType()"><i class="fa-solid fa-check"></i> Add</button>
-              </div>
-            </div>
+        </div>
+        <!-- ROW 3: WO# | Job -->
+        <div class="form-row">
+          <div class="form-group" id="proj-wo-wrap">
+            <label>Work Order Number <span style="color:var(--text-muted);font-weight:400">(RUS only)</span></label>
+            <input type="text" id="proj-wo" placeholder="e.g. 16316">
           </div>
           <div class="form-group">
             <label>Job * <span style="color:var(--text-muted);font-weight:400">(work category)</span></label>
@@ -2819,10 +2817,16 @@ function concentratorChanged() {
   const id = sel.value;
   if (!id) return;
   const conc = allConcentrators.find(c => c.id === id);
-  if (conc) {
-    if (conc.work_order_number) {
-      document.getElementById('proj-wo').value = conc.work_order_number;
-    }
+  if (!conc) return;
+  // Auto-fill WO# only for RUS — that's the only program where WO# is
+  // a real field. For GF(R) (which uses the same concentrator list but
+  // doesn't bill against a RUS WO#), leave WO# empty so the hidden
+  // input doesn't carry stale data into saveProject().
+  const effective = (typeof effectiveProgramForProjectModal === 'function')
+    ? effectiveProgramForProjectModal()
+    : null;
+  if (effective === 'rus' && conc.work_order_number) {
+    document.getElementById('proj-wo').value = conc.work_order_number;
   }
 }
 
@@ -2880,16 +2884,22 @@ function effectiveProgramForProjectModal() {
 function applyProjectModalFieldGating() {
   const effective = effectiveProgramForProjectModal();
   const isRus = effective === 'rus';
-  const isNonRus = effective && effective !== 'rus';
+  const isGfr = effective === 'gfr';
+  // GF(R) = Government Fiber Reconnect. Owner spec (2026-05-05): "GF(R)
+  // is BAU work within RUS areas." So it uses the RUS contract/area
+  // structure (concentrators, RUS-program contract dropdown) but the
+  // jobs are non-RUS BAU jobs and there's no WO# (RUS-billing-specific).
+  const usesRusInfra = isRus || isGfr;
+  // "Free-text" service-area mode applies to non-RUS programs that don't
+  // share RUS infrastructure: BAU and Other.
+  const usesFreeTextArea = !!effective && !usesRusInfra;
   const clientId = document.getElementById('proj-client')?.value;
   const client = (clients || []).find(c => c.id === clientId);
-  // Contract field: shown for RUS by default; for non-RUS only if admin
-  // opted in per client (Settings → Clients "Show Contract"). Nothing's
-  // shown until a client is picked.
-  const showContract = clientId && (isRus || client?.show_contract === true);
+  // Contract field: shown for RUS/GFR by default; for BAU/Other only if
+  // admin opted in per client (Settings → Clients "Show Contract").
+  const showContract = clientId && (usesRusInfra || client?.show_contract === true);
 
-  // Program select (proj-ptype) — always visible once a client is picked.
-  // Lets the user explicitly disambiguate.
+  // Program select — always visible once a client is picked.
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
 
@@ -2902,7 +2912,7 @@ function applyProjectModalFieldGating() {
     }
   }
 
-  // WO# — RUS-only. Owner rule: "WO# are only for RUS jobs."
+  // WO# — RUS only (NOT GF(R)). Owner rule: WO# are only for RUS jobs.
   const woWrap = document.getElementById('proj-wo-wrap');
   if (woWrap) {
     woWrap.style.display = isRus ? '' : 'none';
@@ -2912,70 +2922,144 @@ function applyProjectModalFieldGating() {
     }
   }
 
-  // Concentrator dropdown — RUS only. Concentrator records are RUS
-  // service areas (Mt. Paran / Crossroad School / etc.); non-RUS work
-  // gets a free-text Service Area instead.
+  // Concentrator dropdown — RUS or GF(R). Concentrators are the RUS
+  // service-area records (Mt. Paran / Crossroad School / etc.). GF(R)
+  // also uses these because GF(R) is BAU work happening WITHIN those
+  // RUS areas.
   const concWrap = document.getElementById('proj-concentrator-wrap');
   if (concWrap) {
-    concWrap.style.display = isRus ? '' : 'none';
-    if (!isRus) {
+    concWrap.style.display = usesRusInfra ? '' : 'none';
+    if (!usesRusInfra) {
       const cIn = document.getElementById('proj-concentrator');
       if (cIn) cIn.value = '';
     }
   }
 
-  // Free-text Service Area — for any non-RUS effective program. Hidden
-  // when effective is unknown (no client / mixed / pre-pick) since we
-  // don't yet know whether to show the dropdown or free-text.
+  // Free-text Service Area — for any program that DOESN'T use RUS
+  // infrastructure (BAU/Other). Hidden when effective is RUS/GFR/null.
   const saWrap = document.getElementById('proj-service-area-wrap');
   if (saWrap) {
-    saWrap.style.display = isNonRus ? '' : 'none';
-    if (!isNonRus) {
+    saWrap.style.display = usesFreeTextArea ? '' : 'none';
+    if (!usesFreeTextArea) {
       const saIn = document.getElementById('proj-service-area');
       if (saIn) saIn.value = '';
     }
   }
+
+  // Re-populate Contract dropdown to only show contracts that match the
+  // effective program. Concentrator dropdown filters by whichever
+  // contract is selected. Both helpers are no-ops when the relevant
+  // wrappers are hidden.
+  if (typeof populateContractDropdownForProgram === 'function') populateContractDropdownForProgram();
+  if (typeof populateConcentratorDropdownForContract === 'function') populateConcentratorDropdownForContract();
+}
+
+// Populate the Contract dropdown to only contracts under engineering
+// contracts whose program matches the effective program. Owner rule:
+// "If RUS or GF(R) then load the RUS contracts." So both share the
+// same RUS-program contract list. BAU/Other can still pick their own
+// contracts when admin has opted in.
+function populateContractDropdownForProgram() {
+  const sel = document.getElementById('proj-contract');
+  if (!sel) return;
+  const effective = effectiveProgramForProjectModal();
+  const clientId = document.getElementById('proj-client')?.value;
+  if (!clientId) {
+    sel.innerHTML = '<option value="">None / N/A</option>';
+    return;
+  }
+
+  const allContracts = (window.contractsCache || []).filter(c => c.client_id === clientId);
+  const ecCache = window.engineeringContractsCache || [];
+
+  // Decide which programs the contract list should include.
+  // RUS or GFR → contracts under program='rus' ECs only (RUS umbrella).
+  // BAU/Other → contracts under matching-program ECs.
+  // null      → all client contracts (let user explore).
+  let allowedEcIds;
+  if (effective === 'rus' || effective === 'gfr') {
+    allowedEcIds = new Set(ecCache.filter(ec => ec.client_id === clientId && ec.program === 'rus').map(ec => ec.id));
+  } else if (effective) {
+    allowedEcIds = new Set(ecCache.filter(ec => ec.client_id === clientId && ec.program === effective).map(ec => ec.id));
+  } else {
+    allowedEcIds = null; // unfiltered
+  }
+
+  const filtered = allContracts.filter(c => !allowedEcIds || allowedEcIds.has(c.engineering_contract_id));
+
+  // Preserve current selection if it's still valid; otherwise clear.
+  const prev = sel.value;
+  const seen = new Set();
+  const opts = ['<option value="">None / N/A</option>'];
+  for (const c of filtered) {
+    const display = c.friendly_label || c.name || c.contract_number;
+    if (!display || seen.has(display)) continue;
+    seen.add(display);
+    opts.push(`<option value="${c.id}">${esc(display)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+  if (filtered.some(c => c.id === prev)) sel.value = prev;
+}
+
+// Populate the Concentrator dropdown to show only the service areas
+// belonging to the currently-selected contract. Match concentrators by
+// their `contract_label` against the contract's `friendly_label`
+// (legacy data convention — see schema.sql concentrators seed).
+function populateConcentratorDropdownForContract() {
+  const sel = document.getElementById('proj-concentrator');
+  if (!sel) return;
+  const contractId = document.getElementById('proj-contract')?.value;
+  const contract = (window.contractsCache || []).find(c => c.id === contractId);
+  const targetLabel = contract?.friendly_label || contract?.contract_number || null;
+  const allConcs = window.allConcentrators || allConcentrators || [];
+
+  const prev = sel.value;
+  if (!contractId) {
+    sel.innerHTML = '<option value="">— Pick contract first —</option>';
+    return;
+  }
+  const filtered = allConcs.filter(co => !targetLabel || co.contract_label === targetLabel);
+  const opts = ['<option value="">— Select service area —</option>'];
+  for (const co of filtered) {
+    const wo = co.work_order_number ? ` (WO# ${co.work_order_number})` : '';
+    opts.push(`<option value="${co.id}">${esc(co.area_name)}${wo}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+  if (filtered.some(c => c.id === prev)) sel.value = prev;
 }
 
 async function clientChanged(preserveJobId) {
   const clientId = document.getElementById('proj-client').value;
-  const csel = document.getElementById('proj-contract');
-  while (csel.options.length > 1) csel.remove(1);
 
-  // Reset explicit program pick when the client changes — the previous
-  // value may not apply to the new client's EC mix. Field gating
-  // re-derives below.
+  // Reset explicit program + contract picks when the client changes —
+  // they may not apply to the new client.
   const pSel = document.getElementById('proj-ptype');
   if (pSel) pSel.value = '';
+  const cSel = document.getElementById('proj-contract');
+  if (cSel) cSel.value = '';
 
-  // Compute the effective program and toggle every gated field. The
-  // legacy "isPsc" boolean is gone — we look at the actual program
-  // signal now (see effectiveProgramForProjectModal above for the
-  // priority order).
+  // Fetch this client's contracts FIRST, cache them globally so the
+  // gating helper (populateContractDropdownForProgram) can filter by
+  // engineering_contract.program when it runs below.
+  if (clientId) {
+    try {
+      const ctrs = await api('/api/contracts?client_id=' + clientId);
+      window.contractsCache = window.contractsCache || [];
+      const idsBefore = new Set(window.contractsCache.map(c => c.id));
+      for (const c of ctrs) if (!idsBefore.has(c.id)) window.contractsCache.push(c);
+    } catch (e) { /* non-fatal — gating just won't filter */ }
+  }
+
+  // Apply field gating now that contracts are cached. This populates
+  // the Contract dropdown filtered by program (only RUS contracts when
+  // effective is RUS or GFR), and the Concentrator dropdown will be
+  // populated when contractChanged fires.
   applyProjectModalFieldGating();
 
   // Re-filter the Job dropdown — server filters by program_scope when
-  // we pass engineering_contract_id (preferred) or by client EC mix
+  // we pass program / engineering_contract_id, or by client EC mix
   // when only client_id is supplied.
   await refilterJobsDropdown(preserveJobId);
-
-  if (!clientId) return;
-  const ctrs = await api('/api/contracts?client_id=' + clientId);
-  // Cache contracts globally so effectiveProgramForProjectModal() can
-  // resolve a contract → its EC's program without a refetch.
-  window.contractsCache = window.contractsCache || [];
-  // Merge new contracts in without losing other clients' entries.
-  const idsBefore = new Set(window.contractsCache.map(c => c.id));
-  for (const c of ctrs) if (!idsBefore.has(c.id)) window.contractsCache.push(c);
-  // De-dup by display name in the dropdown. If multiple contract records
-  // share the same name, collapse them into one option.
-  const seen = new Set();
-  ctrs.forEach(c => {
-    const display = c.name || c.contract_number;
-    if (seen.has(display)) return;
-    seen.add(display);
-    csel.add(new Option(display, c.id));
-  });
 }
 
 // Pull a fresh, client-filtered jobs list and rebuild the Job dropdown in the
