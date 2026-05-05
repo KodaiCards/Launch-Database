@@ -1038,7 +1038,10 @@ async function start(opts = {}) {
   // ticks don't race the test cleanup. The handle is unref'd anyway, but
   // skipping it keeps test startup quiet.
   if (!opts.skipScheduler) {
-    automationModule.startScheduler(pool);
+    // Pass uploadDir so the scheduler can run the daily orphan-file prune.
+    // Without it, the prune step is skipped (still safe — manual endpoint
+    // /api/_admin/prune-orphan-files works either way).
+    automationModule.startScheduler(pool, { uploadDir: UPLOAD_DIR });
   }
   // listenPort: pass 0 from tests to bind to an ephemeral port; pass the
   // configured PORT in production. We log the resolved port (server.address())

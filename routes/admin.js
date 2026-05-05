@@ -34,13 +34,35 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   // Re-nest every real project under its correct rollup chain. Idempotent —
   // skips projects already under the right parent. Also sweeps orphaned
   // (childless) rollup folders left behind by old nesting attempts.
+  //
+  // DESTRUCTIVE: the cleanup pass DELETEs any rollup that ends up empty
+  // after re-nesting. Pre-2026-05 there was no opt-in, so a single click
+  // could quietly remove every empty service-area / team folder including
+  // ones the owner had hand-curated. To make destructive intent explicit:
+  //   - When called without `confirm: true` in the body, this is a true
+  //     dry-run: it computes what WOULD happen, returns the same shape
+  //     (with `dry_run: true` set), and rolls back any mutations.
+  //   - The frontend (Settings → Migration Tools → "Re-nest legacy")
+  //     calls dry-run first, shows the user a count of what's about to
+  //     change, and only POSTs `confirm: true` after the user clicks
+  //     through the warning.
+  // For backward-compat with API callers that may rely on the old behavior,
+  // an explicit `confirm: true` is required to mutate; `dry_run: true` is
+  // also accepted as a synonym for "preview only" (default).
   app.post('/api/_admin/migrate-nesting', requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    const dryRun = body.confirm !== true || body.dry_run === true;
+
     let processed = 0, moved = 0, skipped = 0, failed = 0;
     let obsoleteRollupsRemoved = 0;
     const errors = [];
+    const wouldRemove = [];
+    const client = await pool.connect();
     try {
+      await client.query('BEGIN');
+
       // Get every real project (no rollups, since rollups ARE the nesting structure)
-      const { rows: projects } = await pool.query(
+      const { rows: projects } = await client.query(
         `SELECT id, name, client_id, concentrator_id, project_type_id, job_id, parent_id
          FROM projects
          WHERE COALESCE(is_rollup, false) = false
@@ -49,27 +71,18 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       for (const p of projects) {
         processed++;
         try {
-          // Skip projects without a client — they can't be nested.
           if (!p.client_id) { skipped++; continue; }
-
-          // Migration can't recover service_area_label for legacy projects
-          // (the field is new). PSC projects with a concentrator_id will get
-          // a Service Area folder via that path. Non-PSC legacy projects
-          // without a concentrator will land directly under the Team folder
-          // until an admin edits them and adds a service area label.
-          const correctParent = await ensureRollupChain(pool, {
+          const correctParent = await ensureRollupChain(client, {
             client_id:          p.client_id,
             concentrator_id:    p.concentrator_id,
             service_area_label: null,
             job_id:             p.job_id
           });
-
           if (!correctParent) { skipped++; continue; }
-
           if (p.parent_id === correctParent) {
             skipped++;
           } else {
-            await pool.query('UPDATE projects SET parent_id = $1 WHERE id = $2',
+            await client.query('UPDATE projects SET parent_id = $1 WHERE id = $2',
               [correctParent, p.id]);
             moved++;
           }
@@ -80,17 +93,9 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       }
 
       // Cleanup pass — delete any rollup folder that no longer has children.
-      // This catches:
-      //   - project_type rollups from the very first nesting attempt
-      //   - obsolete team rollups using the old labels ('Shared (Design + Permitting)',
-      //     'Shared / Unassigned') after the team-key collapse normalized everything
-      //     to 'design' / 'permitting' / 'shared'
-      //   - service_area rollups whose underlying projects moved away
-      //   - empty client rollups left after their last project moved
       // Loop because deleting a leaf rollup can make its parent become empty too.
-      // Bound at 10 passes for safety.
       for (let pass = 0; pass < 10; pass++) {
-        const { rows: deleted } = await pool.query(`
+        const { rows: deleted } = await client.query(`
           DELETE FROM projects
           WHERE is_rollup = TRUE
             AND NOT EXISTS (
@@ -100,18 +105,43 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         `);
         if (deleted.length === 0) break;
         obsoleteRollupsRemoved += deleted.length;
+        for (const d of deleted) wouldRemove.push({ id: d.id, name: d.name, rollup_level: d.rollup_level });
+      }
+
+      // Roll back the whole transaction in dry-run mode so the preview
+      // can show counts without actually touching the DB. The cost is
+      // doing the work twice when the user confirms — fine for an
+      // admin-only migration tool.
+      if (dryRun) {
+        await client.query('ROLLBACK');
+      } else {
+        await client.query('COMMIT');
       }
 
       res.json({
+        dry_run: dryRun,
         processed, moved, skipped, failed,
         obsolete_rollups_removed: obsoleteRollupsRemoved,
-        errors: errors.slice(0, 20),  // cap so response stays small
-        hint: moved === 0 && obsoleteRollupsRemoved === 0 && processed > 0
-          ? 'No projects needed re-nesting and no obsolete rollups were found — the tree was already clean.'
-          : `Re-nested ${moved} of ${processed} projects` + (obsoleteRollupsRemoved > 0 ? ` and removed ${obsoleteRollupsRemoved} obsolete service-area/project-type folders.` : '.')
+        rollups_to_remove: wouldRemove.slice(0, 50),
+        errors: errors.slice(0, 20),
+        hint: dryRun
+          ? (moved === 0 && obsoleteRollupsRemoved === 0
+              ? 'Preview: tree already clean. Nothing to do.'
+              : `Preview: would re-nest ${moved} of ${processed} projects`
+                + (obsoleteRollupsRemoved > 0
+                  ? ` and DELETE ${obsoleteRollupsRemoved} empty rollup folder${obsoleteRollupsRemoved === 1 ? '' : 's'}.`
+                  : '.')
+                + ' Re-POST with {"confirm": true} to apply.')
+          : (moved === 0 && obsoleteRollupsRemoved === 0
+              ? 'Tree already clean — no projects needed re-nesting and no obsolete rollups were found.'
+              : `Re-nested ${moved} of ${processed} projects`
+                + (obsoleteRollupsRemoved > 0 ? ` and deleted ${obsoleteRollupsRemoved} empty rollup folders.` : '.'))
       });
     } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
       res.status(500).json({ error: e.message, processed, moved, failed });
+    } finally {
+      client.release();
     }
   });
 
@@ -322,4 +352,111 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       res.status(500).json({ error: e.message });
     }
   });
+
+  // ─── Orphan-file prune ─────────────────────────────────────────────────
+  // /api/_admin/orphan-files lists what's on disk with no DB row. The
+  // automation scheduler calls pruneOrphanFiles() once a day to actually
+  // delete orphans older than 7 days. Manual endpoint here lets the admin
+  // run the prune sooner from Settings → Migration Tools, with explicit
+  // confirm to avoid accidental deletes.
+  //
+  // Two-stage delete (preview + confirm) so the destructive path is
+  // never reached without acknowledgement.
+  app.post('/api/_admin/prune-orphan-files', requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    const dryRun = body.confirm !== true || body.dry_run === true;
+    const olderThanHours = Number.isFinite(body.older_than_hours)
+      ? Math.max(0, body.older_than_hours)
+      : 7 * 24;  // default: 7 days
+    try {
+      const result = await pruneOrphanFiles({ pool, uploadDir, olderThanHours, dryRun });
+      res.json({
+        dry_run: dryRun,
+        older_than_hours: olderThanHours,
+        candidates: result.candidates.length,
+        deleted: result.deleted,
+        skipped_too_recent: result.skippedTooRecent,
+        bytes_freed: result.bytesFreed,
+        sample: result.candidates.slice(0, 20).map(c => ({ file_path: c.file_path, age_hours: c.ageHours, file_size: c.size })),
+        hint: dryRun
+          ? `Preview: would delete ${result.candidates.length} orphan files older than ${olderThanHours}h `
+            + `(${(result.bytesFreed / 1024 / 1024).toFixed(1)} MB freed). `
+            + `Re-POST with {"confirm": true} to apply.`
+          : `Deleted ${result.deleted} orphan files (${(result.bytesFreed / 1024 / 1024).toFixed(1)} MB freed). `
+            + `${result.skippedTooRecent} files were left in place because they're newer than ${olderThanHours}h.`,
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 };
+
+// ─── Helper: orphan-file prune ───────────────────────────────────────────
+// Exported so the automation scheduler can call this without re-implementing.
+// Scans top-level uploadDir (where permit_documents files live) and the
+// invoice-templates/ subdir, builds a set of in-use paths from
+// permit_documents.file_path and invoice_templates.reference_pdf_path, and
+// returns / deletes anything on disk older than `olderThanHours` that
+// isn't referenced.
+//
+// Conservative defaults: 7-day age cutoff so the undo TTL (60s) and any
+// manual recovery window safely pass before files actually disappear.
+async function pruneOrphanFiles({ pool, uploadDir, olderThanHours = 168, dryRun = true }) {
+  const fs = require('fs');
+  const path = require('path');
+  const out = { candidates: [], deleted: 0, bytesFreed: 0, skippedTooRecent: 0 };
+  if (!uploadDir || !fs.existsSync(uploadDir)) return out;
+
+  // In-use paths for the top-level upload directory
+  const dbDocs = await pool.query(`SELECT file_path FROM permit_documents`).catch(() => ({ rows: [] }));
+  const inUseTop = new Set(dbDocs.rows.map(d => d.file_path));
+
+  // In-use paths for the invoice-templates/ subdir. invoice_templates stores
+  // reference_pdf_path as a full filesystem path; we extract the basename.
+  const tplRows = await pool.query(
+    `SELECT reference_pdf_path FROM invoice_templates WHERE reference_pdf_path IS NOT NULL`
+  ).catch(() => ({ rows: [] }));
+  const inUseTpl = new Set(tplRows.rows.map(r => path.basename(r.reference_pdf_path)));
+
+  const cutoffMs = Date.now() - olderThanHours * 60 * 60 * 1000;
+
+  function scanDir(dir, inUseSet, label) {
+    let entries = [];
+    try { entries = fs.readdirSync(dir); } catch { return; }
+    for (const f of entries) {
+      const full = path.join(dir, f);
+      let stat;
+      try { stat = fs.statSync(full); } catch { continue; }
+      if (stat.isDirectory()) continue;  // don't recurse into other subdirs
+      if (inUseSet.has(f)) continue;
+      const ageHours = (Date.now() - stat.mtimeMs) / (60 * 60 * 1000);
+      if (stat.mtimeMs > cutoffMs) {
+        out.skippedTooRecent++;
+        continue;
+      }
+      out.candidates.push({ file_path: f, full_path: full, size: stat.size, ageHours, label });
+    }
+  }
+
+  scanDir(uploadDir, inUseTop, 'top');
+  scanDir(path.join(uploadDir, 'invoice-templates'), inUseTpl, 'invoice-templates');
+
+  if (!dryRun) {
+    for (const c of out.candidates) {
+      try {
+        require('fs').unlinkSync(c.full_path);
+        out.deleted++;
+        out.bytesFreed += c.size;
+      } catch (e) {
+        // Best-effort — file may have been deleted by another process,
+        // or permission denied. Log and continue.
+        console.error('[admin:prune-orphan-files] unlink failed:', c.full_path, e && e.message);
+      }
+    }
+  } else {
+    out.bytesFreed = out.candidates.reduce((s, c) => s + c.size, 0);
+  }
+  return out;
+}
+
+module.exports.pruneOrphanFiles = pruneOrphanFiles;

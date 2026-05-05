@@ -972,8 +972,13 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
 // timestamp so we don't have to align the scheduler with arbitrary clock
 // times. On boot, every task fires once so deploy logs immediately show
 // the current state — useful when triaging why no email/digest arrived.
-function startScheduler(pool) {
-  const state = { lastDigest: 0, lastStale: 0, lastBurn: 0 };
+function startScheduler(pool, opts) {
+  const state = { lastDigest: 0, lastStale: 0, lastBurn: 0, lastFilePrune: 0 };
+  // Lazy-require admin.js so circular boot order doesn't matter — automation
+  // is required from server.js before routes/admin.js installs, but at tick
+  // time the module export is fully resolved.
+  const adminModule = require('./routes/admin');
+  const uploadDir = opts && opts.uploadDir;
 
   async function tick(reason) {
     const now = Date.now();
@@ -1009,6 +1014,24 @@ function startScheduler(pool) {
         }
         state.lastBurn = now;
       } catch (e) { console.error('[automation:scheduler:burn]', e && e.message); }
+    }
+    // Daily — prune orphan files older than 7 days. Conservative threshold
+    // so the undo TTL (60s) and any manual recovery window safely pass
+    // before files actually disappear. Skip the boot fire to avoid I/O on
+    // every redeploy; only run on the first daily tick after boot.
+    if (uploadDir && reason !== 'boot' && now - state.lastFilePrune >= DAILY_MS) {
+      try {
+        const result = await adminModule.pruneOrphanFiles({
+          pool, uploadDir, olderThanHours: 7 * 24, dryRun: false,
+        });
+        if (result.deleted > 0 || result.candidates.length > 0) {
+          console.log(`[automation:file-prune]`,
+            `deleted ${result.deleted} orphan file${result.deleted === 1 ? '' : 's'},`,
+            `freed ${(result.bytesFreed / 1024 / 1024).toFixed(1)} MB,`,
+            `kept ${result.skippedTooRecent} recent file${result.skippedTooRecent === 1 ? '' : 's'}`);
+        }
+        state.lastFilePrune = now;
+      } catch (e) { console.error('[automation:scheduler:file-prune]', e && e.message); }
     }
   }
 
