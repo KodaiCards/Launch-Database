@@ -3643,6 +3643,12 @@ function openProjectModal(type='') {
   document.getElementById('proj-modal-title').textContent = 'New Project';
   document.getElementById('proj-delete-btn').style.display = 'none';
   populateTypeAndJobDropdowns();
+  // Run field gating once for the empty-form state. With no client + no
+  // program picked, effective=null and only the Program select remains
+  // visible. Without this, the form opens with the previous user's
+  // visibility state (or the markup defaults), which can leak fields
+  // that don't apply to a fresh-form session.
+  if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
   openModal('project-modal');
 }
 
