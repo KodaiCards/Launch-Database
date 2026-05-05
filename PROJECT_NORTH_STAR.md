@@ -166,6 +166,8 @@ migrations/                    versioned SQL applied at boot via db_migrations.j
   README.md                    authoring rules
   0001_splice_schema.sql                       splice matrix tables (see §6.B)
   0002_engineering_contract_program.sql        program enum on engineering_contracts
+  0003_drop_clients_is_rus.sql                 retire legacy clients.is_rus column
+  0004_drop_project_types_table.sql            collapse project_types into program enum
 
 automation.js                  scheduler + digest + orphan-file prune
 db.js                          pg pool + initSchema
@@ -289,12 +291,22 @@ When the customer portal goes live (§6.C), each customer project surfaces a "% 
 - **Multer file uploads** stream to `UPLOAD_DIR` (Railway persistent volume). Daily orphan-prune scheduled from `automation.js`; on-demand at `/api/_admin/prune-orphan-files`.
 - **Approval gate on AI mutations:** every destructive AI tool routes through `_pendingApprovals` Map. The frontend renders an approval card; user clicks Apply; AI loop resumes. Don't bypass — the pattern catches hallucinations.
 
-### Program-vs-client gating (Path B, 2026-05-04)
+### Program-vs-client gating (Path B, 2026-05-04, all phases complete)
 
-- **`engineering_contracts.program`** is the source of truth for whether work is RUS, BAU, GFR, or other. Allowed values: `'rus' | 'bau' | 'gfr' | 'other' | NULL`. NULL means "admin hasn't classified yet" — most behaviors should treat that as non-RUS.
-- **`clients.is_rus`** is a deprecated hint flag preserved for backward compat. New code MUST NOT gate behavior on it. If you're tempted, you're conflating client identity with program classification — re-read §3.
-- The PSC RUS PDF generator, the projection in `automation.js`, the inspection-tab scope (`routes/inspection.js`), and the project-create job filter (`routes/jobs.js`) all read `program`. The job-picker also accepts `engineering_contract_id` to scope precisely; falling back to `client_id` opens the picker up to BOTH `for_psc_client` and `for_generic_client` jobs when the client has mixed-program engineering contracts (PSC's case).
-- AI assistant: `getDBContext()` exposes `engineering_contracts` with their program; system prompt explains the client-vs-program distinction; `create_engineering_contract` / `update_engineering_contract` tools accept the `program` field.
+The program enum (`'rus' | 'bau' | 'gfr' | 'other' | NULL`) is the canonical classifier across the system. NULL means "admin hasn't classified yet" — most behaviors should treat that as non-RUS.
+
+- **`engineering_contracts.program`** — the source of truth for the umbrella's program.
+- **`projects.program`** — set on each project; auto-derived from the project's EC at create/update time, falls back to caller-supplied or legacy free-text. Phase 3b column.
+- **`pricing_entries.program`** — pricing keys directly on program (was `project_type_id` → `project_types.name`). Phase 3b refactor; the `project_types` table itself was dropped in migration 0004.
+
+- **`clients.is_rus`** — RETIRED in migration 0003. Must not appear in new code. If you find it lingering somewhere, it's a bug.
+- **`project_types` table** — RETIRED in migration 0004. The `/api/project-types` route still exists as a legacy compat shim (returns the program enum shaped as `{id, name, active}` rows for old dropdowns); writes return 410 Gone.
+
+The PSC RUS PDF generator, the projection in `automation.js`, the inspection-tab scope (`routes/inspection.js`), and the project-create job filter (`routes/jobs.js`) all read `program`. The job-picker also accepts `engineering_contract_id` to scope precisely; falling back to `client_id` opens the picker up to BOTH `for_psc_client` and `for_generic_client` jobs when the client has mixed-program engineering contracts (PSC's case).
+
+AI assistant: `getDBContext()` exposes `engineering_contracts` with their program; system prompt explains the client-vs-program distinction; `create_engineering_contract` / `update_engineering_contract` tools accept the `program` field.
+
+Frontend project-create modal Project Type dropdown is a static program enum (rus|bau|gfr|other); Settings → Pricing groups by program.
 
 ### Frontend
 
@@ -327,7 +339,8 @@ When the customer portal goes live (§6.C), each customer project surfaces a "% 
 
 ## 8. Common gotchas — things that have already burned a session
 
-- **Conflating PSC (client) with RUS (program).** PSC is a client; RUS is a program. PSC has both RUS and non-RUS engineering contracts. Code that filters on `clients.is_rus` for program-classification purposes is wrong — switch to `engineering_contracts.program = 'rus'`. The Path B refactor (2026-05-04) cleaned this up across `automation.js`, `routes/inspection.js`, `invoice_generator.js`, `routes/jobs.js`, and the AI tools; if you find leftover `is_rus`-driven gating in NEW code, that's regressing.
+- **Conflating PSC (client) with RUS (program).** PSC is a client; RUS is a program. PSC has both RUS and non-RUS engineering contracts. Code that filters on `clients.is_rus` for program-classification purposes is wrong — switch to `engineering_contracts.program = 'rus'`. The Path B refactor (2026-05-04) cleaned this up across `automation.js`, `routes/inspection.js`, `invoice_generator.js`, `routes/jobs.js`, and the AI tools. The `clients.is_rus` column itself was dropped in migration 0003. If you find any leftover `is_rus` reference in NEW code, that's regressing.
+- **`project_types` is a retired enum.** Programs (rus|bau|gfr|other) live as a fixed enum on `engineering_contracts.program`, `projects.program`, and `pricing_entries.program`. The `project_types` table was dropped in migration 0004 (Phase 3b). The `/api/project-types` endpoint still exists as a compat shim but returns the static program enum shaped like the old rows; admin can no longer add/rename/delete program values. If you see `project_type_id` in new code, that's regressing.
 - **`requireAuth` factory called bare.** `app.get('/x', requireAuth, ...)` — wrong. `app.get('/x', requireAuth(), ...)` — right. The bare reference fires the factory once at boot and uses its return value as middleware, which still happens to *work* for `requireAuth` with no args, but breaks `requireAuth(['admin'])`. Two regressions of this fixed.
 - **Schema dual source of truth.** `schema.sql` claims to be canonical but the `bootstrapV3Schema()` in `server.js` also runs ALTERs at boot. Track 1.4 plans to consolidate via `migrations/`. New schema work should ONLY go in `migrations/NNNN_label.sql` — never touch `schema.sql` or the v3 bootstrap.
 - **Polling rebuild every 8s** in the admin app's tab loaders. New widgets that hold state across rebuilds need the `tree_state.js` primitive (`makeTreeState(name)`). The Projects tab's expand-state-across-poll is the canonical example.
@@ -389,4 +402,4 @@ You have full context now. Build well.
 
 ---
 
-*Last updated 2026-05-04 (Path B refactor — program enum on engineering contracts, owner-profile correction). Previous handoffs (HANDOFF.md, NEXT_STEPS.md, SESSION_HANDOFF.md, CLEANUP_PLAN.md) and the standalone SPLICE_MATRIX_HANDOFF.md were absorbed into this document and removed from the repo.*
+*Last updated 2026-05-05 (Path B all phases complete — program enum is now the canonical classifier across engineering_contracts, projects, and pricing_entries; `clients.is_rus` and the `project_types` table both retired). Previous handoffs (HANDOFF.md, NEXT_STEPS.md, SESSION_HANDOFF.md, CLEANUP_PLAN.md) and the standalone SPLICE_MATRIX_HANDOFF.md were absorbed into this document and removed from the repo.*
