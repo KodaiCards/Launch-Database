@@ -362,7 +362,7 @@ const AI_TOOLS = [
         contract_id: { type: 'string', description: 'New contract UUID. If supplied AND program isn\'t in the same patch, program auto-derives from the new contract\'s engineering contract.' },
         work_order_number: { type: 'string' },
         project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'], description: 'Legacy JOB-CATEGORY tag.' },
-        program: { type: ['string', 'null'], enum: ['rus', 'bau', 'gfr', 'other', null], description: 'Program classification (rus|bau|gfr|other). Pass null to clear.' },
+        program: { type: ['string', 'null'], description: 'Program classification (rus|bau|gfr|other). Pass null to clear. Server validates against the enum.' },
         status: { type: 'string', enum: ['active', 'completed', 'on_hold', 'billed'] },
         billing_type: { type: 'string', enum: ['hourly', 'footage'] },
         billing_rate: { type: 'number' },
@@ -728,7 +728,7 @@ const AI_TOOLS = [
             notes: { type: 'string' },
             billing_rate: { type: ['number', 'null'] },
             contract_id: { type: ['string', 'null'] },
-            program: { type: ['string', 'null'], enum: ['rus', 'bau', 'gfr', 'other', null] }
+            program: { type: ['string', 'null'], description: 'rus|bau|gfr|other, or null to clear. Server validates against the enum.' }
           }
         }
       },
