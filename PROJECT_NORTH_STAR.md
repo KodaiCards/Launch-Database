@@ -213,63 +213,123 @@ These are scoped or partially started. Build only when the owner asks. Each bloc
 
 The math itself probably needs a second pass (the owner's concerns with the numbers were the trigger). Read `routes/revenue.js` and `automation.js`'s `psc-rus-projection` builder before reviving.
 
-### 6.B Splice Matrix tool — SCOPED, schema written, not yet built
+### 6.B Splice Matrix tool — Phase 1 SHIPPED 2026-05-05
 
-**What it is.** A visual splice planning tool for the design team. New full-screen page in the platform reachable from the Design Portal. Designers create a project, lay out cables and splice closures, drag fibers (or whole 12-fiber ribbons) to define splices, export a printable PDF for splicers in the field. Replaces an Excel-based workflow that doesn't match the topological nature of splice data.
+**What it is.** A visual splice planning tool for the design team. Designers
+create a project, lay out cables and splice closures, drag fibers (or whole
+12-fiber ribbons) to define splices, export a printable PDF for splicers in
+the field. Replaces an Excel-based workflow that doesn't match the
+topological nature of splice data.
 
-The deliverable is a **PDF for splicers**. Splicers do not interact with the tool.
+The deliverable is a **PDF for splicers**. Splicers do not interact with the
+tool.
 
-**Why deferred.** Scoped + designed in a prior session (2026-05-03) but the owner pivoted to other features. Schema is on disk, route module + canvas page + PDF endpoint not yet built.
+**Deployment shape — DEVIATION FROM ORIGINAL SCOPE.** The original §6.B
+plan called for `/splice.html` to live inside the design portal as a third
+nav-tab. Owner instead asked for it to be its own dedicated Railway
+service (PORTAL_MODE='splice'), matching the pattern of the design /
+permitting / timeclock services. As of commit `b61d00f` (branch
+`claude/splice-matrix-railway-setup-IIG3Q`):
 
-**Current state.**
+- `routes/splice.js` is mounted alongside the other route modules in
+  `server.js` so the API surface is reachable from any service that
+  shares the DB (admin uses it too).
+- `PORTAL_MODE='splice'` serves `public/splice.html` as the SPA. Portal
+  access rule mirrors timeclock — open to all authenticated users (no
+  team gate).
+- Cross-portal links: `public/design.html` nav-tab → opens splice
+  service in new tab; admin Portals dropdown gains a Splice Matrix
+  entry. Both point at `https://launchfiber-splicematrix.xyz/`.
 
-- `migrations/0001_splice_schema.sql` exists in this repo. It will auto-apply on next server boot via the runner in `db_migrations.js`. Tables: `splice_projects`, `splice_locations`, `splice_cables`, `splice_buffer_tubes`, `splice_fibers`, `splice_closures`, `splice_trays`, `splice_ribbon_groups`, `splices` (the join), `splice_closure_models` (organic picklist).
-- The schema's CHECK constraints accept fiber counts in (12, 24, 48, 96, 144, 288, 432, 864). Construction type is (`ribbon` | `loose_tube`). Location type enum includes (`co | splice_point | fdh | terminal | ring_cut`) but Phase 1 only uses `splice_point`.
-- The tool's a `splice_closure_models` table has columns `(model PK, default_tray_count, default_tray_capacity, use_count, last_used_at)` — it's intentionally empty; the closure-create UI is free-text + datalist that grows as designers type model names. Owner explicitly said *don't preload anything*.
+**Phase 1 scope shipped.** Full vertical-slice plus the Phase 1
+acceptance items from the original §6.B:
+
+- **Backend (`routes/splice.js`)**: project CRUD, full-state hydrate
+  (returns project + locations + cables + buffer_tubes + fibers +
+  closures + trays + splices + ribbon_groups + computed warnings),
+  file-lock with 60s heartbeat / 10-min stale window / take-over,
+  locations, cables (POST auto-generates fiber_count/12 buffer tubes
+  + fiber_count fibers in TIA-598 order), closures (POST
+  auto-generates tray rows), single splice, ribbon splice (12 splices
+  grouped under one ribbon_group), closure-models picklist that grows
+  organically, Server-Sent Events stream for committed actions,
+  puppeteer PDF export at Tabloid size.
+- **Frontend (`public/splice.html`)**: Konva canvas (CDN-pinned at
+  9.3.16), inspector pane with closure → tray → splice drilldown,
+  single + ribbon splice modals with cable → tube → fiber cascade
+  (in-use fibers greyed out), lock banner with take-over button, SSE
+  auto-rehydrate on remote commits, dark mode, auto-release lock on
+  page unload, project list sidebar with create / select / delete.
+- **Tests (`tests/splice.test.js`)**: cable POST generates correct
+  TIA-598 fiber tree, lock cycle + heartbeat-from-stranger refusal,
+  ribbon splice creates 12 splices linked to one group, tray-capacity
+  refusal, closure-models picklist grows, full hydrate bundle shape,
+  PUT closure refuses shrink when dropped trays still hold splices.
+
+**Schema.** `migrations/0001_splice_schema.sql` (already applied in
+production). Tables: `splice_projects`, `splice_locations`,
+`splice_cables`, `splice_buffer_tubes`, `splice_fibers`,
+`splice_closures`, `splice_trays`, `splice_ribbon_groups`, `splices`,
+`splice_closure_models`. Standalone — no FK to projects / contracts /
+billing tables. Soft-link to `staff(id)` only for designer attribution
+and lock ownership.
 
 **Six pre-build questions answered (don't re-ask):**
 
-1. **Where in the design portal?** Full-screen `/splice.html` link from a third nav-tab, NOT an embedded view.
-2. **Canvas library:** Konva.js. Render via CDN — no build step. Use layer caching, only redraw the dragged shape's layer, collapse-by-default to buffer tubes (one rect per 12 fibers), expand on click/zoom.
-3. **PDF page size:** 11×17 (tabloid) default with optional custom override per project.
+1. **Where in the design portal?** Originally answered as a third
+   nav-tab; deviated to a dedicated Railway service per owner request.
+   Design portal still gets a nav-tab link that navigates to the
+   splice service in a new tab.
+2. **Canvas library:** Konva.js, CDN-pinned at 9.3.16.
+3. **PDF page size:** Tabloid (11×17) default with `?page_size=` query
+   param override (per project — no DB column for it yet).
 4. **Excel import:** No. All projects start fresh.
-5. **Concurrent editing:** Yes, simple model — file lock acquired on open with locker name; second viewer sees "view only / take over" button. Committed actions broadcast via Server-Sent Events. Mid-drag is NOT broadcast. 10-min stale-lock timeout, 60s heartbeat.
-6. **Closure models picklist:** Don't preload — let it grow from designer input.
+5. **Concurrent editing:** Yes — soft file-lock on open with 60s
+   heartbeat + 10-min stale-lock timeout. Committed actions broadcast
+   via SSE. Mid-drag is NOT broadcast.
+6. **Closure models picklist:** Empty by design — grows organically
+   from designer input.
 
-**Phase plan.**
+**Phase 2 — topology + ring cuts (NOT YET BUILT).** Add CO / FDH /
+terminal / ring_cut location types (the schema already accepts them
+in the CHECK enum). Pathway tracing (graph walk over splices). Three-
+lane ring cut UI (express / spliced / stored). New table
+`splice_ring_cut_assignments` lands as
+**`migrations/0006_splice_ring_cuts.sql`**. NOTE: migration slot 0006
+is already taken by `0006_jobs_program_scope.sql`. Phase 2 ring cuts
+should land at **`migrations/0007_splice_ring_cuts.sql`** (or whatever
+the next free slot is at the time).
 
-- **Phase 1** — vertical slice: create project → place one cable → one closure → one splice → save → click Export → get a PDF. Then widen to multi-cable, multi-closure, ribbon-as-unit drag, tray capacity warnings, project list, SSE broadcasts. Phase 1 replaces the Excel pain (~60% of the tool's value).
-- **Phase 2** — topology + ring cuts. Add CO / FDH / terminal / ring_cut location types. Pathway tracing (graph walk over splices). Three-lane ring cut UI (express / spliced / stored). New table `splice_ring_cut_assignments` as **`0006_*.sql`** (the next free migration slot — 0001 splice schema, 0002 program enum, 0003 dropped is_rus, 0004 dropped project_types, 0005 seeded RUS pricing).
-- **Phase 3** — polish. Templates, copy/paste between projects, validation rules (tray capacity, fiber spliced twice, color mismatch — warn, don't block), better PDF layouts.
-- **Phase 4** — deferred. Don't think about it.
+**Phase 3 — polish.** Templates, copy/paste between projects,
+validation rules (tray capacity, fiber spliced twice, color mismatch
+— warn, don't block), better PDF layouts. Phase 1 already surfaces
+warnings in the hydrate payload (over_spliced_fibers,
+over_capacity_trays, unspliced_fiber_count) so Phase 3 mostly turns
+those warnings into UX, not new logic.
 
-**Out-of-scope guardrails.** No FK relationships to existing project/billing tables (splice projects are standalone; only soft-link to `staff(id)` for designer attribution). No bill of materials. No splicer interaction surface (splicers receive a PDF, they don't log in). No client-facing views. No Phase 4 future-state architecture.
+**Phase 4 — deferred.** Don't think about it.
 
-**Build order for Phase 1.**
+**Out-of-scope guardrails (still apply).** No FK relationships to
+existing project/billing tables. No bill of materials. No splicer
+interaction surface (splicers receive a PDF, they don't log in). No
+client-facing views.
 
-1. Verify migration applied — push and watch Railway log for `[migrations] applied 0001_splice_schema.sql`.
-2. Write `routes/splice.js` — vertical slice endpoints first (project CRUD, full-state hydrate, lock, heartbeat, cable+tube+fiber generator, closure+tray generator, single splice, ribbon-splice, closure-models picklist, PDF export). Wire into `server.js` near the route-module block. Match the existing route-module shape (try/catch returning `{error: e.message}` on 500).
-3. Write `public/splice.html` — single-page Konva editor. Match the visual style + dark-mode tokens of `public/design.html`. Use the same `api()` helper pattern.
-4. PDF export endpoint — puppeteer + HTML template. Crude is fine for Phase 1: cover page, one page per closure with a tray table listing splices, both fibers' cable name + tube color + fiber color + position. **Get the rough PDF in front of an actual splicer before investing in editor polish** — the editor can be perfect and the tool still fails if the document doesn't work in the field.
-5. Add the Splice Matrix link to `public/design.html` nav as `<a class="nav-tab" href="/splice.html">…</a>` (no `data-view`, no `onclick` — it's a real navigation away).
-6. Write `tests/splice.test.js` — round-trip a project, verify cable generates `fiber_count / 12` tubes + `fiber_count` fibers with correct TIA-598 colors at correct positions, verify lock/unlock/relock works, verify ribbon splice creates 12 splices linked to one ribbon group.
+**Pragmatic notes for the next Claude:**
 
-**Key auth/audit decisions.** Every endpoint goes through `requireAuth`; no role gate (any logged-in staff with a `staff_id` can use the tool — Design Portal already filters who reaches the link). No splice-side audit log preemptively — the time-entry audit pattern (`time_entry_audit` in `timeclock_module.js:111-125`) is the template if the owner asks later.
-
-**Files to read before building:** `routes/jobs.js`, `routes/design_pipeline.js`, `db_migrations.js`, `migrations/README.md`, `public/design.html` (head + nav + api() helper), `public/app-shell.css`. Match conventions exactly.
-
-**Pre-build state (2026-05-05 — owner is starting this work next, possibly via a fresh Claude on a VM).**
-
-- **Migration slot to use for Phase 2 ring-cut tables:** `migrations/0006_splice_ring_cuts.sql`. Migrations 0001 (splice schema, already applied) and 0002–0005 (Path B + RUS pricing seed) are taken. Pick 0006 for any new splice work that touches new tables.
-- **Migration 0001 (splice schema) is already applied in production.** Verify with `SELECT count(*) FROM splice_projects` returning a numeric (even if 0). The Phase 1 build can assume every splice table from `migrations/0001_splice_schema.sql` exists.
-- **No Phase 1 routes or HTML exist yet.** `routes/splice.js` and `public/splice.html` do not exist. Server.js does not register them. The Design portal does not link to `/splice.html`. Phase 1 is greenfield.
-- **Don't touch `public/design.html` more than the nav-link addition.** That file is a working portal for design managers; the splice link is a single `<a class="nav-tab" href="/splice.html">` insert, not a refactor.
-- **Use `requireAuth()`** (no role gate) on every splice endpoint. The Design portal already gates who reaches the link; doubling up on roles would block design engineers who legitimately use the tool.
-- **Do not link splice tables to `projects`/`contracts`/`engineering_contracts`/`clients`.** This was an explicit owner decision — splice projects are standalone. Soft-link only to `staff(id)` for designer attribution.
-- **Konva via CDN.** No npm install, no build step. Pin a specific version in the `<script src=...>` so a Konva release doesn't silently break the editor.
-- **Phase 1 deliverable test:** owner wants the rough PDF in front of an actual splicer before investing in editor polish. Whatever shape Phase 1 takes, prioritize getting a printable PDF out of the canvas state ahead of UI niceness. The PDF is the actual product; the canvas is a tool to produce it.
-
-**If you're a fresh Claude on a VM picking this up cold, also read §7 "Verifying changes against the live deployed app" — the Claude-in-Chrome MCP setup gives you direct fetch() access to the deployed admin portal at launchfiberadminportal.xyz, which is invaluable for confirming a migration applied or an endpoint shape matches expectations. There's no local Node, so push-and-verify-via-Chrome is the canonical loop.**
+- The placeholder URL `launchfiber-splicematrix.xyz` is hard-coded in
+  `public/design.html` (nav-tab) and `public/index.html` (Portals
+  dropdown). If the owner picks a different domain in Railway, search
+  and replace those two strings.
+- The SSE endpoint relies on the JWT cookie (EventSource can't send
+  Bearer headers). Same-origin → cookie travels automatically.
+- Puppeteer is already installed via `package.json`; the existing
+  invoice-template-engine uses it the same way. If splice PDF export
+  500s with `puppeteer not installed`, see the README's Railway
+  notes — set `PUPPETEER_CACHE_DIR=/app/.cache/puppeteer`.
+- `req.user.staff_id` is what scopes lock ownership. Admin users
+  without a linked staff row will get NULL there; the lock endpoints
+  handle that fine (NULL is treated as a unique owner per row, but
+  admin can release any lock).
 
 **Post-Path-B polish landed 2026-05-05 (no impact on splice work, but useful context):**
 

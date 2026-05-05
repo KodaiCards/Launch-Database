@@ -628,45 +628,83 @@ function drawCanvasContents() {
   const X_START = 60;
   orderedLocations.forEach((loc, i) => colX.set(loc.id, X_START + i * COL_GAP));
 
-  // Locations as labeled vertical guidelines.
+  // Locations as labeled vertical guidelines. The label is clickable
+  // (opens the location inspector); the dashed line is decorative
+  // (listening:false so it doesn't intercept canvas drag).
   orderedLocations.forEach(loc => {
     const x = colX.get(loc.id);
     closureLayer.add(new Konva.Line({
       points: [x, 40, x, 600], stroke:'#9AA5B5', dash:[4,4], strokeWidth:1,
+      listening: false,
     }));
-    closureLayer.add(new Konva.Text({
-      x: x - 60, y: 14, width: 120, align:'center',
+    const labelGroup = new Konva.Group({ x: x - 60, y: 6 });
+    labelGroup.add(new Konva.Rect({
+      x: 0, y: 0, width: 120, height: 28, fill: 'transparent',
+    }));
+    labelGroup.add(new Konva.Text({
+      x: 0, y: 8, width: 120, align:'center',
       text: loc.name, fontSize: 13, fontStyle:'bold', fill:'#1B5FA0',
     }));
+    labelGroup.on('click tap', () => selectThing('location', loc.id));
+    labelGroup.on('mouseenter', () => { document.body.style.cursor='pointer'; });
+    labelGroup.on('mouseleave', () => { document.body.style.cursor='default'; });
+    closureLayer.add(labelGroup);
   });
 
-  // Cables between locations.
+  // Cables between locations. Each cable is wrapped in a Group with a
+  // transparent hit-area rect so the whole strip is clickable. Cable Y
+  // positions are stashed in cableYById so the splice-line renderer can
+  // anchor curves at the right vertical position.
+  const cableYById = new Map();
   d.cables.forEach((cable, i) => {
     const from = colX.get(cable.from_location_id);
     const to   = colX.get(cable.to_location_id);
     const y = 80 + i * 60;
     if (from && to) {
       const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id).sort((a,b)=>a.position-b.position);
-      // One thick polyline per cable; sub-strands per buffer tube.
       const tubeGap = 2;
+      const stripHeight = Math.max(8, tubes.length * tubeGap + 2);
+      const cableCenterY = y + (tubes.length * tubeGap) / 2;
+      cableYById.set(cable.id, cableCenterY);
+
+      const group = new Konva.Group();
+      // Hit-area rect: covers the strands so a click anywhere on the
+      // cable strip selects the cable. Transparent fill, no stroke.
+      group.add(new Konva.Rect({
+        x: from + 6, y: y - 4, width: to - from - 12, height: stripHeight + 8,
+        fill: 'rgba(0,0,0,0.001)',  // near-transparent but listenable
+      }));
       tubes.forEach((tube, ti) => {
-        cableLayer.add(new Konva.Line({
+        group.add(new Konva.Line({
           points: [from + 6, y + ti * tubeGap, to - 6, y + ti * tubeGap],
           stroke: COLORS[tube.color] || '#666',
-          strokeWidth: 2,
+          strokeWidth: 2, listening: false,
         }));
       });
-      cableLayer.add(new Konva.Text({
+      group.add(new Konva.Text({
         x: (from + to) / 2 - 80, y: y - 14, width: 160, align:'center',
-        text: cable.name + ' (' + cable.fiber_count + ' fiber, ' + cable.construction_type + ')',
-        fontSize: 11, fill:'#444',
+        text: cable.name + ' (' + cable.fiber_count + 'f, ' + cable.construction_type + ')',
+        fontSize: 11, fill:'#444', listening: false,
       }));
+      group.on('click tap', () => selectThing('cable', cable.id));
+      group.on('mouseenter', () => { document.body.style.cursor='pointer'; });
+      group.on('mouseleave', () => { document.body.style.cursor='default'; });
+      cableLayer.add(group);
     } else {
-      // Floating cable (no endpoints). Drop it at the bottom.
-      cableLayer.add(new Konva.Text({
-        x: 20, y: 600 + i * 18, text: '⚠ Unrouted cable: ' + cable.name,
-        fontSize: 11, fill:'#856404',
+      // Floating cable (no endpoints). Drop a click-target row at the bottom.
+      const ty = 600 + i * 22;
+      const floatGroup = new Konva.Group();
+      floatGroup.add(new Konva.Rect({
+        x: 18, y: ty - 2, width: 360, height: 18, fill: 'rgba(0,0,0,0.001)',
       }));
+      floatGroup.add(new Konva.Text({
+        x: 20, y: ty, text: '⚠ Unrouted cable: ' + cable.name,
+        fontSize: 11, fill:'#856404', listening: false,
+      }));
+      floatGroup.on('click tap', () => selectThing('cable', cable.id));
+      floatGroup.on('mouseenter', () => { document.body.style.cursor='pointer'; });
+      floatGroup.on('mouseleave', () => { document.body.style.cursor='default'; });
+      cableLayer.add(floatGroup);
     }
   });
 
@@ -728,6 +766,99 @@ function drawCanvasContents() {
     });
   }
 
+  // Splice lines — drawn on the spliceLayer (listening:false so they're
+  // visual only). For each splice we route a quadratic bezier from
+  // cable A's center-Y to cable B's center-Y at the closure's column X,
+  // bowing slightly to the right so multiple splices in the same tray
+  // are visually distinguishable. Ribbon groups collapse to one thicker
+  // line covering all 12 splices (less canvas noise, matches PDF).
+  const fiberById = new Map(d.fibers.map(f => [f.id, f]));
+  const tubeById  = new Map(d.buffer_tubes.map(t => [t.id, t]));
+  const closureById = new Map(d.closures.map(c => [c.id, c]));
+  const trayById  = new Map(d.trays.map(t => [t.id, t]));
+  const ribbonGroupCounter = new Map();   // group_id → splice count
+  d.splices.forEach(s => {
+    if (s.ribbon_group_id) {
+      ribbonGroupCounter.set(s.ribbon_group_id, (ribbonGroupCounter.get(s.ribbon_group_id) || 0) + 1);
+    }
+  });
+
+  // Cluster offset per tray so multiple splices in the same tray fan out
+  // instead of stacking on top of each other.
+  const trayOffsetCounter = new Map();
+  function nextOffsetForTray(trayId) {
+    const n = (trayOffsetCounter.get(trayId) || 0);
+    trayOffsetCounter.set(trayId, n + 1);
+    // 12, 24, 36... pixels of bow to the right.
+    return 12 + n * 12;
+  }
+  // Render ribbon groups first (bigger, behind), then loose splices on top.
+  const renderedRibbons = new Set();
+  function spliceCableForFiber(fiberId) {
+    const f = fiberById.get(fiberId);
+    if (!f) return null;
+    const tube = tubeById.get(f.buffer_tube_id);
+    if (!tube) return null;
+    return { cable_id: tube.cable_id, tube_color: tube.color };
+  }
+  function tubeColorOfFiber(fiberId) {
+    const c = spliceCableForFiber(fiberId);
+    return c ? COLORS[c.tube_color] || '#666' : '#666';
+  }
+
+  d.splices.forEach(s => {
+    if (s.ribbon_group_id && renderedRibbons.has(s.ribbon_group_id)) return;
+    const tray = trayById.get(s.tray_id);
+    if (!tray) return;
+    const closure = closureById.get(tray.closure_id);
+    if (!closure) return;
+    const x = colX.get(closure.location_id);
+    if (x == null) return;
+    const aInfo = spliceCableForFiber(s.fiber_a_id);
+    const bInfo = spliceCableForFiber(s.fiber_b_id);
+    if (!aInfo || !bInfo) return;
+    const yA = cableYById.get(aInfo.cable_id);
+    const yB = cableYById.get(bInfo.cable_id);
+    // Skip splices whose cables are unrouted — there's no canvas anchor
+    // to draw between. They still show up in the inspector and PDF.
+    if (yA == null || yB == null) return;
+
+    const isRibbon = !!s.ribbon_group_id;
+    const offset = nextOffsetForTray(s.tray_id);
+    const ctrlX = x + offset;
+    const ctrlY = (yA + yB) / 2;
+    const stroke = tubeColorOfFiber(s.fiber_a_id);
+
+    // Quadratic bezier as a Konva.Shape (custom sceneFunc) — Konva's
+    // built-in Line with tension blurs control points; explicit bezier
+    // is easier to reason about.
+    const bow = new Konva.Shape({
+      stroke,
+      strokeWidth: isRibbon ? 4 : 1.5,
+      opacity: isRibbon ? 0.85 : 0.7,
+      lineCap: 'round',
+      sceneFunc(ctx, shape) {
+        ctx.beginPath();
+        ctx.moveTo(x, yA);
+        ctx.quadraticCurveTo(ctrlX, ctrlY, x, yB);
+        ctx.fillStrokeShape(shape);
+      },
+      listening: false,
+    });
+    spliceLayer.add(bow);
+
+    if (isRibbon) {
+      renderedRibbons.add(s.ribbon_group_id);
+      // ×12 marker near the apex of the curve.
+      spliceLayer.add(new Konva.Text({
+        x: ctrlX - 12, y: ctrlY - 6,
+        text: '×' + (ribbonGroupCounter.get(s.ribbon_group_id) || 12),
+        fontSize: 10, fontStyle: 'bold', fill: stroke,
+        listening: false,
+      }));
+    }
+  });
+
   state.konva.stage.batchDraw();
   resetView();
 }
@@ -775,9 +906,84 @@ function renderInspector() {
   body.style.display = 'block';
 
   const { type, id } = state.selection;
-  if (type === 'closure') return renderClosureInspector(id);
-  if (type === 'tray') return renderTrayInspector(id);
+  if (type === 'closure')  return renderClosureInspector(id);
+  if (type === 'tray')     return renderTrayInspector(id);
+  if (type === 'cable')    return renderCableInspector(id);
+  if (type === 'location') return renderLocationInspector(id);
   body.innerHTML = `<div class="empty-pane">Unknown selection</div>`;
+}
+
+function renderCableInspector(cableId) {
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) { state.selection = null; return renderInspector(); }
+  const fromLoc = cable.from_location_id ? state.data.locations.find(l => l.id === cable.from_location_id) : null;
+  const toLoc   = cable.to_location_id   ? state.data.locations.find(l => l.id === cable.to_location_id)   : null;
+  const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId);
+  // Splices that touch any of this cable's fibers.
+  const fiberIds = new Set(state.data.fibers.filter(f =>
+    tubes.find(t => t.id === f.buffer_tube_id)
+  ).map(f => f.id));
+  const spliceCount = state.data.splices.filter(s =>
+    fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id)
+  ).length;
+
+  const body = document.getElementById('inspector-body');
+  body.innerHTML = `
+    <h3>${esc(cable.name)} <span class="small">${cable.fiber_count}f · ${cable.construction_type}</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
+      ${esc(fromLoc?.name || 'unrouted')} → ${esc(toLoc?.name || 'unrouted')}
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="openEditCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
+    </div>
+    <table class="table">
+      <tbody>
+        <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part || '—')}</td></tr>
+        <tr><th>Tubes</th><td>${tubes.length}</td></tr>
+        <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
+        <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
+      Fiber count is locked after creation. To re-size, delete and re-add.
+    </div>
+  `;
+}
+
+function renderLocationInspector(locationId) {
+  const loc = state.data.locations.find(l => l.id === locationId);
+  if (!loc) { state.selection = null; return renderInspector(); }
+  const closures = state.data.closures.filter(c => c.location_id === locationId);
+  const cablesAt = state.data.cables.filter(c =>
+    c.from_location_id === locationId || c.to_location_id === locationId
+  );
+
+  const body = document.getElementById('inspector-body');
+  body.innerHTML = `
+    <h3>${esc(loc.name)} <span class="small">${esc(loc.type)}</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Sequence ${loc.sequence_index ?? 0}</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="openEditLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
+    </div>
+    <table class="table">
+      <tbody>
+        <tr><th>Closures here</th><td>${closures.length}</td></tr>
+        <tr><th>Cables touching</th><td>${cablesAt.length}</td></tr>
+        <tr><th>Notes</th><td>${esc(loc.notes || '—')}</td></tr>
+      </tbody>
+    </table>
+    ${closures.length ? `
+      <div style="margin-top:10px;font-size:11px">
+        <b>Closures</b><br>
+        ${closures.map(c => `<a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')">${esc(c.model || 'Closure')}</a>`).join(' · ')}
+      </div>` : ''}
+    <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
+      Deleting a location cascades to its closures + trays + splices. Cables that
+      reference it become unrouted (their endpoints are nulled, not deleted).
+    </div>
+  `;
 }
 
 function renderClosureInspector(closureId) {
@@ -1057,6 +1263,129 @@ async function deleteClosure(closureId) {
   if (!confirm('Delete this closure and all its trays + splices?')) return;
   try {
     await api('/api/splice/closures/' + closureId, 'DELETE');
+    state.selection = null;
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openEditCable(cableId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const locOpts = state.data.locations.map(l =>
+    `<option value="${l.id}" ${cable.from_location_id===l.id?'selected':''}>${esc(l.name)}</option>`
+  ).join('');
+  const locOptsTo = state.data.locations.map(l =>
+    `<option value="${l.id}" ${cable.to_location_id===l.id?'selected':''}>${esc(l.name)}</option>`
+  ).join('');
+  showModal({
+    title: 'Edit cable',
+    body: `
+      <div class="field"><label>Cable name</label>
+        <input id="m-cable-name" value="${esc(cable.name)}"></div>
+      <div class="row">
+        <div class="field"><label>From location</label>
+          <select id="m-cable-from"><option value="" ${!cable.from_location_id?'selected':''}>— unrouted —</option>${locOpts}</select></div>
+        <div class="field"><label>To location</label>
+          <select id="m-cable-to"><option value="" ${!cable.to_location_id?'selected':''}>— unrouted —</option>${locOptsTo}</select></div>
+      </div>
+      <div class="field"><label>Manufacturer part (optional)</label>
+        <input id="m-cable-part" value="${esc(cable.manufacturer_part || '')}"></div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-cable-notes">${esc(cable.notes || '')}</textarea></div>
+      <div style="font-size:11px;color:var(--text-muted)">
+        Fiber count and construction type aren't editable — they'd invalidate every fiber and splice underneath.
+      </div>
+    `,
+    onSubmit: async (close) => {
+      try {
+        await api('/api/splice/cables/' + cableId, 'PUT', {
+          name: document.getElementById('m-cable-name').value.trim(),
+          from_location_id: document.getElementById('m-cable-from').value || null,
+          to_location_id: document.getElementById('m-cable-to').value || null,
+          manufacturer_part: document.getElementById('m-cable-part').value.trim() || null,
+          notes: document.getElementById('m-cable-notes').value.trim() || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function deleteCable(cableId) {
+  if (isReadOnly()) return;
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  // Count splices that depend on this cable's fibers so the prompt is honest.
+  const fiberIds = new Set(state.data.fibers
+    .filter(f => state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id && t.cable_id === cableId))
+    .map(f => f.id));
+  const dependentSplices = state.data.splices.filter(s =>
+    fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id)
+  ).length;
+  const msg = dependentSplices
+    ? `Delete cable "${cable.name}"? This will cascade-delete ${dependentSplices} splice(s) on its fibers.`
+    : `Delete cable "${cable.name}"?`;
+  if (!confirm(msg)) return;
+  try {
+    await api('/api/splice/cables/' + cableId, 'DELETE');
+    state.selection = null;
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openEditLocation(locationId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const loc = state.data.locations.find(l => l.id === locationId);
+  if (!loc) return;
+  showModal({
+    title: 'Edit location',
+    body: `
+      <div class="field"><label>Name</label>
+        <input id="m-loc-name" value="${esc(loc.name)}" autofocus></div>
+      <div class="field"><label>Sequence (left-to-right ordering on canvas)</label>
+        <input id="m-loc-seq" type="number" value="${loc.sequence_index ?? 0}"></div>
+      <div class="field"><label>Type</label>
+        <select id="m-loc-type">
+          <option value="splice_point"  ${loc.type==='splice_point'?'selected':''}>Splice point</option>
+          <option value="co"            ${loc.type==='co'?'selected':''}>CO</option>
+          <option value="fdh"           ${loc.type==='fdh'?'selected':''}>FDH</option>
+          <option value="terminal"      ${loc.type==='terminal'?'selected':''}>Terminal</option>
+          <option value="ring_cut"      ${loc.type==='ring_cut'?'selected':''}>Ring cut</option>
+        </select></div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-loc-notes">${esc(loc.notes || '')}</textarea></div>
+    `,
+    onSubmit: async (close) => {
+      try {
+        await api('/api/splice/locations/' + locationId, 'PUT', {
+          name: document.getElementById('m-loc-name').value.trim(),
+          sequence_index: parseInt(document.getElementById('m-loc-seq').value, 10) || 0,
+          type: document.getElementById('m-loc-type').value,
+          notes: document.getElementById('m-loc-notes').value.trim() || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function deleteLocation(locationId) {
+  if (isReadOnly()) return;
+  const loc = state.data.locations.find(l => l.id === locationId);
+  if (!loc) return;
+  const closureCount = state.data.closures.filter(c => c.location_id === locationId).length;
+  const cableCount   = state.data.cables.filter(c =>
+    c.from_location_id === locationId || c.to_location_id === locationId
+  ).length;
+  let msg = `Delete location "${loc.name}"?`;
+  if (closureCount) msg += `\n\n${closureCount} closure(s) at this location will be deleted (with their trays + splices).`;
+  if (cableCount)   msg += `\n${cableCount} cable(s) referencing this location will become unrouted (endpoints nulled, cables kept).`;
+  if (!confirm(msg)) return;
+  try {
+    await api('/api/splice/locations/' + locationId, 'DELETE');
     state.selection = null;
     await hydrateProject();
   } catch (e) { toast(e.message, 'error'); }
