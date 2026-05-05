@@ -188,9 +188,14 @@
         <div class="stat-value">${fmtMoney(totalUnbilled)}</div>
         <div class="stat-sub">${unbilled.length} project${unbilled.length !== 1 ? 's' : ''}</div>
       </div>
-      ${isYTD && projTotal > 0 ? `<div class="stat-card" onclick="showProjectedList()" style="cursor:pointer" title="Click to see which projects make up this number">
+      <!-- Projected Revenue tile retired pending revisit. The drilldown
+           list (showProjectedList → /api/revenue/projected-total)
+           still works and the projected_revenue column on projects is
+           untouched, but the tile reads as a placeholder until the
+           projection logic is reviewed. -->
+      ${isYTD ? `<div class="stat-card" style="cursor:default" title="Projection logic retired pending revisit">
         <div class="stat-label">Projected Revenue</div>
-        <div class="stat-value">${fmtMoney(projTotal)}</div>
+        <div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div>
       </div>` : ''}
     `;
 

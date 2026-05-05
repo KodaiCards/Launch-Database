@@ -261,9 +261,16 @@
   }
 
   // ─── Inspection revenue projection card ────────────────────────────────
-  // Admin-only — the API itself returns 403 to non-admins, so this just
-  // silently bails on those calls. Compact table per project + a total.
+  // RETIRED pending revisit. Loader is now a no-op — leaves the
+  // dashboard tile + the projection card in their static
+  // "UNDER CONSTRUCTION" state set in the HTML. Skips the
+  // /api/automation/psc-rus-projection fetch entirely so the dashboard
+  // doesn't pay that round-trip on every page load.
+  // To re-enable, restore the body of this function from git history
+  // (or the version below this line, which we'd un-comment).
   async function loadInspectionProjection() {
+    return;  // retired — see comment above
+    /* original body retained for revival:
     const card = document.getElementById('psc-rus-projection-card');
     const body = document.getElementById('psc-rus-projection-body');
     const tile = document.getElementById('s-90d-projection');
@@ -277,7 +284,6 @@
       return;
     }
     const rows = data.rows || [];
-    // Always update the dashboard tile, even when there are no umbrellas.
     if (tile) tile.textContent = fmtMoney(data.total_projected_revenue || 0);
     if (!rows.length) {
       card.style.display = 'none';
@@ -350,6 +356,7 @@
         </tbody>
       </table>
     `;
+    */
   }
 
   async function loadDashboard() {

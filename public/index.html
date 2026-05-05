@@ -654,9 +654,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="stat-card" style="cursor:pointer" onclick="showActiveList()" title="Click to see which projects are counted"><div class="stat-label">Active Projects</div><div class="stat-value" id="s-active">—</div></div>
         <div class="stat-card accent"><div class="stat-label" id="s-period-label">Earned This Month</div><div class="stat-value" id="s-month-rev">—</div></div>
         <div class="stat-card"><div class="stat-label" id="s-year-label">YTD Revenue</div><div class="stat-value" id="s-ytd">—</div></div>
-        <div class="stat-card" style="background:linear-gradient(135deg,#1B5FA0,#134880);color:#fff;cursor:pointer" onclick="document.getElementById('psc-rus-projection-card')?.scrollIntoView({behavior:'smooth'})" title="Click to jump to the projection breakdown">
+        <!-- Projection tile retired pending revisit. The underlying
+             /api/inspection projection endpoint + projected_revenue
+             column on projects are intact; this tile (and its sibling
+             card below) can be re-enabled when the projection logic is
+             ready for a second pass. -->
+        <div class="stat-card" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:default" title="Projection logic retired pending revisit">
           <div class="stat-label" style="color:rgba(255,255,255,.85)">Next 90 Day Projection</div>
-          <div class="stat-value" id="s-90d-projection">—</div>
+          <div class="stat-value" id="s-90d-projection" style="font-size:13px;font-weight:600;letter-spacing:.05em;color:rgba(255,255,255,.85)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div>
         </div>
       </div>
 
@@ -709,18 +714,20 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
       </div>
 
-      <!-- PSC RUS revenue projection — admin only. One row per engineering
-           contract umbrella under any PSC RUS client; each row shows the
-           90-day combined projection plus a per-job (Inspection / RE /
-           Permitting / Other) breakdown. Hidden when the API returns 403
-           (non-admin viewer) or there's no PSC RUS data. -->
+      <!-- PSC RUS revenue projection — RETIRED pending revisit. The card
+           is hidden by default (display:none); loadInspectionProjection
+           in dashboard_views.js no longer toggles it on. The card body
+           shows an UNDER CONSTRUCTION placeholder if it's ever forced
+           visible. /api/inspection still serves the breakdown data so
+           reviving the card later is a one-line removal of display:none. -->
       <div id="psc-rus-projection-card" class="card lfs-widget" data-widget-id="psc-rus-projection" style="margin-bottom:14px;display:none">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>PSC RUS Revenue Projection</span>
-          <span style="font-size:11px;color:var(--text-muted)">90 day revenue projection</span>
+          <span class="card-title"><i class="fa-solid fa-screwdriver-wrench" style="color:var(--text-muted);margin-right:6px"></i>PSC RUS Revenue Projection</span>
+          <span style="font-size:11px;color:var(--text-muted)">retired pending revisit</span>
         </div>
-        <div class="card-body" id="psc-rus-projection-body" style="padding:0">
-          <div style="padding:16px;color:var(--text-muted)">Loading…</div>
+        <div class="card-body" id="psc-rus-projection-body" style="padding:30px 16px;text-align:center;color:var(--text-muted)">
+          <i class="fa-solid fa-screwdriver-wrench" style="font-size:24px;display:block;margin-bottom:8px;opacity:.5"></i>
+          UNDER CONSTRUCTION
         </div>
       </div>
 
@@ -1514,13 +1521,19 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </select>
             <span class="form-hint">Inspection projects default to monthly. Permitting / fixed-fee jobs are usually one-time.</span>
           </div>
-          <div class="form-group">
+          <!-- Projected Revenue input hidden while projection logic is
+               retired. Field still exists (display:none) so any code
+               reading proj-projected.value gets an empty string and the
+               server's projected_revenue column stays NULL — no break
+               in the create/edit POST. To re-enable, change display:none
+               to display:block on the wrapper. -->
+          <div class="form-group" style="display:none">
             <label>Projected Revenue <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
             <div class="input-group">
               <span class="input-addon">$</span>
               <input type="number" id="proj-projected" placeholder="0.00" step="0.01">
             </div>
-            <span class="form-hint">Total contract value. Auto-fills for footage projects.</span>
+            <span class="form-hint">Retired pending revisit.</span>
           </div>
         </div>
         <div class="form-row">
@@ -5406,11 +5419,14 @@ function renderProjectDetail(data, month, year) {
       ? (['completed', 'billed'].includes(p.status) ? parseFloat(p.expected_revenue || 0) : lifetimeHrs * rate)
       : lifetimeHrs * rate;
 
-    if (projTotal > 0) {
-      html += `<div class="stat-card accent"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${isFootage ? 'permit calc' : 'job rate × estimate'}</div></div>`;
-    }
+    // Projected Revenue tile retired pending revisit. Always render the
+    // placeholder so users don't think the figure is missing — it's just
+    // intentionally not surfaced right now. The expected_revenue column
+    // and permit calc are still computed; this is purely the displayed
+    // tile that's shelved.
+    html += `<div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Projected Revenue</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>`;
     html += `<div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value">${fmt(lifetimeHrs || totalHrs)}</div><div class="stat-sub">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div>`;
-    html += `<div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" style="color:var(--success)">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">${projTotal > 0 ? Math.round((earnedAllTime / projTotal) * 100) + '% of projected' : 'no projection set'}</div></div>`;
+    html += `<div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" style="color:var(--success)">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">earned to date</div></div>`;
     if (isFootage && p.footage) {
       html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
     }
@@ -5427,13 +5443,11 @@ function renderProjectDetail(data, month, year) {
     if (lifetimeHrs > 0 && !isContainer) {
       html += `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>`;
     }
-    if (projTotal > 0) {
-      const remaining = projTotal - lifetimeEarned;
-      const pct = projTotal > 0 ? Math.min(100, (lifetimeEarned / projTotal) * 100) : 0;
-      const remColor = remaining < 0 ? 'var(--danger)' : remaining < projTotal * 0.2 ? 'var(--warning)' : 'var(--success)';
-      html += `<div class="stat-card"><div class="stat-label">Projected Revenue</div><div class="stat-value">${fmtMoney(projTotal)}</div><div class="stat-sub">${projected.projected_count} leaf project${projected.projected_count !== 1 ? 's' : ''} · ${pct.toFixed(0)}% earned</div></div>
-        <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:${remColor}">${fmtMoney(remaining)}</div><div class="stat-sub">projected − earned</div></div>`;
-    }
+    // Projected Revenue + Remaining tiles retired pending revisit. Same
+    // story as the footage variant above — figures still compute under
+    // the hood, just not displayed.
+    html += `<div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Projected Revenue</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>
+      <div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Remaining</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>`;
     if (isFootage && p.footage) {
       html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
     }
