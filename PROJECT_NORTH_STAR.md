@@ -239,7 +239,7 @@ The deliverable is a **PDF for splicers**. Splicers do not interact with the too
 **Phase plan.**
 
 - **Phase 1** — vertical slice: create project → place one cable → one closure → one splice → save → click Export → get a PDF. Then widen to multi-cable, multi-closure, ribbon-as-unit drag, tray capacity warnings, project list, SSE broadcasts. Phase 1 replaces the Excel pain (~60% of the tool's value).
-- **Phase 2** — topology + ring cuts. Add CO / FDH / terminal / ring_cut location types. Pathway tracing (graph walk over splices). Three-lane ring cut UI (express / spliced / stored). New table `splice_ring_cut_assignments` as `0002_*.sql`.
+- **Phase 2** — topology + ring cuts. Add CO / FDH / terminal / ring_cut location types. Pathway tracing (graph walk over splices). Three-lane ring cut UI (express / spliced / stored). New table `splice_ring_cut_assignments` as **`0006_*.sql`** (the next free migration slot — 0001 splice schema, 0002 program enum, 0003 dropped is_rus, 0004 dropped project_types, 0005 seeded RUS pricing).
 - **Phase 3** — polish. Templates, copy/paste between projects, validation rules (tray capacity, fiber spliced twice, color mismatch — warn, don't block), better PDF layouts.
 - **Phase 4** — deferred. Don't think about it.
 
@@ -257,6 +257,19 @@ The deliverable is a **PDF for splicers**. Splicers do not interact with the too
 **Key auth/audit decisions.** Every endpoint goes through `requireAuth`; no role gate (any logged-in staff with a `staff_id` can use the tool — Design Portal already filters who reaches the link). No splice-side audit log preemptively — the time-entry audit pattern (`time_entry_audit` in `timeclock_module.js:111-125`) is the template if the owner asks later.
 
 **Files to read before building:** `routes/jobs.js`, `routes/design_pipeline.js`, `db_migrations.js`, `migrations/README.md`, `public/design.html` (head + nav + api() helper), `public/app-shell.css`. Match conventions exactly.
+
+**Pre-build state (2026-05-05 — owner is starting this work next, possibly via a fresh Claude on a VM).**
+
+- **Migration slot to use for Phase 2 ring-cut tables:** `migrations/0006_splice_ring_cuts.sql`. Migrations 0001 (splice schema, already applied) and 0002–0005 (Path B + RUS pricing seed) are taken. Pick 0006 for any new splice work that touches new tables.
+- **Migration 0001 (splice schema) is already applied in production.** Verify with `SELECT count(*) FROM splice_projects` returning a numeric (even if 0). The Phase 1 build can assume every splice table from `migrations/0001_splice_schema.sql` exists.
+- **No Phase 1 routes or HTML exist yet.** `routes/splice.js` and `public/splice.html` do not exist. Server.js does not register them. The Design portal does not link to `/splice.html`. Phase 1 is greenfield.
+- **Don't touch `public/design.html` more than the nav-link addition.** That file is a working portal for design managers; the splice link is a single `<a class="nav-tab" href="/splice.html">` insert, not a refactor.
+- **Use `requireAuth()`** (no role gate) on every splice endpoint. The Design portal already gates who reaches the link; doubling up on roles would block design engineers who legitimately use the tool.
+- **Do not link splice tables to `projects`/`contracts`/`engineering_contracts`/`clients`.** This was an explicit owner decision — splice projects are standalone. Soft-link only to `staff(id)` for designer attribution.
+- **Konva via CDN.** No npm install, no build step. Pin a specific version in the `<script src=...>` so a Konva release doesn't silently break the editor.
+- **Phase 1 deliverable test:** owner wants the rough PDF in front of an actual splicer before investing in editor polish. Whatever shape Phase 1 takes, prioritize getting a printable PDF out of the canvas state ahead of UI niceness. The PDF is the actual product; the canvas is a tool to produce it.
+
+**If you're a fresh Claude on a VM picking this up cold, also read §7 "Verifying changes against the live deployed app" — the Claude-in-Chrome MCP setup gives you direct fetch() access to the deployed admin portal at launchfiberadminportal.xyz, which is invaluable for confirming a migration applied or an endpoint shape matches expectations. There's no local Node, so push-and-verify-via-Chrome is the canonical loop.**
 
 ### 6.C Customer self-service portal — deferred
 
@@ -308,6 +321,19 @@ AI assistant: `getDBContext()` exposes `engineering_contracts` with their progra
 
 Frontend project-create modal Project Type dropdown is a static program enum (rus|bau|gfr|other); Settings → Pricing groups by program.
 
+#### Path B live verification log (2026-05-05)
+
+After all five migrations (0001 splice schema, 0002 program column, 0003 drop is_rus, 0004 drop project_types, 0005 RUS pricing seed) deployed to production, an end-to-end audit was run against the live admin portal. Notable confirmed live:
+
+- `clients` API response **does not include `is_rus`** — column gone for real.
+- `engineering_contracts.program` populated for the existing "RUS 217 Engineering Contract GA 1706 - A72" row (backfilled by migration 0002's `name ILIKE '%rus%'` heuristic).
+- `pricing_entries` carries `program` on every row (10 RUS-program rows seeded by migration 0005). `/api/pricing/lookup?program=rus` works; `/api/pricing/lookup?program=bau` returns null (expected — admin hasn't priced BAU work yet).
+- `/api/project-types` legacy compat shim returns 4 program rows shaped `{id, name, active}`.
+- `/api/jobs?client_id=PSC` returns the RUS-class job set; `/api/jobs?client_id=COX` returns the generic-class set; the mixed-program OR-mode is wired and ready for when PSC gets a BAU EC.
+- Auto-derive of `projects.program` from the project's contract_id → engineering_contract is **confirmed live** — a project created without an explicit program field correctly inherits the EC's program.
+- **PSC RUS PDF gate verified end-to-end with real data**: created a sandbox BAU EC + contract + project, hit all three RUS PDF endpoints (`/api/invoices/generate-pdf-from-projects`, `/api/invoices/generate-pdf`, `/api/invoices/generate-pdf/preview-data`), all three rejected with the exact program-mismatch error message specifying "program 'bau', not 'rus'" and pointing the user at Settings → Engineering Contracts → Program. Sandbox cleaned up; production state restored.
+- Browser console clean during page load (only Chrome extension noise from MetaMask, no app errors). All ~15 API calls returned 200 OK.
+
 ### Frontend
 
 - **No bundler, no modules, no transpilation.** Vanilla JS. Owner deploys via Railway nixpacks; build steps add risk.
@@ -335,6 +361,30 @@ Frontend project-create modal Project Type dropdown is a static program enum (ru
 - **Update this file (PROJECT_NORTH_STAR.md) and BUILD_PLAN.md** when work lands or new ideas surface.
 - **Add a regression test** when: a class of bug recurred (silent typos, polling state loss, unguarded innerHTML), you shipped a load-bearing endpoint (PSC RUS PDF, billing flows, AI chat), or the test fits in <30 lines. Don't add a test for every CRUD update.
 
+### Verifying changes against the live deployed app
+
+Local Node isn't installed on the owner's machine, so the standard verify path is push → Railway → live preview. Two tools the owner explicitly OKs using on production:
+
+1. **CI (GitHub Actions)** — runs `node --test` + Playwright on every push. Smoke tests boot a fresh Postgres, apply schema.sql + migrations, exercise the auth + main API paths. Use this for "did the SQL apply, did the routes parse." Watch via `gh run list --branch main` / `gh run view <id> --log-failed`.
+2. **Claude in Chrome (MCP)** — there's a paired browser ("Browser 1", deviceId in the user's account) already authenticated to launchfiberadminportal.xyz as `ctrantham` (admin). To use:
+   - `mcp__Claude_in_Chrome__list_connected_browsers` → pick the device → `select_browser`
+   - `tabs_context_mcp` to get tabIds (the admin tab is usually open already)
+   - `javascript_tool` with `action: 'javascript_exec'` to run `fetch()` against `/api/...` on the deployed URL — this is by far the highest-leverage tool for verification since you can hit any endpoint with the user's session cookie and read JSON back.
+   - `computer` (screenshot, click, type) for visual checks of modals + tables
+   - **Hard-reload after a Railway deploy.** Browser caches index.html; `location.reload(true)` or fetch `?_cb=...` to confirm the new bytes are served. Saw this exact issue during the Path B audit — a stale tab showed "PSC RUS" when the deployed HTML already said "RUS".
+
+**Owner's policy on production data**: creating sandbox rows on production to verify a behavior is OK as long as you clean up afterward. The Path B audit created a temp BAU engineering contract + contract + project to verify the PDF rejection path, then deleted them in reverse-FK order (project → contract → EC). Use names with a clear `AUDIT-...` or `(sandbox - delete me)` prefix so anything that survives a crash is easy to find. Verify cleanup by re-fetching the IDs and confirming 404.
+
+### Schema vs migrations interaction (lesson from Path B audit)
+
+`schema.sql` runs on every boot (per-statement try/catch; idempotent constructs only). Migrations in `migrations/NNNN_*.sql` run once per filename via `db_migrations.js` and are tracked in the `schema_migrations` table.
+
+**The trap:** `schema.sql`'s `IF NOT EXISTS` ALTERs and `CREATE TABLE IF NOT EXISTS` will resurrect anything a migration dropped. After Phase 3b dropped `project_types` + `pricing_entries.project_type_id`, schema.sql's old seed kept re-creating the table and ALTER-ing the column back on every Railway re-deploy, then the legacy DO-block seed failed because the column didn't match the seed shape. Caught in CI logs: `column "project_type_id" of relation "pricing_entries" does not exist` on every boot.
+
+**Fix pattern**: when a migration drops something, also strip the corresponding `IF NOT EXISTS`/CREATE in schema.sql so the resurrection can't happen. Move any seed data that depended on the dropped column into a new migration keyed on the new column. The Path B fix lives in commits `755baa5` + `d0e3436` — the schema.sql cleanup + migration 0005 RUS pricing seed pattern.
+
+**Migration tolerance pattern:** if a migration's backfill UPDATE references a table/column that schema.sql no longer creates on fresh DBs, wrap the UPDATE in `DO/IF EXISTS` against `information_schema`. Migration 0004's project_types backfill is the canonical example — it skips on fresh DBs but still backfills on existing production DBs that have the legacy table.
+
 ---
 
 ## 8. Common gotchas — things that have already burned a session
@@ -354,6 +404,10 @@ Frontend project-create modal Project Type dropdown is a static program enum (ru
 - **AI generation latency.** A single `bulk_create_projects` with 99 specs takes ~50s on Sonnet 4.6. Don't add a frontend timeout shorter than ~3 min.
 - **Railway proxy timeout = 5 min.** If the chat loop iterates many times with Anthropic API in between, the request can exceed this. The `MAX_ITERATIONS = 15` cap is the safety net.
 - **Empty Anthropic responses** in production: usually `stop_reason='max_tokens'`. The `_debug_empty` field added in 29d6520 surfaces this on the response.
+- **`schema.sql` resurrects what migrations dropped.** Idempotent `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ADD COLUMN IF NOT EXISTS` happily re-create dropped objects on every boot. Whenever a migration drops a column or table, also remove the matching CREATE/ALTER from schema.sql. Caught in the Path B audit — `pricing_entries.project_type_id` was getting "fixed" on every Railway boot until commits `755baa5` + `d0e3436` fixed it. See §7 "Schema vs migrations interaction" for the pattern.
+- **The split_statements regression test counts CREATE TABLE in raw text vs split statements.** A comment block that contains the literal phrase `CREATE TABLE` will inflate the regex count by one without producing a matching split statement, breaking the test. Avoid the keyword in schema.sql comments — say "the block below" instead. Bit twice during Path B (commits `9454ea9` and `d0e3436`).
+- **Browser caches the admin SPA hard.** A Railway deploy can land on the server but a stale tab still shows the old HTML for hours. After every push, hard-reload (`location.reload(true)` or fetch with `cache: 'no-store'`) before declaring a UI change "live." Saw this exactly during the Path B audit: nav-tab text was "PSC RUS" in a stale tab while the deployed HTML already said "RUS".
+- **Anthropic tool-schema validator dislikes `enum: [..., null]`.** Mixing a string enum with a literal null value is technically valid JSON Schema 7 but Anthropic's strict validator can reject it. For nullable enum fields, use `type: ['string', 'null']` and validate the enum server-side instead. Pattern lives in `routes/ai.js` create/update_project for `program`. Failed once during the Path B audit (commit `6600954`).
 
 ---
 
@@ -402,4 +456,4 @@ You have full context now. Build well.
 
 ---
 
-*Last updated 2026-05-05 (Path B all phases complete — program enum is now the canonical classifier across engineering_contracts, projects, and pricing_entries; `clients.is_rus` and the `project_types` table both retired). Previous handoffs (HANDOFF.md, NEXT_STEPS.md, SESSION_HANDOFF.md, CLEANUP_PLAN.md) and the standalone SPLICE_MATRIX_HANDOFF.md were absorbed into this document and removed from the repo.*
+*Last updated 2026-05-05 — Path B complete (all four phases shipped + an audit pass that caught real bugs and verified the system end-to-end on production via Claude-in-Chrome MCP). Owner is starting the Splice Matrix tool next, possibly via a fresh Claude on a VM. The relevant handoff is §6.B + §7 "Verifying changes against the live deployed app". Previous standalone handoffs (HANDOFF.md, NEXT_STEPS.md, SESSION_HANDOFF.md, CLEANUP_PLAN.md, SPLICE_MATRIX_HANDOFF.md) were absorbed into this document and removed from the repo.*
