@@ -42,7 +42,8 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
                 (SELECT COUNT(*) FROM contracts c WHERE c.engineering_contract_id = ec.id)::int AS contract_count,
                 (SELECT COUNT(*) FROM projects p
                    JOIN contracts c ON c.id = p.contract_id
-                   WHERE c.engineering_contract_id = ec.id)::int AS project_count
+                   WHERE c.engineering_contract_id = ec.id
+                     AND COALESCE(p.is_rollup, FALSE) = FALSE)::int AS project_count
            FROM engineering_contracts ec
            JOIN clients cl ON cl.id = ec.client_id
            ${where}
@@ -67,7 +68,10 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       if (!ec[0]) return res.status(404).json({ error: 'Engineering contract not found' });
       // Include child contracts so the detail view can show the structure
       const { rows: contracts } = await pool.query(
-        `SELECT c.*, (SELECT COUNT(*)::int FROM projects p WHERE p.contract_id = c.id) AS project_count
+        `SELECT c.*,
+                (SELECT COUNT(*)::int FROM projects p
+                   WHERE p.contract_id = c.id
+                     AND COALESCE(p.is_rollup, FALSE) = FALSE) AS project_count
            FROM contracts c WHERE c.engineering_contract_id = $1
            ORDER BY c.contract_number`, [req.params.id]
       );

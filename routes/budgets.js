@@ -78,8 +78,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
           )) FILTER (WHERE proj.id IS NOT NULL) as projects
         FROM budget_codes bc
         LEFT JOIN jobs j ON j.id = bc.job_id
-        LEFT JOIN projects proj ON proj.budget_code_id = bc.id
-          AND (bc.job_id IS NULL OR proj.job_id = bc.job_id)
+        LEFT JOIN projects proj
+          ON proj.budget_code_id = bc.id
+         AND (bc.job_id IS NULL OR proj.job_id = bc.job_id)
+         AND COALESCE(proj.is_rollup, FALSE) = FALSE
         WHERE bc.budget_id = $1
         GROUP BY bc.id, j.name
         ORDER BY bc.code
@@ -166,7 +168,9 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
             END
           )) FILTER (WHERE p.id IS NOT NULL) as projects
         FROM concentrators c
-        LEFT JOIN projects p ON p.concentrator_id = c.id
+        LEFT JOIN projects p
+          ON p.concentrator_id = c.id
+         AND COALESCE(p.is_rollup, FALSE) = FALSE
         WHERE c.active = true
         GROUP BY c.id, c.area_name, c.work_order_number, c.contract_label
         ORDER BY c.contract_label, c.area_name

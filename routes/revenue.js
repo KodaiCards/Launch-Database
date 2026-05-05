@@ -37,6 +37,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
           JOIN projects p ON p.id = te.project_id
           WHERE EXTRACT(YEAR FROM te.entry_date) = $1
             AND p.billing_type = 'hourly'
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
           GROUP BY month
         ),
         footage_monthly AS (
@@ -46,6 +47,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
           FROM projects p
           WHERE p.billing_type = 'footage'
             AND p.status IN ('completed', 'billed')
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
             AND EXTRACT(YEAR FROM COALESCE(p.completed_date, p.billed_date, p.start_date)) = $1
           GROUP BY month
         ),
@@ -91,10 +93,16 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
           SELECT 1 FROM time_entries te2 WHERE te2.project_id = p.id
           AND EXTRACT(MONTH FROM te2.entry_date) = $2
           AND EXTRACT(YEAR FROM te2.entry_date) = $1
-        )`;
+        )
+        AND COALESCE(p.is_rollup, FALSE) = FALSE`;
         params = [year, month];
       } else {
-        dateFilter = `AND (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL)`;
+        // Rollup folders (Client/Service-Area/Team containers) must be excluded
+        // from project counts and revenue rollups — they're organizational,
+        // not billable. Bug caught 2026-05-05: a now-empty rollup left over
+        // from a deleted project chain inflated this client's project_count.
+        dateFilter = `AND (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL)
+                      AND COALESCE(p.is_rollup, FALSE) = FALSE`;
         params = [year];
       }
 

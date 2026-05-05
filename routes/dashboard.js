@@ -31,6 +31,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
         LEFT JOIN clients cl ON cl.id = p.client_id
         LEFT JOIN projects pp ON pp.id = p.parent_id
         WHERE p.status='active'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND p.job_id IS NOT NULL
           AND LOWER(COALESCE(j.name, '')) <> 'other'
@@ -70,16 +71,24 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
       }
 
       const [activeR, unbilledR, monthRevR, ytdRevR, recentR, alertR] = await Promise.all([
-        // Active = leaf projects (anything without children). Counts all active work.
+        // Active = leaf projects (anything without children) AND not a rollup
+        // folder. Rollups have is_rollup=TRUE and are organizational containers
+        // (Client / Service Area / Team folders); they don't represent
+        // billable work and should never appear in business counts. Bug
+        // caught 2026-05-05: a rollup whose only child was deleted becomes
+        // a "childless leaf" by the NOT EXISTS check alone, inflating the
+        // count by every now-empty rollup folder.
         pool.query(`
           SELECT COUNT(*) FROM projects p
           WHERE p.status='active'
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
             AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
         `),
         pool.query(`
           SELECT COUNT(*), COALESCE(SUM(expected_revenue),0) as total
           FROM projects p
           WHERE p.status='completed' AND p.billed_date IS NULL
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
             AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
         `),
         // Period revenue: hours logged in the chosen period × rate
@@ -96,6 +105,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
           FROM time_entries te
           JOIN projects p ON p.id = te.project_id
           WHERE te.entry_date BETWEEN $1 AND $2
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
         `, [periodStart, periodEnd]),
         // YTD revenue: ALL earned revenue in the SELECTED YEAR (not period).
         // Provides a year-context number alongside the period number above so
@@ -122,6 +132,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
           ), 0) AS rev
           FROM projects p
           WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
             AND p.status IN ('active','completed','billed')
         `, [yyyy]),
         pool.query(`
@@ -161,6 +172,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
           LEFT JOIN projects pp ON pp.id=p.parent_id
           LEFT JOIN concentrators con ON con.id=p.concentrator_id
           WHERE p.status='active'
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
           ORDER BY p.created_at DESC
         `),
         pool.query(`
@@ -169,6 +181,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
           FROM projects p
           LEFT JOIN clients cl ON cl.id=p.client_id
           WHERE p.status='completed' AND p.billed_date IS NULL
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
             AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           ORDER BY p.completed_date ASC
         `)

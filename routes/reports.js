@@ -64,6 +64,7 @@ module.exports = function installReportsRoutes(app, pool, mw) {
           AND EXTRACT(MONTH FROM te.entry_date)=$1
           AND EXTRACT(YEAR FROM te.entry_date)=$2
         WHERE p.billed_date IS NULL
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
           AND (p.billing_cadence IS NULL OR p.billing_cadence = 'one_time')
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND (p.status = 'completed'
@@ -87,6 +88,7 @@ module.exports = function installReportsRoutes(app, pool, mw) {
           FROM projects p
           JOIN time_entries te ON te.project_id = p.id
           WHERE p.billing_cadence = 'monthly'
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
             AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           GROUP BY p.id, y, mo
         )

@@ -59,10 +59,16 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   app.delete('/api/clients/:id', requireAdmin, async (req, res) => {
     try {
       if (req.query.preview === 'true') {
+        // Project count excludes is_rollup folders — they're organizational
+        // containers, not real projects. Showing rollups in the cascade
+        // preview overstates "this will delete N projects" and confuses
+        // the typed-name-to-confirm step.
         const counts = await pool.query(`
           SELECT
             (SELECT COUNT(*) FROM contracts WHERE client_id=$1)::int AS contracts,
-            (SELECT COUNT(*) FROM projects WHERE client_id=$1)::int AS projects,
+            (SELECT COUNT(*) FROM projects
+              WHERE client_id=$1
+                AND COALESCE(is_rollup, FALSE) = FALSE)::int AS projects,
             (SELECT COUNT(*) FROM invoices WHERE client_id=$1)::int AS invoices
         `, [req.params.id]);
         return res.json(counts.rows[0]);
