@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Launch Fiber — Splice Matrix</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Konva pinned so a CDN release can't silently change canvas behavior. -->
+<script src="https://cdn.jsdelivr.net/npm/konva@9.3.16/konva.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* Token system mirrors design.html — light defaults + dark overrides. */
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;--primary-text:#FFFFFF;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
+  --text:#222222;--text-secondary:#555555;--text-muted:#6C757D;
+  --border-strong:#CED4DA;--border-weak:#DEE2E6;
+  --success:#28A745;--success-light:#D4EDDA;--success-text:#155724;
+  --warning:#FFC107;--warning-light:#FFF3CD;--warning-text:#856404;
+  --danger:#DC3545;--danger-light:#F8D7DA;--danger-text:#721C24;
+  --info:#17A2B8;--info-light:#D1ECF1;--info-text:#0C5460;
+  --white:#FFFFFF;--gray-light:#F0F0F0;--gray-border:#DEE2E6;
+  /* Fiber color literals — TIA-598 — used for swatches. */
+  --fc-blue:#1660C9;--fc-orange:#E67E22;--fc-green:#27AE60;--fc-brown:#8B5A2B;
+  --fc-slate:#7F8C8D;--fc-white:#F5F5F5;--fc-red:#C0392B;--fc-black:#000;
+  --fc-yellow:#F1C40F;--fc-violet:#8E44AD;--fc-rose:#E91E63;--fc-aqua:#1ABC9C;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;--primary-text:#FFFFFF;
+  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;
+  --text:#E6EAF0;--text-secondary:#B8BFC9;--text-muted:#8A95A4;
+  --border-strong:#3A4250;--border-weak:#2D343F;
+  --success:#3DD174;--success-light:#1F4030;--success-text:#9AE5B5;
+  --warning:#FFD43B;--warning-light:#3D3010;--warning-text:#FFE58F;
+  --danger:#FF6B7A;--danger-light:#3D1820;--danger-text:#FFA0AC;
+  --info:#5BC0DE;--info-light:#0E3340;--info-text:#9EDFEF;
+  --white:#242B36;--gray-light:#1F2630;--gray-border:#3A4250;
+}
+html,body{height:100%;background:var(--surface-1);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px}
+
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Header */
+.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:0 16px;height:48px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.header .logo{font-weight:700;font-size:14px;letter-spacing:0.3px;display:flex;align-items:center;gap:8px}
+.header .divider{width:1px;height:22px;background:rgba(255,255,255,.25)}
+.header .title{font-size:13px;font-weight:500;flex:1;display:flex;align-items:center;gap:8px}
+.header .right{display:flex;gap:8px;align-items:center}
+.user-pill{font-size:11px;color:rgba(255,255,255,.85);padding:4px 10px;border:1px solid rgba(255,255,255,.25);border-radius:12px;cursor:pointer}
+.user-pill:hover{background:rgba(255,255,255,.12)}
+
+/* Layout */
+.app{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 48px)}
+.sidebar{background:var(--surface-2);border-right:1px solid var(--border-weak);overflow:auto;padding:10px}
+.canvas-pane{background:var(--surface-3);position:relative;overflow:hidden}
+.inspector{background:var(--surface-2);border-left:1px solid var(--border-weak);overflow:auto;padding:10px}
+
+/* Sidebar — project list */
+.sidebar-section{margin-bottom:14px}
+.sidebar-section h3{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.proj-list{list-style:none}
+.proj-item{padding:8px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.proj-item:hover{background:var(--surface-1)}
+.proj-item.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
+html[data-theme="dark"] .proj-item.active{color:var(--text)}
+.proj-item .name{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-item .badge{font-size:10px;color:var(--text-muted);background:var(--surface-3);padding:1px 5px;border-radius:8px}
+.proj-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
+
+/* Toolbar (above canvas) */
+.toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
+.lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:6px 10px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:12px}
+.lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
+.lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
+.lock-banner.stale{border-color:var(--danger);color:var(--danger-text);background:var(--danger-light)}
+.warnings-banner{position:absolute;bottom:10px;left:10px;right:10px;background:var(--warning-light);color:var(--warning-text);padding:8px 12px;border-radius:6px;border:1px solid var(--warning);font-size:12px;z-index:5;display:none}
+.warnings-banner.show{display:block}
+
+/* Konva stage container */
+#stage{width:100%;height:100%}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;font-weight:500;border-radius:5px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);cursor:pointer;transition:all .12s}
+.btn:hover{background:var(--surface-3)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary-dark)}
+.btn-primary:hover{background:var(--primary-dark);color:#fff}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn-icon{padding:6px 8px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+
+/* Inspector */
+.inspector h3{font-size:13px;margin-bottom:10px;color:var(--text);display:flex;justify-content:space-between;align-items:center}
+.inspector h3 .small{font-size:10px;color:var(--text-muted);font-weight:400}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:3px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:6px 8px;font-size:12px;border:1px solid var(--border-strong);border-radius:4px;background:var(--white);color:var(--text)}
+.field textarea{resize:vertical;min-height:60px;font-family:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.empty-pane{color:var(--text-muted);font-style:italic;text-align:center;padding:40px 10px;font-size:12px}
+
+/* Tables */
+.table{width:100%;border-collapse:collapse;font-size:12px}
+.table th,.table td{padding:5px 6px;text-align:left;border-bottom:1px solid var(--border-weak);vertical-align:top}
+.table th{font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:600;letter-spacing:0.4px}
+.table tr:hover td{background:var(--surface-1)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface-2);border-radius:10px;max-width:560px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.modal.wide{max-width:840px}
+.modal header{padding:14px 18px;border-bottom:1px solid var(--border-weak);display:flex;justify-content:space-between;align-items:center}
+.modal header h2{font-size:15px;font-weight:600}
+.modal .body{padding:16px 18px;overflow:auto;flex:1}
+.modal footer{padding:12px 18px;border-top:1px solid var(--border-weak);display:flex;gap:8px;justify-content:flex-end}
+.modal .close{cursor:pointer;color:var(--text-muted);background:none;border:none;font-size:18px}
+
+/* Fiber color swatch (used in selectors) */
+.fc{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid var(--border-strong);margin-right:5px;vertical-align:-1px}
+.fc-blue{background:var(--fc-blue)}.fc-orange{background:var(--fc-orange)}
+.fc-green{background:var(--fc-green)}.fc-brown{background:var(--fc-brown)}
+.fc-slate{background:var(--fc-slate)}.fc-white{background:var(--fc-white)}
+.fc-red{background:var(--fc-red)}.fc-black{background:var(--fc-black)}
+.fc-yellow{background:var(--fc-yellow)}.fc-violet{background:var(--fc-violet)}
+.fc-rose{background:var(--fc-rose)}.fc-aqua{background:var(--fc-aqua)}
+
+/* Splice modal layout — two side-by-side columns for fiber A and fiber B */
+.splice-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.splice-cols > div{border:1px solid var(--border-weak);border-radius:6px;padding:10px;background:var(--surface-1)}
+.fiber-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px;max-height:160px;overflow:auto}
+.fiber-cell{font-size:10px;padding:4px;text-align:center;border:1px solid var(--border-weak);border-radius:3px;cursor:pointer;background:var(--white);user-select:none}
+.fiber-cell:hover{background:var(--primary-light);border-color:var(--primary)}
+.fiber-cell.selected{background:var(--primary);color:#fff;border-color:var(--primary-dark)}
+.fiber-cell.in-use{opacity:0.45;cursor:not-allowed}
+.fiber-cell.in-use:hover{background:var(--white);border-color:var(--border-weak)}
+
+.splices-list{margin-top:12px;border-top:1px solid var(--border-weak);padding-top:10px}
+.splices-list h4{font-size:12px;margin-bottom:6px;color:var(--text-secondary)}
+.splice-row{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;font-size:11px;border-bottom:1px solid var(--border-weak)}
+.splice-row .desc{flex:1;display:flex;gap:6px;align-items:center}
+.ribbon-tag{display:inline-block;padding:1px 5px;background:var(--primary-light);color:var(--primary-dark);border-radius:3px;font-size:9px;font-weight:600;margin-left:4px;text-transform:uppercase;letter-spacing:0.4px}
+
+/* Toast (fixed bottom-right) */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--white);padding:10px 14px;border-radius:6px;font-size:12px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:320px}
+.toast.error{background:var(--danger);color:#fff}
+.toast.success{background:var(--success);color:#fff}
+
+/* Mobile — inspector slides over from right */
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar,.inspector{position:absolute;top:48px;bottom:0;width:80%;z-index:10;display:none}
+  .sidebar{left:0}
+  .sidebar.open{display:block}
+  .inspector{right:0}
+  .inspector.open{display:block}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo"><i class="fa-solid fa-network-wired"></i> Splice Matrix</div>
+  <div class="divider"></div>
+  <div class="title" id="title-name">— No project selected —</div>
+  <div class="right">
+    <button class="btn btn-sm" id="btn-export" disabled><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+    <button class="btn btn-sm btn-icon" id="btn-dark" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
+    <span class="user-pill" id="user-pill" onclick="signOut()" title="Click to sign out">
+      <i class="fa-solid fa-user-circle"></i> <span id="user-name">…</span>
+    </span>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ─── Left sidebar: project list ─── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
+      <ul class="proj-list" id="proj-list"><li class="empty-pane">Loading…</li></ul>
+    </div>
+    <div class="sidebar-section" id="proj-actions" style="display:none">
+      <h3>Project actions</h3>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
+        <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
+        <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
+      </div>
+    </div>
+    <div class="sidebar-section" id="proj-summary" style="display:none">
+      <h3>Summary</h3>
+      <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
+    </div>
+  </aside>
+
+  <!-- ─── Center: Konva canvas ─── -->
+  <div class="canvas-pane">
+    <div class="toolbar" id="toolbar" style="display:none">
+      <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
+      <button class="btn btn-sm" onclick="zoom(1.2)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      <button class="btn btn-sm" onclick="zoom(0.83)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+    </div>
+    <div class="lock-banner" id="lock-banner" style="display:none"></div>
+    <div id="stage"></div>
+    <div class="warnings-banner" id="warnings-banner"></div>
+  </div>
+
+  <!-- ─── Right sidebar: inspector ─── -->
+  <aside class="inspector" id="inspector">
+    <div id="inspector-empty" class="empty-pane">
+      Select a project to begin.<br><br>
+      <small>Click a closure on the canvas to view its trays and add splices.</small>
+    </div>
+    <div id="inspector-body" style="display:none"></div>
+  </aside>
+
+</div>
+
+<!-- ─── Toast container ─── -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<!-- ─── Modal containers (populated by JS) ─── -->
+<div id="modal-host"></div>
+
+<script>
+// ───────────────────────────────────────────────────────────────────────────
+// Globals + state
+// ───────────────────────────────────────────────────────────────────────────
+
+const TIA_598 = ['blue','orange','green','brown','slate','white','red','black','yellow','violet','rose','aqua'];
+
+const state = {
+  user: null,
+  projects: [],
+  currentId: null,
+  data: null,           // full hydrate of current project
+  selection: null,      // { type: 'closure'|'tray'|'cable'|'location', id }
+  lockState: 'unlocked', // 'mine' | 'other' | 'stale' | 'unlocked'
+  lockHolder: null,
+  heartbeatTimer: null,
+  sse: null,
+  konva: null,          // { stage, layers... }
+  pendingSplice: null,  // { fiber_a_id, tray_id }
+};
+
+// ───────────────────────────────────────────────────────────────────────────
+// API helper — same shape as design.html, with 30s timeout for PDF call.
+// ───────────────────────────────────────────────────────────────────────────
+
+async function api(path, method='GET', body=null, timeoutMs=15000) {
+  const opts = { method, headers: {'Content-Type':'application/json'}, credentials:'include' };
+  try { const tok = sessionStorage.getItem('lfs_token'); if (tok) opts.headers['Authorization'] = 'Bearer '+tok; } catch(e){}
+  if (body) opts.body = JSON.stringify(body);
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), timeoutMs);
+  try {
+    opts.signal = ctrl.signal;
+    const r = await fetch(path, opts);
+    clearTimeout(tid);
+    if (r.status === 401) {
+      try { sessionStorage.removeItem('lfs_token'); } catch(e){}
+      window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+      throw new Error('Session expired');
+    }
+    if (!r.ok) {
+      let msg = r.statusText;
+      try { const j = await r.json(); msg = j.error || msg; } catch {}
+      throw new Error(msg);
+    }
+    return r.json();
+  } catch (e) {
+    clearTimeout(tid);
+    if (e.name === 'AbortError') throw new Error('Request timed out');
+    throw e;
+  }
+}
+
+function toast(msg, kind='') {
+  const el = document.getElementById('toast');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+function esc(s) {
+  if (s == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Auth bootstrap
+// ───────────────────────────────────────────────────────────────────────────
+
+async function loadMe() {
+  try {
+    const me = await api('/api/auth/me');
+    state.user = me;
+    document.getElementById('user-name').textContent = me.full_name || me.username || me.email || 'user';
+  } catch (e) {
+    // 401 already redirects via api(); other errors leave the user-pill blank.
+    document.getElementById('user-name').textContent = '?';
+  }
+}
+
+function signOut() {
+  fetch('/api/auth/logout', { method:'POST', credentials:'include' })
+    .finally(() => {
+      try { sessionStorage.removeItem('lfs_token'); } catch(e){}
+      window.location.href = '/login';
+    });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Project list
+// ───────────────────────────────────────────────────────────────────────────
+
+async function loadProjects() {
+  try {
+    const list = await api('/api/splice/projects');
+    state.projects = list;
+    renderProjectList();
+  } catch (e) {
+    toast('Failed to load projects: ' + e.message, 'error');
+  }
+}
+
+function renderProjectList() {
+  const ul = document.getElementById('proj-list');
+  if (!state.projects.length) {
+    ul.innerHTML = '<li class="empty-pane">No projects yet. Click + to create one.</li>';
+    return;
+  }
+  ul.innerHTML = state.projects.map(p => `
+    <li class="proj-item ${p.id === state.currentId ? 'active' : ''}" onclick="selectProject('${p.id}')">
+      <div style="flex:1;min-width:0">
+        <div class="name">${esc(p.name)}</div>
+        <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp</div>
+      </div>
+      ${p.locked_by_staff_id ? '<span class="badge" title="Locked"><i class="fa-solid fa-lock"></i></span>' : ''}
+    </li>
+  `).join('');
+}
+
+function openCreateProject() {
+  showModal({
+    title: 'New splice project',
+    body: `
+      <div class="field"><label>Name</label>
+        <input id="m-name" placeholder="e.g. Crossroad School splice plan" autofocus></div>
+      <div class="field"><label>Notes (optional)</label>
+        <textarea id="m-notes" placeholder="Anything the splicer should know up front"></textarea></div>
+    `,
+    onSubmit: async (close) => {
+      const name = document.getElementById('m-name').value.trim();
+      if (!name) { toast('Name required', 'error'); return; }
+      try {
+        const proj = await api('/api/splice/projects', 'POST', {
+          name, notes: document.getElementById('m-notes').value.trim() || null,
+        });
+        state.projects.unshift({ ...proj, cable_count:0, location_count:0, splice_count:0 });
+        renderProjectList();
+        close();
+        await selectProject(proj.id);
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function selectProject(id) {
+  if (state.currentId === id && state.data) return;
+  // Tear down previous SSE + heartbeat first.
+  cleanupCurrent();
+  state.currentId = id;
+  document.getElementById('proj-actions').style.display = 'block';
+  document.getElementById('proj-summary').style.display = 'block';
+  document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('btn-export').disabled = false;
+  renderProjectList();
+  await hydrateProject();
+  attemptLock();
+  openSSE(id);
+}
+
+function cleanupCurrent() {
+  if (state.heartbeatTimer) { clearInterval(state.heartbeatTimer); state.heartbeatTimer = null; }
+  if (state.sse) { try { state.sse.close(); } catch {} state.sse = null; }
+  state.data = null;
+  state.selection = null;
+  state.pendingSplice = null;
+  state.lockState = 'unlocked';
+}
+
+async function hydrateProject() {
+  try {
+    const data = await api('/api/splice/projects/' + state.currentId);
+    state.data = data;
+    document.getElementById('title-name').textContent = data.project.name;
+    renderSummary();
+    renderInspector();
+    renderCanvas();
+    renderWarnings();
+  } catch (e) {
+    toast('Hydrate failed: ' + e.message, 'error');
+  }
+}
+
+function renderSummary() {
+  const d = state.data;
+  if (!d) return;
+  const el = document.getElementById('proj-summary-body');
+  el.innerHTML = `
+    <div><b>${d.cables.length}</b> cable${d.cables.length===1?'':'s'} · <b>${d.fibers.length}</b> fiber${d.fibers.length===1?'':'s'}</div>
+    <div><b>${d.locations.length}</b> location${d.locations.length===1?'':'s'} · <b>${d.closures.length}</b> closure${d.closures.length===1?'':'s'}</div>
+    <div><b>${d.splices.length}</b> splice${d.splices.length===1?'':'s'} · <b>${d.ribbon_groups.length}</b> ribbon group${d.ribbon_groups.length===1?'':'s'}</div>
+    <div style="margin-top:6px;color:var(--text-muted)">Updated ${new Date(d.project.updated_at).toLocaleString()}</div>
+  `;
+}
+
+function renderWarnings() {
+  const w = state.data?.warnings;
+  const banner = document.getElementById('warnings-banner');
+  if (!w) { banner.classList.remove('show'); return; }
+  const messages = [];
+  if (w.over_capacity_trays?.length) {
+    messages.push(`${w.over_capacity_trays.length} tray(s) over capacity`);
+  }
+  if (w.over_spliced_fibers?.length) {
+    messages.push(`${w.over_spliced_fibers.length} fiber(s) spliced more than twice`);
+  }
+  if (!messages.length) { banner.classList.remove('show'); return; }
+  banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + messages.join(' · ');
+  banner.classList.add('show');
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Locking
+// ───────────────────────────────────────────────────────────────────────────
+
+async function attemptLock() {
+  try {
+    const r = await api('/api/splice/projects/' + state.currentId + '/lock', 'POST');
+    state.lockState = 'mine';
+    state.lockHolder = { name: r.locked_by_name, at: r.locked_at };
+    renderLockBanner();
+    // 60s heartbeat (per spec).
+    state.heartbeatTimer = setInterval(() => {
+      api('/api/splice/projects/' + state.currentId + '/heartbeat', 'POST').catch(err => {
+        // Lost the lock — flip to view-only and let the user choose to take it back.
+        if (String(err.message).includes('Lock no longer held')) {
+          state.lockState = 'other';
+          renderLockBanner();
+          clearInterval(state.heartbeatTimer);
+          state.heartbeatTimer = null;
+        }
+      });
+    }, 60000);
+  } catch (e) {
+    if (e.message && e.message.toLowerCase().includes('locked')) {
+      state.lockState = 'other';
+      renderLockBanner();
+    } else {
+      toast('Lock failed: ' + e.message, 'error');
+    }
+  }
+}
+
+async function takeOver() {
+  try {
+    const r = await api('/api/splice/projects/' + state.currentId + '/take-over', 'POST');
+    state.lockState = 'mine';
+    state.lockHolder = { name: r.locked_by_name, at: r.locked_at };
+    renderLockBanner();
+    if (!state.heartbeatTimer) {
+      state.heartbeatTimer = setInterval(() => {
+        api('/api/splice/projects/' + state.currentId + '/heartbeat', 'POST').catch(()=>{});
+      }, 60000);
+    }
+    toast('Lock taken over', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function releaseLock() {
+  try {
+    await api('/api/splice/projects/' + state.currentId + '/unlock', 'POST');
+    state.lockState = 'unlocked';
+    if (state.heartbeatTimer) { clearInterval(state.heartbeatTimer); state.heartbeatTimer = null; }
+    renderLockBanner();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function renderLockBanner() {
+  const el = document.getElementById('lock-banner');
+  if (state.lockState === 'unlocked') { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.className = 'lock-banner ' + (state.lockState === 'mine' ? 'locked' : 'held-by-other');
+  if (state.lockState === 'mine') {
+    el.innerHTML = `<i class="fa-solid fa-lock"></i> Editing · <button class="btn btn-sm" onclick="releaseLock()">Release</button>`;
+  } else {
+    const proj = state.data?.project;
+    const heldBy = proj?.locked_by_full_name || proj?.locked_by_name || 'another designer';
+    const lockedAt = proj?.locked_at ? new Date(proj.locked_at).getTime() : 0;
+    const isStale = Date.now() - lockedAt > 10 * 60 * 1000;
+    el.innerHTML = `<i class="fa-solid fa-eye"></i> View only — locked by <b>${esc(heldBy)}</b>
+      ${isStale ? `<button class="btn btn-sm" onclick="takeOver()">Take over (stale)</button>` : `<button class="btn btn-sm" onclick="takeOver()">Force take over</button>`}`;
+  }
+}
+
+function isReadOnly() { return state.lockState !== 'mine'; }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Server-Sent Events — broadcasts of committed actions from other viewers
+// ───────────────────────────────────────────────────────────────────────────
+
+function openSSE(projectId) {
+  if (!('EventSource' in window)) return;
+  // EventSource doesn't send Authorization headers — relies on the JWT
+  // cookie set by the auth middleware. That's already in place because
+  // our login flow sets the cookie alongside sessionStorage.lfs_token.
+  state.sse = new EventSource('/api/splice/projects/' + projectId + '/events');
+  // Re-hydrate on any committed event. Cheap because cardinality is low
+  // and the alternative (delta-merge per event type) is a footgun for
+  // the v1 build.
+  const handler = () => { hydrateProject(); };
+  ['cable_added','cable_updated','cable_deleted',
+   'closure_added','closure_updated','closure_deleted',
+   'location_added','location_updated','location_deleted',
+   'splice_added','splice_deleted',
+   'ribbon_splice_added','ribbon_group_deleted',
+   'project_updated','lock_acquired','lock_released','lock_taken_over']
+   .forEach(evt => state.sse.addEventListener(evt, handler));
+  state.sse.onerror = () => {
+    // EventSource auto-reconnects; nothing to do unless it's a permanent
+    // 401 — which the api() helper would have already redirected.
+  };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Konva canvas rendering
+// ───────────────────────────────────────────────────────────────────────────
+
+const COLORS = {
+  blue:'#1660C9', orange:'#E67E22', green:'#27AE60', brown:'#8B5A2B',
+  slate:'#7F8C8D', white:'#F5F5F5', red:'#C0392B', black:'#000',
+  yellow:'#F1C40F', violet:'#8E44AD', rose:'#E91E63', aqua:'#1ABC9C',
+};
+
+function renderCanvas() {
+  const container = document.getElementById('stage');
+  container.innerHTML = '';
+  const stage = new Konva.Stage({
+    container: 'stage',
+    width: container.clientWidth || 800,
+    height: container.clientHeight || 600,
+    draggable: true,
+  });
+  const bgLayer = new Konva.Layer({ listening: false });
+  const cableLayer = new Konva.Layer();
+  const closureLayer = new Konva.Layer();
+  const spliceLayer = new Konva.Layer({ listening: false });
+  stage.add(bgLayer); stage.add(cableLayer); stage.add(closureLayer); stage.add(spliceLayer);
+  state.konva = { stage, bgLayer, cableLayer, closureLayer, spliceLayer };
+
+  // Wheel zoom centered on cursor — Konva idiom.
+  stage.on('wheel', (e) => {
+    e.evt.preventDefault();
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = direction > 0 ? oldScale * 1.1 : oldScale / 1.1;
+    stage.scale({ x: newScale, y: newScale });
+    stage.position({
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    });
+  });
+
+  drawCanvasContents();
+
+  // Resize — refit on window resize.
+  if (!renderCanvas._listenerInstalled) {
+    window.addEventListener('resize', () => {
+      if (!state.konva) return;
+      state.konva.stage.size({
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
+      state.konva.stage.batchDraw();
+    });
+    renderCanvas._listenerInstalled = true;
+  }
+}
+
+function drawCanvasContents() {
+  if (!state.konva || !state.data) return;
+  const { cableLayer, closureLayer, spliceLayer } = state.konva;
+  cableLayer.destroyChildren();
+  closureLayer.destroyChildren();
+  spliceLayer.destroyChildren();
+
+  const d = state.data;
+
+  // Layout heuristic for Phase 1:
+  //   Locations are arranged in a horizontal row (sequence_index order).
+  //   Each location gets a column. Cables connecting two locations are
+  //   drawn as horizontal pipes between the relevant columns. Closures
+  //   appear as boxes anchored to their location column.
+  //   It's not topologically precise (a cable spanning 3 locations has no
+  //   midpoint), but Phase 1 only uses 'splice_point' so this works.
+
+  const orderedLocations = [...d.locations].sort((a, b) =>
+    (a.sequence_index || 0) - (b.sequence_index || 0) || a.name.localeCompare(b.name)
+  );
+  const colX = new Map();
+  const COL_GAP = 280;
+  const X_START = 60;
+  orderedLocations.forEach((loc, i) => colX.set(loc.id, X_START + i * COL_GAP));
+
+  // Locations as labeled vertical guidelines.
+  orderedLocations.forEach(loc => {
+    const x = colX.get(loc.id);
+    closureLayer.add(new Konva.Line({
+      points: [x, 40, x, 600], stroke:'#9AA5B5', dash:[4,4], strokeWidth:1,
+    }));
+    closureLayer.add(new Konva.Text({
+      x: x - 60, y: 14, width: 120, align:'center',
+      text: loc.name, fontSize: 13, fontStyle:'bold', fill:'#1B5FA0',
+    }));
+  });
+
+  // Cables between locations.
+  d.cables.forEach((cable, i) => {
+    const from = colX.get(cable.from_location_id);
+    const to   = colX.get(cable.to_location_id);
+    const y = 80 + i * 60;
+    if (from && to) {
+      const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id).sort((a,b)=>a.position-b.position);
+      // One thick polyline per cable; sub-strands per buffer tube.
+      const tubeGap = 2;
+      tubes.forEach((tube, ti) => {
+        cableLayer.add(new Konva.Line({
+          points: [from + 6, y + ti * tubeGap, to - 6, y + ti * tubeGap],
+          stroke: COLORS[tube.color] || '#666',
+          strokeWidth: 2,
+        }));
+      });
+      cableLayer.add(new Konva.Text({
+        x: (from + to) / 2 - 80, y: y - 14, width: 160, align:'center',
+        text: cable.name + ' (' + cable.fiber_count + ' fiber, ' + cable.construction_type + ')',
+        fontSize: 11, fill:'#444',
+      }));
+    } else {
+      // Floating cable (no endpoints). Drop it at the bottom.
+      cableLayer.add(new Konva.Text({
+        x: 20, y: 600 + i * 18, text: '⚠ Unrouted cable: ' + cable.name,
+        fontSize: 11, fill:'#856404',
+      }));
+    }
+  });
+
+  // Closures at each location, stacked vertically below the location label.
+  const closuresByLoc = new Map();
+  d.closures.forEach(cl => {
+    if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
+    closuresByLoc.get(cl.location_id).push(cl);
+  });
+  for (const loc of orderedLocations) {
+    const list = closuresByLoc.get(loc.id) || [];
+    const x = colX.get(loc.id);
+    list.forEach((cl, idx) => {
+      const baseY = 380 + idx * 110;
+      const trayList = d.trays.filter(t => t.closure_id === cl.id).sort((a,b)=>a.position-b.position);
+      const splicesIn = (tray) => d.splices.filter(s => s.tray_id === tray.id).length;
+      const overCap = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+
+      const group = new Konva.Group({ x: x - 60, y: baseY, width: 120 });
+      group.add(new Konva.Rect({
+        width: 120, height: 90,
+        fill: overCap ? '#FFF3CD' : '#FFFFFF',
+        stroke: overCap ? '#DC3545' : '#1B5FA0',
+        strokeWidth: 2, cornerRadius: 4,
+      }));
+      group.add(new Konva.Text({
+        x: 4, y: 4, width: 112,
+        text: cl.model || 'Closure',
+        fontSize: 11, fontStyle:'bold', fill:'#1B5FA0',
+      }));
+      group.add(new Konva.Text({
+        x: 4, y: 18, width: 112,
+        text: trayList.length + '×' + cl.tray_capacity + ' trays',
+        fontSize: 10, fill:'#6C757D',
+      }));
+      // Tray sparkline — small bars showing fill ratio per tray.
+      trayList.forEach((tray, ti) => {
+        const fill = splicesIn(tray) / cl.tray_capacity;
+        const tx = 4 + ti * (112 / Math.max(trayList.length, 1));
+        const tw = 112 / Math.max(trayList.length, 1) - 1;
+        group.add(new Konva.Rect({
+          x: tx, y: 36, width: tw, height: 12,
+          fill:'#F0F0F0', stroke:'#DEE2E6', strokeWidth:0.5,
+        }));
+        group.add(new Konva.Rect({
+          x: tx, y: 36, width: tw * Math.min(fill, 1), height: 12,
+          fill: fill > 1 ? '#DC3545' : (fill > 0.85 ? '#FFC107' : '#28A745'),
+        }));
+      });
+      group.add(new Konva.Text({
+        x: 4, y: 56, width: 112, align:'center',
+        text: 'Open trays →', fontSize: 10, fill:'#1B5FA0',
+      }));
+      // Click → open closure inspector
+      group.on('click tap', () => selectThing('closure', cl.id));
+      group.on('mouseenter', () => { document.body.style.cursor='pointer'; });
+      group.on('mouseleave', () => { document.body.style.cursor='default'; });
+      closureLayer.add(group);
+    });
+  }
+
+  state.konva.stage.batchDraw();
+  resetView();
+}
+
+function resetView() {
+  if (!state.konva) return;
+  const stage = state.konva.stage;
+  stage.scale({ x: 1, y: 1 });
+  stage.position({ x: 0, y: 0 });
+  stage.batchDraw();
+}
+
+function zoom(factor) {
+  if (!state.konva) return;
+  const stage = state.konva.stage;
+  const newScale = stage.scaleX() * factor;
+  stage.scale({ x: newScale, y: newScale });
+  stage.batchDraw();
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Inspector — context-sensitive right pane
+// ───────────────────────────────────────────────────────────────────────────
+
+function selectThing(type, id) {
+  state.selection = { type, id };
+  renderInspector();
+}
+
+function renderInspector() {
+  const empty = document.getElementById('inspector-empty');
+  const body = document.getElementById('inspector-body');
+  if (!state.data) {
+    empty.style.display = 'block';
+    body.style.display = 'none';
+    return;
+  }
+  if (!state.selection) {
+    empty.style.display = 'block';
+    empty.innerHTML = `Select an object on the canvas, or use the project actions on the left.`;
+    body.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  body.style.display = 'block';
+
+  const { type, id } = state.selection;
+  if (type === 'closure') return renderClosureInspector(id);
+  if (type === 'tray') return renderTrayInspector(id);
+  body.innerHTML = `<div class="empty-pane">Unknown selection</div>`;
+}
+
+function renderClosureInspector(closureId) {
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) { state.selection = null; return renderInspector(); }
+  const loc = state.data.locations.find(l => l.id === cl.location_id);
+  const trayList = state.data.trays.filter(t => t.closure_id === closureId).sort((a,b)=>a.position-b.position);
+  const splicesByTray = (tid) => state.data.splices.filter(s => s.tray_id === tid);
+
+  const body = document.getElementById('inspector-body');
+  body.innerHTML = `
+    <h3>${esc(cl.model || 'Closure')} <span class="small">${trayList.length}×${cl.tray_capacity}</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">at ${esc(loc?.name || '?')}</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="btn btn-sm" onclick="openEditClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
+    </div>
+    <table class="table">
+      <thead><tr><th>Tray</th><th>Splices</th><th></th></tr></thead>
+      <tbody>
+        ${trayList.map(t => {
+          const used = splicesByTray(t.id).length;
+          const overCap = used > cl.tray_capacity;
+          return `<tr>
+            <td><b>${t.position}</b></td>
+            <td><span style="color:${overCap?'var(--danger)':'inherit'}">${used} / ${cl.tray_capacity}</span></td>
+            <td><button class="btn btn-sm" onclick="selectThing('tray','${t.id}')">Open</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderTrayInspector(trayId) {
+  const tray = state.data.trays.find(t => t.id === trayId);
+  if (!tray) { state.selection = null; return renderInspector(); }
+  const cl = state.data.closures.find(c => c.id === tray.closure_id);
+  const loc = state.data.locations.find(l => l.id === cl.location_id);
+  const splices = state.data.splices.filter(s => s.tray_id === trayId);
+  const ribbonGroups = state.data.ribbon_groups.filter(g => g.tray_id === trayId);
+
+  const body = document.getElementById('inspector-body');
+  body.innerHTML = `
+    <h3>Tray ${tray.position} <span class="small">${splices.length}/${cl.tray_capacity}</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
+      ${esc(cl.model || 'Closure')} at ${esc(loc?.name || '?')}
+      &nbsp;·&nbsp; <a href="#" onclick="event.preventDefault();selectThing('closure','${cl.id}')">← back to closure</a>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-sm btn-primary" onclick="openSpliceModal('${trayId}', false)" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Single splice</button>
+      <button class="btn btn-sm btn-primary" onclick="openSpliceModal('${trayId}', true)" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-grip"></i> Ribbon splice (×12)</button>
+    </div>
+    ${ribbonGroups.length ? renderRibbonGroupRows(ribbonGroups, splices) : ''}
+    ${renderLooseSpliceRows(splices)}
+  `;
+}
+
+function renderRibbonGroupRows(groups, splices) {
+  return groups.map(g => {
+    const inGroup = splices.filter(s => s.ribbon_group_id === g.id);
+    if (!inGroup.length) return '';
+    const first = inGroup[0];
+    const a = describeFiber(first.fiber_a_id);
+    const b = describeFiber(first.fiber_b_id);
+    return `<div class="splice-row">
+      <div class="desc">
+        <b>${esc(a.cable)}</b> · <span class="fc fc-${a.tube_color}"></span>${esc(a.tube_color)}
+        →
+        <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}"></span>${esc(b.tube_color)}
+        <span class="ribbon-tag">ribbon ×12</span>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteRibbonGroup('${g.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+    </div>`;
+  }).join('');
+}
+
+function renderLooseSpliceRows(splices) {
+  const loose = splices.filter(s => !s.ribbon_group_id);
+  if (!loose.length) return '<div class="empty-pane">No individual splices yet.</div>';
+  return `<div class="splices-list"><h4>Individual splices</h4>
+    ${loose.map(s => {
+      const a = describeFiber(s.fiber_a_id);
+      const b = describeFiber(s.fiber_b_id);
+      return `<div class="splice-row">
+        <div class="desc">
+          <span class="fc fc-${a.color}"></span>${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
+          →
+          <span class="fc fc-${b.color}"></span>${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function describeFiber(fiberId) {
+  const f = state.data.fibers.find(x => x.id === fiberId);
+  if (!f) return { cable:'?', tube_color:'?', tube_position:'?', color:'?', position:'?' };
+  const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+  const cable = tube ? state.data.cables.find(c => c.id === tube.cable_id) : null;
+  return {
+    cable: cable?.name || '?',
+    tube_color: tube?.color || '?',
+    tube_position: tube?.position ?? '?',
+    color: f.color,
+    position: f.position,
+  };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Mutations — locations / cables / closures / splices
+// ───────────────────────────────────────────────────────────────────────────
+
+function openAddLocation() {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  showModal({
+    title: 'Add splice point',
+    body: `
+      <div class="field"><label>Location name</label>
+        <input id="m-loc-name" placeholder="e.g. SP-12" autofocus></div>
+      <div class="field"><label>Sequence (left-to-right ordering on canvas)</label>
+        <input id="m-loc-seq" type="number" value="${state.data.locations.length + 1}"></div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-loc-notes"></textarea></div>
+    `,
+    onSubmit: async (close) => {
+      try {
+        await api('/api/splice/projects/' + state.currentId + '/locations', 'POST', {
+          name: document.getElementById('m-loc-name').value.trim(),
+          sequence_index: parseInt(document.getElementById('m-loc-seq').value, 10) || 0,
+          notes: document.getElementById('m-loc-notes').value.trim() || null,
+          type: 'splice_point',
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+function openAddCable() {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  if (!state.data.locations.length) {
+    return toast('Add a location first', 'error');
+  }
+  const locOpts = state.data.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  showModal({
+    title: 'Add cable',
+    body: `
+      <div class="row">
+        <div class="field"><label>Cable name</label>
+          <input id="m-cable-name" placeholder="e.g. C1 main" autofocus></div>
+        <div class="field"><label>Fiber count</label>
+          <select id="m-cable-fc">
+            <option value="12">12</option><option value="24">24</option>
+            <option value="48">48</option><option value="96">96</option>
+            <option value="144">144</option><option value="288">288</option>
+            <option value="432" selected>432</option><option value="864">864</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Construction</label>
+          <select id="m-cable-ct">
+            <option value="ribbon" selected>Ribbon (12 fibers per ribbon)</option>
+            <option value="loose_tube">Loose tube</option>
+          </select></div>
+        <div class="field"><label>Mfr part (optional)</label>
+          <input id="m-cable-part" placeholder="optional"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>From location</label>
+          <select id="m-cable-from"><option value="">— unrouted —</option>${locOpts}</select></div>
+        <div class="field"><label>To location</label>
+          <select id="m-cable-to"><option value="">— unrouted —</option>${locOpts}</select></div>
+      </div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-cable-notes"></textarea></div>
+    `,
+    onSubmit: async (close) => {
+      try {
+        await api('/api/splice/projects/' + state.currentId + '/cables', 'POST', {
+          name: document.getElementById('m-cable-name').value.trim(),
+          fiber_count: parseInt(document.getElementById('m-cable-fc').value, 10),
+          construction_type: document.getElementById('m-cable-ct').value,
+          from_location_id: document.getElementById('m-cable-from').value || null,
+          to_location_id: document.getElementById('m-cable-to').value || null,
+          manufacturer_part: document.getElementById('m-cable-part').value.trim() || null,
+          notes: document.getElementById('m-cable-notes').value.trim() || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function openAddClosure() {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  if (!state.data.locations.length) {
+    return toast('Add a location first', 'error');
+  }
+  let models = [];
+  try { models = await api('/api/splice/closure-models'); } catch {}
+  const datalist = '<datalist id="closure-models-list">' +
+    models.map(m => `<option value="${esc(m.model)}">`).join('') + '</datalist>';
+  const locOpts = state.data.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  showModal({
+    title: 'Add closure',
+    body: `
+      <div class="field"><label>At location</label>
+        <select id="m-cl-loc">${locOpts}</select></div>
+      <div class="field"><label>Model (free text — picklist grows as you use it)</label>
+        <input id="m-cl-model" list="closure-models-list" placeholder="e.g. Tyco FOSC 450 D6">
+        ${datalist}
+      </div>
+      <div class="row">
+        <div class="field"><label>Tray count</label>
+          <input id="m-cl-tc" type="number" value="6" min="1"></div>
+        <div class="field"><label>Tray capacity (splices)</label>
+          <input id="m-cl-cap" type="number" value="12" min="1"></div>
+      </div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-cl-notes"></textarea></div>
+    `,
+    onSubmit: async (close) => {
+      try {
+        const locId = document.getElementById('m-cl-loc').value;
+        await api('/api/splice/locations/' + locId + '/closures', 'POST', {
+          model: document.getElementById('m-cl-model').value.trim() || null,
+          tray_count: parseInt(document.getElementById('m-cl-tc').value, 10) || 6,
+          tray_capacity: parseInt(document.getElementById('m-cl-cap').value, 10) || 12,
+          notes: document.getElementById('m-cl-notes').value.trim() || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+function openEditClosure(closureId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) return;
+  showModal({
+    title: 'Edit closure',
+    body: `
+      <div class="field"><label>Model</label>
+        <input id="m-cl-model" value="${esc(cl.model || '')}"></div>
+      <div class="row">
+        <div class="field"><label>Tray count</label>
+          <input id="m-cl-tc" type="number" value="${cl.tray_count}" min="1"></div>
+        <div class="field"><label>Tray capacity</label>
+          <input id="m-cl-cap" type="number" value="${cl.tray_capacity}" min="1"></div>
+      </div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-cl-notes">${esc(cl.notes || '')}</textarea></div>
+    `,
+    onSubmit: async (close) => {
+      try {
+        await api('/api/splice/closures/' + closureId, 'PUT', {
+          model: document.getElementById('m-cl-model').value.trim() || null,
+          tray_count: parseInt(document.getElementById('m-cl-tc').value, 10),
+          tray_capacity: parseInt(document.getElementById('m-cl-cap').value, 10),
+          notes: document.getElementById('m-cl-notes').value.trim() || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function deleteClosure(closureId) {
+  if (isReadOnly()) return;
+  if (!confirm('Delete this closure and all its trays + splices?')) return;
+  try {
+    await api('/api/splice/closures/' + closureId, 'DELETE');
+    state.selection = null;
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteSplice(spliceId) {
+  if (isReadOnly()) return;
+  if (!confirm('Delete this splice?')) return;
+  try {
+    await api('/api/splice/splices/' + spliceId, 'DELETE');
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteRibbonGroup(groupId) {
+  if (isReadOnly()) return;
+  if (!confirm('Delete the entire 12-fiber ribbon group?')) return;
+  try {
+    await api('/api/splice/ribbon-groups/' + groupId, 'DELETE');
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteCurrentProject() {
+  if (!state.data) return;
+  if (!confirm(`Delete project "${state.data.project.name}" and ALL its data? This cannot be undone.`)) return;
+  try {
+    await api('/api/splice/projects/' + state.currentId, 'DELETE');
+    cleanupCurrent();
+    state.currentId = null;
+    state.data = null;
+    document.getElementById('title-name').textContent = '— No project selected —';
+    document.getElementById('proj-actions').style.display = 'none';
+    document.getElementById('proj-summary').style.display = 'none';
+    document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('btn-export').disabled = true;
+    document.getElementById('inspector-body').style.display = 'none';
+    document.getElementById('inspector-empty').style.display = 'block';
+    document.getElementById('lock-banner').style.display = 'none';
+    await loadProjects();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Splice modal — single + ribbon
+// ───────────────────────────────────────────────────────────────────────────
+
+function openSpliceModal(trayId, ribbon) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const tray = state.data.trays.find(t => t.id === trayId);
+  if (!tray) return;
+  const usedFibers = new Set();
+  state.data.splices.forEach(s => {
+    // Cap each fiber at 2 endpoints (one per cable side). The route accepts
+    // up to 2 already; we mark any fiber that's hit its limit.
+    const aCount = state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length;
+    if (aCount >= 2) usedFibers.add(s.fiber_a_id);
+    const bCount = state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length;
+    if (bCount >= 2) usedFibers.add(s.fiber_b_id);
+  });
+
+  const cableOpts = state.data.cables.map(c => `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f, ${c.construction_type})</option>`).join('');
+
+  showModal({
+    title: ribbon ? 'Ribbon splice ×12 (mass fusion)' : 'Single splice',
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        ${ribbon
+          ? 'Pick one ribbon (12-fiber buffer tube) on each side. All 12 fibers get spliced together in TIA-598 order — fiber 1 to fiber 1, fiber 2 to fiber 2, etc.'
+          : 'Pick one fiber from each side, then click <b>Splice</b>.'}
+      </p>
+      <div class="splice-cols">
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Side A · cable</label>
+            <select id="sp-cable-a" onchange="renderFiberPicker('a')"><option value="">Pick cable…</option>${cableOpts}</select></div>
+          <div class="field" style="margin-bottom:6px" id="sp-tube-a-wrap" style="display:none"><label>Side A · ${ribbon?'ribbon':'tube'}</label>
+            <select id="sp-tube-a" onchange="renderFiberPicker('a')"></select></div>
+          ${!ribbon ? `<div class="field" style="margin-bottom:0"><label>Side A · fiber</label>
+            <div id="sp-fibers-a" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>` : ''}
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Side B · cable</label>
+            <select id="sp-cable-b" onchange="renderFiberPicker('b')"><option value="">Pick cable…</option>${cableOpts}</select></div>
+          <div class="field" style="margin-bottom:6px" id="sp-tube-b-wrap" style="display:none"><label>Side B · ${ribbon?'ribbon':'tube'}</label>
+            <select id="sp-tube-b" onchange="renderFiberPicker('b')"></select></div>
+          ${!ribbon ? `<div class="field" style="margin-bottom:0"><label>Side B · fiber</label>
+            <div id="sp-fibers-b" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>` : ''}
+        </div>
+      </div>
+    `,
+    submitText: ribbon ? 'Splice 12 fibers' : 'Splice',
+    onSubmit: async (close) => {
+      if (ribbon) {
+        const tubeA = document.getElementById('sp-tube-a').value;
+        const tubeB = document.getElementById('sp-tube-b').value;
+        if (!tubeA || !tubeB) return toast('Pick a ribbon on both sides', 'error');
+        const fibersA = state.data.fibers.filter(f => f.buffer_tube_id === tubeA).sort((a,b)=>a.position-b.position);
+        const fibersB = state.data.fibers.filter(f => f.buffer_tube_id === tubeB).sort((a,b)=>a.position-b.position);
+        if (fibersA.length !== 12 || fibersB.length !== 12) return toast('Each ribbon must have 12 fibers', 'error');
+        const pairs = fibersA.map((fa, i) => ({ fiber_a_id: fa.id, fiber_b_id: fibersB[i].id }));
+        try {
+          await api('/api/splice/trays/' + trayId + '/ribbon-splice', 'POST', { pairs });
+          close();
+          await hydrateProject();
+        } catch (e) { toast(e.message, 'error'); }
+      } else {
+        const fa = state._spA;
+        const fb = state._spB;
+        if (!fa || !fb) return toast('Pick a fiber on both sides', 'error');
+        try {
+          await api('/api/splice/trays/' + trayId + '/splices', 'POST', {
+            fiber_a_id: fa, fiber_b_id: fb,
+          });
+          close();
+          state._spA = null; state._spB = null;
+          await hydrateProject();
+        } catch (e) { toast(e.message, 'error'); }
+      }
+    },
+  });
+  state._spA = null; state._spB = null;
+  state._spRibbon = ribbon;
+  state._spUsed = usedFibers;
+}
+
+window.renderFiberPicker = function(side) {
+  const ribbon = state._spRibbon;
+  const cableSel = document.getElementById('sp-cable-' + side);
+  const cableId = cableSel.value;
+  const tubeWrap = document.getElementById('sp-tube-' + side + '-wrap');
+  const tubeSel  = document.getElementById('sp-tube-' + side);
+  if (!cableId) {
+    tubeWrap.style.display = 'none';
+    if (!ribbon) document.getElementById('sp-fibers-' + side).innerHTML = '<div class="empty-pane">Pick a cable</div>';
+    return;
+  }
+  const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId).sort((a,b)=>a.position-b.position);
+  tubeWrap.style.display = 'block';
+  tubeSel.innerHTML = '<option value="">Pick tube…</option>' + tubes.map(t =>
+    `<option value="${t.id}">${t.position}. ${t.color}</option>`
+  ).join('');
+  if (!ribbon) {
+    const tubeId = tubeSel.value;
+    const grid = document.getElementById('sp-fibers-' + side);
+    if (!tubeId) { grid.innerHTML = '<div class="empty-pane">Pick a tube</div>'; return; }
+    const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tubeId).sort((a,b)=>a.position-b.position);
+    grid.innerHTML = fibers.map(f => {
+      const used = state._spUsed.has(f.id);
+      return `<div class="fiber-cell ${used?'in-use':''}"
+        data-fiber-id="${f.id}" data-side="${side}"
+        onclick="${used?'':'pickFiber(this)'}">
+        <span class="fc fc-${f.color}"></span>${f.position}
+      </div>`;
+    }).join('');
+  }
+};
+
+window.pickFiber = function(el) {
+  const side = el.dataset.side;
+  const fid = el.dataset.fiberId;
+  document.querySelectorAll('.fiber-cell[data-side="' + side + '"]').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  if (side === 'a') state._spA = fid; else state._spB = fid;
+};
+
+// ───────────────────────────────────────────────────────────────────────────
+// Modal helper (lightweight — plain DOM, no framework)
+// ───────────────────────────────────────────────────────────────────────────
+
+function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
+  const host = document.getElementById('modal-host');
+  host.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal ${wide?'wide':''}">
+        <header>
+          <h2>${esc(title)}</h2>
+          <button class="close" onclick="closeModal()">&times;</button>
+        </header>
+        <div class="body">${body}</div>
+        <footer>
+          <button class="btn" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="modal-submit">${esc(submitText)}</button>
+        </footer>
+      </div>
+    </div>`;
+  document.getElementById('modal-submit').onclick = () => onSubmit(closeModal);
+}
+function closeModal() { document.getElementById('modal-host').innerHTML = ''; }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Export
+// ───────────────────────────────────────────────────────────────────────────
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  if (!state.currentId) return;
+  // Open in new tab — server returns inline application/pdf so the browser
+  // renders it directly.
+  window.open('/api/splice/projects/' + state.currentId + '/export-pdf', '_blank');
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Dark mode (mirrors design.html — sticky in localStorage)
+// ───────────────────────────────────────────────────────────────────────────
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('btn-dark').innerHTML =
+    t === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+}
+document.getElementById('btn-dark').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem('lfs_theme', next); } catch {}
+});
+applyTheme(localStorage.getItem('lfs_theme') === 'dark' ? 'dark' : 'light');
+
+// ───────────────────────────────────────────────────────────────────────────
+// Boot
+// ───────────────────────────────────────────────────────────────────────────
+
+(async function boot(){
+  await loadMe();
+  await loadProjects();
+})();
+
+// Release lock when leaving the page so the next viewer doesn't have to
+// wait for the 10-min stale-lock window.
+window.addEventListener('beforeunload', () => {
+  if (state.lockState === 'mine' && state.currentId) {
+    // navigator.sendBeacon avoids the unload race; works without a
+    // Bearer token because the JWT cookie travels alongside.
+    try {
+      navigator.sendBeacon(
+        '/api/splice/projects/' + state.currentId + '/unlock',
+        new Blob([''], { type: 'application/json' })
+      );
+    } catch {}
+  }
+});
+
+</script>
+</body>
+</html>
