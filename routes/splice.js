@@ -897,6 +897,110 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Strand metadata (circuit naming, Phase 2A #4) ───────────────────────
+
+  app.put('/api/splice/fibers/:id', requireAuth(), async (req, res) => {
+    const allowed = ['circuit_name', 'customer', 'notes'];
+    const sets = [];
+    const vals = [req.params.id];
+    let i = 2;
+    for (const f of allowed) {
+      if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+        let v = req.body[f];
+        if (v === '') v = null;
+        sets.push(`${f} = $${i++}`);
+        vals.push(v);
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_fibers SET ${sets.join(', ')} WHERE id = $1
+         RETURNING id, buffer_tube_id, position, color, circuit_name, customer, notes`,
+        vals
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Fiber not found' });
+      // Find the project_id via a 3-level join so we can broadcast.
+      const proj = await pool.query(
+        `SELECT c.project_id
+         FROM splice_fibers f
+         JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+         JOIN splice_cables c ON c.id = t.cable_id
+         WHERE f.id = $1`,
+        [req.params.id]
+      );
+      const projectId = proj.rows[0]?.project_id;
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'fiber_metadata_updated', { fiber: rows[0] });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Bulk update fibers — efficient for designers editing many circuit
+  // names at once (e.g. an entire 144-fiber cable). Body is an array of
+  // { id, circuit_name?, customer?, notes? }; each row updates only the
+  // provided fields. Performed in a transaction so a partial failure
+  // doesn't leave rows in a half-saved state.
+  app.put('/api/splice/cables/:cableId/fiber-metadata', requireAuth(), async (req, res) => {
+    const { fibers } = req.body;
+    if (!Array.isArray(fibers) || !fibers.length) {
+      return res.status(400).json({ error: 'fibers array is required' });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const cable = await client.query(
+        `SELECT project_id FROM splice_cables WHERE id = $1`,
+        [req.params.cableId]
+      );
+      if (!cable.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Cable not found' });
+      }
+      // Verify each fiber belongs to this cable (defense against
+      // cross-cable id smuggling).
+      const valid = await client.query(
+        `SELECT f.id FROM splice_fibers f
+         JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+         WHERE t.cable_id = $1`,
+        [req.params.cableId]
+      );
+      const validIds = new Set(valid.rows.map(r => r.id));
+      const updated = [];
+      for (const f of fibers) {
+        if (!validIds.has(f.id)) continue;
+        const sets = [];
+        const vals = [f.id];
+        let i = 2;
+        for (const field of ['circuit_name', 'customer', 'notes']) {
+          if (Object.prototype.hasOwnProperty.call(f, field)) {
+            let v = f[field];
+            if (v === '') v = null;
+            sets.push(`${field} = $${i++}`);
+            vals.push(v);
+          }
+        }
+        if (!sets.length) continue;
+        const r = await client.query(
+          `UPDATE splice_fibers SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+          vals
+        );
+        if (r.rows[0]) updated.push(r.rows[0]);
+      }
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, cable.rows[0].project_id);
+      _broadcast(cable.rows[0].project_id, 'fiber_metadata_bulk_updated', {
+        cable_id: req.params.cableId, count: updated.length,
+      });
+      res.json({ ok: true, updated_count: updated.length });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
   // ─── Strand states (ring-cut three-lane model) ───────────────────────────
   // Each strand at a location is express / spliced / stored. Splice rows
   // are the source of truth for 'spliced'; this table holds explicit
@@ -1253,6 +1357,11 @@ async function _renderSpliceHtml(data, pageSize) {
     splicesByTray.get(s.tray_id).push(s);
   }
 
+  // Phase 2A #4 — strand circuits. Suppress the column entirely when
+  // no fiber carries a circuit name so the PDF stays tight on jobs
+  // that don't track circuits.
+  const anyCircuit = fibers.some(f => f.circuit_name || f.customer);
+
   // Pre-render QR codes for every closure in parallel. Each QR points
   // at a deep link to the splice editor (project + closure params).
   // When Phase 2B #7 lands, swap the URL pattern for /field/:token.
@@ -1271,7 +1380,7 @@ async function _renderSpliceHtml(data, pageSize) {
 
   function describeFiber(fiberId) {
     const f = fiberById.get(fiberId);
-    if (!f) return { cable: '?', tube: '?', tube_position: '?', color: '?', position: '?' };
+    if (!f) return { cable: '?', tube: '?', tube_position: '?', color: '?', position: '?', circuit_name: '', customer: '' };
     const tube = tubeById.get(f.buffer_tube_id);
     const cable = tube ? cableById.get(tube.cable_id) : null;
     return {
@@ -1280,6 +1389,8 @@ async function _renderSpliceHtml(data, pageSize) {
       tube_position: tube?.position ?? '?',
       color: f.color,
       position: f.position,
+      circuit_name: f.circuit_name || '',
+      customer: f.customer || '',
     };
   }
 
@@ -1292,6 +1403,12 @@ async function _renderSpliceHtml(data, pageSize) {
   function rowForSplice(s) {
     const a = describeFiber(s.fiber_a_id);
     const b = describeFiber(s.fiber_b_id);
+    // Side A circuit is the most useful column on the field document;
+    // splicers reference circuit names when troubleshooting later.
+    // Side B circuit is mostly redundant (a 1:1 splice connects two
+    // ends of the same circuit) so we elide it to save horizontal
+    // space on Tabloid.
+    const circuitCell = anyCircuit ? `<td>${_esc(a.circuit_name || b.circuit_name || '')}</td>` : '';
     return `
       <tr>
         <td>${_esc(a.cable)}</td>
@@ -1301,6 +1418,7 @@ async function _renderSpliceHtml(data, pageSize) {
         <td>${_esc(b.cable)}</td>
         <td>${colorChip(b.tube_color)} <span class="muted">${b.tube_position}</span></td>
         <td>${colorChip(b.color)} <span class="muted">${b.position}</span></td>
+        ${circuitCell}
         <td>${_esc(s.splice_type)}</td>
         <td class="markup-loss">&nbsp;</td>
         <td class="markup-notes">&nbsp;</td>
@@ -1426,10 +1544,15 @@ async function _renderSpliceHtml(data, pageSize) {
         const first = list[0];
         const a = describeFiber(first.fiber_a_id);
         const b = describeFiber(first.fiber_b_id);
+        // For ribbon groups, show "12 circuits" or the first circuit
+        // name with "+11 more" — concise but informative.
+        const ribbonCircuits = list.map(s => describeFiber(s.fiber_a_id).circuit_name).filter(Boolean);
+        const circuitCell = anyCircuit ? `<td>${ribbonCircuits.length ? _esc(ribbonCircuits[0]) + (ribbonCircuits.length > 1 ? ` <span class="muted">+${ribbonCircuits.length-1}</span>` : '') : '<span class="muted">—</span>'}</td>` : '';
         return `<tr class="ribbon-row">
           <td colspan="3"><b>${_esc(a.cable)}</b> · tube ${colorChip(a.tube_color)} <span class="muted">(12 fibers, ribbon)</span></td>
           <td class="arrow">⇒</td>
           <td colspan="3"><b>${_esc(b.cable)}</b> · tube ${colorChip(b.tube_color)} <span class="muted">(12 fibers, ribbon)</span></td>
+          ${circuitCell}
           <td>${_esc(first.splice_type)} <span class="ribbon-tag">×12</span></td>
           <td class="markup-loss">&nbsp;</td>
           <td class="markup-notes">&nbsp;</td>
@@ -1448,16 +1571,18 @@ async function _renderSpliceHtml(data, pageSize) {
           ${(ribbonRows || looseRows) ? `
           <table class="splice-table">
             <colgroup>
-              <col style="width:11%"><col style="width:10%"><col style="width:8%">
+              <col style="width:${anyCircuit?'10%':'11%'}"><col style="width:${anyCircuit?'9%':'10%'}"><col style="width:${anyCircuit?'7%':'8%'}">
               <col style="width:3%">
-              <col style="width:11%"><col style="width:10%"><col style="width:8%">
-              <col style="width:8%">
-              <col style="width:9%"><col style="width:22%">
+              <col style="width:${anyCircuit?'10%':'11%'}"><col style="width:${anyCircuit?'9%':'10%'}"><col style="width:${anyCircuit?'7%':'8%'}">
+              ${anyCircuit ? '<col style="width:11%">' : ''}
+              <col style="width:7%">
+              <col style="width:8%"><col style="width:${anyCircuit?'19%':'22%'}">
             </colgroup>
             <thead><tr>
               <th colspan="3">Side A</th>
               <th></th>
               <th colspan="3">Side B</th>
+              ${anyCircuit ? '<th rowspan="2">Circuit</th>' : ''}
               <th rowspan="2">Type</th>
               <th rowspan="2">Loss<br>(dB)</th>
               <th rowspan="2">As-built notes</th>

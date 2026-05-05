@@ -52,6 +52,12 @@ ticketing.
 
 These are the quick wins. Build first.
 
+> Status: ALL FOUR ITEMS SHIPPED.
+> - PDF polish (1a67433)
+> - Validation engine (3309cdf)
+> - Ring-cut three-lane (598dbba)
+> - Strand circuit naming (this commit)
+
 ### 1. PDF ruthlessly polished
 
 **Why:** every Capterra/G2 review of every commercial tool says the PDF is

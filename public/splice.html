@@ -1002,6 +1002,7 @@ function renderCableInspector(cableId) {
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="openStrandMetadataEditor('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-list-check"></i> Edit circuits</button>
       <button class="btn btn-sm btn-danger" onclick="deleteCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
     <table class="table">
@@ -1009,6 +1010,7 @@ function renderCableInspector(cableId) {
         <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part || '—')}</td></tr>
         <tr><th>Tubes</th><td>${tubes.length}</td></tr>
         <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
+        <tr><th>Circuits set</th><td>${state.data.fibers.filter(f => fiberIds.has(f.id) && f.circuit_name).length} of ${cable.fiber_count}</td></tr>
         <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
       </tbody>
     </table>
@@ -1457,6 +1459,89 @@ function openEditCable(cableId) {
           manufacturer_part: document.getElementById('m-cable-part').value.trim() || null,
           notes: document.getElementById('m-cable-notes').value.trim() || null,
         });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+// Phase 2A #4 — strand metadata bulk editor. Opens a modal with every
+// fiber on this cable and inputs for circuit_name + customer + notes.
+// Save fires a single bulk PUT so editing 432 strands at once is one
+// network round-trip.
+function openStrandMetadataEditor(cableId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const tubes = state.data.buffer_tubes
+    .filter(t => t.cable_id === cableId)
+    .sort((a, b) => a.position - b.position);
+
+  // Build rows: one per fiber, in TIA-598 order, grouped by tube.
+  const rows = [];
+  for (const tube of tubes) {
+    const fibersInTube = state.data.fibers
+      .filter(f => f.buffer_tube_id === tube.id)
+      .sort((a, b) => a.position - b.position);
+    for (const f of fibersInTube) {
+      const strandPos = (tube.position - 1) * 12 + f.position;
+      rows.push(`<tr data-fiber-id="${f.id}">
+        <td class="num">${strandPos}</td>
+        <td><span class="fc fc-${tube.color}"></span>${tube.position}</td>
+        <td><span class="fc fc-${f.color}"></span>${f.position}</td>
+        <td><input class="meta-circuit" type="text" value="${esc(f.circuit_name || '')}" placeholder="e.g. CKT-1024"></td>
+        <td><input class="meta-customer" type="text" value="${esc(f.customer || '')}" placeholder="e.g. ABC Corp"></td>
+        <td><input class="meta-notes" type="text" value="${esc(f.notes || '')}" placeholder="optional"></td>
+      </tr>`);
+    }
+  }
+
+  showModal({
+    title: `Edit circuits — ${cable.name} (${cable.fiber_count} fibers)`,
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
+        Circuit names appear on the splicer's PDF when set. Leave blank to omit.
+      </p>
+      <div style="max-height:60vh;overflow:auto;border:1px solid var(--border-weak);border-radius:4px">
+        <table class="table" style="font-size:11px">
+          <thead style="position:sticky;top:0;background:var(--surface-2);z-index:1">
+            <tr>
+              <th>Strand</th><th>Tube</th><th>Fiber</th>
+              <th>Circuit name</th><th>Customer</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>
+    `,
+    submitText: `Save ${rows.length} fibers`,
+    onSubmit: async (close) => {
+      // Collect every row's three fields. Send only fields that
+      // changed from the saved value to keep the payload tight on
+      // 432-fiber cables.
+      const updates = [];
+      document.querySelectorAll(`#modal-host tr[data-fiber-id]`).forEach(tr => {
+        const id = tr.dataset.fiberId;
+        const original = state.data.fibers.find(f => f.id === id);
+        const circuit = tr.querySelector('.meta-circuit').value.trim();
+        const customer = tr.querySelector('.meta-customer').value.trim();
+        const notes = tr.querySelector('.meta-notes').value.trim();
+        const patch = { id };
+        if (circuit !== (original?.circuit_name || '')) patch.circuit_name = circuit || null;
+        if (customer !== (original?.customer || '')) patch.customer = customer || null;
+        if (notes !== (original?.notes || '')) patch.notes = notes || null;
+        if (Object.keys(patch).length > 1) updates.push(patch);
+      });
+      if (!updates.length) {
+        toast('No changes', 'success');
+        close();
+        return;
+      }
+      try {
+        const r = await api(`/api/splice/cables/${cableId}/fiber-metadata`, 'PUT', { fibers: updates });
+        toast(`Updated ${r.updated_count} fibers`, 'success');
         close();
         await hydrateProject();
       } catch (e) { toast(e.message, 'error'); }
