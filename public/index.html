@@ -618,7 +618,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a class="nav-tab" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
   <a class="nav-tab" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature"></i> Permitting</a>
   <a class="nav-tab" data-view="design" onclick="showView('design')"><i class="fa-solid fa-drafting-compass"></i> Design</a>
-  <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> PSC RUS</a>
+  <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> RUS</a>
   <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
   <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
   <a class="nav-tab" data-view="clients" onclick="showView('clients')"><i class="fa-solid fa-handshake"></i> Clients</a>
@@ -685,11 +685,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="modal-overlay" id="psc-rus-pdf-modal">
         <div class="modal-content" style="max-width:640px">
           <div class="modal-header">
-            <span class="modal-title"><i class="fa-solid fa-file-pdf" style="color:var(--primary)"></i> Generate PSC RUS Invoice PDF</span>
+            <span class="modal-title"><i class="fa-solid fa-file-pdf" style="color:var(--primary)"></i> Generate RUS Invoice PDF</span>
             <button class="btn btn-icon btn-secondary" onclick="closeModal('psc-rus-pdf-modal')"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="modal-body">
-            <p style="margin:0 0 14px 0;font-size:12px;color:var(--text-muted)">Generates a summary page (with optional timecards detail for hourly jobs) for the selected engineering contract, job, and period. Format is exclusive to PSC RUS work.</p>
+            <p style="margin:0 0 14px 0;font-size:12px;color:var(--text-muted)">Generates a summary page (with optional timecards detail for hourly jobs) for the selected engineering contract, job, and period. Format is exclusive to RUS-program work (engineering contracts whose program is set to RUS).</p>
             <div class="form-group">
               <label>Engineering Contract</label>
               <select id="prp-ec" onchange="prpReloadJobs()"><option value="">Loading…</option></select>
@@ -722,7 +722,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
            reviving the card later is a one-line removal of display:none. -->
       <div id="psc-rus-projection-card" class="card lfs-widget" data-widget-id="psc-rus-projection" style="margin-bottom:14px;display:none">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title"><i class="fa-solid fa-screwdriver-wrench" style="color:var(--text-muted);margin-right:6px"></i>PSC RUS Revenue Projection</span>
+          <span class="card-title"><i class="fa-solid fa-screwdriver-wrench" style="color:var(--text-muted);margin-right:6px"></i>RUS Revenue Projection</span>
           <span style="font-size:11px;color:var(--text-muted)">retired pending revisit</span>
         </div>
         <div class="card-body" id="psc-rus-projection-body" style="padding:30px 16px;text-align:center;color:var(--text-muted)">
@@ -875,7 +875,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
          between months until manually marked completed. -->
     <div id="view-inspection" class="view">
       <div class="section-header">
-        <div><div class="section-title">PSC RUS</div><div class="section-sub">All PSC RUS projects with monthly hours and revenue rollups</div></div>
+        <div><div class="section-title">RUS</div><div class="section-sub">All RUS-program projects (any client) with monthly hours and revenue rollups</div></div>
         <div style="display:flex;gap:10px;align-items:center">
           <label style="font-size:12px;color:var(--text-muted)">Period:</label>
           <select id="insp-period" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">

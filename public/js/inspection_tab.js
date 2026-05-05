@@ -1,8 +1,11 @@
-// public/js/inspection_tab.js — PSC RUS tab loader.
+// public/js/inspection_tab.js — RUS tab loader.
 //
 // Extracted from public/index.html as part of CLEANUP_PLAN.md Track 1.2.
+// Path B (2026-05-04): renamed from "PSC RUS" to "RUS" — the tab now
+// scopes by engineering_contracts.program='rus' across any client, not
+// PSC specifically.
 //
-// Renders the PSC RUS scope view: KPI tiles + per-project rows with
+// Renders the RUS-program scope view: KPI tiles + per-project rows with
 // hours/revenue rollup + ongoing toggle + edit/detail actions.
 //
 // Globals this module reads:
@@ -52,7 +55,7 @@
     // Project rows
     const tbody = document.getElementById('inspection-body');
     if (!data.projects?.length) {
-      tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fa-solid fa-helmet-safety"></i><p>No PSC RUS projects with activity${period==='month'?' for '+periodLabel:''}.</p><p style="font-size:12px;color:var(--text-muted)">Any active project under a PSC RUS client will surface here once it has logged hours, regardless of job team.</p></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fa-solid fa-helmet-safety"></i><p>No RUS-program projects with activity${period==='month'?' for '+periodLabel:''}.</p><p style="font-size:12px;color:var(--text-muted)">Any active project under an engineering contract whose program is set to RUS will surface here once it has logged hours, regardless of job team.</p></td></tr>`;
       return;
     }
     tbody.innerHTML = data.projects.map(p => `
