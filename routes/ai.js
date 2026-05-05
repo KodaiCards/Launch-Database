@@ -71,7 +71,7 @@ function userWantsAction(messages) {
   }
   // Nudges — phrases that read as "did you do it / why haven't you / get on with it".
   // Anchored to start because "did" / "why" inside a longer sentence isn't a nudge.
-  if (/^(did you|have you|are you|why didn['‘’]?t|why haven['‘’]?t|why aren['‘’]?t|when will|when are|please just|just do|just create|just run|stop|hurry|c['‘’]?mon|come on|now do|now create|get on with|get started|get going|move on)/i.test(trimmed)) {
+  if (/^(did you|have you|are you|why didn['‘’]?t|why haven['‘’]?t|why aren['‘’]?t|when will|when are|please just|just do|just create|just run|hurry up|c['‘’]?mon|come on|now do|now create|get on with|get started|get going|move on)/i.test(trimmed)) {
     return true;
   }
   if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save|build|make|start|begin|run|execute|generate)\b/i.test(trimmed)) {
