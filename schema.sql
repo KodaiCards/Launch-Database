@@ -8,9 +8,11 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ─────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS clients (
+  -- Identity only. Program classification (RUS / BAU / GFR / Other)
+  -- lives on engineering_contracts.program, not on the client. The
+  -- legacy is_rus boolean was retired in migration 0003.
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL UNIQUE,
-  is_rus BOOLEAN DEFAULT FALSE,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -221,11 +223,11 @@ CREATE TABLE IF NOT EXISTS ai_messages (
 -- SEED DATA
 -- ─────────────────────────────────────────
 
-INSERT INTO clients (name, is_rus) VALUES
-  ('PSC', TRUE),
-  ('COX', FALSE),
-  ('IFT', FALSE),
-  ('TRI-CO', FALSE)
+INSERT INTO clients (name) VALUES
+  ('PSC'),
+  ('COX'),
+  ('IFT'),
+  ('TRI-CO')
 ON CONFLICT (name) DO NOTHING;
 
 -- ─────────────────────────────────────────
@@ -1036,7 +1038,12 @@ BEGIN
   END IF;
 
   FOR pj IN
-    SELECT p.*, c.name AS client_name, c.is_rus AS client_is_rus
+    -- Path B (2026-05-04): client_is_rus dropped — column no longer
+    -- exists. The project_type folder branch below now fires whenever
+    -- the project carries a project_type_id (PSC-class or otherwise),
+    -- which is what we wanted anyway. Phase 3b removes the branch
+    -- entirely when project_types goes away.
+    SELECT p.*, c.name AS client_name
     FROM projects p
     LEFT JOIN clients c ON c.id = p.client_id
     WHERE p.is_rollup = FALSE
@@ -1073,9 +1080,13 @@ BEGIN
       END IF;
     END IF;
 
-    -- (3) PROJECT TYPE folder (only when client is PSC-class AND project_type_id present)
+    -- (3) PROJECT TYPE folder (only when project_type_id is set).
+    -- Was previously gated on client_is_rus too; that column has been
+    -- retired (Path B). The remaining gate (project_type_id presence)
+    -- correctly limits this folder to projects that have an explicit
+    -- type set — which legacy seed data only did for PSC RUS work.
     type_folder := area_folder;
-    IF pj.client_is_rus = TRUE AND pj.project_type_id IS NOT NULL THEN
+    IF pj.project_type_id IS NOT NULL THEN
       SELECT id INTO type_folder
       FROM projects
       WHERE is_rollup = TRUE AND rollup_level = 'project_type' AND rollup_key = pj.project_type_id::text

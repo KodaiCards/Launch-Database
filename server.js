@@ -728,14 +728,17 @@ async function bootstrapV3Schema() {
     // normally be considered done. Manual close still possible via the
     // existing status='completed' workflow.
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_ongoing BOOLEAN DEFAULT FALSE`,
-    // Per-client opt-in: do we show the Contract field? the WO# field? Default
-    // computed from is_rus on the client (PSC clients show both; others default
-    // to neither). Admin can toggle in Settings.
+    // Per-client opt-in: do we show the Contract field? the WO# field?
+    // Originally these defaulted from clients.is_rus (PSC → on, others → off).
+    // The original is_rus-based UPDATE backfill ran on every existing
+    // environment when these columns were first added; subsequent boots
+    // were no-ops. After Path B (migration 0003 drops clients.is_rus), the
+    // backfill is removed entirely. Brand-new clients now default both to
+    // FALSE (NULL → false in the UI); admin toggles them in Settings as
+    // needed. The columns themselves remain so admin's existing toggles
+    // are preserved.
     `ALTER TABLE clients ADD COLUMN IF NOT EXISTS show_contract BOOLEAN`,
     `ALTER TABLE clients ADD COLUMN IF NOT EXISTS show_work_order BOOLEAN`,
-    // Defaults for existing clients, only where NULL (idempotent backfill).
-    `UPDATE clients SET show_contract = (is_rus IS TRUE) WHERE show_contract IS NULL`,
-    `UPDATE clients SET show_work_order = (is_rus IS TRUE) WHERE show_work_order IS NULL`,
     // Rebuild the duplicate-project unique index to EXCLUDE rollups. The old
     // index treated rollups and real projects identically, which caused
     // false-positive 23505 errors when a rollup auto-creation hit a real
