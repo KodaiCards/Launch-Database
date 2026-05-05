@@ -445,7 +445,9 @@ function calcPermittingHours(miles) {
 }
 
 // Staff extracted to routes/staff.js (Track 1.3).
-require('./routes/staff')(app, pool, {});
+// Pass requireAdmin so the new DELETE/PUT/all endpoints (added 2026-05-05)
+// are admin-only. GET + POST stay open to any authed user as before.
+require('./routes/staff')(app, pool, { requireAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECTS — core CRUD + recalc + tree/with-hours delete extracted to
