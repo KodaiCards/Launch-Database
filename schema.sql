@@ -447,7 +447,7 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS permitting_hours_per_mile NUMERIC(
 -- pricing_entries (Job × Program × Billing Code → rate). The Phase 3b
 -- migration 0004 added the `program` column, dropped the old
 -- project_type_id FK, and rebuilt the UNIQUE constraint to use program
--- via a partial index. The CREATE TABLE here only creates the column
+-- via a partial index. The block below only creates the column
 -- shape on a fresh DB; migration 0004 still runs to add the program
 -- column + indexes (no-ops if they already exist).
 CREATE TABLE IF NOT EXISTS pricing_entries (

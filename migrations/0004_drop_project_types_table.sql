@@ -38,19 +38,43 @@
 -- ─── 1. Add program column to pricing_entries ───────────────────────────
 ALTER TABLE pricing_entries ADD COLUMN IF NOT EXISTS program VARCHAR(20);
 
--- Backfill from project_types name (BAU → bau, GF(R) → gfr, RUS → rus, Other → other).
+-- Backfill from project_types.name (BAU → bau, GF(R) → gfr, RUS → rus, Other → other).
 -- Idempotent: only updates rows where program IS NULL.
-UPDATE pricing_entries pe
-   SET program = CASE LOWER(pt.name)
-                   WHEN 'bau'   THEN 'bau'
-                   WHEN 'gf(r)' THEN 'gfr'
-                   WHEN 'rus'   THEN 'rus'
-                   WHEN 'other' THEN 'other'
-                   ELSE LOWER(pt.name)
-                 END
-  FROM project_types pt
- WHERE pe.project_type_id = pt.id
-   AND pe.program IS NULL;
+--
+-- Wrapped in a "does the legacy table still exist?" guard. Existing
+-- production DBs at the time this migration first applied did still
+-- have project_types — that's why the backfill works there. Fresh DBs
+-- created after the schema.sql cleanup never had project_types in the
+-- first place, so we skip the UPDATE there. (This same migration file
+-- runs fresh on those DBs because nothing has applied it yet.)
+DO $migration$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'project_types'
+      AND table_schema = 'public'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'pricing_entries'
+      AND column_name = 'project_type_id'
+      AND table_schema = 'public'
+  ) THEN
+    UPDATE pricing_entries pe
+       SET program = CASE LOWER(pt.name)
+                       WHEN 'bau'   THEN 'bau'
+                       WHEN 'gf(r)' THEN 'gfr'
+                       WHEN 'rus'   THEN 'rus'
+                       WHEN 'other' THEN 'other'
+                       ELSE LOWER(pt.name)
+                     END
+      FROM project_types pt
+     WHERE pe.project_type_id = pt.id
+       AND pe.program IS NULL;
+  ELSE
+    RAISE NOTICE '[migration 0004] project_types table or pricing_entries.project_type_id absent — skipping legacy backfill (fresh DB or already-cleaned state).';
+  END IF;
+END
+$migration$;
 
 -- CHECK constraint mirrors engineering_contracts.program (drop-then-add for
 -- single source of truth in this file).
@@ -124,8 +148,9 @@ $migration$;
 
 -- Backfill projects.program in priority order:
 --   (a) from the project's engineering contract, if attached
---   (b) from project_types via project_type_id
---   (c) from the legacy free-text project_type column
+--   (b) from project_types via project_type_id (legacy DBs only)
+--   (c) from the legacy free-text project_type column where it
+--       happens to match a program label
 UPDATE projects p
    SET program = ec.program
   FROM contracts c, engineering_contracts ec
@@ -134,17 +159,33 @@ UPDATE projects p
    AND ec.program IS NOT NULL
    AND p.program IS NULL;
 
-UPDATE projects p
-   SET program = CASE LOWER(pt.name)
-                   WHEN 'bau'   THEN 'bau'
-                   WHEN 'gf(r)' THEN 'gfr'
-                   WHEN 'rus'   THEN 'rus'
-                   WHEN 'other' THEN 'other'
-                   ELSE LOWER(pt.name)
-                 END
-  FROM project_types pt
- WHERE p.project_type_id = pt.id
-   AND p.program IS NULL;
+-- Same legacy-table guard as the pricing backfill above.
+DO $migration$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'project_types'
+      AND table_schema = 'public'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'projects'
+      AND column_name = 'project_type_id'
+      AND table_schema = 'public'
+  ) THEN
+    UPDATE projects p
+       SET program = CASE LOWER(pt.name)
+                       WHEN 'bau'   THEN 'bau'
+                       WHEN 'gf(r)' THEN 'gfr'
+                       WHEN 'rus'   THEN 'rus'
+                       WHEN 'other' THEN 'other'
+                       ELSE LOWER(pt.name)
+                     END
+      FROM project_types pt
+     WHERE p.project_type_id = pt.id
+       AND p.program IS NULL;
+  END IF;
+END
+$migration$;
 
 UPDATE projects
    SET program = CASE LOWER(project_type)
