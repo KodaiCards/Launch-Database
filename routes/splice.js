@@ -65,6 +65,10 @@ function _removeSseClient(projectId, res) {
   if (!set.size) sseClients.delete(projectId);
 }
 
+// Phase 2A #2 — validation rule engine. Pure functions over the hydrate;
+// no DB access, cheap to call on every save.
+const { validateProject } = require('./_splice_validation');
+
 // Lazy puppeteer require so the dep load doesn't block boot when the
 // container is missing the binary (matches invoice_template_engine.js).
 let _puppeteer = null;
@@ -186,7 +190,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           `, [projectId]),
         ]);
 
-      res.json({
+      const hydrate = {
         project: proj.rows[0],
         locations:    locations.rows,
         cables:       cables.rows,
@@ -196,16 +200,32 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         trays:        trays.rows,
         splices:      splices.rows,
         ribbon_groups: ribbonGroups.rows,
-        // Phase 1 surfaced warnings; the route layer doesn't enforce
-        // splice-uniqueness at write time but does report violations here
-        // so the UI can highlight them.
-        warnings: _computeWarnings({
-          fibers: fibers.rows,
-          splices: splices.rows,
-          trays: trays.rows,
-          closures: closures.rows,
-        }),
+      };
+      // Phase 1 lightweight metrics — kept for backwards-compat with the
+      // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
+      // The richer rule-based output lives in `validation`.
+      hydrate.warnings = _computeWarnings({
+        fibers: fibers.rows,
+        splices: splices.rows,
+        trays: trays.rows,
+        closures: closures.rows,
       });
+      // Phase 2A #2 — full validation pass. Errors block PDF export;
+      // warnings surface in the UI but don't block.
+      hydrate.validation = validateProject(hydrate);
+      res.json(hydrate);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Dedicated validation endpoint. Same rules as the hydrate's `validation`
+  // payload, but loads only what the rules need so a quick "is this project
+  // shippable?" check is cheap. Useful for a debounced "save → revalidate"
+  // loop on the frontend without re-rendering the whole canvas.
+  app.get('/api/splice/projects/:id/validation', requireAuth(), async (req, res) => {
+    try {
+      const data = await _loadProjectForExport(pool, req.params.id);
+      if (!data) return res.status(404).json({ error: 'Project not found' });
+      res.json(validateProject(data));
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -871,6 +891,19 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
+      // Phase 2A #2 — validation gate. Fatal errors (tray overrun, double
+      // splice, ribbon-group split across trays, etc.) block PDF export
+      // unless ?force=1 is set. Designers can still bail past the gate
+      // when they know what they're doing, but the default is "the
+      // splicer never sees a knowingly broken plan."
+      const validation = validateProject(data);
+      const force = req.query.force === '1';
+      if (validation.summary.blocked && !force) {
+        return res.status(422).json({
+          error: 'Splice plan has fatal errors — fix or pass ?force=1 to override.',
+          validation,
+        });
+      }
       const pageSize = req.query.page_size || data.project.page_size || 'Tabloid';
       const html = _renderSpliceHtml(data, pageSize);
       const puppeteer = _puppet();

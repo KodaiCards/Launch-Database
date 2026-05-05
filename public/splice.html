@@ -75,8 +75,19 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
 .lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
 .lock-banner.stale{border-color:var(--danger);color:var(--danger-text);background:var(--danger-light)}
-.warnings-banner{position:absolute;bottom:10px;left:10px;right:10px;background:var(--warning-light);color:var(--warning-text);padding:8px 12px;border-radius:6px;border:1px solid var(--warning);font-size:12px;z-index:5;display:none}
-.warnings-banner.show{display:block}
+.warnings-banner{position:absolute;bottom:10px;left:10px;right:10px;padding:8px 12px;border-radius:6px;font-size:12px;z-index:5;display:none;cursor:pointer;user-select:none}
+.warnings-banner.show{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.warnings-banner.warn{background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning)}
+.warnings-banner.error{background:var(--danger-light);color:var(--danger-text);border:1px solid var(--danger)}
+.warnings-banner:hover{filter:brightness(1.04)}
+.validation-pill{background:rgba(0,0,0,0.08);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase}
+.validation-list{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}
+.validation-item{padding:8px 10px;border-radius:5px;font-size:12px;border-left:3px solid var(--border-strong)}
+.validation-item.error{border-left-color:var(--danger);background:var(--danger-light)}
+.validation-item.warning{border-left-color:var(--warning);background:var(--warning-light)}
+.validation-item .code{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px}
+.validation-item .nav{font-size:11px;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+.validation-item .nav a{cursor:pointer}
 
 /* Konva stage container */
 #stage{width:100%;height:100%}
@@ -425,19 +436,75 @@ function renderSummary() {
 }
 
 function renderWarnings() {
-  const w = state.data?.warnings;
+  const v = state.data?.validation;
   const banner = document.getElementById('warnings-banner');
-  if (!w) { banner.classList.remove('show'); return; }
-  const messages = [];
-  if (w.over_capacity_trays?.length) {
-    messages.push(`${w.over_capacity_trays.length} tray(s) over capacity`);
+  if (!v) { banner.classList.remove('show'); return; }
+  const errCount = v.summary?.error_count || 0;
+  const warnCount = v.summary?.warning_count || 0;
+  // Update Export PDF button state — fatal errors block export, warnings
+  // don't. The button stays clickable with warnings (designer's choice).
+  const exportBtn = document.getElementById('btn-export');
+  if (errCount > 0) {
+    exportBtn.disabled = true;
+    exportBtn.title = `Fix ${errCount} fatal error(s) before exporting (or pass &force=1)`;
+  } else {
+    exportBtn.disabled = false;
+    exportBtn.title = warnCount > 0 ? `Exporting with ${warnCount} warning(s)` : 'Export PDF';
   }
-  if (w.over_spliced_fibers?.length) {
-    messages.push(`${w.over_spliced_fibers.length} fiber(s) spliced more than twice`);
+  if (errCount === 0 && warnCount === 0) {
+    banner.classList.remove('show', 'error', 'warn');
+    return;
   }
-  if (!messages.length) { banner.classList.remove('show'); return; }
-  banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + messages.join(' · ');
-  banner.classList.add('show');
+  const isError = errCount > 0;
+  banner.className = 'warnings-banner show ' + (isError ? 'error' : 'warn');
+  banner.innerHTML = `
+    <span><i class="fa-solid fa-${isError?'circle-exclamation':'triangle-exclamation'}"></i>
+      <b>${errCount} error${errCount===1?'':'s'}</b> · ${warnCount} warning${warnCount===1?'':'s'}
+      ${isError ? '<span class="validation-pill">PDF export blocked</span>' : ''}
+    </span>
+    <span style="font-size:11px;opacity:0.8">click for details →</span>
+  `;
+  banner.onclick = openValidationDrawer;
+}
+
+function openValidationDrawer() {
+  const v = state.data?.validation;
+  if (!v) return;
+  const items = [...v.errors.map(e => ({ ...e, severity: 'error' })),
+                 ...v.warnings.map(w => ({ ...w, severity: 'warning' }))];
+  if (!items.length) return;
+  const itemsHtml = items.map(i => {
+    const navLinks = [];
+    if (i.closure_id)        navLinks.push(`<a onclick="closeModal();selectThing('closure','${i.closure_id}')">→ Closure</a>`);
+    if (i.tray_id)           navLinks.push(`<a onclick="closeModal();selectThing('tray','${i.tray_id}')">→ Tray</a>`);
+    if (i.cable_id)          navLinks.push(`<a onclick="closeModal();selectThing('cable','${i.cable_id}')">→ Cable</a>`);
+    if (i.location_id)       navLinks.push(`<a onclick="closeModal();selectThing('location','${i.location_id}')">→ Location</a>`);
+    return `
+      <div class="validation-item ${i.severity}">
+        <div class="code">${esc(i.severity)} · ${esc(i.code)}</div>
+        <div>${esc(i.message)}</div>
+        ${navLinks.length ? `<div class="nav">${navLinks.join('')}</div>` : ''}
+      </div>`;
+  }).join('');
+  const blocked = v.summary?.blocked;
+  showModal({
+    title: `Plan validation — ${v.summary.error_count} error(s), ${v.summary.warning_count} warning(s)`,
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Errors block PDF export by default. Warnings don't — they're flagged for your review.
+        ${blocked ? `<br><br><b>You can force-export anyway</b> if you know what you're doing — the PDF will still generate, but the splicer will receive a knowingly broken plan.` : ''}
+      </p>
+      <div class="validation-list">${itemsHtml}</div>
+    `,
+    submitText: blocked ? 'Force export PDF' : 'Close',
+    onSubmit: (close) => {
+      if (blocked) {
+        window.open('/api/splice/projects/' + state.currentId + '/export-pdf?force=1', '_blank');
+      }
+      close();
+    },
+  });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
