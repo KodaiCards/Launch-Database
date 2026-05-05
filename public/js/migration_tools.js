@@ -28,11 +28,10 @@
 //   previewOrphanPrune, runOrphanPrune
 
 (function () {
-  // Re-nest legacy projects: walks every real project and moves it
-  // under the correct rollup chain. Two-stage flow because the cleanup
-  // pass DELETEs empty rollup folders — backend defaults to dry-run and
-  // requires explicit {confirm: true} to actually mutate. Step 1 is a
-  // preview; step 2 is the confirm-and-apply round-trip.
+  // Re-nest legacy projects: walks every real project and moves it under
+  // the correct rollup chain. Empty rollups are KEPT (owner-curated folders
+  // shouldn't be silently swept). Two-stage flow lets the operator preview
+  // exactly which projects will move before any parent_id changes.
   async function runRenestMigration() {
     const result = document.getElementById('renest-result');
     result.style.display = 'block';
@@ -41,37 +40,32 @@
     try {
       // Step 1: dry-run preview (no body → backend treats as preview)
       const preview = await api('/api/_admin/migrate-nesting', 'POST');
-      const wouldRemove = preview.obsolete_rollups_removed || 0;
-      // Build a confirmation summary the user has to acknowledge
-      let confirmMsg = `Re-nest ${preview.moved} of ${preview.processed} projects`;
-      if (wouldRemove > 0) {
-        confirmMsg += `\n\nDELETE ${wouldRemove} empty rollup folder${wouldRemove === 1 ? '' : 's'}:\n`;
-        confirmMsg += (preview.rollups_to_remove || []).slice(0, 10)
-          .map(r => `  • ${r.name}${r.rollup_level ? ' (' + r.rollup_level + ')' : ''}`).join('\n');
-        if (wouldRemove > 10) confirmMsg += `\n  …and ${wouldRemove - 10} more`;
-        confirmMsg += '\n\nDeleting empty rollups is permanent (no undo). Proceed?';
-      } else if (preview.moved === 0) {
+      if (preview.moved === 0) {
         result.style.color = 'var(--success)';
-        result.textContent = preview.hint || 'Tree already clean — nothing to do.';
+        result.textContent = preview.hint || 'Tree already nested correctly.';
         return;
-      } else {
-        confirmMsg += '. Proceed?';
       }
+      let confirmMsg = `Re-nest ${preview.moved} of ${preview.processed} projects`;
+      if (Array.isArray(preview.movements) && preview.movements.length) {
+        confirmMsg += ':\n' + preview.movements.slice(0, 10)
+          .map(m => `  • ${m.name}`).join('\n');
+        if (preview.movements.length > 10) confirmMsg += `\n  …and ${preview.movements.length - 10} more`;
+      }
+      confirmMsg += '\n\nEmpty rollup folders will be left in place. Proceed?';
       if (!confirm(confirmMsg)) {
         result.style.color = 'var(--text-muted)';
-        result.textContent = 'Cancelled. ' + (preview.hint || '');
+        result.textContent = 'Cancelled.';
         return;
       }
       result.textContent = 'Applying…';
-      // Step 2: confirm-and-apply
       const r = await api('/api/_admin/migrate-nesting', 'POST', { confirm: true });
       result.style.color = r.failed > 0 ? 'var(--warning)' : 'var(--success)';
-      let summary = `Processed: ${r.processed}\nMoved:     ${r.moved}\nSkipped:   ${r.skipped}\nFailed:    ${r.failed}\nRollups removed: ${r.obsolete_rollups_removed || 0}\n\n${r.hint || ''}`;
+      let summary = `Processed: ${r.processed}\nMoved:     ${r.moved}\nSkipped:   ${r.skipped}\nFailed:    ${r.failed}\n\n${r.hint || ''}`;
       if (r.errors && r.errors.length) {
         summary += '\n\nErrors:\n' + r.errors.map(e => `  • ${e.name}: ${e.error}`).join('\n');
       }
       result.textContent = summary;
-      if (r.moved > 0 || (r.obsolete_rollups_removed || 0) > 0) {
+      if (r.moved > 0) {
         if (typeof loadProjects === 'function') loadProjects();
         if (typeof loadDashboard === 'function') loadDashboard();
       }

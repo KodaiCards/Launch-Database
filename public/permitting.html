@@ -149,6 +149,33 @@ body{font-family:var(--font);background:var(--gray-light);color:var(--text);font
 .nav-tab:hover{color:#fff;background:rgba(255,255,255,.12)}.nav-tab.active{color:#fff;border-bottom-color:#fff;font-weight:600}
 html[data-theme="dark"] .nav-tab{font-weight:600;text-shadow:none}
 html[data-theme="dark"] .nav-tab.active{font-weight:700}
+
+/* Mobile (≤640px) — same shape as admin/design portal mobile pass. */
+@media(max-width:640px){
+  .header{padding:0 10px;gap:6px}
+  .header > div:not(.header-right):not(:first-child){display:none}
+  .header-right{margin-left:auto;gap:4px}
+  .header-right .btn span,.header-right .btn .btn-label{display:none}
+  .header-right .btn i{margin:0}
+  .nav{padding:0 8px}
+  .nav-tab{padding:0 10px;font-size:12px;gap:0}
+  .nav-tab i{display:none}
+  .stats-grid{grid-template-columns:1fr}
+  .stat-card{padding:12px 14px}
+  .stat-value{font-size:22px}
+  .modal-overlay{padding:0;align-items:stretch}
+  .modal-overlay .modal{max-width:100% !important;max-height:100vh !important;width:100%;height:100vh;border-radius:0;display:flex;flex-direction:column}
+  .modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .modal-header{position:sticky;top:0;z-index:1;background:var(--white)}
+  .modal-footer{position:sticky;bottom:0;z-index:1;background:var(--white);padding:10px 14px}
+  .card-header{flex-wrap:wrap;gap:8px}
+  .filter,select.filter{min-width:0;flex:1 1 calc(50% - 4px)}
+  .filters,.filter-row,.toolbar{flex-wrap:wrap;gap:6px}
+  thead th{padding:7px 8px;font-size:10px}
+  tbody td{padding:8px;font-size:12px}
+  .btn{padding:6px 10px;font-size:12px}
+  .btn-sm{padding:5px 8px;font-size:11px}
+}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
 .stat-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px}
 .stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px}

@@ -32,36 +32,31 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   const { requireAdmin, uploadDir } = mw;
 
   // Re-nest every real project under its correct rollup chain. Idempotent —
-  // skips projects already under the right parent. Also sweeps orphaned
-  // (childless) rollup folders left behind by old nesting attempts.
+  // skips projects already under the right parent.
   //
-  // DESTRUCTIVE: the cleanup pass DELETEs any rollup that ends up empty
-  // after re-nesting. Pre-2026-05 there was no opt-in, so a single click
-  // could quietly remove every empty service-area / team folder including
-  // ones the owner had hand-curated. To make destructive intent explicit:
-  //   - When called without `confirm: true` in the body, this is a true
-  //     dry-run: it computes what WOULD happen, returns the same shape
-  //     (with `dry_run: true` set), and rolls back any mutations.
-  //   - The frontend (Settings → Migration Tools → "Re-nest legacy")
-  //     calls dry-run first, shows the user a count of what's about to
-  //     change, and only POSTs `confirm: true` after the user clicks
-  //     through the warning.
-  // For backward-compat with API callers that may rely on the old behavior,
-  // an explicit `confirm: true` is required to mutate; `dry_run: true` is
-  // also accepted as a synonym for "preview only" (default).
+  // 2026-05 owner change: empty rollups are KEPT. Earlier versions of this
+  // route swept any rollup that ended up with no children, which surprised
+  // owners who had hand-curated service-area folders they wanted to keep
+  // for organizational reasons (so a future project lands in a known
+  // folder instead of triggering ensureRollupChain to recreate it under
+  // some auto-derived name). The sweep is removed entirely — rollups stay
+  // until the owner deletes them explicitly via /with-tree.
+  //
+  // The dry-run gate is still useful: re-nesting can move dozens of
+  // projects in one click, and previewing what's about to move is helpful
+  // even though no DELETEs happen. Default (no confirm) returns dry_run:true
+  // and rolls back; {confirm: true} runs for real.
   app.post('/api/_admin/migrate-nesting', requireAdmin, async (req, res) => {
     const body = req.body || {};
     const dryRun = body.confirm !== true || body.dry_run === true;
 
     let processed = 0, moved = 0, skipped = 0, failed = 0;
-    let obsoleteRollupsRemoved = 0;
     const errors = [];
-    const wouldRemove = [];
+    const movements = [];
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Get every real project (no rollups, since rollups ARE the nesting structure)
       const { rows: projects } = await client.query(
         `SELECT id, name, client_id, concentrator_id, project_type_id, job_id, parent_id
          FROM projects
@@ -85,6 +80,9 @@ module.exports = function installAdminRoutes(app, pool, mw) {
             await client.query('UPDATE projects SET parent_id = $1 WHERE id = $2',
               [correctParent, p.id]);
             moved++;
+            if (movements.length < 50) {
+              movements.push({ project_id: p.id, name: p.name, from: p.parent_id, to: correctParent });
+            }
           }
         } catch (e) {
           failed++;
@@ -92,26 +90,6 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         }
       }
 
-      // Cleanup pass — delete any rollup folder that no longer has children.
-      // Loop because deleting a leaf rollup can make its parent become empty too.
-      for (let pass = 0; pass < 10; pass++) {
-        const { rows: deleted } = await client.query(`
-          DELETE FROM projects
-          WHERE is_rollup = TRUE
-            AND NOT EXISTS (
-              SELECT 1 FROM projects child WHERE child.parent_id = projects.id
-            )
-          RETURNING id, rollup_level, name
-        `);
-        if (deleted.length === 0) break;
-        obsoleteRollupsRemoved += deleted.length;
-        for (const d of deleted) wouldRemove.push({ id: d.id, name: d.name, rollup_level: d.rollup_level });
-      }
-
-      // Roll back the whole transaction in dry-run mode so the preview
-      // can show counts without actually touching the DB. The cost is
-      // doing the work twice when the user confirms — fine for an
-      // admin-only migration tool.
       if (dryRun) {
         await client.query('ROLLBACK');
       } else {
@@ -121,21 +99,19 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       res.json({
         dry_run: dryRun,
         processed, moved, skipped, failed,
-        obsolete_rollups_removed: obsoleteRollupsRemoved,
-        rollups_to_remove: wouldRemove.slice(0, 50),
+        // obsolete_rollups_removed kept in the response shape for backward
+        // compatibility with any caller (or test) that reads it. Always 0
+        // now that the sweep is gone.
+        obsolete_rollups_removed: 0,
+        movements,
         errors: errors.slice(0, 20),
         hint: dryRun
-          ? (moved === 0 && obsoleteRollupsRemoved === 0
-              ? 'Preview: tree already clean. Nothing to do.'
-              : `Preview: would re-nest ${moved} of ${processed} projects`
-                + (obsoleteRollupsRemoved > 0
-                  ? ` and DELETE ${obsoleteRollupsRemoved} empty rollup folder${obsoleteRollupsRemoved === 1 ? '' : 's'}.`
-                  : '.')
-                + ' Re-POST with {"confirm": true} to apply.')
-          : (moved === 0 && obsoleteRollupsRemoved === 0
-              ? 'Tree already clean — no projects needed re-nesting and no obsolete rollups were found.'
-              : `Re-nested ${moved} of ${processed} projects`
-                + (obsoleteRollupsRemoved > 0 ? ` and deleted ${obsoleteRollupsRemoved} empty rollup folders.` : '.'))
+          ? (moved === 0
+              ? 'Preview: every project is already nested correctly. Nothing to move.'
+              : `Preview: would re-nest ${moved} of ${processed} projects. Empty rollup folders are kept (no DELETEs). Re-POST with {"confirm": true} to apply.`)
+          : (moved === 0
+              ? 'Tree already nested correctly — no projects needed moving.'
+              : `Re-nested ${moved} of ${processed} projects. Empty rollup folders were left in place.`)
       });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
