@@ -45,6 +45,13 @@ const { v4: uuidv4 } = require('uuid');
 // reply with text only — that's the "AI says it's about to do something
 // and never does" bug. Confirmation regex is anchored to start so "yes"
 // alone matches but "I yes prefer that" doesn't.
+//
+// Also catches NUDGES — short follow-ups that imply "stop talking, do
+// the thing you said you'd do" ("did you start", "why didn't you", "go",
+// "run it"). These are the failure mode where the model proposed a plan,
+// the user replied with anything that isn't a hard yes/no, and the model
+// then waffled in text instead of firing the tool. Treating nudges as
+// implicit approval flips tool_choice to 'any' and forces a tool turn.
 function userWantsAction(messages) {
   if (!messages || !messages.length) return false;
   const last = messages[messages.length - 1];
@@ -59,10 +66,15 @@ function userWantsAction(messages) {
   }
   const trimmed = text.trim();
   if (!trimmed) return false;
-  if (/^(yes|yeah|yep|yup|ok|okay|sure|do it|go ahead|proceed|confirm(ed)?|approve(d)?|please do|let['‘’]?s do it|looks good|sounds good|that works|perfect|great|correct|right|affirmative|y)\b/i.test(trimmed)) {
+  if (/^(yes|yeah|yep|yup|ok|okay|sure|do it|go ahead|proceed|confirm(ed)?|approve(d)?|please do|let['‘’]?s do it|let['‘’]?s go|looks good|sounds good|that works|perfect|great|correct|right|affirmative|y|run it|run them|build it|make it|start|begin|go|run|continue|keep going)\b/i.test(trimmed)) {
     return true;
   }
-  if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save)\b/i.test(trimmed)) {
+  // Nudges — phrases that read as "did you do it / why haven't you / get on with it".
+  // Anchored to start because "did" / "why" inside a longer sentence isn't a nudge.
+  if (/^(did you|have you|are you|why didn['‘’]?t|why haven['‘’]?t|why aren['‘’]?t|when will|when are|please just|just do|just create|just run|stop|hurry|c['‘’]?mon|come on|now do|now create|get on with|get started|get going|move on)/i.test(trimmed)) {
+    return true;
+  }
+  if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save|build|make|start|begin|run|execute|generate)\b/i.test(trimmed)) {
     return true;
   }
   return false;
@@ -219,6 +231,7 @@ HONESTY — NEVER FAKE SUCCESS:
 - NEVER claim an action succeeded unless the corresponding tool was actually called AND returned success:true. No exceptions. If you say "I've logged the entries" or "I've created the project," it must be because a tool result confirmed it.
 - After any modifying tool call (log_time_entries, create_project, update_project, etc.), look at the tool result. If success:false or there's an error field, report the error to the user honestly — do not paper over it.
 - DO NOT say "I'll create that", "Let me log those", "Creating the project now", or any future/progressive phrasing followed by no action. Either CALL the tool in the same turn, or ASK a clarifying question. The frontend has a hallucination guard that surfaces a red warning to the user when text claims action without a successful tool result, so these silent skips don't go unnoticed — they look bad. Prefer "Should I create X with values Y?" (a question) over "I'll create X" (a hollow promise).
+- USER NUDGES — if the user's reply reads as "did you start", "have you started", "why didn't you do it", "just do it", "go", "run it", "starting", or any short prompt that implies you should stop talking and execute, treat the prior plan in this thread as APPROVED and re-emit the proposed tool calls in the SAME turn. Do not say "I haven't started yet" without immediately firing the tool calls in the same response. The user has already confirmed by nudging.
 - After log_time_entries returns success, IMMEDIATELY run a verification query like:
     SELECT COUNT(*) as cnt, SUM(hours) as total_hours FROM time_entries WHERE import_batch = 'ai_import_<batch_id>'
   and report the verified count and total to the user. This proves the data actually landed and catches any silent failures.
