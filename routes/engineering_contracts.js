@@ -6,6 +6,27 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+// Accepted values for engineering_contracts.program. Must match the CHECK
+// constraint in migrations/0002_engineering_contract_program.sql.
+//   rus   — USDA Rural Utilities Service work (PSC RUS umbrella + similar).
+//           Triggers the PSC RUS PDF template, dedicated projection &
+//           inspection-tab scoping, RUS-specific job/billing-code defaults.
+//   bau   — Business-as-usual private fiber. Generic billing.
+//   gfr   — GF(R) program.
+//   other — Anything else; generic treatment.
+const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+
+function normalizeProgram(input) {
+  if (input === null || input === undefined || input === '') return null;
+  const v = String(input).trim().toLowerCase();
+  if (!ALLOWED_PROGRAMS.includes(v)) {
+    const err = new Error(`Invalid program "${input}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.`);
+    err.statusCode = 400;
+    throw err;
+  }
+  return v;
+}
+
 module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
 
@@ -63,14 +84,20 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   });
 
   app.post('/api/engineering-contracts', requireAdmin, async (req, res) => {
-    const { client_id, name, contract_number, loan_name, notes } = req.body || {};
+    const { client_id, name, contract_number, loan_name, notes, program } = req.body || {};
     if (!client_id) return res.status(400).json({ error: 'client_id required' });
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
+    let normalizedProgram;
+    try {
+      normalizedProgram = normalizeProgram(program);
+    } catch (e) {
+      return res.status(e.statusCode || 400).json({ error: e.message });
+    }
     try {
       const { rows } = await pool.query(
-        `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name, notes)
-           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [client_id, String(name).trim(), contract_number || null, loan_name || null, notes || null]
+        `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name, notes, program)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [client_id, String(name).trim(), contract_number || null, loan_name || null, notes || null, normalizedProgram]
       );
       res.json(rows[0]);
     } catch (e) {
@@ -81,7 +108,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   });
 
   app.put('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
-    const { name, contract_number, loan_name, notes, active } = req.body || {};
+    const { name, contract_number, loan_name, notes, active, program } = req.body || {};
     try {
       const sets = [];
       const params = [req.params.id];
@@ -91,6 +118,15 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       if (loan_name !== undefined) { sets.push(`loan_name = $${i++}`); params.push(loan_name || null); }
       if (notes !== undefined) { sets.push(`notes = $${i++}`); params.push(notes || null); }
       if (active !== undefined) { sets.push(`active = $${i++}`); params.push(!!active); }
+      if (program !== undefined) {
+        let normalizedProgram;
+        try {
+          normalizedProgram = normalizeProgram(program);
+        } catch (err) {
+          return res.status(err.statusCode || 400).json({ error: err.message });
+        }
+        sets.push(`program = $${i++}`); params.push(normalizedProgram);
+      }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
       const { rows } = await pool.query(
         `UPDATE engineering_contracts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,

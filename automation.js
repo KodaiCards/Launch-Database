@@ -181,8 +181,9 @@ async function findPermitsAwaitingInvoice(pool) {
 
 // PSC RUS revenue projection — UMBRELLA-FIRST, all PSC RUS jobs.
 //
-// Returns one row per engineering_contract umbrella under any PSC RUS
-// client (cl.is_rus = TRUE). Each row carries:
+// Returns one row per engineering_contract umbrella whose program='rus'
+// (i.e. RUS-program work, regardless of which client owns it). Each row
+// carries:
 //   - top-level totals (umbrella name, projected_remaining_revenue, MTD
 //     hours, billed_to_date, budget if any)
 //   - a per-job breakdown (Inspection / RE / Permitting / Other) with
@@ -207,9 +208,12 @@ async function buildPscRusProjection(pool, opts) {
   const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
   const horizonWeeks  = (opts && opts.horizonWeeks)  || 13;   // ~90 days
 
-  // ── 1. Pull every active project under a PSC RUS client ─────────────
-  // Includes all jobs (Inspection, RE, Permitting, Design, Other) —
-  // we'll bucket by job team in JS for the breakdown.
+  // ── 1. Pull every active project under an engineering contract whose
+  //      program='rus'. Scoping by program (not by client) is critical:
+  //      PSC has BOTH RUS work and ordinary work, and projecting from the
+  //      wrong scope inflates the number every time. Includes all jobs
+  //      (Inspection, RE, Permitting, Design, Other) — we'll bucket by
+  //      job team in JS for the breakdown.
   const { rows: projects } = await pool.query(
     `SELECT p.id, p.name, p.client_id, p.contract_id,
             p.billing_rate::float AS billing_rate,
@@ -232,7 +236,7 @@ async function buildPscRusProjection(pool, opts) {
        LEFT JOIN jobs j ON j.id = p.job_id
        LEFT JOIN contracts c ON c.id = p.contract_id
        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
-      WHERE cl.is_rus = TRUE
+      WHERE ec.program = 'rus'
         AND p.status IN ('active', 'billed')
         AND COALESCE(p.is_rollup, FALSE) = FALSE
         AND c.engineering_contract_id IS NOT NULL`

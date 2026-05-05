@@ -2356,6 +2356,16 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
             <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-ec-client" style="font-size:13px"><option value="">— Select —</option></select></div>
+            <div class="form-group" style="flex:1" title="Program classification. RUS triggers the PSC RUS PDF template, the dedicated projection, and inspection-tab scoping. BAU/GFR/Other use generic billing.">
+              <label style="font-size:11px">Program</label>
+              <select id="new-ec-program" style="font-size:13px">
+                <option value="">— Not set —</option>
+                <option value="rus">RUS (USDA Rural Utilities Service)</option>
+                <option value="bau">BAU (Business as Usual)</option>
+                <option value="gfr">GF(R)</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
             <div class="form-group" style="flex:2"><label style="font-size:11px">Notes</label><input type="text" id="new-ec-notes" placeholder="Optional" style="font-size:13px"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
@@ -2901,11 +2911,23 @@ async function clientChanged(preserveJobId) {
 // job was deactivated by the v3 reseed would silently lose its selection.
 async function refilterJobsDropdown(preserveJobId) {
   const clientId = document.getElementById('proj-client')?.value;
+  // When the user has already picked an engineering contract for the
+  // project, narrow the job picker by that EC's program. This is
+  // surgical for PSC: PSC has BOTH RUS and BAU work, and without an EC
+  // hint the picker has to show jobs from both classes; with an EC, it
+  // can hide irrelevant ones.
+  const ecId =
+    document.getElementById('proj-engineering-contract')?.value ||
+    document.getElementById('proj-ec')?.value ||
+    '';
   const jsel = document.getElementById('proj-job');
   if (!jsel) return;
   const currentJobId = preserveJobId || jsel.value;
   let url = '/api/jobs';
-  if (clientId) url += '?client_id=' + encodeURIComponent(clientId);
+  const qp = [];
+  if (ecId) qp.push('engineering_contract_id=' + encodeURIComponent(ecId));
+  else if (clientId) qp.push('client_id=' + encodeURIComponent(clientId));
+  if (qp.length) url += '?' + qp.join('&');
   try {
     const filtered = await api(url);
     const placeholder = jsel.options[0]?.cloneNode(true);

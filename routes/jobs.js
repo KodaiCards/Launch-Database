@@ -23,18 +23,65 @@ module.exports = function installJobsRoutes(app, pool, mw) {
 
   app.get('/api/jobs', async (req, res) => {
     try {
-      // Optional client_id filter — when set, only return jobs whose
-      // for_psc_client / for_generic_client flag matches the client's class.
-      // This makes the admin and portal job dropdowns behave consistently.
+      // Filter precedence (most specific first):
+      //   1. engineering_contract_id — load that contract's program. If
+      //      program='rus' → for_psc_client=true jobs. Anything else
+      //      (bau/gfr/other) → for_generic_client=true jobs.
+      //   2. client_id alone — examine the client's engineering contracts.
+      //      • Has any RUS-program ECs AND any non-RUS-program ECs (or no
+      //        EC, which counts as generic) → return jobs flagged for
+      //        EITHER class. This is the PSC case: PSC has both RUS work
+      //        and ordinary BAU work, and the picker should not hide
+      //        either set when the user hasn't picked a contract yet.
+      //      • Only RUS-program ECs → for_psc_client=true.
+      //      • Only non-RUS-program ECs (or none) → for_generic_client=true.
+      //   3. No client at all → return every active job.
+      // Backward compat: legacy callers that pass client_id and expected the
+      // old cl.is_rus-based filter still see correct results, because the
+      // mixed case (PSC) now opens up both flags rather than incorrectly
+      // hiding one half.
       const clientId = req.query.client_id || null;
-      let isPsc = null;
-      if (clientId) {
-        const c = await pool.query('SELECT is_rus FROM clients WHERE id = $1', [clientId]);
-        if (c.rows.length) isPsc = c.rows[0].is_rus === true;
-      }
+      const ecId = req.query.engineering_contract_id || null;
+
       const conds = [`active = true`];
-      if (isPsc === true) conds.push(`for_psc_client = true`);
-      else if (isPsc === false) conds.push(`for_generic_client = true`);
+
+      if (ecId) {
+        const ec = await pool.query(
+          'SELECT program FROM engineering_contracts WHERE id = $1',
+          [ecId]
+        );
+        if (ec.rows.length) {
+          const program = ec.rows[0].program;
+          if (program === 'rus') conds.push(`for_psc_client = true`);
+          else if (program) conds.push(`for_generic_client = true`);
+          // program=NULL: don't gate — admin hasn't classified it yet.
+        }
+      } else if (clientId) {
+        // Look at the client's mix of EC programs.
+        const mix = await pool.query(
+          `SELECT
+             SUM(CASE WHEN program = 'rus' THEN 1 ELSE 0 END)::int  AS rus_count,
+             SUM(CASE WHEN program IS NOT NULL AND program <> 'rus' THEN 1 ELSE 0 END)::int AS other_count,
+             COUNT(*)::int AS total_ec_count
+           FROM engineering_contracts
+           WHERE client_id = $1`,
+          [clientId]
+        );
+        const { rus_count, other_count, total_ec_count } = mix.rows[0];
+        const hasRus    = rus_count > 0;
+        // Treat "no engineering contracts" as generic so first-time users
+        // can still create projects on a fresh client.
+        const hasOther  = other_count > 0 || total_ec_count === 0;
+
+        if (hasRus && hasOther) {
+          // Mixed (PSC case): include jobs flagged for either class.
+          conds.push(`(for_psc_client = true OR for_generic_client = true)`);
+        } else if (hasRus) {
+          conds.push(`for_psc_client = true`);
+        } else {
+          conds.push(`for_generic_client = true`);
+        }
+      }
       const { rows } = await pool.query(
         `SELECT * FROM jobs WHERE ${conds.join(' AND ')} ORDER BY name`
       );

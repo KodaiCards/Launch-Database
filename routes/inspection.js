@@ -1,10 +1,13 @@
-// routes/inspection.js — PSC RUS scope view (formerly the Inspection tab).
+// routes/inspection.js — RUS-program scope view (formerly the Inspection tab).
 //
-// Returns every active project under any PSC RUS client (cl.is_rus = TRUE)
+// Returns every active project whose engineering contract has program='rus'
 // with hours and revenue rolled up for the requested time period. The tab
 // covers the whole engineering-contract umbrella now — Inspection, RE,
-// Permitting, and any other jobs PSC RUS work runs through. Non-PSC
-// clients are excluded entirely (they have their own format / surfacing).
+// Permitting, and any other jobs RUS work runs through. Non-RUS engineering
+// contracts (BAU/GFR/Other) are excluded entirely (they have their own
+// format / surfacing). PSC clients commonly have BOTH RUS and non-RUS work,
+// so scoping by client.is_rus would mistakenly include their BAU projects;
+// we scope by engineering_contracts.program to keep this surgical.
 //
 // Query params:
 //   period: 'ytd' (default) or 'month'
@@ -55,12 +58,14 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
     }
 
     try {
-      // PSC RUS scope (was inspection-only). Returns every project under any
-      // PSC RUS client (cl.is_rus = TRUE) that matches the status filter.
-      // The tab covers the whole engineering-contract umbrella now —
-      // Inspection, RE, Permitting, and any other jobs PSC RUS work runs
-      // through. Non-PSC clients are excluded entirely (they have their own
-      // format / surfacing).
+      // RUS-program scope. Returns every project whose engineering contract
+      // has program='rus' and matches the status filter. The tab covers
+      // the whole engineering-contract umbrella now — Inspection, RE,
+      // Permitting, and any other jobs RUS work runs through. Non-RUS
+      // engineering contracts are excluded entirely (BAU/GFR/Other have
+      // their own format / surfacing). Joining through contracts→
+      // engineering_contracts is required because program lives on the
+      // umbrella, not the project or the client.
       const { rows: projects } = await pool.query(`
         SELECT p.id, p.name, p.work_order_number, p.status, p.is_ongoing, p.client_id,
                cl.name as client_name,
@@ -72,14 +77,16 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
         LEFT JOIN clients cl ON cl.id = p.client_id
         LEFT JOIN jobs j     ON j.id  = p.job_id
         LEFT JOIN projects pp ON pp.id = p.parent_id
+        LEFT JOIN contracts co ON co.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = co.engineering_contract_id
         WHERE COALESCE(p.is_rollup, FALSE) = FALSE
-          AND cl.is_rus = TRUE
+          AND ec.program = 'rus'
           AND ${statusClause}
         ORDER BY p.is_ongoing DESC, j.name NULLS LAST, p.name
       `, queryParams);
 
       // Sum every hour on each project for the period — no job_title heuristic
-      // since the cl.is_rus filter already scopes us correctly. Permitting
+      // since the program='rus' filter already scopes us correctly. Permitting
       // (footage) projects keep $0 in revenue because they bill by mile,
       // not hourly; the tab is hours-driven.
       const result = [];

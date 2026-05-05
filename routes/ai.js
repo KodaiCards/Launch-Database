@@ -112,7 +112,11 @@ module.exports = function installAiRoutes(app, pool, mw) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function getDBContext() {
-  const [clients, projects, staff, contracts, budgets, concentrators] = await Promise.all([
+  // is_rus is kept on clients as a deprecated hint ("does this client do
+  // ANY RUS work"). The source of truth for program classification is
+  // engineering_contracts.program — surfaced separately below so the AI
+  // can reason about RUS vs BAU/GFR/Other at the right level.
+  const [clients, projects, staff, contracts, engineeringContracts, budgets, concentrators] = await Promise.all([
     pool.query('SELECT id, name, is_rus FROM clients ORDER BY name'),
     pool.query(`
       SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
@@ -133,6 +137,11 @@ async function getDBContext() {
     `),
     pool.query('SELECT id, name FROM staff WHERE active=true ORDER BY name'),
     pool.query('SELECT c.*, cl.name as client_name FROM contracts c JOIN clients cl ON cl.id=c.client_id ORDER BY cl.name, c.contract_number'),
+    pool.query(`SELECT ec.id, ec.name, ec.contract_number, ec.loan_name, ec.program, ec.active,
+                       cl.id AS client_id, cl.name AS client_name
+                  FROM engineering_contracts ec
+                  JOIN clients cl ON cl.id = ec.client_id
+                 ORDER BY cl.name, ec.name`),
     pool.query(`
       SELECT b.id, b.name, b.project_id, b.total_amount, p.name as project_name,
              json_agg(json_build_object(
@@ -146,24 +155,45 @@ async function getDBContext() {
     `),
     pool.query('SELECT id, contract_label, area_name, work_order_number FROM concentrators WHERE active=true ORDER BY contract_label, area_name')
   ]);
-  return { clients: clients.rows, projects: projects.rows, staff: staff.rows, contracts: contracts.rows, budgets: budgets.rows, concentrators: concentrators.rows };
+  return {
+    clients: clients.rows,
+    projects: projects.rows,
+    staff: staff.rows,
+    contracts: contracts.rows,
+    engineering_contracts: engineeringContracts.rows,
+    budgets: budgets.rows,
+    concentrators: concentrators.rows,
+  };
 }
 
 const SYSTEM_PROMPT = `You are the AI project manager for Launch Fiber Services, a fiber optic infrastructure company in Macon, Georgia. You have FULL access to the database through tools. You are smart, proactive, and thorough.
 
 RATE STRUCTURE:
-- Inspection: $90/hr (RUS work only, PSC client)
-- Resident Engineer (RE): $100/hr (RUS/PSC only)
+- Inspection: $90/hr (typical for RUS-program work, but applicable wherever an Inspection job is configured)
+- Resident Engineer (RE): $100/hr (typical for RUS-program work)
 - Permitting: $90/hr at random 25-30 hrs/mile (0.25 increments), with a 25-hour minimum when the project is under one mile. The hours-per-mile factor is randomized per-project at create time and stored. The "Permitting" job is the standard DOT/County variant ($90/hr). The "Permitting (RR)" job is the railroad variant — uses the same hours calc but with a custom rate the user sets in Settings → Pricing (rate may be NULL until set, in which case expected_revenue is also NULL).
 - Design: VARIABLE - always ask for billing rate
 - Other: VARIABLE - always ask for billing rate
 
-CLIENTS: PSC, COX, IFT, TRI-CO
-The PSC client is the RUS-eligible one (clients.is_rus=TRUE). When a user
-says "PSC", "PSC RUS", or "RUS", they mean the PSC client. Always use the
-PSC client_id from the database context — never ask to create a "PSC RUS"
-client (it would be a duplicate).
-RUS work is PSC only. Contracts and work orders are managed manually or through the AI.
+CLIENTS vs PROGRAMS — CRITICAL DISTINCTION:
+- "PSC", "COX", "IFT", "TRI-CO" are CLIENTS (rows in the clients table).
+- "RUS", "BAU", "GFR", "Other" are PROGRAMS (engineering_contracts.program).
+- A single client can have engineering contracts in multiple programs.
+  PSC in particular has BOTH RUS-program work (under the "RUS 217
+  Engineering Contract GA 1706 - A72" umbrella) AND ordinary BAU work.
+  Do NOT conflate "PSC" with "RUS" — they are orthogonal.
+- When a user says "PSC RUS", they mean: the PSC client AND a
+  program='rus' engineering contract. Find the PSC client_id, then find
+  (or ask which) engineering contract under PSC has program='rus'.
+- When a user says "PSC" alone, they mean the PSC client across any program.
+- When a user says "RUS" alone, they almost always mean RUS work for PSC
+  (since that's where the bulk of RUS work lives), but verify before
+  scoping — another client could have RUS work too.
+- NEVER create a "PSC RUS" client. PSC is the client; RUS lives at the
+  engineering-contract level via the program field.
+- clients.is_rus is a DEPRECATED hint flag — do not rely on it for program
+  classification. Use engineering_contracts.program instead.
+Contracts and work orders are managed manually or through the AI.
 
 BILLING CADENCE: Each project is either "one_time" (default — single invoice when complete; permitting, fixed-fee design jobs) or "monthly" (bills hours every month, project stays active across cycles; typical Inspection contracts). When a one-time project is billed, status becomes 'billed' and it closes. When a monthly project is billed, it stays active and reappears in next month's queue. Inspection-job projects default to monthly. Use set_billing_cadence to flip a project between modes.
 
@@ -418,12 +448,12 @@ const AI_TOOLS = [
   },
   {
     name: 'create_client',
-    description: 'Create a new client in the database.',
+    description: 'Create a new client in the database. Programs (RUS / BAU / GFR / Other) are NOT set here — they live on engineering contracts via create_engineering_contract.',
     input_schema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Client name' },
-        is_rus: { type: 'boolean', description: 'Whether this is a RUS client (default false)' },
+        is_rus: { type: 'boolean', description: 'DEPRECATED hint flag — set true if the client does any RUS work. Source of truth for program classification is engineering_contracts.program, not this flag.' },
         notes: { type: 'string' }
       },
       required: ['name']
@@ -431,16 +461,49 @@ const AI_TOOLS = [
   },
   {
     name: 'update_client',
-    description: 'Update an existing client. Only provided fields are changed.',
+    description: 'Update an existing client. Only provided fields are changed. Note: program (RUS/BAU/GFR/Other) lives on engineering contracts, not on the client.',
     input_schema: {
       type: 'object',
       properties: {
         client_id: { type: 'string', description: 'Client UUID to update' },
         name: { type: 'string', description: 'New name (optional)' },
-        is_rus: { type: 'boolean', description: 'RUS flag (optional)' },
+        is_rus: { type: 'boolean', description: 'DEPRECATED hint flag (optional). Use create/update_engineering_contract.program to classify work, not this.' },
         notes: { type: 'string', description: 'New notes (optional, pass empty string to clear)' }
       },
       required: ['client_id']
+    }
+  },
+  {
+    name: 'create_engineering_contract',
+    description: 'Create an engineering-contract umbrella for a client. The umbrella groups multiple billing contracts (e.g. 515-3, 515-4, 515-5 under "RUS 217 Engineering Contract GA 1706 -A72"). Set program to classify the work — this drives RUS-specific behaviors like the PSC RUS PDF template, the projection/inspection scoping, and the right pricing defaults.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        client_id:        { type: 'string', description: 'Client UUID this engineering contract belongs to' },
+        name:             { type: 'string', description: 'Display name (e.g. "RUS 217 Engineering Contract GA 1706 -A72")' },
+        contract_number:  { type: 'string', description: 'Optional short identifier for invoices/reports' },
+        loan_name:        { type: 'string', description: 'Optional loan name (e.g. "Reconnect 3"). Appears on PSC RUS invoice summaries.' },
+        program:          { type: 'string', enum: ['rus','bau','gfr','other'], description: 'Program classification. rus = USDA RUS work (triggers PSC RUS PDF, projection, inspection-tab scoping). bau = business-as-usual private fiber. gfr = GF(R). other = anything else.' },
+        notes:            { type: 'string' }
+      },
+      required: ['client_id', 'name']
+    }
+  },
+  {
+    name: 'update_engineering_contract',
+    description: 'Update an engineering contract. Only provided fields are changed.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        engineering_contract_id: { type: 'string', description: 'Engineering contract UUID to update' },
+        name:             { type: 'string' },
+        contract_number:  { type: 'string' },
+        loan_name:        { type: 'string' },
+        program:          { type: 'string', enum: ['rus','bau','gfr','other'], description: 'Program classification — see create_engineering_contract.' },
+        notes:            { type: 'string' },
+        active:           { type: 'boolean' }
+      },
+      required: ['engineering_contract_id']
     }
   },
   {
@@ -616,20 +679,10 @@ const AI_TOOLS = [
   // exactly what will run, and clicks Apply before any DB write happens.
   // See DESTRUCTIVE_TOOLS in the chat handler for which tools require approval.
 
-  {
-    name: 'create_engineering_contract',
-    description: 'Create an engineering-contract umbrella above one or more billing contracts. Use when the user has a master agreement (e.g. "RUS 217 Engineering Contract GA 1706 -A72") that contains multiple billing contracts (515-3, 515-4, 515-5). The umbrella is where shared budgets attach. After creation, you can attach existing contracts via update_contract_umbrella.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        client_id: { type: 'string', description: 'Client UUID' },
-        name: { type: 'string', description: 'Display name (e.g. "RUS 217 Engineering Contract GA 1706 -A72")' },
-        contract_number: { type: 'string', description: 'Optional short identifier (e.g. "RUS 217")' },
-        notes: { type: 'string', description: 'Optional free-form notes' }
-      },
-      required: ['client_id', 'name']
-    }
-  },
+  // create_engineering_contract / update_engineering_contract are defined
+  // earlier in this list (with the program field). The legacy duplicate that
+  // used to live here was removed in the Path B refactor — having two tools
+  // with the same name causes the Anthropic API to reject the request.
 
   {
     name: 'update_contract_umbrella',
@@ -1101,6 +1154,75 @@ async function executeTool(toolName, toolInput) {
         return { success: true, deleted_name: r0.rows[0].name };
       }
 
+      case 'create_engineering_contract': {
+        // Validate program against the same enum the route module enforces.
+        // Keeping the list inline rather than importing keeps this executor
+        // free of cross-module deps; the migration's CHECK constraint is
+        // the ultimate gate either way.
+        const ALLOWED = ['rus','bau','gfr','other'];
+        let program = null;
+        if (toolInput.program !== undefined && toolInput.program !== null && toolInput.program !== '') {
+          const v = String(toolInput.program).trim().toLowerCase();
+          if (!ALLOWED.includes(v)) {
+            return { success: false, error: `Invalid program "${toolInput.program}" — allowed: ${ALLOWED.join(', ')}.` };
+          }
+          program = v;
+        }
+        try {
+          const { rows } = await pool.query(
+            `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name, notes, program)
+               VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [
+              toolInput.client_id,
+              String(toolInput.name || '').trim(),
+              toolInput.contract_number || null,
+              toolInput.loan_name || null,
+              toolInput.notes || null,
+              program,
+            ]
+          );
+          return { success: true, engineering_contract: rows[0] };
+        } catch (e) {
+          if (e.code === '23505') return { success: false, error: 'An engineering contract with this name already exists for this client' };
+          return { success: false, error: e.message };
+        }
+      }
+
+      case 'update_engineering_contract': {
+        const ALLOWED = ['rus','bau','gfr','other'];
+        const sets = [];
+        const params = [toolInput.engineering_contract_id];
+        let i = 2;
+        if (toolInput.name !== undefined)            { sets.push(`name = $${i++}`);            params.push(String(toolInput.name).trim()); }
+        if (toolInput.contract_number !== undefined) { sets.push(`contract_number = $${i++}`); params.push(toolInput.contract_number || null); }
+        if (toolInput.loan_name !== undefined)       { sets.push(`loan_name = $${i++}`);       params.push(toolInput.loan_name || null); }
+        if (toolInput.notes !== undefined)           { sets.push(`notes = $${i++}`);           params.push(toolInput.notes || null); }
+        if (toolInput.active !== undefined)          { sets.push(`active = $${i++}`);          params.push(!!toolInput.active); }
+        if (toolInput.program !== undefined) {
+          let program = null;
+          if (toolInput.program !== null && toolInput.program !== '') {
+            const v = String(toolInput.program).trim().toLowerCase();
+            if (!ALLOWED.includes(v)) {
+              return { success: false, error: `Invalid program "${toolInput.program}" — allowed: ${ALLOWED.join(', ')}.` };
+            }
+            program = v;
+          }
+          sets.push(`program = $${i++}`); params.push(program);
+        }
+        if (!sets.length) return { success: false, error: 'Nothing to update' };
+        try {
+          const { rows } = await pool.query(
+            `UPDATE engineering_contracts SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+            params
+          );
+          if (!rows[0]) return { success: false, error: 'Engineering contract not found' };
+          return { success: true, engineering_contract: rows[0] };
+        } catch (e) {
+          if (e.code === '23505') return { success: false, error: 'An engineering contract with this name already exists for this client' };
+          return { success: false, error: e.message };
+        }
+      }
+
       case 'create_staff': {
         const { rows } = await pool.query(
           'INSERT INTO staff (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET active=true RETURNING *',
@@ -1453,21 +1575,9 @@ async function executeTool(toolName, toolInput) {
       }
 
       // ─── EXPANDED TOOLS ─────────────────────────────────────────────
-      case 'create_engineering_contract': {
-        const { client_id, name, contract_number, notes } = toolInput;
-        if (!client_id || !name) return { success: false, error: 'client_id and name required' };
-        try {
-          const { rows } = await pool.query(
-            `INSERT INTO engineering_contracts (client_id, name, contract_number, notes)
-             VALUES ($1,$2,$3,$4) RETURNING *`,
-            [client_id, String(name).trim(), contract_number || null, notes || null]
-          );
-          return { success: true, engineering_contract: rows[0] };
-        } catch (e) {
-          if (e.code === '23505') return { success: false, error: 'Engineering contract with this name already exists for this client' };
-          return { success: false, error: e.message };
-        }
-      }
+      // create_engineering_contract / update_engineering_contract executors
+      // are defined earlier in this switch (with program-field support). The
+      // legacy duplicate was removed in the Path B refactor.
 
       case 'update_contract_umbrella': {
         const { contract_id, engineering_contract_id } = toolInput;
@@ -1646,7 +1756,8 @@ function summarizeToolCall(toolName, toolInput) {
     case 'set_billing_cadence':       return `Set billing cadence on project ${i.project_id} → "${i.cadence}"`;
     case 'advance_permit_stage':      return `Advance permit stage on project ${i.project_id}`;
     case 'csv_smart_import':          return `Smart-import CSV upload ${i.upload_id}`;
-    case 'create_engineering_contract': return `Create engineering contract "${i.name}"`;
+    case 'create_engineering_contract': return `Create engineering contract "${i.name}"${i.program ? ` (program: ${i.program})` : ''}`;
+    case 'update_engineering_contract': return `Update engineering contract ${i.engineering_contract_id}${i.program !== undefined ? ` (program → ${i.program || 'NULL'})` : ''}`;
     case 'bulk_update_projects':      return `BULK update projects matching ${JSON.stringify(i.filter)} → ${JSON.stringify(i.patch)}`;
     case 'write_sql':                 return `EXECUTE SQL: ${String(i.sql || '').slice(0, 200)}${(i.sql || '').length > 200 ? '…' : ''}`;
     case 'create_user':               return `Create user "${i.username}" with role ${i.role}`;

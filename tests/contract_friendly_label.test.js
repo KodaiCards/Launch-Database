@@ -86,6 +86,7 @@ test('friendly_label appears in invoice preview data for an assigned project', a
   const ec = await fixtures.engineeringContract({
     client_id: client.id,
     name: uniqueTag('EC-217'),
+    program: 'rus',
   });
   cleanup.engineering_contracts.push(ec.id);
   const contract = await fixtures.contract({

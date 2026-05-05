@@ -112,9 +112,12 @@ async function buildInvoiceData(pool, opts) {
   if (!period_start || !period_end) throw new Error('period_start and period_end required');
 
   // 1. Engineering contract + client + loan info
+  // NOTE: program lives at the engineering-contract level, not the client.
+  // PSC has both RUS work (program='rus') and ordinary work — the gate
+  // below uses program, not the deprecated cl.is_rus flag.
   const ecRes = await pool.query(
-    `SELECT ec.id, ec.name, ec.contract_number, ec.loan_name,
-            cl.id AS client_id, cl.name AS client_name, cl.is_rus
+    `SELECT ec.id, ec.name, ec.contract_number, ec.loan_name, ec.program,
+            cl.id AS client_id, cl.name AS client_name
        FROM engineering_contracts ec
        JOIN clients cl ON cl.id = ec.client_id
        WHERE ec.id = $1`,
@@ -123,10 +126,12 @@ async function buildInvoiceData(pool, opts) {
   if (!ecRes.rows[0]) throw new Error('Engineering contract not found');
   const ec = ecRes.rows[0];
 
-  // Refuse to render for non-PSC-RUS work — different format. Better to
-  // fail loudly than to mis-format a real invoice for COX or a future client.
-  if (!ec.is_rus) {
-    throw new Error(`Client "${ec.client_name}" is not RUS — this template is exclusive to PSC RUS work. Other clients need their own template (see reference_invoice_non_rus_formats memory).`);
+  // Refuse to render for non-RUS work — this template is exclusive to RUS
+  // billing. Better to fail loudly than to mis-format a real invoice for
+  // BAU/GFR/Other work, which need their own templates.
+  if (ec.program !== 'rus') {
+    const programLabel = ec.program ? `program "${ec.program}"` : 'no program set';
+    throw new Error(`Engineering contract "${ec.name}" (${ec.client_name}) has ${programLabel} — the PSC RUS PDF template is exclusive to engineering contracts with program='rus'. Other programs need their own template (see reference_invoice_non_rus_formats memory).`);
   }
 
   // 2. Job info — billing code, rate, hourly vs footage
@@ -693,10 +698,11 @@ async function inferInvoiceMakeup(pool, projectIds) {
             p.footage::float AS footage,
             p.expected_revenue::float AS expected_revenue,
             p.status, p.billed_date, p.billing_cadence,
-            cl.id AS client_id, cl.name AS client_name, cl.is_rus,
+            cl.id AS client_id, cl.name AS client_name,
             c.id AS contract_id, c.contract_number, c.friendly_label AS contract_label,
             ec.id AS engineering_contract_id, ec.name AS engineering_contract_name,
             ec.contract_number AS engineering_contract_number, ec.loan_name,
+            ec.program AS ec_program,
             j.id AS job_id, j.name AS job_name, j.billing_code,
             j.default_billing_type, j.is_permitting,
             (SELECT MIN(entry_date)::text FROM time_entries WHERE project_id = p.id) AS first_entry_date,
@@ -728,10 +734,14 @@ async function inferInvoiceMakeup(pool, projectIds) {
     const names = [...new Set(rows.map(r => r.job_name).filter(Boolean))];
     conflicts.push(`Selection spans ${jobs.size} jobs (${names.join(', ')}) — one job per invoice`);
   }
-  // RUS-only check on the unambiguous case
+  // RUS-only check on the unambiguous case. Program lives on the
+  // engineering contract — a single client (PSC) can have BOTH RUS and
+  // non-RUS engineering contracts, so we gate on ec.program rather than
+  // cl.is_rus.
   const firstRow = rows[0];
-  if (clients.size === 1 && !firstRow.is_rus) {
-    conflicts.push(`Client "${firstRow.client_name}" is not RUS — this template is exclusive to PSC RUS work`);
+  if (ecs.size === 1 && firstRow.ec_program !== 'rus') {
+    const programLabel = firstRow.ec_program ? `program "${firstRow.ec_program}"` : 'no program set';
+    conflicts.push(`Engineering contract "${firstRow.engineering_contract_name || ''}" has ${programLabel} — the PSC RUS PDF template is exclusive to engineering contracts with program='rus'`);
   }
 
   // Period inference: take the min/max entry_date across all selected

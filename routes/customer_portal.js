@@ -42,8 +42,11 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
       const ids = await clientIdsForUser(req.user.id);
       let clients = [];
       if (ids.length) {
+        // Customer portal doesn't need is_rus — program classification lives
+        // on engineering contracts and is irrelevant to the per-client
+        // view the customer sees.
         const { rows } = await pool.query(
-          `SELECT id, name, is_rus FROM clients WHERE id = ANY($1::uuid[]) ORDER BY name`,
+          `SELECT id, name FROM clients WHERE id = ANY($1::uuid[]) ORDER BY name`,
           [ids]
         );
         clients = rows;

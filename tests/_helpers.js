@@ -157,14 +157,18 @@ const fixtures = {
     return rows[0];
   },
 
-  async engineeringContract({ client_id, name, contract_number, loan_name } = {}) {
+  async engineeringContract({ client_id, name, contract_number, loan_name, program } = {}) {
     if (!client_id) throw new Error('engineeringContract requires client_id');
     const n = name || uniqueTag('eng-contract');
     const num = contract_number || uniqueTag('EC');
+    // program defaults to NULL. Tests that exercise RUS-specific behaviors
+    // (PSC RUS PDF, projection, inspection scope) should pass program: 'rus'
+    // explicitly. Tests of generic invoice rejection pass program: null
+    // (or omit it) to verify the gate fires.
     const { rows } = await pool.query(
-      `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
-      [client_id, n, num, loan_name || null]
+      `INSERT INTO engineering_contracts (client_id, name, contract_number, loan_name, program)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [client_id, n, num, loan_name || null, program === undefined ? null : program]
     );
     return rows[0];
   },
