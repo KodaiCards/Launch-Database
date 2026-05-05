@@ -885,12 +885,20 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div id="view-design" class="view">
       <div class="section-header">
         <div><div class="section-title">Design Pipeline</div><div class="section-sub">Track design projects through stages</div></div>
-        <div>
+        <div style="display:flex;gap:8px;align-items:center">
           <a href="https://launchfiberdesignportal.xyz/" target="_blank" rel="noopener"
              class="btn btn-secondary btn-sm" style="text-decoration:none"
              title="Open the Design Portal in a new tab">
             <i class="fa-solid fa-up-right-from-square"></i> Open Portal
           </a>
+          <select class="filter" id="design-stage-filter" onchange="loadDesign()">
+            <option value="">All stages</option>
+            <option value="potential">Potential</option>
+            <option value="started">Started</option>
+            <option value="review_process">Review Process</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="showView('projects');openProjectModal('design')"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
       </div>
       <div id="design-stage-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>

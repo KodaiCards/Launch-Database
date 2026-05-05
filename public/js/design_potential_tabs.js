@@ -40,18 +40,31 @@
 
   async function loadDesign() {
     const projects = await api('/api/design');
+    const stageFilter = document.getElementById('design-stage-filter')?.value || '';
     const counts = {}; DESIGN_STAGES.forEach(s => counts[s]=0);
     projects.forEach(p => { if(p.current_stage) counts[p.current_stage]++; });
+    // Stage tiles are clickable — clicking one sets the filter (and re-clicking
+    // the active one clears it). Mirrors the Permitting stage bar UX.
     document.getElementById('design-stage-bar').innerHTML = DESIGN_STAGES.map(s => {
       const c = {potential:'#6c757d',started:'var(--primary)',review_process:'#ff9800',completed:'var(--success)'}[s];
-      return `<div style="background:${c};color:#fff;padding:12px;border-radius:8px;text-align:center"><div style="font-size:22px;font-weight:700">${counts[s]}</div><div style="font-size:11px;text-transform:uppercase">${DESIGN_LABELS[s]}</div></div>`;
+      const active = stageFilter === s;
+      const ring = active ? 'box-shadow:0 0 0 3px rgba(0,0,0,0.18) inset;' : '';
+      const toggleVal = active ? '' : s;
+      return `<div onclick="document.getElementById('design-stage-filter').value='${toggleVal}';loadDesign()" style="background:${c};color:#fff;padding:12px;border-radius:8px;text-align:center;cursor:pointer;${ring}"><div style="font-size:22px;font-weight:700">${counts[s]}</div><div style="font-size:11px;text-transform:uppercase">${DESIGN_LABELS[s]}</div></div>`;
     }).join('');
 
     const tbody = document.getElementById('design-body');
     if (!projects.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-drafting-compass"></i><p>No design projects</p></div></td></tr>'; return; }
 
+    // Apply stage filter (client-side — /api/design returns the full list).
+    const filtered = stageFilter
+      ? projects.filter(p => (p.current_stage || 'potential') === stageFilter)
+      : projects;
+
+    if (!filtered.length) { tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-drafting-compass"></i><p>No projects in stage "${DESIGN_LABELS[stageFilter] || stageFilter}"</p></div></td></tr>`; return; }
+
     // Sort: further-along stages on top. Within a stage, newest updated_at first.
-    const sortedProjects = [...projects].sort((a, b) => {
+    const sortedProjects = [...filtered].sort((a, b) => {
       const sa = DESIGN_STAGES.indexOf(a.current_stage || 'potential');
       const sb = DESIGN_STAGES.indexOf(b.current_stage || 'potential');
       if (sa !== sb) return sb - sa;
