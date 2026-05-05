@@ -30,14 +30,29 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       where.push(`EXTRACT(YEAR FROM te.entry_date)=$${i++}`);
       params.push(year);
     }
-    // Engineer-class users see ONLY their own time entries. The user_id column
-    // gets set when a hours-backfill is run (Settings → Migration Tools) or when
-    // new entries are created with the user logged in. Role check is done here
-    // server-side so even if the frontend mistakenly shows the Hours tab to an
-    // engineer, the data they see is filtered.
+    // Engineer-class users see hours attributed to them. Two attribution
+    // signals exist on a time_entries row:
+    //   - te.staff_id  — the staff record the hours belong to (set on
+    //                    every entry; the canonical "whose work")
+    //   - te.user_id   — the logged-in user who CREATED the entry (set
+    //                    when an engineer self-logs via timeclock)
+    // If admin enters an engineer's hours via CSV import or the Hours tab,
+    // te.user_id is the admin's id, not the engineer's. The engineer
+    // would then log in and see nothing — even though the staff link
+    // is correct. Prefer staff_id when the user has a linked staff record
+    // (set in Settings → Users → "Linked staff"), fall back to user_id
+    // when no link exists so newly-created accounts still see only their
+    // own self-logged time. Role check is done here server-side so even
+    // if the frontend mistakenly shows the Hours tab to an engineer,
+    // they only see their own data.
     if (req.user && (req.user.role === 'design_engineer' || req.user.role === 'permitting_engineer')) {
-      where.push(`te.user_id = $${i++}`);
-      params.push(req.user.id);
+      if (req.user.staff_id) {
+        where.push(`te.staff_id = $${i++}`);
+        params.push(req.user.staff_id);
+      } else {
+        where.push(`te.user_id = $${i++}`);
+        params.push(req.user.id);
+      }
     }
     // Manager-class users see ONLY hours tied to projects on their team. The
     // project's team is determined via its job (jobs.team). Projects whose job

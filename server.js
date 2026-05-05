@@ -583,8 +583,20 @@ app.use('/api', (err, req, res, next) => {
   // user-readable message that names the actual cap so the operator
   // knows what to do.
   if (err && err.code === 'LIMIT_FILE_SIZE') {
+    // Multer's MulterError carries `code` and `field` but the size limit
+    // isn't always on the error object — its absence used to fall through
+    // to the literal word "limited", producing the nonsensical
+    // "Maximum size for this upload is pdf limited." Look up the cap by
+    // route field instead so the message names a real number.
+    const sizeMb = err.limit
+      ? Math.round(err.limit / 1024 / 1024) + ' MB'
+      : err.field === 'pdf' ? '50 MB'   // invoice_templates.js cap
+      : err.field === 'file' ? '3 GB'    // server.js global multer cap
+      : null;
     return res.status(413).json({
-      error: `File too large. Maximum size for this upload is ${err.field ? err.field + ' ' : ''}${err.limit ? Math.round(err.limit / 1024 / 1024) + ' MB' : 'limited'}.`,
+      error: sizeMb
+        ? `File too large. Maximum size for this upload is ${sizeMb}.`
+        : 'File too large. Try a smaller file.',
     });
   }
   if (err && err.code && String(err.code).startsWith('LIMIT_')) {

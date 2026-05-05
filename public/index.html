@@ -294,8 +294,13 @@ body{font-family:var(--font);background:var(--gray-light);color:var(--text);font
 /* Dark mode: --primary becomes a lighter blue (#4A90D9) so buttons / accents
    read on dark surfaces, but a saturated medium blue is too low-contrast for
    white nav text — inactive tabs end up looking washed-out gray. Darken just
-   the nav strip so the white tab text pops. */
+   the nav strip and crisp up the type so every tab pops, not just the
+   active one. The text-shadow is a soft drop-shadow that helps in light
+   mode but muddies white-on-darker-blue, so drop it; bump inactive weight
+   to 600 so the tabs read evenly bright with the active 700. */
 html[data-theme="dark"] .nav{background:var(--primary-dark)}
+html[data-theme="dark"] .nav-tab{font-weight:600;text-shadow:none}
+html[data-theme="dark"] .nav-tab.active{font-weight:700}
 
 /* STAT CARDS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}

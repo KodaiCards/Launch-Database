@@ -22,6 +22,13 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
     try {
       const { rows } = await pool.query(`
         WITH hourly_monthly AS (
+          -- Sum time-entry hours × billing_rate for hourly-billed projects
+          -- ONLY. Footage projects' billing_rate is per-mile (or per the
+          -- project finance helper's interpretation); multiplying it by
+          -- te.hours produces nonsense dollars. Pre-fix this CTE included
+          -- every project regardless of billing_type, inflating "earned"
+          -- by hours × rate of every footage project that had any hours
+          -- logged against it.
           SELECT
             EXTRACT(MONTH FROM te.entry_date)::int as month,
             COALESCE(SUM(te.hours), 0) as hours,
@@ -29,6 +36,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
           FROM time_entries te
           JOIN projects p ON p.id = te.project_id
           WHERE EXTRACT(YEAR FROM te.entry_date) = $1
+            AND p.billing_type = 'hourly'
           GROUP BY month
         ),
         footage_monthly AS (
@@ -42,18 +50,19 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
           GROUP BY month
         ),
         billed_monthly AS (
+          -- Read from invoices.total_amount, not projects.billed_date.
+          -- Monthly cadence projects (Inspection, Resident Engineer) keep
+          -- status='active' across bill-and-clone and billed_date is
+          -- never stamped on them — the invoice IS the record. The
+          -- previous projects.billed_date filter therefore showed $0
+          -- "YTD BILLED" while the Billing tab (reading invoices)
+          -- correctly showed the same period as paid. Pull from invoices
+          -- so the two tabs stay consistent.
           SELECT
-            EXTRACT(MONTH FROM p.billed_date)::int as month,
-            COALESCE(SUM(
-              CASE
-                WHEN p.billing_type = 'footage' THEN p.expected_revenue
-                WHEN p.billing_type = 'hourly' THEN p.actual_hours * p.billing_rate
-                ELSE 0
-              END
-            ), 0) as billed
-          FROM projects p
-          WHERE p.billed_date IS NOT NULL
-            AND EXTRACT(YEAR FROM p.billed_date) = $1
+            EXTRACT(MONTH FROM i.invoice_date)::int as month,
+            COALESCE(SUM(i.total_amount), 0) as billed
+          FROM invoices i
+          WHERE EXTRACT(YEAR FROM i.invoice_date) = $1
           GROUP BY month
         )
         SELECT
@@ -94,25 +103,43 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         ? `AND EXTRACT(MONTH FROM te.entry_date) = $2 AND EXTRACT(YEAR FROM te.entry_date) = $1`
         : `AND EXTRACT(YEAR FROM te.entry_date) = $1`;
 
+      // Filter the invoice tally by the SAME month/year used elsewhere on
+      // this query so that "billed" lines up with the period the user
+      // selected. monthFilterInvoiced is parameterized; never string-
+      // interpolate user input here.
+      const invoiceMonthFilter = month ? `AND EXTRACT(MONTH FROM i.invoice_date) = $2` : '';
+
       const { rows } = await pool.query(`
         SELECT
           cl.id as client_id,
           cl.name as client_name,
           COUNT(DISTINCT p.id) as project_count,
           COALESCE(SUM(p.expected_revenue), 0) as expected_total,
-          COALESCE(SUM(COALESCE(te_hrs.hrs, 0) * p.billing_rate), 0) as earned_hourly,
+          -- earned_hourly: gate on billing_type='hourly'. The previous version
+          -- multiplied billing_rate by hours for every project regardless of
+          -- type, which inflated the number for footage projects whose
+          -- "rate" isn't $/hr. (Same fix applied in monthly-summary above.)
+          COALESCE(SUM(
+            CASE WHEN p.billing_type = 'hourly'
+            THEN COALESCE(te_hrs.hrs, 0) * p.billing_rate
+            ELSE 0 END
+          ), 0) as earned_hourly,
           COALESCE(SUM(
             CASE WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed')
             THEN p.expected_revenue ELSE 0 END
           ), 0) as earned_footage,
-          COALESCE(SUM(
-            CASE WHEN p.billed_date IS NOT NULL THEN
-              CASE
-                WHEN p.billing_type = 'footage' THEN p.expected_revenue
-                WHEN p.billing_type = 'hourly' THEN p.actual_hours * p.billing_rate
-                ELSE 0
-              END
-            ELSE 0 END
+          -- billed_total: read from invoices, not projects.billed_date.
+          -- Monthly cadence projects keep status='active' across
+          -- bill-and-clone, so the billed_date filter missed every
+          -- monthly-billed dollar. Pulling from invoices keeps Revenue
+          -- by-client consistent with the Billing tab and with the
+          -- monthly-summary CTE above.
+          COALESCE((
+            SELECT SUM(i.total_amount)
+            FROM invoices i
+            WHERE i.client_id = cl.id
+              AND EXTRACT(YEAR FROM i.invoice_date) = $1
+              ${invoiceMonthFilter}
           ), 0) as billed_total,
           COALESCE(SUM(COALESCE(te_hrs.hrs, 0)), 0) as total_hours
         FROM clients cl
