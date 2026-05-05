@@ -69,6 +69,55 @@ function _removeSseClient(projectId, res) {
 // no DB access, cheap to call on every save.
 const { validateProject } = require('./_splice_validation');
 
+const crypto = require('crypto');
+
+// Public-facing base URL for QR codes. Set SPLICE_PUBLIC_URL on the
+// splice Railway service ("https://launchfiber-splicematrix.xyz"). If
+// unset, QR codes fall back to a deep link without a domain — the QR
+// still scans, but to a relative URL that only works on the splice
+// portal itself.
+const SPLICE_PUBLIC_URL = (process.env.SPLICE_PUBLIC_URL || '').replace(/\/+$/, '');
+
+// Lazy QR-code require — falls back to omitting QR codes if the
+// package wasn't installed (e.g. on a misconfigured Railway build).
+// Marker value `false` distinguishes "tried and failed" from "not yet
+// attempted."
+let _qrcode = null;
+function _qr() {
+  if (_qrcode === false) return null;
+  if (_qrcode) return _qrcode;
+  try { _qrcode = require('qrcode'); }
+  catch (e) {
+    console.warn('[splice] qrcode package missing; PDF will skip QR codes:', e.message);
+    _qrcode = false;
+    return null;
+  }
+  return _qrcode;
+}
+
+async function _renderQrSvg(text, size = 96) {
+  const qr = _qr();
+  if (!qr) return '';
+  try {
+    return await qr.toString(text, { type: 'svg', margin: 0, width: size });
+  } catch (e) {
+    return '';
+  }
+}
+
+// Stable 7-char hash of the splice graph used as a "generation hash" in
+// the PDF footer. Anyone in the field comparing two prints can spot at
+// a glance whether they're working from the same revision.
+function _generationHash(data) {
+  const stable = JSON.stringify({
+    cables: data.cables.map(c => ({ id: c.id, name: c.name, fc: c.fiber_count, ct: c.construction_type })),
+    locations: data.locations.map(l => ({ id: l.id, name: l.name, t: l.type })),
+    closures: data.closures.map(c => ({ id: c.id, m: c.model, tc: c.tray_count, cap: c.tray_capacity })),
+    splices: data.splices.map(s => ({ a: s.fiber_a_id, b: s.fiber_b_id, t: s.tray_id, rg: s.ribbon_group_id })),
+  });
+  return crypto.createHash('sha1').update(stable).digest('hex').slice(0, 7);
+}
+
 // Lazy puppeteer require so the dep load doesn't block boot when the
 // container is missing the binary (matches invoice_template_engine.js).
 let _puppeteer = null;
@@ -882,7 +931,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
-      const html = _renderSpliceHtml(data, req.query.page_size);
+      const html = await _renderSpliceHtml(data, req.query.page_size || 'Tabloid');
       res.set('Content-Type', 'text/html; charset=utf-8').send(html);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -905,7 +954,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
       }
       const pageSize = req.query.page_size || data.project.page_size || 'Tabloid';
-      const html = _renderSpliceHtml(data, pageSize);
+      const html = await _renderSpliceHtml(data, pageSize);
       const puppeteer = _puppet();
       const browser = await puppeteer.launch({
         headless: 'new',
@@ -1058,10 +1107,13 @@ function _safeFilename(s) {
     .slice(0, 60) || 'splice';
 }
 
-// Renders the splicer field document. Cover page with project metadata +
-// per-closure pages with a tray-by-tray table of splices showing both
-// fibers' cable name + tube color + fiber color + position.
-function _renderSpliceHtml(data, pageSize) {
+// Renders the splicer field document. Async because per-closure QR codes
+// are awaited before composition. Cover page carries project metadata +
+// revision block; per-closure pages render tray-by-tray tables with
+// fiber color swatches + as-built markup columns + signature line; QR
+// code per closure links to the public deep link (splicer scans to
+// upload field markup; full public-token flow lands in Phase 2B #7).
+async function _renderSpliceHtml(data, pageSize) {
   const { project, locations, cables, buffer_tubes, fibers, closures, trays, splices, ribbon_groups } = data;
 
   const fiberById = new Map(fibers.map(f => [f.id, f]));
@@ -1081,6 +1133,22 @@ function _renderSpliceHtml(data, pageSize) {
     splicesByTray.get(s.tray_id).push(s);
   }
 
+  // Pre-render QR codes for every closure in parallel. Each QR points
+  // at a deep link to the splice editor (project + closure params).
+  // When Phase 2B #7 lands, swap the URL pattern for /field/:token.
+  const qrPromises = closures.map(cl => {
+    const url = SPLICE_PUBLIC_URL
+      ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
+      : `/?project=${project.id}&closure=${cl.id}`;
+    return _renderQrSvg(url, 84).then(svg => [cl.id, svg]);
+  });
+  const qrByClosureId = new Map(await Promise.all(qrPromises));
+
+  // Generation hash — splicers can compare prints in the field at a
+  // glance to confirm they're working from the same revision.
+  const genHash = _generationHash(data);
+  const todayIso = new Date().toISOString().slice(0, 10);
+
   function describeFiber(fiberId) {
     const f = fiberById.get(fiberId);
     if (!f) return { cable: '?', tube: '?', tube_position: '?', color: '?', position: '?' };
@@ -1095,19 +1163,27 @@ function _renderSpliceHtml(data, pageSize) {
     };
   }
 
+  // Color swatch + name. Black-and-white printers, colorblind splicers,
+  // and dim flashlights all benefit from BOTH being on the page.
+  function colorChip(name) {
+    return `<span class="chip chip-${_esc(name)}"></span>${_esc(name)}`;
+  }
+
   function rowForSplice(s) {
     const a = describeFiber(s.fiber_a_id);
     const b = describeFiber(s.fiber_b_id);
     return `
       <tr>
         <td>${_esc(a.cable)}</td>
-        <td>${_esc(a.tube_color)} <span class="muted">(${a.tube_position})</span></td>
-        <td>${_esc(a.color)} <span class="muted">(${a.position})</span></td>
+        <td>${colorChip(a.tube_color)} <span class="muted">${a.tube_position}</span></td>
+        <td>${colorChip(a.color)} <span class="muted">${a.position}</span></td>
         <td class="arrow">→</td>
         <td>${_esc(b.cable)}</td>
-        <td>${_esc(b.tube_color)} <span class="muted">(${b.tube_position})</span></td>
-        <td>${_esc(b.color)} <span class="muted">(${b.position})</span></td>
-        <td>${_esc(s.splice_type)}${s.ribbon_group_id ? ' <span class="ribbon-tag">ribbon</span>' : ''}</td>
+        <td>${colorChip(b.tube_color)} <span class="muted">${b.tube_position}</span></td>
+        <td>${colorChip(b.color)} <span class="muted">${b.position}</span></td>
+        <td>${_esc(s.splice_type)}</td>
+        <td class="markup-loss">&nbsp;</td>
+        <td class="markup-notes">&nbsp;</td>
       </tr>`;
   }
 
@@ -1117,23 +1193,43 @@ function _renderSpliceHtml(data, pageSize) {
   const totalSplices  = splices.length;
   const totalRibbons  = ribbon_groups.length;
   const totalClosures = closures.length;
+  const designerName = project.designer_name || '—';
 
   const coverCableRows = cables.map(c => {
     const fromName = c.from_location_id ? (locationById.get(c.from_location_id)?.name || '?') : '—';
     const toName   = c.to_location_id   ? (locationById.get(c.to_location_id)?.name   || '?') : '—';
     return `<tr>
       <td>${_esc(c.name)}</td>
-      <td>${_esc(c.fiber_count)}</td>
+      <td class="num">${_esc(c.fiber_count)}</td>
       <td>${_esc(c.construction_type)}</td>
       <td>${_esc(fromName)} → ${_esc(toName)}</td>
       <td>${_esc(c.manufacturer_part || '')}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="5" class="empty">No cables</td></tr>`;
 
+  const coverLocationRows = locations
+    .slice()
+    .sort((a, b) => (a.sequence_index || 0) - (b.sequence_index || 0) || a.name.localeCompare(b.name))
+    .map(l => {
+      const closureCount = closures.filter(c => c.location_id === l.id).length;
+      const cableCount = cables.filter(c =>
+        c.from_location_id === l.id || c.to_location_id === l.id
+      ).length;
+      return `<tr>
+        <td class="num">${_esc(l.sequence_index ?? 0)}</td>
+        <td>${_esc(l.name)}</td>
+        <td>${_esc(l.type)}</td>
+        <td class="num">${closureCount}</td>
+        <td class="num">${cableCount}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="5" class="empty">No locations</td></tr>`;
+
   // Per-closure pages.
   const closurePages = closures.map(cl => {
     const loc = locationById.get(cl.location_id);
     const trayList = (traysByClosure.get(cl.id) || []).sort((a, b) => a.position - b.position);
+    const qr = qrByClosureId.get(cl.id) || '';
+
     const trayBlocks = trayList.map(t => {
       const inTray = (splicesByTray.get(t.id) || []);
       // Render ribbon-grouped splices first (compact ribbon line),
@@ -1151,10 +1247,12 @@ function _renderSpliceHtml(data, pageSize) {
         const a = describeFiber(first.fiber_a_id);
         const b = describeFiber(first.fiber_b_id);
         return `<tr class="ribbon-row">
-          <td colspan="3"><b>${_esc(a.cable)}</b> tube <b>${_esc(a.tube_color)}</b> (12 fibers, ribbon)</td>
+          <td colspan="3"><b>${_esc(a.cable)}</b> · tube ${colorChip(a.tube_color)} <span class="muted">(12 fibers, ribbon)</span></td>
           <td class="arrow">⇒</td>
-          <td colspan="3"><b>${_esc(b.cable)}</b> tube <b>${_esc(b.tube_color)}</b> (12 fibers, ribbon)</td>
-          <td>${_esc(first.splice_type)} <span class="ribbon-tag">ribbon ×12</span></td>
+          <td colspan="3"><b>${_esc(b.cable)}</b> · tube ${colorChip(b.tube_color)} <span class="muted">(12 fibers, ribbon)</span></td>
+          <td>${_esc(first.splice_type)} <span class="ribbon-tag">×12</span></td>
+          <td class="markup-loss">&nbsp;</td>
+          <td class="markup-notes">&nbsp;</td>
         </tr>`;
       }).join('');
       const looseRows = loose.map(rowForSplice).join('');
@@ -1165,36 +1263,78 @@ function _renderSpliceHtml(data, pageSize) {
         <div class="tray-block">
           <div class="tray-header">
             Tray ${t.position}
-            <span class="muted">— ${totalUsed}/${cap} splices ${overCap ? '<span class="warn">(OVER CAPACITY)</span>' : ''}</span>
+            <span class="tray-meta">${totalUsed} / ${cap} splices ${overCap ? '<span class="warn">— OVER CAPACITY</span>' : ''}</span>
           </div>
           ${(ribbonRows || looseRows) ? `
           <table class="splice-table">
+            <colgroup>
+              <col style="width:11%"><col style="width:10%"><col style="width:8%">
+              <col style="width:3%">
+              <col style="width:11%"><col style="width:10%"><col style="width:8%">
+              <col style="width:8%">
+              <col style="width:9%"><col style="width:22%">
+            </colgroup>
             <thead><tr>
               <th colspan="3">Side A</th>
               <th></th>
               <th colspan="3">Side B</th>
-              <th>Type</th>
+              <th rowspan="2">Type</th>
+              <th rowspan="2">Loss<br>(dB)</th>
+              <th rowspan="2">As-built notes</th>
             </tr><tr class="sub">
               <th>Cable</th><th>Tube</th><th>Fiber</th>
               <th></th>
               <th>Cable</th><th>Tube</th><th>Fiber</th>
-              <th></th>
             </tr></thead>
             <tbody>${ribbonRows}${looseRows}</tbody>
           </table>` : `<div class="empty">No splices in this tray</div>`}
         </div>`;
     }).join('');
+
     return `
       <section class="page closure-page">
         <header class="page-header">
-          <div class="title">${_esc(cl.location_name || loc?.name || 'Location')}
-            <span class="subtitle">— Closure ${cl.model ? '· ' + _esc(cl.model) : ''}</span>
+          <div class="page-header-text">
+            <div class="title">${_esc(cl.location_name || loc?.name || 'Location')}
+              <span class="subtitle">${cl.model ? '· ' + _esc(cl.model) : ''}</span>
+            </div>
+            <div class="meta">
+              ${_esc(cl.tray_count)} trays × ${_esc(cl.tray_capacity)} capacity
+              · Closure ID <span class="mono">${_esc(cl.id.slice(0, 8))}</span>
+              ${cl.notes ? '· ' + _esc(cl.notes) : ''}
+            </div>
           </div>
-          <div class="meta">${_esc(cl.tray_count)} trays × ${_esc(cl.tray_capacity)} cap</div>
+          ${qr ? `<div class="qr">${qr}<div class="qr-cap">scan to upload<br>field markup</div></div>` : ''}
         </header>
         ${trayBlocks || '<div class="empty">No trays</div>'}
+        <div class="signoff">
+          <div class="signoff-row">
+            <div class="signoff-cell"><div class="signoff-line">&nbsp;</div><div class="signoff-label">Splicer name (print)</div></div>
+            <div class="signoff-cell"><div class="signoff-line">&nbsp;</div><div class="signoff-label">Signature</div></div>
+            <div class="signoff-cell narrow"><div class="signoff-line">&nbsp;</div><div class="signoff-label">Date</div></div>
+            <div class="signoff-cell narrow"><div class="signoff-line">&nbsp;</div><div class="signoff-label">Closure photo? (Y / N)</div></div>
+          </div>
+        </div>
       </section>`;
   }).join('') || `<section class="page"><div class="empty">No closures placed yet</div></section>`;
+
+  // Color hex map for the swatches. Same TIA-598 palette used in the
+  // canvas; embedded inline so the PDF renders correctly without an
+  // external stylesheet.
+  const colorCss = `
+    .chip-blue   {background:#1660C9}
+    .chip-orange {background:#E67E22}
+    .chip-green  {background:#27AE60}
+    .chip-brown  {background:#8B5A2B}
+    .chip-slate  {background:#7F8C8D}
+    .chip-white  {background:#F5F5F5;border:1px solid #999}
+    .chip-red    {background:#C0392B}
+    .chip-black  {background:#000}
+    .chip-yellow {background:#F1C40F}
+    .chip-violet {background:#8E44AD}
+    .chip-rose   {background:#E91E63}
+    .chip-aqua   {background:#1ABC9C}
+  `;
 
   return `<!DOCTYPE html>
 <html lang="en"><head>
@@ -1202,42 +1342,94 @@ function _renderSpliceHtml(data, pageSize) {
 <title>Splice Plan — ${_esc(project.name)}</title>
 <style>
   @page { size: ${_esc(pageSize)}; margin: 0; }
+  @page :first { margin: 0; }
   *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-  body{color:#222;font-size:11px;line-height:1.4}
-  .page{padding:0.4in 0.4in 0.6in;page-break-after:always;min-height:99%}
+  body{color:#222;font-size:10.5px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{padding:0.4in 0.4in 0.7in;page-break-after:always;min-height:99%;position:relative}
   .page:last-child{page-break-after:auto}
-  .cover{padding:0.6in 0.6in}
-  h1{font-size:24px;margin-bottom:6px}
-  h2{font-size:15px;margin:14px 0 6px;border-bottom:2px solid #1B5FA0;padding-bottom:4px;color:#1B5FA0}
-  .cover-meta{color:#555;font-size:12px;margin-bottom:8px}
+  .cover{padding:0.7in 0.7in}
+  h1{font-size:26px;margin-bottom:4px;color:#0F3D66;letter-spacing:-0.3px}
+  h2{font-size:14px;margin:18px 0 6px;border-bottom:2px solid #1B5FA0;padding-bottom:4px;color:#1B5FA0;text-transform:uppercase;letter-spacing:0.5px}
+  .cover-meta{color:#555;font-size:11px;margin-bottom:14px}
+
+  /* Revision block — engineering-firm style: rev / project / designer / date / hash */
+  .rev-block{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;margin-bottom:14px;border:1px solid #1B5FA0;border-radius:4px;overflow:hidden}
+  .rev-block .cell{padding:6px 10px;border-right:1px solid #DEE2E6;border-bottom:1px solid #DEE2E6}
+  .rev-block .cell:nth-child(4n){border-right:none}
+  .rev-block .cell:nth-last-child(-n+4){border-bottom:none}
+  .rev-block .lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:0.6px;color:#6C757D;margin-bottom:2px;font-weight:600}
+  .rev-block .val{font-size:12.5px;font-weight:600;color:#0F3D66}
+  .rev-block .val.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+
   .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:18px 0}
   .stat{background:#F5F7FA;border:1px solid #DEE2E6;border-radius:6px;padding:10px;text-align:center}
-  .stat .num{font-size:22px;font-weight:700;color:#1B5FA0}
-  .stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#6C757D;margin-top:4px}
-  table{border-collapse:collapse;width:100%;font-size:10.5px}
-  th,td{border:1px solid #DEE2E6;padding:5px 6px;text-align:left;vertical-align:top}
-  th{background:#F5F7FA;font-weight:600}
-  th.sub, tr.sub th{font-size:9.5px;font-weight:600;background:#FAFBFD}
-  .splice-table .arrow,.cover-table .arrow{text-align:center;color:#1B5FA0;font-weight:700}
-  .muted{color:#6C757D;font-size:9.5px}
-  .empty{color:#6C757D;font-style:italic;padding:8px}
-  .warn{color:#DC3545;font-weight:600;text-transform:uppercase;font-size:9.5px}
-  .ribbon-tag{display:inline-block;padding:1px 5px;background:#E8F0FB;color:#1B5FA0;border-radius:3px;font-size:9px;font-weight:600;margin-left:4px}
+  .stat .num{font-size:22px;font-weight:700;color:#1B5FA0;font-variant-numeric:tabular-nums}
+  .stat .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:0.5px;color:#6C757D;margin-top:4px}
+
+  table{border-collapse:collapse;width:100%;font-size:10px}
+  th,td{border:1px solid #DEE2E6;padding:5px 6px;text-align:left;vertical-align:middle}
+  th{background:#F5F7FA;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;font-size:9px}
+  th.sub, tr.sub th{font-size:9px;font-weight:600;background:#FAFBFD}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .splice-table{table-layout:fixed}
+  .splice-table .arrow,.cover-table .arrow{text-align:center;color:#1B5FA0;font-weight:700;font-size:13px}
+  .splice-table td{font-size:10px;padding:5px 5px}
+  .markup-loss,.markup-notes{background:repeating-linear-gradient(135deg,#fff,#fff 4px,#FAFBFD 4px,#FAFBFD 8px);min-height:20px}
+
+  .muted{color:#6C757D;font-size:9.5px;font-variant-numeric:tabular-nums}
+  .empty{color:#6C757D;font-style:italic;padding:8px;text-align:center}
+  .warn{color:#DC3545;font-weight:700;text-transform:uppercase;font-size:9px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
+
+  /* Color swatches — printed alongside color names. */
+  .chip{display:inline-block;width:9px;height:9px;border-radius:50%;border:0.5px solid #999;margin-right:4px;vertical-align:-1px}
+  ${colorCss}
+
+  .ribbon-tag{display:inline-block;padding:1px 5px;background:#E8F0FB;color:#1B5FA0;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px;letter-spacing:0.4px}
   .ribbon-row td{background:#FAFBFD}
-  .page-header{margin-bottom:10px;border-bottom:2px solid #1B5FA0;padding-bottom:6px}
-  .page-header .title{font-size:18px;font-weight:700;color:#1B5FA0}
-  .page-header .subtitle{font-weight:400;color:#555;font-size:13px}
-  .page-header .meta{font-size:10px;color:#6C757D;margin-top:2px}
-  .tray-block{margin-bottom:14px}
-  .tray-header{font-size:13px;font-weight:600;margin-bottom:4px;padding:4px 8px;background:#1B5FA0;color:#fff;border-radius:3px}
-  .footer{position:fixed;bottom:0.2in;left:0.4in;right:0.4in;font-size:9px;color:#6C757D;border-top:1px solid #DEE2E6;padding-top:4px;display:flex;justify-content:space-between}
+
+  /* Per-closure page header: title block on the left, QR on the right. */
+  .page-header{margin-bottom:10px;border-bottom:2px solid #1B5FA0;padding-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+  .page-header-text{flex:1;min-width:0}
+  .page-header .title{font-size:19px;font-weight:700;color:#0F3D66;letter-spacing:-0.2px}
+  .page-header .subtitle{font-weight:400;color:#555;font-size:14px;font-style:italic}
+  .page-header .meta{font-size:10px;color:#6C757D;margin-top:3px;line-height:1.4}
+  .qr{text-align:center;flex-shrink:0}
+  .qr svg{display:block;width:84px;height:84px}
+  .qr-cap{font-size:8px;color:#6C757D;margin-top:2px;text-transform:uppercase;letter-spacing:0.4px;line-height:1.2}
+
+  .tray-block{margin-bottom:14px;page-break-inside:avoid}
+  .tray-header{font-size:13px;font-weight:700;margin-bottom:0;padding:5px 10px;background:#1B5FA0;color:#fff;border-radius:3px 3px 0 0;display:flex;justify-content:space-between;align-items:center}
+  .tray-header .tray-meta{font-size:10px;font-weight:500;opacity:0.85;text-transform:uppercase;letter-spacing:0.4px}
+  .tray-block .splice-table{border-radius:0 0 3px 3px}
+
+  /* Sign-off block at the bottom of every closure page. */
+  .signoff{margin-top:14px;page-break-inside:avoid;border-top:1px solid #CED4DA;padding-top:10px}
+  .signoff-row{display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:14px}
+  .signoff-cell .signoff-line{border-bottom:1px solid #222;height:18px;margin-bottom:2px}
+  .signoff-cell .signoff-label{font-size:8.5px;text-transform:uppercase;letter-spacing:0.4px;color:#6C757D}
+
+  /* Page footer fixed to every page bottom — project, hash, page numbers. */
+  .footer{position:fixed;bottom:0.18in;left:0.4in;right:0.4in;font-size:8.5px;color:#6C757D;border-top:1px solid #DEE2E6;padding-top:4px;display:flex;justify-content:space-between;align-items:center}
+  .footer .center{text-align:center}
+  .footer .gen-hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 </style></head><body>
 
 <section class="page cover">
-  <h1>Splice Plan: ${_esc(project.name)}</h1>
-  <div class="cover-meta">
-    Generated ${new Date().toISOString().slice(0,10)}${project.notes ? ' · ' + _esc(project.notes) : ''}
+  <h1>Splice Plan</h1>
+  <div class="cover-meta">${_esc(project.name)}</div>
+
+  <div class="rev-block">
+    <div class="cell"><div class="lbl">Project</div><div class="val">${_esc(project.name)}</div></div>
+    <div class="cell"><div class="lbl">Designer</div><div class="val">${_esc(designerName)}</div></div>
+    <div class="cell"><div class="lbl">Generated</div><div class="val">${todayIso}</div></div>
+    <div class="cell"><div class="lbl">Revision hash</div><div class="val mono">${genHash}</div></div>
+    <div class="cell"><div class="lbl">Status</div><div class="val">${_esc(project.status || 'active')}</div></div>
+    <div class="cell"><div class="lbl">Closures</div><div class="val">${totalClosures}</div></div>
+    <div class="cell"><div class="lbl">Cables</div><div class="val">${totalCables}</div></div>
+    <div class="cell"><div class="lbl">Total splices</div><div class="val">${totalSplices}</div></div>
   </div>
+
   <div class="summary">
     <div class="stat"><div class="num">${totalCables}</div><div class="lbl">Cables</div></div>
     <div class="stat"><div class="num">${totalFibers}</div><div class="lbl">Fibers</div></div>
@@ -1245,18 +1437,28 @@ function _renderSpliceHtml(data, pageSize) {
     <div class="stat"><div class="num">${totalSplices}</div><div class="lbl">Splices</div></div>
     <div class="stat"><div class="num">${totalRibbons}</div><div class="lbl">Ribbon groups</div></div>
   </div>
+
   <h2>Cables</h2>
   <table class="cover-table">
-    <thead><tr><th>Name</th><th>Fibers</th><th>Construction</th><th>Route</th><th>Mfr Part</th></tr></thead>
+    <thead><tr><th>Name</th><th class="num">Fibers</th><th>Construction</th><th>Route</th><th>Mfr Part</th></tr></thead>
     <tbody>${coverCableRows}</tbody>
   </table>
+
+  <h2>Locations</h2>
+  <table class="cover-table">
+    <thead><tr><th class="num">Seq</th><th>Name</th><th>Type</th><th class="num">Closures</th><th class="num">Cables</th></tr></thead>
+    <tbody>${coverLocationRows}</tbody>
+  </table>
+
+  ${project.notes ? `<h2>Project notes</h2><div style="white-space:pre-wrap;font-size:11px;color:#444">${_esc(project.notes)}</div>` : ''}
 </section>
 
 ${closurePages}
 
 <div class="footer">
-  <span>Splice Plan: ${_esc(project.name)}</span>
-  <span>Launch Fiber Services</span>
+  <span>${_esc(project.name)}</span>
+  <span class="center">Launch Fiber Services · Splice Matrix</span>
+  <span>Rev <span class="gen-hash">${genHash}</span> · ${todayIso}</span>
 </div>
 </body></html>`;
 }
