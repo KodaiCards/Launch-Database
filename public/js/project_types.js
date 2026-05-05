@@ -1,60 +1,49 @@
-// public/js/project_types.js — Project Types settings (chips + add).
+// public/js/project_types.js — read-only program enum display.
 //
-// Extracted from public/index.html as part of CLEANUP_PLAN.md Track 1.2.
-//
-// Renders project_types as removable chips inside the Settings modal.
-// Add/delete are admin-only; existing projects keep their type when one
-// is deleted (the API soft-flags active=false; the chip just stops
-// showing up in new-project pickers).
+// Phase 3b (2026-05-04): the project_types CRUD table was retired.
+// Programs are now a fixed enum on engineering_contracts.program. This
+// module renders the enum as informational chips (no delete buttons,
+// no add form) so the existing Settings → Project Types panel still
+// shows something meaningful when admin opens it. The add-form helper
+// surfaces a clear message that programs are no longer admin-editable.
 //
 // Globals this module reads:
-//   api(), esc()                    — global helpers
-//   projectTypesCache               — global cache loaded by loadProjectTypes()
-//   loadProjectTypes()              — global loader
-//   populatePricingFormDropdowns()  — re-populates Pricing form selects;
-//                                     still inline because Pricing reads
-//                                     both projectTypesCache + jobsCache
-//   refreshSettingsDot()            — global helper
+//   esc()                            — global helper
 //
 // Functions exposed on window:
 //   renderProjectTypesList, saveNewProjectType, deleteProjectType
 
 (function () {
+  // Mirror the engineering_contracts.program enum + the migration's CHECK list.
+  const PROGRAMS = [
+    { code: 'rus',   label: 'RUS' },
+    { code: 'bau',   label: 'BAU' },
+    { code: 'gfr',   label: 'GF(R)' },
+    { code: 'other', label: 'Other' },
+  ];
+
   function renderProjectTypesList() {
     const root = document.getElementById('project-types-list-body');
     if (!root) return;
-    const cache = (typeof projectTypesCache !== 'undefined' && projectTypesCache) ? projectTypesCache : [];
-    if (!cache.length) { root.innerHTML = '<span style="color:var(--text-muted);font-size:12px">None.</span>'; return; }
-    root.innerHTML = cache.map(pt => `
-      <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--primary-light);color:var(--primary);border-radius:14px;font-size:12px;font-weight:600">
-        ${esc(pt.name)}
-        <button onclick="deleteProjectType('${pt.id}','${esc(pt.name)}')" style="background:transparent;border:none;color:var(--primary);cursor:pointer;padding:0;font-size:14px;line-height:1">×</button>
-      </span>
-    `).join('');
+    root.innerHTML = `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;line-height:1.5">
+        Programs are now a fixed enum, not an admin-editable list. Set the program on each engineering contract via the Engineering Contracts panel above.
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${PROGRAMS.map(p => `
+          <span title="program=${esc(p.code)}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--primary-light);color:var(--primary);border-radius:14px;font-size:12px;font-weight:600">
+            ${esc(p.label)}
+          </span>
+        `).join('')}
+      </div>`;
   }
 
-  async function saveNewProjectType() {
-    const name = document.getElementById('new-pt-name').value.trim();
-    if (!name) return alert('Name required');
-    try {
-      await api('/api/project-types', 'POST', { name });
-      document.getElementById('new-pt-name').value = '';
-      if (typeof loadProjectTypes === 'function') await loadProjectTypes();
-      if (typeof populatePricingFormDropdowns === 'function') populatePricingFormDropdowns();
-      renderProjectTypesList();
-      if (typeof refreshSettingsDot === 'function') refreshSettingsDot();
-    } catch (e) { alert('Failed: ' + e.message); }
+  function saveNewProjectType() {
+    alert('Programs are a fixed enum (RUS / BAU / GF(R) / Other). Set the program on each engineering contract instead — see the Engineering Contracts settings panel.');
   }
 
-  async function deleteProjectType(id, name) {
-    if (!confirm(`Delete project type "${name}"?\n\nExisting projects keep their type. The type will just be hidden from new selections.`)) return;
-    try {
-      await api('/api/project-types/' + id, 'DELETE');
-      if (typeof loadProjectTypes === 'function') await loadProjectTypes();
-      if (typeof populatePricingFormDropdowns === 'function') populatePricingFormDropdowns();
-      renderProjectTypesList();
-      if (typeof refreshSettingsDot === 'function') refreshSettingsDot();
-    } catch (e) { alert('Failed: ' + e.message); }
+  function deleteProjectType() {
+    alert('Programs are a fixed enum and cannot be deleted.');
   }
 
   window.renderProjectTypesList = renderProjectTypesList;

@@ -777,7 +777,12 @@ async function editProject(id){
     await clientChanged(p.job_id);   // threads job_id so legacy/deactivated jobs survive the refilter
     document.getElementById('proj-job').value    = p.job_id || '';
     document.getElementById('proj-contract').value = p.contract_id || '';
-    document.getElementById('proj-ptype').value  = p.project_type_id || '';
+    // Phase 3b: project_type_id was dropped; the dropdown holds program enum values now.
+    {
+      const ptypeSel = document.getElementById('proj-ptype');
+      const preset = p.program || (p.project_type ? String(p.project_type).toLowerCase() : '');
+      if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(preset) ? preset : '';
+    }
   } catch (e) { console.error('client/job hookup failed:', e); }
 
   try {
@@ -800,7 +805,13 @@ function populateProjectFormDropdowns(){
   cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}" data-show-contract="${c.show_contract?1:0}" data-show-wo="${c.show_work_order?1:0}">${esc(c.name)}</option>`).join('');
   // Project types
   const pt = document.getElementById('proj-ptype');
-  pt.innerHTML = '<option value="">— Select —</option>' + projectTypesCache.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  // Phase 3b: fixed program enum (rus|bau|gfr|other) instead of the
+  // dropped project_types table.
+  pt.innerHTML = '<option value="">— Select —</option>' +
+    `<option value="rus">RUS</option>` +
+    `<option value="bau">BAU</option>` +
+    `<option value="gfr">GF(R)</option>` +
+    `<option value="other">Other</option>`;
   // Jobs (will be re-filtered by client when a client is picked)
   refilterJobsDropdown();
 }
@@ -1016,7 +1027,8 @@ async function saveProject(){
   const payload = {
     name, client_id, job_id,
     contract_id: document.getElementById('proj-contract').value || null,
-    project_type_id: document.getElementById('proj-ptype').value || null,
+    // Phase 3b: project_type_id was dropped; ptype dropdown holds program enum.
+    program: document.getElementById('proj-ptype').value || null,
     work_order_number: document.getElementById('proj-wo').value.trim() || null,
     service_area_label: document.getElementById('proj-service-area').value.trim() || null,
     status: document.getElementById('proj-status').value,

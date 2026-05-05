@@ -58,7 +58,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       await client.query('BEGIN');
 
       const { rows: projects } = await client.query(
-        `SELECT id, name, client_id, concentrator_id, project_type_id, job_id, parent_id
+        `SELECT id, name, client_id, concentrator_id, program, job_id, parent_id
          FROM projects
          WHERE COALESCE(is_rollup, false) = false
          ORDER BY created_at ASC`

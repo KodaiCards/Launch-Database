@@ -3576,8 +3576,17 @@ function populateTypeAndJobDropdowns() {
   const t = document.getElementById('proj-ptype');
   const j = document.getElementById('proj-job');
   if (t) {
-    t.innerHTML = '<option value="">Select type...</option>' +
-      projectTypesCache.map(pt => `<option value="${pt.id}">${esc(pt.name)}</option>`).join('');
+    // Phase 3b: Project Type select now offers the fixed program enum.
+    // Value is the program code (rus|bau|gfr|other); the projects API
+    // accepts this as the `program` field on POST/PUT.
+    const PROGRAMS = [
+      { value: 'rus',   label: 'RUS' },
+      { value: 'bau',   label: 'BAU' },
+      { value: 'gfr',   label: 'GF(R)' },
+      { value: 'other', label: 'Other' },
+    ];
+    t.innerHTML = '<option value="">Select program...</option>' +
+      PROGRAMS.map(p => `<option value="${p.value}">${esc(p.label)}</option>`).join('');
   }
   if (j) {
     j.innerHTML = '<option value="">Select job...</option>' +
@@ -3634,7 +3643,14 @@ async function editProject(id) {
 
   try {
     populateTypeAndJobDropdowns();
-    document.getElementById('proj-ptype').value = p.project_type_id || '';
+    // Phase 3b: project_type_id was dropped; the dropdown is keyed on the
+    // program enum now. Pre-select from p.program (the new column),
+    // falling back to lower-casing the legacy free-text project_type
+    // when the program column is NULL on older rows.
+    const presetProgram = p.program
+      || (p.project_type ? String(p.project_type).toLowerCase() : '');
+    const ptypeSel = document.getElementById('proj-ptype');
+    if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(presetProgram) ? presetProgram : '';
   } catch (e) { console.error('type/job dropdown failed:', e); }
 
   try {
@@ -3724,10 +3740,11 @@ async function jobChanged(skipRateLookup = false) {
     rh.textContent = 'Billed at hours × rate. Hours = miles × random(25..30 in 0.25), min 25 hrs if under a mile.';
   }
 
-  // Look up the price-list default and pre-fill the rate
+  // Look up the price-list default and pre-fill the rate. Phase 3b
+  // replaced project_type_id with the program enum.
   if (!skipRateLookup && ptypeId) {
     try {
-      const lookup = await api(`/api/pricing/lookup?job_id=${jobId}&project_type_id=${ptypeId}`);
+      const lookup = await api(`/api/pricing/lookup?job_id=${jobId}&program=${encodeURIComponent(ptypeId)}`);
       if (lookup && lookup.rate != null) {
         rate.value = lookup.rate;
         rh.textContent = (rh.textContent ? rh.textContent + ' · ' : '') + `Default from pricing list${lookup.billing_code ? ' (code ' + lookup.billing_code + ')' : ''}`;
@@ -3777,6 +3794,13 @@ function calcExpected() {
 }
 
 async function quickAddProjectType() {
+  // Phase 3b (2026-05-04): programs are a fixed enum; quick-add was
+  // retired. The form is left in the DOM so existing inline handlers
+  // don't 404, but it just nudges the user toward the program select.
+  alert('Programs (RUS / BAU / GF(R) / Other) are a fixed enum. Pick from the dropdown — there is no Add to perform.');
+  return;
+  // The unreachable code below is kept verbatim so a `git log -p` shows
+  // exactly what was decommissioned.
   const name = document.getElementById('qa-ptype-name').value.trim();
   if (!name) return alert('Type name required');
   try {
@@ -3851,7 +3875,9 @@ async function saveProject(opts) {
     work_order_number: document.getElementById('proj-wo').value,
     service_area_label: (document.getElementById('proj-service-area')?.value || '').trim() || null,
     project_type: legacyType,
-    project_type_id: projectTypeId,
+    // Phase 3b: project_type_id was dropped; the dropdown now holds a
+    // program code (rus|bau|gfr|other) — send it as `program`.
+    program: projectTypeId || null,
     job_id: jobId,
     status: document.getElementById('proj-status').value,
     billing_type: isFootage ? 'footage' : 'hourly',

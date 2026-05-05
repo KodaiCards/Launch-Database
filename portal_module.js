@@ -184,12 +184,12 @@ async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, n
   const e = extras || {};
   try {
     const r = await pool.query(`
-      INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id,
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, program,
                             status, is_rollup, rollup_level, rollup_key, project_type)
       VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
       RETURNING id
     `, [name, e.client_id || null, parent_id || null, e.concentrator_id || null,
-        e.project_type_id || null, rollup_level, String(rollup_key)]);
+        e.program || null, rollup_level, String(rollup_key)]);
     return r.rows[0].id;
   } catch (err) {
     if (err.code !== '23505') throw err;
@@ -209,12 +209,12 @@ async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, n
     // Fallback: prefixed name to dodge collision with a real project
     const prefixed = `[${rollup_level.replace('_', ' ')}] ${name}`;
     const r2 = await pool.query(`
-      INSERT INTO projects (name, client_id, parent_id, concentrator_id, project_type_id,
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, program,
                             status, is_rollup, rollup_level, rollup_key, project_type)
       VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
       RETURNING id
     `, [prefixed, e.client_id || null, parent_id || null, e.concentrator_id || null,
-        e.project_type_id || null, rollup_level, String(rollup_key)]);
+        e.program || null, rollup_level, String(rollup_key)]);
     return r2.rows[0].id;
   }
 }
@@ -253,15 +253,12 @@ async function applySettingChange(pool, sr) {
   }
 
   else if (entity_type === 'project_type') {
-    if (action === 'create') {
-      await pool.query(
-        `INSERT INTO project_types (name) VALUES ($1)
-         ON CONFLICT (name) DO UPDATE SET active = true`,
-        [p.name]
-      );
-    } else if (action === 'delete') {
-      await pool.query('UPDATE project_types SET active = false WHERE id = $1', [entity_id]);
-    }
+    // Phase 3b (2026-05-04): the project_types table was dropped. Old
+    // pending change requests of this type are silently no-ops on apply
+    // (programs are now a fixed enum, not a CRUD entity). The endpoints
+    // below were also removed, so no new requests of this type can be
+    // created — this branch only runs for pre-existing pending rows.
+    return;
   }
 
   else if (entity_type === 'client') {
@@ -618,26 +615,13 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   });
 
   // ── PROJECT TYPES ──────────────────────────────────────────────────────
-  // GET stays via the existing route (no team filter needed — types apply
-  // across both teams). Only writes are intercepted.
-  app.post('/api/project-types', requireAuth(), async (req, res) => {
-    const { name } = req.body;
-    if (!name || !String(name).trim()) return res.status(400).json({ error: 'Name required' });
-    try {
-      const sr = await proposeChange('project_type', 'create', null,
-        { name: String(name).trim() }, actorOf(req));
-      res.json(proposalResponse(sr));
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  });
-  app.delete('/api/project-types/:id', requireAuth(), async (req, res) => {
-    try {
-      const cur = await pool.query('SELECT * FROM project_types WHERE id = $1', [req.params.id]);
-      if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
-      const sr = await proposeChange('project_type', 'delete', req.params.id,
-        {}, actorOf(req), cur.rows[0]);
-      res.json(proposalResponse(sr, 'Deletion submitted'));
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  });
+  // Phase 3b (2026-05-04): /api/project-types went away when the table
+  // was dropped. Programs are now a fixed enum (rus|bau|gfr|other) on
+  // engineering_contracts and projects — no portal CRUD surface needed.
+  // The previous propose-change wrappers for this entity have been
+  // removed; portal calls to /api/project-types now hit the static GET
+  // shim defined elsewhere (returns the program enum) and reject writes
+  // with 410 Gone via the catch-all route handler in routes/project_types.js.
 
   // ── CLIENTS ────────────────────────────────────────────────────────────
   // GET stays via existing route.
@@ -805,9 +789,9 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
 
   // Create project from portal — validates team, blocks duplicates, strips money.
   app.post('/api/projects', requireAuth(), async (req, res) => {
-    const {
+    let {
       name, client_id, contract_id, work_order_number,
-      project_type, project_type_id, job_id,
+      project_type, program, job_id,
       service_area_label,  // free-text service area for non-PSC clients
       status = 'active',
       footage,        // for footage-billed jobs
@@ -817,6 +801,16 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       // portal users don't pick the nest. We auto-derive concentrator from the
       // work order (if there's a match), and auto-nest under the rollup chain.
     } = req.body;
+    // Phase 3b: program enum replaces project_type_id. Validate then keep going.
+    if (program !== undefined && program !== null && program !== '') {
+      const v = String(program).trim().toLowerCase();
+      if (!['rus','bau','gfr','other'].includes(v)) {
+        return res.status(400).json({ error: `Invalid program "${program}" — allowed: rus, bau, gfr, other.` });
+      }
+      program = v;
+    } else {
+      program = null;
+    }
 
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'Project name required' });
     if (!client_id) return res.status(400).json({ error: 'Client required' });
@@ -887,10 +881,24 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         expectedRevenue = miles * effectiveRate;
       }
 
+      // Auto-derive program from the engineering contract on the chosen
+      // contract, if no explicit program came in. Same rule as routes/projects.js.
+      if (!program && contract_id) {
+        const ecLookup = await pool.query(
+          `SELECT ec.program
+             FROM contracts c
+             JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+            WHERE c.id = $1`, [contract_id]
+        );
+        if (ecLookup.rows.length && ecLookup.rows[0].program) {
+          program = ecLookup.rows[0].program;
+        }
+      }
+
       const { rows } = await pool.query(`
         INSERT INTO projects (
           name, client_id, contract_id, work_order_number,
-          project_type, project_type_id, job_id,
+          project_type, program, job_id,
           status, billing_type, billing_rate,
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, concentrator_id,
@@ -899,7 +907,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         RETURNING *
       `, [
         String(name).trim(), client_id, contract_id || null, work_order_number || null,
-        effectiveType, project_type_id || null, job_id,
+        effectiveType, program, job_id,
         status, effectiveBillType, effectiveRate,
         projFootage, miles, expectedHours, expectedRevenue,
         start_date || null, notes || null, parent_id, concentrator_id,

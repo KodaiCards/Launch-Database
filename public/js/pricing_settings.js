@@ -1,17 +1,13 @@
 // public/js/pricing_settings.js — Pricing entries Settings panel.
 //
-// Extracted from public/index.html as part of CLEANUP_PLAN.md Track 1.2.
-//
-// Legacy "pricing entries" CRUD — per (project_type, job) combination,
-// stores a billing_code + billing_type + rate. The newer Jobs settings
-// owns most of this responsibility now (per-job rate + billing type),
-// but pricing_entries are still consumed by the CSV import's billing-
-// code → job mapping and a few legacy reports.
+// Phase 3b (2026-05-04): pricing entries now key on the program enum
+// (rus|bau|gfr|other) instead of the dropped project_types table. The
+// type-picker is a static <select> populated from PROGRAM_OPTIONS. Each
+// pricing row displays + sorts by program. Other behavior is unchanged.
 //
 // Globals this module reads:
 //   api(), esc(), fmtMoney()        — global helpers
 //   pricingCache                    — global cache (lifted to window)
-//   projectTypesCache               — global cache loaded by loadProjectTypes()
 //   jobsCache                       — global cache loaded by loadJobs()
 //   refreshSettingsDot()            — global helper
 //
@@ -20,14 +16,27 @@
 //   editPricingEntry, deletePricingEntry
 
 (function () {
+  // Match engineering_contracts.program enum + the migration's CHECK list.
+  const PROGRAM_OPTIONS = [
+    { value: 'rus',   label: 'RUS' },
+    { value: 'bau',   label: 'BAU' },
+    { value: 'gfr',   label: 'GF(R)' },
+    { value: 'other', label: 'Other' },
+  ];
+
+  function programLabel(value) {
+    if (!value) return '— No program —';
+    const opt = PROGRAM_OPTIONS.find(o => o.value === value);
+    return opt ? opt.label : value;
+  }
+
   function populatePricingFormDropdowns() {
     const tSel = document.getElementById('new-pe-type');
     const jSel = document.getElementById('new-pe-job');
-    const types = (typeof projectTypesCache !== 'undefined' && projectTypesCache) ? projectTypesCache : [];
     const jobs = (typeof jobsCache !== 'undefined' && jobsCache) ? jobsCache : [];
     if (tSel) {
-      tSel.innerHTML = '<option value="">Select type...</option>' +
-        types.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+      tSel.innerHTML = '<option value="">Select program...</option>' +
+        PROGRAM_OPTIONS.map(o => `<option value="${o.value}">${esc(o.label)}</option>`).join('');
     }
     if (jSel) {
       jSel.innerHTML = '<option value="">Select job...</option>' +
@@ -47,17 +56,17 @@
       return;
     }
 
-    // Group by project type for readability
-    const byType = {};
+    // Group by program for readability
+    const byProgram = {};
     cache.forEach(pe => {
-      const k = pe.project_type_name || '— No type —';
-      (byType[k] = byType[k] || []).push(pe);
+      const k = programLabel(pe.program);
+      (byProgram[k] = byProgram[k] || []).push(pe);
     });
 
     let html = '';
-    for (const [typeName, entries] of Object.entries(byType)) {
+    for (const [programName, entries] of Object.entries(byProgram)) {
       html += `<div style="margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--primary);padding:6px 0;border-bottom:2px solid var(--primary-light);margin-bottom:6px">${esc(typeName)}</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--primary);padding:6px 0;border-bottom:2px solid var(--primary-light);margin-bottom:6px">${esc(programName)}</div>
         <table style="width:100%;font-size:13px;border-collapse:collapse">
           <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
             <th style="text-align:left;padding:6px 8px">Job</th>
@@ -85,18 +94,18 @@
   }
 
   async function savePricingEntry() {
-    const project_type_id = document.getElementById('new-pe-type').value;
+    const program = document.getElementById('new-pe-type').value;
     const job_id = document.getElementById('new-pe-job').value;
     const billing_code = document.getElementById('new-pe-code').value.trim() || null;
     const billing_type = document.getElementById('new-pe-billing-type').value;
     const rate = parseFloat(document.getElementById('new-pe-rate').value);
     const notes = document.getElementById('new-pe-notes').value.trim() || null;
 
-    if (!project_type_id || !job_id) return alert('Project type and job are required.');
+    if (!program || !job_id) return alert('Program and job are required.');
     if (isNaN(rate) || rate < 0) return alert('Enter a valid non-negative rate.');
 
     try {
-      await api('/api/pricing', 'POST', { project_type_id, job_id, billing_code, billing_type, rate, notes });
+      await api('/api/pricing', 'POST', { program, job_id, billing_code, billing_type, rate, notes });
       document.getElementById('new-pe-code').value = '';
       document.getElementById('new-pe-rate').value = '';
       document.getElementById('new-pe-notes').value = '';
@@ -110,7 +119,7 @@
     const cache = (typeof pricingCache !== 'undefined' && pricingCache) ? pricingCache : [];
     const pe = cache.find(p => p.id === id);
     if (!pe) return;
-    const newRate = prompt(`Update rate for ${pe.job_name} (${pe.project_type_name})\nCurrent: ${pe.rate}`, pe.rate);
+    const newRate = prompt(`Update rate for ${pe.job_name} (${programLabel(pe.program)})\nCurrent: ${pe.rate}`, pe.rate);
     if (newRate === null) return;
     const r = parseFloat(newRate);
     if (isNaN(r) || r < 0) return alert('Invalid rate.');

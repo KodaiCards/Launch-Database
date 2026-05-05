@@ -1,66 +1,42 @@
-// routes/project_types.js — program categories CRUD (BAU / GF(R) / RUS /
-// Other / custom). Soft-delete via active=false to preserve historical
-// references on existing projects.
+// routes/project_types.js — legacy compat shim.
 //
-// Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
+// Phase 3b (2026-05-04): the project_types TABLE was dropped in favor of
+// the canonical engineering_contracts.program enum. This route module is
+// kept around so existing portal/admin frontends that still call
+// /api/project-types don't 404 in the deploy window.
+//
+// GET /api/project-types     → returns the four program enum values as
+//                              {id, name, active} rows so old dropdowns
+//                              still populate. The id is the program code
+//                              itself (e.g. "rus") so any frontend that
+//                              POSTs the id back as project_type_id is
+//                              actually sending us the program string;
+//                              the projects/pricing endpoints handle that
+//                              gracefully.
+// POST/PUT/DELETE             → 410 Gone with a clear message. Programs
+//                              are a fixed enum now; admin can no longer
+//                              add or rename them.
 
-module.exports = function installProjectTypesRoutes(app, pool, mw) {
+const PROGRAM_ROWS = [
+  { id: 'rus',   name: 'RUS',   active: true },
+  { id: 'bau',   name: 'BAU',   active: true },
+  { id: 'gfr',   name: 'GF(R)', active: true },
+  { id: 'other', name: 'Other', active: true },
+];
+
+module.exports = function installProjectTypesRoutes(app /*, pool, mw */) {
   app.get('/api/project-types', async (req, res) => {
-    try {
-      const { rows } = await pool.query('SELECT * FROM project_types WHERE active = true ORDER BY name');
-      res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    res.json(PROGRAM_ROWS);
   });
 
-  app.post('/api/project-types', async (req, res) => {
-    const { name } = req.body;
-    if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
-    try {
-      const { rows } = await pool.query(
-        `INSERT INTO project_types (name) VALUES ($1)
-         ON CONFLICT (name) DO UPDATE SET active = true RETURNING *`,
-        [String(name).trim()]
-      );
-      res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  });
-
-  // PUT — rename a project type. Soft-edit: only the name changes; existing
-  // projects keep pointing at the same id so historical references stay
-  // valid. Reactivates a soft-deleted record (active=false → active=true)
-  // when the name comes back.
-  app.put('/api/project-types/:id', async (req, res) => {
-    const { name, active } = req.body || {};
-    const sets = [];
-    const vals = [req.params.id];
-    let i = 2;
-    if (name !== undefined) {
-      const trimmed = String(name).trim();
-      if (!trimmed) return res.status(400).json({ error: 'name cannot be empty' });
-      sets.push(`name = $${i++}`); vals.push(trimmed);
-    }
-    if (active !== undefined) {
-      sets.push(`active = $${i++}`); vals.push(!!active);
-    }
-    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
-    try {
-      const { rows } = await pool.query(
-        `UPDATE project_types SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
-        vals
-      );
-      if (!rows[0]) return res.status(404).json({ error: 'Project type not found' });
-      res.json(rows[0]);
-    } catch (e) {
-      // 23505 = unique_violation on (name) when renaming to a taken name.
-      if (e.code === '23505') return res.status(409).json({ error: 'Another project type already uses that name' });
-      res.status(500).json({ error: e.message });
-    }
-  });
-
-  app.delete('/api/project-types/:id', async (req, res) => {
-    try {
-      await pool.query('UPDATE project_types SET active = false WHERE id = $1', [req.params.id]);
-      res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  });
+  // Frontends or AI tools that try to mutate the (now-fixed) program list
+  // get a clear 410 instead of a silent 404. The body identifies why.
+  const goneHandler = (req, res) => {
+    res.status(410).json({
+      error: 'Project Types are now a fixed enum (rus / bau / gfr / other). The CRUD surface was retired in Phase 3b. Set program on each engineering contract instead.',
+    });
+  };
+  app.post('/api/project-types', goneHandler);
+  app.put('/api/project-types/:id', goneHandler);
+  app.delete('/api/project-types/:id', goneHandler);
 };

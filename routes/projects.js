@@ -100,7 +100,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   app.post('/api/projects', async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
-      project_type, project_type_id, job_id,
+      project_type, program, job_id,
       status = 'active', billing_type, billing_rate,
       footage, start_date, notes, parent_id, budget_code_id, concentrator_id,
       service_area_label,    // free-text service area for non-PSC clients
@@ -108,6 +108,20 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       billing_cadence, projected_revenue,
       manual_invoice_amount
     } = req.body;
+    // Phase 3b (2026-05-04): project_types was dropped. Pricing now keys on
+    // a program enum (rus|bau|gfr|other). Each project carries its own
+    // program — auto-derived from the engineering contract when one is
+    // attached, otherwise mirrored from the (legacy) free-text project_type
+    // when that string matches a program label, otherwise NULL.
+    if (program !== undefined && program !== null && program !== '') {
+      const v = String(program).trim().toLowerCase();
+      if (!['rus','bau','gfr','other'].includes(v)) {
+        return res.status(400).json({ error: `Invalid program "${program}" — allowed: rus, bau, gfr, other.` });
+      }
+      program = v;
+    } else {
+      program = null;
+    }
 
     try {
       // Auto-nesting: when admin doesn't explicitly pick a parent, derive it
@@ -182,10 +196,25 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         : (effectiveManual != null ? effectiveManual
            : (fin.expectedRevenue != null ? fin.expectedRevenue : null));
 
+      // Auto-derive program from the engineering contract if one is
+      // attached and no explicit program was passed. PSC has both RUS and
+      // BAU work, so admin/AI-set program wins; otherwise we trust the EC.
+      if (!program && contract_id) {
+        const ecLookup = await pool.query(
+          `SELECT ec.program
+             FROM contracts c
+             JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+            WHERE c.id = $1`, [contract_id]
+        );
+        if (ecLookup.rows.length && ecLookup.rows[0].program) {
+          program = ecLookup.rows[0].program;
+        }
+      }
+
       const { rows } = await pool.query(`
         INSERT INTO projects (
           name, client_id, contract_id, work_order_number,
-          project_type, project_type_id, job_id,
+          project_type, program, job_id,
           status, billing_type, billing_rate,
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, budget_code_id, concentrator_id,
@@ -195,7 +224,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
-        project_type, project_type_id || null, job_id || null,
+        project_type, program, job_id || null,
         status, effectiveBillingType, effectiveRate || null,
         footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
         start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
@@ -224,13 +253,25 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   });
 
   app.put('/api/projects/:id', async (req, res) => {
-    const {
+    let {
       name, client_id, contract_id, work_order_number,
-      project_type, project_type_id, job_id,
+      project_type, program, job_id,
       status, billing_type, billing_rate,
       footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id,
       billing_cadence, projected_revenue, manual_invoice_amount
     } = req.body;
+    // Phase 3b: program enum replaces project_type_id. Same validation as POST.
+    if (program !== undefined) {
+      if (program === null || program === '') {
+        program = null;
+      } else {
+        const v = String(program).trim().toLowerCase();
+        if (!['rus','bau','gfr','other'].includes(v)) {
+          return res.status(400).json({ error: `Invalid program "${program}" — allowed: rus, bau, gfr, other.` });
+        }
+        program = v;
+      }
+    }
 
     try {
       // Duplicate-project guard — only check if name OR parent is being changed
@@ -277,10 +318,28 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         ? (manual_invoice_amount === null || manual_invoice_amount === '' ? null : parseFloat(manual_invoice_amount))
         : existing.rows[0]?.manual_invoice_amount;
 
+      // Auto-derive program from the EC if not supplied and contract changed.
+      // COALESCE pattern: only update program if explicitly provided OR
+      // derivable from a freshly-attached EC.
+      let effectiveProgram = program;
+      if (effectiveProgram === undefined && contract_id !== undefined) {
+        if (contract_id) {
+          const ecLookup = await pool.query(
+            `SELECT ec.program
+               FROM contracts c
+               JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+              WHERE c.id = $1`, [contract_id]
+          );
+          if (ecLookup.rows.length && ecLookup.rows[0].program) {
+            effectiveProgram = ecLookup.rows[0].program;
+          }
+        }
+      }
+
       const { rows } = await pool.query(`
         UPDATE projects SET
           name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
-          project_type=$5, project_type_id=$6, job_id=$7,
+          project_type=$5, program=COALESCE($6, program), job_id=$7,
           status=$8, billing_type=$9, billing_rate=$10,
           footage=$11, miles=$12, expected_hours=$13, expected_revenue=$14,
           start_date=$15, completed_date=$16, billed_date=$17,
@@ -291,7 +350,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         WHERE id=$26 RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
-        project_type, project_type_id || null, job_id || null,
+        project_type, effectiveProgram === undefined ? null : effectiveProgram, job_id || null,
         status, effectiveBillingType, effectiveRate || null,
         footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
         start_date || null, completed_date || null, billed_date || null,
