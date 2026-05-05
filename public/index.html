@@ -394,7 +394,13 @@ body.ai-open .main{padding-right:360px}
 .ai-header-title{font-weight:600;font-size:14px;flex:1}
 .ai-dot{width:8px;height:8px;border-radius:50%;background:#4AE54A;flex-shrink:0}
 .ai-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-.ai-msg{max-width:94%;font-size:13px;line-height:1.5}
+/* flex-shrink:0 — without it, .ai-msg children inside a column flex container
+   shrink to ~0px when the container's accumulated children would overflow.
+   The bulk_create_projects approval card has tall inner content (99-spec
+   <details><pre>) and was collapsing to height:3px, hiding the approval
+   header, the rows, and the Apply button. The user reported "nothing's
+   working" — the card was actually rendered, just zero-height. */
+.ai-msg{max-width:94%;font-size:13px;line-height:1.5;flex-shrink:0}
 .ai-msg.user{align-self:flex-end;background:var(--primary);color:#fff;padding:8px 12px;border-radius:12px 12px 3px 12px}
 .ai-msg.assistant{align-self:flex-start;background:var(--gray-light);color:var(--text);padding:8px 12px;border-radius:3px 12px 12px 12px}
 .ai-msg.assistant strong{color:var(--primary)}
