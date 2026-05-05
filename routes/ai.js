@@ -1993,11 +1993,23 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       console.log(`AI usage — in:${u.input_tokens} out:${u.output_tokens} cache_write:${u.cache_creation_input_tokens || 0} cache_read:${u.cache_read_input_tokens || 0} iters:${iterations} mods:${successfulModifications.length}`);
     }
 
+    // Diagnostic: when the final response has neither text nor tool results,
+    // something silently failed (max_tokens hit mid-tool-use, hallucination
+    // guard stripped, or model produced empty content). Surface stop_reason
+    // and content-block shape on the response so we can diagnose live without
+    // a redeploy. Cheap — only runs when the response is empty.
+    const _diag = (!finalText.trim() && !toolResults.length) ? {
+      stop_reason: response.stop_reason,
+      content_block_types: (response.content || []).map(b => b.type),
+      content_lengths: (response.content || []).map(b => b.type === 'text' ? (b.text || '').length : (b.type === 'tool_use' ? Object.keys(b.input || {}).length : 0)),
+      iterations,
+    } : null;
     res.json({
       kind: 'final',
       content: finalText.trim(),
       toolResults,
       usage: response.usage,
+      ...(_diag ? { _debug_empty: _diag } : {}),
     });
 
   } catch (e) {
