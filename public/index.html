@@ -3426,22 +3426,21 @@ async function openPscRusPdfModal() {
   document.getElementById('prp-end').value = fmtDate(lastDay);
   document.getElementById('prp-preview').style.display = 'none';
 
-  // Load engineering contracts (already client-filtered server-side will
-  // include all; we filter to RUS clients here for clarity).
+  // Load engineering contracts and filter to program='rus'. After Path B
+  // (2026-05-04), program lives at the engineering-contract level, not the
+  // client level — PSC has both RUS and non-RUS engineering contracts, and
+  // showing the BAU ones in this picker would only lead to a backend
+  // rejection ("template is exclusive to program='rus'"). Hiding them here
+  // saves a round-trip and confusion.
   const ecSel = document.getElementById('prp-ec');
   ecSel.innerHTML = '<option value="">Loading…</option>';
   try {
     const ecs = await api('/api/engineering-contracts');
-    // Filter to RUS clients — generator refuses non-RUS, but hiding them
-    // here saves a round-trip and confusion.
-    const rusEcs = ecs.filter(ec => {
-      const cl = (clients || []).find(c => c.id === ec.client_id);
-      return cl && cl.is_rus;
-    });
+    const rusEcs = ecs.filter(ec => ec.program === 'rus');
     ecSel.innerHTML = '<option value="">— Select —</option>' +
       rusEcs.map(ec => `<option value="${esc(ec.id)}">${esc(ec.client_name)} · ${esc(ec.name)}</option>`).join('');
     if (!rusEcs.length) {
-      ecSel.innerHTML = '<option value="">No RUS engineering contracts yet — add one in Settings</option>';
+      ecSel.innerHTML = '<option value="">No RUS-program engineering contracts yet — add one in Settings (set Program → RUS)</option>';
     }
   } catch (e) {
     ecSel.innerHTML = `<option value="">Failed to load: ${esc(e.message)}</option>`;

@@ -511,17 +511,17 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   //   1) team match — only EXPLICIT team match or 'both'. Jobs with NULL
   //      team (admin-only / unassigned) are excluded from portals to prevent
   //      legacy/leftover jobs from leaking into the portal dropdowns.
-  //   2) applicability — for the optional client_id query param, look up
-  //      the client's is_rus flag and filter by for_psc_client / for_generic_client.
+  //   2) applicability — Path B (2026-05-04): scope by program when an
+  //      engineering_contract_id is given; fall back to the client's mix
+  //      of EC programs. PSC has both RUS and BAU work, so client-only
+  //      filtering must open the picker to BOTH for_psc_client and
+  //      for_generic_client jobs (the legacy cl.is_rus filter incorrectly
+  //      hid one half). Mirrors the admin-side logic in routes/jobs.js.
   // Money fields stripped.
   app.get('/api/jobs', requireAuth(), async (req, res) => {
     try {
       const clientId = req.query.client_id || null;
-      let isPsc = null;
-      if (clientId) {
-        const c = await pool.query('SELECT is_rus FROM clients WHERE id = $1', [clientId]);
-        if (c.rows.length) isPsc = c.rows[0].is_rus === true;
-      }
+      const ecId = req.query.engineering_contract_id || null;
 
       // Defensive: only include applicability filters if those columns exist
       // (in case bootstrap hasn't run yet on this service).
@@ -534,9 +534,43 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
 
       const conds = [`active = true`, `(team = $1 OR team = 'both')`];
       const params = [portal];
+
       if (hasApplicability) {
-        if (isPsc === true) conds.push(`for_psc_client = true`);
-        else if (isPsc === false) conds.push(`for_generic_client = true`);
+        if (ecId) {
+          const ec = await pool.query(
+            'SELECT program FROM engineering_contracts WHERE id = $1',
+            [ecId]
+          );
+          if (ec.rows.length) {
+            const program = ec.rows[0].program;
+            if (program === 'rus') conds.push(`for_psc_client = true`);
+            else if (program) conds.push(`for_generic_client = true`);
+            // program=NULL: don't gate — admin hasn't classified yet.
+          }
+        } else if (clientId) {
+          const mix = await pool.query(
+            `SELECT
+               SUM(CASE WHEN program = 'rus' THEN 1 ELSE 0 END)::int  AS rus_count,
+               SUM(CASE WHEN program IS NOT NULL AND program <> 'rus' THEN 1 ELSE 0 END)::int AS other_count,
+               COUNT(*)::int AS total_ec_count
+             FROM engineering_contracts
+             WHERE client_id = $1`,
+            [clientId]
+          );
+          const { rus_count, other_count, total_ec_count } = mix.rows[0];
+          const hasRus   = rus_count > 0;
+          // No engineering contracts yet → treat as generic so first-time
+          // users can still create projects on a fresh client.
+          const hasOther = other_count > 0 || total_ec_count === 0;
+
+          if (hasRus && hasOther) {
+            conds.push(`(for_psc_client = true OR for_generic_client = true)`);
+          } else if (hasRus) {
+            conds.push(`for_psc_client = true`);
+          } else {
+            conds.push(`for_generic_client = true`);
+          }
+        }
       }
 
       const { rows } = await pool.query(
