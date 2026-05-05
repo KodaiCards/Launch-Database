@@ -608,6 +608,30 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <i class="fa-solid fa-clipboard-check"></i> Approvals
       <span id="approvals-badge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 4px;background:var(--danger);color:#fff;border-radius:9px;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--white);box-sizing:content-box">0</span>
     </button>
+    <!-- Portals dropdown — quick access to the three external portal sites
+         from the admin header. Each opens in a new tab so the admin's
+         current view isn't lost. -->
+    <div style="position:relative;display:inline-block">
+      <button class="btn btn-secondary btn-sm" id="portals-btn"
+              onclick="document.getElementById('portals-menu').style.display = (document.getElementById('portals-menu').style.display==='block'?'none':'block')"
+              title="Open one of the team portals in a new tab">
+        <i class="fa-solid fa-up-right-from-square"></i> Portals
+      </button>
+      <div id="portals-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.25);min-width:220px;z-index:1000;padding:4px;font-size:13px">
+        <a href="https://launchfiberdesignportal.xyz/"     target="_blank" rel="noopener" onclick="document.getElementById('portals-menu').style.display='none'" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+          <i class="fa-solid fa-pen-ruler" style="color:var(--primary);width:16px"></i>
+          <span><b>Design Portal</b><div style="font-size:11px;color:var(--text-muted)">launchfiberdesignportal.xyz</div></span>
+        </a>
+        <a href="https://launchfiberpermittingportal.xyz/" target="_blank" rel="noopener" onclick="document.getElementById('portals-menu').style.display='none'" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+          <i class="fa-solid fa-clipboard-list" style="color:var(--primary);width:16px"></i>
+          <span><b>Permitting Portal</b><div style="font-size:11px;color:var(--text-muted)">launchfiberpermittingportal.xyz</div></span>
+        </a>
+        <a href="https://launchfibertimeclock.xyz/"        target="_blank" rel="noopener" onclick="document.getElementById('portals-menu').style.display='none'" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+          <i class="fa-solid fa-clock" style="color:var(--primary);width:16px"></i>
+          <span><b>Timeclock Portal</b><div style="font-size:11px;color:var(--text-muted)">launchfibertimeclock.xyz</div></span>
+        </a>
+      </div>
+    </div>
     <button class="btn btn-secondary btn-sm" onclick="toggleAI()"><i class="fa-solid fa-robot"></i> AI Assistant</button>
   </div>
 </header>
@@ -826,7 +850,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div id="view-permitting" class="view">
       <div class="section-header">
         <div><div class="section-title">Permitting Pipeline</div></div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <a href="https://launchfiberpermittingportal.xyz/" target="_blank" rel="noopener"
+             class="btn btn-secondary btn-sm" style="text-decoration:none"
+             title="Open the Permitting Portal in a new tab">
+            <i class="fa-solid fa-up-right-from-square"></i> Open Portal
+          </a>
           <select class="filter" id="perm-stage-filter" onchange="loadPermits()">
             <option value="">All stages</option>
             <option value="potential">Potential</option>
@@ -856,6 +885,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div id="view-design" class="view">
       <div class="section-header">
         <div><div class="section-title">Design Pipeline</div><div class="section-sub">Track design projects through stages</div></div>
+        <div>
+          <a href="https://launchfiberdesignportal.xyz/" target="_blank" rel="noopener"
+             class="btn btn-secondary btn-sm" style="text-decoration:none"
+             title="Open the Design Portal in a new tab">
+            <i class="fa-solid fa-up-right-from-square"></i> Open Portal
+          </a>
+        </div>
       </div>
       <div id="design-stage-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>
       <div class="card">
@@ -980,6 +1016,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="section-header">
         <div><div class="section-title">Hours</div></div>
         <div style="display:flex;gap:8px;align-items:center">
+          <a href="https://launchfibertimeclock.xyz/" target="_blank" rel="noopener"
+             class="btn btn-secondary btn-sm" style="text-decoration:none"
+             title="Open the Timeclock Portal in a new tab">
+            <i class="fa-solid fa-up-right-from-square"></i> Open Portal
+          </a>
           <select class="filter" id="hrs-period" onchange="loadHours()">
             <option value="month" selected>Specific Month</option>
             <option value="ytd">Year to Date</option>
@@ -2707,6 +2748,16 @@ let currentView = 'dashboard';
 // ═══════════════════════════════════════════════════════════
 async function init() {
   document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'long',day:'numeric'});
+
+  // Click-outside-to-close for the Portals header dropdown.
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('portals-menu');
+    const btn  = document.getElementById('portals-btn');
+    if (!menu || menu.style.display !== 'block') return;
+    if (menu.contains(e.target) || btn?.contains(e.target)) return;
+    menu.style.display = 'none';
+  });
+
   // Set current month/year dropdowns
   const now = new Date();
   const yrs = [now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1];
