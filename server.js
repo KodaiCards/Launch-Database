@@ -118,11 +118,13 @@ app.use((req, res, next) => {
 //   'design'     — design team portal
 //   'permitting' — permitting team portal
 //   'timeclock'  — Launch Time Clock (clock-in/out for hourly tracking)
+//   'splice'     — Splice Matrix (OSP fiber splice planning + PDF export)
 const PORTAL_MODE = (process.env.PORTAL_MODE || '').toLowerCase();
 const PORTAL_NAMES = {
   permitting: 'Permitting Portal',
   design: 'Design Portal',
   timeclock: 'Launch Time Clock',
+  splice: 'Splice Matrix',
   // Customer portal: external users (clients) see ONLY their own
   // projects, progress, and invoices. Backed by customer_clients
   // table + the 'customer' role.
@@ -271,6 +273,7 @@ if (PORTAL_MODE) {
   const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
                    : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
                    : PORTAL_MODE === 'customer' ? 'customer.html'
+                   : PORTAL_MODE === 'splice' ? 'splice.html'
                    : 'design.html';
   const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
 
@@ -572,6 +575,13 @@ require('./routes/reports')(app, pool, {});
 require('./routes/billing')(app, pool, { requireManagerOrAdmin, invoiceGenerator });
 
 
+// Splice Matrix tool (OSP fiber splice planning + PDF export).
+// Standalone: no FK to projects/contracts/billing. Schema in
+// migrations/0001_splice_schema.sql. Endpoints under /api/splice/*.
+// PORTAL_MODE='splice' serves public/splice.html as its SPA.
+require('./routes/splice')(app, pool, { requireAuth });
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // API ERROR HANDLER — catches anything thrown out of an /api/* route AND
 // out of multer's pre-handler middleware (file-too-large, file-rejected),
@@ -623,6 +633,7 @@ app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'de
 const SPA_FILE = PORTAL_MODE === 'permitting' ? 'permitting.html'
                : PORTAL_MODE === 'design' ? 'design.html'
                : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
+               : PORTAL_MODE === 'splice' ? 'splice.html'
                : 'index.html';
 
 // Hard 404 (JSON) for any /api/* path that didn't match a real route. Without
@@ -667,7 +678,7 @@ app.get('*', (req, res) => {
   // surface — every employee should be able to use it. Access to specific
   // PROJECTS is still scoped via /api/projects, and audit + edit history
   // is still per-user, so there's no data leak risk in opening the portal.
-  if (PORTAL_MODE && req.user && req.user.role !== 'admin' && PORTAL_MODE !== 'timeclock') {
+  if (PORTAL_MODE && req.user && req.user.role !== 'admin' && PORTAL_MODE !== 'timeclock' && PORTAL_MODE !== 'splice') {
     const primaryTeam = req.user.role.startsWith('design_') ? 'design'
                       : req.user.role.startsWith('permitting_') ? 'permitting'
                       : req.user.role.startsWith('inspection_') ? 'inspection'
