@@ -232,6 +232,7 @@ HONESTY — NEVER FAKE SUCCESS:
 - After any modifying tool call (log_time_entries, create_project, update_project, etc.), look at the tool result. If success:false or there's an error field, report the error to the user honestly — do not paper over it.
 - DO NOT say "I'll create that", "Let me log those", "Creating the project now", or any future/progressive phrasing followed by no action. Either CALL the tool in the same turn, or ASK a clarifying question. The frontend has a hallucination guard that surfaces a red warning to the user when text claims action without a successful tool result, so these silent skips don't go unnoticed — they look bad. Prefer "Should I create X with values Y?" (a question) over "I'll create X" (a hollow promise).
 - USER NUDGES — if the user's reply reads as "did you start", "have you started", "why didn't you do it", "just do it", "go", "run it", "starting", or any short prompt that implies you should stop talking and execute, treat the prior plan in this thread as APPROVED and re-emit the proposed tool calls in the SAME turn. Do not say "I haven't started yet" without immediately firing the tool calls in the same response. The user has already confirmed by nudging.
+- BATCHING — when scaffolding more than ~5 projects in one ask (e.g. "create the whole PSC tree", "set up all WO containers under Contract 3", "give me Permitting DOT/RR/County under each area"), USE bulk_create_projects ONCE with the full spec list, NOT a series of create_project calls split across "Layer 1 / Layer 2 / Layer 3" approval rounds. The bulk tool resolves intra-batch parent_id refs via local_id, so a single approval click materializes the entire tree. Splitting a tree into N layers means N approval round-trips for the user, which is the wrong default. Reserve single create_project for one-off creates the user explicitly named.
 - After log_time_entries returns success, IMMEDIATELY run a verification query like:
     SELECT COUNT(*) as cnt, SUM(hours) as total_hours FROM time_entries WHERE import_batch = 'ai_import_<batch_id>'
   and report the verified count and total to the user. This proves the data actually landed and catches any silent failures.
@@ -376,6 +377,43 @@ const AI_TOOLS = [
         reason: { type: 'string', description: 'Short reason / justification (shown on the approval card)' }
       },
       required: ['project_ids']
+    }
+  },
+  {
+    name: 'bulk_create_projects',
+    description: 'Create a TREE of projects in a single approval round. Use this whenever the user asks to scaffold more than ~5 projects at once (full PSC tree, all WO containers under a contract, all permitting sub-rollups under an area, etc.) instead of firing many small create_project calls across many approval cards. Each spec carries a `local_id` string the AI invents — referencing it as another spec\'s `parent_local_id` lets the tool resolve parent UUIDs server-side after creating each row in dependency order. Use `is_rollup: true` for container/folder projects (Contract, Service Area, Team) — they show as collapsible folders in the tree. Set `is_rollup: false` (or omit) for actual leaves that hold hours / footage / invoices. Returns a map of local_id → created UUID so the AI can reference the new ids in follow-up tool calls. ONLY call after the user has explicitly confirmed the full plan.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projects: {
+          type: 'array',
+          description: 'Array of project specs to create in one transaction. Order is auto-resolved by parent_local_id; circular refs are rejected.',
+          items: {
+            type: 'object',
+            properties: {
+              local_id:        { type: 'string',  description: 'Caller-invented stable id (e.g. "C3", "C3-Crossroad", "C3-Crossroad-Permitting"). Used to wire parent refs in this same batch.' },
+              parent_local_id: { type: 'string',  description: 'local_id of the parent in this batch. Mutually exclusive with parent_id.' },
+              parent_id:       { type: 'string',  description: 'UUID of an existing project to nest under. Mutually exclusive with parent_local_id. Leave both empty for root.' },
+              name:            { type: 'string' },
+              client_id:       { type: 'string' },
+              contract_id:     { type: 'string' },
+              concentrator_id: { type: 'string' },
+              project_type:    { type: 'string', description: "rollup / other / inspection / re / permitting / design" },
+              is_rollup:       { type: 'boolean', description: 'TRUE for container/folder projects (default FALSE)' },
+              status:          { type: 'string', description: 'active / completed / billed (default active)' },
+              billing_type:    { type: 'string', description: 'hourly / footage' },
+              billing_rate:    { type: 'number' },
+              billing_cadence: { type: 'string', description: 'one_time / monthly' },
+              footage:         { type: 'number' },
+              start_date:      { type: 'string', description: 'YYYY-MM-DD' },
+              work_order_number: { type: 'string' },
+              notes:           { type: 'string' },
+            },
+            required: ['local_id', 'name', 'client_id'],
+          },
+        },
+      },
+      required: ['projects'],
     }
   },
   {
@@ -856,6 +894,105 @@ async function executeTool(toolName, toolInput) {
           deleted: root ? root.name : id,
           deleted_count: tree.length,
           included_descendants: tree.length - 1,
+        };
+      }
+
+      case 'bulk_create_projects': {
+        // Multi-project tree create with intra-batch parent resolution.
+        // Each spec carries a local_id; parent_local_id refs another spec
+        // in the same batch. Topological sort orders inserts so every
+        // parent exists before its children. Real UUIDs are generated
+        // server-side and the local_id → UUID map is returned for the
+        // AI to reference in follow-up tool calls.
+        const specs = Array.isArray(toolInput.projects) ? toolInput.projects : [];
+        if (!specs.length) return { success: false, error: 'projects array required' };
+
+        // Topological sort by parent_local_id
+        const byLocal = {};
+        for (const s of specs) {
+          if (!s.local_id) return { success: false, error: 'every spec needs a local_id' };
+          if (byLocal[s.local_id]) return { success: false, error: `duplicate local_id: ${s.local_id}` };
+          byLocal[s.local_id] = s;
+        }
+        const order = [];
+        const placed = new Set();
+        // Deterministic loop — each pass picks every spec whose parent is
+        // already placed (or has no in-batch parent). Bound at specs.length+1
+        // passes; if we ever fail to place anything, there's a cycle.
+        for (let pass = 0; pass <= specs.length; pass++) {
+          let added = 0;
+          for (const s of specs) {
+            if (placed.has(s.local_id)) continue;
+            if (s.parent_local_id && !placed.has(s.parent_local_id)) continue;
+            order.push(s); placed.add(s.local_id); added++;
+          }
+          if (placed.size === specs.length) break;
+          if (added === 0) {
+            return { success: false, error: 'cycle detected in parent_local_id refs (or unresolved parent_local_id)' };
+          }
+        }
+
+        const idMap = {};        // local_id → real UUID
+        const created = [];
+        const failed = [];
+        for (const s of order) {
+          try {
+            const fin = calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
+            const realParent = s.parent_local_id
+              ? idMap[s.parent_local_id]
+              : (s.parent_id || null);
+            const { rows } = await pool.query(`
+              INSERT INTO projects (
+                name, client_id, contract_id, work_order_number,
+                project_type, status, billing_type, billing_rate,
+                footage, miles, expected_hours, expected_revenue,
+                start_date, notes, parent_id, concentrator_id,
+                is_rollup, billing_cadence
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+              RETURNING id, name`,
+              [
+                s.name,
+                s.client_id,
+                s.contract_id || null,
+                s.work_order_number || null,
+                s.project_type || 'other',
+                s.status || 'active',
+                s.billing_type || 'hourly',
+                s.billing_rate ?? 0,
+                s.footage || null,
+                fin.miles,
+                fin.expectedHours,
+                fin.expectedRevenue,
+                s.start_date || null,
+                s.notes || null,
+                realParent,
+                s.concentrator_id || null,
+                s.is_rollup === true,
+                s.billing_cadence || 'one_time',
+              ]
+            );
+            idMap[s.local_id] = rows[0].id;
+            created.push({ local_id: s.local_id, id: rows[0].id, name: rows[0].name });
+            // Auto-stage logic: same as create_project.
+            if (s.project_type === 'permitting' && !s.is_rollup) {
+              try {
+                await pool.query(
+                  'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
+                  [rows[0].id, 'potential']
+                );
+              } catch {}
+            }
+          } catch (e) {
+            failed.push({ local_id: s.local_id, name: s.name, error: e.message });
+          }
+        }
+        return {
+          success: failed.length === 0,
+          created_count: created.length,
+          failed_count: failed.length,
+          id_map: idMap,
+          created,
+          failed,
         };
       }
 
@@ -1433,7 +1570,7 @@ async function executeTool(toolName, toolInput) {
 // a "preview" payload to the frontend, and waits for the admin to click
 // Apply on each proposed action.
 const DESTRUCTIVE_AI_TOOLS = new Set([
-  'create_project', 'update_project', 'delete_project', 'bulk_delete_projects', 'update_project_status',
+  'create_project', 'bulk_create_projects', 'update_project', 'delete_project', 'bulk_delete_projects', 'update_project_status',
   'log_time_entries',
   'create_client', 'update_client', 'delete_client',
   'create_staff', 'create_contract', 'update_contract_umbrella',
@@ -1467,6 +1604,7 @@ function summarizeToolCall(toolName, toolInput) {
   const i = toolInput || {};
   switch (toolName) {
     case 'create_project':            return `Create project "${i.name}"`;
+    case 'bulk_create_projects':      return `BULK CREATE ${(i.projects || []).length} project${(i.projects || []).length === 1 ? '' : 's'} (tree)`;
     case 'update_project':            return `Update project ${i.project_id}`;
     case 'delete_project':            return `Delete project ${i.project_id}`;
     case 'bulk_delete_projects':      return `BULK DELETE ${(i.project_ids || []).length} project${(i.project_ids || []).length === 1 ? '' : 's'}${i.reason ? ` — ${i.reason}` : ''}`;
