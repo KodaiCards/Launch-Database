@@ -3002,24 +3002,40 @@ function populateContractDropdownForProgram() {
 }
 
 // Populate the Concentrator dropdown to show only the service areas
-// belonging to the currently-selected contract. Match concentrators by
-// their `contract_label` against the contract's `friendly_label`
-// (legacy data convention — see schema.sql concentrators seed).
+// belonging to the currently-selected contract.
+//
+// Matching strategy (most-specific first):
+//   1. concentrators.contract_label === contracts.friendly_label
+//      (clean schema match — what new contracts will use)
+//   2. contracts.contract_number STARTS WITH concentrators.contract_label
+//      (legacy production data: contract_number is "Contract 3 / 515-3"
+//      while concentrator.contract_label is "Contract 3" — startsWith
+//      bridges them without backfilling).
 function populateConcentratorDropdownForContract() {
   const sel = document.getElementById('proj-concentrator');
   if (!sel) return;
   const contractId = document.getElementById('proj-contract')?.value;
   const contract = (window.contractsCache || []).find(c => c.id === contractId);
-  const targetLabel = contract?.friendly_label || contract?.contract_number || null;
-  const allConcs = window.allConcentrators || allConcentrators || [];
+  const allConcs = (typeof allConcentrators !== 'undefined' && allConcentrators) || [];
 
   const prev = sel.value;
   if (!contractId) {
     sel.innerHTML = '<option value="">— Pick contract first —</option>';
     return;
   }
-  const filtered = allConcs.filter(co => !targetLabel || co.contract_label === targetLabel);
-  const opts = ['<option value="">— Select service area —</option>'];
+
+  const friendlyLabel = contract?.friendly_label || null;
+  const fullNumber = contract?.contract_number || '';
+  const filtered = allConcs.filter(co => {
+    if (!co.contract_label) return false;
+    if (friendlyLabel && co.contract_label === friendlyLabel) return true;
+    if (fullNumber && fullNumber.startsWith(co.contract_label)) return true;
+    return false;
+  });
+
+  const opts = filtered.length
+    ? ['<option value="">— Select service area —</option>']
+    : ['<option value="">No service areas linked to this contract</option>'];
   for (const co of filtered) {
     const wo = co.work_order_number ? ` (WO# ${co.work_order_number})` : '';
     opts.push(`<option value="${co.id}">${esc(co.area_name)}${wo}</option>`);
