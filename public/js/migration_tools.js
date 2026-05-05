@@ -24,29 +24,111 @@
 //
 // Functions exposed on window:
 //   runRenestMigration, scanOrphanFiles, adoptOrphan,
-//   adoptOrphansBulk, previewHoursBackfill, runHoursBackfill
+//   adoptOrphansBulk, previewHoursBackfill, runHoursBackfill,
+//   previewOrphanPrune, runOrphanPrune
 
 (function () {
   // Re-nest legacy projects: walks every real project and moves it
-  // under the correct rollup chain.
+  // under the correct rollup chain. Two-stage flow because the cleanup
+  // pass DELETEs empty rollup folders — backend defaults to dry-run and
+  // requires explicit {confirm: true} to actually mutate. Step 1 is a
+  // preview; step 2 is the confirm-and-apply round-trip.
   async function runRenestMigration() {
     const result = document.getElementById('renest-result');
     result.style.display = 'block';
     result.style.color = 'var(--text-muted)';
-    result.textContent = 'Running… this can take a moment for large project sets.';
+    result.textContent = 'Previewing changes…';
     try {
-      const r = await api('/api/_admin/migrate-nesting', 'POST');
+      // Step 1: dry-run preview (no body → backend treats as preview)
+      const preview = await api('/api/_admin/migrate-nesting', 'POST');
+      const wouldRemove = preview.obsolete_rollups_removed || 0;
+      // Build a confirmation summary the user has to acknowledge
+      let confirmMsg = `Re-nest ${preview.moved} of ${preview.processed} projects`;
+      if (wouldRemove > 0) {
+        confirmMsg += `\n\nDELETE ${wouldRemove} empty rollup folder${wouldRemove === 1 ? '' : 's'}:\n`;
+        confirmMsg += (preview.rollups_to_remove || []).slice(0, 10)
+          .map(r => `  • ${r.name}${r.rollup_level ? ' (' + r.rollup_level + ')' : ''}`).join('\n');
+        if (wouldRemove > 10) confirmMsg += `\n  …and ${wouldRemove - 10} more`;
+        confirmMsg += '\n\nDeleting empty rollups is permanent (no undo). Proceed?';
+      } else if (preview.moved === 0) {
+        result.style.color = 'var(--success)';
+        result.textContent = preview.hint || 'Tree already clean — nothing to do.';
+        return;
+      } else {
+        confirmMsg += '. Proceed?';
+      }
+      if (!confirm(confirmMsg)) {
+        result.style.color = 'var(--text-muted)';
+        result.textContent = 'Cancelled. ' + (preview.hint || '');
+        return;
+      }
+      result.textContent = 'Applying…';
+      // Step 2: confirm-and-apply
+      const r = await api('/api/_admin/migrate-nesting', 'POST', { confirm: true });
       result.style.color = r.failed > 0 ? 'var(--warning)' : 'var(--success)';
-      let summary = `Processed: ${r.processed}\nMoved:     ${r.moved}\nSkipped:   ${r.skipped}\nFailed:    ${r.failed}\n\n${r.hint || ''}`;
+      let summary = `Processed: ${r.processed}\nMoved:     ${r.moved}\nSkipped:   ${r.skipped}\nFailed:    ${r.failed}\nRollups removed: ${r.obsolete_rollups_removed || 0}\n\n${r.hint || ''}`;
       if (r.errors && r.errors.length) {
         summary += '\n\nErrors:\n' + r.errors.map(e => `  • ${e.name}: ${e.error}`).join('\n');
       }
       result.textContent = summary;
-      if (r.moved > 0) {
-        // Refresh the projects table so the new structure shows immediately.
+      if (r.moved > 0 || (r.obsolete_rollups_removed || 0) > 0) {
         if (typeof loadProjects === 'function') loadProjects();
         if (typeof loadDashboard === 'function') loadDashboard();
       }
+    } catch (e) {
+      result.style.color = 'var(--danger)';
+      result.textContent = 'Failed: ' + e.message;
+    }
+  }
+
+  // Preview / run the orphan-file prune. Same two-stage pattern: backend
+  // is dry-run by default, second call carries {confirm: true} once the
+  // operator acknowledges the destructive nature of the delete.
+  async function previewOrphanPrune() {
+    const result = document.getElementById('prune-result');
+    result.style.display = 'block';
+    result.style.color = 'var(--text-muted)';
+    result.textContent = 'Scanning…';
+    try {
+      const r = await api('/api/_admin/prune-orphan-files', 'POST', {});
+      result.style.color = r.candidates > 0 ? 'var(--warning)' : 'var(--success)';
+      let summary = `Orphan candidates: ${r.candidates}\nWould free:        ${(r.bytes_freed / 1024 / 1024).toFixed(1)} MB\nKept (too recent): ${r.skipped_too_recent}\n\n${r.hint || ''}`;
+      if (r.sample && r.sample.length) {
+        summary += '\n\nSample:\n' + r.sample.slice(0, 8).map(s => `  • ${s.file_path} (${(s.file_size/1024).toFixed(0)} KB, ${s.age_hours.toFixed(0)}h old)`).join('\n');
+      }
+      result.textContent = summary;
+    } catch (e) {
+      result.style.color = 'var(--danger)';
+      result.textContent = 'Failed: ' + e.message;
+    }
+  }
+
+  async function runOrphanPrune() {
+    const result = document.getElementById('prune-result');
+    result.style.display = 'block';
+    result.style.color = 'var(--text-muted)';
+    result.textContent = 'Previewing…';
+    try {
+      const preview = await api('/api/_admin/prune-orphan-files', 'POST', {});
+      if (preview.candidates === 0) {
+        result.style.color = 'var(--success)';
+        result.textContent = preview.hint || 'No orphans to prune.';
+        return;
+      }
+      const ok = confirm(
+        `Permanently delete ${preview.candidates} orphan file${preview.candidates === 1 ? '' : 's'}? ` +
+        `(${(preview.bytes_freed / 1024 / 1024).toFixed(1)} MB will be freed.)\n\n` +
+        `This cannot be undone.`
+      );
+      if (!ok) {
+        result.style.color = 'var(--text-muted)';
+        result.textContent = 'Cancelled.';
+        return;
+      }
+      result.textContent = 'Deleting…';
+      const r = await api('/api/_admin/prune-orphan-files', 'POST', { confirm: true });
+      result.style.color = 'var(--success)';
+      result.textContent = `Deleted: ${r.deleted}\nFreed:   ${(r.bytes_freed / 1024 / 1024).toFixed(1)} MB\nKept:    ${r.skipped_too_recent}\n\n${r.hint || ''}`;
     } catch (e) {
       result.style.color = 'var(--danger)';
       result.textContent = 'Failed: ' + e.message;
@@ -191,4 +273,6 @@
   window.adoptOrphansBulk = adoptOrphansBulk;
   window.previewHoursBackfill = previewHoursBackfill;
   window.runHoursBackfill = runHoursBackfill;
+  window.previewOrphanPrune = previewOrphanPrune;
+  window.runOrphanPrune = runOrphanPrune;
 })();

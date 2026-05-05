@@ -2371,6 +2371,21 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
             <div id="backfill-result" style="display:none;margin-top:10px"></div>
           </div>
+
+          <!-- Prune orphan upload files -->
+          <div style="border:1px solid var(--gray-border);border-radius:8px;padding:12px;background:var(--gray-light)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+              <div>
+                <strong style="font-size:13px">Prune orphan upload files</strong>
+                <p style="font-size:11px;color:var(--text-muted);margin:4px 0 0 0">Files left on disk after their owning project / invoice template was deleted. The scheduler runs this once a day for files older than 7 days; click <b>Preview</b> to see what's there now, then <b>Delete</b> to clear them sooner. <span style="color:var(--danger-text)">Permanent — cannot be undone.</span></p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;white-space:nowrap">
+                <button class="btn btn-secondary btn-sm" onclick="previewOrphanPrune()"><i class="fa-solid fa-eye"></i> Preview</button>
+                <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--danger)" onclick="runOrphanPrune()"><i class="fa-solid fa-broom"></i> Delete</button>
+              </div>
+            </div>
+            <div id="prune-result" style="display:none;margin-top:10px;padding:8px;background:var(--white);border-radius:6px;font-size:12px;font-family:monospace;white-space:pre-wrap"></div>
+          </div>
         </div>
       </div>
     </div>
