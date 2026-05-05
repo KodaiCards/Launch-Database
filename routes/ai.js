@@ -1831,9 +1831,17 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       : userWantsAction(conversationMessages)
         ? { type: 'any' }
         : { type: 'auto' };
+    // max_tokens=16000 — bulk_create_projects tool inputs for a full
+    // PSC RUS tree (3 contracts × 12 areas × ~7 nodes each ≈ 99 specs)
+    // exceed 4096 output tokens. Pre-fix the response truncated mid-JSON
+    // and the SDK retried, blowing past Railway's 5-min proxy timeout —
+    // user saw the chat hang. Sonnet 4.6 supports up to 64000 output
+    // tokens; 16000 fits the largest realistic batch with margin to
+    // spare for the AI's preamble text without making single-tool
+    // turns expensive.
     let response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 16000,
       system: systemBlocks,
       tools: cachedTools,
       tool_choice: initialToolChoice,
@@ -1903,7 +1911,7 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
 
       response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 16000,
         system: systemBlocks,
         tools: cachedTools,
         tool_choice: { type: 'auto' },
