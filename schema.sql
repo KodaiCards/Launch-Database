@@ -405,12 +405,12 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 
 -- DEPRECATED — Phase 3b (2026-05-04): the project_types table is dropped
--- by migration 0004. The CREATE TABLE / seed / pricing_entries seed
--- below still run on a fresh database to populate the legacy schema
--- (the per-statement retry in db.js makes that safe), and migration
--- 0004 then backfills the new `program` column on pricing_entries from
--- project_types.name and drops the table. End state: `program` enum
--- (rus|bau|gfr|other) on engineering_contracts + projects + pricing_entries.
+-- by migration 0004. The block below still runs on a fresh database to
+-- populate the legacy schema (the per-statement retry in db.js makes
+-- that safe), and migration 0004 then backfills the new `program`
+-- column on pricing_entries from project_types.name and drops the
+-- table. End state: program enum (rus|bau|gfr|other) on
+-- engineering_contracts + projects + pricing_entries.
 -- Project program categories (BAU, GF(R), RUS, Other).
 CREATE TABLE IF NOT EXISTS project_types (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
