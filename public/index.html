@@ -2285,11 +2285,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <div class="form-group" style="align-items:flex-start;padding-top:18px">
               <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-applied to permitting jobs"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label>
             </div>
-            <div class="form-group" style="align-items:flex-start;padding-top:18px">
-              <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Show this job for PSC clients"><input type="checkbox" id="new-job-for-psc" checked style="width:auto"> Show for PSC clients</label>
-            </div>
-            <div class="form-group" style="align-items:flex-start;padding-top:18px">
-              <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Show this job for non-PSC clients"><input type="checkbox" id="new-job-for-generic" checked style="width:auto"> Show for other clients</label>
+            <div class="form-group" title="RUS = USDA work, billing code required. Non-RUS = ordinary work. Shared = shows in both contexts.">
+              <label style="font-size:11px">Program Scope</label>
+              <select id="new-job-scope" style="font-size:13px">
+                <option value="rus">RUS (billing code required)</option>
+                <option value="non_rus">Non-RUS</option>
+                <option value="shared">Shared (both)</option>
+              </select>
             </div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">

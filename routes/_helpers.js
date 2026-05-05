@@ -92,31 +92,84 @@ async function collectProjectTree(rootId) {
   return all;
 }
 
+// Permitting hours calc — taper rule (added 2026-05-05 per owner spec).
+//
+// Owner's spec: "I need the ability to slightly scale down the calc as
+// the permit gets over 2 miles, the mileage after drops by 2 hours each
+// mile."
+//
+// Implementation: a randomized base hours-per-mile factor (25 → 30 in
+// 0.25 steps, 21 possible values) applies to miles 1 and 2 in full.
+// Each mile beyond 2 contributes (base − 2 × (mile_index − 2)) hours,
+// floored at PERMITTING_FLOOR_HRS_PER_MILE so the calc can't go to zero
+// or negative for very long permits.
+//
+// Examples (base = 27.5, floor = 5):
+//   1 mile  → 27.5 hrs
+//   2 miles → 55.0 hrs
+//   3 miles → 27.5 + 27.5 + 25.5 = 80.5 hrs
+//   4 miles → above + 23.5 = 104.0 hrs
+//   5 miles → above + 21.5 = 125.5 hrs
+//   ...
+//   13.25 miles → first 2 at 27.5 + 11 tapered miles → flat at floor for all beyond.
+//
+// Fractional last mile is pro-rated against the rate that would apply
+// to that integer mile slot.
+//
+// 25-hour absolute minimum still applies when total comes in below 25
+// (covers the sub-mile case the owner originally specified).
+const PERMITTING_FLOOR_HRS_PER_MILE = 5;
+const PERMITTING_TAPER_AFTER_MILES = 2;
+const PERMITTING_TAPER_DROP_PER_MILE = 2;
+const PERMITTING_MIN_TOTAL_HOURS = 25;
+
+function rateForMileIndex(mileIndex, baseFactor) {
+  // mileIndex is 1-based: mile 1 = first mile, mile 2 = second mile, ...
+  if (mileIndex <= PERMITTING_TAPER_AFTER_MILES) return baseFactor;
+  const tapered = baseFactor - PERMITTING_TAPER_DROP_PER_MILE * (mileIndex - PERMITTING_TAPER_AFTER_MILES);
+  return Math.max(PERMITTING_FLOOR_HRS_PER_MILE, tapered);
+}
+
+function computeTaperedPermittingHours(miles, baseFactor) {
+  if (miles <= 0) return 0;
+  let total = 0;
+  const wholeMiles = Math.floor(miles);
+  for (let m = 1; m <= wholeMiles; m++) {
+    total += rateForMileIndex(m, baseFactor);
+  }
+  const fraction = miles - wholeMiles;
+  if (fraction > 0) {
+    total += rateForMileIndex(wholeMiles + 1, baseFactor) * fraction;
+  }
+  return total;
+}
+
 // Pure-math: compute expected hours / expected revenue / miles for a
 // project from its type, rate, and footage. Permitting uses a randomized
-// hours-per-mile factor between 25 and 30 (in 0.25 steps) with a 25-hour
-// minimum if under a mile. Caller may pass a previously-saved factor via
-// hoursPerMileOverride so re-renders of the same project don't draw a new
-// random number every time.
+// hours-per-mile factor between 25 and 30 (in 0.25 steps) for the first
+// 2 miles, then tapers down by 2 hrs/mile thereafter (floored — see
+// computeTaperedPermittingHours above). Caller may pass a previously-
+// saved factor via hoursPerMileOverride so re-renders of the same
+// project don't draw a new random number every time.
 function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride) {
   const ratePresent = billingRate !== null && billingRate !== undefined && billingRate !== '' && !isNaN(parseFloat(billingRate));
   const PERMITTING_RATE = ratePresent ? parseFloat(billingRate) : null;
 
   if (type === 'permitting' && footage) {
     const miles = footage / 5280;
-    let hoursPerMile, totalHours;
+    let hoursPerMile;
     if (hoursPerMileOverride && hoursPerMileOverride > 0) {
       // Caller supplied a previously-saved random factor — re-use it
       hoursPerMile = +parseFloat(hoursPerMileOverride);
-      totalHours = miles * hoursPerMile;
     } else {
       // Random between 25.00 and 30.00 in 0.25 increments → 21 possible values
       const steps = Math.floor(Math.random() * 21);
       hoursPerMile = 25 + steps * 0.25;
-      totalHours = miles * hoursPerMile;
     }
-    // Minimum 25 hours if project is under a mile
-    if (miles < 1) totalHours = Math.max(25, totalHours);
+    let totalHours = computeTaperedPermittingHours(miles, hoursPerMile);
+    // Floor at 25 hours total — covers sub-mile permits and the small
+    // total at very-low-fraction miles.
+    if (totalHours < PERMITTING_MIN_TOTAL_HOURS) totalHours = PERMITTING_MIN_TOTAL_HOURS;
     // Snap to 0.25 increments
     totalHours = Math.round(totalHours * 4) / 4;
     return {

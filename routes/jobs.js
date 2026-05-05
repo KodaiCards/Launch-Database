@@ -24,22 +24,27 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   app.get('/api/jobs', async (req, res) => {
     try {
       // Filter precedence (most specific first):
-      //   1. engineering_contract_id — load that contract's program. If
-      //      program='rus' → for_psc_client=true jobs. Anything else
-      //      (bau/gfr/other) → for_generic_client=true jobs.
-      //   2. client_id alone — examine the client's engineering contracts.
-      //      • Has any RUS-program ECs AND any non-RUS-program ECs (or no
-      //        EC, which counts as generic) → return jobs flagged for
-      //        EITHER class. This is the PSC case: PSC has both RUS work
-      //        and ordinary BAU work, and the picker should not hide
-      //        either set when the user hasn't picked a contract yet.
-      //      • Only RUS-program ECs → for_psc_client=true.
-      //      • Only non-RUS-program ECs (or none) → for_generic_client=true.
-      //   3. No client at all → return every active job.
-      // Backward compat: legacy callers that pass client_id and expected the
-      // old cl.is_rus-based filter still see correct results, because the
-      // mixed case (PSC) now opens up both flags rather than incorrectly
-      // hiding one half.
+      //   1. engineering_contract_id provided → load that contract's
+      //      program and filter:
+      //        program='rus'         → program_scope IN ('rus', 'shared')
+      //        program in (bau,gfr,other) → program_scope IN ('non_rus', 'shared')
+      //        program IS NULL       → no program filter (admin must classify)
+      //   2. client_id provided (no EC yet) → look at the client's mix of
+      //      EC programs:
+      //        any RUS EC AND any non-RUS EC → all program_scope values
+      //          (including 'shared') so the picker doesn't hide work
+      //          they might choose. PSC's mixed case if it ever arises.
+      //        only RUS ECs   → program_scope IN ('rus', 'shared')
+      //        only other ECs → program_scope IN ('non_rus', 'shared')
+      //        no ECs         → all (treat fresh client as generic-friendly)
+      //   3. No client → return every active job.
+      //
+      // Path B + Phase 4 (2026-05-05): replaced the legacy
+      // for_psc_client/for_generic_client boolean pair with the
+      // program_scope enum (rus | non_rus | shared). Owner asked for
+      // cleaner segregation in the dropdowns. The legacy columns are
+      // still present in the DB for one release window but no longer
+      // read by this filter.
       const clientId = req.query.client_id || null;
       const ecId = req.query.engineering_contract_id || null;
 
@@ -52,15 +57,17 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         );
         if (ec.rows.length) {
           const program = ec.rows[0].program;
-          if (program === 'rus') conds.push(`for_psc_client = true`);
-          else if (program) conds.push(`for_generic_client = true`);
+          if (program === 'rus') {
+            conds.push(`program_scope IN ('rus','shared')`);
+          } else if (program) {
+            conds.push(`program_scope IN ('non_rus','shared')`);
+          }
           // program=NULL: don't gate — admin hasn't classified it yet.
         }
       } else if (clientId) {
-        // Look at the client's mix of EC programs.
         const mix = await pool.query(
           `SELECT
-             SUM(CASE WHEN program = 'rus' THEN 1 ELSE 0 END)::int  AS rus_count,
+             SUM(CASE WHEN program = 'rus' THEN 1 ELSE 0 END)::int AS rus_count,
              SUM(CASE WHEN program IS NOT NULL AND program <> 'rus' THEN 1 ELSE 0 END)::int AS other_count,
              COUNT(*)::int AS total_ec_count
            FROM engineering_contracts
@@ -68,18 +75,15 @@ module.exports = function installJobsRoutes(app, pool, mw) {
           [clientId]
         );
         const { rus_count, other_count, total_ec_count } = mix.rows[0];
-        const hasRus    = rus_count > 0;
-        // Treat "no engineering contracts" as generic so first-time users
-        // can still create projects on a fresh client.
-        const hasOther  = other_count > 0 || total_ec_count === 0;
+        const hasRus   = rus_count > 0;
+        const hasOther = other_count > 0 || total_ec_count === 0;
 
         if (hasRus && hasOther) {
-          // Mixed (PSC case): include jobs flagged for either class.
-          conds.push(`(for_psc_client = true OR for_generic_client = true)`);
+          // Mixed: don't gate — show every active job (RUS, non-RUS, shared).
         } else if (hasRus) {
-          conds.push(`for_psc_client = true`);
+          conds.push(`program_scope IN ('rus','shared')`);
         } else {
-          conds.push(`for_generic_client = true`);
+          conds.push(`program_scope IN ('non_rus','shared')`);
         }
       }
       const { rows } = await pool.query(
@@ -121,25 +125,60 @@ module.exports = function installJobsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
   });
 
+  // Allowed program_scope values match the CHECK constraint in
+  // migrations/0006_jobs_program_scope.sql.
+  const ALLOWED_PROGRAM_SCOPES = ['rus', 'non_rus', 'shared'];
+
   app.post('/api/jobs', async (req, res) => {
     const {
       name, default_billing_type = 'hourly', default_rate = null,
       is_permitting = false, notes = null, team = null,
-      billing_code = null, for_psc_client = true, for_generic_client = true
+      billing_code = null,
+      for_psc_client, for_generic_client,        // legacy bools (still accepted)
+      program_scope                               // new enum (preferred)
     } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
+
+    // Resolve program_scope: prefer the explicit enum, fall back to inferring
+    // from the legacy booleans for clients that haven't been updated yet.
+    let resolvedScope = null;
+    if (program_scope !== undefined && program_scope !== null && program_scope !== '') {
+      const v = String(program_scope).trim().toLowerCase();
+      if (!ALLOWED_PROGRAM_SCOPES.includes(v)) {
+        return res.status(400).json({ error: `Invalid program_scope "${program_scope}" — allowed: ${ALLOWED_PROGRAM_SCOPES.join(', ')}.` });
+      }
+      resolvedScope = v;
+    } else {
+      const psc = for_psc_client !== undefined ? !!for_psc_client : true;
+      const gen = for_generic_client !== undefined ? !!for_generic_client : true;
+      resolvedScope = (psc && gen) ? 'shared' : (psc ? 'rus' : (gen ? 'non_rus' : 'shared'));
+    }
+
+    // Owner rule: RUS jobs require a billing code (RUS reporting needs the
+    // code on every line). Non-RUS / Shared don't.
+    if (resolvedScope === 'rus' && (!billing_code || !String(billing_code).trim())) {
+      return res.status(400).json({ error: 'RUS jobs require a billing code. Either set a billing code or change program_scope to non_rus / shared.' });
+    }
+
+    // Mirror the new scope into the legacy bools so old code paths see
+    // consistent values until those columns are dropped.
+    const mirrorPsc = resolvedScope === 'rus' || resolvedScope === 'shared';
+    const mirrorGen = resolvedScope === 'non_rus' || resolvedScope === 'shared';
+
     try {
       const teamVal = team === '' ? null : team;
       const { rows } = await pool.query(
         `INSERT INTO jobs (name, default_billing_type, default_rate, is_permitting,
-                           notes, team, billing_code, for_psc_client, for_generic_client)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                           notes, team, billing_code,
+                           for_psc_client, for_generic_client, program_scope)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          ON CONFLICT (name) DO UPDATE SET
            active = true,
            team = COALESCE(EXCLUDED.team, jobs.team)
          RETURNING *`,
         [String(name).trim(), default_billing_type, default_rate, is_permitting,
-         notes, teamVal, billing_code, for_psc_client, for_generic_client]
+         notes, teamVal, billing_code,
+         mirrorPsc, mirrorGen, resolvedScope]
       );
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -153,14 +192,49 @@ module.exports = function installJobsRoutes(app, pool, mw) {
     // back to NULL.
     const allowed = ['name', 'default_billing_type', 'default_rate', 'is_permitting',
                      'notes', 'active', 'team', 'billing_code', 'for_psc_client',
-                     'for_generic_client'];
+                     'for_generic_client', 'program_scope'];
     // These fields, when changed, mark the job as manually-overridden so the
     // bootstrap reseed won't revert them on next deploy. Excludes 'notes' and
     // 'active' (those are bookkeeping, don't represent a config decision worth
     // pinning) and 'name' (renames are name-changes, not config overrides).
     const overrideTriggers = ['default_billing_type', 'default_rate', 'team',
                                'billing_code', 'for_psc_client', 'for_generic_client',
-                               'is_permitting'];
+                               'is_permitting', 'program_scope'];
+
+    // Validate program_scope and (when scope changes) keep the legacy bools
+    // in sync so old query paths see consistent values. Also enforce the
+    // RUS-needs-billing-code rule on PUT.
+    if (Object.prototype.hasOwnProperty.call(req.body, 'program_scope')) {
+      const scope = String(req.body.program_scope || '').trim().toLowerCase();
+      if (!['rus','non_rus','shared'].includes(scope)) {
+        return res.status(400).json({ error: `Invalid program_scope "${req.body.program_scope}" — allowed: rus, non_rus, shared.` });
+      }
+      // Pull current billing_code if PUT didn't supply one — needed for the
+      // RUS-requires-code check below.
+      if (scope === 'rus') {
+        const supplied = Object.prototype.hasOwnProperty.call(req.body, 'billing_code')
+          ? req.body.billing_code
+          : null;
+        if (supplied === null || supplied === undefined || String(supplied).trim() === '') {
+          const cur = await pool.query('SELECT billing_code FROM jobs WHERE id = $1', [req.params.id]);
+          const existing = cur.rows[0]?.billing_code;
+          if (!existing || !String(existing).trim()) {
+            return res.status(400).json({ error: 'RUS jobs require a billing code. Set a billing code in this same PUT, or change program_scope to non_rus / shared.' });
+          }
+        } else if (!String(supplied).trim()) {
+          return res.status(400).json({ error: 'RUS jobs require a billing code. Cleared billing_code is not allowed when program_scope=rus.' });
+        }
+      }
+      req.body.program_scope = scope;
+      // Mirror into legacy bools when the caller didn't explicitly set them.
+      if (!Object.prototype.hasOwnProperty.call(req.body, 'for_psc_client')) {
+        req.body.for_psc_client = scope === 'rus' || scope === 'shared';
+      }
+      if (!Object.prototype.hasOwnProperty.call(req.body, 'for_generic_client')) {
+        req.body.for_generic_client = scope === 'non_rus' || scope === 'shared';
+      }
+    }
+
     const setClauses = [];
     const values = [req.params.id];
     let i = 2;

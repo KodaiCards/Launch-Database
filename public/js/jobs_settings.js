@@ -35,8 +35,7 @@
         <th style="text-align:right;padding:6px 8px">Rate</th>
         <th style="text-align:center;padding:6px 8px">Team</th>
         <th style="text-align:center;padding:6px 8px;white-space:nowrap">Permit<br>Calc</th>
-        <th style="text-align:center;padding:6px 8px;white-space:nowrap">PSC</th>
-        <th style="text-align:center;padding:6px 8px;white-space:nowrap">Other</th>
+        <th style="text-align:center;padding:6px 8px;white-space:nowrap" title="RUS jobs require a billing code; Non-RUS don't. Shared shows in both contexts.">Program<br>Scope</th>
         <th></th>
       </tr></thead>
       <tbody>${cache.map(j => {
@@ -71,8 +70,13 @@
           </select>
         </td>
         <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.is_permitting ? 'checked' : ''} onchange="setJobField('${j.id}','is_permitting',this.checked)" title="Counts toward permit calc when checked"></td>
-        <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_psc_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_psc_client',this.checked)" title="Show for PSC clients"></td>
-        <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.for_generic_client ? 'checked' : ''} onchange="setJobFlag('${j.id}','for_generic_client',this.checked)" title="Show for non-PSC clients"></td>
+        <td style="padding:6px 8px;text-align:center">
+          <select onchange="setJobField('${j.id}','program_scope',this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)" title="RUS = USDA work (billing code required). Non-RUS = ordinary work. Shared = shows in both contexts.">
+            <option value="rus"     ${j.program_scope==='rus'     ? 'selected':''}>RUS</option>
+            <option value="non_rus" ${j.program_scope==='non_rus' ? 'selected':''}>Non-RUS</option>
+            <option value="shared"  ${j.program_scope==='shared'  ? 'selected':''}>Shared</option>
+          </select>
+        </td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
           ${j.manually_overridden_at ? `<button class="btn btn-sm btn-icon" style="color:var(--warning);background:transparent;border:1px solid var(--gray-border)" onclick="resetJobOverride('${j.id}','${esc(j.name)}')" title="Manual override active — click to reset to system default on next deploy"><i class="fa-solid fa-thumbtack"></i></button>` : ''}
           <button class="btn btn-sm btn-icon" style="color:var(--primary);background:transparent;border:1px solid var(--gray-border)" onclick="propagateJobRate('${j.id}','${esc(j.name)}')" title="Apply current rate to all existing projects using this job"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
@@ -81,7 +85,7 @@
       </tr>`;
       }).join('')}</tbody></table>
       <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px;line-height:1.5">
-        <i class="fa-solid fa-circle-info"></i> Inline edits to <b>Billing</b>, <b>Rate</b>, <b>Team</b>, or PSC/Other flags become a <b>manual override</b> — they survive deploys and the system stops trying to revert them. A <i class="fa-solid fa-thumbtack" style="color:var(--warning)"></i> pin appears on overridden rows; click it to reset to system defaults. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job.
+        <i class="fa-solid fa-circle-info"></i> Inline edits to <b>Billing</b>, <b>Rate</b>, <b>Team</b>, or <b>Program Scope</b> become a <b>manual override</b> — they survive deploys and the system stops trying to revert them. A <i class="fa-solid fa-thumbtack" style="color:var(--warning)"></i> pin appears on overridden rows; click it to reset to system defaults. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job.
       </div>`;
   }
 
@@ -175,8 +179,12 @@
     const default_rate = parseFloat(document.getElementById('new-job-rate').value);
     const is_permitting = document.getElementById('new-job-perm').checked;
     const team = document.getElementById('new-job-team').value || null;
-    const for_psc_client = document.getElementById('new-job-for-psc').checked;
-    const for_generic_client = document.getElementById('new-job-for-generic').checked;
+    const program_scope = (document.getElementById('new-job-scope')?.value) || 'rus';
+    // Owner rule: RUS jobs require a billing code; non-RUS jobs don't.
+    // Surface that immediately so admin can't create a malformed RUS job.
+    if (program_scope === 'rus' && !billing_code) {
+      return alert('RUS jobs require a billing code. Add a billing code or change the program scope to Non-RUS / Shared.');
+    }
     if (!name) return alert('Job name is required');
     try {
       await api('/api/jobs', 'POST', {
@@ -186,14 +194,18 @@
         default_rate: isNaN(default_rate) ? null : default_rate,
         is_permitting,
         team,
-        for_psc_client,
-        for_generic_client
+        program_scope,
+        // Legacy boolean pair still accepted by the route; mirror the new
+        // enum so older code paths see consistent values until the
+        // legacy columns are dropped in a follow-up migration.
+        for_psc_client:     program_scope === 'rus'     || program_scope === 'shared',
+        for_generic_client: program_scope === 'non_rus' || program_scope === 'shared',
       });
       ['new-job-name','new-job-code','new-job-rate'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('new-job-perm').checked = false;
       document.getElementById('new-job-team').value = '';
-      document.getElementById('new-job-for-psc').checked = true;
-      document.getElementById('new-job-for-generic').checked = true;
+      const scopeEl = document.getElementById('new-job-scope');
+      if (scopeEl) scopeEl.value = 'rus';
       document.getElementById('jobs-add-form').style.display = 'none';
       await loadJobs();
       if (typeof populatePricingFormDropdowns === 'function') populatePricingFormDropdowns();

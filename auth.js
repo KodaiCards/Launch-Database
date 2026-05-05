@@ -644,20 +644,45 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  // DELETE /api/users/:id — soft delete (sets active=false). Hard delete only
-  // available via direct SQL because deleting a user may orphan time_entries.
+  // DELETE /api/users/:id
+  //   default: soft-delete. Sets active=FALSE + invalidates tokens. Existing
+  //            FK references (customer_clients, billing_batches.created_by,
+  //            invoice_templates.created_by, ai_messages, etc.) stay intact.
+  //   ?hard=1: hard-delete the row. Refused if the user is still active OR
+  //            the user is the caller's own account. Requires the row to
+  //            be soft-deleted first as a safety gate (forces a two-step
+  //            "deactivate first, then permanently remove" flow). Cleans up
+  //            customer_clients links automatically (ON DELETE CASCADE).
+  //            Other FK columns are ON DELETE SET NULL so historical rows
+  //            survive but lose the audit pointer.
   app.delete('/api/users/:id', requireAdmin, async (req, res) => {
     if (req.user.id === req.params.id) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
+    const hard = req.query.hard === '1' || req.query.hard === 'true';
     try {
+      if (hard) {
+        const cur = await pool.query(
+          'SELECT id, username, active FROM users WHERE id = $1',
+          [req.params.id]
+        );
+        if (!cur.rows[0]) return res.status(404).json({ error: 'User not found' });
+        if (cur.rows[0].active) {
+          return res.status(409).json({
+            error: 'Refuse to hard-delete an active user. Soft-delete (deactivate) first, then call DELETE ?hard=1 to permanently remove.',
+          });
+        }
+        await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+        return res.json({ ok: true, mode: 'hard', deleted_username: cur.rows[0].username });
+      }
+
       const { rows } = await pool.query(
         `UPDATE users SET active = FALSE, tokens_invalid_after = NOW(), updated_at = NOW()
          WHERE id = $1 RETURNING id`,
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
-      res.json({ ok: true, deactivated: true });
+      res.json({ ok: true, mode: 'soft', deactivated: true });
     } catch (e) { return serverError(res, e, 'delete-user'); }
   });
 }
