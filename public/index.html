@@ -1385,7 +1385,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <div class="form-group" id="proj-contract-wrap">
             <label>Contract</label>
             <div style="display:flex;gap:6px">
-              <select id="proj-contract" style="flex:1"><option value="">None / N/A</option></select>
+              <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new contract"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
@@ -1432,10 +1432,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client + team.</span>
           </div>
           <div class="form-group" id="proj-ptype-wrap">
-            <label>Project Type * <span style="color:var(--text-muted);font-weight:400">(program category — PSC only)</span></label>
+            <label>Program * <span style="color:var(--text-muted);font-weight:400">(RUS / BAU / GFR / Other — drives which fields appear)</span></label>
             <div style="display:flex;gap:6px">
               <select id="proj-ptype" onchange="ptypeChanged()" style="flex:1">
-                <option value="">Select type...</option>
+                <option value="">Select program...</option>
               </select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('ptype')" title="Add new project type"><i class="fa-solid fa-plus"></i></button>
             </div>
@@ -2816,40 +2816,73 @@ function concentratorChanged() {
   }
 }
 
-async function clientChanged(preserveJobId) {
-  const clientId = document.getElementById('proj-client').value;
-  const csel = document.getElementById('proj-contract');
-  while (csel.options.length > 1) csel.remove(1);
+// ────────────────────────────────────────────────────────────────────
+// Field gating in the project modal — Phase 5 (2026-05-05)
+// ────────────────────────────────────────────────────────────────────
+//
+// Gating fires off the EFFECTIVE PROGRAM of the project being created,
+// not just the client. A PSC client with a BAU contract should look
+// exactly like a COX project (no WO#, free-text Service Area, only
+// non-RUS jobs). Most-specific signal wins:
+//
+//   1. Explicit Program select (proj-ptype)         — wins if set
+//   2. Selected Contract's engineering_contract.program — second
+//   3. Client's EC mix:
+//        - only RUS ECs            → effective = 'rus'
+//        - only non-RUS ECs        → effective = the program of those
+//        - mixed / no ECs          → effective = null (await explicit)
+//   4. Otherwise null (no client → no fields gated yet)
+//
+// effective='rus' shows: Program select, Contract, Concentrator
+//   (dropdown), WO# field; HIDES the free-text Service Area.
+// effective='non_rus|bau|gfr|other' shows: Program select, free-text
+//   Service Area, Contract only when client.show_contract is on; HIDES
+//   Concentrator + WO#.
+// effective=null shows only Program select + Contract + nothing else,
+//   so the user can pick a program first.
 
-  // Field gating per client + program:
-  //   "RUS-class" clients (have at least one engineering contract with
-  //   program='rus'): Project Type, Contract, WO# all visible.
-  //   Service Area is auto-derived from the WO# match.
-  //
-  //   Non-RUS-class clients: Project Type and WO# HIDDEN entirely.
-  //                          Contract visible only if admin opted in via Settings.
-  //                          Service Area visible as a free-text input.
-  //
-  // Path B (2026-05-04) note: this used to gate on clients.is_rus. PSC
-  // has both RUS and BAU engineering contracts, so we now gate on
-  // "client has any RUS-program EC" — which still resolves to true for
-  // PSC and false for COX/IFT/TRI-CO. If the user later picks a specific
-  // engineering contract, the job-picker further refines by ec.program.
-  const client = clients.find(c => c.id === clientId);
-  const ecCache = window.engineeringContractsCache || [];
-  const isPsc = !!client && ecCache.some(ec => ec.client_id === clientId && ec.program === 'rus');
-  const showContract = isPsc || client?.show_contract === true;
+function effectiveProgramForProjectModal() {
+  // 1. Explicit pick wins
+  const ptypeVal = document.getElementById('proj-ptype')?.value;
+  if (ptypeVal && ['rus','bau','gfr','other'].includes(ptypeVal)) return ptypeVal;
 
-  // Project Type — PSC only
-  const ptypeWrap = document.getElementById('proj-ptype-wrap');
-  if (ptypeWrap) {
-    ptypeWrap.style.display = isPsc ? '' : 'none';
-    if (!isPsc) {
-      const sel = document.getElementById('proj-ptype');
-      if (sel) sel.value = '';
-    }
+  // 2. Selected contract → its EC's program
+  const contractId = document.getElementById('proj-contract')?.value;
+  if (contractId) {
+    const allContracts = window.contractsCache || [];
+    const c = allContracts.find(x => x.id === contractId);
+    const ec = c && (window.engineeringContractsCache || []).find(e => e.id === c.engineering_contract_id);
+    if (ec?.program) return ec.program;
   }
-  // Contract — PSC default + per-client opt-in
+
+  // 3. Client's EC mix
+  const clientId = document.getElementById('proj-client')?.value;
+  if (!clientId) return null;
+  const ecs = (window.engineeringContractsCache || []).filter(e => e.client_id === clientId);
+  if (!ecs.length) return null;
+  const programs = new Set(ecs.map(e => e.program).filter(Boolean));
+  if (programs.size === 1) return [...programs][0];
+  if (programs.size === 0) return null;
+  // Mixed — wait for explicit program pick.
+  return null;
+}
+
+function applyProjectModalFieldGating() {
+  const effective = effectiveProgramForProjectModal();
+  const isRus = effective === 'rus';
+  const isNonRus = effective && effective !== 'rus';
+  const clientId = document.getElementById('proj-client')?.value;
+  const client = (clients || []).find(c => c.id === clientId);
+  // Contract field: shown for RUS by default; for non-RUS only if admin
+  // opted in per client (Settings → Clients "Show Contract"). Nothing's
+  // shown until a client is picked.
+  const showContract = clientId && (isRus || client?.show_contract === true);
+
+  // Program select (proj-ptype) — always visible once a client is picked.
+  // Lets the user explicitly disambiguate.
+  const ptypeWrap = document.getElementById('proj-ptype-wrap');
+  if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
+
   const contractWrap = document.getElementById('proj-contract-wrap');
   if (contractWrap) {
     contractWrap.style.display = showContract ? '' : 'none';
@@ -2858,46 +2891,74 @@ async function clientChanged(preserveJobId) {
       if (cSel) cSel.value = '';
     }
   }
-  // WO# — PSC ONLY (no admin opt-in)
+
+  // WO# — RUS-only. Owner rule: "WO# are only for RUS jobs."
   const woWrap = document.getElementById('proj-wo-wrap');
   if (woWrap) {
-    woWrap.style.display = isPsc ? '' : 'none';
-    if (!isPsc) {
+    woWrap.style.display = isRus ? '' : 'none';
+    if (!isRus) {
       const woIn = document.getElementById('proj-wo');
       if (woIn) woIn.value = '';
     }
   }
-  // Service Area — non-PSC ONLY (PSC derives from WO#)
-  const saWrap = document.getElementById('proj-service-area-wrap');
-  if (saWrap) {
-    saWrap.style.display = isPsc ? 'none' : '';
-    if (isPsc) {
-      const saIn = document.getElementById('proj-service-area');
-      if (saIn) saIn.value = '';
-    }
-  }
-  // Concentrator dropdown — PSC ONLY (non-PSC clients have no concentrator
-  // records — Service Area free-text replaces it for them).
+
+  // Concentrator dropdown — RUS only. Concentrator records are RUS
+  // service areas (Mt. Paran / Crossroad School / etc.); non-RUS work
+  // gets a free-text Service Area instead.
   const concWrap = document.getElementById('proj-concentrator-wrap');
   if (concWrap) {
-    concWrap.style.display = isPsc ? '' : 'none';
-    if (!isPsc) {
+    concWrap.style.display = isRus ? '' : 'none';
+    if (!isRus) {
       const cIn = document.getElementById('proj-concentrator');
       if (cIn) cIn.value = '';
     }
   }
 
-  // Re-filter the Job dropdown using the client_id (server filters by
-  // for_psc_client / for_generic_client). The preserveJobId param lets the
-  // edit-project flow keep its current job selected even if filtered out.
+  // Free-text Service Area — for any non-RUS effective program. Hidden
+  // when effective is unknown (no client / mixed / pre-pick) since we
+  // don't yet know whether to show the dropdown or free-text.
+  const saWrap = document.getElementById('proj-service-area-wrap');
+  if (saWrap) {
+    saWrap.style.display = isNonRus ? '' : 'none';
+    if (!isNonRus) {
+      const saIn = document.getElementById('proj-service-area');
+      if (saIn) saIn.value = '';
+    }
+  }
+}
+
+async function clientChanged(preserveJobId) {
+  const clientId = document.getElementById('proj-client').value;
+  const csel = document.getElementById('proj-contract');
+  while (csel.options.length > 1) csel.remove(1);
+
+  // Reset explicit program pick when the client changes — the previous
+  // value may not apply to the new client's EC mix. Field gating
+  // re-derives below.
+  const pSel = document.getElementById('proj-ptype');
+  if (pSel) pSel.value = '';
+
+  // Compute the effective program and toggle every gated field. The
+  // legacy "isPsc" boolean is gone — we look at the actual program
+  // signal now (see effectiveProgramForProjectModal above for the
+  // priority order).
+  applyProjectModalFieldGating();
+
+  // Re-filter the Job dropdown — server filters by program_scope when
+  // we pass engineering_contract_id (preferred) or by client EC mix
+  // when only client_id is supplied.
   await refilterJobsDropdown(preserveJobId);
 
   if (!clientId) return;
   const ctrs = await api('/api/contracts?client_id=' + clientId);
-  // De-dup by display name. If multiple contract records share the same name
-  // (which happens when they get auto-created repeatedly), collapse them into
-  // one dropdown option using the first matching id. The user can clean up
-  // the duplicate records later from the data side; this just keeps the UI sane.
+  // Cache contracts globally so effectiveProgramForProjectModal() can
+  // resolve a contract → its EC's program without a refetch.
+  window.contractsCache = window.contractsCache || [];
+  // Merge new contracts in without losing other clients' entries.
+  const idsBefore = new Set(window.contractsCache.map(c => c.id));
+  for (const c of ctrs) if (!idsBefore.has(c.id)) window.contractsCache.push(c);
+  // De-dup by display name in the dropdown. If multiple contract records
+  // share the same name, collapse them into one option.
   const seen = new Set();
   ctrs.forEach(c => {
     const display = c.name || c.contract_number;
@@ -2918,11 +2979,9 @@ async function clientChanged(preserveJobId) {
 // job was deactivated by the v3 reseed would silently lose its selection.
 async function refilterJobsDropdown(preserveJobId) {
   const clientId = document.getElementById('proj-client')?.value;
-  // When the user has already picked an engineering contract for the
-  // project, narrow the job picker by that EC's program. This is
-  // surgical for PSC: PSC has BOTH RUS and BAU work, and without an EC
-  // hint the picker has to show jobs from both classes; with an EC, it
-  // can hide irrelevant ones.
+  // Filter precedence: explicit Program > picked EC > client EC mix.
+  // The /api/jobs route honors the same precedence server-side.
+  const explicitProgram = document.getElementById('proj-ptype')?.value;
   const ecId =
     document.getElementById('proj-engineering-contract')?.value ||
     document.getElementById('proj-ec')?.value ||
@@ -2932,8 +2991,13 @@ async function refilterJobsDropdown(preserveJobId) {
   const currentJobId = preserveJobId || jsel.value;
   let url = '/api/jobs';
   const qp = [];
-  if (ecId) qp.push('engineering_contract_id=' + encodeURIComponent(ecId));
-  else if (clientId) qp.push('client_id=' + encodeURIComponent(clientId));
+  if (explicitProgram && ['rus','bau','gfr','other'].includes(explicitProgram)) {
+    qp.push('program=' + encodeURIComponent(explicitProgram));
+  } else if (ecId) {
+    qp.push('engineering_contract_id=' + encodeURIComponent(ecId));
+  } else if (clientId) {
+    qp.push('client_id=' + encodeURIComponent(clientId));
+  }
   if (qp.length) url += '?' + qp.join('&');
   try {
     const filtered = await api(url);
@@ -3698,10 +3762,22 @@ function clearProjectForm() {
   jobChanged(/*skipRateLookup=*/true);
 }
 
-// User changed the program category. Trigger a rate lookup (since rate depends
-// on Job × Project Type).
-function ptypeChanged() {
+// User changed the program category. Re-derive field gating (program now
+// drives WO#, Concentrator, free-text Service Area visibility), refilter
+// the Job dropdown so only program-appropriate jobs show, then re-run
+// the rate lookup since rate depends on Job × Program.
+async function ptypeChanged() {
+  applyProjectModalFieldGating();
+  await refilterJobsDropdown(document.getElementById('proj-job')?.value || null);
   jobChanged();
+}
+
+// User changed the Contract. Same triple-effect: gating may flip if the
+// new contract's EC has a different program, and the job filter scopes
+// tighter once we know the EC.
+async function contractChanged() {
+  applyProjectModalFieldGating();
+  await refilterJobsDropdown(document.getElementById('proj-job')?.value || null);
 }
 
 // User changed the Job. Update UI to reflect the job's billing pattern (hourly

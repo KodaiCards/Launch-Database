@@ -24,12 +24,16 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   app.get('/api/jobs', async (req, res) => {
     try {
       // Filter precedence (most specific first):
-      //   1. engineering_contract_id provided → load that contract's
+      //   1. program (rus|bau|gfr|other) provided directly → filter
+      //      program_scope IN (rus|non_rus, 'shared') as appropriate.
+      //      Used by the project modal when the user picks Program
+      //      explicitly.
+      //   2. engineering_contract_id provided → load that contract's
       //      program and filter:
       //        program='rus'         → program_scope IN ('rus', 'shared')
       //        program in (bau,gfr,other) → program_scope IN ('non_rus', 'shared')
       //        program IS NULL       → no program filter (admin must classify)
-      //   2. client_id provided (no EC yet) → look at the client's mix of
+      //   3. client_id provided (no EC yet) → look at the client's mix of
       //      EC programs:
       //        any RUS EC AND any non-RUS EC → all program_scope values
       //          (including 'shared') so the picker doesn't hide work
@@ -37,20 +41,22 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       //        only RUS ECs   → program_scope IN ('rus', 'shared')
       //        only other ECs → program_scope IN ('non_rus', 'shared')
       //        no ECs         → all (treat fresh client as generic-friendly)
-      //   3. No client → return every active job.
-      //
-      // Path B + Phase 4 (2026-05-05): replaced the legacy
-      // for_psc_client/for_generic_client boolean pair with the
-      // program_scope enum (rus | non_rus | shared). Owner asked for
-      // cleaner segregation in the dropdowns. The legacy columns are
-      // still present in the DB for one release window but no longer
-      // read by this filter.
+      //   4. No client → return every active job.
       const clientId = req.query.client_id || null;
       const ecId = req.query.engineering_contract_id || null;
+      const explicitProgram = req.query.program ? String(req.query.program).trim().toLowerCase() : null;
 
       const conds = [`active = true`];
 
-      if (ecId) {
+      if (explicitProgram) {
+        if (explicitProgram === 'rus') {
+          conds.push(`program_scope IN ('rus','shared')`);
+        } else if (['bau','gfr','other'].includes(explicitProgram)) {
+          conds.push(`program_scope IN ('non_rus','shared')`);
+        }
+        // Unknown program string: ignore (don't gate). Frontend should
+        // only ever pass a valid enum value.
+      } else if (ecId) {
         const ec = await pool.query(
           'SELECT program FROM engineering_contracts WHERE id = $1',
           [ecId]

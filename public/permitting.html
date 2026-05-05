@@ -414,7 +414,7 @@ fetch('/api/auth/me', { credentials: 'include' })
           </div>
           <div class="form-group" id="proj-contract-wrap" style="display:none">
             <label>Contract</label>
-            <select id="proj-contract"><option value="">None / N/A</option></select>
+            <select id="proj-contract" onchange="contractChanged()"><option value="">None / N/A</option></select>
           </div>
         </div>
         <!-- Existing-project lookup: once a client is chosen, surface
@@ -446,7 +446,7 @@ fetch('/api/auth/me', { credentials: 'include' })
           </div>
           <div class="form-group" id="proj-ptype-wrap" style="display:none">
             <label>Project Type</label>
-            <select id="proj-ptype"><option value="">— Select —</option></select>
+            <select id="proj-ptype" onchange="ptypeChanged()"><option value="">— Select —</option></select>
             <span class="form-hint">PSC only</span>
           </div>
         </div>
@@ -820,11 +820,23 @@ function populateProjectFormDropdowns(){
 // for_generic_client based on the chosen client.
 async function refilterJobsDropdown(preserveJobId){
   const clientId = document.getElementById('proj-client')?.value;
+  const explicitProgram = document.getElementById('proj-ptype')?.value;
+  const contractId = document.getElementById('proj-contract')?.value;
   const jb = document.getElementById('proj-job');
   if (!jb) return;
   const currentJobId = preserveJobId || jb.value;
   let url = '/api/jobs';
-  if (clientId) url += '?client_id=' + encodeURIComponent(clientId);
+  const qp = [];
+  if (explicitProgram && ['rus','bau','gfr','other'].includes(explicitProgram)) {
+    qp.push('program=' + encodeURIComponent(explicitProgram));
+  } else if (contractId) {
+    const c = (window.contractsCache || []).find(x => x.id === contractId);
+    if (c?.engineering_contract_id) qp.push('engineering_contract_id=' + encodeURIComponent(c.engineering_contract_id));
+    else if (clientId) qp.push('client_id=' + encodeURIComponent(clientId));
+  } else if (clientId) {
+    qp.push('client_id=' + encodeURIComponent(clientId));
+  }
+  if (qp.length) url += '?' + qp.join('&');
   try {
     const filtered = await api(url);
     jobsCache = filtered;
@@ -853,37 +865,36 @@ async function refilterJobsDropdown(preserveJobId){
   } catch (e) { /* non-fatal */ }
 }
 
-async function clientChanged(preserveJobId){
-  const clientId = document.getElementById('proj-client').value;
-
-  // Field gating per client + program (Path B 2026-05-04):
-  //   "RUS-class" clients (have at least one engineering contract with
-  //   program='rus'): Project Type, Contract, WO# all visible. Service
-  //   Area is auto-derived from the WO# match.
-  //
-  //   Non-RUS-class clients: Project Type and WO# HIDDEN entirely.
-  //                          Contract visible only if admin opted in via Settings.
-  //                          Service Area visible as a free-text input (the user
-  //                          types the area name; rollup folder is created from it).
-  //
-  // The legacy data-rus attribute on the option element was driven by
-  // clients.is_rus and was dropped in Path B. We now compute RUS-class
-  // by scanning window.engineeringContractsCache for any program='rus' EC.
-  const opt = document.getElementById('proj-client').selectedOptions[0];
-  const ecCache = window.engineeringContractsCache || [];
-  const isPsc = !!clientId && ecCache.some(ec => ec.client_id === clientId && ec.program === 'rus');
-  const showContract = isPsc || opt?.dataset.showContract === '1';
-
-  // Project Type — PSC only, no admin-opt-in
-  const ptypeWrap = document.getElementById('proj-ptype-wrap');
-  if (ptypeWrap) {
-    ptypeWrap.style.display = isPsc ? '' : 'none';
-    if (!isPsc) {
-      const ptSel = document.getElementById('proj-ptype');
-      if (ptSel) ptSel.value = '';
-    }
+// Effective-program logic for portal field gating (mirrors admin + design portals).
+function effectiveProgramForPortalProjectModal() {
+  const ptypeVal = document.getElementById('proj-ptype')?.value;
+  if (ptypeVal && ['rus','bau','gfr','other'].includes(ptypeVal)) return ptypeVal;
+  const contractId = document.getElementById('proj-contract')?.value;
+  if (contractId) {
+    const allContracts = window.contractsCache || [];
+    const c = allContracts.find(x => x.id === contractId);
+    const ec = c && (window.engineeringContractsCache || []).find(e => e.id === c.engineering_contract_id);
+    if (ec?.program) return ec.program;
   }
-  // Contract — PSC default + per-client opt-in
+  const clientId = document.getElementById('proj-client')?.value;
+  if (!clientId) return null;
+  const ecs = (window.engineeringContractsCache || []).filter(e => e.client_id === clientId);
+  if (!ecs.length) return null;
+  const programs = new Set(ecs.map(e => e.program).filter(Boolean));
+  if (programs.size === 1) return [...programs][0];
+  return null;
+}
+
+function applyPortalProjectModalFieldGating() {
+  const effective = effectiveProgramForPortalProjectModal();
+  const isRus = effective === 'rus';
+  const isNonRus = effective && effective !== 'rus';
+  const clientId = document.getElementById('proj-client')?.value;
+  const opt = document.getElementById('proj-client')?.selectedOptions[0];
+  const showContract = clientId && (isRus || opt?.dataset.showContract === '1');
+
+  const ptypeWrap = document.getElementById('proj-ptype-wrap');
+  if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
   const contractWrap = document.getElementById('proj-contract-wrap');
   if (contractWrap) {
     contractWrap.style.display = showContract ? '' : 'none';
@@ -892,24 +903,40 @@ async function clientChanged(preserveJobId){
       if (cSel) cSel.value = '';
     }
   }
-  // WO# — PSC ONLY (no admin opt-in for non-PSC; user explicitly removed that)
   const woWrap = document.getElementById('proj-wo-wrap');
   if (woWrap) {
-    woWrap.style.display = isPsc ? '' : 'none';
-    if (!isPsc) {
+    woWrap.style.display = isRus ? '' : 'none';
+    if (!isRus) {
       const woIn = document.getElementById('proj-wo');
       if (woIn) woIn.value = '';
     }
   }
-  // Service Area — non-PSC ONLY (PSC derives Service Area from WO# automatically)
   const saWrap = document.getElementById('proj-service-area-wrap');
   if (saWrap) {
-    saWrap.style.display = isPsc ? 'none' : '';
-    if (isPsc) {
+    saWrap.style.display = isNonRus ? '' : 'none';
+    if (!isNonRus) {
       const saIn = document.getElementById('proj-service-area');
       if (saIn) saIn.value = '';
     }
   }
+}
+
+async function ptypeChanged(){
+  applyPortalProjectModalFieldGating();
+  await refilterJobsDropdown();
+}
+async function contractChanged(){
+  applyPortalProjectModalFieldGating();
+  await refilterJobsDropdown();
+}
+
+async function clientChanged(preserveJobId){
+  const clientId = document.getElementById('proj-client').value;
+  // Reset explicit program so previous client's pick doesn't leak through.
+  const pSel = document.getElementById('proj-ptype');
+  if (pSel) pSel.value = '';
+
+  applyPortalProjectModalFieldGating();
 
   // 2) Refilter jobs dropdown
   await refilterJobsDropdown();
@@ -927,6 +954,11 @@ async function clientChanged(preserveJobId){
   if (!clientId) { sel.innerHTML = '<option value="">None / N/A</option>'; return; }
   try {
     const r = await api('/api/contracts?client_id=' + encodeURIComponent(clientId));
+    // Cache to window.contractsCache so the field-gating helper can resolve
+    // contract → engineering_contract.program without an extra fetch.
+    window.contractsCache = window.contractsCache || [];
+    const known = new Set(window.contractsCache.map(c => c.id));
+    for (const c of r) if (!known.has(c.id)) window.contractsCache.push(c);
     const seen = new Set();
     const unique = [];
     for (const c of r) {
