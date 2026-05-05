@@ -21,9 +21,9 @@ module.exports = function installClientsRoutes(app, pool, mw) {
 
   // Path B (2026-05-04): the is_rus field is no longer accepted by these
   // endpoints. Program classification lives on engineering_contracts.program.
-  // The clients.is_rus column is being phased out; an incoming `is_rus` in
-  // the body is silently ignored to keep older clients/portals working
-  // through the deploy window — the column-drop migration finalizes things.
+  // The clients.is_rus column itself was retired in migration 0003;
+  // any incoming `is_rus` in the request body is silently ignored
+  // (req.body destructure simply doesn't read it).
   app.post('/api/clients', async (req, res) => {
     const { name, notes } = req.body;
     try {
