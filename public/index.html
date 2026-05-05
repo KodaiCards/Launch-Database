@@ -2719,6 +2719,16 @@ async function init() {
   document.getElementById('hrs-month').value = now.getMonth()+1;
 
   await Promise.all([loadClients(), loadStaff(), loadConcentrators(), loadJobs(), loadProjectTypes()]);
+  // Engineering contracts power the project-modal field-gating (Phase 5
+  // 2026-05-05): the helper effectiveProgramForProjectModal() reads
+  // window.engineeringContractsCache to decide whether to show RUS-only
+  // fields (WO#, Concentrator) vs free-text Service Area for non-RUS work.
+  // Without this load, the gating defaults to "no signal" and shows
+  // every field. loadEngineeringContracts() is exported by
+  // public/js/engineering_contracts.js and writes to the global cache.
+  if (typeof loadEngineeringContracts === 'function') {
+    try { await loadEngineeringContracts(); } catch (e) { /* non-fatal */ }
+  }
   await loadDashboard();
   refreshSettingsDot();
 }
