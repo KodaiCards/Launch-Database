@@ -289,6 +289,9 @@ const state = {
   sse: null,
   konva: null,          // { stage, layers... }
   pendingSplice: null,  // { fiber_a_id, tray_id }
+  // Phase 2C #11 — path tracing. Populated by traceFiberPath(); cleared by
+  // clearTracePath(). drawCanvasContents() reads this to overlay highlights.
+  tracePath: null,      // { fiber_id, chain, circular, over_spliced, warnings }
   // Phase 3A — map view state.
   activeView: 'diagram',     // 'diagram' | 'map'
   map: null,                 // MapLibre Map instance
@@ -735,8 +738,18 @@ function renderCanvas() {
   const cableLayer = new Konva.Layer();
   const closureLayer = new Konva.Layer();
   const spliceLayer = new Konva.Layer({ listening: false });
-  stage.add(bgLayer); stage.add(cableLayer); stage.add(closureLayer); stage.add(spliceLayer);
-  state.konva = { stage, bgLayer, cableLayer, closureLayer, spliceLayer };
+  // traceLayer renders path-trace highlights on top of everything else.
+  // listening:false so it never intercepts clicks.
+  const traceLayer = new Konva.Layer({ listening: false });
+  stage.add(bgLayer); stage.add(cableLayer); stage.add(closureLayer); stage.add(spliceLayer); stage.add(traceLayer);
+  state.konva = { stage, bgLayer, cableLayer, closureLayer, spliceLayer, traceLayer };
+
+  // Click on empty canvas clears any active path trace (same UX as Esc).
+  stage.on('click tap', (e) => {
+    if (e.target === stage && state.tracePath) {
+      clearTracePath();
+    }
+  });
 
   // Wheel zoom centered on cursor — Konva idiom.
   stage.on('wheel', (e) => {
@@ -775,10 +788,11 @@ function renderCanvas() {
 
 function drawCanvasContents() {
   if (!state.konva || !state.data) return;
-  const { cableLayer, closureLayer, spliceLayer } = state.konva;
+  const { cableLayer, closureLayer, spliceLayer, traceLayer } = state.konva;
   cableLayer.destroyChildren();
   closureLayer.destroyChildren();
   spliceLayer.destroyChildren();
+  traceLayer.destroyChildren();
 
   const d = state.data;
 
@@ -1028,6 +1042,63 @@ function drawCanvasContents() {
       }));
     }
   });
+
+  // ── Path-trace overlay (Phase 2C #11) ──────────────────────────────────
+  // When a strand path is active, glow every cable in the chain and accent
+  // every closure that hosts a splice-to-next hop.
+  if (state.tracePath && state.tracePath.chain && state.tracePath.chain.length) {
+    const TRACE_CABLE_COLOR  = '#FF6B00';  // vivid orange — high contrast on both themes
+    const TRACE_CLOSURE_COLOR = '#FF6B00';
+
+    // Collect the set of cable IDs and closure IDs that appear in the chain.
+    const traceCableIds   = new Set();
+    const traceClosureIds = new Set();
+
+    for (const entry of state.tracePath.chain) {
+      const f = entry.fiber;
+      if (f.cable_id) traceCableIds.add(f.cable_id);
+      if (entry.splice_to_next && entry.splice_to_next.closure_id) {
+        traceClosureIds.add(entry.splice_to_next.closure_id);
+      }
+    }
+
+    // For each traced cable, draw a thick glowing outline around its strip.
+    d.cables.forEach((cable, i) => {
+      if (!traceCableIds.has(cable.id)) return;
+      const from = colX.get(cable.from_location_id);
+      const to   = colX.get(cable.to_location_id);
+      if (from == null || to == null) return;
+      const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id);
+      const y = 80 + i * 60;
+      const tubeGap = 2;
+      const stripHeight = Math.max(8, tubes.length * tubeGap + 2);
+      // Glow rect behind the cable strip.
+      traceLayer.add(new Konva.Rect({
+        x: from + 4, y: y - 6,
+        width: to - from - 8, height: stripHeight + 12,
+        stroke: TRACE_CABLE_COLOR, strokeWidth: 3,
+        fill: 'rgba(255,107,0,0.10)',
+        cornerRadius: 4, listening: false,
+      }));
+    });
+
+    // For each traced closure, draw a colored accent ring around its box.
+    for (const loc of orderedLocations) {
+      const list = closuresByLoc.get(loc.id) || [];
+      const x = colX.get(loc.id);
+      list.forEach((cl, idx) => {
+        if (!traceClosureIds.has(cl.id)) return;
+        const baseY = 380 + idx * 110;
+        traceLayer.add(new Konva.Rect({
+          x: x - 64, y: baseY - 4,
+          width: 128, height: 98,
+          stroke: TRACE_CLOSURE_COLOR, strokeWidth: 3,
+          fill: 'rgba(255,107,0,0.08)',
+          cornerRadius: 6, listening: false,
+        }));
+      });
+    }
+  }
 
   state.konva.stage.batchDraw();
   resetView();
@@ -1396,7 +1467,10 @@ function renderRibbonGroupRows(groups, splices) {
         <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}"></span>${esc(b.tube_color)}
         <span class="ribbon-tag">ribbon ×12</span>
       </div>
-      <button class="btn btn-sm btn-danger" onclick="deleteRibbonGroup('${g.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="traceFiberPath('${first.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRibbonGroup('${g.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1414,7 +1488,10 @@ function renderLooseSpliceRows(splices) {
           →
           <span class="fc fc-${b.color}"></span>${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
         </div>
-        <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+        </div>
       </div>`;
     }).join('')}
   </div>`;
@@ -1432,6 +1509,85 @@ function describeFiber(fiberId) {
     color: f.color,
     position: f.position,
   };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Path tracing (Phase 2C #11)
+// ───────────────────────────────────────────────────────────────────────────
+
+// Fetch the full strand path for fiber_a_id of a splice and light up the
+// canvas. We always trace from fiber_a_id (side A) so the result is
+// deterministic — if the designer wants the other end they can click
+// Trace on the splice at the far end of the chain.
+async function traceFiberPath(fiberId) {
+  if (!fiberId || !state.currentId) return;
+  try {
+    const result = await api('/api/splice/fibers/' + fiberId + '/path');
+    state.tracePath = result;
+    // Re-draw the canvas so highlights appear immediately.
+    drawCanvasContents();
+    // Show a sidebar chain summary in a transient info area if it exists.
+    _renderTracePathSidebar(result);
+    if (result.warnings && result.warnings.length) {
+      toast(result.warnings[0], 'warn');
+    }
+  } catch (e) {
+    toast('Path trace failed: ' + e.message, 'error');
+  }
+}
+
+function clearTracePath() {
+  state.tracePath = null;
+  drawCanvasContents();
+  const sidebar = document.getElementById('trace-path-sidebar');
+  if (sidebar) sidebar.remove();
+}
+
+// Render a numbered chain summary in a floating sidebar overlay on the
+// canvas pane. Removed whenever clearTracePath() is called.
+function _renderTracePathSidebar(result) {
+  // Remove any stale sidebar first.
+  const old = document.getElementById('trace-path-sidebar');
+  if (old) old.remove();
+
+  const pane = document.querySelector('.canvas-pane');
+  if (!pane) return;
+
+  const div = document.createElement('div');
+  div.id = 'trace-path-sidebar';
+  div.style.cssText = [
+    'position:absolute', 'bottom:48px', 'right:10px', 'z-index:10',
+    'background:var(--surface-2)', 'border:1px solid var(--border-weak)',
+    'border-radius:8px', 'box-shadow:0 2px 8px rgba(0,0,0,.12)',
+    'padding:10px 12px', 'font-size:11px', 'max-width:320px',
+    'max-height:40vh', 'overflow:auto',
+  ].join(';');
+
+  const chain = result.chain || [];
+  const hops = chain.map((entry, i) => {
+    const f = entry.fiber;
+    const label = f.cable_name
+      ? `${esc(f.cable_name)} · tube ${f.tube_position} · fiber ${f.position}`
+      : `(fiber ${f.id.slice(0, 8)})`;
+    const arrow = entry.splice_to_next
+      ? ` <span style="color:var(--primary)">→ ${esc(entry.splice_to_next.closure_model || 'closure')} (${esc(entry.splice_to_next.location_name || '?')}) →</span> `
+      : '';
+    return `<div style="margin-bottom:2px"><b>${i + 1}.</b> ${label}${arrow}</div>`;
+  }).join('');
+
+  const flags = [];
+  if (result.circular)    flags.push('<span style="color:var(--warning-text)">circular strand detected</span>');
+  if (result.over_spliced) flags.push('<span style="color:var(--danger-text)">over-spliced fiber in path</span>');
+
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <b><i class="fa-solid fa-diagram-project"></i> Strand path (${chain.length} hop${chain.length !== 1 ? 's' : ''})</b>
+      <button class="btn btn-sm" onclick="clearTracePath()" title="Clear trace (Esc)"><i class="fa-solid fa-times"></i></button>
+    </div>
+    ${flags.length ? `<div style="margin-bottom:6px">${flags.join(' · ')}</div>` : ''}
+    ${hops || '<div style="color:var(--text-muted)">Single fiber — no splices.</div>'}
+  `;
+  pane.appendChild(div);
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -2410,7 +2566,10 @@ function mapClearMode() {
 
 // Esc cancels any active map mode.
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.mapMode) mapClearMode();
+  if (e.key === 'Escape') {
+    if (state.mapMode) mapClearMode();
+    if (state.tracePath) clearTracePath();
+  }
 });
 
 // ───────────────────────────────────────────────────────────────────────────
