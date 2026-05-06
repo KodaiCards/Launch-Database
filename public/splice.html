@@ -71,6 +71,20 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 /* Toolbar (above canvas) */
 .toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
+.view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:0;background:var(--surface-2);border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:6;overflow:hidden}
+.view-tab{padding:6px 14px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:500;border-right:1px solid var(--border-weak)}
+.view-tab:last-child{border-right:none}
+.view-tab.active{background:var(--primary);color:var(--primary-text)}
+.view-tab:hover:not(.active){background:var(--surface-3)}
+.map-toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
+.map-toolbar .btn.active{background:var(--primary);color:var(--primary-text)}
+.map-mode-hint{font-size:11px;color:var(--text-muted);margin-left:6px}
+.map-popup{font-size:12px;min-width:160px}
+.map-popup b{color:var(--primary)}
+.map-popup .row{margin:2px 0}
+.map-popup .actions{margin-top:6px;display:flex;gap:4px}
+#map-stage .maplibregl-canvas-container{outline:none}
+#map-stage.placing,#map-stage.placing .maplibregl-canvas{cursor:crosshair !important}
 .lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:6px 10px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:12px}
 .lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
 .lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
@@ -177,7 +191,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
   <div class="divider"></div>
   <div class="title" id="title-name">— No project selected —</div>
   <div class="right">
+    <button class="btn btn-sm" id="btn-save-rev" title="Save a labeled revision" disabled onclick="saveRevision()"><i class="fa-solid fa-flag"></i> Save rev</button>
+    <button class="btn btn-sm" id="btn-versions" title="Version history & compare" disabled onclick="openVersionsModal()"><i class="fa-solid fa-clock-rotate-left"></i> Versions</button>
     <button class="btn btn-sm" id="btn-export" disabled><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+    <button class="btn btn-sm" id="btn-export-kmz" disabled title="Download a KMZ for Google Earth / GIS" onclick="downloadKmz()"><i class="fa-solid fa-earth-americas"></i> KMZ</button>
     <button class="btn btn-sm btn-icon" id="btn-dark" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
     <span class="user-pill" id="user-pill" onclick="signOut()" title="Click to sign out">
       <i class="fa-solid fa-user-circle"></i> <span id="user-name">…</span>
@@ -199,8 +216,14 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
         <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
         <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
+        <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
+        <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
         <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
       </div>
+    </div>
+    <div class="sidebar-section" id="proj-imports" style="display:none">
+      <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
+      <div id="proj-imports-body" style="font-size:11px"></div>
     </div>
     <div class="sidebar-section" id="proj-summary" style="display:none">
       <h3>Summary</h3>
@@ -208,15 +231,26 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     </div>
   </aside>
 
-  <!-- ─── Center: Konva canvas ─── -->
+  <!-- ─── Center: Konva canvas + Map (Phase 3A) tabs ─── -->
   <div class="canvas-pane">
+    <div class="view-tabs" id="view-tabs" style="display:none">
+      <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
+      <button class="view-tab" data-view="map" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Map</button>
+    </div>
     <div class="toolbar" id="toolbar" style="display:none">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
       <button class="btn btn-sm" onclick="zoom(1.2)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
       <button class="btn btn-sm" onclick="zoom(0.83)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
     </div>
+    <div class="map-toolbar" id="map-toolbar" style="display:none">
+      <button class="btn btn-sm" onclick="mapFitData()" title="Zoom to fit all geographic data"><i class="fa-solid fa-expand"></i> Fit</button>
+      <button class="btn btn-sm" id="btn-place-mode" onclick="mapTogglePlaceMode()" title="Place a closure: click an unmapped closure in the list, then click on the map"><i class="fa-solid fa-map-pin"></i> Place</button>
+      <button class="btn btn-sm" id="btn-path-mode" onclick="mapTogglePathMode()" title="Draw cable path: click waypoints, double-click to finish"><i class="fa-solid fa-route"></i> Draw path</button>
+      <span id="map-mode-hint" class="map-mode-hint"></span>
+    </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
+    <div id="map-stage" style="display:none;width:100%;height:100%"></div>
     <div class="warnings-banner" id="warnings-banner"></div>
   </div>
 
@@ -256,6 +290,18 @@ const state = {
   sse: null,
   konva: null,          // { stage, layers... }
   pendingSplice: null,  // { fiber_a_id, tray_id }
+  // Phase 2C #11 — path tracing. Populated by traceFiberPath(); cleared by
+  // clearTracePath(). drawCanvasContents() reads this to overlay highlights.
+  tracePath: null,      // { fiber_id, chain, circular, over_spliced, warnings }
+  // Phase 3A — map view state.
+  activeView: 'diagram',     // 'diagram' | 'map'
+  map: null,                 // MapLibre Map instance
+  maplibregl: null,          // captured for Marker/LngLatBounds constructors
+  _mapMarkers: [],
+  mapMode: null,             // null | 'place' | 'path'
+  mapPlaceTargetId: null,
+  mapPathTargetId: null,
+  mapPathPoints: [],
 };
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -355,9 +401,26 @@ function renderProjectList() {
         <div class="name">${esc(p.name)}</div>
         <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp</div>
       </div>
+      <button class="btn btn-sm btn-icon" title="Clone project" onclick="event.stopPropagation();cloneProject('${p.id}','${esc(p.name).replace(/'/g, "\\'")}')"><i class="fa-solid fa-copy"></i></button>
       ${p.locked_by_staff_id ? '<span class="badge" title="Locked"><i class="fa-solid fa-lock"></i></span>' : ''}
     </li>
   `).join('');
+}
+
+// Phase 2B #5 — clone a project end-to-end on the server. Picks up
+// every descendant row (locations, cables, fibers, closures, trays,
+// splices, ribbon groups, strand states + circuit metadata). Designer
+// attribution moves to the cloning user; lock state is NOT carried
+// over so the clone opens unlocked.
+async function cloneProject(projectId, sourceName) {
+  const newName = prompt('Name for the cloned project:', `${sourceName} (copy)`);
+  if (!newName || !newName.trim()) return;
+  try {
+    const r = await api(`/api/splice/projects/${projectId}/clone`, 'POST', { name: newName.trim() });
+    toast(`Cloned ${r.counts.cables} cables, ${r.counts.fibers} fibers, ${r.counts.splices} splices.`, 'success');
+    await loadProjects();
+    if (r.project?.id) selectProject(r.project.id);
+  } catch (e) { toast('Clone failed: ' + e.message, 'error'); }
 }
 
 function openCreateProject() {
@@ -391,9 +454,15 @@ async function selectProject(id) {
   cleanupCurrent();
   state.currentId = id;
   document.getElementById('proj-actions').style.display = 'block';
+  document.getElementById('proj-imports').style.display = 'block';
+  refreshImportsList();
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('view-tabs').style.display = 'flex';
   document.getElementById('btn-export').disabled = false;
+  document.getElementById('btn-export-kmz').disabled = false;
+  document.getElementById('btn-versions').disabled = false;
+  document.getElementById('btn-save-rev').disabled = false;
   renderProjectList();
   await hydrateProject();
   attemptLock();
@@ -418,9 +487,27 @@ async function hydrateProject() {
     renderInspector();
     renderCanvas();
     renderWarnings();
+    // Phase 3A — refresh the map layer on every hydrate. No-op when
+    // map isn't initialized yet (user never opened the Map tab).
+    if (state.map) refreshMapLayers();
+    // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
+    // skips when last version is <10min old or generation hash matches,
+    // so this is safe to call after every hydrate without flooding the
+    // versions table.
+    fireAutoSnapshot();
   } catch (e) {
     toast('Hydrate failed: ' + e.message, 'error');
   }
+}
+
+function fireAutoSnapshot() {
+  if (!state.currentId || isReadOnly()) return;
+  // Client-side throttle (60s) on top of the server's 10-min debounce —
+  // avoids the network round-trip on rapid sequential edits.
+  const now = Date.now();
+  if (state._lastAutoSnap && (now - state._lastAutoSnap) < 60_000) return;
+  state._lastAutoSnap = now;
+  api('/api/splice/projects/' + state.currentId + '/versions/auto', 'POST').catch(() => {});
 }
 
 function renderSummary() {
@@ -601,8 +688,30 @@ function openSSE(projectId) {
    'location_added','location_updated','location_deleted',
    'splice_added','splice_deleted',
    'ribbon_splice_added','ribbon_group_deleted',
-   'project_updated','lock_acquired','lock_released','lock_taken_over']
+   'location_coords_changed','cable_path_changed',
+   'design_import_applied','design_import_rejected',
+   'project_updated','lock_acquired','lock_released','lock_taken_over',
+   'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired',
+   'cable_state_updated','cable_state_deleted']
    .forEach(evt => state.sse.addEventListener(evt, handler));
+  // Refresh the imports sidebar when the master designer or another
+  // engineer takes action on a pending import.
+  ['design_import_applied','design_import_rejected'].forEach(evt => {
+    state.sse.addEventListener(evt, () => refreshImportsList());
+  });
+  // Phase 2B #7 — splicer uploaded a field photo from a public QR
+  // link. We don't need a full re-hydrate (no graph change); just
+  // refresh the markup list if the matching closure is selected.
+  ['field_markup_added', 'field_markup_removed'].forEach(evt => {
+    state.sse.addEventListener(evt, (e) => {
+      try {
+        const data = JSON.parse(e.data || '{}');
+        if (state.selection?.type === 'closure' && state.selection.id === data.closure_id) {
+          loadClosureMarkups(data.closure_id);
+        }
+      } catch {}
+    });
+  });
   state.sse.onerror = () => {
     // EventSource auto-reconnects; nothing to do unless it's a permanent
     // 401 — which the api() helper would have already redirected.
@@ -632,8 +741,18 @@ function renderCanvas() {
   const cableLayer = new Konva.Layer();
   const closureLayer = new Konva.Layer();
   const spliceLayer = new Konva.Layer({ listening: false });
-  stage.add(bgLayer); stage.add(cableLayer); stage.add(closureLayer); stage.add(spliceLayer);
-  state.konva = { stage, bgLayer, cableLayer, closureLayer, spliceLayer };
+  // traceLayer renders path-trace highlights on top of everything else.
+  // listening:false so it never intercepts clicks.
+  const traceLayer = new Konva.Layer({ listening: false });
+  stage.add(bgLayer); stage.add(cableLayer); stage.add(closureLayer); stage.add(spliceLayer); stage.add(traceLayer);
+  state.konva = { stage, bgLayer, cableLayer, closureLayer, spliceLayer, traceLayer };
+
+  // Click on empty canvas clears any active path trace (same UX as Esc).
+  stage.on('click tap', (e) => {
+    if (e.target === stage && state.tracePath) {
+      clearTracePath();
+    }
+  });
 
   // Wheel zoom centered on cursor — Konva idiom.
   stage.on('wheel', (e) => {
@@ -672,10 +791,11 @@ function renderCanvas() {
 
 function drawCanvasContents() {
   if (!state.konva || !state.data) return;
-  const { cableLayer, closureLayer, spliceLayer } = state.konva;
+  const { cableLayer, closureLayer, spliceLayer, traceLayer } = state.konva;
   cableLayer.destroyChildren();
   closureLayer.destroyChildren();
   spliceLayer.destroyChildren();
+  traceLayer.destroyChildren();
 
   const d = state.data;
 
@@ -781,14 +901,235 @@ function drawCanvasContents() {
     if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
     closuresByLoc.get(cl.location_id).push(cl);
   });
+
+  // _drawRichClosure — renders a closure that has 3 or more cables terminating
+  // at its location. The standard two-cable layout (vertical box centered on the
+  // location column) becomes confusing at high cable counts because stub lines
+  // would overlap and the column is too narrow to show per-cable disposition.
+  // Instead we draw a wider rounded rectangle, route cable stubs in from both
+  // sides (left = cables whose from_location_id matches, right = to_location_id
+  // matches), and attach a per-cable pill badge showing splice/store/express
+  // counts so the splicer can see at a glance how each cable is handled here.
+  function _drawRichClosure(cl, locX, baseY, cablesAtLoc, trayList, totalSpliceCount) {
+    const RW = 200;  // rich-closure rectangle width
+    // Height grows with tray count so the sparklines have breathing room,
+    // but we clamp so the canvas doesn't balloon for huge closures.
+    const RH = Math.min(200, Math.max(130, trayList.length * 14 + 80));
+    const rx = locX - RW / 2;  // top-left X, centred on location column
+
+    const splicesIn = (tray) => d.splices.filter(s => s.tray_id === tray.id).length;
+    const overCap   = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+
+    // Build a fiber-ID set for each cable so disposition counts are O(n)
+    // rather than O(n*m).  strand_states is cable-scoped, so we group by
+    // cable_id and location in one pass.
+    const strandStatesByLocCable = new Map(); // key: `${cable_id}:${loc_id}`
+    (d.strand_states || []).forEach(ss => {
+      if (ss.state !== 'stored') return;
+      const key = ss.cable_id + ':' + ss.location_id;
+      if (!strandStatesByLocCable.has(key)) strandStatesByLocCable.set(key, 0);
+      strandStatesByLocCable.set(key, strandStatesByLocCable.get(key) + 1);
+    });
+
+    // For each cable, count how many of its fibers are spliced at this closure
+    // (any splice in any tray of this closure that touches a fiber from this cable).
+    const trayIds = new Set(trayList.map(t => t.id));
+    const splicesHere = d.splices.filter(s => trayIds.has(s.tray_id));
+    const fiberById2  = new Map(d.fibers.map(f => [f.id, f]));
+    const tubeById2   = new Map(d.buffer_tubes.map(t => [t.id, t]));
+    function cableOfFiber(fid) {
+      const f = fiberById2.get(fid);
+      if (!f) return null;
+      const tb = tubeById2.get(f.buffer_tube_id);
+      return tb ? tb.cable_id : null;
+    }
+    // splice count per cable at this closure
+    const splicedPerCable = new Map();
+    splicesHere.forEach(s => {
+      [s.fiber_a_id, s.fiber_b_id].forEach(fid => {
+        const cid = cableOfFiber(fid);
+        if (cid) splicedPerCable.set(cid, (splicedPerCable.get(cid) || 0) + 1);
+      });
+    });
+
+    // Separate cables into left-side (originate here) and right-side (terminate
+    // here).  If a cable has both endpoints at the same location (a loop), put
+    // it on the left so it shows up somewhere.
+    const leftCables  = cablesAtLoc.filter(c => c.from_location_id === cl.location_id);
+    const rightCables = cablesAtLoc.filter(c => c.to_location_id === cl.location_id && c.from_location_id !== cl.location_id);
+
+    const group = new Konva.Group({ x: rx, y: baseY });
+
+    // Background rectangle — wider than the standard box to accommodate stubs.
+    group.add(new Konva.Rect({
+      width: RW, height: RH,
+      fill: overCap ? '#FFF3CD' : '#FFFFFF',
+      stroke: overCap ? '#DC3545' : '#1B5FA0',
+      strokeWidth: 2, cornerRadius: 6,
+    }));
+
+    // Closure model name.
+    group.add(new Konva.Text({
+      x: 6, y: 5, width: RW - 12,
+      text: cl.model || 'Closure',
+      fontSize: 11, fontStyle: 'bold', fill: '#1B5FA0',
+    }));
+
+    // Interior summary: "N trays · M splices" — gives the splicer a quick
+    // sanity check without having to open the inspector.
+    group.add(new Konva.Text({
+      x: 6, y: 18, width: RW - 12, align: 'center',
+      text: trayList.length + ' trays · ' + totalSpliceCount + ' splices',
+      fontSize: 10, fill: '#6C757D',
+    }));
+
+    // Tray sparkline — same fill-ratio bars as the standard closure, scaled to
+    // fit the wider rectangle.
+    const sparkY = 34;
+    const sparkH = 10;
+    trayList.forEach((tray, ti) => {
+      const fill = splicesIn(tray) / Math.max(cl.tray_capacity, 1);
+      const tw   = (RW - 12) / Math.max(trayList.length, 1);
+      const tx   = 6 + ti * tw;
+      group.add(new Konva.Rect({
+        x: tx, y: sparkY, width: tw - 1, height: sparkH,
+        fill: '#F0F0F0', stroke: '#DEE2E6', strokeWidth: 0.5,
+      }));
+      group.add(new Konva.Rect({
+        x: tx, y: sparkY, width: (tw - 1) * Math.min(fill, 1), height: sparkH,
+        fill: fill > 1 ? '#DC3545' : (fill > 0.85 ? '#FFC107' : '#28A745'),
+      }));
+    });
+
+    // Per-cable stub + disposition badge helper.
+    // stubX is the closure-rectangle edge (0 for left side, RW for right side).
+    // stubDirX is -1 for left (line goes left out of the closure) or +1 for right.
+    // cableY is the canvas Y of that cable's center stripe.
+    function _drawStub(cable, stubX, stubDirX, stubRowY) {
+      const STUB_LEN  = 40;   // length of the horizontal connector outside the box
+      const BADGE_W   = 80;   // pill badge width
+      const BADGE_H   = 14;
+      const STUB_COLOR = '#888';
+
+      // Horizontal line from the closure edge to the cable's canvas Y-position.
+      // We draw in group-local coords, so subtract baseY and rx for Y.
+      const localCableY = (cableYById.get(cable.id) ?? (baseY + RH / 2)) - baseY;
+
+      // Vertical tap from closure edge to the cable row.
+      const edgeY = Math.max(5, Math.min(RH - 5, stubRowY));
+
+      // Connector path: right-angle elbow. Start at closure edge (stubX, edgeY),
+      // go horizontally out STUB_LEN, then a vertical segment to align with the
+      // cable stripe, then continue horizontally to meet it. In practice the
+      // cable stripe is far away on the canvas so we only draw the elbow stub;
+      // the cable's own drawn line already extends across the canvas.
+      const elbowX = stubX + stubDirX * STUB_LEN;
+      group.add(new Konva.Line({
+        points: [stubX, edgeY, elbowX, edgeY],
+        stroke: STUB_COLOR, strokeWidth: 1.5, listening: false,
+        dash: [4, 3],
+      }));
+      // Arrow nub at the elbow tip to indicate direction.
+      const arrowDir = stubDirX;  // +1 right, -1 left
+      group.add(new Konva.Line({
+        points: [
+          elbowX, edgeY,
+          elbowX - arrowDir * 6, edgeY - 4,
+          elbowX - arrowDir * 6, edgeY + 4,
+          elbowX, edgeY,
+        ],
+        closed: true, fill: STUB_COLOR, stroke: STUB_COLOR, strokeWidth: 0.5,
+        listening: false,
+      }));
+
+      // Cable name label alongside the stub, placed just outside the closure edge.
+      const labelX = stubDirX === -1 ? (elbowX - BADGE_W - 2) : (elbowX + 2);
+      group.add(new Konva.Text({
+        x: labelX, y: edgeY - 10, width: BADGE_W,
+        text: cable.name + ' · ' + cable.fiber_count + 'f',
+        fontSize: 9, fill: '#444', listening: false,
+        ellipsis: true,
+      }));
+
+      // Disposition counts for this cable at this closure.
+      const spliced  = Math.floor((splicedPerCable.get(cable.id) || 0) / 2); // each splice counted twice (fiber_a + fiber_b)
+      const stored   = strandStatesByLocCable.get(cable.id + ':' + cl.location_id) || 0;
+      const express  = Math.max(0, cable.fiber_count - spliced - stored);
+
+      // Pill badges: blue=spliced, gray=stored, green=express. Only draw a
+      // badge when count > 0 to avoid clutter on cables that are entirely
+      // expressed through or entirely spliced.
+      const badges = [];
+      if (spliced > 0) badges.push({ label: spliced + ' spl', color: '#1660C9', textColor: '#fff' });
+      if (stored  > 0) badges.push({ label: stored  + ' sto', color: '#7F8C8D', textColor: '#fff' });
+      if (express > 0) badges.push({ label: express + ' exp', color: '#27AE60', textColor: '#fff' });
+
+      const PILL_W = 36;
+      const PILL_H = 12;
+      const PILL_GAP = 2;
+      const pillsWidth = badges.length * (PILL_W + PILL_GAP) - PILL_GAP;
+      // Centre the pill row below the label.
+      const pillStartX = stubDirX === -1
+        ? (elbowX - pillsWidth - 2)
+        : (elbowX + 2);
+      badges.forEach((b, bi) => {
+        const px = pillStartX + bi * (PILL_W + PILL_GAP);
+        const py = edgeY + 2;
+        group.add(new Konva.Rect({
+          x: px, y: py, width: PILL_W, height: PILL_H,
+          fill: b.color, cornerRadius: PILL_H / 2, listening: false,
+        }));
+        group.add(new Konva.Text({
+          x: px + 2, y: py + 2, width: PILL_W - 4,
+          text: b.label, fontSize: 8, fill: b.textColor,
+          align: 'center', listening: false,
+        }));
+      });
+    }
+
+    // Distribute stubs evenly along the left and right edges of the closure rect.
+    // We reserve the top 50px for headers/sparkline, so stubs start at y=50.
+    const STUB_TOP = 50;
+    const STUB_BOTTOM = RH - 10;
+    function stubY(idx, total) {
+      if (total <= 1) return (STUB_TOP + STUB_BOTTOM) / 2;
+      return STUB_TOP + idx * (STUB_BOTTOM - STUB_TOP) / (total - 1);
+    }
+    leftCables.forEach((cable, i) => {
+      _drawStub(cable, 0, -1, stubY(i, leftCables.length));
+    });
+    rightCables.forEach((cable, i) => {
+      _drawStub(cable, RW, 1, stubY(i, rightCables.length));
+    });
+
+    group.on('click tap', () => selectThing('closure', cl.id));
+    group.on('mouseenter', () => { document.body.style.cursor = 'pointer'; });
+    group.on('mouseleave', () => { document.body.style.cursor = 'default'; });
+    closureLayer.add(group);
+  }
+
   for (const loc of orderedLocations) {
     const list = closuresByLoc.get(loc.id) || [];
     const x = colX.get(loc.id);
+    // Cables that terminate (from or to) at this location — used to decide
+    // whether to use the rich layout for a given closure.
+    const cablesAtLoc = d.cables.filter(c =>
+      c.from_location_id === loc.id || c.to_location_id === loc.id
+    );
     list.forEach((cl, idx) => {
-      const baseY = 380 + idx * 110;
+      const baseY    = 380 + idx * 110;
       const trayList = d.trays.filter(t => t.closure_id === cl.id).sort((a,b)=>a.position-b.position);
       const splicesIn = (tray) => d.splices.filter(s => s.tray_id === tray.id).length;
-      const overCap = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+      const overCap  = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+      const totalSpliceCount = trayList.reduce((sum, t) => sum + splicesIn(t), 0);
+
+      // Rich layout for closures where 3 or more cables converge. The standard
+      // two-cable layout (120px box) is kept unchanged — generalising it just
+      // to handle the common case adds complexity without benefit.
+      if (cablesAtLoc.length >= 3) {
+        _drawRichClosure(cl, x, baseY, cablesAtLoc, trayList, totalSpliceCount);
+        return;
+      }
 
       const group = new Konva.Group({ x: x - 60, y: baseY, width: 120 });
       group.add(new Konva.Rect({
@@ -925,6 +1266,69 @@ function drawCanvasContents() {
       }));
     }
   });
+
+  // ── Path-trace overlay (Phase 2C #11) ──────────────────────────────────
+  // When a strand path is active, glow every cable in the chain and accent
+  // every closure that hosts a splice-to-next hop.
+  if (state.tracePath && state.tracePath.chain && state.tracePath.chain.length) {
+    const TRACE_CABLE_COLOR  = '#FF6B00';  // vivid orange — high contrast on both themes
+    const TRACE_CLOSURE_COLOR = '#FF6B00';
+
+    // Collect the set of cable IDs and closure IDs that appear in the chain.
+    const traceCableIds   = new Set();
+    const traceClosureIds = new Set();
+
+    for (const entry of state.tracePath.chain) {
+      const f = entry.fiber;
+      if (f.cable_id) traceCableIds.add(f.cable_id);
+      if (entry.splice_to_next && entry.splice_to_next.closure_id) {
+        traceClosureIds.add(entry.splice_to_next.closure_id);
+      }
+    }
+
+    // For each traced cable, draw a thick glowing outline around its strip.
+    d.cables.forEach((cable, i) => {
+      if (!traceCableIds.has(cable.id)) return;
+      const from = colX.get(cable.from_location_id);
+      const to   = colX.get(cable.to_location_id);
+      if (from == null || to == null) return;
+      const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id);
+      const y = 80 + i * 60;
+      const tubeGap = 2;
+      const stripHeight = Math.max(8, tubes.length * tubeGap + 2);
+      // Glow rect behind the cable strip.
+      traceLayer.add(new Konva.Rect({
+        x: from + 4, y: y - 6,
+        width: to - from - 8, height: stripHeight + 12,
+        stroke: TRACE_CABLE_COLOR, strokeWidth: 3,
+        fill: 'rgba(255,107,0,0.10)',
+        cornerRadius: 4, listening: false,
+      }));
+    });
+
+    // For each traced closure, draw a colored accent ring around its box.
+    // Rich closures (3+ cables) use a wider rectangle; standard ones use 120px.
+    for (const loc of orderedLocations) {
+      const list = closuresByLoc.get(loc.id) || [];
+      const x = colX.get(loc.id);
+      const cablesHere = d.cables.filter(c =>
+        c.from_location_id === loc.id || c.to_location_id === loc.id
+      );
+      const isRich = cablesHere.length >= 3;
+      const ringW = isRich ? 208 : 128;
+      list.forEach((cl, idx) => {
+        if (!traceClosureIds.has(cl.id)) return;
+        const baseY = 380 + idx * 110;
+        traceLayer.add(new Konva.Rect({
+          x: x - ringW / 2 - 4, y: baseY - 4,
+          width: ringW, height: 98,
+          stroke: TRACE_CLOSURE_COLOR, strokeWidth: 3,
+          fill: 'rgba(255,107,0,0.08)',
+          cornerRadius: 6, listening: false,
+        }));
+      });
+    }
+  }
 
   state.konva.stage.batchDraw();
   resetView();
@@ -1071,6 +1475,7 @@ function renderClosureInspector(closureId) {
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">at ${esc(loc?.name || '?')}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="saveClosureAsTemplate('${closureId}')" title="Save closure shell as a reusable template" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-floppy-disk"></i> Save as template</button>
       <button class="btn btn-sm btn-danger" onclick="deleteClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
     <table class="table">
@@ -1087,6 +1492,20 @@ function renderClosureInspector(closureId) {
         }).join('')}
       </tbody>
     </table>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        Splitters <span class="small">${renderSplitterCount(closureId)}</span>
+      </h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Passive optical splitters (PLC/FBT). One input fiber fans out to N
+        downstream fibers. Validate before exporting — un-wired ports are flagged.
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="btn btn-sm" onclick="openAddSplitter('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Add splitter</button>
+      </div>
+      ${renderSplitterList(closureId)}
+    </div>
 
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
       <h3 style="display:flex;justify-content:space-between;align-items:center">
@@ -1115,7 +1534,380 @@ function renderClosureInspector(closureId) {
           </tbody>
         </table>` : '<div class="empty-pane" style="padding:8px">None marked yet.</div>'}
     </div>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3>Slack at this closure</h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Service loop length per cable. Splicer coils these at the handhole
+        before making cuts.
+      </div>
+      ${renderCableSlackList(cl.location_id)}
+    </div>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)" id="closure-field-section">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        Field markup
+        <button class="btn btn-sm" onclick="getClosureFieldLink('${closureId}')" title="Mint or copy the public link splicers scan to upload field photos"><i class="fa-solid fa-link"></i> Field link</button>
+      </h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Splicers scan the per-closure QR code on the printed PDF and upload as-built photos with no login.
+      </div>
+      <div id="closure-markups-${closureId}"><div class="empty-pane" style="padding:8px">Loading…</div></div>
+    </div>
   `;
+
+  loadClosureMarkups(closureId);
+}
+
+// Phase 2B #7 — pull field markups for the selected closure and
+// render thumbnails. Image bytes come from a separate auth-gated
+// endpoint so the list response stays light.
+async function loadClosureMarkups(closureId) {
+  const host = document.getElementById('closure-markups-' + closureId);
+  if (!host) return;
+  try {
+    const list = await api('/api/splice/closures/' + closureId + '/markups');
+    if (!list.length) {
+      host.innerHTML = '<div class="empty-pane" style="padding:8px">No field photos yet.</div>';
+      return;
+    }
+    host.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">
+        ${list.map(m => `
+          <div style="border:1px solid var(--border-weak);border-radius:6px;overflow:hidden;background:var(--surface)">
+            <a href="/api/splice/markups/${m.id}/image" target="_blank" rel="noopener">
+              <img src="/api/splice/markups/${m.id}/image" alt="field photo"
+                   style="width:100%;height:90px;object-fit:cover;display:block;background:var(--surface-2)" loading="lazy">
+            </a>
+            <div style="padding:5px 6px;font-size:11px;color:var(--text-muted)">
+              <div style="color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.splicer_name || 'Anonymous')}</div>
+              <div>${new Date(m.uploaded_at).toLocaleDateString()}</div>
+              ${m.notes ? `<div title="${esc(m.notes)}" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.notes)}</div>` : ''}
+              <div style="margin-top:3px"><button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px" onclick="deleteMarkup('${m.id}','${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i></button></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (e) {
+    host.innerHTML = '<div class="empty-pane" style="padding:8px;color:var(--danger)">Load failed: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function getClosureFieldLink(closureId) {
+  try {
+    // Use the most recent un-expired token if one exists; otherwise
+    // mint. Engineer can always mint a fresh one explicitly.
+    const existing = await api('/api/splice/closures/' + closureId + '/public-tokens');
+    let url;
+    const live = existing.find(t => !t.expires_at || new Date(t.expires_at) > new Date());
+    if (live) {
+      url = live.url;
+    } else {
+      const fresh = await api('/api/splice/closures/' + closureId + '/public-tokens', 'POST', {});
+      url = fresh.url;
+    }
+    // Best-effort clipboard copy. Falls back to a prompt() so the
+    // engineer can still grab the URL on browsers that block
+    // navigator.clipboard from non-HTTPS origins.
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Field link copied to clipboard', 'success');
+        return;
+      } catch {}
+    }
+    prompt('Field link (Cmd/Ctrl+C to copy):', url);
+  } catch (e) { toast('Failed to get field link: ' + e.message, 'error'); }
+}
+
+async function deleteMarkup(markupId, closureId) {
+  if (!confirm('Delete this field photo?')) return;
+  try {
+    await api('/api/splice/markups/' + markupId, 'DELETE');
+    loadClosureMarkups(closureId);
+    toast('Photo deleted', 'success');
+  } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ─── Cable slack helpers (Phase 2C #10) ──────────────────────────────────
+// One row per cable that terminates or passes through this location
+// (from_location_id OR to_location_id matches).  Each row shows the
+// current slack_length_inches + notes from splice_cable_states and
+// lets the engineer edit them inline.  Auto-save on blur keeps the UI
+// lightweight — no separate Save button needed.
+
+function renderCableSlackList(locationId) {
+  const cablesAtLoc = (state.data.cables || []).filter(c =>
+    c.from_location_id === locationId || c.to_location_id === locationId
+  );
+  if (!cablesAtLoc.length) {
+    return '<div class="empty-pane" style="padding:8px">No cables at this location yet.</div>';
+  }
+  const rows = cablesAtLoc.map(cable => {
+    const cs = (state.data.cable_states || []).find(
+      s => s.cable_id === cable.id && s.location_id === locationId
+    );
+    const slackVal  = cs?.slack_length_inches ?? '';
+    const notesVal  = cs?.notes ?? '';
+    const csId      = cs?.id || '';
+    return `<tr>
+      <td><b>${esc(cable.name)}</b></td>
+      <td>
+        <input type="number" min="0" step="1" class="input-sm" style="width:70px"
+               value="${esc(String(slackVal))}"
+               data-cable-id="${cable.id}" data-location-id="${locationId}"
+               data-field="slack_length_inches" data-cs-id="${csId}"
+               onblur="saveCableSlackField(this)"
+               ${isReadOnly() ? 'disabled' : ''}>
+      </td>
+      <td>
+        <input type="text" class="input-sm" style="width:130px"
+               value="${esc(notesVal)}"
+               data-cable-id="${cable.id}" data-location-id="${locationId}"
+               data-field="notes" data-cs-id="${csId}"
+               onblur="saveCableSlackField(this)"
+               ${isReadOnly() ? 'disabled' : ''}>
+      </td>
+      <td>
+        ${csId ? `<button class="btn btn-sm btn-danger" onclick="clearCableState('${csId}')" title="Clear slack entry" ${isReadOnly() ? 'disabled' : ''}><i class="fa-solid fa-times"></i></button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <table class="table">
+      <thead><tr><th>Cable</th><th>Slack (in)</th><th>Notes</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// Persist a single field change from a cable-slack inline input.
+// Both inputs in a row share the same (cable_id, location_id) key;
+// we read the sibling value so the UPSERT always writes both columns.
+async function saveCableSlackField(input) {
+  if (isReadOnly()) return;
+  const cableId    = input.dataset.cableId;
+  const locationId = input.dataset.locationId;
+  if (!cableId || !locationId) return;
+
+  // Find both sibling inputs for this cable+location row.
+  const row = input.closest('tr');
+  const slackInput = row.querySelector('[data-field="slack_length_inches"]');
+  const notesInput = row.querySelector('[data-field="notes"]');
+
+  const slackRaw = slackInput?.value.trim();
+  const body = {
+    slack_length_inches: slackRaw !== '' && slackRaw != null ? parseInt(slackRaw, 10) : null,
+    notes: notesInput?.value.trim() || null,
+  };
+  try {
+    await api(
+      `/api/splice/cables/${cableId}/locations/${locationId}/cable-state`,
+      'PUT', body
+    );
+    // Refresh state so the row re-renders with the new cs.id if this
+    // was a first insert (csId was blank before).
+    await hydrateProject();
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function clearCableState(cableStateId) {
+  if (!confirm('Clear this cable slack entry?')) return;
+  try {
+    await api('/api/splice/cable-states/' + cableStateId, 'DELETE');
+    await hydrateProject();
+    toast('Slack entry cleared', 'success');
+  } catch (e) { toast('Clear failed: ' + e.message, 'error'); }
+}
+
+// ─── Splitter helpers (Phase 2C #9) ──────────────────────────────────────
+
+function renderSplitterCount(closureId) {
+  const splitters = (state.data.splitters || []).filter(s => s.closure_id === closureId);
+  return splitters.length;
+}
+
+function renderSplitterList(closureId) {
+  const splitters = (state.data.splitters || []).filter(s => s.closure_id === closureId);
+  if (!splitters.length) return '<div class="empty-pane" style="padding:8px">No splitters yet.</div>';
+
+  return splitters.map(sp => {
+    const outputs = (state.data.splitter_outputs || []).filter(o => o.splitter_id === sp.id);
+    const wiredOut = outputs.filter(o => o.output_fiber_id).length;
+    const inputFiber = sp.input_fiber_id ? describeFiber(sp.input_fiber_id) : null;
+    const inputDesc = inputFiber
+      ? `${inputFiber.cable} / <span class="fc fc-${inputFiber.tube_color}"></span>${inputFiber.tube_color} / pos ${inputFiber.position}`
+      : '<span style="color:var(--text-muted)">not wired</span>';
+
+    return `
+      <div class="splice-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div style="display:flex;width:100%;justify-content:space-between;align-items:center">
+          <div>
+            <b>${esc(sp.ratio)}</b> splitter
+            &nbsp;·&nbsp; outputs: ${wiredOut}/${outputs.length} wired
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm" onclick="openEditSplitter('${sp.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-sm" onclick="openWireSplitter('${sp.id}')" title="Wire output ports"><i class="fa-solid fa-plug"></i> Outputs</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteSplitter('${sp.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div style="font-size:11px">Input: ${inputDesc}</div>
+        ${sp.notes ? `<div style="font-size:11px;color:var(--text-muted)">${esc(sp.notes)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// Build a flat list of fiber options for cables touching this closure's
+// location. Used by both the input-fiber and output-fiber pickers.
+function _closureFiberOptions(closureId) {
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) return '';
+  const cablesAtLoc = state.data.cables.filter(c =>
+    c.from_location_id === cl.location_id || c.to_location_id === cl.location_id
+  );
+  if (!cablesAtLoc.length) return '<option value="">No cables at this location</option>';
+  const opts = ['<option value="">-- none --</option>'];
+  for (const cable of cablesAtLoc) {
+    const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cable.id);
+    for (const tube of tubes) {
+      const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tube.id);
+      for (const fiber of fibers) {
+        opts.push(`<option value="${fiber.id}">${esc(cable.name)} / ${tube.color} / pos ${fiber.position}</option>`);
+      }
+    }
+  }
+  return opts.join('');
+}
+
+function openAddSplitter(closureId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const fiberOpts = _closureFiberOptions(closureId);
+  showModal({
+    title: 'Add splitter',
+    body: `
+      <div class="field"><label>Ratio</label>
+        <select id="m-spl-ratio">
+          <option>1x2</option><option>1x4</option><option>1x8</option>
+          <option selected>1x16</option><option>1x32</option><option>1x64</option>
+        </select></div>
+      <div class="field"><label>Input fiber (optional — wire later)</label>
+        <select id="m-spl-input">${fiberOpts}</select></div>
+      <div class="field"><label>Notes (optional)</label>
+        <textarea id="m-spl-notes" placeholder="e.g. port 1 of APC-SC bank"></textarea></div>
+    `,
+    submitText: 'Add',
+    onSubmit: async (close) => {
+      const ratio   = document.getElementById('m-spl-ratio').value;
+      const inputId = document.getElementById('m-spl-input').value;
+      const notes   = document.getElementById('m-spl-notes').value.trim();
+      try {
+        await api(`/api/splice/closures/${closureId}/splitters`, 'POST', {
+          ratio,
+          input_fiber_id: inputId || null,
+          notes: notes || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+function openEditSplitter(splitterId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const sp = (state.data.splitters || []).find(s => s.id === splitterId);
+  if (!sp) return;
+  const fiberOpts = _closureFiberOptions(sp.closure_id);
+  // Pre-select the current input fiber in the option list.
+  const fiberOptsSelected = fiberOpts.replace(
+    `value="${sp.input_fiber_id || ''}"`,
+    `value="${sp.input_fiber_id || ''}" selected`
+  );
+  showModal({
+    title: 'Edit splitter',
+    body: `
+      <div class="field"><label>Ratio</label>
+        <select id="m-espl-ratio">
+          ${['1x2','1x4','1x8','1x16','1x32','1x64'].map(r =>
+            `<option${r === sp.ratio ? ' selected' : ''}>${r}</option>`
+          ).join('')}
+        </select></div>
+      <div class="field"><label>Input fiber</label>
+        <select id="m-espl-input">${fiberOptsSelected}</select></div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-espl-notes">${esc(sp.notes || '')}</textarea></div>
+    `,
+    submitText: 'Save',
+    onSubmit: async (close) => {
+      const ratio   = document.getElementById('m-espl-ratio').value;
+      const inputId = document.getElementById('m-espl-input').value;
+      const notes   = document.getElementById('m-espl-notes').value.trim();
+      try {
+        await api(`/api/splice/splitters/${splitterId}`, 'PUT', {
+          ratio,
+          input_fiber_id: inputId || null,
+          notes: notes || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+function openWireSplitter(splitterId) {
+  const sp = (state.data.splitters || []).find(s => s.id === splitterId);
+  if (!sp) return;
+  const outputs = (state.data.splitter_outputs || []).filter(o => o.splitter_id === splitterId);
+  const fiberOpts = _closureFiberOptions(sp.closure_id);
+
+  // Build one row per output port so the designer can wire each
+  // independently. We re-select the current output_fiber_id inline.
+  const rows = outputs.map(o => {
+    const selected = o.output_fiber_id
+      ? fiberOpts.replace(`value="${o.output_fiber_id}"`, `value="${o.output_fiber_id}" selected`)
+      : fiberOpts;
+    return `
+      <div class="field" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <label style="width:60px;min-width:60px">Port ${o.position}</label>
+        <select data-output-id="${o.id}" style="flex:1">${selected}</select>
+      </div>`;
+  }).join('');
+
+  showModal({
+    title: `Wire outputs — ${sp.ratio} splitter`,
+    wide: true,
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+        Select the downstream fiber for each output port. Leave blank to un-wire.
+      </div>
+      <div id="m-wire-outputs">${rows}</div>
+    `,
+    submitText: 'Save all',
+    onSubmit: async (close) => {
+      const selects = document.querySelectorAll('#m-wire-outputs select[data-output-id]');
+      try {
+        await Promise.all([...selects].map(sel =>
+          api(`/api/splice/splitter-outputs/${sel.dataset.outputId}`, 'PUT', {
+            output_fiber_id: sel.value || null,
+          })
+        ));
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function deleteSplitter(splitterId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  if (!confirm('Delete this splitter and all its output ports?')) return;
+  try {
+    await api(`/api/splice/splitters/${splitterId}`, 'DELETE');
+    await hydrateProject();
+    toast('Splitter deleted', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function openAddStoredStrand(locationId) {
@@ -1209,7 +2001,10 @@ function renderRibbonGroupRows(groups, splices) {
         <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}"></span>${esc(b.tube_color)}
         <span class="ribbon-tag">ribbon ×12</span>
       </div>
-      <button class="btn btn-sm btn-danger" onclick="deleteRibbonGroup('${g.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="traceFiberPath('${first.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRibbonGroup('${g.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1227,7 +2022,10 @@ function renderLooseSpliceRows(splices) {
           →
           <span class="fc fc-${b.color}"></span>${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
         </div>
-        <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+        </div>
       </div>`;
     }).join('')}
   </div>`;
@@ -1245,6 +2043,85 @@ function describeFiber(fiberId) {
     color: f.color,
     position: f.position,
   };
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Path tracing (Phase 2C #11)
+// ───────────────────────────────────────────────────────────────────────────
+
+// Fetch the full strand path for fiber_a_id of a splice and light up the
+// canvas. We always trace from fiber_a_id (side A) so the result is
+// deterministic — if the designer wants the other end they can click
+// Trace on the splice at the far end of the chain.
+async function traceFiberPath(fiberId) {
+  if (!fiberId || !state.currentId) return;
+  try {
+    const result = await api('/api/splice/fibers/' + fiberId + '/path');
+    state.tracePath = result;
+    // Re-draw the canvas so highlights appear immediately.
+    drawCanvasContents();
+    // Show a sidebar chain summary in a transient info area if it exists.
+    _renderTracePathSidebar(result);
+    if (result.warnings && result.warnings.length) {
+      toast(result.warnings[0], 'warn');
+    }
+  } catch (e) {
+    toast('Path trace failed: ' + e.message, 'error');
+  }
+}
+
+function clearTracePath() {
+  state.tracePath = null;
+  drawCanvasContents();
+  const sidebar = document.getElementById('trace-path-sidebar');
+  if (sidebar) sidebar.remove();
+}
+
+// Render a numbered chain summary in a floating sidebar overlay on the
+// canvas pane. Removed whenever clearTracePath() is called.
+function _renderTracePathSidebar(result) {
+  // Remove any stale sidebar first.
+  const old = document.getElementById('trace-path-sidebar');
+  if (old) old.remove();
+
+  const pane = document.querySelector('.canvas-pane');
+  if (!pane) return;
+
+  const div = document.createElement('div');
+  div.id = 'trace-path-sidebar';
+  div.style.cssText = [
+    'position:absolute', 'bottom:48px', 'right:10px', 'z-index:10',
+    'background:var(--surface-2)', 'border:1px solid var(--border-weak)',
+    'border-radius:8px', 'box-shadow:0 2px 8px rgba(0,0,0,.12)',
+    'padding:10px 12px', 'font-size:11px', 'max-width:320px',
+    'max-height:40vh', 'overflow:auto',
+  ].join(';');
+
+  const chain = result.chain || [];
+  const hops = chain.map((entry, i) => {
+    const f = entry.fiber;
+    const label = f.cable_name
+      ? `${esc(f.cable_name)} · tube ${f.tube_position} · fiber ${f.position}`
+      : `(fiber ${f.id.slice(0, 8)})`;
+    const arrow = entry.splice_to_next
+      ? ` <span style="color:var(--primary)">→ ${esc(entry.splice_to_next.closure_model || 'closure')} (${esc(entry.splice_to_next.location_name || '?')}) →</span> `
+      : '';
+    return `<div style="margin-bottom:2px"><b>${i + 1}.</b> ${label}${arrow}</div>`;
+  }).join('');
+
+  const flags = [];
+  if (result.circular)    flags.push('<span style="color:var(--warning-text)">circular strand detected</span>');
+  if (result.over_spliced) flags.push('<span style="color:var(--danger-text)">over-spliced fiber in path</span>');
+
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <b><i class="fa-solid fa-diagram-project"></i> Strand path (${chain.length} hop${chain.length !== 1 ? 's' : ''})</b>
+      <button class="btn btn-sm" onclick="clearTracePath()" title="Clear trace (Esc)"><i class="fa-solid fa-times"></i></button>
+    </div>
+    ${flags.length ? `<div style="margin-bottom:6px">${flags.join(' · ')}</div>` : ''}
+    ${hops || '<div style="color:var(--text-muted)">Single fiber — no splices.</div>'}
+  `;
+  pane.appendChild(div);
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -1340,13 +2217,33 @@ async function openAddClosure() {
     return toast('Add a location first', 'error');
   }
   let models = [];
+  let templates = [];
   try { models = await api('/api/splice/closure-models'); } catch {}
+  try { templates = await api('/api/splice/closure-templates'); } catch {}
   const datalist = '<datalist id="closure-models-list">' +
     models.map(m => `<option value="${esc(m.model)}">`).join('') + '</datalist>';
   const locOpts = state.data.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  // Phase 2B #5 — Apply Template picker. Empty when no templates
+  // exist; selecting one auto-fills model/tray_count/tray_capacity
+  // so the user can still tweak before saving.
+  const tplOpts = templates.length
+    ? templates.map(t => {
+        const scope = t.scope_client_name ? ' [' + esc(t.scope_client_name) + ']' : ' [global]';
+        const meta  = ' (' + t.tray_count + '×' + t.tray_capacity + (t.model ? ', ' + esc(t.model) : '') + ')';
+        return `<option value="${t.id}">${esc(t.name)}${scope}${meta}</option>`;
+      }).join('')
+    : '';
   showModal({
     title: 'Add closure',
     body: `
+      ${templates.length ? `
+        <div class="field"><label>Apply template <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
+          <select id="m-cl-template" onchange="onAddClosureTemplateChanged(this.value)">
+            <option value="">— none, configure manually —</option>
+            ${tplOpts}
+          </select>
+        </div>
+      ` : ''}
       <div class="field"><label>At location</label>
         <select id="m-cl-loc">${locOpts}</select></div>
       <div class="field"><label>Model (free text — picklist grows as you use it)</label>
@@ -1365,17 +2262,70 @@ async function openAddClosure() {
     onSubmit: async (close) => {
       try {
         const locId = document.getElementById('m-cl-loc').value;
-        await api('/api/splice/locations/' + locId + '/closures', 'POST', {
-          model: document.getElementById('m-cl-model').value.trim() || null,
-          tray_count: parseInt(document.getElementById('m-cl-tc').value, 10) || 6,
-          tray_capacity: parseInt(document.getElementById('m-cl-cap').value, 10) || 12,
-          notes: document.getElementById('m-cl-notes').value.trim() || null,
-        });
+        const tplId = document.getElementById('m-cl-template')?.value || '';
+        // If a template is selected AND the user hasn't tweaked the
+        // shell fields below, prefer the from-template endpoint —
+        // it bumps the closure_models picklist + carries notes from
+        // the template + signals SSE listeners with from_template.
+        if (tplId) {
+          await api(`/api/splice/locations/${locId}/closures/from-template/${tplId}`, 'POST');
+        } else {
+          await api('/api/splice/locations/' + locId + '/closures', 'POST', {
+            model: document.getElementById('m-cl-model').value.trim() || null,
+            tray_count: parseInt(document.getElementById('m-cl-tc').value, 10) || 6,
+            tray_capacity: parseInt(document.getElementById('m-cl-cap').value, 10) || 12,
+            notes: document.getElementById('m-cl-notes').value.trim() || null,
+          });
+        }
         close();
         await hydrateProject();
       } catch (e) { toast(e.message, 'error'); }
     },
   });
+  // Cache templates so the change handler can read them without a
+  // second round-trip.
+  state._closureTemplates = templates;
+}
+
+// Auto-fill the closure-shell fields when the user picks a template
+// from the picker. They can still tweak before saving.
+function onAddClosureTemplateChanged(tplId) {
+  const tpl = (state._closureTemplates || []).find(t => t.id === tplId);
+  if (!tpl) return;
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setVal('m-cl-model', tpl.model || '');
+  setVal('m-cl-tc', tpl.tray_count);
+  setVal('m-cl-cap', tpl.tray_capacity);
+  if (tpl.notes) setVal('m-cl-notes', tpl.notes);
+}
+
+// Save the selected closure's shell as a reusable template. Pulls
+// model + tray_count + tray_capacity off the closure; lets the user
+// name it and pick scope (this client or global).
+async function saveClosureAsTemplate(closureId) {
+  if (isReadOnly()) return;
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) return;
+  const defaultName = (cl.model ? cl.model + ' ' : '') + cl.tray_count + 'x' + cl.tray_capacity;
+  const name = prompt('Template name:', defaultName);
+  if (!name || !name.trim()) return;
+  // Scope: prompt yes/no. Defaults to global; the simple prompt avoids
+  // the overhead of a full second modal for what is most often a
+  // single-client save.
+  const scopeToClient = state.data.project?.client_id
+    ? confirm('Scope this template to the current project\'s client?\n\nOK = client-scoped (only shows on that client\'s projects)\nCancel = global (shows on every client)')
+    : false;
+  try {
+    await api('/api/splice/closure-templates', 'POST', {
+      name: name.trim(),
+      model: cl.model || null,
+      tray_count: cl.tray_count,
+      tray_capacity: cl.tray_capacity,
+      scope_client_id: scopeToClient ? (state.data.project?.client_id || null) : null,
+      notes: cl.notes || null,
+    });
+    toast(`Saved "${name.trim()}" as a template`, 'success');
+  } catch (e) { toast('Failed to save template: ' + e.message, 'error'); }
 }
 
 function openEditClosure(closureId) {
@@ -1655,9 +2605,17 @@ async function deleteCurrentProject() {
     state.data = null;
     document.getElementById('title-name').textContent = '— No project selected —';
     document.getElementById('proj-actions').style.display = 'none';
+    document.getElementById('proj-imports').style.display = 'none';
     document.getElementById('proj-summary').style.display = 'none';
     document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('view-tabs').style.display = 'none';
+    document.getElementById('map-toolbar').style.display = 'none';
+    document.getElementById('map-stage').style.display = 'none';
+    document.getElementById('stage').style.display = 'block';
     document.getElementById('btn-export').disabled = true;
+    document.getElementById('btn-export-kmz').disabled = true;
+    document.getElementById('btn-versions').disabled = true;
+    document.getElementById('btn-save-rev').disabled = true;
     document.getElementById('inspector-body').style.display = 'none';
     document.getElementById('inspector-empty').style.display = 'block';
     document.getElementById('lock-banner').style.display = 'none';
@@ -1813,6 +2771,858 @@ function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
 function closeModal() { document.getElementById('modal-host').innerHTML = ''; }
 
 // ───────────────────────────────────────────────────────────────────────────
+// Map view (Phase 3A) — MapLibre GL JS, lazy-loaded on first activation.
+// Esri World Imagery as the default basemap (free, attributed). The map
+// renders the same closure/cable rows as the diagram tab — one source
+// of truth, two views. Click a marker → open the existing closure
+// inspector in the right pane. Drag a marker → PUT /coords. Draw-path
+// mode adds waypoints click-by-click and double-click finishes.
+// ───────────────────────────────────────────────────────────────────────────
+
+const MAPLIBRE_VERSION = '4.7.1';
+let _mapLibrePromise = null;
+function loadMapLibre() {
+  if (_mapLibrePromise) return _mapLibrePromise;
+  _mapLibrePromise = new Promise((resolve, reject) => {
+    // CSS first so the canvas mounts with the right styles.
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css`;
+    document.head.appendChild(css);
+    const s = document.createElement('script');
+    s.src = `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js`;
+    s.onload  = () => resolve(window.maplibregl);
+    s.onerror = () => reject(new Error('Failed to load MapLibre GL JS'));
+    document.head.appendChild(s);
+  });
+  return _mapLibrePromise;
+}
+
+// Esri World Imagery — free for non-commercial-and-light-commercial use,
+// attributed in tile URL params. The most common OSP-industry basemap.
+const ESRI_SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+function switchView(view) {
+  if (view === state.activeView) return;
+  state.activeView = view;
+  document.querySelectorAll('.view-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.view === view));
+  const isMap = view === 'map';
+  document.getElementById('stage').style.display      = isMap ? 'none' : 'block';
+  document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
+  document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
+  document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
+  if (isMap) initMapIfNeeded();
+}
+
+async function initMapIfNeeded() {
+  if (state.map) {
+    // Already mounted; just refresh from current state.data.
+    state.map.resize();
+    refreshMapLayers();
+    mapFitData();
+    return;
+  }
+  try {
+    const maplibregl = await loadMapLibre();
+    state.maplibregl = maplibregl;
+    const map = new maplibregl.Map({
+      container: 'map-stage',
+      style: {
+        version: 8,
+        sources: {
+          'esri-sat': {
+            type: 'raster',
+            tiles: [ESRI_SAT_TILES],
+            tileSize: 256,
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+          },
+        },
+        layers: [{ id: 'esri-sat', type: 'raster', source: 'esri-sat' }],
+      },
+      // Continental US default; mapFitData() flies to the data on load
+      // when at least one location has coords.
+      center: [-98.5, 39.8],
+      zoom: 4,
+      attributionControl: { compact: true },
+    });
+    state.map = map;
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
+    map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }));
+    map.on('load', () => {
+      // Source + layer for cable polylines. We re-set the data on every
+      // refresh from state.data; the source itself just needs to exist
+      // so the layer can mount.
+      map.addSource('cables', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({
+        id: 'cables-line',
+        type: 'line',
+        source: 'cables',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#FFD400',
+          'line-width': 3,
+          'line-opacity': 0.9,
+        },
+      });
+      // Halo so the line is visible over both bright and dark satellite.
+      map.addLayer({
+        id: 'cables-line-halo',
+        type: 'line',
+        source: 'cables',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#000',
+          'line-width': 6,
+          'line-opacity': 0.3,
+        },
+      }, 'cables-line');
+      // Track in-progress draw waypoints separately so we can render
+      // them while the user is clicking.
+      map.addSource('draft-path', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({
+        id: 'draft-path-line',
+        type: 'line',
+        source: 'draft-path',
+        paint: { 'line-color': '#FF6E00', 'line-width': 3, 'line-dasharray': [2, 2] },
+      });
+      map.addLayer({
+        id: 'draft-path-points',
+        type: 'circle',
+        source: 'draft-path',
+        filter: ['==', '$type', 'Point'],
+        paint: { 'circle-radius': 5, 'circle-color': '#FF6E00', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 },
+      });
+      refreshMapLayers();
+      mapFitData();
+      // Click handler for placing-an-unmapped-closure mode.
+      map.on('click', (e) => {
+        if (state.mapMode === 'place' && state.mapPlaceTargetId) {
+          mapApplyPlacement(e.lngLat);
+        } else if (state.mapMode === 'path') {
+          mapPathAddWaypoint(e.lngLat);
+        }
+      });
+      map.on('dblclick', (e) => {
+        if (state.mapMode === 'path') {
+          e.preventDefault();
+          mapPathFinish();
+        }
+      });
+    });
+  } catch (e) {
+    toast('Map failed to load: ' + e.message, 'error');
+  }
+}
+
+function refreshMapLayers() {
+  const map = state.map;
+  if (!map || !map.isStyleLoaded() || !state.data) return;
+  // Tear down existing markers so we can rebuild from scratch — cheaper
+  // than tracking which moved/added/removed at this scale.
+  if (state._mapMarkers) {
+    state._mapMarkers.forEach(m => m.remove());
+  }
+  state._mapMarkers = [];
+  const ml = state.maplibregl;
+  const locsWithGeo = (state.data.locations || []).filter(l => l.latitude != null && l.longitude != null);
+  for (const loc of locsWithGeo) {
+    const closuresAtLoc = (state.data.closures || []).filter(c => c.location_id === loc.id);
+    const el = document.createElement('div');
+    el.className = 'map-closure-marker';
+    el.style.cssText = `width:18px;height:18px;border-radius:50%;background:${closuresAtLoc.length?'#1B5FA0':'#888'};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);cursor:pointer`;
+    el.title = loc.name + (closuresAtLoc.length ? ' · ' + closuresAtLoc.length + ' closure(s)' : '');
+    const marker = new ml.Marker({ element: el, draggable: !isReadOnly() })
+      .setLngLat([Number(loc.longitude), Number(loc.latitude)])
+      .addTo(map);
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      // If the location has closures, open the first one's inspector;
+      // otherwise open the location inspector.
+      if (closuresAtLoc.length) selectThing('closure', closuresAtLoc[0].id);
+      else selectThing('location', loc.id);
+    });
+    marker.on('dragend', async () => {
+      const ll = marker.getLngLat();
+      try {
+        await api(`/api/splice/locations/${loc.id}/coords`, 'PUT', {
+          latitude: ll.lat, longitude: ll.lng,
+        });
+        loc.latitude = ll.lat; loc.longitude = ll.lng;
+      } catch (e) {
+        toast('Move failed: ' + e.message, 'error');
+        marker.setLngLat([Number(loc.longitude), Number(loc.latitude)]);
+      }
+    });
+    state._mapMarkers.push(marker);
+  }
+  // Cables — only those with a stored path render. A path is independent
+  // of endpoint locations having coords; if a designer has only mapped
+  // the polyline (e.g. ingest from KMZ), it still shows.
+  const cableFeatures = (state.data.cables || [])
+    .filter(c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2)
+    .map(c => ({
+      type: 'Feature',
+      geometry: c.path_geojson,
+      properties: { id: c.id, name: c.name, fiber_count: c.fiber_count },
+    }));
+  const src = map.getSource('cables');
+  if (src) src.setData({ type: 'FeatureCollection', features: cableFeatures });
+}
+
+function mapFitData() {
+  const map = state.map;
+  if (!map || !state.data) return;
+  const ml = state.maplibregl;
+  const bounds = new ml.LngLatBounds();
+  let count = 0;
+  for (const loc of state.data.locations || []) {
+    if (loc.latitude != null && loc.longitude != null) {
+      bounds.extend([Number(loc.longitude), Number(loc.latitude)]);
+      count++;
+    }
+  }
+  for (const c of state.data.cables || []) {
+    if (c.path_geojson && Array.isArray(c.path_geojson.coordinates)) {
+      for (const pt of c.path_geojson.coordinates) bounds.extend(pt);
+    }
+  }
+  if (count === 0 && bounds.isEmpty()) return;
+  map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 500 });
+}
+
+function mapTogglePlaceMode() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  // Pick an unmapped location to place. If only one is unmapped, skip
+  // the picker; otherwise prompt.
+  const unmapped = (state.data.locations || []).filter(l => l.latitude == null || l.longitude == null);
+  if (!unmapped.length) return toast('All locations are already on the map.', 'info');
+  if (state.mapMode === 'place') return mapClearMode();
+  const list = unmapped.map((l, i) => `${i + 1}. ${l.name}`).join('\n');
+  const choice = prompt(`Which location to place on the map?\n\n${list}\n\nEnter a number:`, '1');
+  if (!choice) return;
+  const idx = parseInt(choice, 10) - 1;
+  if (!Number.isFinite(idx) || idx < 0 || idx >= unmapped.length) return toast('Bad choice', 'error');
+  state.mapPlaceTargetId = unmapped[idx].id;
+  state.mapMode = 'place';
+  document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('btn-place-mode').classList.add('active');
+  document.getElementById('map-mode-hint').textContent = `Click on the map to place "${unmapped[idx].name}"`;
+}
+
+async function mapApplyPlacement(lngLat) {
+  const id = state.mapPlaceTargetId;
+  if (!id) return;
+  try {
+    await api(`/api/splice/locations/${id}/coords`, 'PUT', {
+      latitude: lngLat.lat, longitude: lngLat.lng,
+    });
+    toast('Location placed', 'success');
+    mapClearMode();
+    await hydrateProject();
+    if (state.activeView === 'map') refreshMapLayers();
+  } catch (e) {
+    toast('Place failed: ' + e.message, 'error');
+  }
+}
+
+function mapTogglePathMode() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const cables = state.data?.cables || [];
+  if (!cables.length) return toast('Add a cable first.', 'info');
+  if (state.mapMode === 'path') return mapClearMode();
+  const list = cables.map((c, i) => `${i + 1}. ${c.name} (${c.fiber_count}f${c.path_geojson ? ' — has path, will replace' : ''})`).join('\n');
+  const choice = prompt(`Draw path for which cable?\n\n${list}\n\nEnter a number:`, '1');
+  if (!choice) return;
+  const idx = parseInt(choice, 10) - 1;
+  if (!Number.isFinite(idx) || idx < 0 || idx >= cables.length) return toast('Bad choice', 'error');
+  state.mapPathTargetId = cables[idx].id;
+  state.mapPathPoints = [];
+  state.mapMode = 'path';
+  document.getElementById('btn-path-mode').classList.add('active');
+  document.getElementById('map-mode-hint').textContent = `Click waypoints for "${cables[idx].name}"; double-click to finish, Esc to cancel`;
+  document.getElementById('map-stage').classList.add('placing');
+}
+
+function mapPathAddWaypoint(lngLat) {
+  if (state.mapMode !== 'path') return;
+  state.mapPathPoints.push([lngLat.lng, lngLat.lat]);
+  mapRefreshDraftPath();
+}
+
+function mapRefreshDraftPath() {
+  const map = state.map;
+  if (!map) return;
+  const features = [];
+  if (state.mapPathPoints.length >= 2) {
+    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: state.mapPathPoints } });
+  }
+  for (const p of state.mapPathPoints) {
+    features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: p } });
+  }
+  const src = map.getSource('draft-path');
+  if (src) src.setData({ type: 'FeatureCollection', features });
+}
+
+async function mapPathFinish() {
+  if (state.mapMode !== 'path') return;
+  if (state.mapPathPoints.length < 2) {
+    toast('Need at least two waypoints', 'error');
+    return;
+  }
+  const cableId = state.mapPathTargetId;
+  const path_geojson = { type: 'LineString', coordinates: state.mapPathPoints.slice() };
+  try {
+    await api(`/api/splice/cables/${cableId}/path`, 'PUT', { path_geojson });
+    toast('Cable path saved', 'success');
+    mapClearMode();
+    await hydrateProject();
+    if (state.activeView === 'map') refreshMapLayers();
+  } catch (e) {
+    toast('Save failed: ' + e.message, 'error');
+  }
+}
+
+function mapClearMode() {
+  state.mapMode = null;
+  state.mapPlaceTargetId = null;
+  state.mapPathTargetId = null;
+  state.mapPathPoints = [];
+  document.getElementById('btn-place-mode').classList.remove('active');
+  document.getElementById('btn-path-mode').classList.remove('active');
+  document.getElementById('map-stage').classList.remove('placing');
+  document.getElementById('map-mode-hint').textContent = '';
+  if (state.map) {
+    const src = state.map.getSource('draft-path');
+    if (src) src.setData({ type: 'FeatureCollection', features: [] });
+  }
+}
+
+// Esc cancels any active map mode.
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (state.mapMode) mapClearMode();
+    if (state.tracePath) clearTracePath();
+  }
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Design imports — KMZ + DXF (Phases 3C, 3D, 3E)
+// ───────────────────────────────────────────────────────────────────────────
+
+async function refreshImportsList() {
+  if (!state.currentId) return;
+  let imports = [];
+  try { imports = await api('/api/splice/projects/' + state.currentId + '/imports'); }
+  catch { return; }
+  const pending = imports.filter(i => i.status === 'pending');
+  const recent  = imports.filter(i => i.status !== 'pending').slice(0, 5);
+  document.getElementById('proj-imports-count').textContent =
+    pending.length ? pending.length : '';
+  const host = document.getElementById('proj-imports-body');
+  if (!imports.length) {
+    host.innerHTML = '<div class="empty-pane" style="padding:6px">No imports yet. Use "Import KMZ/DXF" above.</div>';
+    return;
+  }
+  host.innerHTML = `
+    ${pending.length ? '<div style="margin-bottom:8px"><b>Pending</b></div>' : ''}
+    ${pending.map(i => importRowHtml(i, true)).join('')}
+    ${recent.length ? '<div style="margin:10px 0 4px;color:var(--text-muted);font-size:10px;text-transform:uppercase">Recent</div>' : ''}
+    ${recent.map(i => importRowHtml(i, false)).join('')}
+  `;
+}
+
+function importRowHtml(i, pending) {
+  const sum = i.summary_jsonb || {};
+  const counts = `${(sum.adds?.locations||0)+(sum.adds?.cables||0)} adds · ${(sum.updates?.locations||0)+(sum.updates?.cables||0)} updates · ${(sum.removes?.locations||0)+(sum.removes?.cables||0)} removes`;
+  return `
+    <div style="border:1px solid var(--border-weak);border-radius:6px;padding:6px;margin-bottom:6px;background:var(--surface)">
+      <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(i.source_filename || '')}">${esc(i.source_filename || '(unnamed)')}</div>
+      <div style="color:var(--text-muted);font-size:10px;margin-top:2px">
+        ${esc(i.source_format)} · ${i.uploaded_by_name ? esc(i.uploaded_by_name) + ' · ' : ''}${new Date(i.uploaded_at).toLocaleString()}
+      </div>
+      <div style="font-size:10px;margin-top:2px">${counts}</div>
+      <div style="font-size:10px;margin-top:2px;color:${importStatusColor(i.status)};font-weight:500;text-transform:uppercase">${esc(i.status.replace('_',' '))}</div>
+      ${pending ? `
+        <div style="display:flex;gap:4px;margin-top:6px">
+          <button class="btn btn-sm" style="flex:1" onclick="openImportReviewModal('${i.id}')"><i class="fa-solid fa-eye"></i> Review</button>
+          <button class="btn btn-sm btn-danger" onclick="rejectImport('${i.id}')" title="Reject this import"><i class="fa-solid fa-times"></i></button>
+        </div>` : ''}
+    </div>`;
+}
+
+function importStatusColor(status) {
+  switch (status) {
+    case 'applied':           return 'var(--success)';
+    case 'partially_applied': return 'var(--warning)';
+    case 'rejected':          return 'var(--danger)';
+    case 'pending':           return 'var(--primary)';
+    default:                  return 'var(--text-muted)';
+  }
+}
+
+function openImportDesignModal() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  showModal({
+    title: 'Import design (KMZ / DXF / GeoJSON)',
+    submitText: 'Upload + parse',
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Upload a design from AutoCAD (DXF), Google Earth (KMZ), or GeoJSON.
+        The server will parse and stage the changes — nothing in the live
+        project moves until you review and apply.
+      </div>
+      <div class="field"><label>File</label>
+        <input type="file" id="m-imp-file" accept=".kmz,.kml,.dxf,.geojson"></div>
+      <div id="m-imp-dxf-calib" style="display:none;margin-top:6px;padding:10px;background:var(--surface-2);border-radius:6px">
+        <div style="font-size:12px;font-weight:500;margin-bottom:6px">DXF needs georeferencing</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+          Pick the option that matches your DXF.
+        </div>
+        <div class="field"><label><input type="radio" name="m-imp-calib-mode" value="crs" checked> Source coordinate system (preferred)</label></div>
+        <div id="m-imp-calib-crs" style="margin-left:18px;margin-bottom:8px">
+          <input type="text" id="m-imp-crs" placeholder="e.g. EPSG:2284 (Virginia State Plane North, ftUS)" style="width:100%">
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">
+            Common: EPSG:2284 VA-N · EPSG:2285 WA-N · EPSG:32119 NC · EPSG:3857 WebMercator. Find yours: epsg.io
+          </div>
+        </div>
+        <div class="field"><label><input type="radio" name="m-imp-calib-mode" value="control"> Two control points (fallback if CRS unknown)</label></div>
+        <div id="m-imp-calib-cp" style="margin-left:18px;display:none">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+            Pick two distinct features in the DXF and provide both their drawing coordinates and real-world lat/lon.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+            <div><b>Point 1</b><br>
+              <input type="text" id="m-imp-cp1-src" placeholder="src x,y" style="width:100%;margin:2px 0"><br>
+              <input type="text" id="m-imp-cp1-dst" placeholder="lon,lat" style="width:100%;margin:2px 0">
+            </div>
+            <div><b>Point 2</b><br>
+              <input type="text" id="m-imp-cp2-src" placeholder="src x,y" style="width:100%;margin:2px 0"><br>
+              <input type="text" id="m-imp-cp2-dst" placeholder="lon,lat" style="width:100%;margin:2px 0">
+            </div>
+          </div>
+        </div>
+      </div>
+    `,
+    onSubmit: async (close) => {
+      const fileEl = document.getElementById('m-imp-file');
+      const file = fileEl.files[0];
+      if (!file) return toast('Pick a file first', 'error');
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const fd = new FormData();
+      fd.set('file', file);
+      if (ext === 'dxf') {
+        const mode = document.querySelector('input[name="m-imp-calib-mode"]:checked')?.value || 'crs';
+        let calib;
+        if (mode === 'crs') {
+          const crs = document.getElementById('m-imp-crs').value.trim();
+          if (!/^EPSG:\d+$/i.test(crs)) return toast('CRS must look like EPSG:2284', 'error');
+          calib = { crs };
+        } else {
+          const parsePair = id => {
+            const v = document.getElementById(id).value.trim();
+            const parts = v.split(',').map(s => parseFloat(s.trim()));
+            return parts.length === 2 && parts.every(Number.isFinite) ? parts : null;
+          };
+          const cp1src = parsePair('m-imp-cp1-src'), cp1dst = parsePair('m-imp-cp1-dst');
+          const cp2src = parsePair('m-imp-cp2-src'), cp2dst = parsePair('m-imp-cp2-dst');
+          if (!cp1src || !cp1dst || !cp2src || !cp2dst) return toast('Each point needs src x,y AND lon,lat', 'error');
+          calib = { control_points: [{ src: cp1src, dst: cp1dst }, { src: cp2src, dst: cp2dst }] };
+        }
+        fd.set('calibration', JSON.stringify(calib));
+      }
+      try {
+        const tok = sessionStorage.getItem('lfs_token');
+        const r = await fetch('/api/splice/projects/' + state.currentId + '/imports', {
+          method: 'POST',
+          credentials: 'include',
+          headers: tok ? { 'Authorization': 'Bearer ' + tok } : {},
+          body: fd,
+        });
+        const json = await r.json();
+        if (!r.ok) throw new Error(json.error || 'Upload failed');
+        close();
+        toast('Imported ' + file.name + ' — open it in the imports list to review.', 'success');
+        await refreshImportsList();
+        // Auto-open the review modal for convenience.
+        if (json.import?.id) openImportReviewModal(json.import.id);
+      } catch (e) { toast('Import failed: ' + e.message, 'error'); }
+    },
+  });
+  // Toggle DXF calibration block based on file extension.
+  setTimeout(() => {
+    const fileEl = document.getElementById('m-imp-file');
+    fileEl.addEventListener('change', () => {
+      const ext = (fileEl.files[0]?.name.split('.').pop() || '').toLowerCase();
+      document.getElementById('m-imp-dxf-calib').style.display = ext === 'dxf' ? 'block' : 'none';
+    });
+    document.querySelectorAll('input[name="m-imp-calib-mode"]').forEach(r => {
+      r.addEventListener('change', () => {
+        document.getElementById('m-imp-calib-crs').style.display = r.value === 'crs' && r.checked ? 'block' : 'none';
+        document.getElementById('m-imp-calib-cp').style.display  = r.value === 'control' && r.checked ? 'block' : 'none';
+      });
+    });
+  }, 50);
+}
+
+async function openImportReviewModal(importId) {
+  let detail;
+  try { detail = await api('/api/splice/imports/' + importId); }
+  catch (e) { return toast('Load failed: ' + e.message, 'error'); }
+  state._reviewImport = detail;
+  const { import: imp, changes } = detail;
+  if (imp.status !== 'pending') {
+    return toast(`This import is already ${imp.status.replace('_',' ')}.`, 'info');
+  }
+  // Group changes for rendering.
+  const sections = [
+    { label: 'Add locations',    type: 'add',    table: 'splice_locations' },
+    { label: 'Update locations', type: 'update', table: 'splice_locations' },
+    { label: 'Remove locations', type: 'delete', table: 'splice_locations' },
+    { label: 'Add cables',       type: 'add',    table: 'splice_cables' },
+    { label: 'Update cables',    type: 'update', table: 'splice_cables' },
+    { label: 'Remove cables',    type: 'delete', table: 'splice_cables' },
+  ];
+  const renderRows = (sec) => {
+    const rows = changes.filter(c => c.change_type === sec.type && c.target_table === sec.table);
+    if (!rows.length) return '';
+    return `
+      <div style="margin-top:14px">
+        <div style="font-weight:600;margin-bottom:6px">${esc(sec.label)} <span style="color:var(--text-muted);font-weight:400">(${rows.length})</span></div>
+        <table class="table">
+          <thead><tr><th style="width:60px">Decision</th><th>Detail</th></tr></thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr id="rev-${r.id}">
+                <td>
+                  <select onchange="updateChangeDecision('${r.id}', this.value)" style="font-size:11px;padding:2px">
+                    <option value="approved" ${r.decision==='approved'?'selected':''}>Approve</option>
+                    <option value="skipped"  ${r.decision==='skipped'?'selected':''}>Skip</option>
+                    <option value="pending"  ${r.decision==='pending'?'selected':''}>Pending</option>
+                  </select>
+                </td>
+                <td style="font-size:11px">${reviewDetailHtml(r)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  };
+  showModal({
+    title: 'Review import: ' + esc(imp.source_filename || ''),
+    submitText: 'Apply approved changes',
+    wide: true,
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">
+        Uploaded ${imp.uploaded_by_name ? 'by ' + esc(imp.uploaded_by_name) + ' ' : ''}
+        on ${new Date(imp.uploaded_at).toLocaleString()} ·
+        ${esc(imp.source_format.toUpperCase())} ·
+        ${imp.source_size_bytes ? Math.round(imp.source_size_bytes/1024) + ' KB' : ''}
+      </div>
+      ${(imp.summary_jsonb?.warnings || []).length ? `
+        <div style="background:var(--warning-light);color:var(--warning-text);padding:6px;border-radius:4px;font-size:11px;margin-bottom:8px">
+          ${imp.summary_jsonb.warnings.map(w => '⚠ ' + esc(w)).join('<br>')}
+        </div>` : ''}
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button class="btn btn-sm" onclick="bulkDecision('approved')">Approve all adds + updates</button>
+        <button class="btn btn-sm" onclick="bulkDecision('skipped')">Skip all</button>
+      </div>
+      ${sections.map(renderRows).join('')}
+      ${changes.length === 0 ? '<div class="empty-pane" style="padding:18px">No changes detected — the import matched the live tree exactly.</div>' : ''}
+    `,
+    onSubmit: async (close) => {
+      try {
+        const r = await api('/api/splice/imports/' + importId + '/apply', 'POST', {});
+        toast(`Applied ${r.applied} change(s) — status: ${r.status.replace('_',' ')}`, 'success');
+        close();
+        await refreshImportsList();
+        await hydrateProject();
+      } catch (e) { toast('Apply failed: ' + e.message, 'error'); }
+    },
+  });
+}
+
+function reviewDetailHtml(c) {
+  const p = c.payload_jsonb || {};
+  if (c.target_table === 'splice_locations') {
+    if (c.change_type === 'add') {
+      return `<b>${esc(p.name || '?')}</b> · ${esc(p.type || 'splice_point')} <span style="color:var(--text-muted)">at ${(+p.latitude).toFixed(5)}, ${(+p.longitude).toFixed(5)}</span>`;
+    }
+    if (c.change_type === 'update') {
+      const fields = Object.entries(p).map(([k, v]) => `<code>${esc(k)}</code>: ${esc(JSON.stringify(v))}`).join(' · ');
+      return `Update location <code>${esc(c.target_id)}</code><br><span style="color:var(--text-muted);font-size:10px">${fields}</span>`;
+    }
+    if (c.change_type === 'delete') {
+      return `<span style="color:var(--danger)">Remove</span> location <b>${esc(p.name || c.target_id)}</b>`;
+    }
+  }
+  if (c.target_table === 'splice_cables') {
+    if (c.change_type === 'add') {
+      const len = p.path_geojson?.coordinates?.length || 0;
+      return `<b>${esc(p.name || '?')}</b> · ${p.fiber_count}f ${esc(p.construction_type || '')} <span style="color:var(--text-muted)">${len} waypoints</span>`;
+    }
+    if (c.change_type === 'update') {
+      const fields = Object.keys(p).map(k => k === 'path_geojson' ? 'path' : k).join(', ');
+      return `Update cable <code>${esc(c.target_id)}</code><br><span style="color:var(--text-muted);font-size:10px">fields: ${esc(fields)}</span>`;
+    }
+    if (c.change_type === 'delete') {
+      return `<span style="color:var(--danger)">Remove</span> cable <b>${esc(p.name || c.target_id)}</b>`;
+    }
+  }
+  return JSON.stringify(p).slice(0, 200);
+}
+
+async function updateChangeDecision(changeId, decision) {
+  const importId = state._reviewImport?.import?.id;
+  if (!importId) return;
+  try {
+    await api(`/api/splice/imports/${importId}/changes/${changeId}/decision`, 'POST', { decision });
+    // Update the in-memory copy so bulkDecision and re-renders stay
+    // accurate without re-fetching.
+    const c = state._reviewImport.changes.find(x => x.id === changeId);
+    if (c) c.decision = decision;
+  } catch (e) { toast('Decision failed: ' + e.message, 'error'); }
+}
+
+async function bulkDecision(decision) {
+  const importId = state._reviewImport?.import?.id;
+  if (!importId) return;
+  const targets = state._reviewImport.changes.filter(c =>
+    decision === 'approved' ? c.change_type !== 'delete' : true
+  );
+  for (const c of targets) {
+    if (c.decision !== decision) {
+      try {
+        await api(`/api/splice/imports/${importId}/changes/${c.id}/decision`, 'POST', { decision });
+        c.decision = decision;
+        const sel = document.querySelector(`#rev-${c.id} select`);
+        if (sel) sel.value = decision;
+      } catch {}
+    }
+  }
+  toast(`Set ${targets.length} change(s) to ${decision}`, 'success');
+}
+
+async function rejectImport(importId) {
+  if (!confirm('Reject this import? Nothing in the live project will change. The audit log keeps the record.')) return;
+  try {
+    await api('/api/splice/imports/' + importId, 'DELETE');
+    toast('Import rejected', 'success');
+    await refreshImportsList();
+  } catch (e) { toast('Reject failed: ' + e.message, 'error'); }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// CSV / Excel paste import (Phase 2C #13)
+//
+// Three-step wizard:
+//   Step 1 — paste raw text (tab-sep or CSV)
+//   Step 2 — map columns to canonical fields + pick kind (cables/locations)
+//   Step 3 — POST to /import-paste, then open the standard review modal
+//
+// No external dependency: the CSV parser below handles quoted fields and
+// "" escaped quotes in ~30 lines; that's enough for Excel/Sheets output.
+// ───────────────────────────────────────────────────────────────────────────
+
+// Minimal CSV parser — handles double-quoted fields (embedded commas,
+// newlines, and "" escapes). Delimiter auto-detected per line: tab wins
+// if any field contains a tab in the first scan; otherwise comma.
+function parseCsv(text, delim) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  // Heuristic: if we find a tab anywhere in the first 4 lines, use tab.
+  if (!delim) {
+    const sample = lines.slice(0, 4).join('\n');
+    delim = sample.includes('\t') ? '\t' : ',';
+  }
+  const result = [];
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const row = [];
+    let i = 0;
+    while (i < line.length) {
+      if (line[i] === '"') {
+        // Quoted field — consume until closing quote, un-escape "".
+        let field = '';
+        i++; // skip opening quote
+        while (i < line.length) {
+          if (line[i] === '"' && line[i + 1] === '"') { field += '"'; i += 2; }
+          else if (line[i] === '"') { i++; break; }
+          else { field += line[i++]; }
+        }
+        row.push(field);
+        if (line[i] === delim) i++; // skip trailing delimiter
+      } else {
+        // Unquoted field — read until delimiter or end of line.
+        let start = i;
+        while (i < line.length && line[i] !== delim) i++;
+        row.push(line.slice(start, i));
+        if (line[i] === delim) i++;
+      }
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+// Canonical fields for each kind. Used for auto-mapping and the column
+// mapping select options.
+const PASTE_FIELDS = {
+  cables: [
+    { key: 'name',              label: 'Name *' },
+    { key: 'fiber_count',       label: 'Fiber count' },
+    { key: 'construction_type', label: 'Construction type (ribbon/loose_tube)' },
+    { key: 'from_location',     label: 'From location' },
+    { key: 'to_location',       label: 'To location' },
+    { key: 'manufacturer_part', label: 'Manufacturer part' },
+    { key: 'notes',             label: 'Notes' },
+  ],
+  locations: [
+    { key: 'name',      label: 'Name *' },
+    { key: 'type',      label: 'Type (co/splice_point/fdh/terminal/ring_cut)' },
+    { key: 'latitude',  label: 'Latitude' },
+    { key: 'longitude', label: 'Longitude' },
+    { key: 'notes',     label: 'Notes' },
+  ],
+};
+
+// Best-guess auto-mapping: normalize both sides and look for exact match,
+// then prefix match so "Cable Name" → "name" if nothing better fits.
+function autoMapColumn(headerName, kind) {
+  const h = headerName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const { key } of PASTE_FIELDS[kind]) {
+    const k = key.replace(/_/g, '');
+    if (h === k) return key;
+  }
+  // Looser: check if the canonical key appears anywhere in the header.
+  for (const { key } of PASTE_FIELDS[kind]) {
+    if (h.includes(key.replace(/_/g, ''))) return key;
+  }
+  return '';
+}
+
+function openPasteImportModal() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  if (!state.currentId) return toast('Open a project first', 'error');
+
+  // ── Step 1: paste textarea ───────────────────────────────────────────────
+  showModal({
+    title: 'Paste from spreadsheet — step 1 of 3',
+    submitText: 'Next: map columns',
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Copy rows from Excel or Google Sheets and paste below. Tab-separated
+        and comma-separated (CSV) are both accepted.
+      </div>
+      <textarea id="pi-raw" rows="10" style="width:100%;font-family:monospace;font-size:11px;resize:vertical"
+        placeholder="Name&#9;Fiber count&#9;From location&#9;..."></textarea>
+    `,
+    onSubmit: (close) => {
+      const raw = document.getElementById('pi-raw').value.trim();
+      if (!raw) return toast('Paste some data first', 'error');
+      let parsed;
+      try { parsed = parseCsv(raw); }
+      catch (e) { return toast('Parse error: ' + e.message, 'error'); }
+      if (parsed.length < 2) return toast('Need at least a header row + one data row', 'error');
+      close();
+      _pasteImportStep2(parsed);
+    },
+  });
+}
+
+function _pasteImportStep2(parsed) {
+  const headers  = parsed[0];
+  const preview  = parsed.slice(1, 4); // show up to 3 data rows
+  const allRows  = parsed.slice(1);
+
+  // Build preview table HTML.
+  const previewHtml = `
+    <table class="table" style="font-size:11px;margin-bottom:12px">
+      <thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${preview.map(row =>
+          `<tr>${row.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`
+        ).join('')}
+      </tbody>
+    </table>
+    ${allRows.length > 3 ? `<div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">...and ${allRows.length - 3} more row(s)</div>` : ''}
+  `;
+
+  // Column mapping selectors — re-rendered when kind changes.
+  function mappingHtml(kind) {
+    const opts = [{ key: '', label: '(ignore)' }, ...PASTE_FIELDS[kind]];
+    return headers.map((h, i) => `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="width:140px;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(h)}">${esc(h)}</div>
+        <select id="pi-col-${i}" style="flex:1;font-size:11px">
+          ${opts.map(o => `<option value="${o.key}" ${autoMapColumn(h, kind) === o.key ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+        </select>
+      </div>`).join('');
+  }
+
+  showModal({
+    title: 'Paste from spreadsheet — step 2 of 3',
+    submitText: 'Next: review & submit',
+    wide: true,
+    body: `
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px">Preview (first ${Math.min(3, preview.length)} row(s))</div>
+      <div style="overflow-x:auto;margin-bottom:10px">${previewHtml}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <label style="font-size:12px;font-weight:500">Import as:</label>
+        <label style="font-size:12px"><input type="radio" name="pi-kind" value="cables" checked> Cables</label>
+        <label style="font-size:12px"><input type="radio" name="pi-kind" value="locations"> Locations</label>
+      </div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px">Map columns</div>
+      <div id="pi-mapping-body">${mappingHtml('cables')}</div>
+    `,
+    onSubmit: (close) => {
+      const kind = document.querySelector('input[name="pi-kind"]:checked')?.value || 'cables';
+
+      // Build mapped rows using the user's column assignments.
+      const mapping = headers.map((_, i) => document.getElementById('pi-col-' + i)?.value || '');
+      const rows = allRows.map(row => {
+        const obj = {};
+        mapping.forEach((field, i) => {
+          if (field) obj[field] = row[i] ?? '';
+        });
+        return obj;
+      }).filter(r => Object.keys(r).length > 0);
+
+      if (!rows.length) return toast('No mappable rows', 'error');
+      close();
+      _pasteImportStep3(rows, kind);
+    },
+  });
+
+  // Re-render mapping selectors when kind radio changes, resetting
+  // auto-mapping to the newly chosen kind's field list.
+  setTimeout(() => {
+    document.querySelectorAll('input[name="pi-kind"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const kind = document.querySelector('input[name="pi-kind"]:checked')?.value || 'cables';
+        document.getElementById('pi-mapping-body').innerHTML = mappingHtml(kind);
+      });
+    });
+  }, 50);
+}
+
+async function _pasteImportStep3(rows, kind) {
+  try {
+    const json = await api(
+      '/api/splice/projects/' + state.currentId + '/import-paste',
+      'POST',
+      { rows, kind }
+    );
+    toast(
+      `Staged ${rows.length} row(s) as "${kind}" — opening review.`,
+      'success'
+    );
+    await refreshImportsList();
+    if (json.import?.id) openImportReviewModal(json.import.id);
+  } catch (e) {
+    toast('Paste import failed: ' + e.message, 'error');
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Export
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -1822,6 +3632,105 @@ document.getElementById('btn-export').addEventListener('click', () => {
   // renders it directly.
   window.open('/api/splice/projects/' + state.currentId + '/export-pdf', '_blank');
 });
+
+// Phase 3B — KMZ download. Server sends Content-Disposition: attachment
+// so the browser saves the file rather than trying to render it.
+function downloadKmz() {
+  if (!state.currentId) return;
+  const hasGeo = (state.data?.locations || []).some(l => l.latitude != null && l.longitude != null) ||
+                 (state.data?.cables   || []).some(c => c.path_geojson);
+  if (!hasGeo) {
+    if (!confirm('No locations or cables have geographic coordinates yet. The KMZ will be effectively empty. Download anyway?')) return;
+  }
+  window.location.href = '/api/splice/projects/' + state.currentId + '/export-kmz';
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Versions (Phase 2B #6)
+// ───────────────────────────────────────────────────────────────────────────
+
+async function saveRevision() {
+  if (!state.currentId) return;
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const label = prompt('Label for this revision (e.g. "rev A", "client review"):', '');
+  if (label === null) return;
+  try {
+    const v = await api('/api/splice/projects/' + state.currentId + '/versions', 'POST', { label: label.trim() || null });
+    if (v.skipped) {
+      toast('Nothing changed since last snapshot — not saved.', 'info');
+    } else {
+      toast(`Saved revision v${v.version_number}${v.label ? ' — ' + v.label : ''}`, 'success');
+    }
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function openVersionsModal() {
+  if (!state.currentId) return;
+  let versions = [];
+  try { versions = await api('/api/splice/projects/' + state.currentId + '/versions'); }
+  catch (e) { return toast('Load failed: ' + e.message, 'error'); }
+
+  // Stash on state so the diff button can read selections without a
+  // second fetch.
+  state._versions = versions;
+  const projId = state.currentId;
+  const rows = versions.length ? versions.map(v => `
+    <tr>
+      <td><label><input type="radio" name="diff-a" value="${v.version_number}"> v${v.version_number}</label></td>
+      <td><label><input type="radio" name="diff-b" value="${v.version_number}"> v${v.version_number}</label></td>
+      <td><b>v${v.version_number}</b></td>
+      <td>${esc(v.label || '')}</td>
+      <td><span class="muted" style="font-family:monospace">${esc(v.generation_hash || '')}</span></td>
+      <td>${new Date(v.created_at).toLocaleString()}</td>
+      <td>${esc(v.created_by_name || '')}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">No saved revisions yet. Click "Save rev" to create one.</td></tr>`;
+
+  showModal({
+    title: 'Version history',
+    submitText: 'Close',
+    wide: true,
+    body: `
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Auto-snapshots fire after edits when the last version is &gt;10 minutes old.
+        Pick A and B columns to diff two revisions, or pick A only and diff against the live tree.
+      </div>
+      <div style="max-height:50vh;overflow:auto;border:1px solid var(--border-weak);border-radius:6px">
+        <table class="table" style="margin:0">
+          <thead>
+            <tr>
+              <th>A</th><th>B</th><th>Ver</th><th>Label</th><th>Hash</th><th>Saved</th><th>By</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="viewDiffJson()"><i class="fa-solid fa-code"></i> View diff (JSON)</button>
+        <button class="btn btn-sm btn-primary" onclick="downloadDiffPdf()"><i class="fa-solid fa-file-pdf"></i> Download diff PDF</button>
+        <span class="muted" style="font-size:11px;align-self:center">B blank ⇒ diff vs current</span>
+      </div>
+    `,
+    onSubmit: (close) => close(),
+  });
+}
+
+function pickedVersions() {
+  const aEl = document.querySelector('input[name="diff-a"]:checked');
+  const bEl = document.querySelector('input[name="diff-b"]:checked');
+  if (!aEl) { toast('Pick a version in column A', 'error'); return null; }
+  return { a: aEl.value, b: bEl ? bEl.value : 'current' };
+}
+
+function viewDiffJson() {
+  const p = pickedVersions(); if (!p) return;
+  window.open(`/api/splice/projects/${state.currentId}/diff/${p.a}/${p.b}`, '_blank');
+}
+
+function downloadDiffPdf() {
+  const p = pickedVersions(); if (!p) return;
+  window.open(`/api/splice/projects/${state.currentId}/diff/${p.a}/${p.b}/pdf`, '_blank');
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // Dark mode (mirrors design.html — sticky in localStorage)

@@ -131,6 +131,78 @@ function _puppet() {
   return _puppeteer;
 }
 
+// Phase 2B #7 — public field-markup uploads use multer memory storage
+// (≤2MB cap, image MIME types only). The bytes go straight into
+// Postgres BYTEA, so we never write to disk; the splice service has
+// no Railway volume of its own. Lazy-loaded so a misconfigured
+// container that lacks multer can still boot the rest of the splice
+// service — the field-markup endpoints will return 500 with a clean
+// error message instead of crashing at require time.
+const FIELD_MARKUP_MAX_BYTES = 2 * 1024 * 1024;
+let _fieldMarkupUpload = null;
+function _getFieldMarkupUpload() {
+  if (_fieldMarkupUpload) return _fieldMarkupUpload;
+  let multer;
+  try { multer = require('multer'); }
+  catch (e) {
+    throw new Error('multer not installed; field-markup upload unavailable. ' +
+                    'Run `npm install multer`. Original: ' + e.message);
+  }
+  _fieldMarkupUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: FIELD_MARKUP_MAX_BYTES, files: 1 },
+    fileFilter: (req, file, cb) => {
+      if (!/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.mimetype)) {
+        return cb(new Error('Only JPEG, PNG, WebP, or HEIC images are accepted'));
+      }
+      cb(null, true);
+    },
+  });
+  return _fieldMarkupUpload;
+}
+
+// Sliding-window IP rate limiter for the public upload endpoint. In-
+// memory because the splice service runs as a single Railway replica
+// and the field-markup volume is low (a splicer uploading at most a
+// few photos per closure per day). If we ever scale horizontally,
+// switch this to a Redis-backed limiter.
+const _fieldMarkupRate = new Map(); // ip → array<timestamp ms>
+const FIELD_MARKUP_LIMIT = 30;
+const FIELD_MARKUP_WINDOW_MS = 60 * 1000;
+function _fieldMarkupRateOk(ip) {
+  if (!ip) return true;
+  const now = Date.now();
+  const cutoff = now - FIELD_MARKUP_WINDOW_MS;
+  const arr = (_fieldMarkupRate.get(ip) || []).filter(t => t > cutoff);
+  if (arr.length >= FIELD_MARKUP_LIMIT) {
+    _fieldMarkupRate.set(ip, arr);
+    return false;
+  }
+  arr.push(now);
+  _fieldMarkupRate.set(ip, arr);
+  return true;
+}
+
+// 24-char URL-safe token. crypto.randomBytes(18) → 24 base64url chars
+// → ~10^32 possible values, plenty unguessable for a per-closure key
+// without going overboard on length (printed QR codes get bigger
+// fast as the encoded string grows).
+function _mintFieldToken() {
+  return crypto.randomBytes(18).toString('base64url');
+}
+
+// Phase 3B — lazy archiver require (matches puppeteer/multer pattern).
+let _archiverMod = null;
+function _getArchiver() {
+  if (_archiverMod) return _archiverMod;
+  try { _archiverMod = require('archiver'); }
+  catch (e) {
+    throw new Error('archiver not installed; KMZ export unavailable. ' +
+                    'Run `npm install archiver`. Original: ' + e.message);
+  }
+  return _archiverMod;
+}
+
 module.exports = function installSpliceRoutes(app, pool, mw) {
   const { requireAuth } = mw;
 
@@ -141,7 +213,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const { rows } = await pool.query(`
         SELECT
           p.*,
-          s.full_name AS designer_name,
+          s.name AS designer_name,
           (SELECT COUNT(*) FROM splice_cables   c WHERE c.project_id = p.id)::int AS cable_count,
           (SELECT COUNT(*) FROM splice_locations l WHERE l.project_id = p.id)::int AS location_count,
           (SELECT COUNT(*) FROM splices sp
@@ -181,8 +253,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     const projectId = req.params.id;
     try {
       const proj = await pool.query(
-        `SELECT p.*, s.full_name AS designer_name,
-                ls.full_name AS locked_by_full_name
+        `SELECT p.*, s.name AS designer_name,
+                ls.name AS locked_by_full_name
          FROM splice_projects p
          LEFT JOIN staff s  ON s.id = p.designer_id
          LEFT JOIN staff ls ON ls.id = p.locked_by_staff_id
@@ -191,7 +263,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -243,19 +315,43 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             WHERE c.project_id = $1
             ORDER BY c.name, s.location_id, s.strand_position
           `, [projectId]),
+          pool.query(`
+            SELECT sp.* FROM splice_splitters sp
+            JOIN splice_closures cl ON cl.id = sp.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY sp.created_at
+          `, [projectId]),
+          pool.query(`
+            SELECT o.* FROM splice_splitter_outputs o
+            JOIN splice_splitters sp ON sp.id = o.splitter_id
+            JOIN splice_closures cl ON cl.id = sp.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY o.splitter_id, o.position
+          `, [projectId]),
+          pool.query(`
+            SELECT cs.* FROM splice_cable_states cs
+            JOIN splice_cables c ON c.id = cs.cable_id
+            WHERE c.project_id = $1
+            ORDER BY c.name, cs.location_id
+          `, [projectId]),
         ]);
 
       const hydrate = {
         project: proj.rows[0],
-        locations:    locations.rows,
-        cables:       cables.rows,
-        buffer_tubes: tubes.rows,
-        fibers:       fibers.rows,
-        closures:     closures.rows,
-        trays:        trays.rows,
-        splices:      splices.rows,
-        ribbon_groups: ribbonGroups.rows,
-        strand_states: strandStates.rows,
+        locations:        locations.rows,
+        cables:           cables.rows,
+        buffer_tubes:     tubes.rows,
+        fibers:           fibers.rows,
+        closures:         closures.rows,
+        trays:            trays.rows,
+        splices:          splices.rows,
+        ribbon_groups:    ribbonGroups.rows,
+        strand_states:    strandStates.rows,
+        splitters:        splittersRes.rows,
+        splitter_outputs: splitterOutputsRes.rows,
+        cable_states:     cableStatesRes.rows,
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
@@ -442,7 +538,11 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   });
 
   app.put('/api/splice/locations/:id', requireAuth(), async (req, res) => {
-    const allowed = ['type', 'name', 'sequence_index', 'notes'];
+    // Phase 3A — accept latitude/longitude on the generic PUT too, so the
+    // edit-attributes modal can move a closure on a single submit. The
+    // dedicated /coords endpoint below is for drag-on-map updates that
+    // want a smaller payload.
+    const allowed = ['type', 'name', 'sequence_index', 'notes', 'latitude', 'longitude'];
     const sets = [];
     const vals = [req.params.id];
     let i = 2;
@@ -461,6 +561,38 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!rows[0]) return res.status(404).json({ error: 'Location not found' });
       _bumpProjectMtime(pool, rows[0].project_id);
       _broadcast(rows[0].project_id, 'location_updated', { location: rows[0] });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Phase 3A — drag-a-marker fast path. Drops the rest of the location
+  // payload off the wire so a drag that fires on every mouse-move (if
+  // we add live-drag in 3B) doesn't carry a kilobyte of metadata.
+  app.put('/api/splice/locations/:id/coords', requireAuth(), async (req, res) => {
+    const lat = req.body?.latitude;
+    const lon = req.body?.longitude;
+    // Allow null on either axis to clear the geographic placement
+    // (e.g. designer realized this location is purely logical).
+    const validLat = lat == null || (Number.isFinite(Number(lat)) && Math.abs(lat) <= 90);
+    const validLon = lon == null || (Number.isFinite(Number(lon)) && Math.abs(lon) <= 180);
+    if (!validLat || !validLon) {
+      return res.status(400).json({ error: 'latitude must be in [-90,90], longitude in [-180,180]' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_locations
+            SET latitude = $2, longitude = $3
+          WHERE id = $1
+          RETURNING project_id, id, latitude, longitude`,
+        [req.params.id, lat == null ? null : Number(lat), lon == null ? null : Number(lon)]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Location not found' });
+      _bumpProjectMtime(pool, rows[0].project_id);
+      _broadcast(rows[0].project_id, 'location_coords_changed', {
+        location_id: rows[0].id,
+        latitude: rows[0].latitude,
+        longitude: rows[0].longitude,
+      });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -580,6 +712,47 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'cable_deleted', { id: req.params.id });
       res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Phase 3A — set the geographic path of a cable. Body shape:
+  //   { path_geojson: { type: 'LineString', coordinates: [[lon,lat],...] } }
+  // Pass `null` to clear the path. Validation is deliberately loose: we
+  // require LineString shape but don't reject sparse routes, single
+  // segments, or self-crossing paths — designers eyeball the satellite
+  // and we trust the result. The schema rejects anything that fails
+  // JSONB parse on its way in.
+  app.put('/api/splice/cables/:id/path', requireAuth(), async (req, res) => {
+    const path = req.body?.path_geojson;
+    if (path != null) {
+      if (typeof path !== 'object' || path.type !== 'LineString' ||
+          !Array.isArray(path.coordinates) || path.coordinates.length < 2) {
+        return res.status(400).json({
+          error: 'path_geojson must be a GeoJSON LineString with at least two coordinates',
+        });
+      }
+      for (const pt of path.coordinates) {
+        if (!Array.isArray(pt) || pt.length < 2 ||
+            !Number.isFinite(pt[0]) || !Number.isFinite(pt[1]) ||
+            Math.abs(pt[1]) > 90 || Math.abs(pt[0]) > 180) {
+          return res.status(400).json({
+            error: 'path_geojson coordinates must be [lon, lat] with lat in [-90,90], lon in [-180,180]',
+          });
+        }
+      }
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_cables SET path_geojson = $2::jsonb WHERE id = $1
+         RETURNING id, project_id, path_geojson`,
+        [req.params.id, path == null ? null : JSON.stringify(path)]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Cable not found' });
+      _bumpProjectMtime(pool, rows[0].project_id);
+      _broadcast(rows[0].project_id, 'cable_path_changed', {
+        cable_id: rows[0].id, path_geojson: rows[0].path_geojson,
+      });
+      res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -1107,6 +1280,845 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Cable states — Phase 2C #10 (slack / service loop) ──────────────────
+  // Per-cable-at-location slack length + notes.  Mirrors the strand-states
+  // endpoints above; same URL shape but keyed UNIQUE(cable_id, location_id)
+  // rather than (cable_id, location_id, strand_position) — one slack value
+  // per cable at each closure, not per strand.
+
+  app.get('/api/splice/projects/:id/cable-states', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT cs.*
+         FROM splice_cable_states cs
+         JOIN splice_cables c ON c.id = cs.cable_id
+         WHERE c.project_id = $1
+         ORDER BY c.name, cs.location_id`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // UPSERT on the UNIQUE(cable_id, location_id) constraint — idempotent.
+  app.put('/api/splice/cables/:cableId/locations/:locationId/cable-state', requireAuth(), async (req, res) => {
+    const { slack_length_inches, notes } = req.body;
+    try {
+      // Verify cable + location exist and belong to the same project —
+      // same guard used by strand-states to prevent scope-crossing.
+      const { rows: cable } = await pool.query(
+        `SELECT project_id FROM splice_cables WHERE id = $1`,
+        [req.params.cableId]
+      );
+      const { rows: loc } = await pool.query(
+        `SELECT project_id FROM splice_locations WHERE id = $1`,
+        [req.params.locationId]
+      );
+      if (!cable.length || !loc.length) {
+        return res.status(404).json({ error: 'Cable or location not found' });
+      }
+      if (cable[0].project_id !== loc[0].project_id) {
+        return res.status(400).json({ error: 'Cable and location belong to different projects' });
+      }
+      const { rows } = await pool.query(
+        `INSERT INTO splice_cable_states (cable_id, location_id, slack_length_inches, notes)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (cable_id, location_id) DO UPDATE SET
+           slack_length_inches = EXCLUDED.slack_length_inches,
+           notes               = EXCLUDED.notes,
+           updated_at          = NOW()
+         RETURNING *`,
+        [req.params.cableId, req.params.locationId,
+         slack_length_inches ?? null, notes ?? null]
+      );
+      _bumpProjectMtime(pool, cable[0].project_id);
+      _broadcast(cable[0].project_id, 'cable_state_updated', {
+        cable_id: req.params.cableId, location_id: req.params.locationId,
+        cable_state: rows[0],
+      });
+      res.json({ ok: true, cable_state: rows[0] });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/cable-states/:id', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT cs.id, c.project_id
+         FROM splice_cable_states cs
+         JOIN splice_cables c ON c.id = cs.cable_id
+         WHERE cs.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Cable state not found' });
+      await pool.query(`DELETE FROM splice_cable_states WHERE id = $1`, [req.params.id]);
+      _bumpProjectMtime(pool, cur.rows[0].project_id);
+      _broadcast(cur.rows[0].project_id, 'cable_state_deleted', { id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── Closure templates (Phase 2B #5) ─────────────────────────────────────
+  // Reusable closure shells designers save once and apply across
+  // projects. Sized config (tray_count, tray_capacity) plus optional
+  // default splice pattern in default_splices_jsonb.
+  //
+  // scope_client_id NULL = global; set = only shows for that client's
+  // projects. The list endpoint accepts ?client_id= to filter to
+  // (global OR matching-client) templates.
+
+  app.get('/api/splice/closure-templates', requireAuth(), async (req, res) => {
+    try {
+      const clientId = req.query.client_id || null;
+      const { rows } = clientId
+        ? await pool.query(
+            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+               FROM splice_closure_templates t
+               LEFT JOIN clients cl ON cl.id = t.scope_client_id
+               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+              WHERE t.scope_client_id IS NULL OR t.scope_client_id = $1
+              ORDER BY t.scope_client_id NULLS FIRST, t.name`,
+            [clientId]
+          )
+        : await pool.query(
+            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+               FROM splice_closure_templates t
+               LEFT JOIN clients cl ON cl.id = t.scope_client_id
+               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+              ORDER BY t.scope_client_id NULLS FIRST, t.name`
+          );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/closure-templates', requireAuth(), async (req, res) => {
+    const {
+      name, scope_client_id, model,
+      tray_count = 6, tray_capacity = 12,
+      default_splices, notes,
+    } = req.body || {};
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+    const tc  = Math.max(1, Number(tray_count)    || 6);
+    const cap = Math.max(1, Number(tray_capacity) || 12);
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO splice_closure_templates
+           (name, scope_client_id, model, tray_count, tray_capacity,
+            default_splices_jsonb, notes, created_by_staff_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [
+          String(name).trim(),
+          scope_client_id || null,
+          model || null,
+          tc, cap,
+          default_splices ? JSON.stringify(default_splices) : null,
+          notes || null,
+          req.user?.staff_id || null,
+        ]
+      );
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.put('/api/splice/closure-templates/:id', requireAuth(), async (req, res) => {
+    const allowed = ['name', 'scope_client_id', 'model', 'tray_count',
+                     'tray_capacity', 'default_splices_jsonb', 'notes'];
+    const sets = [];
+    const vals = [req.params.id];
+    let i = 2;
+    for (const f of allowed) {
+      if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+        // Map default_splices → JSON-stringified default_splices_jsonb.
+        if (f === 'default_splices_jsonb') {
+          sets.push(`${f} = $${i++}`);
+          vals.push(req.body[f] == null ? null : JSON.stringify(req.body[f]));
+        } else {
+          sets.push(`${f} = $${i++}`);
+          vals.push(req.body[f]);
+        }
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+    sets.push(`updated_at = NOW()`);
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_closure_templates SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+        vals
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/closure-templates/:id', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(`DELETE FROM splice_closure_templates WHERE id = $1`, [req.params.id]);
+      if (!r.rowCount) return res.status(404).json({ error: 'Template not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Apply a template to create a new closure at the given location.
+  // Inserts a closure row, materializes its trays from tray_count, and
+  // bumps the closure_models picklist (same side-effect as the regular
+  // POST .../closures path so model names stay searchable).
+  //
+  // TODO Phase 2B #5b: also materialize default_splices_jsonb. Today
+  // the JSONB is stored but the apply path only creates the closure +
+  // trays. The splice replay needs a cable picker UI to bind template
+  // slots to the closure's actual cables — which is bigger than this
+  // shipping cut.
+  app.post('/api/splice/locations/:locationId/closures/from-template/:templateId',
+    requireAuth(), async (req, res) => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const tpl = await client.query(
+          `SELECT * FROM splice_closure_templates WHERE id = $1`,
+          [req.params.templateId]
+        );
+        if (!tpl.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: 'Template not found' });
+        }
+        const t = tpl.rows[0];
+        const loc = await client.query(
+          `SELECT project_id FROM splice_locations WHERE id = $1`,
+          [req.params.locationId]
+        );
+        if (!loc.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: 'Location not found' });
+        }
+        const closure = await client.query(
+          `INSERT INTO splice_closures (location_id, model, tray_count, tray_capacity, notes)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [req.params.locationId, t.model || null, t.tray_count, t.tray_capacity, t.notes || null]
+        );
+        const trays = [];
+        for (let p = 1; p <= t.tray_count; p++) {
+          const tr = await client.query(
+            `INSERT INTO splice_trays (closure_id, position) VALUES ($1, $2) RETURNING *`,
+            [closure.rows[0].id, p]
+          );
+          trays.push(tr.rows[0]);
+        }
+        if (t.model && String(t.model).trim()) {
+          await client.query(
+            `INSERT INTO splice_closure_models (model, default_tray_count, default_tray_capacity, use_count, last_used_at)
+             VALUES ($1, $2, $3, 1, NOW())
+             ON CONFLICT (model) DO UPDATE SET
+               use_count = splice_closure_models.use_count + 1,
+               last_used_at = NOW(),
+               default_tray_count    = EXCLUDED.default_tray_count,
+               default_tray_capacity = EXCLUDED.default_tray_capacity`,
+            [String(t.model).trim(), t.tray_count, t.tray_capacity]
+          );
+        }
+        await client.query('COMMIT');
+        _bumpProjectMtime(pool, loc.rows[0].project_id);
+        _broadcast(loc.rows[0].project_id, 'closure_added', {
+          closure: closure.rows[0], trays, from_template: t.id,
+        });
+        res.json({ closure: closure.rows[0], trays, template: t });
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch {}
+        res.status(500).json({ error: e.message });
+      } finally {
+        client.release();
+      }
+    });
+
+  // POST /api/splice/projects/:id/clone — deep-copy a splice project
+  // and every record under it (locations, cables, tubes, fibers,
+  // closures, trays, splices, ribbon_groups, strand_states) into a
+  // new project. Owner-spec use case: "I splice 144→144 straight-
+  // through 80% of the time, scaffold the next project from last
+  // month's." Cloning a 432-fiber tree fully would otherwise take
+  // an hour of manual work.
+  //
+  // Body: { name?: string }  — optional name override; defaults to
+  //                            "<source.name> (copy)".
+  app.post('/api/splice/projects/:id/clone', requireAuth(), async (req, res) => {
+    const sourceId = req.params.id;
+    const requestedName = (req.body && req.body.name) ? String(req.body.name).trim() : null;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const src = await client.query(`SELECT * FROM splice_projects WHERE id = $1`, [sourceId]);
+      if (!src.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Source project not found' });
+      }
+      const srcProj = src.rows[0];
+      const newName = requestedName || `${srcProj.name} (copy)`;
+
+      // 1. New project header. Designer attribution moves to the
+      //    cloning user; lock state intentionally NOT carried over
+      //    so the clone opens unlocked.
+      const newProj = await client.query(
+        `INSERT INTO splice_projects (name, designer_id, status, notes)
+         VALUES ($1, $2, 'active', $3)
+         RETURNING *`,
+        [newName, req.user?.staff_id || null, srcProj.notes || null]
+      );
+      const newProjectId = newProj.rows[0].id;
+
+      // 2. Locations — preserve sequence_index so the canvas layout
+      //    matches the source.
+      const locMap = new Map();   // oldId → newId
+      const locRows = await client.query(
+        `SELECT * FROM splice_locations WHERE project_id = $1 ORDER BY sequence_index, name`,
+        [sourceId]
+      );
+      for (const l of locRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_locations (project_id, type, name, sequence_index, notes)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [newProjectId, l.type, l.name, l.sequence_index, l.notes]
+        );
+        locMap.set(l.id, r.rows[0].id);
+      }
+
+      // 3. Cables — remap from/to location FKs through locMap. Buffer
+      //    tubes + fibers regenerate via the cable INSERT trigger... no,
+      //    we have no trigger. We insert tubes + fibers explicitly so
+      //    the FIBER IDS stay deterministic for the splice remap below.
+      const cableMap = new Map();
+      const tubeMap  = new Map();
+      const fiberMap = new Map();
+      const cableRows = await client.query(
+        `SELECT * FROM splice_cables WHERE project_id = $1 ORDER BY created_at`,
+        [sourceId]
+      );
+      for (const c of cableRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_cables
+             (project_id, name, fiber_count, construction_type,
+              from_location_id, to_location_id, manufacturer_part, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING id`,
+          [newProjectId, c.name, c.fiber_count, c.construction_type,
+           c.from_location_id ? locMap.get(c.from_location_id) || null : null,
+           c.to_location_id   ? locMap.get(c.to_location_id)   || null : null,
+           c.manufacturer_part, c.notes]
+        );
+        cableMap.set(c.id, r.rows[0].id);
+      }
+      // 4. Buffer tubes — index by old cable id to remap.
+      const tubeRows = await client.query(`
+        SELECT t.* FROM splice_buffer_tubes t
+        JOIN splice_cables c ON c.id = t.cable_id
+        WHERE c.project_id = $1
+        ORDER BY t.cable_id, t.position
+      `, [sourceId]);
+      for (const t of tubeRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_buffer_tubes (cable_id, position, color)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [cableMap.get(t.cable_id), t.position, t.color]
+        );
+        tubeMap.set(t.id, r.rows[0].id);
+      }
+      // 5. Fibers — preserve circuit_name / customer / notes (Phase 2A
+      //    #4 strand metadata) so a clone keeps the same circuit
+      //    identifiers; common when designer is splitting one big
+      //    project into a "billable" copy and a "field" copy.
+      const fiberRows = await client.query(`
+        SELECT f.* FROM splice_fibers f
+        JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+        JOIN splice_cables c ON c.id = t.cable_id
+        WHERE c.project_id = $1
+      `, [sourceId]);
+      for (const f of fiberRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_fibers
+             (buffer_tube_id, position, color, circuit_name, customer, notes)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [tubeMap.get(f.buffer_tube_id), f.position, f.color,
+           f.circuit_name, f.customer, f.notes]
+        );
+        fiberMap.set(f.id, r.rows[0].id);
+      }
+      // 6. Closures + trays.
+      const closureMap = new Map();
+      const trayMap    = new Map();
+      const closureRows = await client.query(`
+        SELECT cl.* FROM splice_closures cl
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+        ORDER BY cl.created_at
+      `, [sourceId]);
+      for (const cl of closureRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_closures
+             (location_id, model, tray_count, tray_capacity, notes)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [locMap.get(cl.location_id), cl.model, cl.tray_count, cl.tray_capacity, cl.notes]
+        );
+        closureMap.set(cl.id, r.rows[0].id);
+      }
+      const trayRows = await client.query(`
+        SELECT t.* FROM splice_trays t
+        JOIN splice_closures cl ON cl.id = t.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+      `, [sourceId]);
+      for (const t of trayRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_trays (closure_id, position) VALUES ($1, $2) RETURNING id`,
+          [closureMap.get(t.closure_id), t.position]
+        );
+        trayMap.set(t.id, r.rows[0].id);
+      }
+      // 7. Ribbon groups — must come BEFORE splices because splices.
+      //    ribbon_group_id FKs into them.
+      const ribbonGroupMap = new Map();
+      const groupRows = await client.query(`
+        SELECT g.* FROM splice_ribbon_groups g
+        JOIN splice_trays t ON t.id = g.tray_id
+        JOIN splice_closures cl ON cl.id = t.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+      `, [sourceId]);
+      for (const g of groupRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_ribbon_groups (tray_id) VALUES ($1) RETURNING id`,
+          [trayMap.get(g.tray_id)]
+        );
+        ribbonGroupMap.set(g.id, r.rows[0].id);
+      }
+      // 8. Splices — remap fiber A, fiber B, tray, ribbon group.
+      const spliceRows = await client.query(`
+        SELECT s.* FROM splices s
+        JOIN splice_trays t ON t.id = s.tray_id
+        JOIN splice_closures cl ON cl.id = t.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+      `, [sourceId]);
+      for (const s of spliceRows.rows) {
+        await client.query(
+          `INSERT INTO splices
+             (tray_id, fiber_a_id, fiber_b_id, splice_type, ribbon_group_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [trayMap.get(s.tray_id),
+           fiberMap.get(s.fiber_a_id),
+           fiberMap.get(s.fiber_b_id),
+           s.splice_type,
+           s.ribbon_group_id ? ribbonGroupMap.get(s.ribbon_group_id) || null : null]
+        );
+      }
+      // 9. Strand states — remap cable_id + location_id.
+      const stateRows = await client.query(`
+        SELECT s.* FROM splice_strand_states s
+        JOIN splice_cables c ON c.id = s.cable_id
+        WHERE c.project_id = $1
+      `, [sourceId]);
+      for (const ss of stateRows.rows) {
+        await client.query(
+          `INSERT INTO splice_strand_states
+             (cable_id, location_id, strand_position, state, stored_length_inches, notes)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [cableMap.get(ss.cable_id),
+           locMap.get(ss.location_id),
+           ss.strand_position, ss.state, ss.stored_length_inches, ss.notes]
+        );
+      }
+
+      await client.query('COMMIT');
+      res.json({
+        ok: true,
+        project: newProj.rows[0],
+        counts: {
+          locations: locMap.size,
+          cables:    cableMap.size,
+          buffer_tubes: tubeMap.size,
+          fibers:    fiberMap.size,
+          closures:  closureMap.size,
+          trays:     trayMap.size,
+          ribbon_groups: ribbonGroupMap.size,
+          splices:   spliceRows.rows.length,
+          strand_states: stateRows.rows.length,
+        },
+      });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  // ─── Version snapshots + diff (Phase 2B #6) ─────────────────────────────
+  // Manual save: always records a row, never debounced. Use case:
+  // "checkpoint before client redline review."
+  app.post('/api/splice/projects/:id/versions', requireAuth(), async (req, res) => {
+    try {
+      const label = (req.body && req.body.label) ? String(req.body.label).slice(0, 200) : null;
+      const v = await _takeSnapshot(pool, req.params.id, label, req.user?.staff_id);
+      res.json(v);
+    } catch (e) {
+      const code = /not found/i.test(e.message) ? 404 : 500;
+      res.status(code).json({ error: e.message });
+    }
+  });
+
+  // Auto-snapshot — debounced server-side. Editor calls this after
+  // every successful write; server only records a row if the last
+  // version is older than 10 minutes. Generation-hash check avoids
+  // recording a new row when the splice graph is structurally the
+  // same as the last snapshot (for example, the user opened the
+  // project and hovered around but didn't change anything).
+  app.post('/api/splice/projects/:id/versions/auto', requireAuth(), async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const last = await pool.query(
+        `SELECT version_number, generation_hash, created_at
+           FROM splice_project_versions
+          WHERE project_id = $1
+          ORDER BY version_number DESC LIMIT 1`,
+        [projectId]
+      );
+      const lastRow = last.rows[0];
+      const ageMs = lastRow ? (Date.now() - new Date(lastRow.created_at).getTime()) : Infinity;
+      if (ageMs < 10 * 60 * 1000) {
+        return res.json({ skipped: true, reason: 'debounced', last_version: lastRow });
+      }
+      const v = await _takeSnapshot(pool, projectId, null, req.user?.staff_id);
+      res.json(v);
+    } catch (e) {
+      const code = /not found/i.test(e.message) ? 404 : 500;
+      res.status(code).json({ error: e.message });
+    }
+  });
+
+  app.get('/api/splice/projects/:id/versions', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT v.id, v.version_number, v.label, v.generation_hash,
+                v.created_at, v.created_by_staff_id,
+                s.name AS created_by_name
+           FROM splice_project_versions v
+           LEFT JOIN staff s ON s.id = v.created_by_staff_id
+          WHERE v.project_id = $1
+          ORDER BY v.version_number DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/projects/:id/versions/:n', requireAuth(), async (req, res) => {
+    try {
+      const v = await _loadVersion(pool, req.params.id, req.params.n);
+      if (!v) return res.status(404).json({ error: 'Version not found' });
+      res.json(v);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/projects/:id/versions/:n', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_project_versions
+          WHERE project_id = $1 AND version_number = $2`,
+        [req.params.id, req.params.n]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Version not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Diff JSON: side B may be a numeric version OR the literal string
+  // "current" to diff against the live tree.
+  app.get('/api/splice/projects/:id/diff/:a/:b', requireAuth(), async (req, res) => {
+    try {
+      const a = await _loadVersion(pool, req.params.id, req.params.a);
+      if (!a) return res.status(404).json({ error: `Version ${req.params.a} not found` });
+      const b = req.params.b === 'current'
+        ? { version_number: 'current', snapshot: await _loadProjectForExport(pool, req.params.id) }
+        : await _loadVersion(pool, req.params.id, req.params.b);
+      if (!b || !b.snapshot) return res.status(404).json({ error: `Version ${req.params.b} not found` });
+      res.json({
+        a: { version_number: a.version_number, label: a.label, generation_hash: a.generation_hash, created_at: a.created_at },
+        b: { version_number: b.version_number, label: b.label || null, generation_hash: b.generation_hash || null, created_at: b.created_at || null },
+        diff: _computeDiff(a.snapshot, b.snapshot),
+      });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Diff PDF — puppeteer-rendered. Sections by closure → tray.
+  // Light-gray strikethrough for removed splices, green-highlight
+  // for added, side-by-side before/after for changed.
+  app.get('/api/splice/projects/:id/diff/:a/:b/pdf', requireAuth(), async (req, res) => {
+    try {
+      const a = await _loadVersion(pool, req.params.id, req.params.a);
+      if (!a) return res.status(404).json({ error: `Version ${req.params.a} not found` });
+      const b = req.params.b === 'current'
+        ? { version_number: 'current', snapshot: await _loadProjectForExport(pool, req.params.id) }
+        : await _loadVersion(pool, req.params.id, req.params.b);
+      if (!b || !b.snapshot) return res.status(404).json({ error: `Version ${req.params.b} not found` });
+      const diff = _computeDiff(a.snapshot, b.snapshot);
+      const html = _renderDiffHtml({
+        project_name: b.snapshot.project?.name || a.snapshot.project?.name || 'Splice project',
+        a_meta: { version_number: a.version_number, label: a.label, hash: a.generation_hash, created_at: a.created_at },
+        b_meta: {
+          version_number: b.version_number,
+          label: b.label || (b.version_number === 'current' ? 'live (uncommitted)' : null),
+          hash: b.generation_hash || null,
+          created_at: b.created_at || null,
+        },
+        a: a.snapshot,
+        b: b.snapshot,
+        diff,
+      });
+      const puppeteer = _puppet();
+      const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+        const pdf = await page.pdf({
+          format: 'Letter',
+          printBackground: true,
+          margin: { top: '0.4in', right: '0.4in', bottom: '0.4in', left: '0.4in' },
+        });
+        const filename = `splice_diff_${_safeFilename(b.snapshot.project?.name || 'project')}_v${a.version_number}_to_v${b.version_number}.pdf`;
+        res.set({
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${filename}"`,
+        });
+        res.send(pdf);
+      } finally {
+        try { await browser.close(); } catch {}
+      }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── Field markup public token + upload (Phase 2B #7) ───────────────────
+  //
+  // The splicer scans the QR printed on the field document, lands on a
+  // public HTML page (no login, no app install), uploads a photo of the
+  // closure interior. The engineer sees those photos attached to the
+  // closure inside the editor. The token in the URL is the only auth.
+  //
+  //   POST /api/splice/closures/:id/public-tokens — engineer mints/lists
+  //   GET  /api/splice/closures/:id/public-tokens — engineer lists
+  //   DELETE /api/splice/public-tokens/:token     — engineer revokes
+  //   GET  /splice/field/:token                    — public HTML
+  //   POST /splice/field/:token/markup             — public photo upload
+  //   GET  /splice/field/:token/markups/:id/image  — public, own-token
+  //                                                  thumbnail
+  //   GET  /api/splice/closures/:id/markups        — engineer list
+  //   GET  /api/splice/markups/:id/image           — engineer image fetch
+  //   DELETE /api/splice/markups/:id               — engineer remove
+
+  app.post('/api/splice/closures/:id/public-tokens', requireAuth(), async (req, res) => {
+    const closureId = req.params.id;
+    const expiresInDays = req.body?.expires_in_days != null
+      ? Math.max(1, parseInt(req.body.expires_in_days, 10) || 0)
+      : null;
+    try {
+      const cl = await pool.query(
+        `SELECT cl.id, l.project_id
+           FROM splice_closures cl
+           JOIN splice_locations l ON l.id = cl.location_id
+          WHERE cl.id = $1`,
+        [closureId]
+      );
+      if (!cl.rows.length) return res.status(404).json({ error: 'Closure not found' });
+      const token = _mintFieldToken();
+      const expiresAt = expiresInDays
+        ? new Date(Date.now() + expiresInDays * 86400 * 1000)
+        : null;
+      const ins = await pool.query(
+        `INSERT INTO splice_closure_public_tokens
+           (token, closure_id, project_id, expires_at, created_by_staff_id)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [token, closureId, cl.rows[0].project_id, expiresAt, req.user?.staff_id || null]
+      );
+      const url = (SPLICE_PUBLIC_URL || '') + '/splice/field/' + token;
+      res.json({ ...ins.rows[0], url });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/closures/:id/public-tokens', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT t.*, s.name AS created_by_name
+           FROM splice_closure_public_tokens t
+           LEFT JOIN staff s ON s.id = t.created_by_staff_id
+          WHERE t.closure_id = $1
+          ORDER BY t.created_at DESC`,
+        [req.params.id]
+      );
+      const base = SPLICE_PUBLIC_URL || '';
+      res.json(rows.map(r => ({ ...r, url: base + '/splice/field/' + r.token })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/public-tokens/:token', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_closure_public_tokens WHERE token = $1`,
+        [req.params.token]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Token not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Public: render minimal HTML for the splicer. Resolves the token to
+  // its closure, pulls closure + location + project metadata + any
+  // already-uploaded markups so the splicer can confirm they're at the
+  // right closure. Also embeds the upload form. NO requireAuth here —
+  // the token IS the auth.
+  app.get('/splice/field/:token', async (req, res) => {
+    try {
+      const tok = await _resolveFieldToken(pool, req.params.token);
+      if (!tok) return res.status(404).type('html').send(_renderFieldErrorHtml('This field link is invalid or expired. Ask the engineer for a fresh QR code.'));
+      const meta = await _loadClosureForField(pool, tok.closure_id);
+      if (!meta) return res.status(404).type('html').send(_renderFieldErrorHtml('Closure not found.'));
+      const markups = await pool.query(
+        `SELECT id, splicer_name, notes, mime_type, byte_size, uploaded_at
+           FROM splice_field_markups WHERE closure_id = $1 ORDER BY uploaded_at DESC`,
+        [tok.closure_id]
+      );
+      res.type('html').send(_renderFieldHtml({
+        token: req.params.token,
+        closure: meta,
+        markups: markups.rows,
+      }));
+    } catch (e) {
+      res.status(500).type('html').send(_renderFieldErrorHtml('Server error: ' + e.message));
+    }
+  });
+
+  // Resolve the multer middleware lazily on first request so a missing
+  // multer install fails the request, not the service boot.
+  const _fieldMarkupMiddleware = (req, res, next) => {
+    let upload;
+    try { upload = _getFieldMarkupUpload(); }
+    catch (e) { return res.status(500).json({ error: e.message }); }
+    upload.single('photo')(req, res, next);
+  };
+
+  app.post('/splice/field/:token/markup',
+    _fieldMarkupMiddleware,
+    async (req, res) => {
+      const ip = req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || null;
+      if (!_fieldMarkupRateOk(ip)) {
+        return res.status(429).json({ error: 'Too many uploads. Slow down and try again in a minute.' });
+      }
+      try {
+        const tok = await _resolveFieldToken(pool, req.params.token);
+        if (!tok) return res.status(404).json({ error: 'Field link is invalid or expired.' });
+        if (!req.file || !req.file.buffer || !req.file.buffer.length) {
+          return res.status(400).json({ error: 'No photo uploaded.' });
+        }
+        const splicerName = (req.body?.splicer_name || '').toString().trim().slice(0, 120) || null;
+        const notes = (req.body?.notes || '').toString().trim().slice(0, 2000) || null;
+        const ins = await pool.query(
+          `INSERT INTO splice_field_markups
+             (closure_id, project_id, token, splicer_name, notes,
+              mime_type, byte_size, image_data, uploader_ip)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           RETURNING id, uploaded_at`,
+          [tok.closure_id, tok.project_id, req.params.token, splicerName, notes,
+           req.file.mimetype, req.file.buffer.length, req.file.buffer, ip]
+        );
+        // Best-effort SSE broadcast so an engineer who has the project
+        // open sees the upload appear in real-time without refreshing.
+        _broadcast(tok.project_id, 'field_markup_added', {
+          markup_id: ins.rows[0].id,
+          closure_id: tok.closure_id,
+          splicer_name: splicerName,
+          uploaded_at: ins.rows[0].uploaded_at,
+        });
+        res.json({ ok: true, markup_id: ins.rows[0].id });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+  // Public image-fetch endpoint for the field page itself — splicer
+  // uploads a photo, then the page wants to render a thumbnail right
+  // back to confirm the upload landed. Restricted to images that
+  // belong to the SAME closure as the token in the URL, so a leaked
+  // markup id can't be used to read other closures' photos.
+  app.get('/splice/field/:token/markups/:id/image', async (req, res) => {
+    try {
+      const tok = await _resolveFieldToken(pool, req.params.token);
+      if (!tok) return res.status(404).end();
+      const { rows } = await pool.query(
+        `SELECT mime_type, image_data
+           FROM splice_field_markups
+          WHERE id = $1 AND closure_id = $2`,
+        [req.params.id, tok.closure_id]
+      );
+      if (!rows.length) return res.status(404).end();
+      res.set('Content-Type', rows[0].mime_type);
+      res.set('Cache-Control', 'private, max-age=300');
+      res.send(rows[0].image_data);
+    } catch (e) {
+      res.status(500).end();
+    }
+  });
+
+  // Engineer-side: list markups for a closure (no image bytes — those
+  // come over the dedicated image endpoint). byte_size lets the UI
+  // render "1.2MB" hints without pulling the BYTEA over the wire.
+  app.get('/api/splice/closures/:id/markups', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, closure_id, project_id, splicer_name, notes,
+                mime_type, byte_size, uploaded_at, token
+           FROM splice_field_markups
+          WHERE closure_id = $1
+          ORDER BY uploaded_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Engineer-side image fetch. Goes through requireAuth so a public
+  // user can't enumerate markup ids they don't own a token for.
+  app.get('/api/splice/markups/:id/image', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT mime_type, image_data
+           FROM splice_field_markups WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!rows.length) return res.status(404).end();
+      res.set('Content-Type', rows[0].mime_type);
+      res.set('Cache-Control', 'private, max-age=600');
+      res.send(rows[0].image_data);
+    } catch (e) {
+      res.status(500).end();
+    }
+  });
+
+  app.delete('/api/splice/markups/:id', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_field_markups WHERE id = $1 RETURNING project_id, closure_id`,
+        [req.params.id]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Markup not found' });
+      _broadcast(r.rows[0].project_id, 'field_markup_removed', {
+        markup_id: req.params.id, closure_id: r.rows[0].closure_id,
+      });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure models picklist ─────────────────────────────────────────────
   // Empty by design — fills as designers type model names. No seed.
 
@@ -1148,7 +2160,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
-      const html = await _renderSpliceHtml(data, req.query.page_size || 'Tabloid');
+      const tokensByClosureId = await _ensureFieldTokens(pool, data, req.user?.staff_id);
+      const html = await _renderSpliceHtml(data, req.query.page_size || 'Tabloid', { tokensByClosureId });
       res.set('Content-Type', 'text/html; charset=utf-8').send(html);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1171,7 +2184,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
       }
       const pageSize = req.query.page_size || data.project.page_size || 'Tabloid';
-      const html = await _renderSpliceHtml(data, pageSize);
+      // Phase 2B #7 — make sure every closure has a current public
+      // token before render so the QR codes encode field-markup links
+      // instead of editor deep-links. Cheap on re-prints (existing
+      // tokens are reused) but mints fresh ones for any new closures
+      // since the last export.
+      const tokensByClosureId = await _ensureFieldTokens(pool, data, req.user?.staff_id);
+      const html = await _renderSpliceHtml(data, pageSize, { tokensByClosureId });
       const puppeteer = _puppet();
       const browser = await puppeteer.launch({
         headless: 'new',
@@ -1196,6 +2215,674 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       }
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
+
+  // Phase 3B — KMZ export. Generates a KML document covering every
+  // location with coords + every cable with a path_geojson, embedded
+  // in ExtendedData with the splice_location_id / splice_cable_id so
+  // a round-trip through Phase 3C re-import re-binds to the same
+  // rows. Streams as application/vnd.google-earth.kmz.
+  app.get('/api/splice/projects/:id/export-kmz', requireAuth(), async (req, res) => {
+    try {
+      const data = await _loadProjectForExport(pool, req.params.id);
+      if (!data) return res.status(404).json({ error: 'Project not found' });
+      const kml = _renderKml(data);
+      const archiver = _getArchiver();
+      const filename = `splice_${_safeFilename(data.project.name)}_${new Date().toISOString().slice(0,10)}.kmz`;
+      res.set({
+        'Content-Type': 'application/vnd.google-earth.kmz',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      });
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      archive.on('error', (err) => {
+        // Headers already sent in the streaming case; can't write JSON.
+        // Log so the operator at least sees the failure on the splice
+        // service stdout.
+        console.error('[splice/export-kmz] archive error:', err);
+        try { res.end(); } catch {}
+      });
+      archive.pipe(res);
+      // KMZ convention: the KML document is named "doc.kml" at archive
+      // root. Google Earth, ArcGIS, QGIS all key off this name.
+      archive.append(kml, { name: 'doc.kml' });
+      await archive.finalize();
+    } catch (e) {
+      if (!res.headersSent) res.status(500).json({ error: e.message });
+    }
+  });
+
+  // ─── Design import: KMZ/DXF submit-and-review (Phase 3C / 3D / 3E) ──────
+  //
+  //   POST   /api/splice/projects/:id/imports          — upload + parse + stage
+  //   GET    /api/splice/projects/:id/imports          — list
+  //   GET    /api/splice/imports/:id                   — detail (with changes)
+  //   POST   /api/splice/imports/:id/changes/:cid/decision — approve | skip | pending
+  //   POST   /api/splice/imports/:id/apply             — commit approved changes
+  //   DELETE /api/splice/imports/:id                   — reject wholesale
+  //
+  // The upload endpoint stages — never mutates the live tree. The
+  // apply endpoint commits the approved subset in a single transaction.
+
+  // 25MB cap. KMZs are tiny but DXFs can run megabytes; this leaves
+  // headroom without inviting abuse on a public-ish import path.
+  const DESIGN_IMPORT_MAX_BYTES = 25 * 1024 * 1024;
+  let _designImportUpload = null;
+  function _getDesignImportUpload() {
+    if (_designImportUpload) return _designImportUpload;
+    let multer;
+    try { multer = require('multer'); }
+    catch (e) {
+      throw new Error('multer not installed; design import unavailable. ' + e.message);
+    }
+    _designImportUpload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: DESIGN_IMPORT_MAX_BYTES, files: 1 },
+    });
+    return _designImportUpload;
+  }
+  const _designImportMiddleware = (req, res, next) => {
+    let upload;
+    try { upload = _getDesignImportUpload(); }
+    catch (e) { return res.status(500).json({ error: e.message }); }
+    upload.single('file')(req, res, next);
+  };
+
+  app.post('/api/splice/projects/:id/imports',
+    _designImportMiddleware,
+    requireAuth(),
+    async (req, res) => {
+      const projectId = req.params.id;
+      const file = req.file;
+      if (!file) return res.status(400).json({ error: 'No file uploaded (field name: "file")' });
+      const filename = file.originalname || 'upload';
+      const ext = (filename.split('.').pop() || '').toLowerCase();
+      const format =
+        ext === 'kmz' ? 'kmz' :
+        ext === 'kml' ? 'kml' :
+        ext === 'dxf' ? 'dxf' :
+        ext === 'geojson' ? 'geojson' :
+        null;
+      if (!format) {
+        return res.status(400).json({ error: 'Unsupported file extension; expected .kmz, .kml, .dxf, or .geojson' });
+      }
+
+      try {
+        // Phase 3C: KMZ/KML/GeoJSON. Phase 3D adds DXF.
+        let parsed;
+        if (format === 'dxf') {
+          // Phase 3D — DXF requires a calibration payload (either a
+          // declared CRS or two control points). The frontend collects
+          // that in a separate calibration modal and re-submits.
+          const calibration = _parseDxfCalibration(req.body?.calibration);
+          if (!calibration) {
+            return res.status(400).json({
+              error: 'DXF imports require a `calibration` form field — either {"crs":"EPSG:..."} or {"control_points":[{src:[x,y],dst:[lon,lat]},{...}]}.',
+            });
+          }
+          parsed = _parseDxf(file.buffer, calibration);
+        } else {
+          parsed = await _parseKmzOrKml(file.buffer, format);
+        }
+
+        // Build the diff against the live project tree. This is where
+        // splice_location_id / splice_cable_id ExtendedData drives the
+        // re-bind: an incoming feature carrying a known id becomes an
+        // update; without one, name match decides update-vs-add.
+        const live = await _loadProjectForExport(pool, projectId);
+        if (!live) return res.status(404).json({ error: 'Project not found' });
+        const changes = _diffIngestAgainstLive(parsed, live);
+
+        // Stage the import + every proposed change in one transaction via
+        // _stageImport (shared with the CSV paste endpoint). DXF calibration
+        // is appended as a follow-up UPDATE so _stageImport stays generic.
+        const { importRow, summary } = await _stageImport(
+          pool, projectId,
+          { filename, format, size: file.size },
+          parsed, changes, req.user?.staff_id || null
+        );
+        if (format === 'dxf') {
+          await pool.query(
+            `UPDATE splice_design_imports SET dxf_calibration_jsonb = $2::jsonb WHERE id = $1`,
+            [importRow.id, JSON.stringify(_parseDxfCalibration(req.body?.calibration))]
+          );
+        }
+        res.json({ import: importRow, summary });
+      } catch (e) {
+        res.status(400).json({ error: 'Import parse failed: ' + e.message });
+      }
+    });
+
+  app.get('/api/splice/projects/:id/imports', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT i.id, i.source_filename, i.source_format, i.source_size_bytes,
+                i.uploaded_at, i.status, i.summary_jsonb, i.decision_at,
+                s.name AS uploaded_by_name
+           FROM splice_design_imports i
+           LEFT JOIN staff s ON s.id = i.uploaded_by_staff_id
+          WHERE i.project_id = $1
+          ORDER BY i.uploaded_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/imports/:id', requireAuth(), async (req, res) => {
+    try {
+      const imp = await pool.query(
+        `SELECT i.*, s.name AS uploaded_by_name
+           FROM splice_design_imports i
+           LEFT JOIN staff s ON s.id = i.uploaded_by_staff_id
+          WHERE i.id = $1`,
+        [req.params.id]
+      );
+      if (!imp.rows.length) return res.status(404).json({ error: 'Import not found' });
+      const ch = await pool.query(
+        `SELECT * FROM splice_design_import_changes
+          WHERE import_id = $1
+          ORDER BY change_type, id`,
+        [req.params.id]
+      );
+      res.json({ import: imp.rows[0], changes: ch.rows });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/imports/:id/changes/:cid/decision', requireAuth(), async (req, res) => {
+    const decision = req.body?.decision;
+    const comment = req.body?.comment || null;
+    if (!['pending', 'approved', 'skipped'].includes(decision)) {
+      return res.status(400).json({ error: 'decision must be one of pending, approved, skipped' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_design_import_changes
+            SET decision = $3,
+                decision_at = NOW(),
+                decision_by_staff_id = $4,
+                decision_comment = $5
+          WHERE id = $2 AND import_id = $1
+          RETURNING *`,
+        [req.params.id, req.params.cid, decision, req.user?.staff_id || null, comment]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Change not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/imports/:id/apply', requireAuth(), async (req, res) => {
+    const importId = req.params.id;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const imp = await client.query(
+        `SELECT * FROM splice_design_imports WHERE id = $1 FOR UPDATE`,
+        [importId]
+      );
+      if (!imp.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Import not found' });
+      }
+      if (imp.rows[0].status === 'applied' || imp.rows[0].status === 'rejected') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: `Import is already ${imp.rows[0].status}` });
+      }
+      const projectId = imp.rows[0].project_id;
+      const ch = await client.query(
+        `SELECT * FROM splice_design_import_changes
+          WHERE import_id = $1 AND decision = 'approved'
+          ORDER BY change_type, id`,
+        [importId]
+      );
+      let appliedCount = 0;
+      // Apply order matters: locations first (so cable adds can FK to
+      // them), then cables. Within each, deletes last.
+      const inOrder = [
+        ...ch.rows.filter(c => c.target_table === 'splice_locations' && c.change_type !== 'delete'),
+        ...ch.rows.filter(c => c.target_table === 'splice_cables'    && c.change_type !== 'delete'),
+        ...ch.rows.filter(c => c.target_table === 'splice_cables'    && c.change_type === 'delete'),
+        ...ch.rows.filter(c => c.target_table === 'splice_locations' && c.change_type === 'delete'),
+      ];
+      for (const c of inOrder) {
+        const newId = await _applyImportChange(client, projectId, c);
+        await client.query(
+          `UPDATE splice_design_import_changes
+              SET applied_at = NOW(), applied_target_id = $2
+            WHERE id = $1`,
+          [c.id, newId]
+        );
+        appliedCount++;
+      }
+      // Final import status: 'applied' if every change was approved,
+      // 'partially_applied' if some were skipped.
+      const tot = await client.query(
+        `SELECT COUNT(*) FILTER (WHERE decision = 'skipped') AS skipped,
+                COUNT(*) AS total
+           FROM splice_design_import_changes WHERE import_id = $1`,
+        [importId]
+      );
+      const skipped = parseInt(tot.rows[0].skipped, 10);
+      const total = parseInt(tot.rows[0].total, 10);
+      const finalStatus = skipped === 0 ? 'applied'
+                         : skipped === total ? 'rejected'
+                         : 'partially_applied';
+      await client.query(
+        `UPDATE splice_design_imports
+            SET status = $2, decision_at = NOW(), decision_by_staff_id = $3
+          WHERE id = $1`,
+        [importId, finalStatus, req.user?.staff_id || null]
+      );
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'design_import_applied', {
+        import_id: importId, applied: appliedCount, status: finalStatus,
+      });
+      res.json({ ok: true, applied: appliedCount, status: finalStatus });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: 'Apply failed: ' + e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.delete('/api/splice/imports/:id', requireAuth(), async (req, res) => {
+    try {
+      // Two-step so we can distinguish "doesn't exist" (404) from
+      // "exists but already finalized" (409). Earlier shape collapsed
+      // both into 404 with an ambiguous message — Worker B surfaced
+      // that as ISSUE-2 in tests/splice_phase3.test.js.
+      const cur = await pool.query(
+        `SELECT status FROM splice_design_imports WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Import not found' });
+      if (cur.rows[0].status !== 'pending') {
+        return res.status(409).json({
+          error: `Cannot reject import — already ${cur.rows[0].status}`,
+          status: cur.rows[0].status,
+        });
+      }
+      const { rows } = await pool.query(
+        `UPDATE splice_design_imports
+            SET status = 'rejected',
+                decision_at = NOW(),
+                decision_by_staff_id = $2
+          WHERE id = $1
+          RETURNING project_id, status`,
+        [req.params.id, req.user?.staff_id || null]
+      );
+      _broadcast(rows[0].project_id, 'design_import_rejected', { import_id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── CSV/Excel paste import (Phase 2C #13) ──────────────────────────────
+  // JSON-body endpoint (not multipart) — the frontend has already parsed
+  // the pasted text and mapped columns before calling here.  We build the
+  // same parsed-ingest shape that _parseKmzOrKml produces, feed it through
+  // _diffIngestAgainstLive, then stage via _stageImport — the same helper
+  // the file-upload path now calls.  The master designer reviews CSV-pasted
+  // changes in exactly the same modal as KMZ/DXF imports.
+
+  app.post('/api/splice/projects/:id/import-paste', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    const { rows, kind } = req.body || {};
+
+    if (!Array.isArray(rows) || !rows.length) {
+      return res.status(400).json({ error: '`rows` must be a non-empty array' });
+    }
+    if (kind !== 'cables' && kind !== 'locations') {
+      return res.status(400).json({ error: '`kind` must be "cables" or "locations"' });
+    }
+
+    try {
+      // Build a parsed-ingest object in the same shape _parseKmzOrKml returns.
+      const parsed = { locations: [], cables: [], warnings: [] };
+
+      // Load live project once — used for location name resolution and diffing.
+      const live = await _loadProjectForExport(pool, projectId);
+      if (!live) return res.status(404).json({ error: 'Project not found' });
+
+      if (kind === 'locations') {
+        for (const row of rows) {
+          const name = String(row.name || '').trim().slice(0, 120);
+          if (!name) { parsed.warnings.push('Skipped row with no name'); continue; }
+          parsed.locations.push({
+            name,
+            type:      _normalizeLocationType(row.type) || 'splice_point',
+            latitude:  parseFloat(row.latitude)  || null,
+            longitude: parseFloat(row.longitude) || null,
+            source_id: null,
+            props:     row,
+            notes:     row.notes || null,
+          });
+        }
+      } else {
+        // CSV cables have no geometry — path_geojson stays null.
+        // from_location / to_location are advisory; warn if names don't
+        // match an existing location rather than auto-creating them.
+        const liveLocByName = new Map(
+          (live.locations || []).map(l => [String(l.name).toLowerCase(), l])
+        );
+
+        for (const row of rows) {
+          const name = String(row.name || '').trim().slice(0, 120);
+          if (!name) { parsed.warnings.push('Skipped cable row with no name'); continue; }
+
+          const fc = _normalizeFiberCount(row.fiber_count);
+          if (!fc) {
+            parsed.warnings.push(
+              `Cable "${name}": fiber_count "${row.fiber_count}" not recognised; defaulted to 144`
+            );
+          }
+
+          // Warn about unresolved endpoint names so the reviewer can act on them.
+          for (const locField of ['from_location', 'to_location']) {
+            const locName = String(row[locField] || '').trim();
+            if (locName && !liveLocByName.has(locName.toLowerCase())) {
+              parsed.warnings.push(
+                `Cable "${name}": ${locField} "${locName}" does not match any existing location — endpoint will not be auto-linked`
+              );
+            }
+          }
+
+          parsed.cables.push({
+            name,
+            fiber_count:       fc || 144,
+            construction_type: _normalizeConstructionType(row.construction_type) || 'ribbon',
+            path_geojson:      null,
+            source_id:         null,
+            props:             row,
+            notes:             row.notes || null,
+            manufacturer_part: row.manufacturer_part || null,
+          });
+        }
+      }
+
+      const changes = _diffIngestAgainstLive(parsed, live);
+      const sourceSize = JSON.stringify(rows).length;
+      const { importRow, summary } = await _stageImport(
+        pool, projectId,
+        { filename: 'paste.csv', format: 'csv', size: sourceSize },
+        parsed, changes, req.user?.staff_id || null
+      );
+      res.json({ import: importRow, summary });
+    } catch (e) {
+      res.status(400).json({ error: 'CSV paste import failed: ' + e.message });
+    }
+  });
+
+  // ─── Path tracing (Phase 2C #11) ─────────────────────────────────────────
+  // Walk the full strand chain that a fiber participates in, hopping
+  // through every splice in both directions until we hit dead ends or a
+  // cycle. All data is pre-loaded in one shot (via _loadProjectForExport)
+  // so the graph walk is purely in-memory — no N+1 DB round-trips.
+
+  app.get('/api/splice/fibers/:id/path', requireAuth(), async (req, res) => {
+    const fiberId = req.params.id;
+    try {
+      // Resolve the fiber's project so we can scope the walk.
+      const fiberRow = await pool.query(
+        `SELECT f.id, t.cable_id, c.project_id
+         FROM splice_fibers f
+         JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+         JOIN splice_cables c ON c.id = t.cable_id
+         WHERE f.id = $1`,
+        [fiberId]
+      );
+      if (!fiberRow.rows.length) {
+        return res.status(404).json({ error: 'Fiber not found' });
+      }
+      const projectId = fiberRow.rows[0].project_id;
+
+      // Load the full project into memory. The walk uses only splices,
+      // fibers, buffer_tubes, cables, trays, closures, and locations.
+      const data = await _loadProjectForExport(pool, projectId);
+      if (!data) return res.status(404).json({ error: 'Project not found' });
+
+      const chain = _traceStrandPath(fiberId, data);
+      res.json(chain);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── Splitters (Phase 2C #9) ──────────────────────────────────────────────
+  // A splitter is a passive optical device (PLC or FBT) housed inside a
+  // closure. It takes one input fiber and fans out to N output fibers
+  // (N = ratio fanout). Each output is an independent row in
+  // splice_splitter_outputs so the wiring can be filled in piecemeal.
+  //
+  // The same fiber MUST NOT drive two splitter inputs, be both a splice
+  // participant and a splitter input, or appear as two outputs. Validation
+  // flags all of these. The route layer does not double-check at write time
+  // because the validator runs on every hydrate and the PDF gate catches
+  // conflicts before they leave the tool.
+
+  // Parse '1x32' → 32. Ratio is validated by the DB CHECK constraint, so
+  // no explicit error needed here beyond what Postgres returns.
+  function _splitterFanout(ratio) {
+    return parseInt(ratio.split('x')[1], 10);
+  }
+
+  app.post('/api/splice/closures/:id/splitters', requireAuth(), async (req, res) => {
+    const { ratio, input_fiber_id, notes } = req.body;
+    if (!ratio) return res.status(400).json({ error: 'ratio is required' });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Confirm closure exists and grab its project.
+      const clRow = await client.query(
+        `SELECT cl.id, l.project_id
+         FROM splice_closures cl
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE cl.id = $1`,
+        [req.params.id]
+      );
+      if (!clRow.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Closure not found' });
+      }
+      const projectId = clRow.rows[0].project_id;
+
+      const splRow = await client.query(
+        `INSERT INTO splice_splitters (closure_id, ratio, input_fiber_id, notes)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [req.params.id, ratio, input_fiber_id || null, notes || null]
+      );
+      const splitter = splRow.rows[0];
+
+      const fanout = _splitterFanout(ratio);
+      const outputs = [];
+      for (let pos = 1; pos <= fanout; pos++) {
+        const oRow = await client.query(
+          `INSERT INTO splice_splitter_outputs (splitter_id, position)
+           VALUES ($1, $2)
+           RETURNING *`,
+          [splitter.id, pos]
+        );
+        outputs.push(oRow.rows[0]);
+      }
+
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'splitter_added', { splitter, outputs });
+      res.json({ splitter, outputs });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  // List all splitters + their outputs for a project. Used by the hydrate
+  // aggregation path as a standalone endpoint so callers can refresh just
+  // this slice without re-fetching the full world.
+  app.get('/api/splice/projects/:id/splitters', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    try {
+      const [splitters, outputs] = await Promise.all([
+        pool.query(
+          `SELECT sp.* FROM splice_splitters sp
+           JOIN splice_closures cl ON cl.id = sp.closure_id
+           JOIN splice_locations l ON l.id = cl.location_id
+           WHERE l.project_id = $1
+           ORDER BY sp.created_at`,
+          [projectId]
+        ),
+        pool.query(
+          `SELECT o.* FROM splice_splitter_outputs o
+           JOIN splice_splitters sp ON sp.id = o.splitter_id
+           JOIN splice_closures cl ON cl.id = sp.closure_id
+           JOIN splice_locations l ON l.id = cl.location_id
+           WHERE l.project_id = $1
+           ORDER BY o.splitter_id, o.position`,
+          [projectId]
+        ),
+      ]);
+      res.json({ splitters: splitters.rows, splitter_outputs: outputs.rows });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.put('/api/splice/splitters/:id', requireAuth(), async (req, res) => {
+    const { ratio, input_fiber_id, notes } = req.body;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const cur = await client.query(
+        `SELECT sp.*, l.project_id
+         FROM splice_splitters sp
+         JOIN splice_closures cl ON cl.id = sp.closure_id
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE sp.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Splitter not found' });
+      }
+      const existing = cur.rows[0];
+      const projectId = existing.project_id;
+
+      // If ratio is changing and the new fanout is smaller, refuse when
+      // any output position beyond the new limit is already wired —
+      // mirrors the tray-shrink protection in PUT /api/splice/closures/:id.
+      const newRatio = ratio !== undefined ? ratio : existing.ratio;
+      if (ratio !== undefined && ratio !== existing.ratio) {
+        const newFanout = _splitterFanout(newRatio);
+        const blocking = await client.query(
+          `SELECT position FROM splice_splitter_outputs
+           WHERE splitter_id = $1
+             AND position > $2
+             AND output_fiber_id IS NOT NULL`,
+          [req.params.id, newFanout]
+        );
+        if (blocking.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({
+            error: 'Cannot shrink splitter ratio — wired outputs would be orphaned',
+            blocking_positions: blocking.rows.map(r => r.position),
+          });
+        }
+      }
+
+      const sets = [];
+      const vals = [req.params.id];
+      let i = 2;
+      if (ratio !== undefined)            { sets.push(`ratio = $${i++}`); vals.push(ratio); }
+      if (input_fiber_id !== undefined)   { sets.push(`input_fiber_id = $${i++}`); vals.push(input_fiber_id || null); }
+      if (notes !== undefined)            { sets.push(`notes = $${i++}`); vals.push(notes || null); }
+      if (!sets.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+
+      const upd = await client.query(
+        `UPDATE splice_splitters SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+        vals
+      );
+
+      // Re-materialize output rows when the ratio actually changed.
+      if (ratio !== undefined && ratio !== existing.ratio) {
+        const oldFanout = _splitterFanout(existing.ratio);
+        const newFanout = _splitterFanout(newRatio);
+        if (newFanout > oldFanout) {
+          for (let pos = oldFanout + 1; pos <= newFanout; pos++) {
+            await client.query(
+              `INSERT INTO splice_splitter_outputs (splitter_id, position)
+               VALUES ($1, $2)`,
+              [req.params.id, pos]
+            );
+          }
+        } else if (newFanout < oldFanout) {
+          // We already confirmed these positions are un-wired above.
+          await client.query(
+            `DELETE FROM splice_splitter_outputs
+             WHERE splitter_id = $1 AND position > $2`,
+            [req.params.id, newFanout]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'splitter_updated', { splitter: upd.rows[0] });
+      res.json(upd.rows[0]);
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.delete('/api/splice/splitters/:id', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT sp.id, l.project_id
+         FROM splice_splitters sp
+         JOIN splice_closures cl ON cl.id = sp.closure_id
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE sp.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Splitter not found' });
+      await pool.query(`DELETE FROM splice_splitters WHERE id = $1`, [req.params.id]);
+      _bumpProjectMtime(pool, cur.rows[0].project_id);
+      _broadcast(cur.rows[0].project_id, 'splitter_deleted', { id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Wire (or unwire) a single output port to a downstream fiber.
+  app.put('/api/splice/splitter-outputs/:id', requireAuth(), async (req, res) => {
+    const { output_fiber_id } = req.body;
+    try {
+      const cur = await pool.query(
+        `SELECT o.id, l.project_id
+         FROM splice_splitter_outputs o
+         JOIN splice_splitters sp ON sp.id = o.splitter_id
+         JOIN splice_closures cl ON cl.id = sp.closure_id
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE o.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Splitter output not found' });
+      const projectId = cur.rows[0].project_id;
+
+      const upd = await pool.query(
+        `UPDATE splice_splitter_outputs SET output_fiber_id = $2 WHERE id = $1 RETURNING *`,
+        [req.params.id, output_fiber_id || null]
+      );
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'splitter_output_wired', { output: upd.rows[0] });
+      res.json(upd.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -1247,7 +2934,7 @@ function _computeWarnings({ fibers, splices, trays, closures }) {
 async function _loadProjectForExport(pool, projectId) {
   const proj = await pool.query(`SELECT * FROM splice_projects WHERE id = $1`, [projectId]);
   if (!proj.rows.length) return null;
-  const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates] =
+  const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
     await Promise.all([
       pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
       pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY name`, [projectId]),
@@ -1300,18 +2987,42 @@ async function _loadProjectForExport(pool, projectId) {
         WHERE c.project_id = $1
         ORDER BY c.name, s.location_id, s.strand_position
       `, [projectId]),
+      pool.query(`
+        SELECT sp.* FROM splice_splitters sp
+        JOIN splice_closures cl ON cl.id = sp.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+        ORDER BY sp.created_at
+      `, [projectId]),
+      pool.query(`
+        SELECT o.* FROM splice_splitter_outputs o
+        JOIN splice_splitters sp ON sp.id = o.splitter_id
+        JOIN splice_closures cl ON cl.id = sp.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+        ORDER BY o.splitter_id, o.position
+      `, [projectId]),
+      pool.query(`
+        SELECT cs.* FROM splice_cable_states cs
+        JOIN splice_cables c ON c.id = cs.cable_id
+        WHERE c.project_id = $1
+        ORDER BY c.name, cs.location_id
+      `, [projectId]),
     ]);
   return {
-    project: proj.rows[0],
-    locations:    locations.rows,
-    cables:       cables.rows,
-    buffer_tubes: tubes.rows,
-    fibers:       fibers.rows,
-    closures:     closures.rows,
-    trays:        trays.rows,
-    splices:      splices.rows,
-    ribbon_groups: ribbonGroups.rows,
-    strand_states: strandStates.rows,
+    project:          proj.rows[0],
+    locations:        locations.rows,
+    cables:           cables.rows,
+    buffer_tubes:     tubes.rows,
+    fibers:           fibers.rows,
+    closures:         closures.rows,
+    trays:            trays.rows,
+    splices:          splices.rows,
+    ribbon_groups:    ribbonGroups.rows,
+    strand_states:    strandStates.rows,
+    splitters:        splittersRes.rows,
+    splitter_outputs: splitterOutputsRes.rows,
+    cable_states:     cableStatesRes.rows,
   };
 }
 
@@ -1337,7 +3048,8 @@ function _safeFilename(s) {
 // fiber color swatches + as-built markup columns + signature line; QR
 // code per closure links to the public deep link (splicer scans to
 // upload field markup; full public-token flow lands in Phase 2B #7).
-async function _renderSpliceHtml(data, pageSize) {
+async function _renderSpliceHtml(data, pageSize, opts = {}) {
+  const tokensByClosureId = opts.tokensByClosureId || new Map();
   const { project, locations, cables, buffer_tubes, fibers, closures, trays, splices, ribbon_groups } = data;
 
   const fiberById = new Map(fibers.map(f => [f.id, f]));
@@ -1362,13 +3074,18 @@ async function _renderSpliceHtml(data, pageSize) {
   // that don't track circuits.
   const anyCircuit = fibers.some(f => f.circuit_name || f.customer);
 
-  // Pre-render QR codes for every closure in parallel. Each QR points
-  // at a deep link to the splice editor (project + closure params).
-  // When Phase 2B #7 lands, swap the URL pattern for /field/:token.
+  // Pre-render QR codes for every closure in parallel. When a public
+  // field token exists for the closure (Phase 2B #7), the QR encodes
+  // the no-login splicer URL `/splice/field/:token`. Otherwise it
+  // falls back to a deep-link into the editor — useful while the
+  // engineer is still iterating before they print.
   const qrPromises = closures.map(cl => {
-    const url = SPLICE_PUBLIC_URL
-      ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
-      : `/?project=${project.id}&closure=${cl.id}`;
+    const tok = tokensByClosureId.get(cl.id);
+    const url = tok
+      ? `${SPLICE_PUBLIC_URL || ''}/splice/field/${tok}`
+      : (SPLICE_PUBLIC_URL
+          ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
+          : `/?project=${project.id}&closure=${cl.id}`);
     return _renderQrSvg(url, 84).then(svg => [cl.id, svg]);
   });
   const qrByClosureId = new Map(await Promise.all(qrPromises));
@@ -1470,6 +3187,14 @@ async function _renderSpliceHtml(data, pageSize) {
     strandStatesByLocation.get(ss.location_id).push(ss);
   }
 
+  // Phase 2C #10 — index cable slack by location so per-closure pages
+  // know how much each passing cable should be coiled at that handhole.
+  const cableStatesByLocation = new Map();
+  for (const cs of (data.cable_states || [])) {
+    if (!cableStatesByLocation.has(cs.location_id)) cableStatesByLocation.set(cs.location_id, []);
+    cableStatesByLocation.get(cs.location_id).push(cs);
+  }
+
   // Per-closure pages.
   const closurePages = closures.map(cl => {
     const loc = locationById.get(cl.location_id);
@@ -1525,6 +3250,36 @@ async function _renderSpliceHtml(data, pageSize) {
             </table>
           `;
         }).join('')}
+      </div>
+    ` : '';
+
+    // Phase 2C #10 — cable slack coil lengths at this closure. Splicer
+    // reads these onsite to know how much fiber to coil at the handhole
+    // before making any cuts. Cables with no entry are omitted so the
+    // section stays compact on simpler jobs.
+    const csAtLoc = cableStatesByLocation.get(cl.location_id) || [];
+    const slackSection = csAtLoc.length ? `
+      <div class="stored-section">
+        <div class="section-title">Cable slack at this closure
+          <span class="muted">— service loops to coil before cutting</span>
+        </div>
+        <table class="stored-table">
+          <thead><tr>
+            <th>Cable</th>
+            <th class="num">Slack (in)</th>
+            <th>Notes</th>
+          </tr></thead>
+          <tbody>
+            ${csAtLoc.map(cs => {
+              const cable = cableById.get(cs.cable_id);
+              return `<tr>
+                <td><b>${_esc(cable?.name || '?')}</b></td>
+                <td class="num">${cs.slack_length_inches ?? '—'}</td>
+                <td>${_esc(cs.notes || '')}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     ` : '';
 
@@ -1612,6 +3367,7 @@ async function _renderSpliceHtml(data, pageSize) {
           ${qr ? `<div class="qr">${qr}<div class="qr-cap">scan to upload<br>field markup</div></div>` : ''}
         </header>
         ${storedSection}
+        ${slackSection}
         ${trayBlocks || '<div class="empty">No trays</div>'}
         <div class="signoff">
           <div class="signoff-row">
@@ -1774,4 +3530,1528 @@ ${closurePages}
   <span>Rev <span class="gen-hash">${genHash}</span> · ${todayIso}</span>
 </div>
 </body></html>`;
+}
+
+// ─── Version snapshot helpers (Phase 2B #6) ─────────────────────────────
+
+// Take a snapshot of the current project state. Auto-snapshots (label
+// null) skip when the generation hash matches the previous snapshot
+// because nothing has structurally changed since then. Manual saves
+// always record. version_number is computed under a UNIQUE
+// (project_id, version_number) so a concurrent writer can't collide.
+async function _takeSnapshot(pool, projectId, label, staffId) {
+  const data = await _loadProjectForExport(pool, projectId);
+  if (!data) {
+    const err = new Error('Project not found');
+    throw err;
+  }
+  const hash = _generationHash(data);
+  const lastQ = await pool.query(
+    `SELECT version_number, generation_hash
+       FROM splice_project_versions
+      WHERE project_id = $1
+      ORDER BY version_number DESC LIMIT 1`,
+    [projectId]
+  );
+  const last = lastQ.rows[0];
+  if (!label && last && last.generation_hash === hash) {
+    return { skipped: true, reason: 'no-change', last_version_number: last.version_number };
+  }
+  const nextNum = (last?.version_number || 0) + 1;
+  const ins = await pool.query(
+    `INSERT INTO splice_project_versions
+       (project_id, version_number, snapshot_jsonb, generation_hash, label, created_by_staff_id)
+     VALUES ($1, $2, $3::jsonb, $4, $5, $6)
+     RETURNING id, project_id, version_number, generation_hash, label, created_at, created_by_staff_id`,
+    [projectId, nextNum, JSON.stringify(data), hash, label || null, staffId || null]
+  );
+  return ins.rows[0];
+}
+
+// Load a version row + its snapshot. Returns null when the version
+// doesn't exist (caller maps to 404).
+async function _loadVersion(pool, projectId, versionNumber) {
+  const n = parseInt(versionNumber, 10);
+  if (!Number.isFinite(n) || n < 1) return null;
+  const { rows } = await pool.query(
+    `SELECT id, project_id, version_number, generation_hash, label,
+            created_at, created_by_staff_id, snapshot_jsonb
+       FROM splice_project_versions
+      WHERE project_id = $1 AND version_number = $2`,
+    [projectId, n]
+  );
+  if (!rows.length) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    project_id: r.project_id,
+    version_number: r.version_number,
+    generation_hash: r.generation_hash,
+    label: r.label,
+    created_at: r.created_at,
+    created_by_staff_id: r.created_by_staff_id,
+    snapshot: r.snapshot_jsonb,
+  };
+}
+
+// Diff two hydrate-shaped snapshots. Walks every entity type by id;
+// emits added (id only in B), removed (id only in A), changed (id in
+// both with different content). Splices specifically also get
+// "moved" detection — same fiber pair, different tray — so we don't
+// double-count a tray reorganization as remove-then-add.
+function _computeDiff(a, b) {
+  const out = {};
+  const KEYS = ['locations', 'cables', 'closures', 'trays',
+                'splices', 'ribbon_groups', 'strand_states',
+                'buffer_tubes', 'fibers'];
+  for (const k of KEYS) {
+    const al = Array.isArray(a?.[k]) ? a[k] : [];
+    const bl = Array.isArray(b?.[k]) ? b[k] : [];
+    const aById = new Map(al.map(x => [x.id, x]));
+    const bById = new Map(bl.map(x => [x.id, x]));
+    const added = [];
+    const removed = [];
+    const changed = [];
+    for (const [id, bx] of bById) {
+      const ax = aById.get(id);
+      if (!ax) added.push(bx);
+      else if (!_shallowEqualEntity(ax, bx)) changed.push({ before: ax, after: bx });
+    }
+    for (const [id, ax] of aById) {
+      if (!bById.has(id)) removed.push(ax);
+    }
+    out[k] = { added, removed, changed };
+  }
+  // Project header (name / notes / status) often gets edited
+  // alongside the splice tree; surface that separately.
+  if (a?.project && b?.project) {
+    const fields = ['name', 'status', 'notes'];
+    const projChanges = {};
+    for (const f of fields) {
+      if ((a.project[f] || null) !== (b.project[f] || null)) {
+        projChanges[f] = { before: a.project[f], after: b.project[f] };
+      }
+    }
+    if (Object.keys(projChanges).length) out.project = projChanges;
+  }
+  return out;
+}
+
+function _shallowEqualEntity(a, b) {
+  if (a === b) return true;
+  // Skip volatile fields that don't represent splice-graph intent.
+  const skip = new Set(['created_at', 'updated_at']);
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const k of keys) {
+    if (skip.has(k)) continue;
+    const av = a[k], bv = b[k];
+    if (av === bv) continue;
+    if (av == null && bv == null) continue;
+    return false;
+  }
+  return true;
+}
+
+// Render the diff as a self-contained HTML document. Same look-and-
+// feel as the splicer field doc but reduced: a header + summary
+// counts + per-closure tables that show only the splices that
+// changed (added in green, removed in gray strikethrough).
+// Closures with no splice deltas are omitted entirely.
+function _renderDiffHtml({ project_name, a_meta, b_meta, a, b, diff }) {
+  const css = `
+    *,*::before,*::after { box-sizing:border-box; }
+    body { font: 11px/1.35 -apple-system,Segoe UI,Roboto,sans-serif; color:#222; margin:0; padding:18px 22px; background:#fff; }
+    h1 { font-size:18px; margin:0 0 4px; }
+    h2 { font-size:13px; margin:18px 0 6px; padding-bottom:3px; border-bottom:1px solid #ccc; }
+    h3 { font-size:11px; margin:10px 0 4px; color:#333; }
+    .header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #003366; padding-bottom:6px; margin-bottom:10px; }
+    .header .meta { text-align:right; font-size:10px; color:#555; }
+    .meta-row { margin:1px 0; }
+    .pill { display:inline-block; padding:1px 7px; border-radius:9px; font-size:10px; font-weight:600; }
+    .pill-a { background:#fff3cd; color:#664d03; border:1px solid #ffe69c; }
+    .pill-b { background:#cfe2ff; color:#084298; border:1px solid #9ec5fe; }
+    .summary { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .stat { background:#f5f5f5; border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:10px; }
+    .stat b { color:#003366; font-size:13px; display:block; }
+    .stat.add b { color:#0a7d2a; }
+    .stat.rem b { color:#a31616; }
+    table { width:100%; border-collapse:collapse; font-size:10px; margin-bottom:10px; }
+    th, td { border:1px solid #ddd; padding:3px 5px; text-align:left; vertical-align:top; }
+    th { background:#f0f0f0; font-weight:600; }
+    tr.added td { background:#e8f7ec; }
+    tr.added td:first-child::before { content:'+ '; color:#0a7d2a; font-weight:700; }
+    tr.removed td { background:#f5f5f5; color:#888; text-decoration:line-through; }
+    tr.removed td:first-child::before { content:'- '; color:#a31616; font-weight:700; text-decoration:none; display:inline-block; }
+    tr.changed td { background:#fff8e1; }
+    tr.changed td:first-child::before { content:'~ '; color:#b46900; font-weight:700; }
+    .empty-section { color:#888; font-style:italic; padding:8px 0; }
+    .closure-page { page-break-inside:avoid; margin-bottom:14px; }
+    .footer { position:fixed; bottom:8px; left:22px; right:22px; display:flex; justify-content:space-between; font-size:9px; color:#666; }
+    .num { text-align:right; font-variant-numeric:tabular-nums; }
+  `;
+
+  // Snapshots may be missing strand_states on really old rows; keep
+  // diffs robust against that.
+  const safe = (snap, k) => Array.isArray(snap?.[k]) ? snap[k] : [];
+
+  // Build lookup maps off SIDE B (the "after" snapshot) for label
+  // generation — that's what the reader is asking the question
+  // about: "what did this become?" When an entity is removed we
+  // look it up on side A.
+  function describe(side, fiberId) {
+    const snap = side;
+    const fibers = safe(snap, 'fibers');
+    const tubes  = safe(snap, 'buffer_tubes');
+    const cables = safe(snap, 'cables');
+    const f = fibers.find(x => x.id === fiberId);
+    if (!f) return '?';
+    const t = tubes.find(x => x.id === f.buffer_tube_id);
+    const c = t ? cables.find(x => x.id === t.cable_id) : null;
+    return `${c?.name || '?'} · tube ${t?.color || '?'}-${t?.position ?? '?'} · fiber ${f.color}-${f.position}`;
+  }
+
+  function spliceLabel(side, s) {
+    return `${describe(side, s.fiber_a_id)}  →  ${describe(side, s.fiber_b_id)}  (${s.splice_type || 'fusion'})`;
+  }
+
+  const totalAdded   = diff.splices.added.length;
+  const totalRemoved = diff.splices.removed.length;
+  const totalChanged = diff.splices.changed.length;
+
+  // Project-header changes block.
+  const projHeaderChanges = diff.project ? Object.entries(diff.project).map(([f, v]) =>
+    `<tr><td>${_esc(f)}</td><td>${_esc(v.before || '—')}</td><td>${_esc(v.after || '—')}</td></tr>`
+  ).join('') : '';
+
+  // Cable / location / closure shell summary.
+  function entityTable(label, entries, displayFn) {
+    const added   = entries.added.map(x => `<tr class="added"><td>${displayFn(x)}</td></tr>`).join('');
+    const removed = entries.removed.map(x => `<tr class="removed"><td>${displayFn(x)}</td></tr>`).join('');
+    const changed = entries.changed.map(x => `<tr class="changed"><td>${displayFn(x.after)} <span style="color:#666">(was: ${displayFn(x.before)})</span></td></tr>`).join('');
+    if (!added && !removed && !changed) return '';
+    return `<h3>${_esc(label)}</h3><table><tbody>${added}${removed}${changed}</tbody></table>`;
+  }
+
+  // Per-closure splice deltas. Group splices by closure_id (via
+  // tray_id → closure_id from whichever snapshot has the tray).
+  const trayToClosureA = new Map(safe(a, 'trays').map(t => [t.id, t.closure_id]));
+  const trayToClosureB = new Map(safe(b, 'trays').map(t => [t.id, t.closure_id]));
+  const closureA = new Map(safe(a, 'closures').map(c => [c.id, c]));
+  const closureB = new Map(safe(b, 'closures').map(c => [c.id, c]));
+  const locationA = new Map(safe(a, 'locations').map(l => [l.id, l]));
+  const locationB = new Map(safe(b, 'locations').map(l => [l.id, l]));
+
+  function closureIdForSplice(side, sideMap, s) {
+    return sideMap.get(s.tray_id);
+  }
+  function closureLabel(closureId) {
+    const c = closureB.get(closureId) || closureA.get(closureId);
+    if (!c) return '(unknown closure)';
+    const loc = locationB.get(c.location_id) || locationA.get(c.location_id);
+    return `${loc?.name || '?'} · ${c.model || 'closure'}`;
+  }
+
+  const byClosure = new Map(); // closureId → { added:[], removed:[], changed:[] }
+  function bucket(closureId) {
+    if (!byClosure.has(closureId)) byClosure.set(closureId, { added: [], removed: [], changed: [] });
+    return byClosure.get(closureId);
+  }
+  for (const s of diff.splices.added) {
+    const cid = closureIdForSplice(b, trayToClosureB, s);
+    if (cid) bucket(cid).added.push(s);
+    else bucket('__orphan__').added.push(s);
+  }
+  for (const s of diff.splices.removed) {
+    const cid = closureIdForSplice(a, trayToClosureA, s);
+    if (cid) bucket(cid).removed.push(s);
+    else bucket('__orphan__').removed.push(s);
+  }
+  for (const c of diff.splices.changed) {
+    const cid = closureIdForSplice(b, trayToClosureB, c.after) || closureIdForSplice(a, trayToClosureA, c.before);
+    if (cid) bucket(cid).changed.push(c);
+    else bucket('__orphan__').changed.push(c);
+  }
+
+  const closurePages = [...byClosure.entries()].map(([cid, group]) => {
+    const lines = [];
+    for (const s of group.added)   lines.push(`<tr class="added"><td>${_esc(spliceLabel(b, s))}</td></tr>`);
+    for (const s of group.removed) lines.push(`<tr class="removed"><td>${_esc(spliceLabel(a, s))}</td></tr>`);
+    for (const c of group.changed) {
+      lines.push(`<tr class="changed"><td>${_esc(spliceLabel(b, c.after))} <span style="color:#666">(was: ${_esc(spliceLabel(a, c.before))})</span></td></tr>`);
+    }
+    return `
+      <div class="closure-page">
+        <h3>${_esc(closureLabel(cid))} — ${group.added.length} added · ${group.removed.length} removed · ${group.changed.length} changed</h3>
+        <table><tbody>${lines.join('')}</tbody></table>
+      </div>`;
+  }).join('');
+
+  const aLabel = a_meta.version_number === 'current' ? 'current' : `v${a_meta.version_number}`;
+  const bLabel = b_meta.version_number === 'current' ? 'current' : `v${b_meta.version_number}`;
+  const aDate  = a_meta.created_at ? new Date(a_meta.created_at).toLocaleString() : '—';
+  const bDate  = b_meta.created_at ? new Date(b_meta.created_at).toLocaleString() : 'now';
+
+  return `<!doctype html><html><head><meta charset="utf-8">
+<title>Splice diff — ${_esc(project_name)}</title>
+<style>${css}</style>
+</head><body>
+<div class="header">
+  <div>
+    <h1>${_esc(project_name)} — splice diff</h1>
+    <div class="meta-row"><span class="pill pill-a">A · ${_esc(aLabel)}</span> ${a_meta.label ? `<span style="color:#555">${_esc(a_meta.label)}</span>` : ''} <span style="color:#888">${_esc(aDate)}</span> ${a_meta.hash ? `<span style="color:#888">#${_esc(a_meta.hash)}</span>` : ''}</div>
+    <div class="meta-row"><span class="pill pill-b">B · ${_esc(bLabel)}</span> ${b_meta.label ? `<span style="color:#555">${_esc(b_meta.label)}</span>` : ''} <span style="color:#888">${_esc(bDate)}</span> ${b_meta.hash ? `<span style="color:#888">#${_esc(b_meta.hash)}</span>` : ''}</div>
+  </div>
+  <div class="meta">
+    <div>Generated ${new Date().toISOString().slice(0,10)}</div>
+    <div>Launch Fiber Services · Splice Matrix</div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="stat add"><b>${totalAdded}</b>splices added</div>
+  <div class="stat rem"><b>${totalRemoved}</b>splices removed</div>
+  <div class="stat"><b>${totalChanged}</b>splices changed</div>
+  <div class="stat add"><b>${diff.closures.added.length}</b>closures added</div>
+  <div class="stat rem"><b>${diff.closures.removed.length}</b>closures removed</div>
+  <div class="stat add"><b>${diff.cables.added.length}</b>cables added</div>
+  <div class="stat rem"><b>${diff.cables.removed.length}</b>cables removed</div>
+</div>
+
+${projHeaderChanges ? `<h2>Project header</h2><table><thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead><tbody>${projHeaderChanges}</tbody></table>` : ''}
+
+<h2>Cables, locations, closures</h2>
+${entityTable('Locations', diff.locations, l => `${_esc(l.name)} <span style="color:#666">(${_esc(l.type)})</span>`)}
+${entityTable('Cables',    diff.cables,    c => `${_esc(c.name)} <span style="color:#666">(${c.fiber_count}f ${_esc(c.construction_type || '')})</span>`)}
+${entityTable('Closures',  diff.closures,  c => `${_esc(c.model || 'closure')} <span style="color:#666">(${c.tray_count}×${c.tray_capacity})</span>`)}
+
+<h2>Splice deltas by closure</h2>
+${closurePages || '<div class="empty-section">No splice changes between these revisions.</div>'}
+
+<div class="footer">
+  <span>${_esc(project_name)}</span>
+  <span>Diff ${_esc(aLabel)} → ${_esc(bLabel)}</span>
+</div>
+</body></html>`;
+}
+
+// ─── Field markup helpers (Phase 2B #7) ─────────────────────────────────
+
+// Resolve a public field token to its closure + project. Honours
+// expires_at when set. Returns null when the token is unknown or
+// expired so the caller can 404 cleanly.
+async function _resolveFieldToken(pool, token) {
+  if (!token || typeof token !== 'string' || token.length > 64) return null;
+  const { rows } = await pool.query(
+    `SELECT token, closure_id, project_id, expires_at, created_at
+       FROM splice_closure_public_tokens
+      WHERE token = $1
+        AND (expires_at IS NULL OR expires_at > NOW())`,
+    [token]
+  );
+  return rows[0] || null;
+}
+
+// Pull just enough closure metadata for the public field page —
+// closure model, location name, project name. Splicer scans the QR
+// and confirms "yes, this is the right closure" by reading these
+// fields on screen.
+async function _loadClosureForField(pool, closureId) {
+  const { rows } = await pool.query(
+    `SELECT cl.id, cl.model, cl.tray_count, cl.tray_capacity, cl.notes,
+            l.name AS location_name, l.type AS location_type,
+            p.name AS project_name, p.id AS project_id
+       FROM splice_closures cl
+       JOIN splice_locations l ON l.id = cl.location_id
+       JOIN splice_projects  p ON p.id = l.project_id
+      WHERE cl.id = $1`,
+    [closureId]
+  );
+  return rows[0] || null;
+}
+
+// Ensure every closure in `data.closures` has at least one un-
+// expired public token. Reuses any existing token (most recent
+// wins); mints fresh ones for closures without coverage. Returns
+// a Map<closure_id, token> ready to feed _renderSpliceHtml.
+async function _ensureFieldTokens(pool, data, staffId) {
+  if (!data?.closures?.length) return new Map();
+  const closureIds = data.closures.map(c => c.id);
+  const projId = data.project?.id;
+  const existing = await pool.query(
+    `SELECT DISTINCT ON (closure_id) closure_id, token
+       FROM splice_closure_public_tokens
+      WHERE closure_id = ANY($1::uuid[])
+        AND (expires_at IS NULL OR expires_at > NOW())
+      ORDER BY closure_id, created_at DESC`,
+    [closureIds]
+  );
+  const map = new Map(existing.rows.map(r => [r.closure_id, r.token]));
+  const missing = closureIds.filter(id => !map.has(id));
+  if (!missing.length) return map;
+  // Mint fresh tokens in a single batched insert. No expires_at —
+  // the field doc may sit in a splicer's truck for months before
+  // they get to that section. Engineers can revoke explicitly when
+  // a job is closed out.
+  const values = missing.map(cid => [_mintFieldToken(), cid, projId, staffId || null]);
+  const flat = values.flat();
+  const placeholders = values.map((_, i) =>
+    `($${i*4+1}, $${i*4+2}, $${i*4+3}, $${i*4+4})`
+  ).join(', ');
+  await pool.query(
+    `INSERT INTO splice_closure_public_tokens
+       (token, closure_id, project_id, created_by_staff_id)
+     VALUES ${placeholders}`,
+    flat
+  );
+  for (const [tok, cid] of values.map(v => [v[0], v[1]])) {
+    map.set(cid, tok);
+  }
+  return map;
+}
+
+// Public-facing HTML page for the splicer. Mobile-first, single
+// column, large touch targets, no JavaScript framework — just
+// vanilla fetch() for the upload. Image preview after upload uses
+// the public-token-scoped image endpoint so the splicer can confirm
+// their upload landed without needing to log in anywhere.
+function _renderFieldHtml({ token, closure, markups }) {
+  const safeToken = String(token).replace(/[^A-Za-z0-9_-]/g, '');
+  const markupRows = (markups || []).map(m => `
+    <li class="markup-row">
+      <img src="/splice/field/${safeToken}/markups/${m.id}/image" alt="field photo" loading="lazy">
+      <div class="meta">
+        <div class="who">${_esc(m.splicer_name || 'Anonymous')}</div>
+        <div class="when">${new Date(m.uploaded_at).toLocaleString()}</div>
+        ${m.notes ? `<div class="notes">${_esc(m.notes)}</div>` : ''}
+      </div>
+    </li>`).join('');
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Field markup · ${_esc(closure.project_name)}</title>
+<style>
+  *,*::before,*::after { box-sizing:border-box; }
+  body { font: 16px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; color:#1c1c1c; background:#f5f6f8; margin:0; padding:0; min-height:100vh; }
+  .topbar { background:#003366; color:#fff; padding:12px 18px; }
+  .topbar h1 { margin:0; font-size:16px; font-weight:600; }
+  .topbar .sub { font-size:12px; opacity:.85; margin-top:2px; }
+  main { max-width:560px; margin:0 auto; padding:14px; }
+  .card { background:#fff; border:1px solid #e2e4e9; border-radius:8px; padding:14px; margin-bottom:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .meta-table { width:100%; font-size:14px; }
+  .meta-table th { text-align:left; color:#5b6470; font-weight:500; padding:3px 8px 3px 0; vertical-align:top; width:40%; }
+  .meta-table td { padding:3px 0; vertical-align:top; }
+  h2 { font-size:14px; font-weight:600; margin:0 0 10px; color:#003366; }
+  label { display:block; font-size:13px; color:#3b4252; margin-bottom:4px; font-weight:500; }
+  input[type=text], textarea {
+    width:100%; padding:9px 10px; border:1px solid #c8cdd4; border-radius:6px; font:inherit; background:#fff;
+  }
+  textarea { min-height:60px; resize:vertical; }
+  .file-input-wrap {
+    border:2px dashed #b3bbc5; border-radius:8px; padding:18px; text-align:center; background:#fafbfc; margin-bottom:10px;
+  }
+  .file-input-wrap input[type=file] { width:100%; }
+  .submit { background:#0a7d2a; color:#fff; border:none; padding:13px; border-radius:8px; font-size:16px; font-weight:600; width:100%; cursor:pointer; }
+  .submit:disabled { background:#7e8b9c; cursor:wait; }
+  .field-row { margin-bottom:10px; }
+  .markup-list { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:1fr; gap:10px; }
+  .markup-row { display:flex; gap:10px; align-items:flex-start; padding:8px; background:#fafbfc; border:1px solid #e2e4e9; border-radius:6px; }
+  .markup-row img { width:80px; height:80px; object-fit:cover; border-radius:4px; background:#eee; flex:0 0 auto; }
+  .markup-row .who { font-weight:600; font-size:13px; }
+  .markup-row .when { font-size:11px; color:#5b6470; }
+  .markup-row .notes { font-size:12px; color:#3b4252; margin-top:3px; white-space:pre-wrap; }
+  #upload-status { margin-top:10px; padding:10px; border-radius:6px; font-size:14px; display:none; }
+  #upload-status.ok { background:#d4f4dd; color:#0a4a18; display:block; }
+  #upload-status.err { background:#fadddd; color:#7a1a1a; display:block; }
+  footer { font-size:11px; color:#5b6470; text-align:center; padding:14px; }
+  .empty { color:#5b6470; font-style:italic; font-size:13px; }
+</style>
+</head><body>
+<div class="topbar">
+  <h1>${_esc(closure.project_name)}</h1>
+  <div class="sub">Splicer field markup</div>
+</div>
+<main>
+  <section class="card">
+    <h2>Closure</h2>
+    <table class="meta-table">
+      <tr><th>Location</th><td><b>${_esc(closure.location_name)}</b> <span style="color:#5b6470;font-size:12px">(${_esc(closure.location_type)})</span></td></tr>
+      <tr><th>Model</th><td>${_esc(closure.model || '—')}</td></tr>
+      <tr><th>Trays</th><td>${closure.tray_count} × ${closure.tray_capacity}-fiber</td></tr>
+      ${closure.notes ? `<tr><th>Notes</th><td>${_esc(closure.notes)}</td></tr>` : ''}
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Upload field photo</h2>
+    <form id="upload-form" enctype="multipart/form-data">
+      <div class="field-row">
+        <label for="splicer_name">Your name <span style="color:#5b6470;font-weight:400">(optional)</span></label>
+        <input type="text" id="splicer_name" name="splicer_name" maxlength="120" placeholder="e.g. Carlos R.">
+      </div>
+      <div class="field-row">
+        <label for="notes">Notes <span style="color:#5b6470;font-weight:400">(optional)</span></label>
+        <textarea id="notes" name="notes" maxlength="2000" placeholder="Tray 3 ribbon-to-ribbon, all 12 fusions clean"></textarea>
+      </div>
+      <div class="field-row">
+        <label for="photo">Photo (max 2 MB · JPEG, PNG, WebP, HEIC)</label>
+        <div class="file-input-wrap">
+          <input type="file" id="photo" name="photo" accept="image/*" capture="environment" required>
+        </div>
+      </div>
+      <button type="submit" class="submit" id="submit-btn">Upload photo</button>
+      <div id="upload-status"></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Photos already uploaded</h2>
+    ${markupRows ? `<ul class="markup-list">${markupRows}</ul>` : '<p class="empty">No photos uploaded yet for this closure.</p>'}
+  </section>
+</main>
+<footer>Launch Fiber Services · Splice Matrix</footer>
+<script>
+(function(){
+  var form = document.getElementById('upload-form');
+  var btn  = document.getElementById('submit-btn');
+  var status = document.getElementById('upload-status');
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    status.className = '';
+    status.textContent = '';
+    var photo = document.getElementById('photo').files[0];
+    if (!photo) { status.className='err'; status.textContent='Pick a photo first.'; return; }
+    if (photo.size > 2*1024*1024) { status.className='err'; status.textContent='Photo is over 2 MB. Compress or shoot at lower resolution.'; return; }
+    btn.disabled = true; btn.textContent = 'Uploading…';
+    var fd = new FormData(form);
+    try {
+      var r = await fetch('/splice/field/${safeToken}/markup', { method:'POST', body: fd });
+      var json = await r.json();
+      if (!r.ok) throw new Error(json.error || 'Upload failed');
+      status.className = 'ok';
+      status.textContent = 'Photo uploaded. Reloading to show it…';
+      setTimeout(function(){ window.location.reload(); }, 800);
+    } catch (err) {
+      status.className = 'err';
+      status.textContent = err.message || 'Upload failed';
+      btn.disabled = false; btn.textContent = 'Upload photo';
+    }
+  });
+})();
+</script>
+</body></html>`;
+}
+
+function _renderFieldErrorHtml(message) {
+  return `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Field link error</title>
+<style>body{font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;color:#1c1c1c;background:#f5f6f8;margin:0;padding:40px 20px;text-align:center}.box{max-width:420px;margin:0 auto;background:#fff;border:1px solid #e2e4e9;border-radius:8px;padding:24px}h1{font-size:17px;color:#a31616;margin:0 0 10px}p{margin:0;color:#3b4252}</style>
+</head><body><div class="box"><h1>This link won't open</h1><p>${_esc(message)}</p></div></body></html>`;
+}
+
+// ─── KML rendering (Phase 3B) ───────────────────────────────────────────
+
+// Serialize a project's locations + cables to a KML document. Locations
+// land in a "Locations" folder, cables in a "Cables" folder. The
+// splice_location_id / splice_cable_id ExtendedData entries are the
+// breadcrumb that lets a Phase 3C round-trip re-bind to the same DB
+// rows on import — match those first, fall back to name match, fall
+// back to "this is a new entity."
+function _renderKml(data) {
+  const proj = data.project || {};
+  const projName = _kmlEsc(proj.name || 'Splice project');
+  const projDesc = _kmlEsc(proj.notes || '');
+
+  const locsWithGeo = (data.locations || []).filter(l =>
+    l.latitude != null && l.longitude != null
+  );
+  const cablesWithPath = (data.cables || []).filter(c =>
+    c.path_geojson && Array.isArray(c.path_geojson.coordinates) &&
+    c.path_geojson.coordinates.length >= 2
+  );
+
+  // Closures-per-location cardinality is useful for the splicer's GIS
+  // person and for round-trip diff. Stick it in ExtendedData.
+  const closuresByLoc = new Map();
+  for (const cl of (data.closures || [])) {
+    if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
+    closuresByLoc.get(cl.location_id).push(cl);
+  }
+
+  const locPlacemarks = locsWithGeo.map(l => {
+    const closuresHere = closuresByLoc.get(l.id) || [];
+    const styleId = closuresHere.length ? '#splice-closure-loc' : '#splice-bare-loc';
+    return `
+      <Placemark>
+        <name>${_kmlEsc(l.name)}</name>
+        <styleUrl>${styleId}</styleUrl>
+        <ExtendedData>
+          <Data name="splice_location_id"><value>${_kmlEsc(l.id)}</value></Data>
+          <Data name="type"><value>${_kmlEsc(l.type || '')}</value></Data>
+          <Data name="sequence_index"><value>${Number(l.sequence_index || 0)}</value></Data>
+          <Data name="closure_count"><value>${closuresHere.length}</value></Data>
+          ${closuresHere.length ? `<Data name="closure_models"><value>${_kmlEsc(closuresHere.map(c => c.model || '').filter(Boolean).join('; '))}</value></Data>` : ''}
+          ${l.notes ? `<Data name="notes"><value>${_kmlEsc(l.notes)}</value></Data>` : ''}
+        </ExtendedData>
+        <Point><coordinates>${Number(l.longitude)},${Number(l.latitude)},0</coordinates></Point>
+      </Placemark>`;
+  }).join('');
+
+  const cablePlacemarks = cablesWithPath.map(c => {
+    const coords = c.path_geojson.coordinates
+      .map(pt => `${Number(pt[0])},${Number(pt[1])},0`)
+      .join(' ');
+    return `
+      <Placemark>
+        <name>${_kmlEsc(c.name)}</name>
+        <styleUrl>#splice-cable</styleUrl>
+        <ExtendedData>
+          <Data name="splice_cable_id"><value>${_kmlEsc(c.id)}</value></Data>
+          <Data name="fiber_count"><value>${Number(c.fiber_count)}</value></Data>
+          <Data name="construction_type"><value>${_kmlEsc(c.construction_type || '')}</value></Data>
+          ${c.manufacturer_part ? `<Data name="manufacturer_part"><value>${_kmlEsc(c.manufacturer_part)}</value></Data>` : ''}
+          ${c.notes ? `<Data name="notes"><value>${_kmlEsc(c.notes)}</value></Data>` : ''}
+        </ExtendedData>
+        <LineString><coordinates>${coords}</coordinates></LineString>
+      </Placemark>`;
+  }).join('');
+
+  // KML colors are ABGR (alpha, blue, green, red), backwards from what
+  // every other graphics stack uses. ff00d4ff = full alpha, B=00 G=d4
+  // R=ff = bright yellow, the same line color as the in-app map.
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${projName}</name>
+    <description><![CDATA[${projDesc}
+
+Generated by Launch Fiber Services — Splice Matrix
+${new Date().toISOString().slice(0,10)}
+${locsWithGeo.length} location(s), ${cablesWithPath.length} cable(s)]]></description>
+    <Style id="splice-closure-loc">
+      <IconStyle>
+        <color>ffff5f1b</color>
+        <scale>1.1</scale>
+        <Icon><href>http://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href></Icon>
+      </IconStyle>
+      <LabelStyle><scale>0.8</scale></LabelStyle>
+    </Style>
+    <Style id="splice-bare-loc">
+      <IconStyle>
+        <scale>0.9</scale>
+        <Icon><href>http://maps.google.com/mapfiles/kml/paddle/wht-circle.png</href></Icon>
+      </IconStyle>
+      <LabelStyle><scale>0.7</scale></LabelStyle>
+    </Style>
+    <Style id="splice-cable">
+      <LineStyle>
+        <color>ff00d4ff</color>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+    <Folder>
+      <name>Locations</name>${locPlacemarks}
+    </Folder>
+    <Folder>
+      <name>Cables</name>${cablePlacemarks}
+    </Folder>
+  </Document>
+</kml>
+`;
+}
+
+// XML-escape with the five named entities. KML is XML so we cover '
+// and " too even though they only matter inside attribute values.
+function _kmlEsc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// ─── Design import: parsing + diff (Phase 3C / 3D) ──────────────────────
+
+// Lazy-required because @tmcw/togeojson + jsdom + adm-zip are only on
+// the import path. Letting the splice service boot when these aren't
+// installed (e.g. local dev that never imports) is friendlier than
+// crashing at startup.
+let _admZip = null;
+function _getAdmZip() {
+  if (_admZip) return _admZip;
+  try { _admZip = require('adm-zip'); }
+  catch (e) {
+    throw new Error('adm-zip not installed; KMZ import unavailable. ' +
+                    'Run `npm install adm-zip`. Original: ' + e.message);
+  }
+  return _admZip;
+}
+let _togeojson = null;
+function _getTogeojson() {
+  if (_togeojson) return _togeojson;
+  try { _togeojson = require('@tmcw/togeojson'); }
+  catch (e) {
+    throw new Error('@tmcw/togeojson not installed; KMZ/KML import unavailable. ' +
+                    'Run `npm install @tmcw/togeojson jsdom`. Original: ' + e.message);
+  }
+  return _togeojson;
+}
+let _jsdomMod = null;
+function _getJsdom() {
+  if (_jsdomMod) return _jsdomMod;
+  try { _jsdomMod = require('jsdom'); }
+  catch (e) {
+    throw new Error('jsdom not installed; KMZ/KML import unavailable. ' +
+                    'Run `npm install jsdom`. Original: ' + e.message);
+  }
+  return _jsdomMod;
+}
+let _dxfParserMod = null;
+function _getDxfParser() {
+  if (_dxfParserMod) return _dxfParserMod;
+  try { _dxfParserMod = require('dxf-parser'); }
+  catch (e) {
+    throw new Error('dxf-parser not installed; DXF import unavailable. ' +
+                    'Run `npm install dxf-parser`. Original: ' + e.message);
+  }
+  return _dxfParserMod;
+}
+let _proj4Mod = null;
+function _getProj4() {
+  if (_proj4Mod) return _proj4Mod;
+  try { _proj4Mod = require('proj4'); }
+  catch (e) {
+    throw new Error('proj4 not installed; DXF georeferencing unavailable. ' +
+                    'Run `npm install proj4`. Original: ' + e.message);
+  }
+  return _proj4Mod;
+}
+
+// Parse a KMZ or KML buffer into the same intermediate shape as the
+// DXF parser produces:
+//   { locations: [{ name, type, latitude, longitude, source_id, props }],
+//     cables:    [{ name, fiber_count, construction_type, path_geojson,
+//                   source_id, props }],
+//     warnings: [...] }
+//
+// source_id is the splice_*_id from KML ExtendedData when present —
+// the round-trip breadcrumb that lets re-import re-bind to existing
+// rows. props carries the raw ExtendedData blob for debugging /
+// future use.
+async function _parseKmzOrKml(buffer, format) {
+  let kmlText;
+  if (format === 'kmz') {
+    const AdmZip = _getAdmZip();
+    const zip = new AdmZip(buffer);
+    // KMZ convention: the primary KML at root, named "doc.kml" or any
+    // *.kml. Pick doc.kml first; otherwise the first .kml entry.
+    const entries = zip.getEntries();
+    const doc = entries.find(e => e.entryName.toLowerCase() === 'doc.kml')
+             || entries.find(e => e.entryName.toLowerCase().endsWith('.kml'));
+    if (!doc) throw new Error('KMZ contains no .kml file');
+    kmlText = doc.getData().toString('utf8');
+  } else if (format === 'geojson') {
+    return _ingestFromGeoJson(JSON.parse(buffer.toString('utf8')));
+  } else {
+    kmlText = buffer.toString('utf8');
+  }
+  const { JSDOM } = _getJsdom();
+  const togeo = _getTogeojson();
+  const dom = new JSDOM(kmlText, { contentType: 'text/xml' });
+  const fc = togeo.kml(dom.window.document);
+  return _ingestFromGeoJson(fc);
+}
+
+// Walk a GeoJSON FeatureCollection and bucket Features into our
+// location/cable shape. Point → location, LineString → cable. Other
+// geometries (Polygon, MultiLineString, etc.) get warnings but don't
+// abort the import.
+function _ingestFromGeoJson(fc) {
+  const out = { locations: [], cables: [], warnings: [] };
+  if (!fc || !Array.isArray(fc.features)) {
+    out.warnings.push('Input is not a GeoJSON FeatureCollection; nothing to import.');
+    return out;
+  }
+  for (const f of fc.features) {
+    if (!f || !f.geometry) continue;
+    const props = f.properties || {};
+    const name  = props.name || props.Name || '(unnamed)';
+    if (f.geometry.type === 'Point') {
+      const [lon, lat] = f.geometry.coordinates;
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+      out.locations.push({
+        name: String(name).slice(0, 120),
+        type: _normalizeLocationType(props.type) || 'splice_point',
+        latitude: lat,
+        longitude: lon,
+        source_id: props.splice_location_id || null,
+        props,
+        notes: props.notes || null,
+      });
+    } else if (f.geometry.type === 'LineString') {
+      const coords = f.geometry.coordinates.filter(pt =>
+        Array.isArray(pt) && pt.length >= 2 &&
+        Number.isFinite(pt[0]) && Number.isFinite(pt[1])
+      );
+      if (coords.length < 2) continue;
+      const fc_count = _normalizeFiberCount(props.fiber_count);
+      out.cables.push({
+        name: String(name).slice(0, 120),
+        fiber_count: fc_count || 144,  // pick a common default; reviewer can edit
+        construction_type: _normalizeConstructionType(props.construction_type) || 'ribbon',
+        path_geojson: { type: 'LineString', coordinates: coords.map(p => [p[0], p[1]]) },
+        source_id: props.splice_cable_id || null,
+        props,
+        notes: props.notes || null,
+        manufacturer_part: props.manufacturer_part || null,
+      });
+      if (!fc_count) {
+        out.warnings.push(`Cable "${name}" has no fiber_count; defaulted to 144 (reviewer can change)`);
+      }
+    } else {
+      out.warnings.push(`Skipped unsupported geometry: ${f.geometry.type} (${name})`);
+    }
+  }
+  return out;
+}
+
+function _normalizeLocationType(t) {
+  if (!t) return null;
+  const v = String(t).toLowerCase().trim();
+  if (['co', 'splice_point', 'fdh', 'terminal', 'ring_cut'].includes(v)) return v;
+  if (v.includes('central') || v === 'co' || v === 'co.') return 'co';
+  if (v.includes('terminal')) return 'terminal';
+  if (v.includes('fdh') || v.includes('cabinet')) return 'fdh';
+  if (v.includes('ring')) return 'ring_cut';
+  return 'splice_point';
+}
+function _normalizeFiberCount(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return null;
+  if ([12, 24, 48, 96, 144, 288, 432, 864].includes(x)) return x;
+  // Snap to next-larger canonical so a "120" doesn't get rejected.
+  for (const c of [12, 24, 48, 96, 144, 288, 432, 864]) if (c >= x) return c;
+  return null;
+}
+function _normalizeConstructionType(t) {
+  if (!t) return null;
+  const v = String(t).toLowerCase().trim();
+  if (v === 'ribbon' || v === 'loose_tube') return v;
+  if (v.includes('ribbon')) return 'ribbon';
+  if (v.includes('loose')) return 'loose_tube';
+  return null;
+}
+
+// Coord-by-coord LineString equality with an epsilon tolerance. Used
+// by _diffIngestAgainstLive to avoid phantom path-changed updates when
+// the same KMZ round-trips through a JS float (38.9 vs 38.90000000000001).
+// 1e-7 matches DECIMAL(10,7) storage precision; anything tighter is
+// noise below what the satellite imagery resolves anyway.
+function _pathsCoordsEqual(a, b, eps = 1e-7) {
+  if (!a || !b) return a === b;
+  if (a.type !== 'LineString' || b.type !== 'LineString') return false;
+  const ac = a.coordinates, bc = b.coordinates;
+  if (!Array.isArray(ac) || !Array.isArray(bc) || ac.length !== bc.length) return false;
+  for (let i = 0; i < ac.length; i++) {
+    const pa = ac[i], pb = bc[i];
+    if (!Array.isArray(pa) || !Array.isArray(pb) || pa.length !== pb.length) return false;
+    for (let j = 0; j < pa.length; j++) {
+      if (Math.abs(Number(pa[j]) - Number(pb[j])) > eps) return false;
+    }
+  }
+  return true;
+}
+
+// Compare a parsed ingest payload against the live project tree and
+// produce add/update/delete buckets per entity type.
+//
+// Re-bind precedence:
+//   1. source_id from KML ExtendedData (splice_location_id /
+//      splice_cable_id) — exact match wins
+//   2. Same-name match within the live project (case-insensitive)
+//   3. New entity (add)
+//
+// Removes are surfaced as "in master, not in submission" candidates
+// so the master designer can see them; they default to 'skipped'
+// at the apply step.
+function _diffIngestAgainstLive(parsed, live) {
+  const out = {
+    locations: { adds: [], updates: [], removes: [] },
+    cables:    { adds: [], updates: [], removes: [] },
+  };
+  // Locations
+  const liveLocs    = live.locations || [];
+  const liveLocById = new Map(liveLocs.map(l => [l.id, l]));
+  const liveLocByName = new Map(liveLocs.map(l => [String(l.name).toLowerCase(), l]));
+  const matchedLocIds = new Set();
+  for (const incoming of parsed.locations || []) {
+    let match = null;
+    if (incoming.source_id && liveLocById.has(incoming.source_id)) {
+      match = liveLocById.get(incoming.source_id);
+    } else if (liveLocByName.has(incoming.name.toLowerCase())) {
+      match = liveLocByName.get(incoming.name.toLowerCase());
+    }
+    if (match) {
+      matchedLocIds.add(match.id);
+      const updates = {};
+      // Epsilon comparison on lat/lon. Postgres returns DECIMAL(10,7)
+      // as a string with up to 7 decimal places; an incoming KMZ may
+      // round-trip through a JS float that has trailing precision
+      // noise (e.g. 38.90000000000001). Bare !== would flag those as
+      // updates and produce phantom approvals on a clean re-import.
+      // 1e-7 matches the storage precision floor.
+      if (incoming.latitude  != null && Math.abs(Number(match.latitude)  - Number(incoming.latitude))  > 1e-7) updates.latitude  = incoming.latitude;
+      if (incoming.longitude != null && Math.abs(Number(match.longitude) - Number(incoming.longitude)) > 1e-7) updates.longitude = incoming.longitude;
+      if (incoming.type && incoming.type !== match.type) updates.type = incoming.type;
+      if (incoming.notes && incoming.notes !== match.notes) updates.notes = incoming.notes;
+      if (Object.keys(updates).length) {
+        out.locations.updates.push({ target_id: match.id, payload: updates, name: match.name });
+      }
+    } else {
+      out.locations.adds.push({
+        payload: {
+          name: incoming.name,
+          type: incoming.type,
+          latitude: incoming.latitude,
+          longitude: incoming.longitude,
+          notes: incoming.notes,
+        },
+      });
+    }
+  }
+  for (const l of liveLocs) {
+    if (!matchedLocIds.has(l.id)) {
+      out.locations.removes.push({ target_id: l.id, payload: { name: l.name } });
+    }
+  }
+
+  // Cables — same shape.
+  const liveCables = live.cables || [];
+  const liveCableById = new Map(liveCables.map(c => [c.id, c]));
+  const liveCableByName = new Map(liveCables.map(c => [String(c.name).toLowerCase(), c]));
+  const matchedCableIds = new Set();
+  for (const incoming of parsed.cables || []) {
+    let match = null;
+    if (incoming.source_id && liveCableById.has(incoming.source_id)) {
+      match = liveCableById.get(incoming.source_id);
+    } else if (liveCableByName.has(incoming.name.toLowerCase())) {
+      match = liveCableByName.get(incoming.name.toLowerCase());
+    }
+    if (match) {
+      matchedCableIds.add(match.id);
+      const updates = {};
+      // Path is the most common change for cables. Use coord-by-coord
+      // epsilon comparison — JSON.stringify equality flags spurious
+      // updates when the same path round-trips through floating-point
+      // serialization (Worker B ISSUE-3). 1e-7 matches the storage
+      // precision floor in DECIMAL(10,7) for latitude/longitude.
+      if (incoming.path_geojson &&
+          !_pathsCoordsEqual(match.path_geojson, incoming.path_geojson)) {
+        updates.path_geojson = incoming.path_geojson;
+      }
+      if (incoming.fiber_count && match.fiber_count !== incoming.fiber_count) {
+        updates.fiber_count = incoming.fiber_count;
+      }
+      if (incoming.construction_type && match.construction_type !== incoming.construction_type) {
+        updates.construction_type = incoming.construction_type;
+      }
+      if (Object.keys(updates).length) {
+        out.cables.updates.push({ target_id: match.id, payload: updates, name: match.name });
+      }
+    } else {
+      out.cables.adds.push({
+        payload: {
+          name: incoming.name,
+          fiber_count: incoming.fiber_count,
+          construction_type: incoming.construction_type,
+          path_geojson: incoming.path_geojson,
+          notes: incoming.notes,
+          manufacturer_part: incoming.manufacturer_part,
+        },
+      });
+    }
+  }
+  for (const c of liveCables) {
+    if (!matchedCableIds.has(c.id)) {
+      out.cables.removes.push({ target_id: c.id, payload: { name: c.name } });
+    }
+  }
+  return out;
+}
+
+// Stage a parsed ingest object into the DB in one transaction: one row in
+// splice_design_imports + one row in splice_design_import_changes per diff
+// entry.  Extracted from the file-upload handler so the CSV paste endpoint
+// can call the same code path without duplicating twenty INSERT statements.
+//
+// sourceMeta: { filename, format, size }
+// Returns { importRow, summary }.
+async function _stageImport(pool, projectId, sourceMeta, parsed, changes, staffId) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const summary = {
+      adds:     { locations: changes.locations.adds.length,    cables: changes.cables.adds.length },
+      updates:  { locations: changes.locations.updates.length, cables: changes.cables.updates.length },
+      removes:  { locations: changes.locations.removes.length, cables: changes.cables.removes.length },
+      warnings: parsed.warnings || [],
+    };
+    const imp = await client.query(
+      `INSERT INTO splice_design_imports
+         (project_id, source_filename, source_format, source_size_bytes,
+          uploaded_by_staff_id, status, summary_jsonb)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6::jsonb)
+       RETURNING *`,
+      [projectId, sourceMeta.filename, sourceMeta.format, sourceMeta.size,
+       staffId, JSON.stringify(summary)]
+    );
+    const importRow = imp.rows[0];
+
+    for (const c of changes.locations.adds) {
+      await client.query(
+        `INSERT INTO splice_design_import_changes
+           (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+         VALUES ($1, 'add', 'splice_locations', NULL, $2::jsonb, 'pending')`,
+        [importRow.id, JSON.stringify(c.payload)]
+      );
+    }
+    for (const c of changes.locations.updates) {
+      await client.query(
+        `INSERT INTO splice_design_import_changes
+           (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+         VALUES ($1, 'update', 'splice_locations', $2, $3::jsonb, 'pending')`,
+        [importRow.id, c.target_id, JSON.stringify(c.payload)]
+      );
+    }
+    for (const c of changes.locations.removes) {
+      // Removes default to 'skipped' — the master opts in rather than
+      // accidental deletions happening on a partial submission.
+      await client.query(
+        `INSERT INTO splice_design_import_changes
+           (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+         VALUES ($1, 'delete', 'splice_locations', $2, $3::jsonb, 'skipped')`,
+        [importRow.id, c.target_id, JSON.stringify(c.payload || {})]
+      );
+    }
+    for (const c of changes.cables.adds) {
+      await client.query(
+        `INSERT INTO splice_design_import_changes
+           (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+         VALUES ($1, 'add', 'splice_cables', NULL, $2::jsonb, 'pending')`,
+        [importRow.id, JSON.stringify(c.payload)]
+      );
+    }
+    for (const c of changes.cables.updates) {
+      await client.query(
+        `INSERT INTO splice_design_import_changes
+           (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+         VALUES ($1, 'update', 'splice_cables', $2, $3::jsonb, 'pending')`,
+        [importRow.id, c.target_id, JSON.stringify(c.payload)]
+      );
+    }
+    for (const c of changes.cables.removes) {
+      await client.query(
+        `INSERT INTO splice_design_import_changes
+           (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+         VALUES ($1, 'delete', 'splice_cables', $2, $3::jsonb, 'skipped')`,
+        [importRow.id, c.target_id, JSON.stringify(c.payload || {})]
+      );
+    }
+
+    await client.query('COMMIT');
+    return { importRow, summary };
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch {}
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+// Apply a single approved change to the live tree, inside an open
+// transaction. Returns the affected row's id (existing target_id for
+// updates/deletes; new uuid for adds).
+async function _applyImportChange(client, projectId, change) {
+  const { change_type, target_table, target_id, payload_jsonb } = change;
+  const p = payload_jsonb || {};
+  if (target_table === 'splice_locations') {
+    if (change_type === 'add') {
+      const r = await client.query(
+        `INSERT INTO splice_locations
+           (project_id, type, name, latitude, longitude, notes)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [projectId, p.type || 'splice_point', p.name || '(unnamed)',
+         p.latitude ?? null, p.longitude ?? null, p.notes || null]
+      );
+      return r.rows[0].id;
+    }
+    if (change_type === 'update') {
+      const sets = [];
+      const vals = [target_id];
+      let i = 2;
+      for (const f of ['name', 'type', 'latitude', 'longitude', 'notes']) {
+        if (Object.prototype.hasOwnProperty.call(p, f)) {
+          sets.push(`${f} = $${i++}`);
+          vals.push(p[f]);
+        }
+      }
+      if (!sets.length) return target_id;
+      await client.query(
+        `UPDATE splice_locations SET ${sets.join(', ')} WHERE id = $1`, vals
+      );
+      return target_id;
+    }
+    if (change_type === 'delete') {
+      await client.query(`DELETE FROM splice_locations WHERE id = $1`, [target_id]);
+      return target_id;
+    }
+  }
+  if (target_table === 'splice_cables') {
+    if (change_type === 'add') {
+      const r = await client.query(
+        `INSERT INTO splice_cables
+           (project_id, name, fiber_count, construction_type, path_geojson, notes, manufacturer_part)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING id`,
+        [projectId, p.name || '(unnamed)',
+         p.fiber_count || 144,
+         p.construction_type || 'ribbon',
+         p.path_geojson ? JSON.stringify(p.path_geojson) : null,
+         p.notes || null, p.manufacturer_part || null]
+      );
+      // Auto-generates buffer tubes + fibers in TIA-598 order to
+      // match the same flow the live POST-cable endpoint runs.
+      const newCableId = r.rows[0].id;
+      const tubeCount = (p.fiber_count || 144) / 12;
+      for (let pos = 1; pos <= tubeCount; pos++) {
+        const tube = await client.query(
+          `INSERT INTO splice_buffer_tubes (cable_id, position, color)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [newCableId, pos, TIA_598_COLORS[(pos - 1) % 12]]
+        );
+        for (let fp = 1; fp <= 12; fp++) {
+          await client.query(
+            `INSERT INTO splice_fibers (buffer_tube_id, position, color)
+             VALUES ($1, $2, $3)`,
+            [tube.rows[0].id, fp, TIA_598_COLORS[fp - 1]]
+          );
+        }
+      }
+      return newCableId;
+    }
+    if (change_type === 'update') {
+      const sets = [];
+      const vals = [target_id];
+      let i = 2;
+      // fiber_count is intentionally NOT updatable here — changing it
+      // would require regenerating buffer tubes + fibers + reconciling
+      // splices, which is well past "review-and-merge" complexity.
+      // The reviewer who approves a fiber_count change today gets a
+      // no-op write on that field; the import warning surfaced it.
+      for (const f of ['name', 'construction_type', 'notes', 'manufacturer_part']) {
+        if (Object.prototype.hasOwnProperty.call(p, f)) {
+          sets.push(`${f} = $${i++}`);
+          vals.push(p[f]);
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(p, 'path_geojson')) {
+        sets.push(`path_geojson = $${i++}::jsonb`);
+        vals.push(p.path_geojson ? JSON.stringify(p.path_geojson) : null);
+      }
+      if (!sets.length) return target_id;
+      await client.query(
+        `UPDATE splice_cables SET ${sets.join(', ')} WHERE id = $1`, vals
+      );
+      return target_id;
+    }
+    if (change_type === 'delete') {
+      await client.query(`DELETE FROM splice_cables WHERE id = $1`, [target_id]);
+      return target_id;
+    }
+  }
+  throw new Error(`Unsupported change ${change_type} on ${target_table}`);
+}
+
+// ─── DXF parser (Phase 3D) ──────────────────────────────────────────────
+
+// calibration shape:
+//   { crs: 'EPSG:2284' }           — source CRS, transform to WGS84
+//   { control_points: [{ src:[x,y], dst:[lon,lat] },
+//                      { src:[x,y], dst:[lon,lat] }] }
+// Returns the calibration object (validated) or null if invalid/missing.
+function _parseDxfCalibration(raw) {
+  if (!raw) return null;
+  let calib;
+  try { calib = typeof raw === 'string' ? JSON.parse(raw) : raw; }
+  catch { return null; }
+  if (calib.crs && typeof calib.crs === 'string' && /^EPSG:\d+$/i.test(calib.crs)) {
+    return { crs: calib.crs.toUpperCase() };
+  }
+  if (Array.isArray(calib.control_points) && calib.control_points.length === 2) {
+    const ok = calib.control_points.every(p =>
+      Array.isArray(p.src) && p.src.length === 2 &&
+      Array.isArray(p.dst) && p.dst.length === 2 &&
+      p.src.every(Number.isFinite) && p.dst.every(Number.isFinite)
+    );
+    if (ok) return { control_points: calib.control_points };
+  }
+  return null;
+}
+
+// Parse a DXF buffer + calibration into the same ingest shape as the
+// KMZ parser. Pulls POINT / CIRCLE / INSERT for closures (label sources
+// vary by AutoCAD template; we treat any POINT or labelled INSERT as a
+// candidate location), LINE / LWPOLYLINE / POLYLINE for cable paths.
+function _parseDxf(buffer, calibration) {
+  const DxfParser = _getDxfParser();
+  const parser = new DxfParser();
+  const parsed = parser.parseSync(buffer.toString('utf8'));
+  const transform = _buildDxfTransform(calibration);
+
+  const out = { locations: [], cables: [], warnings: [] };
+  const layerMap = (input) => input || '0'; // default AutoCAD layer
+
+  for (const ent of parsed.entities || []) {
+    const layer = layerMap(ent.layer);
+    if (ent.type === 'POINT' || ent.type === 'INSERT') {
+      const x = ent.position?.x ?? ent.x;
+      const y = ent.position?.y ?? ent.y;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      const [lon, lat] = transform([x, y]);
+      out.locations.push({
+        name: ent.name || ent.text || `${layer}-${out.locations.length + 1}`,
+        type: 'splice_point',
+        latitude: lat,
+        longitude: lon,
+        source_id: null,
+        props: { layer, dxf_type: ent.type },
+        notes: null,
+      });
+    } else if (ent.type === 'LINE') {
+      const a = transform([ent.vertices[0].x, ent.vertices[0].y]);
+      const b = transform([ent.vertices[1].x, ent.vertices[1].y]);
+      out.cables.push({
+        name: `${layer}-line-${out.cables.length + 1}`,
+        fiber_count: 144,
+        construction_type: 'ribbon',
+        path_geojson: { type: 'LineString', coordinates: [a, b] },
+        source_id: null,
+        props: { layer, dxf_type: ent.type },
+        notes: null,
+        manufacturer_part: null,
+      });
+    } else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
+      const verts = (ent.vertices || []).filter(v => Number.isFinite(v.x) && Number.isFinite(v.y));
+      if (verts.length < 2) continue;
+      const coords = verts.map(v => transform([v.x, v.y]));
+      out.cables.push({
+        name: `${layer}-poly-${out.cables.length + 1}`,
+        fiber_count: 144,
+        construction_type: 'ribbon',
+        path_geojson: { type: 'LineString', coordinates: coords },
+        source_id: null,
+        props: { layer, dxf_type: ent.type },
+        notes: null,
+        manufacturer_part: null,
+      });
+    }
+    // Other DXF entity types (TEXT, ARC, CIRCLE, etc.) are ignored
+    // for v1 — the layer-mapping UI in 3D will let the user opt in
+    // to specific entity classes per layer.
+  }
+  if (!out.locations.length && !out.cables.length) {
+    out.warnings.push('DXF parsed but no POINT/INSERT/LINE/POLYLINE entities were found.');
+  }
+  return out;
+}
+
+// Build a coordinate-transform function from the calibration. CRS path
+// uses proj4js; control-point path computes a 2D affine transform from
+// two points (translate + uniform scale + rotate). Two points isn't
+// enough to recover skew — Phase 3D could grow to 3+ control points
+// for full affine, but two is the bare minimum that does the OSP
+// "I shot two manholes with my GPS, here are the lat/lons" use case.
+function _buildDxfTransform(calibration) {
+  if (calibration.crs) {
+    const proj4 = _getProj4();
+    return (xy) => {
+      const [lon, lat] = proj4(calibration.crs, 'EPSG:4326', xy);
+      return [lon, lat];
+    };
+  }
+  if (calibration.control_points) {
+    const [p1, p2] = calibration.control_points;
+    const [sx1, sy1] = p1.src, [dx1, dy1] = p1.dst;
+    const [sx2, sy2] = p2.src, [dx2, dy2] = p2.dst;
+    const dxs = sx2 - sx1, dys = sy2 - sy1;
+    const dxd = dx2 - dx1, dyd = dy2 - dy1;
+    const srcLen = Math.hypot(dxs, dys);
+    if (srcLen < 1e-9) throw new Error('Control points must be distinct');
+    // Scale + rotation such that vector (sx1→sx2) maps to (dx1→dx2).
+    const scale = Math.hypot(dxd, dyd) / srcLen;
+    const srcAng = Math.atan2(dys, dxs);
+    const dstAng = Math.atan2(dyd, dxd);
+    const rot = dstAng - srcAng;
+    const cos = Math.cos(rot), sin = Math.sin(rot);
+    return ([x, y]) => {
+      const dx = x - sx1, dy = y - sy1;
+      const rx = (dx * cos - dy * sin) * scale;
+      const ry = (dx * sin + dy * cos) * scale;
+      return [dx1 + rx, dy1 + ry];
+    };
+  }
+  throw new Error('Calibration must specify either crs or control_points');
+}
+
+// ─── Path-tracing helper (Phase 2C #11) ───────────────────────────────────
+//
+// Given a starting fiber ID and a fully-loaded project data snapshot,
+// walk the strand chain in both directions (backwards and forwards from
+// the start fiber) through splice connections, building an ordered array
+// of { fiber, splice_to_next } entries.
+//
+// Walk semantics:
+//   - splices table is bidirectional: fiber_a → fiber_b OR fiber_b → fiber_a.
+//   - We pick the "other" fiber in each splice as the next hop.
+//   - Visited set (fiber IDs) prevents infinite loops on circular strands.
+//   - Over-spliced fibers (appearing in 3+ splices) are included in the walk
+//     but flagged. We pick one outgoing neighbor at a time so we don't
+//     branch into a tree; the first unvisited neighbor wins per hop.
+//
+// Returns the response envelope directly (fiber_id, circular, over_spliced,
+// chain, warnings).
+function _traceStrandPath(startFiberId, data) {
+  // Build fast-lookup maps from the pre-loaded snapshot.
+  const fiberById   = new Map(data.fibers.map(f => [f.id, f]));
+  const tubeById    = new Map(data.buffer_tubes.map(t => [t.id, t]));
+  const cableById   = new Map(data.cables.map(c => [c.id, c]));
+  const trayById    = new Map(data.trays.map(t => [t.id, t]));
+  const closureById = new Map(data.closures.map(c => [c.id, c]));
+  const locationById = new Map(data.locations.map(l => [l.id, l]));
+
+  // For each fiber, collect every splice it participates in (as side A or B).
+  const splicesByFiber = new Map();
+  for (const s of data.splices) {
+    for (const fid of [s.fiber_a_id, s.fiber_b_id]) {
+      if (!splicesByFiber.has(fid)) splicesByFiber.set(fid, []);
+      splicesByFiber.get(fid).push(s);
+    }
+  }
+
+  // Detect over-spliced fibers globally so the flag is accurate.
+  let overSpliced = false;
+  for (const [fid, arr] of splicesByFiber) {
+    // A normal fiber appears in at most 2 splices (one on each side).
+    // 3+ means the physical strand is wired to more than two partners.
+    if (arr.length > 2) overSpliced = true;
+  }
+
+  // Helper: given a fiber ID, return its full metadata object for the chain.
+  function fiberMeta(fid) {
+    const f = fiberById.get(fid);
+    if (!f) return { id: fid };
+    const tube = tubeById.get(f.buffer_tube_id);
+    const cable = tube ? cableById.get(tube.cable_id) : null;
+    return {
+      id: f.id,
+      cable_id:      cable?.id    || null,
+      cable_name:    cable?.name  || null,
+      tube_id:       tube?.id     || null,
+      tube_position: tube?.position ?? null,
+      tube_color:    tube?.color   || null,
+      position:      f.position,
+      color:         f.color,
+      circuit_name:  f.circuit_name  || null,
+      customer:      f.customer       || null,
+    };
+  }
+
+  // Helper: build splice_to_next payload from a splice row.
+  function spliceMeta(s) {
+    const tray    = trayById.get(s.tray_id);
+    const closure = tray ? closureById.get(tray.closure_id) : null;
+    const loc     = closure ? locationById.get(closure.location_id) : null;
+    return {
+      id:            s.id,
+      splice_type:   s.splice_type,
+      tray_id:       tray?.id         || null,
+      tray_position: tray?.position   ?? null,
+      closure_id:    closure?.id      || null,
+      closure_model: closure?.model   || null,
+      location_name: loc?.name        || null,
+    };
+  }
+
+  // Walk one direction along the chain. `direction` controls which end of
+  // the current splice is the "current fiber" vs the "next fiber."
+  //
+  // Returns an array of { fiber, splice_to_next } entries in traversal
+  // order. The last entry always has splice_to_next = null.
+  //
+  // `visited` is the shared set of already-seen fiber IDs (mutated in
+  // place) so both direction passes share the same loop-detection state.
+  function walkDir(startFid, visited) {
+    const entries = [];
+    let curFid = startFid;
+    let circular = false;
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (visited.has(curFid)) {
+        // We've been here — either a loop back to a visited interior fiber,
+        // or the two-direction walk is about to double-cross the start.
+        circular = true;
+        break;
+      }
+      visited.add(curFid);
+
+      const neighborSplices = splicesByFiber.get(curFid) || [];
+      // Pick the first splice that leads to an unvisited fiber.
+      let chosenSplice = null;
+      let nextFid = null;
+      for (const s of neighborSplices) {
+        const other = s.fiber_a_id === curFid ? s.fiber_b_id : s.fiber_a_id;
+        if (!visited.has(other)) {
+          chosenSplice = s;
+          nextFid = other;
+          break;
+        }
+      }
+
+      if (!chosenSplice) {
+        // Dead end: no unvisited neighbor. Close off this entry.
+        entries.push({ fiber: fiberMeta(curFid), splice_to_next: null });
+        break;
+      }
+
+      entries.push({ fiber: fiberMeta(curFid), splice_to_next: spliceMeta(chosenSplice) });
+      curFid = nextFid;
+    }
+
+    return { entries, circular };
+  }
+
+  // Walk backward first (gives us the "before-start" portion in reverse),
+  // then forward from the start fiber. Combine so the chain reads from one
+  // end of the strand to the other with the start fiber somewhere in the
+  // middle (or at an end if it was already at an end).
+  //
+  // The visited set starts empty. Walking backward from the start marks
+  // visited fibers in the backward direction. Then the forward walk starts
+  // from the start fiber again — but by then the start is already in visited
+  // so we handle that by excluding the start from the visited set for the
+  // forward pass re-entry.
+  //
+  // Simpler approach: walk backward (not including start), reverse result,
+  // then walk forward from start using the combined visited set.
+
+  const visited = new Set();
+
+  // Backward pass: find a neighbor of start that is behind us, walk that
+  // direction to accumulate the pre-start portion of the chain.
+  let backwardEntries = [];
+  let circularBack = false;
+  {
+    // Walk backward by temporarily pretending we arrived at `startFiberId`
+    // from the forward direction: we mark startFiberId visited so the
+    // backward walk doesn't revisit it, then walk from each unvisited
+    // neighbor of start that isn't the one we'd reach going forward.
+    // Because we don't know the "forward" direction yet, we just pick the
+    // FIRST unvisited neighbor as forward and the rest as backward. On a
+    // linear chain there is at most one backward and one forward neighbor.
+
+    visited.add(startFiberId);
+    const startSplices = splicesByFiber.get(startFiberId) || [];
+
+    // Collect all unvisited neighbors.
+    const neighbors = startSplices.map(s => ({
+      splice: s,
+      fid: s.fiber_a_id === startFiberId ? s.fiber_b_id : s.fiber_a_id,
+    })).filter(n => !visited.has(n.fid));
+
+    // The backward neighbor is the second one (index 1 if it exists).
+    // On a well-formed chain there are 0, 1, or 2 neighbors. With an
+    // over-spliced fiber there may be more — we still pick just one
+    // backward direction to keep the chain linear.
+    if (neighbors.length >= 2) {
+      const backNeighbor = neighbors[1];
+      const res = walkDir(backNeighbor.fid, visited);
+      backwardEntries = res.entries;
+      if (res.circular) circularBack = true;
+      // Prepend the splice edge from backNeighbor back to start.
+      // The backwardEntries end with the tip of the backward arm; we need
+      // to insert the start's splice to the backward arm as well. But the
+      // splice that connected start → backNeighbor was backNeighbor.splice;
+      // since we're reversing the direction, that splice appears AFTER the
+      // backwardEntries (i.e. from the reversed perspective, the last entry
+      // in backward connects to start).
+      // We'll handle this when we assemble the final chain below.
+    }
+  }
+
+  // Forward pass from start. visited already contains start + backward arm.
+  const forwardResult = walkDir(startFiberId, visited);
+  let circularFwd = forwardResult.circular;
+
+  // Assemble the full chain. The backward arm is in reverse traversal order
+  // (it walked away from start, so its entries[0] is closest to start).
+  // Reverse it so the chain reads: [far-backward-end ... start ... far-forward-end].
+  const chain = [];
+
+  if (backwardEntries.length) {
+    // The backward arm walked: backNeighbor → ... → tip
+    // Reversed: tip → ... → backNeighbor
+    // Then we need to connect backNeighbor → start with the right splice.
+    const reversed = [...backwardEntries].reverse();
+    // Re-stitch splice_to_next for the reversed arm:
+    // Each entry's splice_to_next should point FORWARD (toward start).
+    // In the original backward walk, entry[i].splice_to_next led to entry[i+1].
+    // Reversed: entry[i] in reversed should lead to entry[i+1] in reversed.
+    // The splice connecting each adjacent pair is the splice_to_next of the
+    // original (pre-reverse) entry at position (len-2-i) → but that gets
+    // complicated. Instead: just re-derive splice_to_next for the reversed
+    // arm by looking at which splice connects consecutive fiber IDs.
+
+    // Build a quick splice-pair lookup: (fid_a, fid_b) → splice (order-insensitive).
+    const splicePairMap = new Map();
+    for (const s of data.splices) {
+      const key1 = `${s.fiber_a_id}:${s.fiber_b_id}`;
+      const key2 = `${s.fiber_b_id}:${s.fiber_a_id}`;
+      splicePairMap.set(key1, s);
+      splicePairMap.set(key2, s);
+    }
+
+    for (let i = 0; i < reversed.length; i++) {
+      const fid = reversed[i].fiber.id;
+      if (i < reversed.length - 1) {
+        const nextFid = reversed[i + 1].fiber.id;
+        const s = splicePairMap.get(`${fid}:${nextFid}`) || null;
+        chain.push({ fiber: fiberMeta(fid), splice_to_next: s ? spliceMeta(s) : null });
+      } else {
+        // Last of backward arm connects to start via the splice that
+        // originally linked backNeighbor (reversed[length-1]) to start.
+        const s = splicePairMap.get(`${fid}:${startFiberId}`) || null;
+        chain.push({ fiber: fiberMeta(fid), splice_to_next: s ? spliceMeta(s) : null });
+      }
+    }
+  }
+
+  // Append the forward walk (which starts from startFiberId).
+  for (const entry of forwardResult.entries) {
+    chain.push(entry);
+  }
+
+  const warnings = [];
+  if (overSpliced) {
+    warnings.push('One or more fibers in this project participate in 3+ splices (over-spliced); the path may not represent the full topology.');
+  }
+
+  return {
+    fiber_id:     startFiberId,
+    circular:     circularBack || circularFwd,
+    over_spliced: overSpliced,
+    chain,
+    warnings,
+  };
 }

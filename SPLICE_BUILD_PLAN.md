@@ -10,30 +10,45 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last commit on the splice work:** `70b40c6` — Phase 2A #4 strand
-circuit naming.
-**Status:** Phase 2A complete. Phase 2B is the next chunk to start.
+**Last splice commit:** Phase 2C #8 multi-cable canvas (`ed91a0c`).
+
+**Status:** Phase 1, Phase 2A, Phase 2B, Phase 2C, and Phase 3 are
+all complete on this branch. #8 multi-cable canvas, #9 splitters,
+#10 slack modeling, #11 path tracing, and #13 CSV paste all
+shipped + tested. #12 was folded into Phase 3. 3F (DWG sidecar)
+intentionally skipped. The branch is at a natural pause — next
+work is owner-driven from production feedback.
 
 **To pick this back up in a fresh session:**
 
-1. Read this file top-to-bottom (it's the source of truth — the prior
-   build session committed everything to git).
+1. Read this file top-to-bottom (it's the source of truth).
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
-   shape of what's already built.
-3. The planned next item is **Phase 2B #5 — Templates + project
-   copy-paste.** Migration slot allocated: `0010_splice_templates.sql`.
-   Slots 0007 (strand_state, shipped) and 0008 (strand_metadata,
-   shipped) are already used; 0009 is reserved for `splice_pdf_templates`
-   if multi-template PDF support eventually lands as a table (it's
-   currently inline-coded). Pick 0010 for templates work.
-4. Phase 2B order if proceeding straight through: #5 templates → #6
-   versioning + diff PDF → #7 no-login QR markup. Each is its own
-   commit + push.
-5. CI was last green at `598dbba`; the 70b40c6 commit added the
-   strand-metadata migration and bulk endpoints — verify CI on the
-   most recent push before starting #5 in case anything regressed
-   in the bulk fiber-metadata path.
+   shape of what's built.
+3. Phase 2C now shipped end-to-end. The branch contains the
+   full splice tool roadmap minus deferred items. Open a PR to
+   `main` when ready for human review.
+4. Worker dispatch lessons learned this session:
+   (a) The worktree harness sometimes bases off stale `main`.
+   Every dispatch prompt now embeds an `expected_parent_sha`
+   pre-flight check; the project-tracking persona has it baked
+   into its body.
+   (b) Workers given an absolute repo path in their prompt ignore
+   the harness-assigned worktree and operate on the orchestrator's
+   main worktree — benign for a single worker, but two parallel
+   workers race on git's index. Sequential dispatch is safer than
+   isolated-worktree parallel until the harness behavior is
+   pinned down.
+   (c) `git diff --stat` against an agent commit can show enormous
+   bogus deltas if the agent's branch was based on stale `main`.
+   Always reach for `git diff <orchestrator-HEAD>..<agent-commit>`
+   to see the real change set.
+4. Note: slot 0009 ended up holding the unrelated
+   `rename_inspection_team_to_construction` migration (Path B admin
+   work landed mid-stream); the `splice_pdf_templates` table the plan
+   originally reserved 0009 for stayed deferred — multi-template PDF
+   is still inline-coded and a table only needs cutting if templates
+   gain rules of their own.
 
 **Things NOT to lose track of:**
 
@@ -268,10 +283,7 @@ endpoint `GET /api/splice/fibers/:id/path` returning the full strand
 chain. Canvas highlights all splices on the path when a fiber is
 selected.
 
-### 12. KMZ/KML import for cable routes
-`POST /api/splice/projects/:id/import-kmz` accepting multipart upload,
-parsing via `togeojson`. No PostGIS needed — just LineString import.
-Static map snapshot for PDF cover page.
+### 12. (Folded into Phase 3.) KMZ/KML import lives in 3B/3C now.
 
 ### 13. CSV/Excel paste import
 Frontend paste handler with column-mapping wizard. Server endpoint
@@ -280,15 +292,139 @@ migrate designers off Excel.
 
 ---
 
+## Phase 3 — Geographic editor + ACAD/KMZ design ingest
+
+End goal: a satellite-map view where closures are clickable markers,
+cables are polylines that follow the actual fiber route to the C.O.,
+and the same closure row is the one in the tray editor and on the
+splicer field-markup QR. Multi-engineer ingest: AutoCAD designers
+submit DXFs (or KMZs) into a staging area; the master designer
+reviews the diff and merges.
+
+The differentiator: in OZmap and netTerrain the "map" and the
+"splice plan" are parallel datasets that drift. Here the closure on
+the satellite tile IS the closure in the tray editor — one row, two
+views. Saves the designer from the "now reconcile" step that kills
+weekends.
+
+Owner direction 2026-05-06: build straight through 3A → 3E. DWG via
+OdaFileConverter (3F) is skipped — designers can export DXF or KMZ
+from any modern AutoCAD/Civil 3D and that covers the workflow.
+
+### 3A. Foundations: schema + map view
+
+Migration `0013_splice_geography.sql`:
+- `splice_locations.latitude  DECIMAL(10,7) NULL`
+- `splice_locations.longitude DECIMAL(10,7) NULL`
+- `splice_cables.path_geojson JSONB NULL` — LineString GeoJSON
+
+No PostGIS. Plain DECIMAL columns + GeoJSON in JSONB keep the stack
+unchanged — every consumer that doesn't care about geography just
+ignores the new columns. Adding PostGIS later is a non-breaking
+upgrade if we hit query volume that needs it.
+
+Frontend: a "Map" tab in the splice editor (alongside the existing
+Konva canvas). MapLibre GL JS via CDN. Esri World Imagery as the
+default basemap (free, attributed, the OSP standard). Closure
+markers, cable polylines from the new columns. Click marker → opens
+the existing closure inspector (no parallel UI to maintain). Edit
+mode: drag a marker to update lat/lon, draw a polyline along the
+satellite to set a cable path, snap-to-marker for endpoints.
+
+API:
+- `PUT /api/splice/locations/:id/coords` — `{ latitude, longitude }`
+- `PUT /api/splice/cables/:id/path` — `{ path_geojson: <LineString> }`
+
+### 3B. KMZ export
+
+Generate KML from the schema (locations as `Placemark`+`Point`,
+cables as `Placemark`+`LineString`, splice metadata in
+`ExtendedData`), zip via `archiver`. The KMZ opens in Google Earth,
+ArcGIS, QGIS — the one format the splicer's GIS person will accept.
+No new schema. Round-trip test: a KMZ exported from this same tool,
+re-imported, should produce the same locations/cables.
+
+Endpoint: `GET /api/splice/projects/:id/export-kmz`.
+
+### 3C. KMZ import + import-staging schema
+
+Migration `0014_splice_design_imports.sql`:
+- `splice_design_imports (id, project_id, source_filename,
+   source_format, uploaded_by_staff_id, uploaded_at, status,
+   decision_at, decision_by_staff_id, summary_jsonb)` —
+   status ∈ `'pending', 'applied', 'partially_applied',
+   'rejected'`.
+- `splice_design_import_changes (id, import_id, change_type,
+   target_table, target_id, payload_jsonb, decision)` —
+   change_type ∈ `'add', 'update', 'delete'`,
+   decision ∈ `'pending', 'approved', 'skipped'`.
+
+Endpoint `POST /api/splice/projects/:id/imports` accepts multipart
+upload of a KMZ or DXF. Server parses (KMZ via `@tmcw/togeojson`;
+DXF in 3D), produces a diff against the live tree, stores the
+proposed changes as `splice_design_import_changes` rows. The
+endpoint DOES NOT mutate the live tree — it stages.
+
+UI: review modal lists the staged changes with per-row checkboxes
+(approve / skip), shows a side-by-side preview where applicable.
+Apply commits the approved subset in a transaction.
+
+### 3D. DXF import + georeferencing
+
+`dxf-parser` reads geometry. Two paths:
+
+1. DXF in true geographic coordinates (state plane / UTM): resolve
+   via `proj4js` to lat/lon. The header WCS is usually enough.
+2. DXF in "model space" units (the typical OSP designer workflow):
+   the import wizard prompts for two control points — pick a known
+   feature in the DXF, click the corresponding spot on the
+   satellite map, repeat. Compute affine transform, apply to all
+   geometry.
+
+Layer mapping: per import the user picks "which AutoCAD layer is
+closures, which is fiber routes, which is conduit." The mapping
+saves per-client so a returning engineer's second import is one
+click. Stored in a small `splice_client_layer_mappings` table or
+inline on `clients.splice_layer_mapping_jsonb` — pick the lighter
+option at build time.
+
+### 3E. Submit-and-review merge UX
+
+The actual workflow piece that keeps a master map clean:
+
+- Each engineer uploads a DXF/KMZ → server stages a pending import.
+- Master designer reviews staged imports, sees:
+  - "Adds: 12 closures, 3 cables"
+  - "Updates: 4 closure positions moved"
+  - "Removes: 2 closures (in master, not in submission)"
+- Per-row approve/skip with optional comment.
+- Approved subset commits; the rest stays staged or gets rejected.
+- Audit log: the `splice_design_imports` row is the durable trace
+  of who submitted what when.
+
+No real-time conflict resolution in v1 — the file lock from Phase 1
+covers concurrent edits during merge. Two engineers submitting the
+same import at the same time both end up in `pending`; the master
+designer picks one, applies, then handles the other.
+
+### 3F. (Skipped.) DWG via OdaFileConverter sidecar
+
+DXF + KMZ cover the workflow. Reconsider only if a customer can't
+be persuaded to export one of those.
+
+---
+
 ## Anti-features — DO NOT BUILD
 
 - Login-required splicer mobile app. Splicers don't use them.
 - Real-time multi-cursor (Figma-style CRDT). File-lock + SSE handles 95%.
-- Real GIS map editing. PostGIS is a tech-stack change. Stop at
-  KMZ import + static maps.
 - AI auto-routing / auto-design. Wrong audience.
 - Salesforce-flavored ticketing/asset lifecycle. SiteTracker owns this.
 - DWDM channel planning. Wrong audience.
+
+(Earlier drafts of this list parked "real GIS map editing" as
+out-of-scope; owner reversed that 2026-05-06. Phase 3 IS real GIS
+editing, just without PostGIS for now.)
 
 ---
 
@@ -303,13 +439,24 @@ Slots allocated, in order:
 - 0006 jobs_program_scope (Path B)
 - 0007 splice_strand_state (Phase 2A #3, shipped — pdf_templates was
   deferred since multi-template support didn't need a table for v2)
-- 0008 splice_strand_metadata (Phase 2A #4)
-- 0009 splice_pdf_templates (deferred until multi-client templates)
-- 0010 splice_templates (Phase 2B #5)
-- 0011 splice_versions (Phase 2B #6)
-- 0012 splice_field_markup (Phase 2B #7)
-- 0013 splice_splitters (Phase 2C #9, when needed)
-- 0014 splice_cable_states (Phase 2C #10, when needed)
+- 0008 splice_strand_metadata (Phase 2A #4, shipped)
+- 0009 rename_inspection_team_to_construction (Path B admin, shipped —
+  not splice work; the slot the plan originally reserved for
+  `splice_pdf_templates` got consumed by an unrelated rename. PDF
+  templates remain deferred and unscheduled)
+- 0010 splice_templates (Phase 2B #5, shipped — closure templates +
+  project clone endpoints)
+- 0011 splice_versions (Phase 2B #6, shipped — version snapshots +
+  diff PDF)
+- 0012 splice_field_markup (Phase 2B #7, shipped — public field
+  tokens + photo upload to BYTEA)
+- 0013 splice_geography (Phase 3A — lat/lon on locations,
+  path_geojson on cables)
+- 0014 splice_design_imports (Phase 3C — staging + audit table for
+  KMZ/DXF submit-and-review)
+- 0015 splice_splitters (Phase 2C #9, when needed — was 0013 in an
+  earlier draft, bumped because Phase 3 took the slot)
+- 0016 splice_cable_states (Phase 2C #10, when needed — was 0014)
 
 Renumber if reality demands. The runner sorts by filename so as long as
 allocations stay sequential within their landing window, ordering is

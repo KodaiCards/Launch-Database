@@ -207,7 +207,7 @@
       for (const [client, clientInvs] of Object.entries(byClient)) {
         const clientKey = monthKey + '-c-' + client.replace(/\W/g, '');
         const clientTotal = clientInvs.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0);
-        hHtml += `<div class="htree htree-${monthKey}" onclick="event.stopPropagation();htreeToggle('${clientKey}')" style="display:none;cursor:pointer;padding:10px 16px 10px 40px;border-bottom:1px solid #f0f0f0;background:var(--gray-light);font-weight:600">
+        hHtml += `<div class="htree htree-${monthKey}" onclick="event.stopPropagation();htreeToggle('${clientKey}')" style="display:none;cursor:pointer;padding:10px 16px 10px 40px;border-bottom:1px solid var(--border-weak);background:var(--gray-light);font-weight:600">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div><i class="fa-solid fa-chevron-right" id="hc-${clientKey}" style="font-size:9px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-building" style="color:var(--text-muted);margin-right:6px;font-size:12px"></i> ${esc(client)}</div>
             <div style="font-size:13px">${fmtMoney(clientTotal)}</div>
@@ -216,7 +216,7 @@
 
         for (const inv of clientInvs) {
           const invKey = clientKey + '-i-' + inv.id.substring(0, 8);
-          hHtml += `<div class="htree htree-${clientKey}" onclick="event.stopPropagation();htreeToggle('${invKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid #f5f5f5;background:#f8f9fa;font-size:13px">
+          hHtml += `<div class="htree htree-${clientKey}" onclick="event.stopPropagation();htreeToggle('${invKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid var(--border-weak);background:var(--surface-3);font-size:13px;color:var(--text)">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div><i class="fa-solid fa-chevron-right" id="hc-${invKey}" style="font-size:8px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-file-invoice" style="color:var(--text-muted);margin-right:6px;font-size:11px"></i> ${inv.invoice_number ? esc(inv.invoice_number) : 'Invoice'} — <span style="font-weight:600">${fmtMoney(inv.total_amount)}</span></div>
               <div style="display:flex;align-items:center;gap:6px">
@@ -230,7 +230,7 @@
           // Invoice line items (jobs)
           const items = inv.items || [];
           for (const item of items) {
-            hHtml += `<div class="htree htree-${invKey}" style="display:none;padding:6px 16px 6px 88px;border-bottom:1px solid #fafafa;background:#fdfdfd;font-size:12px;color:var(--text-muted)">
+            hHtml += `<div class="htree htree-${invKey}" style="display:none;padding:6px 16px 6px 88px;border-bottom:1px solid var(--border-weak);background:var(--surface-2);font-size:12px;color:var(--text-muted)">
               <div style="display:flex;align-items:center;justify-content:space-between">
                 <div>
                   ${item.project_name ? esc(item.project_name) : esc(item.description)}

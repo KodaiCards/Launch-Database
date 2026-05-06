@@ -338,6 +338,121 @@ function ruleStandardColorOrder(h) {
   return issues;
 }
 
+// ─── Splitter rules (Phase 2C #9) ────────────────────────────────────────
+
+function ruleSplitterInputConflict(h) {
+  // A fiber can't simultaneously feed two splitter inputs, and it can't
+  // be both a splice participant and a splitter input. Either case means
+  // the fiber is "double-driven" — the signal has two competing sources or
+  // destinations, which is impossible in a passive optical network.
+  const issues = [];
+  const splitters = h.splitters || [];
+  const splitterOutputs = h.splitter_outputs || [];
+
+  // Collect all input_fiber_ids that are actually wired.
+  const wiredInputs = splitters.filter(s => s.input_fiber_id).map(s => s.input_fiber_id);
+
+  // A fiber driving more than one splitter input is an error.
+  const inputCount = new Map();
+  for (const fid of wiredInputs) {
+    inputCount.set(fid, (inputCount.get(fid) || 0) + 1);
+  }
+  for (const [fid, n] of inputCount) {
+    if (n > 1) {
+      issues.push({
+        severity: 'error',
+        code: 'splitter_input_double_driven',
+        message: `Fiber ${fid} feeds ${n} splitter inputs. A single fiber can only drive one splitter.`,
+        fiber_id: fid,
+      });
+    }
+  }
+
+  // A fiber that is both a splice fiber (fiber_a / fiber_b) and a splitter
+  // input is contradictory — the fiber can't be both through-spliced and
+  // terminating at a passive split point.
+  const spliceParticipants = new Set();
+  for (const s of h.splices) {
+    spliceParticipants.add(s.fiber_a_id);
+    spliceParticipants.add(s.fiber_b_id);
+  }
+  for (const fid of wiredInputs) {
+    if (spliceParticipants.has(fid)) {
+      issues.push({
+        severity: 'error',
+        code: 'splitter_input_also_spliced',
+        message: `Fiber ${fid} is both a splice participant and a splitter input. Choose one: route it through a splice or into a splitter, not both.`,
+        fiber_id: fid,
+      });
+    }
+  }
+
+  // An output_fiber_id that appears in more than one output, or in any
+  // splice, is also double-driven on the downstream side.
+  const wiredOutputFibers = splitterOutputs.filter(o => o.output_fiber_id).map(o => o.output_fiber_id);
+  const outputCount = new Map();
+  for (const fid of wiredOutputFibers) {
+    outputCount.set(fid, (outputCount.get(fid) || 0) + 1);
+  }
+  for (const [fid, n] of outputCount) {
+    if (n > 1) {
+      issues.push({
+        severity: 'error',
+        code: 'splitter_output_double_driven',
+        message: `Fiber ${fid} is wired to ${n} splitter outputs. An output fiber must connect to exactly one output port.`,
+        fiber_id: fid,
+      });
+    }
+  }
+  for (const fid of wiredOutputFibers) {
+    if (spliceParticipants.has(fid)) {
+      issues.push({
+        severity: 'error',
+        code: 'splitter_output_also_spliced',
+        message: `Fiber ${fid} is both a splice participant and a splitter output. A downstream fiber should arrive via one path only.`,
+        fiber_id: fid,
+      });
+    }
+  }
+
+  return issues;
+}
+
+function ruleSplitterUnwired(h) {
+  // Un-wired inputs and outputs are almost always a designer oversight
+  // at plan-complete time, but they're not a hard error — a designer
+  // might stage the splitter before running the cable.
+  const issues = [];
+  const splitters = h.splitters || [];
+  const splitterOutputs = h.splitter_outputs || [];
+
+  for (const sp of splitters) {
+    if (!sp.input_fiber_id) {
+      issues.push({
+        severity: 'warning',
+        code: 'splitter_input_unwired',
+        message: `Splitter (${sp.ratio}) at closure ${sp.closure_id} has no input fiber wired.`,
+        splitter_id: sp.id,
+        closure_id: sp.closure_id,
+      });
+    }
+    const outputs = splitterOutputs.filter(o => o.splitter_id === sp.id);
+    const unwiredOutputs = outputs.filter(o => !o.output_fiber_id);
+    if (unwiredOutputs.length) {
+      issues.push({
+        severity: 'warning',
+        code: 'splitter_outputs_unwired',
+        message: `Splitter (${sp.ratio}) at closure ${sp.closure_id} has ${unwiredOutputs.length} of ${outputs.length} output port(s) without a fiber wired.`,
+        splitter_id: sp.id,
+        closure_id: sp.closure_id,
+        unwired_count: unwiredOutputs.length,
+      });
+    }
+  }
+
+  return issues;
+}
+
 // ─── Runner ──────────────────────────────────────────────────────────────
 
 const RULES = [
@@ -352,6 +467,8 @@ const RULES = [
   ruleClosureNoIncomingCable,
   ruleStrandStateConflicts,
   ruleStandardColorOrder,
+  ruleSplitterInputConflict,
+  ruleSplitterUnwired,
 ];
 
 function validateProject(hydrate) {

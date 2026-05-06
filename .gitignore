@@ -23,6 +23,12 @@ Thumbs.db
 ~$*
 *.docx
 
-# Claude Code session/worktree state — local-only, never goes to GitHub
-.claude/
+# Claude Code session/worktree state — local-only, never goes to GitHub.
+# Exception: .claude/agents/ holds team-shared subagent personas that are
+# intentionally version-controlled so every developer + CI run sees the
+# same orchestration definitions. `.claude/*` (no trailing slash) lets
+# us re-include specific subpaths; `.claude/` would not.
+.claude/*
+!.claude/agents/
+!.claude/agents/**
 package-lock.json
