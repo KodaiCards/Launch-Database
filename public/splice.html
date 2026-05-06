@@ -457,17 +457,90 @@ async function loadProjects() {
   }
 }
 
+// Project list filter + sort settings persist across reloads in
+// localStorage (matches dark-mode + basemap pattern).
+function loadProjListPrefs() {
+  try {
+    return {
+      status: localStorage.getItem('lfs_splice_proj_status') || 'all',
+      sort:   localStorage.getItem('lfs_splice_proj_sort')   || 'recent',
+      filter: '',  // text filter doesn't persist — feels surprising on reload
+    };
+  } catch { return { status: 'all', sort: 'recent', filter: '' }; }
+}
+function saveProjListPrefs(prefs) {
+  try {
+    if (prefs.status) localStorage.setItem('lfs_splice_proj_status', prefs.status);
+    if (prefs.sort)   localStorage.setItem('lfs_splice_proj_sort',   prefs.sort);
+  } catch {}
+}
+state._projListPrefs = state._projListPrefs || loadProjListPrefs();
+
+function setProjListPref(key, value) {
+  state._projListPrefs[key] = value;
+  if (key !== 'filter') saveProjListPrefs(state._projListPrefs);
+  renderProjectList();
+}
+
 function renderProjectList() {
   const ul = document.getElementById('proj-list');
-  if (!state.projects.length) {
-    ul.innerHTML = '<li class="empty-pane">No projects yet. Click + to create one.</li>';
+  const prefs = state._projListPrefs || loadProjListPrefs();
+  state._projListPrefs = prefs;
+
+  // Filter chrome above the list. Mounted once into a sibling slot;
+  // re-rendered with current pref values so the controls reflect the
+  // active filters even after a hydrate.
+  let chrome = document.getElementById('proj-list-controls');
+  if (!chrome) {
+    chrome = document.createElement('div');
+    chrome.id = 'proj-list-controls';
+    chrome.style.cssText = 'display:flex;gap:4px;margin-bottom:6px;font-size:11px';
+    ul.parentNode.insertBefore(chrome, ul);
+  }
+  chrome.innerHTML = `
+    <select id="proj-list-status" onchange="setProjListPref('status', this.value)" style="flex:1;padding:3px 4px;background:var(--surface-2);color:var(--text);border:1px solid var(--border-weak);border-radius:3px">
+      <option value="all"${prefs.status==='all'?' selected':''}>All</option>
+      <option value="active"${prefs.status==='active'?' selected':''}>Active</option>
+      <option value="completed"${prefs.status==='completed'?' selected':''}>Completed</option>
+      <option value="archived"${prefs.status==='archived'?' selected':''}>Archived</option>
+    </select>
+    <select id="proj-list-sort" onchange="setProjListPref('sort', this.value)" style="flex:1;padding:3px 4px;background:var(--surface-2);color:var(--text);border:1px solid var(--border-weak);border-radius:3px">
+      <option value="recent"${prefs.sort==='recent'?' selected':''}>Recent</option>
+      <option value="name"${prefs.sort==='name'?' selected':''}>Name</option>
+      <option value="size"${prefs.sort==='size'?' selected':''}>Size</option>
+    </select>
+  `;
+
+  // Apply filter then sort to the in-memory list (cheap; cardinality is
+  // low even for an extremely active install). Server-side ordering
+  // already returns recent-first; we re-sort here so other modes work.
+  let view = state.projects.slice();
+  if (prefs.status !== 'all') view = view.filter(p => p.status === prefs.status);
+  if (prefs.filter) {
+    const q = prefs.filter.toLowerCase();
+    view = view.filter(p => (p.name || '').toLowerCase().includes(q));
+  }
+  if (prefs.sort === 'name') {
+    view.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  } else if (prefs.sort === 'size') {
+    const score = p => (p.cable_count || 0) + (p.location_count || 0) + (p.splice_count || 0);
+    view.sort((a, b) => score(b) - score(a));
+  }
+  // 'recent' keeps the server's updated_at DESC ordering.
+
+  if (!view.length) {
+    if (!state.projects.length) {
+      ul.innerHTML = '<li class="empty-pane">No projects yet. Click + to create one.</li>';
+    } else {
+      ul.innerHTML = '<li class="empty-pane">No projects match the current filter.</li>';
+    }
     return;
   }
-  ul.innerHTML = state.projects.map(p => `
+  ul.innerHTML = view.map(p => `
     <li class="proj-item ${p.id === state.currentId ? 'active' : ''}" onclick="selectProject('${p.id}')">
       <div style="flex:1;min-width:0">
         <div class="name">${esc(p.name)}</div>
-        <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp</div>
+        <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp${p.status && p.status !== 'active' ? ' · ' + esc(p.status) : ''}</div>
       </div>
       <button class="btn btn-sm btn-icon" title="Clone project" onclick="event.stopPropagation();cloneProject('${p.id}','${esc(p.name).replace(/'/g, "\\'")}')"><i class="fa-solid fa-copy"></i></button>
       ${p.locked_by_staff_id ? '<span class="badge" title="Locked"><i class="fa-solid fa-lock"></i></span>' : ''}
