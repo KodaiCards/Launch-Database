@@ -10,16 +10,14 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last splice commits:** Phase 2C #9 splitters (`5bd51d1`) +
-Phase 2C #13 CSV paste (`24897b6`) + ISSUE-3 epsilon-comparison
-fix (`3c8e6c8`) + tests for #9/#11/#13 (`10db713`/`9f4bf2a`/
-`751f978`).
+**Last splice commit:** Phase 2C #8 multi-cable canvas (`ed91a0c`).
 
-**Status:** Phase 2A complete. Phase 2B complete. Phase 3
-complete (3A–3E shipped; 3F DWG intentionally skipped).
-Phase 2C: #9 splitters + #11 path tracing + #13 CSV paste all
-shipped + tested. #10 slack modeling in flight. #8 multi-cable
-canvas not yet started.
+**Status:** Phase 1, Phase 2A, Phase 2B, Phase 2C, and Phase 3 are
+all complete on this branch. #8 multi-cable canvas, #9 splitters,
+#10 slack modeling, #11 path tracing, and #13 CSV paste all
+shipped + tested. #12 was folded into Phase 3. 3F (DWG sidecar)
+intentionally skipped. The branch is at a natural pause — next
+work is owner-driven from production feedback.
 
 **To pick this back up in a fresh session:**
 
@@ -27,18 +25,24 @@ canvas not yet started.
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
    shape of what's built.
-3. Pending items: 2C #8 multi-cable canvas, #10 slack/service
-   loop (in flight). When 2C is fully shipped, the next horizon
-   is owner-driven from production feedback.
-4. Worker dispatch lessons: (a) the worktree harness sometimes
-   bases off stale `main`. Every dispatch prompt now embeds an
-   `expected_parent_sha` pre-flight check; the project-tracking
-   persona has the same check built in. (b) Workers given an
-   absolute repo path in their prompt ignore the harness-assigned
-   worktree and operate on the orchestrator's main worktree —
-   benign when only one worker is active, races on git's index
-   if two run concurrently. Sequential dispatch is safer than
-   isolated-worktree parallel right now.
+3. Phase 2C now shipped end-to-end. The branch contains the
+   full splice tool roadmap minus deferred items. Open a PR to
+   `main` when ready for human review.
+4. Worker dispatch lessons learned this session:
+   (a) The worktree harness sometimes bases off stale `main`.
+   Every dispatch prompt now embeds an `expected_parent_sha`
+   pre-flight check; the project-tracking persona has it baked
+   into its body.
+   (b) Workers given an absolute repo path in their prompt ignore
+   the harness-assigned worktree and operate on the orchestrator's
+   main worktree — benign for a single worker, but two parallel
+   workers race on git's index. Sequential dispatch is safer than
+   isolated-worktree parallel until the harness behavior is
+   pinned down.
+   (c) `git diff --stat` against an agent commit can show enormous
+   bogus deltas if the agent's branch was based on stale `main`.
+   Always reach for `git diff <orchestrator-HEAD>..<agent-commit>`
+   to see the real change set.
 4. Note: slot 0009 ended up holding the unrelated
    `rename_inspection_team_to_construction` migration (Path B admin
    work landed mid-stream); the `splice_pdf_templates` table the plan
