@@ -969,6 +969,48 @@ const vetroCableHighlightLayer = {
 
 ---
 
+## Section 9 — Map + Inspector + Handhole Inventory: Additional Implementation Notes
+
+### Map layer ordering (z-index / draw order)
+
+Recommended draw order for the Konva canvas / MapLibre stack, top to bottom:
+
+1. Selection highlight overlays (top — always visible)
+2. Service location markers
+3. Handhole / closure markers
+4. Cabinet / active equipment markers
+5. Fiber cable route lines
+6. Service area polygon fills (semi-transparent)
+7. Basemap tiles (bottom)
+
+Keep network element layers above the basemap but below the highlight layer so selected features are never occluded.
+
+### Inspector open/close animation
+
+Match VETRO's "large, organized workspace" feel with a smooth slide-in:
+
+```css
+.vetro-inspector {
+  transform: translateX(100%);
+  transition: transform 0.22s ease-out;
+}
+.vetro-inspector.is-open {
+  transform: translateX(0);
+}
+```
+
+The map canvas should simultaneously shrink its `right` margin to `var(--inspector-width)` so routes are not hidden under the panel. `(inferred — TBD-VERIFY: VETRO may overlay rather than push)`
+
+### Handhole inventory dashboard — recommended Konva implementation
+
+For the splice tray canvas within the Handhole Inventory view, use Konva Stage with two columns:
+
+- Left column: incoming cable + fiber swatches (one row per fiber, colored by TIA code)
+- Center: splice connection lines (Konva.Line from left swatch center to right swatch center)
+- Right column: outgoing cable + fiber swatches
+
+Fiber swatch dimensions: 20px wide, 16px tall, 2px gap between swatches. Tray separator: 8px gap between tray groups. Tray label at left of each group in `var(--text-small)` gray text. Entire canvas is scrollable vertically for large closures. `(inferred from industry standard — TBD-VERIFY)`
+
 ## Research Gap Log
 
 The following areas have thin or entirely inferred data. FIX-C should treat these as `TBD-VERIFY` and update after obtaining a VETRO demo account or screen-sharing session with a customer:
