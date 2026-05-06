@@ -1478,6 +1478,124 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Phase 4.5: Threaded comments on closures + splices ─────────────────
+  // Pattern: GitHub PR comments. target_table ∈ ('splice_closures','splices').
+  // Top-level threads have parent_comment_id = NULL; replies have it set.
+  // resolve toggle marks a thread as addressed by the engineer.
+
+  const VALID_COMMENT_TARGETS = new Set(['splice_closures', 'splices']);
+
+  app.post('/api/splice/comments', requireAuth(), async (req, res) => {
+    const { project_id, target_table, target_id, body, parent_comment_id } = req.body || {};
+    if (!project_id || !target_table || !target_id || !body || !String(body).trim()) {
+      return res.status(400).json({ error: 'project_id, target_table, target_id, and body are required' });
+    }
+    if (!VALID_COMMENT_TARGETS.has(target_table)) {
+      return res.status(400).json({ error: `target_table must be one of: ${[...VALID_COMMENT_TARGETS].join(', ')}` });
+    }
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO splice_comments
+           (project_id, target_table, target_id, body, created_by_user_id, parent_comment_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          project_id,
+          target_table,
+          target_id,
+          String(body).trim(),
+          req.user?.id || null,
+          parent_comment_id || null,
+        ]
+      );
+      // Join author name for the response.
+      const author = await pool.query(
+        `SELECT COALESCE(full_name, username) AS name FROM users WHERE id = $1`,
+        [req.user?.id]
+      );
+      const comment = { ...rows[0], created_by_name: author.rows[0]?.name || null };
+      _broadcast(project_id, 'comment_added', { comment });
+      res.json(comment);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/comments', requireAuth(), async (req, res) => {
+    const { target_table, target_id } = req.query;
+    if (!target_table || !target_id) {
+      return res.status(400).json({ error: 'target_table and target_id are required' });
+    }
+    if (!VALID_COMMENT_TARGETS.has(target_table)) {
+      return res.status(400).json({ error: `target_table must be one of: ${[...VALID_COMMENT_TARGETS].join(', ')}` });
+    }
+    try {
+      const { rows } = await pool.query(
+        `SELECT c.*,
+                COALESCE(u.full_name, u.username) AS created_by_name,
+                COALESCE(ru.full_name, ru.username) AS resolved_by_name
+           FROM splice_comments c
+           LEFT JOIN users u  ON u.id = c.created_by_user_id
+           LEFT JOIN users ru ON ru.id = c.resolved_by_user_id
+          WHERE c.target_table = $1 AND c.target_id = $2
+          ORDER BY c.created_at ASC`,
+        [target_table, target_id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/projects/:id/comments', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT c.*,
+                COALESCE(u.full_name, u.username) AS created_by_name
+           FROM splice_comments c
+           LEFT JOIN users u ON u.id = c.created_by_user_id
+          WHERE c.project_id = $1
+            AND c.resolved_at IS NULL
+          ORDER BY c.created_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/comments/:id/resolve', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT id, project_id, resolved_at FROM splice_comments WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Comment not found' });
+      const already = cur.rows[0].resolved_at;
+      // Toggle: set if null, clear if already set.
+      const { rows } = await pool.query(
+        `UPDATE splice_comments
+         SET resolved_at = $1, resolved_by_user_id = $2
+         WHERE id = $3 RETURNING *`,
+        [
+          already ? null : new Date(),
+          already ? null : (req.user?.id || null),
+          req.params.id,
+        ]
+      );
+      _broadcast(cur.rows[0].project_id, 'comment_resolved', { comment: rows[0] });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/comments/:id', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT id, project_id, target_table, target_id FROM splice_comments WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Comment not found' });
+      await pool.query(`DELETE FROM splice_comments WHERE id = $1`, [req.params.id]);
+      _broadcast(cur.rows[0].project_id, 'comment_removed', { id: req.params.id, target_table: cur.rows[0].target_table, target_id: cur.rows[0].target_id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure templates (Phase 2B #5) ─────────────────────────────────────
   // Reusable closure shells designers save once and apply across
   // projects. Sized config (tray_count, tray_capacity) plus optional

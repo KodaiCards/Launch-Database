@@ -911,6 +911,30 @@ function openSSE(projectId) {
       } catch {}
     });
   });
+  // Phase 4.5 — comment events: re-render the comments section if the
+  // affected target is currently open in the inspector.
+  ['comment_added', 'comment_removed', 'comment_resolved'].forEach(evt => {
+    state.sse.addEventListener(evt, (e) => {
+      try {
+        const data = JSON.parse(e.data || '{}');
+        const tgt = data.comment || data;
+        // If the closure inspector is open, reload closure comments.
+        if (state.selection?.type === 'closure' &&
+            tgt.target_table === 'splice_closures' &&
+            tgt.target_id === state.selection.id) {
+          loadClosureComments(state.selection.id);
+        }
+        // If a splice comment changed, refresh matrix badges.
+        if (tgt.target_table === 'splices' && state.activeView === 'matrix') {
+          refreshMatrixCommentCounts().then(() => renderMatrixView());
+        }
+        // Also refresh the splice comment popover if it's open for this target.
+        if (tgt.target_table === 'splices' && state._openSpliceCommentId === tgt.target_id) {
+          loadSpliceCommentPopover(tgt.target_id);
+        }
+      } catch {}
+    });
+  });
   state.sse.onerror = () => {
     // EventSource auto-reconnects; nothing to do unless it's a permanent
     // 401 — which the api() helper would have already redirected.
@@ -1871,9 +1895,24 @@ function renderClosureInspector(closureId) {
       </div>
       <div id="closure-markups-${closureId}"><div class="empty-pane" style="padding:8px">Loading…</div></div>
     </div>
+
+    <!-- Phase 4.5: threaded comments -->
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        <span><i class="fa-solid fa-comments"></i> Comments</span>
+        <span id="closure-comments-count-${closureId}" class="small"></span>
+      </h3>
+      <div id="closure-comments-${closureId}"><div class="empty-pane" style="padding:8px">Loading…</div></div>
+      ${isReadOnly() ? '' : `
+      <div style="margin-top:8px">
+        <textarea id="closure-comment-input-${closureId}" class="input-sm" rows="2" style="width:100%;box-sizing:border-box" placeholder="Add a comment…"></textarea>
+        <button class="btn btn-sm btn-primary" style="margin-top:4px" onclick="postClosureComment('${closureId}')"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>`}
+    </div>
   `;
 
   loadClosureMarkups(closureId);
+  loadClosureComments(closureId);
 }
 
 // Phase 2B #7 — pull field markups for the selected closure and
@@ -1945,6 +1984,223 @@ async function deleteMarkup(markupId, closureId) {
     toast('Photo deleted', 'success');
   } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
 }
+
+// ─── Phase 4.5: Threaded comments on closures + splices ──────────────────
+// Closure comments live in the inspector. Splice comments are accessed
+// via a small popover badge on splice rows in the tray inspector and
+// the matrix view.
+
+// Global unresolved-comment counts for splices (used by matrix badges).
+// Map<spliceId, count>
+let _commentCounts = new Map();
+
+async function loadClosureComments(closureId) {
+  const host = document.getElementById('closure-comments-' + closureId);
+  const cnt  = document.getElementById('closure-comments-count-' + closureId);
+  if (!host) return;
+  try {
+    const comments = await api('/api/splice/comments?target_table=splice_closures&target_id=' + closureId);
+    // Separate top-level from replies
+    const topLevel = comments.filter(c => !c.parent_comment_id);
+    const replies  = new Map();
+    comments.filter(c => c.parent_comment_id).forEach(c => {
+      if (!replies.has(c.parent_comment_id)) replies.set(c.parent_comment_id, []);
+      replies.get(c.parent_comment_id).push(c);
+    });
+    const unresolved = comments.filter(c => !c.resolved_at && !c.parent_comment_id).length;
+    if (cnt) cnt.textContent = unresolved ? `${unresolved} unresolved` : '';
+    if (!comments.length) {
+      host.innerHTML = '<div class="empty-pane" style="padding:8px">No comments yet.</div>';
+      return;
+    }
+    host.innerHTML = topLevel.map(c => renderCommentThread(c, replies.get(c.id) || [], closureId, 'closure')).join('');
+  } catch (e) {
+    host.innerHTML = '<div class="empty-pane" style="padding:8px;color:var(--danger)">Load failed: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderCommentThread(c, replyList, targetId, targetType) {
+  const isResolved = !!c.resolved_at;
+  const canAdmin   = !isReadOnly();
+  const isOwn      = c.created_by_user_id && state.user?.id && c.created_by_user_id === state.user.id;
+  const ago        = timeAgo(c.created_at);
+  const replyHtml  = replyList.map(r => `
+    <div style="margin:6px 0 0 18px;padding:6px 8px;background:var(--surface-3);border-radius:5px;border-left:2px solid var(--border-strong)">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px"><b>${esc(r.created_by_name || 'Unknown')}</b> · ${timeAgo(r.created_at)}</div>
+      <div style="font-size:12px;white-space:pre-wrap">${esc(r.body)}</div>
+      ${canAdmin || isOwn ? `<button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px;margin-top:3px" onclick="deleteComment('${esc(r.id)}','${esc(targetId)}','${targetType}')"><i class="fa-solid fa-times"></i></button>` : ''}
+    </div>`).join('');
+
+  const replyInputId = 'reply-input-' + c.id;
+  return `<div style="margin-bottom:10px;padding:8px;background:var(--surface-2);border-radius:6px;border:1px solid ${isResolved?'var(--success-border,#c3e6cb)':'var(--border-weak)'}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+      <div>
+        <span style="font-size:11px;color:var(--text-muted)"><b>${esc(c.created_by_name || 'Unknown')}</b> · ${ago}</span>
+        ${isResolved ? `<span style="margin-left:6px;font-size:10px;background:var(--success,#28a745);color:#fff;padding:1px 5px;border-radius:3px">resolved</span>` : ''}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        ${canAdmin ? `<button class="btn btn-sm" style="padding:1px 6px;font-size:10px" onclick="resolveComment('${esc(c.id)}','${esc(targetId)}','${targetType}')" title="${isResolved?'Unresolve':'Resolve'}"><i class="fa-solid fa-${isResolved?'rotate-left':'check'}"></i></button>` : ''}
+        ${canAdmin || isOwn ? `<button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px" onclick="deleteComment('${esc(c.id)}','${esc(targetId)}','${targetType}')"><i class="fa-solid fa-times"></i></button>` : ''}
+      </div>
+    </div>
+    <div style="margin-top:5px;font-size:12px;white-space:pre-wrap">${esc(c.body)}</div>
+    ${replyHtml}
+    ${isReadOnly() ? '' : `
+    <div style="margin-top:6px;display:flex;gap:4px">
+      <input type="text" class="input-sm" style="flex:1" placeholder="Reply…" id="${esc(replyInputId)}">
+      <button class="btn btn-sm" onclick="postCommentReply('${esc(c.id)}','${esc(replyInputId)}','${esc(targetId)}','${targetType}')"><i class="fa-solid fa-reply"></i></button>
+    </div>`}
+  </div>`;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+async function postClosureComment(closureId) {
+  const inp = document.getElementById('closure-comment-input-' + closureId);
+  if (!inp || !inp.value.trim()) return;
+  if (!state.currentId) return;
+  try {
+    await api('/api/splice/comments', 'POST', {
+      project_id: state.currentId,
+      target_table: 'splice_closures',
+      target_id: closureId,
+      body: inp.value.trim(),
+    });
+    inp.value = '';
+    await loadClosureComments(closureId);
+  } catch (e) { toast('Failed to post: ' + e.message, 'error'); }
+}
+
+async function postCommentReply(parentId, inputId, targetId, targetType) {
+  const inp = document.getElementById(inputId);
+  if (!inp || !inp.value.trim()) return;
+  if (!state.currentId) return;
+  const targetTable = targetType === 'closure' ? 'splice_closures' : 'splices';
+  try {
+    await api('/api/splice/comments', 'POST', {
+      project_id: state.currentId,
+      target_table: targetTable,
+      target_id: targetId,
+      body: inp.value.trim(),
+      parent_comment_id: parentId,
+    });
+    inp.value = '';
+    if (targetType === 'closure') {
+      await loadClosureComments(targetId);
+    } else {
+      await loadSpliceCommentPopover(targetId);
+    }
+  } catch (e) { toast('Failed to post reply: ' + e.message, 'error'); }
+}
+
+async function resolveComment(commentId, targetId, targetType) {
+  try {
+    await api('/api/splice/comments/' + commentId + '/resolve', 'POST');
+    if (targetType === 'closure') {
+      await loadClosureComments(targetId);
+    } else {
+      await loadSpliceCommentPopover(targetId);
+      await refreshMatrixCommentCounts();
+      if (state.activeView === 'matrix') renderMatrixView();
+    }
+  } catch (e) { toast('Failed to toggle resolve: ' + e.message, 'error'); }
+}
+
+async function deleteComment(commentId, targetId, targetType) {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    await api('/api/splice/comments/' + commentId, 'DELETE');
+    if (targetType === 'closure') {
+      await loadClosureComments(targetId);
+    } else {
+      await loadSpliceCommentPopover(targetId);
+      await refreshMatrixCommentCounts();
+      if (state.activeView === 'matrix') renderMatrixView();
+    }
+  } catch (e) { toast('Failed to delete: ' + e.message, 'error'); }
+}
+
+// ── Splice comment badge + popover ───────────────────────────────────────────
+// openSpliceComments opens a small modal-like popover for a splice's thread.
+// Used from both the matrix view badges and (future) tray inspector rows.
+
+async function refreshMatrixCommentCounts() {
+  if (!state.currentId) return;
+  try {
+    const all = await api('/api/splice/projects/' + state.currentId + '/comments');
+    _commentCounts = new Map();
+    all.filter(c => c.target_table === 'splices').forEach(c => {
+      _commentCounts.set(c.target_id, (_commentCounts.get(c.target_id) || 0) + 1);
+    });
+  } catch {}
+}
+
+async function openSpliceComments(spliceId) {
+  state._openSpliceCommentId = spliceId;
+  showModal({
+    title: 'Splice comments',
+    body: `<div id="splice-comment-list-${esc(spliceId)}"><div class="empty-pane" style="padding:10px">Loading…</div></div>
+      ${isReadOnly() ? '' : `
+      <div style="margin-top:8px">
+        <textarea id="splice-comment-input-${esc(spliceId)}" class="input-sm" rows="2" style="width:100%;box-sizing:border-box" placeholder="Add a comment…"></textarea>
+        <button class="btn btn-sm btn-primary" style="margin-top:4px" onclick="postSpliceComment('${esc(spliceId)}')"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>`}`,
+    onSubmit: (close) => close(),
+    submitText: 'Close',
+  });
+  await loadSpliceCommentPopover(spliceId);
+}
+
+async function loadSpliceCommentPopover(spliceId) {
+  const host = document.getElementById('splice-comment-list-' + spliceId);
+  if (!host) return;
+  try {
+    const comments = await api('/api/splice/comments?target_table=splices&target_id=' + spliceId);
+    const topLevel = comments.filter(c => !c.parent_comment_id);
+    const replies  = new Map();
+    comments.filter(c => c.parent_comment_id).forEach(c => {
+      if (!replies.has(c.parent_comment_id)) replies.set(c.parent_comment_id, []);
+      replies.get(c.parent_comment_id).push(c);
+    });
+    if (!comments.length) {
+      host.innerHTML = '<div class="empty-pane" style="padding:8px">No comments yet.</div>';
+      return;
+    }
+    host.innerHTML = topLevel.map(c => renderCommentThread(c, replies.get(c.id) || [], spliceId, 'splice')).join('');
+  } catch (e) {
+    host.innerHTML = '<div class="empty-pane" style="color:var(--danger);padding:8px">Load failed.</div>';
+  }
+}
+
+async function postSpliceComment(spliceId) {
+  const inp = document.getElementById('splice-comment-input-' + spliceId);
+  if (!inp || !inp.value.trim()) return;
+  if (!state.currentId) return;
+  try {
+    await api('/api/splice/comments', 'POST', {
+      project_id: state.currentId,
+      target_table: 'splices',
+      target_id: spliceId,
+      body: inp.value.trim(),
+    });
+    inp.value = '';
+    await loadSpliceCommentPopover(spliceId);
+    await refreshMatrixCommentCounts();
+    if (state.activeView === 'matrix') renderMatrixView();
+  } catch (e) { toast('Failed to post: ' + e.message, 'error'); }
+}
+
+// Also add comment badge to tray inspector loose splice rows.
+// We patch renderLooseSpliceRows to inject a badge after the trace button.
 
 // ─── Cable slack helpers (Phase 2C #10) ──────────────────────────────────
 // One row per cable that terminates or passes through this location
@@ -2333,6 +2589,10 @@ function renderLooseSpliceRows(splices) {
     ${loose.map(s => {
       const a = describeFiber(s.fiber_a_id);
       const b = describeFiber(s.fiber_b_id);
+      const commentCount = _commentCounts.get(s.id) || 0;
+      const badgeHtml = commentCount
+        ? `<button class="btn btn-sm" style="position:relative" onclick="openSpliceComments('${s.id}')" title="${commentCount} unresolved comment${commentCount>1?'s':''}"><i class="fa-solid fa-comments"></i><span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:9px;border-radius:8px;padding:0 4px;min-width:14px;text-align:center">${commentCount}</span></button>`
+        : `<button class="btn btn-sm" onclick="openSpliceComments('${s.id}')" title="Add comment"><i class="fa-regular fa-comment"></i></button>`;
       return `<div class="splice-row">
         <div class="desc">
           <span class="fc fc-${a.color}" title="${a.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.color]||''}</span> ${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
@@ -2341,6 +2601,7 @@ function renderLooseSpliceRows(splices) {
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
+          ${badgeHtml}
           <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
         </div>
       </div>`;
