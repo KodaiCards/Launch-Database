@@ -10,7 +10,7 @@
 // timeclockModule.makeAuditLogger). Audit failures are isolated so a
 // logging hiccup never turns a successful entry mutation into a 500.
 
-const { updateProjectHours, saveUndoBucket } = require('./_helpers');
+const { updateProjectHours, saveUndoBucket, snapHoursToQuarter } = require('./_helpers');
 
 module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
@@ -130,13 +130,17 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         return res.status(409).json({ error: 'That project request is no longer pending; pick a real project.' });
       }
     }
+    // Owner rule: hours always live on the 0.25 grid. Snap before INSERT
+    // so anything stored is canonical regardless of how the row arrived
+    // (admin form, portal, AI tool, CSV path that misses the snap).
+    const snappedHours = snapHoursToQuarter(hours);
     let inserted;
     try {
       const userId = req.user?.id || null;
       const { rows } = await pool.query(`
         INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, notes, user_id, pending_project_request_id)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-      `, [project_id || null, effectiveStaffId, entry_date, hours, job_title, notes, userId, pending_project_request_id || null]);
+      `, [project_id || null, effectiveStaffId, entry_date, snappedHours, job_title, notes, userId, pending_project_request_id || null]);
       inserted = rows[0];
       // Skip the rollup when this is a held timecard — there's no project
       // to roll into yet. The retro-attach on approval handles it later.
@@ -170,10 +174,11 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       await client.query('BEGIN');
       const inserted = [];
       for (const e of entries) {
+        // Snap to 0.25 grid — same invariant as the single-row POST path.
         const { rows } = await client.query(`
           INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
           VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
-        `, [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title, importBatch]);
+        `, [e.project_id, e.staff_id || null, e.entry_date, snapHoursToQuarter(e.hours), e.job_title, importBatch]);
         inserted.push(rows[0]);
       }
       // Update actual_hours with hierarchy rollup
@@ -224,7 +229,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       if (project_id !== undefined) { sets.push(`project_id = $${i++}`); params.push(project_id); }
       if (staff_id !== undefined)   { sets.push(`staff_id = $${i++}`);   params.push(staff_id || null); }
       if (entry_date !== undefined) { sets.push(`entry_date = $${i++}`); params.push(entry_date); }
-      if (hours !== undefined)      { sets.push(`hours = $${i++}`);      params.push(hours); }
+      if (hours !== undefined)      { sets.push(`hours = $${i++}`);      params.push(snapHoursToQuarter(hours)); }
       if (job_title !== undefined)  { sets.push(`job_title = $${i++}`);  params.push(job_title); }
       if (notes !== undefined)      { sets.push(`notes = $${i++}`);      params.push(notes); }
       if (!sets.length) return res.status(400).json({ error: 'No fields to update' });

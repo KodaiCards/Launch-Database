@@ -7089,13 +7089,23 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 // FORMATTERS
 // ═══════════════════════════════════════════════════════════
 function fmtMoney(n) { return '$' + (parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmt(n, unit='') { const v=parseFloat(n)||0; return v.toFixed(1)+(unit?' '+unit:''); }
-// Display hours WITHOUT rounding — strips trailing zeros and dot.
-// 11.5 → "11.5", 12 → "12", 11.745 → "11.745".
+// Lossless number formatter — strips trailing zeros after the decimal.
+// 8 → "8", 8.5 → "8.5", 8.25 → "8.25", 11.745 → "11.745".
+// Owner rule: hours are 0.25-aligned and we never display rounded values
+// like 8.3 when the truth is 8.25. Older callers expected a fixed
+// 1-decimal output ("8.5" / "8.0"); they get full precision now and
+// continue to render correctly because the unit suffix is unchanged.
+function fmt(n, unit='') {
+  const v = parseFloat(n);
+  if (isNaN(v)) return '0' + (unit ? ' ' + unit : '');
+  const str = v.toFixed(4).replace(/\.?0+$/, '') || '0';
+  return str + (unit ? ' ' + unit : '');
+}
+// Same shape as fmt() but no unit. Kept for callers that want just the
+// number string. 11.5 → "11.5", 12 → "12", 11.745 → "11.745".
 function fmtHours(n) {
   const v = parseFloat(n);
   if (isNaN(v) || v === 0) return '0';
-  // toFixed(4) then strip trailing zeros and trailing dot
   return v.toFixed(4).replace(/\.?0+$/, '');
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
