@@ -250,6 +250,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     </div>
     <div class="map-toolbar" id="map-toolbar" style="display:none">
       <button class="btn btn-sm" onclick="mapFitData()" title="Zoom to fit all geographic data"><i class="fa-solid fa-expand"></i> Fit</button>
+      <button class="btn btn-sm" id="btn-basemap" onclick="cycleBasemap()" title="Toggle basemap: satellite-only ↔ hybrid (satellite + roads/labels)"><i class="fa-solid fa-layer-group"></i> <span id="btn-basemap-label">Hybrid</span></button>
       <button class="btn btn-sm" id="btn-place-mode" onclick="mapTogglePlaceMode()" title="Place a closure: click an unmapped closure in the list, then click on the map"><i class="fa-solid fa-map-pin"></i> Place</button>
       <button class="btn btn-sm" id="btn-path-mode" onclick="mapTogglePathMode()" title="Draw cable path: click waypoints, double-click to finish"><i class="fa-solid fa-route"></i> Draw path</button>
       <span id="map-mode-hint" class="map-mode-hint"></span>
@@ -2907,6 +2908,26 @@ function loadMapLibre() {
 // Esri World Imagery — free for non-commercial-and-light-commercial use,
 // attributed in tile URL params. The most common OSP-industry basemap.
 const ESRI_SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+// Esri reference overlay — boundaries + place names + major roads, used
+// in hybrid mode on top of the satellite tiles. Same provider, same
+// attribution, transparent PNGs.
+const ESRI_REF_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+
+// Default starting view when a project has no geographic data yet.
+// Mecca Drive, Macon GA — owner-set 2026-05-06. Once a project gets
+// any location coords, mapFitData() flies to the actual extent on the
+// next hydrate, so this only matters on first-touch.
+const DEFAULT_MAP_CENTER = [-83.6736, 32.8625];
+const DEFAULT_MAP_ZOOM   = 15;
+
+// Basemap mode persists across sessions (matches dark-mode pattern).
+function loadBasemapMode() {
+  try { return localStorage.getItem('lfs_splice_basemap') || 'hybrid'; }
+  catch { return 'hybrid'; }
+}
+function saveBasemapMode(mode) {
+  try { localStorage.setItem('lfs_splice_basemap', mode); } catch {}
+}
 
 function switchView(view) {
   if (view === state.activeView) return;
@@ -2932,6 +2953,8 @@ async function initMapIfNeeded() {
   try {
     const maplibregl = await loadMapLibre();
     state.maplibregl = maplibregl;
+    const initialBasemap = loadBasemapMode();
+    state.basemap = initialBasemap;
     const map = new maplibregl.Map({
       container: 'map-stage',
       style: {
@@ -2943,18 +2966,38 @@ async function initMapIfNeeded() {
             tileSize: 256,
             attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
           },
+          'esri-ref': {
+            type: 'raster',
+            tiles: [ESRI_REF_TILES],
+            tileSize: 256,
+            attribution: 'Reference © Esri',
+          },
         },
-        layers: [{ id: 'esri-sat', type: 'raster', source: 'esri-sat' }],
+        layers: [
+          { id: 'esri-sat', type: 'raster', source: 'esri-sat' },
+          // The reference overlay starts visible-iff-hybrid; toggle
+          // function flips its layout.visibility.
+          {
+            id: 'esri-ref',
+            type: 'raster',
+            source: 'esri-ref',
+            layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
+          },
+        ],
       },
-      // Continental US default; mapFitData() flies to the data on load
-      // when at least one location has coords.
-      center: [-98.5, 39.8],
-      zoom: 4,
+      // Mecca Drive, Macon GA default. mapFitData() flies to a project's
+      // actual extent on the next hydrate when geo data exists.
+      center: DEFAULT_MAP_CENTER,
+      zoom: DEFAULT_MAP_ZOOM,
       attributionControl: { compact: true },
     });
     state.map = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }));
+    // Sync the basemap toggle label to whatever was loaded from
+    // localStorage (defaults to 'hybrid' on first run).
+    const bmLabel = document.getElementById('btn-basemap-label');
+    if (bmLabel) bmLabel.textContent = initialBasemap === 'hybrid' ? 'Hybrid' : 'Satellite';
     map.on('load', () => {
       // Source + layer for cable polylines. We re-set the data on every
       // refresh from state.data; the source itself just needs to exist
@@ -3187,6 +3230,18 @@ async function mapPathFinish() {
   } catch (e) {
     toast('Save failed: ' + e.message, 'error');
   }
+}
+
+// Cycle between satellite-only and hybrid (satellite + reference
+// labels). Persists across sessions in localStorage. Updates the
+// button label so the user can see the current state at a glance.
+function cycleBasemap() {
+  if (!state.map) return;
+  const next = state.basemap === 'hybrid' ? 'sat' : 'hybrid';
+  state.basemap = next;
+  saveBasemapMode(next);
+  state.map.setLayoutProperty('esri-ref', 'visibility', next === 'hybrid' ? 'visible' : 'none');
+  document.getElementById('btn-basemap-label').textContent = next === 'hybrid' ? 'Hybrid' : 'Satellite';
 }
 
 function mapClearMode() {
