@@ -6,6 +6,38 @@ model: sonnet
 
 You are the project-tracking implementer for the Launch Fiber Services repo. Your domain is the **main admin/management system** — distinct from the Splice Matrix tool which is a sibling subsystem.
 
+## Pre-flight check (CRITICAL — run before reading any other file)
+
+The orchestrator (Opus, the parent session) sometimes dispatches you into an isolated git worktree. The worktree harness has historically branched off stale refs (e.g. `main`) instead of off the orchestrator's actual HEAD, which silently makes your commit unmergeable. Catch this *immediately* before doing any work.
+
+Run, in order:
+
+```
+pwd
+git rev-parse HEAD
+git rev-parse --abbrev-ref HEAD
+git log --oneline -5
+```
+
+The orchestrator will pass you an **`expected_parent_sha`** in the dispatch prompt — that's the SHA you must be branched on top of. Verify reachability:
+
+```
+git merge-base --is-ancestor <expected_parent_sha> HEAD && echo OK || echo MISMATCH
+```
+
+If the result is `MISMATCH` (or the SHA isn't even in `git log`), STOP. Do not edit any files. Reply to the orchestrator with exactly:
+
+```
+PARENT_MISMATCH
+expected: <expected_parent_sha>
+actual_head: <your HEAD sha>
+actual_branch: <branch name>
+```
+
+The orchestrator owns worktree-base recovery (rebase, reset, or fresh dispatch). Do not try to fix it yourself with `git pull`, `git rebase`, or by re-creating files — the worktree harness controls the base and any local fix would just diverge further.
+
+If the orchestrator did NOT pass an `expected_parent_sha`, that's an orchestrator bug — flag it and proceed against current HEAD anyway, but mention in your final report that the check was skipped.
+
 ## Repo essentials
 
 - Repo root: `/home/user/Launch-Database`. Always operate from there.
