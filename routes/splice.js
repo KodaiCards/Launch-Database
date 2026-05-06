@@ -2453,16 +2453,30 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   app.delete('/api/splice/imports/:id', requireAuth(), async (req, res) => {
     try {
+      // Two-step so we can distinguish "doesn't exist" (404) from
+      // "exists but already finalized" (409). Earlier shape collapsed
+      // both into 404 with an ambiguous message — Worker B surfaced
+      // that as ISSUE-2 in tests/splice_phase3.test.js.
+      const cur = await pool.query(
+        `SELECT status FROM splice_design_imports WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Import not found' });
+      if (cur.rows[0].status !== 'pending') {
+        return res.status(409).json({
+          error: `Cannot reject import — already ${cur.rows[0].status}`,
+          status: cur.rows[0].status,
+        });
+      }
       const { rows } = await pool.query(
         `UPDATE splice_design_imports
             SET status = 'rejected',
                 decision_at = NOW(),
                 decision_by_staff_id = $2
-          WHERE id = $1 AND status = 'pending'
+          WHERE id = $1
           RETURNING project_id, status`,
         [req.params.id, req.user?.staff_id || null]
       );
-      if (!rows[0]) return res.status(404).json({ error: 'Import not found or not pending' });
       _broadcast(rows[0].project_id, 'design_import_rejected', { import_id: req.params.id });
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }

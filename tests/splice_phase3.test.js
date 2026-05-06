@@ -17,11 +17,10 @@
 //   throws a lazy-require error at request time, not at boot. Tests that
 //   exercise the export on an environment without archiver will 500.
 //
-//   ISSUE-2: DELETE /api/splice/imports/:id returns 404 for any import
-//   whose status is not 'pending' (including 'applied'). The task spec
-//   says "DELETE on an already-applied import should 404 or behave per
-//   the route handler" — confirmed 404 is the intended behavior, but the
-//   error message is "Import not found or not pending" which is ambiguous.
+//   ISSUE-2 (fixed): DELETE /api/splice/imports/:id now distinguishes
+//   404 (no such id) from 409 (exists but already finalized). The 409
+//   body carries the current status so the caller can react. Test 11
+//   asserts the new shape.
 //
 //   ISSUE-3: Round-trip diff may produce phantom location-coordinate
 //   updates if DECIMAL(10,7) values read back from Postgres differ
@@ -383,9 +382,9 @@ test('POST /imports/:id/apply commits approved changes to the live tree', async 
     'live project must have at least one cable after apply');
 });
 
-// ─── Test 11: DELETE /imports/:id rejects a pending import ───────────────
+// ─── Test 11: DELETE /imports/:id distinguishes 404 from 409 ─────────────
 
-test('DELETE /imports/:id rejects pending import; DELETE applied import returns 404', async () => {
+test('DELETE /imports/:id: 200 on pending, 409 on already-finalized, 404 on bogus id', async () => {
   // Create a fresh project + fresh pending import.
   const proj = await makeProject('phase3-delete-import');
   const buf = buildKmz(minimalKml('del-test'));
@@ -401,17 +400,25 @@ test('DELETE /imports/:id rejects pending import; DELETE applied import returns 
   const detail = await requestJson('GET', `/api/splice/imports/${imp.id}`, { token });
   assert.equal(detail.import.status, 'rejected');
 
-  // DELETE again — route uses WHERE status = 'pending', so 'rejected' row
-  // won't match → 404 "Import not found or not pending".
+  // DELETE again — already-rejected should be 409 with the current status,
+  // not the prior ambiguous 404 (ISSUE-2 fix).
   const del2 = await request('DELETE', `/api/splice/imports/${imp.id}`, { token });
-  assert.equal(del2.status, 404);
+  assert.equal(del2.status, 409);
+  const del2Body = await del2.json();
+  assert.equal(del2Body.status, 'rejected');
 
-  // DELETE an already-applied import also returns 404 (not pending).
-  // Use the import from test 10 (stagedImportId) which is now 'applied'.
+  // DELETE an already-applied import returns 409 too.
   if (stagedImportId) {
     const del3 = await request('DELETE', `/api/splice/imports/${stagedImportId}`, { token });
-    assert.equal(del3.status, 404);
+    assert.equal(del3.status, 409);
+    const del3Body = await del3.json();
+    assert.equal(del3Body.status, 'applied');
   }
+
+  // DELETE on a truly nonexistent id returns 404.
+  const bogusId = '00000000-0000-0000-0000-000000000000';
+  const del4 = await request('DELETE', `/api/splice/imports/${bogusId}`, { token });
+  assert.equal(del4.status, 404);
 });
 
 // ─── Test 12: Round-trip export → re-import has zero adds ────────────────
