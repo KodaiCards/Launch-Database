@@ -414,6 +414,130 @@ be persuaded to export one of those.
 
 ---
 
+## Phase 4 — competitive-research-driven roadmap
+
+Owner-approved 2026-05-06 after the May 2026 competitive research
+sweep (`research/01-06_*.md`). Each item below corresponds to a real
+gap, anti-pattern, or differentiator the survey surfaced.
+
+Priority within tiers is build-order. Tier 1 → Tier 2 → Tier 3.
+
+### Tier 1 — high leverage, low–medium effort
+
+#### 4.1 No-login read-only web view of a splice project
+Replaces the KMZ-by-email stakeholder loop the industry uses today.
+A signed-token URL renders the whole project (map + closure
+inspectors + tray view) in read-only mode with no auth required.
+Reuses the Phase 2B #7 token mechanism (`splice_closure_public_
+tokens`) but at the project level.
+
+- New migration `0020_splice_project_public_tokens.sql` mirroring
+  the closure-token table but keyed on `project_id`.
+- New endpoints: `POST /api/splice/projects/:id/public-tokens`
+  (mint), `GET /splice/view/:token` (public, no auth, render).
+- New file `public/splice_view.html` — read-only map + diagram +
+  closure inspector. Lazily loads MapLibre, uses the same hydrate
+  endpoint, no Konva editing layer, no inspector edit controls.
+- `pageRequiresAuth()` in `server.js` allows `/splice/view/`.
+
+#### 4.2 Two-letter TIA-598 codes overlaid on color fills
+Splice.me does this; we don't. Important for grayscale print,
+color-deficient users, and Slate/White confusion at fast-glance.
+
+- Update Konva canvas: render a 2-char abbreviation (`BL`/`OR`/`GR`
+  /`BR`/`SL`/`WH`/`RD`/`BK`/`YL`/`VL`/`RS`/`AQ`) inside or adjacent
+  to each fiber/tube color chip.
+- Update splicer-PDF render in `_renderSpliceHtml` (`routes/
+  splice.js`): strand color cells get the same 2-letter code.
+- Render a high-contrast border around each color block so the fill
+  reproduces well in grayscale.
+
+#### 4.3 Map ↔ diagram split view
+IQGeo and netTerrain show this pattern; we have map + diagram as
+separate tabs today. A split mode where selecting on one highlights
+on the other is what the top tools do.
+
+- Add a third view-tab "Split" alongside Diagram + Map.
+- 50/50 horizontal split (configurable via drag-divider).
+- Selection sync: clicking a closure on the map highlights its tray
+  block on the diagram, scrolls it into view, and inverse.
+- No new schema. No new endpoints. Pure UI.
+
+### Tier 2 — medium effort, real differentiation
+
+#### 4.4 Splice matrix tabular editor
+Adjacent-tools shard #1 finding: every shop maintains an Excel
+splice matrix AND a separate visual diagram, and they always
+diverge. A tabular editor that mirrors the same data model
+eliminates the dual-artifact problem.
+
+- New view-tab "Matrix" alongside Diagram + Map + Split.
+- Renders splices as rows: Cable A · Tube · Fiber · ↔ · Cable B ·
+  Tube · Fiber · Splice type · Tray · Closure · Circuit · Customer.
+- Inline edit each cell; bulk select for delete; filter/sort by any
+  column; export to CSV.
+- No schema change — the splice rows are already there. The matrix
+  is a different read of the same data, with edits going through
+  the existing splice/PUT/DELETE endpoints.
+
+#### 4.5 Threaded comments on closures + splices
+Replaces the "see email re: closure 14" workflow. No competitor in
+the OSP space has this; it's the GitHub PR-comment pattern adapted.
+
+- New migration `0021_splice_comments.sql`:
+  `splice_comments(id, project_id, target_table, target_id, body,
+   created_by_user_id, created_at, resolved_at, resolved_by_user_id,
+   parent_comment_id NULL FOR THREADING)`.
+- Endpoints: `POST/GET/DELETE /api/splice/comments` with the
+  filter `?target_table=splice_closures&target_id=...`.
+- UI: a comment thread under each closure inspector + each tray /
+  splice row. Resolve toggle. New comment notifications via SSE.
+
+#### 4.6 Public template library (cross-account closure templates)
+Phase 2B #5 added per-client closure templates. Make a "public"
+scope (visible across all accounts) so a community library forms.
+Network-effect hook with low schema lift.
+
+- Add a `published_at` + `published_by_staff_id` + `download_count`
+  to `splice_closure_templates` (migration 0022).
+- New endpoint `POST /api/splice/closure-templates/:id/publish`
+  (admin-only) flips a template into the public pool.
+- The closure-template picker (Apply Template modal) gets a third
+  scope tab: Personal | Client | Public Library.
+- Each apply increments the template's download_count.
+
+### Tier 3 — high leverage, high effort
+
+#### 4.7 Fujikura Splice+ fusion-splicer integration
+Adjacent shard #2 finding: fusion splicers capture per-splice GPS
++ loss data, but nothing ingests it back into the design model. No
+competitor closes this loop. Real moat if shipped.
+
+- New migration `0023_splice_field_loss_records.sql`:
+  `splice_loss_records(id, splice_id NULL, closure_id NULL,
+   project_id, splicer_serial, gps_lat, gps_lon, splice_loss_db,
+   measured_at, raw_payload_jsonb)`.
+- Ingest endpoint `POST /api/splice/projects/:id/loss-records`
+  accepting Fujikura Splice+ JSON exports (the format their cloud
+  app produces). Auto-binds each record to the closest splice in
+  the project by GPS distance + matching cable/fiber metadata when
+  the splicer payload includes it.
+- UI: per-splice row shows a loss badge (green ≤ 0.10 dB,
+  yellow ≤ 0.25 dB, red > 0.25 dB) when a loss record is bound.
+- The splicer field markup page (Phase 2B #7) gains a "Upload
+  Splice+ JSON" affordance alongside the photo upload.
+
+### Tier 4 — backlog (deprioritized 2026-05-06)
+
+#### 4.8 (DEFERRED.) AI splice-photo validation
+IQGeo shipped this in their July 2024 Workflow Manager — visual AI
+analyzes field photos of a splice tray and validates against the
+plan. Owner explicitly skipped this in favor of Tier 1-3 above.
+Reconsider when Tier 1-3 ships and we have a corpus of photos
+worth training/grading against.
+
+---
+
 ## Anti-features — DO NOT BUILD
 
 - Login-required splicer mobile app. Splicers don't use them.

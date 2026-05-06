@@ -78,7 +78,22 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .view-tab:hover:not(.active){background:var(--surface-3)}
 .map-toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
 .map-toolbar .btn.active{background:var(--primary);color:var(--primary-text)}
-.map-mode-hint{font-size:11px;color:var(--text-muted);margin-left:6px}
+.map-mode-hint{font-size:11px;color:var(--text-muted);margin-left:6px;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Palette dropdown */
+.map-palette-wrap{position:relative}
+.map-palette{position:absolute;top:calc(100% + 4px);left:0;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);min-width:160px;z-index:20;padding:4px 0}
+.map-palette-item{display:block;width:100%;padding:6px 12px;font-size:11px;font-weight:500;text-align:left;background:none;border:none;color:var(--text);cursor:pointer;white-space:nowrap}
+.map-palette-item:hover{background:var(--surface-3)}
+.map-palette-sep{border:none;border-top:1px solid var(--border-weak);margin:3px 0}
+/* Cable edit handles */
+.cable-handle{width:10px;height:10px;border-radius:50%;background:#FFD400;border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.4);cursor:grab;position:absolute;transform:translate(-50%,-50%)}
+.cable-handle.mid{background:#FF6E00;opacity:0.7}
+.cable-handle:active{cursor:grabbing}
+/* Location type color chips */
+.loc-type-chip{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+/* Fiber diagram compact rows */
+.fiber-diagram-row{padding:3px 0;border-bottom:1px solid var(--border-weak);font-size:11px;display:flex;gap:6px;align-items:center}
+.fiber-diagram-row:last-child{border-bottom:none}
 .map-popup{font-size:12px;min-width:160px}
 .map-popup b{color:var(--primary)}
 .map-popup .row{margin:2px 0}
@@ -105,6 +120,23 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 /* Konva stage container */
 #stage{width:100%;height:100%}
+
+/* Phase 4.3 — Split view: diagram + map side-by-side with drag divider. */
+.canvas-pane.split-mode{display:flex;flex-direction:row}
+.canvas-pane.split-mode #stage{flex:0 0 auto;width:var(--split-ratio,50%);height:100%}
+.canvas-pane.split-mode #map-stage{flex:1 1 0;height:100%;display:block !important}
+.split-divider{display:none;flex:0 0 6px;background:var(--border-strong);cursor:col-resize;z-index:10;transition:background .1s}
+.split-divider:hover,.split-divider.dragging{background:var(--primary)}
+.canvas-pane.split-mode .split-divider{display:block}
+/* In split mode the toolbars need fixed left so they don't overlap divider */
+.canvas-pane.split-mode .toolbar{position:absolute;top:10px;left:10px;z-index:7}
+.canvas-pane.split-mode .map-toolbar{position:absolute;top:10px;z-index:7}
+.canvas-pane.split-mode .view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8}
+
+/* Phase 4.4 matrix view */
+.matrix-row-selected{background:rgba(var(--primary-rgb,27,95,160),.08)}
+.matrix-comment-badge,.matrix-comment-badge-empty{cursor:pointer;margin-right:4px;font-size:11px;color:var(--primary);vertical-align:middle}
+.matrix-comment-badge-empty{color:var(--text-muted)}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;font-weight:500;border-radius:5px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);cursor:pointer;transition:all .12s}
@@ -193,6 +225,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
   <div class="right">
     <button class="btn btn-sm" id="btn-save-rev" title="Save a labeled revision" disabled onclick="saveRevision()"><i class="fa-solid fa-flag"></i> Save rev</button>
     <button class="btn btn-sm" id="btn-versions" title="Version history & compare" disabled onclick="openVersionsModal()"><i class="fa-solid fa-clock-rotate-left"></i> Versions</button>
+    <button class="btn btn-sm" id="btn-share" disabled title="Share a read-only link with stakeholders" onclick="openShareModal()"><i class="fa-solid fa-share-nodes"></i> Share</button>
     <button class="btn btn-sm" id="btn-export" disabled><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
     <button class="btn btn-sm" id="btn-export-kmz" disabled title="Download a KMZ for Google Earth / GIS" onclick="downloadKmz()"><i class="fa-solid fa-earth-americas"></i> KMZ</button>
     <button class="btn btn-sm btn-icon" id="btn-dark" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
@@ -208,6 +241,12 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-section">
       <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
+      <div style="margin-bottom:8px">
+        <input type="search" id="search-input" placeholder="Search circuits, cables, closures…"
+               style="width:100%;padding:5px 8px;font-size:12px;border-radius:4px;border:1px solid var(--border-weak);background:var(--surface-2);color:var(--text)"
+               oninput="onSearchInput(this.value)">
+        <div id="search-results" style="display:none;background:var(--surface);border:1px solid var(--border-weak);border-radius:4px;margin-top:4px;max-height:50vh;overflow:auto;font-size:11px"></div>
+      </div>
       <ul class="proj-list" id="proj-list"><li class="empty-pane">Loading…</li></ul>
     </div>
     <div class="sidebar-section" id="proj-actions" style="display:none">
@@ -219,6 +258,8 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
         <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
         <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
+        <!-- Phase 4.6: admin-only template manager -->
+        <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
       </div>
     </div>
     <div class="sidebar-section" id="proj-imports" style="display:none">
@@ -236,6 +277,8 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     <div class="view-tabs" id="view-tabs" style="display:none">
       <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
       <button class="view-tab" data-view="map" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Map</button>
+      <button class="view-tab" data-view="split" onclick="switchView('split')"><i class="fa-solid fa-table-columns"></i> Split</button>
+      <button class="view-tab" data-view="matrix" onclick="switchView('matrix')"><i class="fa-solid fa-table"></i> Matrix</button>
     </div>
     <div class="toolbar" id="toolbar" style="display:none">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
@@ -244,13 +287,45 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     </div>
     <div class="map-toolbar" id="map-toolbar" style="display:none">
       <button class="btn btn-sm" onclick="mapFitData()" title="Zoom to fit all geographic data"><i class="fa-solid fa-expand"></i> Fit</button>
-      <button class="btn btn-sm" id="btn-place-mode" onclick="mapTogglePlaceMode()" title="Place a closure: click an unmapped closure in the list, then click on the map"><i class="fa-solid fa-map-pin"></i> Place</button>
-      <button class="btn btn-sm" id="btn-path-mode" onclick="mapTogglePathMode()" title="Draw cable path: click waypoints, double-click to finish"><i class="fa-solid fa-route"></i> Draw path</button>
+      <button class="btn btn-sm" id="btn-basemap" onclick="cycleBasemap()" title="Toggle basemap: satellite-only vs hybrid"><i class="fa-solid fa-layer-group"></i> <span id="btn-basemap-label">Hybrid</span></button>
+      <div class="map-palette-wrap" id="palette-wrap">
+        <button class="btn btn-sm" id="btn-add-item" onclick="mapTogglePalette()" title="Add a location item to the map"><i class="fa-solid fa-plus"></i> Add Item</button>
+        <div class="map-palette" id="map-palette" style="display:none">
+          <button class="map-palette-item" onclick="mapStartPlace('handhole')"><i class="fa-solid fa-circle-dot" style="width:14px"></i> Handhole</button>
+          <button class="map-palette-item" onclick="mapStartPlace('manhole')"><i class="fa-solid fa-circle" style="width:14px"></i> Manhole</button>
+          <button class="map-palette-item" onclick="mapStartPlace('pole')"><i class="fa-solid fa-turn-up" style="width:14px"></i> Pole</button>
+          <button class="map-palette-item" onclick="mapStartPlace('pedestal')"><i class="fa-solid fa-box" style="width:14px"></i> Pedestal</button>
+          <button class="map-palette-item" onclick="mapStartPlace('vault')"><i class="fa-solid fa-vault" style="width:14px"></i> Vault</button>
+          <hr class="map-palette-sep">
+          <button class="map-palette-item" onclick="mapStartPlace('fdh')"><i class="fa-solid fa-network-wired" style="width:14px"></i> FDH</button>
+          <button class="map-palette-item" onclick="mapStartPlace('splice_point')"><i class="fa-solid fa-scissors" style="width:14px"></i> Splice point</button>
+          <button class="map-palette-item" onclick="mapStartPlace('co')"><i class="fa-solid fa-building" style="width:14px"></i> Central Office</button>
+          <button class="map-palette-item" onclick="mapStartPlace('terminal')"><i class="fa-solid fa-plug" style="width:14px"></i> Terminal</button>
+          <button class="map-palette-item" onclick="mapStartPlace('ring_cut')"><i class="fa-solid fa-ring" style="width:14px"></i> Ring cut</button>
+        </div>
+      </div>
+      <button class="btn btn-sm" id="btn-draw-cable" onclick="mapToggleMultistop()" title="Draw a cable route across multiple locations"><i class="fa-solid fa-route"></i> Draw cable</button>
       <span id="map-mode-hint" class="map-mode-hint"></span>
     </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
+    <div class="split-divider" id="split-divider"></div>
     <div id="map-stage" style="display:none;width:100%;height:100%"></div>
+    <!-- Phase 4.4: matrix tabular editor -->
+    <div id="matrix-stage" style="display:none;width:100%;height:100%;overflow:auto;background:var(--surface)">
+      <div id="matrix-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--border-weak);background:var(--surface-2);position:sticky;top:0;z-index:5">
+        <input id="matrix-filter-text" type="text" placeholder="Filter splices…" class="input-sm" style="width:180px" oninput="renderMatrixView()">
+        <select id="matrix-filter-closure" class="input-sm" onchange="renderMatrixView()">
+          <option value="">All closures</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)">
+          <input type="checkbox" id="matrix-select-all" onchange="matrixToggleAll(this.checked)"> Select all
+        </label>
+        <button class="btn btn-sm btn-danger" id="matrix-bulk-delete" style="display:none" onclick="matrixBulkDelete()"><i class="fa-solid fa-trash"></i> Delete selected</button>
+        <button class="btn btn-sm" onclick="matrixExportCSV()" style="margin-left:auto"><i class="fa-solid fa-download"></i> Download CSV</button>
+      </div>
+      <div id="matrix-table-wrap" style="padding:8px"></div>
+    </div>
     <div class="warnings-banner" id="warnings-banner"></div>
   </div>
 
@@ -278,6 +353,16 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 const TIA_598 = ['blue','orange','green','brown','slate','white','red','black','yellow','violet','rose','aqua'];
 
+// Phase 4.2 — two-letter TIA-598 abbreviations for color-deficient designers,
+// grayscale prints, and fast-glance Slate/White confusion avoidance.
+const TIA_598_ABBREV = {
+  blue:'BL', orange:'OR', green:'GR', brown:'BR', slate:'SL', white:'WH',
+  red:'RD', black:'BK', yellow:'YL', violet:'VL', rose:'RS', aqua:'AQ',
+};
+
+// Colors that need white text for contrast (dark fills).
+const TIA_598_DARK_FILLS = new Set(['blue','brown','slate','violet','rose','red','black']);
+
 const state = {
   user: null,
   projects: [],
@@ -298,11 +383,42 @@ const state = {
   map: null,                 // MapLibre Map instance
   maplibregl: null,          // captured for Marker/LngLatBounds constructors
   _mapMarkers: [],
-  mapMode: null,             // null | 'place' | 'path'
+  _mapLabelMarkers: [],      // footage label markers for cable midpoints
+  _cableHandleMarkers: [],   // drag handles for active cable edit session
+  _editingCableId: null,     // cable whose path is being edited
+  _editPathCoords: [],       // mutable working copy during edit session
+  // mapMode: null | 'palette' | 'place-new' | 'multistop' | 'edit-path'
+  mapMode: null,
+  mapPlaceType: null,        // location type being placed (place-new mode)
+  // Legacy compat — mapPlaceTargetId is now unused; mapPathTargetId reused
+  // for the old path draw mode (cable selector); kept so any SSE handler
+  // that still references it doesn't throw.
   mapPlaceTargetId: null,
   mapPathTargetId: null,
   mapPathPoints: [],
+  // Multi-stop draw state
+  _msStops: [],              // { lngLat, locationId|null, name } accumulated stops
+  _msMarkers: [],            // MapLibre Markers for visual stop indicators
 };
+
+// Per-type marker colour palette. Defined here (before the inspector section)
+// so renderLocationInspector can use _locColor() at render time.
+const LOC_TYPE_COLORS = {
+  handhole:    '#3B82F6',
+  manhole:     '#7C3AED',
+  pole:        '#78716C',
+  pedestal:    '#16A34A',
+  vault:       '#B45309',
+  fdh:         '#DC2626',
+  co:          '#0F172A',
+  splice_point:'#1B5FA0',
+  terminal:    '#0D9488',
+  ring_cut:    '#EA580C',
+};
+
+function _locColor(loc) {
+  return LOC_TYPE_COLORS[loc.type] || '#888';
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // API helper — same shape as design.html, with 30s timeout for PDF call.
@@ -361,6 +477,9 @@ async function loadMe() {
     const me = await api('/api/auth/me');
     state.user = me;
     document.getElementById('user-name').textContent = me.full_name || me.username || me.email || 'user';
+    // Phase 4.6 — show admin-only template manager button.
+    const btnMgr = document.getElementById('btn-manage-templates');
+    if (btnMgr && me.role === 'admin') btnMgr.style.display = 'flex';
   } catch (e) {
     // 401 already redirects via api(); other errors leave the user-pill blank.
     document.getElementById('user-name').textContent = '?';
@@ -389,17 +508,90 @@ async function loadProjects() {
   }
 }
 
+// Project list filter + sort settings persist across reloads in
+// localStorage (matches dark-mode + basemap pattern).
+function loadProjListPrefs() {
+  try {
+    return {
+      status: localStorage.getItem('lfs_splice_proj_status') || 'all',
+      sort:   localStorage.getItem('lfs_splice_proj_sort')   || 'recent',
+      filter: '',  // text filter doesn't persist — feels surprising on reload
+    };
+  } catch { return { status: 'all', sort: 'recent', filter: '' }; }
+}
+function saveProjListPrefs(prefs) {
+  try {
+    if (prefs.status) localStorage.setItem('lfs_splice_proj_status', prefs.status);
+    if (prefs.sort)   localStorage.setItem('lfs_splice_proj_sort',   prefs.sort);
+  } catch {}
+}
+state._projListPrefs = state._projListPrefs || loadProjListPrefs();
+
+function setProjListPref(key, value) {
+  state._projListPrefs[key] = value;
+  if (key !== 'filter') saveProjListPrefs(state._projListPrefs);
+  renderProjectList();
+}
+
 function renderProjectList() {
   const ul = document.getElementById('proj-list');
-  if (!state.projects.length) {
-    ul.innerHTML = '<li class="empty-pane">No projects yet. Click + to create one.</li>';
+  const prefs = state._projListPrefs || loadProjListPrefs();
+  state._projListPrefs = prefs;
+
+  // Filter chrome above the list. Mounted once into a sibling slot;
+  // re-rendered with current pref values so the controls reflect the
+  // active filters even after a hydrate.
+  let chrome = document.getElementById('proj-list-controls');
+  if (!chrome) {
+    chrome = document.createElement('div');
+    chrome.id = 'proj-list-controls';
+    chrome.style.cssText = 'display:flex;gap:4px;margin-bottom:6px;font-size:11px';
+    ul.parentNode.insertBefore(chrome, ul);
+  }
+  chrome.innerHTML = `
+    <select id="proj-list-status" onchange="setProjListPref('status', this.value)" style="flex:1;padding:3px 4px;background:var(--surface-2);color:var(--text);border:1px solid var(--border-weak);border-radius:3px">
+      <option value="all"${prefs.status==='all'?' selected':''}>All</option>
+      <option value="active"${prefs.status==='active'?' selected':''}>Active</option>
+      <option value="completed"${prefs.status==='completed'?' selected':''}>Completed</option>
+      <option value="archived"${prefs.status==='archived'?' selected':''}>Archived</option>
+    </select>
+    <select id="proj-list-sort" onchange="setProjListPref('sort', this.value)" style="flex:1;padding:3px 4px;background:var(--surface-2);color:var(--text);border:1px solid var(--border-weak);border-radius:3px">
+      <option value="recent"${prefs.sort==='recent'?' selected':''}>Recent</option>
+      <option value="name"${prefs.sort==='name'?' selected':''}>Name</option>
+      <option value="size"${prefs.sort==='size'?' selected':''}>Size</option>
+    </select>
+  `;
+
+  // Apply filter then sort to the in-memory list (cheap; cardinality is
+  // low even for an extremely active install). Server-side ordering
+  // already returns recent-first; we re-sort here so other modes work.
+  let view = state.projects.slice();
+  if (prefs.status !== 'all') view = view.filter(p => p.status === prefs.status);
+  if (prefs.filter) {
+    const q = prefs.filter.toLowerCase();
+    view = view.filter(p => (p.name || '').toLowerCase().includes(q));
+  }
+  if (prefs.sort === 'name') {
+    view.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  } else if (prefs.sort === 'size') {
+    const score = p => (p.cable_count || 0) + (p.location_count || 0) + (p.splice_count || 0);
+    view.sort((a, b) => score(b) - score(a));
+  }
+  // 'recent' keeps the server's updated_at DESC ordering.
+
+  if (!view.length) {
+    if (!state.projects.length) {
+      ul.innerHTML = '<li class="empty-pane">No projects yet. Click + to create one.</li>';
+    } else {
+      ul.innerHTML = '<li class="empty-pane">No projects match the current filter.</li>';
+    }
     return;
   }
-  ul.innerHTML = state.projects.map(p => `
+  ul.innerHTML = view.map(p => `
     <li class="proj-item ${p.id === state.currentId ? 'active' : ''}" onclick="selectProject('${p.id}')">
       <div style="flex:1;min-width:0">
         <div class="name">${esc(p.name)}</div>
-        <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp</div>
+        <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp${p.status && p.status !== 'active' ? ' · ' + esc(p.status) : ''}</div>
       </div>
       <button class="btn btn-sm btn-icon" title="Clone project" onclick="event.stopPropagation();cloneProject('${p.id}','${esc(p.name).replace(/'/g, "\\'")}')"><i class="fa-solid fa-copy"></i></button>
       ${p.locked_by_staff_id ? '<span class="badge" title="Locked"><i class="fa-solid fa-lock"></i></span>' : ''}
@@ -459,6 +651,7 @@ async function selectProject(id) {
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
+  document.getElementById('btn-share').disabled = false;
   document.getElementById('btn-export').disabled = false;
   document.getElementById('btn-export-kmz').disabled = false;
   document.getElementById('btn-versions').disabled = false;
@@ -467,6 +660,13 @@ async function selectProject(id) {
   await hydrateProject();
   attemptLock();
   openSSE(id);
+  // Phase 4.4 — restore last active view tab (matrix survives reload).
+  try {
+    const saved = localStorage.getItem('lfs_splice_active_view');
+    if (saved && saved !== state.activeView && ['diagram','map','split','matrix'].includes(saved)) {
+      switchView(saved);
+    }
+  } catch {}
 }
 
 function cleanupCurrent() {
@@ -490,6 +690,9 @@ async function hydrateProject() {
     // Phase 3A — refresh the map layer on every hydrate. No-op when
     // map isn't initialized yet (user never opened the Map tab).
     if (state.map) refreshMapLayers();
+    // Phase 4.4 — re-render matrix view if active so inline edits
+    // and SSE-pushed changes appear without a manual refresh.
+    if (state.activeView === 'matrix') renderMatrixView();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
     // skips when last version is <10min old or generation hash matches,
     // so this is safe to call after every hydrate without flooding the
@@ -686,13 +889,14 @@ function openSSE(projectId) {
   ['cable_added','cable_updated','cable_deleted',
    'closure_added','closure_updated','closure_deleted',
    'location_added','location_updated','location_deleted',
-   'splice_added','splice_deleted',
+   'splice_added','splice_updated','splice_deleted',
    'ribbon_splice_added','ribbon_group_deleted',
    'location_coords_changed','cable_path_changed',
    'design_import_applied','design_import_rejected',
    'project_updated','lock_acquired','lock_released','lock_taken_over',
    'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired',
-   'cable_state_updated','cable_state_deleted']
+   'cable_state_updated','cable_state_deleted',
+   'closures_bulk_deleted']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Refresh the imports sidebar when the master designer or another
   // engineer takes action on a pending import.
@@ -708,6 +912,30 @@ function openSSE(projectId) {
         const data = JSON.parse(e.data || '{}');
         if (state.selection?.type === 'closure' && state.selection.id === data.closure_id) {
           loadClosureMarkups(data.closure_id);
+        }
+      } catch {}
+    });
+  });
+  // Phase 4.5 — comment events: re-render the comments section if the
+  // affected target is currently open in the inspector.
+  ['comment_added', 'comment_removed', 'comment_resolved'].forEach(evt => {
+    state.sse.addEventListener(evt, (e) => {
+      try {
+        const data = JSON.parse(e.data || '{}');
+        const tgt = data.comment || data;
+        // If the closure inspector is open, reload closure comments.
+        if (state.selection?.type === 'closure' &&
+            tgt.target_table === 'splice_closures' &&
+            tgt.target_id === state.selection.id) {
+          loadClosureComments(state.selection.id);
+        }
+        // If a splice comment changed, refresh matrix badges.
+        if (tgt.target_table === 'splices' && state.activeView === 'matrix') {
+          refreshMatrixCommentCounts().then(() => renderMatrixView());
+        }
+        // Also refresh the splice comment popover if it's open for this target.
+        if (tgt.target_table === 'splices' && state._openSpliceCommentId === tgt.target_id) {
+          loadSpliceCommentPopover(tgt.target_id);
         }
       } catch {}
     });
@@ -867,6 +1095,15 @@ function drawCanvasContents() {
           stroke: COLORS[tube.color] || '#666',
           strokeWidth: 2, listening: false,
         }));
+        // Phase 4.2 — TIA-598 two-letter abbreviation on the left end of each tube stripe.
+        const abbrev = TIA_598_ABBREV[tube.color];
+        if (abbrev) {
+          group.add(new Konva.Text({
+            x: from + 6, y: y + ti * tubeGap - 5,
+            text: abbrev, fontSize: 7, fill: COLORS[tube.color] || '#666',
+            fontStyle: 'bold', listening: false,
+          }));
+        }
       });
       group.add(new Konva.Text({
         x: (from + to) / 2 - 80, y: y - 14, width: 160, align:'center',
@@ -958,14 +1195,15 @@ function drawCanvasContents() {
     const leftCables  = cablesAtLoc.filter(c => c.from_location_id === cl.location_id);
     const rightCables = cablesAtLoc.filter(c => c.to_location_id === cl.location_id && c.from_location_id !== cl.location_id);
 
+    const isSelectedRich = state.selection?.type === 'closure' && state.selection?.id === cl.id;
     const group = new Konva.Group({ x: rx, y: baseY });
 
     // Background rectangle — wider than the standard box to accommodate stubs.
     group.add(new Konva.Rect({
       width: RW, height: RH,
       fill: overCap ? '#FFF3CD' : '#FFFFFF',
-      stroke: overCap ? '#DC3545' : '#1B5FA0',
-      strokeWidth: 2, cornerRadius: 6,
+      stroke: isSelectedRich ? '#F59E0B' : (overCap ? '#DC3545' : '#1B5FA0'),
+      strokeWidth: isSelectedRich ? 3 : 2, cornerRadius: 6,
     }));
 
     // Closure model name.
@@ -1131,12 +1369,13 @@ function drawCanvasContents() {
         return;
       }
 
+      const isSelected = state.selection?.type === 'closure' && state.selection?.id === cl.id;
       const group = new Konva.Group({ x: x - 60, y: baseY, width: 120 });
       group.add(new Konva.Rect({
         width: 120, height: 90,
         fill: overCap ? '#FFF3CD' : '#FFFFFF',
-        stroke: overCap ? '#DC3545' : '#1B5FA0',
-        strokeWidth: 2, cornerRadius: 4,
+        stroke: isSelected ? '#F59E0B' : (overCap ? '#DC3545' : '#1B5FA0'),
+        strokeWidth: isSelected ? 3 : 2, cornerRadius: 4,
       }));
       group.add(new Konva.Text({
         x: 4, y: 4, width: 112,
@@ -1357,6 +1596,26 @@ function zoom(factor) {
 function selectThing(type, id) {
   state.selection = { type, id };
   renderInspector();
+  // Refresh the map's selected-location HTML Marker when the user picks a
+  // location so the drag handle appears/moves immediately.
+  if ((state.activeView === 'map' || state.activeView === 'split') && state.map) refreshMapLayers();
+
+  // Phase 4.3 — split view selection sync.
+  // When a closure or location is selected in split mode, pan the map to it.
+  if (state.activeView === 'split' && state.map && state.data) {
+    let targetLoc = null;
+    if (type === 'location') {
+      targetLoc = state.data.locations.find(l => l.id === id);
+    } else if (type === 'closure') {
+      const cl = state.data.closures.find(c => c.id === id);
+      if (cl) targetLoc = state.data.locations.find(l => l.id === cl.location_id);
+      // Also re-draw canvas to show selection highlight on the closure block.
+      if (state.konva) drawCanvasContents();
+    }
+    if (targetLoc && targetLoc.latitude != null && targetLoc.longitude != null) {
+      state.map.easeTo({ center: [targetLoc.longitude, targetLoc.latitude], duration: 350 });
+    }
+  }
 }
 
 function renderInspector() {
@@ -1415,9 +1674,14 @@ function renderCableInspector(cableId) {
         <tr><th>Tubes</th><td>${tubes.length}</td></tr>
         <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
         <tr><th>Circuits set</th><td>${state.data.fibers.filter(f => fiberIds.has(f.id) && f.circuit_name).length} of ${cable.fiber_count}</td></tr>
+        <tr><th>Route length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
         <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
       </tbody>
     </table>
+    ${cable.path_geojson ? `
+      <div style="margin-top:8px;font-size:11px;display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>
+      </div>` : ''}
     <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
       Fiber count is locked after creation. To re-size, delete and re-add.
     </div>
@@ -1431,32 +1695,114 @@ function renderLocationInspector(locationId) {
   const cablesAt = state.data.cables.filter(c =>
     c.from_location_id === locationId || c.to_location_id === locationId
   );
+  const hasGeo = loc.latitude != null && loc.longitude != null;
+  const coordStr = hasGeo
+    ? `${Number(loc.latitude).toFixed(6)}, ${Number(loc.longitude).toFixed(6)}`
+    : 'Not placed on map';
+
+  // Build compact fiber diagram: for each closure at this location, list
+  // splices as "Cable A f# ↔ Cable B f#" grouped by closure.
+  const fiberDiagramRows = [];
+  for (const cl of closures) {
+    const trays = state.data.trays.filter(t => t.closure_id === cl.id);
+    const trayIds = new Set(trays.map(t => t.id));
+    const splicesHere = state.data.splices.filter(s => trayIds.has(s.tray_id));
+    if (!splicesHere.length) continue;
+    fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:0.4px">${esc(cl.model || 'Closure')}</div>`);
+    for (const sp of splicesHere.slice(0, 20)) {
+      const fiberA = state.data.fibers.find(f => f.id === sp.fiber_a_id);
+      const fiberB = state.data.fibers.find(f => f.id === sp.fiber_b_id);
+      const tubeA = fiberA ? state.data.buffer_tubes.find(t => t.id === fiberA.buffer_tube_id) : null;
+      const tubeB = fiberB ? state.data.buffer_tubes.find(t => t.id === fiberB.buffer_tube_id) : null;
+      const cableA = tubeA ? state.data.cables.find(c => c.id === tubeA.cable_id) : null;
+      const cableB = tubeB ? state.data.cables.find(c => c.id === tubeB.cable_id) : null;
+      const labelA = cableA ? `${esc(cableA.name)} T${tubeA.position} f${fiberA.position}` : '?';
+      const labelB = cableB ? `${esc(cableB.name)} T${tubeB.position} f${fiberB.position}` : '?';
+      fiberDiagramRows.push(
+        `<div class="fiber-diagram-row"><span style="flex:1">${labelA}</span><span style="color:var(--text-muted)">&#8596;</span><span style="flex:1;text-align:right">${labelB}</span></div>`
+      );
+    }
+    if (splicesHere.length > 20) {
+      fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted)">&hellip; ${splicesHere.length - 20} more splices</div>`);
+    }
+  }
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <h3>${esc(loc.name)} <span class="small">${esc(loc.type)}</span></h3>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Sequence ${loc.sequence_index ?? 0}</div>
+    <h3>${esc(loc.name)} <span class="small" style="background:${_locColor(loc)};color:#fff;padding:1px 6px;border-radius:10px">${esc(loc.type)}</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${coordStr}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="openAddClosureForLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Add closure</button>
       <button class="btn btn-sm btn-danger" onclick="deleteLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
     <table class="table">
       <tbody>
-        <tr><th>Closures here</th><td>${closures.length}</td></tr>
-        <tr><th>Cables touching</th><td>${cablesAt.length}</td></tr>
+        <tr><th>Type</th><td>${esc(loc.type)}</td></tr>
+        <tr><th>Closures</th><td>${closures.length}</td></tr>
+        <tr><th>Cables</th><td>${cablesAt.length}</td></tr>
+        ${cablesAt.length ? `<tr><th></th><td style="font-size:10px">${cablesAt.map(c=>`<a href="#" onclick="event.preventDefault();selectThing('cable','${c.id}')">${esc(c.name)}</a>`).join(', ')}</td></tr>` : ''}
         <tr><th>Notes</th><td>${esc(loc.notes || '—')}</td></tr>
       </tbody>
     </table>
     ${closures.length ? `
-      <div style="margin-top:10px;font-size:11px">
-        <b>Closures</b><br>
-        ${closures.map(c => `<a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')">${esc(c.model || 'Closure')}</a>`).join(' · ')}
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:11px;font-weight:600">Closures at this location</div>
+          ${!isReadOnly() ? `<button class="btn btn-sm btn-danger" id="bulk-delete-btn" disabled onclick="bulkDeleteClosures('${locationId}')" style="font-size:10px;padding:2px 7px"><i class="fa-solid fa-trash"></i> Delete selected</button>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${closures.map(c => `
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+              ${!isReadOnly() ? `<input type="checkbox" class="closure-bulk-pick" data-closure-id="${c.id}" onchange="updateBulkDeleteBtn()" style="flex-shrink:0">` : ''}
+              <a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')" style="flex:1">${esc(c.model || 'Closure')} (${c.tray_count} trays)</a>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+    ${fiberDiagramRows.length ? `
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+        <div style="font-size:11px;font-weight:600;margin-bottom:4px">Fiber diagram</div>
+        ${fiberDiagramRows.join('')}
       </div>` : ''}
     <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
-      Deleting a location cascades to its closures + trays + splices. Cables that
-      reference it become unrouted (their endpoints are nulled, not deleted).
+      Deleting a location cascades to its closures, trays, and splices.
     </div>
   `;
+}
+
+// Enable/disable the bulk-delete button based on how many checkboxes are checked.
+function updateBulkDeleteBtn() {
+  const btn = document.getElementById('bulk-delete-btn');
+  if (!btn) return;
+  const checked = document.querySelectorAll('input.closure-bulk-pick:checked');
+  btn.disabled = checked.length === 0;
+}
+
+// Bulk-delete all checked closures in the location inspector.
+async function bulkDeleteClosures(locationId) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const checked = Array.from(document.querySelectorAll('input.closure-bulk-pick:checked'));
+  if (!checked.length) return;
+  const ids = checked.map(el => el.dataset.closureId);
+  const n = ids.length;
+  if (!confirm(`Delete ${n} closure${n === 1 ? '' : 's'} at this location? Each closure's trays + splices will cascade-delete with it.`)) return;
+  try {
+    await api('/api/splice/closures/bulk-delete', 'POST', { ids });
+    await hydrateProject();
+    selectThing('location', locationId);
+  } catch (e) {
+    toast('Bulk delete failed: ' + e.message, 'error');
+  }
+}
+
+// Helper used by the multi-stop flow and the location inspector to open the
+// add-closure modal with a specific location pre-selected.
+async function openAddClosureForLocation(locationId) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  await openAddClosure();
+  // Pre-select the given location in the modal that just opened.
+  const sel = document.getElementById('m-cl-loc');
+  if (sel) sel.value = locationId;
 }
 
 function renderClosureInspector(closureId) {
@@ -1554,9 +1900,24 @@ function renderClosureInspector(closureId) {
       </div>
       <div id="closure-markups-${closureId}"><div class="empty-pane" style="padding:8px">Loading…</div></div>
     </div>
+
+    <!-- Phase 4.5: threaded comments -->
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        <span><i class="fa-solid fa-comments"></i> Comments</span>
+        <span id="closure-comments-count-${closureId}" class="small"></span>
+      </h3>
+      <div id="closure-comments-${closureId}"><div class="empty-pane" style="padding:8px">Loading…</div></div>
+      ${isReadOnly() ? '' : `
+      <div style="margin-top:8px">
+        <textarea id="closure-comment-input-${closureId}" class="input-sm" rows="2" style="width:100%;box-sizing:border-box" placeholder="Add a comment…"></textarea>
+        <button class="btn btn-sm btn-primary" style="margin-top:4px" onclick="postClosureComment('${closureId}')"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>`}
+    </div>
   `;
 
   loadClosureMarkups(closureId);
+  loadClosureComments(closureId);
 }
 
 // Phase 2B #7 — pull field markups for the selected closure and
@@ -1628,6 +1989,223 @@ async function deleteMarkup(markupId, closureId) {
     toast('Photo deleted', 'success');
   } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
 }
+
+// ─── Phase 4.5: Threaded comments on closures + splices ──────────────────
+// Closure comments live in the inspector. Splice comments are accessed
+// via a small popover badge on splice rows in the tray inspector and
+// the matrix view.
+
+// Global unresolved-comment counts for splices (used by matrix badges).
+// Map<spliceId, count>
+let _commentCounts = new Map();
+
+async function loadClosureComments(closureId) {
+  const host = document.getElementById('closure-comments-' + closureId);
+  const cnt  = document.getElementById('closure-comments-count-' + closureId);
+  if (!host) return;
+  try {
+    const comments = await api('/api/splice/comments?target_table=splice_closures&target_id=' + closureId);
+    // Separate top-level from replies
+    const topLevel = comments.filter(c => !c.parent_comment_id);
+    const replies  = new Map();
+    comments.filter(c => c.parent_comment_id).forEach(c => {
+      if (!replies.has(c.parent_comment_id)) replies.set(c.parent_comment_id, []);
+      replies.get(c.parent_comment_id).push(c);
+    });
+    const unresolved = comments.filter(c => !c.resolved_at && !c.parent_comment_id).length;
+    if (cnt) cnt.textContent = unresolved ? `${unresolved} unresolved` : '';
+    if (!comments.length) {
+      host.innerHTML = '<div class="empty-pane" style="padding:8px">No comments yet.</div>';
+      return;
+    }
+    host.innerHTML = topLevel.map(c => renderCommentThread(c, replies.get(c.id) || [], closureId, 'closure')).join('');
+  } catch (e) {
+    host.innerHTML = '<div class="empty-pane" style="padding:8px;color:var(--danger)">Load failed: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderCommentThread(c, replyList, targetId, targetType) {
+  const isResolved = !!c.resolved_at;
+  const canAdmin   = !isReadOnly();
+  const isOwn      = c.created_by_user_id && state.user?.id && c.created_by_user_id === state.user.id;
+  const ago        = timeAgo(c.created_at);
+  const replyHtml  = replyList.map(r => `
+    <div style="margin:6px 0 0 18px;padding:6px 8px;background:var(--surface-3);border-radius:5px;border-left:2px solid var(--border-strong)">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px"><b>${esc(r.created_by_name || 'Unknown')}</b> · ${timeAgo(r.created_at)}</div>
+      <div style="font-size:12px;white-space:pre-wrap">${esc(r.body)}</div>
+      ${canAdmin || isOwn ? `<button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px;margin-top:3px" onclick="deleteComment('${esc(r.id)}','${esc(targetId)}','${targetType}')"><i class="fa-solid fa-times"></i></button>` : ''}
+    </div>`).join('');
+
+  const replyInputId = 'reply-input-' + c.id;
+  return `<div style="margin-bottom:10px;padding:8px;background:var(--surface-2);border-radius:6px;border:1px solid ${isResolved?'var(--success-border,#c3e6cb)':'var(--border-weak)'}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+      <div>
+        <span style="font-size:11px;color:var(--text-muted)"><b>${esc(c.created_by_name || 'Unknown')}</b> · ${ago}</span>
+        ${isResolved ? `<span style="margin-left:6px;font-size:10px;background:var(--success,#28a745);color:#fff;padding:1px 5px;border-radius:3px">resolved</span>` : ''}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        ${canAdmin ? `<button class="btn btn-sm" style="padding:1px 6px;font-size:10px" onclick="resolveComment('${esc(c.id)}','${esc(targetId)}','${targetType}')" title="${isResolved?'Unresolve':'Resolve'}"><i class="fa-solid fa-${isResolved?'rotate-left':'check'}"></i></button>` : ''}
+        ${canAdmin || isOwn ? `<button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px" onclick="deleteComment('${esc(c.id)}','${esc(targetId)}','${targetType}')"><i class="fa-solid fa-times"></i></button>` : ''}
+      </div>
+    </div>
+    <div style="margin-top:5px;font-size:12px;white-space:pre-wrap">${esc(c.body)}</div>
+    ${replyHtml}
+    ${isReadOnly() ? '' : `
+    <div style="margin-top:6px;display:flex;gap:4px">
+      <input type="text" class="input-sm" style="flex:1" placeholder="Reply…" id="${esc(replyInputId)}">
+      <button class="btn btn-sm" onclick="postCommentReply('${esc(c.id)}','${esc(replyInputId)}','${esc(targetId)}','${targetType}')"><i class="fa-solid fa-reply"></i></button>
+    </div>`}
+  </div>`;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+async function postClosureComment(closureId) {
+  const inp = document.getElementById('closure-comment-input-' + closureId);
+  if (!inp || !inp.value.trim()) return;
+  if (!state.currentId) return;
+  try {
+    await api('/api/splice/comments', 'POST', {
+      project_id: state.currentId,
+      target_table: 'splice_closures',
+      target_id: closureId,
+      body: inp.value.trim(),
+    });
+    inp.value = '';
+    await loadClosureComments(closureId);
+  } catch (e) { toast('Failed to post: ' + e.message, 'error'); }
+}
+
+async function postCommentReply(parentId, inputId, targetId, targetType) {
+  const inp = document.getElementById(inputId);
+  if (!inp || !inp.value.trim()) return;
+  if (!state.currentId) return;
+  const targetTable = targetType === 'closure' ? 'splice_closures' : 'splices';
+  try {
+    await api('/api/splice/comments', 'POST', {
+      project_id: state.currentId,
+      target_table: targetTable,
+      target_id: targetId,
+      body: inp.value.trim(),
+      parent_comment_id: parentId,
+    });
+    inp.value = '';
+    if (targetType === 'closure') {
+      await loadClosureComments(targetId);
+    } else {
+      await loadSpliceCommentPopover(targetId);
+    }
+  } catch (e) { toast('Failed to post reply: ' + e.message, 'error'); }
+}
+
+async function resolveComment(commentId, targetId, targetType) {
+  try {
+    await api('/api/splice/comments/' + commentId + '/resolve', 'POST');
+    if (targetType === 'closure') {
+      await loadClosureComments(targetId);
+    } else {
+      await loadSpliceCommentPopover(targetId);
+      await refreshMatrixCommentCounts();
+      if (state.activeView === 'matrix') renderMatrixView();
+    }
+  } catch (e) { toast('Failed to toggle resolve: ' + e.message, 'error'); }
+}
+
+async function deleteComment(commentId, targetId, targetType) {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    await api('/api/splice/comments/' + commentId, 'DELETE');
+    if (targetType === 'closure') {
+      await loadClosureComments(targetId);
+    } else {
+      await loadSpliceCommentPopover(targetId);
+      await refreshMatrixCommentCounts();
+      if (state.activeView === 'matrix') renderMatrixView();
+    }
+  } catch (e) { toast('Failed to delete: ' + e.message, 'error'); }
+}
+
+// ── Splice comment badge + popover ───────────────────────────────────────────
+// openSpliceComments opens a small modal-like popover for a splice's thread.
+// Used from both the matrix view badges and (future) tray inspector rows.
+
+async function refreshMatrixCommentCounts() {
+  if (!state.currentId) return;
+  try {
+    const all = await api('/api/splice/projects/' + state.currentId + '/comments');
+    _commentCounts = new Map();
+    all.filter(c => c.target_table === 'splices').forEach(c => {
+      _commentCounts.set(c.target_id, (_commentCounts.get(c.target_id) || 0) + 1);
+    });
+  } catch {}
+}
+
+async function openSpliceComments(spliceId) {
+  state._openSpliceCommentId = spliceId;
+  showModal({
+    title: 'Splice comments',
+    body: `<div id="splice-comment-list-${esc(spliceId)}"><div class="empty-pane" style="padding:10px">Loading…</div></div>
+      ${isReadOnly() ? '' : `
+      <div style="margin-top:8px">
+        <textarea id="splice-comment-input-${esc(spliceId)}" class="input-sm" rows="2" style="width:100%;box-sizing:border-box" placeholder="Add a comment…"></textarea>
+        <button class="btn btn-sm btn-primary" style="margin-top:4px" onclick="postSpliceComment('${esc(spliceId)}')"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>`}`,
+    onSubmit: (close) => close(),
+    submitText: 'Close',
+  });
+  await loadSpliceCommentPopover(spliceId);
+}
+
+async function loadSpliceCommentPopover(spliceId) {
+  const host = document.getElementById('splice-comment-list-' + spliceId);
+  if (!host) return;
+  try {
+    const comments = await api('/api/splice/comments?target_table=splices&target_id=' + spliceId);
+    const topLevel = comments.filter(c => !c.parent_comment_id);
+    const replies  = new Map();
+    comments.filter(c => c.parent_comment_id).forEach(c => {
+      if (!replies.has(c.parent_comment_id)) replies.set(c.parent_comment_id, []);
+      replies.get(c.parent_comment_id).push(c);
+    });
+    if (!comments.length) {
+      host.innerHTML = '<div class="empty-pane" style="padding:8px">No comments yet.</div>';
+      return;
+    }
+    host.innerHTML = topLevel.map(c => renderCommentThread(c, replies.get(c.id) || [], spliceId, 'splice')).join('');
+  } catch (e) {
+    host.innerHTML = '<div class="empty-pane" style="color:var(--danger);padding:8px">Load failed.</div>';
+  }
+}
+
+async function postSpliceComment(spliceId) {
+  const inp = document.getElementById('splice-comment-input-' + spliceId);
+  if (!inp || !inp.value.trim()) return;
+  if (!state.currentId) return;
+  try {
+    await api('/api/splice/comments', 'POST', {
+      project_id: state.currentId,
+      target_table: 'splices',
+      target_id: spliceId,
+      body: inp.value.trim(),
+    });
+    inp.value = '';
+    await loadSpliceCommentPopover(spliceId);
+    await refreshMatrixCommentCounts();
+    if (state.activeView === 'matrix') renderMatrixView();
+  } catch (e) { toast('Failed to post: ' + e.message, 'error'); }
+}
+
+// Also add comment badge to tray inspector loose splice rows.
+// We patch renderLooseSpliceRows to inject a badge after the trace button.
 
 // ─── Cable slack helpers (Phase 2C #10) ──────────────────────────────────
 // One row per cable that terminates or passes through this location
@@ -1996,9 +2574,9 @@ function renderRibbonGroupRows(groups, splices) {
     const b = describeFiber(first.fiber_b_id);
     return `<div class="splice-row">
       <div class="desc">
-        <b>${esc(a.cable)}</b> · <span class="fc fc-${a.tube_color}"></span>${esc(a.tube_color)}
+        <b>${esc(a.cable)}</b> · <span class="fc fc-${a.tube_color}" title="${a.tube_color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.tube_color]||''}</span>
         →
-        <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}"></span>${esc(b.tube_color)}
+        <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}" title="${b.tube_color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.tube_color]||''}</span>
         <span class="ribbon-tag">ribbon ×12</span>
       </div>
       <div style="display:flex;gap:4px">
@@ -2016,14 +2594,19 @@ function renderLooseSpliceRows(splices) {
     ${loose.map(s => {
       const a = describeFiber(s.fiber_a_id);
       const b = describeFiber(s.fiber_b_id);
+      const commentCount = _commentCounts.get(s.id) || 0;
+      const badgeHtml = commentCount
+        ? `<button class="btn btn-sm" style="position:relative" onclick="openSpliceComments('${s.id}')" title="${commentCount} unresolved comment${commentCount>1?'s':''}"><i class="fa-solid fa-comments"></i><span style="position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:9px;border-radius:8px;padding:0 4px;min-width:14px;text-align:center">${commentCount}</span></button>`
+        : `<button class="btn btn-sm" onclick="openSpliceComments('${s.id}')" title="Add comment"><i class="fa-regular fa-comment"></i></button>`;
       return `<div class="splice-row">
         <div class="desc">
-          <span class="fc fc-${a.color}"></span>${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
+          <span class="fc fc-${a.color}" title="${a.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.color]||''}</span> ${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
           →
-          <span class="fc fc-${b.color}"></span>${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
+          <span class="fc fc-${b.color}" title="${b.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.color]||''}</span> ${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
+          ${badgeHtml}
           <button class="btn btn-sm btn-danger" onclick="deleteSplice('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
         </div>
       </div>`;
@@ -2169,19 +2752,34 @@ function openAddCable() {
           <input id="m-cable-name" placeholder="e.g. C1 main" autofocus></div>
         <div class="field"><label>Fiber count</label>
           <select id="m-cable-fc">
-            <option value="12">12</option><option value="24">24</option>
-            <option value="48">48</option><option value="96">96</option>
-            <option value="144">144</option><option value="288">288</option>
-            <option value="432" selected>432</option><option value="864">864</option>
+            <option value="6">6</option><option value="12">12</option>
+            <option value="24">24</option><option value="36">36</option>
+            <option value="48">48</option><option value="72">72</option>
+            <option value="96">96</option><option value="144">144</option>
+            <option value="216">216</option><option value="288">288</option>
+            <option value="432" selected>432</option><option value="576">576</option>
+            <option value="864">864</option><option value="1152">1152</option>
+            <option value="1728">1728</option><option value="3456">3456</option>
           </select></div>
       </div>
       <div class="row">
         <div class="field"><label>Construction</label>
           <select id="m-cable-ct">
-            <option value="ribbon" selected>Ribbon (12 fibers per ribbon)</option>
-            <option value="loose_tube">Loose tube</option>
+            <option value="ribbon" selected>Ribbon (stackable 12-fiber ribbons)</option>
+            <option value="loose_tube">Loose tube (subunit per tube)</option>
+            <option value="central_tube">Central tube (single core tube)</option>
+            <option value="micromodule">Micromodule (small flexible bundles)</option>
+            <option value="rollable_ribbon">Rollable ribbon (intermittently bonded)</option>
           </select></div>
-        <div class="field"><label>Mfr part (optional)</label>
+        <div class="field"><label>Fibers per tube</label>
+          <select id="m-cable-tube-size" title="Number of fibers per buffer tube. 12 is OSP standard; 6 for low-count drops, 24 for high-density loose-tube subunits.">
+            <option value="6">6</option>
+            <option value="12" selected>12</option>
+            <option value="24">24</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:0 0 50%"><label>Mfr part (optional)</label>
           <input id="m-cable-part" placeholder="optional"></div>
       </div>
       <div class="row">
@@ -2199,6 +2797,7 @@ function openAddCable() {
           name: document.getElementById('m-cable-name').value.trim(),
           fiber_count: parseInt(document.getElementById('m-cable-fc').value, 10),
           construction_type: document.getElementById('m-cable-ct').value,
+          tube_size_fibers: parseInt(document.getElementById('m-cable-tube-size').value, 10),
           from_location_id: document.getElementById('m-cable-from').value || null,
           to_location_id: document.getElementById('m-cable-to').value || null,
           manufacturer_part: document.getElementById('m-cable-part').value.trim() || null,
@@ -2211,37 +2810,78 @@ function openAddCable() {
   });
 }
 
+// Phase 4.6 — three-scope template picker (Personal / Client / Public Library).
+// Fetches all three lists in parallel; tabs switch the visible option set.
+// Selecting a template populates the shell fields; user can still tweak.
 async function openAddClosure() {
   if (isReadOnly()) return toast('View-only mode', 'error');
   if (!state.data.locations.length) {
     return toast('Add a location first', 'error');
   }
   let models = [];
-  let templates = [];
+  let tplPersonal = [];
+  let tplClient   = [];
+  let tplPublic   = [];
   try { models = await api('/api/splice/closure-models'); } catch {}
-  try { templates = await api('/api/splice/closure-templates'); } catch {}
+  try {
+    const all = await api('/api/splice/closure-templates');
+    // Personal: no scope_client_id, not published, created by current user's staff_id.
+    tplPersonal = all.filter(t => !t.scope_client_id && !t.published_at);
+    // Client: scoped to current project's client.
+    const clientId = state.data.project?.client_id;
+    tplClient = clientId ? all.filter(t => t.scope_client_id === clientId && !t.published_at) : [];
+  } catch {}
+  try {
+    tplPublic = await api('/api/splice/closure-templates?scope=public');
+  } catch {}
+  // Combine all for the change handler lookup.
+  const allTemplates = [...tplPersonal, ...tplClient, ...tplPublic];
+
   const datalist = '<datalist id="closure-models-list">' +
     models.map(m => `<option value="${esc(m.model)}">`).join('') + '</datalist>';
   const locOpts = state.data.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
-  // Phase 2B #5 — Apply Template picker. Empty when no templates
-  // exist; selecting one auto-fills model/tray_count/tray_capacity
-  // so the user can still tweak before saving.
-  const tplOpts = templates.length
-    ? templates.map(t => {
-        const scope = t.scope_client_name ? ' [' + esc(t.scope_client_name) + ']' : ' [global]';
-        const meta  = ' (' + t.tray_count + '×' + t.tray_capacity + (t.model ? ', ' + esc(t.model) : '') + ')';
-        return `<option value="${t.id}">${esc(t.name)}${scope}${meta}</option>`;
-      }).join('')
-    : '';
+
+  function tplOption(t) {
+    const meta = ' (' + t.tray_count + '\xd7' + t.tray_capacity + (t.model ? ', ' + esc(t.model) : '') + ')';
+    const dl   = t.download_count ? ' ↓' + t.download_count : '';
+    return `<option value="${t.id}">${esc(t.name)}${meta}${dl}</option>`;
+  }
+
+  const personalOpts = tplPersonal.length
+    ? tplPersonal.map(tplOption).join('') : '<option disabled>No personal templates yet</option>';
+  const clientOpts = tplClient.length
+    ? tplClient.map(tplOption).join('') : '<option disabled>No client-scoped templates</option>';
+  const publicOpts = tplPublic.length
+    ? tplPublic.map(tplOption).join('') : '<option disabled>No published templates yet</option>';
+
+  const hasAny = tplPersonal.length || tplClient.length || tplPublic.length;
+
   showModal({
     title: 'Add closure',
     body: `
-      ${templates.length ? `
-        <div class="field"><label>Apply template <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
-          <select id="m-cl-template" onchange="onAddClosureTemplateChanged(this.value)">
-            <option value="">— none, configure manually —</option>
-            ${tplOpts}
-          </select>
+      ${hasAny ? `
+        <div class="field">
+          <label>Apply template <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
+          <div style="display:flex;gap:0;margin-bottom:4px;border:1px solid var(--border-strong);border-radius:5px;overflow:hidden;width:fit-content">
+            <button class="btn btn-sm" id="tpl-tab-personal" onclick="switchTplTab('personal')" style="border-radius:0;border:none;border-right:1px solid var(--border-strong)">Personal</button>
+            <button class="btn btn-sm" id="tpl-tab-client"   onclick="switchTplTab('client')"   style="border-radius:0;border:none;border-right:1px solid var(--border-strong)">Client</button>
+            <button class="btn btn-sm" id="tpl-tab-public"   onclick="switchTplTab('public')"   style="border-radius:0;border:none"><i class="fa-solid fa-globe" style="font-size:10px"></i> Public Library</button>
+          </div>
+          <div id="tpl-panel-personal">
+            <select id="m-cl-template-personal" onchange="onAddClosureTemplateChanged(this.value)">
+              <option value="">— none —</option>${personalOpts}
+            </select>
+          </div>
+          <div id="tpl-panel-client" style="display:none">
+            <select id="m-cl-template-client" onchange="onAddClosureTemplateChanged(this.value)">
+              <option value="">— none —</option>${clientOpts}
+            </select>
+          </div>
+          <div id="tpl-panel-public" style="display:none">
+            <select id="m-cl-template-public" onchange="onAddClosureTemplateChanged(this.value)">
+              <option value="">— none —</option>${publicOpts}
+            </select>
+          </div>
         </div>
       ` : ''}
       <div class="field"><label>At location</label>
@@ -2262,11 +2902,11 @@ async function openAddClosure() {
     onSubmit: async (close) => {
       try {
         const locId = document.getElementById('m-cl-loc').value;
-        const tplId = document.getElementById('m-cl-template')?.value || '';
-        // If a template is selected AND the user hasn't tweaked the
-        // shell fields below, prefer the from-template endpoint —
-        // it bumps the closure_models picklist + carries notes from
-        // the template + signals SSE listeners with from_template.
+        // Find the selected template ID across all three panels.
+        const tplId =
+          document.getElementById('m-cl-template-personal')?.value ||
+          document.getElementById('m-cl-template-client')?.value ||
+          document.getElementById('m-cl-template-public')?.value || '';
         if (tplId) {
           await api(`/api/splice/locations/${locId}/closures/from-template/${tplId}`, 'POST');
         } else {
@@ -2282,9 +2922,26 @@ async function openAddClosure() {
       } catch (e) { toast(e.message, 'error'); }
     },
   });
-  // Cache templates so the change handler can read them without a
-  // second round-trip.
-  state._closureTemplates = templates;
+  // Activate the Personal tab by default.
+  switchTplTab('personal');
+  state._closureTemplates = allTemplates;
+}
+
+function switchTplTab(tab) {
+  ['personal','client','public'].forEach(t => {
+    const panel = document.getElementById('tpl-panel-' + t);
+    const btn   = document.getElementById('tpl-tab-' + t);
+    if (!panel || !btn) return;
+    const active = t === tab;
+    panel.style.display = active ? 'block' : 'none';
+    btn.style.background = active ? 'var(--primary)' : '';
+    btn.style.color = active ? '#fff' : '';
+    // Clear selections on hidden panels so only the active one counts.
+    if (!active) {
+      const sel = document.getElementById('m-cl-template-' + t);
+      if (sel) sel.value = '';
+    }
+  });
 }
 
 // Auto-fill the closure-shell fields when the user picks a template
@@ -2299,33 +2956,104 @@ function onAddClosureTemplateChanged(tplId) {
   if (tpl.notes) setVal('m-cl-notes', tpl.notes);
 }
 
-// Save the selected closure's shell as a reusable template. Pulls
-// model + tray_count + tray_capacity off the closure; lets the user
-// name it and pick scope (this client or global).
+// Phase 4.6 — Save the selected closure's shell as a reusable template.
+// Admin users see a "Publish to library" checkbox so the template becomes
+// publicly visible to all accounts via the Public Library tab.
 async function saveClosureAsTemplate(closureId) {
   if (isReadOnly()) return;
   const cl = state.data.closures.find(c => c.id === closureId);
   if (!cl) return;
   const defaultName = (cl.model ? cl.model + ' ' : '') + cl.tray_count + 'x' + cl.tray_capacity;
-  const name = prompt('Template name:', defaultName);
-  if (!name || !name.trim()) return;
-  // Scope: prompt yes/no. Defaults to global; the simple prompt avoids
-  // the overhead of a full second modal for what is most often a
-  // single-client save.
-  const scopeToClient = state.data.project?.client_id
-    ? confirm('Scope this template to the current project\'s client?\n\nOK = client-scoped (only shows on that client\'s projects)\nCancel = global (shows on every client)')
-    : false;
+  const isAdmin = state.user?.role === 'admin';
+  showModal({
+    title: 'Save as template',
+    body: `
+      <div class="field"><label>Template name</label>
+        <input id="m-tpl-name" value="${esc(defaultName)}" autofocus></div>
+      <div class="field"><label>Scope</label>
+        <select id="m-tpl-scope">
+          <option value="global">Global (shows on every project)</option>
+          ${state.data.project?.client_id ? `<option value="client">Client-scoped (this client only)</option>` : ''}
+        </select>
+      </div>
+      ${isAdmin ? `
+      <div class="field" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="m-tpl-publish" style="margin:0">
+        <label for="m-tpl-publish" style="margin:0;cursor:pointer">
+          <i class="fa-solid fa-globe"></i> Publish to Public Library
+          <span style="font-weight:400;color:var(--text-muted);font-size:11px">(visible across all accounts)</span>
+        </label>
+      </div>` : ''}
+    `,
+    onSubmit: async (close) => {
+      const name = document.getElementById('m-tpl-name')?.value?.trim();
+      if (!name) { toast('Name required', 'error'); return; }
+      const scope = document.getElementById('m-tpl-scope')?.value || 'global';
+      const publish = isAdmin && document.getElementById('m-tpl-publish')?.checked;
+      try {
+        const tpl = await api('/api/splice/closure-templates', 'POST', {
+          name,
+          model: cl.model || null,
+          tray_count: cl.tray_count,
+          tray_capacity: cl.tray_capacity,
+          scope_client_id: scope === 'client' ? (state.data.project?.client_id || null) : null,
+          notes: cl.notes || null,
+        });
+        if (publish && tpl.id) {
+          await api('/api/splice/closure-templates/' + tpl.id + '/publish', 'POST');
+        }
+        close();
+        toast(`Saved "${name}" as a template${publish ? ' (published to library)' : ''}`, 'success');
+      } catch (e) { toast('Failed to save template: ' + e.message, 'error'); }
+    },
+  });
+}
+
+// Phase 4.6 — Admin-only template management modal (publish/unpublish, see download counts).
+async function openManageTemplates() {
+  if (state.user?.role !== 'admin') return toast('Admin role required', 'error');
+  let templates = [];
+  try { templates = await api('/api/splice/closure-templates'); } catch {}
+  showModal({
+    title: 'Manage templates',
+    wide: true,
+    body: templates.length ? `
+      <table class="table" style="font-size:12px">
+        <thead><tr><th>Name</th><th>Model</th><th>Scope</th><th>Published</th><th>Downloads</th><th></th></tr></thead>
+        <tbody>
+          ${templates.map(t => `<tr>
+            <td>${esc(t.name)}</td>
+            <td>${esc(t.model || '—')}</td>
+            <td>${esc(t.scope_client_name || 'Global')}</td>
+            <td>${t.published_at ? `<span style="color:var(--success,#28a745)"><i class="fa-solid fa-globe"></i> ${new Date(t.published_at).toLocaleDateString()}</span>` : '—'}</td>
+            <td style="text-align:center">${t.download_count || 0}</td>
+            <td>
+              ${t.published_at
+                ? `<button class="btn btn-sm" onclick="adminUnpublishTemplate('${esc(t.id)}')"><i class="fa-solid fa-eye-slash"></i> Unpublish</button>`
+                : `<button class="btn btn-sm btn-primary" onclick="adminPublishTemplate('${esc(t.id)}')"><i class="fa-solid fa-globe"></i> Publish</button>`}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty-pane" style="padding:16px">No templates yet.</div>',
+    onSubmit: (close) => close(),
+    submitText: 'Close',
+  });
+}
+
+async function adminPublishTemplate(tplId) {
   try {
-    await api('/api/splice/closure-templates', 'POST', {
-      name: name.trim(),
-      model: cl.model || null,
-      tray_count: cl.tray_count,
-      tray_capacity: cl.tray_capacity,
-      scope_client_id: scopeToClient ? (state.data.project?.client_id || null) : null,
-      notes: cl.notes || null,
-    });
-    toast(`Saved "${name.trim()}" as a template`, 'success');
-  } catch (e) { toast('Failed to save template: ' + e.message, 'error'); }
+    await api('/api/splice/closure-templates/' + tplId + '/publish', 'POST');
+    toast('Template published to Public Library', 'success');
+    openManageTemplates();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+async function adminUnpublishTemplate(tplId) {
+  try {
+    await api('/api/splice/closure-templates/' + tplId + '/unpublish', 'POST');
+    toast('Template unpublished', 'success');
+    openManageTemplates();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
 }
 
 function openEditClosure(closureId) {
@@ -2611,7 +3339,12 @@ async function deleteCurrentProject() {
     document.getElementById('view-tabs').style.display = 'none';
     document.getElementById('map-toolbar').style.display = 'none';
     document.getElementById('map-stage').style.display = 'none';
+    document.getElementById('matrix-stage').style.display = 'none';
     document.getElementById('stage').style.display = 'block';
+    // Reset split mode if it was active.
+    document.querySelector('.canvas-pane').classList.remove('split-mode');
+    state.activeView = 'diagram';
+    document.getElementById('btn-share').disabled = true;
     document.getElementById('btn-export').disabled = true;
     document.getElementById('btn-export-kmz').disabled = true;
     document.getElementById('btn-versions').disabled = true;
@@ -2656,16 +3389,16 @@ function openSpliceModal(trayId, ribbon) {
         <div>
           <div class="field" style="margin-bottom:6px"><label>Side A · cable</label>
             <select id="sp-cable-a" onchange="renderFiberPicker('a')"><option value="">Pick cable…</option>${cableOpts}</select></div>
-          <div class="field" style="margin-bottom:6px" id="sp-tube-a-wrap" style="display:none"><label>Side A · ${ribbon?'ribbon':'tube'}</label>
-            <select id="sp-tube-a" onchange="renderFiberPicker('a')"></select></div>
+          <div class="field" id="sp-tube-a-wrap" style="margin-bottom:6px;display:none"><label>Side A · ${ribbon?'ribbon':'tube'}</label>
+            <select id="sp-tube-a" onchange="renderFibersOnly('a')"></select></div>
           ${!ribbon ? `<div class="field" style="margin-bottom:0"><label>Side A · fiber</label>
             <div id="sp-fibers-a" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>` : ''}
         </div>
         <div>
           <div class="field" style="margin-bottom:6px"><label>Side B · cable</label>
             <select id="sp-cable-b" onchange="renderFiberPicker('b')"><option value="">Pick cable…</option>${cableOpts}</select></div>
-          <div class="field" style="margin-bottom:6px" id="sp-tube-b-wrap" style="display:none"><label>Side B · ${ribbon?'ribbon':'tube'}</label>
-            <select id="sp-tube-b" onchange="renderFiberPicker('b')"></select></div>
+          <div class="field" id="sp-tube-b-wrap" style="margin-bottom:6px;display:none"><label>Side B · ${ribbon?'ribbon':'tube'}</label>
+            <select id="sp-tube-b" onchange="renderFibersOnly('b')"></select></div>
           ${!ribbon ? `<div class="field" style="margin-bottom:0"><label>Side B · fiber</label>
             <div id="sp-fibers-b" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>` : ''}
         </div>
@@ -2706,6 +3439,11 @@ function openSpliceModal(trayId, ribbon) {
   state._spUsed = usedFibers;
 }
 
+// Cable-side onchange. Rebuilds the tube dropdown from the picked
+// cable's buffer_tubes; resets the fiber grid to the "pick a tube"
+// placeholder. The tube dropdown's onchange points at renderFibersOnly
+// (below) so the user's tube selection isn't clobbered every time
+// they pick a tube — that was the "tubes don't populate" bug.
 window.renderFiberPicker = function(side) {
   const ribbon = state._spRibbon;
   const cableSel = document.getElementById('sp-cable-' + side);
@@ -2723,19 +3461,32 @@ window.renderFiberPicker = function(side) {
     `<option value="${t.id}">${t.position}. ${t.color}</option>`
   ).join('');
   if (!ribbon) {
-    const tubeId = tubeSel.value;
-    const grid = document.getElementById('sp-fibers-' + side);
-    if (!tubeId) { grid.innerHTML = '<div class="empty-pane">Pick a tube</div>'; return; }
-    const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tubeId).sort((a,b)=>a.position-b.position);
-    grid.innerHTML = fibers.map(f => {
-      const used = state._spUsed.has(f.id);
-      return `<div class="fiber-cell ${used?'in-use':''}"
-        data-fiber-id="${f.id}" data-side="${side}"
-        onclick="${used?'':'pickFiber(this)'}">
-        <span class="fc fc-${f.color}"></span>${f.position}
-      </div>`;
-    }).join('');
+    document.getElementById('sp-fibers-' + side).innerHTML = '<div class="empty-pane">Pick a tube</div>';
   }
+};
+
+// Tube-side onchange. Reads the currently-selected tube and builds
+// the fiber grid for it. Does NOT touch the tube dropdown — that's
+// what the user just clicked, and rebuilding it would wipe their
+// selection.
+window.renderFibersOnly = function(side) {
+  if (state._spRibbon) return;  // ribbon mode doesn't show a fiber grid
+  const tubeSel = document.getElementById('sp-tube-' + side);
+  const tubeId = tubeSel.value;
+  const grid = document.getElementById('sp-fibers-' + side);
+  if (!tubeId) { grid.innerHTML = '<div class="empty-pane">Pick a tube</div>'; return; }
+  const fibers = state.data.fibers
+    .filter(f => f.buffer_tube_id === tubeId)
+    .sort((a,b)=>a.position-b.position);
+  grid.innerHTML = fibers.map(f => {
+    const used = state._spUsed.has(f.id);
+    const abbrev = TIA_598_ABBREV[f.color] || '';
+    return `<div class="fiber-cell ${used?'in-use':''}"
+      data-fiber-id="${f.id}" data-side="${side}"
+      onclick="${used?'':'pickFiber(this)'}">
+      <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}
+    </div>`;
+  }).join('');
 };
 
 window.pickFiber = function(el) {
@@ -2745,6 +3496,106 @@ window.pickFiber = function(el) {
   el.classList.add('selected');
   if (side === 'a') state._spA = fid; else state._spB = fid;
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+// Cross-project search — debounced sidebar lookup
+// ───────────────────────────────────────────────────────────────────────────
+
+let _searchTimer = null;
+function onSearchInput(value) {
+  clearTimeout(_searchTimer);
+  const q = (value || '').trim();
+  const host = document.getElementById('search-results');
+  if (q.length < 2) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  // 200ms debounce — fast enough to feel live, slow enough to skip
+  // every-keystroke round-trips on a fast typist.
+  _searchTimer = setTimeout(() => runSearch(q), 200);
+}
+
+async function runSearch(q) {
+  const host = document.getElementById('search-results');
+  host.style.display = 'block';
+  host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">Searching…</div>';
+  let r;
+  try { r = await api('/api/splice/search?q=' + encodeURIComponent(q)); }
+  catch (e) {
+    host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
+    return;
+  }
+  const total = r.projects.length + r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
+  if (!total) {
+    host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches.</div>';
+    return;
+  }
+  // Each result deep-links: clicking a non-project result selects the
+  // owning project, hydrates, then sets state.selection so the inspector
+  // opens on the matched entity.
+  const sec = (label, rows, render) => rows.length ? `
+    <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
+      ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
+    </div>
+    ${rows.map(render).join('')}
+  ` : '';
+  host.innerHTML = `
+    ${sec('Projects', r.projects, p => `
+      <div class="search-row" onclick="selectFromSearch('project','${p.id}','${p.id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(p.name)}</b> <span style="color:var(--text-muted)">${esc(p.status || '')}</span>
+      </div>
+    `)}
+    ${sec('Locations', r.locations, l => `
+      <div class="search-row" onclick="selectFromSearch('location','${l.id}','${l.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type || '')}</span>
+        <div style="font-size:10px;color:var(--text-muted)">${esc(l.project_name)}</div>
+      </div>
+    `)}
+    ${sec('Cables', r.cables, c => `
+      <div class="search-row" onclick="selectFromSearch('cable','${c.id}','${c.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span>
+        <div style="font-size:10px;color:var(--text-muted)">${esc(c.project_name)}</div>
+      </div>
+    `)}
+    ${sec('Closures', r.closures, cl => `
+      <div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${cl.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(cl.model || 'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span>
+        <div style="font-size:10px;color:var(--text-muted)">${esc(cl.project_name)}</div>
+      </div>
+    `)}
+    ${sec('Circuits', r.fibers, f => `
+      <div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${f.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(f.circuit_name || '(no circuit name)')}</b>
+        ${f.customer ? '<span style="color:var(--text-muted)"> · ' + esc(f.customer) + '</span>' : ''}
+        <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position} · ${esc(f.project_name)}</div>
+      </div>
+    `)}
+  `;
+  host.querySelectorAll('.search-row').forEach(el => {
+    el.addEventListener('mouseenter', () => el.style.background = 'var(--surface-2)');
+    el.addEventListener('mouseleave', () => el.style.background = '');
+  });
+}
+
+async function selectFromSearch(kind, entityId, projectId) {
+  // Hide the results panel so the click feels immediate.
+  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('search-input').value = '';
+  if (state.currentId !== projectId) {
+    await selectProject(projectId);
+  }
+  // After hydrate, set selection so the inspector lands on the match.
+  if (kind !== 'project') {
+    selectThing(kind, entityId);
+  }
+}
+
+// Click outside the search results closes them (sidebar feel).
+document.addEventListener('click', (e) => {
+  const host = document.getElementById('search-results');
+  const input = document.getElementById('search-input');
+  if (!host || !input) return;
+  if (!host.contains(e.target) && e.target !== input) {
+    host.style.display = 'none';
+  }
+});
 
 // ───────────────────────────────────────────────────────────────────────────
 // Modal helper (lightweight — plain DOM, no framework)
@@ -2801,18 +3652,442 @@ function loadMapLibre() {
 // Esri World Imagery — free for non-commercial-and-light-commercial use,
 // attributed in tile URL params. The most common OSP-industry basemap.
 const ESRI_SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+// Esri reference overlay — boundaries + place names + major roads, used
+// in hybrid mode on top of the satellite tiles. Same provider, same
+// attribution, transparent PNGs.
+const ESRI_REF_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+
+// Default starting view when a project has no geographic data yet.
+// Mecca Drive, Macon GA — owner-set 2026-05-06. Once a project gets
+// any location coords, mapFitData() flies to the actual extent on the
+// next hydrate, so this only matters on first-touch.
+const DEFAULT_MAP_CENTER = [-83.6736, 32.8625];
+const DEFAULT_MAP_ZOOM   = 15;
+
+// Basemap mode persists across sessions (matches dark-mode pattern).
+function loadBasemapMode() {
+  try { return localStorage.getItem('lfs_splice_basemap') || 'hybrid'; }
+  catch { return 'hybrid'; }
+}
+function saveBasemapMode(mode) {
+  try { localStorage.setItem('lfs_splice_basemap', mode); } catch {}
+}
 
 function switchView(view) {
   if (view === state.activeView) return;
   state.activeView = view;
+  try { localStorage.setItem('lfs_splice_active_view', view); } catch {}
   document.querySelectorAll('.view-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.view === view));
-  const isMap = view === 'map';
+
+  const canvasPane = document.querySelector('.canvas-pane');
+  const isSplit  = view === 'split';
+  const isMap    = view === 'map';
+  const isDiag   = view === 'diagram';
+  const isMatrix = view === 'matrix';
+
+  // Matrix view — spreadsheet-style read of state.data.splices.
+  if (isMatrix) {
+    canvasPane.classList.remove('split-mode');
+    canvasPane.style.removeProperty('--split-ratio');
+    document.getElementById('stage').style.display        = 'none';
+    document.getElementById('toolbar').style.display      = 'none';
+    document.getElementById('map-stage').style.display    = 'none';
+    document.getElementById('map-toolbar').style.display  = 'none';
+    document.getElementById('matrix-stage').style.display = 'block';
+    renderMatrixView();
+    return;
+  }
+
+  // Leaving matrix — hide it.
+  document.getElementById('matrix-stage').style.display = 'none';
+
+  // Split mode — show both diagram + map side-by-side.
+  if (isSplit) {
+    canvasPane.classList.add('split-mode');
+    document.getElementById('stage').style.display       = 'block';
+    document.getElementById('toolbar').style.display     = 'flex';
+    // map-stage shown via CSS (.canvas-pane.split-mode #map-stage)
+    document.getElementById('map-toolbar').style.display = 'flex';
+    _applySplitRatio(loadSplitRatio());
+    initMapIfNeeded();
+    setTimeout(() => {
+      if (state.konva) { state.konva.stage.size({ width: document.getElementById('stage').clientWidth, height: document.getElementById('stage').clientHeight }); state.konva.stage.batchDraw(); }
+      if (state.map) state.map.resize();
+    }, 50);
+    return;
+  }
+
+  // Non-split — remove split mode class, restore normal display.
+  canvasPane.classList.remove('split-mode');
+  canvasPane.style.removeProperty('--split-ratio');
   document.getElementById('stage').style.display      = isMap ? 'none' : 'block';
   document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
   document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
   document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
   if (isMap) initMapIfNeeded();
+  // Resize Konva back to full width after leaving split.
+  if (isDiag && state.konva) {
+    setTimeout(() => {
+      const container = document.getElementById('stage');
+      state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+      state.konva.stage.batchDraw();
+    }, 50);
+  }
+}
+
+// ─── Split ratio helpers (Phase 4.3) ─────────────────────────────────────────
+function loadSplitRatio() {
+  try { return parseFloat(localStorage.getItem('lfs_splice_split_ratio')) || 0.5; } catch { return 0.5; }
+}
+function saveSplitRatio(ratio) {
+  try { localStorage.setItem('lfs_splice_split_ratio', ratio); } catch {}
+}
+function _applySplitRatio(ratio) {
+  const pct = Math.max(20, Math.min(80, ratio * 100)).toFixed(1) + '%';
+  document.querySelector('.canvas-pane').style.setProperty('--split-ratio', pct);
+  // Move map-toolbar left edge so it starts at the right panel
+  const mapToolbar = document.getElementById('map-toolbar');
+  if (mapToolbar) mapToolbar.style.left = pct;
+}
+
+// ─── Split divider drag (Phase 4.3) ──────────────────────────────────────────
+(function initSplitDivider() {
+  // Set up once; the divider element is always in the DOM.
+  let dragging = false;
+  let startX = 0;
+  let startRatio = 0.5;
+
+  document.getElementById('split-divider').addEventListener('mousedown', (e) => {
+    if (state.activeView !== 'split') return;
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX;
+    startRatio = loadSplitRatio();
+    document.getElementById('split-divider').classList.add('dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const pane = document.querySelector('.canvas-pane');
+    const paneW = pane.offsetWidth;
+    const dx = e.clientX - startX;
+    const newRatio = Math.max(0.2, Math.min(0.8, startRatio + dx / paneW));
+    _applySplitRatio(newRatio);
+    // Throttled resize
+    if (!initSplitDivider._resizeTimer) {
+      initSplitDivider._resizeTimer = setTimeout(() => {
+        if (state.konva) {
+          const container = document.getElementById('stage');
+          state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+          state.konva.stage.batchDraw();
+        }
+        if (state.map) state.map.resize();
+        initSplitDivider._resizeTimer = null;
+      }, 16);
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.getElementById('split-divider').classList.remove('dragging');
+    // Save ratio from CSS var
+    const pane = document.querySelector('.canvas-pane');
+    const pct = parseFloat(getComputedStyle(pane).getPropertyValue('--split-ratio'));
+    if (!isNaN(pct)) saveSplitRatio(pct / 100);
+    // Final resize
+    if (state.konva) {
+      const container = document.getElementById('stage');
+      state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+      state.konva.stage.batchDraw();
+    }
+    if (state.map) state.map.resize();
+  });
+})();
+
+// ─── Phase 4.4: Matrix tabular editor ────────────────────────────────────────
+// Spreadsheet-style view over state.data.splices. All reads flow through
+// the same in-memory state as the diagram so changes committed via PUT
+// /api/splice/splices/:id or PUT /api/splice/fibers/:id are visible
+// immediately after a re-hydrate (driven by the SSE handler).
+
+// Matrix sort state: { col, asc }
+let _matrixSort = { col: null, asc: true };
+let _matrixSelected = new Set(); // selected splice IDs
+
+function _matrixGetRows() {
+  if (!state.data) return [];
+  const fiberById = new Map((state.data.fibers || []).map(f => [f.id, f]));
+  const tubeById  = new Map((state.data.buffer_tubes || []).map(t => [t.id, t]));
+  const cableById = new Map((state.data.cables || []).map(c => [c.id, c]));
+  const trayById  = new Map((state.data.trays || []).map(t => [t.id, t]));
+  const closureById = new Map((state.data.closures || []).map(c => [c.id, c]));
+  const locById   = new Map((state.data.locations || []).map(l => [l.id, l]));
+
+  function fiberDesc(fid) {
+    const f  = fiberById.get(fid) || {};
+    const tb = tubeById.get(f.buffer_tube_id) || {};
+    const cb = cableById.get(tb.cable_id) || {};
+    return { fiber: f, tube: tb, cable: cb };
+  }
+
+  return (state.data.splices || []).map(s => {
+    const a = fiberDesc(s.fiber_a_id);
+    const b = fiberDesc(s.fiber_b_id);
+    const tray = trayById.get(s.tray_id) || {};
+    const cl   = closureById.get(tray.closure_id) || {};
+    const loc  = locById.get(cl.location_id) || {};
+    const circuit  = a.fiber.circuit_name || b.fiber.circuit_name || '';
+    const customer = a.fiber.customer || b.fiber.customer || '';
+    return {
+      id: s.id,
+      splice_type: s.splice_type || 'fusion',
+      // Side A
+      a_cable: a.cable.name || '?',
+      a_tube_color: a.tube.color || '?',
+      a_fiber_color: a.fiber.color || '?',
+      a_fiber_pos: a.fiber.position ?? '?',
+      a_fiber_id: s.fiber_a_id,
+      // Side B
+      b_cable: b.cable.name || '?',
+      b_tube_color: b.tube.color || '?',
+      b_fiber_color: b.fiber.color || '?',
+      b_fiber_pos: b.fiber.position ?? '?',
+      b_fiber_id: s.fiber_b_id,
+      // Tray / closure
+      tray_pos: tray.position ?? '?',
+      closure_model: cl.model || 'Closure',
+      closure_id: cl.id || '',
+      location: loc.name || '?',
+      circuit,
+      customer,
+      // for filtering
+      _filterText: [
+        a.cable.name, b.cable.name,
+        a.tube.color, b.tube.color,
+        a.fiber.color, b.fiber.color,
+        s.splice_type, cl.model, loc.name,
+        circuit, customer,
+      ].join(' ').toLowerCase(),
+    };
+  });
+}
+
+function renderMatrixView() {
+  if (state.activeView !== 'matrix') return;
+  const filterText    = (document.getElementById('matrix-filter-text')?.value || '').toLowerCase();
+  const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+
+  // Populate closure filter dropdown if empty
+  const cfEl = document.getElementById('matrix-filter-closure');
+  if (cfEl && cfEl.options.length <= 1 && state.data) {
+    const closures = state.data.closures || [];
+    const locs = new Map((state.data.locations || []).map(l => [l.id, l]));
+    closures.forEach(cl => {
+      const opt = document.createElement('option');
+      opt.value = cl.id;
+      opt.textContent = (cl.model || 'Closure') + ' @ ' + (locs.get(cl.location_id)?.name || '?');
+      cfEl.appendChild(opt);
+    });
+  }
+
+  let rows = _matrixGetRows();
+
+  // Apply filters
+  if (filterText) rows = rows.filter(r => r._filterText.includes(filterText));
+  if (filterClosure) rows = rows.filter(r => r.closure_id === filterClosure);
+
+  // Apply sort
+  if (_matrixSort.col) {
+    const col = _matrixSort.col;
+    const asc = _matrixSort.asc ? 1 : -1;
+    rows.sort((a, b) => {
+      const av = String(a[col] ?? '').toLowerCase();
+      const bv = String(b[col] ?? '').toLowerCase();
+      return av < bv ? -asc : av > bv ? asc : 0;
+    });
+  }
+
+  const TIA = (typeof TIA_598_ABBREV !== 'undefined') ? TIA_598_ABBREV : {};
+  function chip(color) {
+    return `<span class="fc fc-${esc(color)}" title="${esc(color)}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${esc(TIA[color]||'')}</span>`;
+  }
+
+  const cols = [
+    { key: '#',           label: '#',          sortable: false },
+    { key: 'a_cable',     label: 'Cable A',    sortable: true  },
+    { key: null,          label: '↔',          sortable: false },
+    { key: 'b_cable',     label: 'Cable B',    sortable: true  },
+    { key: 'splice_type', label: 'Type',       sortable: true  },
+    { key: 'closure_model', label: 'Closure',  sortable: true  },
+    { key: 'location',    label: 'Location',   sortable: true  },
+    { key: 'circuit',     label: 'Circuit',    sortable: true  },
+    { key: 'customer',    label: 'Customer',   sortable: true  },
+    { key: '_action',     label: '',           sortable: false },
+  ];
+
+  function sortTh(col) {
+    if (!col.sortable) return '';
+    const active = _matrixSort.col === col.key;
+    const arrow = active ? (_matrixSort.asc ? ' ▲' : ' ▼') : ' ⇅';
+    return ` style="cursor:pointer;user-select:none" onclick="matrixSortBy('${col.key}')" title="Sort by ${col.label}"`;
+  }
+
+  const header = cols.map(c => `<th${sortTh(c)}>${esc(c.label)}${c.sortable ? (_matrixSort.col===c.key ? (_matrixSort.asc?' ▲':' ▼'):'') : ''}</th>`).join('');
+
+  const bodyRows = rows.map((r, i) => {
+    const sel = _matrixSelected.has(r.id);
+    const roId = esc(r.id);
+    const commentBadge = (typeof _commentCounts !== 'undefined' && _commentCounts.get(r.id))
+      ? `<span class="matrix-comment-badge" onclick="openSpliceComments('${roId}')" title="Unresolved comments"><i class="fa-solid fa-comments"></i> ${_commentCounts.get(r.id)}</span>`
+      : `<span class="matrix-comment-badge-empty" onclick="openSpliceComments('${roId}')" title="Add comment"><i class="fa-regular fa-comment"></i></span>`;
+    return `<tr data-splice-id="${roId}" class="${sel?'matrix-row-selected':''}">
+      <td style="text-align:center">
+        <input type="checkbox" ${sel?'checked':''} onchange="matrixToggleRow('${roId}',this.checked)" style="margin:0">
+        <span style="margin-left:4px;color:var(--text-muted);font-size:11px">${i+1}</span>
+      </td>
+      <td>${chip(r.a_fiber_color)} ${chip(r.a_tube_color)} ${esc(r.a_cable)}</td>
+      <td style="text-align:center;color:var(--text-muted)">↔</td>
+      <td>${chip(r.b_fiber_color)} ${chip(r.b_tube_color)} ${esc(r.b_cable)}</td>
+      <td>
+        <select class="input-sm" style="width:100px" onchange="matrixUpdateSpliceType('${roId}',this.value)" ${isReadOnly()?'disabled':''}>
+          <option value="fusion" ${r.splice_type==='fusion'?'selected':''}>fusion</option>
+          <option value="mechanical" ${r.splice_type==='mechanical'?'selected':''}>mechanical</option>
+        </select>
+      </td>
+      <td>${esc(r.closure_model)} · T${esc(String(r.tray_pos))}</td>
+      <td>${esc(r.location)}</td>
+      <td><input type="text" class="input-sm" style="width:110px" value="${esc(r.circuit)}" placeholder="circuit" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','circuit_name',this.value)" ${isReadOnly()?'disabled':''}></td>
+      <td><input type="text" class="input-sm" style="width:100px" value="${esc(r.customer)}" placeholder="customer" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','customer',this.value)" ${isReadOnly()?'disabled':''}></td>
+      <td style="white-space:nowrap">
+        ${commentBadge}
+        <button class="btn btn-sm btn-danger" style="padding:1px 5px" onclick="matrixDeleteSplice('${roId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const wrap = document.getElementById('matrix-table-wrap');
+  if (!wrap) return;
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty-pane" style="padding:20px">No splices match the current filters.</div>';
+  } else {
+    wrap.innerHTML = `
+      <table class="table" style="font-size:12px;border-collapse:collapse;width:100%;min-width:800px">
+        <thead><tr>${header}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>`;
+  }
+
+  // Update bulk-delete button visibility
+  const bkBtn = document.getElementById('matrix-bulk-delete');
+  if (bkBtn) bkBtn.style.display = _matrixSelected.size ? 'inline-flex' : 'none';
+  const selAll = document.getElementById('matrix-select-all');
+  if (selAll) selAll.checked = rows.length > 0 && rows.every(r => _matrixSelected.has(r.id));
+}
+
+function matrixSortBy(col) {
+  if (_matrixSort.col === col) {
+    _matrixSort.asc = !_matrixSort.asc;
+  } else {
+    _matrixSort = { col, asc: true };
+  }
+  renderMatrixView();
+}
+
+function matrixToggleRow(id, checked) {
+  if (checked) _matrixSelected.add(id);
+  else _matrixSelected.delete(id);
+  const bkBtn = document.getElementById('matrix-bulk-delete');
+  if (bkBtn) bkBtn.style.display = _matrixSelected.size ? 'inline-flex' : 'none';
+}
+
+function matrixToggleAll(checked) {
+  const filterText    = (document.getElementById('matrix-filter-text')?.value || '').toLowerCase();
+  const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+  let rows = _matrixGetRows();
+  if (filterText) rows = rows.filter(r => r._filterText.includes(filterText));
+  if (filterClosure) rows = rows.filter(r => r.closure_id === filterClosure);
+  rows.forEach(r => { if (checked) _matrixSelected.add(r.id); else _matrixSelected.delete(r.id); });
+  renderMatrixView();
+}
+
+async function matrixUpdateSpliceType(spliceId, spliceType) {
+  try {
+    await api('/api/splice/splices/' + spliceId, 'PUT', { splice_type: spliceType });
+    // Optimistic update in state
+    const s = state.data?.splices?.find(x => x.id === spliceId);
+    if (s) s.splice_type = spliceType;
+    // No full re-render needed — the select already shows the new value.
+  } catch (e) { toast('Update failed: ' + e.message, 'error'); }
+}
+
+async function matrixUpdateFiber(fiberAId, fiberBId, field, value) {
+  // Update side A fiber; if blank try to clear side B too (so the matrix
+  // shows a consistent value). Only one call if both fibers share the same
+  // circuit_name / customer.
+  try {
+    await api('/api/splice/fibers/' + fiberAId, 'PUT', { [field]: value || null });
+    // Optimistic update
+    const f = state.data?.fibers?.find(x => x.id === fiberAId);
+    if (f) f[field] = value || null;
+  } catch (e) { toast('Update failed: ' + e.message, 'error'); }
+}
+
+async function matrixDeleteSplice(spliceId) {
+  if (!confirm('Delete this splice?')) return;
+  try {
+    await api('/api/splice/splices/' + spliceId, 'DELETE');
+    _matrixSelected.delete(spliceId);
+    await hydrateProject();
+  } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+async function matrixBulkDelete() {
+  const ids = [..._matrixSelected];
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} splice${ids.length>1?'s':''}?`)) return;
+  try {
+    for (const id of ids) {
+      await api('/api/splice/splices/' + id, 'DELETE');
+    }
+    _matrixSelected.clear();
+    await hydrateProject();
+  } catch (e) { toast('Bulk delete failed: ' + e.message, 'error'); }
+}
+
+function matrixExportCSV() {
+  const filterText    = (document.getElementById('matrix-filter-text')?.value || '').toLowerCase();
+  const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+  let rows = _matrixGetRows();
+  if (filterText) rows = rows.filter(r => r._filterText.includes(filterText));
+  if (filterClosure) rows = rows.filter(r => r.closure_id === filterClosure);
+  if (_matrixSort.col) {
+    const col = _matrixSort.col;
+    const asc = _matrixSort.asc ? 1 : -1;
+    rows.sort((a, b) => {
+      const av = String(a[col] ?? '').toLowerCase();
+      const bv = String(b[col] ?? '').toLowerCase();
+      return av < bv ? -asc : av > bv ? asc : 0;
+    });
+  }
+  const headers = ['#','Cable A','Tube A','Fiber A','Cable B','Tube B','Fiber B','Type','Closure','Tray','Location','Circuit','Customer'];
+  const csvRows = [headers, ...rows.map((r, i) => [
+    i+1, r.a_cable, r.a_tube_color, r.a_fiber_color,
+    r.b_cable, r.b_tube_color, r.b_fiber_color,
+    r.splice_type, r.closure_model, r.tray_pos, r.location,
+    r.circuit, r.customer,
+  ])].map(row => row.map(cell => {
+    const s = String(cell ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob([csvRows], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'splices-' + (state.data?.project?.name || 'export').replace(/[^a-z0-9]+/gi, '-') + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function initMapIfNeeded() {
@@ -2826,6 +4101,8 @@ async function initMapIfNeeded() {
   try {
     const maplibregl = await loadMapLibre();
     state.maplibregl = maplibregl;
+    const initialBasemap = loadBasemapMode();
+    state.basemap = initialBasemap;
     const map = new maplibregl.Map({
       container: 'map-stage',
       style: {
@@ -2837,18 +4114,38 @@ async function initMapIfNeeded() {
             tileSize: 256,
             attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
           },
+          'esri-ref': {
+            type: 'raster',
+            tiles: [ESRI_REF_TILES],
+            tileSize: 256,
+            attribution: 'Reference © Esri',
+          },
         },
-        layers: [{ id: 'esri-sat', type: 'raster', source: 'esri-sat' }],
+        layers: [
+          { id: 'esri-sat', type: 'raster', source: 'esri-sat' },
+          // The reference overlay starts visible-iff-hybrid; toggle
+          // function flips its layout.visibility.
+          {
+            id: 'esri-ref',
+            type: 'raster',
+            source: 'esri-ref',
+            layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
+          },
+        ],
       },
-      // Continental US default; mapFitData() flies to the data on load
-      // when at least one location has coords.
-      center: [-98.5, 39.8],
-      zoom: 4,
+      // Mecca Drive, Macon GA default. mapFitData() flies to a project's
+      // actual extent on the next hydrate when geo data exists.
+      center: DEFAULT_MAP_CENTER,
+      zoom: DEFAULT_MAP_ZOOM,
       attributionControl: { compact: true },
     });
     state.map = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }));
+    // Sync the basemap toggle label to whatever was loaded from
+    // localStorage (defaults to 'hybrid' on first run).
+    const bmLabel = document.getElementById('btn-basemap-label');
+    if (bmLabel) bmLabel.textContent = initialBasemap === 'hybrid' ? 'Hybrid' : 'Satellite';
     map.on('load', () => {
       // Source + layer for cable polylines. We re-set the data on every
       // refresh from state.data; the source itself just needs to exist
@@ -2893,21 +4190,147 @@ async function initMapIfNeeded() {
         filter: ['==', '$type', 'Point'],
         paint: { 'circle-radius': 5, 'circle-color': '#FF6E00', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 },
       });
+
+      // ── Location cluster source + layers ──────────────────────────────────
+      // GeoJSON source with native MapLibre clustering so high-density zoom-out
+      // views are readable. The selected location is rendered as an HTML Marker
+      // (for drag support); all others live in this source.
+      map.addSource('locations', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+        cluster: true,
+        clusterRadius: 40,
+        clusterMaxZoom: 14,
+      });
+
+      // Cluster bubble — radius scales with point_count.
+      map.addLayer({
+        id: 'loc-clusters',
+        type: 'circle',
+        source: 'locations',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#1660C9',
+          'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
+            1, 14, 10, 18, 50, 24, 200, 32],
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 2,
+          'circle-opacity': 0.85,
+        },
+      });
+
+      // Cluster count label.
+      map.addLayer({
+        id: 'loc-cluster-count',
+        type: 'symbol',
+        source: 'locations',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+        },
+        paint: {
+          'text-color': '#fff',
+        },
+      });
+
+      // Unclustered individual location points, coloured by type.
+      map.addLayer({
+        id: 'loc-unclustered',
+        type: 'circle',
+        source: 'locations',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 2,
+          'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+        },
+      });
+
+      // Location name labels — only shown at zoom ≥ 15 to avoid clutter.
+      map.addLayer({
+        id: 'loc-names',
+        type: 'symbol',
+        source: 'locations',
+        filter: ['!', ['has', 'point_count']],
+        minzoom: 15,
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-size': 10,
+          'text-anchor': 'top',
+          'text-offset': [0, 0.8],
+          'text-allow-overlap': false,
+          'text-ignore-placement': false,
+        },
+        paint: {
+          'text-color': '#fff',
+          'text-halo-color': '#000',
+          'text-halo-width': 1.5,
+        },
+      });
+
+      // Cluster click → zoom in to the cluster's bounding box.
+      map.on('click', 'loc-clusters', (e) => {
+        if (state.mapMode) return;
+        e.preventDefault();
+        const feature = e.features[0];
+        const clusterId = feature.properties.cluster_id;
+        const src = map.getSource('locations');
+        src.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return;
+          map.easeTo({ center: feature.geometry.coordinates, zoom: zoom + 0.5 });
+        });
+      });
+
+      // Unclustered point click → open location inspector (or snap in multistop mode).
+      map.on('click', 'loc-unclustered', (e) => {
+        if (state.mapMode === 'place-new') return;
+        e.preventDefault();
+        const props = e.features[0]?.properties;
+        if (!props?.id) return;
+        if (state.mapMode === 'multistop') {
+          const loc = (state.data?.locations || []).find(l => l.id === props.id);
+          if (loc) mapMsSnapToLocation(loc);
+          return;
+        }
+        selectThing('location', props.id);
+      });
+
+      map.on('mouseenter', 'loc-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+
       refreshMapLayers();
       mapFitData();
-      // Click handler for placing-an-unmapped-closure mode.
       map.on('click', (e) => {
-        if (state.mapMode === 'place' && state.mapPlaceTargetId) {
-          mapApplyPlacement(e.lngLat);
-        } else if (state.mapMode === 'path') {
-          mapPathAddWaypoint(e.lngLat);
+        if (state.mapMode === 'place-new') {
+          mapApplyNewLocation(e.lngLat);
+        } else if (state.mapMode === 'multistop') {
+          mapMsAddStop(e.lngLat);
         }
       });
       map.on('dblclick', (e) => {
-        if (state.mapMode === 'path') {
+        if (state.mapMode === 'multistop') {
           e.preventDefault();
-          mapPathFinish();
+          mapMsFinish();
         }
+      });
+      // Cable click → enter edit-path mode.
+      map.on('click', 'cables-line', (e) => {
+        if (state.mapMode) return;
+        const props = e.features[0]?.properties;
+        if (props?.id) mapStartEditPath(props.id);
+      });
+      map.on('mouseenter', 'cables-line', () => {
+        if (!state.mapMode) map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'cables-line', () => {
+        if (!state.mapMode) map.getCanvas().style.cursor = '';
       });
     });
   } catch (e) {
@@ -2915,59 +4338,166 @@ async function initMapIfNeeded() {
   }
 }
 
+// Haversine in feet — client-side mirror of the server helper so the
+// multi-stop running tally works without a round-trip.
+function _haversineFtClient(coords) {
+  if (!coords || coords.length < 2) return 0;
+  const R = 20902231;
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [lon1, lat1] = coords[i - 1];
+    const [lon2, lat2] = coords[i];
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+    total += 2 * R * Math.asin(Math.sqrt(a));
+  }
+  return total;
+}
+
 function refreshMapLayers() {
   const map = state.map;
   if (!map || !map.isStyleLoaded() || !state.data) return;
-  // Tear down existing markers so we can rebuild from scratch — cheaper
-  // than tracking which moved/added/removed at this scale.
-  if (state._mapMarkers) {
-    state._mapMarkers.forEach(m => m.remove());
-  }
-  state._mapMarkers = [];
+
   const ml = state.maplibregl;
   const locsWithGeo = (state.data.locations || []).filter(l => l.latitude != null && l.longitude != null);
-  for (const loc of locsWithGeo) {
-    const closuresAtLoc = (state.data.closures || []).filter(c => c.location_id === loc.id);
+
+  // ── Selected-location HTML Marker (drag support) ──────────────────────────
+  // Remove the previous selected-location marker (if any).
+  if (state._mapSelectedMarker) {
+    state._mapSelectedMarker.remove();
+    state._mapSelectedMarker = null;
+  }
+
+  const selectedLocId = state.selection?.type === 'location' ? state.selection.id : null;
+  const selectedLoc = selectedLocId
+    ? locsWithGeo.find(l => l.id === selectedLocId)
+    : null;
+
+  if (selectedLoc) {
+    const color = _locColor(selectedLoc);
+    const closuresAtSel = (state.data.closures || []).filter(c => c.location_id === selectedLoc.id);
+    const sz = closuresAtSel.length ? 22 : 18;
     const el = document.createElement('div');
     el.className = 'map-closure-marker';
-    el.style.cssText = `width:18px;height:18px;border-radius:50%;background:${closuresAtLoc.length?'#1B5FA0':'#888'};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);cursor:pointer`;
-    el.title = loc.name + (closuresAtLoc.length ? ' · ' + closuresAtLoc.length + ' closure(s)' : '');
-    const marker = new ml.Marker({ element: el, draggable: !isReadOnly() })
-      .setLngLat([Number(loc.longitude), Number(loc.latitude)])
+    el.style.cssText = `width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 0 3px rgba(255,220,0,.9),0 0 0 5px rgba(0,0,0,.3);cursor:grab;transition:transform .1s;position:relative`;
+    el.title = selectedLoc.name + ` (${selectedLoc.type})`;
+    const lbl = document.createElement('div');
+    lbl.textContent = selectedLoc.name;
+    lbl.style.cssText = 'position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;white-space:nowrap;font-size:10px;font-weight:600;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none';
+    el.appendChild(lbl);
+
+    const selMarker = new ml.Marker({ element: el, draggable: !isReadOnly() })
+      .setLngLat([Number(selectedLoc.longitude), Number(selectedLoc.latitude)])
       .addTo(map);
-    el.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      // If the location has closures, open the first one's inspector;
-      // otherwise open the location inspector.
-      if (closuresAtLoc.length) selectThing('closure', closuresAtLoc[0].id);
-      else selectThing('location', loc.id);
-    });
-    marker.on('dragend', async () => {
-      const ll = marker.getLngLat();
+
+    selMarker.on('dragend', async () => {
+      const ll = selMarker.getLngLat();
       try {
-        await api(`/api/splice/locations/${loc.id}/coords`, 'PUT', {
+        await api(`/api/splice/locations/${selectedLoc.id}/coords`, 'PUT', {
           latitude: ll.lat, longitude: ll.lng,
         });
-        loc.latitude = ll.lat; loc.longitude = ll.lng;
+        selectedLoc.latitude = ll.lat; selectedLoc.longitude = ll.lng;
+        // Re-push to GeoJSON source so the hidden-selected-point moves too.
+        _updateLocationsGeoJSON();
       } catch (e) {
         toast('Move failed: ' + e.message, 'error');
-        marker.setLngLat([Number(loc.longitude), Number(loc.latitude)]);
+        selMarker.setLngLat([Number(selectedLoc.longitude), Number(selectedLoc.latitude)]);
       }
     });
-    state._mapMarkers.push(marker);
+    state._mapSelectedMarker = selMarker;
   }
-  // Cables — only those with a stored path render. A path is independent
-  // of endpoint locations having coords; if a designer has only mapped
-  // the polyline (e.g. ingest from KMZ), it still shows.
-  const cableFeatures = (state.data.cables || [])
-    .filter(c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2)
-    .map(c => ({
+
+  // ── GeoJSON cluster source update ─────────────────────────────────────────
+  _updateLocationsGeoJSON();
+
+  // ── Cable polylines with footage labels at their midpoints ────────────────
+  // Remove old label markers and rebuild.
+  (state._mapLabelMarkers || []).forEach(m => m.remove());
+  state._mapLabelMarkers = [];
+
+  const cablesWithPath = (state.data.cables || []).filter(
+    c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2
+  );
+  const cableFeatures = cablesWithPath.map(c => ({
+    type: 'Feature',
+    geometry: c.path_geojson,
+    properties: { id: c.id, name: c.name, fiber_count: c.fiber_count,
+                  path_length_feet: c.path_length_feet || 0 },
+  }));
+  const cableSrc = map.getSource('cables');
+  if (cableSrc) cableSrc.setData({ type: 'FeatureCollection', features: cableFeatures });
+
+  // Footage labels — Marker-based so they render cleanly over raster tiles.
+  for (const c of cablesWithPath) {
+    const ft = c.path_length_feet || 0;
+    if (!ft) continue;
+    const coords = c.path_geojson.coordinates;
+    // Midpoint: interpolate along the coordinate array by total length.
+    const mid = _midpointOfPolyline(coords);
+    if (!mid) continue;
+    const lbl = document.createElement('div');
+    lbl.textContent = `${Math.round(ft)} ft`;
+    lbl.style.cssText = 'background:rgba(0,0,0,.55);color:#FFD400;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;letter-spacing:0.3px';
+    const m = new ml.Marker({ element: lbl, anchor: 'center' })
+      .setLngLat(mid)
+      .addTo(map);
+    state._mapLabelMarkers.push(m);
+  }
+}
+
+// Push current location data into the 'locations' GeoJSON source.
+// The selected location is included with is_selected:true so the circle
+// layer can hide it (the HTML Marker is rendered on top instead).
+function _updateLocationsGeoJSON() {
+  const map = state.map;
+  if (!map) return;
+  const src = map.getSource('locations');
+  if (!src) return;
+  const selectedLocId = state.selection?.type === 'location' ? state.selection.id : null;
+  const locsWithGeo = (state.data?.locations || []).filter(l => l.latitude != null && l.longitude != null);
+  const features = locsWithGeo.map(loc => {
+    const closureCount = (state.data.closures || []).filter(c => c.location_id === loc.id).length;
+    return {
       type: 'Feature',
-      geometry: c.path_geojson,
-      properties: { id: c.id, name: c.name, fiber_count: c.fiber_count },
-    }));
-  const src = map.getSource('cables');
-  if (src) src.setData({ type: 'FeatureCollection', features: cableFeatures });
+      geometry: { type: 'Point', coordinates: [Number(loc.longitude), Number(loc.latitude)] },
+      properties: {
+        id: loc.id,
+        name: loc.name,
+        type: loc.type,
+        color: _locColor(loc),
+        closure_count: closureCount,
+        is_selected: loc.id === selectedLocId,
+      },
+    };
+  });
+  src.setData({ type: 'FeatureCollection', features });
+}
+
+// Returns the geographic midpoint along a polyline (equal arc-length split).
+function _midpointOfPolyline(coords) {
+  if (!coords || coords.length < 2) return null;
+  // Accumulate segment lengths, find half-total, interpolate.
+  const segs = [];
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const d = _haversineFtClient([coords[i - 1], coords[i]]);
+    segs.push(d);
+    total += d;
+  }
+  let half = total / 2;
+  for (let i = 0; i < segs.length; i++) {
+    if (segs[i] >= half) {
+      const t = half / segs[i];
+      const [lon1, lat1] = coords[i];
+      const [lon2, lat2] = coords[i + 1];
+      return [lon1 + (lon2 - lon1) * t, lat1 + (lat2 - lat1) * t];
+    }
+    half -= segs[i];
+  }
+  return coords[Math.floor(coords.length / 2)];
 }
 
 function mapFitData() {
@@ -2991,110 +4521,382 @@ function mapFitData() {
   map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 500 });
 }
 
-function mapTogglePlaceMode() {
-  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
-  // Pick an unmapped location to place. If only one is unmapped, skip
-  // the picker; otherwise prompt.
-  const unmapped = (state.data.locations || []).filter(l => l.latitude == null || l.longitude == null);
-  if (!unmapped.length) return toast('All locations are already on the map.', 'info');
-  if (state.mapMode === 'place') return mapClearMode();
-  const list = unmapped.map((l, i) => `${i + 1}. ${l.name}`).join('\n');
-  const choice = prompt(`Which location to place on the map?\n\n${list}\n\nEnter a number:`, '1');
-  if (!choice) return;
-  const idx = parseInt(choice, 10) - 1;
-  if (!Number.isFinite(idx) || idx < 0 || idx >= unmapped.length) return toast('Bad choice', 'error');
-  state.mapPlaceTargetId = unmapped[idx].id;
-  state.mapMode = 'place';
-  document.getElementById('map-stage').classList.add('placing');
-  document.getElementById('btn-place-mode').classList.add('active');
-  document.getElementById('map-mode-hint').textContent = `Click on the map to place "${unmapped[idx].name}"`;
+// ─── Palette ──────────────────────────────────────────────────────────────
+
+function mapTogglePalette() {
+  const pal = document.getElementById('map-palette');
+  const btn = document.getElementById('btn-add-item');
+  const open = pal.style.display !== 'none';
+  pal.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('active', !open);
+  if (!open) {
+    // Close on next outside click.
+    const close = (ev) => {
+      if (!document.getElementById('palette-wrap').contains(ev.target)) {
+        pal.style.display = 'none';
+        btn.classList.remove('active');
+        document.removeEventListener('click', close, true);
+      }
+    };
+    document.addEventListener('click', close, true);
+  }
 }
 
-async function mapApplyPlacement(lngLat) {
-  const id = state.mapPlaceTargetId;
-  if (!id) return;
+// Enter "place new location" mode for the given type.
+function mapStartPlace(type) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  document.getElementById('map-palette').style.display = 'none';
+  document.getElementById('btn-add-item').classList.remove('active');
+  mapClearMode();
+  state.mapMode = 'place-new';
+  state.mapPlaceType = type;
+  document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('btn-add-item').classList.add('active');
+  const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+  document.getElementById('map-mode-hint').textContent = `Click on the map to place a ${label}. Esc to cancel.`;
+}
+
+async function mapApplyNewLocation(lngLat) {
+  const type = state.mapPlaceType;
+  if (!type) return;
+  const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const name = window.prompt(`Name for this ${label}:`, '');
+  if (name == null || !String(name).trim()) return;
   try {
-    await api(`/api/splice/locations/${id}/coords`, 'PUT', {
+    const loc = await api(`/api/splice/projects/${state.currentId}/locations`, 'POST', {
+      type, name: String(name).trim(),
       latitude: lngLat.lat, longitude: lngLat.lng,
     });
-    toast('Location placed', 'success');
+    toast(`${label} added`, 'success');
     mapClearMode();
     await hydrateProject();
     if (state.activeView === 'map') refreshMapLayers();
+    // Open its inspector immediately.
+    selectThing('location', loc.id);
   } catch (e) {
-    toast('Place failed: ' + e.message, 'error');
+    toast('Failed: ' + e.message, 'error');
   }
 }
 
-function mapTogglePathMode() {
+// ─── Multi-stop cable draw ──────────────────────────────────────────────────
+
+function mapToggleMultistop() {
   if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
-  const cables = state.data?.cables || [];
-  if (!cables.length) return toast('Add a cable first.', 'info');
-  if (state.mapMode === 'path') return mapClearMode();
-  const list = cables.map((c, i) => `${i + 1}. ${c.name} (${c.fiber_count}f${c.path_geojson ? ' — has path, will replace' : ''})`).join('\n');
-  const choice = prompt(`Draw path for which cable?\n\n${list}\n\nEnter a number:`, '1');
-  if (!choice) return;
-  const idx = parseInt(choice, 10) - 1;
-  if (!Number.isFinite(idx) || idx < 0 || idx >= cables.length) return toast('Bad choice', 'error');
-  state.mapPathTargetId = cables[idx].id;
-  state.mapPathPoints = [];
-  state.mapMode = 'path';
-  document.getElementById('btn-path-mode').classList.add('active');
-  document.getElementById('map-mode-hint').textContent = `Click waypoints for "${cables[idx].name}"; double-click to finish, Esc to cancel`;
+  if (state.mapMode === 'multistop') return mapClearMode();
+  mapClearMode();
+  state.mapMode = 'multistop';
+  state._msStops = [];
+  state._msMarkers = [];
+  document.getElementById('btn-draw-cable').classList.add('active');
   document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('map-mode-hint').textContent = 'Click a location to start cable route. Double-click to finish. Esc cancels.';
 }
 
-function mapPathAddWaypoint(lngLat) {
-  if (state.mapMode !== 'path') return;
-  state.mapPathPoints.push([lngLat.lng, lngLat.lat]);
-  mapRefreshDraftPath();
+// Snap-to-location check: find the nearest marker within ~25 CSS px of click.
+function _msFindNearestLoc(lngLat) {
+  const map = state.map;
+  if (!map) return null;
+  const clickPx = map.project(lngLat);
+  const SNAP_PX = 25;
+  let best = null, bestD = Infinity;
+  for (const loc of (state.data.locations || [])) {
+    if (loc.latitude == null || loc.longitude == null) continue;
+    const px = map.project([Number(loc.longitude), Number(loc.latitude)]);
+    const d = Math.hypot(clickPx.x - px.x, clickPx.y - px.y);
+    if (d < SNAP_PX && d < bestD) { best = loc; bestD = d; }
+  }
+  return best;
 }
 
-function mapRefreshDraftPath() {
+function mapMsSnapToLocation(loc) {
+  // Called when user clicks a marker directly in multistop mode.
+  _mapMsAddStopInternal([Number(loc.longitude), Number(loc.latitude)], loc.id, loc.name);
+}
+
+function mapMsAddStop(lngLat) {
+  if (state.mapMode !== 'multistop') return;
+  const snapped = _msFindNearestLoc(lngLat);
+  if (snapped) {
+    _mapMsAddStopInternal([Number(snapped.longitude), Number(snapped.latitude)], snapped.id, snapped.name);
+  } else {
+    _mapMsAddStopInternal([lngLat.lng, lngLat.lat], null, null);
+  }
+}
+
+function _mapMsAddStopInternal(coord, locationId, locName) {
+  state._msStops.push({ coord, locationId, name: locName });
+  // Visual indicator for the waypoint.
+  const ml = state.maplibregl;
+  const el = document.createElement('div');
+  const isSnapped = locationId != null;
+  el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${isSnapped?'#16A34A':'#FF6E00'};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.5);pointer-events:none`;
+  const m = new ml.Marker({ element: el }).setLngLat(coord).addTo(state.map);
+  state._msMarkers.push(m);
+  mapMsUpdateDraftPath();
+  mapMsUpdateHint();
+}
+
+function mapMsUpdateDraftPath() {
   const map = state.map;
   if (!map) return;
+  const coords = state._msStops.map(s => s.coord);
   const features = [];
-  if (state.mapPathPoints.length >= 2) {
-    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: state.mapPathPoints } });
-  }
-  for (const p of state.mapPathPoints) {
-    features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: p } });
+  if (coords.length >= 2) {
+    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } });
   }
   const src = map.getSource('draft-path');
   if (src) src.setData({ type: 'FeatureCollection', features });
 }
 
-async function mapPathFinish() {
-  if (state.mapMode !== 'path') return;
-  if (state.mapPathPoints.length < 2) {
-    toast('Need at least two waypoints', 'error');
+function mapMsUpdateHint() {
+  const stops = state._msStops;
+  if (!stops.length) {
+    document.getElementById('map-mode-hint').textContent = 'Click a location to start cable route. Double-click to finish. Esc cancels.';
     return;
   }
-  const cableId = state.mapPathTargetId;
-  const path_geojson = { type: 'LineString', coordinates: state.mapPathPoints.slice() };
+  const coords = stops.map(s => s.coord);
+  const ft = Math.round(_haversineFtClient(coords));
+  const names = stops.map(s => s.name || '(free)').join(' → ');
+  document.getElementById('map-mode-hint').textContent =
+    `${names} · ${ft.toLocaleString()} ft so far — double-click last point to finish`;
+}
+
+async function mapMsFinish() {
+  if (state.mapMode !== 'multistop') return;
+  const stops = state._msStops;
+  if (stops.length < 2) {
+    toast('Need at least two points to define a route', 'error');
+    return;
+  }
+  // Collect snapped endpoints and intermediates.
+  const fromLoc = stops.find(s => s.locationId)?.locationId || null;
+  const toLoc = [...stops].reverse().find(s => s.locationId)?.locationId || null;
+  const intermediates = stops.slice(1, -1).filter(s => s.locationId);
+  const coords = stops.map(s => s.coord);
+  const totalFt = Math.round(_haversineFtClient(coords));
+
+  // Prompt for cable details via a modal.
+  const FIBER_OPTIONS = [12, 24, 48, 96, 144, 288, 432, 864];
+  await new Promise((resolve) => {
+    showModal({
+      title: 'Create cable',
+      body: `
+        <div class="field"><label>Cable name</label>
+          <input id="ms-cable-name" type="text" placeholder="e.g. 24f-HH1-to-HH5" style="width:100%"></div>
+        <div class="row">
+          <div class="field"><label>Fiber count</label>
+            <select id="ms-fiber-count">${FIBER_OPTIONS.map(n=>`<option value="${n}"${n===24?' selected':''}>${n}f</option>`).join('')}</select>
+          </div>
+          <div class="field"><label>Construction</label>
+            <select id="ms-construction"><option value="loose_tube">Loose tube</option><option value="ribbon">Ribbon</option></select>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Route: ${totalFt.toLocaleString()} ft across ${stops.length} stops</div>
+      `,
+      submitText: 'Create cable',
+      onSubmit: async (close) => {
+        const name = document.getElementById('ms-cable-name').value.trim();
+        if (!name) { toast('Cable name required', 'error'); return; }
+        const fiber_count = Number(document.getElementById('ms-fiber-count').value);
+        const construction_type = document.getElementById('ms-construction').value;
+        try {
+          const result = await api(`/api/splice/projects/${state.currentId}/cables`, 'POST', {
+            name, fiber_count, construction_type,
+            from_location_id: fromLoc, to_location_id: toLoc,
+          });
+          const cableId = result.cable.id;
+          await api(`/api/splice/cables/${cableId}/path`, 'PUT', {
+            path_geojson: { type: 'LineString', coordinates: coords },
+          });
+          toast(`Cable "${name}" created (${totalFt.toLocaleString()} ft)`, 'success');
+          close();
+          mapClearMode();
+          await hydrateProject();
+          if (state.activeView === 'map') refreshMapLayers();
+          // Follow-up: offer to add closures at intermediate snapped stops.
+          for (const stop of intermediates) {
+            const loc = state.data.locations.find(l => l.id === stop.locationId);
+            if (!loc) continue;
+            const yes = window.confirm(`Add closure / splice assignments at "${loc.name}"?`);
+            if (yes) {
+              selectThing('location', loc.id);
+              await openAddClosureForLocation(loc.id);
+            }
+          }
+          resolve();
+        } catch (e) {
+          toast('Failed: ' + e.message, 'error');
+        }
+      },
+    });
+    // Cancel button clears the draw mode but doesn't throw.
+    // The overlay click also clears it via closeModal() → no resolve() needed;
+    // the Promise just hangs (no side-effect since mapClearMode handles cleanup).
+    document.getElementById('modal-host').querySelector('.close')
+      ?.addEventListener('click', () => { mapClearMode(); resolve(); }, { once: true });
+    document.getElementById('modal-host').querySelector('.modal-overlay')
+      ?.addEventListener('click', (ev) => {
+        if (ev.target === ev.currentTarget) { mapClearMode(); resolve(); }
+      }, { once: true });
+    document.getElementById('modal-host').querySelector('footer .btn:first-child')
+      ?.addEventListener('click', () => { mapClearMode(); resolve(); }, { once: true });
+  });
+}
+
+// ─── Cable path editing ────────────────────────────────────────────────────
+
+function mapStartEditPath(cableId) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const cable = (state.data.cables || []).find(c => c.id === cableId);
+  if (!cable || !cable.path_geojson) return;
+  mapClearMode();
+  state.mapMode = 'edit-path';
+  state._editingCableId = cableId;
+  state._editPathCoords = cable.path_geojson.coordinates.map(c => [...c]);
+  document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('map-mode-hint').textContent =
+    `Editing "${cable.name}": drag handles to move, click midpoints to insert. Esc to cancel.`;
+  mapRebuildEditHandles();
+}
+
+function mapRebuildEditHandles() {
+  const map = state.map;
+  if (!map) return;
+  (state._cableHandleMarkers || []).forEach(m => m.remove());
+  state._cableHandleMarkers = [];
+  const ml = state.maplibregl;
+  const coords = state._editPathCoords;
+
+  // Actual waypoint handles.
+  for (let i = 0; i < coords.length; i++) {
+    const el = document.createElement('div');
+    el.className = 'cable-handle';
+    const idx = i; // capture for closure
+    const marker = new ml.Marker({ element: el, draggable: true })
+      .setLngLat(coords[i])
+      .addTo(map);
+    marker.on('drag', () => {
+      const ll = marker.getLngLat();
+      coords[idx] = [ll.lng, ll.lat];
+      _editPathUpdateDraftLine(coords);
+    });
+    marker.on('dragend', () => {
+      mapSaveEditedPath();
+      // Rebuild to reposition midpoint handles correctly.
+      mapRebuildEditHandles();
+    });
+    // Shift-click to delete a waypoint (minimum 2 points required).
+    el.addEventListener('click', (ev) => {
+      if (!ev.shiftKey) return;
+      ev.stopPropagation();
+      if (coords.length <= 2) return toast('A path needs at least 2 points', 'info');
+      coords.splice(idx, 1);
+      mapSaveEditedPath();
+      mapRebuildEditHandles();
+    });
+    state._cableHandleMarkers.push(marker);
+  }
+
+  // Midpoint insertion handles (between every consecutive pair).
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lon1, lat1] = coords[i];
+    const [lon2, lat2] = coords[i + 1];
+    const midCoord = [(lon1 + lon2) / 2, (lat1 + lat2) / 2];
+    const el = document.createElement('div');
+    el.className = 'cable-handle mid';
+    const afterIdx = i + 1; // insert before this index
+    const midMarker = new ml.Marker({ element: el, draggable: true })
+      .setLngLat(midCoord)
+      .addTo(map);
+    midMarker.on('dragstart', () => {
+      // Promote to a real waypoint on first drag.
+      const ll = midMarker.getLngLat();
+      coords.splice(afterIdx, 0, [ll.lng, ll.lat]);
+      midMarker.remove();
+      // Rebuild handles now that coords has a new entry; the dragend
+      // will save after this.
+    });
+    midMarker.on('dragend', () => {
+      mapSaveEditedPath();
+      mapRebuildEditHandles();
+    });
+    state._cableHandleMarkers.push(midMarker);
+  }
+
+  _editPathUpdateDraftLine(coords);
+}
+
+function _editPathUpdateDraftLine(coords) {
+  const map = state.map;
+  if (!map) return;
+  const features = [];
+  if (coords.length >= 2) {
+    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } });
+  }
+  const src = map.getSource('draft-path');
+  if (src) src.setData({ type: 'FeatureCollection', features });
+}
+
+async function mapSaveEditedPath() {
+  const cableId = state._editingCableId;
+  if (!cableId || state._editPathCoords.length < 2) return;
+  const path_geojson = { type: 'LineString', coordinates: state._editPathCoords.map(c => [...c]) };
   try {
     await api(`/api/splice/cables/${cableId}/path`, 'PUT', { path_geojson });
-    toast('Cable path saved', 'success');
-    mapClearMode();
-    await hydrateProject();
-    if (state.activeView === 'map') refreshMapLayers();
+    // Optimistically update local state so footage label updates.
+    const cable = (state.data.cables || []).find(c => c.id === cableId);
+    if (cable) {
+      cable.path_geojson = path_geojson;
+      cable.path_length_feet = Math.round(_haversineFtClient(path_geojson.coordinates));
+    }
+    refreshMapLayers();
   } catch (e) {
     toast('Save failed: ' + e.message, 'error');
   }
 }
 
+// ─── Basemap ───────────────────────────────────────────────────────────────
+
+// Cycle between satellite-only and hybrid (satellite + reference labels).
+// Persists across sessions in localStorage.
+function cycleBasemap() {
+  if (!state.map) return;
+  const next = state.basemap === 'hybrid' ? 'sat' : 'hybrid';
+  state.basemap = next;
+  saveBasemapMode(next);
+  state.map.setLayoutProperty('esri-ref', 'visibility', next === 'hybrid' ? 'visible' : 'none');
+  document.getElementById('btn-basemap-label').textContent = next === 'hybrid' ? 'Hybrid' : 'Satellite';
+}
+
+// ─── Mode clear ────────────────────────────────────────────────────────────
+
 function mapClearMode() {
+  // Clean up multi-stop markers.
+  (state._msMarkers || []).forEach(m => m.remove());
+  state._msMarkers = [];
+  state._msStops = [];
+  // Clean up edit-path handles.
+  (state._cableHandleMarkers || []).forEach(m => m.remove());
+  state._cableHandleMarkers = [];
+  state._editingCableId = null;
+  state._editPathCoords = [];
+
   state.mapMode = null;
+  state.mapPlaceType = null;
   state.mapPlaceTargetId = null;
   state.mapPathTargetId = null;
   state.mapPathPoints = [];
-  document.getElementById('btn-place-mode').classList.remove('active');
-  document.getElementById('btn-path-mode').classList.remove('active');
+  const btnAdd = document.getElementById('btn-add-item');
+  const btnDraw = document.getElementById('btn-draw-cable');
+  if (btnAdd) btnAdd.classList.remove('active');
+  if (btnDraw) btnDraw.classList.remove('active');
   document.getElementById('map-stage').classList.remove('placing');
   document.getElementById('map-mode-hint').textContent = '';
   if (state.map) {
     const src = state.map.getSource('draft-path');
     if (src) src.setData({ type: 'FeatureCollection', features: [] });
+    // Restore default cursor.
+    state.map.getCanvas().style.cursor = '';
   }
 }
 
@@ -3644,6 +5446,98 @@ function downloadKmz() {
   }
   window.location.href = '/api/splice/projects/' + state.currentId + '/export-kmz';
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Share modal — Phase 4.1 project-level public tokens
+// ───────────────────────────────────────────────────────────────────────────
+
+async function openShareModal() {
+  if (!state.currentId) return;
+  let tokens = [];
+  try {
+    tokens = await api('/api/splice/projects/' + state.currentId + '/public-tokens');
+  } catch (e) { toast('Could not load share links: ' + e.message, 'error'); return; }
+
+  function renderTokenRows(list) {
+    if (!list.length) return '<p style="color:var(--text-muted);font-size:12px;margin:0">No active share links yet.</p>';
+    return list.map(t => {
+      const expiry = t.expires_at
+        ? `Expires ${new Date(t.expires_at).toLocaleDateString()}`
+        : 'Never expires';
+      const byLine = t.created_by_name ? ` · by ${esc(t.created_by_name)}` : '';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-weak);font-size:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.label || '(no label)')}</div>
+          <div style="color:var(--text-muted);font-size:11px">${expiry}${byLine}</div>
+          <div style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${esc(t.url)}</div>
+        </div>
+        <button class="btn btn-sm" onclick="copyShareLink(this,'${esc(t.url)}')" title="Copy link"><i class="fa-solid fa-copy"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="revokeShareLink('${t.token}')" title="Revoke"><i class="fa-solid fa-trash"></i></button>
+      </div>`;
+    }).join('');
+  }
+
+  showModal({
+    title: 'Share project — read-only view',
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+        Share a read-only link with clients or stakeholders — no login required.
+        They can view the map, closures, and trays but cannot edit anything.
+      </p>
+      <div id="share-token-list">${renderTokenRows(tokens)}</div>
+      <hr style="margin:14px 0;border:none;border-top:1px solid var(--border-weak)">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px">Mint new link</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <input type="text" id="share-label" placeholder="Label (e.g. Client review 2026-06)" maxlength="200"
+               style="flex:1;padding:6px 8px;font-size:12px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface-1);color:var(--text);min-width:160px">
+        <select id="share-expiry" style="padding:6px 8px;font-size:12px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface-1);color:var(--text)">
+          <option value="">Never expires</option>
+          <option value="7">7 days</option>
+          <option value="30">30 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="mintShareLink()"><i class="fa-solid fa-plus"></i> Mint link</button>
+    `,
+    submitText: 'Close',
+    onSubmit: close => close(),
+  });
+}
+
+window.copyShareLink = function(btn, url) {
+  navigator.clipboard.writeText(url).then(() => {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy"></i>'; }, 1800);
+  }).catch(() => {
+    prompt('Copy this link:', url);
+  });
+};
+
+window.revokeShareLink = async function(token) {
+  if (!confirm('Revoke this share link? Anyone using it will lose access immediately.')) return;
+  try {
+    await api('/api/splice/public-tokens/project/' + token, 'DELETE');
+    toast('Link revoked', 'success');
+    openShareModal();
+  } catch (e) { toast(e.message, 'error'); }
+};
+
+window.mintShareLink = async function() {
+  if (!state.currentId) return;
+  const label = document.getElementById('share-label')?.value?.trim() || null;
+  const expiryEl = document.getElementById('share-expiry');
+  const expiresInDays = expiryEl?.value ? parseInt(expiryEl.value, 10) : null;
+  try {
+    const t = await api('/api/splice/projects/' + state.currentId + '/public-tokens', 'POST', {
+      label: label || undefined,
+      expires_in_days: expiresInDays || undefined,
+    });
+    toast('Link minted — copying to clipboard', 'success');
+    navigator.clipboard.writeText(t.url).catch(() => {});
+    openShareModal();
+  } catch (e) { toast(e.message, 'error'); }
+};
 
 // ───────────────────────────────────────────────────────────────────────────
 // Versions (Phase 2B #6)

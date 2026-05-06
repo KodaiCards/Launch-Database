@@ -33,7 +33,17 @@ const TIA_598_COLORS = [
   'red', 'black', 'yellow', 'violet', 'rose', 'aqua'
 ];
 
-const FIBER_COUNTS = [12, 24, 48, 96, 144, 288, 432, 864];
+// Phase 4.2 — two-letter TIA-598 abbreviations. Rendered on color chips in
+// the splicer PDF so color-deficient splicers and grayscale prints remain
+// unambiguous. Mirror of the frontend TIA_598_ABBREV constant in splice.html.
+const TIA_598_ABBREV = {
+  blue:'BL', orange:'OR', green:'GR', brown:'BR', slate:'SL', white:'WH',
+  red:'RD', black:'BK', yellow:'YL', violet:'VL', rose:'RS', aqua:'AQ',
+};
+// Colors whose fills are dark enough that white abbreviation text is needed.
+const TIA_598_DARK_FILLS = new Set(['blue','brown','slate','violet','rose','red','black']);
+
+const FIBER_COUNTS = [6, 12, 24, 36, 48, 72, 96, 144, 216, 288, 432, 576, 864, 1152, 1728, 3456];
 
 // Stale-lock timeout: 10 minutes since last heartbeat. Past that, any
 // other designer can take over with the take-over endpoint.
@@ -338,10 +348,19 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           `, [projectId]),
         ]);
 
+      // Annotate each cable with its path length in feet, computed from
+      // path_geojson at hydrate time. Zero when no path is stored yet.
+      const cablesWithFootage = cables.rows.map(c => ({
+        ...c,
+        path_length_feet: c.path_geojson && Array.isArray(c.path_geojson.coordinates)
+          ? Math.round(_haversineFeet(c.path_geojson.coordinates))
+          : 0,
+      }));
+
       const hydrate = {
         project: proj.rows[0],
         locations:        locations.rows,
-        cables:           cables.rows,
+        cables:           cablesWithFootage,
         buffer_tubes:     tubes.rows,
         fibers:           fibers.rows,
         closures:         closures.rows,
@@ -522,14 +541,18 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // ─── Locations ───────────────────────────────────────────────────────────
 
   app.post('/api/splice/projects/:id/locations', requireAuth(), async (req, res) => {
-    const { type = 'splice_point', name, sequence_index = 0, notes } = req.body;
+    // Accept latitude/longitude at create time so the map palette can
+    // POST a single request with coords (saves a PUT /coords round-trip).
+    const { type = 'splice_point', name, sequence_index = 0, notes, latitude, longitude } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
     try {
+      const lat = latitude != null ? Number(latitude) : null;
+      const lon = longitude != null ? Number(longitude) : null;
       const { rows } = await pool.query(
-        `INSERT INTO splice_locations (project_id, type, name, sequence_index, notes)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO splice_locations (project_id, type, name, sequence_index, notes, latitude, longitude)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [req.params.id, type, String(name).trim(), Number(sequence_index) || 0, notes || null]
+        [req.params.id, type, String(name).trim(), Number(sequence_index) || 0, notes || null, lat, lon]
       );
       _bumpProjectMtime(pool, req.params.id);
       _broadcast(req.params.id, 'location_added', { location: rows[0] });
@@ -622,12 +645,17 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       name, fiber_count, construction_type = 'ribbon',
       from_location_id, to_location_id, manufacturer_part, notes,
     } = req.body;
+    // tube_size_fibers defaults to 12 (OSP standard); 6 and 24 are the
+    // other common loose-tube subunit sizes per TIA-598.
+    const tube_size_fibers = [6, 12, 24].includes(Number(req.body.tube_size_fibers))
+      ? Number(req.body.tube_size_fibers) : 12;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
     if (!FIBER_COUNTS.includes(Number(fiber_count))) {
       return res.status(400).json({ error: `fiber_count must be one of ${FIBER_COUNTS.join(', ')}` });
     }
-    if (!['ribbon', 'loose_tube'].includes(construction_type)) {
-      return res.status(400).json({ error: `construction_type must be 'ribbon' or 'loose_tube'` });
+    const CONSTRUCTION_TYPES = ['ribbon', 'loose_tube', 'central_tube', 'micromodule', 'rollable_ribbon'];
+    if (!CONSTRUCTION_TYPES.includes(construction_type)) {
+      return res.status(400).json({ error: `construction_type must be one of ${CONSTRUCTION_TYPES.join(', ')}` });
     }
     const client = await pool.connect();
     try {
@@ -635,17 +663,23 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const cable = await client.query(
         `INSERT INTO splice_cables
            (project_id, name, fiber_count, construction_type,
-            from_location_id, to_location_id, manufacturer_part, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            from_location_id, to_location_id, manufacturer_part, notes, tube_size_fibers)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
         [req.params.id, String(name).trim(), Number(fiber_count), construction_type,
-         from_location_id || null, to_location_id || null, manufacturer_part || null, notes || null]
+         from_location_id || null, to_location_id || null, manufacturer_part || null, notes || null,
+         tube_size_fibers]
       );
       const cableId = cable.rows[0].id;
 
-      // Generate N/12 buffer tubes (or ribbons), each with 12 fibers in
-      // TIA-598 order. Tube color cycles through TIA-598 too.
-      const tubeCount = Number(fiber_count) / 12;
+      // Generate ceil(fiber_count / tube_size_fibers) buffer tubes. The last
+      // tube may hold fewer than tube_size_fibers fibers when fiber_count
+      // isn't an exact multiple (e.g. 6F with tube_size=12 → 1 tube of 6
+      // fibers; 36F with tube_size=24 → tubes of 24 then 12).
+      // TIA-598 colors cycle mod 12 for positions beyond 12 (e.g. tube 13
+      // reuses blue, position 13 reuses blue).
+      const totalFibers = Number(fiber_count);
+      const tubeCount = Math.ceil(totalFibers / tube_size_fibers);
       const tubes = [];
       for (let t = 1; t <= tubeCount; t++) {
         const tubeColor = TIA_598_COLORS[(t - 1) % 12];
@@ -655,11 +689,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           [cableId, t, tubeColor]
         );
         tubes.push(tubeRow.rows[0]);
-        for (let f = 1; f <= 12; f++) {
+        const fibersPlaced = (t - 1) * tube_size_fibers;
+        const fibersInThisTube = Math.min(tube_size_fibers, totalFibers - fibersPlaced);
+        for (let f = 1; f <= fibersInThisTube; f++) {
           await client.query(
             `INSERT INTO splice_fibers (buffer_tube_id, position, color)
              VALUES ($1, $2, $3)`,
-            [tubeRow.rows[0].id, f, TIA_598_COLORS[f - 1]]
+            [tubeRow.rows[0].id, f, TIA_598_COLORS[(f - 1) % 12]]
           );
         }
       }
@@ -918,6 +954,59 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Bulk-delete multiple closures in one transaction.
+  // Body: { ids: ['uuid', ...] }
+  // Security: every id must belong to the same project (verified via join).
+  app.post('/api/splice/closures/bulk-delete', requireAuth(), async (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids must be a non-empty array' });
+    }
+    if (ids.length > 200) {
+      return res.status(400).json({ error: 'Too many ids (max 200)' });
+    }
+    // Validate every id is a non-empty string.
+    if (!ids.every(id => typeof id === 'string' && id.trim())) {
+      return res.status(400).json({ error: 'All ids must be non-empty strings' });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Resolve each id to its project — must all match the same project.
+      const placeholders = ids.map((_, i) => `$${i + 1}`).join(', ');
+      const owned = await client.query(
+        `SELECT cl.id, l.project_id
+         FROM splice_closures cl
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE cl.id IN (${placeholders})`,
+        ids
+      );
+      if (owned.rows.length !== ids.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'One or more closure ids not found' });
+      }
+      const projectIds = new Set(owned.rows.map(r => r.project_id));
+      if (projectIds.size !== 1) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'All closures must belong to the same project' });
+      }
+      const projectId = [...projectIds][0];
+      await client.query(
+        `DELETE FROM splice_closures WHERE id IN (${placeholders})`,
+        ids
+      );
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'closures_bulk_deleted', { ids, deleted: ids.length });
+      res.json({ ok: true, deleted: ids.length });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
   // ─── Splices ─────────────────────────────────────────────────────────────
 
   app.post('/api/splice/trays/:id/splices', requireAuth(), async (req, res) => {
@@ -1044,6 +1133,35 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'splice_deleted', { id: req.params.id });
       res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Phase 4.4 — inline splice-type edit from the matrix tabular view.
+  // Accepts { splice_type } and updates the row. Broadcasts splice_updated
+  // so other designers see the change immediately.
+  app.put('/api/splice/splices/:id', requireAuth(), async (req, res) => {
+    const { splice_type } = req.body || {};
+    if (!splice_type || !['fusion', 'mechanical'].includes(splice_type)) {
+      return res.status(400).json({ error: `splice_type must be 'fusion' or 'mechanical'` });
+    }
+    try {
+      const cur = await pool.query(
+        `SELECT s.id, l.project_id
+         FROM splices s
+         JOIN splice_trays t ON t.id = s.tray_id
+         JOIN splice_closures cl ON cl.id = t.closure_id
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE s.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Splice not found' });
+      const { rows } = await pool.query(
+        `UPDATE splices SET splice_type = $1 WHERE id = $2 RETURNING *`,
+        [splice_type, req.params.id]
+      );
+      _bumpProjectMtime(pool, cur.rows[0].project_id);
+      _broadcast(cur.rows[0].project_id, 'splice_updated', { splice: rows[0] });
+      res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -1336,7 +1454,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         cable_id: req.params.cableId, location_id: req.params.locationId,
         cable_state: rows[0],
       });
-      res.json({ ok: true, cable_state: rows[0] });
+      // Return the row at top level — matches the convention of every
+      // other splice PUT/POST that writes a single row, and what the
+      // smoke tests + UI hydrate flow expect.
+      res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -1357,6 +1478,124 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Phase 4.5: Threaded comments on closures + splices ─────────────────
+  // Pattern: GitHub PR comments. target_table ∈ ('splice_closures','splices').
+  // Top-level threads have parent_comment_id = NULL; replies have it set.
+  // resolve toggle marks a thread as addressed by the engineer.
+
+  const VALID_COMMENT_TARGETS = new Set(['splice_closures', 'splices']);
+
+  app.post('/api/splice/comments', requireAuth(), async (req, res) => {
+    const { project_id, target_table, target_id, body, parent_comment_id } = req.body || {};
+    if (!project_id || !target_table || !target_id || !body || !String(body).trim()) {
+      return res.status(400).json({ error: 'project_id, target_table, target_id, and body are required' });
+    }
+    if (!VALID_COMMENT_TARGETS.has(target_table)) {
+      return res.status(400).json({ error: `target_table must be one of: ${[...VALID_COMMENT_TARGETS].join(', ')}` });
+    }
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO splice_comments
+           (project_id, target_table, target_id, body, created_by_user_id, parent_comment_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          project_id,
+          target_table,
+          target_id,
+          String(body).trim(),
+          req.user?.id || null,
+          parent_comment_id || null,
+        ]
+      );
+      // Join author name for the response.
+      const author = await pool.query(
+        `SELECT COALESCE(full_name, username) AS name FROM users WHERE id = $1`,
+        [req.user?.id]
+      );
+      const comment = { ...rows[0], created_by_name: author.rows[0]?.name || null };
+      _broadcast(project_id, 'comment_added', { comment });
+      res.json(comment);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/comments', requireAuth(), async (req, res) => {
+    const { target_table, target_id } = req.query;
+    if (!target_table || !target_id) {
+      return res.status(400).json({ error: 'target_table and target_id are required' });
+    }
+    if (!VALID_COMMENT_TARGETS.has(target_table)) {
+      return res.status(400).json({ error: `target_table must be one of: ${[...VALID_COMMENT_TARGETS].join(', ')}` });
+    }
+    try {
+      const { rows } = await pool.query(
+        `SELECT c.*,
+                COALESCE(u.full_name, u.username) AS created_by_name,
+                COALESCE(ru.full_name, ru.username) AS resolved_by_name
+           FROM splice_comments c
+           LEFT JOIN users u  ON u.id = c.created_by_user_id
+           LEFT JOIN users ru ON ru.id = c.resolved_by_user_id
+          WHERE c.target_table = $1 AND c.target_id = $2
+          ORDER BY c.created_at ASC`,
+        [target_table, target_id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/projects/:id/comments', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT c.*,
+                COALESCE(u.full_name, u.username) AS created_by_name
+           FROM splice_comments c
+           LEFT JOIN users u ON u.id = c.created_by_user_id
+          WHERE c.project_id = $1
+            AND c.resolved_at IS NULL
+          ORDER BY c.created_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/comments/:id/resolve', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT id, project_id, resolved_at FROM splice_comments WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Comment not found' });
+      const already = cur.rows[0].resolved_at;
+      // Toggle: set if null, clear if already set.
+      const { rows } = await pool.query(
+        `UPDATE splice_comments
+         SET resolved_at = $1, resolved_by_user_id = $2
+         WHERE id = $3 RETURNING *`,
+        [
+          already ? null : new Date(),
+          already ? null : (req.user?.id || null),
+          req.params.id,
+        ]
+      );
+      _broadcast(cur.rows[0].project_id, 'comment_resolved', { comment: rows[0] });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/comments/:id', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT id, project_id, target_table, target_id FROM splice_comments WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Comment not found' });
+      await pool.query(`DELETE FROM splice_comments WHERE id = $1`, [req.params.id]);
+      _broadcast(cur.rows[0].project_id, 'comment_removed', { id: req.params.id, target_table: cur.rows[0].target_table, target_id: cur.rows[0].target_id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure templates (Phase 2B #5) ─────────────────────────────────────
   // Reusable closure shells designers save once and apply across
   // projects. Sized config (tray_count, tray_capacity) plus optional
@@ -1366,26 +1605,43 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // projects. The list endpoint accepts ?client_id= to filter to
   // (global OR matching-client) templates.
 
+  // Phase 4.6: added ?scope=public to show only published templates
+  // (published_at IS NOT NULL), ordered by download_count DESC so the
+  // library naturally surfaces popular shells. Existing ?client_id=
+  // behavior is unchanged.
   app.get('/api/splice/closure-templates', requireAuth(), async (req, res) => {
     try {
       const clientId = req.query.client_id || null;
-      const { rows } = clientId
-        ? await pool.query(
-            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
-               FROM splice_closure_templates t
-               LEFT JOIN clients cl ON cl.id = t.scope_client_id
-               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
-              WHERE t.scope_client_id IS NULL OR t.scope_client_id = $1
-              ORDER BY t.scope_client_id NULLS FIRST, t.name`,
-            [clientId]
-          )
-        : await pool.query(
-            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
-               FROM splice_closure_templates t
-               LEFT JOIN clients cl ON cl.id = t.scope_client_id
-               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
-              ORDER BY t.scope_client_id NULLS FIRST, t.name`
-          );
+      const scope    = req.query.scope || null; // 'public' → only published
+      let rows;
+      if (scope === 'public') {
+        ({ rows } = await pool.query(
+          `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+             FROM splice_closure_templates t
+             LEFT JOIN clients cl ON cl.id = t.scope_client_id
+             LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+            WHERE t.published_at IS NOT NULL
+            ORDER BY t.download_count DESC, t.name`
+        ));
+      } else if (clientId) {
+        ({ rows } = await pool.query(
+          `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+             FROM splice_closure_templates t
+             LEFT JOIN clients cl ON cl.id = t.scope_client_id
+             LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+            WHERE t.scope_client_id IS NULL OR t.scope_client_id = $1
+            ORDER BY t.scope_client_id NULLS FIRST, t.name`,
+          [clientId]
+        ));
+      } else {
+        ({ rows } = await pool.query(
+          `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+             FROM splice_closure_templates t
+             LEFT JOIN clients cl ON cl.id = t.scope_client_id
+             LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+            ORDER BY t.scope_client_id NULLS FIRST, t.name`
+        ));
+      }
       res.json(rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1460,6 +1716,40 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Phase 4.6 — publish / unpublish (admin-only). Sets/clears published_at
+  // and published_by_staff_id. Admin check: req.user.role === 'admin'.
+  app.post('/api/splice/closure-templates/:id/publish', requireAuth(), async (req, res) => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin role required to publish templates' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_closure_templates
+         SET published_at = NOW(), published_by_staff_id = $1
+         WHERE id = $2 RETURNING *`,
+        [req.user?.staff_id || null, req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/closure-templates/:id/unpublish', requireAuth(), async (req, res) => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin role required to unpublish templates' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_closure_templates
+         SET published_at = NULL, published_by_staff_id = NULL
+         WHERE id = $1 RETURNING *`,
+        [req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // Apply a template to create a new closure at the given location.
   // Inserts a closure row, materializes its trays from tray_count, and
   // bumps the closure_models picklist (same side-effect as the regular
@@ -1518,6 +1808,12 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             [String(t.model).trim(), t.tray_count, t.tray_capacity]
           );
         }
+        // Phase 4.6 — atomically bump download_count for analytics /
+        // public library ranking. Always fires (global + client + public).
+        await client.query(
+          `UPDATE splice_closure_templates SET download_count = download_count + 1 WHERE id = $1`,
+          [req.params.templateId]
+        );
         await client.query('COMMIT');
         _bumpProjectMtime(pool, loc.rows[0].project_id);
         _broadcast(loc.rows[0].project_id, 'closure_added', {
@@ -1599,13 +1895,14 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         const r = await client.query(
           `INSERT INTO splice_cables
              (project_id, name, fiber_count, construction_type,
-              from_location_id, to_location_id, manufacturer_part, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+              from_location_id, to_location_id, manufacturer_part, notes, tube_size_fibers)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING id`,
           [newProjectId, c.name, c.fiber_count, c.construction_type,
            c.from_location_id ? locMap.get(c.from_location_id) || null : null,
            c.to_location_id   ? locMap.get(c.to_location_id)   || null : null,
-           c.manufacturer_part, c.notes]
+           c.manufacturer_part, c.notes,
+           c.tube_size_fibers || 12]
         );
         cableMap.set(c.id, r.rows[0].id);
       }
@@ -1973,6 +2270,176 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Phase 4.1 — Project-level public tokens (read-only stakeholder view)
+  //   POST /api/splice/projects/:id/public-tokens  — mint
+  //   GET  /api/splice/projects/:id/public-tokens  — list
+  //   DELETE /api/splice/public-tokens/project/:token — revoke
+  //   GET  /splice/view/:token                     — public HTML shell
+  //   GET  /api/splice/view/:token/hydrate         — public read-only data
+
+  app.post('/api/splice/projects/:id/public-tokens', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    const label = req.body?.label ? String(req.body.label).trim().slice(0, 200) : null;
+    const expiresInDays = req.body?.expires_in_days != null
+      ? Math.max(1, parseInt(req.body.expires_in_days, 10) || 0)
+      : null;
+    try {
+      const proj = await pool.query(`SELECT id FROM splice_projects WHERE id = $1`, [projectId]);
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
+      const token = _mintFieldToken();
+      const expiresAt = expiresInDays
+        ? new Date(Date.now() + expiresInDays * 86400 * 1000)
+        : null;
+      const ins = await pool.query(
+        `INSERT INTO splice_project_public_tokens
+           (token, project_id, expires_at, created_by_staff_id, label)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [token, projectId, expiresAt, req.user?.staff_id || null, label]
+      );
+      const url = (SPLICE_PUBLIC_URL || '') + '/splice/view/' + token;
+      res.json({ ...ins.rows[0], url });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/projects/:id/public-tokens', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT t.*, s.name AS created_by_name
+           FROM splice_project_public_tokens t
+           LEFT JOIN staff s ON s.id = t.created_by_staff_id
+          WHERE t.project_id = $1
+          ORDER BY t.created_at DESC`,
+        [req.params.id]
+      );
+      const base = SPLICE_PUBLIC_URL || '';
+      res.json(rows.map(r => ({ ...r, url: base + '/splice/view/' + r.token })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/public-tokens/project/:token', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_project_public_tokens WHERE token = $1`,
+        [req.params.token]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Token not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Public: render the read-only viewer HTML shell. No requireAuth —
+  // the token IS the auth. Resolves token → project, injects the token
+  // into a <meta> tag so the client-side JS can call the hydrate API.
+  app.get('/splice/view/:token', async (req, res) => {
+    try {
+      const tok = await _resolveProjectToken(pool, req.params.token);
+      if (!tok) return res.status(404).type('html').send(_renderViewErrorHtml('This share link is no longer valid. Ask the engineer for a fresh link.'));
+      // Serve the static file with the token embedded as a meta tag.
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(__dirname, '..', 'public', 'splice_view.html');
+      let html = fs.readFileSync(filePath, 'utf8');
+      html = html.replace('__SPLICE_TOKEN__', _esc(req.params.token));
+      res.type('html').send(html);
+    } catch (e) {
+      res.status(500).type('html').send(_renderViewErrorHtml('Server error: ' + e.message));
+    }
+  });
+
+  // Public: read-only hydrate for the viewer. Returns same shape as the
+  // auth'd hydrate but strips lock/edit fields. The token IS the auth.
+  app.get('/api/splice/view/:token/hydrate', async (req, res) => {
+    try {
+      const tok = await _resolveProjectToken(pool, req.params.token);
+      if (!tok) return res.status(401).json({ error: 'Share link is no longer valid.' });
+      const projectId = tok.project_id;
+
+      const proj = await pool.query(
+        `SELECT p.*, s.name AS designer_name
+           FROM splice_projects p
+           LEFT JOIN staff s ON s.id = p.designer_id
+          WHERE p.id = $1`,
+        [projectId]
+      );
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
+
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
+        await Promise.all([
+          pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
+          pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
+          pool.query(`
+            SELECT t.* FROM splice_buffer_tubes t
+            JOIN splice_cables c ON c.id = t.cable_id
+            WHERE c.project_id = $1
+            ORDER BY t.cable_id, t.position
+          `, [projectId]),
+          pool.query(`
+            SELECT f.* FROM splice_fibers f
+            JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+            JOIN splice_cables c ON c.id = t.cable_id
+            WHERE c.project_id = $1
+            ORDER BY f.buffer_tube_id, f.position
+          `, [projectId]),
+          pool.query(`
+            SELECT cl.* FROM splice_closures cl
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY cl.created_at
+          `, [projectId]),
+          pool.query(`
+            SELECT t.* FROM splice_trays t
+            JOIN splice_closures cl ON cl.id = t.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY t.closure_id, t.position
+          `, [projectId]),
+          pool.query(`
+            SELECT s.* FROM splices s
+            JOIN splice_trays t ON t.id = s.tray_id
+            JOIN splice_closures cl ON cl.id = t.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY s.tray_id, s.created_at
+          `, [projectId]),
+          pool.query(`SELECT * FROM splice_ribbon_groups WHERE project_id = $1`, [projectId]),
+          pool.query(`SELECT * FROM splice_strand_states WHERE project_id = $1`, [projectId]),
+          pool.query(`
+            SELECT sp.* FROM splice_splitters sp
+            JOIN splice_closures cl ON cl.id = sp.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+          `, [projectId]).catch(() => ({ rows: [] })),
+          pool.query(`
+            SELECT so.* FROM splice_splitter_outputs so
+            JOIN splice_splitters sp ON sp.id = so.splitter_id
+            JOIN splice_closures cl ON cl.id = sp.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+          `, [projectId]).catch(() => ({ rows: [] })),
+          pool.query(`SELECT * FROM splice_cable_states WHERE project_id = $1`, [projectId]).catch(() => ({ rows: [] })),
+        ]);
+
+      // Strip lock/edit fields from the project row.
+      const { locked_by_staff_id, locked_at, lock_heartbeat_at, ...safeProject } = proj.rows[0];
+
+      res.json({
+        project:        { ...safeProject, _read_only: true },
+        locations:      locations.rows,
+        cables:         cables.rows,
+        buffer_tubes:   tubes.rows,
+        fibers:         fibers.rows,
+        closures:       closures.rows,
+        trays:          trays.rows,
+        splices:        splices.rows,
+        ribbon_groups:  ribbonGroups.rows,
+        strand_states:  strandStates.rows,
+        splitters:      splittersRes.rows,
+        splitter_outputs: splitterOutputsRes.rows,
+        cable_states:   cableStatesRes.rows,
+      });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // Public: render minimal HTML for the splicer. Resolves the token to
   // its closure, pulls closure + location + project metadata + any
   // already-uploaded markups so the splicer can confirm they're at the
@@ -2128,6 +2595,82 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         `SELECT * FROM splice_closure_models ORDER BY use_count DESC, last_used_at DESC, model`
       );
       res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── Cross-project search ────────────────────────────────────────────────
+  // GET /api/splice/search?q=foo
+  // Case-insensitive substring search across project / location / cable /
+  // closure / fiber-circuit / fiber-customer / splice-closure-model.
+  // Returns shallow rows with project context so the UI can deep-link.
+  // Capped per bucket to keep payloads small on a busy install.
+  app.get('/api/splice/search', requireAuth(), async (req, res) => {
+    const raw = (req.query.q || '').toString().trim();
+    if (raw.length < 2) {
+      return res.json({ q: raw, projects: [], locations: [], cables: [], closures: [], fibers: [] });
+    }
+    const PER_BUCKET = 25;
+    const like = '%' + raw.replace(/[\\%_]/g, c => '\\' + c) + '%';
+    try {
+      const [projects, locations, cables, closures, fibers] = await Promise.all([
+        pool.query(
+          `SELECT id, name, status, updated_at
+             FROM splice_projects
+            WHERE name ILIKE $1 ESCAPE '\\'
+            ORDER BY updated_at DESC LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        pool.query(
+          `SELECT l.id, l.name, l.type, l.project_id, p.name AS project_name
+             FROM splice_locations l
+             JOIN splice_projects p ON p.id = l.project_id
+            WHERE l.name ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, l.name LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        pool.query(
+          `SELECT c.id, c.name, c.fiber_count, c.project_id, p.name AS project_name
+             FROM splice_cables c
+             JOIN splice_projects p ON p.id = c.project_id
+            WHERE c.name ILIKE $1 ESCAPE '\\'
+               OR c.manufacturer_part ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, c.name LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        pool.query(
+          `SELECT cl.id, cl.model, l.name AS location_name, l.project_id, p.name AS project_name
+             FROM splice_closures cl
+             JOIN splice_locations l ON l.id = cl.location_id
+             JOIN splice_projects p ON p.id = l.project_id
+            WHERE cl.model ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, cl.model LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        // Fiber search keys on circuit_name + customer (Phase 2A #4) —
+        // these are the strings designers actually go looking for ("which
+        // closure has the Acme Hospital circuit?"). Skip the color/position
+        // text since those are repeated 12 ways in every cable.
+        pool.query(
+          `SELECT f.id, f.circuit_name, f.customer, f.color, f.position,
+                  c.name AS cable_name, c.project_id, p.name AS project_name
+             FROM splice_fibers f
+             JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+             JOIN splice_cables c ON c.id = t.cable_id
+             JOIN splice_projects p ON p.id = c.project_id
+            WHERE f.circuit_name ILIKE $1 ESCAPE '\\'
+               OR f.customer ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, c.name, f.position LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+      ]);
+      res.json({
+        q: raw,
+        projects:  projects.rows,
+        locations: locations.rows,
+        cables:    cables.rows,
+        closures:  closures.rows,
+        fibers:    fibers.rows,
+      });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -2890,6 +3433,26 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 // Bump the project's updated_at so the project list re-sorts and SSE
 // clients can re-fetch on a single hint. Best-effort; failure here is
 // not user-visible.
+// Haversine great-circle distance along a [lon,lat][] polyline, in feet.
+// Used to surface cable footage in the hydrate payload without storing it
+// — it's computed from path_geojson at read time.
+function _haversineFeet(coords) {
+  if (!Array.isArray(coords) || coords.length < 2) return 0;
+  const R_FT = 20902231; // Earth mean radius in feet
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [lon1, lat1] = coords[i - 1];
+    const [lon2, lat2] = coords[i];
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+    total += 2 * R_FT * Math.asin(Math.sqrt(a));
+  }
+  return total;
+}
+
 function _bumpProjectMtime(pool, projectId) {
   if (!projectId) return;
   pool.query(`UPDATE splice_projects SET updated_at = NOW() WHERE id = $1`, [projectId])
@@ -3111,10 +3674,15 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
     };
   }
 
-  // Color swatch + name. Black-and-white printers, colorblind splicers,
-  // and dim flashlights all benefit from BOTH being on the page.
+  // Color swatch + name + TIA-598 abbreviation. Black-and-white printers,
+  // color-deficient splicers, and dim flashlights all benefit from the
+  // swatch, the full name, AND the 2-letter code being present together.
+  // The swatch has a 1px border for grayscale-print fidelity (fills that
+  // are near-white or near-white background blend together without it).
   function colorChip(name) {
-    return `<span class="chip chip-${_esc(name)}"></span>${_esc(name)}`;
+    const abbrev = TIA_598_ABBREV[name] || '';
+    const textColor = TIA_598_DARK_FILLS.has(name) ? '#fff' : '#111';
+    return `<span class="chip chip-${_esc(name)}" data-abbrev="${_esc(abbrev)}" style="position:relative;border:1px solid #888"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5.5px;font-weight:700;color:${textColor};line-height:1;letter-spacing:0">${_esc(abbrev)}</span></span>${_esc(name)}`;
   }
 
   function rowForSplice(s) {
@@ -3443,8 +4011,10 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   .warn{color:#DC3545;font-weight:700;text-transform:uppercase;font-size:9px}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
 
-  /* Color swatches — printed alongside color names. */
-  .chip{display:inline-block;width:9px;height:9px;border-radius:50%;border:0.5px solid #999;margin-right:4px;vertical-align:-1px}
+  /* Color swatches — printed alongside color names. Phase 4.2: larger for
+     abbrev text, 1px border for grayscale-print fidelity, relative position
+     so the inner abbrev span can use absolute positioning. */
+  .chip{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #888;margin-right:3px;vertical-align:-3px;position:relative;overflow:hidden}
   ${colorCss}
 
   .ribbon-tag{display:inline-block;padding:1px 5px;background:#E8F0FB;color:#1B5FA0;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px;letter-spacing:0.4px}
@@ -3830,6 +4400,42 @@ ${closurePages || '<div class="empty-section">No splice changes between these re
 <div class="footer">
   <span>${_esc(project_name)}</span>
   <span>Diff ${_esc(aLabel)} → ${_esc(bLabel)}</span>
+</div>
+</body></html>`;
+}
+
+// ─── Phase 4.1 helpers — project-level public tokens ────────────────────
+
+// Resolve a project-level public token. Returns { token, project_id, ... }
+// or null when unknown/expired.
+async function _resolveProjectToken(pool, token) {
+  if (!token || typeof token !== 'string' || token.length > 64) return null;
+  const { rows } = await pool.query(
+    `SELECT token, project_id, expires_at, created_at, label
+       FROM splice_project_public_tokens
+      WHERE token = $1
+        AND (expires_at IS NULL OR expires_at > NOW())`,
+    [token]
+  );
+  return rows[0] || null;
+}
+
+// Minimal error HTML for the public view endpoint.
+function _renderViewErrorHtml(message) {
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Splice Matrix — Link error</title>
+<style>
+  body{font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#f5f6f8;color:#1c1c1c;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .card{background:#fff;border:1px solid #e2e4e9;border-radius:10px;padding:32px 40px;max-width:440px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  h1{font-size:20px;font-weight:700;color:#003366;margin:0 0 12px}
+  p{color:#5b6470;font-size:14px;margin:0}
+</style>
+</head><body>
+<div class="card">
+  <h1>Link error</h1>
+  <p>${_esc(message)}</p>
 </div>
 </body></html>`;
 }
@@ -4610,31 +5216,38 @@ async function _applyImportChange(client, projectId, change) {
   }
   if (target_table === 'splice_cables') {
     if (change_type === 'add') {
+      const totalFibers   = p.fiber_count || 144;
+      const tubeSize      = [6, 12, 24].includes(Number(p.tube_size_fibers)) ? Number(p.tube_size_fibers) : 12;
       const r = await client.query(
         `INSERT INTO splice_cables
-           (project_id, name, fiber_count, construction_type, path_geojson, notes, manufacturer_part)
-         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING id`,
+           (project_id, name, fiber_count, construction_type, path_geojson, notes, manufacturer_part, tube_size_fibers)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8) RETURNING id`,
         [projectId, p.name || '(unnamed)',
-         p.fiber_count || 144,
+         totalFibers,
          p.construction_type || 'ribbon',
          p.path_geojson ? JSON.stringify(p.path_geojson) : null,
-         p.notes || null, p.manufacturer_part || null]
+         p.notes || null, p.manufacturer_part || null,
+         tubeSize]
       );
-      // Auto-generates buffer tubes + fibers in TIA-598 order to
-      // match the same flow the live POST-cable endpoint runs.
+      // Auto-generate buffer tubes + fibers using the configured tube
+      // size — same logic as the live POST-cable endpoint. The last
+      // tube takes the remainder when totalFibers isn't an exact
+      // multiple of tubeSize (6F with tube=12 → 1 tube of 6 fibers).
       const newCableId = r.rows[0].id;
-      const tubeCount = (p.fiber_count || 144) / 12;
+      const tubeCount = Math.ceil(totalFibers / tubeSize);
       for (let pos = 1; pos <= tubeCount; pos++) {
         const tube = await client.query(
           `INSERT INTO splice_buffer_tubes (cable_id, position, color)
            VALUES ($1, $2, $3) RETURNING id`,
           [newCableId, pos, TIA_598_COLORS[(pos - 1) % 12]]
         );
-        for (let fp = 1; fp <= 12; fp++) {
+        const fibersPlaced = (pos - 1) * tubeSize;
+        const fibersInThisTube = Math.min(tubeSize, totalFibers - fibersPlaced);
+        for (let fp = 1; fp <= fibersInThisTube; fp++) {
           await client.query(
             `INSERT INTO splice_fibers (buffer_tube_id, position, color)
              VALUES ($1, $2, $3)`,
-            [tube.rows[0].id, fp, TIA_598_COLORS[fp - 1]]
+            [tube.rows[0].id, fp, TIA_598_COLORS[(fp - 1) % 12]]
           );
         }
       }

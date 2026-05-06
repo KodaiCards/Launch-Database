@@ -324,6 +324,12 @@ fetch('/api/auth/me', { credentials: 'include' })
     <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" id="dm-toggle" title="Toggle dark mode">
       <i class="fa-solid fa-moon" id="dm-icon"></i>
     </button>
+    <div id="portals-btn-wrap" style="display:none;position:relative">
+      <button class="btn btn-secondary btn-sm" onclick="togglePortalsDropdown()" id="portals-btn" title="My Portals">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i> My Portals
+      </button>
+      <div id="portals-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border-weak);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px;z-index:9999;padding:4px 0"></div>
+    </div>
     <div id="user-pill" style="display:none;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);padding:0 8px;border-right:1px solid var(--gray-border);margin-right:6px;cursor:pointer" onclick="signOut()" title="Click to sign out">
       <i class="fa-solid fa-user-circle" style="font-size:14px"></i>
       <span id="user-pill-text"></span>
@@ -429,15 +435,15 @@ fetch('/api/auth/me', { credentials: 'include' })
             <span class="form-hint" id="proj-existing-hint">Showing existing leaf projects under this client — with WO# in label when applicable.</span>
           </div>
         </div>
-        <!-- Parent Project + Concentrator removed — server auto-nests under
-             Client → Team → Service Area → Project. PSC clients drive Service
-             Area via Work Order # match; non-PSC clients type a free-text
-             Service Area label. -->
         <div class="form-row">
+          <div class="form-group" id="proj-concentrator-wrap" style="display:none">
+            <label>Service Area</label>
+            <select id="proj-concentrator" onchange="concentratorChanged()"><option value="">— Pick area —</option></select>
+          </div>
           <div class="form-group" id="proj-wo-wrap" style="display:none">
             <label>Work Order Number</label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
-            <span class="form-hint">If this WO# matches a known service area, the project gets auto-grouped under it.</span>
+            <span class="form-hint">Auto-filled when an area is selected above.</span>
           </div>
           <div class="form-group" id="proj-service-area-wrap" style="display:none">
             <label>Service Area</label>
@@ -644,6 +650,7 @@ let projectTypesCache = [];
 let clientsCache = [];
 let contractsCache = [];
 let projectsCache = [];
+let allConcentrators = [];
 
 // ─── Tiny utilities ─────────────────────────────────────────────────────────
 function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
@@ -742,6 +749,8 @@ async function openProjectModal(){
   ['proj-name','proj-wo','proj-amount','proj-notes'].forEach(id => document.getElementById(id).value='');
   document.getElementById('proj-status').value = 'active';
   document.getElementById('proj-start').value = new Date().toISOString().split('T')[0];
+  const concSel = document.getElementById('proj-concentrator');
+  if (concSel) concSel.value = '';
   populateProjectFormDropdowns();
   document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
@@ -782,6 +791,16 @@ async function editProject(id){
       const ptypeSel = document.getElementById('proj-ptype');
       const preset = p.program || (p.project_type ? String(p.project_type).toLowerCase() : '');
       if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(preset) ? preset : '';
+    }
+    applyPortalProjectModalFieldGating();
+    const concSel = document.getElementById('proj-concentrator');
+    if (concSel) {
+      if (p.concentrator_id) {
+        concSel.value = p.concentrator_id;
+      } else if (p.work_order_number) {
+        const conc = allConcentrators.find(c => c.work_order_number === p.work_order_number);
+        if (conc) concSel.value = conc.id;
+      }
     }
   } catch (e) { console.error('client/job hookup failed:', e); }
 
@@ -865,6 +884,38 @@ async function refilterJobsDropdown(preserveJobId){
   } catch (e) { /* non-fatal */ }
 }
 
+function populateConcentratorDropdown() {
+  const sel = document.getElementById('proj-concentrator');
+  if (!sel) return;
+  while (sel.options.length > 1) sel.remove(1);
+  const byContract = {};
+  allConcentrators.forEach(c => {
+    if (!byContract[c.contract_label]) byContract[c.contract_label] = [];
+    byContract[c.contract_label].push(c);
+  });
+  for (const [label, areas] of Object.entries(byContract)) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    areas.forEach(a => {
+      const opt = new Option(`${a.area_name}${a.work_order_number ? ' (WO# ' + a.work_order_number + ')' : ''}`, a.id);
+      group.appendChild(opt);
+    });
+    sel.appendChild(group);
+  }
+}
+
+function concentratorChanged() {
+  const sel = document.getElementById('proj-concentrator');
+  const id = sel.value;
+  if (!id) return;
+  const conc = allConcentrators.find(c => c.id === id);
+  if (!conc) return;
+  const effective = effectiveProgramForPortalProjectModal();
+  if (effective === 'rus' && conc.work_order_number) {
+    document.getElementById('proj-wo').value = conc.work_order_number;
+  }
+}
+
 // Effective-program logic for portal field gating (mirrors admin + design portals).
 function effectiveProgramForPortalProjectModal() {
   const ptypeVal = document.getElementById('proj-ptype')?.value;
@@ -888,10 +939,12 @@ function effectiveProgramForPortalProjectModal() {
 function applyPortalProjectModalFieldGating() {
   const effective = effectiveProgramForPortalProjectModal();
   const isRus = effective === 'rus';
-  const isNonRus = effective && effective !== 'rus';
+  const isGfr = effective === 'gfr';
+  const usesRusInfra = isRus || isGfr;
+  const isNonRus = effective && !usesRusInfra;
   const clientId = document.getElementById('proj-client')?.value;
   const opt = document.getElementById('proj-client')?.selectedOptions[0];
-  const showContract = clientId && (isRus || opt?.dataset.showContract === '1');
+  const showContract = clientId && (usesRusInfra || opt?.dataset.showContract === '1');
 
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
@@ -901,6 +954,14 @@ function applyPortalProjectModalFieldGating() {
     if (!showContract) {
       const cSel = document.getElementById('proj-contract');
       if (cSel) cSel.value = '';
+    }
+  }
+  const concWrap = document.getElementById('proj-concentrator-wrap');
+  if (concWrap) {
+    concWrap.style.display = usesRusInfra ? '' : 'none';
+    if (!usesRusInfra) {
+      const cIn = document.getElementById('proj-concentrator');
+      if (cIn) cIn.value = '';
     }
   }
   const woWrap = document.getElementById('proj-wo-wrap');
@@ -1053,12 +1114,10 @@ async function saveProject(){
   const isFootage = opt && (opt.dataset.permit === '1' || opt.dataset.bt === 'footage');
   const amount = parseFloat(document.getElementById('proj-amount').value);
 
-  // NOTE: parent_id and concentrator_id are NOT sent — server auto-nests.
-  // PSC clients drive Service Area via Work Order # match; non-PSC clients
-  // send service_area_label as free-text and the server creates a folder from it.
   const payload = {
     name, client_id, job_id,
     contract_id: document.getElementById('proj-contract').value || null,
+    concentrator_id: document.getElementById('proj-concentrator').value || null,
     // Phase 3b: project_type_id was dropped; ptype dropdown holds program enum.
     program: document.getElementById('proj-ptype').value || null,
     work_order_number: document.getElementById('proj-wo').value.trim() || null,
@@ -1091,16 +1150,19 @@ async function saveProject(){
 async function ensureCachesLoaded(force){
   if (force || !jobsCache.length || !clientsCache.length || !projectTypesCache.length) {
     try {
-      const [j, c, pt, ecs] = await Promise.all([
+      const [j, c, pt, ecs, concs] = await Promise.all([
         api('/api/jobs'),
         api('/api/clients'),
         api('/api/project-types'),
         // Engineering contracts power field-gating logic post-Path B:
         // a client is "RUS-class" iff it has any EC with program='rus'.
-        api('/api/engineering-contracts').catch(() => [])
+        api('/api/engineering-contracts').catch(() => []),
+        api('/api/concentrators').catch(() => [])
       ]);
       jobsCache = j; clientsCache = c; projectTypesCache = pt;
       window.engineeringContractsCache = ecs;
+      allConcentrators = concs;
+      populateConcentratorDropdown();
     } catch (e) { /* keep stale caches if a fetch fails */ }
   }
   // Always refresh projects on force; otherwise lazy
@@ -1268,8 +1330,15 @@ saveProject = async function() {
 // SETTINGS — proposals (jobs, project types, clients, contracts)
 // ═══════════════════════════════════════════════════════════════════════════
 async function openSettings(){
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const contractsTab = document.querySelector('[data-tab="contracts"]');
+  const contractsPane = document.getElementById('stab-contracts');
+  if (contractsTab) contractsTab.style.display = isAdmin ? '' : 'none';
+  if (contractsPane && !isAdmin) contractsPane.style.display = 'none';
   om('settings-modal');
-  await Promise.all([loadJobsList(), loadPtypeList(), loadClientList(), loadContractList()]);
+  const loads = [loadJobsList(), loadPtypeList(), loadClientList()];
+  if (isAdmin) loads.push(loadContractList());
+  await Promise.all(loads);
   loadMyRequests();
 }
 
@@ -1491,8 +1560,60 @@ async function loadCurrentUser() {
         pill.style.cursor = 'pointer';
         pill.onclick = showAccountMenu;
       }
+      initPortalsButton('permitting');
     }
   } catch(e){}
+}
+
+let portalUrlsCache = null;
+async function initPortalsButton(currentPortal) {
+  const u = currentUser || {};
+  const hasExtra = (u.extra_teams && u.extra_teams.length > 0) || u.role === 'admin';
+  if (!hasExtra) return;
+  try {
+    const r = await fetch('/api/auth/portal-urls', { credentials: 'include' });
+    if (!r.ok) return;
+    portalUrlsCache = await r.json();
+  } catch(e) { return; }
+  if (!portalUrlsCache || !Object.keys(portalUrlsCache).length) return;
+  const wrap = document.getElementById('portals-btn-wrap');
+  if (wrap) wrap.style.display = '';
+  buildPortalsDropdown(currentPortal);
+}
+
+const PORTAL_LABELS = { design:'Design', permitting:'Permitting', timeclock:'Time Clock', customer:'Client Portal' };
+
+function buildPortalsDropdown(currentPortal) {
+  const dd = document.getElementById('portals-dropdown');
+  if (!dd || !portalUrlsCache) return;
+  const u = currentUser || {};
+  const primary = u.role === 'admin' ? null
+    : u.role && u.role.startsWith('design_') ? 'design'
+    : u.role && u.role.startsWith('permitting_') ? 'permitting'
+    : u.role && u.role.startsWith('construction_') ? 'construction'
+    : null;
+  const accessible = new Set();
+  if (primary) accessible.add(primary);
+  for (const t of (u.extra_teams || [])) accessible.add(t === 'inspection' ? 'construction' : t);
+  if (u.role === 'admin') Object.keys(portalUrlsCache).forEach(k => accessible.add(k));
+  const others = [...accessible].filter(p => p !== currentPortal && portalUrlsCache[p]);
+  if (!others.length) {
+    document.getElementById('portals-btn-wrap').style.display = 'none';
+    return;
+  }
+  dd.innerHTML = others.map(p =>
+    `<a href="${esc(portalUrlsCache[p])}" target="_blank" rel="noopener" style="display:block;padding:8px 16px;font-size:13px;color:var(--text);text-decoration:none;white-space:nowrap" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">${esc(PORTAL_LABELS[p] || p)}</a>`
+  ).join('');
+}
+
+function togglePortalsDropdown() {
+  const dd = document.getElementById('portals-dropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  if (dd.style.display === 'block') {
+    const close = e => { if (!dd.contains(e.target) && e.target.id !== 'portals-btn') { dd.style.display = 'none'; document.removeEventListener('click', close); } };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  }
 }
 // Centered profile modal (matches admin). Re-creates on each open.
 function showAccountMenu() {

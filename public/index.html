@@ -1989,6 +1989,57 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   </div>
 </div>
 
+<!-- STAFF + USER MODAL — create a staff record and linked login in one step -->
+<div class="modal-overlay" id="staff-user-modal" style="z-index:1100">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">Add Staff Member + Login</span>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('staff-user-modal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-muted);margin:0 0 14px 0">Creates a staff record (used for time-entry attribution) and a linked login account in one step. The staff name and username can be different — use full name for staff (e.g. "Jane Smith") and a short login for username (e.g. "jsmith").</p>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Staff Name *</label>
+          <input type="text" id="su-staff-name" placeholder="e.g. Jane Smith">
+          <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Shown on time entries and hours reports.</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Username *</label>
+          <input type="text" id="su-username" placeholder="e.g. jsmith" autocapitalize="off" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Password *</label>
+          <input type="password" id="su-password" placeholder="min 6 characters" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Full Name</label>
+          <input type="text" id="su-fullname" placeholder="e.g. Jane Smith (optional, used for display)">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Role *</label>
+          <select id="su-role">
+            <option value="design_engineer">Design Engineer (own hours only)</option>
+            <option value="permitting_engineer">Permitting Engineer (own hours only)</option>
+            <option value="design_manager">Design Manager (team data + revenue)</option>
+            <option value="permitting_manager">Permitting Manager (team data + revenue)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('staff-user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStaffWithUser()"><i class="fa-solid fa-user-plus"></i> Create Both</button>
+    </div>
+  </div>
+</div>
+
 <!-- CHANGE PASSWORD MODAL — for the current user to change their own password -->
 <div class="modal-overlay" id="change-password-modal" style="z-index:1100">
   <div class="modal" style="max-width:420px">
@@ -2477,7 +2528,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="settings-section" style="margin-top:24px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-users-gear" style="margin-right:6px;color:var(--text-muted)"></i>Users &amp; Roles</h4>
-          <button class="btn btn-primary btn-sm" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="openStaffUserModal()" title="Create staff record + login in one step"><i class="fa-solid fa-id-badge"></i> Add Staff + Login</button>
+            <button class="btn btn-primary btn-sm" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
+          </div>
         </div>
         <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Manage logins for everyone who accesses the system. Admins see everything; managers see their team's data; engineers see only their own time entries.</p>
         <div id="users-list-body" style="font-size:13px"></div>
@@ -6636,6 +6690,34 @@ async function quickAddStaff() {
     inp.value = '';
     toggleQuickAdd('staff', false);
   } catch (e) { alert('Could not create staff: ' + e.message); }
+}
+
+function openStaffUserModal() {
+  document.getElementById('su-staff-name').value = '';
+  document.getElementById('su-username').value = '';
+  document.getElementById('su-password').value = '';
+  document.getElementById('su-fullname').value = '';
+  document.getElementById('su-role').value = 'design_engineer';
+  openModal('staff-user-modal');
+}
+
+async function saveStaffWithUser() {
+  const staff_name = document.getElementById('su-staff-name').value.trim();
+  const username = document.getElementById('su-username').value.trim();
+  const password = document.getElementById('su-password').value;
+  const full_name = document.getElementById('su-fullname').value.trim() || null;
+  const role = document.getElementById('su-role').value;
+  if (!staff_name) return alert('Staff name is required');
+  if (!username) return alert('Username is required');
+  if (/\s/.test(username)) return alert('Username cannot contain spaces');
+  if (!password || password.length < 6) return alert('Password must be at least 6 characters');
+  try {
+    await api('/api/admin/staff-with-user', 'POST', { staff_name, username, password, full_name, role });
+    closeModal('staff-user-modal');
+    staffListCache = null;
+    loadUsers();
+    if (typeof loadStaff === 'function') loadStaff();
+  } catch (e) { alert('Failed: ' + e.message); }
 }
 
 function openCreateUserModal() {

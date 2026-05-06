@@ -247,6 +247,12 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
     <button class="btn btn-secondary btn-sm" onclick="toggleDarkMode()" title="Toggle dark mode">
       <i class="fa-solid fa-moon" id="dm-icon"></i>
     </button>
+    <div id="portals-btn-wrap" style="display:none;position:relative">
+      <button class="btn btn-secondary btn-sm" onclick="togglePortalsDropdown()" id="portals-btn" title="My Portals">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i> My Portals
+      </button>
+      <div id="portals-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--gray-border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px;z-index:9999;padding:4px 0"></div>
+    </div>
     <div class="account-pill" id="user-pill" style="display:none" onclick="showAccountMenu()">
       <i class="fa-solid fa-user-circle"></i>
       <span id="user-pill-text"></span>
@@ -393,6 +399,10 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
         <input type="text" id="rnp-name" placeholder="e.g. Crossroad School">
       </div>
       <div class="form-group">
+        <label>Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <select id="rnp-area" onchange="rnpAreaChanged()"><option value="">— Select area (PSC/RUS only) —</option></select>
+      </div>
+      <div class="form-group">
         <label>Work Order # <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
         <input type="text" id="rnp-wo" placeholder="e.g. 1234">
       </div>
@@ -435,6 +445,7 @@ let weekData = null;
 let projectsCache = [];
 let jobsCache = {};  // project_id → [{id, name, default_billing_type, default_rate}]
 let timerInterval = null;
+let allConcentrators = [];
 
 // ─── DARK MODE ──────────────────────────────────────────────────────────────
 function applyDarkMode(on){
@@ -515,10 +526,62 @@ async function loadCurrentUser(){
       pillText.innerHTML = `<strong>${esc(currentUser.full_name || currentUser.username)}</strong>`;
       pill.style.display = 'flex';
     }
+    initPortalsButton('timeclock');
   } catch(e){
     // Not logged in — auth middleware already redirected, but as a safety
     // net send them to login if /api/auth/me 401s
     window.location.href = '/login';
+  }
+}
+
+let portalUrlsCache = null;
+async function initPortalsButton(currentPortal) {
+  const u = currentUser || {};
+  const hasExtra = (u.extra_teams && u.extra_teams.length > 0) || u.role === 'admin';
+  if (!hasExtra) return;
+  try {
+    const r = await fetch('/api/auth/portal-urls', { credentials: 'include' });
+    if (!r.ok) return;
+    portalUrlsCache = await r.json();
+  } catch(e) { return; }
+  if (!portalUrlsCache || !Object.keys(portalUrlsCache).length) return;
+  const wrap = document.getElementById('portals-btn-wrap');
+  if (wrap) wrap.style.display = '';
+  buildPortalsDropdown(currentPortal);
+}
+
+const PORTAL_LABELS = { design:'Design', permitting:'Permitting', timeclock:'Time Clock', customer:'Client Portal' };
+
+function buildPortalsDropdown(currentPortal) {
+  const dd = document.getElementById('portals-dropdown');
+  if (!dd || !portalUrlsCache) return;
+  const u = currentUser || {};
+  const primary = u.role === 'admin' ? null
+    : u.role && u.role.startsWith('design_') ? 'design'
+    : u.role && u.role.startsWith('permitting_') ? 'permitting'
+    : u.role && u.role.startsWith('construction_') ? 'construction'
+    : null;
+  const accessible = new Set();
+  if (primary) accessible.add(primary);
+  for (const t of (u.extra_teams || [])) accessible.add(t === 'inspection' ? 'construction' : t);
+  if (u.role === 'admin') Object.keys(portalUrlsCache).forEach(k => accessible.add(k));
+  const others = [...accessible].filter(p => p !== currentPortal && portalUrlsCache[p]);
+  if (!others.length) {
+    document.getElementById('portals-btn-wrap').style.display = 'none';
+    return;
+  }
+  dd.innerHTML = others.map(p =>
+    `<a href="${esc(portalUrlsCache[p])}" target="_blank" rel="noopener" style="display:block;padding:8px 16px;font-size:13px;color:var(--text);text-decoration:none;white-space:nowrap" onmouseover="this.style.background='var(--gray-light)'" onmouseout="this.style.background=''">${esc(PORTAL_LABELS[p] || p)}</a>`
+  ).join('');
+}
+
+function togglePortalsDropdown() {
+  const dd = document.getElementById('portals-dropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  if (dd.style.display === 'block') {
+    const close = e => { if (!dd.contains(e.target) && e.target.id !== 'portals-btn') { dd.style.display = 'none'; document.removeEventListener('click', close); } };
+    setTimeout(() => document.addEventListener('click', close), 0);
   }
 }
 
@@ -1029,6 +1092,36 @@ function entryClientChanged(){
   populateJobSelect(document.getElementById('entry-job'), null);
 }
 
+function populateRnpAreaDropdown() {
+  const sel = document.getElementById('rnp-area');
+  if (!sel) return;
+  while (sel.options.length > 1) sel.remove(1);
+  const byContract = {};
+  allConcentrators.forEach(c => {
+    if (!byContract[c.contract_label]) byContract[c.contract_label] = [];
+    byContract[c.contract_label].push(c);
+  });
+  for (const [label, areas] of Object.entries(byContract)) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    areas.forEach(a => {
+      const opt = new Option(`${a.area_name}${a.work_order_number ? ' (WO# ' + a.work_order_number + ')' : ''}`, a.id);
+      group.appendChild(opt);
+    });
+    sel.appendChild(group);
+  }
+}
+
+function rnpAreaChanged() {
+  const sel = document.getElementById('rnp-area');
+  const id = sel.value;
+  if (!id) return;
+  const conc = allConcentrators.find(c => c.id === id);
+  if (conc && conc.work_order_number) {
+    document.getElementById('rnp-wo').value = conc.work_order_number;
+  }
+}
+
 // ─── REQUEST NEW PROJECT FLOW ───────────────────────────────────────────────
 // Engineers can propose a new project from the timeclock without clobbering
 // admin's project list. The flow:
@@ -1046,6 +1139,8 @@ function openRequestNewProjectModal(){
   document.getElementById('rnp-wo').value = '';
   document.getElementById('rnp-notes').value = '';
   document.getElementById('rnp-error').style.display = 'none';
+  const areaSel = document.getElementById('rnp-area');
+  if (areaSel) areaSel.value = '';
   populateClientSelect(document.getElementById('rnp-client'), cid);
   m.style.display = 'flex';
 }
@@ -1146,6 +1241,11 @@ async function init(){
   await loadProjects();
   await loadActiveSession();
   await loadWeek();
+  // Load concentrators for the Request New Project area dropdown
+  try {
+    allConcentrators = await api('/api/concentrators');
+    populateRnpAreaDropdown();
+  } catch (e) { /* non-fatal — area dropdown stays empty */ }
 
   // Poll active session every 1.5s so the elapsed timer + clock-in/out state
   // stays current. (The local timer interval already updates the display
