@@ -538,6 +538,111 @@ worth training/grading against.
 
 ---
 
+## Phase 5 — Owner feedback (2026-05-06 PM)
+
+Verbatim feedback after Phase 4 Tier 1 + Tier 2 shipped. Owner
+hands-on session surfaced both bug-fixes and a request to
+reshape the splice-creation UX toward the VETRO model. Recorded
+here so nothing gets lost. Workers below dispatched in two
+bundles (FIX-A small fixes, FIX-B UX overhaul).
+
+### 5.A Bug bundle (FIX-A — smoke + small fixes)
+
+1. **Smoke test failed** (CI red). Investigate root cause first
+   — likely a regression introduced by 4.4/4.5/4.6 shipping
+   touching shared state.
+2. **Hybrid map basemap doesn't show streets.** Phase 3A added
+   the hybrid toggle (satellite + street labels overlay); the
+   labels overlay isn't actually rendering. Likely a tile URL
+   or zindex issue.
+3. **Warning bar must be dismissible.** Validation warnings at
+   the top of the project view persist; need an X to dismiss
+   per-session (not per-project, just hide until next reload).
+4. **"24f" verbiage is hardcoded** across the cable-summary
+   chips — should reflect the cable's actual `tube_size_fibers`
+   when that's not 12 (so a 24-fiber-per-tube cable says "24f
+   per tube", not "12f per tube" in the summary).
+5. **Shift-click to multi-select fibers in single-splice mode.**
+   Today only one fiber selectable at a time on each side.
+   Shift-click should add to selection; selecting N on each
+   side and clicking Splice should create N pairwise splices in
+   the order picked (just like the existing batch mode but
+   faster to invoke).
+6. **Traceable unspliced/express/dead fibers.** The fiber
+   trace tool currently only follows fibers that have at least
+   one splice. Engineers need to trace a fiber that runs
+   express through a closure (no splice — just a pass-through),
+   AND fibers that are dead (intentionally unspliced) so they
+   can audit "where does this fiber physically exist". The
+   trace should walk the cable graph, not the splice graph.
+
+### 5.B UX overhaul (FIX-B — VETRO-like flow)
+
+Owner explicit ask: "Honestly if you can make the UI more
+similar or just like vetros that'd be great." Concrete asks:
+
+1. **Adding a Handhole shouldn't pop up closure prompts
+   multiple times.** Today the HH-add wizard prompts for
+   closure type / model repeatedly. Once the location is on
+   the map it should sit there as a bare HH; closures get
+   added LATER by clicking the HH and adding from its own
+   inspector. Locations and closures are separate concepts
+   and the UI should reflect that.
+2. **Kill the file-ingest naming popup.** When a KMZ/DXF
+   import lands, the current flow pops a modal asking the
+   designer to name every newly-discovered location/cable.
+   Owner hates this — wants the items to land as standalone
+   shapes with placeholder names. Clicking on each opens its
+   own dashboard where you can rename + add equipment from a
+   persistent panel.
+3. **Splice without trays.** Today every splice must live in a
+   tray. Owner wants a "tray-less" splice mode: just say
+   "Cable A fiber 7 ↔ Cable B fiber 23" with an optional note,
+   no tray required. Useful for quick express-pass-through
+   documentation and for splicing in handholes that are too
+   small for an enclosure.
+4. **Click-on-item shows the fiber paths within it clearly.**
+   Already partially done for closures (shows splice rows);
+   needs to extend to cables (show every fiber's path through
+   every closure it traverses) and locations (every fiber that
+   passes through, spliced or not).
+5. **VETRO-style drag-and-drop multi-fiber splicing.** This is
+   the headline ask:
+   - Open a closure or HH inspector.
+   - Left side shows Cable A's fibers as a stack of color
+     swatches (with TIA-598 abbrev, per Phase 4.2).
+   - Right side shows Cable B's fibers similarly.
+   - Shift-click on Cable A picks N fibers in the order
+     clicked.
+   - Drag the selection over to Cable B; drop on a starting
+     fiber. The N selected fibers splice in pairwise order
+     starting from that drop point.
+   - Visual feedback: selected fibers glow; valid drop
+     targets highlight; invalid drops (already-spliced fiber)
+     show a red overlay.
+6. **Drag-and-drop at every handhole**, not just enclosure-
+   model closures. The same drag-drop affordance should work
+   in the HH inspector even when there's no formal closure
+   shell.
+
+### 5.C Workstream split
+
+- **FIX-A** (Sonnet, smaller scope, ships first): items 1–6 of
+  5.A. Bundled into one worker because they share file
+  surface (`routes/splice.js` + `public/splice.html`) and any
+  one of them takes a few minutes; bundling cuts dispatch
+  overhead.
+- **FIX-B** (Sonnet, deep scope, ships second): items 1–6 of
+  5.B. Single worker because the whole thing is one coherent
+  flow redesign — splitting it would require coordination on
+  shared state (selection model, drag controller, inspector
+  layout) that's painful across two agents.
+- **P3 retry** (Sonnet, queued): the Fujikura Splice+
+  integration (Phase 4.7) — failed earlier on a per-session
+  billing cap, retries after the cap resets.
+
+---
+
 ## Anti-features — DO NOT BUILD
 
 - Login-required splicer mobile app. Splicers don't use them.
