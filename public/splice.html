@@ -5,30 +5,140 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Launch Fiber — Splice Matrix</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Inter font — VETRO-matched typography (TBD-VERIFY exact stack) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <!-- Konva pinned so a CDN release can't silently change canvas behavior. -->
 <script src="https://cdn.jsdelivr.net/npm/konva@9.3.16/konva.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
-/* Token system mirrors design.html — light defaults + dark overrides. */
+/* ── VETRO FiberMap design tokens (Phase 5.C.1) ─────────────────────────────
+   Brand primary: inferred #003F72 (TBD-VERIFY).
+   Route active:  CONFIRMED #68BD45 from public fiber map source code.
+   All other values inferred from research/07_vetro_visual_match.md.         */
 :root{
-  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;--primary-text:#FFFFFF;
-  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
-  --text:#222222;--text-secondary:#555555;--text-muted:#6C757D;
-  --border-strong:#CED4DA;--border-weak:#DEE2E6;
-  --success:#28A745;--success-light:#D4EDDA;--success-text:#155724;
-  --warning:#FFC107;--warning-light:#FFF3CD;--warning-text:#856404;
-  --danger:#DC3545;--danger-light:#F8D7DA;--danger-text:#721C24;
-  --info:#17A2B8;--info-light:#D1ECF1;--info-text:#0C5460;
-  --white:#FFFFFF;--gray-light:#F0F0F0;--gray-border:#DEE2E6;
+  /* ── VETRO brand colors ── */
+  --vetro-primary:#003F72;
+  --vetro-primary-dark:#002B50;
+  --vetro-primary-light:#1A6AAF;
+  --vetro-route-active:#68BD45;      /* CONFIRMED */
+  --vetro-route-inactive:#9CA3AF;
+  --vetro-route-alert:#EF4444;
+
+  /* ── Backgrounds ── */
+  --vetro-bg:#FAFAFA;
+  --vetro-canvas-bg:#FFFFFF;
+  --vetro-bg-panel:#FFFFFF;
+  --vetro-bg-panel-secondary:#F0F2F5;
+  --vetro-bg-hover:#EBF2FF;
+
+  /* ── Dividers ── */
+  --vetro-divider:#E5E7EB;
+
+  /* ── Text hierarchy ── */
+  --vetro-text-primary:#1F2937;
+  --vetro-text-secondary:#6B7280;
+  --vetro-text-muted:#9CA3AF;
+  --vetro-text-link:#1A6AAF;
+
+  /* ── Status ── */
+  --vetro-success:#10B981;
+  --vetro-warning:#F59E0B;
+  --vetro-error:#EF4444;
+  --vetro-info:#3B82F6;
+
+  /* ── Typography ── */
+  --font-stack:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --text-h1:1.5rem;
+  --text-h2:1.125rem;
+  --text-h3:0.9375rem;
+  --text-body:0.8125rem;
+  --text-small:0.75rem;
+  --text-micro:0.625rem;
+
+  /* ── Spacing (4-px grid) ── */
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-6:24px;
+  --space-8:32px;
+
+  /* ── Radii ── */
+  --radius-sm:3px;
+  --radius-md:6px;
+  --radius-lg:10px;
+  --radius-pill:999px;
+
+  /* ── Shadows ── */
+  --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
+  --shadow-modal:0 8px 32px rgba(0,0,0,0.20);
+
+  /* ── Layout dimensions ── */
+  --left-rail-width:260px;
+  --inspector-width:320px;
+  --header-height:52px;
+  --attr-table-height:40vh;
+
+  /* ── Inspector field density ── */
+  --field-row-min-height:28px;
+  --field-font:13px;
+  --label-font:12px;
+
+  /* ── Legacy aliases — incremental migration so old var() refs keep working ── */
+  --primary:var(--vetro-primary);
+  --primary-dark:var(--vetro-primary-dark);
+  --primary-light:var(--vetro-bg-hover);
+  --primary-text:#FFFFFF;
+  --surface-1:var(--vetro-bg);
+  --surface-2:var(--vetro-bg-panel);
+  --surface-3:var(--vetro-bg-panel-secondary);
+  --surface:var(--vetro-bg-panel);
+  --text:var(--vetro-text-primary);
+  --text-secondary:var(--vetro-text-secondary);
+  --text-muted:var(--vetro-text-muted);
+  --border-strong:#CED4DA;
+  --border-weak:var(--vetro-divider);
+  --success:var(--vetro-success);--success-light:#D1FAE5;--success-text:#065F46;
+  --warning:var(--vetro-warning);--warning-light:#FEF3C7;--warning-text:#92400E;
+  --danger:var(--vetro-error);--danger-light:#FEE2E2;--danger-text:#991B1B;
+  --info:var(--vetro-info);--info-light:#DBEAFE;--info-text:#1E40AF;
+  --white:#FFFFFF;--gray-light:#F0F2F5;--gray-border:var(--vetro-divider);
+
   /* Fiber color literals — TIA-598 — used for swatches. */
   --fc-blue:#1660C9;--fc-orange:#E67E22;--fc-green:#27AE60;--fc-brown:#8B5A2B;
   --fc-slate:#7F8C8D;--fc-white:#F5F5F5;--fc-red:#C0392B;--fc-black:#000;
   --fc-yellow:#F1C40F;--fc-violet:#8E44AD;--fc-rose:#E91E63;--fc-aqua:#1ABC9C;
 }
+
+/* ── Dark mode — override VETRO tokens with dark-surface equivalents ───────
+   Research/07 did not cover dark mode; values are hand-tuned for contrast.  */
 html[data-theme="dark"]{
+  --vetro-primary:#4A90D9;
+  --vetro-primary-dark:#1B5FA0;
+  --vetro-primary-light:#1E3A5C;
+  --vetro-route-active:#68BD45;        /* keep VETRO green in dark mode */
+  --vetro-route-inactive:#6B7280;
+  --vetro-bg:#1A1F26;
+  --vetro-canvas-bg:#1A1F26;
+  --vetro-bg-panel:#242B36;
+  --vetro-bg-panel-secondary:#1F2630;
+  --vetro-bg-hover:#1E3A5C;
+  --vetro-divider:#2D343F;
+  --vetro-text-primary:#E6EAF0;
+  --vetro-text-secondary:#B8BFC9;
+  --vetro-text-muted:#8A95A4;
+  --vetro-text-link:#60A5FA;
+  --vetro-success:#3DD174;
+  --vetro-warning:#FFD43B;
+  --vetro-error:#FF6B7A;
+  --vetro-info:#5BC0DE;
+
+  /* Legacy aliases in dark mode */
   --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;--primary-text:#FFFFFF;
-  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;
+  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;--surface:#242B36;
   --text:#E6EAF0;--text-secondary:#B8BFC9;--text-muted:#8A95A4;
   --border-strong:#3A4250;--border-weak:#2D343F;
   --success:#3DD174;--success-light:#1F4030;--success-text:#9AE5B5;
@@ -37,7 +147,7 @@ html[data-theme="dark"]{
   --info:#5BC0DE;--info-light:#0E3340;--info-text:#9EDFEF;
   --white:#242B36;--gray-light:#1F2630;--gray-border:#3A4250;
 }
-html,body{height:100%;background:var(--surface-1);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px}
+html,body{height:100%;background:var(--vetro-bg);color:var(--vetro-text-primary);font-family:var(--font-stack);font-size:var(--field-font)}
 
 a{color:var(--primary);text-decoration:none}
 a:hover{text-decoration:underline}
