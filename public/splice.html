@@ -2183,11 +2183,11 @@ function renderClosureInspector(closureId) {
   });
 }
 
-// ─── 5.B.5 stub — renderDragDropPanel (real impl follows below) ──────────────
-// Returns HTML string for the VETRO-style two-column drag-drop fiber panel.
+// 5.B.5 / 5.B.6 — renderDragDropPanel: shared entry point for the VETRO-style
+// drag-drop fiber splicing panel. Used by both the closure inspector (5.B.5,
+// anchorType='closure') and the location inspector (5.B.6, anchorType='location').
 // anchorType: 'closure'|'location'; anchorId: the entity's UUID;
-// locationId: the location to pull cables from.
-// Implemented fully in the 5.B.5 section below. Stub here so 5.B.3 renders.
+// locationId: the location to pull cables from for cable selectors.
 function renderDragDropPanel(anchorType, anchorId, locationId) {
   return _buildDragDropPanelHtml(anchorType, anchorId, locationId);
 }
@@ -4248,11 +4248,16 @@ function _buildDragDropPanelHtml(anchorType, anchorId, locationId) {
   ).join('');
 
   const ddKey = `${anchorType}-${anchorId}`;
+  // 5.B.6 — location-level panels show a "no closure needed" subtitle.
+  const subtitle = anchorType === 'location'
+    ? '<span style="font-size:9px;color:var(--text-muted)">Splicing directly at this handhole — no enclosure required</span>'
+    : '<span style="font-size:10px;color:var(--text-muted)">Shift-click to multi-select &bull; drag to splice</span>';
   return `
     <div class="ddrop-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <span style="font-size:11px;font-weight:600"><i class="fa-solid fa-hand-pointer"></i> Fiber splicing</span>
-      <span style="font-size:10px;color:var(--text-muted)">Shift-click to multi-select &bull; drag to splice</span>
+      ${subtitle}
     </div>
+    ${anchorType === 'location' ? '<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Shift-click to multi-select &bull; drag to splice</div>' : ''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div>
         <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">A-side cable</div>
