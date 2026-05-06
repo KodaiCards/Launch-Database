@@ -2782,16 +2782,16 @@ function openSpliceModal(trayId, ribbon) {
         <div>
           <div class="field" style="margin-bottom:6px"><label>Side A · cable</label>
             <select id="sp-cable-a" onchange="renderFiberPicker('a')"><option value="">Pick cable…</option>${cableOpts}</select></div>
-          <div class="field" style="margin-bottom:6px" id="sp-tube-a-wrap" style="display:none"><label>Side A · ${ribbon?'ribbon':'tube'}</label>
-            <select id="sp-tube-a" onchange="renderFiberPicker('a')"></select></div>
+          <div class="field" id="sp-tube-a-wrap" style="margin-bottom:6px;display:none"><label>Side A · ${ribbon?'ribbon':'tube'}</label>
+            <select id="sp-tube-a" onchange="renderFibersOnly('a')"></select></div>
           ${!ribbon ? `<div class="field" style="margin-bottom:0"><label>Side A · fiber</label>
             <div id="sp-fibers-a" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>` : ''}
         </div>
         <div>
           <div class="field" style="margin-bottom:6px"><label>Side B · cable</label>
             <select id="sp-cable-b" onchange="renderFiberPicker('b')"><option value="">Pick cable…</option>${cableOpts}</select></div>
-          <div class="field" style="margin-bottom:6px" id="sp-tube-b-wrap" style="display:none"><label>Side B · ${ribbon?'ribbon':'tube'}</label>
-            <select id="sp-tube-b" onchange="renderFiberPicker('b')"></select></div>
+          <div class="field" id="sp-tube-b-wrap" style="margin-bottom:6px;display:none"><label>Side B · ${ribbon?'ribbon':'tube'}</label>
+            <select id="sp-tube-b" onchange="renderFibersOnly('b')"></select></div>
           ${!ribbon ? `<div class="field" style="margin-bottom:0"><label>Side B · fiber</label>
             <div id="sp-fibers-b" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>` : ''}
         </div>
@@ -2832,6 +2832,11 @@ function openSpliceModal(trayId, ribbon) {
   state._spUsed = usedFibers;
 }
 
+// Cable-side onchange. Rebuilds the tube dropdown from the picked
+// cable's buffer_tubes; resets the fiber grid to the "pick a tube"
+// placeholder. The tube dropdown's onchange points at renderFibersOnly
+// (below) so the user's tube selection isn't clobbered every time
+// they pick a tube — that was the "tubes don't populate" bug.
 window.renderFiberPicker = function(side) {
   const ribbon = state._spRibbon;
   const cableSel = document.getElementById('sp-cable-' + side);
@@ -2849,19 +2854,31 @@ window.renderFiberPicker = function(side) {
     `<option value="${t.id}">${t.position}. ${t.color}</option>`
   ).join('');
   if (!ribbon) {
-    const tubeId = tubeSel.value;
-    const grid = document.getElementById('sp-fibers-' + side);
-    if (!tubeId) { grid.innerHTML = '<div class="empty-pane">Pick a tube</div>'; return; }
-    const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tubeId).sort((a,b)=>a.position-b.position);
-    grid.innerHTML = fibers.map(f => {
-      const used = state._spUsed.has(f.id);
-      return `<div class="fiber-cell ${used?'in-use':''}"
-        data-fiber-id="${f.id}" data-side="${side}"
-        onclick="${used?'':'pickFiber(this)'}">
-        <span class="fc fc-${f.color}"></span>${f.position}
-      </div>`;
-    }).join('');
+    document.getElementById('sp-fibers-' + side).innerHTML = '<div class="empty-pane">Pick a tube</div>';
   }
+};
+
+// Tube-side onchange. Reads the currently-selected tube and builds
+// the fiber grid for it. Does NOT touch the tube dropdown — that's
+// what the user just clicked, and rebuilding it would wipe their
+// selection.
+window.renderFibersOnly = function(side) {
+  if (state._spRibbon) return;  // ribbon mode doesn't show a fiber grid
+  const tubeSel = document.getElementById('sp-tube-' + side);
+  const tubeId = tubeSel.value;
+  const grid = document.getElementById('sp-fibers-' + side);
+  if (!tubeId) { grid.innerHTML = '<div class="empty-pane">Pick a tube</div>'; return; }
+  const fibers = state.data.fibers
+    .filter(f => f.buffer_tube_id === tubeId)
+    .sort((a,b)=>a.position-b.position);
+  grid.innerHTML = fibers.map(f => {
+    const used = state._spUsed.has(f.id);
+    return `<div class="fiber-cell ${used?'in-use':''}"
+      data-fiber-id="${f.id}" data-side="${side}"
+      onclick="${used?'':'pickFiber(this)'}">
+      <span class="fc fc-${f.color}"></span>${f.position}
+    </div>`;
+  }).join('');
 };
 
 window.pickFiber = function(el) {
