@@ -78,7 +78,22 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .view-tab:hover:not(.active){background:var(--surface-3)}
 .map-toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
 .map-toolbar .btn.active{background:var(--primary);color:var(--primary-text)}
-.map-mode-hint{font-size:11px;color:var(--text-muted);margin-left:6px}
+.map-mode-hint{font-size:11px;color:var(--text-muted);margin-left:6px;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Palette dropdown */
+.map-palette-wrap{position:relative}
+.map-palette{position:absolute;top:calc(100% + 4px);left:0;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.18);min-width:160px;z-index:20;padding:4px 0}
+.map-palette-item{display:block;width:100%;padding:6px 12px;font-size:11px;font-weight:500;text-align:left;background:none;border:none;color:var(--text);cursor:pointer;white-space:nowrap}
+.map-palette-item:hover{background:var(--surface-3)}
+.map-palette-sep{border:none;border-top:1px solid var(--border-weak);margin:3px 0}
+/* Cable edit handles */
+.cable-handle{width:10px;height:10px;border-radius:50%;background:#FFD400;border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.4);cursor:grab;position:absolute;transform:translate(-50%,-50%)}
+.cable-handle.mid{background:#FF6E00;opacity:0.7}
+.cable-handle:active{cursor:grabbing}
+/* Location type color chips */
+.loc-type-chip{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+/* Fiber diagram compact rows */
+.fiber-diagram-row{padding:3px 0;border-bottom:1px solid var(--border-weak);font-size:11px;display:flex;gap:6px;align-items:center}
+.fiber-diagram-row:last-child{border-bottom:none}
 .map-popup{font-size:12px;min-width:160px}
 .map-popup b{color:var(--primary)}
 .map-popup .row{margin:2px 0}
@@ -250,9 +265,24 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     </div>
     <div class="map-toolbar" id="map-toolbar" style="display:none">
       <button class="btn btn-sm" onclick="mapFitData()" title="Zoom to fit all geographic data"><i class="fa-solid fa-expand"></i> Fit</button>
-      <button class="btn btn-sm" id="btn-basemap" onclick="cycleBasemap()" title="Toggle basemap: satellite-only ↔ hybrid (satellite + roads/labels)"><i class="fa-solid fa-layer-group"></i> <span id="btn-basemap-label">Hybrid</span></button>
-      <button class="btn btn-sm" id="btn-place-mode" onclick="mapTogglePlaceMode()" title="Place a closure: click an unmapped closure in the list, then click on the map"><i class="fa-solid fa-map-pin"></i> Place</button>
-      <button class="btn btn-sm" id="btn-path-mode" onclick="mapTogglePathMode()" title="Draw cable path: click waypoints, double-click to finish"><i class="fa-solid fa-route"></i> Draw path</button>
+      <button class="btn btn-sm" id="btn-basemap" onclick="cycleBasemap()" title="Toggle basemap: satellite-only vs hybrid"><i class="fa-solid fa-layer-group"></i> <span id="btn-basemap-label">Hybrid</span></button>
+      <div class="map-palette-wrap" id="palette-wrap">
+        <button class="btn btn-sm" id="btn-add-item" onclick="mapTogglePalette()" title="Add a location item to the map"><i class="fa-solid fa-plus"></i> Add Item</button>
+        <div class="map-palette" id="map-palette" style="display:none">
+          <button class="map-palette-item" onclick="mapStartPlace('handhole')"><i class="fa-solid fa-circle-dot" style="width:14px"></i> Handhole</button>
+          <button class="map-palette-item" onclick="mapStartPlace('manhole')"><i class="fa-solid fa-circle" style="width:14px"></i> Manhole</button>
+          <button class="map-palette-item" onclick="mapStartPlace('pole')"><i class="fa-solid fa-turn-up" style="width:14px"></i> Pole</button>
+          <button class="map-palette-item" onclick="mapStartPlace('pedestal')"><i class="fa-solid fa-box" style="width:14px"></i> Pedestal</button>
+          <button class="map-palette-item" onclick="mapStartPlace('vault')"><i class="fa-solid fa-vault" style="width:14px"></i> Vault</button>
+          <hr class="map-palette-sep">
+          <button class="map-palette-item" onclick="mapStartPlace('fdh')"><i class="fa-solid fa-network-wired" style="width:14px"></i> FDH</button>
+          <button class="map-palette-item" onclick="mapStartPlace('splice_point')"><i class="fa-solid fa-scissors" style="width:14px"></i> Splice point</button>
+          <button class="map-palette-item" onclick="mapStartPlace('co')"><i class="fa-solid fa-building" style="width:14px"></i> Central Office</button>
+          <button class="map-palette-item" onclick="mapStartPlace('terminal')"><i class="fa-solid fa-plug" style="width:14px"></i> Terminal</button>
+          <button class="map-palette-item" onclick="mapStartPlace('ring_cut')"><i class="fa-solid fa-ring" style="width:14px"></i> Ring cut</button>
+        </div>
+      </div>
+      <button class="btn btn-sm" id="btn-draw-cable" onclick="mapToggleMultistop()" title="Draw a cable route across multiple locations"><i class="fa-solid fa-route"></i> Draw cable</button>
       <span id="map-mode-hint" class="map-mode-hint"></span>
     </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
@@ -305,11 +335,42 @@ const state = {
   map: null,                 // MapLibre Map instance
   maplibregl: null,          // captured for Marker/LngLatBounds constructors
   _mapMarkers: [],
-  mapMode: null,             // null | 'place' | 'path'
+  _mapLabelMarkers: [],      // footage label markers for cable midpoints
+  _cableHandleMarkers: [],   // drag handles for active cable edit session
+  _editingCableId: null,     // cable whose path is being edited
+  _editPathCoords: [],       // mutable working copy during edit session
+  // mapMode: null | 'palette' | 'place-new' | 'multistop' | 'edit-path'
+  mapMode: null,
+  mapPlaceType: null,        // location type being placed (place-new mode)
+  // Legacy compat — mapPlaceTargetId is now unused; mapPathTargetId reused
+  // for the old path draw mode (cable selector); kept so any SSE handler
+  // that still references it doesn't throw.
   mapPlaceTargetId: null,
   mapPathTargetId: null,
   mapPathPoints: [],
+  // Multi-stop draw state
+  _msStops: [],              // { lngLat, locationId|null, name } accumulated stops
+  _msMarkers: [],            // MapLibre Markers for visual stop indicators
 };
+
+// Per-type marker colour palette. Defined here (before the inspector section)
+// so renderLocationInspector can use _locColor() at render time.
+const LOC_TYPE_COLORS = {
+  handhole:    '#3B82F6',
+  manhole:     '#7C3AED',
+  pole:        '#78716C',
+  pedestal:    '#16A34A',
+  vault:       '#B45309',
+  fdh:         '#DC2626',
+  co:          '#0F172A',
+  splice_point:'#1B5FA0',
+  terminal:    '#0D9488',
+  ring_cut:    '#EA580C',
+};
+
+function _locColor(loc) {
+  return LOC_TYPE_COLORS[loc.type] || '#888';
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // API helper — same shape as design.html, with 30s timeout for PDF call.
@@ -1422,9 +1483,14 @@ function renderCableInspector(cableId) {
         <tr><th>Tubes</th><td>${tubes.length}</td></tr>
         <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
         <tr><th>Circuits set</th><td>${state.data.fibers.filter(f => fiberIds.has(f.id) && f.circuit_name).length} of ${cable.fiber_count}</td></tr>
+        <tr><th>Route length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
         <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
       </tbody>
     </table>
+    ${cable.path_geojson ? `
+      <div style="margin-top:8px;font-size:11px;display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>
+      </div>` : ''}
     <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
       Fiber count is locked after creation. To re-size, delete and re-add.
     </div>
@@ -1438,32 +1504,85 @@ function renderLocationInspector(locationId) {
   const cablesAt = state.data.cables.filter(c =>
     c.from_location_id === locationId || c.to_location_id === locationId
   );
+  const hasGeo = loc.latitude != null && loc.longitude != null;
+  const coordStr = hasGeo
+    ? `${Number(loc.latitude).toFixed(6)}, ${Number(loc.longitude).toFixed(6)}`
+    : 'Not placed on map';
+
+  // Build compact fiber diagram: for each closure at this location, list
+  // splices as "Cable A f# ↔ Cable B f#" grouped by closure.
+  const fiberDiagramRows = [];
+  for (const cl of closures) {
+    const trays = state.data.trays.filter(t => t.closure_id === cl.id);
+    const trayIds = new Set(trays.map(t => t.id));
+    const splicesHere = state.data.splices.filter(s => trayIds.has(s.tray_id));
+    if (!splicesHere.length) continue;
+    fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:0.4px">${esc(cl.model || 'Closure')}</div>`);
+    for (const sp of splicesHere.slice(0, 20)) {
+      const fiberA = state.data.fibers.find(f => f.id === sp.fiber_a_id);
+      const fiberB = state.data.fibers.find(f => f.id === sp.fiber_b_id);
+      const tubeA = fiberA ? state.data.buffer_tubes.find(t => t.id === fiberA.buffer_tube_id) : null;
+      const tubeB = fiberB ? state.data.buffer_tubes.find(t => t.id === fiberB.buffer_tube_id) : null;
+      const cableA = tubeA ? state.data.cables.find(c => c.id === tubeA.cable_id) : null;
+      const cableB = tubeB ? state.data.cables.find(c => c.id === tubeB.cable_id) : null;
+      const labelA = cableA ? `${esc(cableA.name)} T${tubeA.position} f${fiberA.position}` : '?';
+      const labelB = cableB ? `${esc(cableB.name)} T${tubeB.position} f${fiberB.position}` : '?';
+      fiberDiagramRows.push(
+        `<div class="fiber-diagram-row"><span style="flex:1">${labelA}</span><span style="color:var(--text-muted)">&#8596;</span><span style="flex:1;text-align:right">${labelB}</span></div>`
+      );
+    }
+    if (splicesHere.length > 20) {
+      fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted)">&hellip; ${splicesHere.length - 20} more splices</div>`);
+    }
+  }
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <h3>${esc(loc.name)} <span class="small">${esc(loc.type)}</span></h3>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Sequence ${loc.sequence_index ?? 0}</div>
+    <h3>${esc(loc.name)} <span class="small" style="background:${_locColor(loc)};color:#fff;padding:1px 6px;border-radius:10px">${esc(loc.type)}</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${coordStr}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="openAddClosureForLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Add closure</button>
       <button class="btn btn-sm btn-danger" onclick="deleteLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
     <table class="table">
       <tbody>
-        <tr><th>Closures here</th><td>${closures.length}</td></tr>
-        <tr><th>Cables touching</th><td>${cablesAt.length}</td></tr>
+        <tr><th>Type</th><td>${esc(loc.type)}</td></tr>
+        <tr><th>Closures</th><td>${closures.length}</td></tr>
+        <tr><th>Cables</th><td>${cablesAt.length}</td></tr>
+        ${cablesAt.length ? `<tr><th></th><td style="font-size:10px">${cablesAt.map(c=>`<a href="#" onclick="event.preventDefault();selectThing('cable','${c.id}')">${esc(c.name)}</a>`).join(', ')}</td></tr>` : ''}
         <tr><th>Notes</th><td>${esc(loc.notes || '—')}</td></tr>
       </tbody>
     </table>
     ${closures.length ? `
-      <div style="margin-top:10px;font-size:11px">
-        <b>Closures</b><br>
-        ${closures.map(c => `<a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')">${esc(c.model || 'Closure')}</a>`).join(' · ')}
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+        <div style="font-size:11px;font-weight:600;margin-bottom:6px">Closures at this location</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${closures.map(c => `
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+              <a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')" style="flex:1">${esc(c.model || 'Closure')} (${c.tray_count} trays)</a>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+    ${fiberDiagramRows.length ? `
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+        <div style="font-size:11px;font-weight:600;margin-bottom:4px">Fiber diagram</div>
+        ${fiberDiagramRows.join('')}
       </div>` : ''}
     <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
-      Deleting a location cascades to its closures + trays + splices. Cables that
-      reference it become unrouted (their endpoints are nulled, not deleted).
+      Deleting a location cascades to its closures, trays, and splices.
     </div>
   `;
+}
+
+// Helper used by the multi-stop flow and the location inspector to open the
+// add-closure modal with a specific location pre-selected.
+async function openAddClosureForLocation(locationId) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  await openAddClosure();
+  // Pre-select the given location in the modal that just opened.
+  const sel = document.getElementById('m-cl-loc');
+  if (sel) sel.value = locationId;
 }
 
 function renderClosureInspector(closureId) {
@@ -3044,19 +3163,30 @@ async function initMapIfNeeded() {
       });
       refreshMapLayers();
       mapFitData();
-      // Click handler for placing-an-unmapped-closure mode.
       map.on('click', (e) => {
-        if (state.mapMode === 'place' && state.mapPlaceTargetId) {
-          mapApplyPlacement(e.lngLat);
-        } else if (state.mapMode === 'path') {
-          mapPathAddWaypoint(e.lngLat);
+        if (state.mapMode === 'place-new') {
+          mapApplyNewLocation(e.lngLat);
+        } else if (state.mapMode === 'multistop') {
+          mapMsAddStop(e.lngLat);
         }
       });
       map.on('dblclick', (e) => {
-        if (state.mapMode === 'path') {
+        if (state.mapMode === 'multistop') {
           e.preventDefault();
-          mapPathFinish();
+          mapMsFinish();
         }
+      });
+      // Cable click → enter edit-path mode.
+      map.on('click', 'cables-line', (e) => {
+        if (state.mapMode) return;
+        const props = e.features[0]?.properties;
+        if (props?.id) mapStartEditPath(props.id);
+      });
+      map.on('mouseenter', 'cables-line', () => {
+        if (!state.mapMode) map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'cables-line', () => {
+        if (!state.mapMode) map.getCanvas().style.cursor = '';
       });
     });
   } catch (e) {
@@ -3064,33 +3194,70 @@ async function initMapIfNeeded() {
   }
 }
 
+// Haversine in feet — client-side mirror of the server helper so the
+// multi-stop running tally works without a round-trip.
+function _haversineFtClient(coords) {
+  if (!coords || coords.length < 2) return 0;
+  const R = 20902231;
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [lon1, lat1] = coords[i - 1];
+    const [lon2, lat2] = coords[i];
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+    total += 2 * R * Math.asin(Math.sqrt(a));
+  }
+  return total;
+}
+
 function refreshMapLayers() {
   const map = state.map;
   if (!map || !map.isStyleLoaded() || !state.data) return;
-  // Tear down existing markers so we can rebuild from scratch — cheaper
-  // than tracking which moved/added/removed at this scale.
-  if (state._mapMarkers) {
-    state._mapMarkers.forEach(m => m.remove());
-  }
+
+  // Tear down existing markers so we can rebuild from scratch.
+  (state._mapMarkers || []).forEach(m => m.remove());
+  (state._mapLabelMarkers || []).forEach(m => m.remove());
   state._mapMarkers = [];
+  state._mapLabelMarkers = [];
+
   const ml = state.maplibregl;
   const locsWithGeo = (state.data.locations || []).filter(l => l.latitude != null && l.longitude != null);
+
   for (const loc of locsWithGeo) {
     const closuresAtLoc = (state.data.closures || []).filter(c => c.location_id === loc.id);
+    const color = _locColor(loc);
     const el = document.createElement('div');
     el.className = 'map-closure-marker';
-    el.style.cssText = `width:18px;height:18px;border-radius:50%;background:${closuresAtLoc.length?'#1B5FA0':'#888'};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);cursor:pointer`;
-    el.title = loc.name + (closuresAtLoc.length ? ' · ' + closuresAtLoc.length + ' closure(s)' : '');
+    // Larger dot (20px) for closures to signal there's data inside.
+    const sz = closuresAtLoc.length ? 20 : 16;
+    el.style.cssText = `width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);cursor:pointer;transition:transform .1s`;
+    el.title = loc.name + ` (${loc.type})` + (closuresAtLoc.length ? ' · ' + closuresAtLoc.length + ' closure(s)' : '');
+
+    // Small name label below the dot.
+    const label = document.createElement('div');
+    label.textContent = loc.name;
+    label.style.cssText = 'position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;white-space:nowrap;font-size:10px;font-weight:600;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none';
+    el.appendChild(label);
+    el.style.position = 'relative';
+
     const marker = new ml.Marker({ element: el, draggable: !isReadOnly() })
       .setLngLat([Number(loc.longitude), Number(loc.latitude)])
       .addTo(map);
+
     el.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      // If the location has closures, open the first one's inspector;
-      // otherwise open the location inspector.
-      if (closuresAtLoc.length) selectThing('closure', closuresAtLoc[0].id);
-      else selectThing('location', loc.id);
+      if (state.mapMode === 'multistop') {
+        // Snap to this location in multi-stop mode instead of opening inspector.
+        mapMsSnapToLocation(loc);
+        return;
+      }
+      // Always open the rich location inspector; it links through to closures.
+      selectThing('location', loc.id);
     });
+
     marker.on('dragend', async () => {
       const ll = marker.getLngLat();
       try {
@@ -3105,18 +3272,60 @@ function refreshMapLayers() {
     });
     state._mapMarkers.push(marker);
   }
-  // Cables — only those with a stored path render. A path is independent
-  // of endpoint locations having coords; if a designer has only mapped
-  // the polyline (e.g. ingest from KMZ), it still shows.
-  const cableFeatures = (state.data.cables || [])
-    .filter(c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2)
-    .map(c => ({
-      type: 'Feature',
-      geometry: c.path_geojson,
-      properties: { id: c.id, name: c.name, fiber_count: c.fiber_count },
-    }));
+
+  // Cable polylines with footage labels at their midpoints.
+  const cablesWithPath = (state.data.cables || []).filter(
+    c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2
+  );
+  const cableFeatures = cablesWithPath.map(c => ({
+    type: 'Feature',
+    geometry: c.path_geojson,
+    properties: { id: c.id, name: c.name, fiber_count: c.fiber_count,
+                  path_length_feet: c.path_length_feet || 0 },
+  }));
   const src = map.getSource('cables');
   if (src) src.setData({ type: 'FeatureCollection', features: cableFeatures });
+
+  // Footage labels — Marker-based so they render cleanly over raster tiles.
+  for (const c of cablesWithPath) {
+    const ft = c.path_length_feet || 0;
+    if (!ft) continue;
+    const coords = c.path_geojson.coordinates;
+    // Midpoint: interpolate along the coordinate array by total length.
+    const mid = _midpointOfPolyline(coords);
+    if (!mid) continue;
+    const lbl = document.createElement('div');
+    lbl.textContent = `${Math.round(ft)} ft`;
+    lbl.style.cssText = 'background:rgba(0,0,0,.55);color:#FFD400;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;letter-spacing:0.3px';
+    const m = new ml.Marker({ element: lbl, anchor: 'center' })
+      .setLngLat(mid)
+      .addTo(map);
+    state._mapLabelMarkers.push(m);
+  }
+}
+
+// Returns the geographic midpoint along a polyline (equal arc-length split).
+function _midpointOfPolyline(coords) {
+  if (!coords || coords.length < 2) return null;
+  // Accumulate segment lengths, find half-total, interpolate.
+  const segs = [];
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const d = _haversineFtClient([coords[i - 1], coords[i]]);
+    segs.push(d);
+    total += d;
+  }
+  let half = total / 2;
+  for (let i = 0; i < segs.length; i++) {
+    if (segs[i] >= half) {
+      const t = half / segs[i];
+      const [lon1, lat1] = coords[i];
+      const [lon2, lat2] = coords[i + 1];
+      return [lon1 + (lon2 - lon1) * t, lat1 + (lat2 - lat1) * t];
+    }
+    half -= segs[i];
+  }
+  return coords[Math.floor(coords.length / 2)];
 }
 
 function mapFitData() {
@@ -3140,101 +3349,344 @@ function mapFitData() {
   map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 500 });
 }
 
-function mapTogglePlaceMode() {
-  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
-  // Pick an unmapped location to place. If only one is unmapped, skip
-  // the picker; otherwise prompt.
-  const unmapped = (state.data.locations || []).filter(l => l.latitude == null || l.longitude == null);
-  if (!unmapped.length) return toast('All locations are already on the map.', 'info');
-  if (state.mapMode === 'place') return mapClearMode();
-  const list = unmapped.map((l, i) => `${i + 1}. ${l.name}`).join('\n');
-  const choice = prompt(`Which location to place on the map?\n\n${list}\n\nEnter a number:`, '1');
-  if (!choice) return;
-  const idx = parseInt(choice, 10) - 1;
-  if (!Number.isFinite(idx) || idx < 0 || idx >= unmapped.length) return toast('Bad choice', 'error');
-  state.mapPlaceTargetId = unmapped[idx].id;
-  state.mapMode = 'place';
-  document.getElementById('map-stage').classList.add('placing');
-  document.getElementById('btn-place-mode').classList.add('active');
-  document.getElementById('map-mode-hint').textContent = `Click on the map to place "${unmapped[idx].name}"`;
+// ─── Palette ──────────────────────────────────────────────────────────────
+
+function mapTogglePalette() {
+  const pal = document.getElementById('map-palette');
+  const btn = document.getElementById('btn-add-item');
+  const open = pal.style.display !== 'none';
+  pal.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('active', !open);
+  if (!open) {
+    // Close on next outside click.
+    const close = (ev) => {
+      if (!document.getElementById('palette-wrap').contains(ev.target)) {
+        pal.style.display = 'none';
+        btn.classList.remove('active');
+        document.removeEventListener('click', close, true);
+      }
+    };
+    document.addEventListener('click', close, true);
+  }
 }
 
-async function mapApplyPlacement(lngLat) {
-  const id = state.mapPlaceTargetId;
-  if (!id) return;
+// Enter "place new location" mode for the given type.
+function mapStartPlace(type) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  document.getElementById('map-palette').style.display = 'none';
+  document.getElementById('btn-add-item').classList.remove('active');
+  mapClearMode();
+  state.mapMode = 'place-new';
+  state.mapPlaceType = type;
+  document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('btn-add-item').classList.add('active');
+  const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+  document.getElementById('map-mode-hint').textContent = `Click on the map to place a ${label}. Esc to cancel.`;
+}
+
+async function mapApplyNewLocation(lngLat) {
+  const type = state.mapPlaceType;
+  if (!type) return;
+  const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const name = window.prompt(`Name for this ${label}:`, '');
+  if (name == null || !String(name).trim()) return;
   try {
-    await api(`/api/splice/locations/${id}/coords`, 'PUT', {
+    const loc = await api(`/api/splice/projects/${state.currentId}/locations`, 'POST', {
+      type, name: String(name).trim(),
       latitude: lngLat.lat, longitude: lngLat.lng,
     });
-    toast('Location placed', 'success');
+    toast(`${label} added`, 'success');
     mapClearMode();
     await hydrateProject();
     if (state.activeView === 'map') refreshMapLayers();
+    // Open its inspector immediately.
+    selectThing('location', loc.id);
   } catch (e) {
-    toast('Place failed: ' + e.message, 'error');
+    toast('Failed: ' + e.message, 'error');
   }
 }
 
-function mapTogglePathMode() {
+// ─── Multi-stop cable draw ──────────────────────────────────────────────────
+
+function mapToggleMultistop() {
   if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
-  const cables = state.data?.cables || [];
-  if (!cables.length) return toast('Add a cable first.', 'info');
-  if (state.mapMode === 'path') return mapClearMode();
-  const list = cables.map((c, i) => `${i + 1}. ${c.name} (${c.fiber_count}f${c.path_geojson ? ' — has path, will replace' : ''})`).join('\n');
-  const choice = prompt(`Draw path for which cable?\n\n${list}\n\nEnter a number:`, '1');
-  if (!choice) return;
-  const idx = parseInt(choice, 10) - 1;
-  if (!Number.isFinite(idx) || idx < 0 || idx >= cables.length) return toast('Bad choice', 'error');
-  state.mapPathTargetId = cables[idx].id;
-  state.mapPathPoints = [];
-  state.mapMode = 'path';
-  document.getElementById('btn-path-mode').classList.add('active');
-  document.getElementById('map-mode-hint').textContent = `Click waypoints for "${cables[idx].name}"; double-click to finish, Esc to cancel`;
+  if (state.mapMode === 'multistop') return mapClearMode();
+  mapClearMode();
+  state.mapMode = 'multistop';
+  state._msStops = [];
+  state._msMarkers = [];
+  document.getElementById('btn-draw-cable').classList.add('active');
   document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('map-mode-hint').textContent = 'Click a location to start cable route. Double-click to finish. Esc cancels.';
 }
 
-function mapPathAddWaypoint(lngLat) {
-  if (state.mapMode !== 'path') return;
-  state.mapPathPoints.push([lngLat.lng, lngLat.lat]);
-  mapRefreshDraftPath();
+// Snap-to-location check: find the nearest marker within ~25 CSS px of click.
+function _msFindNearestLoc(lngLat) {
+  const map = state.map;
+  if (!map) return null;
+  const clickPx = map.project(lngLat);
+  const SNAP_PX = 25;
+  let best = null, bestD = Infinity;
+  for (const loc of (state.data.locations || [])) {
+    if (loc.latitude == null || loc.longitude == null) continue;
+    const px = map.project([Number(loc.longitude), Number(loc.latitude)]);
+    const d = Math.hypot(clickPx.x - px.x, clickPx.y - px.y);
+    if (d < SNAP_PX && d < bestD) { best = loc; bestD = d; }
+  }
+  return best;
 }
 
-function mapRefreshDraftPath() {
+function mapMsSnapToLocation(loc) {
+  // Called when user clicks a marker directly in multistop mode.
+  _mapMsAddStopInternal([Number(loc.longitude), Number(loc.latitude)], loc.id, loc.name);
+}
+
+function mapMsAddStop(lngLat) {
+  if (state.mapMode !== 'multistop') return;
+  const snapped = _msFindNearestLoc(lngLat);
+  if (snapped) {
+    _mapMsAddStopInternal([Number(snapped.longitude), Number(snapped.latitude)], snapped.id, snapped.name);
+  } else {
+    _mapMsAddStopInternal([lngLat.lng, lngLat.lat], null, null);
+  }
+}
+
+function _mapMsAddStopInternal(coord, locationId, locName) {
+  state._msStops.push({ coord, locationId, name: locName });
+  // Visual indicator for the waypoint.
+  const ml = state.maplibregl;
+  const el = document.createElement('div');
+  const isSnapped = locationId != null;
+  el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${isSnapped?'#16A34A':'#FF6E00'};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.5);pointer-events:none`;
+  const m = new ml.Marker({ element: el }).setLngLat(coord).addTo(state.map);
+  state._msMarkers.push(m);
+  mapMsUpdateDraftPath();
+  mapMsUpdateHint();
+}
+
+function mapMsUpdateDraftPath() {
   const map = state.map;
   if (!map) return;
+  const coords = state._msStops.map(s => s.coord);
   const features = [];
-  if (state.mapPathPoints.length >= 2) {
-    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: state.mapPathPoints } });
-  }
-  for (const p of state.mapPathPoints) {
-    features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: p } });
+  if (coords.length >= 2) {
+    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } });
   }
   const src = map.getSource('draft-path');
   if (src) src.setData({ type: 'FeatureCollection', features });
 }
 
-async function mapPathFinish() {
-  if (state.mapMode !== 'path') return;
-  if (state.mapPathPoints.length < 2) {
-    toast('Need at least two waypoints', 'error');
+function mapMsUpdateHint() {
+  const stops = state._msStops;
+  if (!stops.length) {
+    document.getElementById('map-mode-hint').textContent = 'Click a location to start cable route. Double-click to finish. Esc cancels.';
     return;
   }
-  const cableId = state.mapPathTargetId;
-  const path_geojson = { type: 'LineString', coordinates: state.mapPathPoints.slice() };
+  const coords = stops.map(s => s.coord);
+  const ft = Math.round(_haversineFtClient(coords));
+  const names = stops.map(s => s.name || '(free)').join(' → ');
+  document.getElementById('map-mode-hint').textContent =
+    `${names} · ${ft.toLocaleString()} ft so far — double-click last point to finish`;
+}
+
+async function mapMsFinish() {
+  if (state.mapMode !== 'multistop') return;
+  const stops = state._msStops;
+  if (stops.length < 2) {
+    toast('Need at least two points to define a route', 'error');
+    return;
+  }
+  // Collect snapped endpoints and intermediates.
+  const fromLoc = stops.find(s => s.locationId)?.locationId || null;
+  const toLoc = [...stops].reverse().find(s => s.locationId)?.locationId || null;
+  const intermediates = stops.slice(1, -1).filter(s => s.locationId);
+  const coords = stops.map(s => s.coord);
+  const totalFt = Math.round(_haversineFtClient(coords));
+
+  // Prompt for cable details via a modal.
+  const FIBER_OPTIONS = [12, 24, 48, 96, 144, 288, 432, 864];
+  await new Promise((resolve) => {
+    showModal({
+      title: 'Create cable',
+      body: `
+        <div class="field"><label>Cable name</label>
+          <input id="ms-cable-name" type="text" placeholder="e.g. 24f-HH1-to-HH5" style="width:100%"></div>
+        <div class="row">
+          <div class="field"><label>Fiber count</label>
+            <select id="ms-fiber-count">${FIBER_OPTIONS.map(n=>`<option value="${n}"${n===24?' selected':''}>${n}f</option>`).join('')}</select>
+          </div>
+          <div class="field"><label>Construction</label>
+            <select id="ms-construction"><option value="loose_tube">Loose tube</option><option value="ribbon">Ribbon</option></select>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Route: ${totalFt.toLocaleString()} ft across ${stops.length} stops</div>
+      `,
+      submitText: 'Create cable',
+      onSubmit: async (close) => {
+        const name = document.getElementById('ms-cable-name').value.trim();
+        if (!name) { toast('Cable name required', 'error'); return; }
+        const fiber_count = Number(document.getElementById('ms-fiber-count').value);
+        const construction_type = document.getElementById('ms-construction').value;
+        try {
+          const result = await api(`/api/splice/projects/${state.currentId}/cables`, 'POST', {
+            name, fiber_count, construction_type,
+            from_location_id: fromLoc, to_location_id: toLoc,
+          });
+          const cableId = result.cable.id;
+          await api(`/api/splice/cables/${cableId}/path`, 'PUT', {
+            path_geojson: { type: 'LineString', coordinates: coords },
+          });
+          toast(`Cable "${name}" created (${totalFt.toLocaleString()} ft)`, 'success');
+          close();
+          mapClearMode();
+          await hydrateProject();
+          if (state.activeView === 'map') refreshMapLayers();
+          // Follow-up: offer to add closures at intermediate snapped stops.
+          for (const stop of intermediates) {
+            const loc = state.data.locations.find(l => l.id === stop.locationId);
+            if (!loc) continue;
+            const yes = window.confirm(`Add closure / splice assignments at "${loc.name}"?`);
+            if (yes) {
+              selectThing('location', loc.id);
+              await openAddClosureForLocation(loc.id);
+            }
+          }
+          resolve();
+        } catch (e) {
+          toast('Failed: ' + e.message, 'error');
+        }
+      },
+    });
+    // Cancel button clears the draw mode but doesn't throw.
+    // The overlay click also clears it via closeModal() → no resolve() needed;
+    // the Promise just hangs (no side-effect since mapClearMode handles cleanup).
+    document.getElementById('modal-host').querySelector('.close')
+      ?.addEventListener('click', () => { mapClearMode(); resolve(); }, { once: true });
+    document.getElementById('modal-host').querySelector('.modal-overlay')
+      ?.addEventListener('click', (ev) => {
+        if (ev.target === ev.currentTarget) { mapClearMode(); resolve(); }
+      }, { once: true });
+    document.getElementById('modal-host').querySelector('footer .btn:first-child')
+      ?.addEventListener('click', () => { mapClearMode(); resolve(); }, { once: true });
+  });
+}
+
+// ─── Cable path editing ────────────────────────────────────────────────────
+
+function mapStartEditPath(cableId) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const cable = (state.data.cables || []).find(c => c.id === cableId);
+  if (!cable || !cable.path_geojson) return;
+  mapClearMode();
+  state.mapMode = 'edit-path';
+  state._editingCableId = cableId;
+  state._editPathCoords = cable.path_geojson.coordinates.map(c => [...c]);
+  document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('map-mode-hint').textContent =
+    `Editing "${cable.name}": drag handles to move, click midpoints to insert. Esc to cancel.`;
+  mapRebuildEditHandles();
+}
+
+function mapRebuildEditHandles() {
+  const map = state.map;
+  if (!map) return;
+  (state._cableHandleMarkers || []).forEach(m => m.remove());
+  state._cableHandleMarkers = [];
+  const ml = state.maplibregl;
+  const coords = state._editPathCoords;
+
+  // Actual waypoint handles.
+  for (let i = 0; i < coords.length; i++) {
+    const el = document.createElement('div');
+    el.className = 'cable-handle';
+    const idx = i; // capture for closure
+    const marker = new ml.Marker({ element: el, draggable: true })
+      .setLngLat(coords[i])
+      .addTo(map);
+    marker.on('drag', () => {
+      const ll = marker.getLngLat();
+      coords[idx] = [ll.lng, ll.lat];
+      _editPathUpdateDraftLine(coords);
+    });
+    marker.on('dragend', () => {
+      mapSaveEditedPath();
+      // Rebuild to reposition midpoint handles correctly.
+      mapRebuildEditHandles();
+    });
+    // Shift-click to delete a waypoint (minimum 2 points required).
+    el.addEventListener('click', (ev) => {
+      if (!ev.shiftKey) return;
+      ev.stopPropagation();
+      if (coords.length <= 2) return toast('A path needs at least 2 points', 'info');
+      coords.splice(idx, 1);
+      mapSaveEditedPath();
+      mapRebuildEditHandles();
+    });
+    state._cableHandleMarkers.push(marker);
+  }
+
+  // Midpoint insertion handles (between every consecutive pair).
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [lon1, lat1] = coords[i];
+    const [lon2, lat2] = coords[i + 1];
+    const midCoord = [(lon1 + lon2) / 2, (lat1 + lat2) / 2];
+    const el = document.createElement('div');
+    el.className = 'cable-handle mid';
+    const afterIdx = i + 1; // insert before this index
+    const midMarker = new ml.Marker({ element: el, draggable: true })
+      .setLngLat(midCoord)
+      .addTo(map);
+    midMarker.on('dragstart', () => {
+      // Promote to a real waypoint on first drag.
+      const ll = midMarker.getLngLat();
+      coords.splice(afterIdx, 0, [ll.lng, ll.lat]);
+      midMarker.remove();
+      // Rebuild handles now that coords has a new entry; the dragend
+      // will save after this.
+    });
+    midMarker.on('dragend', () => {
+      mapSaveEditedPath();
+      mapRebuildEditHandles();
+    });
+    state._cableHandleMarkers.push(midMarker);
+  }
+
+  _editPathUpdateDraftLine(coords);
+}
+
+function _editPathUpdateDraftLine(coords) {
+  const map = state.map;
+  if (!map) return;
+  const features = [];
+  if (coords.length >= 2) {
+    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } });
+  }
+  const src = map.getSource('draft-path');
+  if (src) src.setData({ type: 'FeatureCollection', features });
+}
+
+async function mapSaveEditedPath() {
+  const cableId = state._editingCableId;
+  if (!cableId || state._editPathCoords.length < 2) return;
+  const path_geojson = { type: 'LineString', coordinates: state._editPathCoords.map(c => [...c]) };
   try {
     await api(`/api/splice/cables/${cableId}/path`, 'PUT', { path_geojson });
-    toast('Cable path saved', 'success');
-    mapClearMode();
-    await hydrateProject();
-    if (state.activeView === 'map') refreshMapLayers();
+    // Optimistically update local state so footage label updates.
+    const cable = (state.data.cables || []).find(c => c.id === cableId);
+    if (cable) {
+      cable.path_geojson = path_geojson;
+      cable.path_length_feet = Math.round(_haversineFtClient(path_geojson.coordinates));
+    }
+    refreshMapLayers();
   } catch (e) {
     toast('Save failed: ' + e.message, 'error');
   }
 }
 
-// Cycle between satellite-only and hybrid (satellite + reference
-// labels). Persists across sessions in localStorage. Updates the
-// button label so the user can see the current state at a glance.
+// ─── Basemap ───────────────────────────────────────────────────────────────
+
+// Cycle between satellite-only and hybrid (satellite + reference labels).
+// Persists across sessions in localStorage.
 function cycleBasemap() {
   if (!state.map) return;
   const next = state.basemap === 'hybrid' ? 'sat' : 'hybrid';
@@ -3244,18 +3696,35 @@ function cycleBasemap() {
   document.getElementById('btn-basemap-label').textContent = next === 'hybrid' ? 'Hybrid' : 'Satellite';
 }
 
+// ─── Mode clear ────────────────────────────────────────────────────────────
+
 function mapClearMode() {
+  // Clean up multi-stop markers.
+  (state._msMarkers || []).forEach(m => m.remove());
+  state._msMarkers = [];
+  state._msStops = [];
+  // Clean up edit-path handles.
+  (state._cableHandleMarkers || []).forEach(m => m.remove());
+  state._cableHandleMarkers = [];
+  state._editingCableId = null;
+  state._editPathCoords = [];
+
   state.mapMode = null;
+  state.mapPlaceType = null;
   state.mapPlaceTargetId = null;
   state.mapPathTargetId = null;
   state.mapPathPoints = [];
-  document.getElementById('btn-place-mode').classList.remove('active');
-  document.getElementById('btn-path-mode').classList.remove('active');
+  const btnAdd = document.getElementById('btn-add-item');
+  const btnDraw = document.getElementById('btn-draw-cable');
+  if (btnAdd) btnAdd.classList.remove('active');
+  if (btnDraw) btnDraw.classList.remove('active');
   document.getElementById('map-stage').classList.remove('placing');
   document.getElementById('map-mode-hint').textContent = '';
   if (state.map) {
     const src = state.map.getSource('draft-path');
     if (src) src.setData({ type: 'FeatureCollection', features: [] });
+    // Restore default cursor.
+    state.map.getCanvas().style.cursor = '';
   }
 }
 
