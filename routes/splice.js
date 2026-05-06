@@ -4736,31 +4736,38 @@ async function _applyImportChange(client, projectId, change) {
   }
   if (target_table === 'splice_cables') {
     if (change_type === 'add') {
+      const totalFibers   = p.fiber_count || 144;
+      const tubeSize      = [6, 12, 24].includes(Number(p.tube_size_fibers)) ? Number(p.tube_size_fibers) : 12;
       const r = await client.query(
         `INSERT INTO splice_cables
-           (project_id, name, fiber_count, construction_type, path_geojson, notes, manufacturer_part)
-         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING id`,
+           (project_id, name, fiber_count, construction_type, path_geojson, notes, manufacturer_part, tube_size_fibers)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8) RETURNING id`,
         [projectId, p.name || '(unnamed)',
-         p.fiber_count || 144,
+         totalFibers,
          p.construction_type || 'ribbon',
          p.path_geojson ? JSON.stringify(p.path_geojson) : null,
-         p.notes || null, p.manufacturer_part || null]
+         p.notes || null, p.manufacturer_part || null,
+         tubeSize]
       );
-      // Auto-generates buffer tubes + fibers in TIA-598 order to
-      // match the same flow the live POST-cable endpoint runs.
+      // Auto-generate buffer tubes + fibers using the configured tube
+      // size — same logic as the live POST-cable endpoint. The last
+      // tube takes the remainder when totalFibers isn't an exact
+      // multiple of tubeSize (6F with tube=12 → 1 tube of 6 fibers).
       const newCableId = r.rows[0].id;
-      const tubeCount = (p.fiber_count || 144) / 12;
+      const tubeCount = Math.ceil(totalFibers / tubeSize);
       for (let pos = 1; pos <= tubeCount; pos++) {
         const tube = await client.query(
           `INSERT INTO splice_buffer_tubes (cable_id, position, color)
            VALUES ($1, $2, $3) RETURNING id`,
           [newCableId, pos, TIA_598_COLORS[(pos - 1) % 12]]
         );
-        for (let fp = 1; fp <= 12; fp++) {
+        const fibersPlaced = (pos - 1) * tubeSize;
+        const fibersInThisTube = Math.min(tubeSize, totalFibers - fibersPlaced);
+        for (let fp = 1; fp <= fibersInThisTube; fp++) {
           await client.query(
             `INSERT INTO splice_fibers (buffer_tube_id, position, color)
              VALUES ($1, $2, $3)`,
-            [tube.rows[0].id, fp, TIA_598_COLORS[fp - 1]]
+            [tube.rows[0].id, fp, TIA_598_COLORS[(fp - 1) % 12]]
           );
         }
       }
