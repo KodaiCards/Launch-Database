@@ -3660,7 +3660,7 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
 
   function describeFiber(fiberId) {
     const f = fiberById.get(fiberId);
-    if (!f) return { cable: '?', tube: '?', tube_position: '?', color: '?', position: '?', circuit_name: '', customer: '' };
+    if (!f) return { cable: '?', tube: '?', tube_position: '?', color: '?', position: '?', circuit_name: '', customer: '', tube_size_fibers: 12 };
     const tube = tubeById.get(f.buffer_tube_id);
     const cable = tube ? cableById.get(tube.cable_id) : null;
     return {
@@ -3671,6 +3671,8 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
       position: f.position,
       circuit_name: f.circuit_name || '',
       customer: f.customer || '',
+      // Derived from cable's tube_size_fibers; default 12 per OSP standard.
+      tube_size_fibers: cable?.tube_size_fibers || 12,
     };
   }
 
@@ -3871,12 +3873,14 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
         // name with "+11 more" — concise but informative.
         const ribbonCircuits = list.map(s => describeFiber(s.fiber_a_id).circuit_name).filter(Boolean);
         const circuitCell = anyCircuit ? `<td>${ribbonCircuits.length ? _esc(ribbonCircuits[0]) + (ribbonCircuits.length > 1 ? ` <span class="muted">+${ribbonCircuits.length-1}</span>` : '') : '<span class="muted">—</span>'}</td>` : '';
+        const ribbonCount = list.length; // actual splice count in this group
+        const tubeSize = a.tube_size_fibers || 12;
         return `<tr class="ribbon-row">
-          <td colspan="3"><b>${_esc(a.cable)}</b> · tube ${colorChip(a.tube_color)} <span class="muted">(12 fibers, ribbon)</span></td>
+          <td colspan="3"><b>${_esc(a.cable)}</b> · tube ${colorChip(a.tube_color)} <span class="muted">(${tubeSize} fibers, ribbon)</span></td>
           <td class="arrow">⇒</td>
-          <td colspan="3"><b>${_esc(b.cable)}</b> · tube ${colorChip(b.tube_color)} <span class="muted">(12 fibers, ribbon)</span></td>
+          <td colspan="3"><b>${_esc(b.cable)}</b> · tube ${colorChip(b.tube_color)} <span class="muted">(${b.tube_size_fibers || 12} fibers, ribbon)</span></td>
           ${circuitCell}
-          <td>${_esc(first.splice_type)} <span class="ribbon-tag">×12</span></td>
+          <td>${_esc(first.splice_type)} <span class="ribbon-tag">×${ribbonCount}</span></td>
           <td class="markup-loss">&nbsp;</td>
           <td class="markup-notes">&nbsp;</td>
         </tr>`;
