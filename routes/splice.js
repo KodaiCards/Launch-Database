@@ -273,7 +273,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -349,6 +349,18 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             WHERE c.project_id = $1
             ORDER BY c.name, cs.location_id
           `, [projectId]),
+          // Phase 4.7 — loss records for this project. Most-recent per
+          // splice_id is what gets annotated onto each splice row below.
+          pool.query(
+            `SELECT id, splice_id, closure_id, location_id,
+                    splice_loss_db, measured_at, operator_name,
+                    splicer_serial, bind_method, source, uploaded_at,
+                    gps_lat, gps_lon, field_token
+               FROM splice_loss_records
+              WHERE project_id = $1
+              ORDER BY measured_at DESC NULLS LAST, uploaded_at DESC`,
+            [projectId]
+          ),
         ]);
 
       // Annotate each cable with its path length in feet, computed from
@@ -360,6 +372,20 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           : 0,
       }));
 
+      // Phase 4.7 — annotate each splice with its most-recent bound loss
+      // reading so canvas + matrix view can render the loss badge without
+      // a second round-trip. loss_db = null when no record is bound.
+      const latestLossBySplice = new Map();
+      for (const lr of lossRes.rows) {
+        if (lr.splice_id && !latestLossBySplice.has(lr.splice_id)) {
+          latestLossBySplice.set(lr.splice_id, lr.splice_loss_db);
+        }
+      }
+      const splicesAnnotated = splices.rows.map(s => ({
+        ...s,
+        loss_db: latestLossBySplice.has(s.id) ? Number(latestLossBySplice.get(s.id)) : null,
+      }));
+
       const hydrate = {
         project: proj.rows[0],
         locations:        locations.rows,
@@ -368,19 +394,20 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         fibers:           fibers.rows,
         closures:         closures.rows,
         trays:            trays.rows,
-        splices:          splices.rows,
+        splices:          splicesAnnotated,
         ribbon_groups:    ribbonGroups.rows,
         strand_states:    strandStates.rows,
         splitters:        splittersRes.rows,
         splitter_outputs: splitterOutputsRes.rows,
         cable_states:     cableStatesRes.rows,
+        loss_records:     lossRes.rows,
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
       // The richer rule-based output lives in `validation`.
       hydrate.warnings = _computeWarnings({
         fibers: fibers.rows,
-        splices: splices.rows,
+        splices: splicesAnnotated,
         trays: trays.rows,
         closures: closures.rows,
       });
@@ -2651,6 +2678,307 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Phase 4.7 — Fusion-splicer loss records ────────────────────────────
+  //
+  // Accepts Fujikura Splice+ JSON exports (per-splice GPS + loss records).
+  // Auto-binds each record to the nearest location / closure / splice by
+  // GPS proximity (30 m ≈ 98.4 ft). Unbound records land in the table
+  // for engineer manual attach.
+  //
+  // Engineer-side (authenticated):
+  //   POST   /api/splice/projects/:id/loss-records
+  //   GET    /api/splice/projects/:id/loss-records
+  //   PUT    /api/splice/loss-records/:id/bind
+  //   DELETE /api/splice/loss-records/:id
+  //
+  // Splicer-side (public, token-auth):
+  //   POST   /splice/field/:token/loss-records
+
+  // Helper: point-to-point haversine distance in feet between a location's
+  // lat/lon and a GPS fix from the splicer payload.
+  function _haversinePointFeet(lat1, lon1, lat2, lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return Infinity;
+    const R_FT = 20902231;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+    return 2 * R_FT * Math.asin(Math.sqrt(a));
+  }
+
+  // 30 metres in feet — the GPS snap radius.
+  const LOSS_BIND_RADIUS_FT = 98.4;
+
+  // Core ingest logic shared by engineer-side and splicer-side uploads.
+  // `records`    — array of Splice+ objects
+  // `projectId`  — the project we're importing into
+  // `knownClosureId` — if coming from a splicer token, the closure is
+  //   already known; skip GPS location matching and bind directly.
+  // `fieldToken` — the splicer token string, if applicable.
+  // `userId`     — the authenticated staff user, or null for splicer uploads.
+  async function _ingestLossRecords(pool, { records, projectId, knownClosureId, fieldToken, userId }) {
+    // Load all locations (with lat/lon) for this project so we can GPS-bind.
+    const locsRes = await pool.query(
+      `SELECT id, latitude, longitude FROM splice_locations WHERE project_id = $1`,
+      [projectId]
+    );
+    const locations = locsRes.rows;
+
+    // Load closures: we need closure→location mapping for binding.
+    const closuresRes = await pool.query(
+      `SELECT cl.id, cl.location_id
+         FROM splice_closures cl
+         JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1`,
+      [projectId]
+    );
+    const closures = closuresRes.rows; // [{id, location_id}]
+
+    // Load splices (only those without a loss record already bound, so we
+    // don't double-bind). We need tray→closure→location OR closure_id OR
+    // location_id chains to place them geographically.
+    const splicesRes = await pool.query(
+      `SELECT DISTINCT s.id,
+              COALESCE(t_cl.location_id, cl_c.location_id, s.location_id) AS location_id,
+              s.closure_id,
+              s.tray_id
+         FROM splices s
+         LEFT JOIN splice_trays t        ON t.id = s.tray_id
+         LEFT JOIN splice_closures t_cl  ON t_cl.id = t.closure_id
+         LEFT JOIN splice_closures cl_c  ON cl_c.id = s.closure_id
+         LEFT JOIN splice_locations l_t  ON l_t.id = t_cl.location_id
+         LEFT JOIN splice_locations l_c  ON l_c.id = cl_c.location_id
+         LEFT JOIN splice_locations l_l  ON l_l.id = s.location_id
+         WHERE $1 IN (l_t.project_id, l_c.project_id, l_l.project_id)`,
+      [projectId]
+    );
+    const splices = splicesRes.rows; // [{id, location_id, closure_id}]
+
+    // Locate splices that already have a bound loss record so we don't
+    // double-bind at the splice level (conservative policy).
+    const boundSpliceRes = await pool.query(
+      `SELECT splice_id FROM splice_loss_records
+        WHERE project_id = $1 AND splice_id IS NOT NULL`,
+      [projectId]
+    );
+    const alreadyBoundSpliceIds = new Set(boundSpliceRes.rows.map(r => r.splice_id));
+
+    let inserted = 0;
+    let autoBound = 0;
+
+    for (const rec of records) {
+      const gpsLat  = rec.gps?.latitude  ?? null;
+      const gpsLon  = rec.gps?.longitude ?? null;
+      const lossDb  = rec.splice_loss_db ?? null;
+      const measAt  = rec.performed_at   ? new Date(rec.performed_at) : null;
+      const opName  = (rec.operator || '').toString().trim().slice(0, 120) || null;
+      const serial  = (rec.splice_serial || '').toString().trim().slice(0, 120) || null;
+
+      let bindLocationId = null;
+      let bindClosureId  = knownClosureId || null;
+      let bindSpliceId   = null;
+      let bindMethod     = null;
+
+      if (knownClosureId) {
+        // Splicer-side: closure is already known from the token.
+        bindMethod = 'auto';
+
+        // Derive location from closure.
+        const cl = closures.find(c => c.id === knownClosureId);
+        if (cl) bindLocationId = cl.location_id;
+
+        // Splice-level: if this closure has exactly one splice not already
+        // bound to a loss record, attach to it.
+        const splicesForClosure = splices.filter(s => {
+          if (alreadyBoundSpliceIds.has(s.id)) return false;
+          if (s.closure_id === knownClosureId) return true;
+          // Also catch tray-based splices whose closure is this one.
+          // (closure_id on the splice row can be null when using tray anchors.)
+          // We derive effective closure via location, so compare location_id
+          // of the splice to that of the known closure.
+          const cl2 = closures.find(c => c.id === knownClosureId);
+          return cl2 && s.location_id === cl2.location_id;
+        });
+        if (splicesForClosure.length === 1) {
+          bindSpliceId = splicesForClosure[0].id;
+          alreadyBoundSpliceIds.add(bindSpliceId);
+        }
+      } else if (gpsLat != null && gpsLon != null) {
+        // Engineer-side: GPS proximity binding.
+        const nearby = locations.filter(loc => {
+          if (loc.latitude == null || loc.longitude == null) return false;
+          return _haversinePointFeet(gpsLat, gpsLon, Number(loc.latitude), Number(loc.longitude)) <= LOSS_BIND_RADIUS_FT;
+        });
+
+        if (nearby.length === 1) {
+          // Exactly one location in range — bind to it.
+          bindLocationId = nearby[0].id;
+          bindMethod = 'auto';
+
+          // Closure-level: if this location has exactly one closure, bind.
+          const closuresAtLoc = closures.filter(c => c.location_id === bindLocationId);
+          if (closuresAtLoc.length === 1) {
+            bindClosureId = closuresAtLoc[0].id;
+
+            // Splice-level: if that closure has exactly one unbound splice.
+            const splicesForClosure = splices.filter(s => {
+              if (alreadyBoundSpliceIds.has(s.id)) return false;
+              return s.location_id === bindLocationId;
+            });
+            if (splicesForClosure.length === 1) {
+              bindSpliceId = splicesForClosure[0].id;
+              alreadyBoundSpliceIds.add(bindSpliceId);
+            }
+          }
+        }
+        // If 0 or >1 locations in range, leave unbound (bindMethod stays null).
+      }
+
+      if (bindMethod === 'auto') autoBound++;
+
+      await pool.query(
+        `INSERT INTO splice_loss_records
+           (project_id, splice_id, closure_id, location_id,
+            source, splicer_serial, operator_name,
+            splice_loss_db, measured_at, gps_lat, gps_lon,
+            bind_method, raw_payload_jsonb,
+            uploaded_by_user_id, field_token)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+        [
+          projectId,
+          bindSpliceId  || null,
+          bindClosureId || null,
+          bindLocationId || null,
+          'fujikura_splice_plus',
+          serial,
+          opName,
+          lossDb != null ? Number(lossDb) : null,
+          measAt || null,
+          gpsLat != null ? Number(gpsLat) : null,
+          gpsLon != null ? Number(gpsLon) : null,
+          bindMethod || null,
+          JSON.stringify(rec),
+          userId || null,
+          fieldToken || null,
+        ]
+      );
+      inserted++;
+    }
+
+    return { inserted, auto_bound: autoBound, unbound: inserted - autoBound };
+  }
+
+  // POST /api/splice/projects/:id/loss-records  (engineer, auth required)
+  app.post('/api/splice/projects/:id/loss-records', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    try {
+      const proj = await pool.query(`SELECT id FROM splice_projects WHERE id = $1`, [projectId]);
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
+
+      const raw = Array.isArray(req.body) ? req.body : (req.body?.records || []);
+      if (!Array.isArray(raw) || !raw.length) {
+        return res.status(400).json({ error: 'Expected { records: [...] } or a JSON array of Splice+ records.' });
+      }
+
+      const userId = req.user?.id || req.session?.staffId || null;
+      const result = await _ingestLossRecords(pool, {
+        records: raw,
+        projectId,
+        knownClosureId: null,
+        fieldToken: null,
+        userId,
+      });
+
+      _broadcast(projectId, 'loss_records_added', { count: result.inserted });
+      res.json(result);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // GET /api/splice/projects/:id/loss-records  (engineer, auth required)
+  app.get('/api/splice/projects/:id/loss-records', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, splice_id, closure_id, location_id,
+                splice_loss_db, measured_at, operator_name,
+                splicer_serial, bind_method, source, uploaded_at,
+                gps_lat, gps_lon, field_token
+           FROM splice_loss_records
+          WHERE project_id = $1
+          ORDER BY measured_at DESC NULLS LAST, uploaded_at DESC`,
+        [projectId]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // PUT /api/splice/loss-records/:id/bind  (engineer, manual attach)
+  app.put('/api/splice/loss-records/:id/bind', requireAuth(), async (req, res) => {
+    const { splice_id, closure_id, location_id } = req.body || {};
+    try {
+      const cur = await pool.query(
+        `SELECT project_id FROM splice_loss_records WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Loss record not found' });
+
+      const upd = await pool.query(
+        `UPDATE splice_loss_records
+            SET splice_id   = $2,
+                closure_id  = $3,
+                location_id = $4,
+                bind_method = 'manual'
+          WHERE id = $1
+          RETURNING *`,
+        [req.params.id, splice_id || null, closure_id || null, location_id || null]
+      );
+      _broadcast(cur.rows[0].project_id, 'loss_records_added', { count: 0 });
+      res.json(upd.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // DELETE /api/splice/loss-records/:id  (engineer)
+  app.delete('/api/splice/loss-records/:id', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_loss_records WHERE id = $1 RETURNING project_id`,
+        [req.params.id]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Loss record not found' });
+      _broadcast(r.rows[0].project_id, 'loss_records_removed', { id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // POST /splice/field/:token/loss-records  (splicer-side, public)
+  app.post('/splice/field/:token/loss-records', async (req, res) => {
+    const ip = req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || null;
+    if (!_fieldMarkupRateOk(ip)) {
+      return res.status(429).json({ error: 'Too many uploads. Try again in a minute.' });
+    }
+    try {
+      const tok = await _resolveFieldToken(pool, req.params.token);
+      if (!tok) return res.status(404).json({ error: 'Field link is invalid or expired.' });
+
+      const raw = Array.isArray(req.body) ? req.body : (req.body?.records || []);
+      if (!Array.isArray(raw) || !raw.length) {
+        return res.status(400).json({ error: 'Expected a JSON array of Splice+ records.' });
+      }
+
+      const result = await _ingestLossRecords(pool, {
+        records: raw,
+        projectId: tok.project_id,
+        knownClosureId: tok.closure_id,
+        fieldToken: req.params.token,
+        userId: null,
+      });
+
+      _broadcast(tok.project_id, 'loss_records_added', { count: result.inserted });
+      res.json({ inserted: result.inserted });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure models picklist ─────────────────────────────────────────────
   // Empty by design — fills as designers type model names. No seed.
 
@@ -4698,6 +5026,24 @@ function _renderFieldHtml({ token, closure, markups }) {
     <h2>Photos already uploaded</h2>
     ${markupRows ? `<ul class="markup-list">${markupRows}</ul>` : '<p class="empty">No photos uploaded yet for this closure.</p>'}
   </section>
+
+  <section class="card">
+    <h2>Upload Splice+ JSON export</h2>
+    <p style="font-size:12px;color:#5b6470;margin:0 0 10px">
+      Export loss records from your Fujikura Splice+ app and upload the JSON file here.
+      The system will automatically match records to the planned splices in this closure.
+    </p>
+    <form id="loss-upload-form">
+      <div class="field-row">
+        <label for="loss-file">Splice+ JSON file (.json)</label>
+        <div class="file-input-wrap">
+          <input type="file" id="loss-file" name="loss_file" accept=".json,application/json" required>
+        </div>
+      </div>
+      <button type="submit" class="submit" id="loss-submit-btn" style="background:#0a4d8c">Upload Splice+ JSON</button>
+      <div id="loss-upload-status"></div>
+    </form>
+  </section>
 </main>
 <footer>Launch Fiber Services · Splice Matrix</footer>
 <script>
@@ -4725,6 +5071,43 @@ function _renderFieldHtml({ token, closure, markups }) {
       status.className = 'err';
       status.textContent = err.message || 'Upload failed';
       btn.disabled = false; btn.textContent = 'Upload photo';
+    }
+  });
+
+  // Splice+ JSON upload
+  var lossForm   = document.getElementById('loss-upload-form');
+  var lossBtn    = document.getElementById('loss-submit-btn');
+  var lossSt     = document.getElementById('loss-upload-status');
+  lossForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    lossSt.className = '';
+    lossSt.textContent = '';
+    var file = document.getElementById('loss-file').files[0];
+    if (!file) { lossSt.className='err'; lossSt.textContent='Pick a JSON file first.'; return; }
+    var text;
+    try { text = await file.text(); } catch(err) { lossSt.className='err'; lossSt.textContent='Could not read file: ' + err.message; return; }
+    var records;
+    try {
+      var parsed = JSON.parse(text);
+      records = Array.isArray(parsed) ? parsed : (parsed.records || null);
+      if (!records) throw new Error('Expected a JSON array or { records: [...] }');
+    } catch(err) { lossSt.className='err'; lossSt.textContent='Invalid JSON: ' + err.message; return; }
+    lossBtn.disabled = true; lossBtn.textContent = 'Uploading…';
+    try {
+      var r = await fetch('/splice/field/${safeToken}/loss-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(records),
+      });
+      var json = await r.json();
+      if (!r.ok) throw new Error(json.error || 'Upload failed');
+      lossSt.className = 'ok';
+      lossSt.textContent = 'Uploaded ' + json.inserted + ' loss record(s). The engineer will see these on the project dashboard.';
+      lossBtn.disabled = false; lossBtn.textContent = 'Upload Splice+ JSON';
+    } catch (err) {
+      lossSt.className = 'err';
+      lossSt.textContent = err.message || 'Upload failed';
+      lossBtn.disabled = false; lossBtn.textContent = 'Upload Splice+ JSON';
     }
   });
 })();

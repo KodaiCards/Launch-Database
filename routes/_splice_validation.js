@@ -494,6 +494,42 @@ function ruleSplitterUnwired(h) {
   return issues;
 }
 
+// ─── Phase 4.7 — fusion-splicer loss threshold rule ──────────────────────
+
+function ruleSpliceLossThreshold(h) {
+  // Warn when a bound loss record exceeds the OSP "investigate" threshold
+  // (0.25 dB) and error when it exceeds the "redo" threshold (0.5 dB).
+  // The hydrate annotates each splice with `loss_db` from its most-recent
+  // bound loss record; we just read that field here.
+  const issues = [];
+  const splices = h.splices || [];
+  for (const s of splices) {
+    if (s.loss_db == null) continue;
+    const db = Number(s.loss_db);
+    if (isNaN(db)) continue;
+    if (db > 0.5) {
+      issues.push({
+        severity: 'error',
+        code: 'splice_loss_above_threshold',
+        message: `Splice has measured loss of ${db.toFixed(3)} dB, which exceeds the 0.50 dB redo threshold. The splice should be redone.`,
+        splice_id: s.id,
+        splice_loss_db: db,
+        threshold: 0.5,
+      });
+    } else if (db > 0.25) {
+      issues.push({
+        severity: 'warning',
+        code: 'splice_loss_above_threshold',
+        message: `Splice has measured loss of ${db.toFixed(3)} dB, which exceeds the 0.25 dB investigate threshold. Verify the splice quality.`,
+        splice_id: s.id,
+        splice_loss_db: db,
+        threshold: 0.25,
+      });
+    }
+  }
+  return issues;
+}
+
 // ─── Runner ──────────────────────────────────────────────────────────────
 
 const RULES = [
@@ -511,6 +547,7 @@ const RULES = [
   ruleSplitterInputConflict,
   ruleSplitterUnwired,
   ruleClosureHasLooseSplices,
+  ruleSpliceLossThreshold,
 ];
 
 function validateProject(hydrate) {

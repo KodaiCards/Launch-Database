@@ -279,6 +279,23 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
       <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
       <div id="proj-imports-body" style="font-size:11px"></div>
     </div>
+    <!-- Phase 4.7 — Loss records panel -->
+    <div class="sidebar-section" id="proj-loss-records" style="display:none">
+      <h3 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleLossRecordsPanel()">
+        Loss records <span id="proj-loss-count" class="small"></span>
+        <i class="fa-solid fa-chevron-down" id="proj-loss-chevron" style="font-size:10px;color:var(--text-muted)"></i>
+      </h3>
+      <div id="proj-loss-body">
+        <div style="margin-bottom:6px;font-size:11px;color:var(--text-secondary)">
+          Fusion-splicer measurements from Fujikura Splice+ or compatible exports.
+        </div>
+        <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:8px" onclick="openLossRecordUpload()">
+          <i class="fa-solid fa-upload"></i> Upload Splice+ JSON
+        </button>
+        <div id="proj-loss-stats" style="font-size:11px;margin-bottom:6px"></div>
+        <div id="proj-loss-unbound-list" style="font-size:11px"></div>
+      </div>
+    </div>
     <div class="sidebar-section" id="proj-summary" style="display:none">
       <h3>Summary</h3>
       <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
@@ -676,6 +693,7 @@ async function selectProject(id) {
   document.getElementById('proj-actions').style.display = 'block';
   document.getElementById('proj-imports').style.display = 'block';
   refreshImportsList();
+  document.getElementById('proj-loss-records').style.display = 'block';
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
@@ -712,6 +730,7 @@ async function hydrateProject() {
     state.data = data;
     document.getElementById('title-name').textContent = data.project.name;
     renderSummary();
+    renderLossRecordsPanel();
     renderInspector();
     renderCanvas();
     renderWarnings();
@@ -753,6 +772,142 @@ function renderSummary() {
     <div><b>${d.splices.length}</b> splice${d.splices.length===1?'':'s'} · <b>${d.ribbon_groups.length}</b> ribbon group${d.ribbon_groups.length===1?'':'s'}</div>
     <div style="margin-top:6px;color:var(--text-muted)">Updated ${new Date(d.project.updated_at).toLocaleString()}</div>
   `;
+}
+
+// Phase 4.7 — Loss records sidebar panel.
+function renderLossRecordsPanel() {
+  const d = state.data;
+  const panelEl = document.getElementById('proj-loss-records');
+  if (!panelEl) return;
+  const records = d?.loss_records || [];
+  panelEl.style.display = records.length || !isReadOnly() ? '' : 'none';
+  if (!d) return;
+
+  const countEl = document.getElementById('proj-loss-count');
+  if (countEl) countEl.textContent = records.length ? `(${records.length})` : '';
+
+  const bound   = records.filter(r => r.bind_method);
+  const unbound = records.filter(r => !r.bind_method);
+  const statsEl = document.getElementById('proj-loss-stats');
+  if (statsEl) {
+    statsEl.innerHTML = records.length
+      ? `<span style="color:var(--success)">${bound.length} bound</span> · <span style="color:var(--danger)">${unbound.length} unbound</span>`
+      : '<span style="color:var(--text-muted)">No records yet.</span>';
+  }
+
+  // Show first 5 unbound records with a "Bind to…" action.
+  const ubEl = document.getElementById('proj-loss-unbound-list');
+  if (!ubEl) return;
+  if (!unbound.length) { ubEl.innerHTML = ''; return; }
+  ubEl.innerHTML = `<div style="font-weight:600;margin-bottom:4px;color:var(--text-muted)">Unbound records</div>` +
+    unbound.slice(0, 5).map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px;background:var(--surface-2);border:1px solid var(--border-weak);border-radius:4px;padding:4px 6px">
+        <div>
+          <div style="font-weight:600">${r.splice_loss_db != null ? Number(r.splice_loss_db).toFixed(3) + ' dB' : '—'}</div>
+          <div style="color:var(--text-muted);font-size:10px">${r.measured_at ? new Date(r.measured_at).toLocaleString() : 'No timestamp'}</div>
+        </div>
+        <button class="btn btn-sm" onclick="openBindLossRecord('${esc(r.id)}')" style="font-size:10px;padding:2px 6px">Bind to…</button>
+      </div>`).join('') +
+    (unbound.length > 5 ? `<div style="color:var(--text-muted)">…and ${unbound.length - 5} more</div>` : '');
+}
+
+let _lossRecordsPanelCollapsed = false;
+function toggleLossRecordsPanel() {
+  _lossRecordsPanelCollapsed = !_lossRecordsPanelCollapsed;
+  const body = document.getElementById('proj-loss-body');
+  const chev = document.getElementById('proj-loss-chevron');
+  if (body) body.style.display = _lossRecordsPanelCollapsed ? 'none' : '';
+  if (chev) chev.style.transform = _lossRecordsPanelCollapsed ? 'rotate(-90deg)' : '';
+}
+
+function openLossRecordUpload() {
+  if (!state.currentId) return;
+  showModal({
+    title: 'Upload Splice+ JSON',
+    submitText: 'Upload',
+    body: `
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px">
+        Export loss records from your Fujikura Splice+ app and upload the JSON file here.
+        Each record is automatically matched to the nearest planned splice by GPS proximity.
+      </p>
+      <label style="display:block;font-size:12px;font-weight:500;margin-bottom:4px">Splice+ JSON file</label>
+      <input type="file" id="loss-upload-file-input" accept=".json,application/json" style="width:100%;margin-bottom:8px">
+      <div id="loss-upload-modal-status"></div>`,
+    onSubmit: async (close) => { await doUploadLossRecords(close); },
+  });
+}
+
+async function doUploadLossRecords(closeModal) {
+  const input = document.getElementById('loss-upload-file-input');
+  const statusEl = document.getElementById('loss-upload-modal-status');
+  if (!input?.files?.length) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Pick a JSON file first.'; }
+    return;
+  }
+  const file = input.files[0];
+  let text;
+  try { text = await file.text(); } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Cannot read file: ' + e.message; }
+    return;
+  }
+  let records;
+  try {
+    const parsed = JSON.parse(text);
+    records = Array.isArray(parsed) ? parsed : (parsed.records || null);
+    if (!Array.isArray(records)) throw new Error('Expected a JSON array or { records: [...] }');
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Invalid JSON: ' + e.message; }
+    return;
+  }
+  try {
+    const res = await api('/api/splice/projects/' + state.currentId + '/loss-records', 'POST', { records });
+    if (closeModal) closeModal();
+    toast(`Uploaded ${res.inserted} record(s). ${res.auto_bound} auto-bound, ${res.unbound} unbound.`, 'ok');
+    await hydrateProject();
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Upload failed: ' + e.message; }
+  }
+}
+
+async function openBindLossRecord(lossRecordId) {
+  if (!state.data) return;
+  const closures = state.data.closures || [];
+  const locations = state.data.locations || [];
+  const locById = new Map(locations.map(l => [l.id, l]));
+  const closureOpts = closures.map(cl =>
+    `<option value="closure:${esc(cl.id)}">${esc(cl.model || 'Closure')} @ ${esc(locById.get(cl.location_id)?.name || '?')}</option>`
+  ).join('');
+  const locOpts = locations.map(l =>
+    `<option value="location:${esc(l.id)}">${esc(l.name)}</option>`
+  ).join('');
+
+  showModal({
+    title: 'Bind loss record',
+    submitText: 'Bind',
+    body: `
+      <label style="display:block;font-size:12px;font-weight:500;margin-bottom:4px">Bind to</label>
+      <select id="bind-loss-target" class="input-sm" style="width:100%;margin-bottom:8px">
+        <option value="">— select —</option>
+        <optgroup label="Closures">${closureOpts}</optgroup>
+        <optgroup label="Locations">${locOpts}</optgroup>
+      </select>
+      <div id="bind-loss-status"></div>`,
+    onSubmit: async (close) => {
+      const sel = document.getElementById('bind-loss-target')?.value || '';
+      const statusEl = document.getElementById('bind-loss-status');
+      if (!sel) { if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Pick a target.'; } return; }
+      const [kind, id] = sel.split(':');
+      const body = kind === 'closure' ? { closure_id: id } : { location_id: id };
+      try {
+        await api('/api/splice/loss-records/' + lossRecordId + '/bind', 'PUT', body);
+        close();
+        toast('Loss record bound.', 'ok');
+        await hydrateProject();
+      } catch(e) {
+        if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Failed: ' + e.message; }
+      }
+    },
+  });
 }
 
 function renderWarnings() {
@@ -957,7 +1112,8 @@ function openSSE(projectId) {
    'project_updated','lock_acquired','lock_released','lock_taken_over',
    'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired',
    'cable_state_updated','cable_state_deleted',
-   'closures_bulk_deleted']
+   'closures_bulk_deleted',
+   'loss_records_added', 'loss_records_removed']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Refresh the imports sidebar when the master designer or another
   // engineer takes action on a pending import.
@@ -2946,6 +3102,30 @@ function renderRibbonGroupRows(groups, splices) {
   }).join('');
 }
 
+// Phase 4.7 — loss badge for a splice row.
+// Returns an HTML string with a coloured badge when loss_db is set,
+// empty string otherwise.
+// Bands: green < 0.10, yellow 0.10–0.25, red > 0.25 dB.
+function _lossBadgeHtml(splice) {
+  if (splice.loss_db == null) return '';
+  const db = Number(splice.loss_db);
+  if (isNaN(db)) return '';
+  let color, label;
+  if (db < 0.10) {
+    color = '#0a7d2a'; label = 'green';
+  } else if (db <= 0.25) {
+    color = '#a06800'; label = 'yellow';
+  } else {
+    color = '#a31616'; label = 'red';
+  }
+  // Find the loss record for the tooltip (latest bound to this splice).
+  const lr = (state.data?.loss_records || []).find(r => r.splice_id === splice.id);
+  const tip = lr
+    ? `${db.toFixed(3)} dB · ${lr.operator_name || 'unknown'} · ${lr.splicer_serial || ''} · ${lr.measured_at ? new Date(lr.measured_at).toLocaleString() : ''}`
+    : `${db.toFixed(3)} dB`;
+  return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:2px;background:${color}18;border:1px solid ${color}55;color:${color};border-radius:4px;padding:0 5px;font-size:10px;font-weight:600;white-space:nowrap">${db < 0.10 ? '&#10003;' : '&#9888;'} ${db.toFixed(3)} dB</span>`;
+}
+
 function renderLooseSpliceRows(splices) {
   const loose = splices.filter(s => !s.ribbon_group_id);
   if (!loose.length) return '<div class="empty-pane">No individual splices yet.</div>';
@@ -2962,6 +3142,7 @@ function renderLooseSpliceRows(splices) {
           <span class="fc fc-${a.color}" title="${a.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.color]||''}</span> ${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
           →
           <span class="fc fc-${b.color}" title="${b.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.color]||''}</span> ${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
+          ${_lossBadgeHtml(s)}
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
@@ -3751,6 +3932,7 @@ async function deleteCurrentProject() {
     document.getElementById('title-name').textContent = '— No project selected —';
     document.getElementById('proj-actions').style.display = 'none';
     document.getElementById('proj-imports').style.display = 'none';
+    document.getElementById('proj-loss-records').style.display = 'none';
     document.getElementById('proj-summary').style.display = 'none';
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('view-tabs').style.display = 'none';
@@ -4745,6 +4927,7 @@ function renderMatrixView() {
     { key: 'location',    label: 'Location',   sortable: true  },
     { key: 'circuit',     label: 'Circuit',    sortable: true  },
     { key: 'customer',    label: 'Customer',   sortable: true  },
+    { key: 'loss',        label: 'Loss',       sortable: false },
     { key: '_action',     label: '',           sortable: false },
   ];
 
@@ -4781,6 +4964,7 @@ function renderMatrixView() {
       <td>${esc(r.location)}</td>
       <td><input type="text" class="input-sm" style="width:110px" value="${esc(r.circuit)}" placeholder="circuit" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','circuit_name',this.value)" ${isReadOnly()?'disabled':''}></td>
       <td><input type="text" class="input-sm" style="width:100px" value="${esc(r.customer)}" placeholder="customer" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','customer',this.value)" ${isReadOnly()?'disabled':''}></td>
+      <td>${(function(){ const sp = (state.data?.splices||[]).find(x=>x.id===r.id); return sp ? _lossBadgeHtml(sp) : ''; })()}</td>
       <td style="white-space:nowrap">
         ${commentBadge}
         <button class="btn btn-sm btn-danger" style="padding:1px 5px" onclick="matrixDeleteSplice('${roId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
