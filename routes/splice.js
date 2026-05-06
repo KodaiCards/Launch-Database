@@ -1336,7 +1336,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         cable_id: req.params.cableId, location_id: req.params.locationId,
         cable_state: rows[0],
       });
-      res.json({ ok: true, cable_state: rows[0] });
+      // Return the row at top level — matches the convention of every
+      // other splice PUT/POST that writes a single row, and what the
+      // smoke tests + UI hydrate flow expect.
+      res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
