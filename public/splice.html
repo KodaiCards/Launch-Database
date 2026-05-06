@@ -3652,10 +3652,12 @@ function loadMapLibre() {
 // Esri World Imagery — free for non-commercial-and-light-commercial use,
 // attributed in tile URL params. The most common OSP-industry basemap.
 const ESRI_SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-// Esri reference overlay — boundaries + place names + major roads, used
-// in hybrid mode on top of the satellite tiles. Same provider, same
-// attribution, transparent PNGs.
-const ESRI_REF_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+// Esri Reference Overlay — road labels, street names, and place annotations
+// rendered as transparent PNGs, designed specifically to sit on top of
+// satellite imagery in hybrid mode. World_Reference_Overlay includes road
+// labels at all zoom levels (unlike World_Boundaries_and_Places which focuses
+// on admin boundaries and misses street-level detail below zoom ~8).
+const ESRI_REF_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}';
 
 // Default starting view when a project has no geographic data yet.
 // Mecca Drive, Macon GA — owner-set 2026-05-06. Once a project gets
@@ -4114,6 +4116,9 @@ async function initMapIfNeeded() {
             tileSize: 256,
             attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
           },
+          // Reference overlay source — added here so it's available immediately,
+          // but the layer is added in map.on('load') ABOVE cables/markers so
+          // street labels render on top of the OSP drawing.
           'esri-ref': {
             type: 'raster',
             tiles: [ESRI_REF_TILES],
@@ -4123,14 +4128,7 @@ async function initMapIfNeeded() {
         },
         layers: [
           { id: 'esri-sat', type: 'raster', source: 'esri-sat' },
-          // The reference overlay starts visible-iff-hybrid; toggle
-          // function flips its layout.visibility.
-          {
-            id: 'esri-ref',
-            type: 'raster',
-            source: 'esri-ref',
-            layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
-          },
+          // esri-ref layer added in map.on('load') so it renders above cables.
         ],
       },
       // Mecca Drive, Macon GA default. mapFitData() flies to a project's
@@ -4304,6 +4302,18 @@ async function initMapIfNeeded() {
       map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
       map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+
+      // Street-labels overlay for hybrid mode. Added here (after cables and
+      // markers) so road labels render on top of the OSP drawing — useful for
+      // correlating fiber runs to named streets. Visibility is toggled by
+      // cycleBasemap(); the source is declared in the initial style.
+      map.addLayer({
+        id: 'esri-ref',
+        type: 'raster',
+        source: 'esri-ref',
+        layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
+        paint: { 'raster-opacity': 0.85 },
+      });
 
       refreshMapLayers();
       mapFitData();
