@@ -2295,19 +2295,34 @@ function openAddCable() {
           <input id="m-cable-name" placeholder="e.g. C1 main" autofocus></div>
         <div class="field"><label>Fiber count</label>
           <select id="m-cable-fc">
-            <option value="12">12</option><option value="24">24</option>
-            <option value="48">48</option><option value="96">96</option>
-            <option value="144">144</option><option value="288">288</option>
-            <option value="432" selected>432</option><option value="864">864</option>
+            <option value="6">6</option><option value="12">12</option>
+            <option value="24">24</option><option value="36">36</option>
+            <option value="48">48</option><option value="72">72</option>
+            <option value="96">96</option><option value="144">144</option>
+            <option value="216">216</option><option value="288">288</option>
+            <option value="432" selected>432</option><option value="576">576</option>
+            <option value="864">864</option><option value="1152">1152</option>
+            <option value="1728">1728</option><option value="3456">3456</option>
           </select></div>
       </div>
       <div class="row">
         <div class="field"><label>Construction</label>
           <select id="m-cable-ct">
-            <option value="ribbon" selected>Ribbon (12 fibers per ribbon)</option>
-            <option value="loose_tube">Loose tube</option>
+            <option value="ribbon" selected>Ribbon (stackable 12-fiber ribbons)</option>
+            <option value="loose_tube">Loose tube (subunit per tube)</option>
+            <option value="central_tube">Central tube (single core tube)</option>
+            <option value="micromodule">Micromodule (small flexible bundles)</option>
+            <option value="rollable_ribbon">Rollable ribbon (intermittently bonded)</option>
           </select></div>
-        <div class="field"><label>Mfr part (optional)</label>
+        <div class="field"><label>Fibers per tube</label>
+          <select id="m-cable-tube-size" title="Number of fibers per buffer tube. 12 is OSP standard; 6 for low-count drops, 24 for high-density loose-tube subunits.">
+            <option value="6">6</option>
+            <option value="12" selected>12</option>
+            <option value="24">24</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:0 0 50%"><label>Mfr part (optional)</label>
           <input id="m-cable-part" placeholder="optional"></div>
       </div>
       <div class="row">
@@ -2325,6 +2340,7 @@ function openAddCable() {
           name: document.getElementById('m-cable-name').value.trim(),
           fiber_count: parseInt(document.getElementById('m-cable-fc').value, 10),
           construction_type: document.getElementById('m-cable-ct').value,
+          tube_size_fibers: parseInt(document.getElementById('m-cable-tube-size').value, 10),
           from_location_id: document.getElementById('m-cable-from').value || null,
           to_location_id: document.getElementById('m-cable-to').value || null,
           manufacturer_part: document.getElementById('m-cable-part').value.trim() || null,
