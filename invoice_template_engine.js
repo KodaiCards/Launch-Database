@@ -18,6 +18,45 @@
 // path) so both can coexist while the owner migrates job-by-job.
 
 const Anthropic = require('@anthropic-ai/sdk');
+const fs = require('fs');
+const path = require('path');
+
+// Path to the Launch Fiber Services logo. Same file invoice_generator.js
+// uses for the legacy pdfkit PSC RUS path — kept in sync so both paths
+// emit the same brand image. Owner-flagged 2026-05-06: AI-generated
+// invoice templates were stripping the logo and replacing it with plain
+// text "Launch Fiber Services". Now the engine exposes a
+// {{{company_logo}}} placeholder that materializes the actual image as
+// an inline base64 data URI at render time, and the system prompt
+// explicitly tells Claude to use it instead of inline text.
+const LOGO_PATH = path.join(__dirname, 'public', 'img', 'Launch Fiber PNG.png');
+
+// Lazy logo loader — first call reads the file once and caches the data
+// URI for the lifetime of the process. Falls back to an empty string if
+// the file is missing so the rest of the pipeline keeps working.
+let _logoDataUri = null;
+function _logoUri() {
+  if (_logoDataUri !== null) return _logoDataUri;
+  try {
+    const buf = fs.readFileSync(LOGO_PATH);
+    _logoDataUri = 'data:image/png;base64,' + buf.toString('base64');
+  } catch (e) {
+    console.warn('[invoice_template_engine] logo missing at', LOGO_PATH, '—', e.message);
+    _logoDataUri = '';
+  }
+  return _logoDataUri;
+}
+
+// Pre-built <img> tag using the logo data URI. Emitted into templates
+// via {{{company_logo}}} (triple-brace = unescaped, so the <img> tag
+// renders as actual HTML rather than text). Style is intentionally
+// minimal — templates can override by setting their own style on a
+// containing element.
+function _logoImgTag() {
+  const uri = _logoUri();
+  if (!uri) return '';
+  return `<img src="${uri}" alt="Launch Fiber Services" style="height:60px;width:auto;display:block">`;
+}
 
 // Single Anthropic client instance. ANTHROPIC_API_KEY is required at
 // boot; if missing, analysis throws a clean error instead of crashing.
@@ -51,6 +90,22 @@ function _puppet() {
 // shape. Keep in sync if that returns more / different fields.
 const DATA_SCHEMA_DOC = `
 Available data fields (mustache-style placeholders):
+
+Brand assets — USE THESE INSTEAD OF TEXT FOR THE LOGO:
+  {{{company_logo}}}               — pre-built <img> tag for the Launch
+                                     Fiber Services logo (TRIPLE braces,
+                                     unescaped — outputs raw HTML so the
+                                     <img> tag renders correctly). Use
+                                     this anywhere the reference PDF
+                                     shows the company logo. DO NOT
+                                     replace the logo with plain text
+                                     like "Launch Fiber Services" —
+                                     emit {{{company_logo}}}.
+  {{company_logo_url}}             — raw data URI for the same logo
+                                     (escaped — use only if you want
+                                     to wrap it in your own <img> with
+                                     custom sizing, e.g.
+                                     <img src="{{company_logo_url}}" style="...">)
 
 Top-level scalars:
   {{client.name}}                  — billing client (e.g. "PSC")
@@ -121,6 +176,20 @@ Use inline CSS only (no external stylesheets, no <link>, no <style> blocks
 in the head — they're harder to edit later). Keep the HTML semantic
 (<table>, <thead>, <tbody>, <tfoot>, <h1>, <p>, <strong>, <span>) so the
 operator can hand-edit it readably.
+
+LOGO HANDLING — CRITICAL:
+The reference PDF will likely show the Launch Fiber Services logo at
+the top (or in a header/footer). DO NOT replace the logo with plain
+text. The system has a real logo asset that gets injected at render
+time. Wherever the PDF shows the logo, output exactly:
+
+    {{{company_logo}}}
+
+(triple curly braces — unescaped — yields a complete <img> tag).
+If you want to wrap the logo in a sized container, use
+<img src="{{company_logo_url}}" style="height:50px"> with double braces
+and your own style. Substituting "Launch Fiber Services" or any other
+text for the logo is a regression — emit the placeholder.
 
 Where the PDF has variable / data-driven content, use mustache-style
 placeholders. The available data fields are documented below — use ONLY these
@@ -425,7 +494,16 @@ function _fmtFootage(ft) {
 function adaptInvoiceDataForTemplate(data) {
   const m = data.meta || {};
   const isFootage = (m.job_billing_type === 'footage') || !!m.is_permitting;
+  const logoUri = _logoUri();
   const out = {
+    // Brand image. {{{company_logo}}} (triple-brace, unescaped) emits a
+    // ready-made <img> tag with the inline base64 logo. Templates that
+    // want to compose their own <img> can use {{company_logo_url}}
+    // (escaped — it's just a data URI string). If the logo file is
+    // missing on disk, both fields are empty and templates degrade
+    // gracefully rather than emitting a broken <img>.
+    company_logo: logoUri ? _logoImgTag() : '',
+    company_logo_url: logoUri,
     client: { name: m.client_name || '' },
     job: {
       name: m.job_name || '',
