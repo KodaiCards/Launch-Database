@@ -7,6 +7,53 @@
 
 ---
 
+## ▶ RESUME HERE — current position
+
+**Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
+**Last commit on the splice work:** `70b40c6` — Phase 2A #4 strand
+circuit naming.
+**Status:** Phase 2A complete. Phase 2B is the next chunk to start.
+
+**To pick this back up in a fresh session:**
+
+1. Read this file top-to-bottom (it's the source of truth — the prior
+   build session committed everything to git).
+2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
+   `public/splice.html`, `tests/splice*.test.js` to remember the
+   shape of what's already built.
+3. The planned next item is **Phase 2B #5 — Templates + project
+   copy-paste.** Migration slot allocated: `0010_splice_templates.sql`.
+   Slots 0007 (strand_state, shipped) and 0008 (strand_metadata,
+   shipped) are already used; 0009 is reserved for `splice_pdf_templates`
+   if multi-template PDF support eventually lands as a table (it's
+   currently inline-coded). Pick 0010 for templates work.
+4. Phase 2B order if proceeding straight through: #5 templates → #6
+   versioning + diff PDF → #7 no-login QR markup. Each is its own
+   commit + push.
+5. CI was last green at `598dbba`; the 70b40c6 commit added the
+   strand-metadata migration and bulk endpoints — verify CI on the
+   most recent push before starting #5 in case anything regressed
+   in the bulk fiber-metadata path.
+
+**Things NOT to lose track of:**
+
+- The end goal is a premium splicer deliverable + faster engineer
+  workflow. Anything that doesn't move one of those two is noise.
+- The PDF is the product. The canvas is the editor for the artifact.
+- No-login splicer feedback loop is a real differentiator — Phase 2B
+  #7 is what makes the QR codes already in the PDF actually
+  meaningful.
+- File-lock + SSE is good enough for now; don't burn budget on
+  Figma-style multi-cursor (CRDT).
+- Splice service has no Railway volume; #7 needs to either route
+  uploads through admin's volume OR store small images as BYTEA in
+  Postgres. Default to BYTEA for v2.
+- `SPLICE_PUBLIC_URL` env var should be set on the splice Railway
+  service to `https://launchfiber-splicematrix.xyz` so QR codes
+  encode the right absolute URL.
+
+---
+
 ## North star
 
 The splice matrix is **the engineering firm's deliverable tool**, not a
