@@ -380,11 +380,24 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         LEFT JOIN projects pp ON pp.id = p.parent_id
         LEFT JOIN projects gp ON gp.id = pp.parent_id
         WHERE NOT EXISTS (
+          -- Match by billing_period_start when set (the period the
+          -- invoice COVERS), otherwise fall back to invoice_date (the
+          -- period the invoice was issued IN). The bill-multiple path
+          -- always writes billing_period_start when items share a
+          -- single month; legacy invoices that pre-date that change
+          -- still match via invoice_date. Owner-flagged 2026-05-06.
           SELECT 1 FROM invoice_items ii
           JOIN invoices inv ON inv.id = ii.invoice_id
           WHERE ii.project_id = pm.project_id
-            AND EXTRACT(YEAR FROM inv.invoice_date)::int = pm.y
-            AND EXTRACT(MONTH FROM inv.invoice_date)::int = pm.mo
+            AND (
+              (inv.billing_period_start IS NOT NULL
+                AND EXTRACT(YEAR FROM inv.billing_period_start)::int = pm.y
+                AND EXTRACT(MONTH FROM inv.billing_period_start)::int = pm.mo)
+              OR
+              (inv.billing_period_start IS NULL
+                AND EXTRACT(YEAR FROM inv.invoice_date)::int = pm.y
+                AND EXTRACT(MONTH FROM inv.invoice_date)::int = pm.mo)
+            )
         )
       `);
 

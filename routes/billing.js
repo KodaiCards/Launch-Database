@@ -113,10 +113,18 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         total += amount;
       }
 
-      // Determine invoice_date. If all monthly line items share a single (year,
-      // month), the invoice_date goes in that month so the "already billed" check
-      // on the queue endpoint matches correctly. Mixed periods aren't supported
-      // — the user should bill them as separate invoices.
+      // Determine invoice_date AND billing_period bounds.
+      //
+      // Owner-flagged 2026-05-06: previously `invoice_date` doubled as
+      // both "issued on" AND "covers this period," and the queue's
+      // already-billed-for-this-month check used invoice_date. The
+      // frontend always sets invoice_date to TODAY, so an invoice
+      // covering March hours stamped as May 6th never matched the
+      // March project_months row in the queue → items stayed unbilled.
+      //
+      // Fix: write `billing_period_start/end` whenever items share a
+      // single (year, month). The queue check below now prefers those
+      // columns over invoice_date for the period match.
       const monthlyPeriods = lineItems
         .filter(li => li.period_year && li.period_month)
         .map(li => `${li.period_year}-${li.period_month}`);
@@ -127,17 +135,23 @@ module.exports = function installBillingRoutes(app, pool, mw) {
           error: 'Selected items span multiple months — bill each month as a separate invoice.'
         });
       }
-      let billDate = invoice_date || new Date().toISOString().split('T')[0];
-      if (!invoice_date && uniquePeriods.length === 1) {
-        // Stamp the invoice on the 1st of the period so the
-        // "already-billed-for-this-month" detection on the queue is accurate.
+      const billDate = invoice_date || new Date().toISOString().split('T')[0];
+      let billingPeriodStart = null;
+      let billingPeriodEnd = null;
+      if (uniquePeriods.length === 1) {
         const [py, pm] = uniquePeriods[0].split('-').map(Number);
-        billDate = `${py}-${String(pm).padStart(2, '0')}-01`;
+        billingPeriodStart = `${py}-${String(pm).padStart(2, '0')}-01`;
+        const lastDay = new Date(py, pm, 0).getDate();
+        billingPeriodEnd = `${py}-${String(pm).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       }
       const invR = await client.query(
-        `INSERT INTO invoices (client_id, invoice_number, invoice_date, total_amount, status, notes)
-         VALUES ($1, $2, $3, $4, 'sent', $5) RETURNING id`,
-        [billClientId, invoice_number || null, billDate, total, invoice_name || null]
+        `INSERT INTO invoices (client_id, invoice_number, invoice_date,
+                               billing_period_start, billing_period_end,
+                               total_amount, status, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, 'sent', $7) RETURNING id`,
+        [billClientId, invoice_number || null, billDate,
+         billingPeriodStart, billingPeriodEnd,
+         total, invoice_name || null]
       );
       const invoiceId = invR.rows[0].id;
 
@@ -350,21 +364,32 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         [bRows[0].client_id, String(invoice_number).trim(), invDate, periodStart, periodEnd, bRows[0].total_amount, invoice_name || null]
       );
       const inv = invRows[0];
-      // One line item per batch row
+      // One line item per batch row.
+      // Owner-flagged 2026-05-06: do NOT mark monthly-cadence projects
+      // as status='billed' / billed_date. Monthly projects roll over
+      // and bill again next month — closing them ends future billing
+      // until admin manually re-opens. The invoice_items row plus
+      // invoices.billing_period_start (or invoice_date) is the source
+      // of truth for "this month was billed" via the queue's check.
       let lineCount = 0;
       for (const it of itemRows) {
-        const { rows: pr } = await client.query(`SELECT name FROM projects WHERE id = $1`, [it.project_id]);
-        const desc = pr[0] ? pr[0].name : 'Project';
+        const { rows: pr } = await client.query(
+          `SELECT name, billing_cadence FROM projects WHERE id = $1`, [it.project_id]
+        );
+        const proj = pr[0];
+        const desc = proj ? proj.name : 'Project';
+        const cadence = proj?.billing_cadence || 'one_time';
         await client.query(
           `INSERT INTO invoice_items (invoice_id, project_id, description, amount)
              VALUES ($1, $2, $3, $4)`,
           [inv.id, it.project_id, desc, it.snapshot_amount || 0]
         );
-        // Mark project as billed
-        await client.query(
-          `UPDATE projects SET status = 'billed', billed_date = $1 WHERE id = $2`,
-          [invDate, it.project_id]
-        );
+        if (cadence !== 'monthly') {
+          await client.query(
+            `UPDATE projects SET status = 'billed', billed_date = $1 WHERE id = $2`,
+            [invDate, it.project_id]
+          );
+        }
         lineCount++;
       }
       // Delete the batch (cascades items)
