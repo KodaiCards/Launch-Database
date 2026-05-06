@@ -209,6 +209,10 @@ function pageRequiresAuth(reqPath) {
   // splicer scans a QR code from a printed field document and lands
   // here without an account. The token in the path is the auth.
   if (reqPath.startsWith('/splice/field/')) return false;
+  // Splice Matrix Phase 4.1 — no-login read-only project viewer.
+  // Stakeholders click a share link; the token in the path is the auth.
+  if (reqPath.startsWith('/splice/view/')) return false;
+  if (reqPath.startsWith('/api/splice/view/')) return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }

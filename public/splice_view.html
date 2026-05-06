@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="splice-token" content="__SPLICE_TOKEN__">
+<title>Splice Matrix — Read-only view</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/konva@9.3.16/konva.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;--primary-text:#FFFFFF;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
+  --text:#222222;--text-secondary:#555555;--text-muted:#6C757D;
+  --border-strong:#CED4DA;--border-weak:#DEE2E6;
+  --success:#28A745;--danger:#DC3545;--warning:#FFC107;
+  --white:#FFFFFF;
+  --fc-blue:#1660C9;--fc-orange:#E67E22;--fc-green:#27AE60;--fc-brown:#8B5A2B;
+  --fc-slate:#7F8C8D;--fc-white:#F5F5F5;--fc-red:#C0392B;--fc-black:#000;
+  --fc-yellow:#F1C40F;--fc-violet:#8E44AD;--fc-rose:#E91E63;--fc-aqua:#1ABC9C;
+}
+html,body{height:100%;background:var(--surface-1);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px}
+a{color:var(--primary);text-decoration:none}
+.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:0 16px;height:48px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.header .logo{font-weight:700;font-size:14px;letter-spacing:0.3px;display:flex;align-items:center;gap:8px}
+.header .divider{width:1px;height:22px;background:rgba(255,255,255,.25)}
+.header .title{font-size:13px;font-weight:500;flex:1;display:flex;align-items:center;gap:8px}
+.header .badge{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);white-space:nowrap}
+.app{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 48px)}
+.sidebar{background:var(--surface-2);border-right:1px solid var(--border-weak);overflow:auto;padding:10px}
+.canvas-pane{background:var(--surface-3);position:relative;overflow:hidden}
+.inspector{background:var(--surface-2);border-left:1px solid var(--border-weak);overflow:auto;padding:10px}
+.sidebar-section{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-weak)}
+.sidebar-section:last-child{border-bottom:none}
+.sidebar-section h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:8px}
+.proj-meta-table{width:100%;font-size:12px;border-collapse:collapse}
+.proj-meta-table th{text-align:left;color:var(--text-muted);font-weight:500;padding:3px 8px 3px 0;vertical-align:top;width:40%}
+.proj-meta-table td{padding:3px 0;vertical-align:top}
+.loc-list{list-style:none;padding:0;margin:0}
+.loc-item{padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;margin-bottom:1px}
+.loc-item:hover{background:var(--primary-light)}
+.loc-item.active{background:var(--primary);color:#fff}
+.loc-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:0;background:var(--surface-2);border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:6;overflow:hidden}
+.view-tab{padding:6px 14px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:500;border-right:1px solid var(--border-weak)}
+.view-tab:last-child{border-right:none}
+.view-tab.active{background:var(--primary);color:var(--primary-text)}
+.view-tab:hover:not(.active){background:var(--surface-3)}
+.toolbar{position:absolute;top:10px;left:10px;display:flex;gap:4px;z-index:5}
+.map-toolbar{position:absolute;top:10px;left:10px;display:flex;gap:4px;z-index:5}
+#stage{width:100%;height:100%}
+#map-stage{display:none;width:100%;height:100%}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface-2);color:var(--text);cursor:pointer;font-size:12px;font-weight:500;line-height:1;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--surface-3)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--primary);border-color:var(--primary-dark);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+.btn-sm{padding:4px 8px;font-size:11px}
+.empty-pane{color:var(--text-muted);font-size:12px;text-align:center;padding:24px 12px;line-height:1.6}
+.inspector-section{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border-weak)}
+.inspector-section:last-child{border-bottom:none}
+.inspector-section h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:8px}
+.tray-card{border:1px solid var(--border-weak);border-radius:6px;margin-bottom:8px;overflow:hidden}
+.tray-card-header{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface-1);cursor:pointer;user-select:none;font-size:12px;font-weight:600}
+.tray-card-header:hover{background:var(--surface-3)}
+.tray-card-body{padding:8px 10px;font-size:11px}
+.splice-row{display:flex;justify-content:space-between;align-items:center;padding:3px 6px;border-bottom:1px solid var(--border-weak);font-size:11px}
+.splice-row:last-child{border-bottom:none}
+.splice-row .desc{flex:1;display:flex;gap:5px;align-items:center}
+.fc{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid var(--border-strong);margin-right:3px;vertical-align:-1px}
+.fc-blue{background:var(--fc-blue)}.fc-orange{background:var(--fc-orange)}
+.fc-green{background:var(--fc-green)}.fc-brown{background:var(--fc-brown)}
+.fc-slate{background:var(--fc-slate)}.fc-white{background:var(--fc-white)}
+.fc-red{background:var(--fc-red)}.fc-black{background:var(--fc-black)}
+.fc-yellow{background:var(--fc-yellow)}.fc-violet{background:var(--fc-violet)}
+.fc-rose{background:var(--fc-rose)}.fc-aqua{background:var(--fc-aqua)}
+.ribbon-tag{display:inline-block;padding:1px 5px;background:var(--primary-light);color:var(--primary-dark);border-radius:3px;font-size:9px;font-weight:600;margin-left:4px;text-transform:uppercase;letter-spacing:0.4px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--white);padding:10px 14px;border-radius:6px;font-size:12px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:320px;display:none}
+.toast.error{background:var(--danger);color:#fff}
+.error-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--surface-1)}
+.error-card{background:#fff;border:1px solid var(--border-weak);border-radius:10px;padding:32px 40px;max-width:440px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.error-card h1{font-size:20px;font-weight:700;color:#003366;margin:0 0 12px}
+.error-card p{color:var(--text-muted);font-size:14px;margin:0}
+#map-stage .maplibregl-canvas-container{outline:none}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar,.inspector{display:none}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo"><i class="fa-solid fa-network-wired"></i> Splice Matrix</div>
+  <div class="divider"></div>
+  <div class="title" id="title-name">Loading…</div>
+  <span class="badge" id="ro-badge"><i class="fa-solid fa-eye"></i> Read-only view</span>
+</header>
+
+<div class="app" id="app">
+
+  <!-- Left sidebar: project info + location list -->
+  <aside class="sidebar">
+    <div class="sidebar-section" id="proj-meta-section" style="display:none">
+      <h3>Project</h3>
+      <table class="proj-meta-table" id="proj-meta"></table>
+    </div>
+    <div class="sidebar-section" id="loc-section" style="display:none">
+      <h3>Locations</h3>
+      <ul class="loc-list" id="loc-list"></ul>
+    </div>
+    <div class="sidebar-section" id="cable-section" style="display:none">
+      <h3>Cables</h3>
+      <div id="cable-list" style="font-size:12px"></div>
+    </div>
+  </aside>
+
+  <!-- Center: diagram + map -->
+  <div class="canvas-pane">
+    <div class="view-tabs" id="view-tabs">
+      <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
+      <button class="view-tab" data-view="map" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Map</button>
+    </div>
+    <div class="toolbar" id="toolbar">
+      <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
+      <button class="btn btn-sm" onclick="zoom(1.2)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      <button class="btn btn-sm" onclick="zoom(0.83)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+    </div>
+    <div class="map-toolbar" id="map-toolbar" style="display:none">
+      <button class="btn btn-sm" onclick="mapFitData()"><i class="fa-solid fa-expand"></i> Fit</button>
+    </div>
+    <div id="stage"></div>
+    <div id="map-stage"></div>
+  </div>
+
+  <!-- Right sidebar: inspector -->
+  <aside class="inspector" id="inspector">
+    <div id="inspector-empty" class="empty-pane">Click a closure to inspect its trays and splices.</div>
+    <div id="inspector-body" style="display:none"></div>
+  </aside>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ─── Token resolution ───────────────────────────────────────────────────────
+const SPLICE_TOKEN = (function() {
+  const meta = document.querySelector('meta[name="splice-token"]');
+  if (meta && meta.content && meta.content !== '__SPLICE_TOKEN__') return meta.content;
+  // Fallback: extract from URL path /splice/view/<token>
+  const m = location.pathname.match(/\/splice\/view\/([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+})();
+
+// ─── State ──────────────────────────────────────────────────────────────────
+const state = {
+  data: null,
+  selection: null,  // { type: 'closure'|'location', id }
+  activeView: 'diagram',
+  konva: null,
+  map: null,
+  maplibregl: null,
+  _mapMarkers: [],
+};
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.style.display = 'block';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+// ─── TIA-598 abbreviation map (same as editor) ───────────────────────────────
+const TIA_598 = ['blue','orange','green','brown','slate','white','red','black','yellow','violet','rose','aqua'];
+const TIA_598_ABBREV = {
+  blue:'BL', orange:'OR', green:'GR', brown:'BR', slate:'SL', white:'WH',
+  red:'RD', black:'BK', yellow:'YL', violet:'VL', rose:'RS', aqua:'AQ',
+};
+const COLORS = {
+  blue:'#1660C9', orange:'#E67E22', green:'#27AE60', brown:'#8B5A2B',
+  slate:'#7F8C8D', white:'#F5F5F5', red:'#C0392B', black:'#000',
+  yellow:'#F1C40F', violet:'#8E44AD', rose:'#E91E63', aqua:'#1ABC9C',
+};
+const LOC_TYPE_COLORS = {
+  handhole:'#3B82F6', manhole:'#7C3AED', pole:'#78716C', pedestal:'#16A34A',
+  vault:'#B45309', fdh:'#DC2626', co:'#0F172A', splice_point:'#1B5FA0',
+  terminal:'#0D9488', ring_cut:'#EA580C',
+};
+function _locColor(loc) { return LOC_TYPE_COLORS[loc.type] || '#888'; }
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+(async function init() {
+  if (!SPLICE_TOKEN) {
+    showError('No share token found in this URL.');
+    return;
+  }
+  try {
+    const data = await viewFetch('/api/splice/view/' + SPLICE_TOKEN + '/hydrate');
+    state.data = data;
+    renderAll(data);
+  } catch (e) {
+    showError(e.message || 'Could not load project.');
+  }
+})();
+
+async function viewFetch(path) {
+  const r = await fetch(path);
+  if (r.status === 401 || r.status === 404) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(j.error || 'This share link is no longer valid.');
+  }
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(j.error || 'Server error');
+  }
+  return r.json();
+}
+
+function showError(msg) {
+  document.body.innerHTML = `<div class="error-screen"><div class="error-card"><h1>Link error</h1><p>${esc(msg)}</p></div></div>`;
+}
+
+// ─── Render all ──────────────────────────────────────────────────────────────
+function renderAll(data) {
+  const proj = data.project;
+  document.title = esc(proj.name) + ' — Splice Matrix (read-only)';
+  document.getElementById('title-name').textContent = proj.name;
+
+  // Project meta
+  document.getElementById('proj-meta-section').style.display = 'block';
+  document.getElementById('proj-meta').innerHTML = `
+    <tr><th>Designer</th><td>${esc(proj.designer_name || '—')}</td></tr>
+    <tr><th>Cables</th><td>${data.cables.length}</td></tr>
+    <tr><th>Closures</th><td>${data.closures.length}</td></tr>
+    <tr><th>Splices</th><td>${data.splices.length}</td></tr>
+  `;
+
+  // Locations list
+  const locs = [...data.locations].sort((a,b)=>(a.sequence_index||0)-(b.sequence_index||0)||a.name.localeCompare(b.name));
+  document.getElementById('loc-section').style.display = 'block';
+  document.getElementById('loc-list').innerHTML = locs.map(l => `
+    <li class="loc-item" data-id="${esc(l.id)}" onclick="selectLocation('${esc(l.id)}')">
+      <span class="loc-dot" style="background:${_locColor(l)}"></span>
+      ${esc(l.name)}
+    </li>`).join('');
+
+  // Cables list
+  document.getElementById('cable-section').style.display = 'block';
+  document.getElementById('cable-list').innerHTML = data.cables.map(c =>
+    `<div style="padding:3px 0;border-bottom:1px solid var(--border-weak)">${esc(c.name)} — ${c.fiber_count}f ${esc(c.construction_type||'')}</div>`
+  ).join('') || '<div style="color:var(--text-muted)">No cables</div>';
+
+  renderCanvas();
+}
+
+// ─── Selection ────────────────────────────────────────────────────────────────
+function selectThing(type, id) {
+  state.selection = { type, id };
+  if (type === 'closure') renderClosureInspector(id);
+  if (type === 'location') renderLocationInspector(id);
+  // Sync to map if map is active
+  if (state.map && type === 'closure') {
+    const cl = state.data.closures.find(c => c.id === id);
+    const loc = cl && state.data.locations.find(l => l.id === cl.location_id);
+    if (loc && loc.latitude != null && loc.longitude != null) {
+      state.map.easeTo({ center: [loc.longitude, loc.latitude], duration: 400 });
+    }
+  }
+  // Highlight location in sidebar
+  document.querySelectorAll('.loc-item').forEach(el => {
+    if (type === 'location') el.classList.toggle('active', el.dataset.id === id);
+    else el.classList.remove('active');
+  });
+  // Re-draw canvas to show selection highlight
+  if (state.konva) drawCanvasContents();
+}
+
+function selectLocation(id) { selectThing('location', id); }
+
+function renderLocationInspector(id) {
+  const loc = state.data.locations.find(l => l.id === id);
+  if (!loc) return;
+  const closuresHere = state.data.closures.filter(c => c.location_id === id);
+  const body = document.getElementById('inspector-body');
+  body.style.display = 'block';
+  document.getElementById('inspector-empty').style.display = 'none';
+  body.innerHTML = `
+    <div class="inspector-section">
+      <h3>${esc(loc.name)}</h3>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <tr><th style="text-align:left;color:var(--text-muted);width:40%;padding:2px 6px 2px 0">Type</th><td>${esc(loc.type)}</td></tr>
+        ${loc.latitude != null ? `<tr><th style="text-align:left;color:var(--text-muted);padding:2px 6px 2px 0">Coords</th><td style="font-size:11px">${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}</td></tr>` : ''}
+      </table>
+    </div>
+    <div class="inspector-section">
+      <h3>Closures (${closuresHere.length})</h3>
+      ${closuresHere.map(cl => `
+        <div style="padding:5px;border:1px solid var(--border-weak);border-radius:4px;margin-bottom:6px;cursor:pointer;font-size:12px"
+             onclick="selectThing('closure','${esc(cl.id)}')">
+          <b>${esc(cl.model||'Closure')}</b>
+          <span style="color:var(--text-muted);font-size:11px"> · ${cl.tray_count} trays</span>
+        </div>`).join('') || '<div style="color:var(--text-muted);font-size:11px">No closures at this location.</div>'}
+    </div>`;
+}
+
+function renderClosureInspector(closureId) {
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) return;
+  const loc = state.data.locations.find(l => l.id === cl.location_id);
+  const trays = state.data.trays.filter(t => t.closure_id === closureId).sort((a,b)=>a.position-b.position);
+  const ribbonGroupById = new Map((state.data.ribbon_groups||[]).map(g=>[g.id,g]));
+
+  function fiberDesc(fiberId) {
+    const f = state.data.fibers.find(x => x.id === fiberId);
+    if (!f) return { cable:'?', tube_color:'?', tube_position:'?', color:'?', position:'?', circuit_name:'' };
+    const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+    const cable = tube && state.data.cables.find(c => c.id === tube.cable_id);
+    return {
+      cable: cable?.name || '?',
+      tube_color: tube?.color || '?',
+      tube_position: tube?.position ?? '?',
+      color: f.color,
+      position: f.position,
+      circuit_name: f.circuit_name || '',
+    };
+  }
+
+  const trayHtml = trays.map(tray => {
+    const splicesHere = state.data.splices.filter(s => s.tray_id === tray.id);
+    const usedRibbons = new Set();
+    const rows = splicesHere.map(s => {
+      if (s.ribbon_group_id) {
+        if (usedRibbons.has(s.ribbon_group_id)) return '';
+        usedRibbons.add(s.ribbon_group_id);
+        const rg = ribbonGroupById.get(s.ribbon_group_id);
+        const a = fiberDesc(s.fiber_a_id);
+        const b = fiberDesc(s.fiber_b_id);
+        return `<div class="splice-row">
+          <div class="desc">
+            <span class="fc fc-${esc(a.tube_color)}"></span>${esc(a.cable)}
+            <span class="ribbon-tag">ribbon ×12</span>
+          </div>
+          <span style="color:var(--text-muted)">→</span>
+          <div class="desc" style="justify-content:flex-end">
+            <span class="fc fc-${esc(b.tube_color)}"></span>${esc(b.cable)}
+          </div>
+        </div>`;
+      }
+      const a = fiberDesc(s.fiber_a_id);
+      const b = fiberDesc(s.fiber_b_id);
+      return `<div class="splice-row">
+        <div class="desc">
+          <span class="fc fc-${esc(a.tube_color)}"></span>
+          <span class="fc fc-${esc(a.color)}" title="${esc(a.color)}"></span>
+          ${esc(a.cable)} ${a.tube_position}/${a.position}${a.circuit_name ? ` <span style="color:var(--text-muted)">${esc(a.circuit_name)}</span>` : ''}
+        </div>
+        <span style="color:var(--text-muted);padding:0 4px">→</span>
+        <div class="desc" style="justify-content:flex-end;text-align:right">
+          ${esc(b.cable)} ${b.tube_position}/${b.position}
+          <span class="fc fc-${esc(b.color)}" title="${esc(b.color)}"></span>
+          <span class="fc fc-${esc(b.tube_color)}"></span>
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+
+    const fill = splicesHere.length / Math.max(cl.tray_capacity, 1);
+    const fillColor = fill > 1 ? '#DC3545' : (fill > 0.85 ? '#FFC107' : '#28A745');
+    return `<div class="tray-card">
+      <div class="tray-card-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span>Tray ${tray.position}</span>
+        <span style="color:${fillColor};font-size:10px">${splicesHere.length}/${cl.tray_capacity} splices</span>
+      </div>
+      <div class="tray-card-body">
+        ${rows || '<div style="color:var(--text-muted)">No splices in this tray.</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('inspector-body').style.display = 'block';
+  document.getElementById('inspector-empty').style.display = 'none';
+  document.getElementById('inspector-body').innerHTML = `
+    <div class="inspector-section">
+      <h3>${esc(cl.model||'Closure')} <span style="color:var(--text-muted);font-weight:400;font-size:10px">@ ${esc(loc?.name||'?')}</span></h3>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <tr><th style="text-align:left;color:var(--text-muted);width:40%;padding:2px 6px 2px 0">Trays</th><td>${cl.tray_count} × ${cl.tray_capacity}-fiber</td></tr>
+        ${cl.notes ? `<tr><th style="text-align:left;color:var(--text-muted);padding:2px 6px 2px 0">Notes</th><td>${esc(cl.notes)}</td></tr>` : ''}
+      </table>
+    </div>
+    <div class="inspector-section">
+      <h3>Trays &amp; splices</h3>
+      ${trayHtml || '<div class="empty-pane">No trays.</div>'}
+    </div>`;
+}
+
+// ─── Konva canvas ─────────────────────────────────────────────────────────────
+const COLORS_VIEW = COLORS;
+
+function renderCanvas() {
+  const container = document.getElementById('stage');
+  container.innerHTML = '';
+  const stage = new Konva.Stage({
+    container: 'stage',
+    width: container.clientWidth || 800,
+    height: container.clientHeight || 600,
+    draggable: true,
+  });
+  const bgLayer = new Konva.Layer({ listening: false });
+  const cableLayer = new Konva.Layer();
+  const closureLayer = new Konva.Layer();
+  stage.add(bgLayer); stage.add(cableLayer); stage.add(closureLayer);
+  state.konva = { stage, bgLayer, cableLayer, closureLayer };
+
+  stage.on('wheel', (e) => {
+    e.evt.preventDefault();
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const mousePointTo = { x: (pointer.x - stage.x()) / oldScale, y: (pointer.y - stage.y()) / oldScale };
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = direction > 0 ? oldScale * 1.1 : oldScale / 1.1;
+    stage.scale({ x: newScale, y: newScale });
+    stage.position({ x: pointer.x - mousePointTo.x * newScale, y: pointer.y - mousePointTo.y * newScale });
+  });
+
+  drawCanvasContents();
+
+  if (!renderCanvas._listenerInstalled) {
+    window.addEventListener('resize', () => {
+      if (!state.konva) return;
+      state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+      state.konva.stage.batchDraw();
+    });
+    renderCanvas._listenerInstalled = true;
+  }
+}
+
+function drawCanvasContents() {
+  if (!state.konva || !state.data) return;
+  const { cableLayer, closureLayer } = state.konva;
+  cableLayer.destroyChildren();
+  closureLayer.destroyChildren();
+
+  const d = state.data;
+  const orderedLocations = [...d.locations].sort((a,b)=>(a.sequence_index||0)-(b.sequence_index||0)||a.name.localeCompare(b.name));
+  const colX = new Map();
+  const COL_GAP = 280, X_START = 60;
+  orderedLocations.forEach((loc, i) => colX.set(loc.id, X_START + i * COL_GAP));
+
+  // Location guidelines
+  orderedLocations.forEach(loc => {
+    const x = colX.get(loc.id);
+    closureLayer.add(new Konva.Line({ points:[x,40,x,600], stroke:'#9AA5B5', dash:[4,4], strokeWidth:1, listening:false }));
+    const grp = new Konva.Group({ x: x-60, y:6 });
+    grp.add(new Konva.Rect({ x:0,y:0,width:120,height:28,fill:'transparent' }));
+    grp.add(new Konva.Text({ x:0,y:8,width:120,align:'center',text:loc.name,fontSize:13,fontStyle:'bold',fill:'#1B5FA0' }));
+    grp.on('click tap', () => selectThing('location', loc.id));
+    grp.on('mouseenter', () => { document.body.style.cursor='pointer'; });
+    grp.on('mouseleave', () => { document.body.style.cursor='default'; });
+    closureLayer.add(grp);
+  });
+
+  // Cable lines
+  d.cables.forEach(cable => {
+    if (!cable.from_location_id || !cable.to_location_id) return;
+    const x1 = colX.get(cable.from_location_id);
+    const x2 = colX.get(cable.to_location_id);
+    if (x1 == null || x2 == null) return;
+    const cableYById = new Map();
+    let cIdx = 0;
+    d.cables.forEach(c => { cableYById.set(c.id, 120 + cIdx * 22); cIdx++; });
+    const y = cableYById.get(cable.id) || 200;
+    cableLayer.add(new Konva.Line({ points:[x1,y,x2,y], stroke:'#6B8EC2', strokeWidth:6, listening:false }));
+    cableLayer.add(new Konva.Text({ x:(x1+x2)/2-40,y:y+3,width:80,align:'center',text:cable.name,fontSize:8,fill:'#fff',listening:false }));
+  });
+
+  // Closures
+  const closuresByLoc = new Map();
+  d.closures.forEach(cl => {
+    if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
+    closuresByLoc.get(cl.location_id).push(cl);
+  });
+
+  for (const loc of orderedLocations) {
+    const list = closuresByLoc.get(loc.id) || [];
+    const x = colX.get(loc.id);
+    list.forEach((cl, idx) => {
+      const baseY = 160 + idx * 100;
+      const trayList = d.trays.filter(t => t.closure_id === cl.id);
+      const totalSpliceCount = trayList.reduce((sum,t) => sum + d.splices.filter(s=>s.tray_id===t.id).length, 0);
+      const overCap = trayList.some(t => d.splices.filter(s=>s.tray_id===t.id).length > cl.tray_capacity);
+      const isSelected = state.selection?.type === 'closure' && state.selection?.id === cl.id;
+
+      const grp = new Konva.Group({ x: x-60, y: baseY });
+      grp.add(new Konva.Rect({
+        width:120, height:80,
+        fill: overCap ? '#FFF3CD' : '#FFFFFF',
+        stroke: isSelected ? '#F59E0B' : (overCap ? '#DC3545' : '#1B5FA0'),
+        strokeWidth: isSelected ? 3 : 2,
+        cornerRadius:4,
+      }));
+      grp.add(new Konva.Text({ x:4,y:4,width:112,text:cl.model||'Closure',fontSize:11,fontStyle:'bold',fill:'#1B5FA0' }));
+      grp.add(new Konva.Text({ x:4,y:18,width:112,align:'center',text:trayList.length+' trays · '+totalSpliceCount+' splices',fontSize:10,fill:'#6C757D' }));
+
+      // Sparkline
+      trayList.forEach((tray,ti) => {
+        const fill = d.splices.filter(s=>s.tray_id===tray.id).length / Math.max(cl.tray_capacity,1);
+        const tw = 108 / Math.max(trayList.length,1);
+        grp.add(new Konva.Rect({ x:4+ti*tw,y:34,width:tw-1,height:8,fill:'#F0F0F0',stroke:'#DEE2E6',strokeWidth:0.5 }));
+        grp.add(new Konva.Rect({ x:4+ti*tw,y:34,width:(tw-1)*Math.min(fill,1),height:8,fill:fill>1?'#DC3545':(fill>0.85?'#FFC107':'#28A745') }));
+      });
+
+      grp.on('click tap', () => selectThing('closure', cl.id));
+      grp.on('mouseenter', () => { document.body.style.cursor='pointer'; });
+      grp.on('mouseleave', () => { document.body.style.cursor='default'; });
+      closureLayer.add(grp);
+    });
+  }
+
+  state.konva.stage.batchDraw();
+}
+
+function resetView() {
+  if (!state.konva) return;
+  state.konva.stage.scale({ x:1, y:1 });
+  state.konva.stage.position({ x:0, y:0 });
+  state.konva.stage.batchDraw();
+}
+
+function zoom(factor) {
+  if (!state.konva) return;
+  const s = state.konva.stage;
+  const newScale = s.scaleX() * factor;
+  s.scale({ x:newScale, y:newScale });
+  s.batchDraw();
+}
+
+// ─── View switching ───────────────────────────────────────────────────────────
+function switchView(view) {
+  if (view === state.activeView) return;
+  state.activeView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  const isMap = view === 'map';
+  document.getElementById('stage').style.display = isMap ? 'none' : 'block';
+  document.getElementById('toolbar').style.display = isMap ? 'none' : 'flex';
+  document.getElementById('map-stage').style.display = isMap ? 'block' : 'none';
+  document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
+  if (isMap) initMapIfNeeded();
+}
+
+// ─── Map ──────────────────────────────────────────────────────────────────────
+const ESRI_SAT_TILES = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const DEFAULT_MAP_CENTER = [-83.6324, 32.8407];
+const DEFAULT_MAP_ZOOM = 12;
+
+function loadMapLibre() {
+  if (window.maplibregl) return Promise.resolve(window.maplibregl);
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+    document.head.appendChild(link);
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+    script.onload = () => resolve(window.maplibregl);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+async function initMapIfNeeded() {
+  if (state.map) { state.map.resize(); refreshMapLayers(); mapFitData(); return; }
+  try {
+    const maplibregl = await loadMapLibre();
+    state.maplibregl = maplibregl;
+    const map = new maplibregl.Map({
+      container: 'map-stage',
+      style: {
+        version: 8,
+        sources: { 'esri-sat': { type:'raster', tiles:[ESRI_SAT_TILES], tileSize:256, attribution:'Tiles © Esri' } },
+        layers: [{ id:'esri-sat', type:'raster', source:'esri-sat' }],
+      },
+      center: DEFAULT_MAP_CENTER, zoom: DEFAULT_MAP_ZOOM,
+      attributionControl: { compact: true },
+    });
+    state.map = map;
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch:false }), 'top-right');
+    map.addControl(new maplibregl.ScaleControl({ unit:'imperial' }));
+    map.on('load', () => { refreshMapLayers(); mapFitData(); });
+  } catch (e) { toast('Map failed to load: ' + e.message, 'error'); }
+}
+
+function refreshMapLayers() {
+  if (!state.map) return;
+  const d = state.data;
+  if (!d) return;
+  // Remove old markers
+  state._mapMarkers.forEach(m => m.remove());
+  state._mapMarkers = [];
+
+  // Place location markers
+  d.locations.forEach(loc => {
+    if (loc.latitude == null || loc.longitude == null) return;
+    const el = document.createElement('div');
+    el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${_locColor(loc)};border:2px solid #fff;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)`;
+    el.title = loc.name;
+    el.onclick = () => selectLocation(loc.id);
+    const marker = new state.maplibregl.Marker({ element: el })
+      .setLngLat([loc.longitude, loc.latitude])
+      .addTo(state.map);
+    state._mapMarkers.push(marker);
+  });
+}
+
+function mapFitData() {
+  if (!state.map || !state.data) return;
+  const pts = state.data.locations.filter(l => l.latitude != null).map(l => [l.longitude, l.latitude]);
+  if (!pts.length) return;
+  if (pts.length === 1) { state.map.easeTo({ center: pts[0], zoom:14 }); return; }
+  const bounds = pts.reduce((b,p) => b.extend(p), new state.maplibregl.LngLatBounds(pts[0], pts[0]));
+  state.map.fitBounds(bounds, { padding:60, maxZoom:16 });
+}
+</script>
+</body>
+</html>

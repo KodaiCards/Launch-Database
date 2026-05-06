@@ -2056,6 +2056,176 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Phase 4.1 — Project-level public tokens (read-only stakeholder view)
+  //   POST /api/splice/projects/:id/public-tokens  — mint
+  //   GET  /api/splice/projects/:id/public-tokens  — list
+  //   DELETE /api/splice/public-tokens/project/:token — revoke
+  //   GET  /splice/view/:token                     — public HTML shell
+  //   GET  /api/splice/view/:token/hydrate         — public read-only data
+
+  app.post('/api/splice/projects/:id/public-tokens', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    const label = req.body?.label ? String(req.body.label).trim().slice(0, 200) : null;
+    const expiresInDays = req.body?.expires_in_days != null
+      ? Math.max(1, parseInt(req.body.expires_in_days, 10) || 0)
+      : null;
+    try {
+      const proj = await pool.query(`SELECT id FROM splice_projects WHERE id = $1`, [projectId]);
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
+      const token = _mintFieldToken();
+      const expiresAt = expiresInDays
+        ? new Date(Date.now() + expiresInDays * 86400 * 1000)
+        : null;
+      const ins = await pool.query(
+        `INSERT INTO splice_project_public_tokens
+           (token, project_id, expires_at, created_by_staff_id, label)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [token, projectId, expiresAt, req.user?.staff_id || null, label]
+      );
+      const url = (SPLICE_PUBLIC_URL || '') + '/splice/view/' + token;
+      res.json({ ...ins.rows[0], url });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/projects/:id/public-tokens', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT t.*, s.name AS created_by_name
+           FROM splice_project_public_tokens t
+           LEFT JOIN staff s ON s.id = t.created_by_staff_id
+          WHERE t.project_id = $1
+          ORDER BY t.created_at DESC`,
+        [req.params.id]
+      );
+      const base = SPLICE_PUBLIC_URL || '';
+      res.json(rows.map(r => ({ ...r, url: base + '/splice/view/' + r.token })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/public-tokens/project/:token', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_project_public_tokens WHERE token = $1`,
+        [req.params.token]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Token not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Public: render the read-only viewer HTML shell. No requireAuth —
+  // the token IS the auth. Resolves token → project, injects the token
+  // into a <meta> tag so the client-side JS can call the hydrate API.
+  app.get('/splice/view/:token', async (req, res) => {
+    try {
+      const tok = await _resolveProjectToken(pool, req.params.token);
+      if (!tok) return res.status(404).type('html').send(_renderViewErrorHtml('This share link is no longer valid. Ask the engineer for a fresh link.'));
+      // Serve the static file with the token embedded as a meta tag.
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(__dirname, '..', 'public', 'splice_view.html');
+      let html = fs.readFileSync(filePath, 'utf8');
+      html = html.replace('__SPLICE_TOKEN__', _esc(req.params.token));
+      res.type('html').send(html);
+    } catch (e) {
+      res.status(500).type('html').send(_renderViewErrorHtml('Server error: ' + e.message));
+    }
+  });
+
+  // Public: read-only hydrate for the viewer. Returns same shape as the
+  // auth'd hydrate but strips lock/edit fields. The token IS the auth.
+  app.get('/api/splice/view/:token/hydrate', async (req, res) => {
+    try {
+      const tok = await _resolveProjectToken(pool, req.params.token);
+      if (!tok) return res.status(401).json({ error: 'Share link is no longer valid.' });
+      const projectId = tok.project_id;
+
+      const proj = await pool.query(
+        `SELECT p.*, s.name AS designer_name
+           FROM splice_projects p
+           LEFT JOIN staff s ON s.id = p.designer_id
+          WHERE p.id = $1`,
+        [projectId]
+      );
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
+
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
+        await Promise.all([
+          pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
+          pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
+          pool.query(`
+            SELECT t.* FROM splice_buffer_tubes t
+            JOIN splice_cables c ON c.id = t.cable_id
+            WHERE c.project_id = $1
+            ORDER BY t.cable_id, t.position
+          `, [projectId]),
+          pool.query(`
+            SELECT f.* FROM splice_fibers f
+            JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+            JOIN splice_cables c ON c.id = t.cable_id
+            WHERE c.project_id = $1
+            ORDER BY f.buffer_tube_id, f.position
+          `, [projectId]),
+          pool.query(`
+            SELECT cl.* FROM splice_closures cl
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY cl.created_at
+          `, [projectId]),
+          pool.query(`
+            SELECT t.* FROM splice_trays t
+            JOIN splice_closures cl ON cl.id = t.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY t.closure_id, t.position
+          `, [projectId]),
+          pool.query(`
+            SELECT s.* FROM splices s
+            JOIN splice_trays t ON t.id = s.tray_id
+            JOIN splice_closures cl ON cl.id = t.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+            ORDER BY s.tray_id, s.created_at
+          `, [projectId]),
+          pool.query(`SELECT * FROM splice_ribbon_groups WHERE project_id = $1`, [projectId]),
+          pool.query(`SELECT * FROM splice_strand_states WHERE project_id = $1`, [projectId]),
+          pool.query(`
+            SELECT sp.* FROM splice_splitters sp
+            JOIN splice_closures cl ON cl.id = sp.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+          `, [projectId]).catch(() => ({ rows: [] })),
+          pool.query(`
+            SELECT so.* FROM splice_splitter_outputs so
+            JOIN splice_splitters sp ON sp.id = so.splitter_id
+            JOIN splice_closures cl ON cl.id = sp.closure_id
+            JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1
+          `, [projectId]).catch(() => ({ rows: [] })),
+          pool.query(`SELECT * FROM splice_cable_states WHERE project_id = $1`, [projectId]).catch(() => ({ rows: [] })),
+        ]);
+
+      // Strip lock/edit fields from the project row.
+      const { locked_by_staff_id, locked_at, lock_heartbeat_at, ...safeProject } = proj.rows[0];
+
+      res.json({
+        project:        { ...safeProject, _read_only: true },
+        locations:      locations.rows,
+        cables:         cables.rows,
+        buffer_tubes:   tubes.rows,
+        fibers:         fibers.rows,
+        closures:       closures.rows,
+        trays:          trays.rows,
+        splices:        splices.rows,
+        ribbon_groups:  ribbonGroups.rows,
+        strand_states:  strandStates.rows,
+        splitters:      splittersRes.rows,
+        splitter_outputs: splitterOutputsRes.rows,
+        cable_states:   cableStatesRes.rows,
+      });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // Public: render minimal HTML for the splicer. Resolves the token to
   // its closure, pulls closure + location + project metadata + any
   // already-uploaded markups so the splicer can confirm they're at the
@@ -4009,6 +4179,42 @@ ${closurePages || '<div class="empty-section">No splice changes between these re
 <div class="footer">
   <span>${_esc(project_name)}</span>
   <span>Diff ${_esc(aLabel)} → ${_esc(bLabel)}</span>
+</div>
+</body></html>`;
+}
+
+// ─── Phase 4.1 helpers — project-level public tokens ────────────────────
+
+// Resolve a project-level public token. Returns { token, project_id, ... }
+// or null when unknown/expired.
+async function _resolveProjectToken(pool, token) {
+  if (!token || typeof token !== 'string' || token.length > 64) return null;
+  const { rows } = await pool.query(
+    `SELECT token, project_id, expires_at, created_at, label
+       FROM splice_project_public_tokens
+      WHERE token = $1
+        AND (expires_at IS NULL OR expires_at > NOW())`,
+    [token]
+  );
+  return rows[0] || null;
+}
+
+// Minimal error HTML for the public view endpoint.
+function _renderViewErrorHtml(message) {
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Splice Matrix — Link error</title>
+<style>
+  body{font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#f5f6f8;color:#1c1c1c;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .card{background:#fff;border:1px solid #e2e4e9;border-radius:10px;padding:32px 40px;max-width:440px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  h1{font-size:20px;font-weight:700;color:#003366;margin:0 0 12px}
+  p{color:#5b6470;font-size:14px;margin:0}
+</style>
+</head><body>
+<div class="card">
+  <h1>Link error</h1>
+  <p>${_esc(message)}</p>
 </div>
 </body></html>`;
 }
