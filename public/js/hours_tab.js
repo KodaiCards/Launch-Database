@@ -294,7 +294,7 @@
 
         for (const [proj, projData] of Object.entries(cliData.projects).sort((a, b) => b[1].hours - a[1].hours)) {
           const projKey = cliKey + '-p-' + proj.replace(/\W/g, '');
-          html += `<div class="htree htree-${cliKey}" onclick="event.stopPropagation();htreeToggle('${projKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid #f5f5f5;background:#f8f9fa;font-weight:500;font-size:13px">
+          html += `<div class="htree htree-${cliKey}" onclick="event.stopPropagation();htreeToggle('${projKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid var(--border-weak);background:var(--surface-3);font-weight:500;font-size:13px">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div><i class="fa-solid fa-chevron-right" id="hc-${projKey}" style="font-size:8px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i>└ ${esc(proj)} ${projData.wo ? '<span class="td-mono" style="font-size:11px;color:var(--text-muted);margin-left:4px">WO# ' + esc(projData.wo) + '</span>' : ''} ${typeBadge(projData.type)}</div>
               <div style="font-size:13px">${fmt(projData.hours, 'hrs')}</div>
@@ -303,7 +303,7 @@
 
           // Individual time entries
           for (const e of projData.entries.sort((a, b) => a.entry_date.localeCompare(b.entry_date))) {
-            html += `<div class="htree htree-${projKey}" style="display:none;padding:6px 16px 6px 88px;border-bottom:1px solid #fafafa;background:#fdfdfd;font-size:12px;color:var(--text-muted)">
+            html += `<div class="htree htree-${projKey}" style="display:none;padding:6px 16px 6px 88px;border-bottom:1px solid var(--border-weak);background:var(--surface-2);font-size:12px;color:var(--text-muted)">
               <div style="display:flex;align-items:center;justify-content:space-between">
                 <div>
                   <span style="min-width:60px;display:inline-block">${new Date(e.entry_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
@@ -311,7 +311,7 @@
                   ${e.notes ? '<span style="margin-left:8px;font-style:italic">' + esc(e.notes) + '</span>' : ''}
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-weight:600;color:var(--text)">${e.hours} hrs</span>
+                  <span style="font-weight:600;color:var(--text)">${fmtHours(e.hours)} hrs</span>
                   <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openEditTimeEntryModal('${e.id}')" style="width:20px;height:20px;font-size:10px" title="Edit"><i class="fa-solid fa-pen"></i></button>
                   <button class="btn btn-sm btn-danger btn-icon" onclick="event.stopPropagation();deleteTimeEntry('${e.id}')" style="width:20px;height:20px;font-size:10px" title="Delete"><i class="fa-solid fa-trash"></i></button>
                 </div>
