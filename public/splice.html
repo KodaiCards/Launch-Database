@@ -378,6 +378,14 @@ const state = {
   // Phase 2C #11 — path tracing. Populated by traceFiberPath(); cleared by
   // clearTracePath(). drawCanvasContents() reads this to overlay highlights.
   tracePath: null,      // { fiber_id, chain, circular, over_spliced, warnings }
+  // Phase 5A.2 — per-session dismissed validation warning codes. When the
+  // engineer clicks the X on the warning banner, the current warning codes
+  // are added here. renderWarnings() filters them out until the session ends
+  // (page reload). A warning that was fixed (disappears from validation) is
+  // NOT in the next run's output, so its code is effectively dropped from
+  // the dismissed set automatically — it only re-hides if the same code
+  // comes back AND is still in this set.
+  _dismissedWarningIds: new Set(),
   // Phase 3A — map view state.
   activeView: 'diagram',     // 'diagram' | 'map'
   map: null,                 // MapLibre Map instance
@@ -729,18 +737,29 @@ function renderWarnings() {
   const v = state.data?.validation;
   const banner = document.getElementById('warnings-banner');
   if (!v) { banner.classList.remove('show'); return; }
-  const errCount = v.summary?.error_count || 0;
-  const warnCount = v.summary?.warning_count || 0;
-  // Update Export PDF button state — fatal errors block export, warnings
-  // don't. The button stays clickable with warnings (designer's choice).
+
+  // Filter out warnings/errors whose codes were dismissed this session.
+  // Errors are included in the dismissed-id check too so the engineer can
+  // silence known-broken states they're mid-fix on. The dismissed set is
+  // keyed by `code` — each validation rule fires a distinct code.
+  const dismissed = state._dismissedWarningIds;
+  const visibleErrors   = (v.errors   || []).filter(e => !dismissed.has(e.code));
+  const visibleWarnings = (v.warnings  || []).filter(w => !dismissed.has(w.code));
+  const errCount  = visibleErrors.length;
+  const warnCount = visibleWarnings.length;
+
+  // Update Export PDF button state — use the FULL (undismissed) count so the
+  // PDF gate is based on real validation, not the filtered view.
   const exportBtn = document.getElementById('btn-export');
-  if (errCount > 0) {
+  const realErrors = v.summary?.error_count || 0;
+  if (realErrors > 0) {
     exportBtn.disabled = true;
-    exportBtn.title = `Fix ${errCount} fatal error(s) before exporting (or pass &force=1)`;
+    exportBtn.title = `Fix ${realErrors} fatal error(s) before exporting (or pass &force=1)`;
   } else {
     exportBtn.disabled = false;
-    exportBtn.title = warnCount > 0 ? `Exporting with ${warnCount} warning(s)` : 'Export PDF';
+    exportBtn.title = (v.summary?.warning_count || 0) > 0 ? `Exporting with ${v.summary.warning_count} warning(s)` : 'Export PDF';
   }
+
   if (errCount === 0 && warnCount === 0) {
     banner.classList.remove('show', 'error', 'warn');
     return;
@@ -748,13 +767,33 @@ function renderWarnings() {
   const isError = errCount > 0;
   banner.className = 'warnings-banner show ' + (isError ? 'error' : 'warn');
   banner.innerHTML = `
-    <span><i class="fa-solid fa-${isError?'circle-exclamation':'triangle-exclamation'}"></i>
+    <span style="cursor:pointer;flex:1" id="warnings-banner-clickable">
+      <i class="fa-solid fa-${isError?'circle-exclamation':'triangle-exclamation'}"></i>
       <b>${errCount} error${errCount===1?'':'s'}</b> · ${warnCount} warning${warnCount===1?'':'s'}
       ${isError ? '<span class="validation-pill">PDF export blocked</span>' : ''}
     </span>
-    <span style="font-size:11px;opacity:0.8">click for details →</span>
+    <span style="font-size:11px;opacity:0.8;cursor:pointer;margin-right:4px" id="warnings-banner-details">details →</span>
+    <button id="warnings-banner-dismiss" title="Dismiss for this session"
+      style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.7;padding:0 2px;line-height:1;color:inherit"
+      aria-label="Dismiss warnings">✕</button>
   `;
-  banner.onclick = openValidationDrawer;
+  // Click on text/details → open drawer.
+  banner.onclick = null;
+  document.getElementById('warnings-banner-clickable').onclick = (e) => {
+    e.stopPropagation();
+    openValidationDrawer();
+  };
+  document.getElementById('warnings-banner-details').onclick = (e) => {
+    e.stopPropagation();
+    openValidationDrawer();
+  };
+  // X → dismiss all currently-visible codes for this session.
+  document.getElementById('warnings-banner-dismiss').onclick = (e) => {
+    e.stopPropagation();
+    for (const item of visibleErrors)   dismissed.add(item.code);
+    for (const item of visibleWarnings) dismissed.add(item.code);
+    banner.classList.remove('show', 'error', 'warn');
+  };
 }
 
 function openValidationDrawer() {
