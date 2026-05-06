@@ -201,7 +201,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const { rows } = await pool.query(`
         SELECT
           p.*,
-          s.full_name AS designer_name,
+          s.name AS designer_name,
           (SELECT COUNT(*) FROM splice_cables   c WHERE c.project_id = p.id)::int AS cable_count,
           (SELECT COUNT(*) FROM splice_locations l WHERE l.project_id = p.id)::int AS location_count,
           (SELECT COUNT(*) FROM splices sp
@@ -241,8 +241,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     const projectId = req.params.id;
     try {
       const proj = await pool.query(
-        `SELECT p.*, s.full_name AS designer_name,
-                ls.full_name AS locked_by_full_name
+        `SELECT p.*, s.name AS designer_name,
+                ls.name AS locked_by_full_name
          FROM splice_projects p
          LEFT JOIN staff s  ON s.id = p.designer_id
          LEFT JOIN staff ls ON ls.id = p.locked_by_staff_id
