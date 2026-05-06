@@ -86,7 +86,7 @@ OpenComms Designer is Bentley Systems' GIS-native engineering platform for plann
 
 Bentley markets OpenComms as "the only hybrid fiber coaxial solution that includes the productivity of CAD and all the benefits of an open enterprise GIS." The CONNECT Edition (current release) aligns OpenComms with Bentley's broader infrastructure lifecycle management (ILM) platform, connecting design data to project delivery and asset management workflows.
 
-[Product page](https://www.bentley.com/software/opencomms-designer/) | [eBook/overview PDF](https://www.bentley.com/wp-content/uploads/eBook-OpenComms-EN.pdf) | [Bentley Docs introduction](https://docs.bentley.com/LiveContent/web/OpenComms%20Designer-v2025/Help/en/topics/339992/GUID-DB6BB673-078C-4D09-8379-9700F573F16E.html)
+[Product page](https://www.bentley.com/software/opencomms-designer/) | [eBook/overview PDF](https://www.bentley.com/wp-content/uploads/eBook-OpenComms-EN.pdf) | [Bentley Docs introduction](https://docs.bentley.com/LiveContent/web/OpenComms%20Designer-v2025/Help/en/topics/339992/GUID-DB6BB673-078C-4D09-8379-9700F573F16E.html) | [OpenComms community wiki](https://communities.bentley.com/products/communications_network_design/w/communications_network_design__wiki/53726/opencomms-designer-connect-edition)
 
 ### Pricing Model
 
