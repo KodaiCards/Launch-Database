@@ -1943,7 +1943,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <input type="checkbox" class="user-extra-team" value="permitting"> Permitting portal
             </label>
             <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:400">
-              <input type="checkbox" class="user-extra-team" value="inspection"> Inspection (admin tab only)
+              <input type="checkbox" class="user-extra-team" value="construction"> Construction (admin tab only)
             </label>
           </div>
           <span style="font-size:11px;color:var(--text-muted)">Hidden when the role is Admin (admins already see everything).</span>
@@ -2351,7 +2351,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <div class="form-group"><label style="font-size:11px" id="new-job-rate-label">Default Rate ($/hr)</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
-            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="inspection">Inspection only</option><option value="both">Both (explicit)</option></select></div>
+            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="construction">Construction only</option><option value="both">Both (explicit)</option></select></div>
             <div class="form-group" style="align-items:flex-start;padding-top:18px">
               <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-applied to permitting jobs"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label>
             </div>
@@ -6267,7 +6267,7 @@ function formatRequestCard(sr, isPending) {
             <option value="">Both / Unassigned</option>
             <option value="design"${payload.team==='design'?' selected':''}>Design only</option>
             <option value="permitting"${payload.team==='permitting'?' selected':''}>Permitting only</option>
-            <option value="inspection"${payload.team==='inspection'?' selected':''}>Inspection only</option>
+            <option value="construction"${(payload.team==='construction'||payload.team==='inspection')?' selected':''}>Construction only</option>
             <option value="both"${payload.team==='both'?' selected':''}>Both (explicit)</option>
           </select>
         </div>
@@ -6464,10 +6464,13 @@ function showAccountMenu() {
   const primary = u.role === 'admin' ? null
                 : u.role && u.role.startsWith('design_') ? 'design'
                 : u.role && u.role.startsWith('permitting_') ? 'permitting'
-                : u.role && u.role.startsWith('inspection_') ? 'inspection'
+                : u.role && u.role.startsWith('construction_') ? 'construction'
+                : u.role && u.role.startsWith('inspection_') ? 'construction'  // legacy alias
                 : null;
   if (primary) teams.push(primary);
-  for (const t of (u.extra_teams || [])) {
+  for (const raw of (u.extra_teams || [])) {
+    // Normalize legacy 'inspection' to 'construction' for display.
+    const t = raw === 'inspection' ? 'construction' : raw;
     if (!teams.includes(t)) teams.push(t);
   }
   const teamPills = u.role === 'admin'

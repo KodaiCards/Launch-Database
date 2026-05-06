@@ -54,7 +54,7 @@ test('CSV validate + commit happy path inserts time_entries', async () => {
   const token = await adminLogin();
   const c = await fixtures.client({ name: uniqueTag('csv-client') });
   trash.clients.push(c.id);
-  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'inspection' });
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'construction' });
   trash.jobs.push(j.id);
   const p = await fixtures.project({
     name: uniqueTag('csv-proj'), client_id: c.id, job_id: j.id,
@@ -102,7 +102,7 @@ test('CSV re-validate flags duplicates; commit skips them', async () => {
   const token = await adminLogin();
   const c = await fixtures.client({ name: uniqueTag('csv-dup-client') });
   trash.clients.push(c.id);
-  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'inspection' });
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'construction' });
   trash.jobs.push(j.id);
   const p = await fixtures.project({
     name: uniqueTag('csv-dup-proj'), client_id: c.id, job_id: j.id,
@@ -145,7 +145,7 @@ test('CSV row with different hours classifies as modify', async () => {
   const token = await adminLogin();
   const c = await fixtures.client({ name: uniqueTag('csv-mod-client') });
   trash.clients.push(c.id);
-  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'inspection' });
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'construction' });
   trash.jobs.push(j.id);
   const p = await fixtures.project({
     name: uniqueTag('csv-mod-proj'), client_id: c.id, job_id: j.id,
@@ -179,7 +179,7 @@ test('CSV row with same staff/project/date but different job is "new"', async ()
   const token = await adminLogin();
   const c = await fixtures.client({ name: uniqueTag('csv-job-client') });
   trash.clients.push(c.id);
-  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'inspection' });
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'construction' });
   trash.jobs.push(j.id);
   const p = await fixtures.project({
     name: uniqueTag('csv-job-proj'), client_id: c.id, job_id: j.id,

@@ -65,7 +65,7 @@
             <option value="" ${!j.team ? 'selected':''}>—</option>
             <option value="design" ${j.team==='design' ? 'selected':''}>Design</option>
             <option value="permitting" ${j.team==='permitting' ? 'selected':''}>Permitting</option>
-            <option value="inspection" ${j.team==='inspection' ? 'selected':''}>Inspection</option>
+            <option value="construction" ${(j.team==='construction'||j.team==='inspection') ? 'selected':''}>Construction</option>
             <option value="both" ${j.team==='both' ? 'selected':''}>Both</option>
           </select>
         </td>

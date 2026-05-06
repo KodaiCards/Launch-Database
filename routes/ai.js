@@ -770,7 +770,7 @@ const AI_TOOLS = [
         full_name: { type: 'string', description: 'Display name' },
         email: { type: 'string', description: 'Email (optional)' },
         staff_id: { type: 'string', description: 'Optional staff record UUID to link this user to (required for time clock access)' },
-        extra_teams: { type: 'array', items: { type: 'string' }, description: 'Additional teams beyond their primary role: design, permitting, inspection. Empty by default.' }
+        extra_teams: { type: 'array', items: { type: 'string' }, description: 'Additional teams beyond their primary role: design, permitting, construction. Empty by default.' }
       },
       required: ['username', 'password', 'role']
     }
@@ -1791,10 +1791,12 @@ async function executeTool(toolName, toolInput) {
         if (!VALID_ROLES.includes(role)) return { success: false, error: 'Invalid role' };
         const team = role.startsWith('design_') ? 'design'
                    : role.startsWith('permitting_') ? 'permitting'
-                   : role.startsWith('inspection_') ? 'inspection'
+                   : role.startsWith('construction_') ? 'construction'
+                   : role.startsWith('inspection_') ? 'construction'  // legacy alias
                    : null;
         const cleanExtras = Array.isArray(extra_teams)
-          ? extra_teams.filter(t => ['design', 'permitting', 'inspection'].includes(t))
+          ? extra_teams.filter(t => ['design','permitting','construction','inspection'].includes(t))
+                       .map(t => t === 'inspection' ? 'construction' : t)
           : [];
         try {
           const hash = await bcrypt.hash(password, 12);

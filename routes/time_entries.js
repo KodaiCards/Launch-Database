@@ -57,7 +57,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     // Manager-class users see ONLY hours tied to projects on their team. The
     // project's team is determined via its job (jobs.team). Projects whose job
     // is 'both' or NULL are considered shared and visible to both managers.
-    // Inspection projects (team='inspection') are admin-only since the
+    // Inspection projects (team='construction', formerly 'inspection') are admin-only since the
     // Inspection tab lives in admin. CSV-imported entries inherit the project's
     // team automatically because they're attached to existing projects (or to
     // newly-created projects whose job team is set at creation time).

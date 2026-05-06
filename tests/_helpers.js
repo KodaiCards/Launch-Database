@@ -188,7 +188,7 @@ const fixtures = {
     return rows[0];
   },
 
-  async job({ name, default_billing_type = 'hourly', team = 'inspection', default_rate = 90, is_permitting = false, billing_code = null } = {}) {
+  async job({ name, default_billing_type = 'hourly', team = 'construction', default_rate = 90, is_permitting = false, billing_code = null } = {}) {
     const n = name || uniqueTag('job');
     // Columns added by bootstrapV3Schema (team, billing_code, for_psc_client,
     // for_generic_client) all default to sensible values. We only set the
