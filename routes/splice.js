@@ -2954,6 +2954,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   app.post('/api/splice/imports/:id/apply', requireAuth(), async (req, res) => {
     const importId = req.params.id;
+    // 5.B.2 — auto_approve_adds=true: approve all 'add' changes in the same
+    // transaction before applying, so uploads land immediately without a
+    // separate review step. Updates and deletes stay 'pending' (safer default).
+    const autoApproveAdds = req.body?.auto_approve_adds === true;
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -2970,6 +2974,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         return res.status(409).json({ error: `Import is already ${imp.rows[0].status}` });
       }
       const projectId = imp.rows[0].project_id;
+      if (autoApproveAdds) {
+        // Bulk-approve all 'add' change rows so they're picked up below.
+        await client.query(
+          `UPDATE splice_design_import_changes
+              SET decision = 'approved', decision_at = NOW(), decision_by_staff_id = $2
+            WHERE import_id = $1 AND change_type = 'add' AND decision = 'pending'`,
+          [importId, req.user?.staff_id || null]
+        );
+      }
       const ch = await client.query(
         `SELECT * FROM splice_design_import_changes
           WHERE import_id = $1 AND decision = 'approved'

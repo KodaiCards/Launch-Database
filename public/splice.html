@@ -266,6 +266,15 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
       </div>
     </div>
+    <!-- 5.B.2 — "Recently imported" filter chip shown after an import lands -->
+    <div id="recent-import-chip-wrap" style="display:none;margin-bottom:8px;padding:0 2px">
+      <button id="recent-import-chip" class="btn btn-sm"
+        style="width:100%;background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-size:11px"
+        onclick="toggleRecentlyImportedFilter()">
+        <i class="fa-solid fa-clock-rotate-left"></i> Recently imported
+        <span id="recent-import-chip-count" class="small" style="margin-left:4px"></span>
+      </button>
+    </div>
     <div class="sidebar-section" id="proj-imports" style="display:none">
       <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
       <div id="proj-imports-body" style="font-size:11px"></div>
@@ -705,6 +714,8 @@ async function hydrateProject() {
     // Phase 4.4 — re-render matrix view if active so inline edits
     // and SSE-pushed changes appear without a manual refresh.
     if (state.activeView === 'matrix') renderMatrixView();
+    // 5.B.2 — refresh the recently-imported chip whenever data changes.
+    renderRecentlyImportedChip();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
     // skips when last version is <10min old or generation hash matches,
     // so this is safe to call after every hydrate without flooding the
@@ -1729,7 +1740,11 @@ function renderCableInspector(cableId) {
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <h3>${esc(cable.name)} <span class="small">${cable.fiber_count}f · ${cable.construction_type}</span></h3>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <h3 style="margin:0;flex:1" id="cable-name-display-${cableId}">${esc(cable.name)}</h3>
+      <span class="small">${cable.fiber_count}f · ${cable.construction_type}</span>
+      ${!isReadOnly() ? `<button class="btn btn-sm" title="Rename" onclick="inlineRenameCable('${cableId}')" style="padding:2px 6px;font-size:10px"><i class="fa-solid fa-pen"></i></button>` : ''}
+    </div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
       ${esc(fromLoc?.name || 'unrouted')} → ${esc(toLoc?.name || 'unrouted')}
     </div>
@@ -3349,6 +3364,36 @@ function inlineRenameLoc(locationId) {
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
     if (e.key === 'Escape') { inp.removeEventListener('blur', save); renderLocationInspector(locationId); }
+  });
+}
+
+// 5.B.2 — inline rename for cable inspector header.
+function inlineRenameCable(cableId) {
+  if (isReadOnly()) return;
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const display = document.getElementById('cable-name-display-' + cableId);
+  if (!display) return;
+  const inp = document.createElement('input');
+  inp.className = 'input-sm';
+  inp.value = cable.name;
+  inp.style.cssText = 'flex:1;font-size:14px;font-weight:600;padding:2px 6px';
+  display.replaceWith(inp);
+  inp.focus();
+  inp.select();
+  const save = async () => {
+    const name = inp.value.trim();
+    if (!name || name === cable.name) { renderCableInspector(cableId); return; }
+    try {
+      await api('/api/splice/cables/' + cableId, 'PUT', { name });
+      await hydrateProject();
+      selectThing('cable', cableId);
+    } catch (e) { toast(e.message, 'error'); renderCableInspector(cableId); }
+  };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    if (e.key === 'Escape') { inp.removeEventListener('blur', save); renderCableInspector(cableId); }
   });
 }
 
@@ -5144,6 +5189,50 @@ function importRowHtml(i, pending) {
     </div>`;
 }
 
+// 5.B.2 — Recently imported chip: shows after an import applies so the
+// engineer can quickly find and rename imported items.
+// state._lastImportAt = timestamp (ms) set by openImportDesignModal on apply.
+// state._recentImportFilter = boolean — when true, sidebar items show only recent.
+
+function renderRecentlyImportedChip() {
+  const wrap = document.getElementById('recent-import-chip-wrap');
+  if (!wrap) return;
+  if (!state._lastImportAt) { wrap.style.display = 'none'; return; }
+  const HOUR_MS = 60 * 60 * 1000;
+  const isRecent = (d) => d && (Date.now() - new Date(d).getTime() < HOUR_MS);
+  const recentLocs = (state.data?.locations || []).filter(l => isRecent(l.created_at));
+  const recentCables = (state.data?.cables || []).filter(c => isRecent(c.created_at));
+  const count = recentLocs.length + recentCables.length;
+  if (!count) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const countEl = document.getElementById('recent-import-chip-count');
+  if (countEl) countEl.textContent = `(${count})`;
+}
+
+function toggleRecentlyImportedFilter() {
+  state._recentImportFilter = !state._recentImportFilter;
+  const chip = document.getElementById('recent-import-chip');
+  if (chip) {
+    chip.style.background = state._recentImportFilter ? 'var(--primary)' : 'var(--primary-light)';
+    chip.style.color = state._recentImportFilter ? '#fff' : 'var(--primary)';
+  }
+  // Highlight recently-imported items in the project summary.
+  const HOUR_MS = 60 * 60 * 1000;
+  const isRecent = (d) => d && (Date.now() - new Date(d).getTime() < HOUR_MS);
+  if (state._recentImportFilter) {
+    const items = [
+      ...(state.data?.locations || []).filter(l => isRecent(l.created_at))
+        .map(l => ({ type: 'location', id: l.id, name: l.name })),
+      ...(state.data?.cables || []).filter(c => isRecent(c.created_at))
+        .map(c => ({ type: 'cable', id: c.id, name: c.name })),
+    ];
+    if (!items.length) { toast('No recently imported items found in this hour', 'info'); return; }
+    // Flash highlight by selecting first item and showing a list.
+    toast(`${items.length} recently imported item(s) — click to rename in inspector`, 'info');
+    if (items[0]) selectThing(items[0].type, items[0].id);
+  }
+}
+
 function importStatusColor(status) {
   switch (status) {
     case 'applied':           return 'var(--success)';
@@ -5162,8 +5251,10 @@ function openImportDesignModal() {
     body: `
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
         Upload a design from AutoCAD (DXF), Google Earth (KMZ), or GeoJSON.
-        The server will parse and stage the changes — nothing in the live
-        project moves until you review and apply.
+        New locations and cables land immediately on the map with their
+        original names (or placeholders). Click any item to rename it
+        in the inspector. Updates and deletes remain in the imports list
+        for manual review.
       </div>
       <div class="field"><label>File</label>
         <input type="file" id="m-imp-file" accept=".kmz,.kml,.dxf,.geojson"></div>
@@ -5235,10 +5326,29 @@ function openImportDesignModal() {
         const json = await r.json();
         if (!r.ok) throw new Error(json.error || 'Upload failed');
         close();
-        toast('Imported ' + file.name + ' — open it in the imports list to review.', 'success');
+        // 5.B.2 — auto-apply all adds immediately. No naming modal.
+        // Items land with the names the file provides (or placeholder).
+        // Engineer renames via inspector. Manual review still available
+        // from the imports list for updates/deletes.
+        const importId = json.import?.id;
+        if (importId) {
+          try {
+            const applyRes = await api(`/api/splice/imports/${importId}/apply`, 'POST',
+              { auto_approve_adds: true });
+            await hydrateProject();
+            if (state.activeView === 'map') refreshMapLayers();
+            // Track import timestamp so the sidebar chip can highlight these items.
+            state._lastImportAt = Date.now();
+            const countMsg = applyRes.applied
+              ? `${applyRes.applied} item(s) landed on the map`
+              : 'No new items to add';
+            toast(`${file.name} applied — ${countMsg}. Rename items in their inspectors.`, 'success');
+          } catch (applyErr) {
+            toast(`Upload OK but auto-apply failed: ${applyErr.message} — review manually in the imports list.`, 'warn');
+          }
+        }
         await refreshImportsList();
-        // Auto-open the review modal for convenience.
-        if (json.import?.id) openImportReviewModal(json.import.id);
+        renderRecentlyImportedChip();
       } catch (e) { toast('Import failed: ' + e.message, 'error'); }
     },
   });
