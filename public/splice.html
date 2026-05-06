@@ -1977,6 +1977,23 @@ function renderLocationInspector(locationId) {
       Deleting a location cascades to its closures, trays, and splices.
     </div>
   `;
+  // 5.B.6 — Auto-populate drag-drop cable pickers for location panel.
+  requestAnimationFrame(() => {
+    const ddKey = `location-${locationId}`;
+    const selA = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+    if (!selA || !selB) return;
+    const cables = cablesAt; // already computed above
+    if (cables.length >= 2) {
+      selA.value = cables[0].id;
+      selB.value = cables[1].id;
+      ddropCableChanged(ddKey, 'a');
+      ddropCableChanged(ddKey, 'b');
+    } else if (cables.length === 1) {
+      selA.value = cables[0].id;
+      ddropCableChanged(ddKey, 'a');
+    }
+  });
 }
 
 // Enable/disable the bulk-delete button based on how many checkboxes are checked.
@@ -2146,6 +2163,24 @@ function renderClosureInspector(closureId) {
 
   loadClosureMarkups(closureId);
   loadClosureComments(closureId);
+  // 5.B.5 — Auto-populate drag-drop cable pickers if the location has exactly
+  // two cables (the most common splice-point topology). The panel HTML is
+  // already in the DOM at this point; we just set the selects and trigger.
+  requestAnimationFrame(() => {
+    const ddKey = `closure-${closureId}`;
+    const selA = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+    if (!selA || !selB) return;
+    const cables = (state.data?.cables || []).filter(c =>
+      c.from_location_id === cl.location_id || c.to_location_id === cl.location_id
+    );
+    if (cables.length >= 2) {
+      selA.value = cables[0].id;
+      selB.value = cables[1].id;
+      ddropCableChanged(ddKey, 'a');
+      ddropCableChanged(ddKey, 'b');
+    }
+  });
 }
 
 // ─── 5.B.5 stub — renderDragDropPanel (real impl follows below) ──────────────
