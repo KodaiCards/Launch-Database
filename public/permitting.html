@@ -1330,8 +1330,15 @@ saveProject = async function() {
 // SETTINGS — proposals (jobs, project types, clients, contracts)
 // ═══════════════════════════════════════════════════════════════════════════
 async function openSettings(){
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const contractsTab = document.querySelector('[data-tab="contracts"]');
+  const contractsPane = document.getElementById('stab-contracts');
+  if (contractsTab) contractsTab.style.display = isAdmin ? '' : 'none';
+  if (contractsPane && !isAdmin) contractsPane.style.display = 'none';
   om('settings-modal');
-  await Promise.all([loadJobsList(), loadPtypeList(), loadClientList(), loadContractList()]);
+  const loads = [loadJobsList(), loadPtypeList(), loadClientList()];
+  if (isAdmin) loads.push(loadContractList());
+  await Promise.all(loads);
   loadMyRequests();
 }
 
