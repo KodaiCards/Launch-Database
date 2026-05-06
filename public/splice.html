@@ -217,6 +217,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
         <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
         <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
+        <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
         <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
       </div>
     </div>
@@ -3080,6 +3081,217 @@ async function rejectImport(importId) {
     toast('Import rejected', 'success');
     await refreshImportsList();
   } catch (e) { toast('Reject failed: ' + e.message, 'error'); }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// CSV / Excel paste import (Phase 2C #13)
+//
+// Three-step wizard:
+//   Step 1 — paste raw text (tab-sep or CSV)
+//   Step 2 — map columns to canonical fields + pick kind (cables/locations)
+//   Step 3 — POST to /import-paste, then open the standard review modal
+//
+// No external dependency: the CSV parser below handles quoted fields and
+// "" escaped quotes in ~30 lines; that's enough for Excel/Sheets output.
+// ───────────────────────────────────────────────────────────────────────────
+
+// Minimal CSV parser — handles double-quoted fields (embedded commas,
+// newlines, and "" escapes). Delimiter auto-detected per line: tab wins
+// if any field contains a tab in the first scan; otherwise comma.
+function parseCsv(text, delim) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  // Heuristic: if we find a tab anywhere in the first 4 lines, use tab.
+  if (!delim) {
+    const sample = lines.slice(0, 4).join('\n');
+    delim = sample.includes('\t') ? '\t' : ',';
+  }
+  const result = [];
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const row = [];
+    let i = 0;
+    while (i < line.length) {
+      if (line[i] === '"') {
+        // Quoted field — consume until closing quote, un-escape "".
+        let field = '';
+        i++; // skip opening quote
+        while (i < line.length) {
+          if (line[i] === '"' && line[i + 1] === '"') { field += '"'; i += 2; }
+          else if (line[i] === '"') { i++; break; }
+          else { field += line[i++]; }
+        }
+        row.push(field);
+        if (line[i] === delim) i++; // skip trailing delimiter
+      } else {
+        // Unquoted field — read until delimiter or end of line.
+        let start = i;
+        while (i < line.length && line[i] !== delim) i++;
+        row.push(line.slice(start, i));
+        if (line[i] === delim) i++;
+      }
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+// Canonical fields for each kind. Used for auto-mapping and the column
+// mapping select options.
+const PASTE_FIELDS = {
+  cables: [
+    { key: 'name',              label: 'Name *' },
+    { key: 'fiber_count',       label: 'Fiber count' },
+    { key: 'construction_type', label: 'Construction type (ribbon/loose_tube)' },
+    { key: 'from_location',     label: 'From location' },
+    { key: 'to_location',       label: 'To location' },
+    { key: 'manufacturer_part', label: 'Manufacturer part' },
+    { key: 'notes',             label: 'Notes' },
+  ],
+  locations: [
+    { key: 'name',      label: 'Name *' },
+    { key: 'type',      label: 'Type (co/splice_point/fdh/terminal/ring_cut)' },
+    { key: 'latitude',  label: 'Latitude' },
+    { key: 'longitude', label: 'Longitude' },
+    { key: 'notes',     label: 'Notes' },
+  ],
+};
+
+// Best-guess auto-mapping: normalize both sides and look for exact match,
+// then prefix match so "Cable Name" → "name" if nothing better fits.
+function autoMapColumn(headerName, kind) {
+  const h = headerName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const { key } of PASTE_FIELDS[kind]) {
+    const k = key.replace(/_/g, '');
+    if (h === k) return key;
+  }
+  // Looser: check if the canonical key appears anywhere in the header.
+  for (const { key } of PASTE_FIELDS[kind]) {
+    if (h.includes(key.replace(/_/g, ''))) return key;
+  }
+  return '';
+}
+
+function openPasteImportModal() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  if (!state.currentId) return toast('Open a project first', 'error');
+
+  // ── Step 1: paste textarea ───────────────────────────────────────────────
+  showModal({
+    title: 'Paste from spreadsheet — step 1 of 3',
+    submitText: 'Next: map columns',
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Copy rows from Excel or Google Sheets and paste below. Tab-separated
+        and comma-separated (CSV) are both accepted.
+      </div>
+      <textarea id="pi-raw" rows="10" style="width:100%;font-family:monospace;font-size:11px;resize:vertical"
+        placeholder="Name&#9;Fiber count&#9;From location&#9;..."></textarea>
+    `,
+    onSubmit: (close) => {
+      const raw = document.getElementById('pi-raw').value.trim();
+      if (!raw) return toast('Paste some data first', 'error');
+      let parsed;
+      try { parsed = parseCsv(raw); }
+      catch (e) { return toast('Parse error: ' + e.message, 'error'); }
+      if (parsed.length < 2) return toast('Need at least a header row + one data row', 'error');
+      close();
+      _pasteImportStep2(parsed);
+    },
+  });
+}
+
+function _pasteImportStep2(parsed) {
+  const headers  = parsed[0];
+  const preview  = parsed.slice(1, 4); // show up to 3 data rows
+  const allRows  = parsed.slice(1);
+
+  // Build preview table HTML.
+  const previewHtml = `
+    <table class="table" style="font-size:11px;margin-bottom:12px">
+      <thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${preview.map(row =>
+          `<tr>${row.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`
+        ).join('')}
+      </tbody>
+    </table>
+    ${allRows.length > 3 ? `<div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">...and ${allRows.length - 3} more row(s)</div>` : ''}
+  `;
+
+  // Column mapping selectors — re-rendered when kind changes.
+  function mappingHtml(kind) {
+    const opts = [{ key: '', label: '(ignore)' }, ...PASTE_FIELDS[kind]];
+    return headers.map((h, i) => `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="width:140px;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(h)}">${esc(h)}</div>
+        <select id="pi-col-${i}" style="flex:1;font-size:11px">
+          ${opts.map(o => `<option value="${o.key}" ${autoMapColumn(h, kind) === o.key ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+        </select>
+      </div>`).join('');
+  }
+
+  showModal({
+    title: 'Paste from spreadsheet — step 2 of 3',
+    submitText: 'Next: review & submit',
+    wide: true,
+    body: `
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px">Preview (first ${Math.min(3, preview.length)} row(s))</div>
+      <div style="overflow-x:auto;margin-bottom:10px">${previewHtml}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <label style="font-size:12px;font-weight:500">Import as:</label>
+        <label style="font-size:12px"><input type="radio" name="pi-kind" value="cables" checked> Cables</label>
+        <label style="font-size:12px"><input type="radio" name="pi-kind" value="locations"> Locations</label>
+      </div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px">Map columns</div>
+      <div id="pi-mapping-body">${mappingHtml('cables')}</div>
+    `,
+    onSubmit: (close) => {
+      const kind = document.querySelector('input[name="pi-kind"]:checked')?.value || 'cables';
+
+      // Build mapped rows using the user's column assignments.
+      const mapping = headers.map((_, i) => document.getElementById('pi-col-' + i)?.value || '');
+      const rows = allRows.map(row => {
+        const obj = {};
+        mapping.forEach((field, i) => {
+          if (field) obj[field] = row[i] ?? '';
+        });
+        return obj;
+      }).filter(r => Object.keys(r).length > 0);
+
+      if (!rows.length) return toast('No mappable rows', 'error');
+      close();
+      _pasteImportStep3(rows, kind);
+    },
+  });
+
+  // Re-render mapping selectors when kind radio changes, resetting
+  // auto-mapping to the newly chosen kind's field list.
+  setTimeout(() => {
+    document.querySelectorAll('input[name="pi-kind"]').forEach(r => {
+      r.addEventListener('change', () => {
+        const kind = document.querySelector('input[name="pi-kind"]:checked')?.value || 'cables';
+        document.getElementById('pi-mapping-body').innerHTML = mappingHtml(kind);
+      });
+    });
+  }, 50);
+}
+
+async function _pasteImportStep3(rows, kind) {
+  try {
+    const json = await api(
+      '/api/splice/projects/' + state.currentId + '/import-paste',
+      'POST',
+      { rows, kind }
+    );
+    toast(
+      `Staged ${rows.length} row(s) as "${kind}" — opening review.`,
+      'success'
+    );
+    await refreshImportsList();
+    if (json.import?.id) openImportReviewModal(json.import.id);
+  } catch (e) {
+    toast('Paste import failed: ' + e.message, 'error');
+  }
 }
 
 // ───────────────────────────────────────────────────────────────────────────

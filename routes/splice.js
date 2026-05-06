@@ -2247,88 +2247,21 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         if (!live) return res.status(404).json({ error: 'Project not found' });
         const changes = _diffIngestAgainstLive(parsed, live);
 
-        // Stage the import + every proposed change in one transaction.
-        const client = await pool.connect();
-        try {
-          await client.query('BEGIN');
-          const imp = await client.query(
-            `INSERT INTO splice_design_imports
-               (project_id, source_filename, source_format, source_size_bytes,
-                uploaded_by_staff_id, status, summary_jsonb, dxf_calibration_jsonb)
-             VALUES ($1, $2, $3, $4, $5, 'pending', $6::jsonb, $7::jsonb)
-             RETURNING *`,
-            [
-              projectId, filename, format, file.size,
-              req.user?.staff_id || null,
-              JSON.stringify({
-                adds: { locations: changes.locations.adds.length, cables: changes.cables.adds.length },
-                updates: { locations: changes.locations.updates.length, cables: changes.cables.updates.length },
-                removes: { locations: changes.locations.removes.length, cables: changes.cables.removes.length },
-                warnings: parsed.warnings || [],
-              }),
-              format === 'dxf' ? JSON.stringify(_parseDxfCalibration(req.body?.calibration)) : null,
-            ]
+        // Stage the import + every proposed change in one transaction via
+        // _stageImport (shared with the CSV paste endpoint). DXF calibration
+        // is appended as a follow-up UPDATE so _stageImport stays generic.
+        const { importRow, summary } = await _stageImport(
+          pool, projectId,
+          { filename, format, size: file.size },
+          parsed, changes, req.user?.staff_id || null
+        );
+        if (format === 'dxf') {
+          await pool.query(
+            `UPDATE splice_design_imports SET dxf_calibration_jsonb = $2::jsonb WHERE id = $1`,
+            [importRow.id, JSON.stringify(_parseDxfCalibration(req.body?.calibration))]
           );
-          const importRow = imp.rows[0];
-
-          for (const c of changes.locations.adds) {
-            await client.query(
-              `INSERT INTO splice_design_import_changes
-                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
-               VALUES ($1, 'add', 'splice_locations', NULL, $2::jsonb, 'pending')`,
-              [importRow.id, JSON.stringify(c.payload)]
-            );
-          }
-          for (const c of changes.locations.updates) {
-            await client.query(
-              `INSERT INTO splice_design_import_changes
-                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
-               VALUES ($1, 'update', 'splice_locations', $2, $3::jsonb, 'pending')`,
-              [importRow.id, c.target_id, JSON.stringify(c.payload)]
-            );
-          }
-          for (const c of changes.locations.removes) {
-            // Removes default to 'skipped' so an incomplete submission
-            // doesn't accidentally delete the master's data.
-            await client.query(
-              `INSERT INTO splice_design_import_changes
-                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
-               VALUES ($1, 'delete', 'splice_locations', $2, $3::jsonb, 'skipped')`,
-              [importRow.id, c.target_id, JSON.stringify(c.payload || {})]
-            );
-          }
-          for (const c of changes.cables.adds) {
-            await client.query(
-              `INSERT INTO splice_design_import_changes
-                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
-               VALUES ($1, 'add', 'splice_cables', NULL, $2::jsonb, 'pending')`,
-              [importRow.id, JSON.stringify(c.payload)]
-            );
-          }
-          for (const c of changes.cables.updates) {
-            await client.query(
-              `INSERT INTO splice_design_import_changes
-                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
-               VALUES ($1, 'update', 'splice_cables', $2, $3::jsonb, 'pending')`,
-              [importRow.id, c.target_id, JSON.stringify(c.payload)]
-            );
-          }
-          for (const c of changes.cables.removes) {
-            await client.query(
-              `INSERT INTO splice_design_import_changes
-                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
-               VALUES ($1, 'delete', 'splice_cables', $2, $3::jsonb, 'skipped')`,
-              [importRow.id, c.target_id, JSON.stringify(c.payload || {})]
-            );
-          }
-          await client.query('COMMIT');
-          res.json({ import: importRow, summary: importRow.summary_jsonb });
-        } catch (e) {
-          try { await client.query('ROLLBACK'); } catch {}
-          throw e;
-        } finally {
-          client.release();
         }
+        res.json({ import: importRow, summary });
       } catch (e) {
         res.status(400).json({ error: 'Import parse failed: ' + e.message });
       }
