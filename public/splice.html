@@ -2162,82 +2162,122 @@ function renderInspector() {
   body.innerHTML = `<div class="empty-pane">Unknown selection</div>`;
 }
 
+// ─── 5.C.5 Cable Inventory Dashboard ─────────────────────────────────────────
+// Replaces the old renderCableInspector with a full inventory view.
 function renderCableInspector(cableId) {
   const cable = state.data.cables.find(c => c.id === cableId);
   if (!cable) { state.selection = null; return renderInspector(); }
+
   const fromLoc = cable.from_location_id ? state.data.locations.find(l => l.id === cable.from_location_id) : null;
   const toLoc   = cable.to_location_id   ? state.data.locations.find(l => l.id === cable.to_location_id)   : null;
-  const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId);
-  // Splices that touch any of this cable's fibers.
-  const fiberIds = new Set(state.data.fibers.filter(f =>
-    tubes.find(t => t.id === f.buffer_tube_id)
-  ).map(f => f.id));
-  const spliceCount = state.data.splices.filter(s =>
-    fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id)
-  ).length;
+  const tubes   = state.data.buffer_tubes.filter(t => t.cable_id === cableId).sort((a,b)=>a.position-b.position);
+
+  // All fibers for this cable.
+  const allFibers = state.data.fibers.filter(f => tubes.some(t => t.id === f.buffer_tube_id));
+  const fiberIds  = new Set(allFibers.map(f => f.id));
+
+  // Splice counts.
+  const splicedFiberIds = new Set(
+    state.data.splices.filter(s => fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id))
+      .flatMap(s => [s.fiber_a_id, s.fiber_b_id]).filter(id => fiberIds.has(id))
+  );
+  const totalSpliced = allFibers.filter(f => splicedFiberIds.has(f.id)).length;
+  const totalDead    = allFibers.length - totalSpliced;
+  const circuitsSet  = allFibers.filter(f => f.circuit_name).length;
+
+  // Closures along route: closures whose location is fromLoc or toLoc or any
+  // intermediate location (identified by closures whose cables include this one).
+  const closuresAlongRoute = state.data.closures.filter(cl => {
+    const loc = state.data.locations.find(l => l.id === cl.location_id);
+    if (!loc) return false;
+    return loc.id === cable.from_location_id || loc.id === cable.to_location_id;
+  });
+
+  // Locations passed (from → to).
+  const passedLocs = [fromLoc, toLoc].filter(Boolean);
+
+  const statCard = (label, value, sub) => `
+    <div style="flex:1;background:var(--vetro-bg-panel-secondary);border-radius:var(--radius-md);padding:8px 10px;text-align:center;min-width:0">
+      <div style="font-size:18px;font-weight:700;color:var(--vetro-text-primary)">${value}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-top:1px">${label}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--vetro-text-secondary);margin-top:2px">${sub}</div>` : ''}
+    </div>`;
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-      <h3 style="margin:0;flex:1" id="cable-name-display-${cableId}">${esc(cable.name)}</h3>
-      <span class="small">${cable.fiber_count}f · ${cable.construction_type}</span>
-      ${!isReadOnly() ? `<button class="btn btn-sm" title="Rename" onclick="inlineRenameCable('${cableId}')" style="padding:2px 6px;font-size:10px"><i class="fa-solid fa-pen"></i></button>` : ''}
+    <!-- ── 1. Header ── -->
+    <div style="padding:10px 12px 8px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Cable</span>
+        <span style="margin-left:auto;background:var(--vetro-route-active);color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600">${esc(cable.construction_type||'buried')}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <h3 style="margin:0;flex:1;font-size:15px;font-weight:600" id="cable-name-display-${cableId}">${esc(cable.name)}</h3>
+        ${!isReadOnly() ? `<button class="btn btn-sm" title="Rename" onclick="inlineRenameCable('${cableId}')" style="padding:2px 6px;font-size:10px"><i class="fa-solid fa-pen"></i></button>` : ''}
+        <button class="btn btn-sm" style="padding:2px 6px;font-size:10px" onclick="closeInspectorPanel()" title="Close"><i class="fa-solid fa-times"></i></button>
+      </div>
+      <div style="font-size:11px;color:var(--vetro-text-muted);margin-top:3px">
+        ${cable.fiber_count}f · ${tubes.length} tubes · ${cable.tube_size_fibers||12}f/tube
+        ${cable.path_length_feet ? ` · ${cable.path_length_feet.toLocaleString()} ft` : ''}
+        ${cable.manufacturer_part ? ` · ${esc(cable.manufacturer_part)}` : ''}
+      </div>
     </div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
-      ${esc(fromLoc?.name || 'unrouted')} → ${esc(toLoc?.name || 'unrouted')}
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-      <button class="btn btn-sm" onclick="openEditCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
-      <button class="btn btn-sm" onclick="openStrandMetadataEditor('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-list-check"></i> Edit circuits</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
-    </div>
-    <table class="table">
-      <tbody>
-        <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part || '—')}</td></tr>
-        <tr><th>Tubes</th><td>${tubes.length}</td></tr>
-        <tr><th>Fibers/tube</th><td>${cable.tube_size_fibers || 12}f per tube</td></tr>
-        <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
-        <tr><th>Circuits set</th><td>${state.data.fibers.filter(f => fiberIds.has(f.id) && f.circuit_name).length} of ${cable.fiber_count}</td></tr>
-        <tr><th>Route length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
-        <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
-      </tbody>
-    </table>
-    ${cable.path_geojson ? `
-      <div style="margin-top:8px;font-size:11px;display:flex;gap:6px">
-        <button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>
-      </div>` : ''}
 
-    <!-- 5.B.4 — Per-fiber path list with collapsible tube groups -->
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+    <!-- ── 2. Quick stats ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;gap:6px">
+        ${statCard('Total fibers', cable.fiber_count,
+          `<span style="color:var(--vetro-success)">${totalSpliced}sp</span> · <span style="color:var(--vetro-text-muted)">${totalDead}dead</span>`
+        )}
+        ${statCard('Closures on route', closuresAlongRoute.length, closuresAlongRoute.length ? '' : 'none')}
+        ${statCard('Circuits set', circuitsSet, `of ${cable.fiber_count}`)}
+      </div>
+    </div>
+
+    <!-- ── 3. Route summary ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Route</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;flex-wrap:wrap">
+        ${fromLoc
+          ? `<a href="#" style="font-weight:600" onclick="event.preventDefault();selectThing('location','${fromLoc.id}')">${esc(fromLoc.name)}</a>`
+          : `<span style="color:var(--vetro-text-muted)">unrouted</span>`}
+        <i class="fa-solid fa-arrow-right" style="color:var(--vetro-text-muted);font-size:10px"></i>
+        ${toLoc
+          ? `<a href="#" style="font-weight:600" onclick="event.preventDefault();selectThing('location','${toLoc.id}')">${esc(toLoc.name)}</a>`
+          : `<span style="color:var(--vetro-text-muted)">unrouted</span>`}
+      </div>
+      ${cable.path_geojson ? `
+        <button class="btn btn-sm" style="margin-top:6px;font-size:10px" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>` : ''}
+      ${cable.notes ? `<div style="margin-top:4px;font-size:11px;color:var(--vetro-text-secondary);font-style:italic">${esc(cable.notes)}</div>` : ''}
+    </div>
+
+    <!-- ── 4. Fiber-by-fiber table ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:11px;font-weight:600">Fiber paths</span>
-        <button class="btn btn-sm" onclick="toggleEl('fiber-paths-${cableId}')" style="font-size:10px;padding:2px 8px">
-          <i class="fa-solid fa-chevron-down"></i> Show/hide
-        </button>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Fiber paths</div>
+        <button class="btn btn-sm" onclick="toggleEl('fiber-paths-${cableId}')" style="font-size:9px;padding:1px 6px"><i class="fa-solid fa-chevron-down"></i> Show</button>
       </div>
       <div id="fiber-paths-${cableId}" style="display:none">
         ${tubes.map(tube => {
-          const fibersInTube = state.data.fibers
-            .filter(f => f.buffer_tube_id === tube.id)
-            .sort((a,b) => a.position - b.position);
+          const fibersInTube = state.data.fibers.filter(f => f.buffer_tube_id === tube.id).sort((a,b)=>a.position-b.position);
           const abbrev = TIA_598_ABBREV[tube.color] || '';
           return `<details style="margin-bottom:4px">
-            <summary style="font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 0">
+            <summary style="font-size:10px;font-weight:600;color:var(--vetro-text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;padding:3px 0;min-height:24px">
               <span class="fc fc-${tube.color}"></span>${abbrev} T${tube.position} · ${fibersInTube.length}f
             </summary>
             <div style="padding-left:10px;margin-top:2px">
               ${fibersInTube.map(f => {
                 const fSplices = state.data.splices.filter(s => s.fiber_a_id === f.id || s.fiber_b_id === f.id);
-                const status = fSplices.length === 0 ? 'unspliced'
+                const status = fSplices.length === 0 ? 'dead'
                              : fSplices.length === 1 ? 'end-spliced'
-                             : 'through-spliced';
-                const statusColor = status === 'unspliced' ? 'var(--text-muted)'
-                                  : status === 'through-spliced' ? 'var(--success)' : 'var(--primary)';
-                return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:10px">
+                             : 'through';
+                const statusColor = status === 'dead' ? 'var(--vetro-text-muted)'
+                                  : status === 'through' ? 'var(--vetro-success)' : 'var(--vetro-primary)';
+                return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:10px;min-height:22px;padding:1px 0">
                   <span class="fc fc-${f.color}" style="width:10px;height:10px;flex-shrink:0"></span>
                   <span style="flex:1">${f.position}${f.circuit_name ? ' · ' + esc(f.circuit_name) : ''}</span>
-                  <span style="color:${statusColor};font-size:9px">${status}</span>
-                  <button class="btn btn-sm" style="padding:1px 5px;font-size:9px" title="Trace this fiber's end-to-end path"
+                  <span style="color:${statusColor};font-size:9px;font-weight:600">${status}</span>
+                  <button class="btn btn-sm" style="padding:1px 5px;font-size:9px" title="Trace end-to-end path"
                     onclick="traceFiberPath('${f.id}')"><i class="fa-solid fa-route"></i></button>
                 </div>`;
               }).join('')}
@@ -2247,9 +2287,44 @@ function renderCableInspector(cableId) {
       </div>
     </div>
 
-    <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
-      Fiber count is locked after creation. To re-size, delete and re-add.
+    <!-- ── 5. Closures along route ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Closures along route</div>
+      ${closuresAlongRoute.length ? closuresAlongRoute.map(cl => {
+        const clLoc = state.data.locations.find(l => l.id === cl.location_id);
+        const clSplices = state.data.splices.filter(s => state.data.trays.find(t => t.id === s.tray_id && t.closure_id === cl.id)).length;
+        return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:3px 0;min-height:28px">
+          <i class="fa-solid fa-box" style="color:var(--vetro-primary);font-size:10px"></i>
+          <a href="#" style="flex:1" onclick="event.preventDefault();selectThing('closure','${cl.id}')">${esc(cl.model||'Closure')}</a>
+          <span style="font-size:10px;color:var(--vetro-text-muted)">${esc(clLoc?.name||'?')} · ${clSplices} splices</span>
+        </div>`;
+      }).join('') : '<div style="font-size:11px;color:var(--vetro-text-muted)">No closures found on route endpoints.</div>'}
     </div>
+
+    <!-- ── 6. Bill of Materials summary ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Bill of Materials</div>
+      <table class="table" style="font-size:11px">
+        <tbody>
+          <tr><th>Cable type</th><td>${esc(cable.construction_type||'—')}</td></tr>
+          <tr><th>Fiber count</th><td>${cable.fiber_count}f</td></tr>
+          <tr><th>Length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
+          <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part||'—')}</td></tr>
+          <tr><th>Splices (total)</th><td>${state.data.splices.filter(s=>fiberIds.has(s.fiber_a_id)||fiberIds.has(s.fiber_b_id)).length}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── 7. Action bar (sticky) ── -->
+    <div style="padding:10px 12px;background:var(--vetro-bg-panel);border-top:2px solid var(--vetro-divider);display:flex;gap:5px;flex-wrap:wrap;position:sticky;bottom:0;z-index:5">
+      <button class="btn btn-sm" onclick="openEditCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="openStrandMetadataEditor('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-list-check"></i> Edit circuits</button>
+      ${cable.path_geojson ? `<button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path</button>` : ''}
+      <button class="btn btn-sm" onclick="traceFiberPath(${JSON.stringify(allFibers[0]?.id||null)})" ${!allFibers.length?'disabled':''}><i class="fa-solid fa-route"></i> Trace fiber</button>
+      ${closuresAlongRoute.length ? `<button class="btn btn-sm" onclick="selectThing('closure','${closuresAlongRoute[0].id}')"><i class="fa-solid fa-file-pdf"></i> Splicer doc</button>` : ''}
+      <button class="btn btn-sm btn-danger" onclick="deleteCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
+    </div>
+    <div style="padding:6px 12px;font-size:10px;color:var(--vetro-text-muted)">Fiber count is locked after creation. Delete and re-add to resize.</div>
   `;
 }
 
