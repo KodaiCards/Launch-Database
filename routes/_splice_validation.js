@@ -186,12 +186,17 @@ function ruleEmptyClosure(h) {
   // A closure with zero splices and zero trays-with-fibers-touching it
   // is suspicious — it might be a placeholder, but more often it's a
   // forgotten add. Warn.
+  // 5.B.3: also count trayless closure-level splices.
   const issues = [];
   const splicesByClosure = new Map();
   for (const s of h.splices) {
-    const tray = h.trays.find(t => t.id === s.tray_id);
-    if (!tray) continue;
-    splicesByClosure.set(tray.closure_id, (splicesByClosure.get(tray.closure_id) || 0) + 1);
+    if (s.tray_id) {
+      const tray = h.trays.find(t => t.id === s.tray_id);
+      if (!tray) continue;
+      splicesByClosure.set(tray.closure_id, (splicesByClosure.get(tray.closure_id) || 0) + 1);
+    } else if (s.closure_id) {
+      splicesByClosure.set(s.closure_id, (splicesByClosure.get(s.closure_id) || 0) + 1);
+    }
   }
   for (const cl of h.closures) {
     const count = splicesByClosure.get(cl.id) || 0;
@@ -204,6 +209,30 @@ function ruleEmptyClosure(h) {
         closure_id: cl.id,
       });
     }
+  }
+  return issues;
+}
+
+// 5.B.3 — Warn when a closure has trayless (loose) splices for visibility.
+function ruleClosureHasLooseSplices(h) {
+  const issues = [];
+  const looseByClosure = new Map();
+  for (const s of h.splices) {
+    if (!s.tray_id && s.closure_id) {
+      looseByClosure.set(s.closure_id, (looseByClosure.get(s.closure_id) || 0) + 1);
+    }
+  }
+  for (const [closureId, count] of looseByClosure) {
+    const cl = h.closures.find(c => c.id === closureId);
+    if (!cl) continue;
+    const loc = h.locations.find(l => l.id === cl.location_id);
+    issues.push({
+      severity: 'warning',
+      code: 'closure_has_loose_splices',
+      message: `Closure "${cl.model || 'Closure'}" at ${loc?.name || '?'} has ${count} trayless splice(s). These are intentional but won't appear in per-tray reports.`,
+      closure_id: closureId,
+      count,
+    });
   }
   return issues;
 }
@@ -261,14 +290,26 @@ function ruleStrandStateConflicts(h) {
 
   // Build a set of (cable_id|location_id|strand_position) keys that have
   // a splice row at this location. A splice's location is found via
-  // tray → closure → location.
+  // tray → closure → location (tray-based) OR closure_id → location
+  // (closure-level trayless) OR location_id directly (location-level trayless).
   const splicedKeys = new Set();
   for (const s of h.splices) {
-    const tray = h.trays.find(t => t.id === s.tray_id);
-    if (!tray) continue;
-    const closure = h.closures.find(c => c.id === tray.closure_id);
-    if (!closure) continue;
-    const locId = closure.location_id;
+    let locId;
+    if (s.tray_id) {
+      const tray = h.trays.find(t => t.id === s.tray_id);
+      if (!tray) continue;
+      const closure = h.closures.find(c => c.id === tray.closure_id);
+      if (!closure) continue;
+      locId = closure.location_id;
+    } else if (s.closure_id) {
+      const closure = h.closures.find(c => c.id === s.closure_id);
+      if (!closure) continue;
+      locId = closure.location_id;
+    } else if (s.location_id) {
+      locId = s.location_id;
+    } else {
+      continue;
+    }
     for (const fid of [s.fiber_a_id, s.fiber_b_id]) {
       const f = h.fibers.find(x => x.id === fid);
       if (!f) continue;
@@ -453,6 +494,42 @@ function ruleSplitterUnwired(h) {
   return issues;
 }
 
+// ─── Phase 4.7 — fusion-splicer loss threshold rule ──────────────────────
+
+function ruleSpliceLossThreshold(h) {
+  // Warn when a bound loss record exceeds the OSP "investigate" threshold
+  // (0.25 dB) and error when it exceeds the "redo" threshold (0.5 dB).
+  // The hydrate annotates each splice with `loss_db` from its most-recent
+  // bound loss record; we just read that field here.
+  const issues = [];
+  const splices = h.splices || [];
+  for (const s of splices) {
+    if (s.loss_db == null) continue;
+    const db = Number(s.loss_db);
+    if (isNaN(db)) continue;
+    if (db > 0.5) {
+      issues.push({
+        severity: 'error',
+        code: 'splice_loss_above_threshold',
+        message: `Splice has measured loss of ${db.toFixed(3)} dB, which exceeds the 0.50 dB redo threshold. The splice should be redone.`,
+        splice_id: s.id,
+        splice_loss_db: db,
+        threshold: 0.5,
+      });
+    } else if (db > 0.25) {
+      issues.push({
+        severity: 'warning',
+        code: 'splice_loss_above_threshold',
+        message: `Splice has measured loss of ${db.toFixed(3)} dB, which exceeds the 0.25 dB investigate threshold. Verify the splice quality.`,
+        splice_id: s.id,
+        splice_loss_db: db,
+        threshold: 0.25,
+      });
+    }
+  }
+  return issues;
+}
+
 // ─── Runner ──────────────────────────────────────────────────────────────
 
 const RULES = [
@@ -469,6 +546,8 @@ const RULES = [
   ruleStandardColorOrder,
   ruleSplitterInputConflict,
   ruleSplitterUnwired,
+  ruleClosureHasLooseSplices,
+  ruleSpliceLossThreshold,
 ];
 
 function validateProject(hydrate) {

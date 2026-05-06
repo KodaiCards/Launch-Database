@@ -5,30 +5,140 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Launch Fiber — Splice Matrix</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- Inter font — VETRO-matched typography (TBD-VERIFY exact stack) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <!-- Konva pinned so a CDN release can't silently change canvas behavior. -->
 <script src="https://cdn.jsdelivr.net/npm/konva@9.3.16/konva.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
-/* Token system mirrors design.html — light defaults + dark overrides. */
+/* ── VETRO FiberMap design tokens (Phase 5.C.1) ─────────────────────────────
+   Brand primary: inferred #003F72 (TBD-VERIFY).
+   Route active:  CONFIRMED #68BD45 from public fiber map source code.
+   All other values inferred from research/07_vetro_visual_match.md.         */
 :root{
-  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;--primary-text:#FFFFFF;
-  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
-  --text:#222222;--text-secondary:#555555;--text-muted:#6C757D;
-  --border-strong:#CED4DA;--border-weak:#DEE2E6;
-  --success:#28A745;--success-light:#D4EDDA;--success-text:#155724;
-  --warning:#FFC107;--warning-light:#FFF3CD;--warning-text:#856404;
-  --danger:#DC3545;--danger-light:#F8D7DA;--danger-text:#721C24;
-  --info:#17A2B8;--info-light:#D1ECF1;--info-text:#0C5460;
-  --white:#FFFFFF;--gray-light:#F0F0F0;--gray-border:#DEE2E6;
+  /* ── VETRO brand colors ── */
+  --vetro-primary:#003F72;
+  --vetro-primary-dark:#002B50;
+  --vetro-primary-light:#1A6AAF;
+  --vetro-route-active:#68BD45;      /* CONFIRMED */
+  --vetro-route-inactive:#9CA3AF;
+  --vetro-route-alert:#EF4444;
+
+  /* ── Backgrounds ── */
+  --vetro-bg:#FAFAFA;
+  --vetro-canvas-bg:#FFFFFF;
+  --vetro-bg-panel:#FFFFFF;
+  --vetro-bg-panel-secondary:#F0F2F5;
+  --vetro-bg-hover:#EBF2FF;
+
+  /* ── Dividers ── */
+  --vetro-divider:#E5E7EB;
+
+  /* ── Text hierarchy ── */
+  --vetro-text-primary:#1F2937;
+  --vetro-text-secondary:#6B7280;
+  --vetro-text-muted:#9CA3AF;
+  --vetro-text-link:#1A6AAF;
+
+  /* ── Status ── */
+  --vetro-success:#10B981;
+  --vetro-warning:#F59E0B;
+  --vetro-error:#EF4444;
+  --vetro-info:#3B82F6;
+
+  /* ── Typography ── */
+  --font-stack:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --text-h1:1.5rem;
+  --text-h2:1.125rem;
+  --text-h3:0.9375rem;
+  --text-body:0.8125rem;
+  --text-small:0.75rem;
+  --text-micro:0.625rem;
+
+  /* ── Spacing (4-px grid) ── */
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-6:24px;
+  --space-8:32px;
+
+  /* ── Radii ── */
+  --radius-sm:3px;
+  --radius-md:6px;
+  --radius-lg:10px;
+  --radius-pill:999px;
+
+  /* ── Shadows ── */
+  --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
+  --shadow-modal:0 8px 32px rgba(0,0,0,0.20);
+
+  /* ── Layout dimensions ── */
+  --left-rail-width:260px;
+  --inspector-width:320px;
+  --header-height:52px;
+  --attr-table-height:40vh;
+
+  /* ── Inspector field density ── */
+  --field-row-min-height:28px;
+  --field-font:13px;
+  --label-font:12px;
+
+  /* ── Legacy aliases — incremental migration so old var() refs keep working ── */
+  --primary:var(--vetro-primary);
+  --primary-dark:var(--vetro-primary-dark);
+  --primary-light:var(--vetro-bg-hover);
+  --primary-text:#FFFFFF;
+  --surface-1:var(--vetro-bg);
+  --surface-2:var(--vetro-bg-panel);
+  --surface-3:var(--vetro-bg-panel-secondary);
+  --surface:var(--vetro-bg-panel);
+  --text:var(--vetro-text-primary);
+  --text-secondary:var(--vetro-text-secondary);
+  --text-muted:var(--vetro-text-muted);
+  --border-strong:#CED4DA;
+  --border-weak:var(--vetro-divider);
+  --success:var(--vetro-success);--success-light:#D1FAE5;--success-text:#065F46;
+  --warning:var(--vetro-warning);--warning-light:#FEF3C7;--warning-text:#92400E;
+  --danger:var(--vetro-error);--danger-light:#FEE2E2;--danger-text:#991B1B;
+  --info:var(--vetro-info);--info-light:#DBEAFE;--info-text:#1E40AF;
+  --white:#FFFFFF;--gray-light:#F0F2F5;--gray-border:var(--vetro-divider);
+
   /* Fiber color literals — TIA-598 — used for swatches. */
   --fc-blue:#1660C9;--fc-orange:#E67E22;--fc-green:#27AE60;--fc-brown:#8B5A2B;
   --fc-slate:#7F8C8D;--fc-white:#F5F5F5;--fc-red:#C0392B;--fc-black:#000;
   --fc-yellow:#F1C40F;--fc-violet:#8E44AD;--fc-rose:#E91E63;--fc-aqua:#1ABC9C;
 }
+
+/* ── Dark mode — override VETRO tokens with dark-surface equivalents ───────
+   Research/07 did not cover dark mode; values are hand-tuned for contrast.  */
 html[data-theme="dark"]{
+  --vetro-primary:#4A90D9;
+  --vetro-primary-dark:#1B5FA0;
+  --vetro-primary-light:#1E3A5C;
+  --vetro-route-active:#68BD45;        /* keep VETRO green in dark mode */
+  --vetro-route-inactive:#6B7280;
+  --vetro-bg:#1A1F26;
+  --vetro-canvas-bg:#1A1F26;
+  --vetro-bg-panel:#242B36;
+  --vetro-bg-panel-secondary:#1F2630;
+  --vetro-bg-hover:#1E3A5C;
+  --vetro-divider:#2D343F;
+  --vetro-text-primary:#E6EAF0;
+  --vetro-text-secondary:#B8BFC9;
+  --vetro-text-muted:#8A95A4;
+  --vetro-text-link:#60A5FA;
+  --vetro-success:#3DD174;
+  --vetro-warning:#FFD43B;
+  --vetro-error:#FF6B7A;
+  --vetro-info:#5BC0DE;
+
+  /* Legacy aliases in dark mode */
   --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;--primary-text:#FFFFFF;
-  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;
+  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;--surface:#242B36;
   --text:#E6EAF0;--text-secondary:#B8BFC9;--text-muted:#8A95A4;
   --border-strong:#3A4250;--border-weak:#2D343F;
   --success:#3DD174;--success-light:#1F4030;--success-text:#9AE5B5;
@@ -37,13 +147,15 @@ html[data-theme="dark"]{
   --info:#5BC0DE;--info-light:#0E3340;--info-text:#9EDFEF;
   --white:#242B36;--gray-light:#1F2630;--gray-border:#3A4250;
 }
-html,body{height:100%;background:var(--surface-1);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px}
+html,body{height:100%;background:var(--vetro-bg);color:var(--vetro-text-primary);font-family:var(--font-stack);font-size:var(--field-font)}
 
 a{color:var(--primary);text-decoration:none}
 a:hover{text-decoration:underline}
 
-/* Header */
-.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:0 16px;height:48px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+/* ── 5.C.3 VETRO layout chrome ───────────────────────────────────────────── */
+
+/* Header — VETRO navy (#003F72) solid bar, 52px */
+.header{background:var(--vetro-primary);color:#fff;padding:0 16px;height:var(--header-height);display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);position:fixed;top:0;left:0;right:0;z-index:300}
 .header .logo{font-weight:700;font-size:14px;letter-spacing:0.3px;display:flex;align-items:center;gap:8px}
 .header .divider{width:1px;height:22px;background:rgba(255,255,255,.25)}
 .header .title{font-size:13px;font-weight:500;flex:1;display:flex;align-items:center;gap:8px}
@@ -51,23 +163,108 @@ a:hover{text-decoration:underline}
 .user-pill{font-size:11px;color:rgba(255,255,255,.85);padding:4px 10px;border:1px solid rgba(255,255,255,.25);border-radius:12px;cursor:pointer}
 .user-pill:hover{background:rgba(255,255,255,.12)}
 
-/* Layout */
-.app{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 48px)}
-.sidebar{background:var(--surface-2);border-right:1px solid var(--border-weak);overflow:auto;padding:10px}
-.canvas-pane{background:var(--surface-3);position:relative;overflow:hidden}
-.inspector{background:var(--surface-2);border-left:1px solid var(--border-weak);overflow:auto;padding:10px}
+/* App shell — fixed under the header */
+.app{position:fixed;top:var(--header-height);left:0;right:0;bottom:0;display:flex;flex-direction:row}
 
-/* Sidebar — project list */
+/* ── Left rail (260px, VETRO Map Data panel) ── */
+.sidebar{
+  width:var(--left-rail-width);
+  flex:0 0 var(--left-rail-width);
+  background:var(--vetro-bg-panel);
+  border-right:1px solid var(--vetro-divider);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:10px;
+  box-shadow:var(--shadow-panel);
+  z-index:200;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Rail section headers — VETRO "Map Data" style (uppercase, muted, 12px) */
 .sidebar-section{margin-bottom:14px}
-.sidebar-section h3{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.sidebar-section h3{font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--vetro-text-muted);margin-bottom:6px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+
+/* Layer tree rows */
 .proj-list{list-style:none}
-.proj-item{padding:8px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:6px}
-.proj-item:hover{background:var(--surface-1)}
-.proj-item.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
-html[data-theme="dark"] .proj-item.active{color:var(--text)}
+.proj-item{padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:var(--field-row-min-height)}
+.proj-item:hover{background:var(--vetro-bg-hover)}
+.proj-item.active{background:var(--vetro-bg-hover);border-color:var(--vetro-primary);color:var(--vetro-primary)}
+html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .proj-item .name{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.proj-item .badge{font-size:10px;color:var(--text-muted);background:var(--surface-3);padding:1px 5px;border-radius:8px}
-.proj-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
+.proj-item .badge{font-size:10px;color:var(--vetro-text-muted);background:var(--vetro-bg-panel-secondary);padding:1px 5px;border-radius:8px}
+.proj-meta{font-size:10px;color:var(--vetro-text-muted);margin-top:2px}
+
+/* ── Canvas pane — fills remaining space ── */
+.canvas-pane{flex:1 1 0;min-width:0;background:var(--vetro-bg-panel-secondary);position:relative;overflow:hidden}
+
+/* ── Right inspector — slide-in from right (320px) ── */
+/* The inspector is kept as a flex child but uses a CSS transition for slide-in. */
+.inspector{
+  width:var(--inspector-width);
+  flex:0 0 var(--inspector-width);
+  background:var(--vetro-bg-panel);
+  border-left:1px solid var(--vetro-divider);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:10px;
+  box-shadow:var(--shadow-panel);
+  z-index:200;
+  /* Slide-in transition — 220ms ease-out per research/07 section 9 */
+  transition:width 0.22s ease-out,flex-basis 0.22s ease-out,opacity 0.22s ease-out;
+}
+/* Inspector hidden state — collapse to 0 width */
+.inspector.inspector-closed{
+  width:0;
+  flex-basis:0;
+  overflow:hidden;
+  opacity:0;
+  padding:0;
+  border-left:none;
+}
+
+/* ── Bottom attribute table toggle ── */
+/* The toggle button is a small bar docked at the bottom of the canvas pane. */
+.attr-table-toggle{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:28px;
+  background:var(--vetro-primary);
+  color:#fff;
+  border:none;
+  font-size:11px;
+  font-weight:600;
+  font-family:var(--font-stack);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  z-index:15;
+  letter-spacing:0.3px;
+  transition:background 0.12s;
+}
+.attr-table-toggle:hover{background:var(--vetro-primary-dark)}
+
+/* The docked bottom attribute table panel */
+.bottom-attr-table{
+  position:absolute;
+  bottom:28px; /* sits just above the toggle bar */
+  left:0;
+  right:0;
+  height:var(--attr-table-height);
+  background:var(--vetro-bg-panel);
+  border-top:2px solid var(--vetro-primary);
+  box-shadow:0 -2px 8px rgba(0,0,0,0.12);
+  z-index:14;
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+}
+.bottom-attr-table.is-open{display:flex}
+.bottom-attr-table-body{flex:1;overflow:auto}
 
 /* Toolbar (above canvas) */
 .toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
@@ -191,6 +388,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .fiber-cell{font-size:10px;padding:4px;text-align:center;border:1px solid var(--border-weak);border-radius:3px;cursor:pointer;background:var(--white);user-select:none}
 .fiber-cell:hover{background:var(--primary-light);border-color:var(--primary)}
 .fiber-cell.selected{background:var(--primary);color:#fff;border-color:var(--primary-dark)}
+/* Phase 5A.4 — multi-select: thick blue outline, relative for badge */
+.fiber-cell.sp-selected{border:2.5px solid var(--primary);background:var(--primary-light);position:relative}
+.fiber-cell.sp-selected.in-use{border-color:var(--warning);background:var(--warning-light)}
+.sp-order{position:absolute;top:-5px;right:-5px;background:var(--primary);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:0 3px;min-width:12px;text-align:center;line-height:14px}
 .fiber-cell.in-use{opacity:0.45;cursor:not-allowed}
 .fiber-cell.in-use:hover{background:var(--white);border-color:var(--border-weak)}
 
@@ -205,14 +406,13 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .toast.error{background:var(--danger);color:#fff}
 .toast.success{background:var(--success);color:#fff}
 
-/* Mobile — inspector slides over from right */
+/* Mobile — collapse sidebar to overlay, inspector full-width overlay */
 @media (max-width:900px){
-  .app{grid-template-columns:1fr}
-  .sidebar,.inspector{position:absolute;top:48px;bottom:0;width:80%;z-index:10;display:none}
-  .sidebar{left:0}
-  .sidebar.open{display:block}
-  .inspector{right:0}
-  .inspector.open{display:block}
+  .sidebar{position:fixed;top:var(--header-height);left:0;bottom:0;width:80%;z-index:400;transform:translateX(-100%);transition:transform 0.22s ease-out}
+  .sidebar.open{transform:translateX(0)}
+  .inspector{position:fixed;top:var(--header-height);right:0;bottom:0;width:90%;z-index:400;
+              transform:translateX(100%);transition:transform 0.22s ease-out;flex-basis:auto}
+  .inspector:not(.inspector-closed){transform:translateX(0)}
 }
 </style>
 </head>
@@ -237,8 +437,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 <div class="app">
 
-  <!-- ─── Left sidebar: project list ─── -->
+  <!-- ─── Left rail: VETRO Map Data panel ─── -->
   <aside class="sidebar" id="sidebar">
+    <!-- VETRO-style "Map Data" section label -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:10px">Map Data</div>
     <div class="sidebar-section">
       <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
       <div style="margin-bottom:8px">
@@ -262,9 +464,35 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
       </div>
     </div>
+    <!-- 5.B.2 — "Recently imported" filter chip shown after an import lands -->
+    <div id="recent-import-chip-wrap" style="display:none;margin-bottom:8px;padding:0 2px">
+      <button id="recent-import-chip" class="btn btn-sm"
+        style="width:100%;background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-size:11px"
+        onclick="toggleRecentlyImportedFilter()">
+        <i class="fa-solid fa-clock-rotate-left"></i> Recently imported
+        <span id="recent-import-chip-count" class="small" style="margin-left:4px"></span>
+      </button>
+    </div>
     <div class="sidebar-section" id="proj-imports" style="display:none">
       <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
       <div id="proj-imports-body" style="font-size:11px"></div>
+    </div>
+    <!-- Phase 4.7 — Loss records panel -->
+    <div class="sidebar-section" id="proj-loss-records" style="display:none">
+      <h3 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleLossRecordsPanel()">
+        Loss records <span id="proj-loss-count" class="small"></span>
+        <i class="fa-solid fa-chevron-down" id="proj-loss-chevron" style="font-size:10px;color:var(--text-muted)"></i>
+      </h3>
+      <div id="proj-loss-body">
+        <div style="margin-bottom:6px;font-size:11px;color:var(--text-secondary)">
+          Fusion-splicer measurements from Fujikura Splice+ or compatible exports.
+        </div>
+        <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:8px" onclick="openLossRecordUpload()">
+          <i class="fa-solid fa-upload"></i> Upload Splice+ JSON
+        </button>
+        <div id="proj-loss-stats" style="font-size:11px;margin-bottom:6px"></div>
+        <div id="proj-loss-unbound-list" style="font-size:11px"></div>
+      </div>
     </div>
     <div class="sidebar-section" id="proj-summary" style="display:none">
       <h3>Summary</h3>
@@ -327,10 +555,29 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
       <div id="matrix-table-wrap" style="padding:8px"></div>
     </div>
     <div class="warnings-banner" id="warnings-banner"></div>
+
+    <!-- 5.C.3 — Bottom attribute table (second access path to Matrix data) -->
+    <div class="bottom-attr-table" id="bottom-attr-table">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--vetro-divider);background:var(--vetro-bg-panel);flex-shrink:0">
+        <span style="font-size:11px;font-weight:600;color:var(--vetro-text-primary)"><i class="fa-solid fa-table"></i> Attribute Table</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="bottom-matrix-filter" type="text" placeholder="Filter…" class="input-sm" style="width:140px" oninput="renderBottomAttrTable()">
+          <button class="btn btn-sm" onclick="matrixExportCSV()"><i class="fa-solid fa-download"></i></button>
+          <button class="btn btn-sm" onclick="toggleBottomAttrTable()" title="Close"><i class="fa-solid fa-times"></i></button>
+        </div>
+      </div>
+      <div class="bottom-attr-table-body" id="bottom-attr-table-body"></div>
+    </div>
+
+    <!-- 5.C.3 — Bottom toggle bar: "▲ Attribute table" -->
+    <button class="attr-table-toggle" id="attr-table-toggle" onclick="toggleBottomAttrTable()">
+      <i class="fa-solid fa-chevron-up" id="attr-table-toggle-icon"></i> Attribute table
+    </button>
   </div>
 
-  <!-- ─── Right sidebar: inspector ─── -->
-  <aside class="inspector" id="inspector">
+  <!-- ─── Right inspector: slide-in panel (5.C.3) ─── -->
+  <!-- Starts closed; opens when a feature is selected. -->
+  <aside class="inspector inspector-closed" id="inspector">
     <div id="inspector-empty" class="empty-pane">
       Select a project to begin.<br><br>
       <small>Click a closure on the canvas to view its trays and add splices.</small>
@@ -378,6 +625,14 @@ const state = {
   // Phase 2C #11 — path tracing. Populated by traceFiberPath(); cleared by
   // clearTracePath(). drawCanvasContents() reads this to overlay highlights.
   tracePath: null,      // { fiber_id, chain, circular, over_spliced, warnings }
+  // Phase 5A.2 — per-session dismissed validation warning codes. When the
+  // engineer clicks the X on the warning banner, the current warning codes
+  // are added here. renderWarnings() filters them out until the session ends
+  // (page reload). A warning that was fixed (disappears from validation) is
+  // NOT in the next run's output, so its code is effectively dropped from
+  // the dismissed set automatically — it only re-hides if the same code
+  // comes back AND is still in this set.
+  _dismissedWarningIds: new Set(),
   // Phase 3A — map view state.
   activeView: 'diagram',     // 'diagram' | 'map'
   map: null,                 // MapLibre Map instance
@@ -466,6 +721,13 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = String(s);
   return d.innerHTML;
+}
+
+// 5.B.4 — show/hide a collapsible section by ID.
+function toggleEl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -648,6 +910,7 @@ async function selectProject(id) {
   document.getElementById('proj-actions').style.display = 'block';
   document.getElementById('proj-imports').style.display = 'block';
   refreshImportsList();
+  document.getElementById('proj-loss-records').style.display = 'block';
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
@@ -684,6 +947,7 @@ async function hydrateProject() {
     state.data = data;
     document.getElementById('title-name').textContent = data.project.name;
     renderSummary();
+    renderLossRecordsPanel();
     renderInspector();
     renderCanvas();
     renderWarnings();
@@ -693,6 +957,8 @@ async function hydrateProject() {
     // Phase 4.4 — re-render matrix view if active so inline edits
     // and SSE-pushed changes appear without a manual refresh.
     if (state.activeView === 'matrix') renderMatrixView();
+    // 5.B.2 — refresh the recently-imported chip whenever data changes.
+    renderRecentlyImportedChip();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
     // skips when last version is <10min old or generation hash matches,
     // so this is safe to call after every hydrate without flooding the
@@ -725,22 +991,169 @@ function renderSummary() {
   `;
 }
 
+// Phase 4.7 — Loss records sidebar panel.
+function renderLossRecordsPanel() {
+  const d = state.data;
+  const panelEl = document.getElementById('proj-loss-records');
+  if (!panelEl) return;
+  const records = d?.loss_records || [];
+  panelEl.style.display = records.length || !isReadOnly() ? '' : 'none';
+  if (!d) return;
+
+  const countEl = document.getElementById('proj-loss-count');
+  if (countEl) countEl.textContent = records.length ? `(${records.length})` : '';
+
+  const bound   = records.filter(r => r.bind_method);
+  const unbound = records.filter(r => !r.bind_method);
+  const statsEl = document.getElementById('proj-loss-stats');
+  if (statsEl) {
+    statsEl.innerHTML = records.length
+      ? `<span style="color:var(--success)">${bound.length} bound</span> · <span style="color:var(--danger)">${unbound.length} unbound</span>`
+      : '<span style="color:var(--text-muted)">No records yet.</span>';
+  }
+
+  // Show first 5 unbound records with a "Bind to…" action.
+  const ubEl = document.getElementById('proj-loss-unbound-list');
+  if (!ubEl) return;
+  if (!unbound.length) { ubEl.innerHTML = ''; return; }
+  ubEl.innerHTML = `<div style="font-weight:600;margin-bottom:4px;color:var(--text-muted)">Unbound records</div>` +
+    unbound.slice(0, 5).map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px;background:var(--surface-2);border:1px solid var(--border-weak);border-radius:4px;padding:4px 6px">
+        <div>
+          <div style="font-weight:600">${r.splice_loss_db != null ? Number(r.splice_loss_db).toFixed(3) + ' dB' : '—'}</div>
+          <div style="color:var(--text-muted);font-size:10px">${r.measured_at ? new Date(r.measured_at).toLocaleString() : 'No timestamp'}</div>
+        </div>
+        <button class="btn btn-sm" onclick="openBindLossRecord('${esc(r.id)}')" style="font-size:10px;padding:2px 6px">Bind to…</button>
+      </div>`).join('') +
+    (unbound.length > 5 ? `<div style="color:var(--text-muted)">…and ${unbound.length - 5} more</div>` : '');
+}
+
+let _lossRecordsPanelCollapsed = false;
+function toggleLossRecordsPanel() {
+  _lossRecordsPanelCollapsed = !_lossRecordsPanelCollapsed;
+  const body = document.getElementById('proj-loss-body');
+  const chev = document.getElementById('proj-loss-chevron');
+  if (body) body.style.display = _lossRecordsPanelCollapsed ? 'none' : '';
+  if (chev) chev.style.transform = _lossRecordsPanelCollapsed ? 'rotate(-90deg)' : '';
+}
+
+function openLossRecordUpload() {
+  if (!state.currentId) return;
+  showModal({
+    title: 'Upload Splice+ JSON',
+    submitText: 'Upload',
+    body: `
+      <p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px">
+        Export loss records from your Fujikura Splice+ app and upload the JSON file here.
+        Each record is automatically matched to the nearest planned splice by GPS proximity.
+      </p>
+      <label style="display:block;font-size:12px;font-weight:500;margin-bottom:4px">Splice+ JSON file</label>
+      <input type="file" id="loss-upload-file-input" accept=".json,application/json" style="width:100%;margin-bottom:8px">
+      <div id="loss-upload-modal-status"></div>`,
+    onSubmit: async (close) => { await doUploadLossRecords(close); },
+  });
+}
+
+async function doUploadLossRecords(closeModal) {
+  const input = document.getElementById('loss-upload-file-input');
+  const statusEl = document.getElementById('loss-upload-modal-status');
+  if (!input?.files?.length) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Pick a JSON file first.'; }
+    return;
+  }
+  const file = input.files[0];
+  let text;
+  try { text = await file.text(); } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Cannot read file: ' + e.message; }
+    return;
+  }
+  let records;
+  try {
+    const parsed = JSON.parse(text);
+    records = Array.isArray(parsed) ? parsed : (parsed.records || null);
+    if (!Array.isArray(records)) throw new Error('Expected a JSON array or { records: [...] }');
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Invalid JSON: ' + e.message; }
+    return;
+  }
+  try {
+    const res = await api('/api/splice/projects/' + state.currentId + '/loss-records', 'POST', { records });
+    if (closeModal) closeModal();
+    toast(`Uploaded ${res.inserted} record(s). ${res.auto_bound} auto-bound, ${res.unbound} unbound.`, 'ok');
+    await hydrateProject();
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Upload failed: ' + e.message; }
+  }
+}
+
+async function openBindLossRecord(lossRecordId) {
+  if (!state.data) return;
+  const closures = state.data.closures || [];
+  const locations = state.data.locations || [];
+  const locById = new Map(locations.map(l => [l.id, l]));
+  const closureOpts = closures.map(cl =>
+    `<option value="closure:${esc(cl.id)}">${esc(cl.model || 'Closure')} @ ${esc(locById.get(cl.location_id)?.name || '?')}</option>`
+  ).join('');
+  const locOpts = locations.map(l =>
+    `<option value="location:${esc(l.id)}">${esc(l.name)}</option>`
+  ).join('');
+
+  showModal({
+    title: 'Bind loss record',
+    submitText: 'Bind',
+    body: `
+      <label style="display:block;font-size:12px;font-weight:500;margin-bottom:4px">Bind to</label>
+      <select id="bind-loss-target" class="input-sm" style="width:100%;margin-bottom:8px">
+        <option value="">— select —</option>
+        <optgroup label="Closures">${closureOpts}</optgroup>
+        <optgroup label="Locations">${locOpts}</optgroup>
+      </select>
+      <div id="bind-loss-status"></div>`,
+    onSubmit: async (close) => {
+      const sel = document.getElementById('bind-loss-target')?.value || '';
+      const statusEl = document.getElementById('bind-loss-status');
+      if (!sel) { if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Pick a target.'; } return; }
+      const [kind, id] = sel.split(':');
+      const body = kind === 'closure' ? { closure_id: id } : { location_id: id };
+      try {
+        await api('/api/splice/loss-records/' + lossRecordId + '/bind', 'PUT', body);
+        close();
+        toast('Loss record bound.', 'ok');
+        await hydrateProject();
+      } catch(e) {
+        if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='Failed: ' + e.message; }
+      }
+    },
+  });
+}
+
 function renderWarnings() {
   const v = state.data?.validation;
   const banner = document.getElementById('warnings-banner');
   if (!v) { banner.classList.remove('show'); return; }
-  const errCount = v.summary?.error_count || 0;
-  const warnCount = v.summary?.warning_count || 0;
-  // Update Export PDF button state — fatal errors block export, warnings
-  // don't. The button stays clickable with warnings (designer's choice).
+
+  // Filter out warnings/errors whose codes were dismissed this session.
+  // Errors are included in the dismissed-id check too so the engineer can
+  // silence known-broken states they're mid-fix on. The dismissed set is
+  // keyed by `code` — each validation rule fires a distinct code.
+  const dismissed = state._dismissedWarningIds;
+  const visibleErrors   = (v.errors   || []).filter(e => !dismissed.has(e.code));
+  const visibleWarnings = (v.warnings  || []).filter(w => !dismissed.has(w.code));
+  const errCount  = visibleErrors.length;
+  const warnCount = visibleWarnings.length;
+
+  // Update Export PDF button state — use the FULL (undismissed) count so the
+  // PDF gate is based on real validation, not the filtered view.
   const exportBtn = document.getElementById('btn-export');
-  if (errCount > 0) {
+  const realErrors = v.summary?.error_count || 0;
+  if (realErrors > 0) {
     exportBtn.disabled = true;
-    exportBtn.title = `Fix ${errCount} fatal error(s) before exporting (or pass &force=1)`;
+    exportBtn.title = `Fix ${realErrors} fatal error(s) before exporting (or pass &force=1)`;
   } else {
     exportBtn.disabled = false;
-    exportBtn.title = warnCount > 0 ? `Exporting with ${warnCount} warning(s)` : 'Export PDF';
+    exportBtn.title = (v.summary?.warning_count || 0) > 0 ? `Exporting with ${v.summary.warning_count} warning(s)` : 'Export PDF';
   }
+
   if (errCount === 0 && warnCount === 0) {
     banner.classList.remove('show', 'error', 'warn');
     return;
@@ -748,13 +1161,33 @@ function renderWarnings() {
   const isError = errCount > 0;
   banner.className = 'warnings-banner show ' + (isError ? 'error' : 'warn');
   banner.innerHTML = `
-    <span><i class="fa-solid fa-${isError?'circle-exclamation':'triangle-exclamation'}"></i>
+    <span style="cursor:pointer;flex:1" id="warnings-banner-clickable">
+      <i class="fa-solid fa-${isError?'circle-exclamation':'triangle-exclamation'}"></i>
       <b>${errCount} error${errCount===1?'':'s'}</b> · ${warnCount} warning${warnCount===1?'':'s'}
       ${isError ? '<span class="validation-pill">PDF export blocked</span>' : ''}
     </span>
-    <span style="font-size:11px;opacity:0.8">click for details →</span>
+    <span style="font-size:11px;opacity:0.8;cursor:pointer;margin-right:4px" id="warnings-banner-details">details →</span>
+    <button id="warnings-banner-dismiss" title="Dismiss for this session"
+      style="background:none;border:none;cursor:pointer;font-size:14px;opacity:0.7;padding:0 2px;line-height:1;color:inherit"
+      aria-label="Dismiss warnings">✕</button>
   `;
-  banner.onclick = openValidationDrawer;
+  // Click on text/details → open drawer.
+  banner.onclick = null;
+  document.getElementById('warnings-banner-clickable').onclick = (e) => {
+    e.stopPropagation();
+    openValidationDrawer();
+  };
+  document.getElementById('warnings-banner-details').onclick = (e) => {
+    e.stopPropagation();
+    openValidationDrawer();
+  };
+  // X → dismiss all currently-visible codes for this session.
+  document.getElementById('warnings-banner-dismiss').onclick = (e) => {
+    e.stopPropagation();
+    for (const item of visibleErrors)   dismissed.add(item.code);
+    for (const item of visibleWarnings) dismissed.add(item.code);
+    banner.classList.remove('show', 'error', 'warn');
+  };
 }
 
 function openValidationDrawer() {
@@ -896,7 +1329,8 @@ function openSSE(projectId) {
    'project_updated','lock_acquired','lock_released','lock_taken_over',
    'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired',
    'cable_state_updated','cable_state_deleted',
-   'closures_bulk_deleted']
+   'closures_bulk_deleted',
+   'loss_records_added', 'loss_records_removed']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Refresh the imports sidebar when the master designer or another
   // engineer takes action on a pending import.
@@ -1510,18 +1944,24 @@ function drawCanvasContents() {
   // When a strand path is active, glow every cable in the chain and accent
   // every closure that hosts a splice-to-next hop.
   if (state.tracePath && state.tracePath.chain && state.tracePath.chain.length) {
-    const TRACE_CABLE_COLOR  = '#FF6B00';  // vivid orange — high contrast on both themes
-    const TRACE_CLOSURE_COLOR = '#FF6B00';
+    const TRACE_CABLE_COLOR    = '#FF6B00';  // vivid orange — spliced hops
+    const TRACE_CLOSURE_COLOR  = '#FF6B00';
+    const TRACE_EXPRESS_COLOR  = '#00BCD4';  // teal/cyan — express (pass-through) locations
 
-    // Collect the set of cable IDs and closure IDs that appear in the chain.
-    const traceCableIds   = new Set();
-    const traceClosureIds = new Set();
+    // Collect the set of cable IDs, closure IDs, and express location IDs.
+    const traceCableIds      = new Set();
+    const traceClosureIds    = new Set();
+    const traceExpressLocIds = new Set(); // locations where fiber passes through unspliced
 
     for (const entry of state.tracePath.chain) {
       const f = entry.fiber;
       if (f.cable_id) traceCableIds.add(f.cable_id);
       if (entry.splice_to_next && entry.splice_to_next.closure_id) {
         traceClosureIds.add(entry.splice_to_next.closure_id);
+      }
+      // pass_through_locations added by Phase 5A.5 cable-graph walk
+      if (Array.isArray(entry.pass_through_locations)) {
+        for (const ptl of entry.pass_through_locations) traceExpressLocIds.add(ptl.id);
       }
     }
 
@@ -1555,6 +1995,27 @@ function drawCanvasContents() {
       );
       const isRich = cablesHere.length >= 3;
       const ringW = isRich ? 208 : 128;
+
+      // Express (pass-through) location — teal dashed ring above/around closures.
+      // Drawn first so splice rings render on top.
+      if (traceExpressLocIds.has(loc.id)) {
+        const ptRingW = ringW + 16;
+        traceLayer.add(new Konva.Rect({
+          x: x - ptRingW / 2, y: 372,
+          width: ptRingW, height: list.length ? (list.length * 110 + 8) : 40,
+          stroke: TRACE_EXPRESS_COLOR, strokeWidth: 2,
+          dash: [6, 4],
+          fill: 'rgba(0,188,212,0.06)',
+          cornerRadius: 8, listening: false,
+        }));
+        // Small label: "express through"
+        traceLayer.add(new Konva.Text({
+          x: x - ptRingW / 2 + 4, y: 374,
+          text: '⟶ express',
+          fontSize: 9, fill: TRACE_EXPRESS_COLOR, listening: false,
+        }));
+      }
+
       list.forEach((cl, idx) => {
         if (!traceClosureIds.has(cl.id)) return;
         const baseY = 380 + idx * 110;
@@ -1618,20 +2079,78 @@ function selectThing(type, id) {
   }
 }
 
+// 5.C.3 — Toggle the bottom attribute table docked panel.
+function toggleBottomAttrTable() {
+  const panel = document.getElementById('bottom-attr-table');
+  const icon  = document.getElementById('attr-table-toggle-icon');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('is-open');
+  panel.classList.toggle('is-open', !isOpen);
+  if (icon) {
+    icon.className = isOpen ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+  }
+  if (!isOpen) renderBottomAttrTable();
+}
+
+// 5.C.3 — Render matrix data into the bottom attribute table panel.
+function renderBottomAttrTable() {
+  const wrap = document.getElementById('bottom-attr-table-body');
+  if (!wrap) return;
+  if (!state.data) { wrap.innerHTML = '<div class="empty-pane" style="padding:16px">No project loaded.</div>'; return; }
+  // Reuse the matrix row builder logic; filter by the bottom panel's search.
+  const filterText = (document.getElementById('bottom-matrix-filter')?.value || '').toLowerCase();
+  let rows = _matrixGetRows ? _matrixGetRows() : [];
+  if (filterText) rows = rows.filter(r => r._filterText && r._filterText.includes(filterText));
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty-pane" style="padding:16px">No splices to display.</div>';
+    return;
+  }
+  const cols = ['#','Cable A','Tube A','Fiber A','Cable B','Tube B','Fiber B','Type','Closure','Location'];
+  wrap.innerHTML = `<table class="table" style="min-width:800px">
+    <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>
+      ${rows.map((r,i)=>`<tr>
+        <td>${i+1}</td>
+        <td>${esc(r.a_cable||'')}</td><td>${esc(r.a_tube_color||'')}</td><td>${esc(r.a_fiber_color||'')}</td>
+        <td>${esc(r.b_cable||'')}</td><td>${esc(r.b_tube_color||'')}</td><td>${esc(r.b_fiber_color||'')}</td>
+        <td>${esc(r.splice_type||'')}</td><td>${esc(r.closure_model||'')}</td><td>${esc(r.location||'')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// 5.C.3 — Open the inspector panel (slide-in). Called from renderInspector.
+function _openInspectorPanel() {
+  const el = document.getElementById('inspector');
+  if (el) el.classList.remove('inspector-closed');
+}
+
+// 5.C.3 — Close the inspector panel (slide-out). Exposed globally.
+function closeInspectorPanel() {
+  const el = document.getElementById('inspector');
+  if (el) el.classList.add('inspector-closed');
+  state.selection = null;
+  if (state.konva) drawCanvasContents();
+  if ((state.activeView === 'map' || state.activeView === 'split') && state.map) refreshMapLayers();
+}
+
 function renderInspector() {
   const empty = document.getElementById('inspector-empty');
   const body = document.getElementById('inspector-body');
   if (!state.data) {
     empty.style.display = 'block';
     body.style.display = 'none';
+    closeInspectorPanel();
     return;
   }
   if (!state.selection) {
     empty.style.display = 'block';
     empty.innerHTML = `Select an object on the canvas, or use the project actions on the left.`;
     body.style.display = 'none';
+    closeInspectorPanel();
     return;
   }
+  _openInspectorPanel();
   empty.style.display = 'none';
   body.style.display = 'block';
 
@@ -1643,131 +2162,455 @@ function renderInspector() {
   body.innerHTML = `<div class="empty-pane">Unknown selection</div>`;
 }
 
+// ─── 5.C.5 Cable Inventory Dashboard ─────────────────────────────────────────
+// Replaces the old renderCableInspector with a full inventory view.
 function renderCableInspector(cableId) {
   const cable = state.data.cables.find(c => c.id === cableId);
   if (!cable) { state.selection = null; return renderInspector(); }
+
   const fromLoc = cable.from_location_id ? state.data.locations.find(l => l.id === cable.from_location_id) : null;
   const toLoc   = cable.to_location_id   ? state.data.locations.find(l => l.id === cable.to_location_id)   : null;
-  const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId);
-  // Splices that touch any of this cable's fibers.
-  const fiberIds = new Set(state.data.fibers.filter(f =>
-    tubes.find(t => t.id === f.buffer_tube_id)
-  ).map(f => f.id));
-  const spliceCount = state.data.splices.filter(s =>
-    fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id)
-  ).length;
+  const tubes   = state.data.buffer_tubes.filter(t => t.cable_id === cableId).sort((a,b)=>a.position-b.position);
+
+  // All fibers for this cable.
+  const allFibers = state.data.fibers.filter(f => tubes.some(t => t.id === f.buffer_tube_id));
+  const fiberIds  = new Set(allFibers.map(f => f.id));
+
+  // Splice counts.
+  const splicedFiberIds = new Set(
+    state.data.splices.filter(s => fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id))
+      .flatMap(s => [s.fiber_a_id, s.fiber_b_id]).filter(id => fiberIds.has(id))
+  );
+  const totalSpliced = allFibers.filter(f => splicedFiberIds.has(f.id)).length;
+  const totalDead    = allFibers.length - totalSpliced;
+  const circuitsSet  = allFibers.filter(f => f.circuit_name).length;
+
+  // Closures along route: closures whose location is fromLoc or toLoc or any
+  // intermediate location (identified by closures whose cables include this one).
+  const closuresAlongRoute = state.data.closures.filter(cl => {
+    const loc = state.data.locations.find(l => l.id === cl.location_id);
+    if (!loc) return false;
+    return loc.id === cable.from_location_id || loc.id === cable.to_location_id;
+  });
+
+  // Locations passed (from → to).
+  const passedLocs = [fromLoc, toLoc].filter(Boolean);
+
+  const statCard = (label, value, sub) => `
+    <div style="flex:1;background:var(--vetro-bg-panel-secondary);border-radius:var(--radius-md);padding:8px 10px;text-align:center;min-width:0">
+      <div style="font-size:18px;font-weight:700;color:var(--vetro-text-primary)">${value}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-top:1px">${label}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--vetro-text-secondary);margin-top:2px">${sub}</div>` : ''}
+    </div>`;
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <h3>${esc(cable.name)} <span class="small">${cable.fiber_count}f · ${cable.construction_type}</span></h3>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">
-      ${esc(fromLoc?.name || 'unrouted')} → ${esc(toLoc?.name || 'unrouted')}
+    <!-- ── 1. Header ── -->
+    <div style="padding:10px 12px 8px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Cable</span>
+        <span style="margin-left:auto;background:var(--vetro-route-active);color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600">${esc(cable.construction_type||'buried')}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <h3 style="margin:0;flex:1;font-size:15px;font-weight:600" id="cable-name-display-${cableId}">${esc(cable.name)}</h3>
+        ${!isReadOnly() ? `<button class="btn btn-sm" title="Rename" onclick="inlineRenameCable('${cableId}')" style="padding:2px 6px;font-size:10px"><i class="fa-solid fa-pen"></i></button>` : ''}
+        <button class="btn btn-sm" style="padding:2px 6px;font-size:10px" onclick="closeInspectorPanel()" title="Close"><i class="fa-solid fa-times"></i></button>
+      </div>
+      <div style="font-size:11px;color:var(--vetro-text-muted);margin-top:3px">
+        ${cable.fiber_count}f · ${tubes.length} tubes · ${cable.tube_size_fibers||12}f/tube
+        ${cable.path_length_feet ? ` · ${cable.path_length_feet.toLocaleString()} ft` : ''}
+        ${cable.manufacturer_part ? ` · ${esc(cable.manufacturer_part)}` : ''}
+      </div>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+
+    <!-- ── 2. Quick stats ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;gap:6px">
+        ${statCard('Total fibers', cable.fiber_count,
+          `<span style="color:var(--vetro-success)">${totalSpliced}sp</span> · <span style="color:var(--vetro-text-muted)">${totalDead}dead</span>`
+        )}
+        ${statCard('Closures on route', closuresAlongRoute.length, closuresAlongRoute.length ? '' : 'none')}
+        ${statCard('Circuits set', circuitsSet, `of ${cable.fiber_count}`)}
+      </div>
+    </div>
+
+    <!-- ── 3. Route summary ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Route</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;flex-wrap:wrap">
+        ${fromLoc
+          ? `<a href="#" style="font-weight:600" onclick="event.preventDefault();selectThing('location','${fromLoc.id}')">${esc(fromLoc.name)}</a>`
+          : `<span style="color:var(--vetro-text-muted)">unrouted</span>`}
+        <i class="fa-solid fa-arrow-right" style="color:var(--vetro-text-muted);font-size:10px"></i>
+        ${toLoc
+          ? `<a href="#" style="font-weight:600" onclick="event.preventDefault();selectThing('location','${toLoc.id}')">${esc(toLoc.name)}</a>`
+          : `<span style="color:var(--vetro-text-muted)">unrouted</span>`}
+      </div>
+      ${cable.path_geojson ? `
+        <button class="btn btn-sm" style="margin-top:6px;font-size:10px" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>` : ''}
+      ${cable.notes ? `<div style="margin-top:4px;font-size:11px;color:var(--vetro-text-secondary);font-style:italic">${esc(cable.notes)}</div>` : ''}
+    </div>
+
+    <!-- ── 4. Fiber-by-fiber table ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Fiber paths</div>
+        <button class="btn btn-sm" onclick="toggleEl('fiber-paths-${cableId}')" style="font-size:9px;padding:1px 6px"><i class="fa-solid fa-chevron-down"></i> Show</button>
+      </div>
+      <div id="fiber-paths-${cableId}" style="display:none">
+        ${tubes.map(tube => {
+          const fibersInTube = state.data.fibers.filter(f => f.buffer_tube_id === tube.id).sort((a,b)=>a.position-b.position);
+          const abbrev = TIA_598_ABBREV[tube.color] || '';
+          return `<details style="margin-bottom:4px">
+            <summary style="font-size:10px;font-weight:600;color:var(--vetro-text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;padding:3px 0;min-height:24px">
+              <span class="fc fc-${tube.color}"></span>${abbrev} T${tube.position} · ${fibersInTube.length}f
+            </summary>
+            <div style="padding-left:10px;margin-top:2px">
+              ${fibersInTube.map(f => {
+                const fSplices = state.data.splices.filter(s => s.fiber_a_id === f.id || s.fiber_b_id === f.id);
+                const status = fSplices.length === 0 ? 'dead'
+                             : fSplices.length === 1 ? 'end-spliced'
+                             : 'through';
+                const statusColor = status === 'dead' ? 'var(--vetro-text-muted)'
+                                  : status === 'through' ? 'var(--vetro-success)' : 'var(--vetro-primary)';
+                return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:10px;min-height:22px;padding:1px 0">
+                  <span class="fc fc-${f.color}" style="width:10px;height:10px;flex-shrink:0"></span>
+                  <span style="flex:1">${f.position}${f.circuit_name ? ' · ' + esc(f.circuit_name) : ''}</span>
+                  <span style="color:${statusColor};font-size:9px;font-weight:600">${status}</span>
+                  <button class="btn btn-sm" style="padding:1px 5px;font-size:9px" title="Trace end-to-end path"
+                    onclick="traceFiberPath('${f.id}')"><i class="fa-solid fa-route"></i></button>
+                </div>`;
+              }).join('')}
+            </div>
+          </details>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- ── 5. Closures along route ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Closures along route</div>
+      ${closuresAlongRoute.length ? closuresAlongRoute.map(cl => {
+        const clLoc = state.data.locations.find(l => l.id === cl.location_id);
+        const clSplices = state.data.splices.filter(s => state.data.trays.find(t => t.id === s.tray_id && t.closure_id === cl.id)).length;
+        return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:3px 0;min-height:28px">
+          <i class="fa-solid fa-box" style="color:var(--vetro-primary);font-size:10px"></i>
+          <a href="#" style="flex:1" onclick="event.preventDefault();selectThing('closure','${cl.id}')">${esc(cl.model||'Closure')}</a>
+          <span style="font-size:10px;color:var(--vetro-text-muted)">${esc(clLoc?.name||'?')} · ${clSplices} splices</span>
+        </div>`;
+      }).join('') : '<div style="font-size:11px;color:var(--vetro-text-muted)">No closures found on route endpoints.</div>'}
+    </div>
+
+    <!-- ── 6. Bill of Materials summary ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Bill of Materials</div>
+      <table class="table" style="font-size:11px">
+        <tbody>
+          <tr><th>Cable type</th><td>${esc(cable.construction_type||'—')}</td></tr>
+          <tr><th>Fiber count</th><td>${cable.fiber_count}f</td></tr>
+          <tr><th>Length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
+          <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part||'—')}</td></tr>
+          <tr><th>Splices (total)</th><td>${state.data.splices.filter(s=>fiberIds.has(s.fiber_a_id)||fiberIds.has(s.fiber_b_id)).length}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── 7. Action bar (sticky) ── -->
+    <div style="padding:10px 12px;background:var(--vetro-bg-panel);border-top:2px solid var(--vetro-divider);display:flex;gap:5px;flex-wrap:wrap;position:sticky;bottom:0;z-index:5">
       <button class="btn btn-sm" onclick="openEditCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
       <button class="btn btn-sm" onclick="openStrandMetadataEditor('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-list-check"></i> Edit circuits</button>
+      ${cable.path_geojson ? `<button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path</button>` : ''}
+      <button class="btn btn-sm" onclick="traceFiberPath(${JSON.stringify(allFibers[0]?.id||null)})" ${!allFibers.length?'disabled':''}><i class="fa-solid fa-route"></i> Trace fiber</button>
+      ${closuresAlongRoute.length ? `<button class="btn btn-sm" onclick="selectThing('closure','${closuresAlongRoute[0].id}')"><i class="fa-solid fa-file-pdf"></i> Splicer doc</button>` : ''}
       <button class="btn btn-sm btn-danger" onclick="deleteCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
-    <table class="table">
-      <tbody>
-        <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part || '—')}</td></tr>
-        <tr><th>Tubes</th><td>${tubes.length}</td></tr>
-        <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
-        <tr><th>Circuits set</th><td>${state.data.fibers.filter(f => fiberIds.has(f.id) && f.circuit_name).length} of ${cable.fiber_count}</td></tr>
-        <tr><th>Route length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
-        <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
-      </tbody>
-    </table>
-    ${cable.path_geojson ? `
-      <div style="margin-top:8px;font-size:11px;display:flex;gap:6px">
-        <button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>
-      </div>` : ''}
-    <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
-      Fiber count is locked after creation. To re-size, delete and re-add.
-    </div>
+    <div style="padding:6px 12px;font-size:10px;color:var(--vetro-text-muted)">Fiber count is locked after creation. Delete and re-add to resize.</div>
   `;
 }
+
+// ─── 5.C.4 Handhole Inventory Dashboard ─────────────────────────────────────
+// Replaces the old renderLocationInspector. All existing sub-features are
+// absorbed (fiber status, loose splices, drag-drop panel, closures, comments).
+// Active fiber-filter state persists in _locFiberFilter[locationId].
+const _locFiberFilter = {};
 
 function renderLocationInspector(locationId) {
   const loc = state.data.locations.find(l => l.id === locationId);
   if (!loc) { state.selection = null; return renderInspector(); }
-  const closures = state.data.closures.filter(c => c.location_id === locationId);
-  const cablesAt = state.data.cables.filter(c =>
+
+  const closures  = state.data.closures.filter(c => c.location_id === locationId);
+  const cablesAt  = state.data.cables.filter(c =>
     c.from_location_id === locationId || c.to_location_id === locationId
   );
-  const hasGeo = loc.latitude != null && loc.longitude != null;
+  const hasGeo   = loc.latitude != null && loc.longitude != null;
   const coordStr = hasGeo
     ? `${Number(loc.latitude).toFixed(6)}, ${Number(loc.longitude).toFixed(6)}`
     : 'Not placed on map';
 
-  // Build compact fiber diagram: for each closure at this location, list
-  // splices as "Cable A f# ↔ Cable B f#" grouped by closure.
-  const fiberDiagramRows = [];
-  for (const cl of closures) {
-    const trays = state.data.trays.filter(t => t.closure_id === cl.id);
-    const trayIds = new Set(trays.map(t => t.id));
-    const splicesHere = state.data.splices.filter(s => trayIds.has(s.tray_id));
-    if (!splicesHere.length) continue;
-    fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:0.4px">${esc(cl.model || 'Closure')}</div>`);
-    for (const sp of splicesHere.slice(0, 20)) {
-      const fiberA = state.data.fibers.find(f => f.id === sp.fiber_a_id);
-      const fiberB = state.data.fibers.find(f => f.id === sp.fiber_b_id);
-      const tubeA = fiberA ? state.data.buffer_tubes.find(t => t.id === fiberA.buffer_tube_id) : null;
-      const tubeB = fiberB ? state.data.buffer_tubes.find(t => t.id === fiberB.buffer_tube_id) : null;
-      const cableA = tubeA ? state.data.cables.find(c => c.id === tubeA.cable_id) : null;
-      const cableB = tubeB ? state.data.cables.find(c => c.id === tubeB.cable_id) : null;
-      const labelA = cableA ? `${esc(cableA.name)} T${tubeA.position} f${fiberA.position}` : '?';
-      const labelB = cableB ? `${esc(cableB.name)} T${tubeB.position} f${fiberB.position}` : '?';
-      fiberDiagramRows.push(
-        `<div class="fiber-diagram-row"><span style="flex:1">${labelA}</span><span style="color:var(--text-muted)">&#8596;</span><span style="flex:1;text-align:right">${labelB}</span></div>`
-      );
+  // ── Fiber status accounting (same logic as 5.B.4) ────────────────────────
+  const spliceAtLocFiberIds = new Set();
+  for (const s of state.data.splices) {
+    let sLocId = null;
+    if (s.location_id) { sLocId = s.location_id; }
+    else if (s.closure_id) {
+      const cl = state.data.closures.find(c => c.id === s.closure_id);
+      if (cl) sLocId = cl.location_id;
+    } else if (s.tray_id) {
+      const tray = state.data.trays.find(t => t.id === s.tray_id);
+      if (tray) { const cl = state.data.closures.find(c => c.id === tray.closure_id); if (cl) sLocId = cl.location_id; }
     }
-    if (splicesHere.length > 20) {
-      fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted)">&hellip; ${splicesHere.length - 20} more splices</div>`);
+    if (sLocId === locationId) {
+      spliceAtLocFiberIds.add(s.fiber_a_id);
+      spliceAtLocFiberIds.add(s.fiber_b_id);
     }
   }
+  const splicedAnywhereIds = new Set(state.data.splices.flatMap(s => [s.fiber_a_id, s.fiber_b_id]));
+
+  // ── Quick stats ───────────────────────────────────────────────────────────
+  let totalSpliced = 0, totalExpress = 0, totalDead = 0;
+  for (const cable of cablesAt) {
+    const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cable.id);
+    const fibers = state.data.fibers.filter(f => tubes.some(t => t.id === f.buffer_tube_id));
+    totalSpliced += fibers.filter(f => spliceAtLocFiberIds.has(f.id)).length;
+    totalExpress += fibers.filter(f => !spliceAtLocFiberIds.has(f.id) && splicedAnywhereIds.has(f.id)).length;
+    totalDead    += fibers.filter(f => !splicedAnywhereIds.has(f.id)).length;
+  }
+  const splitterCount = closures.reduce((n, cl) =>
+    n + (state.data.splitters || []).filter(sp => sp.closure_id === cl.id).length, 0);
+  const storedAtLoc = (state.data.strand_states || []).filter(s => s.location_id === locationId && s.state === 'stored');
+  const locLoose    = state.data.splices.filter(s => s.location_id === locationId && !s.tray_id && !s.closure_id);
+
+  // ── Loss records at this location's closures ──────────────────────────────
+  const closureIds = new Set(closures.map(c => c.id));
+  const lossHere   = (state.data.loss_records || []).filter(r =>
+    (r.location_id === locationId) || (r.closure_id && closureIds.has(r.closure_id))
+  );
+
+  // ── Current fiber filter (All / Spliced / Express / Dead) ────────────────
+  const filter = _locFiberFilter[locationId] || 'all';
+
+  // ── VETRO stat-card helper ────────────────────────────────────────────────
+  const statCard = (label, value, sub) => `
+    <div style="flex:1;background:var(--vetro-bg-panel-secondary);border-radius:var(--radius-md);padding:8px 10px;text-align:center;min-width:0">
+      <div style="font-size:18px;font-weight:700;color:var(--vetro-text-primary)">${value}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-top:1px">${label}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--vetro-text-secondary);margin-top:2px">${sub}</div>` : ''}
+    </div>`;
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <h3>${esc(loc.name)} <span class="small" style="background:${_locColor(loc)};color:#fff;padding:1px 6px;border-radius:10px">${esc(loc.type)}</span></h3>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${coordStr}</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+    <!-- ── 1. Header ── -->
+    <div style="padding:10px 12px 8px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Location</span>
+        <span style="margin-left:auto;background:${_locColor(loc)};color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px">${esc(loc.type)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <h3 style="margin:0;flex:1;font-size:15px;font-weight:600" id="loc-name-display-${locationId}">${esc(loc.name)}</h3>
+        ${!isReadOnly() ? `<button class="btn btn-sm" title="Rename" onclick="inlineRenameLoc('${locationId}')" style="padding:2px 6px;font-size:10px"><i class="fa-solid fa-pen"></i></button>` : ''}
+        <button class="btn btn-sm" style="padding:2px 6px;font-size:10px" onclick="closeInspectorPanel()" title="Close"><i class="fa-solid fa-times"></i></button>
+      </div>
+      <div style="font-size:11px;color:var(--vetro-text-muted);margin-top:3px">
+        <i class="fa-solid fa-location-dot" style="width:14px"></i> ${coordStr}
+        ${loc.notes ? `<div style="margin-top:2px;font-style:italic">${esc(loc.notes)}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- ── 2. Quick stats ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;gap:6px">
+        ${statCard('Cables', cablesAt.length, cablesAt.length ? cablesAt.map(c=>c.fiber_count+'f').join(' · ') : 'none')}
+        ${statCard('Fibers',
+          totalSpliced + totalExpress + totalDead,
+          `<span style="color:var(--vetro-success)">${totalSpliced}sp</span> · <span style="color:var(--vetro-info)">${totalExpress}ex</span> · <span style="color:var(--vetro-text-muted)">${totalDead}dead</span>`
+        )}
+        ${statCard('Equipment',
+          closures.length + splitterCount + storedAtLoc.length,
+          `${closures.length}cl · ${splitterCount}sp · ${storedAtLoc.length}sl`
+        )}
+      </div>
+    </div>
+
+    <!-- ── 3. Cables in / out ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Cables in / out</div>
+      ${cablesAt.length ? cablesAt.map(c => {
+        const fromHere = c.from_location_id === locationId;
+        const tubes = state.data.buffer_tubes.filter(t => t.cable_id === c.id);
+        const cFibers = state.data.fibers.filter(f => tubes.some(t => t.id === f.buffer_tube_id));
+        const sp = cFibers.filter(f => spliceAtLocFiberIds.has(f.id)).length;
+        const ex = cFibers.filter(f => !spliceAtLocFiberIds.has(f.id) && splicedAnywhereIds.has(f.id)).length;
+        const dead = cFibers.filter(f => !splicedAnywhereIds.has(f.id)).length;
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--vetro-divider);min-height:28px;font-size:12px">
+          <span style="padding:1px 5px;border-radius:var(--radius-sm);font-size:9px;font-weight:700;background:${fromHere?'#DBEAFE':'#D1FAE5'};color:${fromHere?'#1E40AF':'#065F46'}">${fromHere?'FROM':'TO'}</span>
+          <a href="#" style="flex:1;font-weight:500" onclick="event.preventDefault();selectThing('cable','${c.id}')">${esc(c.name)}</a>
+          <span style="font-size:10px;color:var(--vetro-text-muted)">${c.fiber_count}f ${esc(c.construction_type||'')}</span>
+          <span style="font-size:10px"><span style="color:var(--vetro-success)">${sp}sp</span>·<span style="color:var(--vetro-info)">${ex}ex</span>·<span style="color:var(--vetro-text-muted)">${dead}d</span></span>
+          <button class="btn btn-sm" style="padding:1px 5px;font-size:9px" title="Trace any fiber on this cable" onclick="selectThing('cable','${c.id}')"><i class="fa-solid fa-route"></i></button>
+        </div>`;
+      }).join('') : '<div style="font-size:11px;color:var(--vetro-text-muted)">No cables at this location yet.</div>'}
+    </div>
+
+    <!-- ── 4. Fibers (filterable) ── -->
+    ${cablesAt.length ? `
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Fibers passing through</div>
+        <div style="display:flex;gap:3px">
+          ${['all','spliced','express','dead'].map(f=>`
+            <button class="btn btn-sm" style="padding:1px 6px;font-size:9px;${filter===f?'background:var(--vetro-primary);color:#fff;border-color:var(--vetro-primary)':''}"
+              onclick="_locFiberFilter['${locationId}']='${f}';renderLocationInspector('${locationId}')">${f.charAt(0).toUpperCase()+f.slice(1)}</button>
+          `).join('')}
+        </div>
+      </div>
+      ${cablesAt.map(cable => {
+        const cableTubes = state.data.buffer_tubes.filter(t => t.cable_id === cable.id).sort((a,b)=>a.position-b.position);
+        let fiberRows = '';
+        for (const tube of cableTubes) {
+          const tubeFibers = state.data.fibers.filter(f => f.buffer_tube_id === tube.id).sort((a,b)=>a.position-b.position);
+          for (const f of tubeFibers) {
+            const isSp   = spliceAtLocFiberIds.has(f.id);
+            const isEx   = !isSp && splicedAnywhereIds.has(f.id);
+            const isDead = !isSp && !isEx;
+            if (filter==='spliced' && !isSp) continue;
+            if (filter==='express' && !isEx) continue;
+            if (filter==='dead'    && !isDead) continue;
+            const statusLabel = isSp ? 'spliced' : isEx ? 'express' : 'dead';
+            const statusColor = isSp ? 'var(--vetro-success)' : isEx ? 'var(--vetro-info)' : 'var(--vetro-text-muted)';
+            fiberRows += `<div style="display:flex;align-items:center;gap:4px;font-size:10px;padding:2px 0;border-bottom:1px solid var(--vetro-divider);min-height:22px;cursor:pointer"
+              onclick="traceFiberPath('${f.id}')" title="Trace ${esc(cable.name)} f${f.position}">
+              <span class="fc fc-${tube.color}" style="flex-shrink:0"></span>
+              <span style="flex:1">${esc(cable.name)} T${tube.position} f${f.position}${f.circuit_name?' · '+esc(f.circuit_name):''}</span>
+              <span style="color:${statusColor};font-weight:600;font-size:9px">${statusLabel}</span>
+              <i class="fa-solid fa-route" style="font-size:9px;color:var(--vetro-text-muted)"></i>
+            </div>`;
+          }
+        }
+        return fiberRows ? `<details style="margin-bottom:4px"><summary style="font-size:11px;font-weight:500;cursor:pointer;padding:3px 0">${esc(cable.name)}</summary>${fiberRows}</details>` : '';
+      }).join('')}
+    </div>` : ''}
+
+    <!-- ── 5. Equipment: closures ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Closures</div>
+        ${!isReadOnly() ? `<div style="display:flex;gap:4px"><button class="btn btn-sm btn-danger" id="bulk-delete-btn" disabled onclick="bulkDeleteClosures('${locationId}')" style="font-size:9px;padding:1px 6px"><i class="fa-solid fa-trash"></i></button></div>` : ''}
+      </div>
+      ${closures.length ? closures.map(c => `
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:3px 0;min-height:28px">
+          ${!isReadOnly() ? `<input type="checkbox" class="closure-bulk-pick" data-closure-id="${c.id}" onchange="updateBulkDeleteBtn()" style="flex-shrink:0">` : ''}
+          <i class="fa-solid fa-box" style="color:var(--vetro-primary);font-size:10px"></i>
+          <a href="#" style="flex:1" onclick="event.preventDefault();selectThing('closure','${c.id}')">${esc(c.model||'Closure')} (${c.tray_count} trays)</a>
+          <span style="font-size:10px;color:var(--vetro-text-muted)">${(state.data.splices.filter(s=>state.data.trays.find(t=>t.id===s.tray_id&&t.closure_id===c.id))).length} splices</span>
+        </div>`).join('')
+      : '<div style="font-size:11px;color:var(--vetro-text-muted)">No closures here yet.</div>'}
+
+      <!-- Equipment: splitters -->
+      ${splitterCount > 0 ? `
+        <div style="margin-top:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-bottom:4px">Splitters</div>
+        ${closures.map(cl => {
+          const sps = (state.data.splitters||[]).filter(sp=>sp.closure_id===cl.id);
+          return sps.map(sp=>`<div style="font-size:11px;padding:2px 0;display:flex;gap:6px;align-items:center;min-height:24px">
+            <i class="fa-solid fa-code-branch" style="color:var(--vetro-info);font-size:10px"></i>
+            <span>${esc(sp.splitter_type||'Splitter')} ${esc(sp.ratio||'')}</span>
+            <span style="font-size:10px;color:var(--vetro-text-muted)">in ${esc(cl.model||'Closure')}</span>
+          </div>`).join('');
+        }).join('')}
+      ` : ''}
+
+      <!-- Equipment: slack -->
+      ${storedAtLoc.length > 0 ? `
+        <div style="margin-top:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-bottom:4px">Slack records</div>
+        ${storedAtLoc.map(s=>{
+          const cable = state.data.cables.find(c=>c.id===s.cable_id);
+          return `<div style="font-size:11px;padding:2px 0;display:flex;gap:6px;align-items:center;min-height:24px">
+            <i class="fa-solid fa-circle-half-stroke" style="color:var(--vetro-warning);font-size:10px"></i>
+            <span>${esc(cable?.name||'?')} strand #${s.strand_position}</span>
+            <span style="font-size:10px;color:var(--vetro-text-muted)">${s.stored_length_inches!=null?s.stored_length_inches+'"':'—'}</span>
+          </div>`;
+        }).join('')}
+      ` : ''}
+    </div>
+
+    <!-- ── 6. Loose splices (5.B.3) ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Loose splices <span style="font-weight:400;font-size:10px">(${locLoose.length})</span></div>
+        ${!isReadOnly() ? `<button class="btn btn-sm" onclick="openTraylessSpliceModal('location','${locationId}')" style="font-size:9px;padding:1px 6px"><i class="fa-solid fa-plus"></i></button>` : ''}
+      </div>
+      ${locLoose.length ? locLoose.map(s => renderLooseSpliceRow(s)).join('') : '<div style="font-size:11px;color:var(--vetro-text-muted)">None — use "Add splice here" for handholes without an enclosure.</div>'}
+    </div>
+
+    <!-- ── 7. Drag-drop splice panel (5.B.5/5.B.6) ── -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)" id="ddrop-panel-location-${locationId}">
+      ${renderDragDropPanel('location', locationId, locationId)}
+    </div>
+
+    <!-- ── 8. Loss records (Phase 4.7) ── -->
+    ${lossHere.length ? `
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Loss records (${lossHere.length})</div>
+      <div style="font-size:11px;color:var(--vetro-text-secondary)">See Loss records panel in the left rail for full detail.</div>
+    </div>` : ''}
+
+    <!-- ── 9. Comments (Phase 4.5) via closure comments ── -->
+    ${closures.length ? closures.map(cl=>`
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:4px">
+        <i class="fa-solid fa-comments"></i> Comments — ${esc(cl.model||'Closure')} <span id="closure-comments-count-${cl.id}" class="small"></span>
+      </div>
+      <div id="closure-comments-${cl.id}"><div class="empty-pane" style="padding:6px">Loading…</div></div>
+      ${!isReadOnly() ? `<div style="margin-top:6px">
+        <textarea id="closure-comment-input-${cl.id}" rows="2" style="width:100%;font-size:11px;border:1px solid var(--vetro-divider);border-radius:var(--radius-sm);padding:4px 6px;background:var(--vetro-bg-panel);color:var(--vetro-text-primary)" placeholder="Add a comment…"></textarea>
+        <button class="btn btn-sm btn-primary" style="margin-top:4px;font-size:10px" onclick="postClosureComment('${cl.id}')"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>` : ''}
+    </div>`).join('') : ''}
+
+    <!-- ── 10. Photos (markups at any closure here) ── -->
+    ${closures.length ? `
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">
+        <i class="fa-solid fa-camera"></i> Field photos
+      </div>
+      ${closures.map(cl=>`<div id="closure-markups-${cl.id}" style="margin-bottom:6px"><div class="empty-pane" style="padding:4px">Loading…</div></div>`).join('')}
+    </div>` : ''}
+
+    <!-- ── 11. Action bar (sticky) ── -->
+    <div style="padding:10px 12px;background:var(--vetro-bg-panel);border-top:2px solid var(--vetro-divider);display:flex;gap:5px;flex-wrap:wrap;position:sticky;bottom:0;z-index:5">
       <button class="btn btn-sm" onclick="openEditLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
-      <button class="btn btn-sm" onclick="openAddClosureForLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Add closure</button>
+      <button class="btn btn-sm" onclick="openAddClosureForLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-box"></i> Add closure</button>
+      <button class="btn btn-sm" onclick="openTraylessSpliceModal('location','${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-scissors"></i> Add splice</button>
+      <button class="btn btn-sm" onclick="openAddStoredStrand('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-circle-half-stroke"></i> Add slack</button>
+      <button class="btn btn-sm" onclick="openAddSplitter(${closures.length?'\''+closures[0].id+'\'':'null'})" ${isReadOnly()||!closures.length?'disabled':''}><i class="fa-solid fa-code-branch"></i> Add splitter</button>
+      ${closures.length ? `<button class="btn btn-sm" onclick="getClosureFieldLink('${closures[0].id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-camera"></i> Upload photo</button>` : ''}
+      <button class="btn btn-sm" onclick="if(state.activeView!=='diagram'){switchView('diagram');setTimeout(()=>selectThing('location','${locationId}'),400)}else{document.getElementById('btn-export').click()}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-file-pdf"></i> Splicer page</button>
       <button class="btn btn-sm btn-danger" onclick="deleteLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
-    <table class="table">
-      <tbody>
-        <tr><th>Type</th><td>${esc(loc.type)}</td></tr>
-        <tr><th>Closures</th><td>${closures.length}</td></tr>
-        <tr><th>Cables</th><td>${cablesAt.length}</td></tr>
-        ${cablesAt.length ? `<tr><th></th><td style="font-size:10px">${cablesAt.map(c=>`<a href="#" onclick="event.preventDefault();selectThing('cable','${c.id}')">${esc(c.name)}</a>`).join(', ')}</td></tr>` : ''}
-        <tr><th>Notes</th><td>${esc(loc.notes || '—')}</td></tr>
-      </tbody>
-    </table>
-    ${closures.length ? `
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div style="font-size:11px;font-weight:600">Closures at this location</div>
-          ${!isReadOnly() ? `<button class="btn btn-sm btn-danger" id="bulk-delete-btn" disabled onclick="bulkDeleteClosures('${locationId}')" style="font-size:10px;padding:2px 7px"><i class="fa-solid fa-trash"></i> Delete selected</button>` : ''}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          ${closures.map(c => `
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px">
-              ${!isReadOnly() ? `<input type="checkbox" class="closure-bulk-pick" data-closure-id="${c.id}" onchange="updateBulkDeleteBtn()" style="flex-shrink:0">` : ''}
-              <a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')" style="flex:1">${esc(c.model || 'Closure')} (${c.tray_count} trays)</a>
-            </div>`).join('')}
-        </div>
-      </div>` : ''}
-    ${fiberDiagramRows.length ? `
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
-        <div style="font-size:11px;font-weight:600;margin-bottom:4px">Fiber diagram</div>
-        ${fiberDiagramRows.join('')}
-      </div>` : ''}
-    <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
-      Deleting a location cascades to its closures, trays, and splices.
-    </div>
   `;
+
+  // 5.B.6 — Auto-populate drag-drop cable pickers for location panel.
+  requestAnimationFrame(() => {
+    const ddKey = `location-${locationId}`;
+    const selA = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+    if (!selA || !selB) return;
+    const cables = cablesAt;
+    if (cables.length >= 2) {
+      selA.value = cables[0].id;
+      selB.value = cables[1].id;
+      ddropCableChanged(ddKey, 'a');
+      ddropCableChanged(ddKey, 'b');
+    } else if (cables.length === 1) {
+      selA.value = cables[0].id;
+      ddropCableChanged(ddKey, 'a');
+    }
+  });
+
+  // Load comments and markups for each closure at this location.
+  for (const cl of closures) {
+    loadClosureMarkups(cl.id);
+    loadClosureComments(cl.id);
+  }
 }
 
 // Enable/disable the bulk-delete button based on how many checkboxes are checked.
@@ -1811,6 +2654,8 @@ function renderClosureInspector(closureId) {
   const loc = state.data.locations.find(l => l.id === cl.location_id);
   const trayList = state.data.trays.filter(t => t.closure_id === closureId).sort((a,b)=>a.position-b.position);
   const splicesByTray = (tid) => state.data.splices.filter(s => s.tray_id === tid);
+  // 5.B.3 — trayless splices anchored directly to this closure.
+  const looseSplices = state.data.splices.filter(s => s.closure_id === closureId && !s.tray_id);
   // Stored strands at this closure's location.
   const storedAtLoc = (state.data.strand_states || [])
     .filter(s => s.location_id === cl.location_id && s.state === 'stored');
@@ -1838,6 +2683,23 @@ function renderClosureInspector(closureId) {
         }).join('')}
       </tbody>
     </table>
+
+    <!-- 5.B.3 — Loose (trayless) splices at this closure -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:600">Loose splices (no tray) <span class="small">${looseSplices.length}</span></div>
+        ${!isReadOnly() ? `<button class="btn btn-sm" onclick="openTraylessSpliceModal('closure','${closureId}')" style="font-size:10px;padding:2px 8px"><i class="fa-solid fa-plus"></i> Add loose splice</button>` : ''}
+      </div>
+      ${looseSplices.length ? `
+        <div style="font-size:11px">
+          ${looseSplices.map(s => renderLooseSpliceRow(s)).join('')}
+        </div>` : `<div style="font-size:11px;color:var(--text-muted)">None — use trays above for normal splicework, or add a loose splice for express pass-throughs.</div>`}
+    </div>
+
+    <!-- 5.B.5 — Drag-drop fiber splicing panel (closure anchor) -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)" id="ddrop-panel-closure-${closureId}">
+      ${renderDragDropPanel('closure', closureId, cl.location_id)}
+    </div>
 
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
       <h3 style="display:flex;justify-content:space-between;align-items:center">
@@ -1918,6 +2780,120 @@ function renderClosureInspector(closureId) {
 
   loadClosureMarkups(closureId);
   loadClosureComments(closureId);
+  // 5.B.5 — Auto-populate drag-drop cable pickers if the location has exactly
+  // two cables (the most common splice-point topology). The panel HTML is
+  // already in the DOM at this point; we just set the selects and trigger.
+  requestAnimationFrame(() => {
+    const ddKey = `closure-${closureId}`;
+    const selA = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+    if (!selA || !selB) return;
+    const cables = (state.data?.cables || []).filter(c =>
+      c.from_location_id === cl.location_id || c.to_location_id === cl.location_id
+    );
+    if (cables.length >= 2) {
+      selA.value = cables[0].id;
+      selB.value = cables[1].id;
+      ddropCableChanged(ddKey, 'a');
+      ddropCableChanged(ddKey, 'b');
+    }
+  });
+}
+
+// 5.B.5 / 5.B.6 — renderDragDropPanel: shared entry point for the VETRO-style
+// drag-drop fiber splicing panel. Used by both the closure inspector (5.B.5,
+// anchorType='closure') and the location inspector (5.B.6, anchorType='location').
+// anchorType: 'closure'|'location'; anchorId: the entity's UUID;
+// locationId: the location to pull cables from for cable selectors.
+function renderDragDropPanel(anchorType, anchorId, locationId) {
+  return _buildDragDropPanelHtml(anchorType, anchorId, locationId);
+}
+
+// ─── 5.B.3 helpers ───────────────────────────────────────────────────────────
+
+// 5.B.3 — Render a single loose (trayless) splice row in the inspector.
+function renderLooseSpliceRow(s) {
+  const fA = state.data.fibers.find(f => f.id === s.fiber_a_id);
+  const fB = state.data.fibers.find(f => f.id === s.fiber_b_id);
+  const tubeA = fA ? state.data.buffer_tubes.find(t => t.id === fA.buffer_tube_id) : null;
+  const tubeB = fB ? state.data.buffer_tubes.find(t => t.id === fB.buffer_tube_id) : null;
+  const cableA = tubeA ? state.data.cables.find(c => c.id === tubeA.cable_id) : null;
+  const cableB = tubeB ? state.data.cables.find(c => c.id === tubeB.cable_id) : null;
+  const labelA = cableA ? `${esc(cableA.name)} T${tubeA.position} f${fA.position}` : '?';
+  const labelB = cableB ? `${esc(cableB.name)} T${tubeB.position} f${fB.position}` : '?';
+  return `<div class="fiber-diagram-row" style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+    <span class="fc fc-${fA?.color||''}"></span><span style="flex:1">${labelA}</span>
+    <span style="color:var(--text-muted)">&#8596;</span>
+    <span class="fc fc-${fB?.color||''}"></span><span style="flex:1;text-align:right">${labelB}</span>
+    ${!isReadOnly() ? `<button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px" onclick="deleteSplice('${s.id}')"><i class="fa-solid fa-times"></i></button>` : ''}
+  </div>`;
+}
+
+// 5.B.3 — Modal to add a trayless splice (closure-level or location-level).
+// anchorType: 'closure' | 'location'; anchorId: the id of that entity.
+function openTraylessSpliceModal(anchorType, anchorId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const usedFibers = new Set();
+  state.data.splices.forEach(s => {
+    const aCount = state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length;
+    if (aCount >= 2) usedFibers.add(s.fiber_a_id);
+    const bCount = state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length;
+    if (bCount >= 2) usedFibers.add(s.fiber_b_id);
+  });
+  const cableOpts = state.data.cables.map(c =>
+    `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f)</option>`).join('');
+  // Reuse state._spA / state._spB arrays for fiber selection.
+  state._spA = []; state._spB = []; state._spRibbon = false; state._spUsed = usedFibers;
+  showModal({
+    title: 'Add loose splice (no tray)',
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Creates a splice anchored to this ${anchorType} without requiring a tray.
+        Useful for express pass-throughs and handholes too small for an enclosure.
+      </p>
+      <div class="splice-cols">
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Side A · cable</label>
+            <select id="sp-cable-a" onchange="renderFiberPicker('a')"><option value="">Pick cable…</option>${cableOpts}</select></div>
+          <div class="field" id="sp-tube-a-wrap" style="margin-bottom:6px;display:none"><label>Side A · tube</label>
+            <select id="sp-tube-a" onchange="renderFibersOnly('a')"></select></div>
+          <div class="field" style="margin-bottom:0"><label>Side A · fiber</label>
+            <div id="sp-fibers-a" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Side B · cable</label>
+            <select id="sp-cable-b" onchange="renderFiberPicker('b')"><option value="">Pick cable…</option>${cableOpts}</select></div>
+          <div class="field" id="sp-tube-b-wrap" style="margin-bottom:6px;display:none"><label>Side B · tube</label>
+            <select id="sp-tube-b" onchange="renderFibersOnly('b')"></select></div>
+          <div class="field" style="margin-bottom:0"><label>Side B · fiber</label>
+            <div id="sp-fibers-b" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>
+        </div>
+      </div>
+    `,
+    submitText: 'Add loose splice',
+    onSubmit: async (close) => {
+      const aList = Array.isArray(state._spA) ? state._spA : (state._spA ? [state._spA] : []);
+      const bList = Array.isArray(state._spB) ? state._spB : (state._spB ? [state._spB] : []);
+      if (!aList.length || !bList.length) return toast('Pick a fiber on both sides', 'error');
+      if (aList.length !== bList.length) return toast('Fiber counts must match on both sides', 'error');
+      const pairs = aList.map((fa, i) => ({ fiber_a_id: fa, fiber_b_id: bList[i] }));
+      const usedSet = state._spUsed || new Set();
+      const goodPairs = pairs.filter(p => !usedSet.has(p.fiber_a_id) && !usedSet.has(p.fiber_b_id));
+      if (!goodPairs.length) return toast('All selected fibers are already spliced', 'error');
+      try {
+        const body = goodPairs.length === 1
+          ? { fiber_a_id: goodPairs[0].fiber_a_id, fiber_b_id: goodPairs[0].fiber_b_id }
+          : { pairs: goodPairs };
+        if (anchorType === 'closure') body.closure_id = anchorId;
+        else body.location_id = anchorId;
+        await api('/api/splice/trayless-splices', 'POST', body);
+        close();
+        await hydrateProject();
+        selectThing(anchorType, anchorId);
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
 }
 
 // Phase 2B #7 — pull field markups for the selected closure and
@@ -2558,7 +3534,7 @@ function renderTrayInspector(trayId) {
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm btn-primary" onclick="openSpliceModal('${trayId}', false)" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Single splice</button>
-      <button class="btn btn-sm btn-primary" onclick="openSpliceModal('${trayId}', true)" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-grip"></i> Ribbon splice (×12)</button>
+      <button class="btn btn-sm btn-primary" onclick="openSpliceModal('${trayId}', true)" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-grip"></i> Ribbon splice</button>
     </div>
     ${ribbonGroups.length ? renderRibbonGroupRows(ribbonGroups, splices) : ''}
     ${renderLooseSpliceRows(splices)}
@@ -2577,7 +3553,7 @@ function renderRibbonGroupRows(groups, splices) {
         <b>${esc(a.cable)}</b> · <span class="fc fc-${a.tube_color}" title="${a.tube_color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.tube_color]||''}</span>
         →
         <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}" title="${b.tube_color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.tube_color]||''}</span>
-        <span class="ribbon-tag">ribbon ×12</span>
+        <span class="ribbon-tag">ribbon ×${inGroup.length}</span>
       </div>
       <div style="display:flex;gap:4px">
         <button class="btn btn-sm" onclick="traceFiberPath('${first.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
@@ -2585,6 +3561,30 @@ function renderRibbonGroupRows(groups, splices) {
       </div>
     </div>`;
   }).join('');
+}
+
+// Phase 4.7 — loss badge for a splice row.
+// Returns an HTML string with a coloured badge when loss_db is set,
+// empty string otherwise.
+// Bands: green < 0.10, yellow 0.10–0.25, red > 0.25 dB.
+function _lossBadgeHtml(splice) {
+  if (splice.loss_db == null) return '';
+  const db = Number(splice.loss_db);
+  if (isNaN(db)) return '';
+  let color, label;
+  if (db < 0.10) {
+    color = '#0a7d2a'; label = 'green';
+  } else if (db <= 0.25) {
+    color = '#a06800'; label = 'yellow';
+  } else {
+    color = '#a31616'; label = 'red';
+  }
+  // Find the loss record for the tooltip (latest bound to this splice).
+  const lr = (state.data?.loss_records || []).find(r => r.splice_id === splice.id);
+  const tip = lr
+    ? `${db.toFixed(3)} dB · ${lr.operator_name || 'unknown'} · ${lr.splicer_serial || ''} · ${lr.measured_at ? new Date(lr.measured_at).toLocaleString() : ''}`
+    : `${db.toFixed(3)} dB`;
+  return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:2px;background:${color}18;border:1px solid ${color}55;color:${color};border-radius:4px;padding:0 5px;font-size:10px;font-weight:600;white-space:nowrap">${db < 0.10 ? '&#10003;' : '&#9888;'} ${db.toFixed(3)} dB</span>`;
 }
 
 function renderLooseSpliceRows(splices) {
@@ -2603,6 +3603,7 @@ function renderLooseSpliceRows(splices) {
           <span class="fc fc-${a.color}" title="${a.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.color]||''}</span> ${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
           →
           <span class="fc fc-${b.color}" title="${b.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.color]||''}</span> ${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
+          ${_lossBadgeHtml(s)}
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
@@ -2616,7 +3617,7 @@ function renderLooseSpliceRows(splices) {
 
 function describeFiber(fiberId) {
   const f = state.data.fibers.find(x => x.id === fiberId);
-  if (!f) return { cable:'?', tube_color:'?', tube_position:'?', color:'?', position:'?' };
+  if (!f) return { cable:'?', tube_color:'?', tube_position:'?', color:'?', position:'?', tube_size_fibers: 12 };
   const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
   const cable = tube ? state.data.cables.find(c => c.id === tube.cable_id) : null;
   return {
@@ -2625,6 +3626,7 @@ function describeFiber(fiberId) {
     tube_position: tube?.position ?? '?',
     color: f.color,
     position: f.position,
+    tube_size_fibers: cable?.tube_size_fibers || 12,
   };
 }
 
@@ -2689,12 +3691,17 @@ function _renderTracePathSidebar(result) {
     const arrow = entry.splice_to_next
       ? ` <span style="color:var(--primary)">→ ${esc(entry.splice_to_next.closure_model || 'closure')} (${esc(entry.splice_to_next.location_name || '?')}) →</span> `
       : '';
-    return `<div style="margin-bottom:2px"><b>${i + 1}.</b> ${label}${arrow}</div>`;
+    // Express (pass-through) locations for this hop — shown in teal
+    const ptLocs = Array.isArray(entry.pass_through_locations) && entry.pass_through_locations.length
+      ? `<div style="color:#00BCD4;font-size:10px;margin-left:14px">⟶ express through: ${entry.pass_through_locations.map(l => esc(l.name)).join(', ')}</div>`
+      : '';
+    return `<div style="margin-bottom:2px"><b>${i + 1}.</b> ${label}${arrow}</div>${ptLocs}`;
   }).join('');
 
   const flags = [];
-  if (result.circular)    flags.push('<span style="color:var(--warning-text)">circular strand detected</span>');
+  if (result.circular)     flags.push('<span style="color:var(--warning-text)">circular strand detected</span>');
   if (result.over_spliced) flags.push('<span style="color:var(--danger-text)">over-spliced fiber in path</span>');
+  if (result.is_dead)      flags.push('<span style="color:var(--text-muted)">dead fiber — no splices anywhere</span>');
 
   div.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2711,31 +3718,22 @@ function _renderTracePathSidebar(result) {
 // Mutations — locations / cables / closures / splices
 // ───────────────────────────────────────────────────────────────────────────
 
-function openAddLocation() {
+// 5.B.1 — openAddLocation creates a location immediately with a placeholder
+// name (no modal). The inspector becomes the rename/configure surface.
+async function openAddLocation() {
   if (isReadOnly()) return toast('View-only mode', 'error');
-  showModal({
-    title: 'Add splice point',
-    body: `
-      <div class="field"><label>Location name</label>
-        <input id="m-loc-name" placeholder="e.g. SP-12" autofocus></div>
-      <div class="field"><label>Sequence (left-to-right ordering on canvas)</label>
-        <input id="m-loc-seq" type="number" value="${state.data.locations.length + 1}"></div>
-      <div class="field"><label>Notes</label>
-        <textarea id="m-loc-notes"></textarea></div>
-    `,
-    onSubmit: async (close) => {
-      try {
-        await api('/api/splice/projects/' + state.currentId + '/locations', 'POST', {
-          name: document.getElementById('m-loc-name').value.trim(),
-          sequence_index: parseInt(document.getElementById('m-loc-seq').value, 10) || 0,
-          notes: document.getElementById('m-loc-notes').value.trim() || null,
-          type: 'splice_point',
-        });
-        close();
-        await hydrateProject();
-      } catch (e) { toast(e.message, 'error'); }
-    },
-  });
+  try {
+    const seq = state.data.locations.length + 1;
+    const name = `SP-${seq}`;
+    const loc = await api('/api/splice/projects/' + state.currentId + '/locations', 'POST', {
+      name,
+      sequence_index: seq,
+      type: 'splice_point',
+    });
+    await hydrateProject();
+    selectThing('location', loc.id);
+    toast(`Location "${name}" added — rename it in the inspector`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function openAddCable() {
@@ -3163,7 +4161,8 @@ function openStrandMetadataEditor(cableId) {
       .filter(f => f.buffer_tube_id === tube.id)
       .sort((a, b) => a.position - b.position);
     for (const f of fibersInTube) {
-      const strandPos = (tube.position - 1) * 12 + f.position;
+      const tubeSize = cable.tube_size_fibers || 12;
+      const strandPos = (tube.position - 1) * tubeSize + f.position;
       rows.push(`<tr data-fiber-id="${f.id}">
         <td class="num">${strandPos}</td>
         <td><span class="fc fc-${tube.color}"></span>${tube.position}</td>
@@ -3247,6 +4246,66 @@ async function deleteCable(cableId) {
     state.selection = null;
     await hydrateProject();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// 5.B.1 — click-to-rename inline in the inspector header.
+function inlineRenameLoc(locationId) {
+  if (isReadOnly()) return;
+  const loc = state.data.locations.find(l => l.id === locationId);
+  if (!loc) return;
+  const display = document.getElementById('loc-name-display-' + locationId);
+  if (!display) return;
+  const inp = document.createElement('input');
+  inp.className = 'input-sm';
+  inp.value = loc.name;
+  inp.style.cssText = 'flex:1;font-size:14px;font-weight:600;padding:2px 6px';
+  display.replaceWith(inp);
+  inp.focus();
+  inp.select();
+  const save = async () => {
+    const name = inp.value.trim();
+    if (!name || name === loc.name) { renderLocationInspector(locationId); return; }
+    try {
+      await api('/api/splice/locations/' + locationId, 'PUT', { name });
+      await hydrateProject();
+      selectThing('location', locationId);
+    } catch (e) { toast(e.message, 'error'); renderLocationInspector(locationId); }
+  };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    if (e.key === 'Escape') { inp.removeEventListener('blur', save); renderLocationInspector(locationId); }
+  });
+}
+
+// 5.B.2 — inline rename for cable inspector header.
+function inlineRenameCable(cableId) {
+  if (isReadOnly()) return;
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const display = document.getElementById('cable-name-display-' + cableId);
+  if (!display) return;
+  const inp = document.createElement('input');
+  inp.className = 'input-sm';
+  inp.value = cable.name;
+  inp.style.cssText = 'flex:1;font-size:14px;font-weight:600;padding:2px 6px';
+  display.replaceWith(inp);
+  inp.focus();
+  inp.select();
+  const save = async () => {
+    const name = inp.value.trim();
+    if (!name || name === cable.name) { renderCableInspector(cableId); return; }
+    try {
+      await api('/api/splice/cables/' + cableId, 'PUT', { name });
+      await hydrateProject();
+      selectThing('cable', cableId);
+    } catch (e) { toast(e.message, 'error'); renderCableInspector(cableId); }
+  };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    if (e.key === 'Escape') { inp.removeEventListener('blur', save); renderCableInspector(cableId); }
+  });
 }
 
 function openEditLocation(locationId) {
@@ -3334,6 +4393,7 @@ async function deleteCurrentProject() {
     document.getElementById('title-name').textContent = '— No project selected —';
     document.getElementById('proj-actions').style.display = 'none';
     document.getElementById('proj-imports').style.display = 'none';
+    document.getElementById('proj-loss-records').style.display = 'none';
     document.getElementById('proj-summary').style.display = 'none';
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('view-tabs').style.display = 'none';
@@ -3351,6 +4411,8 @@ async function deleteCurrentProject() {
     document.getElementById('btn-save-rev').disabled = true;
     document.getElementById('inspector-body').style.display = 'none';
     document.getElementById('inspector-empty').style.display = 'block';
+    const insp = document.getElementById('inspector');
+    if (insp) insp.classList.add('inspector-closed');
     document.getElementById('lock-banner').style.display = 'none';
     await loadProjects();
   } catch (e) { toast(e.message, 'error'); }
@@ -3377,12 +4439,12 @@ function openSpliceModal(trayId, ribbon) {
   const cableOpts = state.data.cables.map(c => `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f, ${c.construction_type})</option>`).join('');
 
   showModal({
-    title: ribbon ? 'Ribbon splice ×12 (mass fusion)' : 'Single splice',
+    title: ribbon ? 'Ribbon splice (mass fusion)' : 'Single splice',
     wide: true,
     body: `
       <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
         ${ribbon
-          ? 'Pick one ribbon (12-fiber buffer tube) on each side. All 12 fibers get spliced together in TIA-598 order — fiber 1 to fiber 1, fiber 2 to fiber 2, etc.'
+          ? 'Pick one ribbon (buffer tube) on each side. All fibers in the tube get spliced together in TIA-598 order — fiber 1 to fiber 1, fiber 2 to fiber 2, etc.'
           : 'Pick one fiber from each side, then click <b>Splice</b>.'}
       </p>
       <div class="splice-cols">
@@ -3404,7 +4466,7 @@ function openSpliceModal(trayId, ribbon) {
         </div>
       </div>
     `,
-    submitText: ribbon ? 'Splice 12 fibers' : 'Splice',
+    submitText: ribbon ? 'Splice ribbon' : 'Splice',
     onSubmit: async (close) => {
       if (ribbon) {
         const tubeA = document.getElementById('sp-tube-a').value;
@@ -3412,7 +4474,9 @@ function openSpliceModal(trayId, ribbon) {
         if (!tubeA || !tubeB) return toast('Pick a ribbon on both sides', 'error');
         const fibersA = state.data.fibers.filter(f => f.buffer_tube_id === tubeA).sort((a,b)=>a.position-b.position);
         const fibersB = state.data.fibers.filter(f => f.buffer_tube_id === tubeB).sort((a,b)=>a.position-b.position);
-        if (fibersA.length !== 12 || fibersB.length !== 12) return toast('Each ribbon must have 12 fibers', 'error');
+        if (fibersA.length !== fibersB.length) return toast(`Ribbon sizes don't match (${fibersA.length}f vs ${fibersB.length}f)`, 'error');
+        if (fibersA.length === 0) return toast('Selected tubes have no fibers', 'error');
+        if (fibersA.length !== 12) return toast(`Ribbon has ${fibersA.length} fibers — server currently requires exactly 12 for mass-fusion`, 'error');
         const pairs = fibersA.map((fa, i) => ({ fiber_a_id: fa.id, fiber_b_id: fibersB[i].id }));
         try {
           await api('/api/splice/trays/' + trayId + '/ribbon-splice', 'POST', { pairs });
@@ -3420,21 +4484,45 @@ function openSpliceModal(trayId, ribbon) {
           await hydrateProject();
         } catch (e) { toast(e.message, 'error'); }
       } else {
-        const fa = state._spA;
-        const fb = state._spB;
-        if (!fa || !fb) return toast('Pick a fiber on both sides', 'error');
+        const aList = Array.isArray(state._spA) ? state._spA : (state._spA ? [state._spA] : []);
+        const bList = Array.isArray(state._spB) ? state._spB : (state._spB ? [state._spB] : []);
+        if (!aList.length || !bList.length) return toast('Pick a fiber on both sides', 'error');
+        // Count mismatch: show inline error, don't create any splices.
+        if (aList.length !== bList.length) {
+          return toast(
+            `Side A has ${aList.length} fiber${aList.length>1?'s':''} selected, ` +
+            `side B has ${bList.length} — counts must match for pairwise splice`,
+            'error'
+          );
+        }
+        // Build pairs in pick-order (A₁↔B₁, A₂↔B₂, …).
+        const pairs = aList.map((fa, i) => ({ fa, fb: bList[i] }));
+        // Warn about already-spliced fibers in selection but skip silently.
+        const usedSet = state._spUsed || new Set();
+        const goodPairs = pairs.filter(p => !usedSet.has(p.fa) && !usedSet.has(p.fb));
+        const skipCount = pairs.length - goodPairs.length;
+        if (skipCount && !goodPairs.length) {
+          return toast('All selected fibers are already spliced — nothing to create', 'error');
+        }
+        if (skipCount) toast(`Skipping ${skipCount} already-spliced pair${skipCount>1?'s':''}`, 'warn');
+        close();
+        state._spA = []; state._spB = [];
         try {
-          await api('/api/splice/trays/' + trayId + '/splices', 'POST', {
-            fiber_a_id: fa, fiber_b_id: fb,
-          });
-          close();
-          state._spA = null; state._spB = null;
+          for (const { fa, fb } of goodPairs) {
+            await api('/api/splice/trays/' + trayId + '/splices', 'POST', {
+              fiber_a_id: fa, fiber_b_id: fb,
+            });
+          }
           await hydrateProject();
+          if (goodPairs.length > 1) toast(`Created ${goodPairs.length} splices`, 'success');
         } catch (e) { toast(e.message, 'error'); }
       }
     },
   });
-  state._spA = null; state._spB = null;
+  // Multi-select: arrays of fiber IDs in pick-order. Shift-click appends;
+  // plain click resets to a single selection (mirrors spreadsheet convention).
+  state._spA = [];   // selected fiber IDs on side A
+  state._spB = [];   // selected fiber IDs on side B
   state._spRibbon = ribbon;
   state._spUsed = usedFibers;
 }
@@ -3478,23 +4566,57 @@ window.renderFibersOnly = function(side) {
   const fibers = state.data.fibers
     .filter(f => f.buffer_tube_id === tubeId)
     .sort((a,b)=>a.position-b.position);
+  const selectedIds = side === 'a' ? (state._spA || []) : (state._spB || []);
   grid.innerHTML = fibers.map(f => {
     const used = state._spUsed.has(f.id);
+    const pickedAt = selectedIds.indexOf(f.id);
+    const isPicked = pickedAt !== -1;
     const abbrev = TIA_598_ABBREV[f.color] || '';
-    return `<div class="fiber-cell ${used?'in-use':''}"
+    // Yellow highlight for already-spliced fibers in selection; blue thick
+    // outline for selected fibers; normal for unselected.
+    const cls = [
+      'fiber-cell',
+      used ? 'in-use' : '',
+      isPicked ? 'sp-selected' : '',
+    ].filter(Boolean).join(' ');
+    // Show pick order number when multiple fibers are selected.
+    const orderBadge = isPicked && selectedIds.length > 1
+      ? `<span class="sp-order">${pickedAt + 1}</span>` : '';
+    return `<div class="${cls}"
       data-fiber-id="${f.id}" data-side="${side}"
-      onclick="${used?'':'pickFiber(this)'}">
-      <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}
+      onclick="pickFiber(event,this)">
+      <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}${orderBadge}
     </div>`;
   }).join('');
 };
 
-window.pickFiber = function(el) {
+window.pickFiber = function(event, el) {
   const side = el.dataset.side;
-  const fid = el.dataset.fiberId;
-  document.querySelectorAll('.fiber-cell[data-side="' + side + '"]').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  if (side === 'a') state._spA = fid; else state._spB = fid;
+  const fid  = el.dataset.fiberId;
+  const arr  = side === 'a' ? state._spA : state._spB;
+  const inUse = state._spUsed && state._spUsed.has(fid);
+
+  if (event && event.shiftKey) {
+    // Shift-click: additive select / deselect toggle.
+    const idx = arr.indexOf(fid);
+    if (idx !== -1) {
+      arr.splice(idx, 1);   // deselect if already selected
+    } else {
+      arr.push(fid);        // add to selection in pick-order
+    }
+  } else {
+    // Plain click: reset selection to just this fiber.
+    arr.length = 0;
+    arr.push(fid);
+  }
+
+  // Refresh the grid to reflect current selection (order badges + highlights).
+  const tubeSel = document.getElementById('sp-tube-' + side);
+  if (tubeSel) window.renderFibersOnly(side);
+  // Sync the old scalar _sp{A,B} fields for compatibility with any
+  // code that still reads them — point at the FIRST selected fiber.
+  if (side === 'a') state._spA = arr;
+  else              state._spB = arr;
 };
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -3652,10 +4774,12 @@ function loadMapLibre() {
 // Esri World Imagery — free for non-commercial-and-light-commercial use,
 // attributed in tile URL params. The most common OSP-industry basemap.
 const ESRI_SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-// Esri reference overlay — boundaries + place names + major roads, used
-// in hybrid mode on top of the satellite tiles. Same provider, same
-// attribution, transparent PNGs.
-const ESRI_REF_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+// Esri Reference Overlay — road labels, street names, and place annotations
+// rendered as transparent PNGs, designed specifically to sit on top of
+// satellite imagery in hybrid mode. World_Reference_Overlay includes road
+// labels at all zoom levels (unlike World_Boundaries_and_Places which focuses
+// on admin boundaries and misses street-level detail below zoom ~8).
+const ESRI_REF_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}';
 
 // Default starting view when a project has no geographic data yet.
 // Mecca Drive, Macon GA — owner-set 2026-05-06. Once a project gets
@@ -3750,6 +4874,348 @@ function _applySplitRatio(ratio) {
   const mapToolbar = document.getElementById('map-toolbar');
   if (mapToolbar) mapToolbar.style.left = pct;
 }
+
+// ─── 5.B.5: VETRO-style drag-and-drop fiber splicing panel ──────────────────
+// _buildDragDropPanelHtml() — builds the two-column HTML for the drag-drop UI.
+// Called from renderDragDropPanel() (stub above) which wires it into both the
+// closure inspector (5.B.5) and the location inspector (5.B.6).
+// anchorType: 'closure'|'location', anchorId, locationId (location to source cables).
+function _buildDragDropPanelHtml(anchorType, anchorId, locationId) {
+  // Only show when project is editable and location has cables.
+  const cables = (state.data?.cables || []).filter(c =>
+    c.from_location_id === locationId || c.to_location_id === locationId
+  );
+  if (!cables.length) return '';
+
+  // Auto-pick first two cables for A-side / B-side; show dropdowns otherwise.
+  const cableOpts = cables.map(c =>
+    `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f)</option>`
+  ).join('');
+
+  const ddKey = `${anchorType}-${anchorId}`;
+  // 5.B.6 — location-level panels show a "no closure needed" subtitle.
+  const subtitle = anchorType === 'location'
+    ? '<span style="font-size:9px;color:var(--text-muted)">Splicing directly at this handhole — no enclosure required</span>'
+    : '<span style="font-size:10px;color:var(--text-muted)">Shift-click to multi-select &bull; drag to splice</span>';
+  return `
+    <div class="ddrop-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:600"><i class="fa-solid fa-hand-pointer"></i> Fiber splicing</span>
+      ${subtitle}
+    </div>
+    ${anchorType === 'location' ? '<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Shift-click to multi-select &bull; drag to splice</div>' : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">A-side cable</div>
+        <select class="input-sm" style="width:100%" id="ddrop-cable-a-${ddKey}"
+          onchange="ddropCableChanged('${ddKey}','a')">${cableOpts}</select>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">B-side cable</div>
+        <select class="input-sm" style="width:100%" id="ddrop-cable-b-${ddKey}"
+          onchange="ddropCableChanged('${ddKey}','b')">${cableOpts}</select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="ddrop-fiber-cols-${ddKey}">
+      <div id="ddrop-col-a-${ddKey}"><div class="empty-pane" style="padding:8px;font-size:11px">Select a cable above</div></div>
+      <div id="ddrop-col-b-${ddKey}"><div class="empty-pane" style="padding:8px;font-size:11px">Select a cable above</div></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" id="ddrop-actions-${ddKey}" style="display:none">
+      <button class="btn btn-sm btn-primary" id="ddrop-splice-btn-${ddKey}"
+        onclick="ddropExecuteSplice('${anchorType}','${anchorId}','${ddKey}')" style="display:none">
+        <i class="fa-solid fa-scissors"></i> Splice <span id="ddrop-count-${ddKey}"></span>
+      </button>
+      <button class="btn btn-sm" onclick="ddropClearSelection('${ddKey}')">
+        <i class="fa-solid fa-times"></i> Clear
+      </button>
+    </div>`;
+}
+
+// ─── Drag-drop state & event handlers ────────────────────────────────────────
+// state._ddrop = { key, side, fiberIds, anchorType, anchorId }
+
+// Called when A/B cable selector changes.
+// ddKey format: "<anchorType>-<anchorId>", e.g. "closure-<uuid>" or "location-<uuid>".
+window.ddropCableChanged = function(ddKey, side) {
+  const sel = document.getElementById(`ddrop-cable-${side}-${ddKey}`);
+  if (!sel) return;
+  // Parse anchorType and anchorId from ddKey.
+  const firstDash = ddKey.indexOf('-');
+  const anchorType = firstDash !== -1 ? ddKey.slice(0, firstDash) : ddKey;
+  const anchorId   = firstDash !== -1 ? ddKey.slice(firstDash + 1) : '';
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [], _anchorType: anchorType, _anchorId: anchorId };
+  }
+  state._ddrop._anchorType = anchorType;
+  state._ddrop._anchorId   = anchorId;
+  ddropRenderFiberCol(ddKey, side, sel.value);
+};
+
+// Build the fiber-tube column for a given side.
+function ddropRenderFiberCol(ddKey, side, cableId) {
+  const col = document.getElementById(`ddrop-col-${side}-${ddKey}`);
+  if (!col) return;
+  if (!cableId) { col.innerHTML = '<div class="empty-pane" style="padding:8px;font-size:11px">Pick a cable</div>'; return; }
+
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId).sort((a,b)=>a.position-b.position);
+  const usedFibers = new Set(
+    state.data.splices.flatMap(s => {
+      const used = [];
+      const aC = state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length;
+      if (aC >= 2) used.push(s.fiber_a_id);
+      const bC = state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length;
+      if (bC >= 2) used.push(s.fiber_b_id);
+      return used;
+    })
+  );
+  const sel = state._ddrop?.side === side && state._ddrop?.key === ddKey
+    ? new Set(state._ddrop.fiberIds) : new Set();
+
+  col.innerHTML = tubes.map(tube => {
+    const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tube.id).sort((a,b)=>a.position-b.position);
+    return `<div style="margin-bottom:4px">
+      <div style="font-size:9px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:flex;align-items:center;gap:4px;margin-bottom:2px">
+        <span class="fc fc-${tube.color}"></span> T${tube.position} · ${tube.color}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px">
+        ${fibers.map(f => {
+          const used = usedFibers.has(f.id);
+          const picked = sel.has(f.id);
+          const abbrev = TIA_598_ABBREV[f.color] || '';
+          const cls = ['fiber-cell', 'ddrop-fiber',
+            used ? 'in-use' : '',
+            picked ? 'sp-selected' : '',
+          ].filter(Boolean).join(' ');
+          return `<div class="${cls}" style="cursor:${side==='a'?'grab':'default'}"
+            data-fiber-id="${f.id}" data-side="${side}" data-ddkey="${ddKey}"
+            draggable="${side==='a' && !used ? 'true' : 'false'}"
+            onclick="ddropFiberClick(event,this)"
+            ondragstart="ddropDragStart(event,this)"
+            ondragover="${side==='b' ? 'ddropDragOver(event,this)' : 'false'}"
+            ondragleave="${side==='b' ? 'ddropDragLeave(event,this)' : ''}"
+            ondrop="${side==='b' ? 'ddropDrop(event,this)' : ''}">
+            <span class="fc fc-${f.color}" title="${f.color}"></span>${f.position}${used ? '' : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Auto-init selection state if missing.
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [], anchorType: null, anchorId: null };
+  }
+}
+
+// Fiber click on A-side: shift-click = multi-select.
+window.ddropFiberClick = function(event, el) {
+  const side = el.dataset.side;
+  const ddKey = el.dataset.ddkey;
+  const fid = el.dataset.fiberId;
+  if (side !== 'a') return;                    // B-side only accepts drops
+  if (el.classList.contains('in-use')) return; // skip already spliced
+
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [], anchorType: null, anchorId: null };
+  }
+  const ids = state._ddrop.fiberIds;
+  if (event.shiftKey) {
+    const idx = ids.indexOf(fid);
+    if (idx !== -1) ids.splice(idx, 1);
+    else ids.push(fid);
+  } else {
+    ids.length = 0;
+    ids.push(fid);
+  }
+  state._ddrop.side = 'a';
+  // Refresh the A col and update the splice button.
+  const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+  if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  ddropSyncButton(ddKey);
+};
+
+// Start dragging picked fibers from A-side.
+window.ddropDragStart = function(event, el) {
+  const ddKey = el.dataset.ddkey;
+  const fid = el.dataset.fiberId;
+  // If the dragged fiber isn't in the current selection, make it the selection.
+  if (!state._ddrop || !state._ddrop.fiberIds.includes(fid)) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [fid], anchorType: null, anchorId: null };
+    const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  }
+  const count = state._ddrop.fiberIds.length;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', ddKey + ':' + count);
+  // Ghost label.
+  const ghost = document.createElement('div');
+  ghost.textContent = `${count} fiber${count>1?'s':''}`;
+  ghost.style.cssText = 'position:fixed;top:-999px;left:-999px;background:var(--primary);color:#fff;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;pointer-events:none';
+  document.body.appendChild(ghost);
+  event.dataTransfer.setDragImage(ghost, 0, 0);
+  setTimeout(() => ghost.remove(), 0);
+};
+
+// Highlight B-side fibers as valid drop targets during drag.
+window.ddropDragOver = function(event, el) {
+  if (el.classList.contains('in-use')) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  el.style.outline = '2px solid var(--primary)';
+};
+
+window.ddropDragLeave = function(event, el) {
+  el.style.outline = '';
+};
+
+// Drop: create pairwise splices starting at target fiber.
+window.ddropDrop = async function(event, el) {
+  event.preventDefault();
+  el.style.outline = '';
+  const ddKey = el.dataset.ddkey;
+  if (!state._ddrop || state._ddrop.key !== ddKey) return;
+  const targetFiberId = el.dataset.fiberId;
+  const anchorType = state._ddrop._anchorType;
+  const anchorId   = state._ddrop._anchorId;
+  await _ddropCreateSplices(ddKey, targetFiberId, anchorType, anchorId);
+};
+
+// Create splices from A-selection dropped at B starting fiber.
+async function _ddropCreateSplices(ddKey, startFiberId, anchorType, anchorId) {
+  if (!state._ddrop || !state._ddrop.fiberIds.length) return;
+  // Resolve anchorType + anchorId from the panel element.
+  if (!anchorType || !anchorId) {
+    const panel = document.querySelector(`[id^="ddrop-panel-"]`);
+    if (!panel) return;
+    const panelId = panel.id; // e.g. "ddrop-panel-closure-<uuid>"
+    const parts = panelId.split('-');
+    // Format: ddrop-panel-<anchorType>-<uuid>
+    anchorType = parts[2];
+    anchorId = parts.slice(3).join('-');
+  }
+  const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+  if (!selB) return;
+  const bCableId = selB.value;
+  if (!bCableId) { toast('Pick a B-side cable first', 'error'); return; }
+
+  // Build ordered B fibers starting from the dropped-on fiber.
+  const bFibers = state.data.fibers
+    .filter(f => {
+      const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+      return tube && tube.cable_id === bCableId;
+    })
+    .sort((a, b) => {
+      const ta = state.data.buffer_tubes.find(t => t.id === a.buffer_tube_id);
+      const tb = state.data.buffer_tubes.find(t => t.id === b.buffer_tube_id);
+      if (ta.position !== tb.position) return ta.position - tb.position;
+      return a.position - b.position;
+    });
+
+  const startIdx = bFibers.findIndex(f => f.id === startFiberId);
+  if (startIdx === -1) return;
+
+  const aIds = state._ddrop.fiberIds;
+  const needed = aIds.length;
+  const remaining = bFibers.length - startIdx;
+  if (remaining < needed) {
+    toast(`Not enough B-side fibers: need ${needed}, only ${remaining} from drop point`, 'error');
+    return;
+  }
+  const usedFibers = new Set(
+    state.data.splices.flatMap(s => {
+      const used = [];
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length >= 2) used.push(s.fiber_a_id);
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length >= 2) used.push(s.fiber_b_id);
+      return used;
+    })
+  );
+  // Build pairs, skipping already-spliced ones.
+  const pairs = [];
+  for (let i = 0; i < needed; i++) {
+    const fa = aIds[i];
+    const fb = bFibers[startIdx + i].id;
+    if (!usedFibers.has(fa) && !usedFibers.has(fb)) pairs.push({ fiber_a_id: fa, fiber_b_id: fb });
+  }
+  if (!pairs.length) { toast('All target fibers are already spliced', 'error'); return; }
+  const skipped = needed - pairs.length;
+  try {
+    const body = pairs.length === 1
+      ? { fiber_a_id: pairs[0].fiber_a_id, fiber_b_id: pairs[0].fiber_b_id }
+      : { pairs };
+    if (anchorType === 'closure') body.closure_id = anchorId;
+    else body.location_id = anchorId;
+    await api('/api/splice/trayless-splices', 'POST', body);
+    if (skipped) toast(`Created ${pairs.length} splice(s), skipped ${skipped} already-spliced`, 'warn');
+    else toast(`Created ${pairs.length} splice(s)`, 'success');
+    ddropClearSelection(ddKey);
+    await hydrateProject();
+    selectThing(anchorType, anchorId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Sync the splice button visibility.
+function ddropSyncButton(ddKey) {
+  const btn = document.getElementById(`ddrop-splice-btn-${ddKey}`);
+  const cnt = document.getElementById(`ddrop-count-${ddKey}`);
+  const actions = document.getElementById(`ddrop-actions-${ddKey}`);
+  if (!btn) return;
+  const n = state._ddrop?.fiberIds?.length || 0;
+  if (cnt) cnt.textContent = n ? `(${n})` : '';
+  btn.style.display = n ? 'inline-flex' : 'none';
+  if (actions) actions.style.display = n ? 'flex' : 'none';
+}
+
+// Execute splice from button click (uses B-side first unspliced fiber).
+window.ddropExecuteSplice = async function(anchorType, anchorId, ddKey) {
+  const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+  if (!selB || !selB.value) { toast('Pick a B-side cable first', 'error'); return; }
+  const bFibers = state.data.fibers
+    .filter(f => {
+      const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+      return tube && tube.cable_id === selB.value;
+    })
+    .sort((a, b) => {
+      const ta = state.data.buffer_tubes.find(t => t.id === a.buffer_tube_id);
+      const tb = state.data.buffer_tubes.find(t => t.id === b.buffer_tube_id);
+      if (ta.position !== tb.position) return ta.position - tb.position;
+      return a.position - b.position;
+    });
+  const usedFibers = new Set(
+    state.data.splices.flatMap(s => {
+      const used = [];
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length >= 2) used.push(s.fiber_a_id);
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length >= 2) used.push(s.fiber_b_id);
+      return used;
+    })
+  );
+  const firstUnused = bFibers.find(f => !usedFibers.has(f.id));
+  if (!firstUnused) { toast('No available B-side fibers', 'error'); return; }
+  await _ddropCreateSplices(ddKey, firstUnused.id, anchorType, anchorId);
+};
+
+window.ddropClearSelection = function(ddKey) {
+  if (state._ddrop && state._ddrop.key === ddKey) state._ddrop.fiberIds = [];
+  const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+  if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  ddropSyncButton(ddKey);
+};
+
+// Escape key clears drag selection.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state._ddrop) {
+    const ddKey = state._ddrop.key;
+    ddropClearSelection(ddKey);
+  }
+});
+
+// Clicking elsewhere (not a fiber) clears selection.
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.ddrop-fiber') && !e.target.closest('[id^="ddrop-"]') && state._ddrop) {
+    const ddKey = state._ddrop.key;
+    if (ddKey) ddropClearSelection(ddKey);
+  }
+}, true);
 
 // ─── Split divider drag (Phase 4.3) ──────────────────────────────────────────
 (function initSplitDivider() {
@@ -3924,6 +5390,7 @@ function renderMatrixView() {
     { key: 'location',    label: 'Location',   sortable: true  },
     { key: 'circuit',     label: 'Circuit',    sortable: true  },
     { key: 'customer',    label: 'Customer',   sortable: true  },
+    { key: 'loss',        label: 'Loss',       sortable: false },
     { key: '_action',     label: '',           sortable: false },
   ];
 
@@ -3960,6 +5427,7 @@ function renderMatrixView() {
       <td>${esc(r.location)}</td>
       <td><input type="text" class="input-sm" style="width:110px" value="${esc(r.circuit)}" placeholder="circuit" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','circuit_name',this.value)" ${isReadOnly()?'disabled':''}></td>
       <td><input type="text" class="input-sm" style="width:100px" value="${esc(r.customer)}" placeholder="customer" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','customer',this.value)" ${isReadOnly()?'disabled':''}></td>
+      <td>${(function(){ const sp = (state.data?.splices||[]).find(x=>x.id===r.id); return sp ? _lossBadgeHtml(sp) : ''; })()}</td>
       <td style="white-space:nowrap">
         ${commentBadge}
         <button class="btn btn-sm btn-danger" style="padding:1px 5px" onclick="matrixDeleteSplice('${roId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
@@ -4114,6 +5582,9 @@ async function initMapIfNeeded() {
             tileSize: 256,
             attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
           },
+          // Reference overlay source — added here so it's available immediately,
+          // but the layer is added in map.on('load') ABOVE cables/markers so
+          // street labels render on top of the OSP drawing.
           'esri-ref': {
             type: 'raster',
             tiles: [ESRI_REF_TILES],
@@ -4123,14 +5594,7 @@ async function initMapIfNeeded() {
         },
         layers: [
           { id: 'esri-sat', type: 'raster', source: 'esri-sat' },
-          // The reference overlay starts visible-iff-hybrid; toggle
-          // function flips its layout.visibility.
-          {
-            id: 'esri-ref',
-            type: 'raster',
-            source: 'esri-ref',
-            layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
-          },
+          // esri-ref layer added in map.on('load') so it renders above cables.
         ],
       },
       // Mecca Drive, Macon GA default. mapFitData() flies to a project's
@@ -4147,33 +5611,48 @@ async function initMapIfNeeded() {
     const bmLabel = document.getElementById('btn-basemap-label');
     if (bmLabel) bmLabel.textContent = initialBasemap === 'hybrid' ? 'Hybrid' : 'Satellite';
     map.on('load', () => {
-      // Source + layer for cable polylines. We re-set the data on every
-      // refresh from state.data; the source itself just needs to exist
-      // so the layer can mount.
+      // ── 5.C.2 VETRO map style — cable route layers ───────────────────────
+      // Layer order (bottom→top): cables-halo → cables-line → loc-clusters →
+      // loc-unclustered → loc-names → draft overlays → esri-ref (labels)
+      // Route color: #68BD45 active (CONFIRMED from VETRO source), #9CA3AF dead.
+      // Width: interpolated 2→4→6 at zoom 12→16→18 (VETRO spec).
+      // Aerial cables use dash [8,4]; buried/conduit solid.
       map.addSource('cables', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      map.addLayer({
-        id: 'cables-line',
-        type: 'line',
-        source: 'cables',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': '#FFD400',
-          'line-width': 3,
-          'line-opacity': 0.9,
-        },
-      });
-      // Halo so the line is visible over both bright and dark satellite.
+      // Halo renders BELOW the colored line — inserted first so cables-line goes on top.
       map.addLayer({
         id: 'cables-line-halo',
         type: 'line',
         source: 'cables',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#000',
-          'line-width': 6,
-          'line-opacity': 0.3,
+          'line-color': '#000000',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 8, 18, 12],
+          'line-opacity': 0.22,
         },
-      }, 'cables-line');
+      });
+      map.addLayer({
+        id: 'cables-line',
+        type: 'line',
+        source: 'cables',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          // Active = VETRO green (#68BD45 CONFIRMED); inactive/dark = muted gray.
+          'line-color': ['case',
+            ['==', ['get', 'status'], 'dark'],   '#9CA3AF',
+            ['==', ['get', 'status'], 'planned'], '#F59E0B',
+            '#68BD45'   /* default: active */
+          ],
+          // VETRO width spec: 2px at z12, 4px at z16, 6px at z18.
+          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 16, 4, 18, 6],
+          'line-opacity': 0.92,
+          // Aerial = dashed [8,4]; buried/conduit = solid [1,0].
+          // construction_type field values: 'aerial' | 'buried' | 'conduit' | etc.
+          'line-dasharray': ['case',
+            ['==', ['get', 'construction_type'], 'aerial'], ['literal', [8, 4]],
+            ['literal', [1, 0]]
+          ],
+        },
+      }, 'cables-line-halo');
       // Track in-progress draw waypoints separately so we can render
       // them while the user is clicking.
       map.addSource('draft-path', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -4203,19 +5682,20 @@ async function initMapIfNeeded() {
         clusterMaxZoom: 14,
       });
 
-      // Cluster bubble — radius scales with point_count.
+      // ── 5.C.2 VETRO map style — location markers ─────────────────────────
+      // Cluster bubble — VETRO navy (#003F72) background, white text.
       map.addLayer({
         id: 'loc-clusters',
         type: 'circle',
         source: 'locations',
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color': '#1660C9',
+          'circle-color': '#003F72',   /* --vetro-primary */
           'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
             1, 14, 10, 18, 50, 24, 200, 32],
-          'circle-stroke-color': '#fff',
+          'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2,
-          'circle-opacity': 0.85,
+          'circle-opacity': 0.88,
         },
       });
 
@@ -4230,12 +5710,11 @@ async function initMapIfNeeded() {
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-size': 12,
         },
-        paint: {
-          'text-color': '#fff',
-        },
+        paint: { 'text-color': '#ffffff' },
       });
 
       // Unclustered individual location points, coloured by type.
+      // Stroke: 2px white normal; hover → 3px primary; selected → hidden (HTML marker shown).
       map.addLayer({
         id: 'loc-unclustered',
         type: 'circle',
@@ -4243,32 +5722,36 @@ async function initMapIfNeeded() {
         filter: ['!', ['has', 'point_count']],
         paint: {
           'circle-color': ['get', 'color'],
+          // Base radius: 8 for plain locations, 10 for locations with closures.
           'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
-          'circle-stroke-color': '#fff',
+          'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2,
+          // Hide the GL circle for the selected location — the HTML Marker
+          // (which supports drag) is shown instead.
           'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
         },
       });
 
-      // Location name labels — only shown at zoom ≥ 15 to avoid clutter.
+      // Location name labels — VETRO spec: only at zoom ≥ 16 (was 15).
+      // Reduces label clutter at mid-zoom per 5.C.2 spec.
       map.addLayer({
         id: 'loc-names',
         type: 'symbol',
         source: 'locations',
         filter: ['!', ['has', 'point_count']],
-        minzoom: 15,
+        minzoom: 16,
         layout: {
           'text-field': ['get', 'name'],
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-size': 10,
           'text-anchor': 'top',
-          'text-offset': [0, 0.8],
+          'text-offset': [0, 0.9],
           'text-allow-overlap': false,
           'text-ignore-placement': false,
         },
         paint: {
-          'text-color': '#fff',
-          'text-halo-color': '#000',
+          'text-color': '#ffffff',
+          'text-halo-color': '#000000',
           'text-halo-width': 1.5,
         },
       });
@@ -4304,6 +5787,18 @@ async function initMapIfNeeded() {
       map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
       map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+
+      // Street-labels overlay for hybrid mode. Added here (after cables and
+      // markers) so road labels render on top of the OSP drawing — useful for
+      // correlating fiber runs to named streets. Visibility is toggled by
+      // cycleBasemap(); the source is declared in the initial style.
+      map.addLayer({
+        id: 'esri-ref',
+        type: 'raster',
+        source: 'esri-ref',
+        layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
+        paint: { 'raster-opacity': 0.85 },
+      });
 
       refreshMapLayers();
       mapFitData();
@@ -4425,7 +5920,10 @@ function refreshMapLayers() {
     type: 'Feature',
     geometry: c.path_geojson,
     properties: { id: c.id, name: c.name, fiber_count: c.fiber_count,
-                  path_length_feet: c.path_length_feet || 0 },
+                  path_length_feet: c.path_length_feet || 0,
+                  // 5.C.2: expose fields for VETRO map style expressions.
+                  construction_type: c.construction_type || 'buried',
+                  status: c.status || 'active' },
   }));
   const cableSrc = map.getSource('cables');
   if (cableSrc) cableSrc.setData({ type: 'FeatureCollection', features: cableFeatures });
@@ -4440,7 +5938,7 @@ function refreshMapLayers() {
     if (!mid) continue;
     const lbl = document.createElement('div');
     lbl.textContent = `${Math.round(ft)} ft`;
-    lbl.style.cssText = 'background:rgba(0,0,0,.55);color:#FFD400;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;letter-spacing:0.3px';
+    lbl.style.cssText = 'background:rgba(0,0,0,.6);color:#68BD45;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;letter-spacing:0.3px';
     const m = new ml.Marker({ element: lbl, anchor: 'center' })
       .setLngLat(mid)
       .addTo(map);
@@ -4556,23 +6054,44 @@ function mapStartPlace(type) {
   document.getElementById('map-mode-hint').textContent = `Click on the map to place a ${label}. Esc to cancel.`;
 }
 
+// 5.B.1 — place a location immediately with a placeholder name derived from
+// the location type. No modal/prompt. Inspector is the rename surface.
 async function mapApplyNewLocation(lngLat) {
   const type = state.mapPlaceType;
   if (!type) return;
-  const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
-  const name = window.prompt(`Name for this ${label}:`, '');
-  if (name == null || !String(name).trim()) return;
+  // Build a placeholder: abbreviate the type then append the next available
+  // number across ALL locations (keeps it globally unique per project).
+  const TYPE_PREFIX = {
+    handhole:     'HH',
+    manhole:      'MH',
+    pole:         'PL',
+    pedestal:     'PED',
+    vault:        'VLT',
+    fdh:          'FDH',
+    splice_point: 'SP',
+    co:           'CO',
+    terminal:     'TERM',
+    ring_cut:     'RC',
+  };
+  const prefix = TYPE_PREFIX[type] || type.toUpperCase().slice(0, 4);
+  // Count existing locations whose name starts with this prefix + digit
+  // to pick the next available sequential number.
+  const existing = (state.data.locations || []).filter(l =>
+    l.name.startsWith(prefix + '-') || l.name.startsWith(prefix)
+  );
+  const seq = existing.length + 1;
+  const name = `${prefix}-${seq}`;
   try {
     const loc = await api(`/api/splice/projects/${state.currentId}/locations`, 'POST', {
-      type, name: String(name).trim(),
+      type, name,
       latitude: lngLat.lat, longitude: lngLat.lng,
     });
-    toast(`${label} added`, 'success');
     mapClearMode();
     await hydrateProject();
     if (state.activeView === 'map') refreshMapLayers();
-    // Open its inspector immediately.
+    // Open inspector immediately — that's the rename surface.
     selectThing('location', loc.id);
+    toast(`${name} placed — rename in the inspector`, 'success');
   } catch (e) {
     toast('Failed: ' + e.message, 'error');
   }
@@ -4713,15 +6232,12 @@ async function mapMsFinish() {
           mapClearMode();
           await hydrateProject();
           if (state.activeView === 'map') refreshMapLayers();
-          // Follow-up: offer to add closures at intermediate snapped stops.
-          for (const stop of intermediates) {
-            const loc = state.data.locations.find(l => l.id === stop.locationId);
-            if (!loc) continue;
-            const yes = window.confirm(`Add closure / splice assignments at "${loc.name}"?`);
-            if (yes) {
-              selectThing('location', loc.id);
-              await openAddClosureForLocation(loc.id);
-            }
+          // 5.B.1 — no closure-prompt cascade. Closures are added later via
+          // the location inspector. Just select the first stop for convenience.
+          if (intermediates.length) {
+            const first = intermediates[0];
+            const loc = state.data.locations.find(l => l.id === first.locationId);
+            if (loc) selectThing('location', loc.id);
           }
           resolve();
         } catch (e) {
@@ -4953,6 +6469,50 @@ function importRowHtml(i, pending) {
     </div>`;
 }
 
+// 5.B.2 — Recently imported chip: shows after an import applies so the
+// engineer can quickly find and rename imported items.
+// state._lastImportAt = timestamp (ms) set by openImportDesignModal on apply.
+// state._recentImportFilter = boolean — when true, sidebar items show only recent.
+
+function renderRecentlyImportedChip() {
+  const wrap = document.getElementById('recent-import-chip-wrap');
+  if (!wrap) return;
+  if (!state._lastImportAt) { wrap.style.display = 'none'; return; }
+  const HOUR_MS = 60 * 60 * 1000;
+  const isRecent = (d) => d && (Date.now() - new Date(d).getTime() < HOUR_MS);
+  const recentLocs = (state.data?.locations || []).filter(l => isRecent(l.created_at));
+  const recentCables = (state.data?.cables || []).filter(c => isRecent(c.created_at));
+  const count = recentLocs.length + recentCables.length;
+  if (!count) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const countEl = document.getElementById('recent-import-chip-count');
+  if (countEl) countEl.textContent = `(${count})`;
+}
+
+function toggleRecentlyImportedFilter() {
+  state._recentImportFilter = !state._recentImportFilter;
+  const chip = document.getElementById('recent-import-chip');
+  if (chip) {
+    chip.style.background = state._recentImportFilter ? 'var(--primary)' : 'var(--primary-light)';
+    chip.style.color = state._recentImportFilter ? '#fff' : 'var(--primary)';
+  }
+  // Highlight recently-imported items in the project summary.
+  const HOUR_MS = 60 * 60 * 1000;
+  const isRecent = (d) => d && (Date.now() - new Date(d).getTime() < HOUR_MS);
+  if (state._recentImportFilter) {
+    const items = [
+      ...(state.data?.locations || []).filter(l => isRecent(l.created_at))
+        .map(l => ({ type: 'location', id: l.id, name: l.name })),
+      ...(state.data?.cables || []).filter(c => isRecent(c.created_at))
+        .map(c => ({ type: 'cable', id: c.id, name: c.name })),
+    ];
+    if (!items.length) { toast('No recently imported items found in this hour', 'info'); return; }
+    // Flash highlight by selecting first item and showing a list.
+    toast(`${items.length} recently imported item(s) — click to rename in inspector`, 'info');
+    if (items[0]) selectThing(items[0].type, items[0].id);
+  }
+}
+
 function importStatusColor(status) {
   switch (status) {
     case 'applied':           return 'var(--success)';
@@ -4971,8 +6531,10 @@ function openImportDesignModal() {
     body: `
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
         Upload a design from AutoCAD (DXF), Google Earth (KMZ), or GeoJSON.
-        The server will parse and stage the changes — nothing in the live
-        project moves until you review and apply.
+        New locations and cables land immediately on the map with their
+        original names (or placeholders). Click any item to rename it
+        in the inspector. Updates and deletes remain in the imports list
+        for manual review.
       </div>
       <div class="field"><label>File</label>
         <input type="file" id="m-imp-file" accept=".kmz,.kml,.dxf,.geojson"></div>
@@ -5044,10 +6606,29 @@ function openImportDesignModal() {
         const json = await r.json();
         if (!r.ok) throw new Error(json.error || 'Upload failed');
         close();
-        toast('Imported ' + file.name + ' — open it in the imports list to review.', 'success');
+        // 5.B.2 — auto-apply all adds immediately. No naming modal.
+        // Items land with the names the file provides (or placeholder).
+        // Engineer renames via inspector. Manual review still available
+        // from the imports list for updates/deletes.
+        const importId = json.import?.id;
+        if (importId) {
+          try {
+            const applyRes = await api(`/api/splice/imports/${importId}/apply`, 'POST',
+              { auto_approve_adds: true });
+            await hydrateProject();
+            if (state.activeView === 'map') refreshMapLayers();
+            // Track import timestamp so the sidebar chip can highlight these items.
+            state._lastImportAt = Date.now();
+            const countMsg = applyRes.applied
+              ? `${applyRes.applied} item(s) landed on the map`
+              : 'No new items to add';
+            toast(`${file.name} applied — ${countMsg}. Rename items in their inspectors.`, 'success');
+          } catch (applyErr) {
+            toast(`Upload OK but auto-apply failed: ${applyErr.message} — review manually in the imports list.`, 'warn');
+          }
+        }
         await refreshImportsList();
-        // Auto-open the review modal for convenience.
-        if (json.import?.id) openImportReviewModal(json.import.id);
+        renderRecentlyImportedChip();
       } catch (e) { toast('Import failed: ' + e.message, 'error'); }
     },
   });
