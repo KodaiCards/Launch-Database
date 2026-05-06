@@ -1499,6 +1499,9 @@ function zoom(factor) {
 function selectThing(type, id) {
   state.selection = { type, id };
   renderInspector();
+  // Refresh the map's selected-location HTML Marker when the user picks a
+  // location so the drag handle appears/moves immediately.
+  if (state.activeView === 'map' && state.map) refreshMapLayers();
 }
 
 function renderInspector() {
@@ -3297,6 +3300,121 @@ async function initMapIfNeeded() {
         filter: ['==', '$type', 'Point'],
         paint: { 'circle-radius': 5, 'circle-color': '#FF6E00', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 },
       });
+
+      // ── Location cluster source + layers ──────────────────────────────────
+      // GeoJSON source with native MapLibre clustering so high-density zoom-out
+      // views are readable. The selected location is rendered as an HTML Marker
+      // (for drag support); all others live in this source.
+      map.addSource('locations', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+        cluster: true,
+        clusterRadius: 40,
+        clusterMaxZoom: 14,
+      });
+
+      // Cluster bubble — radius scales with point_count.
+      map.addLayer({
+        id: 'loc-clusters',
+        type: 'circle',
+        source: 'locations',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#1660C9',
+          'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
+            1, 14, 10, 18, 50, 24, 200, 32],
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 2,
+          'circle-opacity': 0.85,
+        },
+      });
+
+      // Cluster count label.
+      map.addLayer({
+        id: 'loc-cluster-count',
+        type: 'symbol',
+        source: 'locations',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+        },
+        paint: {
+          'text-color': '#fff',
+        },
+      });
+
+      // Unclustered individual location points, coloured by type.
+      map.addLayer({
+        id: 'loc-unclustered',
+        type: 'circle',
+        source: 'locations',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 2,
+          'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+        },
+      });
+
+      // Location name labels — only shown at zoom ≥ 15 to avoid clutter.
+      map.addLayer({
+        id: 'loc-names',
+        type: 'symbol',
+        source: 'locations',
+        filter: ['!', ['has', 'point_count']],
+        minzoom: 15,
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-size': 10,
+          'text-anchor': 'top',
+          'text-offset': [0, 0.8],
+          'text-allow-overlap': false,
+          'text-ignore-placement': false,
+        },
+        paint: {
+          'text-color': '#fff',
+          'text-halo-color': '#000',
+          'text-halo-width': 1.5,
+        },
+      });
+
+      // Cluster click → zoom in to the cluster's bounding box.
+      map.on('click', 'loc-clusters', (e) => {
+        if (state.mapMode) return;
+        e.preventDefault();
+        const feature = e.features[0];
+        const clusterId = feature.properties.cluster_id;
+        const src = map.getSource('locations');
+        src.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return;
+          map.easeTo({ center: feature.geometry.coordinates, zoom: zoom + 0.5 });
+        });
+      });
+
+      // Unclustered point click → open location inspector (or snap in multistop mode).
+      map.on('click', 'loc-unclustered', (e) => {
+        if (state.mapMode === 'place-new') return;
+        e.preventDefault();
+        const props = e.features[0]?.properties;
+        if (!props?.id) return;
+        if (state.mapMode === 'multistop') {
+          const loc = (state.data?.locations || []).find(l => l.id === props.id);
+          if (loc) mapMsSnapToLocation(loc);
+          return;
+        }
+        selectThing('location', props.id);
+      });
+
+      map.on('mouseenter', 'loc-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+
       refreshMapLayers();
       mapFitData();
       map.on('click', (e) => {
@@ -3353,63 +3471,63 @@ function refreshMapLayers() {
   const map = state.map;
   if (!map || !map.isStyleLoaded() || !state.data) return;
 
-  // Tear down existing markers so we can rebuild from scratch.
-  (state._mapMarkers || []).forEach(m => m.remove());
-  (state._mapLabelMarkers || []).forEach(m => m.remove());
-  state._mapMarkers = [];
-  state._mapLabelMarkers = [];
-
   const ml = state.maplibregl;
   const locsWithGeo = (state.data.locations || []).filter(l => l.latitude != null && l.longitude != null);
 
-  for (const loc of locsWithGeo) {
-    const closuresAtLoc = (state.data.closures || []).filter(c => c.location_id === loc.id);
-    const color = _locColor(loc);
-    const el = document.createElement('div');
-    el.className = 'map-closure-marker';
-    // Larger dot (20px) for closures to signal there's data inside.
-    const sz = closuresAtLoc.length ? 20 : 16;
-    el.style.cssText = `width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);cursor:pointer;transition:transform .1s`;
-    el.title = loc.name + ` (${loc.type})` + (closuresAtLoc.length ? ' · ' + closuresAtLoc.length + ' closure(s)' : '');
-
-    // Small name label below the dot.
-    const label = document.createElement('div');
-    label.textContent = loc.name;
-    label.style.cssText = 'position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;white-space:nowrap;font-size:10px;font-weight:600;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none';
-    el.appendChild(label);
-    el.style.position = 'relative';
-
-    const marker = new ml.Marker({ element: el, draggable: !isReadOnly() })
-      .setLngLat([Number(loc.longitude), Number(loc.latitude)])
-      .addTo(map);
-
-    el.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      if (state.mapMode === 'multistop') {
-        // Snap to this location in multi-stop mode instead of opening inspector.
-        mapMsSnapToLocation(loc);
-        return;
-      }
-      // Always open the rich location inspector; it links through to closures.
-      selectThing('location', loc.id);
-    });
-
-    marker.on('dragend', async () => {
-      const ll = marker.getLngLat();
-      try {
-        await api(`/api/splice/locations/${loc.id}/coords`, 'PUT', {
-          latitude: ll.lat, longitude: ll.lng,
-        });
-        loc.latitude = ll.lat; loc.longitude = ll.lng;
-      } catch (e) {
-        toast('Move failed: ' + e.message, 'error');
-        marker.setLngLat([Number(loc.longitude), Number(loc.latitude)]);
-      }
-    });
-    state._mapMarkers.push(marker);
+  // ── Selected-location HTML Marker (drag support) ──────────────────────────
+  // Remove the previous selected-location marker (if any).
+  if (state._mapSelectedMarker) {
+    state._mapSelectedMarker.remove();
+    state._mapSelectedMarker = null;
   }
 
-  // Cable polylines with footage labels at their midpoints.
+  const selectedLocId = state.selection?.type === 'location' ? state.selection.id : null;
+  const selectedLoc = selectedLocId
+    ? locsWithGeo.find(l => l.id === selectedLocId)
+    : null;
+
+  if (selectedLoc) {
+    const color = _locColor(selectedLoc);
+    const closuresAtSel = (state.data.closures || []).filter(c => c.location_id === selectedLoc.id);
+    const sz = closuresAtSel.length ? 22 : 18;
+    const el = document.createElement('div');
+    el.className = 'map-closure-marker';
+    el.style.cssText = `width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 0 3px rgba(255,220,0,.9),0 0 0 5px rgba(0,0,0,.3);cursor:grab;transition:transform .1s;position:relative`;
+    el.title = selectedLoc.name + ` (${selectedLoc.type})`;
+    const lbl = document.createElement('div');
+    lbl.textContent = selectedLoc.name;
+    lbl.style.cssText = 'position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;white-space:nowrap;font-size:10px;font-weight:600;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none';
+    el.appendChild(lbl);
+
+    const selMarker = new ml.Marker({ element: el, draggable: !isReadOnly() })
+      .setLngLat([Number(selectedLoc.longitude), Number(selectedLoc.latitude)])
+      .addTo(map);
+
+    selMarker.on('dragend', async () => {
+      const ll = selMarker.getLngLat();
+      try {
+        await api(`/api/splice/locations/${selectedLoc.id}/coords`, 'PUT', {
+          latitude: ll.lat, longitude: ll.lng,
+        });
+        selectedLoc.latitude = ll.lat; selectedLoc.longitude = ll.lng;
+        // Re-push to GeoJSON source so the hidden-selected-point moves too.
+        _updateLocationsGeoJSON();
+      } catch (e) {
+        toast('Move failed: ' + e.message, 'error');
+        selMarker.setLngLat([Number(selectedLoc.longitude), Number(selectedLoc.latitude)]);
+      }
+    });
+    state._mapSelectedMarker = selMarker;
+  }
+
+  // ── GeoJSON cluster source update ─────────────────────────────────────────
+  _updateLocationsGeoJSON();
+
+  // ── Cable polylines with footage labels at their midpoints ────────────────
+  // Remove old label markers and rebuild.
+  (state._mapLabelMarkers || []).forEach(m => m.remove());
+  state._mapLabelMarkers = [];
+
   const cablesWithPath = (state.data.cables || []).filter(
     c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2
   );
@@ -3419,8 +3537,8 @@ function refreshMapLayers() {
     properties: { id: c.id, name: c.name, fiber_count: c.fiber_count,
                   path_length_feet: c.path_length_feet || 0 },
   }));
-  const src = map.getSource('cables');
-  if (src) src.setData({ type: 'FeatureCollection', features: cableFeatures });
+  const cableSrc = map.getSource('cables');
+  if (cableSrc) cableSrc.setData({ type: 'FeatureCollection', features: cableFeatures });
 
   // Footage labels — Marker-based so they render cleanly over raster tiles.
   for (const c of cablesWithPath) {
@@ -3438,6 +3556,34 @@ function refreshMapLayers() {
       .addTo(map);
     state._mapLabelMarkers.push(m);
   }
+}
+
+// Push current location data into the 'locations' GeoJSON source.
+// The selected location is included with is_selected:true so the circle
+// layer can hide it (the HTML Marker is rendered on top instead).
+function _updateLocationsGeoJSON() {
+  const map = state.map;
+  if (!map) return;
+  const src = map.getSource('locations');
+  if (!src) return;
+  const selectedLocId = state.selection?.type === 'location' ? state.selection.id : null;
+  const locsWithGeo = (state.data?.locations || []).filter(l => l.latitude != null && l.longitude != null);
+  const features = locsWithGeo.map(loc => {
+    const closureCount = (state.data.closures || []).filter(c => c.location_id === loc.id).length;
+    return {
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [Number(loc.longitude), Number(loc.latitude)] },
+      properties: {
+        id: loc.id,
+        name: loc.name,
+        type: loc.type,
+        color: _locColor(loc),
+        closure_count: closureCount,
+        is_selected: loc.id === selectedLocId,
+      },
+    };
+  });
+  src.setData({ type: 'FeatureCollection', features });
 }
 
 // Returns the geographic midpoint along a polyline (equal arc-length split).
