@@ -52,35 +52,70 @@
     document.getElementById('insp-tile-projects').textContent = t.active_projects || 0;
     document.getElementById('insp-tile-inspectors').textContent = t.inspector_count || 0;
 
-    // Project rows
+    // Project rows — grouped by contract per owner spec 2026-05-06:
+    // "The projects in the RUS section need to be within a contract
+    // roll up for organization also. Always."
     const tbody = document.getElementById('inspection-body');
     if (!data.projects?.length) {
       tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fa-solid fa-helmet-safety"></i><p>No RUS-program projects with activity${period==='month'?' for '+periodLabel:''}.</p><p style="font-size:12px;color:var(--text-muted)">Any active project under an engineering contract whose program is set to RUS will surface here once it has logged hours, regardless of job team.</p></td></tr>`;
       return;
     }
-    tbody.innerHTML = data.projects.map(p => `
-      <tr style="${p.is_ongoing ? 'background:rgba(253,126,20,0.05)' : ''}">
-        <td>
-          <div style="font-weight:600">${esc(p.name)}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${esc(p.job_name || '—')}</div>
-        </td>
-        <td>${esc(p.client_name || '—')}</td>
-        <td style="font-family:monospace;font-size:12px">${esc(p.work_order_number || '—')}</td>
-        <td>${esc(p.service_area || '—')}</td>
-        <td style="text-align:right;font-weight:600">${fmtHours(p.hours_in_period)}</td>
-        <td style="text-align:right;font-weight:600;color:var(--success)">${fmtMoney(p.revenue_in_period)}</td>
-        <td style="text-align:center">
-          <input type="checkbox" ${p.is_ongoing ? 'checked' : ''}
-            onchange="toggleOngoing('${p.id}', this.checked)"
-            title="Ongoing projects roll over month-to-month and don't auto-close until you mark them complete">
-        </td>
-        <td>${statusBadge(p.status)}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-sm btn-icon btn-secondary" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn btn-sm btn-icon btn-secondary" onclick="showProjectDetail('${p.id}')" title="Details"><i class="fa-solid fa-eye"></i></button>
-        </td>
-      </tr>
-    `).join('');
+
+    // Bucket rows by contract_label. "— Unassigned" gets its own bucket
+    // (rare; should only happen for legacy rows where the contract was
+    // never set).
+    const byContract = new Map();
+    for (const p of data.projects) {
+      const key = p.contract_label || '— Unassigned —';
+      if (!byContract.has(key)) byContract.set(key, []);
+      byContract.get(key).push(p);
+    }
+    // Sort contracts alphabetically; render a section header row per
+    // contract followed by its project rows.
+    const sortedContracts = [...byContract.keys()].sort((a, b) => a.localeCompare(b));
+    const html = [];
+    for (const contractKey of sortedContracts) {
+      const rows = byContract.get(contractKey);
+      const totalHours = rows.reduce((s, r) => s + (r.hours_in_period || 0), 0);
+      const totalRevenue = rows.reduce((s, r) => s + (r.revenue_in_period || 0), 0);
+      html.push(`
+        <tr style="background:var(--surface-3);font-weight:700">
+          <td colspan="4" style="padding:10px 12px;color:var(--primary)">
+            <i class="fa-solid fa-folder-open" style="margin-right:6px"></i>${esc(contractKey)}
+            <span style="margin-left:8px;font-weight:500;color:var(--text-muted);font-size:11px">${rows.length} project${rows.length===1?'':'s'}</span>
+          </td>
+          <td style="text-align:right;padding:10px 12px">${fmtHours(totalHours)}</td>
+          <td style="text-align:right;padding:10px 12px;color:var(--success)">${fmtMoney(totalRevenue)}</td>
+          <td colspan="3"></td>
+        </tr>
+      `);
+      for (const p of rows) {
+        html.push(`
+          <tr style="${p.is_ongoing ? 'background:rgba(253,126,20,0.05)' : ''}">
+            <td style="padding-left:24px">
+              <div style="font-weight:600">${esc(p.display_name || p.name)}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${esc(p.job_name || '—')}</div>
+            </td>
+            <td>${esc(p.client_name || '—')}</td>
+            <td style="font-family:monospace;font-size:12px">${esc(p.work_order_number || p.resolved_wo || '—')}</td>
+            <td>${esc(p.service_area || '—')}</td>
+            <td style="text-align:right;font-weight:600">${fmtHours(p.hours_in_period)}</td>
+            <td style="text-align:right;font-weight:600;color:var(--success)">${fmtMoney(p.revenue_in_period)}</td>
+            <td style="text-align:center">
+              <input type="checkbox" ${p.is_ongoing ? 'checked' : ''}
+                onchange="toggleOngoing('${p.id}', this.checked)"
+                title="Ongoing projects roll over month-to-month and don't auto-close until you mark them complete">
+            </td>
+            <td>${statusBadge(p.status)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-icon btn-secondary" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-sm btn-icon btn-secondary" onclick="showProjectDetail('${p.id}')" title="Details"><i class="fa-solid fa-eye"></i></button>
+            </td>
+          </tr>
+        `);
+      }
+    }
+    tbody.innerHTML = html.join('');
   }
 
   // Toggle ongoing flag — updates the row inline via the API.

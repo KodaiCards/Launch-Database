@@ -245,11 +245,57 @@ async function buildInvoiceData(pool, opts) {
   let grandAmount = 0;
 
   for (const c of contracts) {
+    // Owner-flagged 2026-05-06: AI-built trees often set contract_id on
+    // a rollup container, leaving leaves with contract_id NULL. The old
+    // direct-match query found zero leaves and the invoice rendered
+    // empty (no WO#, no inspector name). Walk descendants of any
+    // project under this contract so leaves whose ANCESTOR carries the
+    // contract_id are included. Falls back to leaf's own work_order_number,
+    // then any ancestor's WO# via COALESCE so the field never goes (no WO).
     const projRes = await pool.query(
-      `SELECT id, work_order_number, name, footage::float AS footage, expected_revenue::float AS expected_revenue
-         FROM projects
-         WHERE contract_id = $1 AND job_id = $2
-         ORDER BY work_order_number NULLS LAST, name`,
+      `WITH RECURSIVE tree AS (
+         SELECT p.id, p.parent_id, p.work_order_number, p.name,
+                p.footage::float AS footage,
+                p.expected_revenue::float AS expected_revenue,
+                p.job_id, p.contract_id, p.is_rollup, p.concentrator_id, 0 AS depth
+           FROM projects p
+          WHERE p.contract_id = $1
+          UNION ALL
+         SELECT p.id, p.parent_id, p.work_order_number, p.name,
+                p.footage::float AS footage,
+                p.expected_revenue::float AS expected_revenue,
+                p.job_id, p.contract_id, p.is_rollup, p.concentrator_id, t.depth + 1
+           FROM projects p
+           JOIN tree t ON p.parent_id = t.id
+          WHERE t.depth < 10
+       ),
+       wo_resolve AS (
+         -- For each leaf, resolve a WO# from the leaf or any ancestor's
+         -- work_order_number, OR from a concentrator on the leaf or
+         -- ancestor. Walks up the parent chain; first non-null wins.
+         SELECT t.id AS leaf_id,
+                COALESCE(t.work_order_number,
+                         (SELECT pa.work_order_number FROM projects pa
+                            WHERE pa.id = t.parent_id AND pa.work_order_number IS NOT NULL),
+                         (SELECT con.work_order_number FROM concentrators con
+                            WHERE con.id = t.concentrator_id),
+                         (SELECT con.work_order_number FROM projects pa
+                            JOIN concentrators con ON con.id = pa.concentrator_id
+                            WHERE pa.id = t.parent_id),
+                         (SELECT con.work_order_number FROM projects pa
+                            JOIN projects ga ON ga.id = pa.parent_id
+                            JOIN concentrators con ON con.id = ga.concentrator_id
+                            WHERE pa.id = t.parent_id)
+                ) AS resolved_wo
+           FROM tree t
+       )
+       SELECT DISTINCT ON (t.id)
+              t.id, COALESCE(wr.resolved_wo, t.work_order_number) AS work_order_number,
+              t.name, t.footage, t.expected_revenue
+         FROM tree t
+         LEFT JOIN wo_resolve wr ON wr.leaf_id = t.id
+         WHERE t.job_id = $2 AND COALESCE(t.is_rollup, FALSE) = FALSE
+         ORDER BY t.id, COALESCE(wr.resolved_wo, t.work_order_number) NULLS LAST, t.name`,
       [c.id, job_id]
     );
     const wos = [];
@@ -267,13 +313,34 @@ async function buildInvoiceData(pool, opts) {
           ? p.expected_revenue
           : (footage / 5280) * rate;
       } else {
-        // Hourly: sum time_entries.hours within the period.
-        const teRes = await pool.query(
-          `SELECT COALESCE(SUM(hours), 0)::float AS h
-             FROM time_entries
-             WHERE project_id = $1 AND entry_date BETWEEN $2 AND $3`,
-          [p.id, period_start, period_end]
-        );
+        // Hourly: sum time_entries.hours within the period. Walks the
+        // leaf's parent chain so entries that landed on a WO rollup
+        // (CSV importer matched the rollup because the leaf had no
+        // WO#) get attributed back to the matching leaf. Ancestor
+        // entries only count when their job_title matches the leaf's
+        // job — otherwise sibling jobs under the same WO would each
+        // claim all the hours.
+        const teRes = await pool.query(`
+          WITH RECURSIVE leaf_ctx AS (
+            SELECT p.id AS leaf_id, p.id AS cursor_id, p.parent_id,
+                   LOWER(j.name) AS job_name_lc, 0 AS depth
+              FROM projects p
+              LEFT JOIN jobs j ON j.id = p.job_id
+             WHERE p.id = $1
+            UNION ALL
+            SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.depth + 1
+              FROM leaf_ctx lc
+              JOIN projects p ON p.id = lc.parent_id
+             WHERE lc.depth < 10
+          )
+          SELECT COALESCE(SUM(te.hours), 0)::float AS h
+            FROM leaf_ctx lc
+            JOIN time_entries te ON te.project_id = lc.cursor_id
+           WHERE te.entry_date BETWEEN $2 AND $3
+             AND (lc.cursor_id = lc.leaf_id
+                  OR (lc.job_name_lc IS NOT NULL
+                      AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc))
+        `, [p.id, period_start, period_end]);
         hours = teRes.rows[0].h;
         amount = hours * rate;
       }
@@ -319,26 +386,51 @@ async function buildInvoiceData(pool, opts) {
   let timecards = [];
   if (!isFootage) {
     const projectIds = contractScopes.flatMap(cs => cs.wos.map(w => w.project_id));
-    const tcRes = await pool.query(
-      `SELECT te.entry_date::text AS date,
-              te.hours::float AS hours,
-              s.name AS staff_name,
-              p.work_order_number AS wo,
-              c.contract_number AS contract_number,
-              c.friendly_label AS contract_friendly,
-              -- Week ending = next Sunday (or today if today is Sunday).
-              -- date_trunc + interval gives us the Monday of the week,
-              -- + 6 days = Sunday.
-              (date_trunc('week', te.entry_date) + INTERVAL '6 days')::date::text AS week_ending
-         FROM time_entries te
-         JOIN projects p ON p.id = te.project_id
-         JOIN contracts c ON c.id = p.contract_id
-         LEFT JOIN staff s ON s.id = te.staff_id
-         WHERE te.project_id = ANY($1::uuid[])
-           AND te.entry_date BETWEEN $2 AND $3
-         ORDER BY s.name NULLS LAST, te.entry_date, p.work_order_number`,
-      [projectIds, period_start, period_end]
-    );
+    // Walk each leaf's ancestor chain so entries that landed on a WO
+    // rollup get attributed to the matching leaf in the timecard
+    // section. Same recursive CTE pattern as the totals query above.
+    // Joins through the LEAF (not the entry's project_id) for WO# +
+    // contract context so the timecard rows show the right values
+    // regardless of where the entry actually sits in the tree.
+    const tcRes = await pool.query(`
+      WITH RECURSIVE leaf_ctx AS (
+        SELECT p.id AS leaf_id, p.id AS cursor_id, p.parent_id,
+               LOWER(j.name) AS job_name_lc, 0 AS depth
+          FROM projects p
+          LEFT JOIN jobs j ON j.id = p.job_id
+         WHERE p.id = ANY($1::uuid[])
+        UNION ALL
+        SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.depth + 1
+          FROM leaf_ctx lc
+          JOIN projects p ON p.id = lc.parent_id
+         WHERE lc.depth < 10
+      )
+      SELECT te.entry_date::text AS date,
+             te.hours::float AS hours,
+             s.name AS staff_name,
+             COALESCE(leaf.work_order_number,
+                      (SELECT pa.work_order_number FROM projects pa
+                         WHERE pa.id = leaf.parent_id AND pa.work_order_number IS NOT NULL),
+                      (SELECT pa2.work_order_number FROM projects pa
+                         JOIN projects pa2 ON pa2.id = pa.parent_id
+                         WHERE pa.id = leaf.parent_id AND pa2.work_order_number IS NOT NULL),
+                      (SELECT con.work_order_number FROM concentrators con
+                         WHERE con.id = leaf.concentrator_id)
+             ) AS wo,
+             leaf_c.contract_number AS contract_number,
+             leaf_c.friendly_label AS contract_friendly,
+             (date_trunc('week', te.entry_date) + INTERVAL '6 days')::date::text AS week_ending
+        FROM leaf_ctx lc
+        JOIN time_entries te ON te.project_id = lc.cursor_id
+        JOIN projects leaf ON leaf.id = lc.leaf_id
+        LEFT JOIN contracts leaf_c ON leaf_c.id = leaf.contract_id
+        LEFT JOIN staff s ON s.id = te.staff_id
+       WHERE te.entry_date BETWEEN $2 AND $3
+         AND (lc.cursor_id = lc.leaf_id
+              OR (lc.job_name_lc IS NOT NULL
+                  AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc))
+       ORDER BY s.name NULLS LAST, te.entry_date, leaf.work_order_number
+    `, [projectIds, period_start, period_end]);
     // Group by staff name
     const byStaff = new Map();
     for (const r of tcRes.rows) {
@@ -401,9 +493,13 @@ async function buildInvoiceData(pool, opts) {
 // the RUS format spec described in the file header.
 function renderInvoicePdf(data, stream) {
   const isFootage = data.meta.job_billing_type === 'footage';
+  // Owner-flagged 2026-05-06: "minimal margins" — drop from 50/40 to
+  // 28/24 (~0.33"). Backgrounds in pdfkit are always rendered (no
+  // print-background toggle exists; fills always paint), so the
+  // "export with background colors on" clause is already satisfied.
   const doc = new PDFDocument({
     size: 'LETTER',
-    margins: { top: 50, bottom: 50, left: 40, right: 40 },
+    margins: { top: 28, bottom: 28, left: 24, right: 24 },
     info: {
       Title: `${data.meta.job_name} Summary - ${data.meta.month_year}`,
       Author: 'Launch Fiber Services',

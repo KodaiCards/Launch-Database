@@ -177,19 +177,40 @@ in the head — they're harder to edit later). Keep the HTML semantic
 (<table>, <thead>, <tbody>, <tfoot>, <h1>, <p>, <strong>, <span>) so the
 operator can hand-edit it readably.
 
-LOGO HANDLING — CRITICAL:
-The reference PDF will likely show the Launch Fiber Services logo at
-the top (or in a header/footer). DO NOT replace the logo with plain
-text. The system has a real logo asset that gets injected at render
-time. Wherever the PDF shows the logo, output exactly:
+LAYOUT FIDELITY — CRITICAL:
+The reference PDF is the source of truth. Your output must match it
+visually as closely as possible. Specific rules owner has flagged:
 
-    {{{company_logo}}}
-
-(triple curly braces — unescaped — yields a complete <img> tag).
-If you want to wrap the logo in a sized container, use
-<img src="{{company_logo_url}}" style="height:50px"> with double braces
-and your own style. Substituting "Launch Fiber Services" or any other
-text for the logo is a regression — emit the placeholder.
+- LOGO: where the reference PDF shows the Launch Fiber Services logo
+  (almost always at top-center or top-left of the first page), output
+  EXACTLY {{{company_logo}}} (triple curly braces — unescaped — yields
+  a complete <img> tag). The system injects the actual logo asset at
+  render time. DO NOT replace the logo with plain text. DO NOT make
+  the logo container too large — the placeholder produces an
+  appropriately-sized image already (~60px height).
+- LOGO SIZING: if the reference PDF shows the logo at a clearly
+  different size, wrap with <img src="{{company_logo_url}}" style="height:NNpx">
+  (double braces). Match the visual size in the reference, don't
+  invent your own sizing.
+- TEXT SIZING: match the reference PDF's font sizes proportionally.
+  Title ~24-28px, section headers ~14-16px, body text ~10-12px,
+  table cells ~9-11px. Do not blow up text 2x — that signals you
+  guessed a size from headless rendering rather than reading the
+  reference.
+- TABLE COLOR SCHEME: if the reference PDF has colored table headers
+  (dark navy, blue, etc.), USE THOSE COLORS in your <th> backgrounds
+  with white or near-white text. If the PDF has alternating row
+  shading, replicate it. Owner explicitly wants the export to retain
+  the same color scheme as the reference — tables WITH colored
+  backgrounds, not stripped-down monochrome.
+- BACKGROUNDS PRINT: the renderer has printBackground:true. Use
+  background-color CSS freely — it'll appear in the printed PDF.
+  Don't fall back to "subtle gray border" when the reference shows a
+  solid colored bar.
+- MARGINS: the renderer uses 0.25in default page margins so
+  backgrounds extend almost edge-to-edge. Don't add extra padding on
+  the outermost wrapper element to "make it look professional" —
+  trust the page margin and put your container flush.
 
 Where the PDF has variable / data-driven content, use mustache-style
 placeholders. The available data fields are documented below — use ONLY these
@@ -460,10 +481,18 @@ async function renderHtmlToPdf(html, opts = {}) {
     // is the right balance — domcontentloaded misses images, networkidle0
     // hangs forever if the page polls.
     await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+    // Owner-flagged 2026-05-06: "minimal margins, in color, with
+    // background colors on." printBackground was already true; margins
+    // dropped from 0.5in to 0.25in so backgrounds extend almost
+    // edge-to-edge. preferCSSPageSize honors any @page size in the
+    // template (including @page { size: Tabloid; margin: 0 }), which
+    // lets owner override per-template if they want the splice-style
+    // bleed-to-edge look.
     const pdf = await page.pdf({
       format: opts.format || 'Letter',
       printBackground: true,
-      margin: opts.margin || { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' },
+      preferCSSPageSize: true,
+      margin: opts.margin || { top: '0.25in', right: '0.25in', bottom: '0.25in', left: '0.25in' },
     });
     return pdf;
   } finally {
