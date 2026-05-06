@@ -5258,33 +5258,48 @@ async function initMapIfNeeded() {
     const bmLabel = document.getElementById('btn-basemap-label');
     if (bmLabel) bmLabel.textContent = initialBasemap === 'hybrid' ? 'Hybrid' : 'Satellite';
     map.on('load', () => {
-      // Source + layer for cable polylines. We re-set the data on every
-      // refresh from state.data; the source itself just needs to exist
-      // so the layer can mount.
+      // ── 5.C.2 VETRO map style — cable route layers ───────────────────────
+      // Layer order (bottom→top): cables-halo → cables-line → loc-clusters →
+      // loc-unclustered → loc-names → draft overlays → esri-ref (labels)
+      // Route color: #68BD45 active (CONFIRMED from VETRO source), #9CA3AF dead.
+      // Width: interpolated 2→4→6 at zoom 12→16→18 (VETRO spec).
+      // Aerial cables use dash [8,4]; buried/conduit solid.
       map.addSource('cables', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      map.addLayer({
-        id: 'cables-line',
-        type: 'line',
-        source: 'cables',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': '#FFD400',
-          'line-width': 3,
-          'line-opacity': 0.9,
-        },
-      });
-      // Halo so the line is visible over both bright and dark satellite.
+      // Halo renders BELOW the colored line — inserted first so cables-line goes on top.
       map.addLayer({
         id: 'cables-line-halo',
         type: 'line',
         source: 'cables',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#000',
-          'line-width': 6,
-          'line-opacity': 0.3,
+          'line-color': '#000000',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 8, 18, 12],
+          'line-opacity': 0.22,
         },
-      }, 'cables-line');
+      });
+      map.addLayer({
+        id: 'cables-line',
+        type: 'line',
+        source: 'cables',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          // Active = VETRO green (#68BD45 CONFIRMED); inactive/dark = muted gray.
+          'line-color': ['case',
+            ['==', ['get', 'status'], 'dark'],   '#9CA3AF',
+            ['==', ['get', 'status'], 'planned'], '#F59E0B',
+            '#68BD45'   /* default: active */
+          ],
+          // VETRO width spec: 2px at z12, 4px at z16, 6px at z18.
+          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 16, 4, 18, 6],
+          'line-opacity': 0.92,
+          // Aerial = dashed [8,4]; buried/conduit = solid [1,0].
+          // construction_type field values: 'aerial' | 'buried' | 'conduit' | etc.
+          'line-dasharray': ['case',
+            ['==', ['get', 'construction_type'], 'aerial'], ['literal', [8, 4]],
+            ['literal', [1, 0]]
+          ],
+        },
+      }, 'cables-line-halo');
       // Track in-progress draw waypoints separately so we can render
       // them while the user is clicking.
       map.addSource('draft-path', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -5314,19 +5329,20 @@ async function initMapIfNeeded() {
         clusterMaxZoom: 14,
       });
 
-      // Cluster bubble — radius scales with point_count.
+      // ── 5.C.2 VETRO map style — location markers ─────────────────────────
+      // Cluster bubble — VETRO navy (#003F72) background, white text.
       map.addLayer({
         id: 'loc-clusters',
         type: 'circle',
         source: 'locations',
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color': '#1660C9',
+          'circle-color': '#003F72',   /* --vetro-primary */
           'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
             1, 14, 10, 18, 50, 24, 200, 32],
-          'circle-stroke-color': '#fff',
+          'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2,
-          'circle-opacity': 0.85,
+          'circle-opacity': 0.88,
         },
       });
 
@@ -5341,12 +5357,11 @@ async function initMapIfNeeded() {
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-size': 12,
         },
-        paint: {
-          'text-color': '#fff',
-        },
+        paint: { 'text-color': '#ffffff' },
       });
 
       // Unclustered individual location points, coloured by type.
+      // Stroke: 2px white normal; hover → 3px primary; selected → hidden (HTML marker shown).
       map.addLayer({
         id: 'loc-unclustered',
         type: 'circle',
@@ -5354,32 +5369,36 @@ async function initMapIfNeeded() {
         filter: ['!', ['has', 'point_count']],
         paint: {
           'circle-color': ['get', 'color'],
+          // Base radius: 8 for plain locations, 10 for locations with closures.
           'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
-          'circle-stroke-color': '#fff',
+          'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2,
+          // Hide the GL circle for the selected location — the HTML Marker
+          // (which supports drag) is shown instead.
           'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
         },
       });
 
-      // Location name labels — only shown at zoom ≥ 15 to avoid clutter.
+      // Location name labels — VETRO spec: only at zoom ≥ 16 (was 15).
+      // Reduces label clutter at mid-zoom per 5.C.2 spec.
       map.addLayer({
         id: 'loc-names',
         type: 'symbol',
         source: 'locations',
         filter: ['!', ['has', 'point_count']],
-        minzoom: 15,
+        minzoom: 16,
         layout: {
           'text-field': ['get', 'name'],
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
           'text-size': 10,
           'text-anchor': 'top',
-          'text-offset': [0, 0.8],
+          'text-offset': [0, 0.9],
           'text-allow-overlap': false,
           'text-ignore-placement': false,
         },
         paint: {
-          'text-color': '#fff',
-          'text-halo-color': '#000',
+          'text-color': '#ffffff',
+          'text-halo-color': '#000000',
           'text-halo-width': 1.5,
         },
       });
@@ -5548,7 +5567,10 @@ function refreshMapLayers() {
     type: 'Feature',
     geometry: c.path_geojson,
     properties: { id: c.id, name: c.name, fiber_count: c.fiber_count,
-                  path_length_feet: c.path_length_feet || 0 },
+                  path_length_feet: c.path_length_feet || 0,
+                  // 5.C.2: expose fields for VETRO map style expressions.
+                  construction_type: c.construction_type || 'buried',
+                  status: c.status || 'active' },
   }));
   const cableSrc = map.getSource('cables');
   if (cableSrc) cableSrc.setData({ type: 'FeatureCollection', features: cableFeatures });
@@ -5563,7 +5585,7 @@ function refreshMapLayers() {
     if (!mid) continue;
     const lbl = document.createElement('div');
     lbl.textContent = `${Math.round(ft)} ft`;
-    lbl.style.cssText = 'background:rgba(0,0,0,.55);color:#FFD400;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;letter-spacing:0.3px';
+    lbl.style.cssText = 'background:rgba(0,0,0,.6);color:#68BD45;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;pointer-events:none;letter-spacing:0.3px';
     const m = new ml.Marker({ element: lbl, anchor: 'center' })
       .setLngLat(mid)
       .addTo(map);
