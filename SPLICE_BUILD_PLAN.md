@@ -625,21 +625,78 @@ similar or just like vetros that'd be great." Concrete asks:
    in the HH inspector even when there's no formal closure
    shell.
 
-### 5.C Workstream split
+### 5.C VETRO visual match + Handhole Inventory dashboard
 
-- **FIX-A** (Sonnet, smaller scope, ships first): items 1–6 of
-  5.A. Bundled into one worker because they share file
-  surface (`routes/splice.js` + `public/splice.html`) and any
-  one of them takes a few minutes; bundling cuts dispatch
-  overhead.
-- **FIX-B** (Sonnet, deep scope, ships second): items 1–6 of
-  5.B. Single worker because the whole thing is one coherent
-  flow redesign — splitting it would require coordination on
-  shared state (selection model, drag controller, inspector
-  layout) that's painful across two agents.
-- **P3 retry** (Sonnet, queued): the Fujikura Splice+
-  integration (Phase 4.7) — failed earlier on a per-session
-  billing cap, retries after the cap resets.
+Owner follow-up after dispatching FIX-B (2026-05-06 PM): the
+behavior changes in 5.B are good, but they want the FULL VETRO
+match — visual tokens, map style, layout, AND a Handhole
+Inventory dashboard that doesn't exist today. Verbatim:
+"I just want you to match vetros UI, map style, splicing drag
+and drop, Handhole inventory all of it."
+
+5.B already covers the splicing drag-and-drop. 5.C covers the
+rest:
+
+1. **Visual tokens to match VETRO.** Color palette, typography
+   stack, density, button/chip/badge styles, panel chrome.
+   Source the visual references from
+   `research/07_vetro_visual_match.md` (a research shard
+   dispatched in parallel with FIX-B to gather concrete VETRO
+   screenshots and inferred design tokens).
+
+2. **Map style match.** VETRO renders fiber routes as colored
+   polylines on a clean street/satellite basemap with
+   equipment markers as standard GIS symbols. Match this:
+   route-line styling (color by fiber count or status, width
+   by capacity), location markers as filled circles colored
+   by type, hover-state highlighting. Replace any improvised
+   styling with VETRO-equivalent.
+
+3. **Layout match.** VETRO uses persistent right-pane
+   inspector + bottom attribute table + left toolbar (the
+   GIS-standard pattern). We already have the right-pane;
+   add the bottom attribute table (matrix view from 4.4 was
+   a tab — VETRO docks it as a peekable bottom panel) and a
+   left-rail icon nav for view switches.
+
+4. **Handhole Inventory dashboard.** When a handhole or
+   location is opened, show a true inventory dashboard
+   (replacing the current spare inspector):
+   - Cables in/out summary with fiber-count totals
+   - Fiber breakdown: N spliced, N express, N dead (clickable
+     to filter the per-cable list)
+   - Equipment installed: closures (with model/capacity),
+     splitters, slack records
+   - Photos uploaded (Phase 2B #7 field markups)
+   - Loss records bound to this location (after 4.7 lands)
+   - Comments thread (Phase 4.5)
+   - GPS coordinates + last-edited metadata
+   - Action bar: Edit, Add closure, Add splice, Add slack,
+     Add splitter, Upload photo, Generate splicer page, Delete
+
+5. **Cable inventory dashboard.** Same treatment for cables:
+   route summary, fiber-by-fiber path table, all closures
+   passing through, all locations passed, total length, BOM
+   contribution.
+
+### 5.D Workstream split
+
+- **FIX-A** (Sonnet, ships first): items 1–6 of 5.A. Bundled
+  into one worker because they share file surface
+  (`routes/splice.js` + `public/splice.html`) and bundling
+  cuts dispatch overhead.
+- **FIX-B** (Sonnet, ships second): items 1–6 of 5.B. Single
+  worker because the whole thing is one coherent flow redesign.
+- **VETRO research shard** (Sonnet, parallel-safe with FIX-B):
+  read-only web research, writes only `research/07_vetro_
+  visual_match.md`. Gathers VETRO visual references for
+  FIX-C to use.
+- **P3 retry** (Sonnet, queued, fires when FIX-B lands): the
+  Fujikura Splice+ integration (Phase 4.7).
+- **FIX-C** (Sonnet, queued, fires when both P3 and the VETRO
+  research shard land): items 1–5 of 5.C. Builds on top of
+  FIX-B's behavior changes + uses the VETRO research as the
+  visual reference.
 
 ---
 
