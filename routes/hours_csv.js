@@ -702,7 +702,19 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           continue;
         }
 
-        const finalJobTitle = r.job_title || apply_job_title || null;
+        // Owner rule: when the matched project has a job assigned, use
+        // THAT job's name as the time_entry's job_title. The Hours tab
+        // groups by `e.project_job_name || e.job_title` and the
+        // /api/time-entries SELECT now exposes project_job_name from
+        // the project's job_id, but stamping the project's job name
+        // onto job_title at commit time also makes the timecard view
+        // (which reads job_title directly) match what the project
+        // actually does.
+        //
+        // This is what the AI's log_hours tool does — falling back to
+        // the CSV's free-text column was the source of "Inspection
+        // projects show as Other" in the Hours tab.
+        const finalJobTitle = r.project_job_name || r.job_title || apply_job_title || null;
 
         // Snap to 0.25 grid — owner rule that hours always live on
         // quarter-hour increments. Applied at INSERT time so a CSV row

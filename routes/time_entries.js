@@ -76,7 +76,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       const { rows } = await pool.query(`
         SELECT te.*, p.name as project_name, p.work_order_number, p.project_type,
                s.name as staff_name, cl.name as client_name,
-               j.team as project_team
+               j.team as project_team, j.name as project_job_name
         FROM time_entries te
         LEFT JOIN projects p ON p.id = te.project_id
         LEFT JOIN jobs j ON j.id = p.job_id
