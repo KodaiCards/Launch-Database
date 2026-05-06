@@ -689,7 +689,8 @@ function openSSE(projectId) {
    'ribbon_splice_added','ribbon_group_deleted',
    'location_coords_changed','cable_path_changed',
    'design_import_applied','design_import_rejected',
-   'project_updated','lock_acquired','lock_released','lock_taken_over']
+   'project_updated','lock_acquired','lock_released','lock_taken_over',
+   'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Refresh the imports sidebar when the master designer or another
   // engineer takes action on a pending import.
@@ -1265,6 +1266,20 @@ function renderClosureInspector(closureId) {
 
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
       <h3 style="display:flex;justify-content:space-between;align-items:center">
+        Splitters <span class="small">${renderSplitterCount(closureId)}</span>
+      </h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Passive optical splitters (PLC/FBT). One input fiber fans out to N
+        downstream fibers. Validate before exporting — un-wired ports are flagged.
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="btn btn-sm" onclick="openAddSplitter('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Add splitter</button>
+      </div>
+      ${renderSplitterList(closureId)}
+    </div>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
         Stored strands <span class="small">${storedAtLoc.length}</span>
       </h3>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
@@ -1374,6 +1389,196 @@ async function deleteMarkup(markupId, closureId) {
     loadClosureMarkups(closureId);
     toast('Photo deleted', 'success');
   } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ─── Splitter helpers (Phase 2C #9) ──────────────────────────────────────
+
+function renderSplitterCount(closureId) {
+  const splitters = (state.data.splitters || []).filter(s => s.closure_id === closureId);
+  return splitters.length;
+}
+
+function renderSplitterList(closureId) {
+  const splitters = (state.data.splitters || []).filter(s => s.closure_id === closureId);
+  if (!splitters.length) return '<div class="empty-pane" style="padding:8px">No splitters yet.</div>';
+
+  return splitters.map(sp => {
+    const outputs = (state.data.splitter_outputs || []).filter(o => o.splitter_id === sp.id);
+    const wiredOut = outputs.filter(o => o.output_fiber_id).length;
+    const inputFiber = sp.input_fiber_id ? describeFiber(sp.input_fiber_id) : null;
+    const inputDesc = inputFiber
+      ? `${inputFiber.cable} / <span class="fc fc-${inputFiber.tube_color}"></span>${inputFiber.tube_color} / pos ${inputFiber.position}`
+      : '<span style="color:var(--text-muted)">not wired</span>';
+
+    return `
+      <div class="splice-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div style="display:flex;width:100%;justify-content:space-between;align-items:center">
+          <div>
+            <b>${esc(sp.ratio)}</b> splitter
+            &nbsp;·&nbsp; outputs: ${wiredOut}/${outputs.length} wired
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm" onclick="openEditSplitter('${sp.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-sm" onclick="openWireSplitter('${sp.id}')" title="Wire output ports"><i class="fa-solid fa-plug"></i> Outputs</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteSplitter('${sp.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div style="font-size:11px">Input: ${inputDesc}</div>
+        ${sp.notes ? `<div style="font-size:11px;color:var(--text-muted)">${esc(sp.notes)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// Build a flat list of fiber options for cables touching this closure's
+// location. Used by both the input-fiber and output-fiber pickers.
+function _closureFiberOptions(closureId) {
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) return '';
+  const cablesAtLoc = state.data.cables.filter(c =>
+    c.from_location_id === cl.location_id || c.to_location_id === cl.location_id
+  );
+  if (!cablesAtLoc.length) return '<option value="">No cables at this location</option>';
+  const opts = ['<option value="">-- none --</option>'];
+  for (const cable of cablesAtLoc) {
+    const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cable.id);
+    for (const tube of tubes) {
+      const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tube.id);
+      for (const fiber of fibers) {
+        opts.push(`<option value="${fiber.id}">${esc(cable.name)} / ${tube.color} / pos ${fiber.position}</option>`);
+      }
+    }
+  }
+  return opts.join('');
+}
+
+function openAddSplitter(closureId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const fiberOpts = _closureFiberOptions(closureId);
+  showModal({
+    title: 'Add splitter',
+    body: `
+      <div class="field"><label>Ratio</label>
+        <select id="m-spl-ratio">
+          <option>1x2</option><option>1x4</option><option>1x8</option>
+          <option selected>1x16</option><option>1x32</option><option>1x64</option>
+        </select></div>
+      <div class="field"><label>Input fiber (optional — wire later)</label>
+        <select id="m-spl-input">${fiberOpts}</select></div>
+      <div class="field"><label>Notes (optional)</label>
+        <textarea id="m-spl-notes" placeholder="e.g. port 1 of APC-SC bank"></textarea></div>
+    `,
+    submitText: 'Add',
+    onSubmit: async (close) => {
+      const ratio   = document.getElementById('m-spl-ratio').value;
+      const inputId = document.getElementById('m-spl-input').value;
+      const notes   = document.getElementById('m-spl-notes').value.trim();
+      try {
+        await api(`/api/splice/closures/${closureId}/splitters`, 'POST', {
+          ratio,
+          input_fiber_id: inputId || null,
+          notes: notes || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+function openEditSplitter(splitterId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const sp = (state.data.splitters || []).find(s => s.id === splitterId);
+  if (!sp) return;
+  const fiberOpts = _closureFiberOptions(sp.closure_id);
+  // Pre-select the current input fiber in the option list.
+  const fiberOptsSelected = fiberOpts.replace(
+    `value="${sp.input_fiber_id || ''}"`,
+    `value="${sp.input_fiber_id || ''}" selected`
+  );
+  showModal({
+    title: 'Edit splitter',
+    body: `
+      <div class="field"><label>Ratio</label>
+        <select id="m-espl-ratio">
+          ${['1x2','1x4','1x8','1x16','1x32','1x64'].map(r =>
+            `<option${r === sp.ratio ? ' selected' : ''}>${r}</option>`
+          ).join('')}
+        </select></div>
+      <div class="field"><label>Input fiber</label>
+        <select id="m-espl-input">${fiberOptsSelected}</select></div>
+      <div class="field"><label>Notes</label>
+        <textarea id="m-espl-notes">${esc(sp.notes || '')}</textarea></div>
+    `,
+    submitText: 'Save',
+    onSubmit: async (close) => {
+      const ratio   = document.getElementById('m-espl-ratio').value;
+      const inputId = document.getElementById('m-espl-input').value;
+      const notes   = document.getElementById('m-espl-notes').value.trim();
+      try {
+        await api(`/api/splice/splitters/${splitterId}`, 'PUT', {
+          ratio,
+          input_fiber_id: inputId || null,
+          notes: notes || null,
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+function openWireSplitter(splitterId) {
+  const sp = (state.data.splitters || []).find(s => s.id === splitterId);
+  if (!sp) return;
+  const outputs = (state.data.splitter_outputs || []).filter(o => o.splitter_id === splitterId);
+  const fiberOpts = _closureFiberOptions(sp.closure_id);
+
+  // Build one row per output port so the designer can wire each
+  // independently. We re-select the current output_fiber_id inline.
+  const rows = outputs.map(o => {
+    const selected = o.output_fiber_id
+      ? fiberOpts.replace(`value="${o.output_fiber_id}"`, `value="${o.output_fiber_id}" selected`)
+      : fiberOpts;
+    return `
+      <div class="field" style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <label style="width:60px;min-width:60px">Port ${o.position}</label>
+        <select data-output-id="${o.id}" style="flex:1">${selected}</select>
+      </div>`;
+  }).join('');
+
+  showModal({
+    title: `Wire outputs — ${sp.ratio} splitter`,
+    wide: true,
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+        Select the downstream fiber for each output port. Leave blank to un-wire.
+      </div>
+      <div id="m-wire-outputs">${rows}</div>
+    `,
+    submitText: 'Save all',
+    onSubmit: async (close) => {
+      const selects = document.querySelectorAll('#m-wire-outputs select[data-output-id]');
+      try {
+        await Promise.all([...selects].map(sel =>
+          api(`/api/splice/splitter-outputs/${sel.dataset.outputId}`, 'PUT', {
+            output_fiber_id: sel.value || null,
+          })
+        ));
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function deleteSplitter(splitterId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  if (!confirm('Delete this splitter and all its output ports?')) return;
+  try {
+    await api(`/api/splice/splitters/${splitterId}`, 'DELETE');
+    await hydrateProject();
+    toast('Splitter deleted', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function openAddStoredStrand(locationId) {
