@@ -1553,18 +1553,24 @@ function drawCanvasContents() {
   // When a strand path is active, glow every cable in the chain and accent
   // every closure that hosts a splice-to-next hop.
   if (state.tracePath && state.tracePath.chain && state.tracePath.chain.length) {
-    const TRACE_CABLE_COLOR  = '#FF6B00';  // vivid orange — high contrast on both themes
-    const TRACE_CLOSURE_COLOR = '#FF6B00';
+    const TRACE_CABLE_COLOR    = '#FF6B00';  // vivid orange — spliced hops
+    const TRACE_CLOSURE_COLOR  = '#FF6B00';
+    const TRACE_EXPRESS_COLOR  = '#00BCD4';  // teal/cyan — express (pass-through) locations
 
-    // Collect the set of cable IDs and closure IDs that appear in the chain.
-    const traceCableIds   = new Set();
-    const traceClosureIds = new Set();
+    // Collect the set of cable IDs, closure IDs, and express location IDs.
+    const traceCableIds      = new Set();
+    const traceClosureIds    = new Set();
+    const traceExpressLocIds = new Set(); // locations where fiber passes through unspliced
 
     for (const entry of state.tracePath.chain) {
       const f = entry.fiber;
       if (f.cable_id) traceCableIds.add(f.cable_id);
       if (entry.splice_to_next && entry.splice_to_next.closure_id) {
         traceClosureIds.add(entry.splice_to_next.closure_id);
+      }
+      // pass_through_locations added by Phase 5A.5 cable-graph walk
+      if (Array.isArray(entry.pass_through_locations)) {
+        for (const ptl of entry.pass_through_locations) traceExpressLocIds.add(ptl.id);
       }
     }
 
@@ -1598,6 +1604,27 @@ function drawCanvasContents() {
       );
       const isRich = cablesHere.length >= 3;
       const ringW = isRich ? 208 : 128;
+
+      // Express (pass-through) location — teal dashed ring above/around closures.
+      // Drawn first so splice rings render on top.
+      if (traceExpressLocIds.has(loc.id)) {
+        const ptRingW = ringW + 16;
+        traceLayer.add(new Konva.Rect({
+          x: x - ptRingW / 2, y: 372,
+          width: ptRingW, height: list.length ? (list.length * 110 + 8) : 40,
+          stroke: TRACE_EXPRESS_COLOR, strokeWidth: 2,
+          dash: [6, 4],
+          fill: 'rgba(0,188,212,0.06)',
+          cornerRadius: 8, listening: false,
+        }));
+        // Small label: "express through"
+        traceLayer.add(new Konva.Text({
+          x: x - ptRingW / 2 + 4, y: 374,
+          text: '⟶ express',
+          fontSize: 9, fill: TRACE_EXPRESS_COLOR, listening: false,
+        }));
+      }
+
       list.forEach((cl, idx) => {
         if (!traceClosureIds.has(cl.id)) return;
         const baseY = 380 + idx * 110;
@@ -2734,12 +2761,17 @@ function _renderTracePathSidebar(result) {
     const arrow = entry.splice_to_next
       ? ` <span style="color:var(--primary)">→ ${esc(entry.splice_to_next.closure_model || 'closure')} (${esc(entry.splice_to_next.location_name || '?')}) →</span> `
       : '';
-    return `<div style="margin-bottom:2px"><b>${i + 1}.</b> ${label}${arrow}</div>`;
+    // Express (pass-through) locations for this hop — shown in teal
+    const ptLocs = Array.isArray(entry.pass_through_locations) && entry.pass_through_locations.length
+      ? `<div style="color:#00BCD4;font-size:10px;margin-left:14px">⟶ express through: ${entry.pass_through_locations.map(l => esc(l.name)).join(', ')}</div>`
+      : '';
+    return `<div style="margin-bottom:2px"><b>${i + 1}.</b> ${label}${arrow}</div>${ptLocs}`;
   }).join('');
 
   const flags = [];
-  if (result.circular)    flags.push('<span style="color:var(--warning-text)">circular strand detected</span>');
+  if (result.circular)     flags.push('<span style="color:var(--warning-text)">circular strand detected</span>');
   if (result.over_spliced) flags.push('<span style="color:var(--danger-text)">over-spliced fiber in path</span>');
+  if (result.is_dead)      flags.push('<span style="color:var(--text-muted)">dead fiber — no splices anywhere</span>');
 
   div.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">

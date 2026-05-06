@@ -5669,10 +5669,84 @@ function _traceStrandPath(startFiberId, data) {
     warnings.push('One or more fibers in this project participate in 3+ splices (over-spliced); the path may not represent the full topology.');
   }
 
+  // ── Cable-graph post-processing (Phase 5A.5) ──────────────────────────
+  // The splice-graph walk above finds fibers that are actually spliced.
+  // For express (pass-through) and dead fibers we also need the cable graph:
+  // a fiber physically travels through every location that its cable's
+  // endpoints (from_location_id / to_location_id) point at, even when no
+  // splice exists there.
+  //
+  // Annotate each chain entry with pass_through_locations: the set of
+  // cable-endpoint locations where the fiber is present but has NO splice.
+  // Add top-level is_dead when the fiber has zero splices in the chain.
+
+  // Index cables by their endpoints so we can find "which cables are at location X".
+  const cablesByLocation = new Map(); // location_id → Set of cable_ids
+  for (const cable of data.cables) {
+    for (const locId of [cable.from_location_id, cable.to_location_id]) {
+      if (!locId) continue;
+      if (!cablesByLocation.has(locId)) cablesByLocation.set(locId, new Set());
+      cablesByLocation.get(locId).add(cable.id);
+    }
+  }
+
+  // Build a quick lookup: which locations does a given fiber's cable span?
+  function cableLocationsForFiber(fiberId) {
+    const f = fiberById.get(fiberId);
+    if (!f) return [];
+    const tube  = tubeById.get(f.buffer_tube_id);
+    const cable = tube ? cableById.get(tube.cable_id) : null;
+    if (!cable) return [];
+    const locs = [];
+    if (cable.from_location_id) locs.push(cable.from_location_id);
+    if (cable.to_location_id)   locs.push(cable.to_location_id);
+    return locs;
+  }
+
+  // For each chain entry, find locations the fiber passes through without a splice.
+  // A "pass-through" location is one where the fiber's cable terminates AND
+  // there is NO splice for this fiber at any closure in that location.
+  const closuresByLocation = new Map(); // location_id → [closure_id, ...]
+  for (const cl of data.closures) {
+    if (!closuresByLocation.has(cl.location_id)) closuresByLocation.set(cl.location_id, []);
+    closuresByLocation.get(cl.location_id).push(cl.id);
+  }
+
+  // For each fiber, collect all splice location_ids (where the fiber is spliced).
+  function splicedLocationsForFiber(fiberId) {
+    const splicedLocs = new Set();
+    for (const s of (splicesByFiber.get(fiberId) || [])) {
+      const tray    = trayById.get(s.tray_id);
+      const closure = tray ? closureById.get(tray.closure_id) : null;
+      const loc     = closure ? locationById.get(closure.location_id) : null;
+      if (loc) splicedLocs.add(loc.id);
+    }
+    return splicedLocs;
+  }
+
+  // Annotate each chain entry.
+  for (const entry of chain) {
+    const fiberId = entry.fiber.id;
+    const cableLocs = cableLocationsForFiber(fiberId);
+    const splicedLocs = splicedLocationsForFiber(fiberId);
+    const passThroughLocs = cableLocs
+      .filter(locId => !splicedLocs.has(locId))
+      .map(locId => {
+        const loc = locationById.get(locId);
+        return loc ? { id: loc.id, name: loc.name } : { id: locId, name: locId };
+      });
+    entry.pass_through_locations = passThroughLocs;
+  }
+
+  // is_dead: the fiber has zero splices anywhere in the project.
+  const is_dead = !splicesByFiber.has(startFiberId) ||
+                  (splicesByFiber.get(startFiberId) || []).length === 0;
+
   return {
     fiber_id:     startFiberId,
     circular:     circularBack || circularFwd,
     over_spliced: overSpliced,
+    is_dead,
     chain,
     warnings,
   };
