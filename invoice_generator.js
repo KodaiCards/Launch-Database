@@ -529,19 +529,15 @@ function renderSummaryPage(doc, data, isFootage) {
   const isPermitting = !!m.is_permitting;
 
   // ── Logo (centered at top) ─────────────────────────────────────────
-  // ~260px wide, horizontally centered. Matches the proportions of the
-  // owner-supplied reference invoice. Skipped silently if the asset is
-  // missing so the PDF still renders during early dev / fresh deploys.
+  // 180px wide, horizontally centered. Owner-flagged 2026-05-06 — wants
+  // a smaller logo than the prior 260px so the summary table breathes.
   const startY = doc.y;
-  const logoWidth = 260;
+  const logoWidth = 180;
   const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
   let postLogoY = startY;
   if (fs.existsSync(LOGO_PATH)) {
     try {
       doc.image(LOGO_PATH, logoX, startY, { width: logoWidth });
-      // PDFKit doesn't auto-advance doc.y after image() — estimate logo
-      // height from typical aspect (≈ 3.8:1 for the Launch wordmark
-      // including the burst ornament).
       postLogoY = startY + (logoWidth / 3.8) + 10;
     } catch (e) { /* corrupt or unsupported image format — silently skip */ }
   }
@@ -588,12 +584,15 @@ function renderSummaryPage(doc, data, isFootage) {
   // right. Centering keeps it visually aligned with the page-centered
   // logo and title above.
   const tableX = (doc.page.width - tableTotalWidth) / 2;
-  // Minimum row height + per-row vertical padding. Rows now grow when their
-  // text wraps onto a second/third line; they used to be clamped at a fixed
-  // 18pt and the wrapped text painted on top of the next row's bg/text.
-  const MIN_ROW_H = 22;
-  const ROW_PAD_TOP = 6;
-  const ROW_PAD_BOTTOM = 6;
+  // Owner-flagged 2026-05-06: bump body text from 9pt → 11pt so it
+  // almost reaches the row borders with a small gap. MIN_ROW_H rises
+  // to 26 to give 11pt text proper breathing room. Cells are
+  // vertically centered (equal gap above + below) — each cell
+  // measures its own text height and offsets accordingly.
+  const MIN_ROW_H = 26;
+  const ROW_PAD_TOP = 5;
+  const ROW_PAD_BOTTOM = 5;
+  const BODY_FONT_SIZE = 11;
 
   // Helper to draw one row at the current y, advancing y by the actual
   // height the row took up.
@@ -608,44 +607,59 @@ function renderSummaryPage(doc, data, isFootage) {
     const textColor = opts.textColor || COL.BODY_TEXT;
     const bold = !!opts.bold;
     const padLeft = 6, padRight = 6;
-    const fontSize = opts.fontSize || 9;
+    const fontSize = opts.fontSize || BODY_FONT_SIZE;
     const spanAll = !!opts.spanAll;
+    // opts.minHeight lets a caller (e.g. the subtotal row) ask for a
+    // tighter row than the default MIN_ROW_H. The row still grows to
+    // fit wrapped text — this just lowers the FLOOR.
+    const minRowH = opts.minHeight != null ? opts.minHeight : MIN_ROW_H;
 
     doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize);
 
+    // Measure phase. For spanAll we measure the single label; for
+    // standard rows we measure the tallest cell. Per-cell heights are
+    // reused below for vertical centering.
+    const cellHeights = {};
     let rowH;
     if (spanAll) {
-      // Single centered string spanning the entire table width.
       const txt = cells.text != null ? String(cells.text) : '';
       const tw = tableTotalWidth - padLeft - padRight;
       const h = doc.heightOfString(txt, { width: tw, align: 'center' });
-      rowH = Math.max(MIN_ROW_H, Math.ceil(h + ROW_PAD_TOP + ROW_PAD_BOTTOM));
+      cellHeights.__span = h;
+      rowH = Math.max(minRowH, Math.ceil(h + ROW_PAD_TOP + ROW_PAD_BOTTOM));
     } else {
-      // First pass: measure the tallest cell so the row can size itself
-      // before we paint the background / borders.
       let maxTextH = 0;
       for (const c of cols) {
         const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
         const tw = c.width - padLeft - padRight;
         const h = doc.heightOfString(cellText, { width: tw, align: c.align });
+        cellHeights[c.key] = h;
         if (h > maxTextH) maxTextH = h;
       }
-      rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
+      rowH = Math.max(minRowH, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
     }
 
-    // Background
     if (bg) {
       doc.rect(tableX, y, tableTotalWidth, rowH).fill(bg);
     }
-    // Borders
     doc.strokeColor(COL.BORDER).lineWidth(0.5);
     doc.rect(tableX, y, tableTotalWidth, rowH).stroke();
-    // Re-set font/color (rect.fill changes the fillColor)
     doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize).fillColor(textColor);
+
+    // Vertical center each cell within rowH so short text sits in the
+    // middle of the row (equal gap above and below). For wrapped /
+    // multi-line text the offset is just the top padding because the
+    // text already fills the row height. Owner-flagged 2026-05-06.
+    function vOffsetFor(textH) {
+      // Equal gap above + below: (rowH - textH) / 2. Clamp to >= 1
+      // so we never paint text into the border.
+      return Math.max(1, Math.floor((rowH - textH) / 2));
+    }
 
     if (spanAll) {
       const txt = cells.text != null ? String(cells.text) : '';
-      doc.text(txt, tableX + padLeft, y + ROW_PAD_TOP, {
+      const yOff = vOffsetFor(cellHeights.__span);
+      doc.text(txt, tableX + padLeft, y + yOff, {
         width: tableTotalWidth - padLeft - padRight,
         align: 'center',
       });
@@ -656,9 +670,8 @@ function renderSummaryPage(doc, data, isFootage) {
         const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
         const tx = cx + padLeft;
         const tw = c.width - padLeft - padRight;
-        doc.text(cellText, tx, y + ROW_PAD_TOP, {
-          width: tw, align: c.align,
-        });
+        const yOff = vOffsetFor(cellHeights[c.key]);
+        doc.text(cellText, tx, y + yOff, { width: tw, align: c.align });
         cx += c.width;
       }
     }
@@ -716,21 +729,26 @@ function renderSummaryPage(doc, data, isFootage) {
       drawRow(cells);
     }
 
-    // Per-contract subtotal. Always emitted (was conditional on
-    // multi-contract before). Item column carries the label;
-    // description blank; rate column intentionally empty per the
-    // reference invoice (the rate is the same row-by-row, not
-    // re-stated on a subtotal). Owner-flagged 2026-05-06.
+    // Per-contract subtotal. Owner-flagged 2026-05-06:
+    //   - Label moves from `item` (95px, wraps) to `desc` (235px, fits
+    //     "Contract 3 / 515-3 Subtotal" on one line).
+    //   - Background is the light blue LOAN_BG to match the
+    //     "Reconnect 3 / RUS 217..." row above (visual coupling — the
+    //     subtotal belongs to the loan-level summary).
+    //   - Smaller minHeight so the row is thinner than body rows now
+    //     that the label fits on a single line.
+    //   - Rate column intentionally empty (rate per row is identical;
+    //     re-stating it on the subtotal is noise).
     const subQty = isPermitting
       ? fmtHours(m.rate > 0 ? cs.contract_amount / m.rate : 0)
       : (isFootage ? fmtFootage(cs.contract_footage) : fmtHours(cs.contract_hours));
     const subCells = {
-      item: `${cs.friendly_label} Subtotal`,
+      desc: `${cs.friendly_label} Subtotal`,
       qty: subQty,
       amt: fmtMoney(cs.contract_amount),
     };
     if (isPermitting) subCells.foot = fmtFootage(cs.contract_footage);
-    drawRow(subCells, { bg: COL.CONTRACT_SUBTOTAL_BG, bold: true });
+    drawRow(subCells, { bg: COL.LOAN_BG, bold: true, minHeight: 20 });
   }
 
   // Final total row. Reference shows "Total" in the Item column with
@@ -768,9 +786,10 @@ function renderTimecardsPages(doc, data) {
   const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
   // Centered logo + title — same positioning as the summary page so
-  // the document reads as a single deliverable.
+  // the document reads as a single deliverable. 180px wide matches the
+  // summary's owner-tweaked size.
   const startY = doc.y;
-  const logoWidth = 220;
+  const logoWidth = 180;
   const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
   let postLogoY = startY;
   if (fs.existsSync(LOGO_PATH)) {
@@ -820,31 +839,40 @@ function renderTimecardsPages(doc, data) {
   ];
   const tableTotalWidth = cols.reduce((s, c) => s + c.width, 0);
   const tableX = (doc.page.width - tableTotalWidth) / 2;
-  const MIN_ROW_H = 22;
-  const ROW_PAD_TOP = 6;
-  const ROW_PAD_BOTTOM = 6;
+  // Owner-flagged 2026-05-06: same body-text + row-height bump as the
+  // summary table, with vertical centering on each cell.
+  const MIN_ROW_H = 26;
+  const ROW_PAD_TOP = 5;
+  const ROW_PAD_BOTTOM = 5;
+  const BODY_FONT_SIZE = 11;
 
   function drawRow(cells, opts = {}) {
     const y = doc.y;
-    const fontSize = opts.fontSize || 9;
+    const fontSize = opts.fontSize || BODY_FONT_SIZE;
+    const minRowH = opts.minHeight != null ? opts.minHeight : MIN_ROW_H;
     doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize);
+
+    const cellHeights = {};
     let maxTextH = 0;
     for (const c of cols) {
       const text = cells[c.key] != null ? String(cells[c.key]) : '';
       const h = doc.heightOfString(text, { width: c.width - 12, align: c.align });
+      cellHeights[c.key] = h;
       if (h > maxTextH) maxTextH = h;
     }
-    const rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
+    const rowH = Math.max(minRowH, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
 
     if (opts.bg) doc.rect(tableX, y, tableTotalWidth, rowH).fill(opts.bg);
     doc.strokeColor(COL.BORDER).lineWidth(0.5);
     doc.rect(tableX, y, tableTotalWidth, rowH).stroke();
-    let cx = tableX;
     doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize)
        .fillColor(opts.textColor || COL.BODY_TEXT);
+
+    let cx = tableX;
     for (const c of cols) {
-      doc.text(cells[c.key] != null ? String(cells[c.key]) : '',
-        cx + 6, y + ROW_PAD_TOP, { width: c.width - 12, align: c.align });
+      const text = cells[c.key] != null ? String(cells[c.key]) : '';
+      const yOff = Math.max(1, Math.floor((rowH - cellHeights[c.key]) / 2));
+      doc.text(text, cx + 6, y + yOff, { width: c.width - 12, align: c.align });
       cx += c.width;
     }
     doc.y = y + rowH;
