@@ -121,6 +121,18 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 /* Konva stage container */
 #stage{width:100%;height:100%}
 
+/* Phase 4.3 — Split view: diagram + map side-by-side with drag divider. */
+.canvas-pane.split-mode{display:flex;flex-direction:row}
+.canvas-pane.split-mode #stage{flex:0 0 auto;width:var(--split-ratio,50%);height:100%}
+.canvas-pane.split-mode #map-stage{flex:1 1 0;height:100%;display:block !important}
+.split-divider{display:none;flex:0 0 6px;background:var(--border-strong);cursor:col-resize;z-index:10;transition:background .1s}
+.split-divider:hover,.split-divider.dragging{background:var(--primary)}
+.canvas-pane.split-mode .split-divider{display:block}
+/* In split mode the toolbars need fixed left so they don't overlap divider */
+.canvas-pane.split-mode .toolbar{position:absolute;top:10px;left:10px;z-index:7}
+.canvas-pane.split-mode .map-toolbar{position:absolute;top:10px;z-index:7}
+.canvas-pane.split-mode .view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8}
+
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;font-weight:500;border-radius:5px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);cursor:pointer;transition:all .12s}
 .btn:hover{background:var(--surface-3)}
@@ -258,6 +270,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     <div class="view-tabs" id="view-tabs" style="display:none">
       <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
       <button class="view-tab" data-view="map" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Map</button>
+      <button class="view-tab" data-view="split" onclick="switchView('split')"><i class="fa-solid fa-table-columns"></i> Split</button>
     </div>
     <div class="toolbar" id="toolbar" style="display:none">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
@@ -288,6 +301,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
+    <div class="split-divider" id="split-divider"></div>
     <div id="map-stage" style="display:none;width:100%;height:100%"></div>
     <div class="warnings-banner" id="warnings-banner"></div>
   </div>
@@ -1121,14 +1135,15 @@ function drawCanvasContents() {
     const leftCables  = cablesAtLoc.filter(c => c.from_location_id === cl.location_id);
     const rightCables = cablesAtLoc.filter(c => c.to_location_id === cl.location_id && c.from_location_id !== cl.location_id);
 
+    const isSelectedRich = state.selection?.type === 'closure' && state.selection?.id === cl.id;
     const group = new Konva.Group({ x: rx, y: baseY });
 
     // Background rectangle — wider than the standard box to accommodate stubs.
     group.add(new Konva.Rect({
       width: RW, height: RH,
       fill: overCap ? '#FFF3CD' : '#FFFFFF',
-      stroke: overCap ? '#DC3545' : '#1B5FA0',
-      strokeWidth: 2, cornerRadius: 6,
+      stroke: isSelectedRich ? '#F59E0B' : (overCap ? '#DC3545' : '#1B5FA0'),
+      strokeWidth: isSelectedRich ? 3 : 2, cornerRadius: 6,
     }));
 
     // Closure model name.
@@ -1294,12 +1309,13 @@ function drawCanvasContents() {
         return;
       }
 
+      const isSelected = state.selection?.type === 'closure' && state.selection?.id === cl.id;
       const group = new Konva.Group({ x: x - 60, y: baseY, width: 120 });
       group.add(new Konva.Rect({
         width: 120, height: 90,
         fill: overCap ? '#FFF3CD' : '#FFFFFF',
-        stroke: overCap ? '#DC3545' : '#1B5FA0',
-        strokeWidth: 2, cornerRadius: 4,
+        stroke: isSelected ? '#F59E0B' : (overCap ? '#DC3545' : '#1B5FA0'),
+        strokeWidth: isSelected ? 3 : 2, cornerRadius: 4,
       }));
       group.add(new Konva.Text({
         x: 4, y: 4, width: 112,
@@ -1522,7 +1538,24 @@ function selectThing(type, id) {
   renderInspector();
   // Refresh the map's selected-location HTML Marker when the user picks a
   // location so the drag handle appears/moves immediately.
-  if (state.activeView === 'map' && state.map) refreshMapLayers();
+  if ((state.activeView === 'map' || state.activeView === 'split') && state.map) refreshMapLayers();
+
+  // Phase 4.3 — split view selection sync.
+  // When a closure or location is selected in split mode, pan the map to it.
+  if (state.activeView === 'split' && state.map && state.data) {
+    let targetLoc = null;
+    if (type === 'location') {
+      targetLoc = state.data.locations.find(l => l.id === id);
+    } else if (type === 'closure') {
+      const cl = state.data.closures.find(c => c.id === id);
+      if (cl) targetLoc = state.data.locations.find(l => l.id === cl.location_id);
+      // Also re-draw canvas to show selection highlight on the closure block.
+      if (state.konva) drawCanvasContents();
+    }
+    if (targetLoc && targetLoc.latitude != null && targetLoc.longitude != null) {
+      state.map.easeTo({ center: [targetLoc.longitude, targetLoc.latitude], duration: 350 });
+    }
+  }
 }
 
 function renderInspector() {
@@ -2881,6 +2914,9 @@ async function deleteCurrentProject() {
     document.getElementById('map-toolbar').style.display = 'none';
     document.getElementById('map-stage').style.display = 'none';
     document.getElementById('stage').style.display = 'block';
+    // Reset split mode if it was active.
+    document.querySelector('.canvas-pane').classList.remove('split-mode');
+    state.activeView = 'diagram';
     document.getElementById('btn-share').disabled = true;
     document.getElementById('btn-export').disabled = true;
     document.getElementById('btn-export-kmz').disabled = true;
@@ -3215,13 +3251,115 @@ function switchView(view) {
   state.activeView = view;
   document.querySelectorAll('.view-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.view === view));
-  const isMap = view === 'map';
+
+  const canvasPane = document.querySelector('.canvas-pane');
+  const isSplit = view === 'split';
+  const isMap   = view === 'map';
+  const isDiag  = view === 'diagram';
+
+  // Split mode — show both diagram + map side-by-side.
+  if (isSplit) {
+    canvasPane.classList.add('split-mode');
+    document.getElementById('stage').style.display       = 'block';
+    document.getElementById('toolbar').style.display     = 'flex';
+    // map-stage shown via CSS (.canvas-pane.split-mode #map-stage)
+    document.getElementById('map-toolbar').style.display = 'flex';
+    _applySplitRatio(loadSplitRatio());
+    initMapIfNeeded();
+    setTimeout(() => {
+      if (state.konva) { state.konva.stage.size({ width: document.getElementById('stage').clientWidth, height: document.getElementById('stage').clientHeight }); state.konva.stage.batchDraw(); }
+      if (state.map) state.map.resize();
+    }, 50);
+    return;
+  }
+
+  // Non-split — remove split mode class, restore normal display.
+  canvasPane.classList.remove('split-mode');
+  canvasPane.style.removeProperty('--split-ratio');
   document.getElementById('stage').style.display      = isMap ? 'none' : 'block';
   document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
   document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
   document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
   if (isMap) initMapIfNeeded();
+  // Resize Konva back to full width after leaving split.
+  if (isDiag && state.konva) {
+    setTimeout(() => {
+      const container = document.getElementById('stage');
+      state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+      state.konva.stage.batchDraw();
+    }, 50);
+  }
 }
+
+// ─── Split ratio helpers (Phase 4.3) ─────────────────────────────────────────
+function loadSplitRatio() {
+  try { return parseFloat(localStorage.getItem('lfs_splice_split_ratio')) || 0.5; } catch { return 0.5; }
+}
+function saveSplitRatio(ratio) {
+  try { localStorage.setItem('lfs_splice_split_ratio', ratio); } catch {}
+}
+function _applySplitRatio(ratio) {
+  const pct = Math.max(20, Math.min(80, ratio * 100)).toFixed(1) + '%';
+  document.querySelector('.canvas-pane').style.setProperty('--split-ratio', pct);
+  // Move map-toolbar left edge so it starts at the right panel
+  const mapToolbar = document.getElementById('map-toolbar');
+  if (mapToolbar) mapToolbar.style.left = pct;
+}
+
+// ─── Split divider drag (Phase 4.3) ──────────────────────────────────────────
+(function initSplitDivider() {
+  // Set up once; the divider element is always in the DOM.
+  let dragging = false;
+  let startX = 0;
+  let startRatio = 0.5;
+
+  document.getElementById('split-divider').addEventListener('mousedown', (e) => {
+    if (state.activeView !== 'split') return;
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX;
+    startRatio = loadSplitRatio();
+    document.getElementById('split-divider').classList.add('dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const pane = document.querySelector('.canvas-pane');
+    const paneW = pane.offsetWidth;
+    const dx = e.clientX - startX;
+    const newRatio = Math.max(0.2, Math.min(0.8, startRatio + dx / paneW));
+    _applySplitRatio(newRatio);
+    // Throttled resize
+    if (!initSplitDivider._resizeTimer) {
+      initSplitDivider._resizeTimer = setTimeout(() => {
+        if (state.konva) {
+          const container = document.getElementById('stage');
+          state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+          state.konva.stage.batchDraw();
+        }
+        if (state.map) state.map.resize();
+        initSplitDivider._resizeTimer = null;
+      }, 16);
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.getElementById('split-divider').classList.remove('dragging');
+    // Save ratio from CSS var
+    const pane = document.querySelector('.canvas-pane');
+    const pct = parseFloat(getComputedStyle(pane).getPropertyValue('--split-ratio'));
+    if (!isNaN(pct)) saveSplitRatio(pct / 100);
+    // Final resize
+    if (state.konva) {
+      const container = document.getElementById('stage');
+      state.konva.stage.size({ width: container.clientWidth, height: container.clientHeight });
+      state.konva.stage.batchDraw();
+    }
+    if (state.map) state.map.resize();
+  });
+})();
 
 async function initMapIfNeeded() {
   if (state.map) {
