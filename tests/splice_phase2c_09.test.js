@@ -171,7 +171,7 @@ test('Validation: splitter input fiber double-driven flags an error', async () =
   });
   const h = await requestJson('GET', `/api/splice/projects/${proj.id}`, { token });
   assert.ok(h.validation, 'hydrate should include validation');
-  const errs = h.validation.issues.filter(i => i.severity === 'error');
+  const errs = h.validation.errors || [];
   // Either a dedicated 'splitter input double-driven' rule or a more
   // general 'fiber referenced by multiple splitters' rule is fine —
   // assert at least one error mentions the splitter input.
@@ -187,7 +187,7 @@ test('Validation: unwired splitter is a warning, not blocking', async () => {
     token, body: { ratio: '1x2' }, // no input_fiber_id, no output wires
   });
   const h = await requestJson('GET', `/api/splice/projects/${proj.id}`, { token });
-  const warns = h.validation.issues.filter(i => i.severity === 'warn' || i.severity === 'warning');
+  const warns = h.validation.warnings || [];
   assert.ok(
     warns.some(w => /splitter|unwired|input/i.test(w.message || w.code || '')),
     `expected an unwired-splitter warning; got: ${JSON.stringify(warns)}`
