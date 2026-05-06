@@ -26,6 +26,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const { ensureRollupChain } = require('../portal_module');
 
 module.exports = function installAdminRoutes(app, pool, mw) {
@@ -693,6 +694,76 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       res.status(500).json({ error: e.message });
+    }
+  });
+
+  // ─── Create staff + linked user account in one transaction ───────────────
+  // POST /api/admin/staff-with-user
+  //
+  // Body: { staff_name, username, password, role, full_name, email, extra_teams }
+  //
+  // 1. Upserts the staff row (ON CONFLICT name → reactivate so the name is
+  //    available even if it was previously soft-deleted).
+  // 2. Creates the user with staff_id set to the upserted staff row.
+  // 3. Rolls back everything if either step fails (e.g. duplicate username).
+  //
+  // Returns: { staff, user } — the two created/updated rows.
+  const { VALID_ROLES, teamForRole } = require('../auth');
+  const BCRYPT_ROUNDS = 12;
+
+  app.post('/api/admin/staff-with-user', requireAdmin, async (req, res) => {
+    const { staff_name, username, password, role, full_name, email, extra_teams } = req.body || {};
+    if (!staff_name || !String(staff_name).trim()) {
+      return res.status(400).json({ error: 'staff_name required' });
+    }
+    if (!username || !String(username).trim()) {
+      return res.status(400).json({ error: 'username required' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'password must be at least 6 characters' });
+    }
+    if (!role || !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
+    }
+    const cleanStaffName = String(staff_name).trim();
+    const cleanUsername = String(username).trim();
+    if (/\s/.test(cleanUsername)) {
+      return res.status(400).json({ error: 'username cannot contain spaces' });
+    }
+    const cleanExtras = Array.isArray(extra_teams)
+      ? extra_teams.filter(t => ['design','permitting','construction','inspection'].includes(t))
+          .map(t => t === 'inspection' ? 'construction' : t)
+      : [];
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const { rows: staffRows } = await client.query(
+        `INSERT INTO staff (name) VALUES ($1)
+         ON CONFLICT (name) DO UPDATE SET active = true
+         RETURNING *`,
+        [cleanStaffName]
+      );
+      const staff = staffRows[0];
+
+      const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const { rows: userRows } = await client.query(
+        `INSERT INTO users (username, password_hash, role, team, full_name, email, extra_teams, staff_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING id, username, role, team, extra_teams, staff_id, full_name, email, active, created_at`,
+        [cleanUsername, hash, role, teamForRole(role), full_name || null, email || null, cleanExtras, staff.id]
+      );
+      const user = userRows[0];
+
+      await client.query('COMMIT');
+      res.json({ staff, user });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
     }
   });
 };
