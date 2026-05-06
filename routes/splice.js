@@ -263,7 +263,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -330,6 +330,12 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             WHERE l.project_id = $1
             ORDER BY o.splitter_id, o.position
           `, [projectId]),
+          pool.query(`
+            SELECT cs.* FROM splice_cable_states cs
+            JOIN splice_cables c ON c.id = cs.cable_id
+            WHERE c.project_id = $1
+            ORDER BY c.name, cs.location_id
+          `, [projectId]),
         ]);
 
       const hydrate = {
@@ -345,6 +351,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         strand_states:    strandStates.rows,
         splitters:        splittersRes.rows,
         splitter_outputs: splitterOutputsRes.rows,
+        cable_states:     cableStatesRes.rows,
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
@@ -1269,6 +1276,83 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       await pool.query(`DELETE FROM splice_strand_states WHERE id = $1`, [req.params.id]);
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'strand_state_deleted', { id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── Cable states — Phase 2C #10 (slack / service loop) ──────────────────
+  // Per-cable-at-location slack length + notes.  Mirrors the strand-states
+  // endpoints above; same URL shape but keyed UNIQUE(cable_id, location_id)
+  // rather than (cable_id, location_id, strand_position) — one slack value
+  // per cable at each closure, not per strand.
+
+  app.get('/api/splice/projects/:id/cable-states', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT cs.*
+         FROM splice_cable_states cs
+         JOIN splice_cables c ON c.id = cs.cable_id
+         WHERE c.project_id = $1
+         ORDER BY c.name, cs.location_id`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // UPSERT on the UNIQUE(cable_id, location_id) constraint — idempotent.
+  app.put('/api/splice/cables/:cableId/locations/:locationId/cable-state', requireAuth(), async (req, res) => {
+    const { slack_length_inches, notes } = req.body;
+    try {
+      // Verify cable + location exist and belong to the same project —
+      // same guard used by strand-states to prevent scope-crossing.
+      const { rows: cable } = await pool.query(
+        `SELECT project_id FROM splice_cables WHERE id = $1`,
+        [req.params.cableId]
+      );
+      const { rows: loc } = await pool.query(
+        `SELECT project_id FROM splice_locations WHERE id = $1`,
+        [req.params.locationId]
+      );
+      if (!cable.length || !loc.length) {
+        return res.status(404).json({ error: 'Cable or location not found' });
+      }
+      if (cable[0].project_id !== loc[0].project_id) {
+        return res.status(400).json({ error: 'Cable and location belong to different projects' });
+      }
+      const { rows } = await pool.query(
+        `INSERT INTO splice_cable_states (cable_id, location_id, slack_length_inches, notes)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (cable_id, location_id) DO UPDATE SET
+           slack_length_inches = EXCLUDED.slack_length_inches,
+           notes               = EXCLUDED.notes,
+           updated_at          = NOW()
+         RETURNING *`,
+        [req.params.cableId, req.params.locationId,
+         slack_length_inches ?? null, notes ?? null]
+      );
+      _bumpProjectMtime(pool, cable[0].project_id);
+      _broadcast(cable[0].project_id, 'cable_state_updated', {
+        cable_id: req.params.cableId, location_id: req.params.locationId,
+        cable_state: rows[0],
+      });
+      res.json({ ok: true, cable_state: rows[0] });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/cable-states/:id', requireAuth(), async (req, res) => {
+    try {
+      const cur = await pool.query(
+        `SELECT cs.id, c.project_id
+         FROM splice_cable_states cs
+         JOIN splice_cables c ON c.id = cs.cable_id
+         WHERE cs.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Cable state not found' });
+      await pool.query(`DELETE FROM splice_cable_states WHERE id = $1`, [req.params.id]);
+      _bumpProjectMtime(pool, cur.rows[0].project_id);
+      _broadcast(cur.rows[0].project_id, 'cable_state_deleted', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -2850,7 +2934,7 @@ function _computeWarnings({ fibers, splices, trays, closures }) {
 async function _loadProjectForExport(pool, projectId) {
   const proj = await pool.query(`SELECT * FROM splice_projects WHERE id = $1`, [projectId]);
   if (!proj.rows.length) return null;
-  const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes] =
+  const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
     await Promise.all([
       pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
       pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY name`, [projectId]),
@@ -2918,6 +3002,12 @@ async function _loadProjectForExport(pool, projectId) {
         WHERE l.project_id = $1
         ORDER BY o.splitter_id, o.position
       `, [projectId]),
+      pool.query(`
+        SELECT cs.* FROM splice_cable_states cs
+        JOIN splice_cables c ON c.id = cs.cable_id
+        WHERE c.project_id = $1
+        ORDER BY c.name, cs.location_id
+      `, [projectId]),
     ]);
   return {
     project:          proj.rows[0],
@@ -2932,6 +3022,7 @@ async function _loadProjectForExport(pool, projectId) {
     strand_states:    strandStates.rows,
     splitters:        splittersRes.rows,
     splitter_outputs: splitterOutputsRes.rows,
+    cable_states:     cableStatesRes.rows,
   };
 }
 
@@ -3096,6 +3187,14 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
     strandStatesByLocation.get(ss.location_id).push(ss);
   }
 
+  // Phase 2C #10 — index cable slack by location so per-closure pages
+  // know how much each passing cable should be coiled at that handhole.
+  const cableStatesByLocation = new Map();
+  for (const cs of (data.cable_states || [])) {
+    if (!cableStatesByLocation.has(cs.location_id)) cableStatesByLocation.set(cs.location_id, []);
+    cableStatesByLocation.get(cs.location_id).push(cs);
+  }
+
   // Per-closure pages.
   const closurePages = closures.map(cl => {
     const loc = locationById.get(cl.location_id);
@@ -3151,6 +3250,36 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
             </table>
           `;
         }).join('')}
+      </div>
+    ` : '';
+
+    // Phase 2C #10 — cable slack coil lengths at this closure. Splicer
+    // reads these onsite to know how much fiber to coil at the handhole
+    // before making any cuts. Cables with no entry are omitted so the
+    // section stays compact on simpler jobs.
+    const csAtLoc = cableStatesByLocation.get(cl.location_id) || [];
+    const slackSection = csAtLoc.length ? `
+      <div class="stored-section">
+        <div class="section-title">Cable slack at this closure
+          <span class="muted">— service loops to coil before cutting</span>
+        </div>
+        <table class="stored-table">
+          <thead><tr>
+            <th>Cable</th>
+            <th class="num">Slack (in)</th>
+            <th>Notes</th>
+          </tr></thead>
+          <tbody>
+            ${csAtLoc.map(cs => {
+              const cable = cableById.get(cs.cable_id);
+              return `<tr>
+                <td><b>${_esc(cable?.name || '?')}</b></td>
+                <td class="num">${cs.slack_length_inches ?? '—'}</td>
+                <td>${_esc(cs.notes || '')}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     ` : '';
 
@@ -3238,6 +3367,7 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
           ${qr ? `<div class="qr">${qr}<div class="qr-cap">scan to upload<br>field markup</div></div>` : ''}
         </header>
         ${storedSection}
+        ${slackSection}
         ${trayBlocks || '<div class="empty">No trays</div>'}
         <div class="signoff">
           <div class="signoff-row">

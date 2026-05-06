@@ -691,7 +691,8 @@ function openSSE(projectId) {
    'location_coords_changed','cable_path_changed',
    'design_import_applied','design_import_rejected',
    'project_updated','lock_acquired','lock_released','lock_taken_over',
-   'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired']
+   'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired',
+   'cable_state_updated','cable_state_deleted']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Refresh the imports sidebar when the master designer or another
   // engineer takes action on a pending import.
@@ -1307,6 +1308,15 @@ function renderClosureInspector(closureId) {
         </table>` : '<div class="empty-pane" style="padding:8px">None marked yet.</div>'}
     </div>
 
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3>Slack at this closure</h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Service loop length per cable. Splicer coils these at the handhole
+        before making cuts.
+      </div>
+      ${renderCableSlackList(cl.location_id)}
+    </div>
+
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)" id="closure-field-section">
       <h3 style="display:flex;justify-content:space-between;align-items:center">
         Field markup
@@ -1390,6 +1400,97 @@ async function deleteMarkup(markupId, closureId) {
     loadClosureMarkups(closureId);
     toast('Photo deleted', 'success');
   } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+// ─── Cable slack helpers (Phase 2C #10) ──────────────────────────────────
+// One row per cable that terminates or passes through this location
+// (from_location_id OR to_location_id matches).  Each row shows the
+// current slack_length_inches + notes from splice_cable_states and
+// lets the engineer edit them inline.  Auto-save on blur keeps the UI
+// lightweight — no separate Save button needed.
+
+function renderCableSlackList(locationId) {
+  const cablesAtLoc = (state.data.cables || []).filter(c =>
+    c.from_location_id === locationId || c.to_location_id === locationId
+  );
+  if (!cablesAtLoc.length) {
+    return '<div class="empty-pane" style="padding:8px">No cables at this location yet.</div>';
+  }
+  const rows = cablesAtLoc.map(cable => {
+    const cs = (state.data.cable_states || []).find(
+      s => s.cable_id === cable.id && s.location_id === locationId
+    );
+    const slackVal  = cs?.slack_length_inches ?? '';
+    const notesVal  = cs?.notes ?? '';
+    const csId      = cs?.id || '';
+    return `<tr>
+      <td><b>${esc(cable.name)}</b></td>
+      <td>
+        <input type="number" min="0" step="1" class="input-sm" style="width:70px"
+               value="${esc(String(slackVal))}"
+               data-cable-id="${cable.id}" data-location-id="${locationId}"
+               data-field="slack_length_inches" data-cs-id="${csId}"
+               onblur="saveCableSlackField(this)"
+               ${isReadOnly() ? 'disabled' : ''}>
+      </td>
+      <td>
+        <input type="text" class="input-sm" style="width:130px"
+               value="${esc(notesVal)}"
+               data-cable-id="${cable.id}" data-location-id="${locationId}"
+               data-field="notes" data-cs-id="${csId}"
+               onblur="saveCableSlackField(this)"
+               ${isReadOnly() ? 'disabled' : ''}>
+      </td>
+      <td>
+        ${csId ? `<button class="btn btn-sm btn-danger" onclick="clearCableState('${csId}')" title="Clear slack entry" ${isReadOnly() ? 'disabled' : ''}><i class="fa-solid fa-times"></i></button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <table class="table">
+      <thead><tr><th>Cable</th><th>Slack (in)</th><th>Notes</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// Persist a single field change from a cable-slack inline input.
+// Both inputs in a row share the same (cable_id, location_id) key;
+// we read the sibling value so the UPSERT always writes both columns.
+async function saveCableSlackField(input) {
+  if (isReadOnly()) return;
+  const cableId    = input.dataset.cableId;
+  const locationId = input.dataset.locationId;
+  if (!cableId || !locationId) return;
+
+  // Find both sibling inputs for this cable+location row.
+  const row = input.closest('tr');
+  const slackInput = row.querySelector('[data-field="slack_length_inches"]');
+  const notesInput = row.querySelector('[data-field="notes"]');
+
+  const slackRaw = slackInput?.value.trim();
+  const body = {
+    slack_length_inches: slackRaw !== '' && slackRaw != null ? parseInt(slackRaw, 10) : null,
+    notes: notesInput?.value.trim() || null,
+  };
+  try {
+    await api(
+      `/api/splice/cables/${cableId}/locations/${locationId}/cable-state`,
+      'PUT', body
+    );
+    // Refresh state so the row re-renders with the new cs.id if this
+    // was a first insert (csId was blank before).
+    await hydrateProject();
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function clearCableState(cableStateId) {
+  if (!confirm('Clear this cable slack entry?')) return;
+  try {
+    await api('/api/splice/cable-states/' + cableStateId, 'DELETE');
+    await hydrateProject();
+    toast('Slack entry cleared', 'success');
+  } catch (e) { toast('Clear failed: ' + e.message, 'error'); }
 }
 
 // ─── Splitter helpers (Phase 2C #9) ──────────────────────────────────────
