@@ -1107,6 +1107,402 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Closure templates (Phase 2B #5) ─────────────────────────────────────
+  // Reusable closure shells designers save once and apply across
+  // projects. Sized config (tray_count, tray_capacity) plus optional
+  // default splice pattern in default_splices_jsonb.
+  //
+  // scope_client_id NULL = global; set = only shows for that client's
+  // projects. The list endpoint accepts ?client_id= to filter to
+  // (global OR matching-client) templates.
+
+  app.get('/api/splice/closure-templates', requireAuth(), async (req, res) => {
+    try {
+      const clientId = req.query.client_id || null;
+      const { rows } = clientId
+        ? await pool.query(
+            `SELECT t.*, cl.name AS scope_client_name, s.full_name AS created_by_name
+               FROM splice_closure_templates t
+               LEFT JOIN clients cl ON cl.id = t.scope_client_id
+               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+              WHERE t.scope_client_id IS NULL OR t.scope_client_id = $1
+              ORDER BY t.scope_client_id NULLS FIRST, t.name`,
+            [clientId]
+          )
+        : await pool.query(
+            `SELECT t.*, cl.name AS scope_client_name, s.full_name AS created_by_name
+               FROM splice_closure_templates t
+               LEFT JOIN clients cl ON cl.id = t.scope_client_id
+               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+              ORDER BY t.scope_client_id NULLS FIRST, t.name`
+          );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/closure-templates', requireAuth(), async (req, res) => {
+    const {
+      name, scope_client_id, model,
+      tray_count = 6, tray_capacity = 12,
+      default_splices, notes,
+    } = req.body || {};
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+    const tc  = Math.max(1, Number(tray_count)    || 6);
+    const cap = Math.max(1, Number(tray_capacity) || 12);
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO splice_closure_templates
+           (name, scope_client_id, model, tray_count, tray_capacity,
+            default_splices_jsonb, notes, created_by_staff_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [
+          String(name).trim(),
+          scope_client_id || null,
+          model || null,
+          tc, cap,
+          default_splices ? JSON.stringify(default_splices) : null,
+          notes || null,
+          req.user?.staff_id || null,
+        ]
+      );
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.put('/api/splice/closure-templates/:id', requireAuth(), async (req, res) => {
+    const allowed = ['name', 'scope_client_id', 'model', 'tray_count',
+                     'tray_capacity', 'default_splices_jsonb', 'notes'];
+    const sets = [];
+    const vals = [req.params.id];
+    let i = 2;
+    for (const f of allowed) {
+      if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+        // Map default_splices → JSON-stringified default_splices_jsonb.
+        if (f === 'default_splices_jsonb') {
+          sets.push(`${f} = $${i++}`);
+          vals.push(req.body[f] == null ? null : JSON.stringify(req.body[f]));
+        } else {
+          sets.push(`${f} = $${i++}`);
+          vals.push(req.body[f]);
+        }
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+    sets.push(`updated_at = NOW()`);
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_closure_templates SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+        vals
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/closure-templates/:id', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(`DELETE FROM splice_closure_templates WHERE id = $1`, [req.params.id]);
+      if (!r.rowCount) return res.status(404).json({ error: 'Template not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Apply a template to create a new closure at the given location.
+  // Inserts a closure row, materializes its trays from tray_count, and
+  // bumps the closure_models picklist (same side-effect as the regular
+  // POST .../closures path so model names stay searchable).
+  //
+  // TODO Phase 2B #5b: also materialize default_splices_jsonb. Today
+  // the JSONB is stored but the apply path only creates the closure +
+  // trays. The splice replay needs a cable picker UI to bind template
+  // slots to the closure's actual cables — which is bigger than this
+  // shipping cut.
+  app.post('/api/splice/locations/:locationId/closures/from-template/:templateId',
+    requireAuth(), async (req, res) => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const tpl = await client.query(
+          `SELECT * FROM splice_closure_templates WHERE id = $1`,
+          [req.params.templateId]
+        );
+        if (!tpl.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: 'Template not found' });
+        }
+        const t = tpl.rows[0];
+        const loc = await client.query(
+          `SELECT project_id FROM splice_locations WHERE id = $1`,
+          [req.params.locationId]
+        );
+        if (!loc.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: 'Location not found' });
+        }
+        const closure = await client.query(
+          `INSERT INTO splice_closures (location_id, model, tray_count, tray_capacity, notes)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [req.params.locationId, t.model || null, t.tray_count, t.tray_capacity, t.notes || null]
+        );
+        const trays = [];
+        for (let p = 1; p <= t.tray_count; p++) {
+          const tr = await client.query(
+            `INSERT INTO splice_trays (closure_id, position) VALUES ($1, $2) RETURNING *`,
+            [closure.rows[0].id, p]
+          );
+          trays.push(tr.rows[0]);
+        }
+        if (t.model && String(t.model).trim()) {
+          await client.query(
+            `INSERT INTO splice_closure_models (model, default_tray_count, default_tray_capacity, use_count, last_used_at)
+             VALUES ($1, $2, $3, 1, NOW())
+             ON CONFLICT (model) DO UPDATE SET
+               use_count = splice_closure_models.use_count + 1,
+               last_used_at = NOW(),
+               default_tray_count    = EXCLUDED.default_tray_count,
+               default_tray_capacity = EXCLUDED.default_tray_capacity`,
+            [String(t.model).trim(), t.tray_count, t.tray_capacity]
+          );
+        }
+        await client.query('COMMIT');
+        _bumpProjectMtime(pool, loc.rows[0].project_id);
+        _broadcast(loc.rows[0].project_id, 'closure_added', {
+          closure: closure.rows[0], trays, from_template: t.id,
+        });
+        res.json({ closure: closure.rows[0], trays, template: t });
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch {}
+        res.status(500).json({ error: e.message });
+      } finally {
+        client.release();
+      }
+    });
+
+  // POST /api/splice/projects/:id/clone — deep-copy a splice project
+  // and every record under it (locations, cables, tubes, fibers,
+  // closures, trays, splices, ribbon_groups, strand_states) into a
+  // new project. Owner-spec use case: "I splice 144→144 straight-
+  // through 80% of the time, scaffold the next project from last
+  // month's." Cloning a 432-fiber tree fully would otherwise take
+  // an hour of manual work.
+  //
+  // Body: { name?: string }  — optional name override; defaults to
+  //                            "<source.name> (copy)".
+  app.post('/api/splice/projects/:id/clone', requireAuth(), async (req, res) => {
+    const sourceId = req.params.id;
+    const requestedName = (req.body && req.body.name) ? String(req.body.name).trim() : null;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const src = await client.query(`SELECT * FROM splice_projects WHERE id = $1`, [sourceId]);
+      if (!src.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Source project not found' });
+      }
+      const srcProj = src.rows[0];
+      const newName = requestedName || `${srcProj.name} (copy)`;
+
+      // 1. New project header. Designer attribution moves to the
+      //    cloning user; lock state intentionally NOT carried over
+      //    so the clone opens unlocked.
+      const newProj = await client.query(
+        `INSERT INTO splice_projects (name, designer_id, status, notes)
+         VALUES ($1, $2, 'active', $3)
+         RETURNING *`,
+        [newName, req.user?.staff_id || null, srcProj.notes || null]
+      );
+      const newProjectId = newProj.rows[0].id;
+
+      // 2. Locations — preserve sequence_index so the canvas layout
+      //    matches the source.
+      const locMap = new Map();   // oldId → newId
+      const locRows = await client.query(
+        `SELECT * FROM splice_locations WHERE project_id = $1 ORDER BY sequence_index, name`,
+        [sourceId]
+      );
+      for (const l of locRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_locations (project_id, type, name, sequence_index, notes)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [newProjectId, l.type, l.name, l.sequence_index, l.notes]
+        );
+        locMap.set(l.id, r.rows[0].id);
+      }
+
+      // 3. Cables — remap from/to location FKs through locMap. Buffer
+      //    tubes + fibers regenerate via the cable INSERT trigger... no,
+      //    we have no trigger. We insert tubes + fibers explicitly so
+      //    the FIBER IDS stay deterministic for the splice remap below.
+      const cableMap = new Map();
+      const tubeMap  = new Map();
+      const fiberMap = new Map();
+      const cableRows = await client.query(
+        `SELECT * FROM splice_cables WHERE project_id = $1 ORDER BY created_at`,
+        [sourceId]
+      );
+      for (const c of cableRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_cables
+             (project_id, name, fiber_count, construction_type,
+              from_location_id, to_location_id, manufacturer_part, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING id`,
+          [newProjectId, c.name, c.fiber_count, c.construction_type,
+           c.from_location_id ? locMap.get(c.from_location_id) || null : null,
+           c.to_location_id   ? locMap.get(c.to_location_id)   || null : null,
+           c.manufacturer_part, c.notes]
+        );
+        cableMap.set(c.id, r.rows[0].id);
+      }
+      // 4. Buffer tubes — index by old cable id to remap.
+      const tubeRows = await client.query(`
+        SELECT t.* FROM splice_buffer_tubes t
+        JOIN splice_cables c ON c.id = t.cable_id
+        WHERE c.project_id = $1
+        ORDER BY t.cable_id, t.position
+      `, [sourceId]);
+      for (const t of tubeRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_buffer_tubes (cable_id, position, color)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [cableMap.get(t.cable_id), t.position, t.color]
+        );
+        tubeMap.set(t.id, r.rows[0].id);
+      }
+      // 5. Fibers — preserve circuit_name / customer / notes (Phase 2A
+      //    #4 strand metadata) so a clone keeps the same circuit
+      //    identifiers; common when designer is splitting one big
+      //    project into a "billable" copy and a "field" copy.
+      const fiberRows = await client.query(`
+        SELECT f.* FROM splice_fibers f
+        JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+        JOIN splice_cables c ON c.id = t.cable_id
+        WHERE c.project_id = $1
+      `, [sourceId]);
+      for (const f of fiberRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_fibers
+             (buffer_tube_id, position, color, circuit_name, customer, notes)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [tubeMap.get(f.buffer_tube_id), f.position, f.color,
+           f.circuit_name, f.customer, f.notes]
+        );
+        fiberMap.set(f.id, r.rows[0].id);
+      }
+      // 6. Closures + trays.
+      const closureMap = new Map();
+      const trayMap    = new Map();
+      const closureRows = await client.query(`
+        SELECT cl.* FROM splice_closures cl
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+        ORDER BY cl.created_at
+      `, [sourceId]);
+      for (const cl of closureRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_closures
+             (location_id, model, tray_count, tray_capacity, notes)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [locMap.get(cl.location_id), cl.model, cl.tray_count, cl.tray_capacity, cl.notes]
+        );
+        closureMap.set(cl.id, r.rows[0].id);
+      }
+      const trayRows = await client.query(`
+        SELECT t.* FROM splice_trays t
+        JOIN splice_closures cl ON cl.id = t.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+      `, [sourceId]);
+      for (const t of trayRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_trays (closure_id, position) VALUES ($1, $2) RETURNING id`,
+          [closureMap.get(t.closure_id), t.position]
+        );
+        trayMap.set(t.id, r.rows[0].id);
+      }
+      // 7. Ribbon groups — must come BEFORE splices because splices.
+      //    ribbon_group_id FKs into them.
+      const ribbonGroupMap = new Map();
+      const groupRows = await client.query(`
+        SELECT g.* FROM splice_ribbon_groups g
+        JOIN splice_trays t ON t.id = g.tray_id
+        JOIN splice_closures cl ON cl.id = t.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+      `, [sourceId]);
+      for (const g of groupRows.rows) {
+        const r = await client.query(
+          `INSERT INTO splice_ribbon_groups (tray_id) VALUES ($1) RETURNING id`,
+          [trayMap.get(g.tray_id)]
+        );
+        ribbonGroupMap.set(g.id, r.rows[0].id);
+      }
+      // 8. Splices — remap fiber A, fiber B, tray, ribbon group.
+      const spliceRows = await client.query(`
+        SELECT s.* FROM splices s
+        JOIN splice_trays t ON t.id = s.tray_id
+        JOIN splice_closures cl ON cl.id = t.closure_id
+        JOIN splice_locations l ON l.id = cl.location_id
+        WHERE l.project_id = $1
+      `, [sourceId]);
+      for (const s of spliceRows.rows) {
+        await client.query(
+          `INSERT INTO splices
+             (tray_id, fiber_a_id, fiber_b_id, splice_type, ribbon_group_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [trayMap.get(s.tray_id),
+           fiberMap.get(s.fiber_a_id),
+           fiberMap.get(s.fiber_b_id),
+           s.splice_type,
+           s.ribbon_group_id ? ribbonGroupMap.get(s.ribbon_group_id) || null : null]
+        );
+      }
+      // 9. Strand states — remap cable_id + location_id.
+      const stateRows = await client.query(`
+        SELECT s.* FROM splice_strand_states s
+        JOIN splice_cables c ON c.id = s.cable_id
+        WHERE c.project_id = $1
+      `, [sourceId]);
+      for (const ss of stateRows.rows) {
+        await client.query(
+          `INSERT INTO splice_strand_states
+             (cable_id, location_id, strand_position, state, stored_length_inches, notes)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [cableMap.get(ss.cable_id),
+           locMap.get(ss.location_id),
+           ss.strand_position, ss.state, ss.stored_length_inches, ss.notes]
+        );
+      }
+
+      await client.query('COMMIT');
+      res.json({
+        ok: true,
+        project: newProj.rows[0],
+        counts: {
+          locations: locMap.size,
+          cables:    cableMap.size,
+          buffer_tubes: tubeMap.size,
+          fibers:    fiberMap.size,
+          closures:  closureMap.size,
+          trays:     trayMap.size,
+          ribbon_groups: ribbonGroupMap.size,
+          splices:   spliceRows.rows.length,
+          strand_states: stateRows.rows.length,
+        },
+      });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
   // ─── Closure models picklist ─────────────────────────────────────────────
   // Empty by design — fills as designers type model names. No seed.
 

@@ -10,30 +10,26 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last commit on the splice work:** `70b40c6` — Phase 2A #4 strand
-circuit naming.
-**Status:** Phase 2A complete. Phase 2B is the next chunk to start.
+**Last splice commit:** Phase 2B #5 — closure templates + project
+clone (this commit; migration `0010_splice_templates.sql`).
+**Status:** Phase 2A complete. Phase 2B #5 done. #6 + #7 remain.
 
 **To pick this back up in a fresh session:**
 
-1. Read this file top-to-bottom (it's the source of truth — the prior
-   build session committed everything to git).
+1. Read this file top-to-bottom (it's the source of truth).
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
-   shape of what's already built.
-3. The planned next item is **Phase 2B #5 — Templates + project
-   copy-paste.** Migration slot allocated: `0010_splice_templates.sql`.
-   Slots 0007 (strand_state, shipped) and 0008 (strand_metadata,
-   shipped) are already used; 0009 is reserved for `splice_pdf_templates`
-   if multi-template PDF support eventually lands as a table (it's
-   currently inline-coded). Pick 0010 for templates work.
-4. Phase 2B order if proceeding straight through: #5 templates → #6
-   versioning + diff PDF → #7 no-login QR markup. Each is its own
-   commit + push.
-5. CI was last green at `598dbba`; the 70b40c6 commit added the
-   strand-metadata migration and bulk endpoints — verify CI on the
-   most recent push before starting #5 in case anything regressed
-   in the bulk fiber-metadata path.
+   shape of what's built.
+3. The planned next item is **Phase 2B #6 — Versioning + diff PDF.**
+   Migration slot allocated: `0011_splice_versions.sql`.
+4. Phase 2B order if proceeding straight through: #6 versioning + diff
+   PDF → #7 no-login QR markup. Each is its own commit + push.
+5. Note: slot 0009 ended up holding the unrelated
+   `rename_inspection_team_to_construction` migration (Path B admin
+   work landed mid-stream); the `splice_pdf_templates` table the plan
+   originally reserved 0009 for stayed deferred — multi-template PDF
+   is still inline-coded and a table only needs cutting if templates
+   gain rules of their own.
 
 **Things NOT to lose track of:**
 
@@ -303,9 +299,13 @@ Slots allocated, in order:
 - 0006 jobs_program_scope (Path B)
 - 0007 splice_strand_state (Phase 2A #3, shipped — pdf_templates was
   deferred since multi-template support didn't need a table for v2)
-- 0008 splice_strand_metadata (Phase 2A #4)
-- 0009 splice_pdf_templates (deferred until multi-client templates)
-- 0010 splice_templates (Phase 2B #5)
+- 0008 splice_strand_metadata (Phase 2A #4, shipped)
+- 0009 rename_inspection_team_to_construction (Path B admin, shipped —
+  not splice work; the slot the plan originally reserved for
+  `splice_pdf_templates` got consumed by an unrelated rename. PDF
+  templates remain deferred and unscheduled)
+- 0010 splice_templates (Phase 2B #5, shipped — closure templates +
+  project clone endpoints)
 - 0011 splice_versions (Phase 2B #6)
 - 0012 splice_field_markup (Phase 2B #7)
 - 0013 splice_splitters (Phase 2C #9, when needed)

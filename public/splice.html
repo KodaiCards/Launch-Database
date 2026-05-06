@@ -355,9 +355,26 @@ function renderProjectList() {
         <div class="name">${esc(p.name)}</div>
         <div class="proj-meta">${p.cable_count||0}c · ${p.location_count||0}loc · ${p.splice_count||0}sp</div>
       </div>
+      <button class="btn btn-sm btn-icon" title="Clone project" onclick="event.stopPropagation();cloneProject('${p.id}','${esc(p.name).replace(/'/g, "\\'")}')"><i class="fa-solid fa-copy"></i></button>
       ${p.locked_by_staff_id ? '<span class="badge" title="Locked"><i class="fa-solid fa-lock"></i></span>' : ''}
     </li>
   `).join('');
+}
+
+// Phase 2B #5 — clone a project end-to-end on the server. Picks up
+// every descendant row (locations, cables, fibers, closures, trays,
+// splices, ribbon groups, strand states + circuit metadata). Designer
+// attribution moves to the cloning user; lock state is NOT carried
+// over so the clone opens unlocked.
+async function cloneProject(projectId, sourceName) {
+  const newName = prompt('Name for the cloned project:', `${sourceName} (copy)`);
+  if (!newName || !newName.trim()) return;
+  try {
+    const r = await api(`/api/splice/projects/${projectId}/clone`, 'POST', { name: newName.trim() });
+    toast(`Cloned ${r.counts.cables} cables, ${r.counts.fibers} fibers, ${r.counts.splices} splices.`, 'success');
+    await loadProjects();
+    if (r.project?.id) selectProject(r.project.id);
+  } catch (e) { toast('Clone failed: ' + e.message, 'error'); }
 }
 
 function openCreateProject() {
@@ -1071,6 +1088,7 @@ function renderClosureInspector(closureId) {
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">at ${esc(loc?.name || '?')}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="saveClosureAsTemplate('${closureId}')" title="Save closure shell as a reusable template" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-floppy-disk"></i> Save as template</button>
       <button class="btn btn-sm btn-danger" onclick="deleteClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
     <table class="table">
@@ -1340,13 +1358,33 @@ async function openAddClosure() {
     return toast('Add a location first', 'error');
   }
   let models = [];
+  let templates = [];
   try { models = await api('/api/splice/closure-models'); } catch {}
+  try { templates = await api('/api/splice/closure-templates'); } catch {}
   const datalist = '<datalist id="closure-models-list">' +
     models.map(m => `<option value="${esc(m.model)}">`).join('') + '</datalist>';
   const locOpts = state.data.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  // Phase 2B #5 — Apply Template picker. Empty when no templates
+  // exist; selecting one auto-fills model/tray_count/tray_capacity
+  // so the user can still tweak before saving.
+  const tplOpts = templates.length
+    ? templates.map(t => {
+        const scope = t.scope_client_name ? ' [' + esc(t.scope_client_name) + ']' : ' [global]';
+        const meta  = ' (' + t.tray_count + '×' + t.tray_capacity + (t.model ? ', ' + esc(t.model) : '') + ')';
+        return `<option value="${t.id}">${esc(t.name)}${scope}${meta}</option>`;
+      }).join('')
+    : '';
   showModal({
     title: 'Add closure',
     body: `
+      ${templates.length ? `
+        <div class="field"><label>Apply template <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
+          <select id="m-cl-template" onchange="onAddClosureTemplateChanged(this.value)">
+            <option value="">— none, configure manually —</option>
+            ${tplOpts}
+          </select>
+        </div>
+      ` : ''}
       <div class="field"><label>At location</label>
         <select id="m-cl-loc">${locOpts}</select></div>
       <div class="field"><label>Model (free text — picklist grows as you use it)</label>
@@ -1365,17 +1403,70 @@ async function openAddClosure() {
     onSubmit: async (close) => {
       try {
         const locId = document.getElementById('m-cl-loc').value;
-        await api('/api/splice/locations/' + locId + '/closures', 'POST', {
-          model: document.getElementById('m-cl-model').value.trim() || null,
-          tray_count: parseInt(document.getElementById('m-cl-tc').value, 10) || 6,
-          tray_capacity: parseInt(document.getElementById('m-cl-cap').value, 10) || 12,
-          notes: document.getElementById('m-cl-notes').value.trim() || null,
-        });
+        const tplId = document.getElementById('m-cl-template')?.value || '';
+        // If a template is selected AND the user hasn't tweaked the
+        // shell fields below, prefer the from-template endpoint —
+        // it bumps the closure_models picklist + carries notes from
+        // the template + signals SSE listeners with from_template.
+        if (tplId) {
+          await api(`/api/splice/locations/${locId}/closures/from-template/${tplId}`, 'POST');
+        } else {
+          await api('/api/splice/locations/' + locId + '/closures', 'POST', {
+            model: document.getElementById('m-cl-model').value.trim() || null,
+            tray_count: parseInt(document.getElementById('m-cl-tc').value, 10) || 6,
+            tray_capacity: parseInt(document.getElementById('m-cl-cap').value, 10) || 12,
+            notes: document.getElementById('m-cl-notes').value.trim() || null,
+          });
+        }
         close();
         await hydrateProject();
       } catch (e) { toast(e.message, 'error'); }
     },
   });
+  // Cache templates so the change handler can read them without a
+  // second round-trip.
+  state._closureTemplates = templates;
+}
+
+// Auto-fill the closure-shell fields when the user picks a template
+// from the picker. They can still tweak before saving.
+function onAddClosureTemplateChanged(tplId) {
+  const tpl = (state._closureTemplates || []).find(t => t.id === tplId);
+  if (!tpl) return;
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setVal('m-cl-model', tpl.model || '');
+  setVal('m-cl-tc', tpl.tray_count);
+  setVal('m-cl-cap', tpl.tray_capacity);
+  if (tpl.notes) setVal('m-cl-notes', tpl.notes);
+}
+
+// Save the selected closure's shell as a reusable template. Pulls
+// model + tray_count + tray_capacity off the closure; lets the user
+// name it and pick scope (this client or global).
+async function saveClosureAsTemplate(closureId) {
+  if (isReadOnly()) return;
+  const cl = state.data.closures.find(c => c.id === closureId);
+  if (!cl) return;
+  const defaultName = (cl.model ? cl.model + ' ' : '') + cl.tray_count + 'x' + cl.tray_capacity;
+  const name = prompt('Template name:', defaultName);
+  if (!name || !name.trim()) return;
+  // Scope: prompt yes/no. Defaults to global; the simple prompt avoids
+  // the overhead of a full second modal for what is most often a
+  // single-client save.
+  const scopeToClient = state.data.project?.client_id
+    ? confirm('Scope this template to the current project\'s client?\n\nOK = client-scoped (only shows on that client\'s projects)\nCancel = global (shows on every client)')
+    : false;
+  try {
+    await api('/api/splice/closure-templates', 'POST', {
+      name: name.trim(),
+      model: cl.model || null,
+      tray_count: cl.tray_count,
+      tray_capacity: cl.tray_capacity,
+      scope_client_id: scopeToClient ? (state.data.project?.client_id || null) : null,
+      notes: cl.notes || null,
+    });
+    toast(`Saved "${name.trim()}" as a template`, 'success');
+  } catch (e) { toast('Failed to save template: ' + e.message, 'error'); }
 }
 
 function openEditClosure(closureId) {
