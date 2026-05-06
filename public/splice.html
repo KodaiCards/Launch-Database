@@ -316,6 +316,16 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 const TIA_598 = ['blue','orange','green','brown','slate','white','red','black','yellow','violet','rose','aqua'];
 
+// Phase 4.2 — two-letter TIA-598 abbreviations for color-deficient designers,
+// grayscale prints, and fast-glance Slate/White confusion avoidance.
+const TIA_598_ABBREV = {
+  blue:'BL', orange:'OR', green:'GR', brown:'BR', slate:'SL', white:'WH',
+  red:'RD', black:'BK', yellow:'YL', violet:'VL', rose:'RS', aqua:'AQ',
+};
+
+// Colors that need white text for contrast (dark fills).
+const TIA_598_DARK_FILLS = new Set(['blue','brown','slate','violet','rose','red','black']);
+
 const state = {
   user: null,
   projects: [],
@@ -1011,6 +1021,15 @@ function drawCanvasContents() {
           stroke: COLORS[tube.color] || '#666',
           strokeWidth: 2, listening: false,
         }));
+        // Phase 4.2 — TIA-598 two-letter abbreviation on the left end of each tube stripe.
+        const abbrev = TIA_598_ABBREV[tube.color];
+        if (abbrev) {
+          group.add(new Konva.Text({
+            x: from + 6, y: y + ti * tubeGap - 5,
+            text: abbrev, fontSize: 7, fill: COLORS[tube.color] || '#666',
+            fontStyle: 'bold', listening: false,
+          }));
+        }
       });
       group.add(new Konva.Text({
         x: (from + to) / 2 - 80, y: y - 14, width: 160, align:'center',
@@ -2230,9 +2249,9 @@ function renderRibbonGroupRows(groups, splices) {
     const b = describeFiber(first.fiber_b_id);
     return `<div class="splice-row">
       <div class="desc">
-        <b>${esc(a.cable)}</b> · <span class="fc fc-${a.tube_color}"></span>${esc(a.tube_color)}
+        <b>${esc(a.cable)}</b> · <span class="fc fc-${a.tube_color}" title="${a.tube_color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.tube_color]||''}</span>
         →
-        <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}"></span>${esc(b.tube_color)}
+        <b>${esc(b.cable)}</b> · <span class="fc fc-${b.tube_color}" title="${b.tube_color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.tube_color]||''}</span>
         <span class="ribbon-tag">ribbon ×12</span>
       </div>
       <div style="display:flex;gap:4px">
@@ -2252,9 +2271,9 @@ function renderLooseSpliceRows(splices) {
       const b = describeFiber(s.fiber_b_id);
       return `<div class="splice-row">
         <div class="desc">
-          <span class="fc fc-${a.color}"></span>${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
+          <span class="fc fc-${a.color}" title="${a.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[a.color]||''}</span> ${esc(a.cable)} ${esc(a.tube_color)}/${a.position}
           →
-          <span class="fc fc-${b.color}"></span>${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
+          <span class="fc fc-${b.color}" title="${b.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${TIA_598_ABBREV[b.color]||''}</span> ${esc(b.cable)} ${esc(b.tube_color)}/${b.position}
         </div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-sm" onclick="traceFiberPath('${s.fiber_a_id}')" title="Trace full strand path from side A"><i class="fa-solid fa-diagram-project"></i> Trace</button>
@@ -2998,10 +3017,11 @@ window.renderFibersOnly = function(side) {
     .sort((a,b)=>a.position-b.position);
   grid.innerHTML = fibers.map(f => {
     const used = state._spUsed.has(f.id);
+    const abbrev = TIA_598_ABBREV[f.color] || '';
     return `<div class="fiber-cell ${used?'in-use':''}"
       data-fiber-id="${f.id}" data-side="${side}"
       onclick="${used?'':'pickFiber(this)'}">
-      <span class="fc fc-${f.color}"></span>${f.position}
+      <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}
     </div>`;
   }).join('');
 };

@@ -33,6 +33,16 @@ const TIA_598_COLORS = [
   'red', 'black', 'yellow', 'violet', 'rose', 'aqua'
 ];
 
+// Phase 4.2 — two-letter TIA-598 abbreviations. Rendered on color chips in
+// the splicer PDF so color-deficient splicers and grayscale prints remain
+// unambiguous. Mirror of the frontend TIA_598_ABBREV constant in splice.html.
+const TIA_598_ABBREV = {
+  blue:'BL', orange:'OR', green:'GR', brown:'BR', slate:'SL', white:'WH',
+  red:'RD', black:'BK', yellow:'YL', violet:'VL', rose:'RS', aqua:'AQ',
+};
+// Colors whose fills are dark enough that white abbreviation text is needed.
+const TIA_598_DARK_FILLS = new Set(['blue','brown','slate','violet','rose','red','black']);
+
 const FIBER_COUNTS = [6, 12, 24, 36, 48, 72, 96, 144, 216, 288, 432, 576, 864, 1152, 1728, 3456];
 
 // Stale-lock timeout: 10 minutes since last heartbeat. Past that, any
@@ -3460,10 +3470,15 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
     };
   }
 
-  // Color swatch + name. Black-and-white printers, colorblind splicers,
-  // and dim flashlights all benefit from BOTH being on the page.
+  // Color swatch + name + TIA-598 abbreviation. Black-and-white printers,
+  // color-deficient splicers, and dim flashlights all benefit from the
+  // swatch, the full name, AND the 2-letter code being present together.
+  // The swatch has a 1px border for grayscale-print fidelity (fills that
+  // are near-white or near-white background blend together without it).
   function colorChip(name) {
-    return `<span class="chip chip-${_esc(name)}"></span>${_esc(name)}`;
+    const abbrev = TIA_598_ABBREV[name] || '';
+    const textColor = TIA_598_DARK_FILLS.has(name) ? '#fff' : '#111';
+    return `<span class="chip chip-${_esc(name)}" data-abbrev="${_esc(abbrev)}" style="position:relative;border:1px solid #888"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5.5px;font-weight:700;color:${textColor};line-height:1;letter-spacing:0">${_esc(abbrev)}</span></span>${_esc(name)}`;
   }
 
   function rowForSplice(s) {
@@ -3792,8 +3807,10 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   .warn{color:#DC3545;font-weight:700;text-transform:uppercase;font-size:9px}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px}
 
-  /* Color swatches — printed alongside color names. */
-  .chip{display:inline-block;width:9px;height:9px;border-radius:50%;border:0.5px solid #999;margin-right:4px;vertical-align:-1px}
+  /* Color swatches — printed alongside color names. Phase 4.2: larger for
+     abbrev text, 1px border for grayscale-print fidelity, relative position
+     so the inner abbrev span can use absolute positioning. */
+  .chip{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #888;margin-right:3px;vertical-align:-3px;position:relative;overflow:hidden}
   ${colorCss}
 
   .ribbon-tag{display:inline-block;padding:1px 5px;background:#E8F0FB;color:#1B5FA0;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px;letter-spacing:0.4px}
