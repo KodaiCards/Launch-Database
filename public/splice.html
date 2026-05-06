@@ -639,6 +639,19 @@ function openSSE(projectId) {
    'ribbon_splice_added','ribbon_group_deleted',
    'project_updated','lock_acquired','lock_released','lock_taken_over']
    .forEach(evt => state.sse.addEventListener(evt, handler));
+  // Phase 2B #7 — splicer uploaded a field photo from a public QR
+  // link. We don't need a full re-hydrate (no graph change); just
+  // refresh the markup list if the matching closure is selected.
+  ['field_markup_added', 'field_markup_removed'].forEach(evt => {
+    state.sse.addEventListener(evt, (e) => {
+      try {
+        const data = JSON.parse(e.data || '{}');
+        if (state.selection?.type === 'closure' && state.selection.id === data.closure_id) {
+          loadClosureMarkups(data.closure_id);
+        }
+      } catch {}
+    });
+  });
   state.sse.onerror = () => {
     // EventSource auto-reconnects; nothing to do unless it's a permanent
     // 401 — which the api() helper would have already redirected.
@@ -1152,7 +1165,90 @@ function renderClosureInspector(closureId) {
           </tbody>
         </table>` : '<div class="empty-pane" style="padding:8px">None marked yet.</div>'}
     </div>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)" id="closure-field-section">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        Field markup
+        <button class="btn btn-sm" onclick="getClosureFieldLink('${closureId}')" title="Mint or copy the public link splicers scan to upload field photos"><i class="fa-solid fa-link"></i> Field link</button>
+      </h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Splicers scan the per-closure QR code on the printed PDF and upload as-built photos with no login.
+      </div>
+      <div id="closure-markups-${closureId}"><div class="empty-pane" style="padding:8px">Loading…</div></div>
+    </div>
   `;
+
+  loadClosureMarkups(closureId);
+}
+
+// Phase 2B #7 — pull field markups for the selected closure and
+// render thumbnails. Image bytes come from a separate auth-gated
+// endpoint so the list response stays light.
+async function loadClosureMarkups(closureId) {
+  const host = document.getElementById('closure-markups-' + closureId);
+  if (!host) return;
+  try {
+    const list = await api('/api/splice/closures/' + closureId + '/markups');
+    if (!list.length) {
+      host.innerHTML = '<div class="empty-pane" style="padding:8px">No field photos yet.</div>';
+      return;
+    }
+    host.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">
+        ${list.map(m => `
+          <div style="border:1px solid var(--border-weak);border-radius:6px;overflow:hidden;background:var(--surface)">
+            <a href="/api/splice/markups/${m.id}/image" target="_blank" rel="noopener">
+              <img src="/api/splice/markups/${m.id}/image" alt="field photo"
+                   style="width:100%;height:90px;object-fit:cover;display:block;background:var(--surface-2)" loading="lazy">
+            </a>
+            <div style="padding:5px 6px;font-size:11px;color:var(--text-muted)">
+              <div style="color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.splicer_name || 'Anonymous')}</div>
+              <div>${new Date(m.uploaded_at).toLocaleDateString()}</div>
+              ${m.notes ? `<div title="${esc(m.notes)}" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.notes)}</div>` : ''}
+              <div style="margin-top:3px"><button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px" onclick="deleteMarkup('${m.id}','${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i></button></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (e) {
+    host.innerHTML = '<div class="empty-pane" style="padding:8px;color:var(--danger)">Load failed: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function getClosureFieldLink(closureId) {
+  try {
+    // Use the most recent un-expired token if one exists; otherwise
+    // mint. Engineer can always mint a fresh one explicitly.
+    const existing = await api('/api/splice/closures/' + closureId + '/public-tokens');
+    let url;
+    const live = existing.find(t => !t.expires_at || new Date(t.expires_at) > new Date());
+    if (live) {
+      url = live.url;
+    } else {
+      const fresh = await api('/api/splice/closures/' + closureId + '/public-tokens', 'POST', {});
+      url = fresh.url;
+    }
+    // Best-effort clipboard copy. Falls back to a prompt() so the
+    // engineer can still grab the URL on browsers that block
+    // navigator.clipboard from non-HTTPS origins.
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Field link copied to clipboard', 'success');
+        return;
+      } catch {}
+    }
+    prompt('Field link (Cmd/Ctrl+C to copy):', url);
+  } catch (e) { toast('Failed to get field link: ' + e.message, 'error'); }
+}
+
+async function deleteMarkup(markupId, closureId) {
+  if (!confirm('Delete this field photo?')) return;
+  try {
+    await api('/api/splice/markups/' + markupId, 'DELETE');
+    loadClosureMarkups(closureId);
+    toast('Photo deleted', 'success');
+  } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
 }
 
 function openAddStoredStrand(locationId) {

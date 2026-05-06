@@ -205,6 +205,10 @@ function pageRequiresAuth(reqPath) {
   if (reqPath === '/toast.js' || reqPath === '/keyboard.js') return false;
   if (reqPath === '/app-shell.css') return false;
   if (reqPath === '/favicon.ico') return false;
+  // Splice Matrix Phase 2B #7 — no-login splicer field markup. The
+  // splicer scans a QR code from a printed field document and lands
+  // here without an account. The token in the path is the auth.
+  if (reqPath.startsWith('/splice/field/')) return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }

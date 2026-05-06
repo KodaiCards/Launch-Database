@@ -131,6 +131,66 @@ function _puppet() {
   return _puppeteer;
 }
 
+// Phase 2B #7 — public field-markup uploads use multer memory storage
+// (≤2MB cap, image MIME types only). The bytes go straight into
+// Postgres BYTEA, so we never write to disk; the splice service has
+// no Railway volume of its own. Lazy-loaded so a misconfigured
+// container that lacks multer can still boot the rest of the splice
+// service — the field-markup endpoints will return 500 with a clean
+// error message instead of crashing at require time.
+const FIELD_MARKUP_MAX_BYTES = 2 * 1024 * 1024;
+let _fieldMarkupUpload = null;
+function _getFieldMarkupUpload() {
+  if (_fieldMarkupUpload) return _fieldMarkupUpload;
+  let multer;
+  try { multer = require('multer'); }
+  catch (e) {
+    throw new Error('multer not installed; field-markup upload unavailable. ' +
+                    'Run `npm install multer`. Original: ' + e.message);
+  }
+  _fieldMarkupUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: FIELD_MARKUP_MAX_BYTES, files: 1 },
+    fileFilter: (req, file, cb) => {
+      if (!/^image\/(jpeg|jpg|png|webp|heic|heif)$/i.test(file.mimetype)) {
+        return cb(new Error('Only JPEG, PNG, WebP, or HEIC images are accepted'));
+      }
+      cb(null, true);
+    },
+  });
+  return _fieldMarkupUpload;
+}
+
+// Sliding-window IP rate limiter for the public upload endpoint. In-
+// memory because the splice service runs as a single Railway replica
+// and the field-markup volume is low (a splicer uploading at most a
+// few photos per closure per day). If we ever scale horizontally,
+// switch this to a Redis-backed limiter.
+const _fieldMarkupRate = new Map(); // ip → array<timestamp ms>
+const FIELD_MARKUP_LIMIT = 30;
+const FIELD_MARKUP_WINDOW_MS = 60 * 1000;
+function _fieldMarkupRateOk(ip) {
+  if (!ip) return true;
+  const now = Date.now();
+  const cutoff = now - FIELD_MARKUP_WINDOW_MS;
+  const arr = (_fieldMarkupRate.get(ip) || []).filter(t => t > cutoff);
+  if (arr.length >= FIELD_MARKUP_LIMIT) {
+    _fieldMarkupRate.set(ip, arr);
+    return false;
+  }
+  arr.push(now);
+  _fieldMarkupRate.set(ip, arr);
+  return true;
+}
+
+// 24-char URL-safe token. crypto.randomBytes(18) → 24 base64url chars
+// → ~10^32 possible values, plenty unguessable for a per-closure key
+// without going overboard on length (printed QR codes get bigger
+// fast as the encoded string grows).
+function _mintFieldToken() {
+  return crypto.randomBytes(18).toString('base64url');
+}
+
 module.exports = function installSpliceRoutes(app, pool, mw) {
   const { requireAuth } = mw;
 
@@ -1650,6 +1710,225 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Field markup public token + upload (Phase 2B #7) ───────────────────
+  //
+  // The splicer scans the QR printed on the field document, lands on a
+  // public HTML page (no login, no app install), uploads a photo of the
+  // closure interior. The engineer sees those photos attached to the
+  // closure inside the editor. The token in the URL is the only auth.
+  //
+  //   POST /api/splice/closures/:id/public-tokens — engineer mints/lists
+  //   GET  /api/splice/closures/:id/public-tokens — engineer lists
+  //   DELETE /api/splice/public-tokens/:token     — engineer revokes
+  //   GET  /splice/field/:token                    — public HTML
+  //   POST /splice/field/:token/markup             — public photo upload
+  //   GET  /splice/field/:token/markups/:id/image  — public, own-token
+  //                                                  thumbnail
+  //   GET  /api/splice/closures/:id/markups        — engineer list
+  //   GET  /api/splice/markups/:id/image           — engineer image fetch
+  //   DELETE /api/splice/markups/:id               — engineer remove
+
+  app.post('/api/splice/closures/:id/public-tokens', requireAuth(), async (req, res) => {
+    const closureId = req.params.id;
+    const expiresInDays = req.body?.expires_in_days != null
+      ? Math.max(1, parseInt(req.body.expires_in_days, 10) || 0)
+      : null;
+    try {
+      const cl = await pool.query(
+        `SELECT cl.id, l.project_id
+           FROM splice_closures cl
+           JOIN splice_locations l ON l.id = cl.location_id
+          WHERE cl.id = $1`,
+        [closureId]
+      );
+      if (!cl.rows.length) return res.status(404).json({ error: 'Closure not found' });
+      const token = _mintFieldToken();
+      const expiresAt = expiresInDays
+        ? new Date(Date.now() + expiresInDays * 86400 * 1000)
+        : null;
+      const ins = await pool.query(
+        `INSERT INTO splice_closure_public_tokens
+           (token, closure_id, project_id, expires_at, created_by_staff_id)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [token, closureId, cl.rows[0].project_id, expiresAt, req.user?.staff_id || null]
+      );
+      const url = (SPLICE_PUBLIC_URL || '') + '/splice/field/' + token;
+      res.json({ ...ins.rows[0], url });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/closures/:id/public-tokens', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT t.*, s.full_name AS created_by_name
+           FROM splice_closure_public_tokens t
+           LEFT JOIN staff s ON s.id = t.created_by_staff_id
+          WHERE t.closure_id = $1
+          ORDER BY t.created_at DESC`,
+        [req.params.id]
+      );
+      const base = SPLICE_PUBLIC_URL || '';
+      res.json(rows.map(r => ({ ...r, url: base + '/splice/field/' + r.token })));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/public-tokens/:token', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_closure_public_tokens WHERE token = $1`,
+        [req.params.token]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Token not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Public: render minimal HTML for the splicer. Resolves the token to
+  // its closure, pulls closure + location + project metadata + any
+  // already-uploaded markups so the splicer can confirm they're at the
+  // right closure. Also embeds the upload form. NO requireAuth here —
+  // the token IS the auth.
+  app.get('/splice/field/:token', async (req, res) => {
+    try {
+      const tok = await _resolveFieldToken(pool, req.params.token);
+      if (!tok) return res.status(404).type('html').send(_renderFieldErrorHtml('This field link is invalid or expired. Ask the engineer for a fresh QR code.'));
+      const meta = await _loadClosureForField(pool, tok.closure_id);
+      if (!meta) return res.status(404).type('html').send(_renderFieldErrorHtml('Closure not found.'));
+      const markups = await pool.query(
+        `SELECT id, splicer_name, notes, mime_type, byte_size, uploaded_at
+           FROM splice_field_markups WHERE closure_id = $1 ORDER BY uploaded_at DESC`,
+        [tok.closure_id]
+      );
+      res.type('html').send(_renderFieldHtml({
+        token: req.params.token,
+        closure: meta,
+        markups: markups.rows,
+      }));
+    } catch (e) {
+      res.status(500).type('html').send(_renderFieldErrorHtml('Server error: ' + e.message));
+    }
+  });
+
+  // Resolve the multer middleware lazily on first request so a missing
+  // multer install fails the request, not the service boot.
+  const _fieldMarkupMiddleware = (req, res, next) => {
+    let upload;
+    try { upload = _getFieldMarkupUpload(); }
+    catch (e) { return res.status(500).json({ error: e.message }); }
+    upload.single('photo')(req, res, next);
+  };
+
+  app.post('/splice/field/:token/markup',
+    _fieldMarkupMiddleware,
+    async (req, res) => {
+      const ip = req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || null;
+      if (!_fieldMarkupRateOk(ip)) {
+        return res.status(429).json({ error: 'Too many uploads. Slow down and try again in a minute.' });
+      }
+      try {
+        const tok = await _resolveFieldToken(pool, req.params.token);
+        if (!tok) return res.status(404).json({ error: 'Field link is invalid or expired.' });
+        if (!req.file || !req.file.buffer || !req.file.buffer.length) {
+          return res.status(400).json({ error: 'No photo uploaded.' });
+        }
+        const splicerName = (req.body?.splicer_name || '').toString().trim().slice(0, 120) || null;
+        const notes = (req.body?.notes || '').toString().trim().slice(0, 2000) || null;
+        const ins = await pool.query(
+          `INSERT INTO splice_field_markups
+             (closure_id, project_id, token, splicer_name, notes,
+              mime_type, byte_size, image_data, uploader_ip)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           RETURNING id, uploaded_at`,
+          [tok.closure_id, tok.project_id, req.params.token, splicerName, notes,
+           req.file.mimetype, req.file.buffer.length, req.file.buffer, ip]
+        );
+        // Best-effort SSE broadcast so an engineer who has the project
+        // open sees the upload appear in real-time without refreshing.
+        _broadcast(tok.project_id, 'field_markup_added', {
+          markup_id: ins.rows[0].id,
+          closure_id: tok.closure_id,
+          splicer_name: splicerName,
+          uploaded_at: ins.rows[0].uploaded_at,
+        });
+        res.json({ ok: true, markup_id: ins.rows[0].id });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+  // Public image-fetch endpoint for the field page itself — splicer
+  // uploads a photo, then the page wants to render a thumbnail right
+  // back to confirm the upload landed. Restricted to images that
+  // belong to the SAME closure as the token in the URL, so a leaked
+  // markup id can't be used to read other closures' photos.
+  app.get('/splice/field/:token/markups/:id/image', async (req, res) => {
+    try {
+      const tok = await _resolveFieldToken(pool, req.params.token);
+      if (!tok) return res.status(404).end();
+      const { rows } = await pool.query(
+        `SELECT mime_type, image_data
+           FROM splice_field_markups
+          WHERE id = $1 AND closure_id = $2`,
+        [req.params.id, tok.closure_id]
+      );
+      if (!rows.length) return res.status(404).end();
+      res.set('Content-Type', rows[0].mime_type);
+      res.set('Cache-Control', 'private, max-age=300');
+      res.send(rows[0].image_data);
+    } catch (e) {
+      res.status(500).end();
+    }
+  });
+
+  // Engineer-side: list markups for a closure (no image bytes — those
+  // come over the dedicated image endpoint). byte_size lets the UI
+  // render "1.2MB" hints without pulling the BYTEA over the wire.
+  app.get('/api/splice/closures/:id/markups', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, closure_id, project_id, splicer_name, notes,
+                mime_type, byte_size, uploaded_at, token
+           FROM splice_field_markups
+          WHERE closure_id = $1
+          ORDER BY uploaded_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Engineer-side image fetch. Goes through requireAuth so a public
+  // user can't enumerate markup ids they don't own a token for.
+  app.get('/api/splice/markups/:id/image', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT mime_type, image_data
+           FROM splice_field_markups WHERE id = $1`,
+        [req.params.id]
+      );
+      if (!rows.length) return res.status(404).end();
+      res.set('Content-Type', rows[0].mime_type);
+      res.set('Cache-Control', 'private, max-age=600');
+      res.send(rows[0].image_data);
+    } catch (e) {
+      res.status(500).end();
+    }
+  });
+
+  app.delete('/api/splice/markups/:id', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_field_markups WHERE id = $1 RETURNING project_id, closure_id`,
+        [req.params.id]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Markup not found' });
+      _broadcast(r.rows[0].project_id, 'field_markup_removed', {
+        markup_id: req.params.id, closure_id: r.rows[0].closure_id,
+      });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure models picklist ─────────────────────────────────────────────
   // Empty by design — fills as designers type model names. No seed.
 
@@ -1691,7 +1970,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
-      const html = await _renderSpliceHtml(data, req.query.page_size || 'Tabloid');
+      const tokensByClosureId = await _ensureFieldTokens(pool, data, req.user?.staff_id);
+      const html = await _renderSpliceHtml(data, req.query.page_size || 'Tabloid', { tokensByClosureId });
       res.set('Content-Type', 'text/html; charset=utf-8').send(html);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1714,7 +1994,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
       }
       const pageSize = req.query.page_size || data.project.page_size || 'Tabloid';
-      const html = await _renderSpliceHtml(data, pageSize);
+      // Phase 2B #7 — make sure every closure has a current public
+      // token before render so the QR codes encode field-markup links
+      // instead of editor deep-links. Cheap on re-prints (existing
+      // tokens are reused) but mints fresh ones for any new closures
+      // since the last export.
+      const tokensByClosureId = await _ensureFieldTokens(pool, data, req.user?.staff_id);
+      const html = await _renderSpliceHtml(data, pageSize, { tokensByClosureId });
       const puppeteer = _puppet();
       const browser = await puppeteer.launch({
         headless: 'new',
@@ -1880,7 +2166,8 @@ function _safeFilename(s) {
 // fiber color swatches + as-built markup columns + signature line; QR
 // code per closure links to the public deep link (splicer scans to
 // upload field markup; full public-token flow lands in Phase 2B #7).
-async function _renderSpliceHtml(data, pageSize) {
+async function _renderSpliceHtml(data, pageSize, opts = {}) {
+  const tokensByClosureId = opts.tokensByClosureId || new Map();
   const { project, locations, cables, buffer_tubes, fibers, closures, trays, splices, ribbon_groups } = data;
 
   const fiberById = new Map(fibers.map(f => [f.id, f]));
@@ -1905,13 +2192,18 @@ async function _renderSpliceHtml(data, pageSize) {
   // that don't track circuits.
   const anyCircuit = fibers.some(f => f.circuit_name || f.customer);
 
-  // Pre-render QR codes for every closure in parallel. Each QR points
-  // at a deep link to the splice editor (project + closure params).
-  // When Phase 2B #7 lands, swap the URL pattern for /field/:token.
+  // Pre-render QR codes for every closure in parallel. When a public
+  // field token exists for the closure (Phase 2B #7), the QR encodes
+  // the no-login splicer URL `/splice/field/:token`. Otherwise it
+  // falls back to a deep-link into the editor — useful while the
+  // engineer is still iterating before they print.
   const qrPromises = closures.map(cl => {
-    const url = SPLICE_PUBLIC_URL
-      ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
-      : `/?project=${project.id}&closure=${cl.id}`;
+    const tok = tokensByClosureId.get(cl.id);
+    const url = tok
+      ? `${SPLICE_PUBLIC_URL || ''}/splice/field/${tok}`
+      : (SPLICE_PUBLIC_URL
+          ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
+          : `/?project=${project.id}&closure=${cl.id}`);
     return _renderQrSvg(url, 84).then(svg => [cl.id, svg]);
   });
   const qrByClosureId = new Map(await Promise.all(qrPromises));
@@ -2619,4 +2911,219 @@ ${closurePages || '<div class="empty-section">No splice changes between these re
   <span>Diff ${_esc(aLabel)} → ${_esc(bLabel)}</span>
 </div>
 </body></html>`;
+}
+
+// ─── Field markup helpers (Phase 2B #7) ─────────────────────────────────
+
+// Resolve a public field token to its closure + project. Honours
+// expires_at when set. Returns null when the token is unknown or
+// expired so the caller can 404 cleanly.
+async function _resolveFieldToken(pool, token) {
+  if (!token || typeof token !== 'string' || token.length > 64) return null;
+  const { rows } = await pool.query(
+    `SELECT token, closure_id, project_id, expires_at, created_at
+       FROM splice_closure_public_tokens
+      WHERE token = $1
+        AND (expires_at IS NULL OR expires_at > NOW())`,
+    [token]
+  );
+  return rows[0] || null;
+}
+
+// Pull just enough closure metadata for the public field page —
+// closure model, location name, project name. Splicer scans the QR
+// and confirms "yes, this is the right closure" by reading these
+// fields on screen.
+async function _loadClosureForField(pool, closureId) {
+  const { rows } = await pool.query(
+    `SELECT cl.id, cl.model, cl.tray_count, cl.tray_capacity, cl.notes,
+            l.name AS location_name, l.type AS location_type,
+            p.name AS project_name, p.id AS project_id
+       FROM splice_closures cl
+       JOIN splice_locations l ON l.id = cl.location_id
+       JOIN splice_projects  p ON p.id = l.project_id
+      WHERE cl.id = $1`,
+    [closureId]
+  );
+  return rows[0] || null;
+}
+
+// Ensure every closure in `data.closures` has at least one un-
+// expired public token. Reuses any existing token (most recent
+// wins); mints fresh ones for closures without coverage. Returns
+// a Map<closure_id, token> ready to feed _renderSpliceHtml.
+async function _ensureFieldTokens(pool, data, staffId) {
+  if (!data?.closures?.length) return new Map();
+  const closureIds = data.closures.map(c => c.id);
+  const projId = data.project?.id;
+  const existing = await pool.query(
+    `SELECT DISTINCT ON (closure_id) closure_id, token
+       FROM splice_closure_public_tokens
+      WHERE closure_id = ANY($1::uuid[])
+        AND (expires_at IS NULL OR expires_at > NOW())
+      ORDER BY closure_id, created_at DESC`,
+    [closureIds]
+  );
+  const map = new Map(existing.rows.map(r => [r.closure_id, r.token]));
+  const missing = closureIds.filter(id => !map.has(id));
+  if (!missing.length) return map;
+  // Mint fresh tokens in a single batched insert. No expires_at —
+  // the field doc may sit in a splicer's truck for months before
+  // they get to that section. Engineers can revoke explicitly when
+  // a job is closed out.
+  const values = missing.map(cid => [_mintFieldToken(), cid, projId, staffId || null]);
+  const flat = values.flat();
+  const placeholders = values.map((_, i) =>
+    `($${i*4+1}, $${i*4+2}, $${i*4+3}, $${i*4+4})`
+  ).join(', ');
+  await pool.query(
+    `INSERT INTO splice_closure_public_tokens
+       (token, closure_id, project_id, created_by_staff_id)
+     VALUES ${placeholders}`,
+    flat
+  );
+  for (const [tok, cid] of values.map(v => [v[0], v[1]])) {
+    map.set(cid, tok);
+  }
+  return map;
+}
+
+// Public-facing HTML page for the splicer. Mobile-first, single
+// column, large touch targets, no JavaScript framework — just
+// vanilla fetch() for the upload. Image preview after upload uses
+// the public-token-scoped image endpoint so the splicer can confirm
+// their upload landed without needing to log in anywhere.
+function _renderFieldHtml({ token, closure, markups }) {
+  const safeToken = String(token).replace(/[^A-Za-z0-9_-]/g, '');
+  const markupRows = (markups || []).map(m => `
+    <li class="markup-row">
+      <img src="/splice/field/${safeToken}/markups/${m.id}/image" alt="field photo" loading="lazy">
+      <div class="meta">
+        <div class="who">${_esc(m.splicer_name || 'Anonymous')}</div>
+        <div class="when">${new Date(m.uploaded_at).toLocaleString()}</div>
+        ${m.notes ? `<div class="notes">${_esc(m.notes)}</div>` : ''}
+      </div>
+    </li>`).join('');
+  return `<!doctype html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Field markup · ${_esc(closure.project_name)}</title>
+<style>
+  *,*::before,*::after { box-sizing:border-box; }
+  body { font: 16px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; color:#1c1c1c; background:#f5f6f8; margin:0; padding:0; min-height:100vh; }
+  .topbar { background:#003366; color:#fff; padding:12px 18px; }
+  .topbar h1 { margin:0; font-size:16px; font-weight:600; }
+  .topbar .sub { font-size:12px; opacity:.85; margin-top:2px; }
+  main { max-width:560px; margin:0 auto; padding:14px; }
+  .card { background:#fff; border:1px solid #e2e4e9; border-radius:8px; padding:14px; margin-bottom:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .meta-table { width:100%; font-size:14px; }
+  .meta-table th { text-align:left; color:#5b6470; font-weight:500; padding:3px 8px 3px 0; vertical-align:top; width:40%; }
+  .meta-table td { padding:3px 0; vertical-align:top; }
+  h2 { font-size:14px; font-weight:600; margin:0 0 10px; color:#003366; }
+  label { display:block; font-size:13px; color:#3b4252; margin-bottom:4px; font-weight:500; }
+  input[type=text], textarea {
+    width:100%; padding:9px 10px; border:1px solid #c8cdd4; border-radius:6px; font:inherit; background:#fff;
+  }
+  textarea { min-height:60px; resize:vertical; }
+  .file-input-wrap {
+    border:2px dashed #b3bbc5; border-radius:8px; padding:18px; text-align:center; background:#fafbfc; margin-bottom:10px;
+  }
+  .file-input-wrap input[type=file] { width:100%; }
+  .submit { background:#0a7d2a; color:#fff; border:none; padding:13px; border-radius:8px; font-size:16px; font-weight:600; width:100%; cursor:pointer; }
+  .submit:disabled { background:#7e8b9c; cursor:wait; }
+  .field-row { margin-bottom:10px; }
+  .markup-list { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:1fr; gap:10px; }
+  .markup-row { display:flex; gap:10px; align-items:flex-start; padding:8px; background:#fafbfc; border:1px solid #e2e4e9; border-radius:6px; }
+  .markup-row img { width:80px; height:80px; object-fit:cover; border-radius:4px; background:#eee; flex:0 0 auto; }
+  .markup-row .who { font-weight:600; font-size:13px; }
+  .markup-row .when { font-size:11px; color:#5b6470; }
+  .markup-row .notes { font-size:12px; color:#3b4252; margin-top:3px; white-space:pre-wrap; }
+  #upload-status { margin-top:10px; padding:10px; border-radius:6px; font-size:14px; display:none; }
+  #upload-status.ok { background:#d4f4dd; color:#0a4a18; display:block; }
+  #upload-status.err { background:#fadddd; color:#7a1a1a; display:block; }
+  footer { font-size:11px; color:#5b6470; text-align:center; padding:14px; }
+  .empty { color:#5b6470; font-style:italic; font-size:13px; }
+</style>
+</head><body>
+<div class="topbar">
+  <h1>${_esc(closure.project_name)}</h1>
+  <div class="sub">Splicer field markup</div>
+</div>
+<main>
+  <section class="card">
+    <h2>Closure</h2>
+    <table class="meta-table">
+      <tr><th>Location</th><td><b>${_esc(closure.location_name)}</b> <span style="color:#5b6470;font-size:12px">(${_esc(closure.location_type)})</span></td></tr>
+      <tr><th>Model</th><td>${_esc(closure.model || '—')}</td></tr>
+      <tr><th>Trays</th><td>${closure.tray_count} × ${closure.tray_capacity}-fiber</td></tr>
+      ${closure.notes ? `<tr><th>Notes</th><td>${_esc(closure.notes)}</td></tr>` : ''}
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Upload field photo</h2>
+    <form id="upload-form" enctype="multipart/form-data">
+      <div class="field-row">
+        <label for="splicer_name">Your name <span style="color:#5b6470;font-weight:400">(optional)</span></label>
+        <input type="text" id="splicer_name" name="splicer_name" maxlength="120" placeholder="e.g. Carlos R.">
+      </div>
+      <div class="field-row">
+        <label for="notes">Notes <span style="color:#5b6470;font-weight:400">(optional)</span></label>
+        <textarea id="notes" name="notes" maxlength="2000" placeholder="Tray 3 ribbon-to-ribbon, all 12 fusions clean"></textarea>
+      </div>
+      <div class="field-row">
+        <label for="photo">Photo (max 2 MB · JPEG, PNG, WebP, HEIC)</label>
+        <div class="file-input-wrap">
+          <input type="file" id="photo" name="photo" accept="image/*" capture="environment" required>
+        </div>
+      </div>
+      <button type="submit" class="submit" id="submit-btn">Upload photo</button>
+      <div id="upload-status"></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Photos already uploaded</h2>
+    ${markupRows ? `<ul class="markup-list">${markupRows}</ul>` : '<p class="empty">No photos uploaded yet for this closure.</p>'}
+  </section>
+</main>
+<footer>Launch Fiber Services · Splice Matrix</footer>
+<script>
+(function(){
+  var form = document.getElementById('upload-form');
+  var btn  = document.getElementById('submit-btn');
+  var status = document.getElementById('upload-status');
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    status.className = '';
+    status.textContent = '';
+    var photo = document.getElementById('photo').files[0];
+    if (!photo) { status.className='err'; status.textContent='Pick a photo first.'; return; }
+    if (photo.size > 2*1024*1024) { status.className='err'; status.textContent='Photo is over 2 MB. Compress or shoot at lower resolution.'; return; }
+    btn.disabled = true; btn.textContent = 'Uploading…';
+    var fd = new FormData(form);
+    try {
+      var r = await fetch('/splice/field/${safeToken}/markup', { method:'POST', body: fd });
+      var json = await r.json();
+      if (!r.ok) throw new Error(json.error || 'Upload failed');
+      status.className = 'ok';
+      status.textContent = 'Photo uploaded. Reloading to show it…';
+      setTimeout(function(){ window.location.reload(); }, 800);
+    } catch (err) {
+      status.className = 'err';
+      status.textContent = err.message || 'Upload failed';
+      btn.disabled = false; btn.textContent = 'Upload photo';
+    }
+  });
+})();
+</script>
+</body></html>`;
+}
+
+function _renderFieldErrorHtml(message) {
+  return `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Field link error</title>
+<style>body{font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;color:#1c1c1c;background:#f5f6f8;margin:0;padding:40px 20px;text-align:center}.box{max-width:420px;margin:0 auto;background:#fff;border:1px solid #e2e4e9;border-radius:8px;padding:24px}h1{font-size:17px;color:#a31616;margin:0 0 10px}p{margin:0;color:#3b4252}</style>
+</head><body><div class="box"><h1>This link won't open</h1><p>${_esc(message)}</p></div></body></html>`;
 }

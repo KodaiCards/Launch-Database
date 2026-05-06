@@ -10,9 +10,11 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last splice commit:** Phase 2B #6 — version snapshots + diff PDF
-(this commit; migration `0011_splice_versions.sql`).
-**Status:** Phase 2A complete. Phase 2B #5 + #6 done. #7 remains.
+**Last splice commit:** Phase 2B #7 — no-login QR field markup
+(this commit; migration `0012_splice_field_markup.sql`).
+**Status:** Phase 2A complete. Phase 2B complete (#5, #6, #7 all
+shipped). Next: Phase 2C, deferred until 2A/2B prove out in
+production.
 
 **To pick this back up in a fresh session:**
 
@@ -20,9 +22,11 @@
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
    shape of what's built.
-3. The planned next item is **Phase 2B #7 — No-login splicer field
-   markup via QR.** Migration slot allocated:
-   `0012_splice_field_markup.sql`.
+3. Phase 2B is now done. The next chunk is **Phase 2C** (multi-cable
+   closure scenarios with rich canvas, splitters/PON, optical
+   distance ↔ slack, SOR import). Don't start it speculatively —
+   wait for engineer feedback on 2A/2B in production before deciding
+   what's actually load-bearing.
 4. Note: slot 0009 ended up holding the unrelated
    `rename_inspection_team_to_construction` migration (Path B admin
    work landed mid-stream); the `splice_pdf_templates` table the plan
@@ -307,7 +311,8 @@ Slots allocated, in order:
   project clone endpoints)
 - 0011 splice_versions (Phase 2B #6, shipped — version snapshots +
   diff PDF)
-- 0012 splice_field_markup (Phase 2B #7)
+- 0012 splice_field_markup (Phase 2B #7, shipped — public field
+  tokens + photo upload to BYTEA)
 - 0013 splice_splitters (Phase 2C #9, when needed)
 - 0014 splice_cable_states (Phase 2C #10, when needed)
 
