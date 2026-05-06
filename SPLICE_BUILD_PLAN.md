@@ -10,13 +10,16 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last splice commit:** Phase 3C/3D/3E — KMZ + DXF import with
-submit-and-review (migration `0014_splice_design_imports.sql`).
-**Status:** Phase 2A complete. Phase 2B complete. Phase 3 complete
-(3A geography + map view, 3B KMZ export, 3C/3D/3E unified KMZ+DXF
-ingest with the submit-and-review staging path). 3F (DWG sidecar)
-is intentionally skipped. Phase 2C is still parked behind owner
-production feedback.
+**Last splice commits:** Phase 2C #11 path tracing
+(`f0f4f8b`) + `9f4bf2a` test coverage. ISSUE-2 (DELETE
+imports 404/409 ambiguity) fixed in `ec730cc`.
+
+**Status:** Phase 2A complete. Phase 2B complete. Phase 3
+complete (3A–3E shipped; 3F DWG intentionally skipped).
+Phase 2C: #11 path tracing shipped + tested. #8 / #9 / #10 /
+#13 are in active build (owner directed 2026-05-06 to push
+through 2C); #9 splitters and #13 CSV paste are dispatched as
+parallel Sonnet workers as of this commit.
 
 **To pick this back up in a fresh session:**
 
@@ -24,10 +27,15 @@ production feedback.
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
    shape of what's built.
-3. With Phases 1, 2A, 2B, 3 all shipped, the next chunk requires
-   owner direction. Phase 2C is the parked-and-ready candidate;
-   beyond that, real production feedback should drive the next
-   priority.
+3. Pending items: 2C #8 multi-cable canvas, #10 slack/service
+   loop, #13 CSV paste (in flight), #9 splitters (in flight).
+   When 2C is fully shipped, the next horizon is owner-driven
+   from production feedback.
+4. Worker A's first dispatch (path tracing) had its worktree
+   based on stale `main`. Mitigation: every ad-hoc dispatch
+   prompt now embeds an `expected_parent_sha` pre-flight check,
+   and `.claude/agents/project-tracking.md` has the same check
+   baked into its persona body.
 4. Note: slot 0009 ended up holding the unrelated
    `rename_inspection_team_to_construction` migration (Path B admin
    work landed mid-stream); the `splice_pdf_templates` table the plan
