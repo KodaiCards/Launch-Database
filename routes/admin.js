@@ -365,6 +365,139 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       res.status(500).json({ error: e.message });
     }
   });
+
+  // GET /api/_admin/import-trace/:batch_id — diagnostic for an import.
+  //
+  // Returns where each time_entries row from the batch landed and what
+  // the project's RUS/billing wiring looks like, so the owner can
+  // verify an import end-to-end without manually running SQL.
+  // Owner-flagged 2026-05-06: multiple shipped fixes claimed to work
+  // but the visible state didn't reflect it. This endpoint is the
+  // self-serve "did the import actually do what I think it did" tool.
+  //
+  // Use cases:
+  //   - "I imported 94 rows but RUS tab shows 0 hours" — surface
+  //     each project's contract_id / engineering_contract.program. If
+  //     program != 'rus', the RUS tab silently excludes the project.
+  //   - "Projects tab shows 0 hrs on the rollup" — surface each
+  //     project's actual_hours (the persisted rollup value) so owner
+  //     can spot whether updateProjectHours actually fired.
+  //   - "I expected hours to land on Project A but they're on Project B"
+  //     — surface the project name + parent chain.
+  //
+  // The endpoint is read-only. Cap at 1000 rows so a malformed batch
+  // can't OOM the response.
+  app.get('/api/_admin/import-trace/:batch_id', requireAdmin, async (req, res) => {
+    const batchId = req.params.batch_id;
+    if (!batchId) return res.status(400).json({ error: 'batch_id is required' });
+    try {
+      // Per-entry: row id, date, hours, job_title, project info, ec.program,
+      // and a parent chain so owner can see where each entry sits in the tree.
+      const { rows: entries } = await pool.query(
+        `SELECT te.id AS time_entry_id, te.entry_date, te.hours, te.job_title,
+                te.staff_id, s.name AS staff_name,
+                te.project_id, p.name AS project_name,
+                p.is_rollup, p.project_type,
+                p.work_order_number AS project_wo,
+                p.contract_id, c.contract_number, c.friendly_label AS contract_label,
+                ec.id AS engineering_contract_id, ec.program AS ec_program,
+                ec.name AS engineering_contract_name,
+                p.actual_hours::float AS project_actual_hours,
+                pp.id AS parent_id, pp.name AS parent_name, pp.rollup_level AS parent_rollup_level,
+                ppp.name AS grandparent_name,
+                pj.name AS project_job_name
+           FROM time_entries te
+           LEFT JOIN projects p     ON p.id = te.project_id
+           LEFT JOIN staff s        ON s.id = te.staff_id
+           LEFT JOIN contracts c    ON c.id = p.contract_id
+           LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+           LEFT JOIN projects pp    ON pp.id = p.parent_id
+           LEFT JOIN projects ppp   ON ppp.id = pp.parent_id
+           LEFT JOIN jobs pj        ON pj.id = p.job_id
+          WHERE te.import_batch = $1
+          ORDER BY te.entry_date, s.name, p.name
+          LIMIT 1000`,
+        [batchId]
+      );
+      if (!entries.length) {
+        return res.json({
+          batch_id: batchId,
+          message: 'No time entries found for this import_batch. Either the batch_id is wrong, the entries were deleted, or the import was rolled back.',
+          entries: [],
+          summary: null,
+        });
+      }
+      // Per-project rollup of the batch.
+      const byProject = new Map();
+      for (const e of entries) {
+        const k = e.project_id || '__null__';
+        if (!byProject.has(k)) {
+          byProject.set(k, {
+            project_id: e.project_id,
+            project_name: e.project_name,
+            is_rollup: e.is_rollup,
+            project_type: e.project_type,
+            project_wo: e.project_wo,
+            project_job_name: e.project_job_name,
+            contract_id: e.contract_id,
+            contract_number: e.contract_number,
+            contract_label: e.contract_label,
+            engineering_contract_id: e.engineering_contract_id,
+            ec_program: e.ec_program,
+            engineering_contract_name: e.engineering_contract_name,
+            project_actual_hours: e.project_actual_hours,
+            parent_name: e.parent_name,
+            parent_rollup_level: e.parent_rollup_level,
+            grandparent_name: e.grandparent_name,
+            entry_count: 0,
+            sum_hours: 0,
+            distinct_job_titles: new Set(),
+            distinct_staff: new Set(),
+            // Diagnostic flags surfacing why the project might not show
+            // up where owner expects:
+            problems: [],
+          });
+        }
+        const r = byProject.get(k);
+        r.entry_count++;
+        r.sum_hours += parseFloat(e.hours) || 0;
+        if (e.job_title) r.distinct_job_titles.add(e.job_title);
+        if (e.staff_name) r.distinct_staff.add(e.staff_name);
+      }
+      const projectSummary = [...byProject.values()].map(r => {
+        if (!r.contract_id) r.problems.push('no contract_id — RUS tab will exclude this project (filter requires contract→engineering_contract.program=\'rus\')');
+        if (r.contract_id && r.ec_program !== 'rus') r.problems.push(`engineering contract program is "${r.ec_program || 'NULL'}" not "rus" — RUS tab will exclude`);
+        if (r.is_rollup) r.problems.push('project is a rollup container (is_rollup=TRUE) — Projects-tab logged_hours shows 0 on rollups; rolled-up actual_hours = ' + (r.project_actual_hours || 0));
+        if (!r.project_job_name) r.problems.push('project has no job_id assigned — Hours tab job display falls back to entry job_title');
+        if (r.project_actual_hours == null || r.project_actual_hours === 0) r.problems.push('project.actual_hours is 0 or NULL — updateProjectHours may not have fired; sum_hours from this batch alone is ' + r.sum_hours.toFixed(2));
+        return {
+          ...r,
+          distinct_job_titles: [...r.distinct_job_titles],
+          distinct_staff: [...r.distinct_staff],
+        };
+      });
+      const totals = {
+        total_entries: entries.length,
+        total_hours: entries.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0),
+        distinct_projects: byProject.size,
+        distinct_staff: new Set(entries.map(e => e.staff_id).filter(Boolean)).size,
+        rus_eligible_entries: entries.filter(e => e.ec_program === 'rus').length,
+        rus_excluded_entries: entries.filter(e => e.ec_program !== 'rus').length,
+        rollup_attached_entries: entries.filter(e => e.is_rollup).length,
+      };
+      res.json({
+        batch_id: batchId,
+        summary: totals,
+        projects: projectSummary,
+        // Cap entries returned to keep payload manageable; full project
+        // rollup is in `projects`.
+        entries_sample: entries.slice(0, 50),
+        entries_truncated: entries.length > 50,
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 };
 
 // ─── Helper: orphan-file prune ───────────────────────────────────────────
