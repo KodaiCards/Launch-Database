@@ -901,14 +901,235 @@ function drawCanvasContents() {
     if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
     closuresByLoc.get(cl.location_id).push(cl);
   });
+
+  // _drawRichClosure — renders a closure that has 3 or more cables terminating
+  // at its location. The standard two-cable layout (vertical box centered on the
+  // location column) becomes confusing at high cable counts because stub lines
+  // would overlap and the column is too narrow to show per-cable disposition.
+  // Instead we draw a wider rounded rectangle, route cable stubs in from both
+  // sides (left = cables whose from_location_id matches, right = to_location_id
+  // matches), and attach a per-cable pill badge showing splice/store/express
+  // counts so the splicer can see at a glance how each cable is handled here.
+  function _drawRichClosure(cl, locX, baseY, cablesAtLoc, trayList, totalSpliceCount) {
+    const RW = 200;  // rich-closure rectangle width
+    // Height grows with tray count so the sparklines have breathing room,
+    // but we clamp so the canvas doesn't balloon for huge closures.
+    const RH = Math.min(200, Math.max(130, trayList.length * 14 + 80));
+    const rx = locX - RW / 2;  // top-left X, centred on location column
+
+    const splicesIn = (tray) => d.splices.filter(s => s.tray_id === tray.id).length;
+    const overCap   = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+
+    // Build a fiber-ID set for each cable so disposition counts are O(n)
+    // rather than O(n*m).  strand_states is cable-scoped, so we group by
+    // cable_id and location in one pass.
+    const strandStatesByLocCable = new Map(); // key: `${cable_id}:${loc_id}`
+    (d.strand_states || []).forEach(ss => {
+      if (ss.state !== 'stored') return;
+      const key = ss.cable_id + ':' + ss.location_id;
+      if (!strandStatesByLocCable.has(key)) strandStatesByLocCable.set(key, 0);
+      strandStatesByLocCable.set(key, strandStatesByLocCable.get(key) + 1);
+    });
+
+    // For each cable, count how many of its fibers are spliced at this closure
+    // (any splice in any tray of this closure that touches a fiber from this cable).
+    const trayIds = new Set(trayList.map(t => t.id));
+    const splicesHere = d.splices.filter(s => trayIds.has(s.tray_id));
+    const fiberById2  = new Map(d.fibers.map(f => [f.id, f]));
+    const tubeById2   = new Map(d.buffer_tubes.map(t => [t.id, t]));
+    function cableOfFiber(fid) {
+      const f = fiberById2.get(fid);
+      if (!f) return null;
+      const tb = tubeById2.get(f.buffer_tube_id);
+      return tb ? tb.cable_id : null;
+    }
+    // splice count per cable at this closure
+    const splicedPerCable = new Map();
+    splicesHere.forEach(s => {
+      [s.fiber_a_id, s.fiber_b_id].forEach(fid => {
+        const cid = cableOfFiber(fid);
+        if (cid) splicedPerCable.set(cid, (splicedPerCable.get(cid) || 0) + 1);
+      });
+    });
+
+    // Separate cables into left-side (originate here) and right-side (terminate
+    // here).  If a cable has both endpoints at the same location (a loop), put
+    // it on the left so it shows up somewhere.
+    const leftCables  = cablesAtLoc.filter(c => c.from_location_id === cl.location_id);
+    const rightCables = cablesAtLoc.filter(c => c.to_location_id === cl.location_id && c.from_location_id !== cl.location_id);
+
+    const group = new Konva.Group({ x: rx, y: baseY });
+
+    // Background rectangle — wider than the standard box to accommodate stubs.
+    group.add(new Konva.Rect({
+      width: RW, height: RH,
+      fill: overCap ? '#FFF3CD' : '#FFFFFF',
+      stroke: overCap ? '#DC3545' : '#1B5FA0',
+      strokeWidth: 2, cornerRadius: 6,
+    }));
+
+    // Closure model name.
+    group.add(new Konva.Text({
+      x: 6, y: 5, width: RW - 12,
+      text: cl.model || 'Closure',
+      fontSize: 11, fontStyle: 'bold', fill: '#1B5FA0',
+    }));
+
+    // Interior summary: "N trays · M splices" — gives the splicer a quick
+    // sanity check without having to open the inspector.
+    group.add(new Konva.Text({
+      x: 6, y: 18, width: RW - 12, align: 'center',
+      text: trayList.length + ' trays · ' + totalSpliceCount + ' splices',
+      fontSize: 10, fill: '#6C757D',
+    }));
+
+    // Tray sparkline — same fill-ratio bars as the standard closure, scaled to
+    // fit the wider rectangle.
+    const sparkY = 34;
+    const sparkH = 10;
+    trayList.forEach((tray, ti) => {
+      const fill = splicesIn(tray) / Math.max(cl.tray_capacity, 1);
+      const tw   = (RW - 12) / Math.max(trayList.length, 1);
+      const tx   = 6 + ti * tw;
+      group.add(new Konva.Rect({
+        x: tx, y: sparkY, width: tw - 1, height: sparkH,
+        fill: '#F0F0F0', stroke: '#DEE2E6', strokeWidth: 0.5,
+      }));
+      group.add(new Konva.Rect({
+        x: tx, y: sparkY, width: (tw - 1) * Math.min(fill, 1), height: sparkH,
+        fill: fill > 1 ? '#DC3545' : (fill > 0.85 ? '#FFC107' : '#28A745'),
+      }));
+    });
+
+    // Per-cable stub + disposition badge helper.
+    // stubX is the closure-rectangle edge (0 for left side, RW for right side).
+    // stubDirX is -1 for left (line goes left out of the closure) or +1 for right.
+    // cableY is the canvas Y of that cable's center stripe.
+    function _drawStub(cable, stubX, stubDirX, stubRowY) {
+      const STUB_LEN  = 40;   // length of the horizontal connector outside the box
+      const BADGE_W   = 80;   // pill badge width
+      const BADGE_H   = 14;
+      const STUB_COLOR = '#888';
+
+      // Horizontal line from the closure edge to the cable's canvas Y-position.
+      // We draw in group-local coords, so subtract baseY and rx for Y.
+      const localCableY = (cableYById.get(cable.id) ?? (baseY + RH / 2)) - baseY;
+
+      // Vertical tap from closure edge to the cable row.
+      const edgeY = Math.max(5, Math.min(RH - 5, stubRowY));
+
+      // Connector path: right-angle elbow. Start at closure edge (stubX, edgeY),
+      // go horizontally out STUB_LEN, then a vertical segment to align with the
+      // cable stripe, then continue horizontally to meet it. In practice the
+      // cable stripe is far away on the canvas so we only draw the elbow stub;
+      // the cable's own drawn line already extends across the canvas.
+      const elbowX = stubX + stubDirX * STUB_LEN;
+      group.add(new Konva.Line({
+        points: [stubX, edgeY, elbowX, edgeY],
+        stroke: STUB_COLOR, strokeWidth: 1.5, listening: false,
+        dash: [4, 3],
+      }));
+      // Arrow nub at the elbow tip to indicate direction.
+      const arrowDir = stubDirX;  // +1 right, -1 left
+      group.add(new Konva.Line({
+        points: [
+          elbowX, edgeY,
+          elbowX - arrowDir * 6, edgeY - 4,
+          elbowX - arrowDir * 6, edgeY + 4,
+          elbowX, edgeY,
+        ],
+        closed: true, fill: STUB_COLOR, stroke: STUB_COLOR, strokeWidth: 0.5,
+        listening: false,
+      }));
+
+      // Cable name label alongside the stub, placed just outside the closure edge.
+      const labelX = stubDirX === -1 ? (elbowX - BADGE_W - 2) : (elbowX + 2);
+      group.add(new Konva.Text({
+        x: labelX, y: edgeY - 10, width: BADGE_W,
+        text: cable.name + ' · ' + cable.fiber_count + 'f',
+        fontSize: 9, fill: '#444', listening: false,
+        ellipsis: true,
+      }));
+
+      // Disposition counts for this cable at this closure.
+      const spliced  = Math.floor((splicedPerCable.get(cable.id) || 0) / 2); // each splice counted twice (fiber_a + fiber_b)
+      const stored   = strandStatesByLocCable.get(cable.id + ':' + cl.location_id) || 0;
+      const express  = Math.max(0, cable.fiber_count - spliced - stored);
+
+      // Pill badges: blue=spliced, gray=stored, green=express. Only draw a
+      // badge when count > 0 to avoid clutter on cables that are entirely
+      // expressed through or entirely spliced.
+      const badges = [];
+      if (spliced > 0) badges.push({ label: spliced + ' spl', color: '#1660C9', textColor: '#fff' });
+      if (stored  > 0) badges.push({ label: stored  + ' sto', color: '#7F8C8D', textColor: '#fff' });
+      if (express > 0) badges.push({ label: express + ' exp', color: '#27AE60', textColor: '#fff' });
+
+      const PILL_W = 36;
+      const PILL_H = 12;
+      const PILL_GAP = 2;
+      const pillsWidth = badges.length * (PILL_W + PILL_GAP) - PILL_GAP;
+      // Centre the pill row below the label.
+      const pillStartX = stubDirX === -1
+        ? (elbowX - pillsWidth - 2)
+        : (elbowX + 2);
+      badges.forEach((b, bi) => {
+        const px = pillStartX + bi * (PILL_W + PILL_GAP);
+        const py = edgeY + 2;
+        group.add(new Konva.Rect({
+          x: px, y: py, width: PILL_W, height: PILL_H,
+          fill: b.color, cornerRadius: PILL_H / 2, listening: false,
+        }));
+        group.add(new Konva.Text({
+          x: px + 2, y: py + 2, width: PILL_W - 4,
+          text: b.label, fontSize: 8, fill: b.textColor,
+          align: 'center', listening: false,
+        }));
+      });
+    }
+
+    // Distribute stubs evenly along the left and right edges of the closure rect.
+    // We reserve the top 50px for headers/sparkline, so stubs start at y=50.
+    const STUB_TOP = 50;
+    const STUB_BOTTOM = RH - 10;
+    function stubY(idx, total) {
+      if (total <= 1) return (STUB_TOP + STUB_BOTTOM) / 2;
+      return STUB_TOP + idx * (STUB_BOTTOM - STUB_TOP) / (total - 1);
+    }
+    leftCables.forEach((cable, i) => {
+      _drawStub(cable, 0, -1, stubY(i, leftCables.length));
+    });
+    rightCables.forEach((cable, i) => {
+      _drawStub(cable, RW, 1, stubY(i, rightCables.length));
+    });
+
+    group.on('click tap', () => selectThing('closure', cl.id));
+    group.on('mouseenter', () => { document.body.style.cursor = 'pointer'; });
+    group.on('mouseleave', () => { document.body.style.cursor = 'default'; });
+    closureLayer.add(group);
+  }
+
   for (const loc of orderedLocations) {
     const list = closuresByLoc.get(loc.id) || [];
     const x = colX.get(loc.id);
+    // Cables that terminate (from or to) at this location — used to decide
+    // whether to use the rich layout for a given closure.
+    const cablesAtLoc = d.cables.filter(c =>
+      c.from_location_id === loc.id || c.to_location_id === loc.id
+    );
     list.forEach((cl, idx) => {
-      const baseY = 380 + idx * 110;
+      const baseY    = 380 + idx * 110;
       const trayList = d.trays.filter(t => t.closure_id === cl.id).sort((a,b)=>a.position-b.position);
       const splicesIn = (tray) => d.splices.filter(s => s.tray_id === tray.id).length;
-      const overCap = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+      const overCap  = trayList.some(t => splicesIn(t) > cl.tray_capacity);
+      const totalSpliceCount = trayList.reduce((sum, t) => sum + splicesIn(t), 0);
+
+      // Rich layout for closures where 3 or more cables converge. The standard
+      // two-cable layout (120px box) is kept unchanged — generalising it just
+      // to handle the common case adds complexity without benefit.
+      if (cablesAtLoc.length >= 3) {
+        _drawRichClosure(cl, x, baseY, cablesAtLoc, trayList, totalSpliceCount);
+        return;
+      }
 
       const group = new Konva.Group({ x: x - 60, y: baseY, width: 120 });
       group.add(new Konva.Rect({
@@ -1086,15 +1307,21 @@ function drawCanvasContents() {
     });
 
     // For each traced closure, draw a colored accent ring around its box.
+    // Rich closures (3+ cables) use a wider rectangle; standard ones use 120px.
     for (const loc of orderedLocations) {
       const list = closuresByLoc.get(loc.id) || [];
       const x = colX.get(loc.id);
+      const cablesHere = d.cables.filter(c =>
+        c.from_location_id === loc.id || c.to_location_id === loc.id
+      );
+      const isRich = cablesHere.length >= 3;
+      const ringW = isRich ? 208 : 128;
       list.forEach((cl, idx) => {
         if (!traceClosureIds.has(cl.id)) return;
         const baseY = 380 + idx * 110;
         traceLayer.add(new Konva.Rect({
-          x: x - 64, y: baseY - 4,
-          width: 128, height: 98,
+          x: x - ringW / 2 - 4, y: baseY - 4,
+          width: ringW, height: 98,
           stroke: TRACE_CLOSURE_COLOR, strokeWidth: 3,
           fill: 'rgba(255,107,0,0.08)',
           cornerRadius: 6, listening: false,
