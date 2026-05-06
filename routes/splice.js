@@ -1181,7 +1181,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const clientId = req.query.client_id || null;
       const { rows } = clientId
         ? await pool.query(
-            `SELECT t.*, cl.name AS scope_client_name, s.full_name AS created_by_name
+            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
                FROM splice_closure_templates t
                LEFT JOIN clients cl ON cl.id = t.scope_client_id
                LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
@@ -1190,7 +1190,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             [clientId]
           )
         : await pool.query(
-            `SELECT t.*, cl.name AS scope_client_name, s.full_name AS created_by_name
+            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
                FROM splice_closure_templates t
                LEFT JOIN clients cl ON cl.id = t.scope_client_id
                LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
@@ -1611,7 +1611,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const { rows } = await pool.query(
         `SELECT v.id, v.version_number, v.label, v.generation_hash,
                 v.created_at, v.created_by_staff_id,
-                s.full_name AS created_by_name
+                s.name AS created_by_name
            FROM splice_project_versions v
            LEFT JOIN staff s ON s.id = v.created_by_staff_id
           WHERE v.project_id = $1
@@ -1760,7 +1760,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   app.get('/api/splice/closures/:id/public-tokens', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(
-        `SELECT t.*, s.full_name AS created_by_name
+        `SELECT t.*, s.name AS created_by_name
            FROM splice_closure_public_tokens t
            LEFT JOIN staff s ON s.id = t.created_by_staff_id
           WHERE t.closure_id = $1
