@@ -449,6 +449,19 @@ function installAuthRoutes(app, pool) {
     }
   });
 
+  // GET /api/auth/portal-urls — returns the cross-portal URL map so clients with
+  // extra_teams can navigate between portals. Reads the PORTAL_URLS env var
+  // (JSON object: {"design":"https://...", "permitting":"https://...", ...}).
+  // Returns an empty object if not configured — the frontend hides the tab.
+  app.get('/api/auth/portal-urls', requireAuth(), (req, res) => {
+    let urls = {};
+    try {
+      const raw = process.env.PORTAL_URLS;
+      if (raw) urls = JSON.parse(raw);
+    } catch (e) { /* malformed JSON — return empty */ }
+    res.json(urls);
+  });
+
   // PUT /api/auth/me/theme — persist current user's theme preference.
   // Body: { theme: 'light' | 'dark' | null }. NULL clears the preference and
   // the frontend falls back to system/OS preference. Persisted server-side so

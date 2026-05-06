@@ -324,6 +324,12 @@ fetch('/api/auth/me', { credentials: 'include' })
     <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" id="dm-toggle" title="Toggle dark mode">
       <i class="fa-solid fa-moon" id="dm-icon"></i>
     </button>
+    <div id="portals-btn-wrap" style="display:none;position:relative">
+      <button class="btn btn-secondary btn-sm" onclick="togglePortalsDropdown()" id="portals-btn" title="My Portals">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i> My Portals
+      </button>
+      <div id="portals-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border-weak);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:160px;z-index:9999;padding:4px 0"></div>
+    </div>
     <div id="user-pill" style="display:none;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);padding:0 8px;border-right:1px solid var(--gray-border);margin-right:6px;cursor:pointer" onclick="signOut()" title="Click to sign out">
       <i class="fa-solid fa-user-circle" style="font-size:14px"></i>
       <span id="user-pill-text"></span>
@@ -1547,8 +1553,60 @@ async function loadCurrentUser() {
         pill.style.cursor = 'pointer';
         pill.onclick = showAccountMenu;
       }
+      initPortalsButton('permitting');
     }
   } catch(e){}
+}
+
+let portalUrlsCache = null;
+async function initPortalsButton(currentPortal) {
+  const u = currentUser || {};
+  const hasExtra = (u.extra_teams && u.extra_teams.length > 0) || u.role === 'admin';
+  if (!hasExtra) return;
+  try {
+    const r = await fetch('/api/auth/portal-urls', { credentials: 'include' });
+    if (!r.ok) return;
+    portalUrlsCache = await r.json();
+  } catch(e) { return; }
+  if (!portalUrlsCache || !Object.keys(portalUrlsCache).length) return;
+  const wrap = document.getElementById('portals-btn-wrap');
+  if (wrap) wrap.style.display = '';
+  buildPortalsDropdown(currentPortal);
+}
+
+const PORTAL_LABELS = { design:'Design', permitting:'Permitting', timeclock:'Time Clock', customer:'Client Portal' };
+
+function buildPortalsDropdown(currentPortal) {
+  const dd = document.getElementById('portals-dropdown');
+  if (!dd || !portalUrlsCache) return;
+  const u = currentUser || {};
+  const primary = u.role === 'admin' ? null
+    : u.role && u.role.startsWith('design_') ? 'design'
+    : u.role && u.role.startsWith('permitting_') ? 'permitting'
+    : u.role && u.role.startsWith('construction_') ? 'construction'
+    : null;
+  const accessible = new Set();
+  if (primary) accessible.add(primary);
+  for (const t of (u.extra_teams || [])) accessible.add(t === 'inspection' ? 'construction' : t);
+  if (u.role === 'admin') Object.keys(portalUrlsCache).forEach(k => accessible.add(k));
+  const others = [...accessible].filter(p => p !== currentPortal && portalUrlsCache[p]);
+  if (!others.length) {
+    document.getElementById('portals-btn-wrap').style.display = 'none';
+    return;
+  }
+  dd.innerHTML = others.map(p =>
+    `<a href="${esc(portalUrlsCache[p])}" target="_blank" rel="noopener" style="display:block;padding:8px 16px;font-size:13px;color:var(--text);text-decoration:none;white-space:nowrap" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">${esc(PORTAL_LABELS[p] || p)}</a>`
+  ).join('');
+}
+
+function togglePortalsDropdown() {
+  const dd = document.getElementById('portals-dropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  if (dd.style.display === 'block') {
+    const close = e => { if (!dd.contains(e.target) && e.target.id !== 'portals-btn') { dd.style.display = 'none'; document.removeEventListener('click', close); } };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  }
 }
 // Centered profile modal (matches admin). Re-creates on each open.
 function showAccountMenu() {
