@@ -416,7 +416,7 @@ const AI_TOOLS = [
   },
   {
     name: 'bulk_create_projects',
-    description: 'Create a TREE of projects in a single approval round. Use this whenever the user asks to scaffold more than ~5 projects at once (full PSC tree, all WO containers under a contract, all permitting sub-rollups under an area, etc.) instead of firing many small create_project calls across many approval cards. Each spec carries a `local_id` string the AI invents — referencing it as another spec\'s `parent_local_id` lets the tool resolve parent UUIDs server-side after creating each row in dependency order. Use `is_rollup: true` for container/folder projects (Contract, Service Area, Team) — they show as collapsible folders in the tree. Set `is_rollup: false` (or omit) for actual leaves that hold hours / footage / invoices. Returns a map of local_id → created UUID so the AI can reference the new ids in follow-up tool calls. ONLY call after the user has explicitly confirmed the full plan. INHERITANCE: a spec without an explicit client_id / contract_id / concentrator_id inherits the value from its nearest ancestor (via parent_local_id chain). Set those three UUIDs ONCE at the root or contract level — DO NOT repeat them on every spec. Repeating UUIDs on every row blows up the token cost and risks hitting the model\'s output cap on a tree of 50+ specs.',
+    description: 'Create a TREE of projects in a single approval round. Use this whenever the user asks to scaffold more than ~5 projects at once (full PSC tree, all WO containers under a contract, all permitting sub-rollups under an area, etc.) instead of firing many small create_project calls across many approval cards. Each spec carries a `local_id` string the AI invents — referencing it as another spec\'s `parent_local_id` lets the tool resolve parent UUIDs server-side after creating each row in dependency order. Use `is_rollup: true` for container/folder projects (Contract, Service Area, Team) — they show as collapsible folders in the tree. Set `is_rollup: false` (or omit) for actual leaves that hold hours / footage / invoices. Returns a map of local_id → created UUID so the AI can reference the new ids in follow-up tool calls. ONLY call after the user has explicitly confirmed the full plan. INHERITANCE: a spec without an explicit client_id / contract_id / concentrator_id / work_order_number inherits the value from its nearest ancestor (via parent_local_id chain). Set those four fields ONCE at the appropriate rollup level (concentrator_id + work_order_number on the Service Area / WO rollup, client_id + contract_id on the Contract rollup) — DO NOT repeat them on every spec. Repeating UUIDs on every row blows up the token cost and risks hitting the model\'s output cap on a tree of 50+ specs. CRITICAL for RUS Inspection trees: when nesting Inspection/RE leaves under a WO rollup, the child leaves auto-inherit the rollup\'s concentrator_id AND work_order_number — that\'s how the PSC RUS tab shows the right service area and WO# on each leaf. If you skip setting them on the parent rollup, the leaves will show with no service area / no WO#.',
     input_schema: {
       type: 'object',
       properties: {
@@ -1088,6 +1088,12 @@ async function executeTool(toolName, toolInput) {
             const clientId = resolveInherit(s, 'client_id');
             const contractId = resolveInherit(s, 'contract_id');
             const concentratorId = resolveInherit(s, 'concentrator_id');
+            // work_order_number now inherits from the parent chain too —
+            // critical for RUS Inspection trees where the AI sets WO# on
+            // a Service Area / WO rollup and expects the leaves under it
+            // to carry it through. Without inheritance, the leaves show
+            // with no WO# in the PSC RUS tab. Owner-flagged 2026-05-06.
+            const workOrderNumber = resolveInherit(s, 'work_order_number');
             if (!clientId) {
               failed.push({ local_id: s.local_id, name: s.name, error: 'no client_id (set on this spec or any ancestor via parent_local_id)' });
               continue;
@@ -1124,7 +1130,7 @@ async function executeTool(toolName, toolInput) {
                 s.name,
                 clientId,
                 contractId || null,
-                s.work_order_number || null,
+                workOrderNumber || null,
                 s.project_type || 'other',
                 program,
                 s.status || 'active',
