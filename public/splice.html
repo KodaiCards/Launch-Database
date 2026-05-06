@@ -489,6 +489,13 @@ function esc(s) {
   return d.innerHTML;
 }
 
+// 5.B.4 — show/hide a collapsible section by ID.
+function toggleEl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // Auth bootstrap
 // ───────────────────────────────────────────────────────────────────────────
@@ -1768,6 +1775,47 @@ function renderCableInspector(cableId) {
       <div style="margin-top:8px;font-size:11px;display:flex;gap:6px">
         <button class="btn btn-sm" onclick="if(state.activeView==='map'){mapStartEditPath('${cableId}')}else{switchView('map');setTimeout(()=>mapStartEditPath('${cableId}'),600)}" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-vector-square"></i> Edit path on map</button>
       </div>` : ''}
+
+    <!-- 5.B.4 — Per-fiber path list with collapsible tube groups -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:600">Fiber paths</span>
+        <button class="btn btn-sm" onclick="toggleEl('fiber-paths-${cableId}')" style="font-size:10px;padding:2px 8px">
+          <i class="fa-solid fa-chevron-down"></i> Show/hide
+        </button>
+      </div>
+      <div id="fiber-paths-${cableId}" style="display:none">
+        ${tubes.map(tube => {
+          const fibersInTube = state.data.fibers
+            .filter(f => f.buffer_tube_id === tube.id)
+            .sort((a,b) => a.position - b.position);
+          const abbrev = TIA_598_ABBREV[tube.color] || '';
+          return `<details style="margin-bottom:4px">
+            <summary style="font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 0">
+              <span class="fc fc-${tube.color}"></span>${abbrev} T${tube.position} · ${fibersInTube.length}f
+            </summary>
+            <div style="padding-left:10px;margin-top:2px">
+              ${fibersInTube.map(f => {
+                const fSplices = state.data.splices.filter(s => s.fiber_a_id === f.id || s.fiber_b_id === f.id);
+                const status = fSplices.length === 0 ? 'unspliced'
+                             : fSplices.length === 1 ? 'end-spliced'
+                             : 'through-spliced';
+                const statusColor = status === 'unspliced' ? 'var(--text-muted)'
+                                  : status === 'through-spliced' ? 'var(--success)' : 'var(--primary)';
+                return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:10px">
+                  <span class="fc fc-${f.color}" style="width:10px;height:10px;flex-shrink:0"></span>
+                  <span style="flex:1">${f.position}${f.circuit_name ? ' · ' + esc(f.circuit_name) : ''}</span>
+                  <span style="color:${statusColor};font-size:9px">${status}</span>
+                  <button class="btn btn-sm" style="padding:1px 5px;font-size:9px" title="Trace this fiber's end-to-end path"
+                    onclick="traceFiberPath('${f.id}')"><i class="fa-solid fa-route"></i></button>
+                </div>`;
+              }).join('')}
+            </div>
+          </details>`;
+        }).join('')}
+      </div>
+    </div>
+
     <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
       Fiber count is locked after creation. To re-size, delete and re-add.
     </div>
@@ -1786,32 +1834,37 @@ function renderLocationInspector(locationId) {
     ? `${Number(loc.latitude).toFixed(6)}, ${Number(loc.longitude).toFixed(6)}`
     : 'Not placed on map';
 
-  // Build compact fiber diagram: for each closure at this location, list
-  // splices as "Cable A f# ↔ Cable B f#" grouped by closure.
-  const fiberDiagramRows = [];
-  for (const cl of closures) {
-    const trays = state.data.trays.filter(t => t.closure_id === cl.id);
-    const trayIds = new Set(trays.map(t => t.id));
-    const splicesHere = state.data.splices.filter(s => trayIds.has(s.tray_id));
-    if (!splicesHere.length) continue;
-    fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:0.4px">${esc(cl.model || 'Closure')}</div>`);
-    for (const sp of splicesHere.slice(0, 20)) {
-      const fiberA = state.data.fibers.find(f => f.id === sp.fiber_a_id);
-      const fiberB = state.data.fibers.find(f => f.id === sp.fiber_b_id);
-      const tubeA = fiberA ? state.data.buffer_tubes.find(t => t.id === fiberA.buffer_tube_id) : null;
-      const tubeB = fiberB ? state.data.buffer_tubes.find(t => t.id === fiberB.buffer_tube_id) : null;
-      const cableA = tubeA ? state.data.cables.find(c => c.id === tubeA.cable_id) : null;
-      const cableB = tubeB ? state.data.cables.find(c => c.id === tubeB.cable_id) : null;
-      const labelA = cableA ? `${esc(cableA.name)} T${tubeA.position} f${fiberA.position}` : '?';
-      const labelB = cableB ? `${esc(cableB.name)} T${tubeB.position} f${fiberB.position}` : '?';
-      fiberDiagramRows.push(
-        `<div class="fiber-diagram-row"><span style="flex:1">${labelA}</span><span style="color:var(--text-muted)">&#8596;</span><span style="flex:1;text-align:right">${labelB}</span></div>`
-      );
+  // 5.B.4 — Build per-cable fiber status view for this location.
+  // For each cable terminating/passing-through here, show each fiber's status:
+  // spliced-here / express-through / dead (no splice in the whole project).
+  // "Spliced here" = has a splice whose tray/closure/location is at this location.
+  const spliceAtLocFiberIds = new Set();
+  // Collect splice fiber IDs that are anchored at this location.
+  for (const s of state.data.splices) {
+    let sLocId = null;
+    if (s.location_id) {
+      sLocId = s.location_id;
+    } else if (s.closure_id) {
+      const cl = state.data.closures.find(c => c.id === s.closure_id);
+      if (cl) sLocId = cl.location_id;
+    } else if (s.tray_id) {
+      const tray = state.data.trays.find(t => t.id === s.tray_id);
+      if (tray) {
+        const cl = state.data.closures.find(c => c.id === tray.closure_id);
+        if (cl) sLocId = cl.location_id;
+      }
     }
-    if (splicesHere.length > 20) {
-      fiberDiagramRows.push(`<div style="font-size:10px;color:var(--text-muted)">&hellip; ${splicesHere.length - 20} more splices</div>`);
+    if (sLocId === locationId) {
+      spliceAtLocFiberIds.add(s.fiber_a_id);
+      spliceAtLocFiberIds.add(s.fiber_b_id);
     }
   }
+  // All splice participants in the entire project (for "spliced elsewhere").
+  const splicedAnywhereIds = new Set(state.data.splices.flatMap(s => [s.fiber_a_id, s.fiber_b_id]));
+
+  // Build compact fiber diagram: for each closure at this location, list
+  // splices as "Cable A f# ↔ Cable B f#" grouped by closure. Keep for backward compat.
+  const fiberDiagramRows = [];
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
@@ -1849,10 +1902,60 @@ function renderLocationInspector(locationId) {
             </div>`).join('')}
         </div>
       </div>` : ''}
-    ${fiberDiagramRows.length ? `
+    <!-- 5.B.4 — Per-cable fiber status view at this location -->
+    ${cablesAt.length ? `
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
-        <div style="font-size:11px;font-weight:600;margin-bottom:4px">Fiber diagram</div>
-        ${fiberDiagramRows.join('')}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:600">Fibers at this location</span>
+          <button class="btn btn-sm" onclick="toggleEl('loc-fiber-detail-${locationId}')" style="font-size:10px;padding:2px 8px">
+            <i class="fa-solid fa-chevron-down"></i> Show/hide
+          </button>
+        </div>
+        <div id="loc-fiber-detail-${locationId}" style="display:none">
+          ${cablesAt.map(cable => {
+            const cableTubes = state.data.buffer_tubes
+              .filter(t => t.cable_id === cable.id)
+              .sort((a,b) => a.position - b.position);
+            const cableFibers = state.data.fibers.filter(f =>
+              cableTubes.some(t => t.id === f.buffer_tube_id)
+            );
+            const splicedHereCount = cableFibers.filter(f => spliceAtLocFiberIds.has(f.id)).length;
+            const expressCount = cableFibers.filter(f => !spliceAtLocFiberIds.has(f.id) && splicedAnywhereIds.has(f.id)).length;
+            const deadCount = cableFibers.filter(f => !splicedAnywhereIds.has(f.id)).length;
+            return `<details style="margin-bottom:6px">
+              <summary style="font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;padding:3px 0">
+                <a href="#" onclick="event.preventDefault();selectThing('cable','${cable.id}')" style="flex:1">${esc(cable.name)}</a>
+                <span style="font-size:10px;color:var(--text-muted)">${splicedHereCount}sp · ${expressCount}ex · ${deadCount}dead</span>
+              </summary>
+              <div style="padding-left:10px;margin-top:4px">
+                ${cableTubes.map(tube => {
+                  const tubeFibers = state.data.fibers.filter(f => f.buffer_tube_id === tube.id).sort((a,b)=>a.position-b.position);
+                  return `<div style="margin-bottom:4px">
+                    <div style="font-size:9px;font-weight:600;color:var(--text-muted);display:flex;align-items:center;gap:3px;margin-bottom:2px">
+                      <span class="fc fc-${tube.color}"></span> T${tube.position}
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:2px">
+                      ${tubeFibers.map(f => {
+                        let status, statusColor, title;
+                        if (spliceAtLocFiberIds.has(f.id)) {
+                          status = 'sp'; statusColor = 'var(--primary)'; title = 'spliced here';
+                        } else if (splicedAnywhereIds.has(f.id)) {
+                          status = 'ex'; statusColor = '#00BCD4'; title = 'express through';
+                        } else {
+                          status = 'dead'; statusColor = 'var(--text-muted)'; title = 'dead (unspliced)';
+                        }
+                        return `<div style="display:flex;align-items:center;gap:2px;font-size:9px;background:var(--surface-2);border:1px solid var(--border-weak);border-radius:3px;padding:1px 3px;cursor:pointer"
+                          title="${title}" onclick="traceFiberPath('${f.id}')">
+                          <span class="fc fc-${f.color}" style="width:8px;height:8px"></span>${f.position}<span style="color:${statusColor};font-weight:600">${status}</span>
+                        </div>`;
+                      }).join('')}
+                    </div>
+                  </div>`;
+                }).join('')}
+              </div>
+            </details>`;
+          }).join('')}
+        </div>
       </div>` : ''}
     ${(()=>{
       // 5.B.3 — Location-level loose splices (tray_id=null, closure_id=null).
