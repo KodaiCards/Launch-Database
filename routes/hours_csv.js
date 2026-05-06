@@ -240,13 +240,50 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
       const [staffR, projR, pricingR] = await Promise.all([
         pool.query('SELECT id, name FROM staff'),
+        // Owner-flagged 2026-05-06: WO# is often set ONLY on the parent
+        // rollup (e.g. "Cummings (16299)"), not on the leaf
+        // ("Inspection" / "Resident Engineer") under it. The old query
+        // only pulled projects with a direct work_order_number, so when
+        // a CSV row had WO=16299, pickProject matched the rollup and
+        // hours piled on the rollup instead of the matching leaf.
+        //
+        // Recursive CTE: anchor on every project that has a WO#
+        // (current behavior), then DESCEND to children, propagating the
+        // effective_wo down so each leaf inherits its ancestor's WO#.
+        // pickProject can then match leaves directly via the inherited
+        // WO# and pick the one whose job matches the billing-code
+        // lookup. Depth cap of 10 keeps this safe against malformed
+        // parent_id chains.
         pool.query(`
-          SELECT p.id, p.name, p.work_order_number, p.job_id, p.parent_id,
-                 j.name as job_name,
-                 EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id) AS has_children
-          FROM projects p
-          LEFT JOIN jobs j ON j.id = p.job_id
-          WHERE p.work_order_number IS NOT NULL AND p.work_order_number != ''
+          WITH RECURSIVE wo_tree AS (
+            -- Anchor: every project with a real work_order_number.
+            SELECT p.id, p.name, p.work_order_number, p.work_order_number AS effective_wo,
+                   p.job_id, p.parent_id, p.is_rollup,
+                   EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id) AS has_children,
+                   0 AS depth
+              FROM projects p
+             WHERE p.work_order_number IS NOT NULL AND p.work_order_number != ''
+            UNION ALL
+            -- Descend: each child inherits the ancestor's effective_wo.
+            SELECT p.id, p.name, p.work_order_number, w.effective_wo,
+                   p.job_id, p.parent_id, p.is_rollup,
+                   EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id) AS has_children,
+                   w.depth + 1
+              FROM projects p
+              JOIN wo_tree w ON p.parent_id = w.id
+             WHERE w.depth < 10
+          )
+          SELECT DISTINCT ON (w.id)
+                 w.id, w.name, w.work_order_number, w.effective_wo,
+                 w.job_id, w.parent_id, w.is_rollup, w.has_children,
+                 w.depth, j.name AS job_name
+            FROM wo_tree w
+            LEFT JOIN jobs j ON j.id = w.job_id
+            -- Skip rollups when there's a matching leaf descendant — see
+            -- pickProject below; we still need rollups indexed for the
+            -- "no leaves anywhere under this WO" fallback though, so we
+            -- KEEP them in the result and let pickProject prefer leaves.
+           ORDER BY w.id, w.depth ASC
         `),
         pool.query(`
           SELECT pe.billing_code, j.name as job_name
@@ -258,9 +295,13 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       const staffByNorm = {};
       staffR.rows.forEach(s => { staffByNorm[normalizeName(s.name)] = s; });
 
+      // Index by EFFECTIVE WO# (own or inherited from any ancestor) so
+      // a CSV row tagged WO=16299 finds the leaves under the 16299
+      // rollup, not just the rollup itself.
       const projsByNorm = {};
       projR.rows.forEach(p => {
-        const k = normalizeWO(p.work_order_number);
+        const k = normalizeWO(p.effective_wo);
+        if (!k) return;
         (projsByNorm[k] = projsByNorm[k] || []).push(p);
       });
 
@@ -271,17 +312,39 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         }
       });
 
+      // Pick the most specific project for a (WO, job) pair.
+      // Order of preference:
+      //   1. A real LEAF (is_rollup=FALSE, has_children=FALSE) whose
+      //      job_name matches the billing-code-derived job. This is the
+      //      common path for AI-built RUS trees: "Cummings 16299
+      //      Inspection" beats "Cummings 16299 rollup".
+      //   2. Any leaf at all (when the job name doesn't match — better
+      //      than dropping hours on a folder).
+      //   3. Any non-rollup row that matches the job name (defensive
+      //      against legacy data without is_rollup flag).
+      //   4. The first candidate whatever it is (legacy fallback so
+      //      we never silently drop hours).
       function pickProject(woNorm, billingCodeJobName) {
         const candidates = projsByNorm[woNorm];
         if (!candidates || !candidates.length) return null;
-        const leaves = candidates.filter(c => !c.has_children);
-        const pool2 = leaves.length ? leaves : candidates;
-        if (billingCodeJobName) {
-          const wantLc = billingCodeJobName.toLowerCase();
-          const jobMatch = pool2.find(c => c.job_name && c.job_name.toLowerCase() === wantLc);
-          if (jobMatch) return jobMatch;
+        const wantLc = billingCodeJobName ? billingCodeJobName.toLowerCase() : null;
+        const isRealLeaf = (c) => !c.has_children && !c.is_rollup;
+
+        if (wantLc) {
+          // 1. Real leaf with matching job
+          const leafJobMatch = candidates.find(c => isRealLeaf(c)
+            && c.job_name && c.job_name.toLowerCase() === wantLc);
+          if (leafJobMatch) return leafJobMatch;
+          // 3. Any non-rollup matching job
+          const anyJobMatch = candidates.find(c => !c.is_rollup
+            && c.job_name && c.job_name.toLowerCase() === wantLc);
+          if (anyJobMatch) return anyJobMatch;
         }
-        return pool2[0];
+        // 2. Any real leaf (no job constraint)
+        const realLeaves = candidates.filter(isRealLeaf);
+        if (realLeaves.length) return realLeaves[0];
+        // 4. Last resort — first candidate (probably a rollup)
+        return candidates[0];
       }
 
       const today = new Date(); today.setHours(0,0,0,0);

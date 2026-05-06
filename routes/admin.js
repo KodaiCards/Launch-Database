@@ -366,6 +366,203 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     }
   });
 
+  // GET /api/_admin/import-trace — list recent CSV imports so the
+  // owner can pick a batch_id without guessing. Returns the most recent
+  // 50 distinct import_batch values with their entry count, total
+  // hours, and earliest/latest entry dates.
+  app.get('/api/_admin/import-trace', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT import_batch,
+               COUNT(*)::int AS entry_count,
+               SUM(hours)::float AS total_hours,
+               MIN(entry_date)::text AS first_date,
+               MAX(entry_date)::text AS last_date,
+               MIN(created_at) AS imported_at
+          FROM time_entries
+         WHERE import_batch IS NOT NULL
+         GROUP BY import_batch
+         ORDER BY MIN(created_at) DESC
+         LIMIT 50
+      `);
+      res.json({
+        message: 'Recent import batches. Append /:batch_id to drill into one.',
+        batches: rows,
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // POST /api/_admin/reattribute-rollup-hours — moves time_entries
+  // that were mis-attributed to a rollup project onto a real leaf
+  // descendant matching the entry's job_title.
+  //
+  // Owner-flagged 2026-05-06: existing CSV imports landed entries on
+  // rollups (the rollup carried the WO#; leaves didn't). The pickProject
+  // fix in hours_csv.js stops this for FUTURE imports, but already-
+  // imported batches still need their entries moved.
+  //
+  // Body:
+  //   { dry_run?: true,             // default true — safe; preview
+  //     import_batch?: 'string',    // optional — limit to one batch
+  //     project_ids?: ['uuid', ...] // optional — limit to these rollup ids
+  //   }
+  //
+  // Logic:
+  //   1. Find time_entries whose project_id is a rollup (is_rollup=TRUE
+  //      OR has children) AND whose job_title is non-empty.
+  //   2. For each, walk descendants of that rollup looking for a LEAF
+  //      with job_name matching the entry's job_title (case-
+  //      insensitive). Same job mapping rules as the CSV importer.
+  //   3. If exactly one leaf matches, the entry moves to it; otherwise
+  //      the entry is reported and skipped.
+  //   4. After moving, run updateProjectHours on both the old rollup
+  //      and the new leaf so actual_hours reflects the move.
+  app.post('/api/_admin/reattribute-rollup-hours', requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    const dryRun = body.dry_run !== false;  // default true
+    const batchFilter = body.import_batch || null;
+    const projectFilter = Array.isArray(body.project_ids) && body.project_ids.length
+      ? body.project_ids : null;
+
+    try {
+      // 1. Pull every time_entry currently on a rollup-or-parent.
+      const filters = [`(p.is_rollup = TRUE OR EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id))`];
+      const params = [];
+      let i = 1;
+      if (batchFilter) { filters.push(`te.import_batch = $${i++}`); params.push(batchFilter); }
+      if (projectFilter) { filters.push(`te.project_id = ANY($${i++}::uuid[])`); params.push(projectFilter); }
+
+      const { rows: candidates } = await pool.query(`
+        SELECT te.id AS entry_id, te.hours, te.entry_date, te.job_title,
+               te.project_id, p.name AS project_name, p.is_rollup,
+               te.staff_id, te.import_batch
+          FROM time_entries te
+          JOIN projects p ON p.id = te.project_id
+         WHERE ${filters.join(' AND ')}
+           AND te.job_title IS NOT NULL AND te.job_title <> ''
+         ORDER BY te.project_id, te.entry_date
+      `, params);
+
+      // 2. For each unique (parent_project_id, job_title), look up a
+      //    matching leaf descendant. Cache to avoid repeated queries
+      //    for the same combo.
+      const targetCache = new Map();
+      async function findLeafFor(parentId, jobTitle) {
+        const key = parentId + '|' + jobTitle.toLowerCase();
+        if (targetCache.has(key)) return targetCache.get(key);
+        const { rows } = await pool.query(`
+          WITH RECURSIVE descendants AS (
+            SELECT id, parent_id, name, job_id, is_rollup,
+                   EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = projects.id) AS has_children,
+                   0 AS depth
+              FROM projects WHERE id = $1
+            UNION ALL
+            SELECT p.id, p.parent_id, p.name, p.job_id, p.is_rollup,
+                   EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id) AS has_children,
+                   d.depth + 1
+              FROM projects p JOIN descendants d ON p.parent_id = d.id
+             WHERE d.depth < 10
+          )
+          SELECT d.id, d.name, j.name AS job_name
+            FROM descendants d
+            LEFT JOIN jobs j ON j.id = d.job_id
+           WHERE d.has_children = FALSE
+             AND COALESCE(d.is_rollup, FALSE) = FALSE
+             AND j.name IS NOT NULL
+             AND LOWER(j.name) = LOWER($2)
+           ORDER BY d.depth ASC
+           LIMIT 2
+        `, [parentId, jobTitle]);
+        // Require exactly one match — ambiguous trees stay manual.
+        const result = rows.length === 1 ? rows[0] : null;
+        targetCache.set(key, result);
+        return result;
+      }
+
+      // 3. Plan the moves. Each plan row is one entry → leaf.
+      const moves = [];
+      const skipped = [];
+      for (const c of candidates) {
+        const target = await findLeafFor(c.project_id, c.job_title);
+        if (target) {
+          moves.push({
+            entry_id: c.entry_id,
+            from_project_id: c.project_id,
+            from_project_name: c.project_name,
+            to_project_id: target.id,
+            to_project_name: target.name,
+            hours: c.hours,
+            entry_date: c.entry_date,
+            job_title: c.job_title,
+            staff_id: c.staff_id,
+          });
+        } else {
+          skipped.push({
+            entry_id: c.entry_id,
+            project_name: c.project_name,
+            job_title: c.job_title,
+            reason: 'no leaf descendant with matching job_name (or multiple matches)',
+          });
+        }
+      }
+
+      if (dryRun) {
+        return res.json({
+          dry_run: true,
+          would_move: moves.length,
+          would_skip: skipped.length,
+          moves: moves.slice(0, 100),
+          skipped: skipped.slice(0, 50),
+          message: `Dry run. Would move ${moves.length} time entries off ${new Set(moves.map(m => m.from_project_id)).size} rollup(s) onto ${new Set(moves.map(m => m.to_project_id)).size} leaf(ves). Pass {"dry_run": false} to apply.`,
+        });
+      }
+
+      // 4. Apply. Group by entry_id and UPDATE project_id; recompute
+      //    actual_hours on the affected projects after.
+      const client = await pool.connect();
+      const affectedProjects = new Set();
+      try {
+        await client.query('BEGIN');
+        for (const m of moves) {
+          await client.query(
+            `UPDATE time_entries SET project_id = $1 WHERE id = $2`,
+            [m.to_project_id, m.entry_id]
+          );
+          affectedProjects.add(m.from_project_id);
+          affectedProjects.add(m.to_project_id);
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch {}
+        client.release();
+        return res.status(500).json({ error: e.message });
+      }
+      client.release();
+
+      // updateProjectHours walks parent chain so calling it on each
+      // leaf + each rollup propagates correctly. Imported lazily because
+      // routes/_helpers.js carries a pool reference at module load.
+      const { updateProjectHours } = require('./_helpers');
+      for (const pid of affectedProjects) {
+        try { await updateProjectHours(pid); }
+        catch (e) { console.error('[reattribute] updateProjectHours failed:', pid, e.message); }
+      }
+
+      res.json({
+        dry_run: false,
+        moved: moves.length,
+        skipped: skipped.length,
+        affected_project_count: affectedProjects.size,
+        skipped_sample: skipped.slice(0, 50),
+        message: `Moved ${moves.length} time entries; recomputed actual_hours on ${affectedProjects.size} projects. Refresh the Hours tab and RUS tab to see the new attribution.`,
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // GET /api/_admin/import-trace/:batch_id — diagnostic for an import.
   //
   // Returns where each time_entries row from the batch landed and what
