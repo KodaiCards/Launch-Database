@@ -2131,6 +2131,82 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Cross-project search ────────────────────────────────────────────────
+  // GET /api/splice/search?q=foo
+  // Case-insensitive substring search across project / location / cable /
+  // closure / fiber-circuit / fiber-customer / splice-closure-model.
+  // Returns shallow rows with project context so the UI can deep-link.
+  // Capped per bucket to keep payloads small on a busy install.
+  app.get('/api/splice/search', requireAuth(), async (req, res) => {
+    const raw = (req.query.q || '').toString().trim();
+    if (raw.length < 2) {
+      return res.json({ q: raw, projects: [], locations: [], cables: [], closures: [], fibers: [] });
+    }
+    const PER_BUCKET = 25;
+    const like = '%' + raw.replace(/[\\%_]/g, c => '\\' + c) + '%';
+    try {
+      const [projects, locations, cables, closures, fibers] = await Promise.all([
+        pool.query(
+          `SELECT id, name, status, updated_at
+             FROM splice_projects
+            WHERE name ILIKE $1 ESCAPE '\\'
+            ORDER BY updated_at DESC LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        pool.query(
+          `SELECT l.id, l.name, l.type, l.project_id, p.name AS project_name
+             FROM splice_locations l
+             JOIN splice_projects p ON p.id = l.project_id
+            WHERE l.name ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, l.name LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        pool.query(
+          `SELECT c.id, c.name, c.fiber_count, c.project_id, p.name AS project_name
+             FROM splice_cables c
+             JOIN splice_projects p ON p.id = c.project_id
+            WHERE c.name ILIKE $1 ESCAPE '\\'
+               OR c.manufacturer_part ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, c.name LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        pool.query(
+          `SELECT cl.id, cl.model, l.name AS location_name, l.project_id, p.name AS project_name
+             FROM splice_closures cl
+             JOIN splice_locations l ON l.id = cl.location_id
+             JOIN splice_projects p ON p.id = l.project_id
+            WHERE cl.model ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, cl.model LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+        // Fiber search keys on circuit_name + customer (Phase 2A #4) —
+        // these are the strings designers actually go looking for ("which
+        // closure has the Acme Hospital circuit?"). Skip the color/position
+        // text since those are repeated 12 ways in every cable.
+        pool.query(
+          `SELECT f.id, f.circuit_name, f.customer, f.color, f.position,
+                  c.name AS cable_name, c.project_id, p.name AS project_name
+             FROM splice_fibers f
+             JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+             JOIN splice_cables c ON c.id = t.cable_id
+             JOIN splice_projects p ON p.id = c.project_id
+            WHERE f.circuit_name ILIKE $1 ESCAPE '\\'
+               OR f.customer ILIKE $1 ESCAPE '\\'
+            ORDER BY p.updated_at DESC, c.name, f.position LIMIT $2`,
+          [like, PER_BUCKET]
+        ),
+      ]);
+      res.json({
+        q: raw,
+        projects:  projects.rows,
+        locations: locations.rows,
+        cables:    cables.rows,
+        closures:  closures.rows,
+        fibers:    fibers.rows,
+      });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Server-Sent Events ──────────────────────────────────────────────────
 
   app.get('/api/splice/projects/:id/events', requireAuth(), (req, res) => {

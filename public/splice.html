@@ -208,6 +208,12 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-section">
       <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
+      <div style="margin-bottom:8px">
+        <input type="search" id="search-input" placeholder="Search circuits, cables, closures…"
+               style="width:100%;padding:5px 8px;font-size:12px;border-radius:4px;border:1px solid var(--border-weak);background:var(--surface-2);color:var(--text)"
+               oninput="onSearchInput(this.value)">
+        <div id="search-results" style="display:none;background:var(--surface);border:1px solid var(--border-weak);border-radius:4px;margin-top:4px;max-height:50vh;overflow:auto;font-size:11px"></div>
+      </div>
       <ul class="proj-list" id="proj-list"><li class="empty-pane">Loading…</li></ul>
     </div>
     <div class="sidebar-section" id="proj-actions" style="display:none">
@@ -2745,6 +2751,106 @@ window.pickFiber = function(el) {
   el.classList.add('selected');
   if (side === 'a') state._spA = fid; else state._spB = fid;
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+// Cross-project search — debounced sidebar lookup
+// ───────────────────────────────────────────────────────────────────────────
+
+let _searchTimer = null;
+function onSearchInput(value) {
+  clearTimeout(_searchTimer);
+  const q = (value || '').trim();
+  const host = document.getElementById('search-results');
+  if (q.length < 2) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  // 200ms debounce — fast enough to feel live, slow enough to skip
+  // every-keystroke round-trips on a fast typist.
+  _searchTimer = setTimeout(() => runSearch(q), 200);
+}
+
+async function runSearch(q) {
+  const host = document.getElementById('search-results');
+  host.style.display = 'block';
+  host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">Searching…</div>';
+  let r;
+  try { r = await api('/api/splice/search?q=' + encodeURIComponent(q)); }
+  catch (e) {
+    host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
+    return;
+  }
+  const total = r.projects.length + r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
+  if (!total) {
+    host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches.</div>';
+    return;
+  }
+  // Each result deep-links: clicking a non-project result selects the
+  // owning project, hydrates, then sets state.selection so the inspector
+  // opens on the matched entity.
+  const sec = (label, rows, render) => rows.length ? `
+    <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
+      ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
+    </div>
+    ${rows.map(render).join('')}
+  ` : '';
+  host.innerHTML = `
+    ${sec('Projects', r.projects, p => `
+      <div class="search-row" onclick="selectFromSearch('project','${p.id}','${p.id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(p.name)}</b> <span style="color:var(--text-muted)">${esc(p.status || '')}</span>
+      </div>
+    `)}
+    ${sec('Locations', r.locations, l => `
+      <div class="search-row" onclick="selectFromSearch('location','${l.id}','${l.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type || '')}</span>
+        <div style="font-size:10px;color:var(--text-muted)">${esc(l.project_name)}</div>
+      </div>
+    `)}
+    ${sec('Cables', r.cables, c => `
+      <div class="search-row" onclick="selectFromSearch('cable','${c.id}','${c.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span>
+        <div style="font-size:10px;color:var(--text-muted)">${esc(c.project_name)}</div>
+      </div>
+    `)}
+    ${sec('Closures', r.closures, cl => `
+      <div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${cl.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(cl.model || 'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span>
+        <div style="font-size:10px;color:var(--text-muted)">${esc(cl.project_name)}</div>
+      </div>
+    `)}
+    ${sec('Circuits', r.fibers, f => `
+      <div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${f.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+        <b>${esc(f.circuit_name || '(no circuit name)')}</b>
+        ${f.customer ? '<span style="color:var(--text-muted)"> · ' + esc(f.customer) + '</span>' : ''}
+        <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position} · ${esc(f.project_name)}</div>
+      </div>
+    `)}
+  `;
+  host.querySelectorAll('.search-row').forEach(el => {
+    el.addEventListener('mouseenter', () => el.style.background = 'var(--surface-2)');
+    el.addEventListener('mouseleave', () => el.style.background = '');
+  });
+}
+
+async function selectFromSearch(kind, entityId, projectId) {
+  // Hide the results panel so the click feels immediate.
+  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('search-input').value = '';
+  if (state.currentId !== projectId) {
+    await selectProject(projectId);
+  }
+  // After hydrate, set selection so the inspector lands on the match.
+  if (kind !== 'project') {
+    selectThing(kind, entityId);
+  }
+}
+
+// Click outside the search results closes them (sidebar feel).
+document.addEventListener('click', (e) => {
+  const host = document.getElementById('search-results');
+  const input = document.getElementById('search-input');
+  if (!host || !input) return;
+  if (!host.contains(e.target) && e.target !== input) {
+    host.style.display = 'none';
+  }
+});
 
 // ───────────────────────────────────────────────────────────────────────────
 // Modal helper (lightweight — plain DOM, no framework)
