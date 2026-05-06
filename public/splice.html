@@ -1800,7 +1800,11 @@ function renderLocationInspector(locationId) {
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
-    <h3>${esc(loc.name)} <span class="small" style="background:${_locColor(loc)};color:#fff;padding:1px 6px;border-radius:10px">${esc(loc.type)}</span></h3>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <h3 style="margin:0;flex:1" id="loc-name-display-${locationId}">${esc(loc.name)}</h3>
+      <span class="small" style="background:${_locColor(loc)};color:#fff;padding:1px 6px;border-radius:10px;white-space:nowrap">${esc(loc.type)}</span>
+      ${!isReadOnly() ? `<button class="btn btn-sm" title="Rename" onclick="inlineRenameLoc('${locationId}')" style="padding:2px 6px;font-size:10px"><i class="fa-solid fa-pen"></i></button>` : ''}
+    </div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${coordStr}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditLocation('${locationId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
@@ -2788,31 +2792,22 @@ function _renderTracePathSidebar(result) {
 // Mutations — locations / cables / closures / splices
 // ───────────────────────────────────────────────────────────────────────────
 
-function openAddLocation() {
+// 5.B.1 — openAddLocation creates a location immediately with a placeholder
+// name (no modal). The inspector becomes the rename/configure surface.
+async function openAddLocation() {
   if (isReadOnly()) return toast('View-only mode', 'error');
-  showModal({
-    title: 'Add splice point',
-    body: `
-      <div class="field"><label>Location name</label>
-        <input id="m-loc-name" placeholder="e.g. SP-12" autofocus></div>
-      <div class="field"><label>Sequence (left-to-right ordering on canvas)</label>
-        <input id="m-loc-seq" type="number" value="${state.data.locations.length + 1}"></div>
-      <div class="field"><label>Notes</label>
-        <textarea id="m-loc-notes"></textarea></div>
-    `,
-    onSubmit: async (close) => {
-      try {
-        await api('/api/splice/projects/' + state.currentId + '/locations', 'POST', {
-          name: document.getElementById('m-loc-name').value.trim(),
-          sequence_index: parseInt(document.getElementById('m-loc-seq').value, 10) || 0,
-          notes: document.getElementById('m-loc-notes').value.trim() || null,
-          type: 'splice_point',
-        });
-        close();
-        await hydrateProject();
-      } catch (e) { toast(e.message, 'error'); }
-    },
-  });
+  try {
+    const seq = state.data.locations.length + 1;
+    const name = `SP-${seq}`;
+    const loc = await api('/api/splice/projects/' + state.currentId + '/locations', 'POST', {
+      name,
+      sequence_index: seq,
+      type: 'splice_point',
+    });
+    await hydrateProject();
+    selectThing('location', loc.id);
+    toast(`Location "${name}" added — rename it in the inspector`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function openAddCable() {
@@ -3325,6 +3320,36 @@ async function deleteCable(cableId) {
     state.selection = null;
     await hydrateProject();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// 5.B.1 — click-to-rename inline in the inspector header.
+function inlineRenameLoc(locationId) {
+  if (isReadOnly()) return;
+  const loc = state.data.locations.find(l => l.id === locationId);
+  if (!loc) return;
+  const display = document.getElementById('loc-name-display-' + locationId);
+  if (!display) return;
+  const inp = document.createElement('input');
+  inp.className = 'input-sm';
+  inp.value = loc.name;
+  inp.style.cssText = 'flex:1;font-size:14px;font-weight:600;padding:2px 6px';
+  display.replaceWith(inp);
+  inp.focus();
+  inp.select();
+  const save = async () => {
+    const name = inp.value.trim();
+    if (!name || name === loc.name) { renderLocationInspector(locationId); return; }
+    try {
+      await api('/api/splice/locations/' + locationId, 'PUT', { name });
+      await hydrateProject();
+      selectThing('location', locationId);
+    } catch (e) { toast(e.message, 'error'); renderLocationInspector(locationId); }
+  };
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    if (e.key === 'Escape') { inp.removeEventListener('blur', save); renderLocationInspector(locationId); }
+  });
 }
 
 function openEditLocation(locationId) {
@@ -4704,23 +4729,44 @@ function mapStartPlace(type) {
   document.getElementById('map-mode-hint').textContent = `Click on the map to place a ${label}. Esc to cancel.`;
 }
 
+// 5.B.1 — place a location immediately with a placeholder name derived from
+// the location type. No modal/prompt. Inspector is the rename surface.
 async function mapApplyNewLocation(lngLat) {
   const type = state.mapPlaceType;
   if (!type) return;
-  const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
-  const name = window.prompt(`Name for this ${label}:`, '');
-  if (name == null || !String(name).trim()) return;
+  // Build a placeholder: abbreviate the type then append the next available
+  // number across ALL locations (keeps it globally unique per project).
+  const TYPE_PREFIX = {
+    handhole:     'HH',
+    manhole:      'MH',
+    pole:         'PL',
+    pedestal:     'PED',
+    vault:        'VLT',
+    fdh:          'FDH',
+    splice_point: 'SP',
+    co:           'CO',
+    terminal:     'TERM',
+    ring_cut:     'RC',
+  };
+  const prefix = TYPE_PREFIX[type] || type.toUpperCase().slice(0, 4);
+  // Count existing locations whose name starts with this prefix + digit
+  // to pick the next available sequential number.
+  const existing = (state.data.locations || []).filter(l =>
+    l.name.startsWith(prefix + '-') || l.name.startsWith(prefix)
+  );
+  const seq = existing.length + 1;
+  const name = `${prefix}-${seq}`;
   try {
     const loc = await api(`/api/splice/projects/${state.currentId}/locations`, 'POST', {
-      type, name: String(name).trim(),
+      type, name,
       latitude: lngLat.lat, longitude: lngLat.lng,
     });
-    toast(`${label} added`, 'success');
     mapClearMode();
     await hydrateProject();
     if (state.activeView === 'map') refreshMapLayers();
-    // Open its inspector immediately.
+    // Open inspector immediately — that's the rename surface.
     selectThing('location', loc.id);
+    toast(`${name} placed — rename in the inspector`, 'success');
   } catch (e) {
     toast('Failed: ' + e.message, 'error');
   }
@@ -4861,15 +4907,12 @@ async function mapMsFinish() {
           mapClearMode();
           await hydrateProject();
           if (state.activeView === 'map') refreshMapLayers();
-          // Follow-up: offer to add closures at intermediate snapped stops.
-          for (const stop of intermediates) {
-            const loc = state.data.locations.find(l => l.id === stop.locationId);
-            if (!loc) continue;
-            const yes = window.confirm(`Add closure / splice assignments at "${loc.name}"?`);
-            if (yes) {
-              selectThing('location', loc.id);
-              await openAddClosureForLocation(loc.id);
-            }
+          // 5.B.1 — no closure-prompt cascade. Closures are added later via
+          // the location inspector. Just select the first stop for convenience.
+          if (intermediates.length) {
+            const first = intermediates[0];
+            const loc = state.data.locations.find(l => l.id === first.locationId);
+            if (loc) selectThing('location', loc.id);
           }
           resolve();
         } catch (e) {
