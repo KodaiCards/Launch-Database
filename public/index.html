@@ -3107,15 +3107,22 @@ function populateConcentratorDropdownForContract() {
   if (filtered.some(c => c.id === prev)) sel.value = prev;
 }
 
-async function clientChanged(preserveJobId) {
+async function clientChanged(preserveJobId, preservePicks = false) {
   const clientId = document.getElementById('proj-client').value;
 
   // Reset explicit program + contract picks when the client changes —
   // they may not apply to the new client.
-  const pSel = document.getElementById('proj-ptype');
-  if (pSel) pSel.value = '';
-  const cSel = document.getElementById('proj-contract');
-  if (cSel) cSel.value = '';
+  // EXCEPT in edit mode (preservePicks=true): editProject pre-fills
+  // ptype + contract before calling clientChanged, and clearing them
+  // here would silently wipe the user's existing selections (the
+  // "modal opens with name + fields blanked" bug). When preservePicks
+  // is set, leave both alone so the edit-flow's pre-fill survives.
+  if (!preservePicks) {
+    const pSel = document.getElementById('proj-ptype');
+    if (pSel) pSel.value = '';
+    const cSel = document.getElementById('proj-contract');
+    if (cSel) cSel.value = '';
+  }
 
   // Fetch this client's contracts FIRST, cache them globally so the
   // gating helper (populateContractDropdownForProgram) can filter by
@@ -3902,12 +3909,22 @@ async function editProject(id) {
     document.getElementById('proj-client').value = p.client_id || '';
     // Threads p.job_id through so the dropdown preserves the current job even
     // if it was deactivated by the v3 reseed (renders as "(legacy)").
-    await clientChanged(p.job_id);
+    // preservePicks=true keeps the ptype + contract values pre-filled
+    // above (line 3898) from being wiped by the program/contract reset
+    // path that clientChanged uses for fresh new-project sessions.
+    await clientChanged(p.job_id, /*preservePicks=*/ true);
     document.getElementById('proj-job').value = p.job_id || '';
   } catch (e) { console.error('client/job hookup failed:', e); }
 
   try {
     document.getElementById('proj-contract').value = p.contract_id || '';
+    // After setting contract, repopulate the concentrator dropdown so
+    // the project's concentrator_id has a matching <option>. Without
+    // this, the next .value=p.concentrator_id silently drops because
+    // the dropdown is still in its "pick contract first" state.
+    if (typeof populateConcentratorDropdownForContract === 'function') {
+      populateConcentratorDropdownForContract();
+    }
   } catch (e) { /* contract dropdown might not have the option yet — non-fatal */ }
 
   try {
