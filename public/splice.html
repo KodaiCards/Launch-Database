@@ -177,6 +177,8 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
   <div class="divider"></div>
   <div class="title" id="title-name">— No project selected —</div>
   <div class="right">
+    <button class="btn btn-sm" id="btn-save-rev" title="Save a labeled revision" disabled onclick="saveRevision()"><i class="fa-solid fa-flag"></i> Save rev</button>
+    <button class="btn btn-sm" id="btn-versions" title="Version history & compare" disabled onclick="openVersionsModal()"><i class="fa-solid fa-clock-rotate-left"></i> Versions</button>
     <button class="btn btn-sm" id="btn-export" disabled><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
     <button class="btn btn-sm btn-icon" id="btn-dark" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
     <span class="user-pill" id="user-pill" onclick="signOut()" title="Click to sign out">
@@ -411,6 +413,8 @@ async function selectProject(id) {
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('btn-export').disabled = false;
+  document.getElementById('btn-versions').disabled = false;
+  document.getElementById('btn-save-rev').disabled = false;
   renderProjectList();
   await hydrateProject();
   attemptLock();
@@ -435,9 +439,24 @@ async function hydrateProject() {
     renderInspector();
     renderCanvas();
     renderWarnings();
+    // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
+    // skips when last version is <10min old or generation hash matches,
+    // so this is safe to call after every hydrate without flooding the
+    // versions table.
+    fireAutoSnapshot();
   } catch (e) {
     toast('Hydrate failed: ' + e.message, 'error');
   }
+}
+
+function fireAutoSnapshot() {
+  if (!state.currentId || isReadOnly()) return;
+  // Client-side throttle (60s) on top of the server's 10-min debounce —
+  // avoids the network round-trip on rapid sequential edits.
+  const now = Date.now();
+  if (state._lastAutoSnap && (now - state._lastAutoSnap) < 60_000) return;
+  state._lastAutoSnap = now;
+  api('/api/splice/projects/' + state.currentId + '/versions/auto', 'POST').catch(() => {});
 }
 
 function renderSummary() {
@@ -1749,6 +1768,8 @@ async function deleteCurrentProject() {
     document.getElementById('proj-summary').style.display = 'none';
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('btn-export').disabled = true;
+    document.getElementById('btn-versions').disabled = true;
+    document.getElementById('btn-save-rev').disabled = true;
     document.getElementById('inspector-body').style.display = 'none';
     document.getElementById('inspector-empty').style.display = 'block';
     document.getElementById('lock-banner').style.display = 'none';
@@ -1913,6 +1934,93 @@ document.getElementById('btn-export').addEventListener('click', () => {
   // renders it directly.
   window.open('/api/splice/projects/' + state.currentId + '/export-pdf', '_blank');
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// Versions (Phase 2B #6)
+// ───────────────────────────────────────────────────────────────────────────
+
+async function saveRevision() {
+  if (!state.currentId) return;
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const label = prompt('Label for this revision (e.g. "rev A", "client review"):', '');
+  if (label === null) return;
+  try {
+    const v = await api('/api/splice/projects/' + state.currentId + '/versions', 'POST', { label: label.trim() || null });
+    if (v.skipped) {
+      toast('Nothing changed since last snapshot — not saved.', 'info');
+    } else {
+      toast(`Saved revision v${v.version_number}${v.label ? ' — ' + v.label : ''}`, 'success');
+    }
+  } catch (e) { toast('Save failed: ' + e.message, 'error'); }
+}
+
+async function openVersionsModal() {
+  if (!state.currentId) return;
+  let versions = [];
+  try { versions = await api('/api/splice/projects/' + state.currentId + '/versions'); }
+  catch (e) { return toast('Load failed: ' + e.message, 'error'); }
+
+  // Stash on state so the diff button can read selections without a
+  // second fetch.
+  state._versions = versions;
+  const projId = state.currentId;
+  const rows = versions.length ? versions.map(v => `
+    <tr>
+      <td><label><input type="radio" name="diff-a" value="${v.version_number}"> v${v.version_number}</label></td>
+      <td><label><input type="radio" name="diff-b" value="${v.version_number}"> v${v.version_number}</label></td>
+      <td><b>v${v.version_number}</b></td>
+      <td>${esc(v.label || '')}</td>
+      <td><span class="muted" style="font-family:monospace">${esc(v.generation_hash || '')}</span></td>
+      <td>${new Date(v.created_at).toLocaleString()}</td>
+      <td>${esc(v.created_by_name || '')}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="7" class="muted" style="text-align:center;padding:18px">No saved revisions yet. Click "Save rev" to create one.</td></tr>`;
+
+  showModal({
+    title: 'Version history',
+    submitText: 'Close',
+    wide: true,
+    body: `
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Auto-snapshots fire after edits when the last version is &gt;10 minutes old.
+        Pick A and B columns to diff two revisions, or pick A only and diff against the live tree.
+      </div>
+      <div style="max-height:50vh;overflow:auto;border:1px solid var(--border-weak);border-radius:6px">
+        <table class="table" style="margin:0">
+          <thead>
+            <tr>
+              <th>A</th><th>B</th><th>Ver</th><th>Label</th><th>Hash</th><th>Saved</th><th>By</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="viewDiffJson()"><i class="fa-solid fa-code"></i> View diff (JSON)</button>
+        <button class="btn btn-sm btn-primary" onclick="downloadDiffPdf()"><i class="fa-solid fa-file-pdf"></i> Download diff PDF</button>
+        <span class="muted" style="font-size:11px;align-self:center">B blank ⇒ diff vs current</span>
+      </div>
+    `,
+    onSubmit: (close) => close(),
+  });
+}
+
+function pickedVersions() {
+  const aEl = document.querySelector('input[name="diff-a"]:checked');
+  const bEl = document.querySelector('input[name="diff-b"]:checked');
+  if (!aEl) { toast('Pick a version in column A', 'error'); return null; }
+  return { a: aEl.value, b: bEl ? bEl.value : 'current' };
+}
+
+function viewDiffJson() {
+  const p = pickedVersions(); if (!p) return;
+  window.open(`/api/splice/projects/${state.currentId}/diff/${p.a}/${p.b}`, '_blank');
+}
+
+function downloadDiffPdf() {
+  const p = pickedVersions(); if (!p) return;
+  window.open(`/api/splice/projects/${state.currentId}/diff/${p.a}/${p.b}/pdf`, '_blank');
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // Dark mode (mirrors design.html — sticky in localStorage)

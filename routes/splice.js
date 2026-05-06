@@ -1503,6 +1503,153 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     }
   });
 
+  // ─── Version snapshots + diff (Phase 2B #6) ─────────────────────────────
+  // Manual save: always records a row, never debounced. Use case:
+  // "checkpoint before client redline review."
+  app.post('/api/splice/projects/:id/versions', requireAuth(), async (req, res) => {
+    try {
+      const label = (req.body && req.body.label) ? String(req.body.label).slice(0, 200) : null;
+      const v = await _takeSnapshot(pool, req.params.id, label, req.user?.staff_id);
+      res.json(v);
+    } catch (e) {
+      const code = /not found/i.test(e.message) ? 404 : 500;
+      res.status(code).json({ error: e.message });
+    }
+  });
+
+  // Auto-snapshot — debounced server-side. Editor calls this after
+  // every successful write; server only records a row if the last
+  // version is older than 10 minutes. Generation-hash check avoids
+  // recording a new row when the splice graph is structurally the
+  // same as the last snapshot (for example, the user opened the
+  // project and hovered around but didn't change anything).
+  app.post('/api/splice/projects/:id/versions/auto', requireAuth(), async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const last = await pool.query(
+        `SELECT version_number, generation_hash, created_at
+           FROM splice_project_versions
+          WHERE project_id = $1
+          ORDER BY version_number DESC LIMIT 1`,
+        [projectId]
+      );
+      const lastRow = last.rows[0];
+      const ageMs = lastRow ? (Date.now() - new Date(lastRow.created_at).getTime()) : Infinity;
+      if (ageMs < 10 * 60 * 1000) {
+        return res.json({ skipped: true, reason: 'debounced', last_version: lastRow });
+      }
+      const v = await _takeSnapshot(pool, projectId, null, req.user?.staff_id);
+      res.json(v);
+    } catch (e) {
+      const code = /not found/i.test(e.message) ? 404 : 500;
+      res.status(code).json({ error: e.message });
+    }
+  });
+
+  app.get('/api/splice/projects/:id/versions', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT v.id, v.version_number, v.label, v.generation_hash,
+                v.created_at, v.created_by_staff_id,
+                s.full_name AS created_by_name
+           FROM splice_project_versions v
+           LEFT JOIN staff s ON s.id = v.created_by_staff_id
+          WHERE v.project_id = $1
+          ORDER BY v.version_number DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/projects/:id/versions/:n', requireAuth(), async (req, res) => {
+    try {
+      const v = await _loadVersion(pool, req.params.id, req.params.n);
+      if (!v) return res.status(404).json({ error: 'Version not found' });
+      res.json(v);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.delete('/api/splice/projects/:id/versions/:n', requireAuth(), async (req, res) => {
+    try {
+      const r = await pool.query(
+        `DELETE FROM splice_project_versions
+          WHERE project_id = $1 AND version_number = $2`,
+        [req.params.id, req.params.n]
+      );
+      if (!r.rowCount) return res.status(404).json({ error: 'Version not found' });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Diff JSON: side B may be a numeric version OR the literal string
+  // "current" to diff against the live tree.
+  app.get('/api/splice/projects/:id/diff/:a/:b', requireAuth(), async (req, res) => {
+    try {
+      const a = await _loadVersion(pool, req.params.id, req.params.a);
+      if (!a) return res.status(404).json({ error: `Version ${req.params.a} not found` });
+      const b = req.params.b === 'current'
+        ? { version_number: 'current', snapshot: await _loadProjectForExport(pool, req.params.id) }
+        : await _loadVersion(pool, req.params.id, req.params.b);
+      if (!b || !b.snapshot) return res.status(404).json({ error: `Version ${req.params.b} not found` });
+      res.json({
+        a: { version_number: a.version_number, label: a.label, generation_hash: a.generation_hash, created_at: a.created_at },
+        b: { version_number: b.version_number, label: b.label || null, generation_hash: b.generation_hash || null, created_at: b.created_at || null },
+        diff: _computeDiff(a.snapshot, b.snapshot),
+      });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Diff PDF — puppeteer-rendered. Sections by closure → tray.
+  // Light-gray strikethrough for removed splices, green-highlight
+  // for added, side-by-side before/after for changed.
+  app.get('/api/splice/projects/:id/diff/:a/:b/pdf', requireAuth(), async (req, res) => {
+    try {
+      const a = await _loadVersion(pool, req.params.id, req.params.a);
+      if (!a) return res.status(404).json({ error: `Version ${req.params.a} not found` });
+      const b = req.params.b === 'current'
+        ? { version_number: 'current', snapshot: await _loadProjectForExport(pool, req.params.id) }
+        : await _loadVersion(pool, req.params.id, req.params.b);
+      if (!b || !b.snapshot) return res.status(404).json({ error: `Version ${req.params.b} not found` });
+      const diff = _computeDiff(a.snapshot, b.snapshot);
+      const html = _renderDiffHtml({
+        project_name: b.snapshot.project?.name || a.snapshot.project?.name || 'Splice project',
+        a_meta: { version_number: a.version_number, label: a.label, hash: a.generation_hash, created_at: a.created_at },
+        b_meta: {
+          version_number: b.version_number,
+          label: b.label || (b.version_number === 'current' ? 'live (uncommitted)' : null),
+          hash: b.generation_hash || null,
+          created_at: b.created_at || null,
+        },
+        a: a.snapshot,
+        b: b.snapshot,
+        diff,
+      });
+      const puppeteer = _puppet();
+      const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+        const pdf = await page.pdf({
+          format: 'Letter',
+          printBackground: true,
+          margin: { top: '0.4in', right: '0.4in', bottom: '0.4in', left: '0.4in' },
+        });
+        const filename = `splice_diff_${_safeFilename(b.snapshot.project?.name || 'project')}_v${a.version_number}_to_v${b.version_number}.pdf`;
+        res.set({
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${filename}"`,
+        });
+        res.send(pdf);
+      } finally {
+        try { await browser.close(); } catch {}
+      }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Closure models picklist ─────────────────────────────────────────────
   // Empty by design — fills as designers type model names. No seed.
 
@@ -2168,6 +2315,308 @@ ${closurePages}
   <span>${_esc(project.name)}</span>
   <span class="center">Launch Fiber Services · Splice Matrix</span>
   <span>Rev <span class="gen-hash">${genHash}</span> · ${todayIso}</span>
+</div>
+</body></html>`;
+}
+
+// ─── Version snapshot helpers (Phase 2B #6) ─────────────────────────────
+
+// Take a snapshot of the current project state. Auto-snapshots (label
+// null) skip when the generation hash matches the previous snapshot
+// because nothing has structurally changed since then. Manual saves
+// always record. version_number is computed under a UNIQUE
+// (project_id, version_number) so a concurrent writer can't collide.
+async function _takeSnapshot(pool, projectId, label, staffId) {
+  const data = await _loadProjectForExport(pool, projectId);
+  if (!data) {
+    const err = new Error('Project not found');
+    throw err;
+  }
+  const hash = _generationHash(data);
+  const lastQ = await pool.query(
+    `SELECT version_number, generation_hash
+       FROM splice_project_versions
+      WHERE project_id = $1
+      ORDER BY version_number DESC LIMIT 1`,
+    [projectId]
+  );
+  const last = lastQ.rows[0];
+  if (!label && last && last.generation_hash === hash) {
+    return { skipped: true, reason: 'no-change', last_version_number: last.version_number };
+  }
+  const nextNum = (last?.version_number || 0) + 1;
+  const ins = await pool.query(
+    `INSERT INTO splice_project_versions
+       (project_id, version_number, snapshot_jsonb, generation_hash, label, created_by_staff_id)
+     VALUES ($1, $2, $3::jsonb, $4, $5, $6)
+     RETURNING id, project_id, version_number, generation_hash, label, created_at, created_by_staff_id`,
+    [projectId, nextNum, JSON.stringify(data), hash, label || null, staffId || null]
+  );
+  return ins.rows[0];
+}
+
+// Load a version row + its snapshot. Returns null when the version
+// doesn't exist (caller maps to 404).
+async function _loadVersion(pool, projectId, versionNumber) {
+  const n = parseInt(versionNumber, 10);
+  if (!Number.isFinite(n) || n < 1) return null;
+  const { rows } = await pool.query(
+    `SELECT id, project_id, version_number, generation_hash, label,
+            created_at, created_by_staff_id, snapshot_jsonb
+       FROM splice_project_versions
+      WHERE project_id = $1 AND version_number = $2`,
+    [projectId, n]
+  );
+  if (!rows.length) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    project_id: r.project_id,
+    version_number: r.version_number,
+    generation_hash: r.generation_hash,
+    label: r.label,
+    created_at: r.created_at,
+    created_by_staff_id: r.created_by_staff_id,
+    snapshot: r.snapshot_jsonb,
+  };
+}
+
+// Diff two hydrate-shaped snapshots. Walks every entity type by id;
+// emits added (id only in B), removed (id only in A), changed (id in
+// both with different content). Splices specifically also get
+// "moved" detection — same fiber pair, different tray — so we don't
+// double-count a tray reorganization as remove-then-add.
+function _computeDiff(a, b) {
+  const out = {};
+  const KEYS = ['locations', 'cables', 'closures', 'trays',
+                'splices', 'ribbon_groups', 'strand_states',
+                'buffer_tubes', 'fibers'];
+  for (const k of KEYS) {
+    const al = Array.isArray(a?.[k]) ? a[k] : [];
+    const bl = Array.isArray(b?.[k]) ? b[k] : [];
+    const aById = new Map(al.map(x => [x.id, x]));
+    const bById = new Map(bl.map(x => [x.id, x]));
+    const added = [];
+    const removed = [];
+    const changed = [];
+    for (const [id, bx] of bById) {
+      const ax = aById.get(id);
+      if (!ax) added.push(bx);
+      else if (!_shallowEqualEntity(ax, bx)) changed.push({ before: ax, after: bx });
+    }
+    for (const [id, ax] of aById) {
+      if (!bById.has(id)) removed.push(ax);
+    }
+    out[k] = { added, removed, changed };
+  }
+  // Project header (name / notes / status) often gets edited
+  // alongside the splice tree; surface that separately.
+  if (a?.project && b?.project) {
+    const fields = ['name', 'status', 'notes'];
+    const projChanges = {};
+    for (const f of fields) {
+      if ((a.project[f] || null) !== (b.project[f] || null)) {
+        projChanges[f] = { before: a.project[f], after: b.project[f] };
+      }
+    }
+    if (Object.keys(projChanges).length) out.project = projChanges;
+  }
+  return out;
+}
+
+function _shallowEqualEntity(a, b) {
+  if (a === b) return true;
+  // Skip volatile fields that don't represent splice-graph intent.
+  const skip = new Set(['created_at', 'updated_at']);
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const k of keys) {
+    if (skip.has(k)) continue;
+    const av = a[k], bv = b[k];
+    if (av === bv) continue;
+    if (av == null && bv == null) continue;
+    return false;
+  }
+  return true;
+}
+
+// Render the diff as a self-contained HTML document. Same look-and-
+// feel as the splicer field doc but reduced: a header + summary
+// counts + per-closure tables that show only the splices that
+// changed (added in green, removed in gray strikethrough).
+// Closures with no splice deltas are omitted entirely.
+function _renderDiffHtml({ project_name, a_meta, b_meta, a, b, diff }) {
+  const css = `
+    *,*::before,*::after { box-sizing:border-box; }
+    body { font: 11px/1.35 -apple-system,Segoe UI,Roboto,sans-serif; color:#222; margin:0; padding:18px 22px; background:#fff; }
+    h1 { font-size:18px; margin:0 0 4px; }
+    h2 { font-size:13px; margin:18px 0 6px; padding-bottom:3px; border-bottom:1px solid #ccc; }
+    h3 { font-size:11px; margin:10px 0 4px; color:#333; }
+    .header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #003366; padding-bottom:6px; margin-bottom:10px; }
+    .header .meta { text-align:right; font-size:10px; color:#555; }
+    .meta-row { margin:1px 0; }
+    .pill { display:inline-block; padding:1px 7px; border-radius:9px; font-size:10px; font-weight:600; }
+    .pill-a { background:#fff3cd; color:#664d03; border:1px solid #ffe69c; }
+    .pill-b { background:#cfe2ff; color:#084298; border:1px solid #9ec5fe; }
+    .summary { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .stat { background:#f5f5f5; border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:10px; }
+    .stat b { color:#003366; font-size:13px; display:block; }
+    .stat.add b { color:#0a7d2a; }
+    .stat.rem b { color:#a31616; }
+    table { width:100%; border-collapse:collapse; font-size:10px; margin-bottom:10px; }
+    th, td { border:1px solid #ddd; padding:3px 5px; text-align:left; vertical-align:top; }
+    th { background:#f0f0f0; font-weight:600; }
+    tr.added td { background:#e8f7ec; }
+    tr.added td:first-child::before { content:'+ '; color:#0a7d2a; font-weight:700; }
+    tr.removed td { background:#f5f5f5; color:#888; text-decoration:line-through; }
+    tr.removed td:first-child::before { content:'- '; color:#a31616; font-weight:700; text-decoration:none; display:inline-block; }
+    tr.changed td { background:#fff8e1; }
+    tr.changed td:first-child::before { content:'~ '; color:#b46900; font-weight:700; }
+    .empty-section { color:#888; font-style:italic; padding:8px 0; }
+    .closure-page { page-break-inside:avoid; margin-bottom:14px; }
+    .footer { position:fixed; bottom:8px; left:22px; right:22px; display:flex; justify-content:space-between; font-size:9px; color:#666; }
+    .num { text-align:right; font-variant-numeric:tabular-nums; }
+  `;
+
+  // Snapshots may be missing strand_states on really old rows; keep
+  // diffs robust against that.
+  const safe = (snap, k) => Array.isArray(snap?.[k]) ? snap[k] : [];
+
+  // Build lookup maps off SIDE B (the "after" snapshot) for label
+  // generation — that's what the reader is asking the question
+  // about: "what did this become?" When an entity is removed we
+  // look it up on side A.
+  function describe(side, fiberId) {
+    const snap = side;
+    const fibers = safe(snap, 'fibers');
+    const tubes  = safe(snap, 'buffer_tubes');
+    const cables = safe(snap, 'cables');
+    const f = fibers.find(x => x.id === fiberId);
+    if (!f) return '?';
+    const t = tubes.find(x => x.id === f.buffer_tube_id);
+    const c = t ? cables.find(x => x.id === t.cable_id) : null;
+    return `${c?.name || '?'} · tube ${t?.color || '?'}-${t?.position ?? '?'} · fiber ${f.color}-${f.position}`;
+  }
+
+  function spliceLabel(side, s) {
+    return `${describe(side, s.fiber_a_id)}  →  ${describe(side, s.fiber_b_id)}  (${s.splice_type || 'fusion'})`;
+  }
+
+  const totalAdded   = diff.splices.added.length;
+  const totalRemoved = diff.splices.removed.length;
+  const totalChanged = diff.splices.changed.length;
+
+  // Project-header changes block.
+  const projHeaderChanges = diff.project ? Object.entries(diff.project).map(([f, v]) =>
+    `<tr><td>${_esc(f)}</td><td>${_esc(v.before || '—')}</td><td>${_esc(v.after || '—')}</td></tr>`
+  ).join('') : '';
+
+  // Cable / location / closure shell summary.
+  function entityTable(label, entries, displayFn) {
+    const added   = entries.added.map(x => `<tr class="added"><td>${displayFn(x)}</td></tr>`).join('');
+    const removed = entries.removed.map(x => `<tr class="removed"><td>${displayFn(x)}</td></tr>`).join('');
+    const changed = entries.changed.map(x => `<tr class="changed"><td>${displayFn(x.after)} <span style="color:#666">(was: ${displayFn(x.before)})</span></td></tr>`).join('');
+    if (!added && !removed && !changed) return '';
+    return `<h3>${_esc(label)}</h3><table><tbody>${added}${removed}${changed}</tbody></table>`;
+  }
+
+  // Per-closure splice deltas. Group splices by closure_id (via
+  // tray_id → closure_id from whichever snapshot has the tray).
+  const trayToClosureA = new Map(safe(a, 'trays').map(t => [t.id, t.closure_id]));
+  const trayToClosureB = new Map(safe(b, 'trays').map(t => [t.id, t.closure_id]));
+  const closureA = new Map(safe(a, 'closures').map(c => [c.id, c]));
+  const closureB = new Map(safe(b, 'closures').map(c => [c.id, c]));
+  const locationA = new Map(safe(a, 'locations').map(l => [l.id, l]));
+  const locationB = new Map(safe(b, 'locations').map(l => [l.id, l]));
+
+  function closureIdForSplice(side, sideMap, s) {
+    return sideMap.get(s.tray_id);
+  }
+  function closureLabel(closureId) {
+    const c = closureB.get(closureId) || closureA.get(closureId);
+    if (!c) return '(unknown closure)';
+    const loc = locationB.get(c.location_id) || locationA.get(c.location_id);
+    return `${loc?.name || '?'} · ${c.model || 'closure'}`;
+  }
+
+  const byClosure = new Map(); // closureId → { added:[], removed:[], changed:[] }
+  function bucket(closureId) {
+    if (!byClosure.has(closureId)) byClosure.set(closureId, { added: [], removed: [], changed: [] });
+    return byClosure.get(closureId);
+  }
+  for (const s of diff.splices.added) {
+    const cid = closureIdForSplice(b, trayToClosureB, s);
+    if (cid) bucket(cid).added.push(s);
+    else bucket('__orphan__').added.push(s);
+  }
+  for (const s of diff.splices.removed) {
+    const cid = closureIdForSplice(a, trayToClosureA, s);
+    if (cid) bucket(cid).removed.push(s);
+    else bucket('__orphan__').removed.push(s);
+  }
+  for (const c of diff.splices.changed) {
+    const cid = closureIdForSplice(b, trayToClosureB, c.after) || closureIdForSplice(a, trayToClosureA, c.before);
+    if (cid) bucket(cid).changed.push(c);
+    else bucket('__orphan__').changed.push(c);
+  }
+
+  const closurePages = [...byClosure.entries()].map(([cid, group]) => {
+    const lines = [];
+    for (const s of group.added)   lines.push(`<tr class="added"><td>${_esc(spliceLabel(b, s))}</td></tr>`);
+    for (const s of group.removed) lines.push(`<tr class="removed"><td>${_esc(spliceLabel(a, s))}</td></tr>`);
+    for (const c of group.changed) {
+      lines.push(`<tr class="changed"><td>${_esc(spliceLabel(b, c.after))} <span style="color:#666">(was: ${_esc(spliceLabel(a, c.before))})</span></td></tr>`);
+    }
+    return `
+      <div class="closure-page">
+        <h3>${_esc(closureLabel(cid))} — ${group.added.length} added · ${group.removed.length} removed · ${group.changed.length} changed</h3>
+        <table><tbody>${lines.join('')}</tbody></table>
+      </div>`;
+  }).join('');
+
+  const aLabel = a_meta.version_number === 'current' ? 'current' : `v${a_meta.version_number}`;
+  const bLabel = b_meta.version_number === 'current' ? 'current' : `v${b_meta.version_number}`;
+  const aDate  = a_meta.created_at ? new Date(a_meta.created_at).toLocaleString() : '—';
+  const bDate  = b_meta.created_at ? new Date(b_meta.created_at).toLocaleString() : 'now';
+
+  return `<!doctype html><html><head><meta charset="utf-8">
+<title>Splice diff — ${_esc(project_name)}</title>
+<style>${css}</style>
+</head><body>
+<div class="header">
+  <div>
+    <h1>${_esc(project_name)} — splice diff</h1>
+    <div class="meta-row"><span class="pill pill-a">A · ${_esc(aLabel)}</span> ${a_meta.label ? `<span style="color:#555">${_esc(a_meta.label)}</span>` : ''} <span style="color:#888">${_esc(aDate)}</span> ${a_meta.hash ? `<span style="color:#888">#${_esc(a_meta.hash)}</span>` : ''}</div>
+    <div class="meta-row"><span class="pill pill-b">B · ${_esc(bLabel)}</span> ${b_meta.label ? `<span style="color:#555">${_esc(b_meta.label)}</span>` : ''} <span style="color:#888">${_esc(bDate)}</span> ${b_meta.hash ? `<span style="color:#888">#${_esc(b_meta.hash)}</span>` : ''}</div>
+  </div>
+  <div class="meta">
+    <div>Generated ${new Date().toISOString().slice(0,10)}</div>
+    <div>Launch Fiber Services · Splice Matrix</div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="stat add"><b>${totalAdded}</b>splices added</div>
+  <div class="stat rem"><b>${totalRemoved}</b>splices removed</div>
+  <div class="stat"><b>${totalChanged}</b>splices changed</div>
+  <div class="stat add"><b>${diff.closures.added.length}</b>closures added</div>
+  <div class="stat rem"><b>${diff.closures.removed.length}</b>closures removed</div>
+  <div class="stat add"><b>${diff.cables.added.length}</b>cables added</div>
+  <div class="stat rem"><b>${diff.cables.removed.length}</b>cables removed</div>
+</div>
+
+${projHeaderChanges ? `<h2>Project header</h2><table><thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead><tbody>${projHeaderChanges}</tbody></table>` : ''}
+
+<h2>Cables, locations, closures</h2>
+${entityTable('Locations', diff.locations, l => `${_esc(l.name)} <span style="color:#666">(${_esc(l.type)})</span>`)}
+${entityTable('Cables',    diff.cables,    c => `${_esc(c.name)} <span style="color:#666">(${c.fiber_count}f ${_esc(c.construction_type || '')})</span>`)}
+${entityTable('Closures',  diff.closures,  c => `${_esc(c.model || 'closure')} <span style="color:#666">(${c.tray_count}×${c.tray_capacity})</span>`)}
+
+<h2>Splice deltas by closure</h2>
+${closurePages || '<div class="empty-section">No splice changes between these revisions.</div>'}
+
+<div class="footer">
+  <span>${_esc(project_name)}</span>
+  <span>Diff ${_esc(aLabel)} → ${_esc(bLabel)}</span>
 </div>
 </body></html>`;
 }

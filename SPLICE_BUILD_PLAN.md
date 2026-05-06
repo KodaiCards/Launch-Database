@@ -10,9 +10,9 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last splice commit:** Phase 2B #5 — closure templates + project
-clone (this commit; migration `0010_splice_templates.sql`).
-**Status:** Phase 2A complete. Phase 2B #5 done. #6 + #7 remain.
+**Last splice commit:** Phase 2B #6 — version snapshots + diff PDF
+(this commit; migration `0011_splice_versions.sql`).
+**Status:** Phase 2A complete. Phase 2B #5 + #6 done. #7 remains.
 
 **To pick this back up in a fresh session:**
 
@@ -20,11 +20,10 @@ clone (this commit; migration `0010_splice_templates.sql`).
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
    shape of what's built.
-3. The planned next item is **Phase 2B #6 — Versioning + diff PDF.**
-   Migration slot allocated: `0011_splice_versions.sql`.
-4. Phase 2B order if proceeding straight through: #6 versioning + diff
-   PDF → #7 no-login QR markup. Each is its own commit + push.
-5. Note: slot 0009 ended up holding the unrelated
+3. The planned next item is **Phase 2B #7 — No-login splicer field
+   markup via QR.** Migration slot allocated:
+   `0012_splice_field_markup.sql`.
+4. Note: slot 0009 ended up holding the unrelated
    `rename_inspection_team_to_construction` migration (Path B admin
    work landed mid-stream); the `splice_pdf_templates` table the plan
    originally reserved 0009 for stayed deferred — multi-template PDF
@@ -306,7 +305,8 @@ Slots allocated, in order:
   templates remain deferred and unscheduled)
 - 0010 splice_templates (Phase 2B #5, shipped — closure templates +
   project clone endpoints)
-- 0011 splice_versions (Phase 2B #6)
+- 0011 splice_versions (Phase 2B #6, shipped — version snapshots +
+  diff PDF)
 - 0012 splice_field_markup (Phase 2B #7)
 - 0013 splice_splitters (Phase 2C #9, when needed)
 - 0014 splice_cable_states (Phase 2C #10, when needed)
