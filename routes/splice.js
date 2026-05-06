@@ -5970,39 +5970,41 @@ function _traceStrandPath(startFiberId, data) {
   // Returns an array of { fiber, splice_to_next } entries in traversal
   // order. The last entry always has splice_to_next = null.
   //
-  // `visited` is the shared set of already-seen fiber IDs (mutated in
-  // place) so both direction passes share the same loop-detection state.
-  function walkDir(startFid, visited) {
+  // We track BOTH visited fibers and used splices. Walking by splice (not
+  // just by fiber) catches a 2-cycle where two parallel splices connect
+  // the same pair of fibers — the fiber-only check would dead-end without
+  // flagging circular. Picking any splice not yet used and then checking
+  // whether its destination is a visited fiber gives the correct answer:
+  // dead end (no unused splice → null entry) vs loop (unused splice lands
+  // on a known fiber → circular=true).
+  function walkDir(startFid, visited, usedSplices) {
     const entries = [];
     let curFid = startFid;
     let circular = false;
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      if (visited.has(curFid)) {
-        // We've been here — either a loop back to a visited interior fiber,
-        // or the two-direction walk is about to double-cross the start.
-        circular = true;
-        break;
-      }
       visited.add(curFid);
 
       const neighborSplices = splicesByFiber.get(curFid) || [];
-      // Pick the first splice that leads to an unvisited fiber.
       let chosenSplice = null;
       let nextFid = null;
       for (const s of neighborSplices) {
-        const other = s.fiber_a_id === curFid ? s.fiber_b_id : s.fiber_a_id;
-        if (!visited.has(other)) {
-          chosenSplice = s;
-          nextFid = other;
-          break;
-        }
+        if (usedSplices.has(s.id)) continue;
+        chosenSplice = s;
+        nextFid = s.fiber_a_id === curFid ? s.fiber_b_id : s.fiber_a_id;
+        break;
       }
 
       if (!chosenSplice) {
-        // Dead end: no unvisited neighbor. Close off this entry.
         entries.push({ fiber: fiberMeta(curFid), splice_to_next: null });
+        break;
+      }
+
+      usedSplices.add(chosenSplice.id);
+      if (visited.has(nextFid)) {
+        entries.push({ fiber: fiberMeta(curFid), splice_to_next: spliceMeta(chosenSplice) });
+        circular = true;
         break;
       }
 
@@ -6028,56 +6030,40 @@ function _traceStrandPath(startFiberId, data) {
   // then walk forward from start using the combined visited set.
 
   const visited = new Set();
+  const usedSplices = new Set();
 
   // Backward pass: find a neighbor of start that is behind us, walk that
   // direction to accumulate the pre-start portion of the chain.
   let backwardEntries = [];
   let circularBack = false;
   {
-    // Walk backward by temporarily pretending we arrived at `startFiberId`
-    // from the forward direction: we mark startFiberId visited so the
-    // backward walk doesn't revisit it, then walk from each unvisited
-    // neighbor of start that isn't the one we'd reach going forward.
-    // Because we don't know the "forward" direction yet, we just pick the
-    // FIRST unvisited neighbor as forward and the rest as backward. On a
-    // linear chain there is at most one backward and one forward neighbor.
+    // We mark startFiberId visited so neither arm walks back through it,
+    // and we mark the back-edge splice used so the backward walk doesn't
+    // immediately U-turn through start via that same splice.
 
     visited.add(startFiberId);
     const startSplices = splicesByFiber.get(startFiberId) || [];
 
-    // Collect all unvisited neighbors.
     const neighbors = startSplices.map(s => ({
       splice: s,
       fid: s.fiber_a_id === startFiberId ? s.fiber_b_id : s.fiber_a_id,
     })).filter(n => !visited.has(n.fid));
 
-    // The backward neighbor is the second one (index 1 if it exists).
-    // On a well-formed chain there are 0, 1, or 2 neighbors. With an
-    // over-spliced fiber there may be more — we still pick just one
-    // backward direction to keep the chain linear.
     if (neighbors.length >= 2) {
       const backNeighbor = neighbors[1];
-      const res = walkDir(backNeighbor.fid, visited);
+      usedSplices.add(backNeighbor.splice.id);
+      const res = walkDir(backNeighbor.fid, visited, usedSplices);
       backwardEntries = res.entries;
       if (res.circular) circularBack = true;
-      // Prepend the splice edge from backNeighbor back to start.
-      // The backwardEntries end with the tip of the backward arm; we need
-      // to insert the start's splice to the backward arm as well. But the
-      // splice that connected start → backNeighbor was backNeighbor.splice;
-      // since we're reversing the direction, that splice appears AFTER the
-      // backwardEntries (i.e. from the reversed perspective, the last entry
-      // in backward connects to start).
-      // We'll handle this when we assemble the final chain below.
     }
   }
 
-  // Forward pass from start. The backward pass added startFiberId to visited
-  // to prevent the backward walk from doubling back through start, but the
-  // forward walk must BEGIN at start. Remove it so walkDir processes start
-  // as its first entry (otherwise walkDir sees start as already-visited,
-  // returns an empty chain with circular=true, and lone/end fibers break).
+  // Forward pass from start. The backward pass added startFiberId to
+  // visited; remove it so walkDir treats start as a fresh node (otherwise
+  // the lone-fiber and end-of-chain cases break). The used-splice set
+  // protects forward from re-traversing the back-edge.
   visited.delete(startFiberId);
-  const forwardResult = walkDir(startFiberId, visited);
+  const forwardResult = walkDir(startFiberId, visited, usedSplices);
   let circularFwd = forwardResult.circular;
 
   // Assemble the full chain. The backward arm is in reverse traversal order
