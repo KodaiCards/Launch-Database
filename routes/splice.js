@@ -1136,6 +1136,35 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Phase 4.4 — inline splice-type edit from the matrix tabular view.
+  // Accepts { splice_type } and updates the row. Broadcasts splice_updated
+  // so other designers see the change immediately.
+  app.put('/api/splice/splices/:id', requireAuth(), async (req, res) => {
+    const { splice_type } = req.body || {};
+    if (!splice_type || !['fusion', 'mechanical'].includes(splice_type)) {
+      return res.status(400).json({ error: `splice_type must be 'fusion' or 'mechanical'` });
+    }
+    try {
+      const cur = await pool.query(
+        `SELECT s.id, l.project_id
+         FROM splices s
+         JOIN splice_trays t ON t.id = s.tray_id
+         JOIN splice_closures cl ON cl.id = t.closure_id
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE s.id = $1`,
+        [req.params.id]
+      );
+      if (!cur.rows.length) return res.status(404).json({ error: 'Splice not found' });
+      const { rows } = await pool.query(
+        `UPDATE splices SET splice_type = $1 WHERE id = $2 RETURNING *`,
+        [splice_type, req.params.id]
+      );
+      _bumpProjectMtime(pool, cur.rows[0].project_id);
+      _broadcast(cur.rows[0].project_id, 'splice_updated', { splice: rows[0] });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   app.delete('/api/splice/ribbon-groups/:id', requireAuth(), async (req, res) => {
     try {
       const cur = await pool.query(

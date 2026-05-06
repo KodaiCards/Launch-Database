@@ -133,6 +133,11 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .canvas-pane.split-mode .map-toolbar{position:absolute;top:10px;z-index:7}
 .canvas-pane.split-mode .view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8}
 
+/* Phase 4.4 matrix view */
+.matrix-row-selected{background:rgba(var(--primary-rgb,27,95,160),.08)}
+.matrix-comment-badge,.matrix-comment-badge-empty{cursor:pointer;margin-right:4px;font-size:11px;color:var(--primary);vertical-align:middle}
+.matrix-comment-badge-empty{color:var(--text-muted)}
+
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;font-weight:500;border-radius:5px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text);cursor:pointer;transition:all .12s}
 .btn:hover{background:var(--surface-3)}
@@ -271,6 +276,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
       <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
       <button class="view-tab" data-view="map" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Map</button>
       <button class="view-tab" data-view="split" onclick="switchView('split')"><i class="fa-solid fa-table-columns"></i> Split</button>
+      <button class="view-tab" data-view="matrix" onclick="switchView('matrix')"><i class="fa-solid fa-table"></i> Matrix</button>
     </div>
     <div class="toolbar" id="toolbar" style="display:none">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
@@ -303,6 +309,21 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     <div id="stage"></div>
     <div class="split-divider" id="split-divider"></div>
     <div id="map-stage" style="display:none;width:100%;height:100%"></div>
+    <!-- Phase 4.4: matrix tabular editor -->
+    <div id="matrix-stage" style="display:none;width:100%;height:100%;overflow:auto;background:var(--surface)">
+      <div id="matrix-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--border-weak);background:var(--surface-2);position:sticky;top:0;z-index:5">
+        <input id="matrix-filter-text" type="text" placeholder="Filter splices…" class="input-sm" style="width:180px" oninput="renderMatrixView()">
+        <select id="matrix-filter-closure" class="input-sm" onchange="renderMatrixView()">
+          <option value="">All closures</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)">
+          <input type="checkbox" id="matrix-select-all" onchange="matrixToggleAll(this.checked)"> Select all
+        </label>
+        <button class="btn btn-sm btn-danger" id="matrix-bulk-delete" style="display:none" onclick="matrixBulkDelete()"><i class="fa-solid fa-trash"></i> Delete selected</button>
+        <button class="btn btn-sm" onclick="matrixExportCSV()" style="margin-left:auto"><i class="fa-solid fa-download"></i> Download CSV</button>
+      </div>
+      <div id="matrix-table-wrap" style="padding:8px"></div>
+    </div>
     <div class="warnings-banner" id="warnings-banner"></div>
   </div>
 
@@ -634,6 +655,13 @@ async function selectProject(id) {
   await hydrateProject();
   attemptLock();
   openSSE(id);
+  // Phase 4.4 — restore last active view tab (matrix survives reload).
+  try {
+    const saved = localStorage.getItem('lfs_splice_active_view');
+    if (saved && saved !== state.activeView && ['diagram','map','split','matrix'].includes(saved)) {
+      switchView(saved);
+    }
+  } catch {}
 }
 
 function cleanupCurrent() {
@@ -657,6 +685,9 @@ async function hydrateProject() {
     // Phase 3A — refresh the map layer on every hydrate. No-op when
     // map isn't initialized yet (user never opened the Map tab).
     if (state.map) refreshMapLayers();
+    // Phase 4.4 — re-render matrix view if active so inline edits
+    // and SSE-pushed changes appear without a manual refresh.
+    if (state.activeView === 'matrix') renderMatrixView();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
     // skips when last version is <10min old or generation hash matches,
     // so this is safe to call after every hydrate without flooding the
@@ -853,7 +884,7 @@ function openSSE(projectId) {
   ['cable_added','cable_updated','cable_deleted',
    'closure_added','closure_updated','closure_deleted',
    'location_added','location_updated','location_deleted',
-   'splice_added','splice_deleted',
+   'splice_added','splice_updated','splice_deleted',
    'ribbon_splice_added','ribbon_group_deleted',
    'location_coords_changed','cable_path_changed',
    'design_import_applied','design_import_rejected',
@@ -2913,6 +2944,7 @@ async function deleteCurrentProject() {
     document.getElementById('view-tabs').style.display = 'none';
     document.getElementById('map-toolbar').style.display = 'none';
     document.getElementById('map-stage').style.display = 'none';
+    document.getElementById('matrix-stage').style.display = 'none';
     document.getElementById('stage').style.display = 'block';
     // Reset split mode if it was active.
     document.querySelector('.canvas-pane').classList.remove('split-mode');
@@ -3249,13 +3281,31 @@ function saveBasemapMode(mode) {
 function switchView(view) {
   if (view === state.activeView) return;
   state.activeView = view;
+  try { localStorage.setItem('lfs_splice_active_view', view); } catch {}
   document.querySelectorAll('.view-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.view === view));
 
   const canvasPane = document.querySelector('.canvas-pane');
-  const isSplit = view === 'split';
-  const isMap   = view === 'map';
-  const isDiag  = view === 'diagram';
+  const isSplit  = view === 'split';
+  const isMap    = view === 'map';
+  const isDiag   = view === 'diagram';
+  const isMatrix = view === 'matrix';
+
+  // Matrix view — spreadsheet-style read of state.data.splices.
+  if (isMatrix) {
+    canvasPane.classList.remove('split-mode');
+    canvasPane.style.removeProperty('--split-ratio');
+    document.getElementById('stage').style.display        = 'none';
+    document.getElementById('toolbar').style.display      = 'none';
+    document.getElementById('map-stage').style.display    = 'none';
+    document.getElementById('map-toolbar').style.display  = 'none';
+    document.getElementById('matrix-stage').style.display = 'block';
+    renderMatrixView();
+    return;
+  }
+
+  // Leaving matrix — hide it.
+  document.getElementById('matrix-stage').style.display = 'none';
 
   // Split mode — show both diagram + map side-by-side.
   if (isSplit) {
@@ -3360,6 +3410,290 @@ function _applySplitRatio(ratio) {
     if (state.map) state.map.resize();
   });
 })();
+
+// ─── Phase 4.4: Matrix tabular editor ────────────────────────────────────────
+// Spreadsheet-style view over state.data.splices. All reads flow through
+// the same in-memory state as the diagram so changes committed via PUT
+// /api/splice/splices/:id or PUT /api/splice/fibers/:id are visible
+// immediately after a re-hydrate (driven by the SSE handler).
+
+// Matrix sort state: { col, asc }
+let _matrixSort = { col: null, asc: true };
+let _matrixSelected = new Set(); // selected splice IDs
+
+function _matrixGetRows() {
+  if (!state.data) return [];
+  const fiberById = new Map((state.data.fibers || []).map(f => [f.id, f]));
+  const tubeById  = new Map((state.data.buffer_tubes || []).map(t => [t.id, t]));
+  const cableById = new Map((state.data.cables || []).map(c => [c.id, c]));
+  const trayById  = new Map((state.data.trays || []).map(t => [t.id, t]));
+  const closureById = new Map((state.data.closures || []).map(c => [c.id, c]));
+  const locById   = new Map((state.data.locations || []).map(l => [l.id, l]));
+
+  function fiberDesc(fid) {
+    const f  = fiberById.get(fid) || {};
+    const tb = tubeById.get(f.buffer_tube_id) || {};
+    const cb = cableById.get(tb.cable_id) || {};
+    return { fiber: f, tube: tb, cable: cb };
+  }
+
+  return (state.data.splices || []).map(s => {
+    const a = fiberDesc(s.fiber_a_id);
+    const b = fiberDesc(s.fiber_b_id);
+    const tray = trayById.get(s.tray_id) || {};
+    const cl   = closureById.get(tray.closure_id) || {};
+    const loc  = locById.get(cl.location_id) || {};
+    const circuit  = a.fiber.circuit_name || b.fiber.circuit_name || '';
+    const customer = a.fiber.customer || b.fiber.customer || '';
+    return {
+      id: s.id,
+      splice_type: s.splice_type || 'fusion',
+      // Side A
+      a_cable: a.cable.name || '?',
+      a_tube_color: a.tube.color || '?',
+      a_fiber_color: a.fiber.color || '?',
+      a_fiber_pos: a.fiber.position ?? '?',
+      a_fiber_id: s.fiber_a_id,
+      // Side B
+      b_cable: b.cable.name || '?',
+      b_tube_color: b.tube.color || '?',
+      b_fiber_color: b.fiber.color || '?',
+      b_fiber_pos: b.fiber.position ?? '?',
+      b_fiber_id: s.fiber_b_id,
+      // Tray / closure
+      tray_pos: tray.position ?? '?',
+      closure_model: cl.model || 'Closure',
+      closure_id: cl.id || '',
+      location: loc.name || '?',
+      circuit,
+      customer,
+      // for filtering
+      _filterText: [
+        a.cable.name, b.cable.name,
+        a.tube.color, b.tube.color,
+        a.fiber.color, b.fiber.color,
+        s.splice_type, cl.model, loc.name,
+        circuit, customer,
+      ].join(' ').toLowerCase(),
+    };
+  });
+}
+
+function renderMatrixView() {
+  if (state.activeView !== 'matrix') return;
+  const filterText    = (document.getElementById('matrix-filter-text')?.value || '').toLowerCase();
+  const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+
+  // Populate closure filter dropdown if empty
+  const cfEl = document.getElementById('matrix-filter-closure');
+  if (cfEl && cfEl.options.length <= 1 && state.data) {
+    const closures = state.data.closures || [];
+    const locs = new Map((state.data.locations || []).map(l => [l.id, l]));
+    closures.forEach(cl => {
+      const opt = document.createElement('option');
+      opt.value = cl.id;
+      opt.textContent = (cl.model || 'Closure') + ' @ ' + (locs.get(cl.location_id)?.name || '?');
+      cfEl.appendChild(opt);
+    });
+  }
+
+  let rows = _matrixGetRows();
+
+  // Apply filters
+  if (filterText) rows = rows.filter(r => r._filterText.includes(filterText));
+  if (filterClosure) rows = rows.filter(r => r.closure_id === filterClosure);
+
+  // Apply sort
+  if (_matrixSort.col) {
+    const col = _matrixSort.col;
+    const asc = _matrixSort.asc ? 1 : -1;
+    rows.sort((a, b) => {
+      const av = String(a[col] ?? '').toLowerCase();
+      const bv = String(b[col] ?? '').toLowerCase();
+      return av < bv ? -asc : av > bv ? asc : 0;
+    });
+  }
+
+  const TIA = (typeof TIA_598_ABBREV !== 'undefined') ? TIA_598_ABBREV : {};
+  function chip(color) {
+    return `<span class="fc fc-${esc(color)}" title="${esc(color)}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${esc(TIA[color]||'')}</span>`;
+  }
+
+  const cols = [
+    { key: '#',           label: '#',          sortable: false },
+    { key: 'a_cable',     label: 'Cable A',    sortable: true  },
+    { key: null,          label: '↔',          sortable: false },
+    { key: 'b_cable',     label: 'Cable B',    sortable: true  },
+    { key: 'splice_type', label: 'Type',       sortable: true  },
+    { key: 'closure_model', label: 'Closure',  sortable: true  },
+    { key: 'location',    label: 'Location',   sortable: true  },
+    { key: 'circuit',     label: 'Circuit',    sortable: true  },
+    { key: 'customer',    label: 'Customer',   sortable: true  },
+    { key: '_action',     label: '',           sortable: false },
+  ];
+
+  function sortTh(col) {
+    if (!col.sortable) return '';
+    const active = _matrixSort.col === col.key;
+    const arrow = active ? (_matrixSort.asc ? ' ▲' : ' ▼') : ' ⇅';
+    return ` style="cursor:pointer;user-select:none" onclick="matrixSortBy('${col.key}')" title="Sort by ${col.label}"`;
+  }
+
+  const header = cols.map(c => `<th${sortTh(c)}>${esc(c.label)}${c.sortable ? (_matrixSort.col===c.key ? (_matrixSort.asc?' ▲':' ▼'):'') : ''}</th>`).join('');
+
+  const bodyRows = rows.map((r, i) => {
+    const sel = _matrixSelected.has(r.id);
+    const roId = esc(r.id);
+    const commentBadge = (typeof _commentCounts !== 'undefined' && _commentCounts.get(r.id))
+      ? `<span class="matrix-comment-badge" onclick="openSpliceComments('${roId}')" title="Unresolved comments"><i class="fa-solid fa-comments"></i> ${_commentCounts.get(r.id)}</span>`
+      : `<span class="matrix-comment-badge-empty" onclick="openSpliceComments('${roId}')" title="Add comment"><i class="fa-regular fa-comment"></i></span>`;
+    return `<tr data-splice-id="${roId}" class="${sel?'matrix-row-selected':''}">
+      <td style="text-align:center">
+        <input type="checkbox" ${sel?'checked':''} onchange="matrixToggleRow('${roId}',this.checked)" style="margin:0">
+        <span style="margin-left:4px;color:var(--text-muted);font-size:11px">${i+1}</span>
+      </td>
+      <td>${chip(r.a_fiber_color)} ${chip(r.a_tube_color)} ${esc(r.a_cable)}</td>
+      <td style="text-align:center;color:var(--text-muted)">↔</td>
+      <td>${chip(r.b_fiber_color)} ${chip(r.b_tube_color)} ${esc(r.b_cable)}</td>
+      <td>
+        <select class="input-sm" style="width:100px" onchange="matrixUpdateSpliceType('${roId}',this.value)" ${isReadOnly()?'disabled':''}>
+          <option value="fusion" ${r.splice_type==='fusion'?'selected':''}>fusion</option>
+          <option value="mechanical" ${r.splice_type==='mechanical'?'selected':''}>mechanical</option>
+        </select>
+      </td>
+      <td>${esc(r.closure_model)} · T${esc(String(r.tray_pos))}</td>
+      <td>${esc(r.location)}</td>
+      <td><input type="text" class="input-sm" style="width:110px" value="${esc(r.circuit)}" placeholder="circuit" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','circuit_name',this.value)" ${isReadOnly()?'disabled':''}></td>
+      <td><input type="text" class="input-sm" style="width:100px" value="${esc(r.customer)}" placeholder="customer" onblur="matrixUpdateFiber('${esc(r.a_fiber_id)}','${esc(r.b_fiber_id)}','customer',this.value)" ${isReadOnly()?'disabled':''}></td>
+      <td style="white-space:nowrap">
+        ${commentBadge}
+        <button class="btn btn-sm btn-danger" style="padding:1px 5px" onclick="matrixDeleteSplice('${roId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const wrap = document.getElementById('matrix-table-wrap');
+  if (!wrap) return;
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty-pane" style="padding:20px">No splices match the current filters.</div>';
+  } else {
+    wrap.innerHTML = `
+      <table class="table" style="font-size:12px;border-collapse:collapse;width:100%;min-width:800px">
+        <thead><tr>${header}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>`;
+  }
+
+  // Update bulk-delete button visibility
+  const bkBtn = document.getElementById('matrix-bulk-delete');
+  if (bkBtn) bkBtn.style.display = _matrixSelected.size ? 'inline-flex' : 'none';
+  const selAll = document.getElementById('matrix-select-all');
+  if (selAll) selAll.checked = rows.length > 0 && rows.every(r => _matrixSelected.has(r.id));
+}
+
+function matrixSortBy(col) {
+  if (_matrixSort.col === col) {
+    _matrixSort.asc = !_matrixSort.asc;
+  } else {
+    _matrixSort = { col, asc: true };
+  }
+  renderMatrixView();
+}
+
+function matrixToggleRow(id, checked) {
+  if (checked) _matrixSelected.add(id);
+  else _matrixSelected.delete(id);
+  const bkBtn = document.getElementById('matrix-bulk-delete');
+  if (bkBtn) bkBtn.style.display = _matrixSelected.size ? 'inline-flex' : 'none';
+}
+
+function matrixToggleAll(checked) {
+  const filterText    = (document.getElementById('matrix-filter-text')?.value || '').toLowerCase();
+  const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+  let rows = _matrixGetRows();
+  if (filterText) rows = rows.filter(r => r._filterText.includes(filterText));
+  if (filterClosure) rows = rows.filter(r => r.closure_id === filterClosure);
+  rows.forEach(r => { if (checked) _matrixSelected.add(r.id); else _matrixSelected.delete(r.id); });
+  renderMatrixView();
+}
+
+async function matrixUpdateSpliceType(spliceId, spliceType) {
+  try {
+    await api('/api/splice/splices/' + spliceId, 'PUT', { splice_type: spliceType });
+    // Optimistic update in state
+    const s = state.data?.splices?.find(x => x.id === spliceId);
+    if (s) s.splice_type = spliceType;
+    // No full re-render needed — the select already shows the new value.
+  } catch (e) { toast('Update failed: ' + e.message, 'error'); }
+}
+
+async function matrixUpdateFiber(fiberAId, fiberBId, field, value) {
+  // Update side A fiber; if blank try to clear side B too (so the matrix
+  // shows a consistent value). Only one call if both fibers share the same
+  // circuit_name / customer.
+  try {
+    await api('/api/splice/fibers/' + fiberAId, 'PUT', { [field]: value || null });
+    // Optimistic update
+    const f = state.data?.fibers?.find(x => x.id === fiberAId);
+    if (f) f[field] = value || null;
+  } catch (e) { toast('Update failed: ' + e.message, 'error'); }
+}
+
+async function matrixDeleteSplice(spliceId) {
+  if (!confirm('Delete this splice?')) return;
+  try {
+    await api('/api/splice/splices/' + spliceId, 'DELETE');
+    _matrixSelected.delete(spliceId);
+    await hydrateProject();
+  } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+}
+
+async function matrixBulkDelete() {
+  const ids = [..._matrixSelected];
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} splice${ids.length>1?'s':''}?`)) return;
+  try {
+    for (const id of ids) {
+      await api('/api/splice/splices/' + id, 'DELETE');
+    }
+    _matrixSelected.clear();
+    await hydrateProject();
+  } catch (e) { toast('Bulk delete failed: ' + e.message, 'error'); }
+}
+
+function matrixExportCSV() {
+  const filterText    = (document.getElementById('matrix-filter-text')?.value || '').toLowerCase();
+  const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+  let rows = _matrixGetRows();
+  if (filterText) rows = rows.filter(r => r._filterText.includes(filterText));
+  if (filterClosure) rows = rows.filter(r => r.closure_id === filterClosure);
+  if (_matrixSort.col) {
+    const col = _matrixSort.col;
+    const asc = _matrixSort.asc ? 1 : -1;
+    rows.sort((a, b) => {
+      const av = String(a[col] ?? '').toLowerCase();
+      const bv = String(b[col] ?? '').toLowerCase();
+      return av < bv ? -asc : av > bv ? asc : 0;
+    });
+  }
+  const headers = ['#','Cable A','Tube A','Fiber A','Cable B','Tube B','Fiber B','Type','Closure','Tray','Location','Circuit','Customer'];
+  const csvRows = [headers, ...rows.map((r, i) => [
+    i+1, r.a_cable, r.a_tube_color, r.a_fiber_color,
+    r.b_cable, r.b_tube_color, r.b_fiber_color,
+    r.splice_type, r.closure_model, r.tray_pos, r.location,
+    r.circuit, r.customer,
+  ])].map(row => row.map(cell => {
+    const s = String(cell ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob([csvRows], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'splices-' + (state.data?.project?.name || 'export').replace(/[^a-z0-9]+/gi, '-') + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 async function initMapIfNeeded() {
   if (state.map) {
