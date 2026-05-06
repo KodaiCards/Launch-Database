@@ -1605,26 +1605,43 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // projects. The list endpoint accepts ?client_id= to filter to
   // (global OR matching-client) templates.
 
+  // Phase 4.6: added ?scope=public to show only published templates
+  // (published_at IS NOT NULL), ordered by download_count DESC so the
+  // library naturally surfaces popular shells. Existing ?client_id=
+  // behavior is unchanged.
   app.get('/api/splice/closure-templates', requireAuth(), async (req, res) => {
     try {
       const clientId = req.query.client_id || null;
-      const { rows } = clientId
-        ? await pool.query(
-            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
-               FROM splice_closure_templates t
-               LEFT JOIN clients cl ON cl.id = t.scope_client_id
-               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
-              WHERE t.scope_client_id IS NULL OR t.scope_client_id = $1
-              ORDER BY t.scope_client_id NULLS FIRST, t.name`,
-            [clientId]
-          )
-        : await pool.query(
-            `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
-               FROM splice_closure_templates t
-               LEFT JOIN clients cl ON cl.id = t.scope_client_id
-               LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
-              ORDER BY t.scope_client_id NULLS FIRST, t.name`
-          );
+      const scope    = req.query.scope || null; // 'public' → only published
+      let rows;
+      if (scope === 'public') {
+        ({ rows } = await pool.query(
+          `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+             FROM splice_closure_templates t
+             LEFT JOIN clients cl ON cl.id = t.scope_client_id
+             LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+            WHERE t.published_at IS NOT NULL
+            ORDER BY t.download_count DESC, t.name`
+        ));
+      } else if (clientId) {
+        ({ rows } = await pool.query(
+          `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+             FROM splice_closure_templates t
+             LEFT JOIN clients cl ON cl.id = t.scope_client_id
+             LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+            WHERE t.scope_client_id IS NULL OR t.scope_client_id = $1
+            ORDER BY t.scope_client_id NULLS FIRST, t.name`,
+          [clientId]
+        ));
+      } else {
+        ({ rows } = await pool.query(
+          `SELECT t.*, cl.name AS scope_client_name, s.name AS created_by_name
+             FROM splice_closure_templates t
+             LEFT JOIN clients cl ON cl.id = t.scope_client_id
+             LEFT JOIN staff s   ON s.id  = t.created_by_staff_id
+            ORDER BY t.scope_client_id NULLS FIRST, t.name`
+        ));
+      }
       res.json(rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1699,6 +1716,40 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Phase 4.6 — publish / unpublish (admin-only). Sets/clears published_at
+  // and published_by_staff_id. Admin check: req.user.role === 'admin'.
+  app.post('/api/splice/closure-templates/:id/publish', requireAuth(), async (req, res) => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin role required to publish templates' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_closure_templates
+         SET published_at = NOW(), published_by_staff_id = $1
+         WHERE id = $2 RETURNING *`,
+        [req.user?.staff_id || null, req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/closure-templates/:id/unpublish', requireAuth(), async (req, res) => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin role required to unpublish templates' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_closure_templates
+         SET published_at = NULL, published_by_staff_id = NULL
+         WHERE id = $1 RETURNING *`,
+        [req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // Apply a template to create a new closure at the given location.
   // Inserts a closure row, materializes its trays from tray_count, and
   // bumps the closure_models picklist (same side-effect as the regular
@@ -1757,6 +1808,12 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             [String(t.model).trim(), t.tray_count, t.tray_capacity]
           );
         }
+        // Phase 4.6 — atomically bump download_count for analytics /
+        // public library ranking. Always fires (global + client + public).
+        await client.query(
+          `UPDATE splice_closure_templates SET download_count = download_count + 1 WHERE id = $1`,
+          [req.params.templateId]
+        );
         await client.query('COMMIT');
         _bumpProjectMtime(pool, loc.rows[0].project_id);
         _broadcast(loc.rows[0].project_id, 'closure_added', {

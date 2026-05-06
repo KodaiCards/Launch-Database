@@ -258,6 +258,8 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
         <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
         <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
+        <!-- Phase 4.6: admin-only template manager -->
+        <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
       </div>
     </div>
     <div class="sidebar-section" id="proj-imports" style="display:none">
@@ -475,6 +477,9 @@ async function loadMe() {
     const me = await api('/api/auth/me');
     state.user = me;
     document.getElementById('user-name').textContent = me.full_name || me.username || me.email || 'user';
+    // Phase 4.6 — show admin-only template manager button.
+    const btnMgr = document.getElementById('btn-manage-templates');
+    if (btnMgr && me.role === 'admin') btnMgr.style.display = 'flex';
   } catch (e) {
     // 401 already redirects via api(); other errors leave the user-pill blank.
     document.getElementById('user-name').textContent = '?';
@@ -2805,37 +2810,78 @@ function openAddCable() {
   });
 }
 
+// Phase 4.6 — three-scope template picker (Personal / Client / Public Library).
+// Fetches all three lists in parallel; tabs switch the visible option set.
+// Selecting a template populates the shell fields; user can still tweak.
 async function openAddClosure() {
   if (isReadOnly()) return toast('View-only mode', 'error');
   if (!state.data.locations.length) {
     return toast('Add a location first', 'error');
   }
   let models = [];
-  let templates = [];
+  let tplPersonal = [];
+  let tplClient   = [];
+  let tplPublic   = [];
   try { models = await api('/api/splice/closure-models'); } catch {}
-  try { templates = await api('/api/splice/closure-templates'); } catch {}
+  try {
+    const all = await api('/api/splice/closure-templates');
+    // Personal: no scope_client_id, not published, created by current user's staff_id.
+    tplPersonal = all.filter(t => !t.scope_client_id && !t.published_at);
+    // Client: scoped to current project's client.
+    const clientId = state.data.project?.client_id;
+    tplClient = clientId ? all.filter(t => t.scope_client_id === clientId && !t.published_at) : [];
+  } catch {}
+  try {
+    tplPublic = await api('/api/splice/closure-templates?scope=public');
+  } catch {}
+  // Combine all for the change handler lookup.
+  const allTemplates = [...tplPersonal, ...tplClient, ...tplPublic];
+
   const datalist = '<datalist id="closure-models-list">' +
     models.map(m => `<option value="${esc(m.model)}">`).join('') + '</datalist>';
   const locOpts = state.data.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
-  // Phase 2B #5 — Apply Template picker. Empty when no templates
-  // exist; selecting one auto-fills model/tray_count/tray_capacity
-  // so the user can still tweak before saving.
-  const tplOpts = templates.length
-    ? templates.map(t => {
-        const scope = t.scope_client_name ? ' [' + esc(t.scope_client_name) + ']' : ' [global]';
-        const meta  = ' (' + t.tray_count + '×' + t.tray_capacity + (t.model ? ', ' + esc(t.model) : '') + ')';
-        return `<option value="${t.id}">${esc(t.name)}${scope}${meta}</option>`;
-      }).join('')
-    : '';
+
+  function tplOption(t) {
+    const meta = ' (' + t.tray_count + '\xd7' + t.tray_capacity + (t.model ? ', ' + esc(t.model) : '') + ')';
+    const dl   = t.download_count ? ' ↓' + t.download_count : '';
+    return `<option value="${t.id}">${esc(t.name)}${meta}${dl}</option>`;
+  }
+
+  const personalOpts = tplPersonal.length
+    ? tplPersonal.map(tplOption).join('') : '<option disabled>No personal templates yet</option>';
+  const clientOpts = tplClient.length
+    ? tplClient.map(tplOption).join('') : '<option disabled>No client-scoped templates</option>';
+  const publicOpts = tplPublic.length
+    ? tplPublic.map(tplOption).join('') : '<option disabled>No published templates yet</option>';
+
+  const hasAny = tplPersonal.length || tplClient.length || tplPublic.length;
+
   showModal({
     title: 'Add closure',
     body: `
-      ${templates.length ? `
-        <div class="field"><label>Apply template <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
-          <select id="m-cl-template" onchange="onAddClosureTemplateChanged(this.value)">
-            <option value="">— none, configure manually —</option>
-            ${tplOpts}
-          </select>
+      ${hasAny ? `
+        <div class="field">
+          <label>Apply template <span style="font-weight:400;color:var(--text-muted);font-size:11px">(optional)</span></label>
+          <div style="display:flex;gap:0;margin-bottom:4px;border:1px solid var(--border-strong);border-radius:5px;overflow:hidden;width:fit-content">
+            <button class="btn btn-sm" id="tpl-tab-personal" onclick="switchTplTab('personal')" style="border-radius:0;border:none;border-right:1px solid var(--border-strong)">Personal</button>
+            <button class="btn btn-sm" id="tpl-tab-client"   onclick="switchTplTab('client')"   style="border-radius:0;border:none;border-right:1px solid var(--border-strong)">Client</button>
+            <button class="btn btn-sm" id="tpl-tab-public"   onclick="switchTplTab('public')"   style="border-radius:0;border:none"><i class="fa-solid fa-globe" style="font-size:10px"></i> Public Library</button>
+          </div>
+          <div id="tpl-panel-personal">
+            <select id="m-cl-template-personal" onchange="onAddClosureTemplateChanged(this.value)">
+              <option value="">— none —</option>${personalOpts}
+            </select>
+          </div>
+          <div id="tpl-panel-client" style="display:none">
+            <select id="m-cl-template-client" onchange="onAddClosureTemplateChanged(this.value)">
+              <option value="">— none —</option>${clientOpts}
+            </select>
+          </div>
+          <div id="tpl-panel-public" style="display:none">
+            <select id="m-cl-template-public" onchange="onAddClosureTemplateChanged(this.value)">
+              <option value="">— none —</option>${publicOpts}
+            </select>
+          </div>
         </div>
       ` : ''}
       <div class="field"><label>At location</label>
@@ -2856,11 +2902,11 @@ async function openAddClosure() {
     onSubmit: async (close) => {
       try {
         const locId = document.getElementById('m-cl-loc').value;
-        const tplId = document.getElementById('m-cl-template')?.value || '';
-        // If a template is selected AND the user hasn't tweaked the
-        // shell fields below, prefer the from-template endpoint —
-        // it bumps the closure_models picklist + carries notes from
-        // the template + signals SSE listeners with from_template.
+        // Find the selected template ID across all three panels.
+        const tplId =
+          document.getElementById('m-cl-template-personal')?.value ||
+          document.getElementById('m-cl-template-client')?.value ||
+          document.getElementById('m-cl-template-public')?.value || '';
         if (tplId) {
           await api(`/api/splice/locations/${locId}/closures/from-template/${tplId}`, 'POST');
         } else {
@@ -2876,9 +2922,26 @@ async function openAddClosure() {
       } catch (e) { toast(e.message, 'error'); }
     },
   });
-  // Cache templates so the change handler can read them without a
-  // second round-trip.
-  state._closureTemplates = templates;
+  // Activate the Personal tab by default.
+  switchTplTab('personal');
+  state._closureTemplates = allTemplates;
+}
+
+function switchTplTab(tab) {
+  ['personal','client','public'].forEach(t => {
+    const panel = document.getElementById('tpl-panel-' + t);
+    const btn   = document.getElementById('tpl-tab-' + t);
+    if (!panel || !btn) return;
+    const active = t === tab;
+    panel.style.display = active ? 'block' : 'none';
+    btn.style.background = active ? 'var(--primary)' : '';
+    btn.style.color = active ? '#fff' : '';
+    // Clear selections on hidden panels so only the active one counts.
+    if (!active) {
+      const sel = document.getElementById('m-cl-template-' + t);
+      if (sel) sel.value = '';
+    }
+  });
 }
 
 // Auto-fill the closure-shell fields when the user picks a template
@@ -2893,33 +2956,104 @@ function onAddClosureTemplateChanged(tplId) {
   if (tpl.notes) setVal('m-cl-notes', tpl.notes);
 }
 
-// Save the selected closure's shell as a reusable template. Pulls
-// model + tray_count + tray_capacity off the closure; lets the user
-// name it and pick scope (this client or global).
+// Phase 4.6 — Save the selected closure's shell as a reusable template.
+// Admin users see a "Publish to library" checkbox so the template becomes
+// publicly visible to all accounts via the Public Library tab.
 async function saveClosureAsTemplate(closureId) {
   if (isReadOnly()) return;
   const cl = state.data.closures.find(c => c.id === closureId);
   if (!cl) return;
   const defaultName = (cl.model ? cl.model + ' ' : '') + cl.tray_count + 'x' + cl.tray_capacity;
-  const name = prompt('Template name:', defaultName);
-  if (!name || !name.trim()) return;
-  // Scope: prompt yes/no. Defaults to global; the simple prompt avoids
-  // the overhead of a full second modal for what is most often a
-  // single-client save.
-  const scopeToClient = state.data.project?.client_id
-    ? confirm('Scope this template to the current project\'s client?\n\nOK = client-scoped (only shows on that client\'s projects)\nCancel = global (shows on every client)')
-    : false;
+  const isAdmin = state.user?.role === 'admin';
+  showModal({
+    title: 'Save as template',
+    body: `
+      <div class="field"><label>Template name</label>
+        <input id="m-tpl-name" value="${esc(defaultName)}" autofocus></div>
+      <div class="field"><label>Scope</label>
+        <select id="m-tpl-scope">
+          <option value="global">Global (shows on every project)</option>
+          ${state.data.project?.client_id ? `<option value="client">Client-scoped (this client only)</option>` : ''}
+        </select>
+      </div>
+      ${isAdmin ? `
+      <div class="field" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="m-tpl-publish" style="margin:0">
+        <label for="m-tpl-publish" style="margin:0;cursor:pointer">
+          <i class="fa-solid fa-globe"></i> Publish to Public Library
+          <span style="font-weight:400;color:var(--text-muted);font-size:11px">(visible across all accounts)</span>
+        </label>
+      </div>` : ''}
+    `,
+    onSubmit: async (close) => {
+      const name = document.getElementById('m-tpl-name')?.value?.trim();
+      if (!name) { toast('Name required', 'error'); return; }
+      const scope = document.getElementById('m-tpl-scope')?.value || 'global';
+      const publish = isAdmin && document.getElementById('m-tpl-publish')?.checked;
+      try {
+        const tpl = await api('/api/splice/closure-templates', 'POST', {
+          name,
+          model: cl.model || null,
+          tray_count: cl.tray_count,
+          tray_capacity: cl.tray_capacity,
+          scope_client_id: scope === 'client' ? (state.data.project?.client_id || null) : null,
+          notes: cl.notes || null,
+        });
+        if (publish && tpl.id) {
+          await api('/api/splice/closure-templates/' + tpl.id + '/publish', 'POST');
+        }
+        close();
+        toast(`Saved "${name}" as a template${publish ? ' (published to library)' : ''}`, 'success');
+      } catch (e) { toast('Failed to save template: ' + e.message, 'error'); }
+    },
+  });
+}
+
+// Phase 4.6 — Admin-only template management modal (publish/unpublish, see download counts).
+async function openManageTemplates() {
+  if (state.user?.role !== 'admin') return toast('Admin role required', 'error');
+  let templates = [];
+  try { templates = await api('/api/splice/closure-templates'); } catch {}
+  showModal({
+    title: 'Manage templates',
+    wide: true,
+    body: templates.length ? `
+      <table class="table" style="font-size:12px">
+        <thead><tr><th>Name</th><th>Model</th><th>Scope</th><th>Published</th><th>Downloads</th><th></th></tr></thead>
+        <tbody>
+          ${templates.map(t => `<tr>
+            <td>${esc(t.name)}</td>
+            <td>${esc(t.model || '—')}</td>
+            <td>${esc(t.scope_client_name || 'Global')}</td>
+            <td>${t.published_at ? `<span style="color:var(--success,#28a745)"><i class="fa-solid fa-globe"></i> ${new Date(t.published_at).toLocaleDateString()}</span>` : '—'}</td>
+            <td style="text-align:center">${t.download_count || 0}</td>
+            <td>
+              ${t.published_at
+                ? `<button class="btn btn-sm" onclick="adminUnpublishTemplate('${esc(t.id)}')"><i class="fa-solid fa-eye-slash"></i> Unpublish</button>`
+                : `<button class="btn btn-sm btn-primary" onclick="adminPublishTemplate('${esc(t.id)}')"><i class="fa-solid fa-globe"></i> Publish</button>`}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty-pane" style="padding:16px">No templates yet.</div>',
+    onSubmit: (close) => close(),
+    submitText: 'Close',
+  });
+}
+
+async function adminPublishTemplate(tplId) {
   try {
-    await api('/api/splice/closure-templates', 'POST', {
-      name: name.trim(),
-      model: cl.model || null,
-      tray_count: cl.tray_count,
-      tray_capacity: cl.tray_capacity,
-      scope_client_id: scopeToClient ? (state.data.project?.client_id || null) : null,
-      notes: cl.notes || null,
-    });
-    toast(`Saved "${name.trim()}" as a template`, 'success');
-  } catch (e) { toast('Failed to save template: ' + e.message, 'error'); }
+    await api('/api/splice/closure-templates/' + tplId + '/publish', 'POST');
+    toast('Template published to Public Library', 'success');
+    openManageTemplates();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+async function adminUnpublishTemplate(tplId) {
+  try {
+    await api('/api/splice/closure-templates/' + tplId + '/unpublish', 'POST');
+    toast('Template unpublished', 'success');
+    openManageTemplates();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
 }
 
 function openEditClosure(closureId) {
