@@ -393,6 +393,10 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
         <input type="text" id="rnp-name" placeholder="e.g. Crossroad School">
       </div>
       <div class="form-group">
+        <label>Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <select id="rnp-area" onchange="rnpAreaChanged()"><option value="">— Select area (PSC/RUS only) —</option></select>
+      </div>
+      <div class="form-group">
         <label>Work Order # <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
         <input type="text" id="rnp-wo" placeholder="e.g. 1234">
       </div>
@@ -435,6 +439,7 @@ let weekData = null;
 let projectsCache = [];
 let jobsCache = {};  // project_id → [{id, name, default_billing_type, default_rate}]
 let timerInterval = null;
+let allConcentrators = [];
 
 // ─── DARK MODE ──────────────────────────────────────────────────────────────
 function applyDarkMode(on){
@@ -1029,6 +1034,36 @@ function entryClientChanged(){
   populateJobSelect(document.getElementById('entry-job'), null);
 }
 
+function populateRnpAreaDropdown() {
+  const sel = document.getElementById('rnp-area');
+  if (!sel) return;
+  while (sel.options.length > 1) sel.remove(1);
+  const byContract = {};
+  allConcentrators.forEach(c => {
+    if (!byContract[c.contract_label]) byContract[c.contract_label] = [];
+    byContract[c.contract_label].push(c);
+  });
+  for (const [label, areas] of Object.entries(byContract)) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    areas.forEach(a => {
+      const opt = new Option(`${a.area_name}${a.work_order_number ? ' (WO# ' + a.work_order_number + ')' : ''}`, a.id);
+      group.appendChild(opt);
+    });
+    sel.appendChild(group);
+  }
+}
+
+function rnpAreaChanged() {
+  const sel = document.getElementById('rnp-area');
+  const id = sel.value;
+  if (!id) return;
+  const conc = allConcentrators.find(c => c.id === id);
+  if (conc && conc.work_order_number) {
+    document.getElementById('rnp-wo').value = conc.work_order_number;
+  }
+}
+
 // ─── REQUEST NEW PROJECT FLOW ───────────────────────────────────────────────
 // Engineers can propose a new project from the timeclock without clobbering
 // admin's project list. The flow:
@@ -1046,6 +1081,8 @@ function openRequestNewProjectModal(){
   document.getElementById('rnp-wo').value = '';
   document.getElementById('rnp-notes').value = '';
   document.getElementById('rnp-error').style.display = 'none';
+  const areaSel = document.getElementById('rnp-area');
+  if (areaSel) areaSel.value = '';
   populateClientSelect(document.getElementById('rnp-client'), cid);
   m.style.display = 'flex';
 }
@@ -1146,6 +1183,11 @@ async function init(){
   await loadProjects();
   await loadActiveSession();
   await loadWeek();
+  // Load concentrators for the Request New Project area dropdown
+  try {
+    allConcentrators = await api('/api/concentrators');
+    populateRnpAreaDropdown();
+  } catch (e) { /* non-fatal — area dropdown stays empty */ }
 
   // Poll active session every 1.5s so the elapsed timer + clock-in/out state
   // stays current. (The local timer interval already updates the display

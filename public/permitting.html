@@ -429,15 +429,15 @@ fetch('/api/auth/me', { credentials: 'include' })
             <span class="form-hint" id="proj-existing-hint">Showing existing leaf projects under this client — with WO# in label when applicable.</span>
           </div>
         </div>
-        <!-- Parent Project + Concentrator removed — server auto-nests under
-             Client → Team → Service Area → Project. PSC clients drive Service
-             Area via Work Order # match; non-PSC clients type a free-text
-             Service Area label. -->
         <div class="form-row">
+          <div class="form-group" id="proj-concentrator-wrap" style="display:none">
+            <label>Service Area</label>
+            <select id="proj-concentrator" onchange="concentratorChanged()"><option value="">— Pick area —</option></select>
+          </div>
           <div class="form-group" id="proj-wo-wrap" style="display:none">
             <label>Work Order Number</label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
-            <span class="form-hint">If this WO# matches a known service area, the project gets auto-grouped under it.</span>
+            <span class="form-hint">Auto-filled when an area is selected above.</span>
           </div>
           <div class="form-group" id="proj-service-area-wrap" style="display:none">
             <label>Service Area</label>
@@ -644,6 +644,7 @@ let projectTypesCache = [];
 let clientsCache = [];
 let contractsCache = [];
 let projectsCache = [];
+let allConcentrators = [];
 
 // ─── Tiny utilities ─────────────────────────────────────────────────────────
 function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
@@ -742,6 +743,8 @@ async function openProjectModal(){
   ['proj-name','proj-wo','proj-amount','proj-notes'].forEach(id => document.getElementById(id).value='');
   document.getElementById('proj-status').value = 'active';
   document.getElementById('proj-start').value = new Date().toISOString().split('T')[0];
+  const concSel = document.getElementById('proj-concentrator');
+  if (concSel) concSel.value = '';
   populateProjectFormDropdowns();
   document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
@@ -782,6 +785,16 @@ async function editProject(id){
       const ptypeSel = document.getElementById('proj-ptype');
       const preset = p.program || (p.project_type ? String(p.project_type).toLowerCase() : '');
       if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(preset) ? preset : '';
+    }
+    applyPortalProjectModalFieldGating();
+    const concSel = document.getElementById('proj-concentrator');
+    if (concSel) {
+      if (p.concentrator_id) {
+        concSel.value = p.concentrator_id;
+      } else if (p.work_order_number) {
+        const conc = allConcentrators.find(c => c.work_order_number === p.work_order_number);
+        if (conc) concSel.value = conc.id;
+      }
     }
   } catch (e) { console.error('client/job hookup failed:', e); }
 
@@ -865,6 +878,38 @@ async function refilterJobsDropdown(preserveJobId){
   } catch (e) { /* non-fatal */ }
 }
 
+function populateConcentratorDropdown() {
+  const sel = document.getElementById('proj-concentrator');
+  if (!sel) return;
+  while (sel.options.length > 1) sel.remove(1);
+  const byContract = {};
+  allConcentrators.forEach(c => {
+    if (!byContract[c.contract_label]) byContract[c.contract_label] = [];
+    byContract[c.contract_label].push(c);
+  });
+  for (const [label, areas] of Object.entries(byContract)) {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    areas.forEach(a => {
+      const opt = new Option(`${a.area_name}${a.work_order_number ? ' (WO# ' + a.work_order_number + ')' : ''}`, a.id);
+      group.appendChild(opt);
+    });
+    sel.appendChild(group);
+  }
+}
+
+function concentratorChanged() {
+  const sel = document.getElementById('proj-concentrator');
+  const id = sel.value;
+  if (!id) return;
+  const conc = allConcentrators.find(c => c.id === id);
+  if (!conc) return;
+  const effective = effectiveProgramForPortalProjectModal();
+  if (effective === 'rus' && conc.work_order_number) {
+    document.getElementById('proj-wo').value = conc.work_order_number;
+  }
+}
+
 // Effective-program logic for portal field gating (mirrors admin + design portals).
 function effectiveProgramForPortalProjectModal() {
   const ptypeVal = document.getElementById('proj-ptype')?.value;
@@ -888,10 +933,12 @@ function effectiveProgramForPortalProjectModal() {
 function applyPortalProjectModalFieldGating() {
   const effective = effectiveProgramForPortalProjectModal();
   const isRus = effective === 'rus';
-  const isNonRus = effective && effective !== 'rus';
+  const isGfr = effective === 'gfr';
+  const usesRusInfra = isRus || isGfr;
+  const isNonRus = effective && !usesRusInfra;
   const clientId = document.getElementById('proj-client')?.value;
   const opt = document.getElementById('proj-client')?.selectedOptions[0];
-  const showContract = clientId && (isRus || opt?.dataset.showContract === '1');
+  const showContract = clientId && (usesRusInfra || opt?.dataset.showContract === '1');
 
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
@@ -901,6 +948,14 @@ function applyPortalProjectModalFieldGating() {
     if (!showContract) {
       const cSel = document.getElementById('proj-contract');
       if (cSel) cSel.value = '';
+    }
+  }
+  const concWrap = document.getElementById('proj-concentrator-wrap');
+  if (concWrap) {
+    concWrap.style.display = usesRusInfra ? '' : 'none';
+    if (!usesRusInfra) {
+      const cIn = document.getElementById('proj-concentrator');
+      if (cIn) cIn.value = '';
     }
   }
   const woWrap = document.getElementById('proj-wo-wrap');
@@ -1053,12 +1108,10 @@ async function saveProject(){
   const isFootage = opt && (opt.dataset.permit === '1' || opt.dataset.bt === 'footage');
   const amount = parseFloat(document.getElementById('proj-amount').value);
 
-  // NOTE: parent_id and concentrator_id are NOT sent — server auto-nests.
-  // PSC clients drive Service Area via Work Order # match; non-PSC clients
-  // send service_area_label as free-text and the server creates a folder from it.
   const payload = {
     name, client_id, job_id,
     contract_id: document.getElementById('proj-contract').value || null,
+    concentrator_id: document.getElementById('proj-concentrator').value || null,
     // Phase 3b: project_type_id was dropped; ptype dropdown holds program enum.
     program: document.getElementById('proj-ptype').value || null,
     work_order_number: document.getElementById('proj-wo').value.trim() || null,
@@ -1091,16 +1144,19 @@ async function saveProject(){
 async function ensureCachesLoaded(force){
   if (force || !jobsCache.length || !clientsCache.length || !projectTypesCache.length) {
     try {
-      const [j, c, pt, ecs] = await Promise.all([
+      const [j, c, pt, ecs, concs] = await Promise.all([
         api('/api/jobs'),
         api('/api/clients'),
         api('/api/project-types'),
         // Engineering contracts power field-gating logic post-Path B:
         // a client is "RUS-class" iff it has any EC with program='rus'.
-        api('/api/engineering-contracts').catch(() => [])
+        api('/api/engineering-contracts').catch(() => []),
+        api('/api/concentrators').catch(() => [])
       ]);
       jobsCache = j; clientsCache = c; projectTypesCache = pt;
       window.engineeringContractsCache = ecs;
+      allConcentrators = concs;
+      populateConcentratorDropdown();
     } catch (e) { /* keep stale caches if a fetch fails */ }
   }
   // Always refresh projects on force; otherwise lazy
