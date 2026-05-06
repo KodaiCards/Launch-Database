@@ -40,7 +40,7 @@ If the orchestrator did NOT pass an `expected_parent_sha`, that's an orchestrato
 
 ## Repo essentials
 
-- Repo root: `/home/user/Launch-Database`. Always operate from there.
+- Repo root: whatever directory the harness drops you in (run `pwd` to confirm). When `isolation: "worktree"` is on, you'll be in `<repo>/.claude/worktrees/agent-<id>/`. Treat your `pwd` as the repo root for all relative paths. Do NOT cd to a hardcoded absolute path — that defeats worktree isolation and creates concurrent-write races if another agent is running in parallel.
 - Stack: Node.js + Express backend, raw Postgres via `pg`, vanilla JS frontend with token-based dark mode. PDFKit for legacy invoice PDFs, Puppeteer for AI-template PDFs.
 - Schema lives in `schema.sql` (initial bootstrap) plus `migrations/000N_*.sql` (additive, applied in filename order). New schema changes go in a new migration slot — never edit `schema.sql` for existing tables.
 - Auth: JWT cookie + Bearer fallback, set up in `auth.js`. Admin portal users are managed via `routes/admin.js` (not `staff` — that's a separate table for time-entry attribution).
