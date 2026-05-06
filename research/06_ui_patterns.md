@@ -536,6 +536,15 @@ levels. This creates a discoverability problem: users do not know what they cann
 zoom in enough to find it. A better pattern is a network tree / outline panel that lists all
 elements hierarchically, independent of the map view.
 
+**7. Missing revision metadata on exported documents**
+Every exported PDF or printed splice sheet in this category is immediately orphaned from the
+live data record. There is no revision identifier, no URL, no generation timestamp prominently
+placed. When a splicer returns to the field three weeks later with an old printout and an error
+occurs, there is no way to know if the document is the current revision or a superseded one.
+Every export should carry: (a) a human-readable revision label, (b) a short URL or QR code
+linking to the live record, (c) a UTC timestamp of generation, and (d) an explicit "this
+document was generated from revision X — verify it is current before splicing" warning banner.
+
 ---
 
 ## Sources
