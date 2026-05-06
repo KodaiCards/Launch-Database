@@ -502,7 +502,11 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   });
 
   app.put('/api/splice/locations/:id', requireAuth(), async (req, res) => {
-    const allowed = ['type', 'name', 'sequence_index', 'notes'];
+    // Phase 3A — accept latitude/longitude on the generic PUT too, so the
+    // edit-attributes modal can move a closure on a single submit. The
+    // dedicated /coords endpoint below is for drag-on-map updates that
+    // want a smaller payload.
+    const allowed = ['type', 'name', 'sequence_index', 'notes', 'latitude', 'longitude'];
     const sets = [];
     const vals = [req.params.id];
     let i = 2;
@@ -521,6 +525,38 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!rows[0]) return res.status(404).json({ error: 'Location not found' });
       _bumpProjectMtime(pool, rows[0].project_id);
       _broadcast(rows[0].project_id, 'location_updated', { location: rows[0] });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Phase 3A — drag-a-marker fast path. Drops the rest of the location
+  // payload off the wire so a drag that fires on every mouse-move (if
+  // we add live-drag in 3B) doesn't carry a kilobyte of metadata.
+  app.put('/api/splice/locations/:id/coords', requireAuth(), async (req, res) => {
+    const lat = req.body?.latitude;
+    const lon = req.body?.longitude;
+    // Allow null on either axis to clear the geographic placement
+    // (e.g. designer realized this location is purely logical).
+    const validLat = lat == null || (Number.isFinite(Number(lat)) && Math.abs(lat) <= 90);
+    const validLon = lon == null || (Number.isFinite(Number(lon)) && Math.abs(lon) <= 180);
+    if (!validLat || !validLon) {
+      return res.status(400).json({ error: 'latitude must be in [-90,90], longitude in [-180,180]' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_locations
+            SET latitude = $2, longitude = $3
+          WHERE id = $1
+          RETURNING project_id, id, latitude, longitude`,
+        [req.params.id, lat == null ? null : Number(lat), lon == null ? null : Number(lon)]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Location not found' });
+      _bumpProjectMtime(pool, rows[0].project_id);
+      _broadcast(rows[0].project_id, 'location_coords_changed', {
+        location_id: rows[0].id,
+        latitude: rows[0].latitude,
+        longitude: rows[0].longitude,
+      });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -640,6 +676,47 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'cable_deleted', { id: req.params.id });
       res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Phase 3A — set the geographic path of a cable. Body shape:
+  //   { path_geojson: { type: 'LineString', coordinates: [[lon,lat],...] } }
+  // Pass `null` to clear the path. Validation is deliberately loose: we
+  // require LineString shape but don't reject sparse routes, single
+  // segments, or self-crossing paths — designers eyeball the satellite
+  // and we trust the result. The schema rejects anything that fails
+  // JSONB parse on its way in.
+  app.put('/api/splice/cables/:id/path', requireAuth(), async (req, res) => {
+    const path = req.body?.path_geojson;
+    if (path != null) {
+      if (typeof path !== 'object' || path.type !== 'LineString' ||
+          !Array.isArray(path.coordinates) || path.coordinates.length < 2) {
+        return res.status(400).json({
+          error: 'path_geojson must be a GeoJSON LineString with at least two coordinates',
+        });
+      }
+      for (const pt of path.coordinates) {
+        if (!Array.isArray(pt) || pt.length < 2 ||
+            !Number.isFinite(pt[0]) || !Number.isFinite(pt[1]) ||
+            Math.abs(pt[1]) > 90 || Math.abs(pt[0]) > 180) {
+          return res.status(400).json({
+            error: 'path_geojson coordinates must be [lon, lat] with lat in [-90,90], lon in [-180,180]',
+          });
+        }
+      }
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_cables SET path_geojson = $2::jsonb WHERE id = $1
+         RETURNING id, project_id, path_geojson`,
+        [req.params.id, path == null ? null : JSON.stringify(path)]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Cable not found' });
+      _bumpProjectMtime(pool, rows[0].project_id);
+      _broadcast(rows[0].project_id, 'cable_path_changed', {
+        cable_id: rows[0].id, path_geojson: rows[0].path_geojson,
+      });
+      res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

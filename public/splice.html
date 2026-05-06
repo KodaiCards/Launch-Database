@@ -71,6 +71,20 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 /* Toolbar (above canvas) */
 .toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
+.view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:0;background:var(--surface-2);border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:6;overflow:hidden}
+.view-tab{padding:6px 14px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:500;border-right:1px solid var(--border-weak)}
+.view-tab:last-child{border-right:none}
+.view-tab.active{background:var(--primary);color:var(--primary-text)}
+.view-tab:hover:not(.active){background:var(--surface-3)}
+.map-toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
+.map-toolbar .btn.active{background:var(--primary);color:var(--primary-text)}
+.map-mode-hint{font-size:11px;color:var(--text-muted);margin-left:6px}
+.map-popup{font-size:12px;min-width:160px}
+.map-popup b{color:var(--primary)}
+.map-popup .row{margin:2px 0}
+.map-popup .actions{margin-top:6px;display:flex;gap:4px}
+#map-stage .maplibregl-canvas-container{outline:none}
+#map-stage.placing,#map-stage.placing .maplibregl-canvas{cursor:crosshair !important}
 .lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:6px 10px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:12px}
 .lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
 .lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
@@ -210,15 +224,26 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     </div>
   </aside>
 
-  <!-- ─── Center: Konva canvas ─── -->
+  <!-- ─── Center: Konva canvas + Map (Phase 3A) tabs ─── -->
   <div class="canvas-pane">
+    <div class="view-tabs" id="view-tabs" style="display:none">
+      <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
+      <button class="view-tab" data-view="map" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Map</button>
+    </div>
     <div class="toolbar" id="toolbar" style="display:none">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
       <button class="btn btn-sm" onclick="zoom(1.2)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
       <button class="btn btn-sm" onclick="zoom(0.83)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
     </div>
+    <div class="map-toolbar" id="map-toolbar" style="display:none">
+      <button class="btn btn-sm" onclick="mapFitData()" title="Zoom to fit all geographic data"><i class="fa-solid fa-expand"></i> Fit</button>
+      <button class="btn btn-sm" id="btn-place-mode" onclick="mapTogglePlaceMode()" title="Place a closure: click an unmapped closure in the list, then click on the map"><i class="fa-solid fa-map-pin"></i> Place</button>
+      <button class="btn btn-sm" id="btn-path-mode" onclick="mapTogglePathMode()" title="Draw cable path: click waypoints, double-click to finish"><i class="fa-solid fa-route"></i> Draw path</button>
+      <span id="map-mode-hint" class="map-mode-hint"></span>
+    </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
+    <div id="map-stage" style="display:none;width:100%;height:100%"></div>
     <div class="warnings-banner" id="warnings-banner"></div>
   </div>
 
@@ -258,6 +283,15 @@ const state = {
   sse: null,
   konva: null,          // { stage, layers... }
   pendingSplice: null,  // { fiber_a_id, tray_id }
+  // Phase 3A — map view state.
+  activeView: 'diagram',     // 'diagram' | 'map'
+  map: null,                 // MapLibre Map instance
+  maplibregl: null,          // captured for Marker/LngLatBounds constructors
+  _mapMarkers: [],
+  mapMode: null,             // null | 'place' | 'path'
+  mapPlaceTargetId: null,
+  mapPathTargetId: null,
+  mapPathPoints: [],
 };
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -412,6 +446,7 @@ async function selectProject(id) {
   document.getElementById('proj-actions').style.display = 'block';
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('view-tabs').style.display = 'flex';
   document.getElementById('btn-export').disabled = false;
   document.getElementById('btn-versions').disabled = false;
   document.getElementById('btn-save-rev').disabled = false;
@@ -439,6 +474,9 @@ async function hydrateProject() {
     renderInspector();
     renderCanvas();
     renderWarnings();
+    // Phase 3A — refresh the map layer on every hydrate. No-op when
+    // map isn't initialized yet (user never opened the Map tab).
+    if (state.map) refreshMapLayers();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
     // skips when last version is <10min old or generation hash matches,
     // so this is safe to call after every hydrate without flooding the
@@ -637,6 +675,7 @@ function openSSE(projectId) {
    'location_added','location_updated','location_deleted',
    'splice_added','splice_deleted',
    'ribbon_splice_added','ribbon_group_deleted',
+   'location_coords_changed','cable_path_changed',
    'project_updated','lock_acquired','lock_released','lock_taken_over']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Phase 2B #7 — splicer uploaded a field photo from a public QR
@@ -1863,6 +1902,10 @@ async function deleteCurrentProject() {
     document.getElementById('proj-actions').style.display = 'none';
     document.getElementById('proj-summary').style.display = 'none';
     document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('view-tabs').style.display = 'none';
+    document.getElementById('map-toolbar').style.display = 'none';
+    document.getElementById('map-stage').style.display = 'none';
+    document.getElementById('stage').style.display = 'block';
     document.getElementById('btn-export').disabled = true;
     document.getElementById('btn-versions').disabled = true;
     document.getElementById('btn-save-rev').disabled = true;
@@ -2019,6 +2062,339 @@ function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
   document.getElementById('modal-submit').onclick = () => onSubmit(closeModal);
 }
 function closeModal() { document.getElementById('modal-host').innerHTML = ''; }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Map view (Phase 3A) — MapLibre GL JS, lazy-loaded on first activation.
+// Esri World Imagery as the default basemap (free, attributed). The map
+// renders the same closure/cable rows as the diagram tab — one source
+// of truth, two views. Click a marker → open the existing closure
+// inspector in the right pane. Drag a marker → PUT /coords. Draw-path
+// mode adds waypoints click-by-click and double-click finishes.
+// ───────────────────────────────────────────────────────────────────────────
+
+const MAPLIBRE_VERSION = '4.7.1';
+let _mapLibrePromise = null;
+function loadMapLibre() {
+  if (_mapLibrePromise) return _mapLibrePromise;
+  _mapLibrePromise = new Promise((resolve, reject) => {
+    // CSS first so the canvas mounts with the right styles.
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css`;
+    document.head.appendChild(css);
+    const s = document.createElement('script');
+    s.src = `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js`;
+    s.onload  = () => resolve(window.maplibregl);
+    s.onerror = () => reject(new Error('Failed to load MapLibre GL JS'));
+    document.head.appendChild(s);
+  });
+  return _mapLibrePromise;
+}
+
+// Esri World Imagery — free for non-commercial-and-light-commercial use,
+// attributed in tile URL params. The most common OSP-industry basemap.
+const ESRI_SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+function switchView(view) {
+  if (view === state.activeView) return;
+  state.activeView = view;
+  document.querySelectorAll('.view-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.view === view));
+  const isMap = view === 'map';
+  document.getElementById('stage').style.display      = isMap ? 'none' : 'block';
+  document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
+  document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
+  document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
+  if (isMap) initMapIfNeeded();
+}
+
+async function initMapIfNeeded() {
+  if (state.map) {
+    // Already mounted; just refresh from current state.data.
+    state.map.resize();
+    refreshMapLayers();
+    mapFitData();
+    return;
+  }
+  try {
+    const maplibregl = await loadMapLibre();
+    state.maplibregl = maplibregl;
+    const map = new maplibregl.Map({
+      container: 'map-stage',
+      style: {
+        version: 8,
+        sources: {
+          'esri-sat': {
+            type: 'raster',
+            tiles: [ESRI_SAT_TILES],
+            tileSize: 256,
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+          },
+        },
+        layers: [{ id: 'esri-sat', type: 'raster', source: 'esri-sat' }],
+      },
+      // Continental US default; mapFitData() flies to the data on load
+      // when at least one location has coords.
+      center: [-98.5, 39.8],
+      zoom: 4,
+      attributionControl: { compact: true },
+    });
+    state.map = map;
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
+    map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }));
+    map.on('load', () => {
+      // Source + layer for cable polylines. We re-set the data on every
+      // refresh from state.data; the source itself just needs to exist
+      // so the layer can mount.
+      map.addSource('cables', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({
+        id: 'cables-line',
+        type: 'line',
+        source: 'cables',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#FFD400',
+          'line-width': 3,
+          'line-opacity': 0.9,
+        },
+      });
+      // Halo so the line is visible over both bright and dark satellite.
+      map.addLayer({
+        id: 'cables-line-halo',
+        type: 'line',
+        source: 'cables',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#000',
+          'line-width': 6,
+          'line-opacity': 0.3,
+        },
+      }, 'cables-line');
+      // Track in-progress draw waypoints separately so we can render
+      // them while the user is clicking.
+      map.addSource('draft-path', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({
+        id: 'draft-path-line',
+        type: 'line',
+        source: 'draft-path',
+        paint: { 'line-color': '#FF6E00', 'line-width': 3, 'line-dasharray': [2, 2] },
+      });
+      map.addLayer({
+        id: 'draft-path-points',
+        type: 'circle',
+        source: 'draft-path',
+        filter: ['==', '$type', 'Point'],
+        paint: { 'circle-radius': 5, 'circle-color': '#FF6E00', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 },
+      });
+      refreshMapLayers();
+      mapFitData();
+      // Click handler for placing-an-unmapped-closure mode.
+      map.on('click', (e) => {
+        if (state.mapMode === 'place' && state.mapPlaceTargetId) {
+          mapApplyPlacement(e.lngLat);
+        } else if (state.mapMode === 'path') {
+          mapPathAddWaypoint(e.lngLat);
+        }
+      });
+      map.on('dblclick', (e) => {
+        if (state.mapMode === 'path') {
+          e.preventDefault();
+          mapPathFinish();
+        }
+      });
+    });
+  } catch (e) {
+    toast('Map failed to load: ' + e.message, 'error');
+  }
+}
+
+function refreshMapLayers() {
+  const map = state.map;
+  if (!map || !map.isStyleLoaded() || !state.data) return;
+  // Tear down existing markers so we can rebuild from scratch — cheaper
+  // than tracking which moved/added/removed at this scale.
+  if (state._mapMarkers) {
+    state._mapMarkers.forEach(m => m.remove());
+  }
+  state._mapMarkers = [];
+  const ml = state.maplibregl;
+  const locsWithGeo = (state.data.locations || []).filter(l => l.latitude != null && l.longitude != null);
+  for (const loc of locsWithGeo) {
+    const closuresAtLoc = (state.data.closures || []).filter(c => c.location_id === loc.id);
+    const el = document.createElement('div');
+    el.className = 'map-closure-marker';
+    el.style.cssText = `width:18px;height:18px;border-radius:50%;background:${closuresAtLoc.length?'#1B5FA0':'#888'};border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);cursor:pointer`;
+    el.title = loc.name + (closuresAtLoc.length ? ' · ' + closuresAtLoc.length + ' closure(s)' : '');
+    const marker = new ml.Marker({ element: el, draggable: !isReadOnly() })
+      .setLngLat([Number(loc.longitude), Number(loc.latitude)])
+      .addTo(map);
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      // If the location has closures, open the first one's inspector;
+      // otherwise open the location inspector.
+      if (closuresAtLoc.length) selectThing('closure', closuresAtLoc[0].id);
+      else selectThing('location', loc.id);
+    });
+    marker.on('dragend', async () => {
+      const ll = marker.getLngLat();
+      try {
+        await api(`/api/splice/locations/${loc.id}/coords`, 'PUT', {
+          latitude: ll.lat, longitude: ll.lng,
+        });
+        loc.latitude = ll.lat; loc.longitude = ll.lng;
+      } catch (e) {
+        toast('Move failed: ' + e.message, 'error');
+        marker.setLngLat([Number(loc.longitude), Number(loc.latitude)]);
+      }
+    });
+    state._mapMarkers.push(marker);
+  }
+  // Cables — only those with a stored path render. A path is independent
+  // of endpoint locations having coords; if a designer has only mapped
+  // the polyline (e.g. ingest from KMZ), it still shows.
+  const cableFeatures = (state.data.cables || [])
+    .filter(c => c.path_geojson && Array.isArray(c.path_geojson.coordinates) && c.path_geojson.coordinates.length >= 2)
+    .map(c => ({
+      type: 'Feature',
+      geometry: c.path_geojson,
+      properties: { id: c.id, name: c.name, fiber_count: c.fiber_count },
+    }));
+  const src = map.getSource('cables');
+  if (src) src.setData({ type: 'FeatureCollection', features: cableFeatures });
+}
+
+function mapFitData() {
+  const map = state.map;
+  if (!map || !state.data) return;
+  const ml = state.maplibregl;
+  const bounds = new ml.LngLatBounds();
+  let count = 0;
+  for (const loc of state.data.locations || []) {
+    if (loc.latitude != null && loc.longitude != null) {
+      bounds.extend([Number(loc.longitude), Number(loc.latitude)]);
+      count++;
+    }
+  }
+  for (const c of state.data.cables || []) {
+    if (c.path_geojson && Array.isArray(c.path_geojson.coordinates)) {
+      for (const pt of c.path_geojson.coordinates) bounds.extend(pt);
+    }
+  }
+  if (count === 0 && bounds.isEmpty()) return;
+  map.fitBounds(bounds, { padding: 60, maxZoom: 18, duration: 500 });
+}
+
+function mapTogglePlaceMode() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  // Pick an unmapped location to place. If only one is unmapped, skip
+  // the picker; otherwise prompt.
+  const unmapped = (state.data.locations || []).filter(l => l.latitude == null || l.longitude == null);
+  if (!unmapped.length) return toast('All locations are already on the map.', 'info');
+  if (state.mapMode === 'place') return mapClearMode();
+  const list = unmapped.map((l, i) => `${i + 1}. ${l.name}`).join('\n');
+  const choice = prompt(`Which location to place on the map?\n\n${list}\n\nEnter a number:`, '1');
+  if (!choice) return;
+  const idx = parseInt(choice, 10) - 1;
+  if (!Number.isFinite(idx) || idx < 0 || idx >= unmapped.length) return toast('Bad choice', 'error');
+  state.mapPlaceTargetId = unmapped[idx].id;
+  state.mapMode = 'place';
+  document.getElementById('map-stage').classList.add('placing');
+  document.getElementById('btn-place-mode').classList.add('active');
+  document.getElementById('map-mode-hint').textContent = `Click on the map to place "${unmapped[idx].name}"`;
+}
+
+async function mapApplyPlacement(lngLat) {
+  const id = state.mapPlaceTargetId;
+  if (!id) return;
+  try {
+    await api(`/api/splice/locations/${id}/coords`, 'PUT', {
+      latitude: lngLat.lat, longitude: lngLat.lng,
+    });
+    toast('Location placed', 'success');
+    mapClearMode();
+    await hydrateProject();
+    if (state.activeView === 'map') refreshMapLayers();
+  } catch (e) {
+    toast('Place failed: ' + e.message, 'error');
+  }
+}
+
+function mapTogglePathMode() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const cables = state.data?.cables || [];
+  if (!cables.length) return toast('Add a cable first.', 'info');
+  if (state.mapMode === 'path') return mapClearMode();
+  const list = cables.map((c, i) => `${i + 1}. ${c.name} (${c.fiber_count}f${c.path_geojson ? ' — has path, will replace' : ''})`).join('\n');
+  const choice = prompt(`Draw path for which cable?\n\n${list}\n\nEnter a number:`, '1');
+  if (!choice) return;
+  const idx = parseInt(choice, 10) - 1;
+  if (!Number.isFinite(idx) || idx < 0 || idx >= cables.length) return toast('Bad choice', 'error');
+  state.mapPathTargetId = cables[idx].id;
+  state.mapPathPoints = [];
+  state.mapMode = 'path';
+  document.getElementById('btn-path-mode').classList.add('active');
+  document.getElementById('map-mode-hint').textContent = `Click waypoints for "${cables[idx].name}"; double-click to finish, Esc to cancel`;
+  document.getElementById('map-stage').classList.add('placing');
+}
+
+function mapPathAddWaypoint(lngLat) {
+  if (state.mapMode !== 'path') return;
+  state.mapPathPoints.push([lngLat.lng, lngLat.lat]);
+  mapRefreshDraftPath();
+}
+
+function mapRefreshDraftPath() {
+  const map = state.map;
+  if (!map) return;
+  const features = [];
+  if (state.mapPathPoints.length >= 2) {
+    features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: state.mapPathPoints } });
+  }
+  for (const p of state.mapPathPoints) {
+    features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: p } });
+  }
+  const src = map.getSource('draft-path');
+  if (src) src.setData({ type: 'FeatureCollection', features });
+}
+
+async function mapPathFinish() {
+  if (state.mapMode !== 'path') return;
+  if (state.mapPathPoints.length < 2) {
+    toast('Need at least two waypoints', 'error');
+    return;
+  }
+  const cableId = state.mapPathTargetId;
+  const path_geojson = { type: 'LineString', coordinates: state.mapPathPoints.slice() };
+  try {
+    await api(`/api/splice/cables/${cableId}/path`, 'PUT', { path_geojson });
+    toast('Cable path saved', 'success');
+    mapClearMode();
+    await hydrateProject();
+    if (state.activeView === 'map') refreshMapLayers();
+  } catch (e) {
+    toast('Save failed: ' + e.message, 'error');
+  }
+}
+
+function mapClearMode() {
+  state.mapMode = null;
+  state.mapPlaceTargetId = null;
+  state.mapPathTargetId = null;
+  state.mapPathPoints = [];
+  document.getElementById('btn-place-mode').classList.remove('active');
+  document.getElementById('btn-path-mode').classList.remove('active');
+  document.getElementById('map-stage').classList.remove('placing');
+  document.getElementById('map-mode-hint').textContent = '';
+  if (state.map) {
+    const src = state.map.getSource('draft-path');
+    if (src) src.setData({ type: 'FeatureCollection', features: [] });
+  }
+}
+
+// Esc cancels any active map mode.
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.mapMode) mapClearMode();
+});
 
 // ───────────────────────────────────────────────────────────────────────────
 // Export
