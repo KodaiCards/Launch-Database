@@ -304,11 +304,14 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             ORDER BY t.closure_id, t.position
           `, [projectId]),
           pool.query(`
-            SELECT s.* FROM splices s
-            JOIN splice_trays t ON t.id = s.tray_id
-            JOIN splice_closures cl ON cl.id = t.closure_id
-            JOIN splice_locations l ON l.id = cl.location_id
-            WHERE l.project_id = $1
+            SELECT DISTINCT s.* FROM splices s
+            LEFT JOIN splice_trays t ON t.id = s.tray_id
+            LEFT JOIN splice_closures cl_t ON cl_t.id = t.closure_id
+            LEFT JOIN splice_locations l_t ON l_t.id = cl_t.location_id
+            LEFT JOIN splice_closures cl_c ON cl_c.id = s.closure_id
+            LEFT JOIN splice_locations l_c ON l_c.id = cl_c.location_id
+            LEFT JOIN splice_locations l_l ON l_l.id = s.location_id
+            WHERE $1 IN (l_t.project_id, l_c.project_id, l_l.project_id)
             ORDER BY s.created_at
           `, [projectId]),
           pool.query(`
@@ -1047,6 +1050,65 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, tray.rows[0].project_id);
       _broadcast(tray.rows[0].project_id, 'splice_added', { splice: rows[0] });
       res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // 5.B.3 — Trayless splice endpoint: splice anchored to a closure or
+  // location without needing a tray. Accepts closure_id OR location_id
+  // (at least one required). Supports bulk creation via pairs[] array
+  // (same shape as the tray endpoint) for the drag-drop UI.
+  app.post('/api/splice/trayless-splices', requireAuth(), async (req, res) => {
+    const { closure_id, location_id, fiber_a_id, fiber_b_id,
+            splice_type = 'fusion', pairs } = req.body;
+    if (!closure_id && !location_id) {
+      return res.status(400).json({ error: 'closure_id or location_id is required' });
+    }
+    if (!['fusion', 'mechanical'].includes(splice_type)) {
+      return res.status(400).json({ error: `splice_type must be 'fusion' or 'mechanical'` });
+    }
+    // Resolve project_id for broadcast.
+    let projectId;
+    try {
+      if (closure_id) {
+        const r = await pool.query(
+          `SELECT l.project_id FROM splice_closures cl
+           JOIN splice_locations l ON l.id = cl.location_id
+           WHERE cl.id = $1`,
+          [closure_id]
+        );
+        if (!r.rows.length) return res.status(404).json({ error: 'Closure not found' });
+        projectId = r.rows[0].project_id;
+      } else {
+        const r = await pool.query(
+          `SELECT project_id FROM splice_locations WHERE id = $1`,
+          [location_id]
+        );
+        if (!r.rows.length) return res.status(404).json({ error: 'Location not found' });
+        projectId = r.rows[0].project_id;
+      }
+      // pairs[] → bulk insert; single fiber_a_id/fiber_b_id → single insert.
+      const pairsToInsert = pairs && pairs.length
+        ? pairs
+        : [{ fiber_a_id, fiber_b_id }];
+      for (const p of pairsToInsert) {
+        if (!p.fiber_a_id || !p.fiber_b_id)
+          return res.status(400).json({ error: 'Each pair needs fiber_a_id and fiber_b_id' });
+        if (p.fiber_a_id === p.fiber_b_id)
+          return res.status(400).json({ error: 'A fiber cannot be spliced to itself' });
+      }
+      const created = [];
+      for (const p of pairsToInsert) {
+        const { rows } = await pool.query(
+          `INSERT INTO splices (closure_id, location_id, fiber_a_id, fiber_b_id, splice_type)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *`,
+          [closure_id || null, location_id || null, p.fiber_a_id, p.fiber_b_id, splice_type]
+        );
+        created.push(rows[0]);
+      }
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'splice_added', { splices: created });
+      res.json(created.length === 1 ? created[0] : { splices: created });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -2394,12 +2456,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             ORDER BY t.closure_id, t.position
           `, [projectId]),
           pool.query(`
-            SELECT s.* FROM splices s
-            JOIN splice_trays t ON t.id = s.tray_id
-            JOIN splice_closures cl ON cl.id = t.closure_id
-            JOIN splice_locations l ON l.id = cl.location_id
-            WHERE l.project_id = $1
-            ORDER BY s.tray_id, s.created_at
+            SELECT DISTINCT s.* FROM splices s
+            LEFT JOIN splice_trays t ON t.id = s.tray_id
+            LEFT JOIN splice_closures cl_t ON cl_t.id = t.closure_id
+            LEFT JOIN splice_locations l_t ON l_t.id = cl_t.location_id
+            LEFT JOIN splice_closures cl_c ON cl_c.id = s.closure_id
+            LEFT JOIN splice_locations l_c ON l_c.id = cl_c.location_id
+            LEFT JOIN splice_locations l_l ON l_l.id = s.location_id
+            WHERE $1 IN (l_t.project_id, l_c.project_id, l_l.project_id)
+            ORDER BY s.created_at
           `, [projectId]),
           pool.query(`SELECT * FROM splice_ribbon_groups WHERE project_id = $1`, [projectId]),
           pool.query(`SELECT * FROM splice_strand_states WHERE project_id = $1`, [projectId]),
@@ -3542,11 +3607,14 @@ async function _loadProjectForExport(pool, projectId) {
         ORDER BY t.closure_id, t.position
       `, [projectId]),
       pool.query(`
-        SELECT s.* FROM splices s
-        JOIN splice_trays t ON t.id = s.tray_id
-        JOIN splice_closures cl ON cl.id = t.closure_id
-        JOIN splice_locations l ON l.id = cl.location_id
-        WHERE l.project_id = $1
+        SELECT DISTINCT s.* FROM splices s
+        LEFT JOIN splice_trays t ON t.id = s.tray_id
+        LEFT JOIN splice_closures cl_t ON cl_t.id = t.closure_id
+        LEFT JOIN splice_locations l_t ON l_t.id = cl_t.location_id
+        LEFT JOIN splice_closures cl_c ON cl_c.id = s.closure_id
+        LEFT JOIN splice_locations l_c ON l_c.id = cl_c.location_id
+        LEFT JOIN splice_locations l_l ON l_l.id = s.location_id
+        WHERE $1 IN (l_t.project_id, l_c.project_id, l_l.project_id)
         ORDER BY s.created_at
       `, [projectId]),
       pool.query(`

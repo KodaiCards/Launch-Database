@@ -1854,6 +1854,22 @@ function renderLocationInspector(locationId) {
         <div style="font-size:11px;font-weight:600;margin-bottom:4px">Fiber diagram</div>
         ${fiberDiagramRows.join('')}
       </div>` : ''}
+    ${(()=>{
+      // 5.B.3 — Location-level loose splices (tray_id=null, closure_id=null).
+      const locLoose = state.data.splices.filter(s => s.location_id === locationId && !s.tray_id && !s.closure_id);
+      if (!locLoose.length && isReadOnly()) return '';
+      return `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:11px;font-weight:600">Loose splices here <span class="small">${locLoose.length}</span></div>
+          ${!isReadOnly() ? `<button class="btn btn-sm" onclick="openTraylessSpliceModal('location','${locationId}')" style="font-size:10px;padding:2px 8px"><i class="fa-solid fa-plus"></i> Add splice here</button>` : ''}
+        </div>
+        ${locLoose.length ? locLoose.map(s => renderLooseSpliceRow(s)).join('') : '<div style="font-size:11px;color:var(--text-muted)">None yet — use "Add splice here" for handholes without an enclosure.</div>'}
+      </div>`;
+    })()}
+    <!-- 5.B.5 — Drag-drop fiber splicing panel (location anchor) -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)" id="ddrop-panel-location-${locationId}">
+      ${renderDragDropPanel('location', locationId, locationId)}
+    </div>
     <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">
       Deleting a location cascades to its closures, trays, and splices.
     </div>
@@ -1901,6 +1917,8 @@ function renderClosureInspector(closureId) {
   const loc = state.data.locations.find(l => l.id === cl.location_id);
   const trayList = state.data.trays.filter(t => t.closure_id === closureId).sort((a,b)=>a.position-b.position);
   const splicesByTray = (tid) => state.data.splices.filter(s => s.tray_id === tid);
+  // 5.B.3 — trayless splices anchored directly to this closure.
+  const looseSplices = state.data.splices.filter(s => s.closure_id === closureId && !s.tray_id);
   // Stored strands at this closure's location.
   const storedAtLoc = (state.data.strand_states || [])
     .filter(s => s.location_id === cl.location_id && s.state === 'stored');
@@ -1928,6 +1946,23 @@ function renderClosureInspector(closureId) {
         }).join('')}
       </tbody>
     </table>
+
+    <!-- 5.B.3 — Loose (trayless) splices at this closure -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:600">Loose splices (no tray) <span class="small">${looseSplices.length}</span></div>
+        ${!isReadOnly() ? `<button class="btn btn-sm" onclick="openTraylessSpliceModal('closure','${closureId}')" style="font-size:10px;padding:2px 8px"><i class="fa-solid fa-plus"></i> Add loose splice</button>` : ''}
+      </div>
+      ${looseSplices.length ? `
+        <div style="font-size:11px">
+          ${looseSplices.map(s => renderLooseSpliceRow(s)).join('')}
+        </div>` : `<div style="font-size:11px;color:var(--text-muted)">None — use trays above for normal splicework, or add a loose splice for express pass-throughs.</div>`}
+    </div>
+
+    <!-- 5.B.5 — Drag-drop fiber splicing panel (closure anchor) -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)" id="ddrop-panel-closure-${closureId}">
+      ${renderDragDropPanel('closure', closureId, cl.location_id)}
+    </div>
 
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
       <h3 style="display:flex;justify-content:space-between;align-items:center">
@@ -2008,6 +2043,102 @@ function renderClosureInspector(closureId) {
 
   loadClosureMarkups(closureId);
   loadClosureComments(closureId);
+}
+
+// ─── 5.B.5 stub — renderDragDropPanel (real impl follows below) ──────────────
+// Returns HTML string for the VETRO-style two-column drag-drop fiber panel.
+// anchorType: 'closure'|'location'; anchorId: the entity's UUID;
+// locationId: the location to pull cables from.
+// Implemented fully in the 5.B.5 section below. Stub here so 5.B.3 renders.
+function renderDragDropPanel(anchorType, anchorId, locationId) {
+  return _buildDragDropPanelHtml(anchorType, anchorId, locationId);
+}
+
+// ─── 5.B.3 helpers ───────────────────────────────────────────────────────────
+
+// 5.B.3 — Render a single loose (trayless) splice row in the inspector.
+function renderLooseSpliceRow(s) {
+  const fA = state.data.fibers.find(f => f.id === s.fiber_a_id);
+  const fB = state.data.fibers.find(f => f.id === s.fiber_b_id);
+  const tubeA = fA ? state.data.buffer_tubes.find(t => t.id === fA.buffer_tube_id) : null;
+  const tubeB = fB ? state.data.buffer_tubes.find(t => t.id === fB.buffer_tube_id) : null;
+  const cableA = tubeA ? state.data.cables.find(c => c.id === tubeA.cable_id) : null;
+  const cableB = tubeB ? state.data.cables.find(c => c.id === tubeB.cable_id) : null;
+  const labelA = cableA ? `${esc(cableA.name)} T${tubeA.position} f${fA.position}` : '?';
+  const labelB = cableB ? `${esc(cableB.name)} T${tubeB.position} f${fB.position}` : '?';
+  return `<div class="fiber-diagram-row" style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+    <span class="fc fc-${fA?.color||''}"></span><span style="flex:1">${labelA}</span>
+    <span style="color:var(--text-muted)">&#8596;</span>
+    <span class="fc fc-${fB?.color||''}"></span><span style="flex:1;text-align:right">${labelB}</span>
+    ${!isReadOnly() ? `<button class="btn btn-sm btn-danger" style="padding:1px 5px;font-size:10px" onclick="deleteSplice('${s.id}')"><i class="fa-solid fa-times"></i></button>` : ''}
+  </div>`;
+}
+
+// 5.B.3 — Modal to add a trayless splice (closure-level or location-level).
+// anchorType: 'closure' | 'location'; anchorId: the id of that entity.
+function openTraylessSpliceModal(anchorType, anchorId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const usedFibers = new Set();
+  state.data.splices.forEach(s => {
+    const aCount = state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length;
+    if (aCount >= 2) usedFibers.add(s.fiber_a_id);
+    const bCount = state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length;
+    if (bCount >= 2) usedFibers.add(s.fiber_b_id);
+  });
+  const cableOpts = state.data.cables.map(c =>
+    `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f)</option>`).join('');
+  // Reuse state._spA / state._spB arrays for fiber selection.
+  state._spA = []; state._spB = []; state._spRibbon = false; state._spUsed = usedFibers;
+  showModal({
+    title: 'Add loose splice (no tray)',
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Creates a splice anchored to this ${anchorType} without requiring a tray.
+        Useful for express pass-throughs and handholes too small for an enclosure.
+      </p>
+      <div class="splice-cols">
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Side A · cable</label>
+            <select id="sp-cable-a" onchange="renderFiberPicker('a')"><option value="">Pick cable…</option>${cableOpts}</select></div>
+          <div class="field" id="sp-tube-a-wrap" style="margin-bottom:6px;display:none"><label>Side A · tube</label>
+            <select id="sp-tube-a" onchange="renderFibersOnly('a')"></select></div>
+          <div class="field" style="margin-bottom:0"><label>Side A · fiber</label>
+            <div id="sp-fibers-a" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Side B · cable</label>
+            <select id="sp-cable-b" onchange="renderFiberPicker('b')"><option value="">Pick cable…</option>${cableOpts}</select></div>
+          <div class="field" id="sp-tube-b-wrap" style="margin-bottom:6px;display:none"><label>Side B · tube</label>
+            <select id="sp-tube-b" onchange="renderFibersOnly('b')"></select></div>
+          <div class="field" style="margin-bottom:0"><label>Side B · fiber</label>
+            <div id="sp-fibers-b" class="fiber-grid"><div class="empty-pane">Pick a cable</div></div></div>
+        </div>
+      </div>
+    `,
+    submitText: 'Add loose splice',
+    onSubmit: async (close) => {
+      const aList = Array.isArray(state._spA) ? state._spA : (state._spA ? [state._spA] : []);
+      const bList = Array.isArray(state._spB) ? state._spB : (state._spB ? [state._spB] : []);
+      if (!aList.length || !bList.length) return toast('Pick a fiber on both sides', 'error');
+      if (aList.length !== bList.length) return toast('Fiber counts must match on both sides', 'error');
+      const pairs = aList.map((fa, i) => ({ fiber_a_id: fa, fiber_b_id: bList[i] }));
+      const usedSet = state._spUsed || new Set();
+      const goodPairs = pairs.filter(p => !usedSet.has(p.fiber_a_id) && !usedSet.has(p.fiber_b_id));
+      if (!goodPairs.length) return toast('All selected fibers are already spliced', 'error');
+      try {
+        const body = goodPairs.length === 1
+          ? { fiber_a_id: goodPairs[0].fiber_a_id, fiber_b_id: goodPairs[0].fiber_b_id }
+          : { pairs: goodPairs };
+        if (anchorType === 'closure') body.closure_id = anchorId;
+        else body.location_id = anchorId;
+        await api('/api/splice/trayless-splices', 'POST', body);
+        close();
+        await hydrateProject();
+        selectThing(anchorType, anchorId);
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
 }
 
 // Phase 2B #7 — pull field markups for the selected closure and
@@ -3960,6 +4091,343 @@ function _applySplitRatio(ratio) {
   const mapToolbar = document.getElementById('map-toolbar');
   if (mapToolbar) mapToolbar.style.left = pct;
 }
+
+// ─── 5.B.5: VETRO-style drag-and-drop fiber splicing panel ──────────────────
+// _buildDragDropPanelHtml() — builds the two-column HTML for the drag-drop UI.
+// Called from renderDragDropPanel() (stub above) which wires it into both the
+// closure inspector (5.B.5) and the location inspector (5.B.6).
+// anchorType: 'closure'|'location', anchorId, locationId (location to source cables).
+function _buildDragDropPanelHtml(anchorType, anchorId, locationId) {
+  // Only show when project is editable and location has cables.
+  const cables = (state.data?.cables || []).filter(c =>
+    c.from_location_id === locationId || c.to_location_id === locationId
+  );
+  if (!cables.length) return '';
+
+  // Auto-pick first two cables for A-side / B-side; show dropdowns otherwise.
+  const cableOpts = cables.map(c =>
+    `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f)</option>`
+  ).join('');
+
+  const ddKey = `${anchorType}-${anchorId}`;
+  return `
+    <div class="ddrop-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:600"><i class="fa-solid fa-hand-pointer"></i> Fiber splicing</span>
+      <span style="font-size:10px;color:var(--text-muted)">Shift-click to multi-select &bull; drag to splice</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">A-side cable</div>
+        <select class="input-sm" style="width:100%" id="ddrop-cable-a-${ddKey}"
+          onchange="ddropCableChanged('${ddKey}','a')">${cableOpts}</select>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">B-side cable</div>
+        <select class="input-sm" style="width:100%" id="ddrop-cable-b-${ddKey}"
+          onchange="ddropCableChanged('${ddKey}','b')">${cableOpts}</select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="ddrop-fiber-cols-${ddKey}">
+      <div id="ddrop-col-a-${ddKey}"><div class="empty-pane" style="padding:8px;font-size:11px">Select a cable above</div></div>
+      <div id="ddrop-col-b-${ddKey}"><div class="empty-pane" style="padding:8px;font-size:11px">Select a cable above</div></div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" id="ddrop-actions-${ddKey}" style="display:none">
+      <button class="btn btn-sm btn-primary" id="ddrop-splice-btn-${ddKey}"
+        onclick="ddropExecuteSplice('${anchorType}','${anchorId}','${ddKey}')" style="display:none">
+        <i class="fa-solid fa-scissors"></i> Splice <span id="ddrop-count-${ddKey}"></span>
+      </button>
+      <button class="btn btn-sm" onclick="ddropClearSelection('${ddKey}')">
+        <i class="fa-solid fa-times"></i> Clear
+      </button>
+    </div>`;
+}
+
+// ─── Drag-drop state & event handlers ────────────────────────────────────────
+// state._ddrop = { key, side, fiberIds, anchorType, anchorId }
+
+// Called when A/B cable selector changes.
+// ddKey format: "<anchorType>-<anchorId>", e.g. "closure-<uuid>" or "location-<uuid>".
+window.ddropCableChanged = function(ddKey, side) {
+  const sel = document.getElementById(`ddrop-cable-${side}-${ddKey}`);
+  if (!sel) return;
+  // Parse anchorType and anchorId from ddKey.
+  const firstDash = ddKey.indexOf('-');
+  const anchorType = firstDash !== -1 ? ddKey.slice(0, firstDash) : ddKey;
+  const anchorId   = firstDash !== -1 ? ddKey.slice(firstDash + 1) : '';
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [], _anchorType: anchorType, _anchorId: anchorId };
+  }
+  state._ddrop._anchorType = anchorType;
+  state._ddrop._anchorId   = anchorId;
+  ddropRenderFiberCol(ddKey, side, sel.value);
+};
+
+// Build the fiber-tube column for a given side.
+function ddropRenderFiberCol(ddKey, side, cableId) {
+  const col = document.getElementById(`ddrop-col-${side}-${ddKey}`);
+  if (!col) return;
+  if (!cableId) { col.innerHTML = '<div class="empty-pane" style="padding:8px;font-size:11px">Pick a cable</div>'; return; }
+
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId).sort((a,b)=>a.position-b.position);
+  const usedFibers = new Set(
+    state.data.splices.flatMap(s => {
+      const used = [];
+      const aC = state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length;
+      if (aC >= 2) used.push(s.fiber_a_id);
+      const bC = state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length;
+      if (bC >= 2) used.push(s.fiber_b_id);
+      return used;
+    })
+  );
+  const sel = state._ddrop?.side === side && state._ddrop?.key === ddKey
+    ? new Set(state._ddrop.fiberIds) : new Set();
+
+  col.innerHTML = tubes.map(tube => {
+    const fibers = state.data.fibers.filter(f => f.buffer_tube_id === tube.id).sort((a,b)=>a.position-b.position);
+    return `<div style="margin-bottom:4px">
+      <div style="font-size:9px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:flex;align-items:center;gap:4px;margin-bottom:2px">
+        <span class="fc fc-${tube.color}"></span> T${tube.position} · ${tube.color}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px">
+        ${fibers.map(f => {
+          const used = usedFibers.has(f.id);
+          const picked = sel.has(f.id);
+          const abbrev = TIA_598_ABBREV[f.color] || '';
+          const cls = ['fiber-cell', 'ddrop-fiber',
+            used ? 'in-use' : '',
+            picked ? 'sp-selected' : '',
+          ].filter(Boolean).join(' ');
+          return `<div class="${cls}" style="cursor:${side==='a'?'grab':'default'}"
+            data-fiber-id="${f.id}" data-side="${side}" data-ddkey="${ddKey}"
+            draggable="${side==='a' && !used ? 'true' : 'false'}"
+            onclick="ddropFiberClick(event,this)"
+            ondragstart="ddropDragStart(event,this)"
+            ondragover="${side==='b' ? 'ddropDragOver(event,this)' : 'false'}"
+            ondragleave="${side==='b' ? 'ddropDragLeave(event,this)' : ''}"
+            ondrop="${side==='b' ? 'ddropDrop(event,this)' : ''}">
+            <span class="fc fc-${f.color}" title="${f.color}"></span>${f.position}${used ? '' : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Auto-init selection state if missing.
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [], anchorType: null, anchorId: null };
+  }
+}
+
+// Fiber click on A-side: shift-click = multi-select.
+window.ddropFiberClick = function(event, el) {
+  const side = el.dataset.side;
+  const ddKey = el.dataset.ddkey;
+  const fid = el.dataset.fiberId;
+  if (side !== 'a') return;                    // B-side only accepts drops
+  if (el.classList.contains('in-use')) return; // skip already spliced
+
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [], anchorType: null, anchorId: null };
+  }
+  const ids = state._ddrop.fiberIds;
+  if (event.shiftKey) {
+    const idx = ids.indexOf(fid);
+    if (idx !== -1) ids.splice(idx, 1);
+    else ids.push(fid);
+  } else {
+    ids.length = 0;
+    ids.push(fid);
+  }
+  state._ddrop.side = 'a';
+  // Refresh the A col and update the splice button.
+  const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+  if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  ddropSyncButton(ddKey);
+};
+
+// Start dragging picked fibers from A-side.
+window.ddropDragStart = function(event, el) {
+  const ddKey = el.dataset.ddkey;
+  const fid = el.dataset.fiberId;
+  // If the dragged fiber isn't in the current selection, make it the selection.
+  if (!state._ddrop || !state._ddrop.fiberIds.includes(fid)) {
+    state._ddrop = { key: ddKey, side: 'a', fiberIds: [fid], anchorType: null, anchorId: null };
+    const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  }
+  const count = state._ddrop.fiberIds.length;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', ddKey + ':' + count);
+  // Ghost label.
+  const ghost = document.createElement('div');
+  ghost.textContent = `${count} fiber${count>1?'s':''}`;
+  ghost.style.cssText = 'position:fixed;top:-999px;left:-999px;background:var(--primary);color:#fff;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;pointer-events:none';
+  document.body.appendChild(ghost);
+  event.dataTransfer.setDragImage(ghost, 0, 0);
+  setTimeout(() => ghost.remove(), 0);
+};
+
+// Highlight B-side fibers as valid drop targets during drag.
+window.ddropDragOver = function(event, el) {
+  if (el.classList.contains('in-use')) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  el.style.outline = '2px solid var(--primary)';
+};
+
+window.ddropDragLeave = function(event, el) {
+  el.style.outline = '';
+};
+
+// Drop: create pairwise splices starting at target fiber.
+window.ddropDrop = async function(event, el) {
+  event.preventDefault();
+  el.style.outline = '';
+  const ddKey = el.dataset.ddkey;
+  if (!state._ddrop || state._ddrop.key !== ddKey) return;
+  const targetFiberId = el.dataset.fiberId;
+  const anchorType = state._ddrop._anchorType;
+  const anchorId   = state._ddrop._anchorId;
+  await _ddropCreateSplices(ddKey, targetFiberId, anchorType, anchorId);
+};
+
+// Create splices from A-selection dropped at B starting fiber.
+async function _ddropCreateSplices(ddKey, startFiberId, anchorType, anchorId) {
+  if (!state._ddrop || !state._ddrop.fiberIds.length) return;
+  // Resolve anchorType + anchorId from the panel element.
+  if (!anchorType || !anchorId) {
+    const panel = document.querySelector(`[id^="ddrop-panel-"]`);
+    if (!panel) return;
+    const panelId = panel.id; // e.g. "ddrop-panel-closure-<uuid>"
+    const parts = panelId.split('-');
+    // Format: ddrop-panel-<anchorType>-<uuid>
+    anchorType = parts[2];
+    anchorId = parts.slice(3).join('-');
+  }
+  const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+  if (!selB) return;
+  const bCableId = selB.value;
+  if (!bCableId) { toast('Pick a B-side cable first', 'error'); return; }
+
+  // Build ordered B fibers starting from the dropped-on fiber.
+  const bFibers = state.data.fibers
+    .filter(f => {
+      const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+      return tube && tube.cable_id === bCableId;
+    })
+    .sort((a, b) => {
+      const ta = state.data.buffer_tubes.find(t => t.id === a.buffer_tube_id);
+      const tb = state.data.buffer_tubes.find(t => t.id === b.buffer_tube_id);
+      if (ta.position !== tb.position) return ta.position - tb.position;
+      return a.position - b.position;
+    });
+
+  const startIdx = bFibers.findIndex(f => f.id === startFiberId);
+  if (startIdx === -1) return;
+
+  const aIds = state._ddrop.fiberIds;
+  const needed = aIds.length;
+  const remaining = bFibers.length - startIdx;
+  if (remaining < needed) {
+    toast(`Not enough B-side fibers: need ${needed}, only ${remaining} from drop point`, 'error');
+    return;
+  }
+  const usedFibers = new Set(
+    state.data.splices.flatMap(s => {
+      const used = [];
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length >= 2) used.push(s.fiber_a_id);
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length >= 2) used.push(s.fiber_b_id);
+      return used;
+    })
+  );
+  // Build pairs, skipping already-spliced ones.
+  const pairs = [];
+  for (let i = 0; i < needed; i++) {
+    const fa = aIds[i];
+    const fb = bFibers[startIdx + i].id;
+    if (!usedFibers.has(fa) && !usedFibers.has(fb)) pairs.push({ fiber_a_id: fa, fiber_b_id: fb });
+  }
+  if (!pairs.length) { toast('All target fibers are already spliced', 'error'); return; }
+  const skipped = needed - pairs.length;
+  try {
+    const body = pairs.length === 1
+      ? { fiber_a_id: pairs[0].fiber_a_id, fiber_b_id: pairs[0].fiber_b_id }
+      : { pairs };
+    if (anchorType === 'closure') body.closure_id = anchorId;
+    else body.location_id = anchorId;
+    await api('/api/splice/trayless-splices', 'POST', body);
+    if (skipped) toast(`Created ${pairs.length} splice(s), skipped ${skipped} already-spliced`, 'warn');
+    else toast(`Created ${pairs.length} splice(s)`, 'success');
+    ddropClearSelection(ddKey);
+    await hydrateProject();
+    selectThing(anchorType, anchorId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Sync the splice button visibility.
+function ddropSyncButton(ddKey) {
+  const btn = document.getElementById(`ddrop-splice-btn-${ddKey}`);
+  const cnt = document.getElementById(`ddrop-count-${ddKey}`);
+  const actions = document.getElementById(`ddrop-actions-${ddKey}`);
+  if (!btn) return;
+  const n = state._ddrop?.fiberIds?.length || 0;
+  if (cnt) cnt.textContent = n ? `(${n})` : '';
+  btn.style.display = n ? 'inline-flex' : 'none';
+  if (actions) actions.style.display = n ? 'flex' : 'none';
+}
+
+// Execute splice from button click (uses B-side first unspliced fiber).
+window.ddropExecuteSplice = async function(anchorType, anchorId, ddKey) {
+  const selB = document.getElementById(`ddrop-cable-b-${ddKey}`);
+  if (!selB || !selB.value) { toast('Pick a B-side cable first', 'error'); return; }
+  const bFibers = state.data.fibers
+    .filter(f => {
+      const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+      return tube && tube.cable_id === selB.value;
+    })
+    .sort((a, b) => {
+      const ta = state.data.buffer_tubes.find(t => t.id === a.buffer_tube_id);
+      const tb = state.data.buffer_tubes.find(t => t.id === b.buffer_tube_id);
+      if (ta.position !== tb.position) return ta.position - tb.position;
+      return a.position - b.position;
+    });
+  const usedFibers = new Set(
+    state.data.splices.flatMap(s => {
+      const used = [];
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_a_id || x.fiber_b_id === s.fiber_a_id).length >= 2) used.push(s.fiber_a_id);
+      if (state.data.splices.filter(x => x.fiber_a_id === s.fiber_b_id || x.fiber_b_id === s.fiber_b_id).length >= 2) used.push(s.fiber_b_id);
+      return used;
+    })
+  );
+  const firstUnused = bFibers.find(f => !usedFibers.has(f.id));
+  if (!firstUnused) { toast('No available B-side fibers', 'error'); return; }
+  await _ddropCreateSplices(ddKey, firstUnused.id, anchorType, anchorId);
+};
+
+window.ddropClearSelection = function(ddKey) {
+  if (state._ddrop && state._ddrop.key === ddKey) state._ddrop.fiberIds = [];
+  const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+  if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  ddropSyncButton(ddKey);
+};
+
+// Escape key clears drag selection.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state._ddrop) {
+    const ddKey = state._ddrop.key;
+    ddropClearSelection(ddKey);
+  }
+});
+
+// Clicking elsewhere (not a fiber) clears selection.
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.ddrop-fiber') && !e.target.closest('[id^="ddrop-"]') && state._ddrop) {
+    const ddKey = state._ddrop.key;
+    if (ddKey) ddropClearSelection(ddKey);
+  }
+}, true);
 
 // ─── Split divider drag (Phase 4.3) ──────────────────────────────────────────
 (function initSplitDivider() {
