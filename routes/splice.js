@@ -5603,7 +5603,12 @@ function _traceStrandPath(startFiberId, data) {
     }
   }
 
-  // Forward pass from start. visited already contains start + backward arm.
+  // Forward pass from start. The backward pass added startFiberId to visited
+  // to prevent the backward walk from doubling back through start, but the
+  // forward walk must BEGIN at start. Remove it so walkDir processes start
+  // as its first entry (otherwise walkDir sees start as already-visited,
+  // returns an empty chain with circular=true, and lone/end fibers break).
+  visited.delete(startFiberId);
   const forwardResult = walkDir(startFiberId, visited);
   let circularFwd = forwardResult.circular;
 
