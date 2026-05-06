@@ -529,18 +529,20 @@ function renderSummaryPage(doc, data, isFootage) {
   const isPermitting = !!m.is_permitting;
 
   // ── Logo (centered at top) ─────────────────────────────────────────
-  // ~180px wide, horizontally centered. Skipped silently if the asset is
+  // ~260px wide, horizontally centered. Matches the proportions of the
+  // owner-supplied reference invoice. Skipped silently if the asset is
   // missing so the PDF still renders during early dev / fresh deploys.
   const startY = doc.y;
-  const logoWidth = 180;
+  const logoWidth = 260;
   const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
   let postLogoY = startY;
   if (fs.existsSync(LOGO_PATH)) {
     try {
       doc.image(LOGO_PATH, logoX, startY, { width: logoWidth });
       // PDFKit doesn't auto-advance doc.y after image() — estimate logo
-      // height from typical aspect (≈ 3:1 for the Launch wordmark).
-      postLogoY = startY + (logoWidth / 3) + 8;
+      // height from typical aspect (≈ 3.8:1 for the Launch wordmark
+      // including the burst ornament).
+      postLogoY = startY + (logoWidth / 3.8) + 10;
     } catch (e) { /* corrupt or unsupported image format — silently skip */ }
   }
   doc.y = postLogoY;
@@ -595,24 +597,41 @@ function renderSummaryPage(doc, data, isFootage) {
 
   // Helper to draw one row at the current y, advancing y by the actual
   // height the row took up.
+  //
+  // opts.spanAll = true  → render a SINGLE centered text spanning all
+  //                        columns (used for the per-contract header
+  //                        rows like "Contract 3/515-3" in the
+  //                        reference invoice).
   function drawRow(cells, opts = {}) {
     const y = doc.y;
     const bg = opts.bg;
     const textColor = opts.textColor || COL.BODY_TEXT;
     const bold = !!opts.bold;
     const padLeft = 6, padRight = 6;
+    const fontSize = opts.fontSize || 9;
+    const spanAll = !!opts.spanAll;
 
-    // First pass: measure the tallest cell so the row can size itself
-    // before we paint the background / borders.
-    doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(9);
-    let maxTextH = 0;
-    for (const c of cols) {
-      const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
-      const tw = c.width - padLeft - padRight;
-      const h = doc.heightOfString(cellText, { width: tw, align: c.align });
-      if (h > maxTextH) maxTextH = h;
+    doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize);
+
+    let rowH;
+    if (spanAll) {
+      // Single centered string spanning the entire table width.
+      const txt = cells.text != null ? String(cells.text) : '';
+      const tw = tableTotalWidth - padLeft - padRight;
+      const h = doc.heightOfString(txt, { width: tw, align: 'center' });
+      rowH = Math.max(MIN_ROW_H, Math.ceil(h + ROW_PAD_TOP + ROW_PAD_BOTTOM));
+    } else {
+      // First pass: measure the tallest cell so the row can size itself
+      // before we paint the background / borders.
+      let maxTextH = 0;
+      for (const c of cols) {
+        const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
+        const tw = c.width - padLeft - padRight;
+        const h = doc.heightOfString(cellText, { width: tw, align: c.align });
+        if (h > maxTextH) maxTextH = h;
+      }
+      rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
     }
-    const rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
 
     // Background
     if (bg) {
@@ -621,18 +640,27 @@ function renderSummaryPage(doc, data, isFootage) {
     // Borders
     doc.strokeColor(COL.BORDER).lineWidth(0.5);
     doc.rect(tableX, y, tableTotalWidth, rowH).stroke();
-    // Text per cell — re-set font/color (rect.fill changes the fillColor)
-    let cx = tableX;
-    doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(9).fillColor(textColor);
-    for (let i = 0; i < cols.length; i++) {
-      const c = cols[i];
-      const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
-      const tx = cx + padLeft;
-      const tw = c.width - padLeft - padRight;
-      doc.text(cellText, tx, y + ROW_PAD_TOP, {
-        width: tw, align: c.align,
+    // Re-set font/color (rect.fill changes the fillColor)
+    doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize).fillColor(textColor);
+
+    if (spanAll) {
+      const txt = cells.text != null ? String(cells.text) : '';
+      doc.text(txt, tableX + padLeft, y + ROW_PAD_TOP, {
+        width: tableTotalWidth - padLeft - padRight,
+        align: 'center',
       });
-      cx += c.width;
+    } else {
+      let cx = tableX;
+      for (let i = 0; i < cols.length; i++) {
+        const c = cols[i];
+        const cellText = cells[c.key] != null ? String(cells[c.key]) : '';
+        const tx = cx + padLeft;
+        const tw = c.width - padLeft - padRight;
+        doc.text(cellText, tx, y + ROW_PAD_TOP, {
+          width: tw, align: c.align,
+        });
+        cx += c.width;
+      }
     }
     doc.y = y + rowH;
   }
@@ -647,24 +675,32 @@ function renderSummaryPage(doc, data, isFootage) {
     desc: m.engineering_contract.name,
   }, { bg: COL.LOAN_BG, bold: true });
 
-  // Per-contract sections
-  const showContractHeaders = data.contracts.length > 1;
+  // Per-contract sections.
+  // Reference invoice ALWAYS shows a centered contract header + a
+  // billing-code sub-header before the WO# rows, even for a single
+  // contract. The single-contract codepath used to skip both, which is
+  // why the generated PDF had "WO# rows floating with no per-contract
+  // grouping. Owner-flagged 2026-05-06.
   for (const cs of data.contracts) {
-    if (showContractHeaders) {
-      // Contract header row
-      drawRow({
-        item: cs.friendly_label,
-      }, { bg: COL.CONTRACT_BG, bold: true });
+    // Contract header row — full-width centered, gray bg.
+    drawRow({ text: cs.friendly_label }, {
+      bg: COL.CONTRACT_BG, bold: true, spanAll: true,
+    });
+
+    // Billing-code sub-header — bold code in the Item column, rest
+    // empty. Reference shows this row above each contract's WO list.
+    if (m.job_billing_code) {
+      drawRow({ item: m.job_billing_code }, { bold: true });
     }
-    // WO rows — billing code on first WO row only.
-    // For permitting: footage gets its own column; hours derived from
-    // amount / rate (the calc that produced the amount: hours = miles*27.5,
-    // floored at 25 when miles<1).
-    let firstWo = true;
+
+    // WO rows. The rate column is populated EVERY row (was set in code
+    // already but the layout makes sure it shows). For permitting:
+    // footage gets its own column; hours derived from amount / rate.
     for (const wo of cs.wos) {
-      const cells = { item: firstWo ? (m.job_billing_code || '') : '',
-                      desc: `WO# ${wo.work_order_number}`,
-                      amt:  fmtMoney(wo.amount) };
+      const cells = {
+        desc: `WO# ${wo.work_order_number}`,
+        amt:  fmtMoney(wo.amount),
+      };
       if (isPermitting) {
         const derivedHours = m.rate > 0 ? wo.amount / m.rate : 0;
         cells.foot = wo.footage > 0 ? fmtFootage(wo.footage) : '';
@@ -678,46 +714,40 @@ function renderSummaryPage(doc, data, isFootage) {
         cells.rate = fmtMoney(m.rate) + '/hr';
       }
       drawRow(cells);
-      firstWo = false;
     }
-    // Per-contract subtotal — only if multi-contract
-    if (showContractHeaders) {
-      // Hours derived for permitting subtotal too (amount / rate aggregates
-      // the same way since it's a linear function of amount).
-      const subQty = isPermitting
-        ? fmtHours(m.rate > 0 ? cs.contract_amount / m.rate : 0)
-        : (isFootage ? fmtFootage(cs.contract_footage) : fmtHours(cs.contract_hours));
-      const subCells = {
-        desc: `${cs.friendly_label} Subtotal`,
-        qty: subQty,
-        amt: fmtMoney(cs.contract_amount),
-      };
-      if (isPermitting) subCells.foot = fmtFootage(cs.contract_footage);
-      drawRow(subCells, { bg: COL.CONTRACT_SUBTOTAL_BG, bold: true });
-    }
+
+    // Per-contract subtotal. Always emitted (was conditional on
+    // multi-contract before). Item column carries the label;
+    // description blank; rate column intentionally empty per the
+    // reference invoice (the rate is the same row-by-row, not
+    // re-stated on a subtotal). Owner-flagged 2026-05-06.
+    const subQty = isPermitting
+      ? fmtHours(m.rate > 0 ? cs.contract_amount / m.rate : 0)
+      : (isFootage ? fmtFootage(cs.contract_footage) : fmtHours(cs.contract_hours));
+    const subCells = {
+      item: `${cs.friendly_label} Subtotal`,
+      qty: subQty,
+      amt: fmtMoney(cs.contract_amount),
+    };
+    if (isPermitting) subCells.foot = fmtFootage(cs.contract_footage);
+    drawRow(subCells, { bg: COL.CONTRACT_SUBTOTAL_BG, bold: true });
   }
 
-  // Loan-wide subtotal — black bg, white text. The owner's screenshot has
-  // this even on single-contract invoices.
+  // Final total row. Reference shows "Total" in the Item column with
+  // the rate ($90.00/hr) populated alongside the qty + amount, on a
+  // dark blue bg with white text. We keep that single-bottom-row look
+  // and drop the older black "Loan Subtotal" intermediary because for
+  // a single-contract invoice it's redundant with the per-contract
+  // subtotal above.
   const totalQty = isPermitting
     ? fmtHours(m.rate > 0 ? data.totals.amount / m.rate : 0)
     : (isFootage ? fmtFootage(data.totals.footage) : fmtHours(data.totals.hours));
-  const loanCells = {
-    desc: m.engineering_contract.loan_name
-      ? `${m.engineering_contract.loan_name} Subtotal`
-      : 'Subtotal',
-    qty: totalQty,
-    amt: fmtMoney(data.totals.amount),
-  };
-  if (isPermitting) loanCells.foot = fmtFootage(data.totals.footage);
-  drawRow(loanCells, { bg: COL.LOAN_SUBTOTAL_BG, textColor: COL.LOAN_SUBTOTAL_TEXT, bold: true });
-
-  // Final total row — blue bg, white text. Renamed "Summary" → "Total"
-  // to match the customer-facing template.
-  doc.moveDown(0.2);
   const totalCells = {
-    desc: 'Total',
+    item: 'Total',
     qty: totalQty,
+    rate: isPermitting || !isFootage
+      ? (m.rate > 0 ? fmtMoney(m.rate) + '/hr' : '')
+      : (m.rate > 0 ? fmtMoney(m.rate) + '/mi' : ''),
     amt: fmtMoney(data.totals.amount),
   };
   if (isPermitting) totalCells.foot = fmtFootage(data.totals.footage);
@@ -725,111 +755,143 @@ function renderSummaryPage(doc, data, isFootage) {
 }
 
 // ─── Timecards detail pages (hourly only) ──────────────────────────────
+//
+// Owner-flagged 2026-05-06: previous output had the staff name as a
+// section heading above each per-employee block, with a "Date / Week
+// Ending / WO# / Contract / Code / Hours" table per employee. The
+// reference invoice owner uploaded uses ONE table for the whole
+// invoice with columns "Date / Name / WO # / Contract / Hours" — the
+// staff name lives on each row, no per-employee splits, no Week
+// Ending or Code column. This rewrite matches that.
 function renderTimecardsPages(doc, data) {
   const m = data.meta;
   const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
-  // Page header (repeats per page via PDFKit's page-add hook would be
-  // cleaner, but for a single-page-per-employee layout we render header
-  // once at top of each section).
-  doc.font(FONT.BODY_BOLD).fontSize(16).fillColor('#000');
-  doc.text(`${m.job_name} Timecards`, doc.page.margins.left, doc.page.margins.top);
-  doc.font(FONT.ITALIC).fontSize(11).fillColor('#444');
-  doc.text(`${m.month_year} · ${m.engineering_contract.loan_name || m.engineering_contract.name}`);
-  doc.moveDown(0.6);
-
-  for (let i = 0; i < data.timecards.length; i++) {
-    if (i > 0) doc.addPage();
-    renderTimecardSection(doc, data.timecards[i], m);
+  // Centered logo + title — same positioning as the summary page so
+  // the document reads as a single deliverable.
+  const startY = doc.y;
+  const logoWidth = 220;
+  const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
+  let postLogoY = startY;
+  if (fs.existsSync(LOGO_PATH)) {
+    try {
+      doc.image(LOGO_PATH, logoX, startY, { width: logoWidth });
+      postLogoY = startY + (logoWidth / 3.8) + 10;
+    } catch (e) {}
   }
-}
+  doc.y = postLogoY;
 
-function renderTimecardSection(doc, tc, meta) {
-  const tableX = doc.page.margins.left;
+  doc.font(FONT.BODY_BOLD).fontSize(16).fillColor('#000');
+  doc.text('Timecard Detail', doc.page.margins.left, doc.y, {
+    width: pageWidth, align: 'center',
+  });
+  doc.font(FONT.ITALIC).fontSize(11).fillColor('#444');
+  doc.text(m.month_year, doc.page.margins.left, doc.y + 2, {
+    width: pageWidth, align: 'center',
+  });
+  doc.moveDown(1);
+
+  // Single-table layout. Flatten every entry across every staff member
+  // into one chronological list, then sort by date + name so the table
+  // reads naturally.
+  const allEntries = [];
+  for (const tc of data.timecards) {
+    for (const e of tc.entries) {
+      allEntries.push({
+        date: e.date,
+        name: tc.staff_name,
+        wo: e.wo,
+        contract: e.contract_friendly || e.contract_number || '',
+        hours: e.hours,
+      });
+    }
+  }
+  allEntries.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
   const cols = [
-    { key: 'date',   label: 'Date',        width: 90,  align: 'left'  },
-    { key: 'week',   label: 'Week Ending', width: 90,  align: 'left'  },
-    { key: 'wo',     label: 'WO #',        width: 90,  align: 'left'  },
-    { key: 'contract', label: 'Contract',  width: 130, align: 'left'  },
-    { key: 'code',   label: 'Code',        width: 70,  align: 'left'  },
-    { key: 'hours',  label: 'Hours',       width: 60,  align: 'right' },
+    { key: 'date',     label: 'Date',     width: 100, align: 'left'  },
+    { key: 'name',     label: 'Name',     width: 130, align: 'left'  },
+    { key: 'wo',       label: 'WO #',     width: 80,  align: 'left'  },
+    { key: 'contract', label: 'Contract', width: 130, align: 'left'  },
+    { key: 'hours',    label: 'Hours',    width: 80,  align: 'right' },
   ];
   const tableTotalWidth = cols.reduce((s, c) => s + c.width, 0);
-  // Same dynamic-row-height approach as the summary table — minimum row +
-  // grow on wrap. Fixes overlapping text when a contract or WO label
-  // wraps to two lines.
-  const MIN_ROW_H = 18;
-  const ROW_PAD_TOP = 4;
-  const ROW_PAD_BOTTOM = 4;
-
-  // Section header — employee name in bold, summary line below
-  doc.font(FONT.BODY_BOLD).fontSize(13).fillColor('#000');
-  doc.text(tc.staff_name, tableX);
-  doc.font(FONT.BODY).fontSize(9).fillColor('#666');
-  doc.text(`${tc.entries.length} entries · ${fmtHours(tc.total_hours)} hrs total`, tableX);
-  doc.moveDown(0.3);
+  const tableX = (doc.page.width - tableTotalWidth) / 2;
+  const MIN_ROW_H = 22;
+  const ROW_PAD_TOP = 6;
+  const ROW_PAD_BOTTOM = 6;
 
   function drawRow(cells, opts = {}) {
     const y = doc.y;
-    // Measure tallest cell so the row sizes itself before painting bg.
-    doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(8.5);
+    const fontSize = opts.fontSize || 9;
+    doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize);
     let maxTextH = 0;
     for (const c of cols) {
       const text = cells[c.key] != null ? String(cells[c.key]) : '';
-      const h = doc.heightOfString(text, { width: c.width - 8, align: c.align });
+      const h = doc.heightOfString(text, { width: c.width - 12, align: c.align });
       if (h > maxTextH) maxTextH = h;
     }
     const rowH = Math.max(MIN_ROW_H, Math.ceil(maxTextH + ROW_PAD_TOP + ROW_PAD_BOTTOM));
 
-    if (opts.bg) {
-      doc.rect(tableX, y, tableTotalWidth, rowH).fill(opts.bg);
-    }
-    doc.strokeColor(COL.BORDER).lineWidth(0.4);
+    if (opts.bg) doc.rect(tableX, y, tableTotalWidth, rowH).fill(opts.bg);
+    doc.strokeColor(COL.BORDER).lineWidth(0.5);
     doc.rect(tableX, y, tableTotalWidth, rowH).stroke();
     let cx = tableX;
-    doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(8.5)
+    doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize)
        .fillColor(opts.textColor || COL.BODY_TEXT);
     for (const c of cols) {
       doc.text(cells[c.key] != null ? String(cells[c.key]) : '',
-        cx + 4, y + ROW_PAD_TOP, { width: c.width - 8, align: c.align });
+        cx + 6, y + ROW_PAD_TOP, { width: c.width - 12, align: c.align });
       cx += c.width;
     }
     doc.y = y + rowH;
   }
 
-  // Header
-  drawRow(Object.fromEntries(cols.map(c => [c.key, c.label])),
-    { bg: COL.HEADER_BG, textColor: COL.HEADER_TEXT, bold: true });
+  function drawHeaderRow() {
+    drawRow(Object.fromEntries(cols.map(c => [c.key, c.label])),
+      { bg: COL.HEADER_BG, textColor: COL.HEADER_TEXT, bold: true });
+  }
+  drawHeaderRow();
 
-  // Body rows — auto-page-break if we run out of room
-  for (const e of tc.entries) {
-    // Crude page-break check: leave room for the total row at the bottom.
-    // Use MIN_ROW_H as the worst-case lower-bound estimate; rows that wrap
-    // simply trigger an earlier page break, which is fine.
-    if (doc.y + MIN_ROW_H > doc.page.height - doc.page.margins.bottom - 30) {
+  let totalHours = 0;
+  for (const e of allEntries) {
+    // Auto page break — leave room for total row + small footer margin.
+    if (doc.y + MIN_ROW_H + 28 > doc.page.height - doc.page.margins.bottom) {
       doc.addPage();
-      // Reprint a slim header on continuation pages for readability
-      doc.font(FONT.BODY_BOLD).fontSize(11).fillColor('#000');
-      doc.text(`${tc.staff_name} (continued)`, tableX);
-      doc.moveDown(0.3);
-      drawRow(Object.fromEntries(cols.map(c => [c.key, c.label])),
-        { bg: COL.HEADER_BG, textColor: COL.HEADER_TEXT, bold: true });
+      drawHeaderRow();
     }
     drawRow({
-      date:     e.date,
-      week:     e.week_ending,
-      wo:       'WO# ' + e.wo,
-      contract: e.contract_friendly || e.contract_number || '',
-      code:     meta.job_billing_code || '',
+      date:     formatDateLong(e.date),
+      name:     e.name,
+      wo:       e.wo,
+      contract: e.contract,
       hours:    fmtHours(e.hours),
     });
+    totalHours += parseFloat(e.hours) || 0;
   }
 
-  // Total row
+  // Total row — rate column is the right-most "Hours" col here, so
+  // "Total Hours" lives in the Contract column for visual alignment
+  // with the value to its right.
   drawRow({
-    week: 'Total',
-    hours: fmtHours(tc.total_hours),
-  }, { bg: COL.LOAN_SUBTOTAL_BG, textColor: COL.LOAN_SUBTOTAL_TEXT, bold: true });
+    contract: 'Total Hours',
+    hours: fmtHours(totalHours),
+  }, { bg: COL.SUMMARY_BG, textColor: COL.SUMMARY_TEXT, bold: true });
+}
+
+// "2026-03-05" → "Mar 5, 2026" — matches the reference's "May 1, 2026"
+// long-form. Fall back to the input string if parsing breaks for any
+// reason.
+function formatDateLong(isoDate) {
+  if (!isoDate) return '';
+  try {
+    const [y, mo, d] = String(isoDate).split('-').map(Number);
+    if (!y || !mo || !d) return isoDate;
+    return `${MONTH_NAMES[mo - 1].slice(0, 3)} ${d}, ${y}`;
+  } catch { return String(isoDate); }
 }
 
 // ─── Filename helper ──────────────────────────────────────────────────────
