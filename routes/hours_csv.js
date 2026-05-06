@@ -702,19 +702,21 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           continue;
         }
 
-        // Owner rule: when the matched project has a job assigned, use
-        // THAT job's name as the time_entry's job_title. The Hours tab
-        // groups by `e.project_job_name || e.job_title` and the
-        // /api/time-entries SELECT now exposes project_job_name from
-        // the project's job_id, but stamping the project's job name
-        // onto job_title at commit time also makes the timecard view
-        // (which reads job_title directly) match what the project
-        // actually does.
+        // The validate stage already resolved a job for each row from
+        // (in priority order) billing_code lookup -> CSV column ->
+        // filename heuristic, and the user confirmed it in the
+        // row-by-row ledger. r.job_title is that confirmed value —
+        // preserve it. Only fall back to the project's assigned
+        // job_name when the row itself carried no job (rare; e.g. a
+        // CSV with no billing_code, no title column, and an unhelpful
+        // filename). Then apply_job_title is the last-resort blanket.
         //
-        // This is what the AI's log_hours tool does — falling back to
-        // the CSV's free-text column was the source of "Inspection
-        // projects show as Other" in the Hours tab.
-        const finalJobTitle = r.project_job_name || r.job_title || apply_job_title || null;
+        // Earlier this preferred r.project_job_name first, which broke
+        // the "matched project has the wrong job_id" case — a leaf
+        // mis-tagged with the Other job would clobber a correctly
+        // identified Inspection from the billing-code lookup.
+        // (Owner-flagged 2026-05-06.)
+        const finalJobTitle = r.job_title || r.project_job_name || apply_job_title || null;
 
         // Snap to 0.25 grid — owner rule that hours always live on
         // quarter-hour increments. Applied at INSERT time so a CSV row

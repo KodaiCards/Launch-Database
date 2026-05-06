@@ -203,7 +203,12 @@
         contract: e => e.contract_number || '— No contract —',
         wo:       e => e.work_order_number || '— No WO# —',
         staff:    e => e.staff_name || '— Unassigned —',
-        job:      e => e.project_job_name || e.job_title || '— No job —',
+        // Entry's own job_title is the authoritative job for that entry
+        // (CSV billing-code lookup, AI log_hours tool, or admin manual
+        // edit all set it). project_job_name is the project's default
+        // job — useful as a fallback when the entry carries no
+        // job_title at all.
+        job:      e => e.job_title || e.project_job_name || '— No job —',
       };
       const labels = { client: 'Client', contract: 'Contract', wo: 'WO #', staff: 'Staff', job: 'Job' };
       const keyFn = keyFns[groupBy];
