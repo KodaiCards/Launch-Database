@@ -152,8 +152,10 @@ html,body{height:100%;background:var(--vetro-bg);color:var(--vetro-text-primary)
 a{color:var(--primary);text-decoration:none}
 a:hover{text-decoration:underline}
 
-/* Header */
-.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:0 16px;height:48px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+/* ── 5.C.3 VETRO layout chrome ───────────────────────────────────────────── */
+
+/* Header — VETRO navy (#003F72) solid bar, 52px */
+.header{background:var(--vetro-primary);color:#fff;padding:0 16px;height:var(--header-height);display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);position:fixed;top:0;left:0;right:0;z-index:300}
 .header .logo{font-weight:700;font-size:14px;letter-spacing:0.3px;display:flex;align-items:center;gap:8px}
 .header .divider{width:1px;height:22px;background:rgba(255,255,255,.25)}
 .header .title{font-size:13px;font-weight:500;flex:1;display:flex;align-items:center;gap:8px}
@@ -161,23 +163,108 @@ a:hover{text-decoration:underline}
 .user-pill{font-size:11px;color:rgba(255,255,255,.85);padding:4px 10px;border:1px solid rgba(255,255,255,.25);border-radius:12px;cursor:pointer}
 .user-pill:hover{background:rgba(255,255,255,.12)}
 
-/* Layout */
-.app{display:grid;grid-template-columns:280px 1fr 320px;height:calc(100vh - 48px)}
-.sidebar{background:var(--surface-2);border-right:1px solid var(--border-weak);overflow:auto;padding:10px}
-.canvas-pane{background:var(--surface-3);position:relative;overflow:hidden}
-.inspector{background:var(--surface-2);border-left:1px solid var(--border-weak);overflow:auto;padding:10px}
+/* App shell — fixed under the header */
+.app{position:fixed;top:var(--header-height);left:0;right:0;bottom:0;display:flex;flex-direction:row}
 
-/* Sidebar — project list */
+/* ── Left rail (260px, VETRO Map Data panel) ── */
+.sidebar{
+  width:var(--left-rail-width);
+  flex:0 0 var(--left-rail-width);
+  background:var(--vetro-bg-panel);
+  border-right:1px solid var(--vetro-divider);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:10px;
+  box-shadow:var(--shadow-panel);
+  z-index:200;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Rail section headers — VETRO "Map Data" style (uppercase, muted, 12px) */
 .sidebar-section{margin-bottom:14px}
-.sidebar-section h3{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.sidebar-section h3{font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--vetro-text-muted);margin-bottom:6px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+
+/* Layer tree rows */
 .proj-list{list-style:none}
-.proj-item{padding:8px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:6px}
-.proj-item:hover{background:var(--surface-1)}
-.proj-item.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
-html[data-theme="dark"] .proj-item.active{color:var(--text)}
+.proj-item{padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:var(--field-row-min-height)}
+.proj-item:hover{background:var(--vetro-bg-hover)}
+.proj-item.active{background:var(--vetro-bg-hover);border-color:var(--vetro-primary);color:var(--vetro-primary)}
+html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .proj-item .name{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.proj-item .badge{font-size:10px;color:var(--text-muted);background:var(--surface-3);padding:1px 5px;border-radius:8px}
-.proj-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
+.proj-item .badge{font-size:10px;color:var(--vetro-text-muted);background:var(--vetro-bg-panel-secondary);padding:1px 5px;border-radius:8px}
+.proj-meta{font-size:10px;color:var(--vetro-text-muted);margin-top:2px}
+
+/* ── Canvas pane — fills remaining space ── */
+.canvas-pane{flex:1 1 0;min-width:0;background:var(--vetro-bg-panel-secondary);position:relative;overflow:hidden}
+
+/* ── Right inspector — slide-in from right (320px) ── */
+/* The inspector is kept as a flex child but uses a CSS transition for slide-in. */
+.inspector{
+  width:var(--inspector-width);
+  flex:0 0 var(--inspector-width);
+  background:var(--vetro-bg-panel);
+  border-left:1px solid var(--vetro-divider);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:10px;
+  box-shadow:var(--shadow-panel);
+  z-index:200;
+  /* Slide-in transition — 220ms ease-out per research/07 section 9 */
+  transition:width 0.22s ease-out,flex-basis 0.22s ease-out,opacity 0.22s ease-out;
+}
+/* Inspector hidden state — collapse to 0 width */
+.inspector.inspector-closed{
+  width:0;
+  flex-basis:0;
+  overflow:hidden;
+  opacity:0;
+  padding:0;
+  border-left:none;
+}
+
+/* ── Bottom attribute table toggle ── */
+/* The toggle button is a small bar docked at the bottom of the canvas pane. */
+.attr-table-toggle{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:28px;
+  background:var(--vetro-primary);
+  color:#fff;
+  border:none;
+  font-size:11px;
+  font-weight:600;
+  font-family:var(--font-stack);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  z-index:15;
+  letter-spacing:0.3px;
+  transition:background 0.12s;
+}
+.attr-table-toggle:hover{background:var(--vetro-primary-dark)}
+
+/* The docked bottom attribute table panel */
+.bottom-attr-table{
+  position:absolute;
+  bottom:28px; /* sits just above the toggle bar */
+  left:0;
+  right:0;
+  height:var(--attr-table-height);
+  background:var(--vetro-bg-panel);
+  border-top:2px solid var(--vetro-primary);
+  box-shadow:0 -2px 8px rgba(0,0,0,0.12);
+  z-index:14;
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+}
+.bottom-attr-table.is-open{display:flex}
+.bottom-attr-table-body{flex:1;overflow:auto}
 
 /* Toolbar (above canvas) */
 .toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
@@ -319,14 +406,13 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .toast.error{background:var(--danger);color:#fff}
 .toast.success{background:var(--success);color:#fff}
 
-/* Mobile — inspector slides over from right */
+/* Mobile — collapse sidebar to overlay, inspector full-width overlay */
 @media (max-width:900px){
-  .app{grid-template-columns:1fr}
-  .sidebar,.inspector{position:absolute;top:48px;bottom:0;width:80%;z-index:10;display:none}
-  .sidebar{left:0}
-  .sidebar.open{display:block}
-  .inspector{right:0}
-  .inspector.open{display:block}
+  .sidebar{position:fixed;top:var(--header-height);left:0;bottom:0;width:80%;z-index:400;transform:translateX(-100%);transition:transform 0.22s ease-out}
+  .sidebar.open{transform:translateX(0)}
+  .inspector{position:fixed;top:var(--header-height);right:0;bottom:0;width:90%;z-index:400;
+              transform:translateX(100%);transition:transform 0.22s ease-out;flex-basis:auto}
+  .inspector:not(.inspector-closed){transform:translateX(0)}
 }
 </style>
 </head>
@@ -351,8 +437,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 
 <div class="app">
 
-  <!-- ─── Left sidebar: project list ─── -->
+  <!-- ─── Left rail: VETRO Map Data panel ─── -->
   <aside class="sidebar" id="sidebar">
+    <!-- VETRO-style "Map Data" section label -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:10px">Map Data</div>
     <div class="sidebar-section">
       <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
       <div style="margin-bottom:8px">
@@ -467,10 +555,29 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
       <div id="matrix-table-wrap" style="padding:8px"></div>
     </div>
     <div class="warnings-banner" id="warnings-banner"></div>
+
+    <!-- 5.C.3 — Bottom attribute table (second access path to Matrix data) -->
+    <div class="bottom-attr-table" id="bottom-attr-table">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--vetro-divider);background:var(--vetro-bg-panel);flex-shrink:0">
+        <span style="font-size:11px;font-weight:600;color:var(--vetro-text-primary)"><i class="fa-solid fa-table"></i> Attribute Table</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="bottom-matrix-filter" type="text" placeholder="Filter…" class="input-sm" style="width:140px" oninput="renderBottomAttrTable()">
+          <button class="btn btn-sm" onclick="matrixExportCSV()"><i class="fa-solid fa-download"></i></button>
+          <button class="btn btn-sm" onclick="toggleBottomAttrTable()" title="Close"><i class="fa-solid fa-times"></i></button>
+        </div>
+      </div>
+      <div class="bottom-attr-table-body" id="bottom-attr-table-body"></div>
+    </div>
+
+    <!-- 5.C.3 — Bottom toggle bar: "▲ Attribute table" -->
+    <button class="attr-table-toggle" id="attr-table-toggle" onclick="toggleBottomAttrTable()">
+      <i class="fa-solid fa-chevron-up" id="attr-table-toggle-icon"></i> Attribute table
+    </button>
   </div>
 
-  <!-- ─── Right sidebar: inspector ─── -->
-  <aside class="inspector" id="inspector">
+  <!-- ─── Right inspector: slide-in panel (5.C.3) ─── -->
+  <!-- Starts closed; opens when a feature is selected. -->
+  <aside class="inspector inspector-closed" id="inspector">
     <div id="inspector-empty" class="empty-pane">
       Select a project to begin.<br><br>
       <small>Click a closure on the canvas to view its trays and add splices.</small>
@@ -1972,20 +2079,78 @@ function selectThing(type, id) {
   }
 }
 
+// 5.C.3 — Toggle the bottom attribute table docked panel.
+function toggleBottomAttrTable() {
+  const panel = document.getElementById('bottom-attr-table');
+  const icon  = document.getElementById('attr-table-toggle-icon');
+  if (!panel) return;
+  const isOpen = panel.classList.contains('is-open');
+  panel.classList.toggle('is-open', !isOpen);
+  if (icon) {
+    icon.className = isOpen ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+  }
+  if (!isOpen) renderBottomAttrTable();
+}
+
+// 5.C.3 — Render matrix data into the bottom attribute table panel.
+function renderBottomAttrTable() {
+  const wrap = document.getElementById('bottom-attr-table-body');
+  if (!wrap) return;
+  if (!state.data) { wrap.innerHTML = '<div class="empty-pane" style="padding:16px">No project loaded.</div>'; return; }
+  // Reuse the matrix row builder logic; filter by the bottom panel's search.
+  const filterText = (document.getElementById('bottom-matrix-filter')?.value || '').toLowerCase();
+  let rows = _matrixGetRows ? _matrixGetRows() : [];
+  if (filterText) rows = rows.filter(r => r._filterText && r._filterText.includes(filterText));
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty-pane" style="padding:16px">No splices to display.</div>';
+    return;
+  }
+  const cols = ['#','Cable A','Tube A','Fiber A','Cable B','Tube B','Fiber B','Type','Closure','Location'];
+  wrap.innerHTML = `<table class="table" style="min-width:800px">
+    <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>
+      ${rows.map((r,i)=>`<tr>
+        <td>${i+1}</td>
+        <td>${esc(r.a_cable||'')}</td><td>${esc(r.a_tube_color||'')}</td><td>${esc(r.a_fiber_color||'')}</td>
+        <td>${esc(r.b_cable||'')}</td><td>${esc(r.b_tube_color||'')}</td><td>${esc(r.b_fiber_color||'')}</td>
+        <td>${esc(r.splice_type||'')}</td><td>${esc(r.closure_model||'')}</td><td>${esc(r.location||'')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// 5.C.3 — Open the inspector panel (slide-in). Called from renderInspector.
+function _openInspectorPanel() {
+  const el = document.getElementById('inspector');
+  if (el) el.classList.remove('inspector-closed');
+}
+
+// 5.C.3 — Close the inspector panel (slide-out). Exposed globally.
+function closeInspectorPanel() {
+  const el = document.getElementById('inspector');
+  if (el) el.classList.add('inspector-closed');
+  state.selection = null;
+  if (state.konva) drawCanvasContents();
+  if ((state.activeView === 'map' || state.activeView === 'split') && state.map) refreshMapLayers();
+}
+
 function renderInspector() {
   const empty = document.getElementById('inspector-empty');
   const body = document.getElementById('inspector-body');
   if (!state.data) {
     empty.style.display = 'block';
     body.style.display = 'none';
+    closeInspectorPanel();
     return;
   }
   if (!state.selection) {
     empty.style.display = 'block';
     empty.innerHTML = `Select an object on the canvas, or use the project actions on the left.`;
     body.style.display = 'none';
+    closeInspectorPanel();
     return;
   }
+  _openInspectorPanel();
   empty.style.display = 'none';
   body.style.display = 'block';
 
@@ -4060,6 +4225,8 @@ async function deleteCurrentProject() {
     document.getElementById('btn-save-rev').disabled = true;
     document.getElementById('inspector-body').style.display = 'none';
     document.getElementById('inspector-empty').style.display = 'block';
+    const insp = document.getElementById('inspector');
+    if (insp) insp.classList.add('inspector-closed');
     document.getElementById('lock-banner').style.display = 'none';
     await loadProjects();
   } catch (e) { toast(e.message, 'error'); }
