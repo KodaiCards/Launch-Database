@@ -4214,6 +4214,26 @@ function _normalizeConstructionType(t) {
   return null;
 }
 
+// Coord-by-coord LineString equality with an epsilon tolerance. Used
+// by _diffIngestAgainstLive to avoid phantom path-changed updates when
+// the same KMZ round-trips through a JS float (38.9 vs 38.90000000000001).
+// 1e-7 matches DECIMAL(10,7) storage precision; anything tighter is
+// noise below what the satellite imagery resolves anyway.
+function _pathsCoordsEqual(a, b, eps = 1e-7) {
+  if (!a || !b) return a === b;
+  if (a.type !== 'LineString' || b.type !== 'LineString') return false;
+  const ac = a.coordinates, bc = b.coordinates;
+  if (!Array.isArray(ac) || !Array.isArray(bc) || ac.length !== bc.length) return false;
+  for (let i = 0; i < ac.length; i++) {
+    const pa = ac[i], pb = bc[i];
+    if (!Array.isArray(pa) || !Array.isArray(pb) || pa.length !== pb.length) return false;
+    for (let j = 0; j < pa.length; j++) {
+      if (Math.abs(Number(pa[j]) - Number(pb[j])) > eps) return false;
+    }
+  }
+  return true;
+}
+
 // Compare a parsed ingest payload against the live project tree and
 // produce add/update/delete buckets per entity type.
 //
@@ -4246,8 +4266,14 @@ function _diffIngestAgainstLive(parsed, live) {
     if (match) {
       matchedLocIds.add(match.id);
       const updates = {};
-      if (incoming.latitude  != null && Number(match.latitude)  !== Number(incoming.latitude))  updates.latitude  = incoming.latitude;
-      if (incoming.longitude != null && Number(match.longitude) !== Number(incoming.longitude)) updates.longitude = incoming.longitude;
+      // Epsilon comparison on lat/lon. Postgres returns DECIMAL(10,7)
+      // as a string with up to 7 decimal places; an incoming KMZ may
+      // round-trip through a JS float that has trailing precision
+      // noise (e.g. 38.90000000000001). Bare !== would flag those as
+      // updates and produce phantom approvals on a clean re-import.
+      // 1e-7 matches the storage precision floor.
+      if (incoming.latitude  != null && Math.abs(Number(match.latitude)  - Number(incoming.latitude))  > 1e-7) updates.latitude  = incoming.latitude;
+      if (incoming.longitude != null && Math.abs(Number(match.longitude) - Number(incoming.longitude)) > 1e-7) updates.longitude = incoming.longitude;
       if (incoming.type && incoming.type !== match.type) updates.type = incoming.type;
       if (incoming.notes && incoming.notes !== match.notes) updates.notes = incoming.notes;
       if (Object.keys(updates).length) {
@@ -4286,10 +4312,13 @@ function _diffIngestAgainstLive(parsed, live) {
     if (match) {
       matchedCableIds.add(match.id);
       const updates = {};
-      // Path is the most common change for cables. Only stamp it when
-      // it actually differs to avoid noisy "no-op" approvals.
+      // Path is the most common change for cables. Use coord-by-coord
+      // epsilon comparison — JSON.stringify equality flags spurious
+      // updates when the same path round-trips through floating-point
+      // serialization (Worker B ISSUE-3). 1e-7 matches the storage
+      // precision floor in DECIMAL(10,7) for latitude/longitude.
       if (incoming.path_geojson &&
-          JSON.stringify(match.path_geojson) !== JSON.stringify(incoming.path_geojson)) {
+          !_pathsCoordsEqual(match.path_geojson, incoming.path_geojson)) {
         updates.path_geojson = incoming.path_geojson;
       }
       if (incoming.fiber_count && match.fiber_count !== incoming.fiber_count) {

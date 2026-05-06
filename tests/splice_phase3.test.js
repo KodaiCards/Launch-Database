@@ -22,12 +22,12 @@
 //   body carries the current status so the caller can react. Test 11
 //   asserts the new shape.
 //
-//   ISSUE-3: Round-trip diff may produce phantom location-coordinate
-//   updates if DECIMAL(10,7) values read back from Postgres differ
-//   slightly from the parsed floats (e.g. trailing zeros). The diff
-//   uses Number() coercion on both sides, so this should be safe, but
-//   the test uses assert.equal(summary.updates.locations, 0) to catch
-//   any regression.
+//   ISSUE-3 (fixed): Round-trip diff used JSON.stringify equality on
+//   path_geojson and bare !== on lat/lon, both of which flag phantom
+//   updates if a JS float round-trips with trailing precision noise.
+//   _diffIngestAgainstLive now uses _pathsCoordsEqual (epsilon=1e-7)
+//   for paths and Math.abs(...) > 1e-7 for lat/lon. Test 12 still
+//   asserts updates===0 to catch any regression.
 
 'use strict';
 
