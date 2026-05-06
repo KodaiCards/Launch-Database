@@ -191,6 +191,18 @@ function _mintFieldToken() {
   return crypto.randomBytes(18).toString('base64url');
 }
 
+// Phase 3B — lazy archiver require (matches puppeteer/multer pattern).
+let _archiverMod = null;
+function _getArchiver() {
+  if (_archiverMod) return _archiverMod;
+  try { _archiverMod = require('archiver'); }
+  catch (e) {
+    throw new Error('archiver not installed; KMZ export unavailable. ' +
+                    'Run `npm install archiver`. Original: ' + e.message);
+  }
+  return _archiverMod;
+}
+
 module.exports = function installSpliceRoutes(app, pool, mw) {
   const { requireAuth } = mw;
 
@@ -2102,6 +2114,40 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       }
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
+
+  // Phase 3B — KMZ export. Generates a KML document covering every
+  // location with coords + every cable with a path_geojson, embedded
+  // in ExtendedData with the splice_location_id / splice_cable_id so
+  // a round-trip through Phase 3C re-import re-binds to the same
+  // rows. Streams as application/vnd.google-earth.kmz.
+  app.get('/api/splice/projects/:id/export-kmz', requireAuth(), async (req, res) => {
+    try {
+      const data = await _loadProjectForExport(pool, req.params.id);
+      if (!data) return res.status(404).json({ error: 'Project not found' });
+      const kml = _renderKml(data);
+      const archiver = _getArchiver();
+      const filename = `splice_${_safeFilename(data.project.name)}_${new Date().toISOString().slice(0,10)}.kmz`;
+      res.set({
+        'Content-Type': 'application/vnd.google-earth.kmz',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      });
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      archive.on('error', (err) => {
+        // Headers already sent in the streaming case; can't write JSON.
+        // Log so the operator at least sees the failure on the splice
+        // service stdout.
+        console.error('[splice/export-kmz] archive error:', err);
+        try { res.end(); } catch {}
+      });
+      archive.pipe(res);
+      // KMZ convention: the KML document is named "doc.kml" at archive
+      // root. Google Earth, ArcGIS, QGIS all key off this name.
+      archive.append(kml, { name: 'doc.kml' });
+      await archive.finalize();
+    } catch (e) {
+      if (!res.headersSent) res.status(500).json({ error: e.message });
+    }
+  });
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -3203,4 +3249,127 @@ function _renderFieldErrorHtml(message) {
 <title>Field link error</title>
 <style>body{font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;color:#1c1c1c;background:#f5f6f8;margin:0;padding:40px 20px;text-align:center}.box{max-width:420px;margin:0 auto;background:#fff;border:1px solid #e2e4e9;border-radius:8px;padding:24px}h1{font-size:17px;color:#a31616;margin:0 0 10px}p{margin:0;color:#3b4252}</style>
 </head><body><div class="box"><h1>This link won't open</h1><p>${_esc(message)}</p></div></body></html>`;
+}
+
+// ─── KML rendering (Phase 3B) ───────────────────────────────────────────
+
+// Serialize a project's locations + cables to a KML document. Locations
+// land in a "Locations" folder, cables in a "Cables" folder. The
+// splice_location_id / splice_cable_id ExtendedData entries are the
+// breadcrumb that lets a Phase 3C round-trip re-bind to the same DB
+// rows on import — match those first, fall back to name match, fall
+// back to "this is a new entity."
+function _renderKml(data) {
+  const proj = data.project || {};
+  const projName = _kmlEsc(proj.name || 'Splice project');
+  const projDesc = _kmlEsc(proj.notes || '');
+
+  const locsWithGeo = (data.locations || []).filter(l =>
+    l.latitude != null && l.longitude != null
+  );
+  const cablesWithPath = (data.cables || []).filter(c =>
+    c.path_geojson && Array.isArray(c.path_geojson.coordinates) &&
+    c.path_geojson.coordinates.length >= 2
+  );
+
+  // Closures-per-location cardinality is useful for the splicer's GIS
+  // person and for round-trip diff. Stick it in ExtendedData.
+  const closuresByLoc = new Map();
+  for (const cl of (data.closures || [])) {
+    if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
+    closuresByLoc.get(cl.location_id).push(cl);
+  }
+
+  const locPlacemarks = locsWithGeo.map(l => {
+    const closuresHere = closuresByLoc.get(l.id) || [];
+    const styleId = closuresHere.length ? '#splice-closure-loc' : '#splice-bare-loc';
+    return `
+      <Placemark>
+        <name>${_kmlEsc(l.name)}</name>
+        <styleUrl>${styleId}</styleUrl>
+        <ExtendedData>
+          <Data name="splice_location_id"><value>${_kmlEsc(l.id)}</value></Data>
+          <Data name="type"><value>${_kmlEsc(l.type || '')}</value></Data>
+          <Data name="sequence_index"><value>${Number(l.sequence_index || 0)}</value></Data>
+          <Data name="closure_count"><value>${closuresHere.length}</value></Data>
+          ${closuresHere.length ? `<Data name="closure_models"><value>${_kmlEsc(closuresHere.map(c => c.model || '').filter(Boolean).join('; '))}</value></Data>` : ''}
+          ${l.notes ? `<Data name="notes"><value>${_kmlEsc(l.notes)}</value></Data>` : ''}
+        </ExtendedData>
+        <Point><coordinates>${Number(l.longitude)},${Number(l.latitude)},0</coordinates></Point>
+      </Placemark>`;
+  }).join('');
+
+  const cablePlacemarks = cablesWithPath.map(c => {
+    const coords = c.path_geojson.coordinates
+      .map(pt => `${Number(pt[0])},${Number(pt[1])},0`)
+      .join(' ');
+    return `
+      <Placemark>
+        <name>${_kmlEsc(c.name)}</name>
+        <styleUrl>#splice-cable</styleUrl>
+        <ExtendedData>
+          <Data name="splice_cable_id"><value>${_kmlEsc(c.id)}</value></Data>
+          <Data name="fiber_count"><value>${Number(c.fiber_count)}</value></Data>
+          <Data name="construction_type"><value>${_kmlEsc(c.construction_type || '')}</value></Data>
+          ${c.manufacturer_part ? `<Data name="manufacturer_part"><value>${_kmlEsc(c.manufacturer_part)}</value></Data>` : ''}
+          ${c.notes ? `<Data name="notes"><value>${_kmlEsc(c.notes)}</value></Data>` : ''}
+        </ExtendedData>
+        <LineString><coordinates>${coords}</coordinates></LineString>
+      </Placemark>`;
+  }).join('');
+
+  // KML colors are ABGR (alpha, blue, green, red), backwards from what
+  // every other graphics stack uses. ff00d4ff = full alpha, B=00 G=d4
+  // R=ff = bright yellow, the same line color as the in-app map.
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${projName}</name>
+    <description><![CDATA[${projDesc}
+
+Generated by Launch Fiber Services — Splice Matrix
+${new Date().toISOString().slice(0,10)}
+${locsWithGeo.length} location(s), ${cablesWithPath.length} cable(s)]]></description>
+    <Style id="splice-closure-loc">
+      <IconStyle>
+        <color>ffff5f1b</color>
+        <scale>1.1</scale>
+        <Icon><href>http://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href></Icon>
+      </IconStyle>
+      <LabelStyle><scale>0.8</scale></LabelStyle>
+    </Style>
+    <Style id="splice-bare-loc">
+      <IconStyle>
+        <scale>0.9</scale>
+        <Icon><href>http://maps.google.com/mapfiles/kml/paddle/wht-circle.png</href></Icon>
+      </IconStyle>
+      <LabelStyle><scale>0.7</scale></LabelStyle>
+    </Style>
+    <Style id="splice-cable">
+      <LineStyle>
+        <color>ff00d4ff</color>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+    <Folder>
+      <name>Locations</name>${locPlacemarks}
+    </Folder>
+    <Folder>
+      <name>Cables</name>${cablePlacemarks}
+    </Folder>
+  </Document>
+</kml>
+`;
+}
+
+// XML-escape with the five named entities. KML is XML so we cover '
+// and " too even though they only matter inside attribute values.
+function _kmlEsc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }

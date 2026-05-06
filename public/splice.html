@@ -194,6 +194,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
     <button class="btn btn-sm" id="btn-save-rev" title="Save a labeled revision" disabled onclick="saveRevision()"><i class="fa-solid fa-flag"></i> Save rev</button>
     <button class="btn btn-sm" id="btn-versions" title="Version history & compare" disabled onclick="openVersionsModal()"><i class="fa-solid fa-clock-rotate-left"></i> Versions</button>
     <button class="btn btn-sm" id="btn-export" disabled><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
+    <button class="btn btn-sm" id="btn-export-kmz" disabled title="Download a KMZ for Google Earth / GIS" onclick="downloadKmz()"><i class="fa-solid fa-earth-americas"></i> KMZ</button>
     <button class="btn btn-sm btn-icon" id="btn-dark" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
     <span class="user-pill" id="user-pill" onclick="signOut()" title="Click to sign out">
       <i class="fa-solid fa-user-circle"></i> <span id="user-name">…</span>
@@ -448,6 +449,7 @@ async function selectProject(id) {
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
   document.getElementById('btn-export').disabled = false;
+  document.getElementById('btn-export-kmz').disabled = false;
   document.getElementById('btn-versions').disabled = false;
   document.getElementById('btn-save-rev').disabled = false;
   renderProjectList();
@@ -1907,6 +1909,7 @@ async function deleteCurrentProject() {
     document.getElementById('map-stage').style.display = 'none';
     document.getElementById('stage').style.display = 'block';
     document.getElementById('btn-export').disabled = true;
+    document.getElementById('btn-export-kmz').disabled = true;
     document.getElementById('btn-versions').disabled = true;
     document.getElementById('btn-save-rev').disabled = true;
     document.getElementById('inspector-body').style.display = 'none';
@@ -2406,6 +2409,18 @@ document.getElementById('btn-export').addEventListener('click', () => {
   // renders it directly.
   window.open('/api/splice/projects/' + state.currentId + '/export-pdf', '_blank');
 });
+
+// Phase 3B — KMZ download. Server sends Content-Disposition: attachment
+// so the browser saves the file rather than trying to render it.
+function downloadKmz() {
+  if (!state.currentId) return;
+  const hasGeo = (state.data?.locations || []).some(l => l.latitude != null && l.longitude != null) ||
+                 (state.data?.cables   || []).some(c => c.path_geojson);
+  if (!hasGeo) {
+    if (!confirm('No locations or cables have geographic coordinates yet. The KMZ will be effectively empty. Download anyway?')) return;
+  }
+  window.location.href = '/api/splice/projects/' + state.currentId + '/export-kmz';
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // Versions (Phase 2B #6)
