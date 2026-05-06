@@ -531,14 +531,19 @@ function renderSummaryPage(doc, data, isFootage) {
   // ── Logo (centered at top) ─────────────────────────────────────────
   // 180px wide, horizontally centered. Owner-flagged 2026-05-06 — wants
   // a smaller logo than the prior 260px so the summary table breathes.
+  // Height now comes from the actual image dimensions (was estimated
+  // at width/3.8, but the real Launch wordmark is closer to 2:1, so
+  // the previous estimate left the title overlapping the logo).
   const startY = doc.y;
   const logoWidth = 180;
   const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
   let postLogoY = startY;
   if (fs.existsSync(LOGO_PATH)) {
     try {
+      const img = doc.openImage(LOGO_PATH);
+      const renderedHeight = logoWidth * (img.height / img.width);
       doc.image(LOGO_PATH, logoX, startY, { width: logoWidth });
-      postLogoY = startY + (logoWidth / 3.8) + 10;
+      postLogoY = startY + renderedHeight + 16;
     } catch (e) { /* corrupt or unsupported image format — silently skip */ }
   }
   doc.y = postLogoY;
@@ -647,13 +652,17 @@ function renderSummaryPage(doc, data, isFootage) {
     doc.font(bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize).fillColor(textColor);
 
     // Vertical center each cell within rowH so short text sits in the
-    // middle of the row (equal gap above and below). For wrapped /
-    // multi-line text the offset is just the top padding because the
-    // text already fills the row height. Owner-flagged 2026-05-06.
+    // middle of the row. PDFKit positions text at the TOP of the
+    // line-height box, but the visible glyph caps sit ~20-25% below
+    // that top because of ascender padding. The mathematical center
+    // of the heightOfString box leaves the GLYPHS biased toward the
+    // top of the row visually. Bias the offset down by ~25% of the
+    // ascender allowance (font size × 0.22) so the visual middle of
+    // the letters matches the geometric middle of the row.
+    // Owner-flagged 2026-05-06: "text sits high".
+    const ascenderBias = Math.round(fontSize * 0.22);
     function vOffsetFor(textH) {
-      // Equal gap above + below: (rowH - textH) / 2. Clamp to >= 1
-      // so we never paint text into the border.
-      return Math.max(1, Math.floor((rowH - textH) / 2));
+      return Math.max(1, Math.floor((rowH - textH) / 2) + ascenderBias);
     }
 
     if (spanAll) {
@@ -787,15 +796,19 @@ function renderTimecardsPages(doc, data) {
 
   // Centered logo + title — same positioning as the summary page so
   // the document reads as a single deliverable. 180px wide matches the
-  // summary's owner-tweaked size.
+  // summary's owner-tweaked size. Height read from the actual image
+  // dimensions; the prior 3.8:1 estimate caused overlap with the
+  // title text on every page.
   const startY = doc.y;
   const logoWidth = 180;
   const logoX = doc.page.margins.left + (pageWidth - logoWidth) / 2;
   let postLogoY = startY;
   if (fs.existsSync(LOGO_PATH)) {
     try {
+      const img = doc.openImage(LOGO_PATH);
+      const renderedHeight = logoWidth * (img.height / img.width);
       doc.image(LOGO_PATH, logoX, startY, { width: logoWidth });
-      postLogoY = startY + (logoWidth / 3.8) + 10;
+      postLogoY = startY + renderedHeight + 16;
     } catch (e) {}
   }
   doc.y = postLogoY;
@@ -868,10 +881,15 @@ function renderTimecardsPages(doc, data) {
     doc.font(opts.bold ? FONT.BODY_BOLD : FONT.BODY).fontSize(fontSize)
        .fillColor(opts.textColor || COL.BODY_TEXT);
 
+    // Same ascender-bias logic as the summary table — pdfkit's text()
+    // y is the top of the line-height box, but visible glyph caps
+    // sit ~22% in. Bias down so the visual middle matches the row
+    // center. Owner-flagged 2026-05-06.
+    const ascenderBias = Math.round(fontSize * 0.22);
     let cx = tableX;
     for (const c of cols) {
       const text = cells[c.key] != null ? String(cells[c.key]) : '';
-      const yOff = Math.max(1, Math.floor((rowH - cellHeights[c.key]) / 2));
+      const yOff = Math.max(1, Math.floor((rowH - cellHeights[c.key]) / 2) + ascenderBias);
       doc.text(text, cx + 6, y + yOff, { width: c.width - 12, align: c.align });
       cx += c.width;
     }
