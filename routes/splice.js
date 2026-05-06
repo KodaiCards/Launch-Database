@@ -338,10 +338,19 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           `, [projectId]),
         ]);
 
+      // Annotate each cable with its path length in feet, computed from
+      // path_geojson at hydrate time. Zero when no path is stored yet.
+      const cablesWithFootage = cables.rows.map(c => ({
+        ...c,
+        path_length_feet: c.path_geojson && Array.isArray(c.path_geojson.coordinates)
+          ? Math.round(_haversineFeet(c.path_geojson.coordinates))
+          : 0,
+      }));
+
       const hydrate = {
         project: proj.rows[0],
         locations:        locations.rows,
-        cables:           cables.rows,
+        cables:           cablesWithFootage,
         buffer_tubes:     tubes.rows,
         fibers:           fibers.rows,
         closures:         closures.rows,
@@ -522,14 +531,18 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // ─── Locations ───────────────────────────────────────────────────────────
 
   app.post('/api/splice/projects/:id/locations', requireAuth(), async (req, res) => {
-    const { type = 'splice_point', name, sequence_index = 0, notes } = req.body;
+    // Accept latitude/longitude at create time so the map palette can
+    // POST a single request with coords (saves a PUT /coords round-trip).
+    const { type = 'splice_point', name, sequence_index = 0, notes, latitude, longitude } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
     try {
+      const lat = latitude != null ? Number(latitude) : null;
+      const lon = longitude != null ? Number(longitude) : null;
       const { rows } = await pool.query(
-        `INSERT INTO splice_locations (project_id, type, name, sequence_index, notes)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO splice_locations (project_id, type, name, sequence_index, notes, latitude, longitude)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [req.params.id, type, String(name).trim(), Number(sequence_index) || 0, notes || null]
+        [req.params.id, type, String(name).trim(), Number(sequence_index) || 0, notes || null, lat, lon]
       );
       _bumpProjectMtime(pool, req.params.id);
       _broadcast(req.params.id, 'location_added', { location: rows[0] });
@@ -2969,6 +2982,26 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 // Bump the project's updated_at so the project list re-sorts and SSE
 // clients can re-fetch on a single hint. Best-effort; failure here is
 // not user-visible.
+// Haversine great-circle distance along a [lon,lat][] polyline, in feet.
+// Used to surface cable footage in the hydrate payload without storing it
+// — it's computed from path_geojson at read time.
+function _haversineFeet(coords) {
+  if (!Array.isArray(coords) || coords.length < 2) return 0;
+  const R_FT = 20902231; // Earth mean radius in feet
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [lon1, lat1] = coords[i - 1];
+    const [lon2, lat2] = coords[i];
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+    total += 2 * R_FT * Math.asin(Math.sqrt(a));
+  }
+  return total;
+}
+
 function _bumpProjectMtime(pool, projectId) {
   if (!projectId) return;
   pool.query(`UPDATE splice_projects SET updated_at = NOW() WHERE id = $1`, [projectId])
