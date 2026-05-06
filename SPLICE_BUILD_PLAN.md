@@ -10,12 +10,12 @@
 ## ▶ RESUME HERE — current position
 
 **Branch:** `claude/splice-matrix-railway-setup-IIG3Q`
-**Last splice commit:** Phase 2B #7 — no-login QR field markup
-(migration `0012_splice_field_markup.sql`).
-**Status:** Phase 2A complete. Phase 2B complete (#5, #6, #7 all
-shipped). Phase 3 (geographic editor + ACAD/KMZ ingest) is the
-active next chunk per owner direction 2026-05-06; build straight
-through 3A → 3E in order. Phase 2C is still parked behind 2A/2B
+**Last splice commit:** Phase 3C/3D/3E — KMZ + DXF import with
+submit-and-review (migration `0014_splice_design_imports.sql`).
+**Status:** Phase 2A complete. Phase 2B complete. Phase 3 complete
+(3A geography + map view, 3B KMZ export, 3C/3D/3E unified KMZ+DXF
+ingest with the submit-and-review staging path). 3F (DWG sidecar)
+is intentionally skipped. Phase 2C is still parked behind owner
 production feedback.
 
 **To pick this back up in a fresh session:**
@@ -24,9 +24,10 @@ production feedback.
 2. Glance at `routes/splice.js`, `routes/_splice_validation.js`,
    `public/splice.html`, `tests/splice*.test.js` to remember the
    shape of what's built.
-3. The active next chunk is **Phase 3 — Geographic editor + ACAD/KMZ
-   design ingest.** Sub-items 3A–3E in order. Migration slots:
-   `0013_splice_geography.sql`, `0014_splice_design_imports.sql`.
+3. With Phases 1, 2A, 2B, 3 all shipped, the next chunk requires
+   owner direction. Phase 2C is the parked-and-ready candidate;
+   beyond that, real production feedback should drive the next
+   priority.
 4. Note: slot 0009 ended up holding the unrelated
    `rename_inspection_team_to_construction` migration (Path B admin
    work landed mid-stream); the `splice_pdf_templates` table the plan
