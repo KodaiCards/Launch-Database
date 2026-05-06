@@ -1400,6 +1400,25 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <input type="text" id="proj-name" placeholder="e.g. RUS WO-001 Inspection">
           </div>
         </div>
+        <!--
+          Manual rollup flag (owner-flagged 2026-05-06). When checked,
+          this project becomes an organize-only container — no job, no
+          billing rate, no footage, no time entries. Server-side
+          enforces by NULL-ing trait fields on save.
+        -->
+        <div class="form-row">
+          <div class="form-group span2" style="background:var(--gray-light);border-radius:8px;padding:10px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+              <input type="checkbox" id="proj-rollup" onchange="rollupChanged()" style="margin:0">
+              <span><strong>Organize-only (rollup)</strong> — purely a folder for nesting other projects. No job / billing / hours.</span>
+            </label>
+            <div id="proj-rollup-hint" style="display:none;font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.5">
+              Rollup containers don't carry traits — saving will clear job, billing rate, footage, projections.
+              The AI knows to nest leaf projects under rollups, even when the rollup's name matches a job (e.g. "Inspection" rollup
+              with "Inspection" job leaves underneath).
+            </div>
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group span2">
             <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
@@ -1924,7 +1943,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <input type="checkbox" class="user-extra-team" value="permitting"> Permitting portal
             </label>
             <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:400">
-              <input type="checkbox" class="user-extra-team" value="inspection"> Inspection (admin tab only)
+              <input type="checkbox" class="user-extra-team" value="construction"> Construction (admin tab only)
             </label>
           </div>
           <span style="font-size:11px;color:var(--text-muted)">Hidden when the role is Admin (admins already see everything).</span>
@@ -2332,7 +2351,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <div class="form-group"><label style="font-size:11px" id="new-job-rate-label">Default Rate ($/hr)</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
-            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="inspection">Inspection only</option><option value="both">Both (explicit)</option></select></div>
+            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="construction">Construction only</option><option value="both">Both (explicit)</option></select></div>
             <div class="form-group" style="align-items:flex-start;padding-top:18px">
               <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-applied to permitting jobs"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label>
             </div>
@@ -3107,15 +3126,22 @@ function populateConcentratorDropdownForContract() {
   if (filtered.some(c => c.id === prev)) sel.value = prev;
 }
 
-async function clientChanged(preserveJobId) {
+async function clientChanged(preserveJobId, preservePicks = false) {
   const clientId = document.getElementById('proj-client').value;
 
   // Reset explicit program + contract picks when the client changes —
   // they may not apply to the new client.
-  const pSel = document.getElementById('proj-ptype');
-  if (pSel) pSel.value = '';
-  const cSel = document.getElementById('proj-contract');
-  if (cSel) cSel.value = '';
+  // EXCEPT in edit mode (preservePicks=true): editProject pre-fills
+  // ptype + contract before calling clientChanged, and clearing them
+  // here would silently wipe the user's existing selections (the
+  // "modal opens with name + fields blanked" bug). When preservePicks
+  // is set, leave both alone so the edit-flow's pre-fill survives.
+  if (!preservePicks) {
+    const pSel = document.getElementById('proj-ptype');
+    if (pSel) pSel.value = '';
+    const cSel = document.getElementById('proj-contract');
+    if (cSel) cSel.value = '';
+  }
 
   // Fetch this client's contracts FIRST, cache them globally so the
   // gating helper (populateContractDropdownForProgram) can filter by
@@ -3876,6 +3902,11 @@ async function editProject(id) {
   if (document.getElementById('proj-cadence'))       document.getElementById('proj-cadence').value = p.billing_cadence || 'one_time';
   if (document.getElementById('proj-projected'))     document.getElementById('proj-projected').value = p.projected_revenue ?? '';
   if (document.getElementById('proj-manual-amount')) document.getElementById('proj-manual-amount').value = p.manual_invoice_amount ?? '';
+  // Reflect the rollup flag and hint the user the trait fields are
+  // intentionally empty on a rollup. saveProject() skips the
+  // job/program required-field validation when this is checked.
+  const rb = document.getElementById('proj-rollup');
+  if (rb) { rb.checked = !!p.is_rollup; rollupChanged(); }
 
   // STEP 4 — populate dropdowns defensively. Each step in its own try/catch so
   // a failure on one (e.g. parent dropdown, jobs cache, budget codes) doesn't
@@ -3902,12 +3933,22 @@ async function editProject(id) {
     document.getElementById('proj-client').value = p.client_id || '';
     // Threads p.job_id through so the dropdown preserves the current job even
     // if it was deactivated by the v3 reseed (renders as "(legacy)").
-    await clientChanged(p.job_id);
+    // preservePicks=true keeps the ptype + contract values pre-filled
+    // above (line 3898) from being wiped by the program/contract reset
+    // path that clientChanged uses for fresh new-project sessions.
+    await clientChanged(p.job_id, /*preservePicks=*/ true);
     document.getElementById('proj-job').value = p.job_id || '';
   } catch (e) { console.error('client/job hookup failed:', e); }
 
   try {
     document.getElementById('proj-contract').value = p.contract_id || '';
+    // After setting contract, repopulate the concentrator dropdown so
+    // the project's concentrator_id has a matching <option>. Without
+    // this, the next .value=p.concentrator_id silently drops because
+    // the dropdown is still in its "pick contract first" state.
+    if (typeof populateConcentratorDropdownForContract === 'function') {
+      populateConcentratorDropdownForContract();
+    }
   } catch (e) { /* contract dropdown might not have the option yet — non-fatal */ }
 
   try {
@@ -3938,7 +3979,21 @@ function clearProjectForm() {
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
   // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
+  // Reset the rollup checkbox so a fresh "New Project" never inherits a
+  // prior open's rollup state. rollupChanged() syncs the hint visibility.
+  const rb = document.getElementById('proj-rollup');
+  if (rb) { rb.checked = false; rollupChanged(); }
   jobChanged(/*skipRateLookup=*/true);
+}
+
+// Toggle the explanatory hint when the rollup checkbox flips. Kept
+// minimal — server-side blanks the trait fields on save regardless,
+// so we don't need to disable inputs here. The hint is the visible
+// signal that "the rest of this form doesn't matter for a rollup."
+function rollupChanged() {
+  const checked = !!document.getElementById('proj-rollup')?.checked;
+  const hint = document.getElementById('proj-rollup-hint');
+  if (hint) hint.style.display = checked ? '' : 'none';
 }
 
 // User changed the program category. Re-derive field gating (program now
@@ -4101,10 +4156,14 @@ async function saveProject(opts) {
   const name = document.getElementById('proj-name').value.trim();
   const clientId = document.getElementById('proj-client').value;
   const rate = document.getElementById('proj-rate').value;
+  // Rollup flag: when checked, this project has no traits (no job, no
+  // billing rate, no footage). Validation skips those required-field
+  // checks so a rollup with only a name + client + parent saves cleanly.
+  const isRollup = !!document.getElementById('proj-rollup')?.checked;
   if (!name) return silent ? false : alert('Project name is required');
   if (!clientId) return silent ? false : alert('Client is required');
-  if (!projectTypeId) return silent ? false : alert('Project type is required');
-  if (!jobId) return silent ? false : alert('Job is required');
+  if (!isRollup && !projectTypeId) return silent ? false : alert('Project type is required');
+  if (!isRollup && !jobId) return silent ? false : alert('Job is required');
 
   const job = jobsCache.find(j => j.id === jobId);
   const isPermit = !!job?.is_permitting;
@@ -4158,7 +4217,8 @@ async function saveProject(opts) {
       if (v === '' || v == null) return null;
       const n = parseFloat(v);
       return isNaN(n) ? null : n;
-    })()
+    })(),
+    is_rollup: isRollup,
   };
   try {
     const id = document.getElementById('proj-id').value;
@@ -6207,7 +6267,7 @@ function formatRequestCard(sr, isPending) {
             <option value="">Both / Unassigned</option>
             <option value="design"${payload.team==='design'?' selected':''}>Design only</option>
             <option value="permitting"${payload.team==='permitting'?' selected':''}>Permitting only</option>
-            <option value="inspection"${payload.team==='inspection'?' selected':''}>Inspection only</option>
+            <option value="construction"${(payload.team==='construction'||payload.team==='inspection')?' selected':''}>Construction only</option>
             <option value="both"${payload.team==='both'?' selected':''}>Both (explicit)</option>
           </select>
         </div>
@@ -6404,10 +6464,13 @@ function showAccountMenu() {
   const primary = u.role === 'admin' ? null
                 : u.role && u.role.startsWith('design_') ? 'design'
                 : u.role && u.role.startsWith('permitting_') ? 'permitting'
-                : u.role && u.role.startsWith('inspection_') ? 'inspection'
+                : u.role && u.role.startsWith('construction_') ? 'construction'
+                : u.role && u.role.startsWith('inspection_') ? 'construction'  // legacy alias
                 : null;
   if (primary) teams.push(primary);
-  for (const t of (u.extra_teams || [])) {
+  for (const raw of (u.extra_teams || [])) {
+    // Normalize legacy 'inspection' to 'construction' for display.
+    const t = raw === 'inspection' ? 'construction' : raw;
     if (!teams.includes(t)) teams.push(t);
   }
   const teamPills = u.role === 'admin'
@@ -7072,13 +7135,23 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 // FORMATTERS
 // ═══════════════════════════════════════════════════════════
 function fmtMoney(n) { return '$' + (parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmt(n, unit='') { const v=parseFloat(n)||0; return v.toFixed(1)+(unit?' '+unit:''); }
-// Display hours WITHOUT rounding — strips trailing zeros and dot.
-// 11.5 → "11.5", 12 → "12", 11.745 → "11.745".
+// Lossless number formatter — strips trailing zeros after the decimal.
+// 8 → "8", 8.5 → "8.5", 8.25 → "8.25", 11.745 → "11.745".
+// Owner rule: hours are 0.25-aligned and we never display rounded values
+// like 8.3 when the truth is 8.25. Older callers expected a fixed
+// 1-decimal output ("8.5" / "8.0"); they get full precision now and
+// continue to render correctly because the unit suffix is unchanged.
+function fmt(n, unit='') {
+  const v = parseFloat(n);
+  if (isNaN(v)) return '0' + (unit ? ' ' + unit : '');
+  const str = v.toFixed(4).replace(/\.?0+$/, '') || '0';
+  return str + (unit ? ' ' + unit : '');
+}
+// Same shape as fmt() but no unit. Kept for callers that want just the
+// number string. 11.5 → "11.5", 12 → "12", 11.745 → "11.745".
 function fmtHours(n) {
   const v = parseFloat(n);
   if (isNaN(v) || v === 0) return '0';
-  // toFixed(4) then strip trailing zeros and trailing dot
   return v.toFixed(4).replace(/\.?0+$/, '');
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

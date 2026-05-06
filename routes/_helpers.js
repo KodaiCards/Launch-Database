@@ -182,11 +182,39 @@ function calcProjectFinancials(type, billingRate, footage, hoursPerMileOverride)
   return { expectedHours: null, expectedRevenue: null, miles: null, permittingHoursPerMile: null };
 }
 
+// Snap an hours value to the nearest 0.25 increment.
+//
+// Owner rule: hours always live on the 0.25 grid. The snap is the only
+// thing that protects the invariant when hours come in via free-text
+// inputs, CSV imports, or bulk endpoints where humans might type 8.3
+// instead of 8.25. The snap fires SILENTLY and the snapped value is
+// what gets returned, so the frontend always receives the canonical
+// representation.
+//
+// Notes:
+//  - The snap rounds half-away-from-zero (Math.round semantics on
+//    positive values). For 0.125 → 0.25, for 0.124 → 0.0.
+//  - Negative inputs are clamped to 0 — hours are never negative.
+//  - Non-numeric / null / undefined input returns null so callers can
+//    tell snap-to-zero apart from "the field wasn't provided" and
+//    handle each appropriately.
+//  - The "NO ROUNDING EVER" rule from the owner means no LOSSY
+//    rounding (5.3 → 5). This snap aligns to 0.25 which preserves
+//    quarter-hour accuracy and is the rule's intent.
+function snapHoursToQuarter(input) {
+  if (input == null || input === '') return null;
+  const n = Number(input);
+  if (!Number.isFinite(n)) return null;
+  if (n <= 0) return 0;
+  return Math.round(n * 4) / 4;
+}
+
 module.exports = {
   updateProjectHours,
   saveUndoBucket,
   popUndoBucket,
   collectProjectTree,
   calcProjectFinancials,
+  snapHoursToQuarter,
   UNDO_TTL_SECONDS,
 };

@@ -681,10 +681,15 @@ app.get('*', (req, res) => {
   if (PORTAL_MODE && req.user && req.user.role !== 'admin' && PORTAL_MODE !== 'timeclock' && PORTAL_MODE !== 'splice') {
     const primaryTeam = req.user.role.startsWith('design_') ? 'design'
                       : req.user.role.startsWith('permitting_') ? 'permitting'
-                      : req.user.role.startsWith('inspection_') ? 'inspection'
+                      : req.user.role.startsWith('construction_') ? 'construction'
+                      : req.user.role.startsWith('inspection_') ? 'construction'  // legacy alias
                       : null;
     const extras = Array.isArray(req.user.extra_teams) ? req.user.extra_teams : [];
-    const accessible = new Set([primaryTeam, ...extras].filter(Boolean));
+    // Treat any legacy 'inspection' string in extras as 'construction'
+    // so old user rows still resolve to the renamed team.
+    const accessibleRaw = [primaryTeam, ...extras].filter(Boolean)
+      .map(t => t === 'inspection' ? 'construction' : t);
+    const accessible = new Set(accessibleRaw);
     if (!accessible.has(PORTAL_MODE)) {
       return res.status(403).send(`
         <!DOCTYPE html><html><head><title>Access Denied</title>
@@ -954,8 +959,11 @@ async function bootstrapV3Schema() {
     { name: 'County Permitting',             bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
     { name: 'DOT Permitting',                bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
     { name: 'RR Permitting',                 bt: 'footage', rate: null, perm: true,  code: 'a-2-D',      team: 'permitting', psc: true,  generic: true  },
-    { name: 'Resident Engineer',             bt: 'hourly',  rate: 100,  perm: false, code: 'g-1-B-1',    team: 'inspection', psc: true,  generic: false },
-    { name: 'Inspection',                    bt: 'hourly',  rate: 90,   perm: false, code: 'g-1-B-4',    team: 'inspection', psc: true,  generic: false },
+    // Owner-flagged 2026-05-06: team renamed from 'inspection' to
+    // 'construction'. Migration 0009 backfilled existing rows; the
+    // seed below uses the canonical value going forward.
+    { name: 'Resident Engineer',             bt: 'hourly',  rate: 100,  perm: false, code: 'g-1-B-1',    team: 'construction', psc: true,  generic: false },
+    { name: 'Inspection',                    bt: 'hourly',  rate: 90,   perm: false, code: 'g-1-B-4',    team: 'construction', psc: true,  generic: false },
     { name: 'Update Plant Records',          bt: 'footage', rate: 850,  perm: false, code: 'a-4',        team: 'design',     psc: true,  generic: false },
     { name: 'OSP Staking Aerial',            bt: 'footage', rate: 850,  perm: false, code: 'e-2-A-1(N)', team: 'design',     psc: true,  generic: false },
     { name: 'OSP Staking Underground',       bt: 'footage', rate: 850,  perm: false, code: 'e-2-A-2(N)', team: 'design',     psc: true,  generic: false },

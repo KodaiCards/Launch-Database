@@ -26,10 +26,20 @@ const TIA_598 = ['blue','orange','green','brown','slate','white','red','black','
 
 let token;
 const createdSpliceProjectIds = [];
+let strangerStaffId = null;
 
 before(async () => {
   await bootTestServer();
   token = await adminLogin();
+  // The lock test simulates a second designer holding the lock by
+  // shoving a different staff_id into splice_projects. The column is
+  // a real FK to staff(id) so we can't fake it with a random UUID —
+  // need a real row. Created here, cleaned up in after().
+  const { rows } = await pool.query(
+    `INSERT INTO staff (name, active) VALUES ($1, TRUE) RETURNING id`,
+    ['splice-test-stranger-' + Date.now()]
+  );
+  strangerStaffId = rows[0].id;
 });
 
 after(async () => {
@@ -43,6 +53,10 @@ after(async () => {
         [createdSpliceProjectIds]
       );
     } catch (e) { console.warn('[splice-cleanup]', e.message); }
+  }
+  if (strangerStaffId) {
+    try { await pool.query(`DELETE FROM staff WHERE id = $1`, [strangerStaffId]); }
+    catch (e) { console.warn('[splice-cleanup-staff]', e.message); }
   }
   await close();
 });
@@ -112,14 +126,16 @@ test('lock / heartbeat / unlock cycle, plus heartbeat-from-stranger refusal', as
   // Heartbeat as the same user — allowed.
   const r2 = await requestJson('POST', `/api/splice/projects/${proj.id}/heartbeat`, { token });
   assert.equal(r2.ok, true);
-  // Direct DB shove: pretend somebody else owns the lock.
+  // Direct DB shove: pretend somebody else owns the lock. Uses the
+  // strangerStaffId from before() because locked_by_staff_id is a real
+  // FK and a fake UUID would trip the constraint.
   await pool.query(
     `UPDATE splice_projects
-       SET locked_by_staff_id = '00000000-0000-0000-0000-000000000000',
+       SET locked_by_staff_id = $2,
            locked_by_name = 'someone else',
            locked_at = NOW()
      WHERE id = $1`,
-    [proj.id]
+    [proj.id, strangerStaffId]
   );
   // Heartbeat now should 409 (lock no longer held by us).
   const r3 = await request('POST', `/api/splice/projects/${proj.id}/heartbeat`, { token });

@@ -1481,10 +1481,12 @@ function showAccountMenu() {
   const primary = u.role === 'admin' ? null
                 : u.role && u.role.startsWith('design_') ? 'design'
                 : u.role && u.role.startsWith('permitting_') ? 'permitting'
-                : u.role && u.role.startsWith('inspection_') ? 'inspection'
+                : u.role && u.role.startsWith('construction_') ? 'construction'
+                : u.role && u.role.startsWith('inspection_') ? 'construction'  // legacy alias
                 : null;
   if (primary) teams.push(primary);
-  for (const t of (u.extra_teams || [])) {
+  for (const raw of (u.extra_teams || [])) {
+    const t = raw === 'inspection' ? 'construction' : raw;
     if (!teams.includes(t)) teams.push(t);
   }
   const teamPills = u.role === 'admin'

@@ -169,7 +169,7 @@
         html += `<div ${handler} style="background:${bg};border:${border};border-radius:6px;padding:8px;min-height:78px;display:flex;flex-direction:column;${cursor};transition:transform .1s" title="${dateKey}${isClickable ? (entryCount > 0 ? ' — click to view ' + entryCount + ' entr' + (entryCount === 1 ? 'y' : 'ies') : ' — click to add hours') : ''}" ${isClickable ? 'onmouseover="this.style.transform=\'scale(1.02)\'" onmouseout="this.style.transform=\'\'"' : ''}>
           <div style="font-size:11px;color:var(--text-muted);font-weight:600">${d}</div>
           <div style="flex:1;display:flex;align-items:center;justify-content:center">
-            ${hours > 0 ? `<div style="font-size:18px;font-weight:600;color:var(--text)">${hours.toFixed(1)}<span style="font-size:11px;color:var(--text-muted);margin-left:2px">h</span></div>` :
+            ${hours > 0 ? `<div style="font-size:18px;font-weight:600;color:var(--text)">${fmtHours(hours)}<span style="font-size:11px;color:var(--text-muted);margin-left:2px">h</span></div>` :
               isFuture ? '' :
               isWeekend ? '<div style="font-size:11px;color:var(--text-muted)">—</div>' :
               '<div style="font-size:11px;color:var(--danger-text);font-weight:600">no entries</div>'}
@@ -179,7 +179,7 @@
       }
       html += `</div>
         <div style="margin-top:14px;padding:10px;background:var(--gray-light);border-radius:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px">
-          <span><strong>${total.toFixed(1)} hrs</strong> · ${entries.length} entries</span>
+          <span><strong>${fmtHours(total)} hrs</strong> · ${entries.length} entries</span>
           <span style="display:flex;gap:14px;color:var(--text-muted)">
             <span><span style="display:inline-block;width:12px;height:12px;background:var(--danger-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>No hours (weekday)</span>
             <span><span style="display:inline-block;width:12px;height:12px;background:var(--warning-light);border:1px solid var(--gray-border);vertical-align:middle;margin-right:4px"></span>Under 4h</span>
@@ -404,7 +404,7 @@
       { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
     const id = 'cal-day-detail-modal';
-    const titleHTML = `<i class="fa-regular fa-calendar"></i> ${esc(dateLabel)} <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'}</span>`;
+    const titleHTML = `<i class="fa-regular fa-calendar"></i> ${esc(dateLabel)} <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${fmtHours(total)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'}</span>`;
     const bodyHTML = matches.length ? `
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr style="background:var(--gray-light);border-bottom:1px solid var(--gray-border)">
@@ -568,7 +568,7 @@
 
     const id = 'hrs-type-detail-modal';
     const titleHTML = `<i class="fa-solid fa-helmet-safety"></i> ${esc(label)} — ${esc(periodLabel)}
-      <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${total.toFixed(2)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'} · ${byStaff.size} staff</span>`;
+      <span style="color:var(--text-muted);font-size:13px;font-weight:400;margin-left:8px">${fmtHours(total)} hrs · ${matches.length} entr${matches.length === 1 ? 'y' : 'ies'} · ${byStaff.size} staff</span>`;
     const bodyHTML = matches.length
       ? staffSorted.map(([name, bucket]) => `
         <div style="border-top:1px solid var(--gray-border)">

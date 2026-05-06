@@ -124,9 +124,13 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
   } else if (rawTeam === 'permitting') {
     teamKey = 'permitting';
     teamLabel = 'Permitting Team';
-  } else if (rawTeam === 'inspection') {
-    teamKey = 'inspection';
-    teamLabel = 'Inspection Team';
+  } else if (rawTeam === 'construction' || rawTeam === 'inspection') {
+    // 'inspection' is the legacy team value; the 0009 migration
+    // renamed it to 'construction' but we still accept both so any
+    // unmigrated row in flight (e.g. a job inserted between code
+    // deploy and migration apply) keeps working.
+    teamKey = 'construction';
+    teamLabel = 'Construction Team';
   } else {
     // 'both', NULL, 'shared', or any unrecognized value all collapse here.
     teamKey = 'shared';

@@ -766,13 +766,17 @@ async function inferInvoiceMakeup(pool, projectIds) {
   if (!Array.isArray(projectIds) || !projectIds.length) {
     return { ok: false, conflicts: ['No projects selected'], makeup: null, projects: [] };
   }
-  // One round trip: pull every project + its client + contract + EC + job
+  // One round trip: pull every project + its client + contract + EC + job.
+  // p.project_type is included so the no-job-set fallback below can map
+  // legacy projects (no job_id, but project_type is set) to a matching
+  // jobs row by name.
   const { rows } = await pool.query(
     `SELECT p.id, p.name AS project_name, p.work_order_number,
             p.billing_type, p.billing_rate::float AS rate,
             p.actual_hours::float AS actual_hours,
             p.footage::float AS footage,
             p.expected_revenue::float AS expected_revenue,
+            p.project_type,
             p.status, p.billed_date, p.billing_cadence,
             cl.id AS client_id, cl.name AS client_name,
             c.id AS contract_id, c.contract_number, c.friendly_label AS contract_label,
@@ -800,12 +804,68 @@ async function inferInvoiceMakeup(pool, projectIds) {
   const ecs = new Set(rows.map(r => r.engineering_contract_id).filter(Boolean));
   const jobs = new Set(rows.map(r => r.job_id).filter(Boolean));
 
+  // Fallback: if no project in the selection has a job_id assigned BUT
+  // they all share the same project_type, look up a matching job by
+  // name. Owner rule: "this should be pulled from the jobs of the
+  // projects I'm batching together — I will never bill 2 different
+  // project jobs together." Lets legacy projects (project_type set,
+  // job_id NULL) still produce an invoice without manual relinking.
+  // Only fires when jobs.size === 0; the multi-job case still
+  // surfaces a conflict the user has to resolve.
+  let inferredJobInfo = null;
+  if (jobs.size === 0) {
+    const ptypes = new Set(rows.map(r => (r.project_type || '').trim().toLowerCase()).filter(Boolean));
+    if (ptypes.size === 1) {
+      const ptype = [...ptypes][0];
+      // Match on case-insensitive name OR a small alias map for
+      // project_type strings that don't equal the job name. RUS
+      // pricing and team-based billing keys off jobs.name; matching
+      // here keeps the downstream invoice generation honest.
+      const aliases = {
+        re: 'Resident Engineer',
+        resident_engineer: 'Resident Engineer',
+        'resident engineer': 'Resident Engineer',
+      };
+      const targetName = aliases[ptype] || ptype;
+      try {
+        const jr = await pool.query(
+          `SELECT id, name, billing_code, default_billing_type, is_permitting
+           FROM jobs
+           WHERE active = TRUE AND LOWER(name) = LOWER($1)
+           LIMIT 2`,
+          [targetName]
+        );
+        if (jr.rows.length === 1) {
+          inferredJobInfo = jr.rows[0];
+          jobs.add(inferredJobInfo.id);
+          // Patch every row's job fields in place so the rest of this
+          // function (and the makeup payload below) sees the inferred job.
+          for (const r of rows) {
+            r.job_id = inferredJobInfo.id;
+            r.job_name = inferredJobInfo.name;
+            r.billing_code = inferredJobInfo.billing_code;
+            r.default_billing_type = inferredJobInfo.default_billing_type;
+            r.is_permitting = inferredJobInfo.is_permitting;
+          }
+        }
+      } catch (e) {
+        // Lookup failure is non-fatal — the legacy "no job" conflict
+        // will fire below and the user can fix the project's job_id.
+        console.warn('[inferInvoiceMakeup:job-fallback]', e && e.message);
+      }
+    }
+  }
+
   const conflicts = [];
   if (clients.size === 0) conflicts.push('No client on any selected project');
   if (clients.size > 1)   conflicts.push(`Selection spans ${clients.size} clients — pick one client at a time`);
   if (ecs.size === 0)     conflicts.push('No engineering contract attached — assign one in Settings → Contracts before invoicing');
   if (ecs.size > 1)       conflicts.push(`Selection spans ${ecs.size} engineering contracts — pick one umbrella at a time`);
-  if (jobs.size === 0)    conflicts.push('No job on any selected project');
+  if (jobs.size === 0) {
+    // After the fallback above, jobs.size===0 means project_types were
+    // mixed OR no matching jobs row exists. Tell the user both options.
+    conflicts.push('No job on any selected project — assign a job to the project, or set its project type to a value that matches a Job name (Inspection / Resident Engineer / etc.)');
+  }
   if (jobs.size > 1) {
     const names = [...new Set(rows.map(r => r.job_name).filter(Boolean))];
     conflicts.push(`Selection spans ${jobs.size} jobs (${names.join(', ')}) — one job per invoice`);

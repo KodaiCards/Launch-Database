@@ -75,8 +75,19 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
 .lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
 .lock-banner.stale{border-color:var(--danger);color:var(--danger-text);background:var(--danger-light)}
-.warnings-banner{position:absolute;bottom:10px;left:10px;right:10px;background:var(--warning-light);color:var(--warning-text);padding:8px 12px;border-radius:6px;border:1px solid var(--warning);font-size:12px;z-index:5;display:none}
-.warnings-banner.show{display:block}
+.warnings-banner{position:absolute;bottom:10px;left:10px;right:10px;padding:8px 12px;border-radius:6px;font-size:12px;z-index:5;display:none;cursor:pointer;user-select:none}
+.warnings-banner.show{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.warnings-banner.warn{background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning)}
+.warnings-banner.error{background:var(--danger-light);color:var(--danger-text);border:1px solid var(--danger)}
+.warnings-banner:hover{filter:brightness(1.04)}
+.validation-pill{background:rgba(0,0,0,0.08);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase}
+.validation-list{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}
+.validation-item{padding:8px 10px;border-radius:5px;font-size:12px;border-left:3px solid var(--border-strong)}
+.validation-item.error{border-left-color:var(--danger);background:var(--danger-light)}
+.validation-item.warning{border-left-color:var(--warning);background:var(--warning-light)}
+.validation-item .code{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px}
+.validation-item .nav{font-size:11px;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+.validation-item .nav a{cursor:pointer}
 
 /* Konva stage container */
 #stage{width:100%;height:100%}
@@ -425,19 +436,75 @@ function renderSummary() {
 }
 
 function renderWarnings() {
-  const w = state.data?.warnings;
+  const v = state.data?.validation;
   const banner = document.getElementById('warnings-banner');
-  if (!w) { banner.classList.remove('show'); return; }
-  const messages = [];
-  if (w.over_capacity_trays?.length) {
-    messages.push(`${w.over_capacity_trays.length} tray(s) over capacity`);
+  if (!v) { banner.classList.remove('show'); return; }
+  const errCount = v.summary?.error_count || 0;
+  const warnCount = v.summary?.warning_count || 0;
+  // Update Export PDF button state — fatal errors block export, warnings
+  // don't. The button stays clickable with warnings (designer's choice).
+  const exportBtn = document.getElementById('btn-export');
+  if (errCount > 0) {
+    exportBtn.disabled = true;
+    exportBtn.title = `Fix ${errCount} fatal error(s) before exporting (or pass &force=1)`;
+  } else {
+    exportBtn.disabled = false;
+    exportBtn.title = warnCount > 0 ? `Exporting with ${warnCount} warning(s)` : 'Export PDF';
   }
-  if (w.over_spliced_fibers?.length) {
-    messages.push(`${w.over_spliced_fibers.length} fiber(s) spliced more than twice`);
+  if (errCount === 0 && warnCount === 0) {
+    banner.classList.remove('show', 'error', 'warn');
+    return;
   }
-  if (!messages.length) { banner.classList.remove('show'); return; }
-  banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + messages.join(' · ');
-  banner.classList.add('show');
+  const isError = errCount > 0;
+  banner.className = 'warnings-banner show ' + (isError ? 'error' : 'warn');
+  banner.innerHTML = `
+    <span><i class="fa-solid fa-${isError?'circle-exclamation':'triangle-exclamation'}"></i>
+      <b>${errCount} error${errCount===1?'':'s'}</b> · ${warnCount} warning${warnCount===1?'':'s'}
+      ${isError ? '<span class="validation-pill">PDF export blocked</span>' : ''}
+    </span>
+    <span style="font-size:11px;opacity:0.8">click for details →</span>
+  `;
+  banner.onclick = openValidationDrawer;
+}
+
+function openValidationDrawer() {
+  const v = state.data?.validation;
+  if (!v) return;
+  const items = [...v.errors.map(e => ({ ...e, severity: 'error' })),
+                 ...v.warnings.map(w => ({ ...w, severity: 'warning' }))];
+  if (!items.length) return;
+  const itemsHtml = items.map(i => {
+    const navLinks = [];
+    if (i.closure_id)        navLinks.push(`<a onclick="closeModal();selectThing('closure','${i.closure_id}')">→ Closure</a>`);
+    if (i.tray_id)           navLinks.push(`<a onclick="closeModal();selectThing('tray','${i.tray_id}')">→ Tray</a>`);
+    if (i.cable_id)          navLinks.push(`<a onclick="closeModal();selectThing('cable','${i.cable_id}')">→ Cable</a>`);
+    if (i.location_id)       navLinks.push(`<a onclick="closeModal();selectThing('location','${i.location_id}')">→ Location</a>`);
+    return `
+      <div class="validation-item ${i.severity}">
+        <div class="code">${esc(i.severity)} · ${esc(i.code)}</div>
+        <div>${esc(i.message)}</div>
+        ${navLinks.length ? `<div class="nav">${navLinks.join('')}</div>` : ''}
+      </div>`;
+  }).join('');
+  const blocked = v.summary?.blocked;
+  showModal({
+    title: `Plan validation — ${v.summary.error_count} error(s), ${v.summary.warning_count} warning(s)`,
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Errors block PDF export by default. Warnings don't — they're flagged for your review.
+        ${blocked ? `<br><br><b>You can force-export anyway</b> if you know what you're doing — the PDF will still generate, but the splicer will receive a knowingly broken plan.` : ''}
+      </p>
+      <div class="validation-list">${itemsHtml}</div>
+    `,
+    submitText: blocked ? 'Force export PDF' : 'Close',
+    onSubmit: (close) => {
+      if (blocked) {
+        window.open('/api/splice/projects/' + state.currentId + '/export-pdf?force=1', '_blank');
+      }
+      close();
+    },
+  });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -935,6 +1002,7 @@ function renderCableInspector(cableId) {
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn btn-sm" onclick="openStrandMetadataEditor('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-list-check"></i> Edit circuits</button>
       <button class="btn btn-sm btn-danger" onclick="deleteCable('${cableId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
     <table class="table">
@@ -942,6 +1010,7 @@ function renderCableInspector(cableId) {
         <tr><th>Mfr part</th><td>${esc(cable.manufacturer_part || '—')}</td></tr>
         <tr><th>Tubes</th><td>${tubes.length}</td></tr>
         <tr><th>Splices touching</th><td>${spliceCount}</td></tr>
+        <tr><th>Circuits set</th><td>${state.data.fibers.filter(f => fiberIds.has(f.id) && f.circuit_name).length} of ${cable.fiber_count}</td></tr>
         <tr><th>Notes</th><td>${esc(cable.notes || '—')}</td></tr>
       </tbody>
     </table>
@@ -992,12 +1061,15 @@ function renderClosureInspector(closureId) {
   const loc = state.data.locations.find(l => l.id === cl.location_id);
   const trayList = state.data.trays.filter(t => t.closure_id === closureId).sort((a,b)=>a.position-b.position);
   const splicesByTray = (tid) => state.data.splices.filter(s => s.tray_id === tid);
+  // Stored strands at this closure's location.
+  const storedAtLoc = (state.data.strand_states || [])
+    .filter(s => s.location_id === cl.location_id && s.state === 'stored');
 
   const body = document.getElementById('inspector-body');
   body.innerHTML = `
     <h3>${esc(cl.model || 'Closure')} <span class="small">${trayList.length}×${cl.tray_capacity}</span></h3>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">at ${esc(loc?.name || '?')}</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="openEditClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-pen"></i> Edit</button>
       <button class="btn btn-sm btn-danger" onclick="deleteClosure('${closureId}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-trash"></i> Delete</button>
     </div>
@@ -1015,7 +1087,88 @@ function renderClosureInspector(closureId) {
         }).join('')}
       </tbody>
     </table>
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-weak)">
+      <h3 style="display:flex;justify-content:space-between;align-items:center">
+        Stored strands <span class="small">${storedAtLoc.length}</span>
+      </h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        Strands cut and coiled here without splicing. Splicer documentation
+        lists these explicitly so a tube isn't cut by mistake.
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="btn btn-sm" onclick="openAddStoredStrand('${cl.location_id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-plus"></i> Mark strand stored</button>
+      </div>
+      ${storedAtLoc.length ? `
+        <table class="table">
+          <thead><tr><th>Cable</th><th>Strand</th><th>Slack</th><th></th></tr></thead>
+          <tbody>
+            ${storedAtLoc.map(s => {
+              const cable = state.data.cables.find(c => c.id === s.cable_id);
+              return `<tr>
+                <td>${esc(cable?.name || '?')}</td>
+                <td>#${s.strand_position}</td>
+                <td>${s.stored_length_inches != null ? s.stored_length_inches + '"' : '—'}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="clearStrandState('${s.id}')" ${isReadOnly()?'disabled':''}><i class="fa-solid fa-times"></i></button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>` : '<div class="empty-pane" style="padding:8px">None marked yet.</div>'}
+    </div>
   `;
+}
+
+function openAddStoredStrand(locationId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const cableOpts = state.data.cables.map(c => `<option value="${c.id}">${esc(c.name)} (${c.fiber_count}f)</option>`).join('');
+  showModal({
+    title: 'Mark strand as stored',
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        The strand will be cut and coiled at this closure's location, but NOT spliced.
+        The splicer's PDF will list it in the "stored strands" section.
+      </p>
+      <div class="field"><label>Cable</label>
+        <select id="m-ss-cable">${cableOpts}</select></div>
+      <div class="row">
+        <div class="field"><label>Strand position (1-based)</label>
+          <input id="m-ss-pos" type="number" min="1" value="1"></div>
+        <div class="field"><label>Slack length (inches)</label>
+          <input id="m-ss-len" type="number" min="0" placeholder="e.g. 36"></div>
+      </div>
+      <div class="field"><label>Notes (optional)</label>
+        <textarea id="m-ss-notes" placeholder="What this strand is reserved for"></textarea></div>
+    `,
+    submitText: 'Save',
+    onSubmit: async (close) => {
+      const cableId = document.getElementById('m-ss-cable').value;
+      const pos = parseInt(document.getElementById('m-ss-pos').value, 10);
+      const len = document.getElementById('m-ss-len').value;
+      const notes = document.getElementById('m-ss-notes').value.trim();
+      if (!cableId || !pos) { toast('Cable and strand position required', 'error'); return; }
+      try {
+        await api(`/api/splice/cables/${cableId}/locations/${locationId}/strand-states`, 'POST', {
+          strands: [{
+            strand_position: pos,
+            state: 'stored',
+            stored_length_inches: len ? parseInt(len, 10) : null,
+            notes: notes || null,
+          }],
+        });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+async function clearStrandState(stateId) {
+  if (isReadOnly()) return;
+  if (!confirm('Clear this strand state (revert to default)?')) return;
+  try {
+    await api('/api/splice/strand-states/' + stateId, 'DELETE');
+    await hydrateProject();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderTrayInspector(trayId) {
@@ -1306,6 +1459,89 @@ function openEditCable(cableId) {
           manufacturer_part: document.getElementById('m-cable-part').value.trim() || null,
           notes: document.getElementById('m-cable-notes').value.trim() || null,
         });
+        close();
+        await hydrateProject();
+      } catch (e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+// Phase 2A #4 — strand metadata bulk editor. Opens a modal with every
+// fiber on this cable and inputs for circuit_name + customer + notes.
+// Save fires a single bulk PUT so editing 432 strands at once is one
+// network round-trip.
+function openStrandMetadataEditor(cableId) {
+  if (isReadOnly()) return toast('View-only mode', 'error');
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+  const tubes = state.data.buffer_tubes
+    .filter(t => t.cable_id === cableId)
+    .sort((a, b) => a.position - b.position);
+
+  // Build rows: one per fiber, in TIA-598 order, grouped by tube.
+  const rows = [];
+  for (const tube of tubes) {
+    const fibersInTube = state.data.fibers
+      .filter(f => f.buffer_tube_id === tube.id)
+      .sort((a, b) => a.position - b.position);
+    for (const f of fibersInTube) {
+      const strandPos = (tube.position - 1) * 12 + f.position;
+      rows.push(`<tr data-fiber-id="${f.id}">
+        <td class="num">${strandPos}</td>
+        <td><span class="fc fc-${tube.color}"></span>${tube.position}</td>
+        <td><span class="fc fc-${f.color}"></span>${f.position}</td>
+        <td><input class="meta-circuit" type="text" value="${esc(f.circuit_name || '')}" placeholder="e.g. CKT-1024"></td>
+        <td><input class="meta-customer" type="text" value="${esc(f.customer || '')}" placeholder="e.g. ABC Corp"></td>
+        <td><input class="meta-notes" type="text" value="${esc(f.notes || '')}" placeholder="optional"></td>
+      </tr>`);
+    }
+  }
+
+  showModal({
+    title: `Edit circuits — ${cable.name} (${cable.fiber_count} fibers)`,
+    wide: true,
+    body: `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
+        Circuit names appear on the splicer's PDF when set. Leave blank to omit.
+      </p>
+      <div style="max-height:60vh;overflow:auto;border:1px solid var(--border-weak);border-radius:4px">
+        <table class="table" style="font-size:11px">
+          <thead style="position:sticky;top:0;background:var(--surface-2);z-index:1">
+            <tr>
+              <th>Strand</th><th>Tube</th><th>Fiber</th>
+              <th>Circuit name</th><th>Customer</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>
+    `,
+    submitText: `Save ${rows.length} fibers`,
+    onSubmit: async (close) => {
+      // Collect every row's three fields. Send only fields that
+      // changed from the saved value to keep the payload tight on
+      // 432-fiber cables.
+      const updates = [];
+      document.querySelectorAll(`#modal-host tr[data-fiber-id]`).forEach(tr => {
+        const id = tr.dataset.fiberId;
+        const original = state.data.fibers.find(f => f.id === id);
+        const circuit = tr.querySelector('.meta-circuit').value.trim();
+        const customer = tr.querySelector('.meta-customer').value.trim();
+        const notes = tr.querySelector('.meta-notes').value.trim();
+        const patch = { id };
+        if (circuit !== (original?.circuit_name || '')) patch.circuit_name = circuit || null;
+        if (customer !== (original?.customer || '')) patch.customer = customer || null;
+        if (notes !== (original?.notes || '')) patch.notes = notes || null;
+        if (Object.keys(patch).length > 1) updates.push(patch);
+      });
+      if (!updates.length) {
+        toast('No changes', 'success');
+        close();
+        return;
+      }
+      try {
+        const r = await api(`/api/splice/cables/${cableId}/fiber-metadata`, 'PUT', { fibers: updates });
+        toast(`Updated ${r.updated_count} fibers`, 'success');
         close();
         await hydrateProject();
       } catch (e) { toast(e.message, 'error'); }

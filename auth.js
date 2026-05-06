@@ -116,28 +116,38 @@ function teamForRole(role) {
   if (!role) return null;
   if (role.startsWith('design_')) return 'design';
   if (role.startsWith('permitting_')) return 'permitting';
-  if (role.startsWith('inspection_')) return 'inspection';
+  // 'construction_*' is the canonical prefix going forward (formerly
+  // 'inspection_'). Owner renamed the team 2026-05-06; the migration
+  // 0009_rename_inspection_team_to_construction.sql swept the data.
+  // We accept the old prefix too so any stale JWTs minted before the
+  // rename still resolve to the same team.
+  if (role.startsWith('construction_')) return 'construction';
+  if (role.startsWith('inspection_')) return 'construction';
   return null;  // admin / customer sees no team scope (they're filtered differently)
 }
 
 // Helper: ALL teams a user can access. Combines their primary role's team
 // with any extra_teams they've been granted. Returns array of team strings:
-// 'design' | 'permitting' | 'inspection'. Empty array means no team-scoped
+// 'design' | 'permitting' | 'construction'. Empty array means no team-scoped
 // access (admin sees everything regardless, so this only matters for
 // non-admin users in portal contexts).
 //
 // Example: a design_engineer with extra_teams=['permitting'] returns
 // ['design','permitting'] — they can use either portal and see both teams'
 // data inside whichever one they're viewing.
+//
+// Backward compat: extra_teams may still contain the legacy 'inspection'
+// string on rows that pre-date migration 0009. Treat it as 'construction'.
 function teamsForUser(user) {
   if (!user) return [];
-  if (user.role === 'admin') return ['design','permitting','inspection'];
+  if (user.role === 'admin') return ['design','permitting','construction'];
   const primary = teamForRole(user.role);
   const extras = Array.isArray(user.extra_teams) ? user.extra_teams : [];
   const set = new Set();
   if (primary) set.add(primary);
   for (const t of extras) {
-    if (t === 'design' || t === 'permitting' || t === 'inspection') set.add(t);
+    if (t === 'design' || t === 'permitting' || t === 'construction') set.add(t);
+    else if (t === 'inspection') set.add('construction');  // legacy alias
   }
   return [...set];
 }
@@ -561,7 +571,7 @@ function installAuthRoutes(app, pool) {
     }
     // Validate extra_teams if provided
     const cleanExtras = Array.isArray(extra_teams)
-      ? extra_teams.filter(t => ['design','permitting','inspection'].includes(t))
+      ? extra_teams.filter(t => ['design','permitting','construction','inspection'].includes(t)).map(t => t === 'inspection' ? 'construction' : t)
       : [];
     try {
       const team = teamForRole(role);
@@ -608,7 +618,7 @@ function installAuthRoutes(app, pool) {
       if (active !== undefined)    { sets.push(`active = $${i++}`); vals.push(!!active); }
       if (extra_teams !== undefined) {
         const cleanExtras = Array.isArray(extra_teams)
-          ? extra_teams.filter(t => ['design','permitting','inspection'].includes(t))
+          ? extra_teams.filter(t => ['design','permitting','construction','inspection'].includes(t)).map(t => t === 'inspection' ? 'construction' : t)
           : [];
         sets.push(`extra_teams = $${i++}`); vals.push(cleanExtras);
       }

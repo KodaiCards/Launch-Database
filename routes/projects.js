@@ -106,8 +106,14 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       service_area_label,    // free-text service area for non-PSC clients
       permit_manager,
       billing_cadence, projected_revenue,
-      manual_invoice_amount
+      manual_invoice_amount,
+      is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
+                             // TRUE = container/folder, no traits, no hours.
     } = req.body;
+    // Coerce to boolean. JSON might arrive as 'true'/'false' strings from
+    // form submissions; treat anything truthy as TRUE, everything else
+    // (including undefined) as FALSE so the DB column never goes NULL.
+    const isRollupFlag = (is_rollup === true || is_rollup === 'true' || is_rollup === 1 || is_rollup === '1');
     // Phase 3b (2026-05-04): project_types was dropped. Pricing now keys on
     // a program enum (rus|bau|gfr|other). Each project carries its own
     // program — auto-derived from the engineering contract when one is
@@ -211,6 +217,24 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
       }
 
+      // When is_rollup=true, blank out the trait fields (job, rate,
+      // footage, projections). A rollup is purely organizational — it
+      // carries no billing semantics, no time entries, no calculated
+      // hours. The Path B post-Path-B note in PROJECT_NORTH_STAR §6.B
+      // already filters is_rollup=TRUE rows out of count queries, so
+      // wiping the traits here keeps the row consistent with the rest
+      // of the system.
+      const insertJobId       = isRollupFlag ? null : (job_id || null);
+      const insertBillingType = isRollupFlag ? null : effectiveBillingType;
+      const insertBillingRate = isRollupFlag ? null : (effectiveRate || null);
+      const insertFootage     = isRollupFlag ? null : (footage || null);
+      const insertMiles       = isRollupFlag ? null : fin.miles;
+      const insertExpHours    = isRollupFlag ? null : fin.expectedHours;
+      const insertExpRev      = isRollupFlag ? null : fin.expectedRevenue;
+      const insertProjected   = isRollupFlag ? null : effectiveProjected;
+      const insertManual      = isRollupFlag ? null : effectiveManual;
+      const insertHrPerMi     = isRollupFlag ? null : (fin.permittingHoursPerMile || null);
+
       const { rows } = await pool.query(`
         INSERT INTO projects (
           name, client_id, contract_id, work_order_number,
@@ -219,33 +243,34 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, budget_code_id, concentrator_id,
           permitting_hours_per_mile, billing_cadence, projected_revenue,
-          manual_invoice_amount
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+          manual_invoice_amount, is_rollup
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
         RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
-        project_type, program, job_id || null,
-        status, effectiveBillingType, effectiveRate || null,
-        footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
+        project_type, program, insertJobId,
+        status, insertBillingType, insertBillingRate,
+        insertFootage, insertMiles, insertExpHours, insertExpRev,
         start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
-        fin.permittingHoursPerMile || null, effectiveCadence, effectiveProjected,
-        effectiveManual
+        insertHrPerMi, effectiveCadence, insertProjected,
+        insertManual, isRollupFlag,
       ]);
 
-      // Auto-create permit stage for permitting projects
-      if (isPermitting) {
-        await pool.query(
-          'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
-          [rows[0].id, 'potential', permit_manager || null]
-        );
-      }
-
-      // Auto-create design stage for design projects
-      if (project_type === 'design') {
-        await pool.query(
-          'INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
-          [rows[0].id, 'potential']
-        );
+      // Auto-create permit / design stages — but ONLY for real projects.
+      // Rollup containers don't go through any pipeline; they're folders.
+      if (!isRollupFlag) {
+        if (isPermitting) {
+          await pool.query(
+            'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
+            [rows[0].id, 'potential', permit_manager || null]
+          );
+        }
+        if (project_type === 'design') {
+          await pool.query(
+            'INSERT INTO design_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
+            [rows[0].id, 'potential']
+          );
+        }
       }
 
       res.json(rows[0]);
@@ -258,8 +283,19 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       project_type, program, job_id,
       status, billing_type, billing_rate,
       footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id,
-      billing_cadence, projected_revenue, manual_invoice_amount
+      billing_cadence, projected_revenue, manual_invoice_amount,
+      is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
+                             // Use COALESCE in the SET so omitting the field
+                             // preserves the existing value.
     } = req.body;
+    // Coerce is_rollup to a boolean (or undefined when omitted, so the
+    // SQL leaves the existing value alone).
+    let isRollupFlag;
+    if (is_rollup === undefined) {
+      isRollupFlag = undefined;
+    } else {
+      isRollupFlag = (is_rollup === true || is_rollup === 'true' || is_rollup === 1 || is_rollup === '1');
+    }
     // Phase 3b: program enum replaces project_type_id. Same validation as POST.
     if (program !== undefined) {
       if (program === null || program === '') {
@@ -336,6 +372,28 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
       }
 
+      // Resolve the effective is_rollup for THIS save:
+      //   - explicit param wins
+      //   - otherwise read the current row's flag and use it for the
+      //     trait-blanking guard below
+      const existingRollup = !!existing.rows[0]?.is_rollup;
+      const willBeRollup = (isRollupFlag === undefined) ? existingRollup : isRollupFlag;
+
+      // Same trait-blanking rule as POST: when the project is (or
+      // becomes) a rollup, every trait field is forced to NULL. This
+      // is intentional even when caller passed values — owner rule:
+      // rollups have NO traits.
+      const updJobId        = willBeRollup ? null : (job_id || null);
+      const updBillingType  = willBeRollup ? null : effectiveBillingType;
+      const updBillingRate  = willBeRollup ? null : (effectiveRate || null);
+      const updFootage      = willBeRollup ? null : (footage || null);
+      const updMiles        = willBeRollup ? null : fin.miles;
+      const updExpHours     = willBeRollup ? null : fin.expectedHours;
+      const updExpRev       = willBeRollup ? null : fin.expectedRevenue;
+      const updHrPerMi      = willBeRollup ? null : (fin.permittingHoursPerMile || existingHpm || null);
+      const updProjected    = willBeRollup ? null : newProjected;
+      const updManual       = willBeRollup ? null : newManual;
+
       const { rows } = await pool.query(`
         UPDATE projects SET
           name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
@@ -346,18 +404,20 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=$21,
           permitting_hours_per_mile=$22,
           billing_cadence=$23, projected_revenue=$24,
-          manual_invoice_amount=$25
+          manual_invoice_amount=$25,
+          is_rollup=COALESCE($27, is_rollup)
         WHERE id=$26 RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
-        project_type, effectiveProgram === undefined ? null : effectiveProgram, job_id || null,
-        status, effectiveBillingType, effectiveRate || null,
-        footage || null, fin.miles, fin.expectedHours, fin.expectedRevenue,
+        project_type, effectiveProgram === undefined ? null : effectiveProgram, updJobId,
+        status, updBillingType, updBillingRate,
+        updFootage, updMiles, updExpHours, updExpRev,
         start_date || null, completed_date || null, billed_date || null,
         notes, parent_id || null, budget_code_id || null, concentrator_id || null,
-        fin.permittingHoursPerMile || existingHpm || null,
-        newCadence, newProjected, newManual,
-        req.params.id
+        updHrPerMi,
+        newCadence, updProjected, updManual,
+        req.params.id,
+        isRollupFlag === undefined ? null : isRollupFlag,
       ]);
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }

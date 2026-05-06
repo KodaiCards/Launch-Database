@@ -20,6 +20,7 @@ const XLSX = require('xlsx');
 const { v4: uuidv4 } = require('uuid');
 
 const { csvStage, CSV_STAGE_TTL_MS } = require('./_csv_stage');
+const { snapHoursToQuarter } = require('./_helpers');
 const { updateProjectHours } = require('./_helpers');
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────
@@ -701,12 +702,30 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           continue;
         }
 
-        const finalJobTitle = r.job_title || apply_job_title || null;
+        // Owner rule: when the matched project has a job assigned, use
+        // THAT job's name as the time_entry's job_title. The Hours tab
+        // groups by `e.project_job_name || e.job_title` and the
+        // /api/time-entries SELECT now exposes project_job_name from
+        // the project's job_id, but stamping the project's job name
+        // onto job_title at commit time also makes the timecard view
+        // (which reads job_title directly) match what the project
+        // actually does.
+        //
+        // This is what the AI's log_hours tool does — falling back to
+        // the CSV's free-text column was the source of "Inspection
+        // projects show as Other" in the Hours tab.
+        const finalJobTitle = r.project_job_name || r.job_title || apply_job_title || null;
+
+        // Snap to 0.25 grid — owner rule that hours always live on
+        // quarter-hour increments. Applied at INSERT time so a CSV row
+        // with 8.3 lands as 8.25 on disk regardless of the source
+        // spreadsheet's precision.
+        const snappedHours = snapHoursToQuarter(r.hours);
 
         const { rows: insRows } = await client.query(
           `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
            VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-          [r.project_id, staffId, r.date, r.hours, finalJobTitle, importBatch]
+          [r.project_id, staffId, r.date, snappedHours, finalJobTitle, importBatch]
         );
         if (insRows[0]) insertedRows.push(insRows[0]);
         inserted++;

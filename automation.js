@@ -302,7 +302,9 @@ async function buildPscRusProjection(pool, opts) {
   // ── 6. Bucket projects into umbrellas → job teams ──────────────────
   function jobBucket(p) {
     if (p.is_permitting) return 'permitting';
-    if (p.job_team === 'inspection') return 'inspection';
+    // Owner-flagged 2026-05-06: jobs.team renamed from 'inspection' to
+    // 'construction' (migration 0009). Accept both during transition.
+    if (p.job_team === 'construction' || p.job_team === 'inspection') return 'inspection';
     const n = (p.job_name || '').toLowerCase();
     if (n.includes('resident eng') || n === 're') return 're';
     if (n.includes('inspect')) return 'inspection';
@@ -503,7 +505,7 @@ async function buildInspectionRevenueProjection(pool, opts) {
          LEFT JOIN jobs j ON j.id = p.job_id
          LEFT JOIN contracts c ON c.id = p.contract_id
          LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
-         WHERE (j.team = 'inspection' OR p.project_type = 'inspection')
+         WHERE (j.team IN ('construction','inspection') OR p.project_type = 'inspection')
            AND p.status IN ('active', 'billed')
            AND COALESCE(p.is_rollup, FALSE) = FALSE
      ),
