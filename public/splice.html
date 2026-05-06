@@ -216,8 +216,13 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
         <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
         <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
         <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
+        <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
         <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
       </div>
+    </div>
+    <div class="sidebar-section" id="proj-imports" style="display:none">
+      <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
+      <div id="proj-imports-body" style="font-size:11px"></div>
     </div>
     <div class="sidebar-section" id="proj-summary" style="display:none">
       <h3>Summary</h3>
@@ -445,6 +450,8 @@ async function selectProject(id) {
   cleanupCurrent();
   state.currentId = id;
   document.getElementById('proj-actions').style.display = 'block';
+  document.getElementById('proj-imports').style.display = 'block';
+  refreshImportsList();
   document.getElementById('proj-summary').style.display = 'block';
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
@@ -678,8 +685,14 @@ function openSSE(projectId) {
    'splice_added','splice_deleted',
    'ribbon_splice_added','ribbon_group_deleted',
    'location_coords_changed','cable_path_changed',
+   'design_import_applied','design_import_rejected',
    'project_updated','lock_acquired','lock_released','lock_taken_over']
    .forEach(evt => state.sse.addEventListener(evt, handler));
+  // Refresh the imports sidebar when the master designer or another
+  // engineer takes action on a pending import.
+  ['design_import_applied','design_import_rejected'].forEach(evt => {
+    state.sse.addEventListener(evt, () => refreshImportsList());
+  });
   // Phase 2B #7 — splicer uploaded a field photo from a public QR
   // link. We don't need a full re-hydrate (no graph change); just
   // refresh the markup list if the matching closure is selected.
@@ -1902,6 +1915,7 @@ async function deleteCurrentProject() {
     state.data = null;
     document.getElementById('title-name').textContent = '— No project selected —';
     document.getElementById('proj-actions').style.display = 'none';
+    document.getElementById('proj-imports').style.display = 'none';
     document.getElementById('proj-summary').style.display = 'none';
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('view-tabs').style.display = 'none';
@@ -2398,6 +2412,311 @@ function mapClearMode() {
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && state.mapMode) mapClearMode();
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// Design imports — KMZ + DXF (Phases 3C, 3D, 3E)
+// ───────────────────────────────────────────────────────────────────────────
+
+async function refreshImportsList() {
+  if (!state.currentId) return;
+  let imports = [];
+  try { imports = await api('/api/splice/projects/' + state.currentId + '/imports'); }
+  catch { return; }
+  const pending = imports.filter(i => i.status === 'pending');
+  const recent  = imports.filter(i => i.status !== 'pending').slice(0, 5);
+  document.getElementById('proj-imports-count').textContent =
+    pending.length ? pending.length : '';
+  const host = document.getElementById('proj-imports-body');
+  if (!imports.length) {
+    host.innerHTML = '<div class="empty-pane" style="padding:6px">No imports yet. Use "Import KMZ/DXF" above.</div>';
+    return;
+  }
+  host.innerHTML = `
+    ${pending.length ? '<div style="margin-bottom:8px"><b>Pending</b></div>' : ''}
+    ${pending.map(i => importRowHtml(i, true)).join('')}
+    ${recent.length ? '<div style="margin:10px 0 4px;color:var(--text-muted);font-size:10px;text-transform:uppercase">Recent</div>' : ''}
+    ${recent.map(i => importRowHtml(i, false)).join('')}
+  `;
+}
+
+function importRowHtml(i, pending) {
+  const sum = i.summary_jsonb || {};
+  const counts = `${(sum.adds?.locations||0)+(sum.adds?.cables||0)} adds · ${(sum.updates?.locations||0)+(sum.updates?.cables||0)} updates · ${(sum.removes?.locations||0)+(sum.removes?.cables||0)} removes`;
+  return `
+    <div style="border:1px solid var(--border-weak);border-radius:6px;padding:6px;margin-bottom:6px;background:var(--surface)">
+      <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(i.source_filename || '')}">${esc(i.source_filename || '(unnamed)')}</div>
+      <div style="color:var(--text-muted);font-size:10px;margin-top:2px">
+        ${esc(i.source_format)} · ${i.uploaded_by_name ? esc(i.uploaded_by_name) + ' · ' : ''}${new Date(i.uploaded_at).toLocaleString()}
+      </div>
+      <div style="font-size:10px;margin-top:2px">${counts}</div>
+      <div style="font-size:10px;margin-top:2px;color:${importStatusColor(i.status)};font-weight:500;text-transform:uppercase">${esc(i.status.replace('_',' '))}</div>
+      ${pending ? `
+        <div style="display:flex;gap:4px;margin-top:6px">
+          <button class="btn btn-sm" style="flex:1" onclick="openImportReviewModal('${i.id}')"><i class="fa-solid fa-eye"></i> Review</button>
+          <button class="btn btn-sm btn-danger" onclick="rejectImport('${i.id}')" title="Reject this import"><i class="fa-solid fa-times"></i></button>
+        </div>` : ''}
+    </div>`;
+}
+
+function importStatusColor(status) {
+  switch (status) {
+    case 'applied':           return 'var(--success)';
+    case 'partially_applied': return 'var(--warning)';
+    case 'rejected':          return 'var(--danger)';
+    case 'pending':           return 'var(--primary)';
+    default:                  return 'var(--text-muted)';
+  }
+}
+
+function openImportDesignModal() {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  showModal({
+    title: 'Import design (KMZ / DXF / GeoJSON)',
+    submitText: 'Upload + parse',
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Upload a design from AutoCAD (DXF), Google Earth (KMZ), or GeoJSON.
+        The server will parse and stage the changes — nothing in the live
+        project moves until you review and apply.
+      </div>
+      <div class="field"><label>File</label>
+        <input type="file" id="m-imp-file" accept=".kmz,.kml,.dxf,.geojson"></div>
+      <div id="m-imp-dxf-calib" style="display:none;margin-top:6px;padding:10px;background:var(--surface-2);border-radius:6px">
+        <div style="font-size:12px;font-weight:500;margin-bottom:6px">DXF needs georeferencing</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+          Pick the option that matches your DXF.
+        </div>
+        <div class="field"><label><input type="radio" name="m-imp-calib-mode" value="crs" checked> Source coordinate system (preferred)</label></div>
+        <div id="m-imp-calib-crs" style="margin-left:18px;margin-bottom:8px">
+          <input type="text" id="m-imp-crs" placeholder="e.g. EPSG:2284 (Virginia State Plane North, ftUS)" style="width:100%">
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">
+            Common: EPSG:2284 VA-N · EPSG:2285 WA-N · EPSG:32119 NC · EPSG:3857 WebMercator. Find yours: epsg.io
+          </div>
+        </div>
+        <div class="field"><label><input type="radio" name="m-imp-calib-mode" value="control"> Two control points (fallback if CRS unknown)</label></div>
+        <div id="m-imp-calib-cp" style="margin-left:18px;display:none">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">
+            Pick two distinct features in the DXF and provide both their drawing coordinates and real-world lat/lon.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+            <div><b>Point 1</b><br>
+              <input type="text" id="m-imp-cp1-src" placeholder="src x,y" style="width:100%;margin:2px 0"><br>
+              <input type="text" id="m-imp-cp1-dst" placeholder="lon,lat" style="width:100%;margin:2px 0">
+            </div>
+            <div><b>Point 2</b><br>
+              <input type="text" id="m-imp-cp2-src" placeholder="src x,y" style="width:100%;margin:2px 0"><br>
+              <input type="text" id="m-imp-cp2-dst" placeholder="lon,lat" style="width:100%;margin:2px 0">
+            </div>
+          </div>
+        </div>
+      </div>
+    `,
+    onSubmit: async (close) => {
+      const fileEl = document.getElementById('m-imp-file');
+      const file = fileEl.files[0];
+      if (!file) return toast('Pick a file first', 'error');
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const fd = new FormData();
+      fd.set('file', file);
+      if (ext === 'dxf') {
+        const mode = document.querySelector('input[name="m-imp-calib-mode"]:checked')?.value || 'crs';
+        let calib;
+        if (mode === 'crs') {
+          const crs = document.getElementById('m-imp-crs').value.trim();
+          if (!/^EPSG:\d+$/i.test(crs)) return toast('CRS must look like EPSG:2284', 'error');
+          calib = { crs };
+        } else {
+          const parsePair = id => {
+            const v = document.getElementById(id).value.trim();
+            const parts = v.split(',').map(s => parseFloat(s.trim()));
+            return parts.length === 2 && parts.every(Number.isFinite) ? parts : null;
+          };
+          const cp1src = parsePair('m-imp-cp1-src'), cp1dst = parsePair('m-imp-cp1-dst');
+          const cp2src = parsePair('m-imp-cp2-src'), cp2dst = parsePair('m-imp-cp2-dst');
+          if (!cp1src || !cp1dst || !cp2src || !cp2dst) return toast('Each point needs src x,y AND lon,lat', 'error');
+          calib = { control_points: [{ src: cp1src, dst: cp1dst }, { src: cp2src, dst: cp2dst }] };
+        }
+        fd.set('calibration', JSON.stringify(calib));
+      }
+      try {
+        const tok = sessionStorage.getItem('lfs_token');
+        const r = await fetch('/api/splice/projects/' + state.currentId + '/imports', {
+          method: 'POST',
+          credentials: 'include',
+          headers: tok ? { 'Authorization': 'Bearer ' + tok } : {},
+          body: fd,
+        });
+        const json = await r.json();
+        if (!r.ok) throw new Error(json.error || 'Upload failed');
+        close();
+        toast('Imported ' + file.name + ' — open it in the imports list to review.', 'success');
+        await refreshImportsList();
+        // Auto-open the review modal for convenience.
+        if (json.import?.id) openImportReviewModal(json.import.id);
+      } catch (e) { toast('Import failed: ' + e.message, 'error'); }
+    },
+  });
+  // Toggle DXF calibration block based on file extension.
+  setTimeout(() => {
+    const fileEl = document.getElementById('m-imp-file');
+    fileEl.addEventListener('change', () => {
+      const ext = (fileEl.files[0]?.name.split('.').pop() || '').toLowerCase();
+      document.getElementById('m-imp-dxf-calib').style.display = ext === 'dxf' ? 'block' : 'none';
+    });
+    document.querySelectorAll('input[name="m-imp-calib-mode"]').forEach(r => {
+      r.addEventListener('change', () => {
+        document.getElementById('m-imp-calib-crs').style.display = r.value === 'crs' && r.checked ? 'block' : 'none';
+        document.getElementById('m-imp-calib-cp').style.display  = r.value === 'control' && r.checked ? 'block' : 'none';
+      });
+    });
+  }, 50);
+}
+
+async function openImportReviewModal(importId) {
+  let detail;
+  try { detail = await api('/api/splice/imports/' + importId); }
+  catch (e) { return toast('Load failed: ' + e.message, 'error'); }
+  state._reviewImport = detail;
+  const { import: imp, changes } = detail;
+  if (imp.status !== 'pending') {
+    return toast(`This import is already ${imp.status.replace('_',' ')}.`, 'info');
+  }
+  // Group changes for rendering.
+  const sections = [
+    { label: 'Add locations',    type: 'add',    table: 'splice_locations' },
+    { label: 'Update locations', type: 'update', table: 'splice_locations' },
+    { label: 'Remove locations', type: 'delete', table: 'splice_locations' },
+    { label: 'Add cables',       type: 'add',    table: 'splice_cables' },
+    { label: 'Update cables',    type: 'update', table: 'splice_cables' },
+    { label: 'Remove cables',    type: 'delete', table: 'splice_cables' },
+  ];
+  const renderRows = (sec) => {
+    const rows = changes.filter(c => c.change_type === sec.type && c.target_table === sec.table);
+    if (!rows.length) return '';
+    return `
+      <div style="margin-top:14px">
+        <div style="font-weight:600;margin-bottom:6px">${esc(sec.label)} <span style="color:var(--text-muted);font-weight:400">(${rows.length})</span></div>
+        <table class="table">
+          <thead><tr><th style="width:60px">Decision</th><th>Detail</th></tr></thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr id="rev-${r.id}">
+                <td>
+                  <select onchange="updateChangeDecision('${r.id}', this.value)" style="font-size:11px;padding:2px">
+                    <option value="approved" ${r.decision==='approved'?'selected':''}>Approve</option>
+                    <option value="skipped"  ${r.decision==='skipped'?'selected':''}>Skip</option>
+                    <option value="pending"  ${r.decision==='pending'?'selected':''}>Pending</option>
+                  </select>
+                </td>
+                <td style="font-size:11px">${reviewDetailHtml(r)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  };
+  showModal({
+    title: 'Review import: ' + esc(imp.source_filename || ''),
+    submitText: 'Apply approved changes',
+    wide: true,
+    body: `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">
+        Uploaded ${imp.uploaded_by_name ? 'by ' + esc(imp.uploaded_by_name) + ' ' : ''}
+        on ${new Date(imp.uploaded_at).toLocaleString()} ·
+        ${esc(imp.source_format.toUpperCase())} ·
+        ${imp.source_size_bytes ? Math.round(imp.source_size_bytes/1024) + ' KB' : ''}
+      </div>
+      ${(imp.summary_jsonb?.warnings || []).length ? `
+        <div style="background:var(--warning-light);color:var(--warning-text);padding:6px;border-radius:4px;font-size:11px;margin-bottom:8px">
+          ${imp.summary_jsonb.warnings.map(w => '⚠ ' + esc(w)).join('<br>')}
+        </div>` : ''}
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button class="btn btn-sm" onclick="bulkDecision('approved')">Approve all adds + updates</button>
+        <button class="btn btn-sm" onclick="bulkDecision('skipped')">Skip all</button>
+      </div>
+      ${sections.map(renderRows).join('')}
+      ${changes.length === 0 ? '<div class="empty-pane" style="padding:18px">No changes detected — the import matched the live tree exactly.</div>' : ''}
+    `,
+    onSubmit: async (close) => {
+      try {
+        const r = await api('/api/splice/imports/' + importId + '/apply', 'POST', {});
+        toast(`Applied ${r.applied} change(s) — status: ${r.status.replace('_',' ')}`, 'success');
+        close();
+        await refreshImportsList();
+        await hydrateProject();
+      } catch (e) { toast('Apply failed: ' + e.message, 'error'); }
+    },
+  });
+}
+
+function reviewDetailHtml(c) {
+  const p = c.payload_jsonb || {};
+  if (c.target_table === 'splice_locations') {
+    if (c.change_type === 'add') {
+      return `<b>${esc(p.name || '?')}</b> · ${esc(p.type || 'splice_point')} <span style="color:var(--text-muted)">at ${(+p.latitude).toFixed(5)}, ${(+p.longitude).toFixed(5)}</span>`;
+    }
+    if (c.change_type === 'update') {
+      const fields = Object.entries(p).map(([k, v]) => `<code>${esc(k)}</code>: ${esc(JSON.stringify(v))}`).join(' · ');
+      return `Update location <code>${esc(c.target_id)}</code><br><span style="color:var(--text-muted);font-size:10px">${fields}</span>`;
+    }
+    if (c.change_type === 'delete') {
+      return `<span style="color:var(--danger)">Remove</span> location <b>${esc(p.name || c.target_id)}</b>`;
+    }
+  }
+  if (c.target_table === 'splice_cables') {
+    if (c.change_type === 'add') {
+      const len = p.path_geojson?.coordinates?.length || 0;
+      return `<b>${esc(p.name || '?')}</b> · ${p.fiber_count}f ${esc(p.construction_type || '')} <span style="color:var(--text-muted)">${len} waypoints</span>`;
+    }
+    if (c.change_type === 'update') {
+      const fields = Object.keys(p).map(k => k === 'path_geojson' ? 'path' : k).join(', ');
+      return `Update cable <code>${esc(c.target_id)}</code><br><span style="color:var(--text-muted);font-size:10px">fields: ${esc(fields)}</span>`;
+    }
+    if (c.change_type === 'delete') {
+      return `<span style="color:var(--danger)">Remove</span> cable <b>${esc(p.name || c.target_id)}</b>`;
+    }
+  }
+  return JSON.stringify(p).slice(0, 200);
+}
+
+async function updateChangeDecision(changeId, decision) {
+  const importId = state._reviewImport?.import?.id;
+  if (!importId) return;
+  try {
+    await api(`/api/splice/imports/${importId}/changes/${changeId}/decision`, 'POST', { decision });
+    // Update the in-memory copy so bulkDecision and re-renders stay
+    // accurate without re-fetching.
+    const c = state._reviewImport.changes.find(x => x.id === changeId);
+    if (c) c.decision = decision;
+  } catch (e) { toast('Decision failed: ' + e.message, 'error'); }
+}
+
+async function bulkDecision(decision) {
+  const importId = state._reviewImport?.import?.id;
+  if (!importId) return;
+  const targets = state._reviewImport.changes.filter(c =>
+    decision === 'approved' ? c.change_type !== 'delete' : true
+  );
+  for (const c of targets) {
+    if (c.decision !== decision) {
+      try {
+        await api(`/api/splice/imports/${importId}/changes/${c.id}/decision`, 'POST', { decision });
+        c.decision = decision;
+        const sel = document.querySelector(`#rev-${c.id} select`);
+        if (sel) sel.value = decision;
+      } catch {}
+    }
+  }
+  toast(`Set ${targets.length} change(s) to ${decision}`, 'success');
+}
+
+async function rejectImport(importId) {
+  if (!confirm('Reject this import? Nothing in the live project will change. The audit log keeps the record.')) return;
+  try {
+    await api('/api/splice/imports/' + importId, 'DELETE');
+    toast('Import rejected', 'success');
+    await refreshImportsList();
+  } catch (e) { toast('Reject failed: ' + e.message, 'error'); }
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // Export

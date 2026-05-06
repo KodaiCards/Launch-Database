@@ -2148,6 +2148,325 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!res.headersSent) res.status(500).json({ error: e.message });
     }
   });
+
+  // ─── Design import: KMZ/DXF submit-and-review (Phase 3C / 3D / 3E) ──────
+  //
+  //   POST   /api/splice/projects/:id/imports          — upload + parse + stage
+  //   GET    /api/splice/projects/:id/imports          — list
+  //   GET    /api/splice/imports/:id                   — detail (with changes)
+  //   POST   /api/splice/imports/:id/changes/:cid/decision — approve | skip | pending
+  //   POST   /api/splice/imports/:id/apply             — commit approved changes
+  //   DELETE /api/splice/imports/:id                   — reject wholesale
+  //
+  // The upload endpoint stages — never mutates the live tree. The
+  // apply endpoint commits the approved subset in a single transaction.
+
+  // 25MB cap. KMZs are tiny but DXFs can run megabytes; this leaves
+  // headroom without inviting abuse on a public-ish import path.
+  const DESIGN_IMPORT_MAX_BYTES = 25 * 1024 * 1024;
+  let _designImportUpload = null;
+  function _getDesignImportUpload() {
+    if (_designImportUpload) return _designImportUpload;
+    let multer;
+    try { multer = require('multer'); }
+    catch (e) {
+      throw new Error('multer not installed; design import unavailable. ' + e.message);
+    }
+    _designImportUpload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: DESIGN_IMPORT_MAX_BYTES, files: 1 },
+    });
+    return _designImportUpload;
+  }
+  const _designImportMiddleware = (req, res, next) => {
+    let upload;
+    try { upload = _getDesignImportUpload(); }
+    catch (e) { return res.status(500).json({ error: e.message }); }
+    upload.single('file')(req, res, next);
+  };
+
+  app.post('/api/splice/projects/:id/imports',
+    _designImportMiddleware,
+    requireAuth(),
+    async (req, res) => {
+      const projectId = req.params.id;
+      const file = req.file;
+      if (!file) return res.status(400).json({ error: 'No file uploaded (field name: "file")' });
+      const filename = file.originalname || 'upload';
+      const ext = (filename.split('.').pop() || '').toLowerCase();
+      const format =
+        ext === 'kmz' ? 'kmz' :
+        ext === 'kml' ? 'kml' :
+        ext === 'dxf' ? 'dxf' :
+        ext === 'geojson' ? 'geojson' :
+        null;
+      if (!format) {
+        return res.status(400).json({ error: 'Unsupported file extension; expected .kmz, .kml, .dxf, or .geojson' });
+      }
+
+      try {
+        // Phase 3C: KMZ/KML/GeoJSON. Phase 3D adds DXF.
+        let parsed;
+        if (format === 'dxf') {
+          // Phase 3D — DXF requires a calibration payload (either a
+          // declared CRS or two control points). The frontend collects
+          // that in a separate calibration modal and re-submits.
+          const calibration = _parseDxfCalibration(req.body?.calibration);
+          if (!calibration) {
+            return res.status(400).json({
+              error: 'DXF imports require a `calibration` form field — either {"crs":"EPSG:..."} or {"control_points":[{src:[x,y],dst:[lon,lat]},{...}]}.',
+            });
+          }
+          parsed = _parseDxf(file.buffer, calibration);
+        } else {
+          parsed = await _parseKmzOrKml(file.buffer, format);
+        }
+
+        // Build the diff against the live project tree. This is where
+        // splice_location_id / splice_cable_id ExtendedData drives the
+        // re-bind: an incoming feature carrying a known id becomes an
+        // update; without one, name match decides update-vs-add.
+        const live = await _loadProjectForExport(pool, projectId);
+        if (!live) return res.status(404).json({ error: 'Project not found' });
+        const changes = _diffIngestAgainstLive(parsed, live);
+
+        // Stage the import + every proposed change in one transaction.
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          const imp = await client.query(
+            `INSERT INTO splice_design_imports
+               (project_id, source_filename, source_format, source_size_bytes,
+                uploaded_by_staff_id, status, summary_jsonb, dxf_calibration_jsonb)
+             VALUES ($1, $2, $3, $4, $5, 'pending', $6::jsonb, $7::jsonb)
+             RETURNING *`,
+            [
+              projectId, filename, format, file.size,
+              req.user?.staff_id || null,
+              JSON.stringify({
+                adds: { locations: changes.locations.adds.length, cables: changes.cables.adds.length },
+                updates: { locations: changes.locations.updates.length, cables: changes.cables.updates.length },
+                removes: { locations: changes.locations.removes.length, cables: changes.cables.removes.length },
+                warnings: parsed.warnings || [],
+              }),
+              format === 'dxf' ? JSON.stringify(_parseDxfCalibration(req.body?.calibration)) : null,
+            ]
+          );
+          const importRow = imp.rows[0];
+
+          for (const c of changes.locations.adds) {
+            await client.query(
+              `INSERT INTO splice_design_import_changes
+                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+               VALUES ($1, 'add', 'splice_locations', NULL, $2::jsonb, 'pending')`,
+              [importRow.id, JSON.stringify(c.payload)]
+            );
+          }
+          for (const c of changes.locations.updates) {
+            await client.query(
+              `INSERT INTO splice_design_import_changes
+                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+               VALUES ($1, 'update', 'splice_locations', $2, $3::jsonb, 'pending')`,
+              [importRow.id, c.target_id, JSON.stringify(c.payload)]
+            );
+          }
+          for (const c of changes.locations.removes) {
+            // Removes default to 'skipped' so an incomplete submission
+            // doesn't accidentally delete the master's data.
+            await client.query(
+              `INSERT INTO splice_design_import_changes
+                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+               VALUES ($1, 'delete', 'splice_locations', $2, $3::jsonb, 'skipped')`,
+              [importRow.id, c.target_id, JSON.stringify(c.payload || {})]
+            );
+          }
+          for (const c of changes.cables.adds) {
+            await client.query(
+              `INSERT INTO splice_design_import_changes
+                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+               VALUES ($1, 'add', 'splice_cables', NULL, $2::jsonb, 'pending')`,
+              [importRow.id, JSON.stringify(c.payload)]
+            );
+          }
+          for (const c of changes.cables.updates) {
+            await client.query(
+              `INSERT INTO splice_design_import_changes
+                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+               VALUES ($1, 'update', 'splice_cables', $2, $3::jsonb, 'pending')`,
+              [importRow.id, c.target_id, JSON.stringify(c.payload)]
+            );
+          }
+          for (const c of changes.cables.removes) {
+            await client.query(
+              `INSERT INTO splice_design_import_changes
+                 (import_id, change_type, target_table, target_id, payload_jsonb, decision)
+               VALUES ($1, 'delete', 'splice_cables', $2, $3::jsonb, 'skipped')`,
+              [importRow.id, c.target_id, JSON.stringify(c.payload || {})]
+            );
+          }
+          await client.query('COMMIT');
+          res.json({ import: importRow, summary: importRow.summary_jsonb });
+        } catch (e) {
+          try { await client.query('ROLLBACK'); } catch {}
+          throw e;
+        } finally {
+          client.release();
+        }
+      } catch (e) {
+        res.status(400).json({ error: 'Import parse failed: ' + e.message });
+      }
+    });
+
+  app.get('/api/splice/projects/:id/imports', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT i.id, i.source_filename, i.source_format, i.source_size_bytes,
+                i.uploaded_at, i.status, i.summary_jsonb, i.decision_at,
+                s.name AS uploaded_by_name
+           FROM splice_design_imports i
+           LEFT JOIN staff s ON s.id = i.uploaded_by_staff_id
+          WHERE i.project_id = $1
+          ORDER BY i.uploaded_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.get('/api/splice/imports/:id', requireAuth(), async (req, res) => {
+    try {
+      const imp = await pool.query(
+        `SELECT i.*, s.name AS uploaded_by_name
+           FROM splice_design_imports i
+           LEFT JOIN staff s ON s.id = i.uploaded_by_staff_id
+          WHERE i.id = $1`,
+        [req.params.id]
+      );
+      if (!imp.rows.length) return res.status(404).json({ error: 'Import not found' });
+      const ch = await pool.query(
+        `SELECT * FROM splice_design_import_changes
+          WHERE import_id = $1
+          ORDER BY change_type, id`,
+        [req.params.id]
+      );
+      res.json({ import: imp.rows[0], changes: ch.rows });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/imports/:id/changes/:cid/decision', requireAuth(), async (req, res) => {
+    const decision = req.body?.decision;
+    const comment = req.body?.comment || null;
+    if (!['pending', 'approved', 'skipped'].includes(decision)) {
+      return res.status(400).json({ error: 'decision must be one of pending, approved, skipped' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_design_import_changes
+            SET decision = $3,
+                decision_at = NOW(),
+                decision_by_staff_id = $4,
+                decision_comment = $5
+          WHERE id = $2 AND import_id = $1
+          RETURNING *`,
+        [req.params.id, req.params.cid, decision, req.user?.staff_id || null, comment]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Change not found' });
+      res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/splice/imports/:id/apply', requireAuth(), async (req, res) => {
+    const importId = req.params.id;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const imp = await client.query(
+        `SELECT * FROM splice_design_imports WHERE id = $1 FOR UPDATE`,
+        [importId]
+      );
+      if (!imp.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Import not found' });
+      }
+      if (imp.rows[0].status === 'applied' || imp.rows[0].status === 'rejected') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: `Import is already ${imp.rows[0].status}` });
+      }
+      const projectId = imp.rows[0].project_id;
+      const ch = await client.query(
+        `SELECT * FROM splice_design_import_changes
+          WHERE import_id = $1 AND decision = 'approved'
+          ORDER BY change_type, id`,
+        [importId]
+      );
+      let appliedCount = 0;
+      // Apply order matters: locations first (so cable adds can FK to
+      // them), then cables. Within each, deletes last.
+      const inOrder = [
+        ...ch.rows.filter(c => c.target_table === 'splice_locations' && c.change_type !== 'delete'),
+        ...ch.rows.filter(c => c.target_table === 'splice_cables'    && c.change_type !== 'delete'),
+        ...ch.rows.filter(c => c.target_table === 'splice_cables'    && c.change_type === 'delete'),
+        ...ch.rows.filter(c => c.target_table === 'splice_locations' && c.change_type === 'delete'),
+      ];
+      for (const c of inOrder) {
+        const newId = await _applyImportChange(client, projectId, c);
+        await client.query(
+          `UPDATE splice_design_import_changes
+              SET applied_at = NOW(), applied_target_id = $2
+            WHERE id = $1`,
+          [c.id, newId]
+        );
+        appliedCount++;
+      }
+      // Final import status: 'applied' if every change was approved,
+      // 'partially_applied' if some were skipped.
+      const tot = await client.query(
+        `SELECT COUNT(*) FILTER (WHERE decision = 'skipped') AS skipped,
+                COUNT(*) AS total
+           FROM splice_design_import_changes WHERE import_id = $1`,
+        [importId]
+      );
+      const skipped = parseInt(tot.rows[0].skipped, 10);
+      const total = parseInt(tot.rows[0].total, 10);
+      const finalStatus = skipped === 0 ? 'applied'
+                         : skipped === total ? 'rejected'
+                         : 'partially_applied';
+      await client.query(
+        `UPDATE splice_design_imports
+            SET status = $2, decision_at = NOW(), decision_by_staff_id = $3
+          WHERE id = $1`,
+        [importId, finalStatus, req.user?.staff_id || null]
+      );
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'design_import_applied', {
+        import_id: importId, applied: appliedCount, status: finalStatus,
+      });
+      res.json({ ok: true, applied: appliedCount, status: finalStatus });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: 'Apply failed: ' + e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.delete('/api/splice/imports/:id', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `UPDATE splice_design_imports
+            SET status = 'rejected',
+                decision_at = NOW(),
+                decision_by_staff_id = $2
+          WHERE id = $1 AND status = 'pending'
+          RETURNING project_id, status`,
+        [req.params.id, req.user?.staff_id || null]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Import not found or not pending' });
+      _broadcast(rows[0].project_id, 'design_import_rejected', { import_id: req.params.id });
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -3372,4 +3691,518 @@ function _kmlEsc(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+// ─── Design import: parsing + diff (Phase 3C / 3D) ──────────────────────
+
+// Lazy-required because @tmcw/togeojson + jsdom + adm-zip are only on
+// the import path. Letting the splice service boot when these aren't
+// installed (e.g. local dev that never imports) is friendlier than
+// crashing at startup.
+let _admZip = null;
+function _getAdmZip() {
+  if (_admZip) return _admZip;
+  try { _admZip = require('adm-zip'); }
+  catch (e) {
+    throw new Error('adm-zip not installed; KMZ import unavailable. ' +
+                    'Run `npm install adm-zip`. Original: ' + e.message);
+  }
+  return _admZip;
+}
+let _togeojson = null;
+function _getTogeojson() {
+  if (_togeojson) return _togeojson;
+  try { _togeojson = require('@tmcw/togeojson'); }
+  catch (e) {
+    throw new Error('@tmcw/togeojson not installed; KMZ/KML import unavailable. ' +
+                    'Run `npm install @tmcw/togeojson jsdom`. Original: ' + e.message);
+  }
+  return _togeojson;
+}
+let _jsdomMod = null;
+function _getJsdom() {
+  if (_jsdomMod) return _jsdomMod;
+  try { _jsdomMod = require('jsdom'); }
+  catch (e) {
+    throw new Error('jsdom not installed; KMZ/KML import unavailable. ' +
+                    'Run `npm install jsdom`. Original: ' + e.message);
+  }
+  return _jsdomMod;
+}
+let _dxfParserMod = null;
+function _getDxfParser() {
+  if (_dxfParserMod) return _dxfParserMod;
+  try { _dxfParserMod = require('dxf-parser'); }
+  catch (e) {
+    throw new Error('dxf-parser not installed; DXF import unavailable. ' +
+                    'Run `npm install dxf-parser`. Original: ' + e.message);
+  }
+  return _dxfParserMod;
+}
+let _proj4Mod = null;
+function _getProj4() {
+  if (_proj4Mod) return _proj4Mod;
+  try { _proj4Mod = require('proj4'); }
+  catch (e) {
+    throw new Error('proj4 not installed; DXF georeferencing unavailable. ' +
+                    'Run `npm install proj4`. Original: ' + e.message);
+  }
+  return _proj4Mod;
+}
+
+// Parse a KMZ or KML buffer into the same intermediate shape as the
+// DXF parser produces:
+//   { locations: [{ name, type, latitude, longitude, source_id, props }],
+//     cables:    [{ name, fiber_count, construction_type, path_geojson,
+//                   source_id, props }],
+//     warnings: [...] }
+//
+// source_id is the splice_*_id from KML ExtendedData when present —
+// the round-trip breadcrumb that lets re-import re-bind to existing
+// rows. props carries the raw ExtendedData blob for debugging /
+// future use.
+async function _parseKmzOrKml(buffer, format) {
+  let kmlText;
+  if (format === 'kmz') {
+    const AdmZip = _getAdmZip();
+    const zip = new AdmZip(buffer);
+    // KMZ convention: the primary KML at root, named "doc.kml" or any
+    // *.kml. Pick doc.kml first; otherwise the first .kml entry.
+    const entries = zip.getEntries();
+    const doc = entries.find(e => e.entryName.toLowerCase() === 'doc.kml')
+             || entries.find(e => e.entryName.toLowerCase().endsWith('.kml'));
+    if (!doc) throw new Error('KMZ contains no .kml file');
+    kmlText = doc.getData().toString('utf8');
+  } else if (format === 'geojson') {
+    return _ingestFromGeoJson(JSON.parse(buffer.toString('utf8')));
+  } else {
+    kmlText = buffer.toString('utf8');
+  }
+  const { JSDOM } = _getJsdom();
+  const togeo = _getTogeojson();
+  const dom = new JSDOM(kmlText, { contentType: 'text/xml' });
+  const fc = togeo.kml(dom.window.document);
+  return _ingestFromGeoJson(fc);
+}
+
+// Walk a GeoJSON FeatureCollection and bucket Features into our
+// location/cable shape. Point → location, LineString → cable. Other
+// geometries (Polygon, MultiLineString, etc.) get warnings but don't
+// abort the import.
+function _ingestFromGeoJson(fc) {
+  const out = { locations: [], cables: [], warnings: [] };
+  if (!fc || !Array.isArray(fc.features)) {
+    out.warnings.push('Input is not a GeoJSON FeatureCollection; nothing to import.');
+    return out;
+  }
+  for (const f of fc.features) {
+    if (!f || !f.geometry) continue;
+    const props = f.properties || {};
+    const name  = props.name || props.Name || '(unnamed)';
+    if (f.geometry.type === 'Point') {
+      const [lon, lat] = f.geometry.coordinates;
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+      out.locations.push({
+        name: String(name).slice(0, 120),
+        type: _normalizeLocationType(props.type) || 'splice_point',
+        latitude: lat,
+        longitude: lon,
+        source_id: props.splice_location_id || null,
+        props,
+        notes: props.notes || null,
+      });
+    } else if (f.geometry.type === 'LineString') {
+      const coords = f.geometry.coordinates.filter(pt =>
+        Array.isArray(pt) && pt.length >= 2 &&
+        Number.isFinite(pt[0]) && Number.isFinite(pt[1])
+      );
+      if (coords.length < 2) continue;
+      const fc_count = _normalizeFiberCount(props.fiber_count);
+      out.cables.push({
+        name: String(name).slice(0, 120),
+        fiber_count: fc_count || 144,  // pick a common default; reviewer can edit
+        construction_type: _normalizeConstructionType(props.construction_type) || 'ribbon',
+        path_geojson: { type: 'LineString', coordinates: coords.map(p => [p[0], p[1]]) },
+        source_id: props.splice_cable_id || null,
+        props,
+        notes: props.notes || null,
+        manufacturer_part: props.manufacturer_part || null,
+      });
+      if (!fc_count) {
+        out.warnings.push(`Cable "${name}" has no fiber_count; defaulted to 144 (reviewer can change)`);
+      }
+    } else {
+      out.warnings.push(`Skipped unsupported geometry: ${f.geometry.type} (${name})`);
+    }
+  }
+  return out;
+}
+
+function _normalizeLocationType(t) {
+  if (!t) return null;
+  const v = String(t).toLowerCase().trim();
+  if (['co', 'splice_point', 'fdh', 'terminal', 'ring_cut'].includes(v)) return v;
+  if (v.includes('central') || v === 'co' || v === 'co.') return 'co';
+  if (v.includes('terminal')) return 'terminal';
+  if (v.includes('fdh') || v.includes('cabinet')) return 'fdh';
+  if (v.includes('ring')) return 'ring_cut';
+  return 'splice_point';
+}
+function _normalizeFiberCount(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return null;
+  if ([12, 24, 48, 96, 144, 288, 432, 864].includes(x)) return x;
+  // Snap to next-larger canonical so a "120" doesn't get rejected.
+  for (const c of [12, 24, 48, 96, 144, 288, 432, 864]) if (c >= x) return c;
+  return null;
+}
+function _normalizeConstructionType(t) {
+  if (!t) return null;
+  const v = String(t).toLowerCase().trim();
+  if (v === 'ribbon' || v === 'loose_tube') return v;
+  if (v.includes('ribbon')) return 'ribbon';
+  if (v.includes('loose')) return 'loose_tube';
+  return null;
+}
+
+// Compare a parsed ingest payload against the live project tree and
+// produce add/update/delete buckets per entity type.
+//
+// Re-bind precedence:
+//   1. source_id from KML ExtendedData (splice_location_id /
+//      splice_cable_id) — exact match wins
+//   2. Same-name match within the live project (case-insensitive)
+//   3. New entity (add)
+//
+// Removes are surfaced as "in master, not in submission" candidates
+// so the master designer can see them; they default to 'skipped'
+// at the apply step.
+function _diffIngestAgainstLive(parsed, live) {
+  const out = {
+    locations: { adds: [], updates: [], removes: [] },
+    cables:    { adds: [], updates: [], removes: [] },
+  };
+  // Locations
+  const liveLocs    = live.locations || [];
+  const liveLocById = new Map(liveLocs.map(l => [l.id, l]));
+  const liveLocByName = new Map(liveLocs.map(l => [String(l.name).toLowerCase(), l]));
+  const matchedLocIds = new Set();
+  for (const incoming of parsed.locations || []) {
+    let match = null;
+    if (incoming.source_id && liveLocById.has(incoming.source_id)) {
+      match = liveLocById.get(incoming.source_id);
+    } else if (liveLocByName.has(incoming.name.toLowerCase())) {
+      match = liveLocByName.get(incoming.name.toLowerCase());
+    }
+    if (match) {
+      matchedLocIds.add(match.id);
+      const updates = {};
+      if (incoming.latitude  != null && Number(match.latitude)  !== Number(incoming.latitude))  updates.latitude  = incoming.latitude;
+      if (incoming.longitude != null && Number(match.longitude) !== Number(incoming.longitude)) updates.longitude = incoming.longitude;
+      if (incoming.type && incoming.type !== match.type) updates.type = incoming.type;
+      if (incoming.notes && incoming.notes !== match.notes) updates.notes = incoming.notes;
+      if (Object.keys(updates).length) {
+        out.locations.updates.push({ target_id: match.id, payload: updates, name: match.name });
+      }
+    } else {
+      out.locations.adds.push({
+        payload: {
+          name: incoming.name,
+          type: incoming.type,
+          latitude: incoming.latitude,
+          longitude: incoming.longitude,
+          notes: incoming.notes,
+        },
+      });
+    }
+  }
+  for (const l of liveLocs) {
+    if (!matchedLocIds.has(l.id)) {
+      out.locations.removes.push({ target_id: l.id, payload: { name: l.name } });
+    }
+  }
+
+  // Cables — same shape.
+  const liveCables = live.cables || [];
+  const liveCableById = new Map(liveCables.map(c => [c.id, c]));
+  const liveCableByName = new Map(liveCables.map(c => [String(c.name).toLowerCase(), c]));
+  const matchedCableIds = new Set();
+  for (const incoming of parsed.cables || []) {
+    let match = null;
+    if (incoming.source_id && liveCableById.has(incoming.source_id)) {
+      match = liveCableById.get(incoming.source_id);
+    } else if (liveCableByName.has(incoming.name.toLowerCase())) {
+      match = liveCableByName.get(incoming.name.toLowerCase());
+    }
+    if (match) {
+      matchedCableIds.add(match.id);
+      const updates = {};
+      // Path is the most common change for cables. Only stamp it when
+      // it actually differs to avoid noisy "no-op" approvals.
+      if (incoming.path_geojson &&
+          JSON.stringify(match.path_geojson) !== JSON.stringify(incoming.path_geojson)) {
+        updates.path_geojson = incoming.path_geojson;
+      }
+      if (incoming.fiber_count && match.fiber_count !== incoming.fiber_count) {
+        updates.fiber_count = incoming.fiber_count;
+      }
+      if (incoming.construction_type && match.construction_type !== incoming.construction_type) {
+        updates.construction_type = incoming.construction_type;
+      }
+      if (Object.keys(updates).length) {
+        out.cables.updates.push({ target_id: match.id, payload: updates, name: match.name });
+      }
+    } else {
+      out.cables.adds.push({
+        payload: {
+          name: incoming.name,
+          fiber_count: incoming.fiber_count,
+          construction_type: incoming.construction_type,
+          path_geojson: incoming.path_geojson,
+          notes: incoming.notes,
+          manufacturer_part: incoming.manufacturer_part,
+        },
+      });
+    }
+  }
+  for (const c of liveCables) {
+    if (!matchedCableIds.has(c.id)) {
+      out.cables.removes.push({ target_id: c.id, payload: { name: c.name } });
+    }
+  }
+  return out;
+}
+
+// Apply a single approved change to the live tree, inside an open
+// transaction. Returns the affected row's id (existing target_id for
+// updates/deletes; new uuid for adds).
+async function _applyImportChange(client, projectId, change) {
+  const { change_type, target_table, target_id, payload_jsonb } = change;
+  const p = payload_jsonb || {};
+  if (target_table === 'splice_locations') {
+    if (change_type === 'add') {
+      const r = await client.query(
+        `INSERT INTO splice_locations
+           (project_id, type, name, latitude, longitude, notes)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [projectId, p.type || 'splice_point', p.name || '(unnamed)',
+         p.latitude ?? null, p.longitude ?? null, p.notes || null]
+      );
+      return r.rows[0].id;
+    }
+    if (change_type === 'update') {
+      const sets = [];
+      const vals = [target_id];
+      let i = 2;
+      for (const f of ['name', 'type', 'latitude', 'longitude', 'notes']) {
+        if (Object.prototype.hasOwnProperty.call(p, f)) {
+          sets.push(`${f} = $${i++}`);
+          vals.push(p[f]);
+        }
+      }
+      if (!sets.length) return target_id;
+      await client.query(
+        `UPDATE splice_locations SET ${sets.join(', ')} WHERE id = $1`, vals
+      );
+      return target_id;
+    }
+    if (change_type === 'delete') {
+      await client.query(`DELETE FROM splice_locations WHERE id = $1`, [target_id]);
+      return target_id;
+    }
+  }
+  if (target_table === 'splice_cables') {
+    if (change_type === 'add') {
+      const r = await client.query(
+        `INSERT INTO splice_cables
+           (project_id, name, fiber_count, construction_type, path_geojson, notes, manufacturer_part)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING id`,
+        [projectId, p.name || '(unnamed)',
+         p.fiber_count || 144,
+         p.construction_type || 'ribbon',
+         p.path_geojson ? JSON.stringify(p.path_geojson) : null,
+         p.notes || null, p.manufacturer_part || null]
+      );
+      // Auto-generates buffer tubes + fibers in TIA-598 order to
+      // match the same flow the live POST-cable endpoint runs.
+      const newCableId = r.rows[0].id;
+      const tubeCount = (p.fiber_count || 144) / 12;
+      for (let pos = 1; pos <= tubeCount; pos++) {
+        const tube = await client.query(
+          `INSERT INTO splice_buffer_tubes (cable_id, position, color)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [newCableId, pos, TIA_598_COLORS[(pos - 1) % 12]]
+        );
+        for (let fp = 1; fp <= 12; fp++) {
+          await client.query(
+            `INSERT INTO splice_fibers (buffer_tube_id, position, color)
+             VALUES ($1, $2, $3)`,
+            [tube.rows[0].id, fp, TIA_598_COLORS[fp - 1]]
+          );
+        }
+      }
+      return newCableId;
+    }
+    if (change_type === 'update') {
+      const sets = [];
+      const vals = [target_id];
+      let i = 2;
+      // fiber_count is intentionally NOT updatable here — changing it
+      // would require regenerating buffer tubes + fibers + reconciling
+      // splices, which is well past "review-and-merge" complexity.
+      // The reviewer who approves a fiber_count change today gets a
+      // no-op write on that field; the import warning surfaced it.
+      for (const f of ['name', 'construction_type', 'notes', 'manufacturer_part']) {
+        if (Object.prototype.hasOwnProperty.call(p, f)) {
+          sets.push(`${f} = $${i++}`);
+          vals.push(p[f]);
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(p, 'path_geojson')) {
+        sets.push(`path_geojson = $${i++}::jsonb`);
+        vals.push(p.path_geojson ? JSON.stringify(p.path_geojson) : null);
+      }
+      if (!sets.length) return target_id;
+      await client.query(
+        `UPDATE splice_cables SET ${sets.join(', ')} WHERE id = $1`, vals
+      );
+      return target_id;
+    }
+    if (change_type === 'delete') {
+      await client.query(`DELETE FROM splice_cables WHERE id = $1`, [target_id]);
+      return target_id;
+    }
+  }
+  throw new Error(`Unsupported change ${change_type} on ${target_table}`);
+}
+
+// ─── DXF parser (Phase 3D) ──────────────────────────────────────────────
+
+// calibration shape:
+//   { crs: 'EPSG:2284' }           — source CRS, transform to WGS84
+//   { control_points: [{ src:[x,y], dst:[lon,lat] },
+//                      { src:[x,y], dst:[lon,lat] }] }
+// Returns the calibration object (validated) or null if invalid/missing.
+function _parseDxfCalibration(raw) {
+  if (!raw) return null;
+  let calib;
+  try { calib = typeof raw === 'string' ? JSON.parse(raw) : raw; }
+  catch { return null; }
+  if (calib.crs && typeof calib.crs === 'string' && /^EPSG:\d+$/i.test(calib.crs)) {
+    return { crs: calib.crs.toUpperCase() };
+  }
+  if (Array.isArray(calib.control_points) && calib.control_points.length === 2) {
+    const ok = calib.control_points.every(p =>
+      Array.isArray(p.src) && p.src.length === 2 &&
+      Array.isArray(p.dst) && p.dst.length === 2 &&
+      p.src.every(Number.isFinite) && p.dst.every(Number.isFinite)
+    );
+    if (ok) return { control_points: calib.control_points };
+  }
+  return null;
+}
+
+// Parse a DXF buffer + calibration into the same ingest shape as the
+// KMZ parser. Pulls POINT / CIRCLE / INSERT for closures (label sources
+// vary by AutoCAD template; we treat any POINT or labelled INSERT as a
+// candidate location), LINE / LWPOLYLINE / POLYLINE for cable paths.
+function _parseDxf(buffer, calibration) {
+  const DxfParser = _getDxfParser();
+  const parser = new DxfParser();
+  const parsed = parser.parseSync(buffer.toString('utf8'));
+  const transform = _buildDxfTransform(calibration);
+
+  const out = { locations: [], cables: [], warnings: [] };
+  const layerMap = (input) => input || '0'; // default AutoCAD layer
+
+  for (const ent of parsed.entities || []) {
+    const layer = layerMap(ent.layer);
+    if (ent.type === 'POINT' || ent.type === 'INSERT') {
+      const x = ent.position?.x ?? ent.x;
+      const y = ent.position?.y ?? ent.y;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      const [lon, lat] = transform([x, y]);
+      out.locations.push({
+        name: ent.name || ent.text || `${layer}-${out.locations.length + 1}`,
+        type: 'splice_point',
+        latitude: lat,
+        longitude: lon,
+        source_id: null,
+        props: { layer, dxf_type: ent.type },
+        notes: null,
+      });
+    } else if (ent.type === 'LINE') {
+      const a = transform([ent.vertices[0].x, ent.vertices[0].y]);
+      const b = transform([ent.vertices[1].x, ent.vertices[1].y]);
+      out.cables.push({
+        name: `${layer}-line-${out.cables.length + 1}`,
+        fiber_count: 144,
+        construction_type: 'ribbon',
+        path_geojson: { type: 'LineString', coordinates: [a, b] },
+        source_id: null,
+        props: { layer, dxf_type: ent.type },
+        notes: null,
+        manufacturer_part: null,
+      });
+    } else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
+      const verts = (ent.vertices || []).filter(v => Number.isFinite(v.x) && Number.isFinite(v.y));
+      if (verts.length < 2) continue;
+      const coords = verts.map(v => transform([v.x, v.y]));
+      out.cables.push({
+        name: `${layer}-poly-${out.cables.length + 1}`,
+        fiber_count: 144,
+        construction_type: 'ribbon',
+        path_geojson: { type: 'LineString', coordinates: coords },
+        source_id: null,
+        props: { layer, dxf_type: ent.type },
+        notes: null,
+        manufacturer_part: null,
+      });
+    }
+    // Other DXF entity types (TEXT, ARC, CIRCLE, etc.) are ignored
+    // for v1 — the layer-mapping UI in 3D will let the user opt in
+    // to specific entity classes per layer.
+  }
+  if (!out.locations.length && !out.cables.length) {
+    out.warnings.push('DXF parsed but no POINT/INSERT/LINE/POLYLINE entities were found.');
+  }
+  return out;
+}
+
+// Build a coordinate-transform function from the calibration. CRS path
+// uses proj4js; control-point path computes a 2D affine transform from
+// two points (translate + uniform scale + rotate). Two points isn't
+// enough to recover skew — Phase 3D could grow to 3+ control points
+// for full affine, but two is the bare minimum that does the OSP
+// "I shot two manholes with my GPS, here are the lat/lons" use case.
+function _buildDxfTransform(calibration) {
+  if (calibration.crs) {
+    const proj4 = _getProj4();
+    return (xy) => {
+      const [lon, lat] = proj4(calibration.crs, 'EPSG:4326', xy);
+      return [lon, lat];
+    };
+  }
+  if (calibration.control_points) {
+    const [p1, p2] = calibration.control_points;
+    const [sx1, sy1] = p1.src, [dx1, dy1] = p1.dst;
+    const [sx2, sy2] = p2.src, [dx2, dy2] = p2.dst;
+    const dxs = sx2 - sx1, dys = sy2 - sy1;
+    const dxd = dx2 - dx1, dyd = dy2 - dy1;
+    const srcLen = Math.hypot(dxs, dys);
+    if (srcLen < 1e-9) throw new Error('Control points must be distinct');
+    // Scale + rotation such that vector (sx1→sx2) maps to (dx1→dx2).
+    const scale = Math.hypot(dxd, dyd) / srcLen;
+    const srcAng = Math.atan2(dys, dxs);
+    const dstAng = Math.atan2(dyd, dxd);
+    const rot = dstAng - srcAng;
+    const cos = Math.cos(rot), sin = Math.sin(rot);
+    return ([x, y]) => {
+      const dx = x - sx1, dy = y - sy1;
+      const rx = (dx * cos - dy * sin) * scale;
+      const ry = (dx * sin + dy * cos) * scale;
+      return [dx1 + rx, dy1 + ry];
+    };
+  }
+  throw new Error('Calibration must specify either crs or control_points');
 }
