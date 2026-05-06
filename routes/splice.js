@@ -944,6 +944,59 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Bulk-delete multiple closures in one transaction.
+  // Body: { ids: ['uuid', ...] }
+  // Security: every id must belong to the same project (verified via join).
+  app.post('/api/splice/closures/bulk-delete', requireAuth(), async (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids must be a non-empty array' });
+    }
+    if (ids.length > 200) {
+      return res.status(400).json({ error: 'Too many ids (max 200)' });
+    }
+    // Validate every id is a non-empty string.
+    if (!ids.every(id => typeof id === 'string' && id.trim())) {
+      return res.status(400).json({ error: 'All ids must be non-empty strings' });
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Resolve each id to its project — must all match the same project.
+      const placeholders = ids.map((_, i) => `$${i + 1}`).join(', ');
+      const owned = await client.query(
+        `SELECT cl.id, l.project_id
+         FROM splice_closures cl
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE cl.id IN (${placeholders})`,
+        ids
+      );
+      if (owned.rows.length !== ids.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'One or more closure ids not found' });
+      }
+      const projectIds = new Set(owned.rows.map(r => r.project_id));
+      if (projectIds.size !== 1) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'All closures must belong to the same project' });
+      }
+      const projectId = [...projectIds][0];
+      await client.query(
+        `DELETE FROM splice_closures WHERE id IN (${placeholders})`,
+        ids
+      );
+      await client.query('COMMIT');
+      _bumpProjectMtime(pool, projectId);
+      _broadcast(projectId, 'closures_bulk_deleted', { ids, deleted: ids.length });
+      res.json({ ok: true, deleted: ids.length });
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
   // ─── Splices ─────────────────────────────────────────────────────────────
 
   app.post('/api/splice/trays/:id/splices', requireAuth(), async (req, res) => {

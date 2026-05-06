@@ -833,7 +833,8 @@ function openSSE(projectId) {
    'design_import_applied','design_import_rejected',
    'project_updated','lock_acquired','lock_released','lock_taken_over',
    'splitter_added','splitter_updated','splitter_deleted','splitter_output_wired',
-   'cable_state_updated','cable_state_deleted']
+   'cable_state_updated','cable_state_deleted',
+   'closures_bulk_deleted']
    .forEach(evt => state.sse.addEventListener(evt, handler));
   // Refresh the imports sidebar when the master designer or another
   // engineer takes action on a pending import.
@@ -1629,10 +1630,14 @@ function renderLocationInspector(locationId) {
     </table>
     ${closures.length ? `
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)">
-        <div style="font-size:11px;font-weight:600;margin-bottom:6px">Closures at this location</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:11px;font-weight:600">Closures at this location</div>
+          ${!isReadOnly() ? `<button class="btn btn-sm btn-danger" id="bulk-delete-btn" disabled onclick="bulkDeleteClosures('${locationId}')" style="font-size:10px;padding:2px 7px"><i class="fa-solid fa-trash"></i> Delete selected</button>` : ''}
+        </div>
         <div style="display:flex;flex-direction:column;gap:4px">
           ${closures.map(c => `
             <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+              ${!isReadOnly() ? `<input type="checkbox" class="closure-bulk-pick" data-closure-id="${c.id}" onchange="updateBulkDeleteBtn()" style="flex-shrink:0">` : ''}
               <a href="#" onclick="event.preventDefault();selectThing('closure','${c.id}')" style="flex:1">${esc(c.model || 'Closure')} (${c.tray_count} trays)</a>
             </div>`).join('')}
         </div>
@@ -1646,6 +1651,31 @@ function renderLocationInspector(locationId) {
       Deleting a location cascades to its closures, trays, and splices.
     </div>
   `;
+}
+
+// Enable/disable the bulk-delete button based on how many checkboxes are checked.
+function updateBulkDeleteBtn() {
+  const btn = document.getElementById('bulk-delete-btn');
+  if (!btn) return;
+  const checked = document.querySelectorAll('input.closure-bulk-pick:checked');
+  btn.disabled = checked.length === 0;
+}
+
+// Bulk-delete all checked closures in the location inspector.
+async function bulkDeleteClosures(locationId) {
+  if (isReadOnly()) return toast('Read-only — take over the lock first', 'error');
+  const checked = Array.from(document.querySelectorAll('input.closure-bulk-pick:checked'));
+  if (!checked.length) return;
+  const ids = checked.map(el => el.dataset.closureId);
+  const n = ids.length;
+  if (!confirm(`Delete ${n} closure${n === 1 ? '' : 's'} at this location? Each closure's trays + splices will cascade-delete with it.`)) return;
+  try {
+    await api('/api/splice/closures/bulk-delete', 'POST', { ids });
+    await hydrateProject();
+    selectThing('location', locationId);
+  } catch (e) {
+    toast('Bulk delete failed: ' + e.message, 'error');
+  }
 }
 
 // Helper used by the multi-stop flow and the location inspector to open the
