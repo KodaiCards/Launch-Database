@@ -10,21 +10,21 @@
 
 ---
 
-## Order of attack
+## Order of attack — ALL SHIPPED
 
-Low-risk first, high-risk last. Each item is its own commit so reverts
-are surgical.
+| # | Issue | Commit |
+|---|---|---|
+| 1 | Project edit modal doesn't pre-fill existing values | a1e77f2 |
+| 5 | Hours must always be 0.25-aligned, NO rounding ever | b3c5a0b |
+| 8 | Invoice print: infer job from batched projects | d41285d |
+| 2 | CSV importer doesn't assign Inspection job to Inspection projects | b3363d9 |
+| 4 | AI-created Inspection tree drops service area + WO# from children | b2958df |
+| 7 | Logo: AI stripping Launch logo from invoice templates | f84ebc2 |
+| 3 | Manual `is_rollup` flag — UI + AI tool support | d3adc14 |
+| 6 | Rename Inspection team → Construction (rename + data + paths) | d61a826 |
 
-| # | Issue | Risk | Status |
-|---|---|---|---|
-| 1 | Project edit modal doesn't pre-fill existing values | Low | pending |
-| 5 | Hours must always be 0.25-aligned, NO rounding ever | Low | pending |
-| 8 | Invoice print: infer job from batched projects (no UI to set today) | Low | pending |
-| 2 | CSV importer doesn't assign Inspection job to Inspection projects | Med | pending |
-| 4 | AI-created Inspection tree drops service area + WO# from children | Med | pending |
-| 7 | Logo: AI stripping Launch logo from invoice templates; needs stored asset | Med | pending |
-| 3 | Manual `is_rollup` flag — UI + AI tool support | High | pending |
-| 6 | Rename Inspection team → Construction (rename + data + paths) | High | pending |
+Branch: `claude/splice-matrix-railway-setup-IIG3Q`. Each fix is its
+own commit so reverts are surgical.
 
 ---
 
