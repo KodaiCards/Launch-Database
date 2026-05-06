@@ -191,6 +191,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--text)}
 .fiber-cell{font-size:10px;padding:4px;text-align:center;border:1px solid var(--border-weak);border-radius:3px;cursor:pointer;background:var(--white);user-select:none}
 .fiber-cell:hover{background:var(--primary-light);border-color:var(--primary)}
 .fiber-cell.selected{background:var(--primary);color:#fff;border-color:var(--primary-dark)}
+/* Phase 5A.4 — multi-select: thick blue outline, relative for badge */
+.fiber-cell.sp-selected{border:2.5px solid var(--primary);background:var(--primary-light);position:relative}
+.fiber-cell.sp-selected.in-use{border-color:var(--warning);background:var(--warning-light)}
+.sp-order{position:absolute;top:-5px;right:-5px;background:var(--primary);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:0 3px;min-width:12px;text-align:center;line-height:14px}
 .fiber-cell.in-use{opacity:0.45;cursor:not-allowed}
 .fiber-cell.in-use:hover{background:var(--white);border-color:var(--border-weak)}
 
@@ -3464,21 +3468,45 @@ function openSpliceModal(trayId, ribbon) {
           await hydrateProject();
         } catch (e) { toast(e.message, 'error'); }
       } else {
-        const fa = state._spA;
-        const fb = state._spB;
-        if (!fa || !fb) return toast('Pick a fiber on both sides', 'error');
+        const aList = Array.isArray(state._spA) ? state._spA : (state._spA ? [state._spA] : []);
+        const bList = Array.isArray(state._spB) ? state._spB : (state._spB ? [state._spB] : []);
+        if (!aList.length || !bList.length) return toast('Pick a fiber on both sides', 'error');
+        // Count mismatch: show inline error, don't create any splices.
+        if (aList.length !== bList.length) {
+          return toast(
+            `Side A has ${aList.length} fiber${aList.length>1?'s':''} selected, ` +
+            `side B has ${bList.length} — counts must match for pairwise splice`,
+            'error'
+          );
+        }
+        // Build pairs in pick-order (A₁↔B₁, A₂↔B₂, …).
+        const pairs = aList.map((fa, i) => ({ fa, fb: bList[i] }));
+        // Warn about already-spliced fibers in selection but skip silently.
+        const usedSet = state._spUsed || new Set();
+        const goodPairs = pairs.filter(p => !usedSet.has(p.fa) && !usedSet.has(p.fb));
+        const skipCount = pairs.length - goodPairs.length;
+        if (skipCount && !goodPairs.length) {
+          return toast('All selected fibers are already spliced — nothing to create', 'error');
+        }
+        if (skipCount) toast(`Skipping ${skipCount} already-spliced pair${skipCount>1?'s':''}`, 'warn');
+        close();
+        state._spA = []; state._spB = [];
         try {
-          await api('/api/splice/trays/' + trayId + '/splices', 'POST', {
-            fiber_a_id: fa, fiber_b_id: fb,
-          });
-          close();
-          state._spA = null; state._spB = null;
+          for (const { fa, fb } of goodPairs) {
+            await api('/api/splice/trays/' + trayId + '/splices', 'POST', {
+              fiber_a_id: fa, fiber_b_id: fb,
+            });
+          }
           await hydrateProject();
+          if (goodPairs.length > 1) toast(`Created ${goodPairs.length} splices`, 'success');
         } catch (e) { toast(e.message, 'error'); }
       }
     },
   });
-  state._spA = null; state._spB = null;
+  // Multi-select: arrays of fiber IDs in pick-order. Shift-click appends;
+  // plain click resets to a single selection (mirrors spreadsheet convention).
+  state._spA = [];   // selected fiber IDs on side A
+  state._spB = [];   // selected fiber IDs on side B
   state._spRibbon = ribbon;
   state._spUsed = usedFibers;
 }
@@ -3522,23 +3550,57 @@ window.renderFibersOnly = function(side) {
   const fibers = state.data.fibers
     .filter(f => f.buffer_tube_id === tubeId)
     .sort((a,b)=>a.position-b.position);
+  const selectedIds = side === 'a' ? (state._spA || []) : (state._spB || []);
   grid.innerHTML = fibers.map(f => {
     const used = state._spUsed.has(f.id);
+    const pickedAt = selectedIds.indexOf(f.id);
+    const isPicked = pickedAt !== -1;
     const abbrev = TIA_598_ABBREV[f.color] || '';
-    return `<div class="fiber-cell ${used?'in-use':''}"
+    // Yellow highlight for already-spliced fibers in selection; blue thick
+    // outline for selected fibers; normal for unselected.
+    const cls = [
+      'fiber-cell',
+      used ? 'in-use' : '',
+      isPicked ? 'sp-selected' : '',
+    ].filter(Boolean).join(' ');
+    // Show pick order number when multiple fibers are selected.
+    const orderBadge = isPicked && selectedIds.length > 1
+      ? `<span class="sp-order">${pickedAt + 1}</span>` : '';
+    return `<div class="${cls}"
       data-fiber-id="${f.id}" data-side="${side}"
-      onclick="${used?'':'pickFiber(this)'}">
-      <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}
+      onclick="pickFiber(event,this)">
+      <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}${orderBadge}
     </div>`;
   }).join('');
 };
 
-window.pickFiber = function(el) {
+window.pickFiber = function(event, el) {
   const side = el.dataset.side;
-  const fid = el.dataset.fiberId;
-  document.querySelectorAll('.fiber-cell[data-side="' + side + '"]').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  if (side === 'a') state._spA = fid; else state._spB = fid;
+  const fid  = el.dataset.fiberId;
+  const arr  = side === 'a' ? state._spA : state._spB;
+  const inUse = state._spUsed && state._spUsed.has(fid);
+
+  if (event && event.shiftKey) {
+    // Shift-click: additive select / deselect toggle.
+    const idx = arr.indexOf(fid);
+    if (idx !== -1) {
+      arr.splice(idx, 1);   // deselect if already selected
+    } else {
+      arr.push(fid);        // add to selection in pick-order
+    }
+  } else {
+    // Plain click: reset selection to just this fiber.
+    arr.length = 0;
+    arr.push(fid);
+  }
+
+  // Refresh the grid to reflect current selection (order badges + highlights).
+  const tubeSel = document.getElementById('sp-tube-' + side);
+  if (tubeSel) window.renderFibersOnly(side);
+  // Sync the old scalar _sp{A,B} fields for compatibility with any
+  // code that still reads them — point at the FIRST selected fiber.
+  if (side === 'a') state._spA = arr;
+  else              state._spB = arr;
 };
 
 // ───────────────────────────────────────────────────────────────────────────
