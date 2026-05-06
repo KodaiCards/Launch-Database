@@ -33,7 +33,7 @@ const TIA_598_COLORS = [
   'red', 'black', 'yellow', 'violet', 'rose', 'aqua'
 ];
 
-const FIBER_COUNTS = [12, 24, 48, 96, 144, 288, 432, 864];
+const FIBER_COUNTS = [6, 12, 24, 36, 48, 72, 96, 144, 216, 288, 432, 576, 864, 1152, 1728, 3456];
 
 // Stale-lock timeout: 10 minutes since last heartbeat. Past that, any
 // other designer can take over with the take-over endpoint.
@@ -635,12 +635,17 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       name, fiber_count, construction_type = 'ribbon',
       from_location_id, to_location_id, manufacturer_part, notes,
     } = req.body;
+    // tube_size_fibers defaults to 12 (OSP standard); 6 and 24 are the
+    // other common loose-tube subunit sizes per TIA-598.
+    const tube_size_fibers = [6, 12, 24].includes(Number(req.body.tube_size_fibers))
+      ? Number(req.body.tube_size_fibers) : 12;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
     if (!FIBER_COUNTS.includes(Number(fiber_count))) {
       return res.status(400).json({ error: `fiber_count must be one of ${FIBER_COUNTS.join(', ')}` });
     }
-    if (!['ribbon', 'loose_tube'].includes(construction_type)) {
-      return res.status(400).json({ error: `construction_type must be 'ribbon' or 'loose_tube'` });
+    const CONSTRUCTION_TYPES = ['ribbon', 'loose_tube', 'central_tube', 'micromodule', 'rollable_ribbon'];
+    if (!CONSTRUCTION_TYPES.includes(construction_type)) {
+      return res.status(400).json({ error: `construction_type must be one of ${CONSTRUCTION_TYPES.join(', ')}` });
     }
     const client = await pool.connect();
     try {
@@ -648,17 +653,23 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const cable = await client.query(
         `INSERT INTO splice_cables
            (project_id, name, fiber_count, construction_type,
-            from_location_id, to_location_id, manufacturer_part, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            from_location_id, to_location_id, manufacturer_part, notes, tube_size_fibers)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
         [req.params.id, String(name).trim(), Number(fiber_count), construction_type,
-         from_location_id || null, to_location_id || null, manufacturer_part || null, notes || null]
+         from_location_id || null, to_location_id || null, manufacturer_part || null, notes || null,
+         tube_size_fibers]
       );
       const cableId = cable.rows[0].id;
 
-      // Generate N/12 buffer tubes (or ribbons), each with 12 fibers in
-      // TIA-598 order. Tube color cycles through TIA-598 too.
-      const tubeCount = Number(fiber_count) / 12;
+      // Generate ceil(fiber_count / tube_size_fibers) buffer tubes. The last
+      // tube may hold fewer than tube_size_fibers fibers when fiber_count
+      // isn't an exact multiple (e.g. 6F with tube_size=12 → 1 tube of 6
+      // fibers; 36F with tube_size=24 → tubes of 24 then 12).
+      // TIA-598 colors cycle mod 12 for positions beyond 12 (e.g. tube 13
+      // reuses blue, position 13 reuses blue).
+      const totalFibers = Number(fiber_count);
+      const tubeCount = Math.ceil(totalFibers / tube_size_fibers);
       const tubes = [];
       for (let t = 1; t <= tubeCount; t++) {
         const tubeColor = TIA_598_COLORS[(t - 1) % 12];
@@ -668,11 +679,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           [cableId, t, tubeColor]
         );
         tubes.push(tubeRow.rows[0]);
-        for (let f = 1; f <= 12; f++) {
+        const fibersPlaced = (t - 1) * tube_size_fibers;
+        const fibersInThisTube = Math.min(tube_size_fibers, totalFibers - fibersPlaced);
+        for (let f = 1; f <= fibersInThisTube; f++) {
           await client.query(
             `INSERT INTO splice_fibers (buffer_tube_id, position, color)
              VALUES ($1, $2, $3)`,
-            [tubeRow.rows[0].id, f, TIA_598_COLORS[f - 1]]
+            [tubeRow.rows[0].id, f, TIA_598_COLORS[(f - 1) % 12]]
           );
         }
       }
@@ -1615,13 +1628,14 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         const r = await client.query(
           `INSERT INTO splice_cables
              (project_id, name, fiber_count, construction_type,
-              from_location_id, to_location_id, manufacturer_part, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+              from_location_id, to_location_id, manufacturer_part, notes, tube_size_fibers)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING id`,
           [newProjectId, c.name, c.fiber_count, c.construction_type,
            c.from_location_id ? locMap.get(c.from_location_id) || null : null,
            c.to_location_id   ? locMap.get(c.to_location_id)   || null : null,
-           c.manufacturer_part, c.notes]
+           c.manufacturer_part, c.notes,
+           c.tube_size_fibers || 12]
         );
         cableMap.set(c.id, r.rows[0].id);
       }
