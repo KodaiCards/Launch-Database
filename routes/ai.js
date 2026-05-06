@@ -266,6 +266,11 @@ HONESTY — NEVER FAKE SUCCESS:
 - DO NOT say "I'll create that", "Let me log those", "Creating the project now", or any future/progressive phrasing followed by no action. Either CALL the tool in the same turn, or ASK a clarifying question. The frontend has a hallucination guard that surfaces a red warning to the user when text claims action without a successful tool result, so these silent skips don't go unnoticed — they look bad. Prefer "Should I create X with values Y?" (a question) over "I'll create X" (a hollow promise).
 - USER NUDGES — if the user's reply reads as "did you start", "have you started", "why didn't you do it", "just do it", "go", "run it", "starting", or any short prompt that implies you should stop talking and execute, treat the prior plan in this thread as APPROVED and re-emit the proposed tool calls in the SAME turn. Do not say "I haven't started yet" without immediately firing the tool calls in the same response. The user has already confirmed by nudging.
 - BATCHING — when scaffolding more than ~5 projects in one ask (e.g. "create the whole PSC tree", "set up all WO containers under Contract 3", "give me Permitting DOT/RR/County under each area"), USE bulk_create_projects ONCE with the full spec list, NOT a series of create_project calls split across "Layer 1 / Layer 2 / Layer 3" approval rounds. The bulk tool resolves intra-batch parent_id refs via local_id, so a single approval click materializes the entire tree. Splitting a tree into N layers means N approval round-trips for the user, which is the wrong default. Reserve single create_project for one-off creates the user explicitly named.
+- ROLLUPS vs LEAVES — every project is one of two things:
+  • A ROLLUP is an organize-only folder. It has a name and a parent, no job, no rate, no hours, no billing. It exists only to nest other projects. Set is_rollup:true on it. Examples: "Contract 3" rollup grouping WO rollups, "Crossroad School WO 16300" rollup grouping team rollups, "Inspection" rollup grouping individual Inspection leaves.
+  • A LEAF is a real billable project with a job, a rate, and (eventually) hours / footage. Set is_rollup:false (or omit). It's where time entries actually land.
+  CRITICAL trap to avoid: when the user says "make an Inspection folder under each WO with the Inspection projects under it," the Inspection FOLDER is a rollup (is_rollup:true) and its children are leaves with project_type:'inspection'. Even though both are named "Inspection," they're different things. If you create the folder as a leaf (is_rollup omitted), the system treats it as an actual job-bearing project — it shows up in dashboards, billing batches, and the inspection tab as if work happened on the folder itself. Owner-flagged 2026-05-06: this exact mistake polluted the PSC RUS tree.
+  Rule of thumb: if the project's only purpose is to group children, it's a rollup. If it has, will have, or could have time entries logged against it, it's a leaf.
 - After log_time_entries returns success, IMMEDIATELY run a verification query like:
     SELECT COUNT(*) as cnt, SUM(hours) as total_hours FROM time_entries WHERE import_batch = 'ai_import_<batch_id>'
   and report the verified count and total to the user. This proves the data actually landed and catches any silent failures.
@@ -327,7 +332,7 @@ DATABASE CONTEXT (current data):
 const AI_TOOLS = [
   {
     name: 'create_project',
-    description: 'Create a new project in the database. Can be a top-level project or a sub-project nested under a parent. Call this ONLY after the user has confirmed the details.',
+    description: 'Create a new project in the database. Can be a top-level project or a sub-project nested under a parent. Call this ONLY after the user has confirmed the details. Use is_rollup:true for organize-only container/folder projects (e.g. a "Crossroad School WO" folder, an "Inspection" rollup grouping every Inspection leaf under a WO). When is_rollup is true, project_type/billing_type/billing_rate are NOT required — rollups have no traits, only nest other projects. CRITICAL: if you are creating a folder named after a job (e.g. a rollup called "Inspection" or "Resident Engineer" that just groups leaves of that type), set is_rollup:true. Otherwise the system treats the folder as an actual job-bearing project and miscounts it in dashboard tiles, billing, and the inspection tab.',
     input_schema: {
       type: 'object',
       properties: {
@@ -335,19 +340,23 @@ const AI_TOOLS = [
         client_id: { type: 'string', description: 'Client UUID from database context' },
         contract_id: { type: 'string', description: 'Contract UUID (optional). Setting this auto-derives `program` from the contract\'s engineering contract.' },
         work_order_number: { type: 'string', description: 'Work order number' },
-        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'], description: 'Legacy JOB-CATEGORY tag (inspection/re/permitting/design/other). Distinct from `program` — see that field.' },
+        project_type: { type: 'string', enum: ['inspection', 're', 'permitting', 'design', 'other'], description: 'Legacy JOB-CATEGORY tag (inspection/re/permitting/design/other). Distinct from `program` — see that field. Not required when is_rollup is true.' },
         program: { type: 'string', enum: ['rus', 'bau', 'gfr', 'other'], description: 'Program classification. Auto-derived from contract_id\'s engineering contract when set; pass explicitly to override or for projects without a contract.' },
-        billing_type: { type: 'string', enum: ['hourly', 'footage'] },
-        billing_rate: { type: 'number', description: 'Hourly rate in dollars' },
+        billing_type: { type: 'string', enum: ['hourly', 'footage'], description: 'Not required when is_rollup is true.' },
+        billing_rate: { type: 'number', description: 'Hourly rate in dollars. Not required when is_rollup is true.' },
         footage: { type: 'number', description: 'Linear footage (permitting projects only)' },
         status: { type: 'string', enum: ['active', 'completed', 'on_hold'], default: 'active' },
         start_date: { type: 'string', description: 'YYYY-MM-DD format (optional)' },
         notes: { type: 'string' },
         parent_id: { type: 'string', description: 'UUID of parent project to nest this under (optional). Use this to create sub-projects.' },
         budget_code_id: { type: 'string', description: 'UUID of budget code this project bills against (optional). Get from database context budgets.' },
-        concentrator_id: { type: 'string', description: 'UUID of the concentrator/service area this project belongs to. Look up from concentrators in database context by area name.' }
+        concentrator_id: { type: 'string', description: 'UUID of the concentrator/service area this project belongs to. Look up from concentrators in database context by area name.' },
+        is_rollup: { type: 'boolean', default: false, description: 'TRUE for organize-only container projects (folders that group other projects). When TRUE, the project carries no job, no rate, no billing — it just nests children. Required required_for_rollup_with_job_name pattern: if the folder is named after a job (e.g. "Inspection" rollup over inspection leaves), set this TRUE so the system treats it as a folder rather than a job-bearing project.' }
       },
-      required: ['name', 'client_id', 'project_type', 'billing_type', 'billing_rate']
+      // is_rollup makes project_type/billing_type/billing_rate optional.
+      // We can't express "required unless is_rollup=true" in JSON schema
+      // here; the server-side handler enforces it.
+      required: ['name', 'client_id']
     }
   },
   {
@@ -803,7 +812,17 @@ async function executeTool(toolName, toolInput) {
           }
           resolvedClientId = r0.rows[0].id;
         }
-        const fin = calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
+        const isRollup = toolInput.is_rollup === true;
+        // Real (non-rollup) projects need the project_type / billing
+        // gates the admin form enforces. Rollups skip those entirely
+        // because they carry no traits.
+        if (!isRollup) {
+          if (!toolInput.project_type) return { success: false, error: 'project_type is required (or pass is_rollup:true for organize-only folders)' };
+          if (!toolInput.billing_type) return { success: false, error: 'billing_type is required (or pass is_rollup:true for organize-only folders)' };
+        }
+        const fin = isRollup
+          ? { miles: null, expectedHours: null, expectedRevenue: null, permittingHoursPerMile: null }
+          : calcProjectFinancials(toolInput.project_type, toolInput.billing_rate, toolInput.footage);
 
         // program: prefer the explicit input; otherwise derive from the
         // contract's engineering contract (mirrors the admin route).
@@ -834,20 +853,23 @@ async function executeTool(toolName, toolInput) {
             name, client_id, contract_id, work_order_number,
             project_type, program, status, billing_type, billing_rate,
             footage, miles, expected_hours, expected_revenue,
-            start_date, notes, parent_id, budget_code_id, concentrator_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+            start_date, notes, parent_id, budget_code_id, concentrator_id,
+            is_rollup
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
           RETURNING *
         `, [
           toolInput.name,
           resolvedClientId,
           toolInput.contract_id || null,
           toolInput.work_order_number || null,
-          toolInput.project_type,
+          // Rollups still get project_type stored if provided (it's purely
+          // informational), but billing_type/rate/footage all force NULL.
+          toolInput.project_type || (isRollup ? 'other' : null),
           resolvedProgram,
           toolInput.status || 'active',
-          toolInput.billing_type,
-          toolInput.billing_rate,
-          toolInput.footage || null,
+          isRollup ? null : toolInput.billing_type,
+          isRollup ? null : toolInput.billing_rate,
+          isRollup ? null : (toolInput.footage || null),
           fin.miles,
           fin.expectedHours,
           fin.expectedRevenue,
@@ -855,9 +877,12 @@ async function executeTool(toolName, toolInput) {
           toolInput.notes || null,
           toolInput.parent_id || null,
           toolInput.budget_code_id || null,
-          toolInput.concentrator_id || null
+          toolInput.concentrator_id || null,
+          isRollup,
         ]);
-        if (toolInput.project_type === 'permitting') {
+        // Rollups skip the permit-stage seed — they're folders, not real
+        // permitting projects.
+        if (!isRollup && toolInput.project_type === 'permitting') {
           await pool.query(
             'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
             [rows[0].id, 'potential']

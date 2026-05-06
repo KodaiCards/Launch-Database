@@ -1400,6 +1400,25 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <input type="text" id="proj-name" placeholder="e.g. RUS WO-001 Inspection">
           </div>
         </div>
+        <!--
+          Manual rollup flag (owner-flagged 2026-05-06). When checked,
+          this project becomes an organize-only container — no job, no
+          billing rate, no footage, no time entries. Server-side
+          enforces by NULL-ing trait fields on save.
+        -->
+        <div class="form-row">
+          <div class="form-group span2" style="background:var(--gray-light);border-radius:8px;padding:10px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+              <input type="checkbox" id="proj-rollup" onchange="rollupChanged()" style="margin:0">
+              <span><strong>Organize-only (rollup)</strong> — purely a folder for nesting other projects. No job / billing / hours.</span>
+            </label>
+            <div id="proj-rollup-hint" style="display:none;font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.5">
+              Rollup containers don't carry traits — saving will clear job, billing rate, footage, projections.
+              The AI knows to nest leaf projects under rollups, even when the rollup's name matches a job (e.g. "Inspection" rollup
+              with "Inspection" job leaves underneath).
+            </div>
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group span2">
             <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
@@ -3883,6 +3902,11 @@ async function editProject(id) {
   if (document.getElementById('proj-cadence'))       document.getElementById('proj-cadence').value = p.billing_cadence || 'one_time';
   if (document.getElementById('proj-projected'))     document.getElementById('proj-projected').value = p.projected_revenue ?? '';
   if (document.getElementById('proj-manual-amount')) document.getElementById('proj-manual-amount').value = p.manual_invoice_amount ?? '';
+  // Reflect the rollup flag and hint the user the trait fields are
+  // intentionally empty on a rollup. saveProject() skips the
+  // job/program required-field validation when this is checked.
+  const rb = document.getElementById('proj-rollup');
+  if (rb) { rb.checked = !!p.is_rollup; rollupChanged(); }
 
   // STEP 4 — populate dropdowns defensively. Each step in its own try/catch so
   // a failure on one (e.g. parent dropdown, jobs cache, budget codes) doesn't
@@ -3955,7 +3979,21 @@ function clearProjectForm() {
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
   // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
+  // Reset the rollup checkbox so a fresh "New Project" never inherits a
+  // prior open's rollup state. rollupChanged() syncs the hint visibility.
+  const rb = document.getElementById('proj-rollup');
+  if (rb) { rb.checked = false; rollupChanged(); }
   jobChanged(/*skipRateLookup=*/true);
+}
+
+// Toggle the explanatory hint when the rollup checkbox flips. Kept
+// minimal — server-side blanks the trait fields on save regardless,
+// so we don't need to disable inputs here. The hint is the visible
+// signal that "the rest of this form doesn't matter for a rollup."
+function rollupChanged() {
+  const checked = !!document.getElementById('proj-rollup')?.checked;
+  const hint = document.getElementById('proj-rollup-hint');
+  if (hint) hint.style.display = checked ? '' : 'none';
 }
 
 // User changed the program category. Re-derive field gating (program now
@@ -4118,10 +4156,14 @@ async function saveProject(opts) {
   const name = document.getElementById('proj-name').value.trim();
   const clientId = document.getElementById('proj-client').value;
   const rate = document.getElementById('proj-rate').value;
+  // Rollup flag: when checked, this project has no traits (no job, no
+  // billing rate, no footage). Validation skips those required-field
+  // checks so a rollup with only a name + client + parent saves cleanly.
+  const isRollup = !!document.getElementById('proj-rollup')?.checked;
   if (!name) return silent ? false : alert('Project name is required');
   if (!clientId) return silent ? false : alert('Client is required');
-  if (!projectTypeId) return silent ? false : alert('Project type is required');
-  if (!jobId) return silent ? false : alert('Job is required');
+  if (!isRollup && !projectTypeId) return silent ? false : alert('Project type is required');
+  if (!isRollup && !jobId) return silent ? false : alert('Job is required');
 
   const job = jobsCache.find(j => j.id === jobId);
   const isPermit = !!job?.is_permitting;
@@ -4175,7 +4217,8 @@ async function saveProject(opts) {
       if (v === '' || v == null) return null;
       const n = parseFloat(v);
       return isNaN(n) ? null : n;
-    })()
+    })(),
+    is_rollup: isRollup,
   };
   try {
     const id = document.getElementById('proj-id').value;
