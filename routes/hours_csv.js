@@ -634,6 +634,55 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
       const createdProjects = [];
       const newProjectsByWO = {};
+      // Pre-load concentrators (the RUS service-area registry) so when we
+      // create a new project for a WO we can derive its contract +
+      // service-area linkage. Without this the new project lands with
+      // contract_id=NULL, and the RUS tab's `WHERE ec.program='rus'`
+      // filter silently excludes it. Owner-flagged 2026-05-06.
+      const { rows: concRows } = await client.query(
+        `SELECT id, contract_label, area_name, work_order_number FROM concentrators WHERE active = TRUE`
+      );
+      const concByWo = new Map();
+      for (const c of concRows) {
+        if (c.work_order_number) concByWo.set(String(c.work_order_number).trim(), c);
+      }
+      // Pre-load contracts so we can resolve contract_id from the
+      // concentrator's contract_label. Match either friendly_label OR
+      // contract_number startsWith (the legacy "Contract 3 / 515-3"
+      // format the rest of the system already tolerates).
+      const { rows: ctrRows } = await client.query(
+        `SELECT id, friendly_label, contract_number FROM contracts`
+      );
+      function resolveContractIdForLabel(label) {
+        if (!label) return null;
+        const exact = ctrRows.find(c => c.friendly_label === label);
+        if (exact) return exact.id;
+        const startsWith = ctrRows.find(c => c.contract_number && c.contract_number.startsWith(label));
+        return startsWith ? startsWith.id : null;
+      }
+      // Heuristic: if the job assigned to a CSV-created project is one
+      // of the canonical RUS jobs, mirror that into project_type so the
+      // dashboard / hours-by-type bucket / inspection tab default
+      // surface it correctly. Avoids the "everything is Other" bug
+      // owner reported. Job lookup uses the freshly-created jobs map
+      // first, then the ALREADY-pre-loaded jobByCode mapping.
+      function jobNameForJobId(jobId) {
+        if (!jobId) return null;
+        // newJobsByName is indexed by lowercased name → id; reverse-find.
+        for (const [name, id] of Object.entries(newJobsByName)) {
+          if (id === jobId) return name;
+        }
+        return null;
+      }
+      function projectTypeForJob(jobName) {
+        if (!jobName) return 'other';
+        const lc = jobName.toLowerCase();
+        if (lc === 'inspection' || lc.includes('inspect')) return 'inspection';
+        if (lc === 'resident engineer' || lc === 're') return 're';
+        if (lc.includes('permit')) return 'permitting';
+        if (lc.includes('design')) return 'design';
+        return 'other';
+      }
       for (const pdef of create_projects) {
         const woRaw = String(pdef.wo || '').trim();
         const woNorm = normalizeWO(woRaw);
@@ -645,13 +694,28 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         if (!jobId && pdef.job_name) {
           jobId = newJobsByName[pdef.job_name.toLowerCase()] || null;
         }
+
+        // Concentrator + contract derivation. WO match → concentrator
+        // → contract_label → contract_id. Falls through to NULL when
+        // unmatched (non-PSC clients, ad-hoc WOs).
+        const conc = concByWo.get(woRaw) || concByWo.get(woNorm);
+        const concentratorId = conc ? conc.id : null;
+        const inferredContractId = pdef.contract_id
+          || (conc ? resolveContractIdForLabel(conc.contract_label) : null);
+
+        // project_type inferred from the job. AI/admin-supplied value
+        // wins; fall back to job-name-based heuristic so the row
+        // surfaces correctly in the Hours-by-Type tile + dashboard.
+        const inferredJobName = pdef.job_name || jobNameForJobId(jobId);
+        const inferredProjectType = pdef.project_type || projectTypeForJob(inferredJobName);
+
         let parentId = null;
         try {
           if (typeof app.locals.ensureRollupChain === 'function') {
             parentId = await app.locals.ensureRollupChain({
               client_id: clientId,
-              concentrator_id: null,
-              service_area_label: pdef.area_label || null,
+              concentrator_id: concentratorId,
+              service_area_label: pdef.area_label || (conc ? conc.area_name : null),
               job_id: jobId
             });
           }
@@ -660,11 +724,12 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const r = await client.query(
           `INSERT INTO projects (
              name, client_id, work_order_number, job_id, contract_id,
-             parent_id, status, project_type, billing_type, billing_rate
-           ) VALUES ($1,$2,$3,$4,$5,$6,'active',$7,$8,$9)
-           RETURNING id, name, work_order_number`,
-          [projName, clientId, woRaw, jobId, pdef.contract_id || null, parentId,
-           pdef.project_type || 'other',
+             concentrator_id, parent_id, status, project_type,
+             billing_type, billing_rate
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,'active',$8,$9,$10)
+           RETURNING id, name, work_order_number, contract_id, concentrator_id, project_type`,
+          [projName, clientId, woRaw, jobId, inferredContractId, concentratorId, parentId,
+           inferredProjectType,
            pdef.billing_type || 'hourly',
            pdef.billing_rate || null]
         );

@@ -246,10 +246,17 @@
 
         // Use server-computed ytd_revenue — no frontend calculation needed
         const ytd = parseFloat(p.ytd_revenue) || 0;
-        const logged = parseFloat(p.logged_hours) || 0;
+        // Leaves show their own logged_hours; rollups roll up via the
+        // recursive sumTree result so a parent row shows the sum across
+        // every descendant leaf. Owner-flagged 2026-05-06: rollups
+        // were displaying "0 hrs logged" even when children had hours
+        // because we were reading p.logged_hours (own only).
+        const ownLogged = parseFloat(p.logged_hours) || 0;
+        const rolledLogged = sums.logged || 0;
+        const displayLogged = isLeaf ? ownLogged : rolledLogged;
         const ytdCell = isLeaf
-          ? `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${fmt(logged, 'hrs')} logged</span>`
-          : `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${kids.length} sub-project${kids.length !== 1 ? 's' : ''}</span>`;
+          ? `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${fmt(displayLogged, 'hrs')} logged</span>`
+          : `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${fmt(displayLogged, 'hrs')} · ${kids.length} sub-project${kids.length !== 1 ? 's' : ''}</span>`;
 
         // Projected: leaves show their own projected_revenue; containers show
         // rolled-up sum from descendant leaves only (sums.projected handles this,
