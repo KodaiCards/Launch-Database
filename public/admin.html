@@ -2880,7 +2880,22 @@ async function init() {
   if (typeof loadEngineeringContracts === 'function') {
     try { await loadEngineeringContracts(); } catch (e) { /* non-fatal */ }
   }
-  await loadDashboard();
+  // ── Tab persistence: restore the last-viewed tab from URL hash ──────────
+  // On first load with no hash we fall through to the default (dashboard).
+  const _initHash = location.hash.replace('#', '');
+  const _validViews = ['dashboard','projects','permitting','design','inspection',
+                       'potential-permits','hours','clients','billing','revenue'];
+  if (_initHash && _validViews.includes(_initHash) &&
+      document.querySelector(`[data-view="${_initHash}"]`)) {
+    showView(_initHash);
+  } else {
+    await loadDashboard();
+  }
+  // Browser back/forward button support
+  window.addEventListener('popstate', () => {
+    const h = location.hash.replace('#', '');
+    if (h && _validViews.includes(h)) showView(h);
+  });
   refreshSettingsDot();
 }
 
@@ -2900,6 +2915,8 @@ function showView(view) {
   document.getElementById('view-'+view)?.classList.add('active');
   document.querySelector(`[data-view="${view}"]`)?.classList.add('active');
   currentView = view;
+  // Persist active tab in URL hash so refresh returns to the same place.
+  history.replaceState(null, '', '#' + view);
   if (view==='dashboard') loadDashboard();
   if (view==='projects') loadProjects();
   if (view==='permitting') loadPermits();
