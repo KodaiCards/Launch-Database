@@ -793,6 +793,21 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 
 const TIA_598 = ['blue','orange','green','brown','slate','white','red','black','yellow','violet','rose','aqua'];
 
+// 5.E.8 — parseRangeSpec: parse a comma-separated range string into a Set<int> of positions.
+// Accepts: "1-72", "1-72, 97-144", "1, 5, 10-20". Returns null on syntax error.
+function parseRangeSpec(s) {
+  const out = new Set();
+  for (const tok of s.split(',').map(t => t.trim()).filter(Boolean)) {
+    const m = tok.match(/^(\d+)(?:-(\d+))?$/);
+    if (!m) return null;
+    const a = parseInt(m[1], 10);
+    const b = m[2] ? parseInt(m[2], 10) : a;
+    if (b < a) return null;
+    for (let i = a; i <= b; i++) out.add(i);
+  }
+  return out;
+}
+
 // Phase 4.2 — two-letter TIA-598 abbreviations for color-deficient designers,
 // grayscale prints, and fast-glance Slate/White confusion avoidance.
 const TIA_598_ABBREV = {
@@ -5347,16 +5362,25 @@ function _buildDragDropPanelHtml(anchorType, anchorId, locationId) {
   ).join('');
 
   const ddKey = `${anchorType}-${anchorId}`;
-  // 5.B.6 — location-level panels show a "no closure needed" subtitle.
+  // 5.E.8 — updated subtitle reflects new Excel-style click semantics.
   const subtitle = anchorType === 'location'
     ? '<span style="font-size:9px;color:var(--text-muted)">Splicing directly at this handhole — no enclosure required</span>'
-    : '<span style="font-size:10px;color:var(--text-muted)">Shift-click to multi-select &bull; drag to splice</span>';
+    : '<span style="font-size:10px;color:var(--text-muted)">Click = select · Shift+click = range · Ctrl/⌘+click = toggle · drag to splice</span>';
+  // 5.E.8 — range input row shared by A and B sides.
+  const rangeRowA = `<div style="display:flex;gap:4px;margin-bottom:4px">
+      <input type="text" class="input-sm" id="ddrop-range-a-${ddKey}" placeholder="e.g. 1-72, 97-144" style="flex:1;font-size:10px" title="Type a fiber position range and click Apply">
+      <button class="btn btn-sm" onclick="ddropApplyRange('${ddKey}','a')" style="font-size:10px;padding:2px 7px">Apply</button>
+    </div>`;
+  const rangeRowB = `<div style="display:flex;gap:4px;margin-bottom:4px">
+      <input type="text" class="input-sm" id="ddrop-range-b-${ddKey}" placeholder="e.g. 1-72, 97-144" style="flex:1;font-size:10px" title="Type a fiber position range and click Apply">
+      <button class="btn btn-sm" onclick="ddropApplyRange('${ddKey}','b')" style="font-size:10px;padding:2px 7px">Apply</button>
+    </div>`;
   return `
     <div class="ddrop-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <span style="font-size:11px;font-weight:600"><i class="fa-solid fa-hand-pointer"></i> Fiber splicing</span>
       ${subtitle}
     </div>
-    ${anchorType === 'location' ? '<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Shift-click to multi-select &bull; drag to splice</div>' : ''}
+    ${anchorType === 'location' ? '<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Click = select · Shift+click = range fill · Ctrl/⌘+click = toggle · drag to splice</div>' : ''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div>
         <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">A-side cable</div>
@@ -5368,6 +5392,10 @@ function _buildDragDropPanelHtml(anchorType, anchorId, locationId) {
         <select class="input-sm" style="width:100%" id="ddrop-cable-b-${ddKey}"
           onchange="ddropCableChanged('${ddKey}','b')">${cableOpts}</select>
       </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+      <div>${rangeRowA}</div>
+      <div>${rangeRowB}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="ddrop-fiber-cols-${ddKey}">
       <div id="ddrop-col-a-${ddKey}"><div class="empty-pane" style="padding:8px;font-size:11px">Select a cable above</div></div>
@@ -5442,7 +5470,7 @@ function ddropRenderFiberCol(ddKey, side, cableId) {
             picked ? 'sp-selected' : '',
           ].filter(Boolean).join(' ');
           return `<div class="${cls}" style="cursor:${side==='a'?'grab':'default'}"
-            data-fiber-id="${f.id}" data-side="${side}" data-ddkey="${ddKey}"
+            data-fiber-id="${f.id}" data-side="${side}" data-ddkey="${ddKey}" data-fiber-pos="${f.position}"
             draggable="${side==='a' && !used ? 'true' : 'false'}"
             onclick="ddropFiberClick(event,this)"
             ondragstart="ddropDragStart(event,this)"
@@ -5462,7 +5490,10 @@ function ddropRenderFiberCol(ddKey, side, cableId) {
   }
 }
 
-// Fiber click on A-side: shift-click = multi-select.
+// 5.E.8 — Fiber click on A-side: Excel-style range selection.
+//   Plain click     → set anchor + select only that fiber (clears prior)
+//   Shift-click     → fill range from anchor to clicked fiber
+//   Ctrl/⌘-click   → toggle clicked fiber in/out of selection (additive)
 window.ddropFiberClick = function(event, el) {
   const side = el.dataset.side;
   const ddKey = el.dataset.ddkey;
@@ -5473,20 +5504,86 @@ window.ddropFiberClick = function(event, el) {
   if (!state._ddrop || state._ddrop.key !== ddKey) {
     state._ddrop = { key: ddKey, side: 'a', fiberIds: [], anchorType: null, anchorId: null };
   }
+  if (!state._ddropAnchor) state._ddropAnchor = {};
+  const anchorKey = ddKey + '|' + side;
   const ids = state._ddrop.fiberIds;
-  if (event.shiftKey) {
+
+  if (event.shiftKey && state._ddropAnchor[anchorKey] != null) {
+    // Range fill: find all fiber IDs between anchor position and this position.
+    const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
+    const cableId = cableSel?.value;
+    const cable = state.data.cables.find(c => c.id === cableId);
+    if (cable) {
+      const allFibers = state.data.fibers.filter(f => {
+        const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id && t.cable_id === cableId);
+        return !!tube;
+      }).sort((a, b) => a.position - b.position);
+      const anchorPos = state._ddropAnchor[anchorKey];
+      const clickedPos = parseInt(el.dataset.fiberPos || '0', 10);
+      const lo = Math.min(anchorPos, clickedPos);
+      const hi = Math.max(anchorPos, clickedPos);
+      ids.length = 0;
+      for (const f of allFibers) {
+        if (f.position >= lo && f.position <= hi) ids.push(f.id);
+      }
+    }
+  } else if (event.ctrlKey || event.metaKey) {
+    // Toggle individual fiber in/out (additive, current Phase 5.A.4 shift-click behavior).
     const idx = ids.indexOf(fid);
     if (idx !== -1) ids.splice(idx, 1);
     else ids.push(fid);
+    // Ctrl/⌘-click doesn't move the anchor.
   } else {
+    // Plain click: clear selection, set anchor, select only this fiber.
     ids.length = 0;
     ids.push(fid);
+    state._ddropAnchor[anchorKey] = parseInt(el.dataset.fiberPos || '0', 10);
   }
   state._ddrop.side = 'a';
   // Refresh the A col and update the splice button.
-  const cableSel = document.getElementById(`ddrop-cable-a-${ddKey}`);
-  if (cableSel) ddropRenderFiberCol(ddKey, 'a', cableSel.value);
+  const cableSel2 = document.getElementById(`ddrop-cable-a-${ddKey}`);
+  if (cableSel2) ddropRenderFiberCol(ddKey, 'a', cableSel2.value);
   ddropSyncButton(ddKey);
+};
+
+// 5.E.8 — Apply a typed range spec to select fibers by position in a given cable side.
+// ddKey: panel key, side: 'a' or 'b'. Reads the range input, validates, sets selection.
+window.ddropApplyRange = function(ddKey, side) {
+  const inputEl = document.getElementById(`ddrop-range-${side}-${ddKey}`);
+  if (!inputEl) return;
+  const spec = inputEl.value.trim();
+  if (!spec) return;
+  const positions = parseRangeSpec(spec);
+  if (!positions) {
+    inputEl.style.borderColor = 'var(--danger)';
+    toast('Invalid range — use 1-72, 97-144 format', 'error');
+    return;
+  }
+  inputEl.style.borderColor = '';
+
+  // Get fibers in the selected cable for this side.
+  const cableSel = document.getElementById(`ddrop-cable-${side}-${ddKey}`);
+  const cableId = cableSel?.value;
+  if (!cableId) { toast('Select a cable first', 'error'); return; }
+  const cable = state.data.cables.find(c => c.id === cableId);
+  if (!cable) return;
+
+  // Find fibers whose position is in the range set.
+  const allFibers = state.data.fibers.filter(f => {
+    const tube = state.data.buffer_tubes.find(t => t.id === f.buffer_tube_id && t.cable_id === cableId);
+    return !!tube;
+  });
+  const matched = allFibers.filter(f => positions.has(f.position));
+
+  if (!state._ddrop || state._ddrop.key !== ddKey) {
+    state._ddrop = { key: ddKey, side, fiberIds: [], anchorType: null, anchorId: null };
+  }
+  state._ddrop.fiberIds = matched.map(f => f.id);
+  state._ddrop.side = side;
+
+  ddropRenderFiberCol(ddKey, side, cableId);
+  ddropSyncButton(ddKey);
+  toast(`Selected ${matched.length} fiber${matched.length===1?'':'s'} in ${cable.name}`, 'success');
 };
 
 // Start dragging picked fibers from A-side.
