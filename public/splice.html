@@ -6831,6 +6831,24 @@ function getMapLibreLayerIds(layerKey) {
   return [];
 }
 
+// 5.H.4 — Returns a small inline SVG swatch matching the per-type map marker shape.
+function _locTypeShapeIcon(type, color) {
+  const c = color || '#888';
+  const s = `title="Edit style" onclick="openStyleEditor('location.${type}')" style="cursor:pointer;flex-shrink:0"`;
+  switch (type) {
+    case 'handhole':   return `<svg width="11" height="11" ${s}><rect x="1" y="1" width="9" height="9" fill="${c}"/></svg>`;
+    case 'manhole':    return `<svg width="12" height="12" ${s}><circle cx="6" cy="6" r="5" fill="${c}"/><circle cx="6" cy="6" r="2.5" fill="none" stroke="#fff" stroke-width="1.2"/></svg>`;
+    case 'pedestal':   return `<svg width="11" height="11" ${s}><polygon points="5.5,1 10,10 1,10" fill="${c}"/></svg>`;
+    case 'vault':      return `<svg width="12" height="12" ${s}><rect x="1" y="1" width="10" height="10" rx="3" fill="${c}"/></svg>`;
+    case 'pole':       return `<svg width="11" height="14" ${s}><rect x="4" y="0" width="3" height="14" fill="${c}"/></svg>`;
+    case 'fdh':        return `<svg width="14" height="14" ${s}><polygon points="7,1 13,7 7,13 1,7" fill="${c}"/></svg>`;
+    case 'splice_point': return `<svg width="10" height="10" ${s}><polygon points="5,1 9,5 5,9 1,5" fill="${c}"/></svg>`;
+    case 'co':         return `<svg width="14" height="14" ${s}><polygon points="7,1 12,4 12,10 7,13 2,10 2,4" fill="${c}"/></svg>`;
+    case 'terminal':   return `<svg width="11" height="11" ${s}><polygon points="1,1 10,1 5.5,10" fill="${c}"/></svg>`;
+    default:           return `<span class="layer-color-dot" style="background:${c}" ${s}></span>`;
+  }
+}
+
 function renderLayerTree() {
   const lpanel = document.getElementById('layer-panel');
   if (!lpanel) return;
@@ -6842,10 +6860,12 @@ function renderLayerTree() {
   function makeLeaf(key, label, groupKey) {
     const visible = getVis(key);
     const color = getColor(key);
+    // 5.H.4 — shape icon for location-type leaves
+    const shapeIcon = groupKey === 'locations' ? _locTypeShapeIcon(key.split('.')[1], color) : `<span class="layer-color-dot" style="background:${color}" title="Edit style" onclick="openStyleEditor('${key}')"></span>`;
     return `<div class="layer-leaf" data-layer-key="${key}" oncontextmenu="layerContextMenu(event,'${key}','${groupKey}')">
       <input type="checkbox" ${visible ? 'checked' : ''} title="Toggle ${label} visibility"
              onchange="toggleLayerVisibility('${key}',this.checked);updateParentCheckboxState('${groupKey}')">
-      <span class="layer-color-dot" style="background:${color}" title="Edit style" onclick="openStyleEditor('${key}')"></span>
+      ${shapeIcon}
       <span class="layer-leaf-name">${label}</span>
       <button class="layer-paint-btn" onclick="openStyleEditor('${key}')" title="Edit style"><i class="fa-solid fa-palette"></i></button>
     </div>`;
@@ -6899,6 +6919,11 @@ function renderLayerTree() {
             [`cables-${cat}-halo`, `cables-${cat}`].forEach(id => {
               if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
             });
+          } else if (s.layer_key.startsWith('location.')) {
+            // 5.H.4 — per-type location layers
+            const type = s.layer_key.split('.')[1];
+            const lid = `loc-unclustered-${type}`;
+            if (map.getLayer(lid)) map.setLayoutProperty(lid, 'visibility', 'none');
           }
         }
       }
@@ -7180,15 +7205,19 @@ function applyLayerStyle(layerKey, styleProps) {
     }
   } else if (layerKey.startsWith('location.')) {
     const type = layerKey.split('.')[1];
-    const id = `loc-${type}`;
+    const id = `loc-unclustered-${type}`; // 5.H.4: per-type layer id
     if (map.getLayer(id)) {
-      if (color !== undefined) map.setPaintProperty(id, 'circle-color', color);
-      if (opacity !== undefined) map.setPaintProperty(id, 'circle-opacity', opacity);
-      if (markerSize !== undefined) map.setPaintProperty(id, 'circle-radius', markerSize);
-    }
-    // Also update the shared loc-unclustered layer color if no per-type layers
-    if (!map.getLayer(id) && map.getLayer('loc-unclustered')) {
-      // The loc-unclustered uses ['get','color'] from feature data — nothing to do here
+      const layerType = map.getLayer(id).type;
+      if (layerType === 'symbol') {
+        // SDF symbol layer — use icon-color and icon-opacity
+        if (color !== undefined) map.setPaintProperty(id, 'icon-color', color);
+        if (opacity !== undefined) map.setPaintProperty(id, 'icon-opacity', opacity);
+      } else {
+        // Circle fallback layer
+        if (color !== undefined) map.setPaintProperty(id, 'circle-color', color);
+        if (opacity !== undefined) map.setPaintProperty(id, 'circle-opacity', opacity);
+        if (markerSize !== undefined) map.setPaintProperty(id, 'circle-radius', markerSize);
+      }
     }
   }
 }
@@ -7296,6 +7325,79 @@ function _makeMapboxTransform(token) {
   };
 }
 
+// 5.H.4 — Generate SDF (signed-distance-field) sprite images for non-native
+// MapLibre shapes (triangle, diamond, hexagon, etc.) via small canvas renders.
+// Each image is 32×32 px, white on transparent — MapLibre SDF icon-color tints them.
+function _addLocTypeSprites(map) {
+  const SIZE = 32;
+  function _canvas(draw) {
+    const c = document.createElement('canvas');
+    c.width = SIZE; c.height = SIZE;
+    const ctx = c.getContext('2d');
+    draw(ctx, SIZE);
+    return map.hasImage ? { width: SIZE, height: SIZE, data: ctx.getImageData(0, 0, SIZE, SIZE).data } : null;
+  }
+  function _addImg(name, draw) {
+    if (map.hasImage(`loc-${name}`)) return;
+    const c = document.createElement('canvas');
+    c.width = SIZE; c.height = SIZE;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    draw(ctx, SIZE);
+    // addImage with SDF=true lets icon-color paint property tint the white shape.
+    try { map.addImage(`loc-${name}`, c, { sdf: true }); } catch {}
+  }
+
+  // Circle (native fallback, but we add for consistency)
+  _addImg('circle', (ctx, s) => {
+    ctx.beginPath(); ctx.arc(s/2, s/2, s/2-2, 0, Math.PI*2); ctx.fill();
+  });
+  // Filled square (handhole)
+  _addImg('square', (ctx, s) => {
+    ctx.fillRect(4, 4, s-8, s-8);
+  });
+  // Rounded square (vault)
+  _addImg('roundsq', (ctx, s) => {
+    const r = 5, m = 4, w = s-8;
+    ctx.beginPath();
+    ctx.moveTo(m+r, m); ctx.lineTo(m+w-r, m);
+    ctx.quadraticCurveTo(m+w, m, m+w, m+r);
+    ctx.lineTo(m+w, m+w-r);
+    ctx.quadraticCurveTo(m+w, m+w, m+w-r, m+w);
+    ctx.lineTo(m+r, m+w);
+    ctx.quadraticCurveTo(m, m+w, m, m+w-r);
+    ctx.lineTo(m, m+r);
+    ctx.quadraticCurveTo(m, m, m+r, m);
+    ctx.closePath(); ctx.fill();
+  });
+  // Triangle pointing up (pedestal)
+  _addImg('triangle', (ctx, s) => {
+    ctx.beginPath(); ctx.moveTo(s/2, 3); ctx.lineTo(s-4, s-4); ctx.lineTo(4, s-4); ctx.closePath(); ctx.fill();
+  });
+  // Inverted triangle (terminal)
+  _addImg('invtri', (ctx, s) => {
+    ctx.beginPath(); ctx.moveTo(4, 4); ctx.lineTo(s-4, 4); ctx.lineTo(s/2, s-3); ctx.closePath(); ctx.fill();
+  });
+  // Diamond (fdh / splice_point)
+  _addImg('diamond', (ctx, s) => {
+    ctx.beginPath(); ctx.moveTo(s/2, 3); ctx.lineTo(s-3, s/2); ctx.lineTo(s/2, s-3); ctx.lineTo(3, s/2); ctx.closePath(); ctx.fill();
+  });
+  // Hexagon (co)
+  _addImg('hexagon', (ctx, s) => {
+    const cx = s/2, cy = s/2, r = s/2-3;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i*60 - 30) * Math.PI/180;
+      i===0 ? ctx.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a)) : ctx.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+    }
+    ctx.closePath(); ctx.fill();
+  });
+  // Vertical bar (pole)
+  _addImg('vbar', (ctx, s) => {
+    ctx.fillRect(s/2-3, 2, 6, s-4);
+  });
+}
+
 // Re-add all network layers (cables, locations, closures) to the map.
 // Called after initial load AND after map.setStyle() for basemap switching.
 function addNetworkLayers(map) {
@@ -7391,16 +7493,69 @@ function addNetworkLayers(map) {
         'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], 'text-size': 12 },
       paint: { 'text-color': '#ffffff' },
     });
-    map.addLayer({
-      id: 'loc-unclustered', type: 'circle', source: 'locations',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-color': ['get', 'color'],
-        'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
-        'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
-        'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
-      },
-    });
+    // 5.H.4 — per-type location layers. Each type gets its own MapLibre layer
+    // with a type-specific shape via circle-radius or symbol-icon-image.
+    // Sprites for non-native shapes are generated by _addLocTypeSprites().
+    _addLocTypeSprites(map);
+    const LOC_LAYER_DEFS = [
+      // [type,   shape,    radius, strokeW]
+      ['handhole',    'square',    10, 2],
+      ['manhole',     'circle',    12, 2],
+      ['pedestal',    'triangle',   9, 2],
+      ['vault',       'roundsq',   12, 2],
+      ['pole',        'vbar',       5, 1],
+      ['fdh',         'diamond',   14, 2],
+      ['splice_point','diamond',    8, 1.5],
+      ['co',          'hexagon',   16, 2],
+      ['terminal',    'invtri',    10, 2],
+      ['ring_cut',    'circle',     9, 2],
+    ];
+    for (const [type, shape, r] of LOC_LAYER_DEFS) {
+      const layerId = `loc-unclustered-${type}`;
+      if (map.getLayer(layerId)) continue;
+      const baseFilter = ['all', ['!', ['has', 'point_count']], ['==', ['get', 'type'], type]];
+      if (['square','circle','roundsq','vbar','diamond','hexagon','invtri','triangle'].includes(shape) && map.hasImage(`loc-${shape}`)) {
+        map.addLayer({
+          id: layerId, type: 'symbol', source: 'locations',
+          filter: baseFilter,
+          layout: {
+            'icon-image': `loc-${shape}`,
+            'icon-size': ['interpolate',['linear'],['zoom'], 10, r/18, 18, r/12],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+          },
+          paint: {
+            'icon-color': ['get', 'color'],
+            'icon-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+          },
+        });
+      } else {
+        // Fallback: circle layer
+        map.addLayer({
+          id: layerId, type: 'circle', source: 'locations',
+          filter: baseFilter,
+          paint: {
+            'circle-color': ['get', 'color'],
+            'circle-radius': r,
+            'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
+            'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+          },
+        });
+      }
+    }
+    // Fallback for unknown types
+    if (!map.getLayer('loc-unclustered-other')) {
+      map.addLayer({
+        id: 'loc-unclustered-other', type: 'circle', source: 'locations',
+        filter: ['all', ['!', ['has', 'point_count']], ['!', ['in', ['get','type'], ['literal',['handhole','manhole','pedestal','vault','pole','fdh','splice_point','co','terminal','ring_cut']]]]],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': 8,
+          'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
+          'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+        },
+      });
+    }
     map.addLayer({
       id: 'loc-names', type: 'symbol', source: 'locations',
       filter: ['!', ['has', 'point_count']], minzoom: 16,
@@ -7449,24 +7604,28 @@ function _wireMapClickHandlers(map) {
     });
   });
 
-  // Unclustered location click → open inspector
-  map.on('click', 'loc-unclustered', (e) => {
-    if (state.mapMode === 'place-new') return;
-    e.preventDefault();
-    const props = e.features[0]?.properties;
-    if (!props?.id) return;
-    if (state.mapMode === 'multistop') {
-      const loc = (state.data?.locations || []).find(l => l.id === props.id);
-      if (loc) mapMsSnapToLocation(loc);
-      return;
-    }
-    selectThing('location', props.id);
-  });
+  // 5.H.4 — per-type unclustered location click → open inspector
+  const ALL_LOC_LAYER_IDS = ['handhole','manhole','pedestal','vault','pole','fdh','splice_point','co','terminal','ring_cut','other']
+    .map(t => `loc-unclustered-${t}`);
+  for (const layerId of ALL_LOC_LAYER_IDS) {
+    map.on('click', layerId, (e) => {
+      if (state.mapMode === 'place-new') return;
+      e.preventDefault();
+      const props = e.features[0]?.properties;
+      if (!props?.id) return;
+      if (state.mapMode === 'multistop') {
+        const loc = (state.data?.locations || []).find(l => l.id === props.id);
+        if (loc) mapMsSnapToLocation(loc);
+        return;
+      }
+      selectThing('location', props.id);
+    });
+    map.on('mouseenter', layerId, () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', layerId, () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+  }
 
   map.on('mouseenter', 'loc-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
-  map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
 
   // Cable click → open inspector (5.D.3 fix: was mapStartEditPath)
   for (const cat of CABLE_CATEGORIES) {
@@ -7496,7 +7655,7 @@ function _wireMapClickHandlers(map) {
       const hitCables = map.queryRenderedFeatures(e.point,
         { layers: CABLE_CATEGORIES.map(c => `cables-${c}`).filter(id => !!map.getLayer(id)) });
       const hitLocs = map.queryRenderedFeatures(e.point,
-        { layers: ['loc-unclustered'].filter(id => !!map.getLayer(id)) });
+        { layers: ['handhole','manhole','pedestal','vault','pole','fdh','splice_point','co','terminal','ring_cut','other'].map(t=>`loc-unclustered-${t}`).filter(id => !!map.getLayer(id)) });
       if (!hitCables.length && !hitLocs.length) {
         _updateCableSelectionHighlight(null);
       }
