@@ -2819,7 +2819,14 @@ async function bulkDeleteClosures(locationId) {
   if (!checked.length) return;
   const ids = checked.map(el => el.dataset.closureId);
   const n = ids.length;
-  if (!confirm(`Delete ${n} closure${n === 1 ? '' : 's'} at this location? Each closure's trays + splices will cascade-delete with it.`)) return;
+  const _trays = state.data.trays.filter(t => ids.includes(t.closure_id)).length;
+  const _splices = state.data.splices.filter(s => ids.includes(s.closure_id) || ids.some(id => state.data.trays.filter(t=>t.closure_id===id).map(t=>t.id).includes(s.tray_id))).length;
+  if (!await confirmDialog({
+    title: `Delete ${n} closure${n === 1 ? '' : 's'}?`,
+    body: `${n} closure${n === 1 ? '' : 's'} at this location will be permanently deleted along with their trays and splices.${_splices ? `\n\n${_splices} splice record${_splices===1?'':'s'} will be lost.` : ''}`,
+    confirmLabel: 'Delete',
+    danger: true,
+  })) return;
   try {
     await api('/api/splice/closures/bulk-delete', 'POST', { ids });
     await hydrateProject();
@@ -3149,7 +3156,7 @@ async function getClosureFieldLink(closureId) {
 }
 
 async function deleteMarkup(markupId, closureId) {
-  if (!confirm('Delete this field photo?')) return;
+  if (!await confirmDialog({ title: 'Delete field photo?', body: 'This photo will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/markups/' + markupId, 'DELETE');
     loadClosureMarkups(closureId);
@@ -3287,8 +3294,8 @@ async function resolveComment(commentId, targetId, targetType) {
   } catch (e) { toast('Failed to toggle resolve: ' + e.message, 'error'); }
 }
 
-async function deleteComment(commentId, targetId, targetType) {
-  if (!confirm('Delete this comment?')) return;
+async function deleteComment(commentId, targetId, targetType) { // eslint-disable-line no-unused-vars
+  if (!await confirmDialog({ title: 'Delete comment?', body: 'This comment will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/comments/' + commentId, 'DELETE');
     if (targetType === 'closure') {
@@ -3457,7 +3464,7 @@ async function saveCableSlackField(input) {
 }
 
 async function clearCableState(cableStateId) {
-  if (!confirm('Clear this cable slack entry?')) return;
+  if (!await confirmDialog({ title: 'Clear slack entry?', body: 'This cable slack record will be removed.', confirmLabel: 'Clear', danger: true })) return;
   try {
     await api('/api/splice/cable-states/' + cableStateId, 'DELETE');
     await hydrateProject();
@@ -3647,7 +3654,7 @@ function openWireSplitter(splitterId) {
 
 async function deleteSplitter(splitterId) {
   if (isReadOnly()) return toast('View-only mode', 'error');
-  if (!confirm('Delete this splitter and all its output ports?')) return;
+  if (!await confirmDialog({ title: 'Delete splitter?', body: 'This splitter and all its output ports will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   try {
     await api(`/api/splice/splitters/${splitterId}`, 'DELETE');
     await hydrateProject();
@@ -3701,7 +3708,7 @@ function openAddStoredStrand(locationId) {
 
 async function clearStrandState(stateId) {
   if (isReadOnly()) return;
-  if (!confirm('Clear this strand state (revert to default)?')) return;
+  if (!await confirmDialog({ title: 'Clear strand state?', body: 'This strand state will be reverted to its default.', confirmLabel: 'Clear', danger: false })) return;
   try {
     await api('/api/splice/strand-states/' + stateId, 'DELETE');
     await hydrateProject();
@@ -4293,7 +4300,17 @@ function openEditClosure(closureId) {
 
 async function deleteClosure(closureId) {
   if (isReadOnly()) return;
-  if (!confirm('Delete this closure and all its trays + splices?')) return;
+  const _cl = state.data.closures.find(c => c.id === closureId);
+  const _traysCnt = state.data.trays.filter(t => t.closure_id === closureId).length;
+  const _splicesCnt = state.data.splices.filter(s => s.closure_id === closureId ||
+    state.data.trays.filter(t => t.closure_id === closureId).map(t => t.id).includes(s.tray_id)).length;
+  const _bodyParts = [];
+  if (_traysCnt)   _bodyParts.push(`${_traysCnt} tray${_traysCnt===1?'':'s'}`);
+  if (_splicesCnt) _bodyParts.push(`${_splicesCnt} splice record${_splicesCnt===1?'':'s'}`);
+  const _bodyStr = _bodyParts.length
+    ? `This closure has ${_bodyParts.join(' and ')}. All will be permanently deleted.`
+    : 'This closure and its contents will be permanently deleted.';
+  if (!await confirmDialog({ title: `Delete closure${_cl ? ' ' + esc(_cl.model || '') : ''}?`, body: _bodyStr, confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/closures/' + closureId, 'DELETE');
     state.selection = null;
@@ -4453,10 +4470,10 @@ async function deleteCable(cableId) {
   const dependentSplices = state.data.splices.filter(s =>
     fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id)
   ).length;
-  const msg = dependentSplices
-    ? `Delete cable "${cable.name}"? This will cascade-delete ${dependentSplices} splice(s) on its fibers.`
-    : `Delete cable "${cable.name}"?`;
-  if (!confirm(msg)) return;
+  const _cableBody = dependentSplices
+    ? `Cable "${cable.name}" has ${dependentSplices} splice record${dependentSplices===1?'':'s'} on its fibers that will be cascade-deleted.`
+    : `Cable "${cable.name}" will be permanently removed.`;
+  if (!await confirmDialog({ title: `Delete cable "${esc(cable.name)}"?`, body: _cableBody, confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/cables/' + cableId, 'DELETE');
     state.selection = null;
@@ -4569,10 +4586,10 @@ async function deleteLocation(locationId) {
   const cableCount   = state.data.cables.filter(c =>
     c.from_location_id === locationId || c.to_location_id === locationId
   ).length;
-  let msg = `Delete location "${loc.name}"?`;
-  if (closureCount) msg += `\n\n${closureCount} closure(s) at this location will be deleted (with their trays + splices).`;
-  if (cableCount)   msg += `\n${cableCount} cable(s) referencing this location will become unrouted (endpoints nulled, cables kept).`;
-  if (!confirm(msg)) return;
+  const _locBodyParts = [`Location "${loc.name}" will be permanently deleted.`];
+  if (closureCount) _locBodyParts.push(`${closureCount} closure${closureCount===1?'':'s'} at this location will also be deleted (along with their trays and splices).`);
+  if (cableCount)   _locBodyParts.push(`${cableCount} cable${cableCount===1?'':'s'} referencing this location will become unrouted (endpoints cleared; cables are kept).`);
+  if (!await confirmDialog({ title: `Delete location "${esc(loc.name)}"?`, body: _locBodyParts.join('\n\n'), confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/locations/' + locationId, 'DELETE');
     state.selection = null;
@@ -4582,7 +4599,7 @@ async function deleteLocation(locationId) {
 
 async function deleteSplice(spliceId) {
   if (isReadOnly()) return;
-  if (!confirm('Delete this splice?')) return;
+  if (!await confirmDialog({ title: 'Delete splice?', body: 'This splice record will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/splices/' + spliceId, 'DELETE');
     await hydrateProject();
@@ -4591,7 +4608,7 @@ async function deleteSplice(spliceId) {
 
 async function deleteRibbonGroup(groupId) {
   if (isReadOnly()) return;
-  if (!confirm('Delete the entire 12-fiber ribbon group?')) return;
+  if (!await confirmDialog({ title: 'Delete ribbon group?', body: 'The entire 12-fiber ribbon group and its splice records will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/ribbon-groups/' + groupId, 'DELETE');
     await hydrateProject();
@@ -4600,7 +4617,16 @@ async function deleteRibbonGroup(groupId) {
 
 async function deleteCurrentProject() {
   if (!state.data) return;
-  if (!confirm(`Delete project "${state.data.project.name}" and ALL its data? This cannot be undone.`)) return;
+  const _pName = state.data.project.name;
+  const _pLocs = state.data.locations.length;
+  const _pCables = state.data.cables.length;
+  const _pSplices = state.data.splices.length;
+  if (!await confirmDialog({
+    title: `Delete project "${esc(_pName)}"?`,
+    body: `ALL project data will be permanently destroyed — this cannot be undone.\n\nThis includes: ${_pLocs} location${_pLocs===1?'':'s'}, ${_pCables} cable${_pCables===1?'':'s'}, ${_pSplices} splice record${_pSplices===1?'':'s'}, and all associated files.`,
+    confirmLabel: 'Delete permanently',
+    danger: true,
+  })) return;
   try {
     await api('/api/splice/projects/' + state.currentId, 'DELETE');
     cleanupCurrent();
@@ -4958,6 +4984,45 @@ function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
   document.getElementById('modal-submit').onclick = () => onSubmit(closeModal);
 }
 function closeModal() { document.getElementById('modal-host').innerHTML = ''; }
+
+// ─── 5.E.2 — Promise-based confirm dialog (replaces native window.confirm) ──
+// Preserves the lock heartbeat because it never blocks the JS event loop.
+// danger:true → red confirm button. Resolves true on confirm, false otherwise.
+async function confirmDialog({ title, body, confirmLabel = 'Confirm', danger = false }) {
+  return new Promise(resolve => {
+    const host = document.getElementById('modal-host');
+    const btnCls = danger ? 'btn btn-danger' : 'btn btn-primary';
+    host.innerHTML = `
+      <div class="modal-overlay" id="confirm-overlay" style="z-index:9999">
+        <div class="modal" style="max-width:440px">
+          <header>
+            <h2>${esc(title)}</h2>
+            <button class="close" id="confirm-cancel-x">&times;</button>
+          </header>
+          <div class="body" style="font-size:13px;line-height:1.5;white-space:pre-wrap">${body}</div>
+          <footer>
+            <button class="btn" id="confirm-cancel-btn">Cancel</button>
+            <button class="${btnCls}" id="confirm-ok-btn">${esc(confirmLabel)}</button>
+          </footer>
+        </div>
+      </div>`;
+    const cleanup = (result) => {
+      host.innerHTML = '';
+      resolve(result);
+    };
+    document.getElementById('confirm-ok-btn').onclick     = () => cleanup(true);
+    document.getElementById('confirm-cancel-btn').onclick = () => cleanup(false);
+    document.getElementById('confirm-cancel-x').onclick   = () => cleanup(false);
+    document.getElementById('confirm-overlay').onclick    = (e) => {
+      if (e.target === document.getElementById('confirm-overlay')) cleanup(false);
+    };
+    // Esc key
+    const onKey = (e) => {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', onKey); cleanup(false); }
+    };
+    document.addEventListener('keydown', onKey);
+  });
+}
 
 // ───────────────────────────────────────────────────────────────────────────
 // Map view (Phase 3A) — MapLibre GL JS, lazy-loaded on first activation.
@@ -5731,7 +5796,7 @@ async function matrixUpdateFiber(fiberAId, fiberBId, field, value) {
 }
 
 async function matrixDeleteSplice(spliceId) {
-  if (!confirm('Delete this splice?')) return;
+  if (!await confirmDialog({ title: 'Delete splice?', body: 'This splice record will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/splices/' + spliceId, 'DELETE');
     _matrixSelected.delete(spliceId);
@@ -5742,7 +5807,7 @@ async function matrixDeleteSplice(spliceId) {
 async function matrixBulkDelete() {
   const ids = [..._matrixSelected];
   if (!ids.length) return;
-  if (!confirm(`Delete ${ids.length} splice${ids.length>1?'s':''}?`)) return;
+  if (!await confirmDialog({ title: `Delete ${ids.length} splice${ids.length>1?'s':''}?`, body: `${ids.length} splice record${ids.length>1?'s':''} will be permanently removed.`, confirmLabel: 'Delete', danger: true })) return;
   try {
     for (const id of ids) {
       await api('/api/splice/splices/' + id, 'DELETE');
@@ -7566,7 +7631,7 @@ async function bulkDecision(decision) {
 }
 
 async function rejectImport(importId) {
-  if (!confirm('Reject this import? Nothing in the live project will change. The audit log keeps the record.')) return;
+  if (!await confirmDialog({ title: 'Reject this import?', body: 'Nothing in the live project will change — the audit log will retain the record.', confirmLabel: 'Reject', danger: true })) return;
   try {
     await api('/api/splice/imports/' + importId, 'DELETE');
     toast('Import rejected', 'success');
@@ -7798,12 +7863,12 @@ document.getElementById('btn-export').addEventListener('click', () => {
 
 // Phase 3B — KMZ download. Server sends Content-Disposition: attachment
 // so the browser saves the file rather than trying to render it.
-function downloadKmz() {
+async function downloadKmz() {
   if (!state.currentId) return;
   const hasGeo = (state.data?.locations || []).some(l => l.latitude != null && l.longitude != null) ||
                  (state.data?.cables   || []).some(c => c.path_geojson);
   if (!hasGeo) {
-    if (!confirm('No locations or cables have geographic coordinates yet. The KMZ will be effectively empty. Download anyway?')) return;
+    if (!await confirmDialog({ title: 'Download empty KMZ?', body: 'No locations or cables have geographic coordinates yet. The KMZ will be effectively empty.', confirmLabel: 'Download anyway', danger: false })) return;
   }
   window.location.href = '/api/splice/projects/' + state.currentId + '/export-kmz';
 }
@@ -7876,7 +7941,7 @@ window.copyShareLink = function(btn, url) {
 };
 
 window.revokeShareLink = async function(token) {
-  if (!confirm('Revoke this share link? Anyone using it will lose access immediately.')) return;
+  if (!await confirmDialog({ title: 'Revoke share link?', body: 'Anyone currently using this link will lose access immediately.', confirmLabel: 'Revoke', danger: true })) return;
   try {
     await api('/api/splice/public-tokens/project/' + token, 'DELETE');
     toast('Link revoked', 'success');
