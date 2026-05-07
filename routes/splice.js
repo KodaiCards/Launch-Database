@@ -4881,12 +4881,18 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   .tray-header{font-size:13px;font-weight:700;margin-bottom:0;padding:5px 10px;background:#1B5FA0;color:#fff;border-radius:3px 3px 0 0;display:flex;justify-content:space-between;align-items:center}
   .tray-header .tray-meta{font-size:10px;font-weight:500;opacity:0.85;text-transform:uppercase;letter-spacing:0.4px}
   .tray-block .splice-table{border-radius:0 0 3px 3px}
-  /* Phase 5.G §6.2 — alternating row background + 8pt body font on per-closure splice table */
+  /* Phase 5.G §6.2 — alternating row background + navy thead for per-closure splice table.
+     Explicit background/color on th overrides the generic th rule so Puppeteer's
+     -webkit-print-color-adjust:exact flag doesn't strip it under some GPU configs. */
+  .splice-table thead th{background:#0F3D66;color:#fff}
+  .splice-table thead tr.sub th{background:#173E6E;color:#fff}
   .splice-table tbody tr:nth-child(even) td{background:#F4F5F7}
   .splice-table tbody tr:nth-child(odd)  td{background:#fff}
   /* Preserve special-case overrides */
   .splice-table tbody .ribbon-row td{background:#FAFBFD}
   .splice-table tbody tr td.markup-loss,.splice-table tbody tr td.markup-notes{background:repeating-linear-gradient(135deg,#fff,#fff 4px,#FAFBFD 4px,#FAFBFD 8px)}
+  /* 8pt body font for per-closure pages per audit §6.2 */
+  .closure-page .splice-table td,.closure-page .splice-table th{font-size:8pt}
 
   /* Sign-off block at the bottom of every closure page. */
   .signoff{margin-top:14px;page-break-inside:avoid;border-top:1px solid #CED4DA;padding-top:10px}
