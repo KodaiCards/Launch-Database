@@ -4448,21 +4448,28 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   });
   const qrByClosureId = new Map(await Promise.all(qrPromises));
 
-  // Phase 5.G: cover page QR — points to the project-level public view
+  // Phase 5.G.2: cover page QR — points to the project-level public view
   // (read-only stakeholder URL) so a non-authed splicer can open the
-  // live record without a login. Uses a 200px PNG data URL via
-  // qrcode.toDataURL (raster, more compatible with Puppeteer than inline SVG).
+  // live record without a login. Uses 240px raster PNG via qrcode.toDataURL
+  // (more reliable in Puppeteer than inline SVG for data: URIs). The full
+  // URL is printed below the QR in small type so the splicer can also
+  // type it manually if their camera app fails.
   let coverQrHtml = '';
   if (projectPublicToken) {
     const publicViewUrl = `${SPLICE_PUBLIC_URL || ''}/splice/view/${projectPublicToken}`;
     try {
       const qr = _qr();
       if (qr) {
-        const qrDataUrl = await qr.toDataURL(publicViewUrl, { width: 200, margin: 1 });
+        const qrDataUrl = await qr.toDataURL(publicViewUrl, {
+          width: 240, margin: 1,
+          color: { dark: '#0F3D66', light: '#FFFFFF' },
+        });
+        const displayUrl = publicViewUrl.replace(/^https?:\/\//, '');
         coverQrHtml = `
           <div class="cover-qr-block">
             <img src="${qrDataUrl}" alt="QR code — public live record" class="cover-qr-img">
             <div class="cover-qr-cap">Scan to view live record</div>
+            <div class="cover-qr-url">${_esc(displayUrl)}</div>
           </div>`;
       }
     } catch (qrErr) {
@@ -4897,6 +4904,7 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   .cover-qr-block{text-align:center}
   .cover-qr-img{display:block;width:100px;height:100px;border:1px solid #DEE2E6;border-radius:4px}
   .cover-qr-cap{font-size:8px;color:#6C757D;margin-top:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .cover-qr-url{font-size:7px;color:#8898aa;margin-top:2px;word-break:break-all;max-width:110px;text-align:center}
   .cover-map-block{margin:12px 0 6px}
   .cover-map-block img{display:block;width:100%;max-width:600px;height:auto;border:1px solid #DEE2E6;border-radius:4px}
   .cover-map-cap{font-size:9px;color:#6C757D;margin-top:4px;font-style:italic}
