@@ -32,7 +32,7 @@
   --radius-lg:10px;
   --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
   --shadow-lift:0 4px 16px rgba(0,0,0,0.16);
-  --topbar-h:52px;
+  --topbar-h:68px;
   --footer-h:48px;
 }
 html[data-theme="dark"]{
@@ -70,17 +70,19 @@ body{
   gap:12px;
   flex-shrink:0;
   box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  position:relative;
 }
-.topbar-logo{
-  font-size:15px;
-  font-weight:700;
-  letter-spacing:-0.01em;
-  color:#fff;
-  display:flex;
-  align-items:center;
-  gap:8px;
+.topbar-logo-img{
+  height:44px;
+  width:auto;
+  object-fit:contain;
+  display:block;
+  /* centered absolutely so user pill doesn't shift it */
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
 }
-.topbar-logo i{color:var(--vetro-route-active);font-size:16px}
 .topbar-spacer{flex:1}
 .user-pill{
   display:flex;
@@ -366,10 +368,7 @@ html[data-theme="dark"] .tile-icon{
 
 <!-- Top bar -->
 <div class="topbar">
-  <div class="topbar-logo">
-    <i class="fa-solid fa-bolt-lightning"></i>
-    Launch Fiber
-  </div>
+  <img src="/img/launch-fiber-logo.png" alt="Launch Fiber" class="topbar-logo-img">
   <div class="topbar-spacer"></div>
   <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode" id="theme-btn">
     <i class="fa-solid fa-moon" id="theme-icon"></i>
