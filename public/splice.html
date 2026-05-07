@@ -499,16 +499,11 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 </style>
 </head>
 <body>
-<a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
-  <i class="fa-solid fa-arrow-left"></i> Launcher
-</a>
-<script>
-fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
-  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
-}).catch(()=>{});
-</script>
 
 <header class="header">
+  <a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
+    <i class="fa-solid fa-arrow-left"></i> Launcher
+  </a>
   <div class="logo"><i class="fa-solid fa-network-wired"></i> Splice Matrix</div>
   <div class="divider"></div>
   <div class="title" id="title-name">— No project selected —</div>
@@ -9576,6 +9571,11 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
+</script>
+<script>
+fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
 </script>
 </body>
 </html>
