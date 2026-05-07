@@ -452,6 +452,15 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   .inspector:not(.inspector-closed){transform:translateX(0)}
 }
 
+/* ── 5.H.2 Sidebar tabs ───────────────────────────────────────────────────── */
+.sb-tabs{display:none;flex-direction:row;border-bottom:1px solid var(--vetro-divider);margin:0 -10px 10px -10px;background:var(--vetro-bg-panel-secondary,#F4F5F7)}
+.sb-tabs.visible{display:flex}
+.sb-tab{flex:1;padding:7px 4px;font-size:10px;font-weight:600;text-align:center;border:none;background:transparent;color:var(--vetro-text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;letter-spacing:0.3px;text-transform:uppercase;line-height:1.2}
+.sb-tab:hover{color:var(--vetro-primary);background:var(--vetro-bg-hover)}
+.sb-tab.active{color:var(--vetro-primary);border-bottom-color:var(--vetro-primary);background:var(--vetro-bg-panel)}
+.sb-panel{display:none}
+.sb-panel.active{display:block}
+
 /* ── 5.D.5 Layer Tree ──────────────────────────────────────────────────────── */
 .layer-group{margin-bottom:4px}
 .layer-group-header{display:flex;align-items:center;gap:5px;padding:3px 0;cursor:pointer;user-select:none}
@@ -496,103 +505,129 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 
   <!-- ─── Left rail: VETRO Map Data panel ─── -->
   <aside class="sidebar" id="sidebar">
-    <!-- VETRO-style "Map Data" section label -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:10px">Map Data</div>
+    <!-- Always-visible: project list + search bar -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 6px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px">Map Data</div>
     <div class="sidebar-section">
       <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
+      <!-- 5.H.6 / 5.H.2 — search bar: scope changes when a project is open -->
       <div style="margin-bottom:8px">
-        <input type="search" id="search-input" placeholder="Search circuits, cables, closures…"
+        <input type="search" id="search-input" placeholder="Search projects…"
                style="width:100%;padding:5px 8px;font-size:12px;border-radius:4px;border:1px solid var(--border-weak);background:var(--surface-2);color:var(--text)"
                oninput="onSearchInput(this.value)">
         <div id="search-results" style="display:none;background:var(--surface);border:1px solid var(--border-weak);border-radius:4px;margin-top:4px;max-height:50vh;overflow:auto;font-size:11px"></div>
       </div>
       <ul class="proj-list" id="proj-list"><li class="empty-pane">Loading…</li></ul>
     </div>
-    <div class="sidebar-section" id="proj-actions" style="display:none">
-      <h3>Project actions</h3>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
-        <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
-        <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
-        <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
-        <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
-        <!-- Phase 4.6: admin-only template manager -->
-        <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
-      </div>
-    </div>
-    <!-- 5.B.2 — "Recently imported" filter chip shown after an import lands -->
-    <div id="recent-import-chip-wrap" style="display:none;margin-bottom:8px;padding:0 2px">
-      <button id="recent-import-chip" class="btn btn-sm"
-        style="width:100%;background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-size:11px"
-        onclick="toggleRecentlyImportedFilter()">
-        <i class="fa-solid fa-clock-rotate-left"></i> Recently imported
-        <span id="recent-import-chip-count" class="small" style="margin-left:4px"></span>
-      </button>
-    </div>
-    <div class="sidebar-section" id="proj-imports" style="display:none">
-      <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
-      <div id="proj-imports-body" style="font-size:11px"></div>
-    </div>
-    <!-- Phase 4.7 — Loss records panel -->
-    <div class="sidebar-section" id="proj-loss-records" style="display:none">
-      <h3 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleLossRecordsPanel()">
-        Loss records <span id="proj-loss-count" class="small"></span>
-        <i class="fa-solid fa-chevron-down" id="proj-loss-chevron" style="font-size:10px;color:var(--text-muted)"></i>
-      </h3>
-      <div id="proj-loss-body">
-        <div style="margin-bottom:6px;font-size:11px;color:var(--text-secondary)">
-          Fusion-splicer measurements from Fujikura Splice+ or compatible exports.
-        </div>
-        <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:8px" onclick="openLossRecordUpload()">
-          <i class="fa-solid fa-upload"></i> Upload Splice+ JSON
-        </button>
-        <div id="proj-loss-stats" style="font-size:11px;margin-bottom:6px"></div>
-        <div id="proj-loss-unbound-list" style="font-size:11px"></div>
-      </div>
-    </div>
-    <div class="sidebar-section" id="proj-summary" style="display:none">
-      <h3>Summary</h3>
-      <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
+
+    <!-- 5.H.2 — Sidebar tabs: visible only when a project is open -->
+    <div class="sb-tabs" id="sb-tabs">
+      <button class="sb-tab active" data-tab="layers" onclick="switchSbTab('layers')" title="Map Layers"><i class="fa-solid fa-layer-group"></i><br>Layers</button>
+      <button class="sb-tab" data-tab="actions" onclick="switchSbTab('actions')" title="Project Actions"><i class="fa-solid fa-wrench"></i><br>Actions</button>
+      <button class="sb-tab" data-tab="imports" onclick="switchSbTab('imports')" title="Imports &amp; Records"><i class="fa-solid fa-file-import"></i><br>Imports</button>
+      <button class="sb-tab" data-tab="summary" onclick="switchSbTab('summary')" title="Project Summary"><i class="fa-solid fa-chart-bar"></i><br>Summary</button>
     </div>
 
-    <!-- 5.D.5: Functional layer visibility tree — shown when a project is loaded -->
-    <div class="sidebar-section" id="layer-panel" style="display:none">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-        Map Layers
-        <button class="btn btn-sm" style="font-size:9px;padding:1px 5px" onclick="showAllLayers()" title="Show all layers">All</button>
-      </div>
-      <!-- Fiber Cables group -->
-      <div class="layer-group" id="layer-group-cables">
-        <div class="layer-group-header" onclick="toggleGroupExpand('cables')">
-          <input type="checkbox" id="layer-parent-cables" checked onclick="event.stopPropagation();toggleGroupVisibility('cables',this.checked)" title="Toggle all cable layers">
-          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-cables"></i></span>
-          <span class="layer-group-name">Fiber Cables</span>
+    <!-- TAB: Layers (5.D.5 layer tree) -->
+    <div class="sb-panel active" id="sb-panel-layers">
+      <!-- 5.D.5: Functional layer visibility tree — shown when a project is loaded -->
+      <div id="layer-panel">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          Map Layers
+          <button class="btn btn-sm" style="font-size:9px;padding:1px 5px" onclick="showAllLayers()" title="Show all layers">All</button>
         </div>
-        <div class="layer-group-children" id="layer-children-cables"></div>
-      </div>
-      <!-- Network Points group -->
-      <div class="layer-group" id="layer-group-locations">
-        <div class="layer-group-header" onclick="toggleGroupExpand('locations')">
-          <input type="checkbox" id="layer-parent-locations" checked onclick="event.stopPropagation();toggleGroupVisibility('locations',this.checked)" title="Toggle all location layers">
-          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-locations"></i></span>
-          <span class="layer-group-name">Network Points</span>
+        <!-- Fiber Cables group -->
+        <div class="layer-group" id="layer-group-cables">
+          <div class="layer-group-header" onclick="toggleGroupExpand('cables')">
+            <input type="checkbox" id="layer-parent-cables" checked onclick="event.stopPropagation();toggleGroupVisibility('cables',this.checked)" title="Toggle all cable layers">
+            <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-cables"></i></span>
+            <span class="layer-group-name">Fiber Cables</span>
+          </div>
+          <div class="layer-group-children" id="layer-children-cables"></div>
         </div>
-        <div class="layer-group-children" id="layer-children-locations"></div>
-      </div>
-      <!-- Custom layers placeholder -->
-      <div class="layer-group" id="layer-group-custom" style="display:none">
-        <div class="layer-group-header" onclick="toggleGroupExpand('custom')">
-          <input type="checkbox" id="layer-parent-custom" checked onclick="event.stopPropagation();toggleGroupVisibility('custom',this.checked)">
-          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-custom"></i></span>
-          <span class="layer-group-name">Custom Layers</span>
+        <!-- Network Points group -->
+        <div class="layer-group" id="layer-group-locations">
+          <div class="layer-group-header" onclick="toggleGroupExpand('locations')">
+            <input type="checkbox" id="layer-parent-locations" checked onclick="event.stopPropagation();toggleGroupVisibility('locations',this.checked)" title="Toggle all location layers">
+            <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-locations"></i></span>
+            <span class="layer-group-name">Network Points</span>
+          </div>
+          <div class="layer-group-children" id="layer-children-locations"></div>
         </div>
-        <div class="layer-group-children" id="layer-children-custom"></div>
+        <!-- Custom layers placeholder -->
+        <div class="layer-group" id="layer-group-custom" style="display:none">
+          <div class="layer-group-header" onclick="toggleGroupExpand('custom')">
+            <input type="checkbox" id="layer-parent-custom" checked onclick="event.stopPropagation();toggleGroupVisibility('custom',this.checked)">
+            <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-custom"></i></span>
+            <span class="layer-group-name">Custom Layers</span>
+          </div>
+          <div class="layer-group-children" id="layer-children-custom"></div>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="openCreateLayerModal()">
+            <i class="fa-solid fa-plus"></i> New Layer
+          </button>
+        </div>
       </div>
-      <div style="margin-top:8px">
-        <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="openCreateLayerModal()">
-          <i class="fa-solid fa-plus"></i> New Layer
+    </div>
+
+    <!-- TAB: Actions -->
+    <div class="sb-panel" id="sb-panel-actions">
+      <div class="sidebar-section" id="proj-actions">
+        <h3>Project actions</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
+          <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
+          <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
+          <!-- Phase 4.6: admin-only template manager -->
+          <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Imports -->
+    <div class="sb-panel" id="sb-panel-imports">
+      <!-- 5.B.2 — "Recently imported" filter chip shown after an import lands -->
+      <div id="recent-import-chip-wrap" style="display:none;margin-bottom:8px;padding:0 2px">
+        <button id="recent-import-chip" class="btn btn-sm"
+          style="width:100%;background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-size:11px"
+          onclick="toggleRecentlyImportedFilter()">
+          <i class="fa-solid fa-clock-rotate-left"></i> Recently imported
+          <span id="recent-import-chip-count" class="small" style="margin-left:4px"></span>
         </button>
+      </div>
+      <div class="sidebar-section" id="proj-imports">
+        <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+          <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
+          <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
+        </div>
+        <div id="proj-imports-body" style="font-size:11px"></div>
+      </div>
+      <!-- Phase 4.7 — Loss records panel -->
+      <div class="sidebar-section" id="proj-loss-records">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleLossRecordsPanel()">
+          Loss records <span id="proj-loss-count" class="small"></span>
+          <i class="fa-solid fa-chevron-down" id="proj-loss-chevron" style="font-size:10px;color:var(--text-muted)"></i>
+        </h3>
+        <div id="proj-loss-body">
+          <div style="margin-bottom:6px;font-size:11px;color:var(--text-secondary)">
+            Fusion-splicer measurements from Fujikura Splice+ or compatible exports.
+          </div>
+          <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:8px" onclick="openLossRecordUpload()">
+            <i class="fa-solid fa-upload"></i> Upload Splice+ JSON
+          </button>
+          <div id="proj-loss-stats" style="font-size:11px;margin-bottom:6px"></div>
+          <div id="proj-loss-unbound-list" style="font-size:11px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Summary -->
+    <div class="sb-panel" id="sb-panel-summary">
+      <div class="sidebar-section" id="proj-summary">
+        <h3>Summary</h3>
+        <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
       </div>
     </div>
   </aside>
@@ -1215,12 +1250,8 @@ async function selectProject(id) {
   // Tear down previous SSE + heartbeat first.
   cleanupCurrent();
   state.currentId = id;
-  document.getElementById('proj-actions').style.display = 'block';
-  document.getElementById('proj-imports').style.display = 'block';
+  _showSidebarTabs(); // 5.H.2: show tabbed sidebar
   refreshImportsList();
-  document.getElementById('proj-loss-records').style.display = 'block';
-  document.getElementById('proj-summary').style.display = 'block';
-  document.getElementById('layer-panel').style.display = '';  // 5.D.5: show layer tree
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
   document.getElementById('btn-share').disabled = false;
@@ -1281,6 +1312,31 @@ async function hydrateProject() {
   } catch (e) {
     toast('Hydrate failed: ' + e.message, 'error');
   }
+}
+
+// ── 5.H.2 — Sidebar tab switcher ─────────────────────────────────────────────
+function switchSbTab(tab) {
+  document.querySelectorAll('.sb-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.sb-panel').forEach(p => p.classList.toggle('active', p.id === `sb-panel-${tab}`));
+}
+
+function _showSidebarTabs() {
+  const tabs = document.getElementById('sb-tabs');
+  if (tabs) tabs.classList.add('visible');
+  // Update search bar placeholder for project scope
+  const si = document.getElementById('search-input');
+  if (si) si.placeholder = 'Search this project…';
+}
+
+function _hideSidebarTabs() {
+  const tabs = document.getElementById('sb-tabs');
+  if (tabs) tabs.classList.remove('visible');
+  // Hide all tab panels
+  document.querySelectorAll('.sb-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('sb-panel-layers')?.classList.add('active');
+  // Reset search bar placeholder
+  const si = document.getElementById('search-input');
+  if (si) si.placeholder = 'Search projects…';
 }
 
 // ── 5.H.1 — Empty state visibility controller ───────────────────────────────
@@ -5433,10 +5489,7 @@ async function deleteCurrentProject() {
     state.currentId = null;
     state.data = null;
     document.getElementById('title-name').textContent = '— No project selected —';
-    document.getElementById('proj-actions').style.display = 'none';
-    document.getElementById('proj-imports').style.display = 'none';
-    document.getElementById('proj-loss-records').style.display = 'none';
-    document.getElementById('proj-summary').style.display = 'none';
+    _hideSidebarTabs(); // 5.H.2
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('view-tabs').style.display = 'none';
     document.getElementById('map-toolbar').style.display = 'none';
@@ -6776,8 +6829,6 @@ function getMapLibreLayerIds(layerKey) {
 function renderLayerTree() {
   const lpanel = document.getElementById('layer-panel');
   if (!lpanel) return;
-  // Show when a project is loaded
-  if (state.currentId) lpanel.style.display = '';
 
   const styles = state.data?.layer_styles || [];
   const getVis = key => { const s = styles.find(s => s.layer_key === key); return s?.visible !== false; };
