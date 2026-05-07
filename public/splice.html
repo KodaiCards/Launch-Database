@@ -1384,12 +1384,13 @@ function _updateEmptyStates() {
   const view = state.activeView || 'diagram';
   const closures = state.data?.closures || [];
   const hasClosures = closures.length > 0;
-  const isMatrixView = view === 'matrix';
 
   // No project: show the centered CTA, hide the closures card.
   noProject.classList.toggle('hidden', hasProject);
-  // No closures: only in diagram/map/split when a project is open but has 0 closures.
-  noClosures.classList.toggle('hidden', !hasProject || hasClosures || isMatrixView);
+  // No closures: only show on Diagram view — Map view stays usable even with
+  // 0 closures so the user can place locations + cables before adding closures.
+  const showNoClosures = hasProject && !hasClosures && view === 'diagram';
+  noClosures.classList.toggle('hidden', !showNoClosures);
 }
 
 function fireAutoSnapshot() {
