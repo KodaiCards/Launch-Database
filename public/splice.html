@@ -317,7 +317,11 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .map-popup .actions{margin-top:6px;display:flex;gap:4px}
 #map-stage .maplibregl-canvas-container{outline:none}
 #map-stage.placing,#map-stage.placing .maplibregl-canvas{cursor:crosshair !important}
-.lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:6px 10px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:12px}
+/* 5.H.3 — Compact lock pill: icon-only by default, expands on hover */
+.lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:5px 8px;border-radius:20px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:11px;cursor:default;overflow:hidden;max-width:32px;transition:max-width .25s ease,padding .25s ease,border-radius .25s ease;white-space:nowrap}
+.lock-banner:hover{max-width:320px;padding:5px 12px;border-radius:8px}
+.lock-banner .lb-text{opacity:0;transition:opacity .15s .1s;pointer-events:none}
+.lock-banner:hover .lb-text{opacity:1;pointer-events:all}
 .lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
 .lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
 .lock-banner.stale{border-color:var(--danger);color:var(--danger-text);background:var(--danger-light)}
@@ -1680,15 +1684,16 @@ function renderLockBanner() {
   if (state.lockState === 'unlocked') { el.style.display = 'none'; return; }
   el.style.display = 'flex';
   el.className = 'lock-banner ' + (state.lockState === 'mine' ? 'locked' : 'held-by-other');
+  // 5.H.3 — compact pill: icon-only collapsed, expands on hover to show full state
   if (state.lockState === 'mine') {
-    el.innerHTML = `<i class="fa-solid fa-lock"></i> Editing · <button class="btn btn-sm" onclick="releaseLock()">Release</button>`;
+    el.innerHTML = `<i class="fa-solid fa-lock" title="You are editing — hover to release"></i><span class="lb-text">&nbsp;Editing · <button class="btn btn-sm" onclick="releaseLock()">Release</button></span>`;
   } else {
     const proj = state.data?.project;
     const heldBy = proj?.locked_by_full_name || proj?.locked_by_name || 'another designer';
     const lockedAt = proj?.locked_at ? new Date(proj.locked_at).getTime() : 0;
     const isStale = Date.now() - lockedAt > 10 * 60 * 1000;
-    el.innerHTML = `<i class="fa-solid fa-eye"></i> View only — locked by <b>${esc(heldBy)}</b>
-      ${isStale ? `<button class="btn btn-sm" onclick="takeOver()">Take over (stale)</button>` : `<button class="btn btn-sm" onclick="takeOver()">Force take over</button>`}`;
+    el.innerHTML = `<i class="fa-solid fa-eye" title="View only — hover for details"></i><span class="lb-text">&nbsp;View only — locked by <b>${esc(heldBy)}</b>
+      ${isStale ? `<button class="btn btn-sm" onclick="takeOver()">Take over (stale)</button>` : `<button class="btn btn-sm" onclick="takeOver()">Force take over</button>`}</span>`;
   }
 }
 
