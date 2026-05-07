@@ -808,6 +808,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </select>
         <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(true)" title="Expand all"><i class="fa-solid fa-angles-down"></i></button>
         <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(false)" title="Collapse all"><i class="fa-solid fa-angles-up"></i></button>
+        <button class="btn btn-secondary btn-sm" id="proj-clear-filters-btn" title="Clear saved project filters" onclick="(function(){['lf_filter:projects:proj-status-filter','lf_filter:projects:proj-type-filter','lf_filter:projects:proj-search','lf_filter:projects:proj-client-filter'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
       </div>
       <!-- Bulk-action bar — appears only when at least one project row is
            selected. The bar exposes high-leverage multi-row actions that
@@ -944,6 +945,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="on_hold">On Hold</option>
             <option value="all">All statuses</option>
           </select>
+          <button class="btn btn-secondary btn-sm" id="rus-clear-filters-btn" title="Clear saved RUS filters" onclick="(function(){['lf_filter:rus:insp-period','lf_filter:rus:insp-month','lf_filter:rus:insp-status'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-primary btn-sm" onclick="openProjectModal('inspection')"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
       </div>
@@ -1059,6 +1061,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openAuditDrawer()" title="View time-entry audit log"><i class="fa-solid fa-history"></i> Audit Log</button>
+          <button class="btn btn-secondary btn-sm" id="hrs-clear-filters-btn" title="Clear saved Hours filters" onclick="(function(){['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
           <button class="btn btn-primary btn-sm" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
@@ -1218,6 +1221,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div style="display:flex;gap:8px">
           <select class="filter" id="billing-year" onchange="loadBilling()"></select>
           <button class="btn btn-secondary btn-sm" onclick="loadBilling()"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-secondary btn-sm" id="billing-clear-filters-btn" title="Clear saved billing filters" onclick="(function(){['lf_filter:billing:billing-year'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
         </div>
       </div>
       <!-- Unbilled section -->
@@ -1293,6 +1297,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div style="display:flex;gap:8px;align-items:center">
           <select class="filter" id="rev-year" onchange="loadRevenue()"></select>
           <button class="btn btn-secondary btn-sm" onclick="selectRevMonth(null)" id="rev-ytd-btn"><i class="fa-solid fa-calendar"></i> YTD</button>
+          <button class="btn btn-secondary btn-sm" id="rev-clear-filters-btn" title="Clear saved revenue filters" onclick="(function(){['lf_filter:revenue:rev-year'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="showBillingReport()"><i class="fa-solid fa-file-invoice-dollar"></i> Billing Report</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
         </div>
@@ -2846,6 +2851,37 @@ let aiSessionId = 'session_' + Date.now();
 let currentView = 'dashboard';
 
 // ═══════════════════════════════════════════════════════════
+// FILTER PERSISTENCE (localStorage)
+// ═══════════════════════════════════════════════════════════
+// Key scheme: lf_filter:<tab>:<element-id>
+// Each value capped at 200 chars to prevent localStorage bloat.
+// Extracted JS modules call persistFilter() after the DOM is ready;
+// inline filters (Dashboard, Projects) are wired below in init().
+function persistFilter(storageKey, el) {
+  if (!el) return;
+  const stored = localStorage.getItem(storageKey);
+  if (stored !== null) el.value = stored.slice(0, 200);
+  const save = () => {
+    const v = (el.value || '').slice(0, 200);
+    localStorage.setItem(storageKey, v);
+  };
+  el.addEventListener('change', save);
+  el.addEventListener('input', save);
+}
+
+// Clear all lf_filter:* and lf_form:* keys from localStorage.
+// Called by the "Clear all saved state" button in Settings.
+function clearAllPersistedUiState() {
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith('lf_filter:') || k.startsWith('lf_form:'))) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+  return toRemove.length;
+}
+
+// ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
 async function init() {
@@ -2868,6 +2904,47 @@ async function init() {
     yrs.forEach(y => { const o = document.createElement('option'); o.value=y; o.text=y; if(y===now.getFullYear()) o.selected=true; el.add(o); });
   });
   document.getElementById('hrs-month').value = now.getMonth()+1;
+
+  // ── Filter persistence — Dashboard & Projects inline filters ─────────────
+  // Hours/RUS/Revenue/Billing filters are wired in their respective JS modules.
+  // We wire the dashboard and project-tab filters here because they live
+  // inline (no separate JS module for them).
+  [
+    ['lf_filter:dashboard:dash-period', 'dash-period'],
+    ['lf_filter:dashboard:dash-month',  'dash-month'],
+    ['lf_filter:dashboard:dash-year',   'dash-year'],
+    ['lf_filter:projects:proj-status-filter', 'proj-status-filter'],
+    ['lf_filter:projects:proj-type-filter',   'proj-type-filter'],
+    ['lf_filter:projects:proj-search',        'proj-search'],
+    // proj-client-filter is populated async (loadClients); wired after that call.
+    ['lf_filter:hours:hrs-period',   'hrs-period'],
+    ['lf_filter:hours:hrs-month',    'hrs-month'],
+    ['lf_filter:hours:hrs-year',     'hrs-year'],
+    ['lf_filter:hours:hrs-groupby',  'hrs-groupby'],
+    ['lf_filter:billing:billing-year','billing-year'],
+    ['lf_filter:revenue:rev-year',   'rev-year'],
+    ['lf_filter:rus:insp-period',    'insp-period'],
+    ['lf_filter:rus:insp-month',     'insp-month'],
+    ['lf_filter:rus:insp-status',    'insp-status'],
+  ].forEach(([key, id]) => persistFilter(key, document.getElementById(id)));
+
+  // Show the per-tab "clear filters" button whenever at least one filter key
+  // for that tab has been stored in localStorage.
+  (function showClearFilterBtns() {
+    const tabKeys = {
+      'proj-clear-filters-btn': ['lf_filter:projects:proj-status-filter','lf_filter:projects:proj-type-filter','lf_filter:projects:proj-search','lf_filter:projects:proj-client-filter'],
+      'rus-clear-filters-btn':  ['lf_filter:rus:insp-period','lf_filter:rus:insp-month','lf_filter:rus:insp-status'],
+      'hrs-clear-filters-btn':  ['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby'],
+      'billing-clear-filters-btn': ['lf_filter:billing:billing-year'],
+      'rev-clear-filters-btn':  ['lf_filter:revenue:rev-year'],
+    };
+    for (const [btnId, keys] of Object.entries(tabKeys)) {
+      if (keys.some(k => localStorage.getItem(k) !== null)) {
+        const btn = document.getElementById(btnId);
+        if (btn) btn.style.display = '';
+      }
+    }
+  })();
 
   await Promise.all([loadClients(), loadStaff(), loadConcentrators(), loadJobs(), loadProjectTypes()]);
   // Engineering contracts power the project-modal field-gating (Phase 5
@@ -2949,6 +3026,9 @@ async function loadClients() {
     while (el.options.length > 1) el.remove(1);
     clients.forEach(c => { const o = new Option(c.name, c.id); el.add(o); });
     el.value = cur;
+    // Wire filter persistence after options are populated so the stored
+    // value can be restored against the real option set.
+    persistFilter('lf_filter:projects:proj-client-filter', el);
   });
   // Project modal client select
   const ps = document.getElementById('proj-client');
