@@ -2335,6 +2335,143 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // 5.E.7 — Undo the last destructive operation by reverting the project to
+  // version N-1 (the snapshot taken just before the most recent change).
+  // The undo is itself snapshotted so it can be undone again.
+  // Broadcasts state_reverted SSE so other open clients refresh.
+  app.post('/api/splice/projects/:id/undo-last', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    try {
+      // Load the two most recent snapshots. Index 0 = current, index 1 = N-1.
+      const { rows } = await pool.query(
+        `SELECT id, version_number, snapshot_jsonb, label, created_at
+           FROM splice_project_versions
+          WHERE project_id = $1
+          ORDER BY version_number DESC
+          LIMIT 2`,
+        [projectId]
+      );
+      if (rows.length < 2) {
+        return res.status(409).json({ error: 'No earlier version to revert to' });
+      }
+      const target = rows[1]; // N-1 snapshot
+      const snap   = target.snapshot_jsonb;
+
+      // Restore the project tree from the snapshot.
+      // We take a snapshot of the current state first so the undo itself is
+      // reversible, then apply the target snapshot.
+      // Strategy: delete all live rows and re-insert from snapshot.
+      // Use a transaction for atomicity.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // Snapshot current state before we destroy it.
+        const currentSnap = await _loadProjectForExport(pool, projectId);
+        const hash = _generationHash(currentSnap);
+        const lastNum = rows[0].version_number;
+        await client.query(
+          `INSERT INTO splice_project_versions
+             (project_id, version_number, snapshot_jsonb, generation_hash, label, created_by_staff_id)
+           VALUES ($1, $2, $3::jsonb, $4, $5, $6)`,
+          [projectId, lastNum + 1, JSON.stringify(currentSnap), hash, 'pre-undo snapshot', req.user?.id || null]
+        );
+
+        // Delete all live child rows (cascade handles children of children).
+        await client.query('DELETE FROM splice_splices WHERE project_id = $1', [projectId]);
+        await client.query('DELETE FROM splice_ribbon_groups WHERE project_id = $1', [projectId]);
+        await client.query('DELETE FROM splice_strand_states WHERE location_id IN (SELECT id FROM splice_locations WHERE project_id = $1)', [projectId]);
+        await client.query('DELETE FROM splice_trays WHERE closure_id IN (SELECT id FROM splice_closures WHERE project_id = $1)', [projectId]);
+        await client.query('DELETE FROM splice_closures WHERE project_id = $1', [projectId]);
+        await client.query('DELETE FROM splice_fibers WHERE buffer_tube_id IN (SELECT id FROM splice_buffer_tubes WHERE cable_id IN (SELECT id FROM splice_cables WHERE project_id = $1))', [projectId]);
+        await client.query('DELETE FROM splice_buffer_tubes WHERE cable_id IN (SELECT id FROM splice_cables WHERE project_id = $1)', [projectId]);
+        await client.query('DELETE FROM splice_cables WHERE project_id = $1', [projectId]);
+        await client.query('DELETE FROM splice_locations WHERE project_id = $1', [projectId]);
+
+        // Re-insert from snapshot. Order matters: locations → cables → tubes → fibers → closures → trays → splices.
+        const S = snap;
+        for (const l of (S.locations || [])) {
+          await client.query(
+            `INSERT INTO splice_locations (id, project_id, name, type, latitude, longitude, sequence_index, notes, elevation_ft)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+               ON CONFLICT (id) DO NOTHING`,
+            [l.id, projectId, l.name, l.type, l.latitude ?? null, l.longitude ?? null, l.sequence_index ?? null, l.notes ?? null, l.elevation_ft ?? null]
+          );
+        }
+        for (const c of (S.cables || [])) {
+          await client.query(
+            `INSERT INTO splice_cables (id, project_id, name, fiber_count, from_location_id, to_location_id, path_geojson, manufacturer_part, notes, category, length_ft)
+               VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11)
+               ON CONFLICT (id) DO NOTHING`,
+            [c.id, projectId, c.name, c.fiber_count, c.from_location_id ?? null, c.to_location_id ?? null,
+             c.path_geojson ? JSON.stringify(c.path_geojson) : null, c.manufacturer_part ?? null,
+             c.notes ?? null, c.category ?? 'distribution', c.length_ft ?? null]
+          );
+        }
+        for (const t of (S.buffer_tubes || [])) {
+          await client.query(
+            `INSERT INTO splice_buffer_tubes (id, cable_id, position, color, tube_size)
+               VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`,
+            [t.id, t.cable_id, t.position, t.color, t.tube_size ?? 12]
+          );
+        }
+        for (const f of (S.fibers || [])) {
+          await client.query(
+            `INSERT INTO splice_fibers (id, buffer_tube_id, position, color)
+               VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+            [f.id, f.buffer_tube_id, f.position, f.color]
+          );
+        }
+        for (const cl of (S.closures || [])) {
+          await client.query(
+            `INSERT INTO splice_closures (id, project_id, location_id, model, tray_count, tray_capacity, notes)
+               VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING`,
+            [cl.id, projectId, cl.location_id, cl.model ?? null, cl.tray_count ?? 0, cl.tray_capacity ?? 12, cl.notes ?? null]
+          );
+        }
+        for (const tr of (S.trays || [])) {
+          await client.query(
+            `INSERT INTO splice_trays (id, closure_id, position, label, notes)
+               VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`,
+            [tr.id, tr.closure_id, tr.position, tr.label ?? null, tr.notes ?? null]
+          );
+        }
+        for (const sp of (S.splices || [])) {
+          await client.query(
+            `INSERT INTO splice_splices (id, project_id, closure_id, tray_id, fiber_a_id, fiber_b_id, splice_type, loss_db, notes)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING`,
+            [sp.id, projectId, sp.closure_id ?? null, sp.tray_id ?? null, sp.fiber_a_id, sp.fiber_b_id,
+             sp.splice_type ?? 'fusion', sp.loss_db ?? null, sp.notes ?? null]
+          );
+        }
+
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+
+      // Broadcast state_reverted so other open clients refresh.
+      _broadcast(projectId, 'state_reverted', {
+        reverted_to_version: target.version_number,
+        reverted_to_label:   target.label || null,
+        reverted_at:         new Date().toISOString(),
+      });
+
+      res.json({
+        ok: true,
+        reverted_to_version: target.version_number,
+        reverted_to_label:   target.label || null,
+        reverted_to_created_at: target.created_at,
+      });
+    } catch (e) {
+      console.error('undo-last error', e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Diff JSON: side B may be a numeric version OR the literal string
   // "current" to diff against the live tree.
   app.get('/api/splice/projects/:id/diff/:a/:b', requireAuth(), async (req, res) => {

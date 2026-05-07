@@ -347,6 +347,13 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .canvas-pane.split-mode .map-toolbar{position:absolute;top:10px;z-index:7}
 /* 5.E.4: split-mode view-tabs inherits flex-row from .canvas-pane — no absolute override needed. */
 
+/* 5.E.7 — Undo snackbar: bottom-center, slides up, stacks vertically */
+.undo-snackbar-stack{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:9999;pointer-events:none}
+.undo-snackbar{display:flex;align-items:center;gap:10px;background:#1A2535;color:#fff;border:1px solid rgba(255,255,255,.15);padding:8px 14px 8px 12px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.35);pointer-events:all;animation:snack-in .2s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes snack-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.undo-snackbar .undo-btn{padding:4px 10px;border-radius:4px;background:var(--vetro-route-active,#68BD45);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:background .1s}
+.undo-snackbar .undo-btn:hover{background:#52A835}
+.undo-snackbar .undo-countdown{font-size:10px;color:rgba(255,255,255,.6);min-width:16px;text-align:right}
 /* Phase 4.4 matrix view */
 .matrix-row-selected{background:rgba(var(--primary-rgb,27,95,160),.08)}
 .matrix-comment-badge,.matrix-comment-badge-empty{cursor:pointer;margin-right:4px;font-size:11px;color:var(--primary);vertical-align:middle}
@@ -773,6 +780,9 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 <!-- ─── Toast container ─── -->
 <div id="toast" class="toast" style="display:none"></div>
 
+<!-- 5.E.7 — Undo snackbar stack (bottom-center, stacks vertically for multiple in-flight) -->
+<div class="undo-snackbar-stack" id="undo-snackbar-stack"></div>
+
 <!-- ─── Modal containers (populated by JS) ─── -->
 <div id="modal-host"></div>
 
@@ -881,6 +891,45 @@ const LOC_TYPE_COLORS = {
 
 function _locColor(loc) {
   return LOC_TYPE_COLORS[loc.type] || '#888';
+}
+
+// ─── 5.E.7 — Undo snackbar ───────────────────────────────────────────────────
+// Show a 5-second snackbar with an Undo button after destructive operations.
+// Multiple snackbars stack vertically (bottom-center). Auto-dismiss after 5s.
+function showUndoSnackbar(label) {
+  const stack = document.getElementById('undo-snackbar-stack');
+  if (!stack || !state.currentId) return;
+  const bar = document.createElement('div');
+  bar.className = 'undo-snackbar';
+  const SECS = 5;
+  let remaining = SECS;
+  bar.innerHTML = `<span style="flex:1">${esc(label)}</span>
+    <button class="undo-btn">Undo <span class="undo-countdown">(${remaining}s)</span></button>`;
+  stack.appendChild(bar);
+
+  const countdownEl = bar.querySelector('.undo-countdown');
+  const interval = setInterval(() => {
+    remaining--;
+    if (countdownEl) countdownEl.textContent = `(${remaining}s)`;
+    if (remaining <= 0) dismiss();
+  }, 1000);
+
+  const dismiss = () => {
+    clearInterval(interval);
+    bar.style.opacity = '0';
+    bar.style.transition = 'opacity 0.2s';
+    setTimeout(() => bar.remove(), 220);
+  };
+
+  bar.querySelector('.undo-btn').addEventListener('click', async () => {
+    clearInterval(interval);
+    bar.remove();
+    try {
+      await api(`/api/splice/projects/${state.currentId}/undo-last`, 'POST');
+      await hydrateProject();
+      toast('Reverted to previous state', 'success');
+    } catch (e) { toast('Undo failed: ' + e.message, 'error'); }
+  });
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -2889,6 +2938,7 @@ async function bulkDeleteClosures(locationId) {
     await api('/api/splice/closures/bulk-delete', 'POST', { ids });
     await hydrateProject();
     selectThing('location', locationId);
+    showUndoSnackbar(`Deleted ${n} closure${n===1?'':'s'} — Undo`);
   } catch (e) {
     toast('Bulk delete failed: ' + e.message, 'error');
   }
@@ -4422,6 +4472,7 @@ async function deleteClosure(closureId) {
     await api('/api/splice/closures/' + closureId, 'DELETE');
     state.selection = null;
     await hydrateProject();
+    showUndoSnackbar(`Deleted closure${_cl?.model ? ' ' + _cl.model : ''} — Undo`);
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -4585,6 +4636,7 @@ async function deleteCable(cableId) {
     await api('/api/splice/cables/' + cableId, 'DELETE');
     state.selection = null;
     await hydrateProject();
+    showUndoSnackbar(`Deleted cable "${cable.name}" — Undo`);
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -4701,6 +4753,7 @@ async function deleteLocation(locationId) {
     await api('/api/splice/locations/' + locationId, 'DELETE');
     state.selection = null;
     await hydrateProject();
+    showUndoSnackbar(`Deleted location "${loc.name}" — Undo`);
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -4710,6 +4763,7 @@ async function deleteSplice(spliceId) {
   try {
     await api('/api/splice/splices/' + spliceId, 'DELETE');
     await hydrateProject();
+    showUndoSnackbar('Deleted splice — Undo');
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -5921,6 +5975,7 @@ async function matrixBulkDelete() {
     }
     _matrixSelected.clear();
     await hydrateProject();
+    showUndoSnackbar(`Deleted ${ids.length} splice${ids.length>1?'s':''} — Undo`);
   } catch (e) { toast('Bulk delete failed: ' + e.message, 'error'); }
 }
 
