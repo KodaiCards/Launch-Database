@@ -830,5 +830,40 @@ individual cables via the cable inspector Category dropdown, or via
 
 ---
 
-*Last updated 2026-05-07 — Phase 5.D functional VETRO UX overhaul complete.
-Phase 5.C shipped at 5957315; Phase 5.D opened at 8d4fdbd (research).*
+## Phase 5.E — Critical bug fixes + UX polish + multi-fiber range selection
+
+**Audit reference:** `SPLICE_MATRIX_SUGGESTIONS.md` (landed on `main` at commit `8c1857c`) — a full UI audit by Claude Sonnet 4.7 on the production deployment. Read sections 3.1–3.5 and 4.7–4.8 for the detailed rationale behind each fix.
+
+**Owner additions:** Two fiber-picker ergonomics features requested directly by Carter:
+- Excel-style shift-click range selection in the drag-drop picker
+- Manual range text input ("1-72, 97-144" syntax)
+
+### Commits
+
+| # | SHA | Task |
+|---|-----|------|
+| 1 | `4c60c58` | §3.1 — Map view empty on first render: call `map.resize()` + `mapFitData()` in the `isMap` branch of `switchView` |
+| 2 | `359a3ce` | §3.2 — Replace all `window.confirm()` calls (17 sites) with `confirmDialog()` Promise helper — preserves lock heartbeat |
+| 3 | `97b98cd` | §3.3 — Dark-mode header: add `--header-bg:#0B1A2E` token, apply it to `.header` via `var(--header-bg, var(--vetro-primary))` |
+| 4 | `1ab1d36` | §3.4 — Move view-tabs into canvas-pane chrome as first flex row (removed absolute positioning, eliminated toolbar collision) |
+| 5 | `0a04eb1` | §3.5 — Add Location enters placement mode: type-selector chips, crosshair cursor, Esc cancels, click-to-place |
+| 6 | `da8e928` | §4.7 — Attribute-table toggle bar shows live entity counts ("9 locations · 4 cables · 0 closures · 0 splices") |
+| 7 | `c5c885e` | §4.8 — Undo snackbar: 5s bottom-center bar after every delete; `POST /api/splice/projects/:id/undo-last` reverts to N-1 version snapshot |
+| 8 | `a6e145e` | Owner ask: Excel-style shift-click range fill + `parseRangeSpec` helper + range text input above each fiber picker column |
+| 9 | *(this commit)* | Plan doc — Phase 5.E documentation |
+
+### Key design decisions
+
+- **`confirmDialog` styling:** reuses existing `modal-overlay` + `--vetro-*` tokens. Danger button uses `.btn-danger` (red). Resolves via Promise so callers `await` it — all enclosing functions were already async.
+- **View-tabs position:** chose option (b) — first flex row inside `.canvas-pane` (not the title bar). Canvas-pane was changed from `position:relative` to `display:flex;flex-direction:column`. The inner `.canvas-pane-body` div holds all the canvas/map content and takes `flex:1`.
+- **Snackbar:** bottom-center fixed, slides up with `cubic-bezier(0.34,1.56,0.64,1)`. Stacks vertically if multiple in-flight. Countdown ticks every 1s. Does NOT use `toast()` to avoid collision with existing toast element.
+- **Undo-last endpoint:** full transaction — deletes live rows, re-inserts from snapshot JSONB. Pre-snapshots current state so undo is itself undoable. Broadcasts `state_reverted` SSE.
+- **Range selection anchor:** tracked in `state._ddropAnchor[ddKey+'|'+side]`. Plain click sets anchor + clears selection. Shift-click fills range from anchor. Ctrl/⌘-click toggles individual fiber (replaces old shift-click additive behavior).
+
+### Phase 5.F (next): Diagram view topology graph
+Connect cable bars to location nodes on the Konva canvas. Source: `SPLICE_MATRIX_SUGGESTIONS.md §5`.
+
+---
+
+*Last updated 2026-05-07 — Phase 5.E bug fixes + UX polish + fiber range selection complete.*
+*Phase 5.D shipped at b35d4a6; Phase 5.E opened at 4c60c58.*
