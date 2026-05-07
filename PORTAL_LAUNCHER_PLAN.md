@@ -281,5 +281,50 @@ involved — launcher is purely a presentation layer.
 
 ---
 
-*Last updated 2026-05-07 — initial draft. Phase 1 build dispatched
-in the same session.*
+---
+
+## Phase 1 + Phase 2 commit log (2026-05-07)
+
+| # | SHA | Description |
+|---|-----|-------------|
+| 1 | `2a64cb7` | PORTAL_DEFS + GET /api/me/portals endpoint |
+| 2 | `b7b2b44` | launcher.html with role-aware tiles + auto-redirect |
+| 3 | `3feeef2` | Rename index.html → admin.html; / serves launcher; drop PORTAL_MODE SPA lock |
+| 4 | `816d367` | '← Launcher' back-arrow component on every portal HTML |
+| 5 | `d87600f` | Client launcher at /client/ for customer-role users |
+| 6 | `3027389` | SPLICE_PUBLIC_URL default to portal.launchfiber.com |
+| 7 | `3c80a7c` | Adaptive bento grid + client launcher improvements |
+
+## URL rollout sequence (Railway)
+
+1. **Add custom domain** `portal.launchfiber.com` to the main Railway
+   service (Settings → Domains → Add). Railway will prompt for a CNAME
+   record; add it in your DNS provider. Wait for TLS provisioning (~2 min).
+
+2. **Drop `PORTAL_MODE`** from the main service's environment variables.
+   Without it, the launcher serves at `/` and all portal paths are active.
+
+3. **Set `SPLICE_PUBLIC_URL=https://portal.launchfiber.com`** on the
+   Railway service (if not already defaulting). New PDF QR codes will
+   point at the new domain immediately.
+
+4. **Set `JWT_SECRET`** to the same value across all remaining services
+   so existing sessions continue to work during the transition window.
+
+5. **Verify** all portals load:
+   - `portal.launchfiber.com/` — launcher
+   - `portal.launchfiber.com/admin.html` — admin SPA
+   - `portal.launchfiber.com/splice.html` — splice matrix
+   - `portal.launchfiber.com/permitting.html` — permitting
+   - `portal.launchfiber.com/design.html` — design
+   - `portal.launchfiber.com/timeclock.html` — time clock
+   - `portal.launchfiber.com/client/` — client launcher
+   - `portal.launchfiber.com/customer.html` — customer portal
+
+6. **Update bookmarks** team-wide. Old service URLs continue to work
+   during the transition window (30 days recommended).
+
+7. **Tear down** the per-portal Railway services after 30 days once
+   `portal.launchfiber.com` is the bookmark of record for everyone.
+
+*Last updated 2026-05-07 — Phase 1 + Phase 2 built and pushed.*
