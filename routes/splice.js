@@ -81,12 +81,16 @@ const { validateProject } = require('./_splice_validation');
 
 const crypto = require('crypto');
 
-// Public-facing base URL for QR codes. Set SPLICE_PUBLIC_URL on the
-// splice Railway service ("https://launchfiber-splicematrix.xyz"). If
-// unset, QR codes fall back to a deep link without a domain — the QR
-// still scans, but to a relative URL that only works on the splice
-// portal itself.
-const SPLICE_PUBLIC_URL = (process.env.SPLICE_PUBLIC_URL || '').replace(/\/+$/, '');
+// Public-facing base URL for QR codes. Defaults to the unified portal
+// domain (portal.launchfiber.com). Override via SPLICE_PUBLIC_URL env var
+// on the Railway service if needed (e.g. during a transition window when
+// the old splicematrix domain is still active and old printed QR codes
+// need to keep resolving).
+//
+// After deploying to portal.launchfiber.com, set:
+//   SPLICE_PUBLIC_URL=https://portal.launchfiber.com
+// on the Railway service. Until then, the default handles new QR codes.
+const SPLICE_PUBLIC_URL = (process.env.SPLICE_PUBLIC_URL || 'https://portal.launchfiber.com').replace(/\/+$/, '');
 
 // Lazy QR-code require — falls back to omitting QR codes if the
 // package wasn't installed (e.g. on a misconfigured Railway build).
