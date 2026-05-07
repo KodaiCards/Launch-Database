@@ -5847,10 +5847,24 @@ function renderLayerTree() {
     }
   }
 
-  // Apply saved visibility from server state
-  for (const s of styles) {
-    if (s.visible === false && s.layer_key) {
-      toggleLayerVisibility(s.layer_key, false);
+  // Apply saved styles + visibility from server state to MapLibre layers
+  if (state.map) {
+    for (const s of styles) {
+      if (s.layer_key) {
+        // Apply style properties (color, opacity, lineWidth, etc.)
+        const { layer_key, visible, ...styleProps } = s;
+        if (Object.keys(styleProps).length > 0) applyLayerStyle(s.layer_key, styleProps);
+        // Apply visibility
+        if (visible === false) {
+          const map = state.map;
+          if (s.layer_key.startsWith('cable.')) {
+            const cat = s.layer_key.split('.')[1];
+            [`cables-${cat}-halo`, `cables-${cat}`].forEach(id => {
+              if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+            });
+          }
+        }
+      }
     }
   }
 
