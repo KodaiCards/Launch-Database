@@ -3380,7 +3380,71 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       // tokens are reused) but mints fresh ones for any new closures
       // since the last export.
       const tokensByClosureId = await _ensureFieldTokens(pool, data, req.user?.staff_id);
-      const html = await _renderSpliceHtml(data, pageSize, { tokensByClosureId });
+
+      // Phase 5.G — rich cover page metadata.
+      // 1. Version count: how many splice_project_versions rows exist for this project.
+      const versionCountRes = await pool.query(
+        `SELECT COUNT(*)::int AS n FROM splice_project_versions WHERE project_id = $1`,
+        [req.params.id]
+      );
+      const versionCount = versionCountRes.rows[0]?.n ?? 0;
+
+      // 2. Designer name — join through staff table.
+      let designerName = data.project.designer_name || null;
+      if (!designerName && data.project.designer_id) {
+        const dnRes = await pool.query(
+          `SELECT name FROM staff WHERE id = $1`, [data.project.designer_id]
+        );
+        designerName = dnRes.rows[0]?.name || null;
+      }
+
+      // 3. Project-level public token for the cover QR. Mint one if absent.
+      //    No expires_at — the splicer may carry this print for months.
+      let projectPublicToken = null;
+      const ptRes = await pool.query(
+        `SELECT token FROM splice_project_public_tokens
+          WHERE project_id = $1
+            AND (expires_at IS NULL OR expires_at > NOW())
+          ORDER BY created_at DESC LIMIT 1`,
+        [req.params.id]
+      );
+      if (ptRes.rows.length) {
+        projectPublicToken = ptRes.rows[0].token;
+      } else {
+        const newToken = _mintFieldToken();
+        await pool.query(
+          `INSERT INTO splice_project_public_tokens
+             (token, project_id, created_by_staff_id, label)
+           VALUES ($1, $2, $3, $4)`,
+          [newToken, req.params.id, req.user?.staff_id || null, 'Auto-minted on PDF export']
+        );
+        projectPublicToken = newToken;
+      }
+
+      // 4. Mapbox Static map image as a data-URL so Puppeteer can embed it
+      //    without a network call at render time. Skip gracefully when the
+      //    token is absent or when no closures have GPS coordinates.
+      let mapImageDataUrl = null;
+      const mapboxToken = process.env.MAPBOX_TOKEN;
+      if (mapboxToken) {
+        const geoLocs = data.locations.filter(l => l.latitude != null && l.longitude != null);
+        if (geoLocs.length) {
+          try {
+            mapImageDataUrl = await _fetchMapboxStaticDataUrl(geoLocs, mapboxToken);
+          } catch (mapErr) {
+            console.warn('[splice/export-pdf] Mapbox static map fetch failed (non-fatal):', mapErr.message);
+          }
+        }
+      }
+
+      const html = await _renderSpliceHtml(data, pageSize, {
+        tokensByClosureId,
+        generatedBy: req.user?.name || req.user?.email || req.user?.staff_id || null,
+        versionCount,
+        designerName,
+        projectPublicToken,
+        mapImageDataUrl,
+      });
       const puppeteer = _puppet();
       const browser = await puppeteer.launch({
         headless: 'new',
@@ -4268,6 +4332,59 @@ function _safeFilename(s) {
     .slice(0, 60) || 'splice';
 }
 
+// Phase 5.G — Mapbox Static Images API: fetch a 600×300 raster map
+// showing all geo-tagged locations as pin markers, returned as a
+// data: URL so Puppeteer can embed it without a separate network call.
+// Adds 10% padding around the natural bounding box so edge markers
+// aren't clipped. Falls back gracefully: returns null on any error.
+async function _fetchMapboxStaticDataUrl(geoLocs, mapboxToken) {
+  const https = require('https');
+  // Build marker overlay — use up to 25 markers (Mapbox limit with
+  // custom marker strings). Extra locations are omitted rather than
+  // crashing the export.
+  const markers = geoLocs.slice(0, 25).map((l, i) =>
+    `pin-s-${(i + 1) % 100}+003366(${l.longitude},${l.latitude})`
+  ).join(',');
+
+  // Compute bbox with 10% padding so edge markers aren't on the border.
+  const lons = geoLocs.map(l => parseFloat(l.longitude));
+  const lats = geoLocs.map(l => parseFloat(l.latitude));
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const padLon = Math.max((maxLon - minLon) * 0.15, 0.002);
+  const padLat = Math.max((maxLat - minLat) * 0.15, 0.002);
+  const bbox = [
+    (minLon - padLon).toFixed(6),
+    (minLat - padLat).toFixed(6),
+    (maxLon + padLon).toFixed(6),
+    (maxLat + padLat).toFixed(6),
+  ];
+
+  // Use 'auto' fit when multiple points; single-point uses a fixed zoom.
+  const position = geoLocs.length === 1
+    ? `${geoLocs[0].longitude},${geoLocs[0].latitude},14`
+    : `[${bbox.join(',')}]`;
+
+  const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${markers}/${position}/600x300@2x?access_token=${mapboxToken}`;
+
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        return reject(new Error(`Mapbox static API returned HTTP ${res.statusCode}`));
+      }
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const buf = Buffer.concat(chunks);
+        const mime = res.headers['content-type'] || 'image/png';
+        resolve(`data:${mime};base64,${buf.toString('base64')}`);
+      });
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
 // Renders the splicer field document. Async because per-closure QR codes
 // are awaited before composition. Cover page carries project metadata +
 // revision block; per-closure pages render tray-by-tray tables with
@@ -4276,6 +4393,13 @@ function _safeFilename(s) {
 // upload field markup; full public-token flow lands in Phase 2B #7).
 async function _renderSpliceHtml(data, pageSize, opts = {}) {
   const tokensByClosureId = opts.tokensByClosureId || new Map();
+  // Phase 5.G: rich cover page metadata
+  const generatedBy         = opts.generatedBy        || null;
+  const versionCount        = opts.versionCount        ?? 0;
+  const designerName        = opts.designerName        || data.project.designer_name || null;
+  const projectPublicToken  = opts.projectPublicToken  || null;
+  const mapImageDataUrl     = opts.mapImageDataUrl     || null;
+
   const { project, locations, cables, buffer_tubes, fibers, closures, trays, splices, ribbon_groups } = data;
 
   const fiberById = new Map(fibers.map(f => [f.id, f]));
@@ -4300,26 +4424,58 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   // that don't track circuits.
   const anyCircuit = fibers.some(f => f.circuit_name || f.customer);
 
-  // Pre-render QR codes for every closure in parallel. When a public
-  // field token exists for the closure (Phase 2B #7), the QR encodes
-  // the no-login splicer URL `/splice/field/:token`. Otherwise it
-  // falls back to a deep-link into the editor — useful while the
-  // engineer is still iterating before they print.
+  // Pre-render QR codes for every closure in parallel.
+  // Phase 5.G commit 5: per-closure QR deep-links to the public read-only
+  // view scoped to that specific closure (`/splice/view/:token?closure=<id>`).
+  // Splicer scans the QR on their active closure page → opens the live record
+  // filtered to that closure. Falls back to the field-markup upload URL when
+  // no project-level public token is available (Phase 2B #7 flow).
   const qrPromises = closures.map(cl => {
-    const tok = tokensByClosureId.get(cl.id);
-    const url = tok
-      ? `${SPLICE_PUBLIC_URL || ''}/splice/field/${tok}`
-      : (SPLICE_PUBLIC_URL
-          ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
-          : `/?project=${project.id}&closure=${cl.id}`);
+    const fieldTok = tokensByClosureId.get(cl.id);
+    let url;
+    if (projectPublicToken) {
+      // Deep-link to public read-only view, scoped to this closure.
+      url = `${SPLICE_PUBLIC_URL || ''}/splice/view/${projectPublicToken}?closure=${cl.id}`;
+    } else if (fieldTok) {
+      // Fall back to field-markup upload URL (pre-5.G behaviour).
+      url = `${SPLICE_PUBLIC_URL || ''}/splice/field/${fieldTok}`;
+    } else {
+      url = SPLICE_PUBLIC_URL
+        ? `${SPLICE_PUBLIC_URL}/?project=${project.id}&closure=${cl.id}`
+        : `/?project=${project.id}&closure=${cl.id}`;
+    }
     return _renderQrSvg(url, 84).then(svg => [cl.id, svg]);
   });
   const qrByClosureId = new Map(await Promise.all(qrPromises));
+
+  // Phase 5.G: cover page QR — points to the project-level public view
+  // (read-only stakeholder URL) so a non-authed splicer can open the
+  // live record without a login. Uses a 200px PNG data URL via
+  // qrcode.toDataURL (raster, more compatible with Puppeteer than inline SVG).
+  let coverQrHtml = '';
+  if (projectPublicToken) {
+    const publicViewUrl = `${SPLICE_PUBLIC_URL || ''}/splice/view/${projectPublicToken}`;
+    try {
+      const qr = _qr();
+      if (qr) {
+        const qrDataUrl = await qr.toDataURL(publicViewUrl, { width: 200, margin: 1 });
+        coverQrHtml = `
+          <div class="cover-qr-block">
+            <img src="${qrDataUrl}" alt="QR code — public live record" class="cover-qr-img">
+            <div class="cover-qr-cap">Scan to view live record</div>
+          </div>`;
+      }
+    } catch (qrErr) {
+      console.warn('[splice/pdf] cover QR generation failed (non-fatal):', qrErr.message);
+    }
+  }
 
   // Generation hash — splicers can compare prints in the field at a
   // glance to confirm they're working from the same revision.
   const genHash = _generationHash(data);
   const todayIso = new Date().toISOString().slice(0, 10);
+  const generatedUtc = new Date().toISOString().replace('T', ' ').replace(/\..+/, ' UTC');
+  const revLabel = `Rev ${versionCount}`;
 
   function describeFiber(fiberId) {
     const f = fiberById.get(fiberId);
@@ -4381,7 +4537,8 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   const totalSplices  = splices.length;
   const totalRibbons  = ribbon_groups.length;
   const totalClosures = closures.length;
-  const designerName = project.designer_name || '—';
+  // designerName already declared above from opts; keep it as fallback.
+  const effectiveDesignerName = designerName || project.designer_name || '—';
 
   const coverCableRows = cables.map(c => {
     const fromName = c.from_location_id ? (locationById.get(c.from_location_id)?.name || '?') : '—';
@@ -4708,6 +4865,12 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   .tray-header{font-size:13px;font-weight:700;margin-bottom:0;padding:5px 10px;background:#1B5FA0;color:#fff;border-radius:3px 3px 0 0;display:flex;justify-content:space-between;align-items:center}
   .tray-header .tray-meta{font-size:10px;font-weight:500;opacity:0.85;text-transform:uppercase;letter-spacing:0.4px}
   .tray-block .splice-table{border-radius:0 0 3px 3px}
+  /* Phase 5.G §6.2 — alternating row background + 8pt body font on per-closure splice table */
+  .splice-table tbody tr:nth-child(even) td{background:#F4F5F7}
+  .splice-table tbody tr:nth-child(odd)  td{background:#fff}
+  /* Preserve special-case overrides */
+  .splice-table tbody .ribbon-row td{background:#FAFBFD}
+  .splice-table tbody tr td.markup-loss,.splice-table tbody tr td.markup-notes{background:repeating-linear-gradient(135deg,#fff,#fff 4px,#FAFBFD 4px,#FAFBFD 8px)}
 
   /* Sign-off block at the bottom of every closure page. */
   .signoff{margin-top:14px;page-break-inside:avoid;border-top:1px solid #CED4DA;padding-top:10px}
@@ -4719,22 +4882,62 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   .footer{position:fixed;bottom:0.18in;left:0.4in;right:0.4in;font-size:8.5px;color:#6C757D;border-top:1px solid #DEE2E6;padding-top:4px;display:flex;justify-content:space-between;align-items:center}
   .footer .center{text-align:center}
   .footer .gen-hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  /* Phase 5.G — Cover page metadata block + QR + map */
+  .cover-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:14px}
+  .cover-title-area{flex:1;min-width:0}
+  .cover-right{display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0}
+  .cover-meta-table{border-collapse:collapse;border:1px solid #1B5FA0;border-radius:4px;overflow:hidden;font-size:10px;min-width:220px}
+  .cover-meta-table thead tr{background:#0F3D66;color:#fff}
+  .cover-meta-table thead th{padding:5px 10px;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;border:none;text-align:left}
+  .cover-meta-table tbody td{padding:4px 10px;border-bottom:1px solid #DEE2E6;vertical-align:top}
+  .cover-meta-table tbody td:first-child{font-weight:600;color:#6C757D;font-size:9px;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;width:40%}
+  .cover-meta-table tbody td:last-child{color:#0F3D66;font-weight:600}
+  .cover-meta-table tbody tr:last-child td{border-bottom:none}
+  .cover-qr-block{text-align:center}
+  .cover-qr-img{display:block;width:100px;height:100px;border:1px solid #DEE2E6;border-radius:4px}
+  .cover-qr-cap{font-size:8px;color:#6C757D;margin-top:3px;text-transform:uppercase;letter-spacing:0.4px}
+  .cover-map-block{margin:12px 0 6px}
+  .cover-map-block img{display:block;width:100%;max-width:600px;height:auto;border:1px solid #DEE2E6;border-radius:4px}
+  .cover-map-cap{font-size:9px;color:#6C757D;margin-top:4px;font-style:italic}
+  .staleness-warning{margin-top:10px;padding:8px 12px;background:#FFFAEC;border:1px solid #FFC107;border-radius:4px;font-size:8.5px;color:#856404;font-style:italic;line-height:1.5}
 </style></head><body>
 
 <section class="page cover">
-  <h1>Splice Plan</h1>
-  <div class="cover-meta">${_esc(project.name)}</div>
+  <div class="cover-top">
+    <div class="cover-title-area">
+      <h1>Splice Plan</h1>
+      <div class="cover-meta">${_esc(project.name)}</div>
+    </div>
+    <div class="cover-right">
+      <table class="cover-meta-table">
+        <thead><tr><th colspan="2">Document Info</th></tr></thead>
+        <tbody>
+          <tr><td>Revision</td><td>${_esc(revLabel)}</td></tr>
+          <tr><td>Project</td><td>${_esc(project.name)}</td></tr>
+          ${effectiveDesignerName && effectiveDesignerName !== '—' ? `<tr><td>Designer</td><td>${_esc(effectiveDesignerName)}</td></tr>` : ''}
+          ${generatedBy ? `<tr><td>Exported by</td><td>${_esc(generatedBy)}</td></tr>` : ''}
+          <tr><td>Generated</td><td>${_esc(generatedUtc)}</td></tr>
+          <tr><td>Gen hash</td><td style="font-family:monospace;font-size:9px">${_esc(genHash)}</td></tr>
+          <tr><td>Status</td><td>${_esc(project.status || 'active')}</td></tr>
+        </tbody>
+      </table>
+      ${coverQrHtml}
+    </div>
+  </div>
 
   <div class="rev-block">
-    <div class="cell"><div class="lbl">Project</div><div class="val">${_esc(project.name)}</div></div>
-    <div class="cell"><div class="lbl">Designer</div><div class="val">${_esc(designerName)}</div></div>
-    <div class="cell"><div class="lbl">Generated</div><div class="val">${todayIso}</div></div>
-    <div class="cell"><div class="lbl">Revision hash</div><div class="val mono">${genHash}</div></div>
-    <div class="cell"><div class="lbl">Status</div><div class="val">${_esc(project.status || 'active')}</div></div>
-    <div class="cell"><div class="lbl">Closures</div><div class="val">${totalClosures}</div></div>
     <div class="cell"><div class="lbl">Cables</div><div class="val">${totalCables}</div></div>
+    <div class="cell"><div class="lbl">Fibers</div><div class="val">${totalFibers}</div></div>
+    <div class="cell"><div class="lbl">Closures</div><div class="val">${totalClosures}</div></div>
     <div class="cell"><div class="lbl">Total splices</div><div class="val">${totalSplices}</div></div>
   </div>
+
+  ${mapImageDataUrl ? `
+  <div class="cover-map-block">
+    <img src="${mapImageDataUrl}" alt="Project map">
+    <div class="cover-map-cap">Project map — ${totalClosures} closure${totalClosures !== 1 ? 's' : ''}, ${totalCables} cable${totalCables !== 1 ? 's' : ''}</div>
+  </div>` : ''}
 
   <div class="summary">
     <div class="stat"><div class="num">${totalCables}</div><div class="lbl">Cables</div></div>
@@ -4757,6 +4960,14 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
   </table>
 
   ${project.notes ? `<h2>Project notes</h2><div style="white-space:pre-wrap;font-size:11px;color:#444">${_esc(project.notes)}</div>` : ''}
+
+  <div class="staleness-warning">
+    This document was generated from ${_esc(revLabel)} on ${_esc(generatedUtc)}.
+    Verify it is current before splicing — scan the QR code or visit
+    ${projectPublicToken
+      ? `${_esc(SPLICE_PUBLIC_URL || 'the portal')}/splice/view/${_esc(projectPublicToken)}`
+      : _esc(SPLICE_PUBLIC_URL || 'the portal')}.
+  </div>
 </section>
 
 ${closurePages}
@@ -4764,7 +4975,7 @@ ${closurePages}
 <div class="footer">
   <span>${_esc(project.name)}</span>
   <span class="center">Launch Fiber Services · Splice Matrix</span>
-  <span>Rev <span class="gen-hash">${genHash}</span> · ${todayIso}</span>
+  <span>${_esc(revLabel)} · <span class="gen-hash">${genHash}</span> · ${todayIso}</span>
 </div>
 </body></html>`;
 }
