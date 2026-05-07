@@ -37,7 +37,9 @@
     const root = document.getElementById('contracts-list-body');
     if (!root) return;
     const ecCache = window.engineeringContractsCache || [];
-    // Populate client + engineering-contract dropdowns in the Add form
+    // Populate client + engineering-contract dropdowns in the Add form.
+    // If window.clients isn't ready yet we skip for now; the clients-loaded
+    // event listener below will call renderContractsList() again once it is.
     const clientSel = document.getElementById('new-contract-client');
     if (clientSel && (window.clients || []).length) {
       while (clientSel.options.length > 1) clientSel.remove(1);
@@ -159,10 +161,16 @@
   }
 
   // Open the Add Contract form. ALWAYS re-fetches engineering contracts
-  // first so the dropdown can't be stale.
+  // first so the dropdown can't be stale. Also ensures the client cache
+  // is populated — if it hasn't loaded yet, call loadClients() now so
+  // the Client dropdown isn't empty when the form opens.
   async function openAddContractForm() {
     if (typeof loadEngineeringContracts === 'function') {
       await loadEngineeringContracts();
+    }
+    // Ensure clients are available before rendering the form dropdown.
+    if (!(window.clients || []).length && typeof loadClients === 'function') {
+      try { await loadClients(); } catch (e) { /* non-fatal */ }
     }
     renderContractsList();
     document.getElementById('contracts-add-form').style.display = 'block';
@@ -265,6 +273,20 @@
     } catch (e) { alert('Failed: ' + e.message); }
   }
 
+  // Re-populate the Client dropdown in the Add form whenever the client
+  // cache finishes loading (race condition: Settings panel may render
+  // before loadClients() resolves, leaving the dropdown empty).
+  document.addEventListener('clients-loaded', function () {
+    const clientSel = document.getElementById('new-contract-client');
+    if (!clientSel || !(window.clients || []).length) return;
+    // Only re-populate if the form is currently open and the dropdown is still empty.
+    if (clientSel.options.length <= 1) {
+      while (clientSel.options.length > 1) clientSel.remove(1);
+      [...window.clients].sort((a,b) => a.name.localeCompare(b.name))
+        .forEach(c => clientSel.add(new Option(c.name, c.id)));
+    }
+  });
+
   window.loadContractList = loadContractList;
   window.renderContractsList = renderContractsList;
   window.deleteContract = deleteContract;
@@ -273,4 +295,21 @@
   window.saveNewContract = saveNewContract;
   window.editContract = editContract;
   window.saveContractEdit = saveContractEdit;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _conStaleTimer = null;
+
+  function _conSseRefresh() {
+    clearTimeout(_conStaleTimer);
+    _conStaleTimer = setTimeout(async () => {
+      await loadContractList();
+      renderContractsList();
+    }, 500);
+  }
+
+  ['contract_added', 'contract_updated', 'contract_deleted',
+   'engineering_contract_added', 'engineering_contract_updated', 'engineering_contract_deleted',
+   'client_added', 'client_updated', 'client_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _conSseRefresh)
+  );
 })();

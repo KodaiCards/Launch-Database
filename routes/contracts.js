@@ -6,6 +6,7 @@
 // /api/undo/:token replay path.
 
 const { collectProjectTree, saveUndoBucket } = require('./_helpers');
+const { broadcast } = require('./_sse');
 
 module.exports = function installContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
@@ -45,6 +46,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
            VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [client_id, contract_number, name, engineering_contract_id || null, friendly_label || null]
       );
+      broadcast('admin', 'contract_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -71,6 +73,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
         params
       );
       if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
+      broadcast('admin', 'contract_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -151,6 +154,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
             permit_documents: cascadePermitDocuments,
           } : null,
         });
+        broadcast('admin', 'contract_deleted', { id: req.params.id, cascade, deleted_projects: cascadeProjects.length });
         res.json({
           ok: true,
           cascade,

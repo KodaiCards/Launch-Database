@@ -583,14 +583,6 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/keyboard.js" defer></script>
 </head>
 <body>
-<a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
-  <i class="fa-solid fa-arrow-left"></i> Launcher
-</a>
-<script>
-fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
-  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
-}).catch(()=>{});
-</script>
 
 <!-- Undo bar — fixed to bottom of viewport. showUndoBar() makes it visible
      with a 15s countdown; user can click Undo to replay or X to dismiss. -->
@@ -603,6 +595,9 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
 
 <!-- HEADER -->
 <header class="header">
+  <a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
+    <i class="fa-solid fa-arrow-left"></i> Launcher
+  </a>
   <img src="data:image/png;base64,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" alt="Launch Fiber Services" class="header-logo">
   <div class="header-divider"></div>
   <span class="header-title">Project Management System</span>
@@ -813,6 +808,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
         </select>
         <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(true)" title="Expand all"><i class="fa-solid fa-angles-down"></i></button>
         <button class="btn btn-secondary btn-sm" onclick="ptreeExpandAll(false)" title="Collapse all"><i class="fa-solid fa-angles-up"></i></button>
+        <button class="btn btn-secondary btn-sm" id="proj-clear-filters-btn" title="Clear saved project filters" onclick="(function(){['lf_filter:projects:proj-status-filter','lf_filter:projects:proj-type-filter','lf_filter:projects:proj-search','lf_filter:projects:proj-client-filter'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
       </div>
       <!-- Bulk-action bar — appears only when at least one project row is
            selected. The bar exposes high-leverage multi-row actions that
@@ -829,7 +825,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)"></th><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)"></th><th>Project</th><th>Client / Const. Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="projects-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -949,6 +945,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
             <option value="on_hold">On Hold</option>
             <option value="all">All statuses</option>
           </select>
+          <button class="btn btn-secondary btn-sm" id="rus-clear-filters-btn" title="Clear saved RUS filters" onclick="(function(){['lf_filter:rus:insp-period','lf_filter:rus:insp-month','lf_filter:rus:insp-status'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-primary btn-sm" onclick="openProjectModal('inspection')"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
       </div>
@@ -1064,6 +1061,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
           </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openAuditDrawer()" title="View time-entry audit log"><i class="fa-solid fa-history"></i> Audit Log</button>
+          <button class="btn btn-secondary btn-sm" id="hrs-clear-filters-btn" title="Clear saved Hours filters" onclick="(function(){['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
           <button class="btn btn-primary btn-sm" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
@@ -1223,6 +1221,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
         <div style="display:flex;gap:8px">
           <select class="filter" id="billing-year" onchange="loadBilling()"></select>
           <button class="btn btn-secondary btn-sm" onclick="loadBilling()"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn btn-secondary btn-sm" id="billing-clear-filters-btn" title="Clear saved billing filters" onclick="(function(){['lf_filter:billing:billing-year'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
         </div>
       </div>
       <!-- Unbilled section -->
@@ -1298,6 +1297,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
         <div style="display:flex;gap:8px;align-items:center">
           <select class="filter" id="rev-year" onchange="loadRevenue()"></select>
           <button class="btn btn-secondary btn-sm" onclick="selectRevMonth(null)" id="rev-ytd-btn"><i class="fa-solid fa-calendar"></i> YTD</button>
+          <button class="btn btn-secondary btn-sm" id="rev-clear-filters-btn" title="Clear saved revenue filters" onclick="(function(){['lf_filter:revenue:rev-year'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="showBillingReport()"><i class="fa-solid fa-file-invoice-dollar"></i> Billing Report</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
         </div>
@@ -1432,12 +1432,12 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
           <div class="form-group span2">
             <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
             <div style="display:flex;gap:6px">
-              <select id="proj-parent" onchange="loadBudgetCodesForProject(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
+              <select id="proj-parent" onchange="parentChanged(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('parent')" title="Add new parent project"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <input type="text" id="qa-parent-name" placeholder="Parent project name (e.g. Reconnect 3 — Contract 3)" style="margin-bottom:6px">
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/contract will be inherited.</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/construction contract will be inherited.</div>
               <div style="display:flex;gap:6px;justify-content:flex-end">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('parent', false)">Cancel</button>
                 <button type="button" class="btn btn-primary btn-sm" onclick="quickAddParent()"><i class="fa-solid fa-check"></i> Add</button>
@@ -1471,13 +1471,26 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
             </select>
           </div>
         </div>
-        <!-- ROW 2: Contract | Service Area -->
+        <!-- ROW 1b: Engineering Contract (shown for RUS / GF(R) only) -->
+        <div class="form-row" id="proj-ec-row" style="display:none">
+          <div class="form-group span2" id="proj-ec-wrap">
+            <label id="proj-ec-label">Engineering Contract *</label>
+            <!-- Top-level: active picker dropdown -->
+            <select id="proj-ec" onchange="ecChanged()" style="width:100%">
+              <option value="">— Select engineering contract —</option>
+            </select>
+            <!-- Child project: read-only inherited display -->
+            <div id="proj-ec-inherited" style="display:none;font-size:13px;color:var(--text-muted);padding:6px 8px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:4px"></div>
+            <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Filters the Construction Contract dropdown below to only show contracts under this umbrella.</span>
+          </div>
+        </div>
+        <!-- ROW 2: Construction Contract | Service Area -->
         <div class="form-row">
           <div class="form-group" id="proj-contract-wrap">
-            <label>Contract</label>
+            <label>Construction Contract</label>
             <div style="display:flex;gap:6px">
               <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new contract"><i class="fa-solid fa-plus"></i></button>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new construction contract"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
@@ -2624,6 +2637,9 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
     </div>
     <div class="modal-footer">
       <span id="pricing-gaps-summary" style="font-size:12px;color:var(--text-muted);flex:1"></span>
+      <!-- Clear all saved UI state (filter values + form drafts). Useful
+           when switching users on the same browser or resetting after testing. -->
+      <button class="btn btn-secondary btn-sm" title="Wipes all lf_filter:* and lf_form:* localStorage keys" onclick="(function(){const n=clearAllPersistedUiState();alert('Cleared '+n+' saved UI state key'+(n===1?'':'s')+'. Reload to apply.');})()" style="margin-right:auto"><i class="fa-solid fa-eraser"></i> Clear all saved UI state</button>
       <button class="btn btn-primary" onclick="closeModal('settings-modal')">Done</button>
     </div>
   </div>
@@ -2838,6 +2854,37 @@ let aiSessionId = 'session_' + Date.now();
 let currentView = 'dashboard';
 
 // ═══════════════════════════════════════════════════════════
+// FILTER PERSISTENCE (localStorage)
+// ═══════════════════════════════════════════════════════════
+// Key scheme: lf_filter:<tab>:<element-id>
+// Each value capped at 200 chars to prevent localStorage bloat.
+// Extracted JS modules call persistFilter() after the DOM is ready;
+// inline filters (Dashboard, Projects) are wired below in init().
+function persistFilter(storageKey, el) {
+  if (!el) return;
+  const stored = localStorage.getItem(storageKey);
+  if (stored !== null) el.value = stored.slice(0, 200);
+  const save = () => {
+    const v = (el.value || '').slice(0, 200);
+    localStorage.setItem(storageKey, v);
+  };
+  el.addEventListener('change', save);
+  el.addEventListener('input', save);
+}
+
+// Clear all lf_filter:* and lf_form:* keys from localStorage.
+// Called by the "Clear all saved state" button in Settings.
+function clearAllPersistedUiState() {
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith('lf_filter:') || k.startsWith('lf_form:'))) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+  return toRemove.length;
+}
+
+// ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
 async function init() {
@@ -2861,6 +2908,47 @@ async function init() {
   });
   document.getElementById('hrs-month').value = now.getMonth()+1;
 
+  // ── Filter persistence — Dashboard & Projects inline filters ─────────────
+  // Hours/RUS/Revenue/Billing filters are wired in their respective JS modules.
+  // We wire the dashboard and project-tab filters here because they live
+  // inline (no separate JS module for them).
+  [
+    ['lf_filter:dashboard:dash-period', 'dash-period'],
+    ['lf_filter:dashboard:dash-month',  'dash-month'],
+    ['lf_filter:dashboard:dash-year',   'dash-year'],
+    ['lf_filter:projects:proj-status-filter', 'proj-status-filter'],
+    ['lf_filter:projects:proj-type-filter',   'proj-type-filter'],
+    ['lf_filter:projects:proj-search',        'proj-search'],
+    // proj-client-filter is populated async (loadClients); wired after that call.
+    ['lf_filter:hours:hrs-period',   'hrs-period'],
+    ['lf_filter:hours:hrs-month',    'hrs-month'],
+    ['lf_filter:hours:hrs-year',     'hrs-year'],
+    ['lf_filter:hours:hrs-groupby',  'hrs-groupby'],
+    ['lf_filter:billing:billing-year','billing-year'],
+    ['lf_filter:revenue:rev-year',   'rev-year'],
+    ['lf_filter:rus:insp-period',    'insp-period'],
+    ['lf_filter:rus:insp-month',     'insp-month'],
+    ['lf_filter:rus:insp-status',    'insp-status'],
+  ].forEach(([key, id]) => persistFilter(key, document.getElementById(id)));
+
+  // Show the per-tab "clear filters" button whenever at least one filter key
+  // for that tab has been stored in localStorage.
+  (function showClearFilterBtns() {
+    const tabKeys = {
+      'proj-clear-filters-btn': ['lf_filter:projects:proj-status-filter','lf_filter:projects:proj-type-filter','lf_filter:projects:proj-search','lf_filter:projects:proj-client-filter'],
+      'rus-clear-filters-btn':  ['lf_filter:rus:insp-period','lf_filter:rus:insp-month','lf_filter:rus:insp-status'],
+      'hrs-clear-filters-btn':  ['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby'],
+      'billing-clear-filters-btn': ['lf_filter:billing:billing-year'],
+      'rev-clear-filters-btn':  ['lf_filter:revenue:rev-year'],
+    };
+    for (const [btnId, keys] of Object.entries(tabKeys)) {
+      if (keys.some(k => localStorage.getItem(k) !== null)) {
+        const btn = document.getElementById(btnId);
+        if (btn) btn.style.display = '';
+      }
+    }
+  })();
+
   await Promise.all([loadClients(), loadStaff(), loadConcentrators(), loadJobs(), loadProjectTypes()]);
   // Engineering contracts power the project-modal field-gating (Phase 5
   // 2026-05-05): the helper effectiveProgramForProjectModal() reads
@@ -2872,7 +2960,22 @@ async function init() {
   if (typeof loadEngineeringContracts === 'function') {
     try { await loadEngineeringContracts(); } catch (e) { /* non-fatal */ }
   }
-  await loadDashboard();
+  // ── Tab persistence: restore the last-viewed tab from URL hash ──────────
+  // On first load with no hash we fall through to the default (dashboard).
+  const _initHash = location.hash.replace('#', '');
+  const _validViews = ['dashboard','projects','permitting','design','inspection',
+                       'potential-permits','hours','clients','billing','revenue'];
+  if (_initHash && _validViews.includes(_initHash) &&
+      document.querySelector(`[data-view="${_initHash}"]`)) {
+    showView(_initHash);
+  } else {
+    await loadDashboard();
+  }
+  // Browser back/forward button support
+  window.addEventListener('popstate', () => {
+    const h = location.hash.replace('#', '');
+    if (h && _validViews.includes(h)) showView(h);
+  });
   refreshSettingsDot();
 }
 
@@ -2892,6 +2995,8 @@ function showView(view) {
   document.getElementById('view-'+view)?.classList.add('active');
   document.querySelector(`[data-view="${view}"]`)?.classList.add('active');
   currentView = view;
+  // Persist active tab in URL hash so refresh returns to the same place.
+  history.replaceState(null, '', '#' + view);
   if (view==='dashboard') loadDashboard();
   if (view==='projects') loadProjects();
   if (view==='permitting') loadPermits();
@@ -2913,6 +3018,9 @@ function showView(view) {
 // ═══════════════════════════════════════════════════════════
 async function loadClients() {
   clients = await api('/api/clients');
+  // Mirror to window so extracted JS modules (construction_contracts.js,
+  // engineering_contracts.js) can read the same cache without a separate fetch.
+  window.clients = clients;
   // Populate filters
   ['proj-client-filter'].forEach(id => {
     const el = document.getElementById(id);
@@ -2921,11 +3029,17 @@ async function loadClients() {
     while (el.options.length > 1) el.remove(1);
     clients.forEach(c => { const o = new Option(c.name, c.id); el.add(o); });
     el.value = cur;
+    // Wire filter persistence after options are populated so the stored
+    // value can be restored against the real option set.
+    persistFilter('lf_filter:projects:proj-client-filter', el);
   });
   // Project modal client select
   const ps = document.getElementById('proj-client');
   while (ps.options.length > 1) ps.remove(1);
   clients.forEach(c => ps.add(new Option(c.name, c.id)));
+  // Notify extracted modules that the client cache is ready so they can
+  // re-populate dropdowns that may have rendered before clients loaded.
+  document.dispatchEvent(new CustomEvent('clients-loaded'));
 }
 
 async function loadStaff() {
@@ -3048,6 +3162,22 @@ function applyProjectModalFieldGating() {
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
 
+  // Engineering Contract row — visible for RUS / GF(R) programs when a
+  // client is selected. Hidden for BAU/Other (those programs don't use
+  // the RUS umbrella → no EC selection needed).
+  const ecRow = document.getElementById('proj-ec-row');
+  if (ecRow) {
+    const showEc = !!(clientId && usesRusInfra);
+    ecRow.style.display = showEc ? '' : 'none';
+    if (showEc) {
+      populateEcDropdown();
+    } else {
+      // Clear when hidden so stale EC doesn't bleed into saves.
+      const ecSel = document.getElementById('proj-ec');
+      if (ecSel) ecSel.value = '';
+    }
+  }
+
   const contractWrap = document.getElementById('proj-contract-wrap');
   if (contractWrap) {
     contractWrap.style.display = showContract ? '' : 'none';
@@ -3130,7 +3260,16 @@ function populateContractDropdownForProgram() {
     allowedEcIds = null; // unfiltered
   }
 
-  const filtered = allContracts.filter(c => !allowedEcIds || allowedEcIds.has(c.engineering_contract_id));
+  let filtered = allContracts.filter(c => !allowedEcIds || allowedEcIds.has(c.engineering_contract_id));
+
+  // Further narrow by the selected Engineering Contract (if the EC row is
+  // visible and a specific EC is chosen). This is the second-level filter
+  // that lets "pick EC → see only its construction contracts".
+  const ecSel = document.getElementById('proj-ec');
+  const pickedEcId = ecSel?.value || (document.getElementById('proj-ec-inherited')?.dataset?.ecId) || '';
+  if (pickedEcId && (effective === 'rus' || effective === 'gfr')) {
+    filtered = filtered.filter(c => c.engineering_contract_id === pickedEcId);
+  }
 
   // Preserve current selection if it's still valid; otherwise clear.
   const prev = sel.value;
@@ -3465,7 +3604,7 @@ function renderPrintPdfBody(result) {
       <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}${m.loan_name ? ` <span style="color:var(--text-muted)">· loan: ${esc(m.loan_name)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}${m.job_billing_code ? ` <span style="font-family:monospace;color:var(--text-muted)">${esc(m.job_billing_code)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:var(--info-light);color:var(--info-text);padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:var(--success-light);color:var(--success-text);padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
-      <div style="color:var(--text-muted)">Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
+      <div style="color:var(--text-muted)">Construction Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
       <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
       <div style="color:var(--text-muted)">Billing Month</div>
       <div>
@@ -3902,6 +4041,21 @@ function openProjectModal(type='') {
   // that don't apply to a fresh-form session.
   if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
   openModal('project-modal');
+
+  // ── Draft restore (new project only) ─────────────────────────────────
+  const _draftKey = 'lf_form:project-modal';
+  const _draftContainer = document.querySelector('#project-modal .modal-body');
+  if (_draftContainer) {
+    // Tear down any previous listener set.
+    if (_formDraftCleanups['project-modal']) _formDraftCleanups['project-modal']();
+    // Show restore banner if a draft exists (it also re-applies field values).
+    _formDraftShowBanner(_draftKey, _draftContainer, () => {
+      // After discarding, re-run field gating since values were wiped.
+      if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
+    });
+    // Attach ongoing auto-save.
+    _formDraftCleanups['project-modal'] = _formDraftAttach(_draftKey, _draftContainer, 'proj-id');
+  }
 }
 
 // Populate the project_type + job dropdowns from the cached server data.
@@ -4004,6 +4158,21 @@ async function editProject(id) {
   } catch (e) { console.error('client/job hookup failed:', e); }
 
   try {
+    // Pre-populate the EC picker from the project's contract → EC chain.
+    const pc = p.contract_id && (window.contractsCache || []).find(c => c.id === p.contract_id);
+    const pcEcId = pc?.engineering_contract_id || '';
+    if (pcEcId) {
+      // Ensure this EC has an option in the dropdown before setting value.
+      const ecSel = document.getElementById('proj-ec');
+      if (ecSel && !ecSel.querySelector(`option[value="${pcEcId}"]`)) {
+        const pcEc = (window.engineeringContractsCache || []).find(e => e.id === pcEcId);
+        if (pcEc) {
+          const lbl = `${pcEc.client_name || '?'} · ${pcEc.name}${pcEc.contract_number ? ' – ' + pcEc.contract_number : ''}`;
+          ecSel.add(new Option(lbl, pcEc.id));
+        }
+      }
+      if (ecSel) ecSel.value = pcEcId;
+    }
     document.getElementById('proj-contract').value = p.contract_id || '';
     // After setting contract, repopulate the concentrator dropdown so
     // the project's concentrator_id has a matching <option>. Without
@@ -4039,6 +4208,13 @@ function clearProjectForm() {
   document.getElementById('proj-ptype').value='';
   document.getElementById('proj-job').value='';
   document.getElementById('proj-status').value='active';
+  // Reset EC picker
+  const ecSel = document.getElementById('proj-ec');
+  if (ecSel) { ecSel.value=''; ecSel.style.display=''; }
+  const ecInherited = document.getElementById('proj-ec-inherited');
+  if (ecInherited) { ecInherited.style.display='none'; ecInherited.dataset.ecId=''; }
+  const ecRow = document.getElementById('proj-ec-row');
+  if (ecRow) ecRow.style.display='none';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
   // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
@@ -4067,6 +4243,90 @@ async function ptypeChanged() {
   applyProjectModalFieldGating();
   await refilterJobsDropdown(document.getElementById('proj-job')?.value || null);
   jobChanged();
+}
+
+// Populate the Engineering Contract dropdown for the current client + program.
+// Only called when the EC row is visible (RUS / GF(R)). Filters to RUS-program
+// engineering contracts belonging to the selected client.
+function populateEcDropdown() {
+  const ecSel = document.getElementById('proj-ec');
+  const inherited = document.getElementById('proj-ec-inherited');
+  if (!ecSel) return;
+
+  // If the parent project has an EC, show it as read-only inherited.
+  const parentId = document.getElementById('proj-parent')?.value;
+  if (parentId) {
+    const parentProj = (typeof allProjects !== 'undefined' && allProjects || []).find(p => p.id === parentId);
+    if (parentProj) {
+      // Look up EC from the parent's contract
+      const parentContract = (window.contractsCache || []).find(c => c.id === parentProj.contract_id);
+      const parentEcId = parentContract?.engineering_contract_id;
+      if (parentEcId) {
+        const parentEc = (window.engineeringContractsCache || []).find(e => e.id === parentEcId);
+        if (parentEc) {
+          // Show read-only inherited text, hide the active dropdown
+          ecSel.style.display = 'none';
+          if (inherited) {
+            inherited.style.display = '';
+            inherited.textContent = `${parentEc.client_name || ''} · ${parentEc.name}${parentEc.contract_number ? ' – ' + parentEc.contract_number : ''} (inherited from parent)`;
+            inherited.dataset.ecId = parentEcId;
+          }
+          // Force-set dropdown to the parent's EC so populateContractDropdownForProgram sees it
+          let opt = ecSel.querySelector(`option[value="${parentEcId}"]`);
+          if (!opt) {
+            opt = new Option('', parentEcId);
+            ecSel.add(opt);
+          }
+          ecSel.value = parentEcId;
+          return;
+        }
+      }
+    }
+  }
+
+  // Top-level: show the active picker, hide inherited display
+  ecSel.style.display = '';
+  if (inherited) { inherited.style.display = 'none'; inherited.dataset.ecId = ''; }
+
+  const clientId = document.getElementById('proj-client')?.value;
+  const ecCache = window.engineeringContractsCache || [];
+  const prev = ecSel.value;
+
+  // Filter to RUS-program ECs for this client (RUS and GF(R) both use the RUS umbrella)
+  const filtered = ecCache.filter(ec => ec.client_id === clientId && ec.program === 'rus');
+  while (ecSel.options.length > 1) ecSel.remove(1);
+  filtered
+    .slice()
+    .sort((a,b) => a.name.localeCompare(b.name))
+    .forEach(ec => {
+      const label = `${ec.client_name || '?'} · ${ec.name}${ec.contract_number ? ' – ' + ec.contract_number : ''}`;
+      ecSel.add(new Option(label, ec.id));
+    });
+
+  // Restore prior selection if still valid
+  if (filtered.some(ec => ec.id === prev)) ecSel.value = prev;
+}
+
+// User changed the Engineering Contract picker. Filter the Construction Contract
+// dropdown to only show contracts under the selected EC.
+function ecChanged() {
+  populateContractDropdownForProgram();
+  populateConcentratorDropdownForContract();
+}
+
+// User changed the Parent Project. Load budget codes (existing behaviour)
+// and re-run EC inheritance so child projects automatically pick up the
+// parent's engineering contract.
+async function parentChanged(parentId) {
+  await loadBudgetCodesForProject(parentId);
+  // If an EC row is currently visible, re-populate it so it can show
+  // the inherited EC from the new parent (or revert to the active picker
+  // if the parent has no EC).
+  const ecRow = document.getElementById('proj-ec-row');
+  if (ecRow && ecRow.style.display !== 'none') {
+    populateEcDropdown();
+    populateContractDropdownForProgram();
+  }
 }
 
 // User changed the Contract. Same triple-effect: gating may flip if the
@@ -4287,6 +4547,8 @@ async function saveProject(opts) {
     const id = document.getElementById('proj-id').value;
     if (id) await api('/api/projects/'+id, 'PUT', body);
     else await api('/api/projects', 'POST', body);
+    // Clear new-project draft on successful save (edit autosave has its own flow).
+    if (!id) _formDraftClear('lf_form:project-modal');
     if (silent) {
       // Mark autosave succeeded; modal stays open, no view refresh.
       _autosaveLastSavedAt = Date.now();
@@ -7199,6 +7461,126 @@ async function executeAIAction(action, btn) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// FORM DRAFT PERSISTENCE
+// ═══════════════════════════════════════════════════════════
+// Stores half-filled modal forms in localStorage under lf_form:<modal-id>
+// so accidental refreshes don't lose in-progress work.
+//
+// Key rules:
+//   • Only for NEW records (when the hidden *-id field is empty).
+//     Edit flows have server-side autosave; draft would conflict.
+//   • Skips password + file inputs (browser security / privacy).
+//   • Capped at 50 KB per form — silently drops if over limit.
+//   • Draft survives Cancel (Close) but is cleared on successful Save.
+//   • On re-open, a small banner shows "Draft from N min ago — Discard?"
+
+const _FORM_DRAFT_MAX_BYTES = 50 * 1024; // 50 KB
+
+// Collect all saveable fields from a form container (div or form element).
+function _formDraftCollect(container) {
+  const out = {};
+  container.querySelectorAll('input,select,textarea').forEach(el => {
+    if (!el.id) return;
+    if (el.type === 'password' || el.type === 'file' || el.type === 'hidden') return;
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      out[el.id] = el.checked;
+    } else {
+      out[el.id] = (el.value || '').slice(0, 500);
+    }
+  });
+  out['__savedAt'] = Date.now();
+  return out;
+}
+
+// Restore field values from a draft object.
+function _formDraftApply(container, draft) {
+  container.querySelectorAll('input,select,textarea').forEach(el => {
+    if (!el.id || !(el.id in draft)) return;
+    if (el.type === 'password' || el.type === 'file' || el.type === 'hidden') return;
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      el.checked = !!draft[el.id];
+    } else {
+      el.value = draft[el.id];
+    }
+  });
+}
+
+// Start auto-saving draft every 2 s while the modal is open.
+// Returns a cleanup function that should be called when the modal closes
+// or the draft is discarded.
+function _formDraftAttach(storageKey, container, idFieldId) {
+  // Only draft NEW records — edits have autosave.
+  function shouldDraft() {
+    const idEl = idFieldId ? document.getElementById(idFieldId) : null;
+    return !idEl || !idEl.value;
+  }
+  function save() {
+    if (!shouldDraft()) return;
+    try {
+      const data = _formDraftCollect(container);
+      const json = JSON.stringify(data);
+      if (json.length > _FORM_DRAFT_MAX_BYTES) return; // too large — skip
+      localStorage.setItem(storageKey, json);
+    } catch (e) { /* localStorage full — ignore */ }
+  }
+  // Save on every input event AND on a 2-second interval as a safety net.
+  const handler = () => { if (shouldDraft()) save(); };
+  container.addEventListener('input',  handler);
+  container.addEventListener('change', handler);
+  const timer = setInterval(save, 2000);
+  return function cleanup() {
+    container.removeEventListener('input',  handler);
+    container.removeEventListener('change', handler);
+    clearInterval(timer);
+  };
+}
+
+// Show the draft-restore banner inside a modal body if a draft exists.
+// Returns true if a draft was found and shown.
+function _formDraftShowBanner(storageKey, container, discardCallback) {
+  const raw = localStorage.getItem(storageKey);
+  if (!raw) return false;
+  let draft;
+  try { draft = JSON.parse(raw); } catch { return false; }
+  const savedAt = draft['__savedAt'];
+  const minutesAgo = savedAt ? Math.round((Date.now() - savedAt) / 60000) : null;
+  const timeLabel = minutesAgo === null ? 'earlier'
+                  : minutesAgo < 1     ? 'just now'
+                  : minutesAgo === 1   ? '1 min ago'
+                  : minutesAgo + ' min ago';
+  // Inject banner at the top of the modal body.
+  const bannerId = storageKey.replace(/[^a-z0-9]/gi, '_') + '_banner';
+  let banner = document.getElementById(bannerId);
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = bannerId;
+    banner.style.cssText = 'background:var(--warning-light,#fff3cd);border:1px solid var(--warning,#ffc107);border-radius:6px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text)';
+    container.insertBefore(banner, container.firstChild);
+  }
+  banner.innerHTML = `<i class="fa-solid fa-clock-rotate-left" style="color:var(--warning,#ffc107)"></i>
+    <span><strong>Draft restored</strong> — saved ${timeLabel}</span>
+    <button onclick="(function(){${JSON.stringify('localStorage.removeItem('+JSON.stringify(storageKey)+')')};document.getElementById(${JSON.stringify(bannerId)}).remove();if(typeof discardCb==='function')discardCb();})()" style="margin-left:auto;background:none;border:1px solid var(--gray-border);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px" id="${bannerId}_discard">Discard draft</button>`;
+  // Wire the discard button properly (can't use closures in innerHTML)
+  banner.querySelector('#' + bannerId + '_discard').onclick = () => {
+    localStorage.removeItem(storageKey);
+    banner.remove();
+    if (typeof discardCallback === 'function') discardCallback();
+  };
+  // Apply the draft values to the form.
+  _formDraftApply(container, draft);
+  return true;
+}
+
+// Clear a draft on successful save.
+function _formDraftClear(storageKey) {
+  localStorage.removeItem(storageKey);
+}
+
+// Per-modal draft cleanup function registry — stored so we can tear down
+// listeners when the modal closes.
+const _formDraftCleanups = {};
+
+// ═══════════════════════════════════════════════════════════
 // MODAL HELPERS
 // ═══════════════════════════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -7363,6 +7745,62 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) _pollTick();
 });
 window.addEventListener('load', startPolling);
+</script>
+<script>
+fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
+</script>
+<!-- ─── SSE live-update subscriber ──────────────────────────────────────────
+     Maintains a persistent /api/events/stream connection and dispatches
+     every server event as a CustomEvent on `document` so tab modules can
+     listen with document.addEventListener('sse:<eventName>', handler).
+     Auto-reconnects after 5 s on disconnect.  Admin gets all channels.
+──────────────────────────────────────────────────────────────────────────── -->
+<script>
+(function() {
+  const SSE_EVENTS = [
+    'project_added', 'project_updated', 'project_deleted',
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+    'contract_added', 'contract_updated', 'contract_deleted',
+    'engineering_contract_added', 'engineering_contract_updated', 'engineering_contract_deleted',
+    'client_added', 'client_updated', 'client_deleted',
+    'job_added', 'job_updated', 'job_deleted',
+    'staff_added', 'staff_updated', 'staff_deleted',
+    'permit_added', 'permit_updated', 'permit_deleted',
+    'invoice_created', 'invoice_voided',
+    'batch_committed', 'batch_voided',
+  ];
+
+  let _sseSource = null;
+
+  function startSse() {
+    if (_sseSource) return;
+    if (!('EventSource' in window)) return;
+    try {
+      _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
+      _sseSource.addEventListener('open', () => console.log('[sse] connected'));
+      _sseSource.addEventListener('error', () => {
+        console.warn('[sse] disconnected, reconnecting in 5 s…');
+        _sseSource.close();
+        _sseSource = null;
+        setTimeout(startSse, 5000);
+      });
+
+      SSE_EVENTS.forEach(name => {
+        _sseSource.addEventListener(name, e => {
+          let detail;
+          try { detail = JSON.parse(e.data); } catch { detail = {}; }
+          document.dispatchEvent(new CustomEvent('sse:' + name, { detail }));
+        });
+      });
+    } catch (e) {
+      console.error('[sse] init failed', e);
+    }
+  }
+
+  window.addEventListener('load', startSse);
+})();
 </script>
 </body>
 </html>

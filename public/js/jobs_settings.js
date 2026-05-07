@@ -236,4 +236,19 @@
   window.updateRateLabel = updateRateLabel;
   window.saveNewJob = saveNewJob;
   window.deleteJob = deleteJob;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _jobsStaleTimer = null;
+
+  function _jobsSseRefresh() {
+    clearTimeout(_jobsStaleTimer);
+    _jobsStaleTimer = setTimeout(async () => {
+      await loadJobs();
+      renderJobsList();
+    }, 500);
+  }
+
+  ['job_added', 'job_updated', 'job_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _jobsSseRefresh)
+  );
 })();

@@ -68,6 +68,8 @@
       [...window.clients].sort((a,b) => a.name.localeCompare(b.name))
         .forEach(c => clientSel.add(new Option(c.name, c.id)));
     }
+    // If window.clients isn't ready yet the clients-loaded event will
+    // trigger a re-render once it is (listener registered below).
     if (!engineeringContractsCache.length) {
       root.innerHTML = '<div class="empty-state" style="padding:12px;text-align:center;color:var(--text-muted)">No engineering contracts yet. Add one above to group billing contracts under a single budget.</div>';
       return;
@@ -180,10 +182,38 @@
     } catch (e) { alert('Delete failed: ' + e.message); }
   }
 
+  // Re-populate the Client dropdown in the Add Engineering Contract form
+  // when the client cache becomes available (same race as construction_contracts.js).
+  document.addEventListener('clients-loaded', function () {
+    const clientSel = document.getElementById('new-ec-client');
+    if (!clientSel || !(window.clients || []).length) return;
+    if (clientSel.options.length <= 1) {
+      while (clientSel.options.length > 1) clientSel.remove(1);
+      [...window.clients].sort((a,b) => a.name.localeCompare(b.name))
+        .forEach(c => clientSel.add(new Option(c.name, c.id)));
+    }
+  });
+
   window.loadEngineeringContracts = loadEngineeringContracts;
   window.renderEngineeringContractsList = renderEngineeringContractsList;
   window.saveNewEngineeringContract = saveNewEngineeringContract;
   window.editEngineeringContract = editEngineeringContract;
   window.saveEngineeringContract = saveEngineeringContract;
   window.deleteEngineeringContract = deleteEngineeringContract;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _ecStaleTimer = null;
+
+  function _ecSseRefresh() {
+    clearTimeout(_ecStaleTimer);
+    _ecStaleTimer = setTimeout(async () => {
+      await loadEngineeringContracts();
+      renderEngineeringContractsList();
+    }, 500);
+  }
+
+  ['engineering_contract_added', 'engineering_contract_updated', 'engineering_contract_deleted',
+   'client_added', 'client_updated', 'client_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _ecSseRefresh)
+  );
 })();

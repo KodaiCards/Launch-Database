@@ -159,6 +159,17 @@
     }
   };
 
+  // ── Period/month visibility ──────────────────────────────────────────────
+  // Hide the month picker when the period dropdown is set to YTD.
+  // Called on page load and whenever the dropdown changes.
+  function syncRusPeriodVisibility() {
+    const period = document.getElementById('insp-period')?.value;
+    const monthEl = document.getElementById('insp-month');
+    if (monthEl) monthEl.style.display = period === 'month' ? '' : 'none';
+  }
+  document.getElementById('insp-period')?.addEventListener('change', syncRusPeriodVisibility);
+  syncRusPeriodVisibility();
+
   async function loadInspection() {
     // Default the month picker to the current month on first load.
     const monthInput = document.getElementById('insp-month');
@@ -286,4 +297,41 @@
 
   window.loadInspection = loadInspection;
   window.toggleOngoing = toggleOngoing;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  // Debounce: if several events arrive within 500 ms (e.g. bulk import),
+  // collapse them into a single reload. Visibility-aware: if the RUS/
+  // Inspection tab is not the active view, mark it stale and reload on
+  // next showView('inspection') call instead of fetching in the background.
+  let _inspStaleTimer = null;
+  let _inspStale = false;
+
+  function _inspDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'inspection') {
+      _inspStale = true;
+      return;
+    }
+    clearTimeout(_inspStaleTimer);
+    _inspStaleTimer = setTimeout(loadInspection, 500);
+  }
+
+  const _inspSseEvents = [
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+    'project_updated', 'project_deleted',
+  ];
+  _inspSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _inspDebounce));
+
+  // Hook into showView so we reload when user switches to inspection tab
+  const _origShowViewInsp = typeof showView === 'function' ? showView : null;
+  if (_origShowViewInsp) {
+    const _prevShowView = window.showView;
+    window.showView = function(view) {
+      _prevShowView(view);
+      if (view === 'inspection' && _inspStale) {
+        _inspStale = false;
+        clearTimeout(_inspStaleTimer);
+        _inspStaleTimer = setTimeout(loadInspection, 100);
+      }
+    };
+  }
 })();

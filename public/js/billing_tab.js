@@ -284,4 +284,36 @@
   window.loadBilling = loadBilling;
   window.deleteInvoice = deleteInvoice;
   window.deleteBilledProject = deleteBilledProject;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _billStaleTimer = null;
+  let _billStale = false;
+
+  function _billDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'billing') {
+      _billStale = true;
+      return;
+    }
+    clearTimeout(_billStaleTimer);
+    _billStaleTimer = setTimeout(loadBilling, 500);
+  }
+
+  const _billSseEvents = [
+    'invoice_created', 'invoice_voided',
+    'batch_committed', 'batch_voided',
+    'project_updated', 'project_deleted',
+  ];
+  _billSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _billDebounce));
+
+  const _prevShowViewBill = window.showView;
+  if (typeof _prevShowViewBill === 'function') {
+    window.showView = function(view) {
+      _prevShowViewBill(view);
+      if (view === 'billing' && _billStale) {
+        _billStale = false;
+        clearTimeout(_billStaleTimer);
+        _billStaleTimer = setTimeout(loadBilling, 100);
+      }
+    };
+  }
 })();

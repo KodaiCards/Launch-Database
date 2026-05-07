@@ -16,6 +16,7 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 const PERMIT_STAGES = ['potential','started','submitted','approved','checklist'];
+const { broadcast } = require('./_sse');
 
 module.exports = function installPermitsRoutes(app, pool, mw) {
   const { upload } = mw;
@@ -72,6 +73,8 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
         'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
         [projectId, nextStage, actor]
       );
+      broadcast('admin', 'permit_updated', { project_id: projectId, stage: nextStage });
+      broadcast('team:permitting', 'permit_updated', { project_id: projectId, stage: nextStage });
       res.json({ previous: currentStage, current: nextStage });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -102,6 +105,8 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
         'UPDATE permit_stages SET completed_at = NULL, updated_by = $1 WHERE project_id=$2 AND stage=$3',
         [actor, projectId, prevStage]
       );
+      broadcast('admin', 'permit_updated', { project_id: projectId, stage: prevStage });
+      broadcast('team:permitting', 'permit_updated', { project_id: projectId, stage: prevStage });
       res.json({ previous: currentStage, current: prevStage });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -114,6 +119,8 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
         INSERT INTO permit_documents (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
       `, [req.params.projectId, doc_type, req.file.originalname, req.file.filename, req.file.size, revision_number || 1, uploaded_by, notes]);
+      broadcast('admin', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
+      broadcast('team:permitting', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

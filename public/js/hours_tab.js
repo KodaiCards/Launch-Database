@@ -47,11 +47,22 @@
   // the full row to openEditTimeEntryModal without re-fetching.
   const _hoursEntriesById = new Map();
 
+  // ── Period/month visibility ─────────────────────────────────────────────
+  // Hide the month picker immediately when period switches to YTD so the
+  // UI is responsive before the async data fetch completes.
+  function syncHrsPeriodVisibility() {
+    const period = document.getElementById('hrs-period')?.value || 'month';
+    const mEl = document.getElementById('hrs-month');
+    if (mEl) mEl.style.display = period === 'ytd' ? 'none' : '';
+  }
+  document.getElementById('hrs-period')?.addEventListener('change', syncHrsPeriodVisibility);
+  syncHrsPeriodVisibility();
+
   async function loadHours() {
     const period = document.getElementById('hrs-period')?.value || 'month';
     const m = document.getElementById('hrs-month').value;
     const y = document.getElementById('hrs-year').value;
-    // Hide month picker in YTD mode
+    // Hide month picker in YTD mode (also done eagerly by syncHrsPeriodVisibility)
     const mEl = document.getElementById('hrs-month');
     if (mEl) mEl.style.display = period === 'ytd' ? 'none' : '';
 
@@ -616,4 +627,35 @@
   window.deleteTimeEntry = deleteTimeEntry;
   window.deleteAllHoursForStaff = deleteAllHoursForStaff;
   window.showHoursTypeBreakdown = showHoursTypeBreakdown;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _hoursStaleTimer = null;
+  let _hoursStale = false;
+
+  function _hoursDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'hours') {
+      _hoursStale = true;
+      return;
+    }
+    clearTimeout(_hoursStaleTimer);
+    _hoursStaleTimer = setTimeout(loadHours, 500);
+  }
+
+  const _hoursSseEvents = [
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+    'project_updated', 'project_deleted', 'staff_added', 'staff_updated', 'staff_deleted',
+  ];
+  _hoursSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _hoursDebounce));
+
+  const _prevShowViewHours = window.showView;
+  if (typeof _prevShowViewHours === 'function') {
+    window.showView = function(view) {
+      _prevShowViewHours(view);
+      if (view === 'hours' && _hoursStale) {
+        _hoursStale = false;
+        clearTimeout(_hoursStaleTimer);
+        _hoursStaleTimer = setTimeout(loadHours, 100);
+      }
+    };
+  }
 })();

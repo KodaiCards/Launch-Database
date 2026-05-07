@@ -264,6 +264,14 @@ const auditTimeEntry = timeclockModule.makeAuditLogger(pool);
 const automationModule = require('./automation');
 automationModule.installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmin });
 
+// ─── SSE live-update endpoint ──────────────────────────────────────────────
+// Persistent GET /api/events/stream for admin + team portals.
+// Must be registered AFTER auth middleware (req.user must be set) and
+// BEFORE express.static (so the path isn't swallowed as a missing file).
+// routes/splice.js has its own project-scoped SSE — these are separate.
+const _sse = require('./routes/_sse');
+_sse.attach(app, { requireAuth });
+
 // Public routes (no login needed): /login page itself, /api/auth/login,
 // any /api/auth/me check, and static assets needed by the login page.
 // Everything else requires a logged-in user.

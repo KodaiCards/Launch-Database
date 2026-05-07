@@ -328,3 +328,229 @@ involved — launcher is purely a presentation layer.
    `portal.launchfiber.com` is the bookmark of record for everyone.
 
 *Last updated 2026-05-07 — Phase 1 + Phase 2 built and pushed.*
+
+---
+
+## UX Persistence Layer (admin.html) — 2026-05-07
+
+Implemented in 5 commits on `claude/splice-matrix-railway-setup-IIG3Q`.
+
+### localStorage key scheme
+
+#### Filter keys (`lf_filter:<tab>:<element-id>`)
+
+| Key | Element | Tab |
+|-----|---------|-----|
+| `lf_filter:dashboard:dash-period` | Period dropdown | Dashboard |
+| `lf_filter:dashboard:dash-month`  | Month dropdown  | Dashboard |
+| `lf_filter:dashboard:dash-year`   | Year dropdown   | Dashboard |
+| `lf_filter:projects:proj-status-filter` | Status | Projects |
+| `lf_filter:projects:proj-type-filter`   | Type   | Projects |
+| `lf_filter:projects:proj-search`        | Search | Projects |
+| `lf_filter:projects:proj-client-filter` | Client | Projects |
+| `lf_filter:hours:hrs-period`   | Period   | Hours |
+| `lf_filter:hours:hrs-month`    | Month    | Hours |
+| `lf_filter:hours:hrs-year`     | Year     | Hours |
+| `lf_filter:hours:hrs-groupby`  | Group by | Hours |
+| `lf_filter:billing:billing-year` | Year   | Billing |
+| `lf_filter:revenue:rev-year`   | Year     | Revenue |
+| `lf_filter:rus:insp-period`    | Period   | RUS |
+| `lf_filter:rus:insp-month`     | Month    | RUS |
+| `lf_filter:rus:insp-status`    | Status   | RUS |
+
+Values capped at 200 characters. Per-tab filter-xmark icon buttons
+appear in the tab toolbar whenever any key for that tab is stored.
+
+#### Form draft keys (`lf_form:<modal-id>`)
+
+| Key | Modal | Notes |
+|-----|-------|-------|
+| `lf_form:project-modal` | Add Project | New records only; edit uses server autosave |
+
+Draft JSON is capped at 50 KB. A yellow banner ("Draft restored —
+saved N min ago | Discard?") appears at the top of the modal body
+when a draft is found. Draft is cleared on successful save;
+survives Cancel/Close so the next open re-offers it.
+
+### Tab persistence
+
+`showView(view)` calls `history.replaceState(null, '', '#' + view)`.
+`init()` reads `location.hash` and routes to that view on load.
+`popstate` listener handles browser back/forward.
+
+### Clearing all state
+
+Settings modal footer → **Clear all saved UI state** button calls
+`clearAllPersistedUiState()` which removes every `lf_filter:*` and
+`lf_form:*` key and alerts the count. Page reload applies the reset.
+
+---
+
+## Live Updates (SSE)
+
+Real-time propagation across all portals without manual refresh. Every
+data-write on the server fires a Server-Sent Event; every open browser
+tab receives it and refreshes the affected view within 500 ms.
+
+### Server — `routes/_sse.js`
+
+Exports two functions:
+
+| Function | Signature | Purpose |
+|---|---|---|
+| `attach(app, mw)` | `mw.requireAuth` from auth.js | Registers `GET /api/events/stream` |
+| `broadcast(channel, event, payload)` | string, string, object | Sends a named SSE event to all subscribers on that channel |
+
+Registered in `server.js` AFTER `installAuthRoutes` (so `req.user` is
+populated) and BEFORE `express.static`.
+
+#### Channels
+
+| Channel | Subscribers |
+|---|---|
+| `admin` | admin role + both manager roles (design_manager, permitting_manager) |
+| `team:design` | admin + design_manager + design_engineer |
+| `team:permitting` | admin + permitting_manager + permitting_engineer |
+| `team:construction` | admin only (construction team not yet a portal role) |
+
+Admin gets all channels (subscribes to all four). A role can appear on
+multiple channels; over-broadcast from the server is harmless since the
+client only acts on events it cares about.
+
+Heartbeat: `: ping\n\n` every 25 s. Keeps Railway/nginx proxies from
+closing idle connections. `X-Accel-Buffering: no` disables nginx
+response buffering so events arrive immediately.
+
+#### Event catalogue
+
+| Event name | Channel | Fired from |
+|---|---|---|
+| `project_added` | admin | routes/projects.js POST |
+| `project_updated` | admin | routes/projects.js PUT |
+| `project_deleted` | admin | routes/projects.js DELETE (all variants) |
+| `time_entry_added` | admin + all team channels | routes/time_entries.js POST + bulk |
+| `time_entry_updated` | admin + all team channels | routes/time_entries.js PUT |
+| `time_entry_deleted` | admin + all team channels | routes/time_entries.js DELETE |
+| `time_entries_bulk_deleted` | admin + all team channels | routes/time_entries.js DELETE /by-staff |
+| `contract_added` | admin | routes/contracts.js POST |
+| `contract_updated` | admin | routes/contracts.js PUT |
+| `contract_deleted` | admin | routes/contracts.js DELETE |
+| `engineering_contract_added` | admin | routes/engineering_contracts.js POST |
+| `engineering_contract_updated` | admin | routes/engineering_contracts.js PUT |
+| `engineering_contract_deleted` | admin | routes/engineering_contracts.js DELETE |
+| `client_added` | admin | routes/clients.js POST |
+| `client_updated` | admin | routes/clients.js PUT |
+| `client_deleted` | admin | routes/clients.js DELETE |
+| `staff_added` | admin + all team channels | routes/staff.js POST |
+| `staff_updated` | admin + all team channels | routes/staff.js PUT |
+| `staff_deleted` | admin + all team channels | routes/staff.js DELETE (hard + soft) |
+| `permit_updated` | admin + team:permitting | routes/permits.js advance/regress/doc upload |
+| `invoice_created` | admin | routes/billing.js bill-multiple + batch confirm |
+| `invoice_voided` | admin | routes/invoices.js DELETE |
+| `batch_committed` | admin | routes/billing.js batch POST + batch confirm |
+| `batch_voided` | admin | routes/billing.js batch DELETE |
+
+Note: `permit_added` and `permit_deleted` event names are registered in
+the client but currently the server only fires `permit_updated` (the
+permitting pipeline advances/regresses stages rather than adding/deleting
+permits as separate entities). Reserved for future expansion.
+
+Note: `job_added/updated/deleted` events are registered in the client
+event listener list in admin.html but are not currently fired server-side
+(jobs are a static config list, admin-managed, rarely changes, and already
+refreshed on the polling tick). Reserved for future expansion.
+
+### Client — subscriber pattern
+
+Each portal HTML file contains a self-contained IIFE that calls
+`startSse()` on `window.load`. The pattern:
+
+```js
+(function() {
+  let _sseSource = null;
+
+  function startSse() {
+    if (_sseSource) return;
+    if (!('EventSource' in window)) return;  // IE fallback guard
+    _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
+    _sseSource.addEventListener('error', () => {
+      _sseSource.close();
+      _sseSource = null;
+      setTimeout(startSse, 5000);  // auto-reconnect
+    });
+    // Wire events...
+  }
+
+  window.addEventListener('load', startSse);
+})();
+```
+
+#### admin.html — full event bus
+
+Subscribes to all 24+ event names and re-emits each as a
+`CustomEvent` on `document`:
+
+```js
+document.dispatchEvent(new CustomEvent('sse:' + name, { detail }));
+```
+
+Tab modules listen to these custom events independently.
+
+#### Tab module pattern (debounced + visibility-aware)
+
+```js
+let _tabStaleTimer = null;
+let _tabStale = false;
+
+function _tabDebounce() {
+  if (currentView !== 'my-tab') {
+    _tabStale = true;   // defer until tab is active
+    return;
+  }
+  clearTimeout(_tabStaleTimer);
+  _tabStaleTimer = setTimeout(loadMyTab, 500);  // 500 ms debounce
+}
+
+SSE_EVENTS.forEach(ev => document.addEventListener('sse:' + ev, _tabDebounce));
+
+// Wrap showView to detect stale-on-activate
+const _prev = window.showView;
+window.showView = function(view) {
+  _prev(view);
+  if (view === 'my-tab' && _tabStale) {
+    _tabStale = false;
+    clearTimeout(_tabStaleTimer);
+    _tabStaleTimer = setTimeout(loadMyTab, 100);
+  }
+};
+```
+
+500 ms debounce: if 10 events arrive in quick succession (e.g., a bulk
+CSV import), only one reload fires. Visibility-aware: if the affected
+tab is not the active view, the flag `_*Stale` is set to true instead of
+refetching. When the user switches to that tab, `showView` detects the
+stale flag and triggers a 100 ms deferred reload.
+
+#### Tab-to-event mapping summary
+
+| Tab / module | SSE events that trigger a reload |
+|---|---|
+| `dashboard_views.js` | project_*, time_entry_*, invoice_*, batch_* |
+| `projects_tab.js` | project_*, client_*, contract_* |
+| `inspection_tab.js` | time_entry_*, project_updated/deleted |
+| `hours_tab.js` | time_entry_*, project_updated/deleted, staff_* |
+| `revenue_tab.js` | project_updated/deleted, invoice_*, time_entry_* |
+| `billing_tab.js` | invoice_*, batch_*, project_updated/deleted |
+| `clients_settings.js` | client_* |
+| `engineering_contracts.js` | engineering_contract_*, client_* |
+| `construction_contracts.js` | contract_*, engineering_contract_*, client_* |
+| `jobs_settings.js` | job_* |
+| timeclock portal | time_entry_*, project_*, staff_* |
+| permitting portal | permit_*, time_entry_*, project_* |
+| design portal | time_entry_*, project_*, staff_* |
+
+### Scope boundaries
+
+- `routes/splice.js` has its own project-scoped SSE (`GET /api/splice/projects/:id/events`). Splice events are NOT bridged into the admin SSE — the two systems are intentionally separate.
+- `public/splice.html` has its own `EventSource` subscriber. No changes made.
+- Customer portal (`public/customer.html`) has no SSE — it is read-only and low-frequency. No changes made.

@@ -306,14 +306,6 @@ fetch('/api/auth/me', { credentials: 'include' })
 <script src="/js/change_password_modal.js" defer></script>
 </head>
 <body>
-<a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
-  <i class="fa-solid fa-arrow-left"></i> Launcher
-</a>
-<script>
-fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
-  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
-}).catch(()=>{});
-</script>
 
 <!-- Undo bar — fires after restorable mutations that return an undo token. -->
 <div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
@@ -1761,6 +1753,48 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) _pollTick();
 });
 window.addEventListener('load', startPolling);
+</script>
+<!-- SSE live-update subscriber for Permitting Portal.
+     Subscribes to permit + time-entry + project events; callIfExists
+     dispatches to whichever view is currently active. -->
+<script>
+(function() {
+  const callIfExists = (name) => {
+    try { if (typeof window[name] === 'function') return window[name](); } catch(e) {}
+  };
+  let _sseSource = null;
+  const _sseTimers = {};
+
+  function _debounce(key, fn) {
+    clearTimeout(_sseTimers[key]);
+    _sseTimers[key] = setTimeout(fn, 500);
+  }
+
+  function startSse() {
+    if (_sseSource) return;
+    if (!('EventSource' in window)) return;
+    try {
+      _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
+      _sseSource.addEventListener('error', () => {
+        _sseSource.close();
+        _sseSource = null;
+        setTimeout(startSse, 5000);
+      });
+      ['permit_added', 'permit_updated', 'permit_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, () => _debounce('permits', () => callIfExists('loadPermits')));
+      });
+      ['time_entry_added', 'time_entry_updated', 'time_entry_deleted',
+       'time_entries_bulk_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, () => _debounce('hours', () => callIfExists('loadHours')));
+      });
+      ['project_added', 'project_updated', 'project_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, () => _debounce('projects', () => callIfExists('loadProjects')));
+      });
+    } catch (e) { console.error('[sse] init failed', e); }
+  }
+
+  window.addEventListener('load', startSse);
+})();
 </script>
 </body>
 </html>

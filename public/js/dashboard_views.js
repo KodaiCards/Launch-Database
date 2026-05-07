@@ -492,4 +492,36 @@
   window.loadInspectionProjection = loadInspectionProjection;
   window.loadDashboard = loadDashboard;
   window.dtreeToggle = dtreeToggle;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _dashStaleTimer = null;
+  let _dashStale = false;
+
+  function _dashDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'dashboard') {
+      _dashStale = true;
+      return;
+    }
+    clearTimeout(_dashStaleTimer);
+    _dashStaleTimer = setTimeout(loadDashboard, 500);
+  }
+
+  const _dashSseEvents = [
+    'project_added', 'project_updated', 'project_deleted',
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+    'invoice_created', 'invoice_voided', 'batch_committed', 'batch_voided',
+  ];
+  _dashSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _dashDebounce));
+
+  const _prevShowViewDash = window.showView;
+  if (typeof _prevShowViewDash === 'function') {
+    window.showView = function(view) {
+      _prevShowViewDash(view);
+      if (view === 'dashboard' && _dashStale) {
+        _dashStale = false;
+        clearTimeout(_dashStaleTimer);
+        _dashStaleTimer = setTimeout(loadDashboard, 100);
+      }
+    };
+  }
 })();

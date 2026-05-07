@@ -32,7 +32,7 @@
   --radius-lg:10px;
   --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
   --shadow-lift:0 4px 16px rgba(0,0,0,0.16);
-  --topbar-h:52px;
+  --topbar-h:68px;
   --footer-h:48px;
 }
 html[data-theme="dark"]{
@@ -70,17 +70,19 @@ body{
   gap:12px;
   flex-shrink:0;
   box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  position:relative;
 }
-.topbar-logo{
-  font-size:15px;
-  font-weight:700;
-  letter-spacing:-0.01em;
-  color:#fff;
-  display:flex;
-  align-items:center;
-  gap:8px;
+.topbar-logo-img{
+  height:44px;
+  width:auto;
+  object-fit:contain;
+  display:block;
+  /* centered absolutely so user pill doesn't shift it */
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
 }
-.topbar-logo i{color:var(--vetro-route-active);font-size:16px}
 .topbar-spacer{flex:1}
 .user-pill{
   display:flex;
@@ -122,21 +124,32 @@ body{
   overflow:hidden;
 }
 
-/* ── Tile grid (bento adaptive layout) ──
-   Total visual footprint is constant — fills the viewport minus
-   header + footer chrome. Tile size scales inversely to count. */
+/* ── Launcher shell + constrained box ── */
 #tile-area{
   flex:1;
   display:flex;
+  align-items:center;
+  justify-content:center;
   min-height:0;
   overflow:hidden;
+  padding:20px;
+  box-sizing:border-box;
 }
+.launcher-box{
+  width:100%;
+  max-width:720px;
+  height:min(480px, calc(100vh - var(--topbar-h) - var(--footer-h) - 40px));
+  display:flex;
+  align-items:stretch;
+}
+
+/* ── Tile grid (bento adaptive layout) ──
+   Tiles fill the launcher-box, not the full viewport. */
 .launcher-grid{
   display:grid;
   width:100%;
   height:100%;
-  gap:12px;
-  padding:24px;
+  gap:10px;
   box-sizing:border-box;
 }
 /* Count-driven layouts */
@@ -151,8 +164,8 @@ body{
 .launcher-grid[data-count="9"]{grid-template:repeat(3, 1fr) / repeat(3, 1fr)}
 /* 10+ falls back to auto-fill at standard tile size */
 .launcher-grid[data-count="10"]{
-  grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
-  grid-auto-rows:minmax(180px, 1fr);
+  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows:minmax(160px, 1fr);
   overflow-y:auto;
 }
 
@@ -185,9 +198,18 @@ body{
 .launcher-grid:not([data-count="1"]) .tile:hover{
   transform:translateY(-2px);
 }
+/* Outline on hover — black in light mode, white in dark mode */
+.launcher-grid:not([data-count="1"]) .tile:hover{
+  outline:2px solid #000;
+  outline-offset:-2px;
+}
+html[data-theme="dark"] .launcher-grid:not([data-count="1"]) .tile:hover{
+  outline:2px solid #fff;
+  outline-offset:-2px;
+}
 .tile-icon{
-  width:clamp(56px, 9vw, 96px);
-  height:clamp(56px, 9vw, 96px);
+  width:clamp(44px, 7vw, 72px);
+  height:clamp(44px, 7vw, 72px);
   border-radius:50%;
   background:var(--primary-light);
   display:flex;
@@ -197,63 +219,63 @@ body{
   flex-shrink:0;
 }
 .tile-icon i{
-  font-size:clamp(22px, 4vw, 44px);
+  font-size:clamp(18px, 3vw, 32px);
 }
 html[data-theme="dark"] .tile-icon{
   background:rgba(27,95,160,0.2);
   color:#60A5FA;
 }
 .tile-name{
-  font-size:clamp(14px, 1.6vw, 22px);
+  font-size:clamp(13px, 1.3vw, 18px);
   font-weight:600;
   color:var(--vetro-text-primary);
   line-height:1.25;
 }
 .tile-desc{
-  font-size:clamp(11px, 1.05vw, 14px);
+  font-size:clamp(11px, 0.9vw, 13px);
   color:var(--vetro-text-muted);
   line-height:1.5;
-  max-width:42ch;
+  max-width:36ch;
 }
 
-/* Hero (count=1) — single huge tile */
+/* Hero (count=1) — single tile fills the constrained box */
 .launcher-grid[data-count="1"] .tile{
-  gap:24px;
-  padding:48px;
+  gap:20px;
+  padding:40px;
 }
 .launcher-grid[data-count="1"] .tile-icon{
-  width:clamp(96px, 14vw, 180px);
-  height:clamp(96px, 14vw, 180px);
+  width:clamp(80px, 12vw, 140px);
+  height:clamp(80px, 12vw, 140px);
 }
 .launcher-grid[data-count="1"] .tile-icon i{
-  font-size:clamp(44px, 7vw, 84px);
+  font-size:clamp(36px, 6vw, 64px);
 }
 .launcher-grid[data-count="1"] .tile-name{
-  font-size:clamp(24px, 3.4vw, 44px);
+  font-size:clamp(20px, 2.8vw, 36px);
 }
 .launcher-grid[data-count="1"] .tile-desc{
-  font-size:clamp(14px, 1.4vw, 18px);
-  max-width:60ch;
+  font-size:clamp(13px, 1.2vw, 16px);
+  max-width:54ch;
 }
 
 /* Large (count=2|3) — generous but not hero */
 .launcher-grid[data-count="2"] .tile,
 .launcher-grid[data-count="3"] .tile{
-  gap:18px;
-  padding:32px;
+  gap:14px;
+  padding:24px;
 }
 .launcher-grid[data-count="2"] .tile-icon,
 .launcher-grid[data-count="3"] .tile-icon{
-  width:clamp(72px, 10vw, 128px);
-  height:clamp(72px, 10vw, 128px);
+  width:clamp(56px, 8vw, 96px);
+  height:clamp(56px, 8vw, 96px);
 }
 .launcher-grid[data-count="2"] .tile-icon i,
 .launcher-grid[data-count="3"] .tile-icon i{
-  font-size:clamp(32px, 5vw, 56px);
+  font-size:clamp(24px, 4vw, 44px);
 }
 .launcher-grid[data-count="2"] .tile-name,
 .launcher-grid[data-count="3"] .tile-name{
-  font-size:clamp(18px, 2.2vw, 30px);
+  font-size:clamp(15px, 1.8vw, 24px);
 }
 
 /* Hide description on tightly packed tiles (count >= 4) */
@@ -326,35 +348,41 @@ html[data-theme="dark"] .tile-icon{
 .theme-btn:hover{background:rgba(255,255,255,0.22)}
 
 /* ── Mobile (< 600px) — single column, scrollable;
-   single-tile users still get a hero filling the screen ── */
+   single-tile users still get a hero filling the constrained box ── */
 @media(max-width:600px){
   body{overflow:auto}
   .main{overflow:visible}
-  #tile-area{overflow:visible}
+  #tile-area{
+    overflow:visible;
+    align-items:flex-start;
+    padding:12px;
+  }
+  .launcher-box{
+    max-width:calc(100vw - 24px);
+    height:auto;
+    min-height:calc(100vh - var(--topbar-h) - var(--footer-h) - 24px);
+  }
   .launcher-grid{
     grid-template-columns:1fr !important;
     grid-template-rows:auto !important;
-    grid-auto-rows:minmax(160px, auto);
+    grid-auto-rows:minmax(140px, auto);
     height:auto;
-    min-height:calc(100vh - var(--topbar-h) - var(--footer-h));
-    padding:16px;
     gap:10px;
   }
   .launcher-grid[data-count="1"]{
     grid-auto-rows:1fr;
-    height:calc(100vh - var(--topbar-h) - var(--footer-h));
+    min-height:calc(100vh - var(--topbar-h) - var(--footer-h) - 24px);
   }
-  /* On mobile, multi-tile users see normal sized tiles —
-     reset the per-count clamps so they don't grow huge in a single column */
+  /* On mobile, multi-tile users see normal sized tiles */
   .launcher-grid:not([data-count="1"]) .tile{
-    padding:20px;
-    gap:10px;
+    padding:16px;
+    gap:8px;
   }
   .launcher-grid:not([data-count="1"]) .tile-icon{
-    width:64px;height:64px;
+    width:52px;height:52px;
   }
-  .launcher-grid:not([data-count="1"]) .tile-icon i{font-size:26px}
-  .launcher-grid:not([data-count="1"]) .tile-name{font-size:16px}
+  .launcher-grid:not([data-count="1"]) .tile-icon i{font-size:22px}
+  .launcher-grid:not([data-count="1"]) .tile-name{font-size:15px}
   .launcher-grid:not([data-count="1"]) .tile-desc{
     display:block;
     font-size:12px;
@@ -366,10 +394,7 @@ html[data-theme="dark"] .tile-icon{
 
 <!-- Top bar -->
 <div class="topbar">
-  <div class="topbar-logo">
-    <i class="fa-solid fa-bolt-lightning"></i>
-    Launch Fiber
-  </div>
+  <img src="/img/launch-fiber-logo.png" alt="Launch Fiber" class="topbar-logo-img">
   <div class="topbar-spacer"></div>
   <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode" id="theme-btn">
     <i class="fa-solid fa-moon" id="theme-icon"></i>
@@ -387,9 +412,11 @@ html[data-theme="dark"] .tile-icon{
 <!-- Main content area -->
 <div class="main">
   <div id="tile-area">
-    <div class="loading-state">
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      Loading your portals...
+    <div class="launcher-box">
+      <div class="loading-state">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Loading your portals...
+      </div>
     </div>
   </div>
 </div>
@@ -496,7 +523,7 @@ function escHtml(v) {
   const area = document.getElementById('tile-area');
 
   if (portals.length === 0) {
-    area.innerHTML = `<div class="empty-state"><i class="fa-solid fa-lock"></i><p>No portals available — contact your administrator.</p></div>`;
+    area.innerHTML = `<div class="launcher-box"><div class="empty-state"><i class="fa-solid fa-lock"></i><p>No portals available — contact your administrator.</p></div></div>`;
     return;
   }
 
@@ -505,8 +532,11 @@ function escHtml(v) {
   // Cap at 10 — anything 10+ uses the auto-fill fallback
   grid.setAttribute('data-count', String(Math.min(portals.length, 10)));
   portals.forEach(p => grid.appendChild(renderTile(p)));
+  const box = document.createElement('div');
+  box.className = 'launcher-box';
+  box.appendChild(grid);
   area.innerHTML = '';
-  area.appendChild(grid);
+  area.appendChild(box);
 })();
 </script>
 </body>

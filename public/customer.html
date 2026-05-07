@@ -103,16 +103,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <script src="/js/change_password_modal.js" defer></script>
 </head>
 <body>
-<a href="/client/" class="launcher-back-btn" data-launcher-back style="display:none">
-  <i class="fa-solid fa-arrow-left"></i> Launcher
-</a>
-<script>
-fetch('/api/me/portals?audience=client',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
-  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
-}).catch(()=>{});
-</script>
 
 <header class="header">
+  <a href="/client/" class="launcher-back-btn" data-launcher-back style="display:none">
+    <i class="fa-solid fa-arrow-left"></i> Launcher
+  </a>
   <div style="display:flex;align-items:center;gap:14px">
     <span class="header-title">Launch Fiber Services</span>
     <span style="font-size:12px;color:var(--text-muted)">Client Portal</span>
@@ -415,6 +410,11 @@ async function signOut(){
   await loadCurrentUser();
   await loadCustomerData();
 })();
+</script>
+<script>
+fetch('/api/me/portals?audience=client',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
 </script>
 </body>
 </html>

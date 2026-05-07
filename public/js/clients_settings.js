@@ -36,7 +36,7 @@
     root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
       <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
         <th style="text-align:left;padding:6px 8px">Name</th>
-        <th style="text-align:center;padding:6px 8px;white-space:nowrap" title="Show the Contract field on new-project forms for this client">Show<br>Contract</th>
+        <th style="text-align:center;padding:6px 8px;white-space:nowrap" title="Show the Construction Contract field on new-project forms for this client">Show<br>Const. Contract</th>
         <th style="text-align:center;padding:6px 8px;white-space:nowrap" title="Show the Work Order # field on new-project forms for this client">Show<br>WO#</th>
         <th style="text-align:left;padding:6px 8px">Notes</th>
         <th></th>
@@ -52,7 +52,7 @@
         </td>
       </tr>`).join('')}</tbody></table>
       <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px;line-height:1.5">
-        <i class="fa-solid fa-circle-info"></i> <b>Show Contract</b> / <b>Show WO#</b> control whether those fields appear on the New Project form for this client. Toggle here to opt in per client. Program classification (RUS / BAU / GFR / Other) lives on each engineering contract — see the Engineering Contracts panel.
+        <i class="fa-solid fa-circle-info"></i> <b>Show Construction Contract</b> / <b>Show WO#</b> control whether those fields appear on the New Project form for this client. Toggle here to opt in per client. Program classification (RUS / BAU / GFR / Other) lives on each engineering contract — see the Engineering Contracts panel.
       </div>`;
   }
 
@@ -137,4 +137,22 @@ This cannot be undone. Type the client name below to confirm:`;
   window.editClient = editClient;
   window.saveClient = saveClient;
   window.deleteClient = deleteClient;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  // Clients settings panel is inside the settings modal — always "active"
+  // in the sense that changes from another tab should be reflected when
+  // the user next opens or scrolls to the panel. Debounce + reload.
+  let _clientsStaleTimer = null;
+
+  function _clientsSseRefresh() {
+    clearTimeout(_clientsStaleTimer);
+    _clientsStaleTimer = setTimeout(async () => {
+      await loadClients();
+      renderClientsList();
+    }, 500);
+  }
+
+  ['client_added', 'client_updated', 'client_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _clientsSseRefresh)
+  );
 })();

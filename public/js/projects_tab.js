@@ -327,4 +327,36 @@
   window.renderProjects = renderProjects;
   window.ptreeToggle = ptreeToggle;
   window.ptreeExpandAll = ptreeExpandAll;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _projStaleTimer = null;
+  let _projStale = false;
+
+  function _projDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'projects') {
+      _projStale = true;
+      return;
+    }
+    clearTimeout(_projStaleTimer);
+    _projStaleTimer = setTimeout(loadProjects, 500);
+  }
+
+  const _projSseEvents = [
+    'project_added', 'project_updated', 'project_deleted',
+    'client_added', 'client_updated', 'client_deleted',
+    'contract_added', 'contract_updated', 'contract_deleted',
+  ];
+  _projSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _projDebounce));
+
+  const _prevShowViewProj = window.showView;
+  if (typeof _prevShowViewProj === 'function') {
+    window.showView = function(view) {
+      _prevShowViewProj(view);
+      if (view === 'projects' && _projStale) {
+        _projStale = false;
+        clearTimeout(_projStaleTimer);
+        _projStaleTimer = setTimeout(loadProjects, 100);
+      }
+    };
+  }
 })();
