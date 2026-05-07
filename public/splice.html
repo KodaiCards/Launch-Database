@@ -2619,6 +2619,48 @@ function drawCanvasContents() {
   // (above everything else) so it's always visible.
   _drawMinimap(orderedLocations, locNodeById, NODE_W);
 
+  // ── 5.F.2: Sticky location labels ────────────────────────────────────────
+  // When zoomed / panned, draw pinned name labels at the visible top edge so
+  // location names don't scroll off screen. Uses stage-inverse transform so
+  // labels stay at fixed screen-Y.
+  if (state.konva && orderedLocations.length) {
+    const stage = state.konva.stage;
+    const sc    = stage.scaleX();
+    const stPos = stage.position();
+    // Screen-space Y of the sticky bar (just below the diagram chrome).
+    const stickyScreenY = 6;
+    const stickyCanvasY = (stickyScreenY - stPos.y) / sc;
+
+    orderedLocations.forEach(loc => {
+      const ni = locNodeById.get(loc.id);
+      if (!ni) return;
+      const nx = ni.group.x();
+      // Only show sticky if the node title bar is above the visible top.
+      if (ni.group.y() >= stickyCanvasY + 4) return;
+      traceLayer.add(new Konva.Rect({
+        x: nx, y: stickyCanvasY, width: NODE_W, height: 18 / sc,
+        fill: ni.typeColor, opacity: 0.9, cornerRadius: 3 / sc, listening: false,
+      }));
+      traceLayer.add(new Konva.Text({
+        x: nx + 4 / sc, y: stickyCanvasY + 2 / sc, width: (NODE_W - 8 / sc),
+        text: loc.name, fontSize: 10 / sc, fontStyle: 'bold', fill: '#fff',
+        ellipsis: true, listening: false,
+      }));
+    });
+  }
+
+  // ── 5.F.2: Konva layer caching for performance ───────────────────────────
+  // At z=0 and z=1, cache the cableLayer and closureLayer so subsequent
+  // pans don't re-rasterize every shape. Cache is implicitly cleared at the
+  // start of each drawCanvasContents call (destroyChildren clears the layer).
+  // Only cache when there's enough content to make it worthwhile.
+  if (lod <= 1 && d.cables.length >= 2) {
+    try {
+      state.konva.cableLayer.cache();
+      state.konva.closureLayer.cache();
+    } catch (_) { /* cache can fail if bounding box is zero — ignore */ }
+  }
+
   state.konva.stage.batchDraw();
   // Only reset view on initial load (not on every LOD redraw).
   if (!drawCanvasContents._initialDone) {
