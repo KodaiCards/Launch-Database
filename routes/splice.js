@@ -3245,6 +3245,51 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ─── Per-project scoped search (5.H.6) ──────────────────────────────────
+  // GET /api/splice/projects/:id/search?q=foo
+  // ILIKE search across locations, cables, closures, fibers in one project.
+  // Returns up to 10 per category with entity type label for grouped dropdown.
+  app.get('/api/splice/projects/:id/search', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    const raw = (req.query.q || '').toString().trim();
+    if (raw.length < 2) return res.json({ closures: [], cables: [], locations: [], fibers: [] });
+    const PER = 10;
+    const like = '%' + raw.replace(/[\\%_]/g, c => '\\' + c) + '%';
+    try {
+      const [locations, cables, closures, fibers] = await Promise.all([
+        pool.query(
+          `SELECT id, name, type FROM splice_locations
+            WHERE project_id = $1 AND name ILIKE $2 ESCAPE '\\' ORDER BY name LIMIT $3`,
+          [projectId, like, PER]
+        ),
+        pool.query(
+          `SELECT id, name, fiber_count FROM splice_cables
+            WHERE project_id = $1 AND (name ILIKE $2 ESCAPE '\\' OR manufacturer_part ILIKE $2 ESCAPE '\\')
+            ORDER BY name LIMIT $3`,
+          [projectId, like, PER]
+        ),
+        pool.query(
+          `SELECT cl.id, cl.model, l.name AS location_name
+             FROM splice_closures cl
+             JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1 AND cl.model ILIKE $2 ESCAPE '\\' ORDER BY cl.model LIMIT $3`,
+          [projectId, like, PER]
+        ),
+        pool.query(
+          `SELECT f.id, f.circuit_name, f.customer, f.color, f.position, c.name AS cable_name
+             FROM splice_fibers f
+             JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+             JOIN splice_cables c ON c.id = t.cable_id
+            WHERE c.project_id = $1
+              AND (f.circuit_name ILIKE $2 ESCAPE '\\' OR f.customer ILIKE $2 ESCAPE '\\')
+            ORDER BY c.name, f.position LIMIT $3`,
+          [projectId, like, PER]
+        ),
+      ]);
+      res.json({ locations: locations.rows, cables: cables.rows, closures: closures.rows, fibers: fibers.rows });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ─── Cross-project search ────────────────────────────────────────────────
   // GET /api/splice/search?q=foo
   // Case-insensitive substring search across project / location / cable /

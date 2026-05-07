@@ -5757,61 +5757,92 @@ function onSearchInput(value) {
 }
 
 async function runSearch(q) {
+  // 5.H.6 — scope to project when one is open; global search otherwise
+  const inProject = !!state.currentId;
   const host = document.getElementById('search-results');
   host.style.display = 'block';
   host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">Searching…</div>';
-  let r;
-  try { r = await api('/api/splice/search?q=' + encodeURIComponent(q)); }
-  catch (e) {
-    host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
-    return;
+
+  if (inProject) {
+    // Per-project search: locations, cables, closures, circuits
+    let r;
+    try { r = await api(`/api/splice/projects/${state.currentId}/search?q=` + encodeURIComponent(q)); }
+    catch (e) {
+      host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
+      return;
+    }
+    const total = r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
+    if (!total) { host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches in this project.</div>'; return; }
+
+    const sec = (label, rows, render) => rows.length ? `
+      <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
+        ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
+      </div>${rows.map(render).join('')}` : '';
+
+    host.innerHTML =
+      sec('Closures', r.closures, cl =>
+        `<div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(cl.model||'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span></div>`) +
+      sec('Cables', r.cables, c =>
+        `<div class="search-row" onclick="selectFromSearch('cable','${c.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span></div>`) +
+      sec('Circuits', r.fibers, f =>
+        `<div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(f.circuit_name||'(no name)')}</b>${f.customer?` <span style="color:var(--text-muted)">· ${esc(f.customer)}</span>`:''}
+          <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position}</div></div>`) +
+      sec('Service locations', r.locations, l =>
+        `<div class="search-row" onclick="selectFromSearch('location','${l.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type||'')}</span></div>`);
+  } else {
+    // Global cross-project search
+    let r;
+    try { r = await api('/api/splice/search?q=' + encodeURIComponent(q)); }
+    catch (e) {
+      host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
+      return;
+    }
+    const total = r.projects.length + r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
+    if (!total) { host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches.</div>'; return; }
+
+    const sec = (label, rows, render) => rows.length ? `
+      <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
+        ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
+      </div>
+      ${rows.map(render).join('')}
+    ` : '';
+    host.innerHTML = `
+      ${sec('Projects', r.projects, p => `
+        <div class="search-row" onclick="selectFromSearch('project','${p.id}','${p.id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(p.name)}</b> <span style="color:var(--text-muted)">${esc(p.status || '')}</span>
+        </div>
+      `)}
+      ${sec('Locations', r.locations, l => `
+        <div class="search-row" onclick="selectFromSearch('location','${l.id}','${l.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type || '')}</span>
+          <div style="font-size:10px;color:var(--text-muted)">${esc(l.project_name)}</div>
+        </div>
+      `)}
+      ${sec('Cables', r.cables, c => `
+        <div class="search-row" onclick="selectFromSearch('cable','${c.id}','${c.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span>
+          <div style="font-size:10px;color:var(--text-muted)">${esc(c.project_name)}</div>
+        </div>
+      `)}
+      ${sec('Closures', r.closures, cl => `
+        <div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${cl.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(cl.model || 'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span>
+          <div style="font-size:10px;color:var(--text-muted)">${esc(cl.project_name)}</div>
+        </div>
+      `)}
+      ${sec('Circuits', r.fibers, f => `
+        <div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${f.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(f.circuit_name || '(no circuit name)')}</b>
+          ${f.customer ? '<span style="color:var(--text-muted)"> · ' + esc(f.customer) + '</span>' : ''}
+          <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position} · ${esc(f.project_name)}</div>
+        </div>
+      `)}
+    `;
   }
-  const total = r.projects.length + r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
-  if (!total) {
-    host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches.</div>';
-    return;
-  }
-  // Each result deep-links: clicking a non-project result selects the
-  // owning project, hydrates, then sets state.selection so the inspector
-  // opens on the matched entity.
-  const sec = (label, rows, render) => rows.length ? `
-    <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
-      ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
-    </div>
-    ${rows.map(render).join('')}
-  ` : '';
-  host.innerHTML = `
-    ${sec('Projects', r.projects, p => `
-      <div class="search-row" onclick="selectFromSearch('project','${p.id}','${p.id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(p.name)}</b> <span style="color:var(--text-muted)">${esc(p.status || '')}</span>
-      </div>
-    `)}
-    ${sec('Locations', r.locations, l => `
-      <div class="search-row" onclick="selectFromSearch('location','${l.id}','${l.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type || '')}</span>
-        <div style="font-size:10px;color:var(--text-muted)">${esc(l.project_name)}</div>
-      </div>
-    `)}
-    ${sec('Cables', r.cables, c => `
-      <div class="search-row" onclick="selectFromSearch('cable','${c.id}','${c.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span>
-        <div style="font-size:10px;color:var(--text-muted)">${esc(c.project_name)}</div>
-      </div>
-    `)}
-    ${sec('Closures', r.closures, cl => `
-      <div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${cl.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(cl.model || 'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span>
-        <div style="font-size:10px;color:var(--text-muted)">${esc(cl.project_name)}</div>
-      </div>
-    `)}
-    ${sec('Circuits', r.fibers, f => `
-      <div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${f.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(f.circuit_name || '(no circuit name)')}</b>
-        ${f.customer ? '<span style="color:var(--text-muted)"> · ' + esc(f.customer) + '</span>' : ''}
-        <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position} · ${esc(f.project_name)}</div>
-      </div>
-    `)}
-  `;
   host.querySelectorAll('.search-row').forEach(el => {
     el.addEventListener('mouseenter', () => el.style.background = 'var(--surface-2)');
     el.addEventListener('mouseleave', () => el.style.background = '');
