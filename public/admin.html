@@ -2637,6 +2637,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-footer">
       <span id="pricing-gaps-summary" style="font-size:12px;color:var(--text-muted);flex:1"></span>
+      <!-- Clear all saved UI state (filter values + form drafts). Useful
+           when switching users on the same browser or resetting after testing. -->
+      <button class="btn btn-secondary btn-sm" title="Wipes all lf_filter:* and lf_form:* localStorage keys" onclick="(function(){const n=clearAllPersistedUiState();alert('Cleared '+n+' saved UI state key'+(n===1?'':'s')+'. Reload to apply.');})()" style="margin-right:auto"><i class="fa-solid fa-eraser"></i> Clear all saved UI state</button>
       <button class="btn btn-primary" onclick="closeModal('settings-modal')">Done</button>
     </div>
   </div>

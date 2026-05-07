@@ -328,3 +328,58 @@ involved — launcher is purely a presentation layer.
    `portal.launchfiber.com` is the bookmark of record for everyone.
 
 *Last updated 2026-05-07 — Phase 1 + Phase 2 built and pushed.*
+
+---
+
+## UX Persistence Layer (admin.html) — 2026-05-07
+
+Implemented in 5 commits on `claude/splice-matrix-railway-setup-IIG3Q`.
+
+### localStorage key scheme
+
+#### Filter keys (`lf_filter:<tab>:<element-id>`)
+
+| Key | Element | Tab |
+|-----|---------|-----|
+| `lf_filter:dashboard:dash-period` | Period dropdown | Dashboard |
+| `lf_filter:dashboard:dash-month`  | Month dropdown  | Dashboard |
+| `lf_filter:dashboard:dash-year`   | Year dropdown   | Dashboard |
+| `lf_filter:projects:proj-status-filter` | Status | Projects |
+| `lf_filter:projects:proj-type-filter`   | Type   | Projects |
+| `lf_filter:projects:proj-search`        | Search | Projects |
+| `lf_filter:projects:proj-client-filter` | Client | Projects |
+| `lf_filter:hours:hrs-period`   | Period   | Hours |
+| `lf_filter:hours:hrs-month`    | Month    | Hours |
+| `lf_filter:hours:hrs-year`     | Year     | Hours |
+| `lf_filter:hours:hrs-groupby`  | Group by | Hours |
+| `lf_filter:billing:billing-year` | Year   | Billing |
+| `lf_filter:revenue:rev-year`   | Year     | Revenue |
+| `lf_filter:rus:insp-period`    | Period   | RUS |
+| `lf_filter:rus:insp-month`     | Month    | RUS |
+| `lf_filter:rus:insp-status`    | Status   | RUS |
+
+Values capped at 200 characters. Per-tab filter-xmark icon buttons
+appear in the tab toolbar whenever any key for that tab is stored.
+
+#### Form draft keys (`lf_form:<modal-id>`)
+
+| Key | Modal | Notes |
+|-----|-------|-------|
+| `lf_form:project-modal` | Add Project | New records only; edit uses server autosave |
+
+Draft JSON is capped at 50 KB. A yellow banner ("Draft restored —
+saved N min ago | Discard?") appears at the top of the modal body
+when a draft is found. Draft is cleared on successful save;
+survives Cancel/Close so the next open re-offers it.
+
+### Tab persistence
+
+`showView(view)` calls `history.replaceState(null, '', '#' + view)`.
+`init()` reads `location.hash` and routes to that view on load.
+`popstate` listener handles browser back/forward.
+
+### Clearing all state
+
+Settings modal footer → **Clear all saved UI state** button calls
+`clearAllPersistedUiState()` which removes every `lf_filter:*` and
+`lf_form:*` key and alerts the count. Page reload applies the reset.
