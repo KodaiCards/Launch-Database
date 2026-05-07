@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/launcher-back.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -582,6 +583,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/keyboard.js" defer></script>
 </head>
 <body>
+<a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
+  <i class="fa-solid fa-arrow-left"></i> Launcher
+</a>
+<script>
+fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
+</script>
 
 <!-- Undo bar — fixed to bottom of viewport. showUndoBar() makes it visible
      with a 15s countdown; user can click Undo to replay or X to dismiss. -->

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Launch Fiber — Splice Matrix</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="/launcher-back.css">
 <!-- Inter font — VETRO-matched typography (TBD-VERIFY exact stack) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -498,6 +499,14 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 </style>
 </head>
 <body>
+<a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
+  <i class="fa-solid fa-arrow-left"></i> Launcher
+</a>
+<script>
+fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
+</script>
 
 <header class="header">
   <div class="logo"><i class="fa-solid fa-network-wired"></i> Splice Matrix</div>
