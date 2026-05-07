@@ -971,3 +971,48 @@ Splicers carry this document in the field. Ran in parallel with Phase 5.F.
 *Last updated 2026-05-07 — Phase 5.G PDF v2 complete (5 commits).*
 *Phase 5.F ran in parallel at b1a4d8d–263a668.*
 *Phase 5.E shipped at 4c60c58–2268ca9.*
+
+---
+
+## Phase 5.H — UX polish round 2 + custom features
+
+**Audit reference:** `SPLICE_MATRIX_SUGGESTIONS.md §4.1, §4.2, §4.3, §4.4, §4.5, §4.9 + custom-layer deferred item from 5.D.7`
+**Files touched:** `public/splice.html`, `routes/splice.js`, `migrations/0028_splice_custom_features.sql`, `SPLICE_BUILD_PLAN.md`
+
+### Commits
+
+| # | SHA | Task |
+|---|-----|------|
+| 1 | `52739c7` | Empty states for no-project / no-splices / no-closures — centered card with icon + headline + body + CTA buttons; Matrix differentiates "no splices" from "filtered too narrow" |
+| 2 | `38438c1` | Sidebar restructured into Layers/Actions/Imports/Summary tabs — tabs visible only when a project is open; search bar placeholder updates with scope |
+| 3 | `d1fe376` | Compact editing/lock pill — collapses to 32px icon-only circle; CSS max-width transition expands on hover to show full text + Release action |
+| 4 | `fd9ea9f` | Per-type location marker shapes + per-type MapLibre layer split — SDF canvas sprites for 8 shapes; 11 per-type layers with click/hover handlers; layer tree shows SVG shape swatches |
+| 5 | `116acbb` | Map legend overlay — collapsible "Legend" pill bottom-right; lists cables by color swatch + locations by shape icon; live-updates on layer visibility change |
+| 6 | `8399311` | Search bar — scope clarity + result dropdown — per-project `/projects/:id/search` endpoint; in-project results grouped by entity type; global fallback when no project open |
+| 7 | `5b4227a` | Custom-layer feature adding — drawing tools (point/line/polygon), backend CRUD endpoints, hydrate includes custom_features, MapLibre render per layer |
+| 8 | *(this commit)* | Plan doc — Phase 5.H documentation |
+
+### Key design decisions
+
+- **Empty-state CTA wording:** "No project open" / "No closures yet" / "No splices yet" — brief, actionable headlines matching Linear/Notion pattern.
+- **Sidebar tab ordering:** Layers (default, most-used) → Actions → Imports → Summary. Layers first because the map is the entry point.
+- **Legend collapsed by default:** Shows "Legend" pill only; click to expand. Avoids obscuring bottom-right map corner on startup.
+- **Custom-feature attribute form for v1:** Simple name input + free-form JSON textarea (not a structured form) — acceptable for v1; structured attribute schema is deferred to Phase 5.I.
+- **Migration 0028:** Idempotent (IF NOT EXISTS + DO $$ column rename block) because the `splice_custom_features` table was forward-declared in migration 0027 with slightly different column names.
+- **Per-type sprite approach:** Canvas-generated SDF images (32×32) loaded via `map.addImage(..., { sdf: true })`; `icon-color` paint property tints them. Falls back to circle layers if SDF fails.
+
+### Owner-test checklist
+
+1. Fresh load with no project → centered "Create project" CTA, not gray void — YES (5.H.1)
+2. Open project with 0 splices, view Matrix → "No splices yet" + Open Diagram CTA — YES (5.H.1)
+3. Open project with 0 closures → "No closures yet" + Add closure CTA — YES (5.H.1)
+4. Sidebar shows tabs (Layers/Actions/Imports/Summary), only one active at a time — YES (5.H.2)
+5. Editing pill is icon-only by default; expands on hover — YES (5.H.3)
+6. Map markers show different shapes per type — YES (5.H.4, via SDF canvas sprites)
+7. Map has a collapsible legend bottom-right — YES (5.H.5)
+8. Type 2+ chars in search → grouped dropdown; clicking selects + zooms — YES (5.H.6)
+9. "+ New Layer" → custom layer in tree; "+ Add feature" → placement mode → persists + renders — YES (5.H.7)
+
+---
+
+*Last updated 2026-05-07 — Phase 5.H UX polish round 2 complete (7 commits + plan doc).*
