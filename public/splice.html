@@ -5065,7 +5065,19 @@ function switchView(view) {
   document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
   document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
   document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
-  if (isMap) initMapIfNeeded();
+  if (isMap) {
+    initMapIfNeeded().then(() => {
+      // 5.E.1 — MapLibre caches 0×0 if the canvas pane had no width when
+      // the map was first constructed. Force a resize + fit whenever the
+      // user enters standalone Map view so the basemap fills the pane.
+      setTimeout(() => {
+        if (state.map) {
+          state.map.resize();
+          mapFitData();
+        }
+      }, 50);
+    });
+  }
   // Resize Konva back to full width after leaving split.
   if (isDiag && state.konva) {
     setTimeout(() => {
