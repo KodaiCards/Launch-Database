@@ -2489,6 +2489,13 @@ function renderCableInspector(cableId) {
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Bill of Materials</div>
       <table class="table" style="font-size:11px">
         <tbody>
+          <tr><th>Category</th><td>
+            <select style="font-size:10px;padding:1px 3px;border:1px solid var(--vetro-divider)" onchange="setCableCategory('${cableId}',this.value)" ${isReadOnly()?'disabled':''}>
+              ${['unclassified','backbone','lateral','drop','pigtail','conduit','legacy'].map(cat =>
+                `<option value="${cat}" ${(cable.category||'unclassified')===cat?'selected':''}>${cat.charAt(0).toUpperCase()+cat.slice(1)}</option>`
+              ).join('')}
+            </select>
+          </td></tr>
           <tr><th>Cable type</th><td>${esc(cable.construction_type||'—')}</td></tr>
           <tr><th>Fiber count</th><td>${cable.fiber_count}f</td></tr>
           <tr><th>Length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
@@ -3960,6 +3967,18 @@ function openAddCable() {
           </select></div>
       </div>
       <div class="row">
+        <div class="field"><label>Category <span style="color:var(--vetro-text-muted);font-weight:400">(for map layer)</span></label>
+          <select id="m-cable-cat">
+            <option value="unclassified" selected>Unclassified</option>
+            <option value="backbone">Backbone</option>
+            <option value="lateral">Lateral</option>
+            <option value="drop">Drop</option>
+            <option value="pigtail">Pigtail</option>
+            <option value="conduit">Conduit</option>
+            <option value="legacy">Legacy</option>
+          </select></div>
+      </div>
+      <div class="row">
         <div class="field" style="flex:0 0 50%"><label>Mfr part (optional)</label>
           <input id="m-cable-part" placeholder="optional"></div>
       </div>
@@ -3978,6 +3997,7 @@ function openAddCable() {
           name: document.getElementById('m-cable-name').value.trim(),
           fiber_count: parseInt(document.getElementById('m-cable-fc').value, 10),
           construction_type: document.getElementById('m-cable-ct').value,
+          category: document.getElementById('m-cable-cat').value,
           tube_size_fibers: parseInt(document.getElementById('m-cable-tube-size').value, 10),
           from_location_id: document.getElementById('m-cable-from').value || null,
           to_location_id: document.getElementById('m-cable-to').value || null,
@@ -4407,6 +4427,18 @@ function openStrandMetadataEditor(cableId) {
       } catch (e) { toast(e.message, 'error'); }
     },
   });
+}
+
+// 5.D.4: Update cable category inline from inspector dropdown
+async function setCableCategory(cableId, category) {
+  if (isReadOnly()) return;
+  try {
+    const updated = await api(`/api/splice/cables/${cableId}/category`, 'PUT', { category });
+    const cable = state.data.cables.find(c => c.id === cableId);
+    if (cable) cable.category = updated.category;
+    if (state.map) refreshMapLayers();  // update map layer colors
+    toast(`Category set to ${category}`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function deleteCable(cableId) {
