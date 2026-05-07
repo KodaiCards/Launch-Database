@@ -9,6 +9,8 @@
 // Wiring (in server.js):
 //   require('./routes/clients')(app, pool, { requireAdmin });
 
+const { broadcast } = require('./_sse');
+
 module.exports = function installClientsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
 
@@ -31,6 +33,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
         'INSERT INTO clients (name, notes) VALUES ($1,$2) RETURNING *',
         [name, notes]
       );
+      broadcast('admin', 'client_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -50,6 +53,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
          show_work_order === undefined ? null : show_work_order]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
+      broadcast('admin', 'client_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -75,6 +79,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
       }
       const r = await pool.query('DELETE FROM clients WHERE id=$1 RETURNING name', [req.params.id]);
       if (!r.rows[0]) return res.status(404).json({ error: 'Client not found' });
+      broadcast('admin', 'client_deleted', { id: req.params.id, name: r.rows[0].name });
       res.json({ ok: true, deleted_name: r.rows[0].name });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

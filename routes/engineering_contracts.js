@@ -15,6 +15,7 @@
 //   gfr   — GF(R) program.
 //   other — Anything else; generic treatment.
 const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+const { broadcast } = require('./_sse');
 
 function normalizeProgram(input) {
   if (input === null || input === undefined || input === '') return null;
@@ -103,6 +104,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
         [client_id, String(name).trim(), contract_number || null, loan_name || null, notes || null, normalizedProgram]
       );
+      broadcast('admin', 'engineering_contract_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
@@ -137,6 +139,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
         params
       );
       if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+      broadcast('admin', 'engineering_contract_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
@@ -163,6 +166,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+      broadcast('admin', 'engineering_contract_deleted', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) {
       console.error('[engineering-contracts:delete]', e && e.message);

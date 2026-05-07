@@ -12,6 +12,7 @@
 
 const { updateProjectHours } = require('./_helpers');
 const invoiceGenerator = require('../invoice_generator');
+const { broadcast } = require('./_sse');
 
 module.exports = function installInvoicesRoutes(app, pool, mw) {
   const { requireManagerOrAdmin } = mw;
@@ -199,6 +200,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
       // Delete the invoice (cascade deletes invoice_items)
       await pool.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
 
+      broadcast('admin', 'invoice_voided', { id: req.params.id, unbilled_projects: projectIds.length });
       res.json({ ok: true, unbilled_projects: projectIds.length });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

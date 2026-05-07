@@ -17,6 +17,7 @@ const {
   collectProjectTree,
   calcProjectFinancials,
 } = require('./_helpers');
+const { broadcast } = require('./_sse');
 
 module.exports = function installProjectsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
@@ -273,6 +274,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
       }
 
+      broadcast('admin', 'project_added', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -419,6 +421,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         req.params.id,
         isRollupFlag === undefined ? null : isRollupFlag,
       ]);
+      broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -430,6 +433,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // make the project undeletable AND keep it visible in the batch UI.
       await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [req.params.id]);
       await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
+      broadcast('admin', 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -489,6 +493,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       if (proj[0] && proj[0].parent_id) {
         await updateProjectHours(proj[0].parent_id);
       }
+      broadcast('admin', 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -553,6 +558,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         permit_documents: pdRes.rows,
         billing_batch_items: bbiRes.rows,
       });
+      // Notify listeners for every deleted project (tree may be large;
+      // broadcast the root id only to avoid a fire-hose of payloads).
+      broadcast('admin', 'project_deleted', { id: req.params.id, tree: true, deleted_count: projects.length });
       res.json({
         ok: true,
         deleted_projects: projects.length,

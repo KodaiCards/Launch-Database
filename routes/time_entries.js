@@ -11,6 +11,7 @@
 // logging hiccup never turns a successful entry mutation into a 500.
 
 const { updateProjectHours, saveUndoBucket, snapHoursToQuarter } = require('./_helpers');
+const { broadcast } = require('./_sse');
 
 module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
@@ -161,6 +162,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     } catch (auditErr) {
       console.error('[time-entries:create-audit]', auditErr && auditErr.message);
     }
+    broadcast('admin', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id, staff_id: inserted.staff_id });
+    broadcast('team:design', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id });
+    broadcast('team:permitting', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id });
+    broadcast('team:construction', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id });
     res.json(inserted);
   });
 
@@ -188,6 +193,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       for (const pid of projectIds) {
         await updateProjectHours(pid);
       }
+      broadcast('admin', 'time_entry_added', { batch: importBatch, count: inserted.length });
+      broadcast('team:design', 'time_entry_added', { batch: importBatch, count: inserted.length });
+      broadcast('team:permitting', 'time_entry_added', { batch: importBatch, count: inserted.length });
+      broadcast('team:construction', 'time_entry_added', { batch: importBatch, count: inserted.length });
       res.json({ inserted: inserted.length, batch: importBatch });
     } catch (e) {
       await client.query('ROLLBACK');
@@ -260,6 +269,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       } catch (auditErr) {
         console.error('[time-entries:update-audit]', auditErr && auditErr.message);
       }
+      broadcast('admin', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
+      broadcast('team:design', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
+      broadcast('team:permitting', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
+      broadcast('team:construction', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
       res.json(updated);
     } catch (e) {
       console.error('[time-entries:update-outer]', e && e.message);
@@ -321,6 +334,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         console.error('[time-entries:delete-audit]', auditErr && auditErr.message);
       }
     }
+    broadcast('admin', 'time_entry_deleted', { id: req.params.id, project_id: before && before.project_id });
+    broadcast('team:design', 'time_entry_deleted', { id: req.params.id, project_id: before && before.project_id });
+    broadcast('team:permitting', 'time_entry_deleted', { id: req.params.id, project_id: before && before.project_id });
+    broadcast('team:construction', 'time_entry_deleted', { id: req.params.id, project_id: before && before.project_id });
     res.json({ ok: true, undo_token: undoToken, undo_expires_at: undoExpiresAt });
   });
 
@@ -361,6 +378,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       const undo = await saveUndoBucket(req.user && req.user.id, 'time_entries_bulk', {
         entries: snapshot.rows,
       });
+      broadcast('admin', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
+      broadcast('team:design', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
+      broadcast('team:permitting', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
+      broadcast('team:construction', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
       res.json({
         ok: true,
         deleted: result.rowCount,

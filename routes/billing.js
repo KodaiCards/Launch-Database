@@ -19,6 +19,8 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+const { broadcast } = require('./_sse');
+
 module.exports = function installBillingRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, invoiceGenerator } = mw;
 
@@ -181,6 +183,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       }
 
       await client.query('COMMIT');
+      broadcast('admin', 'invoice_created', { id: invoiceId, total, line_count: lineItems.length });
       res.json({ ok: true, invoice_id: invoiceId, total, line_count: lineItems.length });
     } catch (e) {
       await client.query('ROLLBACK');
@@ -302,6 +305,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         );
       }
       await client.query('COMMIT');
+      broadcast('admin', 'batch_committed', { id: batch.id, name: batch.name });
       res.json(batch);
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
@@ -321,6 +325,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Batch not found' });
+      broadcast('admin', 'batch_voided', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) {
       console.error('[batches:delete]', e && e.message);
@@ -395,6 +400,8 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       // Delete the batch (cascades items)
       await client.query(`DELETE FROM billing_batches WHERE id = $1`, [req.params.id]);
       await client.query('COMMIT');
+      broadcast('admin', 'invoice_created', { id: inv.id, batch_id: req.params.id, total: bRows[0].total_amount });
+      broadcast('admin', 'batch_committed', { id: req.params.id, invoice_id: inv.id });
       res.json({ ok: true, invoice: inv, line_count: lineCount, total: bRows[0].total_amount });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}

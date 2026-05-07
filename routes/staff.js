@@ -12,6 +12,8 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+const { broadcast } = require('./_sse');
+
 module.exports = function installStaffRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
 
@@ -41,6 +43,10 @@ module.exports = function installStaffRoutes(app, pool, mw) {
         'INSERT INTO staff (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET active=true RETURNING *',
         [String(name).trim()]
       );
+      broadcast('admin', 'staff_added', { id: rows[0].id, name: rows[0].name });
+      broadcast('team:design', 'staff_added', { id: rows[0].id, name: rows[0].name });
+      broadcast('team:permitting', 'staff_added', { id: rows[0].id, name: rows[0].name });
+      broadcast('team:construction', 'staff_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -68,6 +74,10 @@ module.exports = function installStaffRoutes(app, pool, mw) {
         params
       );
       if (!rows[0]) return res.status(404).json({ error: 'Staff member not found' });
+      broadcast('admin', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
+      broadcast('team:design', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
+      broadcast('team:permitting', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
+      broadcast('team:construction', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'Another staff member already uses that name' });
@@ -118,11 +128,19 @@ module.exports = function installStaffRoutes(app, pool, mw) {
           });
         }
         await pool.query('DELETE FROM staff WHERE id = $1', [id]);
+        broadcast('admin', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
+        broadcast('team:design', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
+        broadcast('team:permitting', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
+        broadcast('team:construction', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
         return res.json({ ok: true, mode: 'hard', deleted_name: cur.rows[0].name });
       }
 
       // Soft-delete: flip active=false. Re-activate by PUT { active: true }.
       await pool.query('UPDATE staff SET active = false WHERE id = $1', [id]);
+      broadcast('admin', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
+      broadcast('team:design', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
+      broadcast('team:permitting', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
+      broadcast('team:construction', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
       res.json({ ok: true, mode: 'soft', deactivated_name: cur.rows[0].name, time_entries });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
