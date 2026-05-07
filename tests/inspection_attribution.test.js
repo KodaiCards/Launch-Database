@@ -59,10 +59,12 @@ async function leafProject(opts) {
 }
 
 // Create a rollup project (is_rollup=TRUE, no job_id) as the parent.
+// project_type is NOT NULL in the schema with no default — stamp 'other'
+// since rollups carry no meaningful type.
 async function rollupProject({ name, client_id, contract_id }) {
   const { rows } = await pool.query(
-    `INSERT INTO projects (name, client_id, contract_id, is_rollup, status)
-       VALUES ($1, $2, $3, TRUE, 'active') RETURNING *`,
+    `INSERT INTO projects (name, client_id, contract_id, is_rollup, status, project_type)
+       VALUES ($1, $2, $3, TRUE, 'active', 'other') RETURNING *`,
     [name || uniqueTag('rollup'), client_id, contract_id]
   );
   const p = rows[0];
