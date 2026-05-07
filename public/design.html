@@ -1745,5 +1745,48 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
   if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
 }).catch(()=>{});
 </script>
+<!-- SSE live-update subscriber for Design Portal.
+     Subscribes to time-entry + project events for the design team channel. -->
+<script>
+(function() {
+  const callIfExists = (name) => {
+    try { if (typeof window[name] === 'function') return window[name](); } catch(e) {}
+  };
+  let _sseSource = null;
+  const _sseTimers = {};
+
+  function _debounce(key, fn) {
+    clearTimeout(_sseTimers[key]);
+    _sseTimers[key] = setTimeout(fn, 500);
+  }
+
+  function startSse() {
+    if (_sseSource) return;
+    if (!('EventSource' in window)) return;
+    try {
+      _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
+      _sseSource.addEventListener('error', () => {
+        _sseSource.close();
+        _sseSource = null;
+        setTimeout(startSse, 5000);
+      });
+      ['time_entry_added', 'time_entry_updated', 'time_entry_deleted',
+       'time_entries_bulk_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, () => _debounce('hours', () => callIfExists('loadHours')));
+      });
+      ['project_added', 'project_updated', 'project_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, () => _debounce('projects', () => callIfExists('loadProjects')));
+      });
+      ['staff_added', 'staff_updated', 'staff_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, () => _debounce('staff', () => {
+          callIfExists('loadStaff');
+        }));
+      });
+    } catch (e) { console.error('[sse] init failed', e); }
+  }
+
+  window.addEventListener('load', startSse);
+})();
+</script>
 </body>
 </html>

@@ -1268,5 +1268,41 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
   if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
 }).catch(()=>{});
 </script>
+<!-- SSE live-update subscriber for Time Clock portal.
+     Engineers subscribe to team events; any time-entry change re-renders
+     the weekly view so the log stays current across tabs. -->
+<script>
+(function() {
+  let _sseSource = null;
+  let _sseTimer = null;
+
+  function _tcDebounce() {
+    clearTimeout(_sseTimer);
+    _sseTimer = setTimeout(() => {
+      if (typeof loadWeek === 'function') loadWeek();
+    }, 500);
+  }
+
+  function startSse() {
+    if (_sseSource) return;
+    if (!('EventSource' in window)) return;
+    try {
+      _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
+      _sseSource.addEventListener('error', () => {
+        _sseSource.close();
+        _sseSource = null;
+        setTimeout(startSse, 5000);
+      });
+      ['time_entry_added', 'time_entry_updated', 'time_entry_deleted',
+       'time_entries_bulk_deleted', 'project_added', 'project_updated',
+       'project_deleted', 'staff_added', 'staff_updated', 'staff_deleted'].forEach(ev => {
+        _sseSource.addEventListener(ev, _tcDebounce);
+      });
+    } catch (e) { console.error('[sse] init failed', e); }
+  }
+
+  window.addEventListener('load', startSse);
+})();
+</script>
 </body>
 </html>
