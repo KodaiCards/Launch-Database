@@ -824,7 +824,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)"></th><th>Project</th><th>Client / Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)"></th><th>Project</th><th>Client / Const. Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="projects-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -1432,7 +1432,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
             <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <input type="text" id="qa-parent-name" placeholder="Parent project name (e.g. Reconnect 3 — Contract 3)" style="margin-bottom:6px">
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/contract will be inherited.</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/construction contract will be inherited.</div>
               <div style="display:flex;gap:6px;justify-content:flex-end">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('parent', false)">Cancel</button>
                 <button type="button" class="btn btn-primary btn-sm" onclick="quickAddParent()"><i class="fa-solid fa-check"></i> Add</button>
@@ -1485,7 +1485,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <label>Construction Contract</label>
             <div style="display:flex;gap:6px">
               <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new contract"><i class="fa-solid fa-plus"></i></button>
+              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new construction contract"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
@@ -3504,7 +3504,7 @@ function renderPrintPdfBody(result) {
       <div style="color:var(--text-muted)">Engineering Contract</div><div>${esc(m.engineering_contract_name || '—')}${m.loan_name ? ` <span style="color:var(--text-muted)">· loan: ${esc(m.loan_name)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Job</div><div>${esc(m.job_name || '—')}${m.job_billing_code ? ` <span style="font-family:monospace;color:var(--text-muted)">${esc(m.job_billing_code)}</span>` : ''}</div>
       <div style="color:var(--text-muted)">Type</div><div>${m.job_billing_type === 'footage' ? '<span style="background:var(--info-light);color:var(--info-text);padding:1px 8px;border-radius:8px;font-size:11px">Footage</span>' : '<span style="background:var(--success-light);color:var(--success-text);padding:1px 8px;border-radius:8px;font-size:11px">Hourly</span>'}</div>
-      <div style="color:var(--text-muted)">Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
+      <div style="color:var(--text-muted)">Construction Contracts</div><div>${(m.contracts || []).map(c => `<span style="background:var(--white);border:1px solid var(--gray-border);padding:2px 8px;border-radius:8px;font-size:11px;margin-right:4px">${esc(c.friendly_label || c.contract_number)}</span>`).join('') || '—'}</div>
       <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
       <div style="color:var(--text-muted)">Billing Month</div>
       <div>
