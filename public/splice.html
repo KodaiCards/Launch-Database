@@ -116,6 +116,10 @@
 /* ── Dark mode — override VETRO tokens with dark-surface equivalents ───────
    Research/07 did not cover dark mode; values are hand-tuned for contrast.  */
 html[data-theme="dark"]{
+  /* 5.E.3 — deep saturated navy header token (overrides the washed-out #4A90D9
+     that previously made dark-mode look LESS premium than light-mode).
+     --header-bg is consumed by .header; other surfaces keep their existing tokens. */
+  --header-bg:#0B1A2E;
   --vetro-primary:#4A90D9;
   --vetro-primary-dark:#1B5FA0;
   --vetro-primary-light:#1E3A5C;
@@ -154,8 +158,8 @@ a:hover{text-decoration:underline}
 
 /* ── 5.C.3 VETRO layout chrome ───────────────────────────────────────────── */
 
-/* Header — VETRO navy (#003F72) solid bar, 52px */
-.header{background:var(--vetro-primary);color:#fff;padding:0 16px;height:var(--header-height);display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);position:fixed;top:0;left:0;right:0;z-index:300}
+/* Header — VETRO navy (#003F72) solid bar, 52px. In dark mode --header-bg (#0B1A2E) overrides. */
+.header{background:var(--header-bg,var(--vetro-primary));color:#fff;padding:0 16px;height:var(--header-height);display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);position:fixed;top:0;left:0;right:0;z-index:300}
 .header .logo{font-weight:700;font-size:14px;letter-spacing:0.3px;display:flex;align-items:center;gap:8px}
 .header .divider{width:1px;height:22px;background:rgba(255,255,255,.25)}
 .header .title{font-size:13px;font-weight:500;flex:1;display:flex;align-items:center;gap:8px}
