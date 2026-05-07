@@ -254,6 +254,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   transition:background 0.12s;
 }
 .attr-table-toggle:hover{background:var(--vetro-primary-dark)}
+/* Lift MapLibre attribution + scale controls above the 28px toggle bar so the
+   required basemap copyright text (Mapbox/Esri TOS) stays visible. */
+#map-stage .maplibregl-ctrl-bottom-left,
+#map-stage .maplibregl-ctrl-bottom-right{bottom:30px}
 
 /* The docked bottom attribute table panel */
 .bottom-attr-table{
@@ -348,7 +352,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 /* 5.E.4: split-mode view-tabs inherits flex-row from .canvas-pane — no absolute override needed. */
 
 /* 5.E.7 — Undo snackbar: bottom-center, slides up, stacks vertically */
-.undo-snackbar-stack{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:9999;pointer-events:none}
+.undo-snackbar-stack{position:fixed;bottom:42px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:9999;pointer-events:none}
 .undo-snackbar{display:flex;align-items:center;gap:10px;background:#1A2535;color:#fff;border:1px solid rgba(255,255,255,.15);padding:8px 14px 8px 12px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.35);pointer-events:all;animation:snack-in .2s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes snack-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .undo-snackbar .undo-btn{padding:4px 10px;border-radius:4px;background:var(--vetro-route-active,#68BD45);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:background .1s}
