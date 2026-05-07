@@ -4772,7 +4772,7 @@ async function _renderSpliceHtml(data, pageSize, opts = {}) {
               ${cl.notes ? '· ' + _esc(cl.notes) : ''}
             </div>
           </div>
-          ${qr ? `<div class="qr">${qr}<div class="qr-cap">scan to upload<br>field markup</div></div>` : ''}
+          ${qr ? `<div class="qr">${qr}<div class="qr-cap">${projectPublicToken ? 'live record<br>this closure' : 'scan to upload<br>field markup'}</div></div>` : ''}
         </header>
         ${storedSection}
         ${slackSection}
