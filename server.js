@@ -355,56 +355,6 @@ if (PORTAL_MODE) {
     next();
   });
 
-  // Serve portal HTML at root — BEFORE express.static grabs index.html. Inject
-  // ADMIN_API_BASE so the portal frontend knows where to POST file uploads
-  // and where to read /uploads/* PDFs (since those live on admin's volume,
-  // not on portal containers).
-  const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
-                   : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
-                   : PORTAL_MODE === 'customer' ? 'customer.html'
-                   : PORTAL_MODE === 'splice' ? 'splice.html'
-                   : 'design.html';
-  const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
-
-  // /uploads/* on a portal redirects to admin's /uploads/* — this is critical
-  // because uploaded PDFs live on admin's persistent volume, NOT on portal
-  // containers (which have ephemeral storage and lose files on every redeploy).
-  // Without this, viewing a PDF from a portal returns "File not found" because
-  // the portal's local filesystem is empty.
-  app.get('/uploads/*', (req, res) => {
-    if (!ADMIN_API_BASE) {
-      return res.status(503).json({
-        error: 'ADMIN_API_BASE env var not set on this portal — cannot resolve /uploads. Set it to your admin service URL.'
-      });
-    }
-    return res.redirect(302, ADMIN_API_BASE.replace(/\/+$/, '') + req.originalUrl);
-  });
-
-  app.get('/', (req, res) => {
-    try {
-      const filePath = path.join(__dirname, 'public', portalFile);
-      let html = fs.readFileSync(filePath, 'utf8');
-      // Inject admin URL right after <head> so it's available to all scripts
-      const inject = `<script>window.ADMIN_API_BASE = ${JSON.stringify(ADMIN_API_BASE)};</script>`;
-      if (html.includes('</head>')) {
-        html = html.replace('</head>', inject + '</head>');
-      } else {
-        html = inject + html;  // fallback
-      }
-      res.set('Content-Type', 'text/html; charset=utf-8').send(html);
-    } catch (e) {
-      res.status(500).send('Portal HTML load failed: ' + e.message);
-    }
-  });
-  // Block direct access to the main app in portal mode
-  app.get('/index.html', (req, res) => {
-    res.redirect('/');
-  });
-  if (!ADMIN_API_BASE) {
-    console.warn('⚠ ADMIN_API_BASE env var not set — portal upload routing and PDF viewing will fall back to relative URLs (which will 404 on this portal). Set ADMIN_API_BASE to your admin service URL like "https://launch-database-production-xyz.up.railway.app".');
-  } else {
-    console.log('✓ Portal will route file uploads + /uploads/* PDFs to:', ADMIN_API_BASE);
-  }
 }
 
 // Login page — public, no auth required (handled by the public-path check above).
@@ -722,18 +672,60 @@ app.use('/api', (err, req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PORTAL ROUTES
+// PORTAL ROUTES — named path aliases for the portal HTMLs
+// These remain available as direct deep-links even without PORTAL_MODE.
 app.get('/permitting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'permitting.html')));
 app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'design.html')));
 
-// SPA FALLBACK — serve the portal HTML or main app depending on PORTAL_MODE
-// ─────────────────────────────────────────────────────────────────────────────
+// Old bookmark /index.html → redirect to /admin.html
+app.get('/index.html', (req, res) => res.redirect('/admin.html'));
 
-const SPA_FILE = PORTAL_MODE === 'permitting' ? 'permitting.html'
-               : PORTAL_MODE === 'design' ? 'design.html'
-               : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
-               : PORTAL_MODE === 'splice' ? 'splice.html'
-               : 'index.html';
+// ─────────────────────────────────────────────────────────────────────────────
+// PORTAL_MODE BACKWARD-COMPAT — if PORTAL_MODE is set, honor the old single-
+// portal-service behavior (serve that portal's HTML at '/'). This is the
+// rollback path: if the launcher rollout has a critical bug, re-set
+// PORTAL_MODE on Railway and each service immediately resumes as before.
+// When PORTAL_MODE is NOT set, all portals are reachable via their paths and
+// the launcher serves as the unified entry point.
+if (PORTAL_MODE) {
+  const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
+                   : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
+                   : PORTAL_MODE === 'customer' ? 'customer.html'
+                   : PORTAL_MODE === 'splice' ? 'splice.html'
+                   : 'design.html';
+  const ADMIN_API_BASE = process.env.ADMIN_API_BASE || '';
+
+  app.get('/uploads/*', (req, res) => {
+    if (!ADMIN_API_BASE) {
+      return res.status(503).json({
+        error: 'ADMIN_API_BASE env var not set on this portal — cannot resolve /uploads. Set it to your admin service URL.'
+      });
+    }
+    return res.redirect(302, ADMIN_API_BASE.replace(/\/+$/, '') + req.originalUrl);
+  });
+
+  app.get('/', (req, res) => {
+    try {
+      const filePath = path.join(__dirname, 'public', portalFile);
+      let html = fs.readFileSync(filePath, 'utf8');
+      const inject = `<script>window.ADMIN_API_BASE = ${JSON.stringify(ADMIN_API_BASE)};</script>`;
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', inject + '</head>');
+      } else {
+        html = inject + html;
+      }
+      res.set('Content-Type', 'text/html; charset=utf-8').send(html);
+    } catch (e) {
+      res.status(500).send('Portal HTML load failed: ' + e.message);
+    }
+  });
+
+  if (!ADMIN_API_BASE) {
+    console.warn('⚠ ADMIN_API_BASE env var not set — portal upload routing and PDF viewing will fall back to relative URLs (which will 404 on this portal). Set ADMIN_API_BASE to your admin service URL.');
+  } else {
+    console.log('✓ Portal will route file uploads + /uploads/* PDFs to:', ADMIN_API_BASE);
+  }
+}
 
 // Hard 404 (JSON) for any /api/* path that didn't match a real route. Without
 // this guard, the SPA catch-all below returns the HTML body for unknown API
@@ -743,70 +735,39 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Not found', path: req.originalUrl });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOT + SPA FALLBACK
+// When PORTAL_MODE is not set: / serves the launcher; /admin.html serves the
+// admin SPA; all other portal HTMLs are served directly by express.static
+// (they're in public/ so they're already reachable at their filename paths).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// / → launcher (unless PORTAL_MODE already handled it above)
+if (!PORTAL_MODE) {
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'launcher.html'));
+  });
+}
+
+// /client/ and /client/index.html → client launcher
+app.get(['/client/', '/client/index.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'client', 'index.html'));
+});
+
 app.get('*', (req, res) => {
-  // Admin-only enforcement: when the admin HTML is being served (no PORTAL_MODE),
-  // only allow logged-in users with role='admin'. Logged-in non-admins get
-  // redirected to a portal-style 403 page that explains they don't have
-  // admin access. Anyone not logged in was already caught by the public-
-  // path middleware above.
-  if (!PORTAL_MODE && req.user && req.user.role !== 'admin') {
-    return res.status(403).send(`
-      <!DOCTYPE html><html><head><title>Access Denied</title>
-      <style>body{font-family:'Inter',sans-serif;background:#F5F7FA;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}
-      .card{background:#fff;border:1px solid #DEE2E6;border-radius:14px;padding:32px;max-width:420px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}
-      h1{font-size:22px;color:#DC3545;margin:0 0 12px 0}
-      p{color:#6C757D;font-size:14px;line-height:1.5;margin:0 0 16px 0}
-      a{color:#1B5FA0;text-decoration:none;font-weight:500}
-      a:hover{text-decoration:underline}</style></head><body>
-      <div class="card">
-        <h1>Admin Access Required</h1>
-        <p>You're signed in as <strong>${escapeHtml(req.user.username)}</strong> with role <strong>${escapeHtml(req.user.role)}</strong>.</p>
-        <p>This page requires the <strong>admin</strong> role. Ask your administrator if you need broader access.</p>
-        <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
-      </div></body></html>
-    `);
+  // PORTAL_MODE fallback: SPA for everything not already served.
+  if (PORTAL_MODE) {
+    const portalFile = PORTAL_MODE === 'permitting' ? 'permitting.html'
+                     : PORTAL_MODE === 'timeclock' ? 'timeclock.html'
+                     : PORTAL_MODE === 'customer' ? 'customer.html'
+                     : PORTAL_MODE === 'splice' ? 'splice.html'
+                     : 'design.html';
+    return res.sendFile(path.join(__dirname, 'public', portalFile));
   }
-  // Portal-mode enforcement: when PORTAL_MODE is set, the user must have
-  // access to that team — either via their primary role's team OR via
-  // extra_teams[]. Admin users always pass. This is the gate that lets a
-  // design_engineer with extra_teams=['permitting'] log in to the
-  // permitting portal and have it work.
-  //
-  // SPECIAL CASE: PORTAL_MODE='timeclock' is open to all logged-in users
-  // regardless of role/team. The time clock is a universal hours-tracking
-  // surface — every employee should be able to use it. Access to specific
-  // PROJECTS is still scoped via /api/projects, and audit + edit history
-  // is still per-user, so there's no data leak risk in opening the portal.
-  if (PORTAL_MODE && req.user && req.user.role !== 'admin' && PORTAL_MODE !== 'timeclock' && PORTAL_MODE !== 'splice') {
-    const primaryTeam = req.user.role.startsWith('design_') ? 'design'
-                      : req.user.role.startsWith('permitting_') ? 'permitting'
-                      : req.user.role.startsWith('construction_') ? 'construction'
-                      : req.user.role.startsWith('inspection_') ? 'construction'  // legacy alias
-                      : null;
-    const extras = Array.isArray(req.user.extra_teams) ? req.user.extra_teams : [];
-    // Treat any legacy 'inspection' string in extras as 'construction'
-    // so old user rows still resolve to the renamed team.
-    const accessibleRaw = [primaryTeam, ...extras].filter(Boolean)
-      .map(t => t === 'inspection' ? 'construction' : t);
-    const accessible = new Set(accessibleRaw);
-    if (!accessible.has(PORTAL_MODE)) {
-      return res.status(403).send(`
-        <!DOCTYPE html><html><head><title>Access Denied</title>
-        <style>body{font-family:'Inter',sans-serif;background:#F5F7FA;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}
-        .card{background:#fff;border:1px solid #DEE2E6;border-radius:14px;padding:32px;max-width:420px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}
-        h1{font-size:22px;color:#DC3545;margin:0 0 12px 0}
-        p{color:#6C757D;font-size:14px;line-height:1.5;margin:0 0 16px 0}
-        a{color:#1B5FA0;text-decoration:none;font-weight:500}</style></head><body>
-        <div class="card">
-          <h1>Portal Access Required</h1>
-          <p>You're signed in as <strong>${escapeHtml(req.user.username)}</strong>.</p>
-          <p>This portal requires <strong>${escapeHtml(PORTAL_MODE)}</strong> team access. Ask your administrator to add it to your account.</p>
-          <p><a href="/api/auth/logout" onclick="event.preventDefault();fetch('/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>location.href='/login')">Sign out</a></p>
-        </div></body></html>
-      `);
-    }
-  }
-  res.sendFile(path.join(__dirname, 'public', SPA_FILE));
+  // Unified mode: every portal HTML is a static file served by express.static
+  // at its own path. Unknown paths get a 404 (don't fall back to launcher for
+  // unknown URLs — that would mask real 404s as successful loads).
+  res.status(404).send('Not found');
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
