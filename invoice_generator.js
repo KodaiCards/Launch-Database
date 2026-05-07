@@ -124,7 +124,7 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 // Path to the Launch Fiber Services logo. Loaded if present, gracefully
 // skipped if missing — never throws on absent logo. Filename matches the
 // asset committed under public/img/.
-const LOGO_PATH = path.join(__dirname, 'public', 'img', 'Launch Fiber PNG.png');
+const LOGO_PATH = path.join(__dirname, 'public', 'img', 'launch-fiber-logo.png');
 
 // ─── Number formatters ────────────────────────────────────────────────────
 function fmtMoney(n) {
