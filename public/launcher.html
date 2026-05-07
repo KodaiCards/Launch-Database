@@ -32,6 +32,8 @@
   --radius-lg:10px;
   --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
   --shadow-lift:0 4px 16px rgba(0,0,0,0.16);
+  --topbar-h:52px;
+  --footer-h:48px;
 }
 html[data-theme="dark"]{
   --vetro-bg:#111827;
@@ -46,6 +48,7 @@ html[data-theme="dark"]{
   color-scheme: dark;
 }
 
+html,body{height:100%}
 body{
   font-family:var(--font-stack);
   background:var(--vetro-bg);
@@ -53,13 +56,14 @@ body{
   min-height:100vh;
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
 
 /* ── Top bar ── */
 .topbar{
   background:var(--vetro-primary);
   color:#fff;
-  height:52px;
+  height:var(--topbar-h);
   display:flex;
   align-items:center;
   padding:0 20px;
@@ -109,123 +113,200 @@ body{
 }
 .logout-btn:hover{background:rgba(255,255,255,0.22)}
 
-/* ── Main content ── */
+/* ── Main content (fills remaining viewport so the grid can expand) ── */
 .main{
   flex:1;
   display:flex;
   flex-direction:column;
-  align-items:center;
-  padding:48px 20px;
-}
-.welcome-heading{
-  font-size:22px;
-  font-weight:700;
-  color:var(--vetro-text-primary);
-  margin-bottom:8px;
-  text-align:center;
-}
-.welcome-sub{
-  font-size:13px;
-  color:var(--vetro-text-muted);
-  margin-bottom:36px;
-  text-align:center;
+  min-height:0;
+  overflow:hidden;
 }
 
-/* ── Tile grid ── */
-.tile-grid{
+/* ── Tile grid (bento adaptive layout) ──
+   Total visual footprint is constant — fills the viewport minus
+   header + footer chrome. Tile size scales inversely to count. */
+#tile-area{
+  flex:1;
+  display:flex;
+  min-height:0;
+  overflow:hidden;
+}
+.launcher-grid{
   display:grid;
-  grid-template-columns:repeat(3, 280px);
-  gap:20px;
-  justify-content:center;
   width:100%;
-  max-width:920px;
+  height:100%;
+  gap:12px;
+  padding:24px;
+  box-sizing:border-box;
 }
-@media(max-width:900px){
-  .tile-grid{grid-template-columns:repeat(2, 280px)}
-}
-@media(max-width:600px){
-  .tile-grid{grid-template-columns:1fr}
+/* Count-driven layouts */
+.launcher-grid[data-count="1"]{grid-template:1fr / 1fr}
+.launcher-grid[data-count="2"]{grid-template:1fr / 1fr 1fr}
+.launcher-grid[data-count="3"]{grid-template:1fr / 1fr 1fr 1fr}
+.launcher-grid[data-count="4"]{grid-template:1fr 1fr / 1fr 1fr}
+.launcher-grid[data-count="5"],
+.launcher-grid[data-count="6"]{grid-template:1fr 1fr / repeat(3, 1fr)}
+.launcher-grid[data-count="7"],
+.launcher-grid[data-count="8"],
+.launcher-grid[data-count="9"]{grid-template:repeat(3, 1fr) / repeat(3, 1fr)}
+/* 10+ falls back to auto-fill at standard tile size */
+.launcher-grid[data-count="10"]{
+  grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+  grid-auto-rows:minmax(180px, 1fr);
+  overflow-y:auto;
 }
 
-/* ── Individual tile ── */
+/* ── Individual tile (base / small style) ── */
 .tile{
   background:var(--vetro-bg-panel);
   border:1px solid var(--vetro-divider);
   border-radius:var(--radius-lg);
-  padding:28px 24px;
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:12px;
+  justify-content:center;
+  gap:10px;
+  padding:16px;
   cursor:pointer;
   text-decoration:none;
   color:inherit;
   transition:transform .12s, box-shadow .12s, border-color .12s;
   box-shadow:var(--shadow-panel);
+  overflow:hidden;
+  min-width:0;
+  min-height:0;
+  text-align:center;
 }
 .tile:hover{
-  transform:translateY(-2px);
   box-shadow:var(--shadow-lift);
   border-color:var(--vetro-route-active);
 }
+/* Lift-on-hover only for count >= 2 (hero shouldn't lift) */
+.launcher-grid:not([data-count="1"]) .tile:hover{
+  transform:translateY(-2px);
+}
 .tile-icon{
-  width:72px;
-  height:72px;
+  width:clamp(56px, 9vw, 96px);
+  height:clamp(56px, 9vw, 96px);
   border-radius:50%;
   background:var(--primary-light);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:28px;
   color:var(--primary);
   flex-shrink:0;
+}
+.tile-icon i{
+  font-size:clamp(22px, 4vw, 44px);
 }
 html[data-theme="dark"] .tile-icon{
   background:rgba(27,95,160,0.2);
   color:#60A5FA;
 }
 .tile-name{
-  font-size:16px;
+  font-size:clamp(14px, 1.6vw, 22px);
   font-weight:600;
-  text-align:center;
   color:var(--vetro-text-primary);
+  line-height:1.25;
 }
 .tile-desc{
-  font-size:12px;
+  font-size:clamp(11px, 1.05vw, 14px);
   color:var(--vetro-text-muted);
-  text-align:center;
   line-height:1.5;
+  max-width:42ch;
 }
 
-/* ── Empty state ── */
+/* Hero (count=1) — single huge tile */
+.launcher-grid[data-count="1"] .tile{
+  gap:24px;
+  padding:48px;
+}
+.launcher-grid[data-count="1"] .tile-icon{
+  width:clamp(96px, 14vw, 180px);
+  height:clamp(96px, 14vw, 180px);
+}
+.launcher-grid[data-count="1"] .tile-icon i{
+  font-size:clamp(44px, 7vw, 84px);
+}
+.launcher-grid[data-count="1"] .tile-name{
+  font-size:clamp(24px, 3.4vw, 44px);
+}
+.launcher-grid[data-count="1"] .tile-desc{
+  font-size:clamp(14px, 1.4vw, 18px);
+  max-width:60ch;
+}
+
+/* Large (count=2|3) — generous but not hero */
+.launcher-grid[data-count="2"] .tile,
+.launcher-grid[data-count="3"] .tile{
+  gap:18px;
+  padding:32px;
+}
+.launcher-grid[data-count="2"] .tile-icon,
+.launcher-grid[data-count="3"] .tile-icon{
+  width:clamp(72px, 10vw, 128px);
+  height:clamp(72px, 10vw, 128px);
+}
+.launcher-grid[data-count="2"] .tile-icon i,
+.launcher-grid[data-count="3"] .tile-icon i{
+  font-size:clamp(32px, 5vw, 56px);
+}
+.launcher-grid[data-count="2"] .tile-name,
+.launcher-grid[data-count="3"] .tile-name{
+  font-size:clamp(18px, 2.2vw, 30px);
+}
+
+/* Hide description on tightly packed tiles (count >= 4) */
+.launcher-grid[data-count="4"] .tile-desc,
+.launcher-grid[data-count="5"] .tile-desc,
+.launcher-grid[data-count="6"] .tile-desc,
+.launcher-grid[data-count="7"] .tile-desc,
+.launcher-grid[data-count="8"] .tile-desc,
+.launcher-grid[data-count="9"] .tile-desc,
+.launcher-grid[data-count="10"] .tile-desc{
+  display:none;
+}
+
+/* ── Empty / loading states ── */
 .empty-state{
-  text-align:center;
-  padding:60px 24px;
-  color:var(--vetro-text-muted);
-}
-.empty-state i{font-size:40px;margin-bottom:16px;display:block;opacity:0.4}
-.empty-state p{font-size:14px;line-height:1.6}
-
-/* ── Loading skeleton ── */
-.loading-state{
+  flex:1;
   display:flex;
   flex-direction:column;
   align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:60px 24px;
+  color:var(--vetro-text-muted);
+  width:100%;
+}
+.empty-state i{font-size:40px;margin-bottom:16px;display:block;opacity:0.4}
+.empty-state p{font-size:14px;line-height:1.6;max-width:420px}
+.loading-state{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
   gap:12px;
   padding:60px 24px;
   color:var(--vetro-text-muted);
   font-size:14px;
+  width:100%;
 }
 .loading-state i{font-size:24px;opacity:0.5}
 
 /* ── Footer ── */
 .footer{
-  padding:20px;
-  text-align:center;
+  height:var(--footer-h);
+  padding:0 20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-size:11px;
   color:var(--vetro-text-muted);
   border-top:1px solid var(--vetro-divider);
   flex-shrink:0;
+  background:var(--vetro-bg);
 }
 .footer a{color:var(--vetro-text-muted);text-decoration:none}
 .footer a:hover{text-decoration:underline}
@@ -243,6 +324,42 @@ html[data-theme="dark"] .tile-icon{
   transition:background .12s;
 }
 .theme-btn:hover{background:rgba(255,255,255,0.22)}
+
+/* ── Mobile (< 600px) — single column, scrollable;
+   single-tile users still get a hero filling the screen ── */
+@media(max-width:600px){
+  body{overflow:auto}
+  .main{overflow:visible}
+  #tile-area{overflow:visible}
+  .launcher-grid{
+    grid-template-columns:1fr !important;
+    grid-template-rows:auto !important;
+    grid-auto-rows:minmax(160px, auto);
+    height:auto;
+    min-height:calc(100vh - var(--topbar-h) - var(--footer-h));
+    padding:16px;
+    gap:10px;
+  }
+  .launcher-grid[data-count="1"]{
+    grid-auto-rows:1fr;
+    height:calc(100vh - var(--topbar-h) - var(--footer-h));
+  }
+  /* On mobile, multi-tile users see normal sized tiles —
+     reset the per-count clamps so they don't grow huge in a single column */
+  .launcher-grid:not([data-count="1"]) .tile{
+    padding:20px;
+    gap:10px;
+  }
+  .launcher-grid:not([data-count="1"]) .tile-icon{
+    width:64px;height:64px;
+  }
+  .launcher-grid:not([data-count="1"]) .tile-icon i{font-size:26px}
+  .launcher-grid:not([data-count="1"]) .tile-name{font-size:16px}
+  .launcher-grid:not([data-count="1"]) .tile-desc{
+    display:block;
+    font-size:12px;
+  }
+}
 </style>
 </head>
 <body>
@@ -269,9 +386,6 @@ html[data-theme="dark"] .tile-icon{
 
 <!-- Main content area -->
 <div class="main">
-  <h1 class="welcome-heading">Portal Launcher</h1>
-  <p class="welcome-sub">Select a portal to get started.</p>
-
   <div id="tile-area">
     <div class="loading-state">
       <i class="fa-solid fa-spinner fa-spin"></i>
@@ -371,7 +485,7 @@ function escHtml(v) {
   const uNameEl = document.getElementById('user-name');
   if (uNameEl) uNameEl.textContent = name;
   const footerEl = document.getElementById('footer-user');
-  if (footerEl) footerEl.textContent = name ? `Signed in as ${name} · ` : '';
+  if (footerEl) footerEl.textContent = name ? `Signed in as ${name}` : '';
 
   // Auto-redirect when exactly 1 portal and ?stay=1 is not set
   if (portals.length === 1 && !stay) {
@@ -387,7 +501,9 @@ function escHtml(v) {
   }
 
   const grid = document.createElement('div');
-  grid.className = 'tile-grid';
+  grid.className = 'launcher-grid';
+  // Cap at 10 — anything 10+ uses the auto-fill fallback
+  grid.setAttribute('data-count', String(Math.min(portals.length, 10)));
   portals.forEach(p => grid.appendChild(renderTile(p)));
   area.innerHTML = '';
   area.appendChild(grid);
