@@ -743,8 +743,14 @@ app.use('/api', (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // / → launcher (unless PORTAL_MODE already handled it above)
+// Customer-role users landing at / are redirected to /client/ (the client
+// launcher). This handles the post-login redirect for customer users whose
+// login.html sends them to / by default.
 if (!PORTAL_MODE) {
   app.get('/', (req, res) => {
+    if (req.user && req.user.role === 'customer') {
+      return res.redirect('/client/');
+    }
     res.sendFile(path.join(__dirname, 'public', 'launcher.html'));
   });
 }

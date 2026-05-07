@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Launch Fiber Client Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Design tokens (mirrors employee launcher) ── */
+:root{
+  --primary:#1B5FA0;
+  --primary-dark:#134880;
+  --primary-light:#E8F0FB;
+  --vetro-primary:#003F72;
+  --vetro-primary-dark:#002B50;
+  --vetro-route-active:#68BD45;
+  --vetro-bg:#FAFAFA;
+  --vetro-bg-panel:#FFFFFF;
+  --vetro-bg-panel-secondary:#F0F2F5;
+  --vetro-bg-hover:#EBF2FF;
+  --vetro-divider:#E5E7EB;
+  --vetro-text-primary:#1F2937;
+  --vetro-text-secondary:#6B7280;
+  --vetro-text-muted:#9CA3AF;
+  --font-stack:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --radius-md:6px;
+  --radius-lg:10px;
+  --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
+  --shadow-lift:0 4px 16px rgba(0,0,0,0.16);
+  --topbar-h:52px;
+  --footer-h:48px;
+}
+html[data-theme="dark"]{
+  --vetro-bg:#111827;
+  --vetro-bg-panel:#1F2937;
+  --vetro-bg-panel-secondary:#1A1F2B;
+  --vetro-bg-hover:#1E3A5C;
+  --vetro-divider:#374151;
+  --vetro-text-primary:#F9FAFB;
+  --vetro-text-secondary:#D1D5DB;
+  --vetro-text-muted:#6B7280;
+  --primary-light:#1E3A5C;
+  color-scheme: dark;
+}
+
+html,body{height:100%}
+body{
+  font-family:var(--font-stack);
+  background:var(--vetro-bg);
+  color:var(--vetro-text-primary);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* ── Top bar ── */
+.topbar{
+  background:var(--vetro-primary);
+  color:#fff;
+  height:var(--topbar-h);
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  gap:12px;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.topbar-logo{
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:-0.01em;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.topbar-logo i{color:var(--vetro-route-active);font-size:16px}
+.topbar-spacer{flex:1}
+.user-pill{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:20px;
+  padding:4px 12px;
+  font-size:12px;
+  font-weight:500;
+  color:#fff;
+  cursor:default;
+}
+.user-pill i{font-size:11px;opacity:0.8}
+.logout-btn{
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:500;
+  font-family:inherit;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:background .12s;
+}
+.logout-btn:hover{background:rgba(255,255,255,0.22)}
+
+/* ── Main content (fills remaining viewport) ── */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+}
+
+/* ── Tile grid (bento adaptive layout) ── */
+#tile-area{
+  flex:1;
+  display:flex;
+  min-height:0;
+  overflow:hidden;
+}
+.launcher-grid{
+  display:grid;
+  width:100%;
+  height:100%;
+  gap:12px;
+  padding:24px;
+  box-sizing:border-box;
+}
+.launcher-grid[data-count="1"]{grid-template:1fr / 1fr}
+.launcher-grid[data-count="2"]{grid-template:1fr / 1fr 1fr}
+.launcher-grid[data-count="3"]{grid-template:1fr / 1fr 1fr 1fr}
+.launcher-grid[data-count="4"]{grid-template:1fr 1fr / 1fr 1fr}
+.launcher-grid[data-count="5"],
+.launcher-grid[data-count="6"]{grid-template:1fr 1fr / repeat(3, 1fr)}
+.launcher-grid[data-count="7"],
+.launcher-grid[data-count="8"],
+.launcher-grid[data-count="9"]{grid-template:repeat(3, 1fr) / repeat(3, 1fr)}
+.launcher-grid[data-count="10"]{
+  grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+  grid-auto-rows:minmax(180px, 1fr);
+  overflow-y:auto;
+}
+
+/* ── Individual tile (base / small style) ── */
+.tile{
+  background:var(--vetro-bg-panel);
+  border:1px solid var(--vetro-divider);
+  border-radius:var(--radius-lg);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:16px;
+  cursor:pointer;
+  text-decoration:none;
+  color:inherit;
+  transition:transform .12s, box-shadow .12s, border-color .12s;
+  box-shadow:var(--shadow-panel);
+  overflow:hidden;
+  min-width:0;
+  min-height:0;
+  text-align:center;
+}
+.tile:hover{
+  box-shadow:var(--shadow-lift);
+  border-color:var(--vetro-route-active);
+}
+.launcher-grid:not([data-count="1"]) .tile:hover{
+  transform:translateY(-2px);
+}
+.tile-icon{
+  width:clamp(56px, 9vw, 96px);
+  height:clamp(56px, 9vw, 96px);
+  border-radius:50%;
+  background:var(--primary-light);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--primary);
+  flex-shrink:0;
+}
+.tile-icon i{
+  font-size:clamp(22px, 4vw, 44px);
+}
+html[data-theme="dark"] .tile-icon{
+  background:rgba(27,95,160,0.2);
+  color:#60A5FA;
+}
+.tile-name{
+  font-size:clamp(14px, 1.6vw, 22px);
+  font-weight:600;
+  color:var(--vetro-text-primary);
+  line-height:1.25;
+}
+.tile-desc{
+  font-size:clamp(11px, 1.05vw, 14px);
+  color:var(--vetro-text-muted);
+  line-height:1.5;
+  max-width:42ch;
+}
+
+/* Hero (count=1) */
+.launcher-grid[data-count="1"] .tile{
+  gap:24px;
+  padding:48px;
+}
+.launcher-grid[data-count="1"] .tile-icon{
+  width:clamp(96px, 14vw, 180px);
+  height:clamp(96px, 14vw, 180px);
+}
+.launcher-grid[data-count="1"] .tile-icon i{
+  font-size:clamp(44px, 7vw, 84px);
+}
+.launcher-grid[data-count="1"] .tile-name{
+  font-size:clamp(24px, 3.4vw, 44px);
+}
+.launcher-grid[data-count="1"] .tile-desc{
+  font-size:clamp(14px, 1.4vw, 18px);
+  max-width:60ch;
+}
+
+/* Large (count=2|3) */
+.launcher-grid[data-count="2"] .tile,
+.launcher-grid[data-count="3"] .tile{
+  gap:18px;
+  padding:32px;
+}
+.launcher-grid[data-count="2"] .tile-icon,
+.launcher-grid[data-count="3"] .tile-icon{
+  width:clamp(72px, 10vw, 128px);
+  height:clamp(72px, 10vw, 128px);
+}
+.launcher-grid[data-count="2"] .tile-icon i,
+.launcher-grid[data-count="3"] .tile-icon i{
+  font-size:clamp(32px, 5vw, 56px);
+}
+.launcher-grid[data-count="2"] .tile-name,
+.launcher-grid[data-count="3"] .tile-name{
+  font-size:clamp(18px, 2.2vw, 30px);
+}
+
+/* Hide description on tightly packed tiles (count >= 4) */
+.launcher-grid[data-count="4"] .tile-desc,
+.launcher-grid[data-count="5"] .tile-desc,
+.launcher-grid[data-count="6"] .tile-desc,
+.launcher-grid[data-count="7"] .tile-desc,
+.launcher-grid[data-count="8"] .tile-desc,
+.launcher-grid[data-count="9"] .tile-desc,
+.launcher-grid[data-count="10"] .tile-desc{
+  display:none;
+}
+
+/* ── Empty / loading states ── */
+.empty-state{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:60px 24px;
+  color:var(--vetro-text-muted);
+  width:100%;
+}
+.empty-state i{font-size:40px;margin-bottom:16px;display:block;opacity:0.4}
+.empty-state p{font-size:14px;line-height:1.6;max-width:420px}
+.loading-state{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:60px 24px;
+  color:var(--vetro-text-muted);
+  font-size:14px;
+  width:100%;
+}
+.loading-state i{font-size:24px;opacity:0.5}
+
+/* ── Footer ── */
+.footer{
+  height:var(--footer-h);
+  padding:0 20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  color:var(--vetro-text-muted);
+  border-top:1px solid var(--vetro-divider);
+  flex-shrink:0;
+  background:var(--vetro-bg);
+}
+.footer a{color:var(--vetro-text-muted);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* ── Theme toggle ── */
+.theme-btn{
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);
+  color:#fff;
+  width:36px;height:36px;
+  border-radius:6px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+  transition:background .12s;
+}
+.theme-btn:hover{background:rgba(255,255,255,0.22)}
+
+/* ── Mobile (< 600px) ── */
+@media(max-width:600px){
+  body{overflow:auto}
+  .main{overflow:visible}
+  #tile-area{overflow:visible}
+  .launcher-grid{
+    grid-template-columns:1fr !important;
+    grid-template-rows:auto !important;
+    grid-auto-rows:minmax(160px, auto);
+    height:auto;
+    min-height:calc(100vh - var(--topbar-h) - var(--footer-h));
+    padding:16px;
+    gap:10px;
+  }
+  .launcher-grid[data-count="1"]{
+    grid-auto-rows:1fr;
+    height:calc(100vh - var(--topbar-h) - var(--footer-h));
+  }
+  .launcher-grid:not([data-count="1"]) .tile{
+    padding:20px;
+    gap:10px;
+  }
+  .launcher-grid:not([data-count="1"]) .tile-icon{
+    width:64px;height:64px;
+  }
+  .launcher-grid:not([data-count="1"]) .tile-icon i{font-size:26px}
+  .launcher-grid:not([data-count="1"]) .tile-name{font-size:16px}
+  .launcher-grid:not([data-count="1"]) .tile-desc{
+    display:block;
+    font-size:12px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <i class="fa-solid fa-bolt-lightning"></i>
+    Launch Fiber
+  </div>
+  <div class="topbar-spacer"></div>
+  <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode" id="theme-btn">
+    <i class="fa-solid fa-moon" id="theme-icon"></i>
+  </button>
+  <div class="user-pill" id="user-pill">
+    <i class="fa-solid fa-user-circle"></i>
+    <span id="user-name">Loading...</span>
+  </div>
+  <button class="logout-btn" onclick="doLogout()">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    Sign out
+  </button>
+</div>
+
+<!-- Main content area -->
+<div class="main">
+  <div id="tile-area">
+    <div class="loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      Loading your portals...
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer" id="footer-bar">
+  <span id="footer-user"></span>
+</div>
+
+<script>
+// ── Theme ──
+(function(){
+  let saved;
+  try { saved = localStorage.getItem('lfs-theme'); } catch(e){}
+  if (saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme','dark');
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.className = 'fa-solid fa-sun';
+  }
+})();
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const icon = document.getElementById('theme-icon');
+  if (icon) icon.className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+  try { localStorage.setItem('lfs-theme', isDark ? 'light' : 'dark'); } catch(e){}
+  fetch('/api/auth/me/theme', {
+    method:'PUT', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({theme: isDark ? 'light' : 'dark'})
+  }).catch(()=>{});
+}
+
+// ── Logout ──
+async function doLogout(){
+  try {
+    await fetch('/api/auth/logout', {method:'POST', credentials:'include'});
+  } catch(e){}
+  window.location.href = '/login';
+}
+
+// ── Render tiles ──
+function renderTile(p) {
+  const div = document.createElement('a');
+  div.className = 'tile';
+  div.href = p.url;
+  div.setAttribute('aria-label', p.name);
+  div.innerHTML = `
+    <div class="tile-icon"><i class="fa-solid fa-${escHtml(p.icon)}"></i></div>
+    <div class="tile-name">${escHtml(p.name)}</div>
+    <div class="tile-desc">${escHtml(p.description || '')}</div>
+  `;
+  div.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = p.url;
+  });
+  return div;
+}
+
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Main load ──
+(async function(){
+  // Client launcher always queries the client audience.
+  const params = new URLSearchParams(window.location.search);
+  const stay = params.get('stay') === '1';
+
+  let data;
+  try {
+    const r = await fetch('/api/me/portals?audience=client', {credentials:'include'});
+    if (r.status === 401) { window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname + window.location.search); return; }
+    data = await r.json();
+  } catch(e) {
+    document.getElementById('tile-area').innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Could not load portals. Please refresh or sign in again.</p></div>`;
+    return;
+  }
+
+  const portals = data.portals || [];
+  const user = data.user || {};
+
+  const name = user.name || '';
+  const uNameEl = document.getElementById('user-name');
+  if (uNameEl) uNameEl.textContent = name;
+  const footerEl = document.getElementById('footer-user');
+  if (footerEl) footerEl.textContent = name ? `Signed in as ${name}` : '';
+
+  // Auto-redirect when exactly 1 portal and ?stay=1 is not set
+  if (portals.length === 1 && !stay) {
+    window.location.replace(portals[0].url);
+    return;
+  }
+
+  const area = document.getElementById('tile-area');
+
+  if (portals.length === 0) {
+    area.innerHTML = `<div class="empty-state"><i class="fa-solid fa-lock"></i><p>No portals available — contact your account manager.</p></div>`;
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'launcher-grid';
+  grid.setAttribute('data-count', String(Math.min(portals.length, 10)));
+  portals.forEach(p => grid.appendChild(renderTile(p)));
+  area.innerHTML = '';
+  area.appendChild(grid);
+})();
+</script>
+</body>
+</html>
