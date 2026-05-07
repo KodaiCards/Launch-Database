@@ -2908,6 +2908,9 @@ function showView(view) {
 // ═══════════════════════════════════════════════════════════
 async function loadClients() {
   clients = await api('/api/clients');
+  // Mirror to window so extracted JS modules (construction_contracts.js,
+  // engineering_contracts.js) can read the same cache without a separate fetch.
+  window.clients = clients;
   // Populate filters
   ['proj-client-filter'].forEach(id => {
     const el = document.getElementById(id);
@@ -2921,6 +2924,9 @@ async function loadClients() {
   const ps = document.getElementById('proj-client');
   while (ps.options.length > 1) ps.remove(1);
   clients.forEach(c => ps.add(new Option(c.name, c.id)));
+  // Notify extracted modules that the client cache is ready so they can
+  // re-populate dropdowns that may have rendered before clients loaded.
+  document.dispatchEvent(new CustomEvent('clients-loaded'));
 }
 
 async function loadStaff() {
