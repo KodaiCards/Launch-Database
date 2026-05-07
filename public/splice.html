@@ -1678,7 +1678,8 @@ function renderCanvas() {
   const bgLayer = new Konva.Layer({ listening: false });
   const cableLayer = new Konva.Layer();
   const closureLayer = new Konva.Layer();
-  const spliceLayer = new Konva.Layer({ listening: false });
+  // 5.F.4: spliceLayer now listens so splice arcs are hoverable.
+  const spliceLayer = new Konva.Layer();
   // traceLayer renders path-trace highlights on top of everything else.
   // listening:false so it never intercepts clicks.
   const traceLayer = new Konva.Layer({ listening: false });
@@ -2559,18 +2560,39 @@ function drawCanvasContents() {
     // Quadratic bezier as a Konva.Shape (custom sceneFunc) — Konva's
     // built-in Line with tension blurs control points; explicit bezier
     // is easier to reason about.
+    // 5.F.4: listening:true so hover triggers path trace.
+    const hitThickness = isRibbon ? 12 : 8;
     const bow = new Konva.Shape({
       stroke,
       strokeWidth: isRibbon ? 4 : 1.5,
       opacity: isRibbon ? 0.85 : 0.7,
       lineCap: 'round',
+      hitStrokeWidth: hitThickness,
       sceneFunc(ctx, shape) {
         ctx.beginPath();
         ctx.moveTo(x, yA);
         ctx.quadraticCurveTo(ctrlX, ctrlY, x, yB);
         ctx.fillStrokeShape(shape);
       },
-      listening: false,
+    });
+    // 5.F.4: hover → trace the full end-to-end fiber path.
+    // Cache results per session per fiber to avoid redundant API calls.
+    const fiberId4 = s.fiber_a_id;
+    bow.on('mouseenter', () => {
+      document.body.style.cursor = 'crosshair';
+      bow.strokeWidth(hitThickness / 2);
+      bow.opacity(1);
+      state.konva.stage.batchDraw();
+      _traceOnHover(fiberId4);
+    });
+    bow.on('mouseleave', () => {
+      document.body.style.cursor = 'default';
+      bow.strokeWidth(isRibbon ? 4 : 1.5);
+      bow.opacity(isRibbon ? 0.85 : 0.7);
+      state.konva.stage.batchDraw();
+    });
+    bow.on('click tap', () => {
+      traceFiberPath(fiberId4);
     });
     spliceLayer.add(bow);
 
@@ -4442,6 +4464,30 @@ function describeFiber(fiberId) {
 // ───────────────────────────────────────────────────────────────────────────
 // Path tracing (Phase 2C #11)
 // ───────────────────────────────────────────────────────────────────────────
+
+// ── 5.F.4: Hover-triggered path trace cache ──────────────────────────────────
+// Per-session cache keyed by fiber ID. Avoids repeated API calls when the
+// mouse hovers across multiple arcs for the same fiber in one session.
+// Cleared when the project is re-hydrated (state.data reassigned).
+const _traceCache = new Map();
+
+async function _traceOnHover(fiberId) {
+  if (!fiberId || !state.currentId) return;
+  // Don't re-fire if this fiber's path is already the active trace.
+  if (state.tracePath && state.tracePath.fiber_id === fiberId) return;
+  // If we have a cached result, use it immediately without an API call.
+  if (_traceCache.has(fiberId)) {
+    state.tracePath = _traceCache.get(fiberId);
+    drawCanvasContents();
+    return;
+  }
+  try {
+    const result = await api('/api/splice/fibers/' + fiberId + '/path');
+    _traceCache.set(fiberId, result);
+    state.tracePath = result;
+    drawCanvasContents();
+  } catch (_) { /* silent fail on hover — user can click to get full trace */ }
+}
 
 // Fetch the full strand path for fiber_a_id of a splice and light up the
 // canvas. We always trace from fiber_a_id (side A) so the result is
