@@ -2393,6 +2393,7 @@ function renderCableInspector(cableId) {
       <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
         <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Cable</span>
         <span style="margin-left:auto;background:var(--vetro-route-active);color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600">${esc(cable.construction_type||'buried')}</span>
+        <span style="background:${(LAYER_DEFAULTS['cable.'+(cable.category||'unclassified')]?.color||'#68BD45')};color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600">${esc(cable.category||'unclassified')}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <h3 style="margin:0;flex:1;font-size:15px;font-weight:600" id="cable-name-display-${cableId}">${esc(cable.name)}</h3>
