@@ -123,47 +123,101 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
       }
 
       // Hours attribution. For each leaf, sum time_entries on the leaf
-      // itself, PLUS time_entries on any ancestor rollup where the
-      // entry's job_title matches the leaf's job_name. Single round-trip
-      // CTE so we don't fire one query per leaf.
+      // itself, PLUS time_entries on any ancestor rollup that can be
+      // attributed to this leaf. Attribution rules (in priority order):
+      //
+      //   1. Direct hit — entry's project_id === leaf_id. Every entry
+      //      counts regardless of job_title.
+      //   2. Exact job match — ancestor entry whose job_title matches the
+      //      leaf's job_name (case-insensitive). Original behaviour.
+      //   3. Sole-leaf fallback — the ancestor rollup has EXACTLY ONE
+      //      leaf descendant with a non-null job_id. Attribute ALL of
+      //      that rollup's entries to that leaf regardless of job_title.
+      //      Handles the common case: one Inspection leaf under a WO
+      //      rollup; all the work is about that leaf even if job_title
+      //      says 'Other'.
+      //   4. Substring match — entry's job_title contains the leaf's
+      //      job_name as a substring (or vice-versa). Lower priority
+      //      than exact; only fires when no exact match claimed the entry.
+      //
+      // Anti-double-count: each entry is attributed to AT MOST ONE leaf.
+      // When multiple leaves could claim an ancestor entry we pick the
+      // best (exact > sole-leaf > substring). The CTE uses DISTINCT ON
+      // (te.id) ordered by priority so each entry_id appears once.
       const leafIds = projects.map(p => p.id);
       const { rows: hoursRows } = await pool.query(`
         WITH RECURSIVE
         leaf_ctx AS (
           -- Each leaf's id, parent_id, and the job name to match against.
           SELECT p.id AS leaf_id, p.id AS cursor_id, p.parent_id,
-                 LOWER(j.name) AS job_name_lc, 0 AS depth
+                 LOWER(j.name) AS job_name_lc, p.job_id IS NOT NULL AS has_job,
+                 0 AS depth
           FROM projects p
           LEFT JOIN jobs j ON j.id = p.job_id
           WHERE p.id = ANY($1::uuid[])
           UNION ALL
-          -- Walk up the parent chain. cursor_id moves to the parent;
-          -- depth caps at 10 to stop runaway recursion on a malformed
-          -- parent_id chain.
-          SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.depth + 1
+          -- Walk up the parent chain. cursor_id moves to the parent.
+          -- depth caps at 10 to stop runaway recursion.
+          SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.has_job,
+                 lc.depth + 1
           FROM leaf_ctx lc
           JOIN projects p ON p.id = lc.parent_id
           WHERE lc.depth < 10
         ),
-        leaf_hours AS (
-          SELECT lc.leaf_id,
-                 SUM(te.hours)::float AS hours,
-                 COUNT(DISTINCT te.staff_id)::int AS inspector_count
+        -- For each (leaf, ancestor) pair, count how many OTHER leaves in
+        -- $1 also descend from that ancestor AND have a non-null job_id.
+        -- When the count is 1 and has_job is true for this leaf, this
+        -- leaf is the sole candidate → sole-leaf fallback applies.
+        ancestor_leaf_counts AS (
+          SELECT cursor_id AS ancestor_id,
+                 COUNT(DISTINCT CASE WHEN has_job THEN leaf_id END)::int AS leaves_with_job
+          FROM leaf_ctx
+          WHERE cursor_id <> leaf_id  -- only rollup nodes
+          GROUP BY cursor_id
+        ),
+        -- Candidate attribution rows: one row per (time_entry, leaf) pair.
+        -- priority: 1=direct, 2=exact, 3=sole-leaf, 4=substring.
+        -- We pick the lowest priority number per entry_id.
+        raw_attr AS (
+          SELECT te.id AS entry_id, lc.leaf_id,
+                 te.hours, te.staff_id,
+                 CASE
+                   WHEN lc.cursor_id = lc.leaf_id
+                     THEN 1   -- direct on leaf
+                   WHEN lc.job_name_lc IS NOT NULL
+                        AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc
+                     THEN 2   -- exact job_title match
+                   WHEN lc.has_job
+                        AND lc.cursor_id <> lc.leaf_id
+                        AND alc.leaves_with_job = 1
+                     THEN 3   -- sole-leaf fallback
+                   WHEN lc.job_name_lc IS NOT NULL
+                        AND (LOWER(COALESCE(te.job_title, '')) LIKE ('%' || lc.job_name_lc || '%')
+                             OR lc.job_name_lc LIKE ('%' || LOWER(COALESCE(te.job_title, '')) || '%'))
+                        AND COALESCE(te.job_title, '') <> ''
+                     THEN 4   -- substring near-miss
+                   ELSE NULL
+                 END AS priority
           FROM leaf_ctx lc
           JOIN time_entries te ON te.project_id = lc.cursor_id
+          LEFT JOIN ancestor_leaf_counts alc ON alc.ancestor_id = lc.cursor_id
           WHERE te.entry_date BETWEEN $2 AND $3
-            AND (
-              -- Direct hit on the leaf — every entry counts regardless
-              -- of job_title text.
-              lc.cursor_id = lc.leaf_id
-              -- Ancestor hit — only count entries whose job_title text
-              -- matches the leaf's job. Without this filter, every leaf
-              -- under the same WO rollup would get attributed all of
-              -- the rollup's hours.
-              OR (lc.job_name_lc IS NOT NULL
-                  AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc)
-            )
-          GROUP BY lc.leaf_id
+        ),
+        -- Keep exactly one attribution per entry_id (lowest priority wins;
+        -- ties broken by leaf_id for determinism).
+        best_attr AS (
+          SELECT DISTINCT ON (entry_id)
+                 entry_id, leaf_id, hours, staff_id
+          FROM raw_attr
+          WHERE priority IS NOT NULL
+          ORDER BY entry_id, priority ASC, leaf_id ASC
+        ),
+        leaf_hours AS (
+          SELECT leaf_id,
+                 SUM(hours)::float AS hours,
+                 COUNT(DISTINCT staff_id)::int AS inspector_count
+          FROM best_attr
+          GROUP BY leaf_id
         )
         SELECT * FROM leaf_hours
       `, [leafIds, startDate, endDate]);
@@ -231,26 +285,52 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
           WITH RECURSIVE
           leaf_ctx AS (
             SELECT p.id AS leaf_id, p.id AS cursor_id, p.parent_id,
-                   LOWER(j.name) AS job_name_lc, 0 AS depth
+                   LOWER(j.name) AS job_name_lc, p.job_id IS NOT NULL AS has_job,
+                   0 AS depth
             FROM projects p
             LEFT JOIN jobs j ON j.id = p.job_id
             WHERE p.id = ANY($1::uuid[])
             UNION ALL
-            SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.depth + 1
+            SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.has_job,
+                   lc.depth + 1
             FROM leaf_ctx lc
             JOIN projects p ON p.id = lc.parent_id
             WHERE lc.depth < 10
+          ),
+          ancestor_leaf_counts AS (
+            SELECT cursor_id AS ancestor_id,
+                   COUNT(DISTINCT CASE WHEN has_job THEN leaf_id END)::int AS leaves_with_job
+            FROM leaf_ctx
+            WHERE cursor_id <> leaf_id
+            GROUP BY cursor_id
+          ),
+          raw_attr AS (
+            SELECT te.id AS entry_id, te.staff_id,
+                   CASE
+                     WHEN lc.cursor_id = lc.leaf_id THEN 1
+                     WHEN lc.job_name_lc IS NOT NULL
+                          AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc THEN 2
+                     WHEN lc.has_job AND lc.cursor_id <> lc.leaf_id
+                          AND alc.leaves_with_job = 1 THEN 3
+                     WHEN lc.job_name_lc IS NOT NULL
+                          AND (LOWER(COALESCE(te.job_title, '')) LIKE ('%' || lc.job_name_lc || '%')
+                               OR lc.job_name_lc LIKE ('%' || LOWER(COALESCE(te.job_title, '')) || '%'))
+                          AND COALESCE(te.job_title, '') <> '' THEN 4
+                     ELSE NULL
+                   END AS priority
+            FROM leaf_ctx lc
+            JOIN time_entries te ON te.project_id = lc.cursor_id
+            LEFT JOIN ancestor_leaf_counts alc ON alc.ancestor_id = lc.cursor_id
+            WHERE te.entry_date BETWEEN $2 AND $3
+              AND te.staff_id IS NOT NULL
+          ),
+          best_attr AS (
+            SELECT DISTINCT ON (entry_id) entry_id, staff_id
+            FROM raw_attr
+            WHERE priority IS NOT NULL
+            ORDER BY entry_id, priority ASC
           )
-          SELECT COUNT(DISTINCT te.staff_id)::int AS n
-          FROM leaf_ctx lc
-          JOIN time_entries te ON te.project_id = lc.cursor_id
-          WHERE te.entry_date BETWEEN $2 AND $3
-            AND te.staff_id IS NOT NULL
-            AND (
-              lc.cursor_id = lc.leaf_id
-              OR (lc.job_name_lc IS NOT NULL
-                  AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc)
-            )
+          SELECT COUNT(DISTINCT staff_id)::int AS n FROM best_attr
         `, [projectIds, startDate, endDate]);
         inspectorCount = ic[0].n || 0;
       }
