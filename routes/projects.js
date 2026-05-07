@@ -226,7 +226,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // wiping the traits here keeps the row consistent with the rest
       // of the system.
       const insertJobId       = isRollupFlag ? null : (job_id || null);
-      const insertBillingType = isRollupFlag ? null : effectiveBillingType;
+      // billing_type is NOT NULL DEFAULT 'hourly' in schema. Rollups don't
+      // bill, so the value is never read — stamp the schema default.
+      const insertBillingType = isRollupFlag ? 'hourly' : effectiveBillingType;
       const insertBillingRate = isRollupFlag ? null : (effectiveRate || null);
       const insertFootage     = isRollupFlag ? null : (footage || null);
       const insertMiles       = isRollupFlag ? null : fin.miles;
@@ -386,7 +388,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // is intentional even when caller passed values — owner rule:
       // rollups have NO traits.
       const updJobId        = willBeRollup ? null : (job_id || null);
-      const updBillingType  = willBeRollup ? null : effectiveBillingType;
+      // billing_type is NOT NULL in schema; stamp the default for rollups.
+      const updBillingType  = willBeRollup ? 'hourly' : effectiveBillingType;
       const updBillingRate  = willBeRollup ? null : (effectiveRate || null);
       const updFootage      = willBeRollup ? null : (footage || null);
       const updMiles        = willBeRollup ? null : fin.miles;

@@ -1485,7 +1485,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <!-- ROW 2: Construction Contract | Service Area -->
-        <div class="form-row">
+        <div class="form-row" id="proj-row-contract-area">
           <div class="form-group" id="proj-contract-wrap">
             <label>Construction Contract</label>
             <div style="display:flex;gap:6px">
@@ -1534,7 +1534,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <!-- ROW 3: WO# | Job -->
-        <div class="form-row">
+        <div class="form-row" id="proj-row-wo-job">
           <div class="form-group" id="proj-wo-wrap">
             <label>Work Order Number <span style="color:var(--text-muted);font-weight:400">(RUS only)</span></label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
@@ -1604,7 +1604,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              (one-time vs monthly recurring). Projected revenue is the
              total contract value — used by the Revenue tab and rolled up
              at parent levels. Optional. -->
-        <div class="form-row">
+        <div class="form-row" id="proj-row-cadence">
           <div class="form-group">
             <label>Billing Cadence</label>
             <select id="proj-cadence" style="width:100%">
@@ -1638,7 +1638,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <option value="billed">Billed</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="proj-start-wrap">
             <label>Start Date</label>
             <input type="date" id="proj-start">
           </div>
@@ -1665,7 +1665,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <label>Permit Manager / Created by <span style="font-weight:400;color:var(--text-muted)">(used for permit pipeline tracking)</span></label>
           <input type="text" id="proj-permit-manager" placeholder="Your name">
         </div>
-        <div class="form-group">
+        <div class="form-group" id="proj-notes-wrap">
           <label>Notes</label>
           <textarea id="proj-notes" placeholder="Any additional notes..."></textarea>
         </div>
@@ -4225,14 +4225,35 @@ function clearProjectForm() {
   jobChanged(/*skipRateLookup=*/true);
 }
 
-// Toggle the explanatory hint when the rollup checkbox flips. Kept
-// minimal — server-side blanks the trait fields on save regardless,
-// so we don't need to disable inputs here. The hint is the visible
-// signal that "the rest of this form doesn't matter for a rollup."
+// Rollup mode: rollups are folders, so the only fields that matter are
+// Name + Parent + Client + Program + EC + Status. Hide every trait row
+// when the box is checked so the form isn't cluttered with inputs the
+// server will discard. ptypeChanged() runs the standard program-driven
+// gating when rollup is unchecked, so non-rollup state is fully restored.
 function rollupChanged() {
   const checked = !!document.getElementById('proj-rollup')?.checked;
   const hint = document.getElementById('proj-rollup-hint');
   if (hint) hint.style.display = checked ? '' : 'none';
+  const traitWrapIds = [
+    'proj-row-contract-area',
+    'proj-row-wo-job',
+    'rate-section',
+    'proj-row-cadence',
+    'proj-start-wrap',
+    'proj-notes-wrap',
+    'budget-code-group',
+    'permit-manager-group',
+  ];
+  traitWrapIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = checked ? 'none' : '';
+  });
+  // When un-checking, re-run program-driven gating so WO#/Service-Area/EC
+  // wrappers reflect the current Program selection (otherwise everything
+  // would just be visible without respecting the program rules).
+  if (!checked && typeof applyProjectModalFieldGating === 'function') {
+    applyProjectModalFieldGating();
+  }
 }
 
 // User changed the program category. Re-derive field gating (program now
