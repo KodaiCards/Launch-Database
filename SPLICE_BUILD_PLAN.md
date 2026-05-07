@@ -830,5 +830,144 @@ individual cables via the cable inspector Category dropdown, or via
 
 ---
 
-*Last updated 2026-05-07 — Phase 5.D functional VETRO UX overhaul complete.
-Phase 5.C shipped at 5957315; Phase 5.D opened at 8d4fdbd (research).*
+## Phase 5.E — Critical bug fixes + UX polish + multi-fiber range selection
+
+**Audit reference:** `SPLICE_MATRIX_SUGGESTIONS.md` (landed on `main` at commit `8c1857c`) — a full UI audit by Claude Sonnet 4.7 on the production deployment. Read sections 3.1–3.5 and 4.7–4.8 for the detailed rationale behind each fix.
+
+**Owner additions:** Two fiber-picker ergonomics features requested directly by Carter:
+- Excel-style shift-click range selection in the drag-drop picker
+- Manual range text input ("1-72, 97-144" syntax)
+
+### Commits
+
+| # | SHA | Task |
+|---|-----|------|
+| 1 | `4c60c58` | §3.1 — Map view empty on first render: call `map.resize()` + `mapFitData()` in the `isMap` branch of `switchView` |
+| 2 | `359a3ce` | §3.2 — Replace all `window.confirm()` calls (17 sites) with `confirmDialog()` Promise helper — preserves lock heartbeat |
+| 3 | `97b98cd` | §3.3 — Dark-mode header: add `--header-bg:#0B1A2E` token, apply it to `.header` via `var(--header-bg, var(--vetro-primary))` |
+| 4 | `1ab1d36` | §3.4 — Move view-tabs into canvas-pane chrome as first flex row (removed absolute positioning, eliminated toolbar collision) |
+| 5 | `0a04eb1` | §3.5 — Add Location enters placement mode: type-selector chips, crosshair cursor, Esc cancels, click-to-place |
+| 6 | `da8e928` | §4.7 — Attribute-table toggle bar shows live entity counts ("9 locations · 4 cables · 0 closures · 0 splices") |
+| 7 | `c5c885e` | §4.8 — Undo snackbar: 5s bottom-center bar after every delete; `POST /api/splice/projects/:id/undo-last` reverts to N-1 version snapshot |
+| 8 | `a6e145e` | Owner ask: Excel-style shift-click range fill + `parseRangeSpec` helper + range text input above each fiber picker column |
+| 9 | *(this commit)* | Plan doc — Phase 5.E documentation |
+
+### Key design decisions
+
+- **`confirmDialog` styling:** reuses existing `modal-overlay` + `--vetro-*` tokens. Danger button uses `.btn-danger` (red). Resolves via Promise so callers `await` it — all enclosing functions were already async.
+- **View-tabs position:** chose option (b) — first flex row inside `.canvas-pane` (not the title bar). Canvas-pane was changed from `position:relative` to `display:flex;flex-direction:column`. The inner `.canvas-pane-body` div holds all the canvas/map content and takes `flex:1`.
+- **Snackbar:** bottom-center fixed, slides up with `cubic-bezier(0.34,1.56,0.64,1)`. Stacks vertically if multiple in-flight. Countdown ticks every 1s. Does NOT use `toast()` to avoid collision with existing toast element.
+- **Undo-last endpoint:** full transaction — deletes live rows, re-inserts from snapshot JSONB. Pre-snapshots current state so undo is itself undoable. Broadcasts `state_reverted` SSE.
+- **Range selection anchor:** tracked in `state._ddropAnchor[ddKey+'|'+side]`. Plain click sets anchor + clears selection. Shift-click fills range from anchor. Ctrl/⌘-click toggles individual fiber (replaces old shift-click additive behavior).
+
+---
+
+## Phase 5.F — Diagram topology rewrite (5 commits + plan doc)
+
+Source: `SPLICE_MATRIX_SUGGESTIONS.md §5` ("single biggest visual credibility gap").
+Branch: `claude/splice-matrix-railway-setup-IIG3Q`. Parent: `2268ca9` (Phase 5.E).
+All commits land in `public/splice.html` Konva canvas regions only.
+`routes/splice.js` untouched (Phase 5.G lane).
+
+### Commits
+
+| # | SHA | Description | Lines Δ |
+|---|-----|-------------|---------|
+| 1 | `b1a4d8d` | Topology graph layout — location nodes + cable edges | +585/-186 |
+| 2 | `263a668` | Cable LOD zoom — thin line → tube rows → fiber lines | +42 |
+| 3 | `322bb2b` | Closure nodes inside location bodies + tray drill-down at z=2 | +47 |
+| 4 | `30ac00a` | Splice connection rendering + end-to-end fiber path highlight on hover | +48/-2 |
+| 5 | `4d5cceb` | Sticky labels + minimap for large projects | +34/-1 |
+| 6 | *(this commit)* | Plan doc — Phase 5.F documentation | — |
+
+### Architecture summary
+
+**Location nodes** (`Konva.Group`, draggable):
+- Title bar 24px: type-color fill (`#3B82F6` handhole, `#DC2626` FDH, etc.), name in white bold.
+- Body rect: expands to fit closure sub-nodes (40px per closure).
+- Drag-end persists x/y to localStorage key `splice_diagram_positions_v1` (no schema change).
+- Selection highlight: amber 2.5px ring around full group.
+
+**Cable edges** (`Konva.Group`):
+- Source → destination: right-edge of left node to left-edge of right node (determined by x position).
+- Parallel cable stacking: `_cablePairIndex` Map tracks pair keys `"locA|locB"` (sorted); each cable gets `stackIdx * 20px` vertical offset.
+- LOD: `_lodBucket(scale)` → 0 / 1 / 2.
+
+**LOD buckets**:
+- `z=0` (scale < 1.0): 3px colored line, midpoint label `"144f/12T"`, white pill background.
+- `z=1` (1.0–2.5): N tube rows (6px + 2px gap), TIA-598 fill, 2-letter code at left end.
+- `z=2` (≥ 2.5): 12-fiber-per-tube expansion (3px + 1px gap), fiber color + 2-letter code, tube separator lines.
+
+**LOD performance**: `cableLayer` + `closureLayer` Konva-cached at z≤1. Wheel handler + `zoom()` both trigger `drawCanvasContents()` on bucket change.
+
+**Closure sub-nodes**: 34px tall rects inside location body. Tray fill sparkline. Click is bubble-cancelling.
+
+**Tray drill-down** (z=2 + closure selected): tray rows with TIA-colored fiber dots at each splice endpoint.
+
+**Splice arcs**: `spliceLayer` now `listening:true`. `hitStrokeWidth=8px`. Source-fiber TIA color. Hover → `_traceOnHover(fiberId)` with per-session `_traceCache`. Click → `traceFiberPath()`.
+
+**Path-trace overlay**: traceLayer glows traced cable edges (orange 8px, 35% opacity), amber rings on closure-containing nodes, teal dashed rings on express-through nodes. Uses `locNodeById` so highlights follow dragged nodes.
+
+**Sticky labels**: nodes scrolled above visible top get a pinned label bar at screen-Y=6 using inverse-transform math.
+
+**Minimap** (5+ locations): 200×120px panel pinned bottom-left. Node bars in type color, amber viewport rect, click-to-jump.
+
+### Key design decisions
+
+- **localStorage for diagram coords** (no schema migration): key `splice_diagram_positions_v1`. Schema alternative deferred to v2.
+- **Two-lane stagger** for default layout: y=60 / y=180 alternating. Users can drag to adjust.
+- **Source-fiber color for splice arcs**: chose splice.me convention over neutral gray (audit §5.5 notes opinions split).
+- **Minimap threshold**: 5+ locations. Below that the diagram is readable without overview.
+- **Caching**: layer-level `cache()` not shape-level. Invalidated by `destroyChildren` at each `drawCanvasContents` call.
+- **LOD thresholds**: 1.0 and 2.5 per audit spec.
+
+### Skipped / deferred
+
+- **Sugiyama layout for >2 locations**: two-lane stagger used instead; draggable nodes cover the same UX need.
+- **Y-branch fork rendering**: needs `cable.parent_cable_id` schema (migration slot 0026+).
+- **Touch pinch-zoom LOD**: deferred to mobile phase; trackpad pinch normalized by browser's deltaY.
+
+---
+
+## Phase 5.G — PDF deliverable v2
+
+**Audit reference:** `SPLICE_MATRIX_SUGGESTIONS.md §6` — "this is the actual product."
+Splicers carry this document in the field. Ran in parallel with Phase 5.F.
+**Files touched:** `routes/splice.js` (PDF render path + export endpoint), `package.json`.
+
+### Commits
+
+| # | SHA | Task |
+|---|-----|------|
+| 1 | `8eb9a69` | Cover page metadata block: navy table with Revision label (Rev N), Project, Designer, Exported-by user, Generated UTC, gen hash, Status. Staleness warning. Flex layout. |
+| 2 | `0f40c2d` | QR code on cover page: 240px raster PNG, navy modules, URL text label below for manual fallback. Points to `/splice/view/:project_token`. |
+| 3 | `8549523` | Mapbox Static map on cover: 600×300 @2x with pin markers, 15% bbox padding, 8s timeout, content-type guard, graceful skip when no token or no GPS coords. |
+| 4 | `c0cf31c` | Per-closure page polish: explicit navy thead (Puppeteer-safe), alternating row bg (#F4F5F7 / white), 8pt body font, color swatch + 2-letter TIA-598 code verified. |
+| 5 | `494a87b` | Per-closure QR deep-links: each closure QR encodes `/splice/view/:token?closure=<id>`. Splicer scans → opens live record scoped to that closure. QR label updated. |
+| 6 | *(this commit)* | Plan doc — Phase 5.G documentation |
+
+### Key design decisions
+
+- **`qrcode` package:** already listed in `package.json` (v1.5.4); `npm install` run to add to `node_modules`. The existing `_qr()` lazy-loader + `_renderQrSvg()` were extended; no new lazy-loader needed.
+- **Cover QR vs per-closure QR:** Cover QR → project-level public view (`/splice/view/:token`). Per-closure QR → same view with `?closure=<id>` query param for scoped deep-link. Field markup upload URL (`/splice/field/:closure_token`) is fallback when no project token exists.
+- **Mint-on-export:** If the project has no active public token, one is minted automatically when PDF is exported. Label: "Auto-minted on PDF export". No expiry.
+- **Map bbox padding:** 15% on each side (minimum 0.002° to handle co-located points). Single-location projects use zoom-14 instead of bbox fit.
+- **Per-closure QR placement:** top-right of closure page header (existing `.qr` div position unchanged). Label updated to "live record / this closure" when project token is available.
+- **`designerName` conflict:** existing `const designerName` in `_renderSpliceHtml` renamed to `effectiveDesignerName`; the new `designerName` from opts takes precedence.
+
+### Owner-test checklist
+
+1. Cover page shows project name + client + `Rev N` + generated UTC + generated-by user — YES
+2. Cover page has a QR code linking to public read view — YES (240px navy PNG + URL text)
+3. Cover page has Mapbox Static map snippet — YES (skip gracefully when no token / no GPS)
+4. Cover page has staleness warning — YES (amber banner with project token URL)
+5. Per-closure pages have navy headers + alternating row bg + 10 cols — YES
+6. Color columns show swatch + 2-letter code — YES (Phase 4.2, verified in PDF path)
+7. Each closure page has its own QR linking to that closure on public view — YES
+8. PDF generation works without MAPBOX_TOKEN — YES (graceful skip)
+
+---
+
+*Last updated 2026-05-07 — Phase 5.G PDF v2 complete (5 commits).*
+*Phase 5.F ran in parallel at b1a4d8d–263a668.*
+*Phase 5.E shipped at 4c60c58–2268ca9.*
