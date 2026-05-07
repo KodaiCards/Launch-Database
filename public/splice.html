@@ -8095,6 +8095,12 @@ async function initMapIfNeeded() {
     }
 
     mapOpts.style = mapStyle;
+    if (useMapbox) {
+      mapOpts.validateStyle = false;  // Mapbox style JSON contains props MapLibre's
+                                      // strict validator rejects (e.g. layer.name); the
+                                      // style itself works correctly so disabling validation
+                                      // is the standard fix per MapLibre+Mapbox interop docs.
+    }
     const map = new maplibregl.Map(mapOpts);
     state.map = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
@@ -8109,6 +8115,7 @@ async function initMapIfNeeded() {
     }
 
     map.on('load', () => {
+      console.log('[splice map] style loaded ok');
       addNetworkLayers(map);
       refreshMapLayers();
       mapFitData();
