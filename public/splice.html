@@ -2784,7 +2784,7 @@ function _drawMinimap(orderedLocations, locNodeById, nodeW) {
   }));
 
   // Node dots in minimap coords.
-  locNodeById.forEach((ni, locId) => {
+  locNodeById.forEach((ni) => {
     const nx = (ni.group.x() - minNX) / diagW * (MM_W - 16) / scale;
     const ny = (ni.group.y() - minNY) / diagH * (MM_H - 24) / scale;
     traceLayer.add(new Konva.Rect({
@@ -2807,6 +2807,39 @@ function _drawMinimap(orderedLocations, locNodeById, nodeW) {
     stroke: '#F59E0B', strokeWidth: 1 / scale,
     fill: 'rgba(245,158,11,0.15)', listening: false,
   }));
+
+  // Click-to-jump hit area over the minimap content area.
+  // Click position → map to canvas coords → pan the stage so that point is centered.
+  const mmHit = new Konva.Rect({
+    x: mmX + 8 / scale, y: mmY + 16 / scale,
+    width: (MM_W - 16) / scale, height: (MM_H - 24) / scale,
+    fill: 'rgba(0,0,0,0.001)',
+  });
+  mmHit.on('click tap', (e) => {
+    e.cancelBubble = true;
+    const mmContentX = e.target.x();
+    const mmContentY = e.target.y();
+    // Convert click within the minimap content area to canvas coords.
+    const localPt = e.target.getStage().getPointerPosition();
+    const stagePos = stage.position();
+    const clickCanvasX = (localPt.x - stagePos.x) / scale;
+    const clickCanvasY = (localPt.y - stagePos.y) / scale;
+    // Fraction within minimap content area.
+    const fracX = Math.max(0, Math.min(1, (clickCanvasX - mmContentX) / ((MM_W - 16) / scale)));
+    const fracY = Math.max(0, Math.min(1, (clickCanvasY - mmContentY) / ((MM_H - 24) / scale)));
+    // Map fractions to canvas coords.
+    const targetCanvasX = minNX + fracX * diagW;
+    const targetCanvasY = minNY + fracY * diagH;
+    // Pan so the clicked point is at screen center.
+    stage.position({
+      x: stageW / 2 - targetCanvasX * scale,
+      y: stageH / 2 - targetCanvasY * scale,
+    });
+    drawCanvasContents();
+  });
+  mmHit.on('mouseenter', () => { document.body.style.cursor = 'crosshair'; });
+  mmHit.on('mouseleave', () => { document.body.style.cursor = 'default'; });
+  traceLayer.add(mmHit);
 }
 
 // ── 5.F.5: Sticky location labels ────────────────────────────────────────────
