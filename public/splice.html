@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Launch Fiber — Splice Matrix</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="/launcher-back.css">
 <!-- Inter font — VETRO-matched typography (TBD-VERIFY exact stack) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -254,6 +255,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   transition:background 0.12s;
 }
 .attr-table-toggle:hover{background:var(--vetro-primary-dark)}
+/* Lift MapLibre attribution + scale controls above the 28px toggle bar so the
+   required basemap copyright text (Mapbox/Esri TOS) stays visible. */
+#map-stage .maplibregl-ctrl-bottom-left,
+#map-stage .maplibregl-ctrl-bottom-right{bottom:30px}
 
 /* The docked bottom attribute table panel */
 .bottom-attr-table{
@@ -313,7 +318,11 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .map-popup .actions{margin-top:6px;display:flex;gap:4px}
 #map-stage .maplibregl-canvas-container{outline:none}
 #map-stage.placing,#map-stage.placing .maplibregl-canvas{cursor:crosshair !important}
-.lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:6px 10px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:12px}
+/* 5.H.3 — Compact lock pill: icon-only by default, expands on hover */
+.lock-banner{position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;background:var(--surface-2);padding:5px 8px;border-radius:20px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5;font-size:11px;cursor:default;overflow:hidden;max-width:32px;transition:max-width .25s ease,padding .25s ease,border-radius .25s ease;white-space:nowrap}
+.lock-banner:hover{max-width:320px;padding:5px 12px;border-radius:8px}
+.lock-banner .lb-text{opacity:0;transition:opacity .15s .1s;pointer-events:none}
+.lock-banner:hover .lb-text{opacity:1;pointer-events:all}
 .lock-banner.locked{border-color:var(--success);color:var(--success-text);background:var(--success-light)}
 .lock-banner.held-by-other{border-color:var(--warning);color:var(--warning-text);background:var(--warning-light)}
 .lock-banner.stale{border-color:var(--danger);color:var(--danger-text);background:var(--danger-light)}
@@ -334,6 +343,15 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 /* Konva stage container */
 #stage{width:100%;height:100%}
 
+/* 5.H.1 — Empty state cards (no-project / no-splices / no-closures) */
+.empty-state-card{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3}
+.empty-state-card.hidden{display:none}
+.empty-state-inner{background:var(--vetro-bg-panel,#fff);border:1px solid var(--vetro-divider,#D8DCE3);border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:40px 48px;max-width:400px;width:calc(100% - 80px);text-align:center;pointer-events:all}
+.empty-state-icon{font-size:40px;color:var(--vetro-text-muted,#6B7787);margin-bottom:16px;line-height:1}
+.empty-state-headline{font-size:18px;font-weight:700;color:var(--vetro-text-heading,#1A2433);margin-bottom:8px}
+.empty-state-body{font-size:13px;color:var(--vetro-text-muted,#6B7787);line-height:1.6;margin-bottom:20px}
+.empty-state-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
 /* Phase 4.3 — Split view: diagram + map side-by-side with drag divider. */
 /* 5.E.4: split-mode row layout now applies to .canvas-pane-body (view-tabs stay in the header row). */
 .canvas-pane.split-mode .canvas-pane-body{display:flex;flex-direction:row}
@@ -348,7 +366,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 /* 5.E.4: split-mode view-tabs inherits flex-row from .canvas-pane — no absolute override needed. */
 
 /* 5.E.7 — Undo snackbar: bottom-center, slides up, stacks vertically */
-.undo-snackbar-stack{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:9999;pointer-events:none}
+.undo-snackbar-stack{position:fixed;bottom:42px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:9999;pointer-events:none}
 .undo-snackbar{display:flex;align-items:center;gap:10px;background:#1A2535;color:#fff;border:1px solid rgba(255,255,255,.15);padding:8px 14px 8px 12px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.35);pointer-events:all;animation:snack-in .2s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes snack-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .undo-snackbar .undo-btn{padding:4px 10px;border-radius:4px;background:var(--vetro-route-active,#68BD45);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:background .1s}
@@ -439,6 +457,26 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   .inspector:not(.inspector-closed){transform:translateX(0)}
 }
 
+/* ── 5.H.5 Map legend overlay ─────────────────────────────────────────────── */
+.map-legend{position:absolute;bottom:62px;right:10px;z-index:10;font-size:11px}
+.map-legend-pill{background:var(--surface-2);border:1px solid var(--border-weak);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(0,0,0,.1);user-select:none;transition:background .12s}
+.map-legend-pill:hover{background:var(--surface-3)}
+.map-legend-panel{display:none;background:var(--surface-2);border:1px solid var(--border-weak);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);padding:8px 10px;margin-top:4px;min-width:160px;max-height:50vh;overflow-y:auto}
+.map-legend-panel.open{display:block}
+.map-legend-group{margin-bottom:6px}
+.map-legend-group-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-bottom:3px}
+.map-legend-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;color:var(--text)}
+.map-legend-swatch{flex-shrink:0;width:12px;height:12px;border-radius:2px}
+
+/* ── 5.H.2 Sidebar tabs ───────────────────────────────────────────────────── */
+.sb-tabs{display:none;flex-direction:row;border-bottom:1px solid var(--vetro-divider);margin:0 -10px 10px -10px;background:var(--vetro-bg-panel-secondary,#F4F5F7)}
+.sb-tabs.visible{display:flex}
+.sb-tab{flex:1;padding:7px 4px;font-size:10px;font-weight:600;text-align:center;border:none;background:transparent;color:var(--vetro-text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;letter-spacing:0.3px;text-transform:uppercase;line-height:1.2}
+.sb-tab:hover{color:var(--vetro-primary);background:var(--vetro-bg-hover)}
+.sb-tab.active{color:var(--vetro-primary);border-bottom-color:var(--vetro-primary);background:var(--vetro-bg-panel)}
+.sb-panel{display:none}
+.sb-panel.active{display:block}
+
 /* ── 5.D.5 Layer Tree ──────────────────────────────────────────────────────── */
 .layer-group{margin-bottom:4px}
 .layer-group-header{display:flex;align-items:center;gap:5px;padding:3px 0;cursor:pointer;user-select:none}
@@ -461,6 +499,14 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 </style>
 </head>
 <body>
+<a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
+  <i class="fa-solid fa-arrow-left"></i> Launcher
+</a>
+<script>
+fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
+</script>
 
 <header class="header">
   <div class="logo"><i class="fa-solid fa-network-wired"></i> Splice Matrix</div>
@@ -483,103 +529,129 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 
   <!-- ─── Left rail: VETRO Map Data panel ─── -->
   <aside class="sidebar" id="sidebar">
-    <!-- VETRO-style "Map Data" section label -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:10px">Map Data</div>
+    <!-- Always-visible: project list + search bar -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 6px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px">Map Data</div>
     <div class="sidebar-section">
       <h3>Projects <button class="btn btn-sm btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i></button></h3>
+      <!-- 5.H.6 / 5.H.2 — search bar: scope changes when a project is open -->
       <div style="margin-bottom:8px">
-        <input type="search" id="search-input" placeholder="Search circuits, cables, closures…"
+        <input type="search" id="search-input" placeholder="Search projects…"
                style="width:100%;padding:5px 8px;font-size:12px;border-radius:4px;border:1px solid var(--border-weak);background:var(--surface-2);color:var(--text)"
                oninput="onSearchInput(this.value)">
         <div id="search-results" style="display:none;background:var(--surface);border:1px solid var(--border-weak);border-radius:4px;margin-top:4px;max-height:50vh;overflow:auto;font-size:11px"></div>
       </div>
       <ul class="proj-list" id="proj-list"><li class="empty-pane">Loading…</li></ul>
     </div>
-    <div class="sidebar-section" id="proj-actions" style="display:none">
-      <h3>Project actions</h3>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
-        <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
-        <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
-        <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
-        <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
-        <!-- Phase 4.6: admin-only template manager -->
-        <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
-      </div>
-    </div>
-    <!-- 5.B.2 — "Recently imported" filter chip shown after an import lands -->
-    <div id="recent-import-chip-wrap" style="display:none;margin-bottom:8px;padding:0 2px">
-      <button id="recent-import-chip" class="btn btn-sm"
-        style="width:100%;background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-size:11px"
-        onclick="toggleRecentlyImportedFilter()">
-        <i class="fa-solid fa-clock-rotate-left"></i> Recently imported
-        <span id="recent-import-chip-count" class="small" style="margin-left:4px"></span>
-      </button>
-    </div>
-    <div class="sidebar-section" id="proj-imports" style="display:none">
-      <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
-      <div id="proj-imports-body" style="font-size:11px"></div>
-    </div>
-    <!-- Phase 4.7 — Loss records panel -->
-    <div class="sidebar-section" id="proj-loss-records" style="display:none">
-      <h3 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleLossRecordsPanel()">
-        Loss records <span id="proj-loss-count" class="small"></span>
-        <i class="fa-solid fa-chevron-down" id="proj-loss-chevron" style="font-size:10px;color:var(--text-muted)"></i>
-      </h3>
-      <div id="proj-loss-body">
-        <div style="margin-bottom:6px;font-size:11px;color:var(--text-secondary)">
-          Fusion-splicer measurements from Fujikura Splice+ or compatible exports.
-        </div>
-        <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:8px" onclick="openLossRecordUpload()">
-          <i class="fa-solid fa-upload"></i> Upload Splice+ JSON
-        </button>
-        <div id="proj-loss-stats" style="font-size:11px;margin-bottom:6px"></div>
-        <div id="proj-loss-unbound-list" style="font-size:11px"></div>
-      </div>
-    </div>
-    <div class="sidebar-section" id="proj-summary" style="display:none">
-      <h3>Summary</h3>
-      <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
+
+    <!-- 5.H.2 — Sidebar tabs: visible only when a project is open -->
+    <div class="sb-tabs" id="sb-tabs">
+      <button class="sb-tab active" data-tab="layers" onclick="switchSbTab('layers')" title="Map Layers"><i class="fa-solid fa-layer-group"></i><br>Layers</button>
+      <button class="sb-tab" data-tab="actions" onclick="switchSbTab('actions')" title="Project Actions"><i class="fa-solid fa-wrench"></i><br>Actions</button>
+      <button class="sb-tab" data-tab="imports" onclick="switchSbTab('imports')" title="Imports &amp; Records"><i class="fa-solid fa-file-import"></i><br>Imports</button>
+      <button class="sb-tab" data-tab="summary" onclick="switchSbTab('summary')" title="Project Summary"><i class="fa-solid fa-chart-bar"></i><br>Summary</button>
     </div>
 
-    <!-- 5.D.5: Functional layer visibility tree — shown when a project is loaded -->
-    <div class="sidebar-section" id="layer-panel" style="display:none">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-        Map Layers
-        <button class="btn btn-sm" style="font-size:9px;padding:1px 5px" onclick="showAllLayers()" title="Show all layers">All</button>
-      </div>
-      <!-- Fiber Cables group -->
-      <div class="layer-group" id="layer-group-cables">
-        <div class="layer-group-header" onclick="toggleGroupExpand('cables')">
-          <input type="checkbox" id="layer-parent-cables" checked onclick="event.stopPropagation();toggleGroupVisibility('cables',this.checked)" title="Toggle all cable layers">
-          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-cables"></i></span>
-          <span class="layer-group-name">Fiber Cables</span>
+    <!-- TAB: Layers (5.D.5 layer tree) -->
+    <div class="sb-panel active" id="sb-panel-layers">
+      <!-- 5.D.5: Functional layer visibility tree — shown when a project is loaded -->
+      <div id="layer-panel">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          Map Layers
+          <button class="btn btn-sm" style="font-size:9px;padding:1px 5px" onclick="showAllLayers()" title="Show all layers">All</button>
         </div>
-        <div class="layer-group-children" id="layer-children-cables"></div>
-      </div>
-      <!-- Network Points group -->
-      <div class="layer-group" id="layer-group-locations">
-        <div class="layer-group-header" onclick="toggleGroupExpand('locations')">
-          <input type="checkbox" id="layer-parent-locations" checked onclick="event.stopPropagation();toggleGroupVisibility('locations',this.checked)" title="Toggle all location layers">
-          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-locations"></i></span>
-          <span class="layer-group-name">Network Points</span>
+        <!-- Fiber Cables group -->
+        <div class="layer-group" id="layer-group-cables">
+          <div class="layer-group-header" onclick="toggleGroupExpand('cables')">
+            <input type="checkbox" id="layer-parent-cables" checked onclick="event.stopPropagation();toggleGroupVisibility('cables',this.checked)" title="Toggle all cable layers">
+            <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-cables"></i></span>
+            <span class="layer-group-name">Fiber Cables</span>
+          </div>
+          <div class="layer-group-children" id="layer-children-cables"></div>
         </div>
-        <div class="layer-group-children" id="layer-children-locations"></div>
-      </div>
-      <!-- Custom layers placeholder -->
-      <div class="layer-group" id="layer-group-custom" style="display:none">
-        <div class="layer-group-header" onclick="toggleGroupExpand('custom')">
-          <input type="checkbox" id="layer-parent-custom" checked onclick="event.stopPropagation();toggleGroupVisibility('custom',this.checked)">
-          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-custom"></i></span>
-          <span class="layer-group-name">Custom Layers</span>
+        <!-- Network Points group -->
+        <div class="layer-group" id="layer-group-locations">
+          <div class="layer-group-header" onclick="toggleGroupExpand('locations')">
+            <input type="checkbox" id="layer-parent-locations" checked onclick="event.stopPropagation();toggleGroupVisibility('locations',this.checked)" title="Toggle all location layers">
+            <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-locations"></i></span>
+            <span class="layer-group-name">Network Points</span>
+          </div>
+          <div class="layer-group-children" id="layer-children-locations"></div>
         </div>
-        <div class="layer-group-children" id="layer-children-custom"></div>
+        <!-- Custom layers placeholder -->
+        <div class="layer-group" id="layer-group-custom" style="display:none">
+          <div class="layer-group-header" onclick="toggleGroupExpand('custom')">
+            <input type="checkbox" id="layer-parent-custom" checked onclick="event.stopPropagation();toggleGroupVisibility('custom',this.checked)">
+            <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-custom"></i></span>
+            <span class="layer-group-name">Custom Layers</span>
+          </div>
+          <div class="layer-group-children" id="layer-children-custom"></div>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="openCreateLayerModal()">
+            <i class="fa-solid fa-plus"></i> New Layer
+          </button>
+        </div>
       </div>
-      <div style="margin-top:8px">
-        <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="openCreateLayerModal()">
-          <i class="fa-solid fa-plus"></i> New Layer
+    </div>
+
+    <!-- TAB: Actions -->
+    <div class="sb-panel" id="sb-panel-actions">
+      <div class="sidebar-section" id="proj-actions">
+        <h3>Project actions</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-sm" onclick="openAddLocation()"><i class="fa-solid fa-map-pin"></i> Add Location</button>
+          <button class="btn btn-sm" onclick="openAddCable()"><i class="fa-solid fa-bolt"></i> Add Cable</button>
+          <button class="btn btn-sm" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add Closure</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCurrentProject()"><i class="fa-solid fa-trash"></i> Delete project</button>
+          <!-- Phase 4.6: admin-only template manager -->
+          <button class="btn btn-sm" id="btn-manage-templates" style="display:none" onclick="openManageTemplates()"><i class="fa-solid fa-layer-group"></i> Manage templates</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Imports -->
+    <div class="sb-panel" id="sb-panel-imports">
+      <!-- 5.B.2 — "Recently imported" filter chip shown after an import lands -->
+      <div id="recent-import-chip-wrap" style="display:none;margin-bottom:8px;padding:0 2px">
+        <button id="recent-import-chip" class="btn btn-sm"
+          style="width:100%;background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-size:11px"
+          onclick="toggleRecentlyImportedFilter()">
+          <i class="fa-solid fa-clock-rotate-left"></i> Recently imported
+          <span id="recent-import-chip-count" class="small" style="margin-left:4px"></span>
         </button>
+      </div>
+      <div class="sidebar-section" id="proj-imports">
+        <h3>Pending imports <span id="proj-imports-count" class="small"></span></h3>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+          <button class="btn btn-sm" onclick="openImportDesignModal()"><i class="fa-solid fa-file-import"></i> Import KMZ/DXF</button>
+          <button class="btn btn-sm" onclick="openPasteImportModal()"><i class="fa-solid fa-paste"></i> Paste from spreadsheet</button>
+        </div>
+        <div id="proj-imports-body" style="font-size:11px"></div>
+      </div>
+      <!-- Phase 4.7 — Loss records panel -->
+      <div class="sidebar-section" id="proj-loss-records">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleLossRecordsPanel()">
+          Loss records <span id="proj-loss-count" class="small"></span>
+          <i class="fa-solid fa-chevron-down" id="proj-loss-chevron" style="font-size:10px;color:var(--text-muted)"></i>
+        </h3>
+        <div id="proj-loss-body">
+          <div style="margin-bottom:6px;font-size:11px;color:var(--text-secondary)">
+            Fusion-splicer measurements from Fujikura Splice+ or compatible exports.
+          </div>
+          <button class="btn btn-sm btn-primary" style="width:100%;margin-bottom:8px" onclick="openLossRecordUpload()">
+            <i class="fa-solid fa-upload"></i> Upload Splice+ JSON
+          </button>
+          <div id="proj-loss-stats" style="font-size:11px;margin-bottom:6px"></div>
+          <div id="proj-loss-unbound-list" style="font-size:11px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Summary -->
+    <div class="sb-panel" id="sb-panel-summary">
+      <div class="sidebar-section" id="proj-summary">
+        <h3>Summary</h3>
+        <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
       </div>
     </div>
   </aside>
@@ -724,9 +796,42 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
       </span>
       <button class="pb-cancel" onclick="cancelAddLocationPlacement()">Cancel</button>
     </div>
+    <!-- 5.H.1 — No-project empty state (shown when no project is open) -->
+    <div class="empty-state-card" id="empty-no-project">
+      <div class="empty-state-inner">
+        <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <div class="empty-state-headline">No project open</div>
+        <div class="empty-state-body">Open one from the left sidebar, or create a new project to get started.</div>
+        <div class="empty-state-actions">
+          <button class="btn btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i> Create project</button>
+        </div>
+      </div>
+    </div>
+    <!-- 5.H.1 — No-closures empty state (shown in diagram/map when project has no closures) -->
+    <div class="empty-state-card hidden" id="empty-no-closures">
+      <div class="empty-state-inner">
+        <div class="empty-state-icon"><i class="fa-solid fa-box-open"></i></div>
+        <div class="empty-state-headline">No closures yet</div>
+        <div class="empty-state-body">Add a closure from the location inspector to start splicing.</div>
+        <div class="empty-state-actions">
+          <button class="btn btn-primary" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add closure</button>
+          <button class="btn" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Open map</button>
+        </div>
+      </div>
+    </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
     <div class="split-divider" id="split-divider"></div>
+    <!-- 5.H.5 — Map legend overlay (bottom-right of map canvas) -->
+    <div class="map-legend" id="map-legend" style="display:none">
+      <div class="map-legend-pill" onclick="toggleMapLegend()">
+        <i class="fa-solid fa-circle-info"></i> Legend
+        <i class="fa-solid fa-chevron-up" id="map-legend-chevron" style="font-size:9px;transition:transform .2s"></i>
+      </div>
+      <div class="map-legend-panel" id="map-legend-panel">
+        <!-- populated by renderMapLegend() -->
+      </div>
+    </div>
     <div id="map-stage" style="display:none;width:100%;height:100%"></div>
     <!-- Phase 4.4: matrix tabular editor -->
     <div id="matrix-stage" style="display:none;width:100%;height:100%;overflow:auto;background:var(--surface)">
@@ -1179,12 +1284,8 @@ async function selectProject(id) {
   // Tear down previous SSE + heartbeat first.
   cleanupCurrent();
   state.currentId = id;
-  document.getElementById('proj-actions').style.display = 'block';
-  document.getElementById('proj-imports').style.display = 'block';
+  _showSidebarTabs(); // 5.H.2: show tabbed sidebar
   refreshImportsList();
-  document.getElementById('proj-loss-records').style.display = 'block';
-  document.getElementById('proj-summary').style.display = 'block';
-  document.getElementById('layer-panel').style.display = '';  // 5.D.5: show layer tree
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
   document.getElementById('btn-share').disabled = false;
@@ -1233,6 +1334,8 @@ async function hydrateProject() {
     // Phase 4.4 — re-render matrix view if active so inline edits
     // and SSE-pushed changes appear without a manual refresh.
     if (state.activeView === 'matrix') renderMatrixView();
+    // 5.H.1 — update empty state cards
+    _updateEmptyStates();
     // 5.B.2 — refresh the recently-imported chip whenever data changes.
     renderRecentlyImportedChip();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
@@ -1243,6 +1346,50 @@ async function hydrateProject() {
   } catch (e) {
     toast('Hydrate failed: ' + e.message, 'error');
   }
+}
+
+// ── 5.H.2 — Sidebar tab switcher ─────────────────────────────────────────────
+function switchSbTab(tab) {
+  document.querySelectorAll('.sb-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.sb-panel').forEach(p => p.classList.toggle('active', p.id === `sb-panel-${tab}`));
+}
+
+function _showSidebarTabs() {
+  const tabs = document.getElementById('sb-tabs');
+  if (tabs) tabs.classList.add('visible');
+  // Update search bar placeholder for project scope
+  const si = document.getElementById('search-input');
+  if (si) si.placeholder = 'Search this project…';
+}
+
+function _hideSidebarTabs() {
+  const tabs = document.getElementById('sb-tabs');
+  if (tabs) tabs.classList.remove('visible');
+  // Hide all tab panels
+  document.querySelectorAll('.sb-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('sb-panel-layers')?.classList.add('active');
+  // Reset search bar placeholder
+  const si = document.getElementById('search-input');
+  if (si) si.placeholder = 'Search projects…';
+}
+
+// ── 5.H.1 — Empty state visibility controller ───────────────────────────────
+// Called after every hydrate and every view switch.
+function _updateEmptyStates() {
+  const noProject  = document.getElementById('empty-no-project');
+  const noClosures = document.getElementById('empty-no-closures');
+  if (!noProject || !noClosures) return;
+
+  const hasProject = !!state.currentId && !!state.data;
+  const view = state.activeView || 'diagram';
+  const closures = state.data?.closures || [];
+  const hasClosures = closures.length > 0;
+  const isMatrixView = view === 'matrix';
+
+  // No project: show the centered CTA, hide the closures card.
+  noProject.classList.toggle('hidden', hasProject);
+  // No closures: only in diagram/map/split when a project is open but has 0 closures.
+  noClosures.classList.toggle('hidden', !hasProject || hasClosures || isMatrixView);
 }
 
 function fireAutoSnapshot() {
@@ -1567,15 +1714,16 @@ function renderLockBanner() {
   if (state.lockState === 'unlocked') { el.style.display = 'none'; return; }
   el.style.display = 'flex';
   el.className = 'lock-banner ' + (state.lockState === 'mine' ? 'locked' : 'held-by-other');
+  // 5.H.3 — compact pill: icon-only collapsed, expands on hover to show full state
   if (state.lockState === 'mine') {
-    el.innerHTML = `<i class="fa-solid fa-lock"></i> Editing · <button class="btn btn-sm" onclick="releaseLock()">Release</button>`;
+    el.innerHTML = `<i class="fa-solid fa-lock" title="You are editing — hover to release"></i><span class="lb-text">&nbsp;Editing · <button class="btn btn-sm" onclick="releaseLock()">Release</button></span>`;
   } else {
     const proj = state.data?.project;
     const heldBy = proj?.locked_by_full_name || proj?.locked_by_name || 'another designer';
     const lockedAt = proj?.locked_at ? new Date(proj.locked_at).getTime() : 0;
     const isStale = Date.now() - lockedAt > 10 * 60 * 1000;
-    el.innerHTML = `<i class="fa-solid fa-eye"></i> View only — locked by <b>${esc(heldBy)}</b>
-      ${isStale ? `<button class="btn btn-sm" onclick="takeOver()">Take over (stale)</button>` : `<button class="btn btn-sm" onclick="takeOver()">Force take over</button>`}`;
+    el.innerHTML = `<i class="fa-solid fa-eye" title="View only — hover for details"></i><span class="lb-text">&nbsp;View only — locked by <b>${esc(heldBy)}</b>
+      ${isStale ? `<button class="btn btn-sm" onclick="takeOver()">Take over (stale)</button>` : `<button class="btn btn-sm" onclick="takeOver()">Force take over</button>`}</span>`;
   }
 }
 
@@ -5376,10 +5524,7 @@ async function deleteCurrentProject() {
     state.currentId = null;
     state.data = null;
     document.getElementById('title-name').textContent = '— No project selected —';
-    document.getElementById('proj-actions').style.display = 'none';
-    document.getElementById('proj-imports').style.display = 'none';
-    document.getElementById('proj-loss-records').style.display = 'none';
-    document.getElementById('proj-summary').style.display = 'none';
+    _hideSidebarTabs(); // 5.H.2
     document.getElementById('toolbar').style.display = 'none';
     document.getElementById('view-tabs').style.display = 'none';
     document.getElementById('map-toolbar').style.display = 'none';
@@ -5399,6 +5544,7 @@ async function deleteCurrentProject() {
     const insp = document.getElementById('inspector');
     if (insp) insp.classList.add('inspector-closed');
     document.getElementById('lock-banner').style.display = 'none';
+    _updateEmptyStates(); // 5.H.1
     await loadProjects();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -5620,61 +5766,92 @@ function onSearchInput(value) {
 }
 
 async function runSearch(q) {
+  // 5.H.6 — scope to project when one is open; global search otherwise
+  const inProject = !!state.currentId;
   const host = document.getElementById('search-results');
   host.style.display = 'block';
   host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">Searching…</div>';
-  let r;
-  try { r = await api('/api/splice/search?q=' + encodeURIComponent(q)); }
-  catch (e) {
-    host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
-    return;
+
+  if (inProject) {
+    // Per-project search: locations, cables, closures, circuits
+    let r;
+    try { r = await api(`/api/splice/projects/${state.currentId}/search?q=` + encodeURIComponent(q)); }
+    catch (e) {
+      host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
+      return;
+    }
+    const total = r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
+    if (!total) { host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches in this project.</div>'; return; }
+
+    const sec = (label, rows, render) => rows.length ? `
+      <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
+        ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
+      </div>${rows.map(render).join('')}` : '';
+
+    host.innerHTML =
+      sec('Closures', r.closures, cl =>
+        `<div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(cl.model||'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span></div>`) +
+      sec('Cables', r.cables, c =>
+        `<div class="search-row" onclick="selectFromSearch('cable','${c.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span></div>`) +
+      sec('Circuits', r.fibers, f =>
+        `<div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(f.circuit_name||'(no name)')}</b>${f.customer?` <span style="color:var(--text-muted)">· ${esc(f.customer)}</span>`:''}
+          <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position}</div></div>`) +
+      sec('Service locations', r.locations, l =>
+        `<div class="search-row" onclick="selectFromSearch('location','${l.id}','${state.currentId}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type||'')}</span></div>`);
+  } else {
+    // Global cross-project search
+    let r;
+    try { r = await api('/api/splice/search?q=' + encodeURIComponent(q)); }
+    catch (e) {
+      host.innerHTML = '<div style="padding:8px;color:var(--danger)">Search failed: ' + esc(e.message) + '</div>';
+      return;
+    }
+    const total = r.projects.length + r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
+    if (!total) { host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches.</div>'; return; }
+
+    const sec = (label, rows, render) => rows.length ? `
+      <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
+        ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
+      </div>
+      ${rows.map(render).join('')}
+    ` : '';
+    host.innerHTML = `
+      ${sec('Projects', r.projects, p => `
+        <div class="search-row" onclick="selectFromSearch('project','${p.id}','${p.id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(p.name)}</b> <span style="color:var(--text-muted)">${esc(p.status || '')}</span>
+        </div>
+      `)}
+      ${sec('Locations', r.locations, l => `
+        <div class="search-row" onclick="selectFromSearch('location','${l.id}','${l.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type || '')}</span>
+          <div style="font-size:10px;color:var(--text-muted)">${esc(l.project_name)}</div>
+        </div>
+      `)}
+      ${sec('Cables', r.cables, c => `
+        <div class="search-row" onclick="selectFromSearch('cable','${c.id}','${c.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span>
+          <div style="font-size:10px;color:var(--text-muted)">${esc(c.project_name)}</div>
+        </div>
+      `)}
+      ${sec('Closures', r.closures, cl => `
+        <div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${cl.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(cl.model || 'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span>
+          <div style="font-size:10px;color:var(--text-muted)">${esc(cl.project_name)}</div>
+        </div>
+      `)}
+      ${sec('Circuits', r.fibers, f => `
+        <div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${f.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
+          <b>${esc(f.circuit_name || '(no circuit name)')}</b>
+          ${f.customer ? '<span style="color:var(--text-muted)"> · ' + esc(f.customer) + '</span>' : ''}
+          <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position} · ${esc(f.project_name)}</div>
+        </div>
+      `)}
+    `;
   }
-  const total = r.projects.length + r.locations.length + r.cables.length + r.closures.length + r.fibers.length;
-  if (!total) {
-    host.innerHTML = '<div style="padding:8px;color:var(--text-muted)">No matches.</div>';
-    return;
-  }
-  // Each result deep-links: clicking a non-project result selects the
-  // owning project, hydrates, then sets state.selection so the inspector
-  // opens on the matched entity.
-  const sec = (label, rows, render) => rows.length ? `
-    <div style="padding:6px 8px 2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em">
-      ${esc(label)} <span style="font-weight:400">(${rows.length})</span>
-    </div>
-    ${rows.map(render).join('')}
-  ` : '';
-  host.innerHTML = `
-    ${sec('Projects', r.projects, p => `
-      <div class="search-row" onclick="selectFromSearch('project','${p.id}','${p.id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(p.name)}</b> <span style="color:var(--text-muted)">${esc(p.status || '')}</span>
-      </div>
-    `)}
-    ${sec('Locations', r.locations, l => `
-      <div class="search-row" onclick="selectFromSearch('location','${l.id}','${l.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(l.name)}</b> <span style="color:var(--text-muted)">${esc(l.type || '')}</span>
-        <div style="font-size:10px;color:var(--text-muted)">${esc(l.project_name)}</div>
-      </div>
-    `)}
-    ${sec('Cables', r.cables, c => `
-      <div class="search-row" onclick="selectFromSearch('cable','${c.id}','${c.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(c.name)}</b> <span style="color:var(--text-muted)">${c.fiber_count}f</span>
-        <div style="font-size:10px;color:var(--text-muted)">${esc(c.project_name)}</div>
-      </div>
-    `)}
-    ${sec('Closures', r.closures, cl => `
-      <div class="search-row" onclick="selectFromSearch('closure','${cl.id}','${cl.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(cl.model || 'Closure')}</b> <span style="color:var(--text-muted)">at ${esc(cl.location_name)}</span>
-        <div style="font-size:10px;color:var(--text-muted)">${esc(cl.project_name)}</div>
-      </div>
-    `)}
-    ${sec('Circuits', r.fibers, f => `
-      <div class="search-row" onclick="selectFromSearch('fiber','${f.id}','${f.project_id}')" style="padding:5px 10px;cursor:pointer;border-top:1px solid var(--border-weak)">
-        <b>${esc(f.circuit_name || '(no circuit name)')}</b>
-        ${f.customer ? '<span style="color:var(--text-muted)"> · ' + esc(f.customer) + '</span>' : ''}
-        <div style="font-size:10px;color:var(--text-muted)">${esc(f.cable_name)} ${esc(f.color)}-${f.position} · ${esc(f.project_name)}</div>
-      </div>
-    `)}
-  `;
   host.querySelectorAll('.search-row').forEach(el => {
     el.addEventListener('mouseenter', () => el.style.background = 'var(--surface-2)');
     el.addEventListener('mouseleave', () => el.style.background = '');
@@ -5824,6 +6001,7 @@ function saveBasemapMode(mode) {
 function switchView(view) {
   if (view === state.activeView) return;
   state.activeView = view;
+  _updateEmptyStates(); // 5.H.1
   try { localStorage.setItem('lfs_splice_active_view', view); } catch {}
   document.querySelectorAll('.view-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.view === view));
@@ -5843,6 +6021,7 @@ function switchView(view) {
     document.getElementById('map-stage').style.display    = 'none';
     document.getElementById('map-toolbar').style.display  = 'none';
     document.getElementById('matrix-stage').style.display = 'block';
+    _showMapLegend(false); // 5.H.5
     renderMatrixView();
     return;
   }
@@ -5859,6 +6038,7 @@ function switchView(view) {
     document.getElementById('map-toolbar').style.display = 'flex';
     _applySplitRatio(loadSplitRatio());
     initMapIfNeeded();
+    _showMapLegend(true); // 5.H.5
     setTimeout(() => {
       if (state.konva) { state.konva.stage.size({ width: document.getElementById('stage').clientWidth, height: document.getElementById('stage').clientHeight }); state.konva.stage.batchDraw(); }
       if (state.map) state.map.resize();
@@ -5873,6 +6053,7 @@ function switchView(view) {
   document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
   document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
   document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
+  _showMapLegend(isMap || isSplit); // 5.H.5
   if (isMap) {
     initMapIfNeeded().then(() => {
       // 5.E.1 — MapLibre caches 0×0 if the canvas pane had no width when
@@ -6556,7 +6737,25 @@ function renderMatrixView() {
   const wrap = document.getElementById('matrix-table-wrap');
   if (!wrap) return;
   if (!rows.length) {
-    wrap.innerHTML = '<div class="empty-pane" style="padding:20px">No splices match the current filters.</div>';
+    // 5.H.1 — differentiate "no splices at all" from "filters too narrow"
+    const filterText    = (document.getElementById('matrix-filter-text')?.value || '').trim();
+    const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+    const hasFilters = !!(filterText || filterClosure);
+    const totalSplices = (state.data?.splices || []).length;
+    if (!hasFilters && totalSplices === 0) {
+      wrap.innerHTML = `<div class="empty-state-card" style="position:relative;display:flex;align-items:center;justify-content:center;padding:60px 40px">
+        <div class="empty-state-inner" style="position:relative">
+          <div class="empty-state-icon"><i class="fa-solid fa-scissors"></i></div>
+          <div class="empty-state-headline">No splices yet</div>
+          <div class="empty-state-body">Add your first splice from the Diagram view by clicking a closure.</div>
+          <div class="empty-state-actions">
+            <button class="btn btn-primary" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Open Diagram view</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      wrap.innerHTML = '<div class="empty-pane" style="padding:20px">No splices match the current filters.</div>';
+    }
   } else {
     wrap.innerHTML = `
       <table class="table" style="font-size:12px;border-collapse:collapse;width:100%;min-width:800px">
@@ -6696,11 +6895,27 @@ function getMapLibreLayerIds(layerKey) {
   return [];
 }
 
+// 5.H.4 — Returns a small inline SVG swatch matching the per-type map marker shape.
+function _locTypeShapeIcon(type, color) {
+  const c = color || '#888';
+  const s = `title="Edit style" onclick="openStyleEditor('location.${type}')" style="cursor:pointer;flex-shrink:0"`;
+  switch (type) {
+    case 'handhole':   return `<svg width="11" height="11" ${s}><rect x="1" y="1" width="9" height="9" fill="${c}"/></svg>`;
+    case 'manhole':    return `<svg width="12" height="12" ${s}><circle cx="6" cy="6" r="5" fill="${c}"/><circle cx="6" cy="6" r="2.5" fill="none" stroke="#fff" stroke-width="1.2"/></svg>`;
+    case 'pedestal':   return `<svg width="11" height="11" ${s}><polygon points="5.5,1 10,10 1,10" fill="${c}"/></svg>`;
+    case 'vault':      return `<svg width="12" height="12" ${s}><rect x="1" y="1" width="10" height="10" rx="3" fill="${c}"/></svg>`;
+    case 'pole':       return `<svg width="11" height="14" ${s}><rect x="4" y="0" width="3" height="14" fill="${c}"/></svg>`;
+    case 'fdh':        return `<svg width="14" height="14" ${s}><polygon points="7,1 13,7 7,13 1,7" fill="${c}"/></svg>`;
+    case 'splice_point': return `<svg width="10" height="10" ${s}><polygon points="5,1 9,5 5,9 1,5" fill="${c}"/></svg>`;
+    case 'co':         return `<svg width="14" height="14" ${s}><polygon points="7,1 12,4 12,10 7,13 2,10 2,4" fill="${c}"/></svg>`;
+    case 'terminal':   return `<svg width="11" height="11" ${s}><polygon points="1,1 10,1 5.5,10" fill="${c}"/></svg>`;
+    default:           return `<span class="layer-color-dot" style="background:${c}" ${s}></span>`;
+  }
+}
+
 function renderLayerTree() {
   const lpanel = document.getElementById('layer-panel');
   if (!lpanel) return;
-  // Show when a project is loaded
-  if (state.currentId) lpanel.style.display = '';
 
   const styles = state.data?.layer_styles || [];
   const getVis = key => { const s = styles.find(s => s.layer_key === key); return s?.visible !== false; };
@@ -6709,10 +6924,12 @@ function renderLayerTree() {
   function makeLeaf(key, label, groupKey) {
     const visible = getVis(key);
     const color = getColor(key);
+    // 5.H.4 — shape icon for location-type leaves
+    const shapeIcon = groupKey === 'locations' ? _locTypeShapeIcon(key.split('.')[1], color) : `<span class="layer-color-dot" style="background:${color}" title="Edit style" onclick="openStyleEditor('${key}')"></span>`;
     return `<div class="layer-leaf" data-layer-key="${key}" oncontextmenu="layerContextMenu(event,'${key}','${groupKey}')">
       <input type="checkbox" ${visible ? 'checked' : ''} title="Toggle ${label} visibility"
              onchange="toggleLayerVisibility('${key}',this.checked);updateParentCheckboxState('${groupKey}')">
-      <span class="layer-color-dot" style="background:${color}" title="Edit style" onclick="openStyleEditor('${key}')"></span>
+      ${shapeIcon}
       <span class="layer-leaf-name">${label}</span>
       <button class="layer-paint-btn" onclick="openStyleEditor('${key}')" title="Edit style"><i class="fa-solid fa-palette"></i></button>
     </div>`;
@@ -6739,13 +6956,17 @@ function renderLayerTree() {
   if (customGroup && customContainer) {
     if (customLayers.length > 0) {
       customGroup.style.display = '';
-      customContainer.innerHTML = customLayers.map(cl =>
-        `<div class="layer-leaf" data-custom-layer="${cl.id}">
+      customContainer.innerHTML = customLayers.map(cl => {
+        const color = cl.default_style?.color || '#6366F1';
+        const featCount = (state.data?.custom_features || []).filter(f => f.layer_id === cl.id).length;
+        return `<div class="layer-leaf" data-custom-layer="${cl.id}" style="flex-wrap:wrap;gap:3px">
           <input type="checkbox" checked onchange="toggleCustomLayerVisibility('${cl.id}',this.checked)">
-          <span class="layer-color-dot" style="background:${cl.default_style?.color||'#6366F1'}"></span>
-          <span class="layer-leaf-name">${esc(cl.name)}</span>
-        </div>`
-      ).join('');
+          <span class="layer-color-dot" style="background:${color}"></span>
+          <span class="layer-leaf-name">${esc(cl.name)}${featCount?' <span style="color:var(--text-muted);font-size:9px">('+featCount+')</span>':''}</span>
+          <button class="btn btn-sm" style="font-size:9px;padding:1px 5px;margin-left:auto" title="Add feature to this layer"
+            onclick="startCustomFeatureDraw('${cl.id}')"><i class="fa-solid fa-plus"></i> Add</button>
+        </div>`;
+      }).join('');
     } else {
       customGroup.style.display = 'none';
     }
@@ -6766,6 +6987,11 @@ function renderLayerTree() {
             [`cables-${cat}-halo`, `cables-${cat}`].forEach(id => {
               if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
             });
+          } else if (s.layer_key.startsWith('location.')) {
+            // 5.H.4 — per-type location layers
+            const type = s.layer_key.split('.')[1];
+            const lid = `loc-unclustered-${type}`;
+            if (map.getLayer(lid)) map.setLayoutProperty(lid, 'visibility', 'none');
           }
         }
       }
@@ -6800,6 +7026,9 @@ function toggleLayerVisibility(layerKey, visible) {
   if (state.currentId) {
     api(`/api/splice/projects/${state.currentId}/layer-styles/${encodeURIComponent(layerKey)}`, 'PUT', { visible }).catch(() => {});
   }
+  // 5.H.5 — re-render legend if it's open
+  const legendPanel = document.getElementById('map-legend-panel');
+  if (legendPanel?.classList.contains('open')) renderMapLegend();
 }
 
 function toggleGroupVisibility(groupKey, visible) {
@@ -7047,15 +7276,19 @@ function applyLayerStyle(layerKey, styleProps) {
     }
   } else if (layerKey.startsWith('location.')) {
     const type = layerKey.split('.')[1];
-    const id = `loc-${type}`;
+    const id = `loc-unclustered-${type}`; // 5.H.4: per-type layer id
     if (map.getLayer(id)) {
-      if (color !== undefined) map.setPaintProperty(id, 'circle-color', color);
-      if (opacity !== undefined) map.setPaintProperty(id, 'circle-opacity', opacity);
-      if (markerSize !== undefined) map.setPaintProperty(id, 'circle-radius', markerSize);
-    }
-    // Also update the shared loc-unclustered layer color if no per-type layers
-    if (!map.getLayer(id) && map.getLayer('loc-unclustered')) {
-      // The loc-unclustered uses ['get','color'] from feature data — nothing to do here
+      const layerType = map.getLayer(id).type;
+      if (layerType === 'symbol') {
+        // SDF symbol layer — use icon-color and icon-opacity
+        if (color !== undefined) map.setPaintProperty(id, 'icon-color', color);
+        if (opacity !== undefined) map.setPaintProperty(id, 'icon-opacity', opacity);
+      } else {
+        // Circle fallback layer
+        if (color !== undefined) map.setPaintProperty(id, 'circle-color', color);
+        if (opacity !== undefined) map.setPaintProperty(id, 'circle-opacity', opacity);
+        if (markerSize !== undefined) map.setPaintProperty(id, 'circle-radius', markerSize);
+      }
     }
   }
 }
@@ -7126,11 +7359,284 @@ async function submitCreateLayer() {
   }
 }
 
+// ── 5.H.5 — Map legend overlay ────────────────────────────────────────────────
+function toggleMapLegend() {
+  const panel = document.getElementById('map-legend-panel');
+  const chevron = document.getElementById('map-legend-chevron');
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+  if (isOpen) renderMapLegend();
+}
+
+function renderMapLegend() {
+  const panel = document.getElementById('map-legend-panel');
+  if (!panel) return;
+  const styles = state.data?.layer_styles || [];
+  const getVis = k => { const s = styles.find(s => s.layer_key === k); return s?.visible !== false; };
+  const getColor = k => { const s = styles.find(s => s.layer_key === k); return s?.color || LAYER_DEFAULTS[k]?.color || '#888'; };
+
+  // Cable legend rows
+  const visibleCables = CABLE_CATEGORIES.filter(cat => getVis(`cable.${cat}`));
+  const cableHtml = visibleCables.length ? `
+    <div class="map-legend-group">
+      <div class="map-legend-group-label">Fiber Cables</div>
+      ${visibleCables.map(cat => `
+        <div class="map-legend-row">
+          <div class="map-legend-swatch" style="background:${getColor(`cable.${cat}`)};height:4px;border-radius:2px"></div>
+          <span>${cat.charAt(0).toUpperCase()+cat.slice(1)}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  // Location type legend rows
+  const visibleLocs = LOC_TYPES.filter(t => getVis(`location.${t}`));
+  const locHtml = visibleLocs.length ? `
+    <div class="map-legend-group">
+      <div class="map-legend-group-label">Network Points</div>
+      ${visibleLocs.map(t => `
+        <div class="map-legend-row">
+          ${_locTypeShapeIcon(t, getColor(`location.${t}`))}
+          <span>${t.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  // Custom layers
+  const customLayers = (state.data?.custom_layers || []);
+  const customHtml = customLayers.length ? `
+    <div class="map-legend-group">
+      <div class="map-legend-group-label">Custom Layers</div>
+      ${customLayers.map(cl => `
+        <div class="map-legend-row">
+          <div class="map-legend-swatch" style="background:${cl.default_style?.color||'#6366F1'};border-radius:50%"></div>
+          <span>${esc(cl.name)}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  panel.innerHTML = cableHtml + locHtml + customHtml ||
+    '<div style="color:var(--text-muted);font-size:10px;padding:4px">No visible layers</div>';
+}
+
+function _showMapLegend(show) {
+  const el = document.getElementById('map-legend');
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+
 function toggleCustomLayerVisibility(layerId, visible) {
-  // TODO Phase 5.E: wire to map layer when custom features are added
   const map = state.map;
-  if (map && map.getLayer(`custom-${layerId}`)) {
-    map.setLayoutProperty(`custom-${layerId}`, 'visibility', visible ? 'visible' : 'none');
+  if (!map) return;
+  // 5.H.7: each custom layer has its own MapLibre source + layer
+  [`custom-${layerId}`, `custom-${layerId}-line`].forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+  });
+}
+
+// ── 5.H.7 — Custom feature rendering + drawing tools ──────────────────────────
+
+// Render all custom features from state.data into MapLibre sources + layers.
+function renderCustomFeatures() {
+  const map = state.map;
+  if (!map || !state.data) return;
+  const layers = state.data.custom_layers || [];
+  const features = state.data.custom_features || [];
+
+  for (const cl of layers) {
+    const srcId = `custom-src-${cl.id}`;
+    const color = cl.default_style?.color || '#6366F1';
+    const lineWidth = cl.default_style?.lineWidth || 3;
+    const geomType = cl.geometry_type || 'point';
+
+    // Build GeoJSON FeatureCollection for this layer
+    const fc = {
+      type: 'FeatureCollection',
+      features: features
+        .filter(f => f.layer_id === cl.id)
+        .map(f => ({
+          type: 'Feature',
+          id: f.id,
+          geometry: f.geometry_json,
+          properties: { id: f.id, name: f.name || '', layer_id: cl.id },
+        })),
+    };
+
+    if (map.getSource(srcId)) {
+      map.getSource(srcId).setData(fc);
+    } else {
+      map.addSource(srcId, { type: 'geojson', data: fc });
+    }
+
+    const layerId = `custom-${cl.id}`;
+    const lineLayerId = `custom-${cl.id}-line`;
+
+    if (geomType === 'point') {
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId, type: 'circle', source: srcId,
+          paint: { 'circle-color': color, 'circle-radius': 7, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 },
+        });
+      }
+    } else if (geomType === 'line') {
+      if (!map.getLayer(lineLayerId)) {
+        map.addLayer({
+          id: lineLayerId, type: 'line', source: srcId,
+          paint: { 'line-color': color, 'line-width': lineWidth },
+        });
+      }
+    } else if (geomType === 'polygon') {
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId, type: 'fill', source: srcId,
+          paint: { 'fill-color': color, 'fill-opacity': 0.35 },
+        });
+      }
+      if (!map.getLayer(lineLayerId)) {
+        map.addLayer({
+          id: lineLayerId, type: 'line', source: srcId,
+          paint: { 'line-color': color, 'line-width': 1.5 },
+        });
+      }
+    }
+  }
+}
+
+// State for the active feature-drawing session
+let _cfDrawing = null; // { layerId, geomType, coords[] }
+let _cfMarkers = [];   // MapLibre Markers for waypoints
+let _cfTempSrc = 'custom-draw-temp';
+
+function startCustomFeatureDraw(layerId) {
+  const map = state.map;
+  if (!map) { switchView('map'); setTimeout(() => startCustomFeatureDraw(layerId), 600); return; }
+  const layer = (state.data?.custom_layers || []).find(l => l.id === layerId);
+  if (!layer) return;
+
+  // Cancel any in-progress draw
+  cancelCustomFeatureDraw();
+
+  _cfDrawing = { layerId, geomType: layer.geometry_type, coords: [], layer };
+
+  // Ensure temp source exists
+  if (!map.getSource(_cfTempSrc)) {
+    map.addSource(_cfTempSrc, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'custom-draw-line', type: 'line', source: _cfTempSrc,
+      paint: { 'line-color': layer.default_style?.color||'#6366F1', 'line-width': 2, 'line-dasharray': [4,3] } });
+    map.addLayer({ id: 'custom-draw-fill', type: 'fill', source: _cfTempSrc,
+      filter: ['==','$type','Polygon'],
+      paint: { 'fill-color': layer.default_style?.color||'#6366F1', 'fill-opacity': 0.2 } });
+  }
+
+  state.mapMode = 'custom-draw';
+  map.getCanvas().style.cursor = 'crosshair';
+
+  const hint = `Click map to place ${layer.geometry_type} points. Double-click to finish. Esc to cancel.`;
+  const modeHint = document.getElementById('map-mode-hint');
+  if (modeHint) modeHint.textContent = hint;
+
+  toast(`Drawing ${layer.geometry_type} for "${layer.name}" — click to add points`, 'info');
+}
+
+function _cfAddPoint(lngLat) {
+  if (!_cfDrawing) return;
+  const { geomType, coords } = _cfDrawing;
+  coords.push([lngLat.lng, lngLat.lat]);
+
+  if (geomType === 'point') {
+    // Single-click places immediately
+    _cfFinish();
+    return;
+  }
+
+  // Update temp preview
+  _cfUpdatePreview();
+}
+
+function _cfUpdatePreview() {
+  const map = state.map;
+  if (!map || !_cfDrawing) return;
+  const { geomType, coords } = _cfDrawing;
+  if (coords.length < 2) return;
+  let geom;
+  if (geomType === 'line') {
+    geom = { type: 'LineString', coordinates: coords };
+  } else {
+    geom = { type: 'Polygon', coordinates: [coords.length >= 3 ? [...coords, coords[0]] : coords] };
+  }
+  const src = map.getSource(_cfTempSrc);
+  if (src) src.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: geom, properties: {} }] });
+}
+
+async function _cfFinish() {
+  if (!_cfDrawing) return;
+  const { layerId, geomType, coords } = _cfDrawing;
+  let geometry_json;
+  if (geomType === 'point') {
+    if (!coords.length) return;
+    geometry_json = { type: 'Point', coordinates: coords[0] };
+  } else if (geomType === 'line') {
+    if (coords.length < 2) { toast('Need at least 2 points for a line', 'error'); return; }
+    geometry_json = { type: 'LineString', coordinates: coords };
+  } else {
+    if (coords.length < 3) { toast('Need at least 3 points for a polygon', 'error'); return; }
+    geometry_json = { type: 'Polygon', coordinates: [[...coords, coords[0]]] };
+  }
+
+  cancelCustomFeatureDraw(true); // clean up UI but keep geometry
+
+  // Show naming form
+  const name = await _cfNamePrompt(_cfDrawing?.layer?.name || 'Feature');
+  if (name === null) return; // cancelled
+
+  try {
+    const res = await api(`/api/splice/custom-layers/${layerId}/features`, 'POST', {
+      name: name || null, geometry_json, attributes_jsonb: {},
+    });
+    if (!state.data.custom_features) state.data.custom_features = [];
+    state.data.custom_features.push(res);
+    renderCustomFeatures();
+    toast(`Feature added to layer`, 'success');
+  } catch (e) {
+    toast('Failed to save feature: ' + e.message, 'error');
+  }
+}
+
+function _cfNamePrompt(layerName) {
+  return new Promise(resolve => {
+    showModal({
+      title: `Name this feature`,
+      body: `<div class="field">
+        <label>Feature name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <input id="cf-name-input" placeholder="e.g. Slack Loop A" autofocus>
+      </div>
+      <div class="field">
+        <label>Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <textarea id="cf-attrs-input" placeholder='{"notes": "…"}' style="font-family:monospace;font-size:11px"></textarea>
+      </div>`,
+      onSubmit: (close) => {
+        const name = document.getElementById('cf-name-input')?.value.trim() || null;
+        close();
+        resolve(name);
+      },
+      onCancel: () => resolve(null),
+    });
+  });
+}
+
+function cancelCustomFeatureDraw(keepGeom) {
+  const map = state.map;
+  _cfDrawing = keepGeom ? _cfDrawing : null;
+  _cfMarkers.forEach(m => m.remove());
+  _cfMarkers = [];
+  if (map) {
+    ['custom-draw-line','custom-draw-fill'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    });
+    const src = map.getSource(_cfTempSrc);
+    if (src) src.setData({ type: 'FeatureCollection', features: [] });
+    if (!keepGeom) {
+      state.mapMode = null;
+      map.getCanvas().style.cursor = '';
+      const modeHint = document.getElementById('map-mode-hint');
+      if (modeHint) modeHint.textContent = '';
+    }
   }
 }
 
@@ -7161,6 +7667,79 @@ function _makeMapboxTransform(token) {
     const sep = resolved.includes('?') ? '&' : '?';
     return { url: `${resolved}${sep}access_token=${token}` };
   };
+}
+
+// 5.H.4 — Generate SDF (signed-distance-field) sprite images for non-native
+// MapLibre shapes (triangle, diamond, hexagon, etc.) via small canvas renders.
+// Each image is 32×32 px, white on transparent — MapLibre SDF icon-color tints them.
+function _addLocTypeSprites(map) {
+  const SIZE = 32;
+  function _canvas(draw) {
+    const c = document.createElement('canvas');
+    c.width = SIZE; c.height = SIZE;
+    const ctx = c.getContext('2d');
+    draw(ctx, SIZE);
+    return map.hasImage ? { width: SIZE, height: SIZE, data: ctx.getImageData(0, 0, SIZE, SIZE).data } : null;
+  }
+  function _addImg(name, draw) {
+    if (map.hasImage(`loc-${name}`)) return;
+    const c = document.createElement('canvas');
+    c.width = SIZE; c.height = SIZE;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    draw(ctx, SIZE);
+    // addImage with SDF=true lets icon-color paint property tint the white shape.
+    try { map.addImage(`loc-${name}`, c, { sdf: true }); } catch {}
+  }
+
+  // Circle (native fallback, but we add for consistency)
+  _addImg('circle', (ctx, s) => {
+    ctx.beginPath(); ctx.arc(s/2, s/2, s/2-2, 0, Math.PI*2); ctx.fill();
+  });
+  // Filled square (handhole)
+  _addImg('square', (ctx, s) => {
+    ctx.fillRect(4, 4, s-8, s-8);
+  });
+  // Rounded square (vault)
+  _addImg('roundsq', (ctx, s) => {
+    const r = 5, m = 4, w = s-8;
+    ctx.beginPath();
+    ctx.moveTo(m+r, m); ctx.lineTo(m+w-r, m);
+    ctx.quadraticCurveTo(m+w, m, m+w, m+r);
+    ctx.lineTo(m+w, m+w-r);
+    ctx.quadraticCurveTo(m+w, m+w, m+w-r, m+w);
+    ctx.lineTo(m+r, m+w);
+    ctx.quadraticCurveTo(m, m+w, m, m+w-r);
+    ctx.lineTo(m, m+r);
+    ctx.quadraticCurveTo(m, m, m+r, m);
+    ctx.closePath(); ctx.fill();
+  });
+  // Triangle pointing up (pedestal)
+  _addImg('triangle', (ctx, s) => {
+    ctx.beginPath(); ctx.moveTo(s/2, 3); ctx.lineTo(s-4, s-4); ctx.lineTo(4, s-4); ctx.closePath(); ctx.fill();
+  });
+  // Inverted triangle (terminal)
+  _addImg('invtri', (ctx, s) => {
+    ctx.beginPath(); ctx.moveTo(4, 4); ctx.lineTo(s-4, 4); ctx.lineTo(s/2, s-3); ctx.closePath(); ctx.fill();
+  });
+  // Diamond (fdh / splice_point)
+  _addImg('diamond', (ctx, s) => {
+    ctx.beginPath(); ctx.moveTo(s/2, 3); ctx.lineTo(s-3, s/2); ctx.lineTo(s/2, s-3); ctx.lineTo(3, s/2); ctx.closePath(); ctx.fill();
+  });
+  // Hexagon (co)
+  _addImg('hexagon', (ctx, s) => {
+    const cx = s/2, cy = s/2, r = s/2-3;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i*60 - 30) * Math.PI/180;
+      i===0 ? ctx.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a)) : ctx.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+    }
+    ctx.closePath(); ctx.fill();
+  });
+  // Vertical bar (pole)
+  _addImg('vbar', (ctx, s) => {
+    ctx.fillRect(s/2-3, 2, 6, s-4);
+  });
 }
 
 // Re-add all network layers (cables, locations, closures) to the map.
@@ -7258,16 +7837,69 @@ function addNetworkLayers(map) {
         'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], 'text-size': 12 },
       paint: { 'text-color': '#ffffff' },
     });
-    map.addLayer({
-      id: 'loc-unclustered', type: 'circle', source: 'locations',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-color': ['get', 'color'],
-        'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
-        'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
-        'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
-      },
-    });
+    // 5.H.4 — per-type location layers. Each type gets its own MapLibre layer
+    // with a type-specific shape via circle-radius or symbol-icon-image.
+    // Sprites for non-native shapes are generated by _addLocTypeSprites().
+    _addLocTypeSprites(map);
+    const LOC_LAYER_DEFS = [
+      // [type,   shape,    radius, strokeW]
+      ['handhole',    'square',    10, 2],
+      ['manhole',     'circle',    12, 2],
+      ['pedestal',    'triangle',   9, 2],
+      ['vault',       'roundsq',   12, 2],
+      ['pole',        'vbar',       5, 1],
+      ['fdh',         'diamond',   14, 2],
+      ['splice_point','diamond',    8, 1.5],
+      ['co',          'hexagon',   16, 2],
+      ['terminal',    'invtri',    10, 2],
+      ['ring_cut',    'circle',     9, 2],
+    ];
+    for (const [type, shape, r] of LOC_LAYER_DEFS) {
+      const layerId = `loc-unclustered-${type}`;
+      if (map.getLayer(layerId)) continue;
+      const baseFilter = ['all', ['!', ['has', 'point_count']], ['==', ['get', 'type'], type]];
+      if (['square','circle','roundsq','vbar','diamond','hexagon','invtri','triangle'].includes(shape) && map.hasImage(`loc-${shape}`)) {
+        map.addLayer({
+          id: layerId, type: 'symbol', source: 'locations',
+          filter: baseFilter,
+          layout: {
+            'icon-image': `loc-${shape}`,
+            'icon-size': ['interpolate',['linear'],['zoom'], 10, r/18, 18, r/12],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+          },
+          paint: {
+            'icon-color': ['get', 'color'],
+            'icon-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+          },
+        });
+      } else {
+        // Fallback: circle layer
+        map.addLayer({
+          id: layerId, type: 'circle', source: 'locations',
+          filter: baseFilter,
+          paint: {
+            'circle-color': ['get', 'color'],
+            'circle-radius': r,
+            'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
+            'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+          },
+        });
+      }
+    }
+    // Fallback for unknown types
+    if (!map.getLayer('loc-unclustered-other')) {
+      map.addLayer({
+        id: 'loc-unclustered-other', type: 'circle', source: 'locations',
+        filter: ['all', ['!', ['has', 'point_count']], ['!', ['in', ['get','type'], ['literal',['handhole','manhole','pedestal','vault','pole','fdh','splice_point','co','terminal','ring_cut']]]]],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': 8,
+          'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
+          'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+        },
+      });
+    }
     map.addLayer({
       id: 'loc-names', type: 'symbol', source: 'locations',
       filter: ['!', ['has', 'point_count']], minzoom: 16,
@@ -7316,24 +7948,28 @@ function _wireMapClickHandlers(map) {
     });
   });
 
-  // Unclustered location click → open inspector
-  map.on('click', 'loc-unclustered', (e) => {
-    if (state.mapMode === 'place-new') return;
-    e.preventDefault();
-    const props = e.features[0]?.properties;
-    if (!props?.id) return;
-    if (state.mapMode === 'multistop') {
-      const loc = (state.data?.locations || []).find(l => l.id === props.id);
-      if (loc) mapMsSnapToLocation(loc);
-      return;
-    }
-    selectThing('location', props.id);
-  });
+  // 5.H.4 — per-type unclustered location click → open inspector
+  const ALL_LOC_LAYER_IDS = ['handhole','manhole','pedestal','vault','pole','fdh','splice_point','co','terminal','ring_cut','other']
+    .map(t => `loc-unclustered-${t}`);
+  for (const layerId of ALL_LOC_LAYER_IDS) {
+    map.on('click', layerId, (e) => {
+      if (state.mapMode === 'place-new') return;
+      e.preventDefault();
+      const props = e.features[0]?.properties;
+      if (!props?.id) return;
+      if (state.mapMode === 'multistop') {
+        const loc = (state.data?.locations || []).find(l => l.id === props.id);
+        if (loc) mapMsSnapToLocation(loc);
+        return;
+      }
+      selectThing('location', props.id);
+    });
+    map.on('mouseenter', layerId, () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', layerId, () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+  }
 
   map.on('mouseenter', 'loc-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
-  map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
 
   // Cable click → open inspector (5.D.3 fix: was mapStartEditPath)
   for (const cat of CABLE_CATEGORIES) {
@@ -7357,13 +7993,17 @@ function _wireMapClickHandlers(map) {
     } else if (state.mapMode === 'place-add-location') {
       // 5.E.5 — sidebar Add Location placement mode
       _applyAddLocationClick(e.lngLat);
+    } else if (state.mapMode === 'custom-draw') {
+      // 5.H.7 — custom feature drawing
+      _cfAddPoint(e.lngLat);
+      return;
     } else if (state.mapMode === 'multistop') {
       mapMsAddStop(e.lngLat);
     } else {
       const hitCables = map.queryRenderedFeatures(e.point,
         { layers: CABLE_CATEGORIES.map(c => `cables-${c}`).filter(id => !!map.getLayer(id)) });
       const hitLocs = map.queryRenderedFeatures(e.point,
-        { layers: ['loc-unclustered'].filter(id => !!map.getLayer(id)) });
+        { layers: ['handhole','manhole','pedestal','vault','pole','fdh','splice_point','co','terminal','ring_cut','other'].map(t=>`loc-unclustered-${t}`).filter(id => !!map.getLayer(id)) });
       if (!hitCables.length && !hitLocs.length) {
         _updateCableSelectionHighlight(null);
       }
@@ -7371,6 +8011,7 @@ function _wireMapClickHandlers(map) {
   });
   map.on('dblclick', (e) => {
     if (state.mapMode === 'multistop') { e.preventDefault(); mapMsFinish(); }
+    if (state.mapMode === 'custom-draw') { e.preventDefault(); _cfFinish(); }
   });
 }
 
@@ -7600,6 +8241,9 @@ function refreshMapLayers() {
       .addTo(map);
     state._mapLabelMarkers.push(m);
   }
+
+  // 5.H.7 — render custom feature layers
+  renderCustomFeatures();
 }
 
 // Push current location data into the 'locations' GeoJSON source.
@@ -8070,6 +8714,8 @@ function mapClearMode() {
   state._cableHandleMarkers = [];
   state._editingCableId = null;
   state._editPathCoords = [];
+  // 5.H.7 — clean up custom feature drawing
+  cancelCustomFeatureDraw(false);
 
   state.mapMode = null;
   state.mapPlaceType = null;

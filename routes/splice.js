@@ -81,12 +81,16 @@ const { validateProject } = require('./_splice_validation');
 
 const crypto = require('crypto');
 
-// Public-facing base URL for QR codes. Set SPLICE_PUBLIC_URL on the
-// splice Railway service ("https://launchfiber-splicematrix.xyz"). If
-// unset, QR codes fall back to a deep link without a domain — the QR
-// still scans, but to a relative URL that only works on the splice
-// portal itself.
-const SPLICE_PUBLIC_URL = (process.env.SPLICE_PUBLIC_URL || '').replace(/\/+$/, '');
+// Public-facing base URL for QR codes. Defaults to the unified portal
+// domain (portal.launchfiber.com). Override via SPLICE_PUBLIC_URL env var
+// on the Railway service if needed (e.g. during a transition window when
+// the old splicematrix domain is still active and old printed QR codes
+// need to keep resolving).
+//
+// After deploying to portal.launchfiber.com, set:
+//   SPLICE_PUBLIC_URL=https://portal.launchfiber.com
+// on the Railway service. Until then, the default handles new QR codes.
+const SPLICE_PUBLIC_URL = (process.env.SPLICE_PUBLIC_URL || 'https://portal.launchfiber.com').replace(/\/+$/, '');
 
 // Lazy QR-code require — falls back to omitting QR codes if the
 // package wasn't installed (e.g. on a misconfigured Railway build).
@@ -273,7 +277,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes, layerStylesRes, customLayersRes] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes, layerStylesRes, customLayersRes, customFeaturesRes] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -373,6 +377,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             `SELECT * FROM splice_custom_layers WHERE project_id = $1 ORDER BY created_at`,
             [projectId]
           ).catch(() => ({ rows: [] })),
+          // 5.H.7 — custom feature geometries + attributes
+          pool.query(
+            `SELECT cf.* FROM splice_custom_features cf
+              WHERE cf.project_id = $1
+              ORDER BY cf.layer_id, cf.created_at`,
+            [projectId]
+          ).catch(() => ({ rows: [] })),
         ]);
 
       // Annotate each cable with its path length in feet, computed from
@@ -421,7 +432,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         cable_states:     cableStatesRes.rows,
         loss_records:     lossRes.rows,
         layer_styles:     layerStyles,        // 5.D.4: per-project style overrides
-        custom_layers:    customLayersRes.rows, // 5.D.7: custom layer definitions
+        custom_layers:    customLayersRes.rows,   // 5.D.7: custom layer definitions
+        custom_features:  customFeaturesRes.rows, // 5.H.7: custom feature geometries
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
@@ -529,6 +541,62 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── 5.H.7: Custom feature endpoints ─────────────────────────────────────────
+
+  // POST /api/splice/custom-layers/:layerId/features — add a feature to a custom layer
+  app.post('/api/splice/custom-layers/:layerId/features', requireAuth(), async (req, res) => {
+    const { layerId } = req.params;
+    const { name, geometry_json, attributes_jsonb } = req.body;
+    if (!geometry_json || typeof geometry_json !== 'object') {
+      return res.status(400).json({ error: 'geometry_json is required (GeoJSON geometry object)' });
+    }
+    try {
+      // Resolve project_id from the layer
+      const layerRow = await pool.query(
+        `SELECT project_id FROM splice_custom_layers WHERE id = $1`, [layerId]);
+      if (!layerRow.rows.length) return res.status(404).json({ error: 'Layer not found' });
+      const projectId = layerRow.rows[0].project_id;
+
+      const row = await pool.query(
+        `INSERT INTO splice_custom_features (layer_id, project_id, name, geometry_json, attributes_jsonb)
+         VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+         RETURNING *`,
+        [layerId, projectId, name || null, JSON.stringify(geometry_json),
+          JSON.stringify(attributes_jsonb || {})]
+      );
+      res.status(201).json(row.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // PUT /api/splice/custom-features/:id — update a custom feature
+  app.put('/api/splice/custom-features/:id', requireAuth(), async (req, res) => {
+    const { name, geometry_json, attributes_jsonb } = req.body;
+    try {
+      const row = await pool.query(
+        `UPDATE splice_custom_features
+            SET name = COALESCE($2, name),
+                geometry_json = COALESCE($3::jsonb, geometry_json),
+                attributes_jsonb = COALESCE($4::jsonb, attributes_jsonb),
+                updated_at = NOW()
+          WHERE id = $1
+          RETURNING *`,
+        [req.params.id, name ?? null,
+          geometry_json ? JSON.stringify(geometry_json) : null,
+          attributes_jsonb ? JSON.stringify(attributes_jsonb) : null]
+      );
+      if (!row.rows.length) return res.status(404).json({ error: 'Feature not found' });
+      res.json(row.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // DELETE /api/splice/custom-features/:id
+  app.delete('/api/splice/custom-features/:id', requireAuth(), async (req, res) => {
+    try {
+      await pool.query(`DELETE FROM splice_custom_features WHERE id = $1`, [req.params.id]);
+      res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -3242,6 +3310,51 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         `SELECT * FROM splice_closure_models ORDER BY use_count DESC, last_used_at DESC, model`
       );
       res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ─── Per-project scoped search (5.H.6) ──────────────────────────────────
+  // GET /api/splice/projects/:id/search?q=foo
+  // ILIKE search across locations, cables, closures, fibers in one project.
+  // Returns up to 10 per category with entity type label for grouped dropdown.
+  app.get('/api/splice/projects/:id/search', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    const raw = (req.query.q || '').toString().trim();
+    if (raw.length < 2) return res.json({ closures: [], cables: [], locations: [], fibers: [] });
+    const PER = 10;
+    const like = '%' + raw.replace(/[\\%_]/g, c => '\\' + c) + '%';
+    try {
+      const [locations, cables, closures, fibers] = await Promise.all([
+        pool.query(
+          `SELECT id, name, type FROM splice_locations
+            WHERE project_id = $1 AND name ILIKE $2 ESCAPE '\\' ORDER BY name LIMIT $3`,
+          [projectId, like, PER]
+        ),
+        pool.query(
+          `SELECT id, name, fiber_count FROM splice_cables
+            WHERE project_id = $1 AND (name ILIKE $2 ESCAPE '\\' OR manufacturer_part ILIKE $2 ESCAPE '\\')
+            ORDER BY name LIMIT $3`,
+          [projectId, like, PER]
+        ),
+        pool.query(
+          `SELECT cl.id, cl.model, l.name AS location_name
+             FROM splice_closures cl
+             JOIN splice_locations l ON l.id = cl.location_id
+            WHERE l.project_id = $1 AND cl.model ILIKE $2 ESCAPE '\\' ORDER BY cl.model LIMIT $3`,
+          [projectId, like, PER]
+        ),
+        pool.query(
+          `SELECT f.id, f.circuit_name, f.customer, f.color, f.position, c.name AS cable_name
+             FROM splice_fibers f
+             JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+             JOIN splice_cables c ON c.id = t.cable_id
+            WHERE c.project_id = $1
+              AND (f.circuit_name ILIKE $2 ESCAPE '\\' OR f.customer ILIKE $2 ESCAPE '\\')
+            ORDER BY c.name, f.position LIMIT $3`,
+          [projectId, like, PER]
+        ),
+      ]);
+      res.json({ locations: locations.rows, cables: cables.rows, closures: closures.rows, fibers: fibers.rows });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

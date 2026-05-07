@@ -367,6 +367,222 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     }
   });
 
+  // GET /api/_admin/rus-hours-debug — diagnostic for the RUS tab
+  // hours-attribution gap. Shows which time_entries fall inside RUS
+  // projects but aren't captured by the leaf-matching CTE, and explains
+  // why each candidate leaf didn't match.
+  //
+  // Query params:
+  //   period — 'ytd' (default) or 'month'
+  //   month  — 'YYYY-MM' when period=month
+  //
+  // Returns:
+  //   period, summary (total_entries_in_rus_chain, entries_attributed_to_leaf,
+  //                    entries_unattributed, unattributed_hours_total),
+  //   unattributed_breakdown — per-entry objects with candidate_leaves_under_this_project
+  app.get('/api/_admin/rus-hours-debug', requireAdmin, async (req, res) => {
+    const period = (req.query.period || 'ytd').toLowerCase();
+    let monthYear = req.query.month;
+    let startDate, endDate;
+    const now = new Date();
+    if (period === 'month') {
+      if (!monthYear || !/^\d{4}-\d{2}$/.test(monthYear)) {
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        monthYear = `${yyyy}-${mm}`;
+      }
+      const [y, m] = monthYear.split('-').map(Number);
+      startDate = `${y}-${String(m).padStart(2,'0')}-01`;
+      const last = new Date(y, m, 0).getDate();
+      endDate = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+    } else {
+      const yyyy = now.getFullYear();
+      startDate = `${yyyy}-01-01`;
+      endDate = now.toISOString().slice(0,10);
+    }
+
+    try {
+      // 1. Find every time_entry that sits on any project in a RUS chain
+      //    (i.e., the project's contract has engineering_contract.program='rus',
+      //    OR a descendant leaf's contract does). We use a recursive walk to
+      //    cover entries on rollups whose leaf children are RUS.
+      //
+      //    "Attributed" = the entry would be counted by the current CTE in
+      //    inspection.js, i.e. either:
+      //      - entry is directly on a RUS leaf, OR
+      //      - entry is on an ancestor of a RUS leaf AND job_name_lc IS NOT NULL
+      //        AND LOWER(entry.job_title) = job_name_lc.
+      const { rows: allRusEntries } = await pool.query(`
+        WITH RECURSIVE
+        -- All leaf projects under RUS engineering contracts
+        rus_leaves AS (
+          SELECT p.id AS leaf_id, p.job_id, p.parent_id,
+                 LOWER(j.name) AS job_name_lc
+            FROM projects p
+            LEFT JOIN jobs j           ON j.id = p.job_id
+            LEFT JOIN contracts c      ON c.id = p.contract_id
+            LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+           WHERE COALESCE(p.is_rollup, FALSE) = FALSE
+             AND ec.program = 'rus'
+        ),
+        -- Ancestor chain for each RUS leaf (leaf → root)
+        leaf_ancestors AS (
+          SELECT leaf_id, leaf_id AS ancestor_id, job_name_lc, 0 AS depth
+            FROM rus_leaves
+          UNION ALL
+          SELECT la.leaf_id, p.parent_id, la.job_name_lc, la.depth + 1
+            FROM leaf_ancestors la
+            JOIN projects p ON p.id = la.ancestor_id
+           WHERE p.parent_id IS NOT NULL AND la.depth < 10
+        )
+        -- All time_entries in the date range that touch any node in any RUS chain
+        SELECT DISTINCT te.id AS entry_id, te.hours, te.project_id, te.job_title,
+               te.entry_date,
+               p.name AS project_name, p.is_rollup,
+               -- Was it attributed? Direct-on-leaf always yes; ancestor only if job_name match
+               CASE
+                 WHEN la_direct.leaf_id IS NOT NULL AND la_direct.depth = 0
+                   THEN TRUE   -- entry directly on a RUS leaf
+                 WHEN la_match.leaf_id IS NOT NULL
+                   THEN TRUE   -- ancestor entry with matching job_title
+                 ELSE FALSE
+               END AS attributed
+          FROM time_entries te
+          JOIN projects p ON p.id = te.project_id
+          -- Join to see if this entry's project_id is any node in a RUS chain
+          JOIN leaf_ancestors la ON la.ancestor_id = te.project_id
+          -- Check for direct-leaf attribution (depth=0)
+          LEFT JOIN leaf_ancestors la_direct
+                 ON la_direct.ancestor_id = te.project_id
+                AND la_direct.leaf_id = la.leaf_id
+                AND la_direct.depth = 0
+          -- Check for ancestor+job_title match attribution
+          LEFT JOIN leaf_ancestors la_match
+                 ON la_match.ancestor_id = te.project_id
+                AND la_match.leaf_id = la.leaf_id
+                AND la_match.job_name_lc IS NOT NULL
+                AND LOWER(COALESCE(te.job_title, '')) = la_match.job_name_lc
+         WHERE te.entry_date BETWEEN $1 AND $2
+      `, [startDate, endDate]);
+
+      const totalEntries = allRusEntries.length;
+      const attributed = allRusEntries.filter(e => e.attributed);
+      const unattributed = allRusEntries.filter(e => !e.attributed);
+      const unattributedHoursTotal = unattributed.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+
+      // 2. For each unattributed entry, find the candidate RUS leaves that live
+      //    under the same rollup (or ARE the project if it's a leaf with no job),
+      //    and explain why each didn't match.
+      const { rows: rusLeaves } = await pool.query(`
+        WITH RECURSIVE
+        rus_leaves AS (
+          SELECT p.id AS leaf_id, p.id AS node_id, p.name AS leaf_name,
+                 p.parent_id AS leaf_parent_id, p.job_id,
+                 j.name AS job_name, LOWER(j.name) AS job_name_lc
+            FROM projects p
+            LEFT JOIN jobs j ON j.id = p.job_id
+            LEFT JOIN contracts c ON c.id = p.contract_id
+            LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+           WHERE COALESCE(p.is_rollup, FALSE) = FALSE AND ec.program = 'rus'
+        ),
+        leaf_ancestors AS (
+          SELECT leaf_id, leaf_name, job_id, job_name, job_name_lc,
+                 leaf_id AS ancestor_id, 0 AS depth
+            FROM rus_leaves
+          UNION ALL
+          SELECT la.leaf_id, la.leaf_name, la.job_id, la.job_name, la.job_name_lc,
+                 p.parent_id, la.depth + 1
+            FROM leaf_ancestors la
+            JOIN projects p ON p.id = la.ancestor_id
+           WHERE p.parent_id IS NOT NULL AND la.depth < 10
+        )
+        SELECT ancestor_id AS rollup_id, leaf_id, leaf_name, job_id, job_name, job_name_lc, depth
+          FROM leaf_ancestors
+      `);
+
+      // Index leaves-by-rollup
+      const leavesByRollup = new Map();
+      for (const row of rusLeaves) {
+        const rid = row.rollup_id;
+        if (!leavesByRollup.has(rid)) leavesByRollup.set(rid, []);
+        leavesByRollup.get(rid).push(row);
+      }
+
+      // Build breakdown — group unattributed by project+job_title for compactness
+      const groupKey = e => `${e.project_id}|${e.job_title || ''}`;
+      const groups = new Map();
+      for (const e of unattributed) {
+        const k = groupKey(e);
+        if (!groups.has(k)) {
+          groups.set(k, {
+            project_id: e.project_id,
+            project_name: e.project_name,
+            is_rollup: e.is_rollup,
+            job_title_on_entry: e.job_title || null,
+            hours: 0,
+            entry_count: 0,
+          });
+        }
+        const g = groups.get(k);
+        g.hours += parseFloat(e.hours) || 0;
+        g.entry_count++;
+      }
+
+      const breakdown = [];
+      for (const g of groups.values()) {
+        const candidates = (leavesByRollup.get(g.project_id) || [])
+          .filter((v, i, arr) => arr.findIndex(x => x.leaf_id === v.leaf_id) === i);  // dedupe
+
+        const candidateDetails = candidates.map(leaf => {
+          const entryTitle = (g.job_title_on_entry || '').toLowerCase();
+          let would_match = false;
+          let why = '';
+          if (!leaf.job_id) {
+            why = 'leaf has no job_id assigned';
+          } else if (!leaf.job_name_lc) {
+            why = 'leaf job_name is NULL';
+          } else if (entryTitle === leaf.job_name_lc) {
+            would_match = true;
+            why = 'exact match (but may be depth issue or duplicate attribution)';
+          } else if (!entryTitle) {
+            why = `entry job_title is empty/null; leaf job_name='${leaf.job_name}'`;
+          } else if (entryTitle === 'other') {
+            why = `entry job_title='Other' doesn't match leaf job_name='${leaf.job_name}'`;
+          } else if (leaf.job_name_lc.includes(entryTitle) || entryTitle.includes(leaf.job_name_lc)) {
+            why = `substring near-miss: entry='${g.job_title_on_entry}' vs leaf='${leaf.job_name}' (depth ${leaf.depth})`;
+          } else {
+            why = `job_title='${g.job_title_on_entry}' doesn't match leaf job_name='${leaf.job_name}' (depth ${leaf.depth})`;
+          }
+          return { id: leaf.leaf_id, name: leaf.leaf_name, job_name: leaf.job_name, would_match, why };
+        });
+
+        // Best guess: sole leaf with a non-null job_id
+        const viableLeaves = candidates.filter(l => l.job_id);
+        const best_guess_leaf_id = viableLeaves.length === 1 ? viableLeaves[0].leaf_id : null;
+
+        breakdown.push({
+          ...g,
+          candidate_leaves_under_this_project: candidateDetails,
+          best_guess_leaf_id,
+        });
+      }
+
+      const label = period === 'month' ? monthYear : `${now.getFullYear()} YTD`;
+      res.json({
+        period: { start: startDate, end: endDate, mode: period, label },
+        summary: {
+          total_entries_in_rus_chain: totalEntries,
+          entries_attributed_to_leaf: attributed.length,
+          entries_unattributed: unattributed.length,
+          unattributed_hours_total: Math.round(unattributedHoursTotal * 100) / 100,
+        },
+        unattributed_breakdown: breakdown,
+      });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // GET /api/_admin/import-trace — list recent CSV imports so the
   // owner can pick a batch_id without guessing. Returns the most recent
   // 50 distinct import_batch values with their entry count, total

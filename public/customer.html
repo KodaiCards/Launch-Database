@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Launch Fiber Services — Client Portal</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/launcher-back.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -102,6 +103,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <script src="/js/change_password_modal.js" defer></script>
 </head>
 <body>
+<a href="/client/" class="launcher-back-btn" data-launcher-back style="display:none">
+  <i class="fa-solid fa-arrow-left"></i> Launcher
+</a>
+<script>
+fetch('/api/me/portals?audience=client',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
+  if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
+}).catch(()=>{});
+</script>
 
 <header class="header">
   <div style="display:flex;align-items:center;gap:14px">

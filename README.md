@@ -78,3 +78,27 @@ The AI has access to 10 tools that directly interact with the database, with saf
 
 ## Clients
 PSC (RUS), COX, IFT, TRI-CO — Contracts and work orders managed manually or via AI
+
+---
+
+## Portal URLs
+
+**`portal.launchfiber.com`** is the unified entry point.
+
+| URL | Description |
+|-----|-------------|
+| `portal.launchfiber.com/` | Launcher — role-aware tile grid for employees |
+| `portal.launchfiber.com/admin.html` | Admin SPA (projects, billing, staff, AI) |
+| `portal.launchfiber.com/splice.html` | Splice Matrix (fiber planning + PDF export) |
+| `portal.launchfiber.com/permitting.html` | Permitting Portal |
+| `portal.launchfiber.com/design.html` | Design Portal |
+| `portal.launchfiber.com/timeclock.html` | Time Clock |
+| `portal.launchfiber.com/client/` | Client Launcher (customer-role users) |
+| `portal.launchfiber.com/customer.html` | Customer Portal (read-only client view) |
+
+Direct deep-links (e.g. `/splice.html`) still work for bookmarks — the launcher
+is a convenience layer on top of existing portal paths, not a replacement for them.
+
+After deploying to `portal.launchfiber.com`, set the following on the Railway service:
+- `SPLICE_PUBLIC_URL=https://portal.launchfiber.com` (for QR codes in PDF exports)
+- Remove `PORTAL_MODE` from env vars (or leave unset) to enable the launcher
