@@ -159,6 +159,17 @@
     }
   };
 
+  // ── Period/month visibility ──────────────────────────────────────────────
+  // Hide the month picker when the period dropdown is set to YTD.
+  // Called on page load and whenever the dropdown changes.
+  function syncRusPeriodVisibility() {
+    const period = document.getElementById('insp-period')?.value;
+    const monthEl = document.getElementById('insp-month');
+    if (monthEl) monthEl.style.display = period === 'month' ? '' : 'none';
+  }
+  document.getElementById('insp-period')?.addEventListener('change', syncRusPeriodVisibility);
+  syncRusPeriodVisibility();
+
   async function loadInspection() {
     // Default the month picker to the current month on first load.
     const monthInput = document.getElementById('insp-month');

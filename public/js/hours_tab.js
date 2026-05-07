@@ -47,11 +47,22 @@
   // the full row to openEditTimeEntryModal without re-fetching.
   const _hoursEntriesById = new Map();
 
+  // ── Period/month visibility ─────────────────────────────────────────────
+  // Hide the month picker immediately when period switches to YTD so the
+  // UI is responsive before the async data fetch completes.
+  function syncHrsPeriodVisibility() {
+    const period = document.getElementById('hrs-period')?.value || 'month';
+    const mEl = document.getElementById('hrs-month');
+    if (mEl) mEl.style.display = period === 'ytd' ? 'none' : '';
+  }
+  document.getElementById('hrs-period')?.addEventListener('change', syncHrsPeriodVisibility);
+  syncHrsPeriodVisibility();
+
   async function loadHours() {
     const period = document.getElementById('hrs-period')?.value || 'month';
     const m = document.getElementById('hrs-month').value;
     const y = document.getElementById('hrs-year').value;
-    // Hide month picker in YTD mode
+    // Hide month picker in YTD mode (also done eagerly by syncHrsPeriodVisibility)
     const mEl = document.getElementById('hrs-month');
     if (mEl) mEl.style.display = period === 'ytd' ? 'none' : '';
 
