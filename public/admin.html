@@ -1427,7 +1427,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <div class="form-group span2">
             <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
             <div style="display:flex;gap:6px">
-              <select id="proj-parent" onchange="loadBudgetCodesForProject(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
+              <select id="proj-parent" onchange="parentChanged(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('parent')" title="Add new parent project"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
@@ -1466,10 +1466,23 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </select>
           </div>
         </div>
-        <!-- ROW 2: Contract | Service Area -->
+        <!-- ROW 1b: Engineering Contract (shown for RUS / GF(R) only) -->
+        <div class="form-row" id="proj-ec-row" style="display:none">
+          <div class="form-group span2" id="proj-ec-wrap">
+            <label id="proj-ec-label">Engineering Contract *</label>
+            <!-- Top-level: active picker dropdown -->
+            <select id="proj-ec" onchange="ecChanged()" style="width:100%">
+              <option value="">— Select engineering contract —</option>
+            </select>
+            <!-- Child project: read-only inherited display -->
+            <div id="proj-ec-inherited" style="display:none;font-size:13px;color:var(--text-muted);padding:6px 8px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:4px"></div>
+            <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Filters the Construction Contract dropdown below to only show contracts under this umbrella.</span>
+          </div>
+        </div>
+        <!-- ROW 2: Construction Contract | Service Area -->
         <div class="form-row">
           <div class="form-group" id="proj-contract-wrap">
-            <label>Contract</label>
+            <label>Construction Contract</label>
             <div style="display:flex;gap:6px">
               <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new contract"><i class="fa-solid fa-plus"></i></button>
@@ -3049,6 +3062,22 @@ function applyProjectModalFieldGating() {
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
 
+  // Engineering Contract row — visible for RUS / GF(R) programs when a
+  // client is selected. Hidden for BAU/Other (those programs don't use
+  // the RUS umbrella → no EC selection needed).
+  const ecRow = document.getElementById('proj-ec-row');
+  if (ecRow) {
+    const showEc = !!(clientId && usesRusInfra);
+    ecRow.style.display = showEc ? '' : 'none';
+    if (showEc) {
+      populateEcDropdown();
+    } else {
+      // Clear when hidden so stale EC doesn't bleed into saves.
+      const ecSel = document.getElementById('proj-ec');
+      if (ecSel) ecSel.value = '';
+    }
+  }
+
   const contractWrap = document.getElementById('proj-contract-wrap');
   if (contractWrap) {
     contractWrap.style.display = showContract ? '' : 'none';
@@ -3131,7 +3160,16 @@ function populateContractDropdownForProgram() {
     allowedEcIds = null; // unfiltered
   }
 
-  const filtered = allContracts.filter(c => !allowedEcIds || allowedEcIds.has(c.engineering_contract_id));
+  let filtered = allContracts.filter(c => !allowedEcIds || allowedEcIds.has(c.engineering_contract_id));
+
+  // Further narrow by the selected Engineering Contract (if the EC row is
+  // visible and a specific EC is chosen). This is the second-level filter
+  // that lets "pick EC → see only its construction contracts".
+  const ecSel = document.getElementById('proj-ec');
+  const pickedEcId = ecSel?.value || (document.getElementById('proj-ec-inherited')?.dataset?.ecId) || '';
+  if (pickedEcId && (effective === 'rus' || effective === 'gfr')) {
+    filtered = filtered.filter(c => c.engineering_contract_id === pickedEcId);
+  }
 
   // Preserve current selection if it's still valid; otherwise clear.
   const prev = sel.value;
@@ -4005,6 +4043,21 @@ async function editProject(id) {
   } catch (e) { console.error('client/job hookup failed:', e); }
 
   try {
+    // Pre-populate the EC picker from the project's contract → EC chain.
+    const pc = p.contract_id && (window.contractsCache || []).find(c => c.id === p.contract_id);
+    const pcEcId = pc?.engineering_contract_id || '';
+    if (pcEcId) {
+      // Ensure this EC has an option in the dropdown before setting value.
+      const ecSel = document.getElementById('proj-ec');
+      if (ecSel && !ecSel.querySelector(`option[value="${pcEcId}"]`)) {
+        const pcEc = (window.engineeringContractsCache || []).find(e => e.id === pcEcId);
+        if (pcEc) {
+          const lbl = `${pcEc.client_name || '?'} · ${pcEc.name}${pcEc.contract_number ? ' – ' + pcEc.contract_number : ''}`;
+          ecSel.add(new Option(lbl, pcEc.id));
+        }
+      }
+      if (ecSel) ecSel.value = pcEcId;
+    }
     document.getElementById('proj-contract').value = p.contract_id || '';
     // After setting contract, repopulate the concentrator dropdown so
     // the project's concentrator_id has a matching <option>. Without
@@ -4040,6 +4093,13 @@ function clearProjectForm() {
   document.getElementById('proj-ptype').value='';
   document.getElementById('proj-job').value='';
   document.getElementById('proj-status').value='active';
+  // Reset EC picker
+  const ecSel = document.getElementById('proj-ec');
+  if (ecSel) { ecSel.value=''; ecSel.style.display=''; }
+  const ecInherited = document.getElementById('proj-ec-inherited');
+  if (ecInherited) { ecInherited.style.display='none'; ecInherited.dataset.ecId=''; }
+  const ecRow = document.getElementById('proj-ec-row');
+  if (ecRow) ecRow.style.display='none';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
   // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
@@ -4068,6 +4128,90 @@ async function ptypeChanged() {
   applyProjectModalFieldGating();
   await refilterJobsDropdown(document.getElementById('proj-job')?.value || null);
   jobChanged();
+}
+
+// Populate the Engineering Contract dropdown for the current client + program.
+// Only called when the EC row is visible (RUS / GF(R)). Filters to RUS-program
+// engineering contracts belonging to the selected client.
+function populateEcDropdown() {
+  const ecSel = document.getElementById('proj-ec');
+  const inherited = document.getElementById('proj-ec-inherited');
+  if (!ecSel) return;
+
+  // If the parent project has an EC, show it as read-only inherited.
+  const parentId = document.getElementById('proj-parent')?.value;
+  if (parentId) {
+    const parentProj = (typeof allProjects !== 'undefined' && allProjects || []).find(p => p.id === parentId);
+    if (parentProj) {
+      // Look up EC from the parent's contract
+      const parentContract = (window.contractsCache || []).find(c => c.id === parentProj.contract_id);
+      const parentEcId = parentContract?.engineering_contract_id;
+      if (parentEcId) {
+        const parentEc = (window.engineeringContractsCache || []).find(e => e.id === parentEcId);
+        if (parentEc) {
+          // Show read-only inherited text, hide the active dropdown
+          ecSel.style.display = 'none';
+          if (inherited) {
+            inherited.style.display = '';
+            inherited.textContent = `${parentEc.client_name || ''} · ${parentEc.name}${parentEc.contract_number ? ' – ' + parentEc.contract_number : ''} (inherited from parent)`;
+            inherited.dataset.ecId = parentEcId;
+          }
+          // Force-set dropdown to the parent's EC so populateContractDropdownForProgram sees it
+          let opt = ecSel.querySelector(`option[value="${parentEcId}"]`);
+          if (!opt) {
+            opt = new Option('', parentEcId);
+            ecSel.add(opt);
+          }
+          ecSel.value = parentEcId;
+          return;
+        }
+      }
+    }
+  }
+
+  // Top-level: show the active picker, hide inherited display
+  ecSel.style.display = '';
+  if (inherited) { inherited.style.display = 'none'; inherited.dataset.ecId = ''; }
+
+  const clientId = document.getElementById('proj-client')?.value;
+  const ecCache = window.engineeringContractsCache || [];
+  const prev = ecSel.value;
+
+  // Filter to RUS-program ECs for this client (RUS and GF(R) both use the RUS umbrella)
+  const filtered = ecCache.filter(ec => ec.client_id === clientId && ec.program === 'rus');
+  while (ecSel.options.length > 1) ecSel.remove(1);
+  filtered
+    .slice()
+    .sort((a,b) => a.name.localeCompare(b.name))
+    .forEach(ec => {
+      const label = `${ec.client_name || '?'} · ${ec.name}${ec.contract_number ? ' – ' + ec.contract_number : ''}`;
+      ecSel.add(new Option(label, ec.id));
+    });
+
+  // Restore prior selection if still valid
+  if (filtered.some(ec => ec.id === prev)) ecSel.value = prev;
+}
+
+// User changed the Engineering Contract picker. Filter the Construction Contract
+// dropdown to only show contracts under the selected EC.
+function ecChanged() {
+  populateContractDropdownForProgram();
+  populateConcentratorDropdownForContract();
+}
+
+// User changed the Parent Project. Load budget codes (existing behaviour)
+// and re-run EC inheritance so child projects automatically pick up the
+// parent's engineering contract.
+async function parentChanged(parentId) {
+  await loadBudgetCodesForProject(parentId);
+  // If an EC row is currently visible, re-populate it so it can show
+  // the inherited EC from the new parent (or revert to the active picker
+  // if the parent has no EC).
+  const ecRow = document.getElementById('proj-ec-row');
+  if (ecRow && ecRow.style.display !== 'none') {
+    populateEcDropdown();
+    populateContractDropdownForProgram();
+  }
 }
 
 // User changed the Contract. Same triple-effect: gating may flip if the
