@@ -338,6 +338,15 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 /* Konva stage container */
 #stage{width:100%;height:100%}
 
+/* 5.H.1 — Empty state cards (no-project / no-splices / no-closures) */
+.empty-state-card{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3}
+.empty-state-card.hidden{display:none}
+.empty-state-inner{background:var(--vetro-bg-panel,#fff);border:1px solid var(--vetro-divider,#D8DCE3);border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:40px 48px;max-width:400px;width:calc(100% - 80px);text-align:center;pointer-events:all}
+.empty-state-icon{font-size:40px;color:var(--vetro-text-muted,#6B7787);margin-bottom:16px;line-height:1}
+.empty-state-headline{font-size:18px;font-weight:700;color:var(--vetro-text-heading,#1A2433);margin-bottom:8px}
+.empty-state-body{font-size:13px;color:var(--vetro-text-muted,#6B7787);line-height:1.6;margin-bottom:20px}
+.empty-state-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
 /* Phase 4.3 — Split view: diagram + map side-by-side with drag divider. */
 /* 5.E.4: split-mode row layout now applies to .canvas-pane-body (view-tabs stay in the header row). */
 .canvas-pane.split-mode .canvas-pane-body{display:flex;flex-direction:row}
@@ -727,6 +736,29 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
         <button class="pb-chip" data-type="fdh"         onclick="placementSetType('fdh')">FDH</button>
       </span>
       <button class="pb-cancel" onclick="cancelAddLocationPlacement()">Cancel</button>
+    </div>
+    <!-- 5.H.1 — No-project empty state (shown when no project is open) -->
+    <div class="empty-state-card" id="empty-no-project">
+      <div class="empty-state-inner">
+        <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <div class="empty-state-headline">No project open</div>
+        <div class="empty-state-body">Open one from the left sidebar, or create a new project to get started.</div>
+        <div class="empty-state-actions">
+          <button class="btn btn-primary" onclick="openCreateProject()"><i class="fa-solid fa-plus"></i> Create project</button>
+        </div>
+      </div>
+    </div>
+    <!-- 5.H.1 — No-closures empty state (shown in diagram/map when project has no closures) -->
+    <div class="empty-state-card hidden" id="empty-no-closures">
+      <div class="empty-state-inner">
+        <div class="empty-state-icon"><i class="fa-solid fa-box-open"></i></div>
+        <div class="empty-state-headline">No closures yet</div>
+        <div class="empty-state-body">Add a closure from the location inspector to start splicing.</div>
+        <div class="empty-state-actions">
+          <button class="btn btn-primary" onclick="openAddClosure()"><i class="fa-solid fa-box"></i> Add closure</button>
+          <button class="btn" onclick="switchView('map')"><i class="fa-solid fa-earth-americas"></i> Open map</button>
+        </div>
+      </div>
     </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
@@ -1237,6 +1269,8 @@ async function hydrateProject() {
     // Phase 4.4 — re-render matrix view if active so inline edits
     // and SSE-pushed changes appear without a manual refresh.
     if (state.activeView === 'matrix') renderMatrixView();
+    // 5.H.1 — update empty state cards
+    _updateEmptyStates();
     // 5.B.2 — refresh the recently-imported chip whenever data changes.
     renderRecentlyImportedChip();
     // Phase 2B #6 — fire-and-forget auto-snapshot. Server-side debounce
@@ -1247,6 +1281,25 @@ async function hydrateProject() {
   } catch (e) {
     toast('Hydrate failed: ' + e.message, 'error');
   }
+}
+
+// ── 5.H.1 — Empty state visibility controller ───────────────────────────────
+// Called after every hydrate and every view switch.
+function _updateEmptyStates() {
+  const noProject  = document.getElementById('empty-no-project');
+  const noClosures = document.getElementById('empty-no-closures');
+  if (!noProject || !noClosures) return;
+
+  const hasProject = !!state.currentId && !!state.data;
+  const view = state.activeView || 'diagram';
+  const closures = state.data?.closures || [];
+  const hasClosures = closures.length > 0;
+  const isMatrixView = view === 'matrix';
+
+  // No project: show the centered CTA, hide the closures card.
+  noProject.classList.toggle('hidden', hasProject);
+  // No closures: only in diagram/map/split when a project is open but has 0 closures.
+  noClosures.classList.toggle('hidden', !hasProject || hasClosures || isMatrixView);
 }
 
 function fireAutoSnapshot() {
@@ -5403,6 +5456,7 @@ async function deleteCurrentProject() {
     const insp = document.getElementById('inspector');
     if (insp) insp.classList.add('inspector-closed');
     document.getElementById('lock-banner').style.display = 'none';
+    _updateEmptyStates(); // 5.H.1
     await loadProjects();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -5828,6 +5882,7 @@ function saveBasemapMode(mode) {
 function switchView(view) {
   if (view === state.activeView) return;
   state.activeView = view;
+  _updateEmptyStates(); // 5.H.1
   try { localStorage.setItem('lfs_splice_active_view', view); } catch {}
   document.querySelectorAll('.view-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.view === view));
@@ -6560,7 +6615,25 @@ function renderMatrixView() {
   const wrap = document.getElementById('matrix-table-wrap');
   if (!wrap) return;
   if (!rows.length) {
-    wrap.innerHTML = '<div class="empty-pane" style="padding:20px">No splices match the current filters.</div>';
+    // 5.H.1 — differentiate "no splices at all" from "filters too narrow"
+    const filterText    = (document.getElementById('matrix-filter-text')?.value || '').trim();
+    const filterClosure = document.getElementById('matrix-filter-closure')?.value || '';
+    const hasFilters = !!(filterText || filterClosure);
+    const totalSplices = (state.data?.splices || []).length;
+    if (!hasFilters && totalSplices === 0) {
+      wrap.innerHTML = `<div class="empty-state-card" style="position:relative;display:flex;align-items:center;justify-content:center;padding:60px 40px">
+        <div class="empty-state-inner" style="position:relative">
+          <div class="empty-state-icon"><i class="fa-solid fa-scissors"></i></div>
+          <div class="empty-state-headline">No splices yet</div>
+          <div class="empty-state-body">Add your first splice from the Diagram view by clicking a closure.</div>
+          <div class="empty-state-actions">
+            <button class="btn btn-primary" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Open Diagram view</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      wrap.innerHTML = '<div class="empty-pane" style="padding:20px">No splices match the current filters.</div>';
+    }
   } else {
     wrap.innerHTML = `
       <table class="table" style="font-size:12px;border-collapse:collapse;width:100%;min-width:800px">
