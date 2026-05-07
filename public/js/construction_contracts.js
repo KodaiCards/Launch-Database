@@ -295,4 +295,21 @@
   window.saveNewContract = saveNewContract;
   window.editContract = editContract;
   window.saveContractEdit = saveContractEdit;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _conStaleTimer = null;
+
+  function _conSseRefresh() {
+    clearTimeout(_conStaleTimer);
+    _conStaleTimer = setTimeout(async () => {
+      await loadContractList();
+      renderContractsList();
+    }, 500);
+  }
+
+  ['contract_added', 'contract_updated', 'contract_deleted',
+   'engineering_contract_added', 'engineering_contract_updated', 'engineering_contract_deleted',
+   'client_added', 'client_updated', 'client_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _conSseRefresh)
+  );
 })();

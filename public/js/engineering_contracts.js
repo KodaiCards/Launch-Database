@@ -200,4 +200,20 @@
   window.editEngineeringContract = editEngineeringContract;
   window.saveEngineeringContract = saveEngineeringContract;
   window.deleteEngineeringContract = deleteEngineeringContract;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _ecStaleTimer = null;
+
+  function _ecSseRefresh() {
+    clearTimeout(_ecStaleTimer);
+    _ecStaleTimer = setTimeout(async () => {
+      await loadEngineeringContracts();
+      renderEngineeringContractsList();
+    }, 500);
+  }
+
+  ['engineering_contract_added', 'engineering_contract_updated', 'engineering_contract_deleted',
+   'client_added', 'client_updated', 'client_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _ecSseRefresh)
+  );
 })();

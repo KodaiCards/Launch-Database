@@ -7751,5 +7751,56 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
   if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
 }).catch(()=>{});
 </script>
+<!-- ─── SSE live-update subscriber ──────────────────────────────────────────
+     Maintains a persistent /api/events/stream connection and dispatches
+     every server event as a CustomEvent on `document` so tab modules can
+     listen with document.addEventListener('sse:<eventName>', handler).
+     Auto-reconnects after 5 s on disconnect.  Admin gets all channels.
+──────────────────────────────────────────────────────────────────────────── -->
+<script>
+(function() {
+  const SSE_EVENTS = [
+    'project_added', 'project_updated', 'project_deleted',
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+    'contract_added', 'contract_updated', 'contract_deleted',
+    'engineering_contract_added', 'engineering_contract_updated', 'engineering_contract_deleted',
+    'client_added', 'client_updated', 'client_deleted',
+    'job_added', 'job_updated', 'job_deleted',
+    'staff_added', 'staff_updated', 'staff_deleted',
+    'permit_added', 'permit_updated', 'permit_deleted',
+    'invoice_created', 'invoice_voided',
+    'batch_committed', 'batch_voided',
+  ];
+
+  let _sseSource = null;
+
+  function startSse() {
+    if (_sseSource) return;
+    if (!('EventSource' in window)) return;
+    try {
+      _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
+      _sseSource.addEventListener('open', () => console.log('[sse] connected'));
+      _sseSource.addEventListener('error', () => {
+        console.warn('[sse] disconnected, reconnecting in 5 s…');
+        _sseSource.close();
+        _sseSource = null;
+        setTimeout(startSse, 5000);
+      });
+
+      SSE_EVENTS.forEach(name => {
+        _sseSource.addEventListener(name, e => {
+          let detail;
+          try { detail = JSON.parse(e.data); } catch { detail = {}; }
+          document.dispatchEvent(new CustomEvent('sse:' + name, { detail }));
+        });
+      });
+    } catch (e) {
+      console.error('[sse] init failed', e);
+    }
+  }
+
+  window.addEventListener('load', startSse);
+})();
+</script>
 </body>
 </html>

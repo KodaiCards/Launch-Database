@@ -627,4 +627,35 @@
   window.deleteTimeEntry = deleteTimeEntry;
   window.deleteAllHoursForStaff = deleteAllHoursForStaff;
   window.showHoursTypeBreakdown = showHoursTypeBreakdown;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _hoursStaleTimer = null;
+  let _hoursStale = false;
+
+  function _hoursDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'hours') {
+      _hoursStale = true;
+      return;
+    }
+    clearTimeout(_hoursStaleTimer);
+    _hoursStaleTimer = setTimeout(loadHours, 500);
+  }
+
+  const _hoursSseEvents = [
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+    'project_updated', 'project_deleted', 'staff_added', 'staff_updated', 'staff_deleted',
+  ];
+  _hoursSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _hoursDebounce));
+
+  const _prevShowViewHours = window.showView;
+  if (typeof _prevShowViewHours === 'function') {
+    window.showView = function(view) {
+      _prevShowViewHours(view);
+      if (view === 'hours' && _hoursStale) {
+        _hoursStale = false;
+        clearTimeout(_hoursStaleTimer);
+        _hoursStaleTimer = setTimeout(loadHours, 100);
+      }
+    };
+  }
 })();

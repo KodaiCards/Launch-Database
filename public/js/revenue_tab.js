@@ -257,4 +257,36 @@
   window.renderRevenueDetail = renderRevenueDetail;
   window.rtreeToggle = rtreeToggle;
   window.loadRevenue = loadRevenue;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  let _revStaleTimer = null;
+  let _revStale = false;
+
+  function _revDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'revenue') {
+      _revStale = true;
+      return;
+    }
+    clearTimeout(_revStaleTimer);
+    _revStaleTimer = setTimeout(loadRevenue, 500);
+  }
+
+  const _revSseEvents = [
+    'project_updated', 'project_deleted',
+    'invoice_created', 'invoice_voided',
+    'time_entry_added', 'time_entry_updated', 'time_entry_deleted', 'time_entries_bulk_deleted',
+  ];
+  _revSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _revDebounce));
+
+  const _prevShowViewRev = window.showView;
+  if (typeof _prevShowViewRev === 'function') {
+    window.showView = function(view) {
+      _prevShowViewRev(view);
+      if (view === 'revenue' && _revStale) {
+        _revStale = false;
+        clearTimeout(_revStaleTimer);
+        _revStaleTimer = setTimeout(loadRevenue, 100);
+      }
+    };
+  }
 })();

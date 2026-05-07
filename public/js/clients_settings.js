@@ -137,4 +137,22 @@ This cannot be undone. Type the client name below to confirm:`;
   window.editClient = editClient;
   window.saveClient = saveClient;
   window.deleteClient = deleteClient;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  // Clients settings panel is inside the settings modal — always "active"
+  // in the sense that changes from another tab should be reflected when
+  // the user next opens or scrolls to the panel. Debounce + reload.
+  let _clientsStaleTimer = null;
+
+  function _clientsSseRefresh() {
+    clearTimeout(_clientsStaleTimer);
+    _clientsStaleTimer = setTimeout(async () => {
+      await loadClients();
+      renderClientsList();
+    }, 500);
+  }
+
+  ['client_added', 'client_updated', 'client_deleted'].forEach(ev =>
+    document.addEventListener('sse:' + ev, _clientsSseRefresh)
+  );
 })();
