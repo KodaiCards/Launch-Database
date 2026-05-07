@@ -771,6 +771,64 @@ fine.
 
 ---
 
-*Last updated 2026-05-05 — initial draft after the splice tool research
-pass. Phase 1 shipped at b61d00f; canvas + cable/location inspector
-landed at 2a843a6.*
+## Phase 5.D — Functional VETRO UX overhaul
+
+**Owner's complaints cleared:**
+1. "I don't have a way to change the color or transparency of the lines" → Style Editor
+2. "I don't have layer" → Functional layer-visibility tree (replaces decorative)
+3. "I can't click on lines and it bring up the properties" → cable click fixed
+4. "It's not customizable, I need to be able to add everything" → Custom layer creation MVP
+5. "I NEED A MAP THAT ALSO HAS THE SMALL ROAD NAMES" → Mapbox Streets v12
+6. "It also lags out when I zoom and the map disappears" → split dasharray layers + debounce
+
+**Commits (all on `claude/splice-matrix-railway-setup-IIG3Q`):**
+
+| # | SHA | Description |
+|---|-----|-------------|
+| 1 | `9ac6cf7` | Mapbox `/api/config/mapbox` server endpoint |
+| 2 | `12f831b` | splice.html: Mapbox migration, zoom-lag fixes, layer tree, style editor (full overhaul) |
+| 3 | `e6d21ec` | Schema 0026: cable category + splice_layer_styles; new API endpoints |
+| 4 | `2faa542` | Schema 0027: custom layers + features tables; custom layer endpoints |
+| 5 | `3a34d50` | Click-on-cable opens inspector; category in Add Cable form; setCableCategory |
+| 6 | `ea7d453` | Layer tree: apply saved styles on load; visibility persistence fix |
+| 7 | `d5af100` | Style editor: category badge in cable inspector header |
+| 8 | *(this commit)* | SPLICE_BUILD_PLAN.md Phase 5.D documentation |
+
+**Key architectural decisions:**
+
+- **Mapbox token**: Delivered via `GET /api/config/mapbox` (requireAuth).
+  Set `MAPBOX_TOKEN` env var in Railway. Without it, Esri raster fallback
+  with a toast notification — dev environments work without the token.
+- **Layer model**: One MapLibre line layer per cable category (cables-backbone,
+  cables-lateral, etc.) each with a CONSTANT `line-dasharray`. This eliminates
+  the data-driven `case` expression that caused GPU tessellation zoom lag.
+- **Style persistence**: `splice_layer_styles` table keyed by (project_id, layer_id).
+  Styles hydrate with the project; live-apply via `map.setPaintProperty()`.
+- **cable.category column**: New `VARCHAR(20) NOT NULL DEFAULT 'unclassified'`.
+  Existing cables get 'unclassified'. Re-categorize via cable inspector dropdown.
+  Valid values: backbone, lateral, drop, pigtail, conduit, legacy, unclassified.
+- **Custom layers**: `splice_custom_layers` table per project. Feature-add UI
+  (drawing tool integration) is Phase 5.E — marked with `// TODO Phase 5.E`
+  comments in the code.
+- **basemap toggle**: Mapbox path cycles streets ↔ satellite-streets-v12 via
+  `map.setStyle()` + `styledata` event handler that re-adds network layers.
+  Esri fallback keeps original sat/hybrid toggle via `setLayoutProperty`.
+
+**MAPBOX_TOKEN env var:**
+Set in Railway (or other deployment) environment variables panel.
+Without it, the tool falls back to Esri World Imagery + Reference Overlay
+(the pre-5.D behavior). With it, uses Mapbox Streets v12 vector tiles which
+provide road labels at every zoom level, building footprints at z15+, and
+client-side vector rendering that never blanks on zoom.
+
+**Existing cable re-categorization:**
+All cables before migration 0026 land with `category = 'unclassified'` and
+appear in the "Unclassified" map layer (purple). Owners can re-categorize
+individual cables via the cable inspector Category dropdown, or via
+`PUT /api/splice/cables/:id/category`. No bulk re-categorization UI yet
+(Phase 5.E candidate).
+
+---
+
+*Last updated 2026-05-07 — Phase 5.D functional VETRO UX overhaul complete.
+Phase 5.C shipped at 5957315; Phase 5.D opened at 8d4fdbd (research).*

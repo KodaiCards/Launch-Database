@@ -589,6 +589,16 @@ require('./routes/billing')(app, pool, { requireManagerOrAdmin, invoiceGenerator
 // PORTAL_MODE='splice' serves public/splice.html as its SPA.
 require('./routes/splice')(app, pool, { requireAuth });
 
+// ─── Mapbox token endpoint (Splice 5.D.1) ────────────────────────────────────
+// Returns the MAPBOX_TOKEN env var to authenticated clients so it can be used
+// in the browser-side MapLibre transformRequest without hardcoding in HTML.
+// The token is visible in the client network tab anyway; protection comes from
+// setting allowed-URLs in the Mapbox dashboard (restrict to your deployment domain).
+app.get('/api/config/mapbox', requireAuth(), (req, res) => {
+  const token = process.env.MAPBOX_TOKEN || null;
+  res.json({ token, available: !!token });
+});
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API ERROR HANDLER — catches anything thrown out of an /api/* route AND

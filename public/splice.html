@@ -414,6 +414,26 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
               transform:translateX(100%);transition:transform 0.22s ease-out;flex-basis:auto}
   .inspector:not(.inspector-closed){transform:translateX(0)}
 }
+
+/* ── 5.D.5 Layer Tree ──────────────────────────────────────────────────────── */
+.layer-group{margin-bottom:4px}
+.layer-group-header{display:flex;align-items:center;gap:5px;padding:3px 0;cursor:pointer;user-select:none}
+.layer-group-header:hover{background:var(--vetro-bg-hover,#EBF2FF);border-radius:3px}
+.layer-group-name{font-size:11px;font-weight:600;color:var(--vetro-text-heading,#1A2433);flex:1}
+.layer-group-chevron{font-size:9px;color:var(--vetro-text-muted,#6B7787);width:12px;flex-shrink:0}
+.layer-group-children{padding-left:14px;overflow:hidden;transition:max-height 0.2s ease}
+.layer-leaf{display:flex;align-items:center;gap:5px;padding:2px 3px;font-size:11px;color:var(--vetro-text-body,#3D4A5C);border-radius:3px}
+.layer-leaf:hover{background:var(--vetro-bg-hover,#EBF2FF)}
+.layer-leaf input[type="checkbox"]{flex-shrink:0;width:12px;height:12px;cursor:pointer}
+.layer-color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,0.15);cursor:pointer}
+.layer-leaf-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer-paint-btn{opacity:0;background:none;border:none;cursor:pointer;color:var(--vetro-text-muted,#6B7787);font-size:10px;padding:1px 4px;border-radius:3px;line-height:1}
+.layer-leaf:hover .layer-paint-btn{opacity:1}
+.layer-paint-btn:hover{background:var(--vetro-divider,#D8DCE3)}
+/* Layer context menu */
+.layer-ctx-menu{position:fixed;background:#fff;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:500;min-width:160px;padding:4px 0;font-size:12px}
+.layer-ctx-item{padding:6px 14px;cursor:pointer;color:var(--vetro-text-body,#3D4A5C)}
+.layer-ctx-item:hover{background:var(--vetro-bg-hover,#EBF2FF)}
 </style>
 </head>
 <body>
@@ -498,7 +518,136 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
       <h3>Summary</h3>
       <div id="proj-summary-body" style="font-size:11px;color:var(--text-secondary);line-height:1.7"></div>
     </div>
+
+    <!-- 5.D.5: Functional layer visibility tree — shown when a project is loaded -->
+    <div class="sidebar-section" id="layer-panel" style="display:none">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--vetro-text-muted);padding:4px 2px 8px 2px;border-bottom:1px solid var(--vetro-divider);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        Map Layers
+        <button class="btn btn-sm" style="font-size:9px;padding:1px 5px" onclick="showAllLayers()" title="Show all layers">All</button>
+      </div>
+      <!-- Fiber Cables group -->
+      <div class="layer-group" id="layer-group-cables">
+        <div class="layer-group-header" onclick="toggleGroupExpand('cables')">
+          <input type="checkbox" id="layer-parent-cables" checked onclick="event.stopPropagation();toggleGroupVisibility('cables',this.checked)" title="Toggle all cable layers">
+          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-cables"></i></span>
+          <span class="layer-group-name">Fiber Cables</span>
+        </div>
+        <div class="layer-group-children" id="layer-children-cables"></div>
+      </div>
+      <!-- Network Points group -->
+      <div class="layer-group" id="layer-group-locations">
+        <div class="layer-group-header" onclick="toggleGroupExpand('locations')">
+          <input type="checkbox" id="layer-parent-locations" checked onclick="event.stopPropagation();toggleGroupVisibility('locations',this.checked)" title="Toggle all location layers">
+          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-locations"></i></span>
+          <span class="layer-group-name">Network Points</span>
+        </div>
+        <div class="layer-group-children" id="layer-children-locations"></div>
+      </div>
+      <!-- Custom layers placeholder -->
+      <div class="layer-group" id="layer-group-custom" style="display:none">
+        <div class="layer-group-header" onclick="toggleGroupExpand('custom')">
+          <input type="checkbox" id="layer-parent-custom" checked onclick="event.stopPropagation();toggleGroupVisibility('custom',this.checked)">
+          <span class="layer-group-chevron"><i class="fa-solid fa-chevron-down" id="layer-chevron-custom"></i></span>
+          <span class="layer-group-name">Custom Layers</span>
+        </div>
+        <div class="layer-group-children" id="layer-children-custom"></div>
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="openCreateLayerModal()">
+          <i class="fa-solid fa-plus"></i> New Layer
+        </button>
+      </div>
+    </div>
   </aside>
+
+  <!-- 5.D.6: Style Editor panel (slide-in from left rail paint icon) -->
+  <div id="style-editor-panel" style="display:none;position:fixed;left:var(--left-rail-width,260px);top:var(--header-height,52px);width:280px;background:var(--vetro-bg-panel,#fff);box-shadow:var(--shadow-modal,0 8px 32px rgba(0,0,0,.2));border-right:1px solid var(--vetro-divider,#D8DCE3);border-bottom:1px solid var(--vetro-divider,#D8DCE3);border-radius:0 0 6px 0;z-index:210;flex-direction:column">
+    <div style="padding:10px 14px;border-bottom:1px solid var(--vetro-divider,#D8DCE3);display:flex;justify-content:space-between;align-items:center">
+      <span id="se-layer-name" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-heading,#1A2433)">LAYER STYLE</span>
+      <button onclick="closeStyleEditor()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--vetro-text-muted,#6B7787);line-height:1">&times;</button>
+    </div>
+    <div style="padding:12px 14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100vh - 200px)">
+      <!-- Color row -->
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <label style="font-size:11px;color:var(--vetro-text-muted,#6B7787);font-weight:500">Color</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="color" id="se-color" style="width:36px;height:28px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:4px;cursor:pointer;padding:1px 2px" oninput="onSeColorInput()">
+          <input type="text" id="se-color-hex" maxlength="7" placeholder="#68BD45" style="width:70px;font-family:monospace;font-size:11px;padding:3px 5px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:4px" oninput="onSeHexInput()">
+        </div>
+      </div>
+      <!-- Opacity row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <label style="font-size:11px;color:var(--vetro-text-muted,#6B7787);font-weight:500;flex-shrink:0">Opacity</label>
+        <input type="range" id="se-opacity" min="0.1" max="1.0" step="0.05" style="flex:1" oninput="onSeOpacityInput()">
+        <span id="se-opacity-val" style="width:34px;font-size:11px;text-align:right;color:var(--vetro-text-body,#3D4A5C)">92%</span>
+      </div>
+      <!-- Width row (lines) -->
+      <div id="se-width-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <label style="font-size:11px;color:var(--vetro-text-muted,#6B7787);font-weight:500;flex-shrink:0">Width</label>
+        <input type="range" id="se-width" min="1" max="10" step="0.5" style="flex:1" oninput="onSeWidthInput()">
+        <span id="se-width-val" style="width:34px;font-size:11px;text-align:right;color:var(--vetro-text-body,#3D4A5C)">3px</span>
+      </div>
+      <!-- Stroke row (lines) -->
+      <div id="se-dash-row" style="display:flex;align-items:center;justify-content:space-between">
+        <label style="font-size:11px;color:var(--vetro-text-muted,#6B7787);font-weight:500">Stroke</label>
+        <div style="display:flex;gap:4px">
+          <button class="se-dash-btn" id="se-dash-solid" data-dash="solid" onclick="selectDash('solid')" style="font-size:10px;padding:2px 7px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:3px;cursor:pointer">— Solid</button>
+          <button class="se-dash-btn" id="se-dash-dashed" data-dash="dashed" onclick="selectDash('dashed')" style="font-size:10px;padding:2px 7px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:3px;cursor:pointer">- - Dashed</button>
+        </div>
+      </div>
+      <!-- Marker size row (points) -->
+      <div id="se-marker-row" style="display:none;align-items:center;justify-content:space-between;gap:8px">
+        <label style="font-size:11px;color:var(--vetro-text-muted,#6B7787);font-weight:500;flex-shrink:0">Size</label>
+        <input type="range" id="se-marker-size" min="4" max="20" step="1" style="flex:1" oninput="onSeMarkerInput()">
+        <span id="se-marker-val" style="width:34px;font-size:11px;text-align:right;color:var(--vetro-text-body,#3D4A5C)">8px</span>
+      </div>
+    </div>
+    <div style="padding:8px 14px;border-top:1px solid var(--vetro-divider,#D8DCE3);display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="resetLayerStyleToDefault()" style="font-size:11px">Reset</button>
+      <button class="btn btn-sm btn-primary" onclick="saveLayerStyle()" style="font-size:11px">Save</button>
+    </div>
+  </div>
+
+  <!-- 5.D.7: Create Custom Layer modal -->
+  <div id="create-layer-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.45);align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.2);width:440px;max-width:95vw;padding:0">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--vetro-divider,#D8DCE3);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:15px;font-weight:600;color:var(--vetro-text-heading,#1A2433)">Create Custom Layer</span>
+        <button onclick="closeCreateLayerModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--vetro-text-muted,#6B7787)">&times;</button>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:500;color:var(--vetro-text-muted,#6B7787);display:block;margin-bottom:4px">Layer name</label>
+          <input type="text" id="cl-name" placeholder="e.g. Aerial Slack Loop" style="width:100%;padding:6px 10px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:4px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:500;color:var(--vetro-text-muted,#6B7787);display:block;margin-bottom:4px">Geometry type</label>
+          <div style="display:flex;gap:8px">
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cl-geom" value="point"> Point</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cl-geom" value="line" checked> Line</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="radio" name="cl-geom" value="polygon"> Polygon</label>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:500;color:var(--vetro-text-muted,#6B7787);display:block;margin-bottom:4px">Default color</label>
+            <input type="color" id="cl-color" value="#6366F1" style="width:48px;height:32px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:4px;cursor:pointer;padding:1px 2px">
+          </div>
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:500;color:var(--vetro-text-muted,#6B7787);display:block;margin-bottom:4px">Default width / size</label>
+            <input type="number" id="cl-size" value="3" min="1" max="20" style="width:80px;padding:6px 8px;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:4px;font-size:13px">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--vetro-text-muted,#6B7787);background:var(--vetro-bg-canvas,#F4F5F7);border-radius:4px;padding:8px 10px">
+          <b>Note:</b> After creating the layer, it appears in the Map Data panel. Use the map drawing tools to add features to it in Phase 5.E.
+        </div>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid var(--vetro-divider,#D8DCE3);display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-sm" onclick="closeCreateLayerModal()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="submitCreateLayer()">Create Layer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ─── Center: Konva canvas + Map (Phase 3A) tabs ─── -->
   <div class="canvas-pane">
@@ -657,6 +806,31 @@ const state = {
 };
 
 // Per-type marker colour palette. Defined here (before the inspector section)
+// ── 5.D.2 / 5.D.6: Per-layer default styles ──────────────────────────────────
+// layer_key format: "cable.{category}" or "location.{type}" or "closure.all" etc.
+// color: MapLibre line-color / circle-color default.
+// dash: 'solid' | 'dashed' (constant per layer — GPU-batchable).
+const LAYER_DEFAULTS = {
+  'cable.backbone':    { color: '#DC2626', opacity: 0.92, lineWidth: 4, dash: 'solid' },
+  'cable.lateral':     { color: '#16A34A', opacity: 0.92, lineWidth: 3, dash: 'solid' },
+  'cable.drop':        { color: '#2563EB', opacity: 0.92, lineWidth: 2, dash: 'solid' },
+  'cable.pigtail':     { color: '#0D9488', opacity: 0.85, lineWidth: 2, dash: 'dashed' },
+  'cable.conduit':     { color: '#7C3AED', opacity: 0.80, lineWidth: 3, dash: 'solid' },
+  'cable.legacy':      { color: '#9CA3AF', opacity: 0.65, lineWidth: 2, dash: 'solid' },
+  'cable.unclassified':{ color: '#68BD45', opacity: 0.92, lineWidth: 3, dash: 'solid' },
+  'location.handhole': { color: '#3B82F6', opacity: 1.0, markerSize: 8 },
+  'location.manhole':  { color: '#7C3AED', opacity: 1.0, markerSize: 10 },
+  'location.pole':     { color: '#78716C', opacity: 1.0, markerSize: 6 },
+  'location.pedestal': { color: '#16A34A', opacity: 1.0, markerSize: 8 },
+  'location.vault':    { color: '#B45309', opacity: 1.0, markerSize: 10 },
+  'location.fdh':      { color: '#DC2626', opacity: 1.0, markerSize: 10 },
+  'location.co':       { color: '#0F172A', opacity: 1.0, markerSize: 14 },
+  'location.splice_point': { color: '#1B5FA0', opacity: 1.0, markerSize: 7 },
+  'location.terminal': { color: '#0D9488', opacity: 1.0, markerSize: 7 },
+  'location.ring_cut': { color: '#EA580C', opacity: 1.0, markerSize: 9 },
+  'closure.all':       { color: '#374151', opacity: 1.0, markerSize: 6 },
+};
+
 // so renderLocationInspector can use _locColor() at render time.
 const LOC_TYPE_COLORS = {
   handhole:    '#3B82F6',
@@ -912,6 +1086,7 @@ async function selectProject(id) {
   refreshImportsList();
   document.getElementById('proj-loss-records').style.display = 'block';
   document.getElementById('proj-summary').style.display = 'block';
+  document.getElementById('layer-panel').style.display = '';  // 5.D.5: show layer tree
   document.getElementById('toolbar').style.display = 'flex';
   document.getElementById('view-tabs').style.display = 'flex';
   document.getElementById('btn-share').disabled = false;
@@ -954,6 +1129,8 @@ async function hydrateProject() {
     // Phase 3A — refresh the map layer on every hydrate. No-op when
     // map isn't initialized yet (user never opened the Map tab).
     if (state.map) refreshMapLayers();
+    // 5.D.5: Re-render layer tree with saved styles from hydrate data
+    renderLayerTree();
     // Phase 4.4 — re-render matrix view if active so inline edits
     // and SSE-pushed changes appear without a manual refresh.
     if (state.activeView === 'matrix') renderMatrixView();
@@ -1437,16 +1614,18 @@ function renderCanvas() {
 
   drawCanvasContents();
 
-  // Resize — refit on window resize.
+  // Resize — refit on window resize. Debounced (5.D.2) to avoid GPU spike
+  // when the browser fires many resize events during zoom or panel animation.
   if (!renderCanvas._listenerInstalled) {
-    window.addEventListener('resize', () => {
+    const _debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+    window.addEventListener('resize', _debounce(() => {
       if (!state.konva) return;
       state.konva.stage.size({
         width: container.clientWidth,
         height: container.clientHeight,
       });
       state.konva.stage.batchDraw();
-    });
+    }, 100));
     renderCanvas._listenerInstalled = true;
   }
 }
@@ -2060,6 +2239,10 @@ function selectThing(type, id) {
   // Refresh the map's selected-location HTML Marker when the user picks a
   // location so the drag handle appears/moves immediately.
   if ((state.activeView === 'map' || state.activeView === 'split') && state.map) refreshMapLayers();
+  // 5.D.3: Update cable selection highlight on map
+  if ((state.activeView === 'map' || state.activeView === 'split') && state.map) {
+    _updateCableSelectionHighlight(type === 'cable' ? id : null);
+  }
 
   // Phase 4.3 — split view selection sync.
   // When a closure or location is selected in split mode, pan the map to it.
@@ -2210,6 +2393,7 @@ function renderCableInspector(cableId) {
       <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
         <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted)">Cable</span>
         <span style="margin-left:auto;background:var(--vetro-route-active);color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600">${esc(cable.construction_type||'buried')}</span>
+        <span style="background:${(LAYER_DEFAULTS['cable.'+(cable.category||'unclassified')]?.color||'#68BD45')};color:#fff;padding:1px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600">${esc(cable.category||'unclassified')}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <h3 style="margin:0;flex:1;font-size:15px;font-weight:600" id="cable-name-display-${cableId}">${esc(cable.name)}</h3>
@@ -2306,6 +2490,13 @@ function renderCableInspector(cableId) {
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--vetro-text-muted);margin-bottom:6px">Bill of Materials</div>
       <table class="table" style="font-size:11px">
         <tbody>
+          <tr><th>Category</th><td>
+            <select style="font-size:10px;padding:1px 3px;border:1px solid var(--vetro-divider)" onchange="setCableCategory('${cableId}',this.value)" ${isReadOnly()?'disabled':''}>
+              ${['unclassified','backbone','lateral','drop','pigtail','conduit','legacy'].map(cat =>
+                `<option value="${cat}" ${(cable.category||'unclassified')===cat?'selected':''}>${cat.charAt(0).toUpperCase()+cat.slice(1)}</option>`
+              ).join('')}
+            </select>
+          </td></tr>
           <tr><th>Cable type</th><td>${esc(cable.construction_type||'—')}</td></tr>
           <tr><th>Fiber count</th><td>${cable.fiber_count}f</td></tr>
           <tr><th>Length</th><td>${cable.path_length_feet ? cable.path_length_feet.toLocaleString() + ' ft' : '—'}</td></tr>
@@ -3777,6 +3968,18 @@ function openAddCable() {
           </select></div>
       </div>
       <div class="row">
+        <div class="field"><label>Category <span style="color:var(--vetro-text-muted);font-weight:400">(for map layer)</span></label>
+          <select id="m-cable-cat">
+            <option value="unclassified" selected>Unclassified</option>
+            <option value="backbone">Backbone</option>
+            <option value="lateral">Lateral</option>
+            <option value="drop">Drop</option>
+            <option value="pigtail">Pigtail</option>
+            <option value="conduit">Conduit</option>
+            <option value="legacy">Legacy</option>
+          </select></div>
+      </div>
+      <div class="row">
         <div class="field" style="flex:0 0 50%"><label>Mfr part (optional)</label>
           <input id="m-cable-part" placeholder="optional"></div>
       </div>
@@ -3795,6 +3998,7 @@ function openAddCable() {
           name: document.getElementById('m-cable-name').value.trim(),
           fiber_count: parseInt(document.getElementById('m-cable-fc').value, 10),
           construction_type: document.getElementById('m-cable-ct').value,
+          category: document.getElementById('m-cable-cat').value,
           tube_size_fibers: parseInt(document.getElementById('m-cable-tube-size').value, 10),
           from_location_id: document.getElementById('m-cable-from').value || null,
           to_location_id: document.getElementById('m-cable-to').value || null,
@@ -4224,6 +4428,18 @@ function openStrandMetadataEditor(cableId) {
       } catch (e) { toast(e.message, 'error'); }
     },
   });
+}
+
+// 5.D.4: Update cable category inline from inspector dropdown
+async function setCableCategory(cableId, category) {
+  if (isReadOnly()) return;
+  try {
+    const updated = await api(`/api/splice/cables/${cableId}/category`, 'PUT', { category });
+    const cable = state.data.cables.find(c => c.id === cableId);
+    if (cable) cable.category = updated.category;
+    if (state.map) refreshMapLayers();  // update map layer colors
+    toast(`Category set to ${category}`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function deleteCable(cableId) {
@@ -5558,6 +5774,720 @@ function matrixExportCSV() {
   URL.revokeObjectURL(url);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 5.D.5 — Functional Layer Visibility Tree
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CABLE_CATEGORIES = ['backbone','lateral','drop','pigtail','conduit','legacy','unclassified'];
+const LOC_TYPES = ['handhole','manhole','pole','pedestal','vault','fdh','splice_point','co','terminal','ring_cut'];
+
+function getMapLibreLayerIds(layerKey) {
+  if (layerKey.startsWith('cable.')) {
+    const cat = layerKey.split('.')[1];
+    return [`cables-${cat}-halo`, `cables-${cat}`];
+  }
+  if (layerKey.startsWith('location.')) {
+    const type = layerKey.split('.')[1];
+    return [`loc-unclustered-${type}`].filter(id => state.map?.getLayer(id));
+  }
+  return [];
+}
+
+function renderLayerTree() {
+  const lpanel = document.getElementById('layer-panel');
+  if (!lpanel) return;
+  // Show when a project is loaded
+  if (state.currentId) lpanel.style.display = '';
+
+  const styles = state.data?.layer_styles || [];
+  const getVis = key => { const s = styles.find(s => s.layer_key === key); return s?.visible !== false; };
+  const getColor = key => { const s = styles.find(s => s.layer_key === key); return s?.color || LAYER_DEFAULTS[key]?.color || '#68BD45'; };
+
+  function makeLeaf(key, label, groupKey) {
+    const visible = getVis(key);
+    const color = getColor(key);
+    return `<div class="layer-leaf" data-layer-key="${key}" oncontextmenu="layerContextMenu(event,'${key}','${groupKey}')">
+      <input type="checkbox" ${visible ? 'checked' : ''} title="Toggle ${label} visibility"
+             onchange="toggleLayerVisibility('${key}',this.checked);updateParentCheckboxState('${groupKey}')">
+      <span class="layer-color-dot" style="background:${color}" title="Edit style" onclick="openStyleEditor('${key}')"></span>
+      <span class="layer-leaf-name">${label}</span>
+      <button class="layer-paint-btn" onclick="openStyleEditor('${key}')" title="Edit style"><i class="fa-solid fa-palette"></i></button>
+    </div>`;
+  }
+
+  const cablesContainer = document.getElementById('layer-children-cables');
+  if (cablesContainer) {
+    cablesContainer.innerHTML = CABLE_CATEGORIES.map(cat =>
+      makeLeaf(`cable.${cat}`, cat.charAt(0).toUpperCase() + cat.slice(1), 'cables')
+    ).join('');
+  }
+
+  const locsContainer = document.getElementById('layer-children-locations');
+  if (locsContainer) {
+    locsContainer.innerHTML = LOC_TYPES.map(t =>
+      makeLeaf(`location.${t}`, t.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase()), 'locations')
+    ).join('');
+  }
+
+  // Custom layers from state
+  const customLayers = state.data?.custom_layers || [];
+  const customGroup = document.getElementById('layer-group-custom');
+  const customContainer = document.getElementById('layer-children-custom');
+  if (customGroup && customContainer) {
+    if (customLayers.length > 0) {
+      customGroup.style.display = '';
+      customContainer.innerHTML = customLayers.map(cl =>
+        `<div class="layer-leaf" data-custom-layer="${cl.id}">
+          <input type="checkbox" checked onchange="toggleCustomLayerVisibility('${cl.id}',this.checked)">
+          <span class="layer-color-dot" style="background:${cl.default_style?.color||'#6366F1'}"></span>
+          <span class="layer-leaf-name">${esc(cl.name)}</span>
+        </div>`
+      ).join('');
+    } else {
+      customGroup.style.display = 'none';
+    }
+  }
+
+  // Apply saved styles + visibility from server state to MapLibre layers
+  if (state.map) {
+    for (const s of styles) {
+      if (s.layer_key) {
+        // Apply style properties (color, opacity, lineWidth, etc.)
+        const { layer_key, visible, ...styleProps } = s;
+        if (Object.keys(styleProps).length > 0) applyLayerStyle(s.layer_key, styleProps);
+        // Apply visibility
+        if (visible === false) {
+          const map = state.map;
+          if (s.layer_key.startsWith('cable.')) {
+            const cat = s.layer_key.split('.')[1];
+            [`cables-${cat}-halo`, `cables-${cat}`].forEach(id => {
+              if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+            });
+          }
+        }
+      }
+    }
+  }
+
+  updateParentCheckboxState('cables');
+  updateParentCheckboxState('locations');
+}
+
+function toggleLayerVisibility(layerKey, visible) {
+  const map = state.map;
+  if (!map) return;
+  const vis = visible ? 'visible' : 'none';
+  const ids = getMapLibreLayerIds(layerKey);
+  for (const id of ids) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+  }
+  // Also handle cable layers by category directly (in case getMapLibreLayerIds returns halo too)
+  if (layerKey.startsWith('cable.')) {
+    const cat = layerKey.split('.')[1];
+    [`cables-${cat}-halo`, `cables-${cat}`].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+    });
+  }
+  // Persist
+  if (!state.data) return;
+  if (!state.data.layer_styles) state.data.layer_styles = [];
+  const existing = state.data.layer_styles.find(s => s.layer_key === layerKey);
+  if (existing) existing.visible = visible;
+  else state.data.layer_styles.push({ layer_key: layerKey, visible });
+  if (state.currentId) {
+    api(`/api/splice/projects/${state.currentId}/layer-styles/${encodeURIComponent(layerKey)}`, 'PUT', { visible }).catch(() => {});
+  }
+}
+
+function toggleGroupVisibility(groupKey, visible) {
+  const keys = groupKey === 'cables'
+    ? CABLE_CATEGORIES.map(c => `cable.${c}`)
+    : groupKey === 'locations'
+    ? LOC_TYPES.map(t => `location.${t}`)
+    : [];
+  for (const k of keys) toggleLayerVisibility(k, visible);
+  // Update checkboxes
+  const children = document.getElementById(`layer-children-${groupKey}`);
+  if (children) {
+    children.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = visible; });
+  }
+  updateParentCheckboxState(groupKey);
+}
+
+function toggleGroupExpand(groupKey) {
+  const children = document.getElementById(`layer-children-${groupKey}`);
+  const chevron = document.getElementById(`layer-chevron-${groupKey}`);
+  if (!children) return;
+  const collapsed = children.style.display === 'none';
+  children.style.display = collapsed ? '' : 'none';
+  if (chevron) {
+    chevron.className = collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
+  }
+}
+
+function updateParentCheckboxState(groupKey) {
+  const parent = document.getElementById(`layer-parent-${groupKey}`);
+  const children = document.getElementById(`layer-children-${groupKey}`);
+  if (!parent || !children) return;
+  const boxes = [...children.querySelectorAll('input[type="checkbox"]')];
+  const checked = boxes.filter(b => b.checked).length;
+  if (checked === 0) { parent.checked = false; parent.indeterminate = false; }
+  else if (checked === boxes.length) { parent.checked = true; parent.indeterminate = false; }
+  else { parent.indeterminate = true; }
+}
+
+function showAllLayers() {
+  const allKeys = [
+    ...CABLE_CATEGORIES.map(c => `cable.${c}`),
+    ...LOC_TYPES.map(t => `location.${t}`),
+  ];
+  for (const k of allKeys) toggleLayerVisibility(k, true);
+  renderLayerTree();
+}
+
+// Context menu on right-click of a layer leaf
+let _ctxMenu = null;
+function layerContextMenu(e, layerKey, groupKey) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (_ctxMenu) { _ctxMenu.remove(); _ctxMenu = null; }
+  const menu = document.createElement('div');
+  menu.className = 'layer-ctx-menu';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  const items = [
+    { label: 'Solo this layer', fn: () => soloLayer(layerKey, groupKey) },
+    { label: 'Show all layers', fn: () => showAllLayers() },
+    { label: 'Zoom to layer extent', fn: () => zoomToLayerExtent(layerKey) },
+    { label: 'Edit style', fn: () => openStyleEditor(layerKey) },
+  ];
+  for (const item of items) {
+    const div = document.createElement('div');
+    div.className = 'layer-ctx-item';
+    div.textContent = item.label;
+    div.onclick = () => { item.fn(); menu.remove(); _ctxMenu = null; };
+    menu.appendChild(div);
+  }
+  document.body.appendChild(menu);
+  _ctxMenu = menu;
+  setTimeout(() => document.addEventListener('click', () => { menu.remove(); _ctxMenu = null; }, { once: true }), 0);
+}
+
+function soloLayer(layerKey, groupKey) {
+  const peers = groupKey === 'cables'
+    ? CABLE_CATEGORIES.map(c => `cable.${c}`)
+    : groupKey === 'locations'
+    ? LOC_TYPES.map(t => `location.${t}`)
+    : [];
+  for (const k of peers) toggleLayerVisibility(k, k === layerKey);
+  renderLayerTree();
+}
+
+function zoomToLayerExtent(layerKey) {
+  const map = state.map;
+  const ml = state.maplibregl;
+  if (!map || !ml || !state.data) return;
+  let features = [];
+  if (layerKey.startsWith('cable.')) {
+    const cat = layerKey.split('.')[1];
+    features = (state.data.cables || []).filter(c => c.path_geojson && (c.category || 'unclassified') === cat);
+  } else if (layerKey.startsWith('location.')) {
+    const type = layerKey.split('.')[1];
+    features = (state.data.locations || []).filter(l => l.type === type && l.latitude != null);
+  }
+  if (!features.length) return toast('No features in this layer', 'info');
+  const bounds = new ml.LngLatBounds();
+  for (const f of features) {
+    if (f.path_geojson?.coordinates) { for (const c of f.path_geojson.coordinates) bounds.extend(c); }
+    else if (f.latitude) bounds.extend([Number(f.longitude), Number(f.latitude)]);
+  }
+  if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 40, maxZoom: 17 });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5.D.6 — Per-Layer Style Editor
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _seLayerKey = null;
+let _sePending = {};
+let _seDash = 'solid';
+
+function openStyleEditor(layerKey) {
+  _seLayerKey = layerKey;
+  _sePending = {};
+  const defaults = LAYER_DEFAULTS[layerKey] || {};
+  const saved = (state.data?.layer_styles || []).find(s => s.layer_key === layerKey) || {};
+  const merged = { ...defaults, ...saved };
+  const isLine = layerKey.startsWith('cable.');
+
+  document.getElementById('se-width-row').style.display = isLine ? 'flex' : 'none';
+  document.getElementById('se-dash-row').style.display = isLine ? 'flex' : 'none';
+  document.getElementById('se-marker-row').style.display = isLine ? 'none' : 'flex';
+
+  const color = merged.color || '#68BD45';
+  document.getElementById('se-color').value = color;
+  document.getElementById('se-color-hex').value = color;
+
+  const opacity = merged.opacity ?? 0.92;
+  document.getElementById('se-opacity').value = opacity;
+  document.getElementById('se-opacity-val').textContent = Math.round(opacity * 100) + '%';
+
+  if (isLine) {
+    const lw = merged.lineWidth ?? 3;
+    document.getElementById('se-width').value = lw;
+    document.getElementById('se-width-val').textContent = lw + 'px';
+    _seDash = merged.dash || 'solid';
+    _updateDashButtons(_seDash);
+  } else {
+    const ms = merged.markerSize ?? 8;
+    document.getElementById('se-marker-size').value = ms;
+    document.getElementById('se-marker-val').textContent = ms + 'px';
+  }
+
+  const label = layerKey.replace('.', ' — ').replace(/_/g,' ').toUpperCase();
+  document.getElementById('se-layer-name').textContent = label;
+  const panel = document.getElementById('style-editor-panel');
+  panel.style.display = 'flex';
+}
+
+function closeStyleEditor() {
+  const panel = document.getElementById('style-editor-panel');
+  if (panel) panel.style.display = 'none';
+  _seLayerKey = null;
+}
+
+function _updateDashButtons(dash) {
+  ['solid','dashed'].forEach(d => {
+    const btn = document.getElementById(`se-dash-${d}`);
+    if (btn) btn.style.background = d === dash ? 'var(--primary,#003F72)' : '';
+    if (btn) btn.style.color = d === dash ? '#fff' : '';
+  });
+}
+
+function onSeColorInput() {
+  const val = document.getElementById('se-color').value;
+  document.getElementById('se-color-hex').value = val;
+  _sePending.color = val;
+  if (_seLayerKey) applyLayerStyle(_seLayerKey, _sePending);
+  _updateSwatchInTree(_seLayerKey, val);
+}
+function onSeHexInput() {
+  const val = document.getElementById('se-color-hex').value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    document.getElementById('se-color').value = val;
+    _sePending.color = val;
+    if (_seLayerKey) applyLayerStyle(_seLayerKey, _sePending);
+    _updateSwatchInTree(_seLayerKey, val);
+  }
+}
+function onSeOpacityInput() {
+  const val = parseFloat(document.getElementById('se-opacity').value);
+  document.getElementById('se-opacity-val').textContent = Math.round(val * 100) + '%';
+  _sePending.opacity = val;
+  if (_seLayerKey) applyLayerStyle(_seLayerKey, _sePending);
+}
+function onSeWidthInput() {
+  const val = parseFloat(document.getElementById('se-width').value);
+  document.getElementById('se-width-val').textContent = val + 'px';
+  _sePending.lineWidth = val;
+  if (_seLayerKey) applyLayerStyle(_seLayerKey, _sePending);
+}
+function onSeMarkerInput() {
+  const val = parseInt(document.getElementById('se-marker-size').value);
+  document.getElementById('se-marker-val').textContent = val + 'px';
+  _sePending.markerSize = val;
+  if (_seLayerKey) applyLayerStyle(_seLayerKey, _sePending);
+}
+function selectDash(dash) {
+  _seDash = dash;
+  _sePending.dash = dash;
+  _updateDashButtons(dash);
+  if (_seLayerKey) applyLayerStyle(_seLayerKey, _sePending);
+}
+
+function _updateSwatchInTree(layerKey, color) {
+  const leaf = document.querySelector(`.layer-leaf[data-layer-key="${layerKey}"]`);
+  if (leaf) {
+    const dot = leaf.querySelector('.layer-color-dot');
+    if (dot) dot.style.background = color;
+  }
+}
+
+function applyLayerStyle(layerKey, styleProps) {
+  const map = state.map;
+  if (!map) return;
+  const { color, opacity, lineWidth, dash, markerSize } = styleProps;
+  const isLine = layerKey.startsWith('cable.');
+
+  if (isLine) {
+    const cat = layerKey.split('.')[1];
+    const mainId = `cables-${cat}`;
+    const haloId = `cables-${cat}-halo`;
+    if (map.getLayer(mainId)) {
+      if (color !== undefined) map.setPaintProperty(mainId, 'line-color', color);
+      if (opacity !== undefined) map.setPaintProperty(mainId, 'line-opacity', opacity);
+      if (lineWidth !== undefined) {
+        const lw = lineWidth;
+        map.setPaintProperty(mainId, 'line-width',
+          ['interpolate', ['linear'], ['zoom'], 12, lw * 0.5, 16, lw, 18, lw * 1.5]);
+      }
+      if (dash !== undefined) {
+        if (dash === 'dashed') map.setPaintProperty(mainId, 'line-dasharray', [8, 4]);
+        else if (dash === 'dotted') map.setPaintProperty(mainId, 'line-dasharray', [2, 3]);
+        else map.setPaintProperty(mainId, 'line-dasharray', [1, 0]);
+      }
+    }
+    if (map.getLayer(haloId) && lineWidth !== undefined) {
+      const lw = lineWidth;
+      map.setPaintProperty(haloId, 'line-width',
+        ['interpolate', ['linear'], ['zoom'], 12, lw * 2, 16, lw * 3, 18, lw * 4]);
+    }
+  } else if (layerKey.startsWith('location.')) {
+    const type = layerKey.split('.')[1];
+    const id = `loc-${type}`;
+    if (map.getLayer(id)) {
+      if (color !== undefined) map.setPaintProperty(id, 'circle-color', color);
+      if (opacity !== undefined) map.setPaintProperty(id, 'circle-opacity', opacity);
+      if (markerSize !== undefined) map.setPaintProperty(id, 'circle-radius', markerSize);
+    }
+    // Also update the shared loc-unclustered layer color if no per-type layers
+    if (!map.getLayer(id) && map.getLayer('loc-unclustered')) {
+      // The loc-unclustered uses ['get','color'] from feature data — nothing to do here
+    }
+  }
+}
+
+async function saveLayerStyle() {
+  if (!_seLayerKey || !state.currentId) return;
+  try {
+    await api(`/api/splice/projects/${state.currentId}/layer-styles/${encodeURIComponent(_seLayerKey)}`, 'PUT', _sePending);
+    if (!state.data.layer_styles) state.data.layer_styles = [];
+    const existing = state.data.layer_styles.find(s => s.layer_key === _seLayerKey);
+    if (existing) Object.assign(existing, _sePending);
+    else state.data.layer_styles.push({ layer_key: _seLayerKey, ..._sePending });
+    toast('Style saved', 'success');
+    closeStyleEditor();
+    renderLayerTree();
+  } catch (ex) {
+    toast('Save failed: ' + ex.message, 'error');
+  }
+}
+
+async function resetLayerStyleToDefault() {
+  if (!_seLayerKey || !state.currentId) return;
+  try {
+    await api(`/api/splice/projects/${state.currentId}/layer-styles/${encodeURIComponent(_seLayerKey)}`, 'DELETE');
+    if (state.data.layer_styles) {
+      state.data.layer_styles = state.data.layer_styles.filter(s => s.layer_key !== _seLayerKey);
+    }
+    const defaults = LAYER_DEFAULTS[_seLayerKey] || {};
+    applyLayerStyle(_seLayerKey, defaults);
+    toast('Style reset to default', 'success');
+    closeStyleEditor();
+    renderLayerTree();
+  } catch (ex) {
+    toast('Reset failed: ' + ex.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5.D.7 — Custom Layer Creation (MVP)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function openCreateLayerModal() {
+  const modal = document.getElementById('create-layer-modal');
+  if (modal) { modal.style.display = 'flex'; document.getElementById('cl-name').value = ''; }
+}
+function closeCreateLayerModal() {
+  const modal = document.getElementById('create-layer-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function submitCreateLayer() {
+  if (!state.currentId) return toast('No project loaded', 'error');
+  const name = document.getElementById('cl-name').value.trim();
+  if (!name) return toast('Layer name is required', 'error');
+  const geometry_type = document.querySelector('input[name="cl-geom"]:checked')?.value || 'line';
+  const color = document.getElementById('cl-color').value;
+  const size = parseFloat(document.getElementById('cl-size').value) || 3;
+  const default_style = { color, ...(geometry_type === 'line' ? { lineWidth: size, dash: 'solid' } : { markerSize: size }) };
+  try {
+    const res = await api(`/api/splice/projects/${state.currentId}/custom-layers`, 'POST', { name, geometry_type, default_style });
+    if (!state.data.custom_layers) state.data.custom_layers = [];
+    state.data.custom_layers.push(res);
+    closeCreateLayerModal();
+    renderLayerTree();
+    toast(`Layer "${name}" created`, 'success');
+  } catch (ex) {
+    toast('Create failed: ' + ex.message, 'error');
+  }
+}
+
+function toggleCustomLayerVisibility(layerId, visible) {
+  // TODO Phase 5.E: wire to map layer when custom features are added
+  const map = state.map;
+  if (map && map.getLayer(`custom-${layerId}`)) {
+    map.setLayoutProperty(`custom-${layerId}`, 'visibility', visible ? 'visible' : 'none');
+  }
+}
+
+// ── 5.D.1: Mapbox basemap constants ──────────────────────────────────────────
+const MAPBOX_BASEMAPS = {
+  streets:   'mapbox://styles/mapbox/streets-v12',
+  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
+  hybrid:    'mapbox://styles/mapbox/satellite-streets-v12',  // alias
+  dark:      'mapbox://styles/mapbox/dark-v11',
+};
+
+// Build a MapLibre transformRequest that injects the Mapbox token into all
+// mapbox:// protocol URLs (styles, fonts, sprites, tile endpoints).
+function _makeMapboxTransform(token) {
+  return (url) => {
+    if (!url.startsWith('mapbox://')) return { url };
+    let resolved = url;
+    if (url.startsWith('mapbox://styles/'))
+      resolved = url.replace('mapbox://styles/', 'https://api.mapbox.com/styles/v1/');
+    else if (url.startsWith('mapbox://fonts/'))
+      resolved = url.replace('mapbox://fonts/', 'https://api.mapbox.com/fonts/v1/');
+    else if (url.startsWith('mapbox://sprites/'))
+      resolved = url.replace('mapbox://sprites/', 'https://api.mapbox.com/sprites/');
+    else if (url.startsWith('mapbox://tiles/') || url.startsWith('mapbox://v4/'))
+      resolved = url.replace('mapbox://', 'https://api.mapbox.com/v4/');
+    else
+      resolved = url.replace('mapbox://', 'https://api.mapbox.com/');
+    const sep = resolved.includes('?') ? '&' : '?';
+    return { url: `${resolved}${sep}access_token=${token}` };
+  };
+}
+
+// Re-add all network layers (cables, locations, closures) to the map.
+// Called after initial load AND after map.setStyle() for basemap switching.
+function addNetworkLayers(map) {
+  // ── Cable per-category layers (5.D.2: split dasharray layers) ─────────────
+  if (!map.getSource('cables')) {
+    map.addSource('cables', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  }
+  if (!map.getSource('cables-selection')) {
+    map.addSource('cables-selection', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  }
+
+  const CABLE_CATEGORIES = ['backbone','lateral','drop','pigtail','conduit','legacy','unclassified'];
+  for (const cat of CABLE_CATEGORIES) {
+    if (map.getLayer(`cables-${cat}-halo`)) continue; // already added
+    const defaults = LAYER_DEFAULTS[`cable.${cat}`] || LAYER_DEFAULTS['cable.unclassified'];
+    const lw = defaults.lineWidth || 3;
+    // Halo: renders BELOW the color layer
+    map.addLayer({
+      id: `cables-${cat}-halo`,
+      type: 'line',
+      source: 'cables',
+      filter: ['==', ['get', 'category'], cat],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': '#000000',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 12, lw * 2, 16, lw * 3, 18, lw * 4],
+        'line-opacity': 0.18,
+      },
+    });
+    // Color layer — constant dasharray (GPU-batchable, no per-feature tessellation)
+    const layerSpec = {
+      id: `cables-${cat}`,
+      type: 'line',
+      source: 'cables',
+      filter: ['==', ['get', 'category'], cat],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': defaults.color,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 12, lw * 0.5, 16, lw, 18, lw * 1.5],
+        'line-opacity': defaults.opacity ?? 0.92,
+        ...(defaults.dash === 'dashed' ? { 'line-dasharray': [8, 4] } : {}),
+      },
+    };
+    map.addLayer(layerSpec);
+  }
+
+  // Selection highlight layer — yellow glow on clicked cable
+  if (!map.getLayer('cables-selected')) {
+    map.addLayer({
+      id: 'cables-selected',
+      type: 'line',
+      source: 'cables-selection',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#FFD700', 'line-width': 8, 'line-opacity': 0.9 },
+    });
+  }
+
+  // ── Draft-path overlay (in-progress draw tool) ────────────────────────────
+  if (!map.getSource('draft-path')) {
+    map.addSource('draft-path', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  }
+  if (!map.getLayer('draft-path-line')) {
+    map.addLayer({ id: 'draft-path-line', type: 'line', source: 'draft-path',
+      paint: { 'line-color': '#FF6E00', 'line-width': 3, 'line-dasharray': [2, 2] } });
+    map.addLayer({ id: 'draft-path-points', type: 'circle', source: 'draft-path',
+      filter: ['==', '$type', 'Point'],
+      paint: { 'circle-radius': 5, 'circle-color': '#FF6E00', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 } });
+  }
+
+  // ── Location cluster source + layers ──────────────────────────────────────
+  if (!map.getSource('locations')) {
+    map.addSource('locations', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+      cluster: true, clusterRadius: 40, clusterMaxZoom: 14,
+    });
+  }
+
+  if (!map.getLayer('loc-clusters')) {
+    map.addLayer({
+      id: 'loc-clusters', type: 'circle', source: 'locations',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': '#003F72',
+        'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'], 1, 14, 10, 18, 50, 24, 200, 32],
+        'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2, 'circle-opacity': 0.88,
+      },
+    });
+    map.addLayer({
+      id: 'loc-cluster-count', type: 'symbol', source: 'locations',
+      filter: ['has', 'point_count'],
+      layout: { 'text-field': ['get', 'point_count_abbreviated'],
+        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], 'text-size': 12 },
+      paint: { 'text-color': '#ffffff' },
+    });
+    map.addLayer({
+      id: 'loc-unclustered', type: 'circle', source: 'locations',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': ['get', 'color'],
+        'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
+        'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2,
+        'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
+      },
+    });
+    map.addLayer({
+      id: 'loc-names', type: 'symbol', source: 'locations',
+      filter: ['!', ['has', 'point_count']], minzoom: 16,
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        'text-size': 10, 'text-anchor': 'top', 'text-offset': [0, 0.9],
+        'text-allow-overlap': false, 'text-ignore-placement': false,
+      },
+      paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.5 },
+    });
+  }
+
+  // Esri reference overlay (only used in Esri fallback mode)
+  if (!state._usingMapbox && !map.getSource('esri-ref')) {
+    map.addSource('esri-ref', { type: 'raster', tiles: [ESRI_REF_TILES], tileSize: 256,
+      attribution: 'Reference © Esri' });
+  }
+  if (!state._usingMapbox && !map.getLayer('esri-ref')) {
+    const bm = state.basemap || 'hybrid';
+    map.addLayer({ id: 'esri-ref', type: 'raster', source: 'esri-ref',
+      layout: { visibility: bm === 'hybrid' ? 'visible' : 'none' },
+      paint: { 'raster-opacity': 0.85 } });
+  }
+
+  // ── Wire click / hover handlers (idempotent via flag) ─────────────────────
+  if (!addNetworkLayers._handlersWired) {
+    addNetworkLayers._handlersWired = true;
+    _wireMapClickHandlers(map);
+  }
+}
+
+function _wireMapClickHandlers(map) {
+  const CABLE_CATEGORIES = ['backbone','lateral','drop','pigtail','conduit','legacy','unclassified'];
+
+  // Cluster click → zoom in
+  map.on('click', 'loc-clusters', (e) => {
+    if (state.mapMode) return;
+    e.preventDefault();
+    const feature = e.features[0];
+    const clusterId = feature.properties.cluster_id;
+    const src = map.getSource('locations');
+    src.getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({ center: feature.geometry.coordinates, zoom: zoom + 0.5 });
+    });
+  });
+
+  // Unclustered location click → open inspector
+  map.on('click', 'loc-unclustered', (e) => {
+    if (state.mapMode === 'place-new') return;
+    e.preventDefault();
+    const props = e.features[0]?.properties;
+    if (!props?.id) return;
+    if (state.mapMode === 'multistop') {
+      const loc = (state.data?.locations || []).find(l => l.id === props.id);
+      if (loc) mapMsSnapToLocation(loc);
+      return;
+    }
+    selectThing('location', props.id);
+  });
+
+  map.on('mouseenter', 'loc-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
+  map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+
+  // Cable click → open inspector (5.D.3 fix: was mapStartEditPath)
+  for (const cat of CABLE_CATEGORIES) {
+    map.on('click', `cables-${cat}`, (e) => {
+      if (state.mapMode) return;
+      e.preventDefault();
+      const props = e.features[0]?.properties;
+      if (props?.id) {
+        selectThing('cable', props.id);
+        _updateCableSelectionHighlight(props.id);
+      }
+    });
+    map.on('mouseenter', `cables-${cat}`, () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', `cables-${cat}`, () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
+  }
+
+  // Empty map click → deselect
+  map.on('click', (e) => {
+    if (state.mapMode === 'place-new') {
+      mapApplyNewLocation(e.lngLat);
+    } else if (state.mapMode === 'multistop') {
+      mapMsAddStop(e.lngLat);
+    } else {
+      const hitCables = map.queryRenderedFeatures(e.point,
+        { layers: CABLE_CATEGORIES.map(c => `cables-${c}`).filter(id => !!map.getLayer(id)) });
+      const hitLocs = map.queryRenderedFeatures(e.point,
+        { layers: ['loc-unclustered'].filter(id => !!map.getLayer(id)) });
+      if (!hitCables.length && !hitLocs.length) {
+        _updateCableSelectionHighlight(null);
+      }
+    }
+  });
+  map.on('dblclick', (e) => {
+    if (state.mapMode === 'multistop') { e.preventDefault(); mapMsFinish(); }
+  });
+}
+
+function _updateCableSelectionHighlight(cableId) {
+  const map = state.map;
+  if (!map) return;
+  const src = map.getSource('cables-selection');
+  if (!src) return;
+  if (!cableId) {
+    src.setData({ type: 'FeatureCollection', features: [] });
+    return;
+  }
+  // Find the cable geometry from state.data and populate the selection source
+  const cable = (state.data?.cables || []).find(c => c.id === cableId);
+  if (cable?.path_geojson) {
+    src.setData({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', geometry: cable.path_geojson,
+        properties: { id: cableId } }],
+    });
+  }
+}
+
 async function initMapIfNeeded() {
   if (state.map) {
     // Already mounted; just refresh from current state.data.
@@ -5566,267 +6496,86 @@ async function initMapIfNeeded() {
     mapFitData();
     return;
   }
+
+  // Fetch Mapbox token from server (5.D.1). Sets window._mapboxToken.
+  if (window._mapboxToken === undefined) {
+    try {
+      const cfg = await fetch('/api/config/mapbox', { credentials: 'include' }).then(r => r.json());
+      window._mapboxToken = cfg.token || null;
+    } catch {
+      window._mapboxToken = null;
+    }
+    if (!window._mapboxToken) {
+      // Friendly fallback notice for dev environments
+      setTimeout(() => toast('MAPBOX_TOKEN not set — using Esri fallback. Set MAPBOX_TOKEN in Railway env vars for full road labels.', 'info'), 500);
+    }
+  }
+
   try {
     const maplibregl = await loadMapLibre();
     state.maplibregl = maplibregl;
-    const initialBasemap = loadBasemapMode();
+    const useMapbox = !!window._mapboxToken;
+    state._usingMapbox = useMapbox;
+
+    const storedBasemap = loadBasemapMode();
+    const initialBasemap = storedBasemap || (useMapbox ? 'streets' : 'hybrid');
     state.basemap = initialBasemap;
-    const map = new maplibregl.Map({
+
+    let mapStyle;
+    const mapOpts = {
       container: 'map-stage',
-      style: {
-        version: 8,
-        sources: {
-          'esri-sat': {
-            type: 'raster',
-            tiles: [ESRI_SAT_TILES],
-            tileSize: 256,
-            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-          },
-          // Reference overlay source — added here so it's available immediately,
-          // but the layer is added in map.on('load') ABOVE cables/markers so
-          // street labels render on top of the OSP drawing.
-          'esri-ref': {
-            type: 'raster',
-            tiles: [ESRI_REF_TILES],
-            tileSize: 256,
-            attribution: 'Reference © Esri',
-          },
-        },
-        layers: [
-          { id: 'esri-sat', type: 'raster', source: 'esri-sat' },
-          // esri-ref layer added in map.on('load') so it renders above cables.
-        ],
-      },
-      // Mecca Drive, Macon GA default. mapFitData() flies to a project's
-      // actual extent on the next hydrate when geo data exists.
       center: DEFAULT_MAP_CENTER,
       zoom: DEFAULT_MAP_ZOOM,
       attributionControl: { compact: true },
-    });
+    };
+
+    if (useMapbox) {
+      // Mapbox Streets v12 — vector tiles with road labels at all zoom levels
+      mapStyle = MAPBOX_BASEMAPS[initialBasemap] || MAPBOX_BASEMAPS.streets;
+      mapOpts.transformRequest = _makeMapboxTransform(window._mapboxToken);
+    } else {
+      // Esri raster fallback
+      mapStyle = {
+        version: 8,
+        sources: {
+          'esri-sat': { type: 'raster', tiles: [ESRI_SAT_TILES], tileSize: 256,
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community' },
+          'esri-ref': { type: 'raster', tiles: [ESRI_REF_TILES], tileSize: 256,
+            attribution: 'Reference © Esri' },
+        },
+        layers: [{ id: 'esri-sat', type: 'raster', source: 'esri-sat' }],
+      };
+    }
+
+    mapOpts.style = mapStyle;
+    const map = new maplibregl.Map(mapOpts);
     state.map = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }));
-    // Sync the basemap toggle label to whatever was loaded from
-    // localStorage (defaults to 'hybrid' on first run).
+
+    // Sync basemap button label
     const bmLabel = document.getElementById('btn-basemap-label');
-    if (bmLabel) bmLabel.textContent = initialBasemap === 'hybrid' ? 'Hybrid' : 'Satellite';
+    if (bmLabel) {
+      bmLabel.textContent = useMapbox
+        ? (initialBasemap === 'satellite' ? 'Satellite' : initialBasemap === 'dark' ? 'Dark' : 'Streets')
+        : (initialBasemap === 'hybrid' ? 'Hybrid' : 'Satellite');
+    }
+
     map.on('load', () => {
-      // ── 5.C.2 VETRO map style — cable route layers ───────────────────────
-      // Layer order (bottom→top): cables-halo → cables-line → loc-clusters →
-      // loc-unclustered → loc-names → draft overlays → esri-ref (labels)
-      // Route color: #68BD45 active (CONFIRMED from VETRO source), #9CA3AF dead.
-      // Width: interpolated 2→4→6 at zoom 12→16→18 (VETRO spec).
-      // Aerial cables use dash [8,4]; buried/conduit solid.
-      map.addSource('cables', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      // Halo renders BELOW the colored line — inserted first so cables-line goes on top.
-      map.addLayer({
-        id: 'cables-line-halo',
-        type: 'line',
-        source: 'cables',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': '#000000',
-          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 8, 18, 12],
-          'line-opacity': 0.22,
-        },
-      });
-      map.addLayer({
-        id: 'cables-line',
-        type: 'line',
-        source: 'cables',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          // Active = VETRO green (#68BD45 CONFIRMED); inactive/dark = muted gray.
-          'line-color': ['case',
-            ['==', ['get', 'status'], 'dark'],   '#9CA3AF',
-            ['==', ['get', 'status'], 'planned'], '#F59E0B',
-            '#68BD45'   /* default: active */
-          ],
-          // VETRO width spec: 2px at z12, 4px at z16, 6px at z18.
-          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 16, 4, 18, 6],
-          'line-opacity': 0.92,
-          // Aerial = dashed [8,4]; buried/conduit = solid [1,0].
-          // construction_type field values: 'aerial' | 'buried' | 'conduit' | etc.
-          'line-dasharray': ['case',
-            ['==', ['get', 'construction_type'], 'aerial'], ['literal', [8, 4]],
-            ['literal', [1, 0]]
-          ],
-        },
-      }, 'cables-line-halo');
-      // Track in-progress draw waypoints separately so we can render
-      // them while the user is clicking.
-      map.addSource('draft-path', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      map.addLayer({
-        id: 'draft-path-line',
-        type: 'line',
-        source: 'draft-path',
-        paint: { 'line-color': '#FF6E00', 'line-width': 3, 'line-dasharray': [2, 2] },
-      });
-      map.addLayer({
-        id: 'draft-path-points',
-        type: 'circle',
-        source: 'draft-path',
-        filter: ['==', '$type', 'Point'],
-        paint: { 'circle-radius': 5, 'circle-color': '#FF6E00', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1 },
-      });
-
-      // ── Location cluster source + layers ──────────────────────────────────
-      // GeoJSON source with native MapLibre clustering so high-density zoom-out
-      // views are readable. The selected location is rendered as an HTML Marker
-      // (for drag support); all others live in this source.
-      map.addSource('locations', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-        cluster: true,
-        clusterRadius: 40,
-        clusterMaxZoom: 14,
-      });
-
-      // ── 5.C.2 VETRO map style — location markers ─────────────────────────
-      // Cluster bubble — VETRO navy (#003F72) background, white text.
-      map.addLayer({
-        id: 'loc-clusters',
-        type: 'circle',
-        source: 'locations',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': '#003F72',   /* --vetro-primary */
-          'circle-radius': ['interpolate', ['linear'], ['get', 'point_count'],
-            1, 14, 10, 18, 50, 24, 200, 32],
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-width': 2,
-          'circle-opacity': 0.88,
-        },
-      });
-
-      // Cluster count label.
-      map.addLayer({
-        id: 'loc-cluster-count',
-        type: 'symbol',
-        source: 'locations',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-          'text-size': 12,
-        },
-        paint: { 'text-color': '#ffffff' },
-      });
-
-      // Unclustered individual location points, coloured by type.
-      // Stroke: 2px white normal; hover → 3px primary; selected → hidden (HTML marker shown).
-      map.addLayer({
-        id: 'loc-unclustered',
-        type: 'circle',
-        source: 'locations',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': ['get', 'color'],
-          // Base radius: 8 for plain locations, 10 for locations with closures.
-          'circle-radius': ['case', ['>', ['get', 'closure_count'], 0], 10, 8],
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-width': 2,
-          // Hide the GL circle for the selected location — the HTML Marker
-          // (which supports drag) is shown instead.
-          'circle-opacity': ['case', ['==', ['get', 'is_selected'], true], 0, 1],
-        },
-      });
-
-      // Location name labels — VETRO spec: only at zoom ≥ 16 (was 15).
-      // Reduces label clutter at mid-zoom per 5.C.2 spec.
-      map.addLayer({
-        id: 'loc-names',
-        type: 'symbol',
-        source: 'locations',
-        filter: ['!', ['has', 'point_count']],
-        minzoom: 16,
-        layout: {
-          'text-field': ['get', 'name'],
-          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-          'text-size': 10,
-          'text-anchor': 'top',
-          'text-offset': [0, 0.9],
-          'text-allow-overlap': false,
-          'text-ignore-placement': false,
-        },
-        paint: {
-          'text-color': '#ffffff',
-          'text-halo-color': '#000000',
-          'text-halo-width': 1.5,
-        },
-      });
-
-      // Cluster click → zoom in to the cluster's bounding box.
-      map.on('click', 'loc-clusters', (e) => {
-        if (state.mapMode) return;
-        e.preventDefault();
-        const feature = e.features[0];
-        const clusterId = feature.properties.cluster_id;
-        const src = map.getSource('locations');
-        src.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err) return;
-          map.easeTo({ center: feature.geometry.coordinates, zoom: zoom + 0.5 });
-        });
-      });
-
-      // Unclustered point click → open location inspector (or snap in multistop mode).
-      map.on('click', 'loc-unclustered', (e) => {
-        if (state.mapMode === 'place-new') return;
-        e.preventDefault();
-        const props = e.features[0]?.properties;
-        if (!props?.id) return;
-        if (state.mapMode === 'multistop') {
-          const loc = (state.data?.locations || []).find(l => l.id === props.id);
-          if (loc) mapMsSnapToLocation(loc);
-          return;
-        }
-        selectThing('location', props.id);
-      });
-
-      map.on('mouseenter', 'loc-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'loc-clusters', () => { map.getCanvas().style.cursor = ''; });
-      map.on('mouseenter', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'loc-unclustered', () => { if (!state.mapMode) map.getCanvas().style.cursor = ''; });
-
-      // Street-labels overlay for hybrid mode. Added here (after cables and
-      // markers) so road labels render on top of the OSP drawing — useful for
-      // correlating fiber runs to named streets. Visibility is toggled by
-      // cycleBasemap(); the source is declared in the initial style.
-      map.addLayer({
-        id: 'esri-ref',
-        type: 'raster',
-        source: 'esri-ref',
-        layout: { visibility: initialBasemap === 'hybrid' ? 'visible' : 'none' },
-        paint: { 'raster-opacity': 0.85 },
-      });
-
+      addNetworkLayers(map);
       refreshMapLayers();
       mapFitData();
-      map.on('click', (e) => {
-        if (state.mapMode === 'place-new') {
-          mapApplyNewLocation(e.lngLat);
-        } else if (state.mapMode === 'multistop') {
-          mapMsAddStop(e.lngLat);
-        }
-      });
-      map.on('dblclick', (e) => {
-        if (state.mapMode === 'multistop') {
-          e.preventDefault();
-          mapMsFinish();
-        }
-      });
-      // Cable click → enter edit-path mode.
-      map.on('click', 'cables-line', (e) => {
-        if (state.mapMode) return;
-        const props = e.features[0]?.properties;
-        if (props?.id) mapStartEditPath(props.id);
-      });
-      map.on('mouseenter', 'cables-line', () => {
-        if (!state.mapMode) map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', 'cables-line', () => {
-        if (!state.mapMode) map.getCanvas().style.cursor = '';
-      });
+      renderLayerTree();
+    });
+
+    // Re-add network layers after any style switch (setStyle destroys custom layers)
+    map.on('styledata', () => {
+      if (state._pendingBasemapSwitch) {
+        addNetworkLayers(map);
+        refreshMapLayers();
+        state._pendingBasemapSwitch = false;
+        renderLayerTree();
+      }
     });
   } catch (e) {
     toast('Map failed to load: ' + e.message, 'error');
@@ -5921,8 +6670,9 @@ function refreshMapLayers() {
     geometry: c.path_geojson,
     properties: { id: c.id, name: c.name, fiber_count: c.fiber_count,
                   path_length_feet: c.path_length_feet || 0,
-                  // 5.C.2: expose fields for VETRO map style expressions.
                   construction_type: c.construction_type || 'buried',
+                  // 5.D.2: category drives per-layer styling (split dasharray layers)
+                  category: c.category || 'unclassified',
                   status: c.status || 'active' },
   }));
   const cableSrc = map.getSource('cables');
@@ -6373,15 +7123,33 @@ async function mapSaveEditedPath() {
 
 // ─── Basemap ───────────────────────────────────────────────────────────────
 
-// Cycle between satellite-only and hybrid (satellite + reference labels).
-// Persists across sessions in localStorage.
+// Cycle between basemap modes. With Mapbox: streets ↔ satellite-streets.
+// With Esri fallback: satellite ↔ hybrid (satellite + label overlay).
 function cycleBasemap() {
   if (!state.map) return;
-  const next = state.basemap === 'hybrid' ? 'sat' : 'hybrid';
-  state.basemap = next;
-  saveBasemapMode(next);
-  state.map.setLayoutProperty('esri-ref', 'visibility', next === 'hybrid' ? 'visible' : 'none');
-  document.getElementById('btn-basemap-label').textContent = next === 'hybrid' ? 'Hybrid' : 'Satellite';
+
+  if (state._usingMapbox) {
+    // Mapbox: cycle streets → satellite → streets
+    const next = state.basemap === 'streets' ? 'satellite' : 'streets';
+    state.basemap = next;
+    saveBasemapMode(next);
+    const style = MAPBOX_BASEMAPS[next];
+    if (style) {
+      state._pendingBasemapSwitch = true;
+      state.map.setStyle(style);
+    }
+    const lbl = document.getElementById('btn-basemap-label');
+    if (lbl) lbl.textContent = next === 'satellite' ? 'Satellite' : 'Streets';
+  } else {
+    // Esri fallback: toggle hybrid labels
+    const next = state.basemap === 'hybrid' ? 'sat' : 'hybrid';
+    state.basemap = next;
+    saveBasemapMode(next);
+    const layer = state.map.getLayer('esri-ref');
+    if (layer) state.map.setLayoutProperty('esri-ref', 'visibility', next === 'hybrid' ? 'visible' : 'none');
+    const lbl = document.getElementById('btn-basemap-label');
+    if (lbl) lbl.textContent = next === 'hybrid' ? 'Hybrid' : 'Satellite';
+  }
 }
 
 // ─── Mode clear ────────────────────────────────────────────────────────────

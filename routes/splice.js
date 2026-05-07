@@ -273,7 +273,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes, layerStylesRes, customLayersRes] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -361,6 +361,18 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
               ORDER BY measured_at DESC NULLS LAST, uploaded_at DESC`,
             [projectId]
           ),
+          // 5.D.4 — per-project layer style overrides
+          pool.query(
+            `SELECT layer_id AS layer_key, style_json, visible
+               FROM splice_layer_styles
+              WHERE project_id = $1`,
+            [projectId]
+          ).catch(() => ({ rows: [] })),  // graceful if table not yet migrated
+          // 5.D.7 — custom layer definitions
+          pool.query(
+            `SELECT * FROM splice_custom_layers WHERE project_id = $1 ORDER BY created_at`,
+            [projectId]
+          ).catch(() => ({ rows: [] })),
         ]);
 
       // Annotate each cable with its path length in feet, computed from
@@ -386,6 +398,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         loss_db: latestLossBySplice.has(s.id) ? Number(latestLossBySplice.get(s.id)) : null,
       }));
 
+      // 5.D.4: merge style_json fields into the layer style rows for client convenience
+      const layerStyles = layerStylesRes.rows.map(r => ({
+        layer_key: r.layer_key,
+        visible: r.visible,
+        ...(r.style_json || {}),
+      }));
+
       const hydrate = {
         project: proj.rows[0],
         locations:        locations.rows,
@@ -401,6 +420,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         splitter_outputs: splitterOutputsRes.rows,
         cable_states:     cableStatesRes.rows,
         loss_records:     lossRes.rows,
+        layer_styles:     layerStyles,        // 5.D.4: per-project style overrides
+        custom_layers:    customLayersRes.rows, // 5.D.7: custom layer definitions
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
@@ -415,6 +436,99 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       // warnings surface in the UI but don't block.
       hydrate.validation = validateProject(hydrate);
       res.json(hydrate);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── 5.D.4: Layer style persistence endpoints ────────────────────────────────
+
+  // PUT /api/splice/projects/:id/layer-styles/:layerId — upsert style + visibility
+  app.put('/api/splice/projects/:id/layer-styles/:layerId', requireAuth(), async (req, res) => {
+    const { id: projectId, layerId } = req.params;
+    const { visible, color, opacity, lineWidth, dash, markerSize, ...rest } = req.body;
+    const styleJson = {};
+    if (color !== undefined) styleJson.color = color;
+    if (opacity !== undefined) styleJson.opacity = Number(opacity);
+    if (lineWidth !== undefined) styleJson.lineWidth = Number(lineWidth);
+    if (dash !== undefined) styleJson.dash = dash;
+    if (markerSize !== undefined) styleJson.markerSize = Number(markerSize);
+    Object.assign(styleJson, rest);
+    try {
+      const row = await pool.query(
+        `INSERT INTO splice_layer_styles (project_id, layer_id, style_json, visible)
+         VALUES ($1, $2, $3::jsonb, $4)
+         ON CONFLICT (project_id, layer_id)
+         DO UPDATE SET style_json = splice_layer_styles.style_json || $3::jsonb,
+                       visible    = COALESCE($4, splice_layer_styles.visible),
+                       updated_at = NOW()
+         RETURNING *`,
+        [projectId, layerId, JSON.stringify(styleJson),
+          visible !== undefined ? visible : null]
+      );
+      res.json(row.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // DELETE /api/splice/projects/:id/layer-styles/:layerId — reset to code defaults
+  app.delete('/api/splice/projects/:id/layer-styles/:layerId', requireAuth(), async (req, res) => {
+    const { id: projectId, layerId } = req.params;
+    try {
+      await pool.query(
+        `DELETE FROM splice_layer_styles WHERE project_id = $1 AND layer_id = $2`,
+        [projectId, layerId]
+      );
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // PUT /api/splice/cables/:id/category — update a cable's OSP category
+  app.put('/api/splice/cables/:id/category', requireAuth(), async (req, res) => {
+    const VALID_CATEGORIES = ['backbone','lateral','drop','pigtail','conduit','legacy','unclassified'];
+    const { category } = req.body;
+    if (!VALID_CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(', ')}` });
+    }
+    try {
+      const row = await pool.query(
+        `UPDATE splice_cables SET category = $2 WHERE id = $1 RETURNING *`,
+        [req.params.id, category]
+      );
+      if (!row.rows.length) return res.status(404).json({ error: 'Cable not found' });
+      res.json(row.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── 5.D.7: Custom layer endpoints ───────────────────────────────────────────
+
+  // POST /api/splice/projects/:id/custom-layers — create a new custom layer
+  app.post('/api/splice/projects/:id/custom-layers', requireAuth(), async (req, res) => {
+    const { name, geometry_type, default_style } = req.body;
+    if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
+    if (!['point','line','polygon'].includes(geometry_type)) {
+      return res.status(400).json({ error: 'geometry_type must be point, line, or polygon' });
+    }
+    try {
+      const row = await pool.query(
+        `INSERT INTO splice_custom_layers (project_id, name, geometry_type, default_style)
+         VALUES ($1, $2, $3, $4::jsonb)
+         RETURNING *`,
+        [req.params.id, String(name).trim(), geometry_type,
+          JSON.stringify(default_style || { color: '#6366F1' })]
+      );
+      res.status(201).json(row.rows[0]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(409).json({ error: 'A layer with that name already exists' });
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // GET /api/splice/projects/:id/custom-layers — list custom layers for project
+  app.get('/api/splice/projects/:id/custom-layers', requireAuth(), async (req, res) => {
+    try {
+      const rows = await pool.query(
+        `SELECT * FROM splice_custom_layers WHERE project_id = $1 ORDER BY created_at`,
+        [req.params.id]
+      );
+      res.json(rows.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -675,6 +789,9 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       name, fiber_count, construction_type = 'ribbon',
       from_location_id, to_location_id, manufacturer_part, notes,
     } = req.body;
+    // 5.D.4: category field for per-layer styling
+    const VALID_CATEGORIES = ['backbone','lateral','drop','pigtail','conduit','legacy','unclassified'];
+    const category = VALID_CATEGORIES.includes(req.body.category) ? req.body.category : 'unclassified';
     // tube_size_fibers defaults to 12 (OSP standard); 6 and 24 are the
     // other common loose-tube subunit sizes per TIA-598.
     const tube_size_fibers = [6, 12, 24].includes(Number(req.body.tube_size_fibers))
@@ -692,11 +809,11 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       await client.query('BEGIN');
       const cable = await client.query(
         `INSERT INTO splice_cables
-           (project_id, name, fiber_count, construction_type,
+           (project_id, name, fiber_count, construction_type, category,
             from_location_id, to_location_id, manufacturer_part, notes, tube_size_fibers)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
-        [req.params.id, String(name).trim(), Number(fiber_count), construction_type,
+        [req.params.id, String(name).trim(), Number(fiber_count), construction_type, category,
          from_location_id || null, to_location_id || null, manufacturer_part || null, notes || null,
          tube_size_fibers]
       );
