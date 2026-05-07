@@ -144,7 +144,7 @@ if (PORTAL_MODE) {
 // portal routes can read req.user / req.cookies. Express middleware runs in
 // registration order, so a route registered before authMiddleware never
 // sees req.user.
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin } = require('./auth');
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal } = require('./auth');
 installAuthRoutes(app, pool);
 
 // Customer scope guard. Per auth.js's role doc: "Customers are external —
@@ -161,7 +161,88 @@ app.use((req, res, next) => {
   if (!p.startsWith('/api/')) return next();
   if (p.startsWith('/api/auth/')) return next();
   if (p.startsWith('/api/customer/')) return next();
+  // Portal launcher — customers need this to build their tile list.
+  if (p === '/api/me/portals') return next();
   return res.status(403).json({ error: 'Customer accounts can only access the customer portal API.' });
+});
+
+// ─── PORTAL_DEFS — role-to-portal mapping ────────────────────────────────────
+// Each entry: { id, audience, url, name, icon, description, canAccess(user) }
+// audience: 'employee' | 'client'
+// canAccess: receives the user object from req.user and returns true/false.
+// canAccessPortal(user, portalMode) from auth.js is the source of truth for
+// splice/design/permitting access (it uses teamsForUser internally).
+const PORTAL_DEFS = [
+  {
+    id: 'admin',
+    audience: 'employee',
+    url: '/admin.html',
+    name: 'Admin Portal',
+    icon: 'gauge',
+    description: 'Full administration: projects, clients, billing, staff, and system settings.',
+    canAccess: u => u.role === 'admin',
+  },
+  {
+    id: 'splice',
+    audience: 'employee',
+    url: '/splice.html',
+    name: 'Splice Matrix',
+    icon: 'plug',
+    description: 'OSP fiber splice planning, closure management, and PDF field-document export.',
+    canAccess: u => canAccessPortal(u, 'splice') || u.role === 'admin',
+  },
+  {
+    id: 'design',
+    audience: 'employee',
+    url: '/design.html',
+    name: 'Design Portal',
+    icon: 'compass-drafting',
+    description: 'Design pipeline: projects, hours tracking, permit submittals, and revenue.',
+    canAccess: u => canAccessPortal(u, 'design'),
+  },
+  {
+    id: 'permitting',
+    audience: 'employee',
+    url: '/permitting.html',
+    name: 'Permitting Portal',
+    icon: 'file-signature',
+    description: 'Permit staging, document management, and permitting financials.',
+    canAccess: u => canAccessPortal(u, 'permitting'),
+  },
+  {
+    id: 'timeclock',
+    audience: 'employee',
+    url: '/timeclock.html',
+    name: 'Time Clock',
+    icon: 'clock',
+    description: 'Clock in/out, view your hours, and manage time entries.',
+    canAccess: u => u.role !== 'customer',
+  },
+  {
+    id: 'customer',
+    audience: 'client',
+    url: '/customer.html',
+    name: 'Customer Portal',
+    icon: 'user',
+    description: 'View your projects, progress updates, and invoices.',
+    canAccess: u => u.role === 'customer',
+  },
+];
+
+// GET /api/me/portals — returns the list of portals the current user can access.
+// Optional query param: ?audience=employee|client
+//   default: customer role → 'client'; everything else → 'employee'
+// Returns: { portals: [{id, name, icon, url, description}], user: {role, name} }
+app.get('/api/me/portals', requireAuth(), (req, res) => {
+  const u = req.user;
+  const defaultAudience = u.role === 'customer' ? 'client' : 'employee';
+  const audience = (req.query.audience === 'client' || req.query.audience === 'employee')
+    ? req.query.audience
+    : defaultAudience;
+  const portals = PORTAL_DEFS
+    .filter(p => p.audience === audience && p.canAccess(u))
+    .map(p => ({ id: p.id, name: p.name, icon: p.icon, url: p.url, description: p.description }));
+  res.json({ portals, user: { role: u.role, name: u.full_name || u.username } });
 });
 
 // Wire up portal-mode route overrides + setting-approval flow. Now that
