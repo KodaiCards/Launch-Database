@@ -1160,6 +1160,7 @@ async function hydrateProject() {
     renderInspector();
     renderCanvas();
     renderWarnings();
+    updateAttrTableLabel(); // 5.E.6 — live entity counts in the toggle bar
     // Phase 3A — refresh the map layer on every hydrate. No-op when
     // map isn't initialized yet (user never opened the Map tab).
     if (state.map) refreshMapLayers();
@@ -2297,6 +2298,29 @@ function selectThing(type, id) {
 }
 
 // 5.C.3 — Toggle the bottom attribute table docked panel.
+// 5.E.6 — Update the attribute-table toggle bar with live entity counts.
+// Called after every hydrateProject() so the counts are always current.
+function updateAttrTableLabel() {
+  const btn = document.getElementById('attr-table-toggle');
+  if (!btn) return;
+  if (!state.data) {
+    btn.innerHTML = '<i class="fa-solid fa-chevron-up" id="attr-table-toggle-icon"></i> Attribute table';
+    return;
+  }
+  const locs    = state.data.locations?.length ?? 0;
+  const cables  = state.data.cables?.length    ?? 0;
+  const closures= state.data.closures?.length  ?? 0;
+  const splices = state.data.splices?.length   ?? 0;
+  btn.title = 'Click to expand the bottom-docked attribute grid. Click rows to navigate.';
+  btn.innerHTML = `<i class="fa-solid fa-chevron-up" id="attr-table-toggle-icon"></i>` +
+    ` Attribute table — ${locs} location${locs===1?'':'s'} · ${cables} cable${cables===1?'':'s'}` +
+    ` · ${closures} closure${closures===1?'':'s'} · ${splices} splice${splices===1?'':'s'}`;
+  // Preserve icon direction if already open.
+  const panel = document.getElementById('bottom-attr-table');
+  const icon  = document.getElementById('attr-table-toggle-icon');
+  if (icon && panel?.classList.contains('is-open')) icon.className = 'fa-solid fa-chevron-down';
+}
+
 function toggleBottomAttrTable() {
   const panel = document.getElementById('bottom-attr-table');
   const icon  = document.getElementById('attr-table-toggle-icon');
