@@ -200,7 +200,10 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .proj-meta{font-size:10px;color:var(--vetro-text-muted);margin-top:2px}
 
 /* ── Canvas pane — fills remaining space ── */
-.canvas-pane{flex:1 1 0;min-width:0;background:var(--vetro-bg-panel-secondary);position:relative;overflow:hidden}
+/* 5.E.4: canvas-pane is a flex column so view-tabs bar occupies the first row. */
+.canvas-pane{flex:1 1 0;min-width:0;background:var(--vetro-bg-panel-secondary);position:relative;overflow:hidden;display:flex;flex-direction:column}
+/* The canvas/map content area grows to fill remaining height below the view-tabs bar. */
+.canvas-pane-body{flex:1 1 0;position:relative;overflow:hidden}
 
 /* ── Right inspector — slide-in from right (320px) ── */
 /* The inspector is kept as a flex child but uses a CSS transition for slide-in. */
@@ -272,8 +275,9 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 
 /* Toolbar (above canvas) */
 .toolbar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;background:var(--surface-2);padding:6px;border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:5}
-.view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:0;background:var(--surface-2);border-radius:8px;border:1px solid var(--border-weak);box-shadow:0 2px 6px rgba(0,0,0,.06);z-index:6;overflow:hidden}
-.view-tab{padding:6px 14px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:500;border-right:1px solid var(--border-weak)}
+/* 5.E.4: view-tabs moved into canvas-pane chrome as first flex row (no more absolute overlay). */
+.view-tabs{flex:0 0 auto;display:flex;gap:0;background:var(--surface-2);border-bottom:1px solid var(--border-weak);box-shadow:0 1px 4px rgba(0,0,0,.08);z-index:6;overflow:hidden;justify-content:center;padding:0}
+.view-tab{padding:7px 18px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:500;border-right:1px solid var(--border-weak)}
 .view-tab:last-child{border-right:none}
 .view-tab.active{background:var(--primary);color:var(--primary-text)}
 .view-tab:hover:not(.active){background:var(--surface-3)}
@@ -323,7 +327,8 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 #stage{width:100%;height:100%}
 
 /* Phase 4.3 — Split view: diagram + map side-by-side with drag divider. */
-.canvas-pane.split-mode{display:flex;flex-direction:row}
+/* 5.E.4: split-mode row layout now applies to .canvas-pane-body (view-tabs stay in the header row). */
+.canvas-pane.split-mode .canvas-pane-body{display:flex;flex-direction:row}
 .canvas-pane.split-mode #stage{flex:0 0 auto;width:var(--split-ratio,50%);height:100%}
 .canvas-pane.split-mode #map-stage{flex:1 1 0;height:100%;display:block !important}
 .split-divider{display:none;flex:0 0 6px;background:var(--border-strong);cursor:col-resize;z-index:10;transition:background .1s}
@@ -332,7 +337,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 /* In split mode the toolbars need fixed left so they don't overlap divider */
 .canvas-pane.split-mode .toolbar{position:absolute;top:10px;left:10px;z-index:7}
 .canvas-pane.split-mode .map-toolbar{position:absolute;top:10px;z-index:7}
-.canvas-pane.split-mode .view-tabs{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8}
+/* 5.E.4: split-mode view-tabs inherits flex-row from .canvas-pane — no absolute override needed. */
 
 /* Phase 4.4 matrix view */
 .matrix-row-selected{background:rgba(var(--primary-rgb,27,95,160),.08)}
@@ -654,6 +659,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   </div>
 
   <!-- ─── Center: Konva canvas + Map (Phase 3A) tabs ─── -->
+  <!-- 5.E.4: view-tabs is now the first flex row inside .canvas-pane (no longer floated). -->
   <div class="canvas-pane">
     <div class="view-tabs" id="view-tabs" style="display:none">
       <button class="view-tab active" data-view="diagram" onclick="switchView('diagram')"><i class="fa-solid fa-diagram-project"></i> Diagram</button>
@@ -661,6 +667,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
       <button class="view-tab" data-view="split" onclick="switchView('split')"><i class="fa-solid fa-table-columns"></i> Split</button>
       <button class="view-tab" data-view="matrix" onclick="switchView('matrix')"><i class="fa-solid fa-table"></i> Matrix</button>
     </div>
+    <div class="canvas-pane-body" id="canvas-pane-body">
     <div class="toolbar" id="toolbar" style="display:none">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
       <button class="btn btn-sm" onclick="zoom(1.2)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
@@ -726,6 +733,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
     <button class="attr-table-toggle" id="attr-table-toggle" onclick="toggleBottomAttrTable()">
       <i class="fa-solid fa-chevron-up" id="attr-table-toggle-icon"></i> Attribute table
     </button>
+    </div><!-- /canvas-pane-body (5.E.4) -->
   </div>
 
   <!-- ─── Right inspector: slide-in panel (5.C.3) ─── -->
