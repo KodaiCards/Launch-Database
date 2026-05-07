@@ -4038,6 +4038,21 @@ function openProjectModal(type='') {
   // that don't apply to a fresh-form session.
   if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
   openModal('project-modal');
+
+  // ── Draft restore (new project only) ─────────────────────────────────
+  const _draftKey = 'lf_form:project-modal';
+  const _draftContainer = document.querySelector('#project-modal .modal-body');
+  if (_draftContainer) {
+    // Tear down any previous listener set.
+    if (_formDraftCleanups['project-modal']) _formDraftCleanups['project-modal']();
+    // Show restore banner if a draft exists (it also re-applies field values).
+    _formDraftShowBanner(_draftKey, _draftContainer, () => {
+      // After discarding, re-run field gating since values were wiped.
+      if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
+    });
+    // Attach ongoing auto-save.
+    _formDraftCleanups['project-modal'] = _formDraftAttach(_draftKey, _draftContainer, 'proj-id');
+  }
 }
 
 // Populate the project_type + job dropdowns from the cached server data.
@@ -4529,6 +4544,8 @@ async function saveProject(opts) {
     const id = document.getElementById('proj-id').value;
     if (id) await api('/api/projects/'+id, 'PUT', body);
     else await api('/api/projects', 'POST', body);
+    // Clear new-project draft on successful save (edit autosave has its own flow).
+    if (!id) _formDraftClear('lf_form:project-modal');
     if (silent) {
       // Mark autosave succeeded; modal stays open, no view refresh.
       _autosaveLastSavedAt = Date.now();
@@ -7439,6 +7456,126 @@ async function executeAIAction(action, btn) {
     btn.style.background = 'var(--danger)';
   }
 }
+
+// ═══════════════════════════════════════════════════════════
+// FORM DRAFT PERSISTENCE
+// ═══════════════════════════════════════════════════════════
+// Stores half-filled modal forms in localStorage under lf_form:<modal-id>
+// so accidental refreshes don't lose in-progress work.
+//
+// Key rules:
+//   • Only for NEW records (when the hidden *-id field is empty).
+//     Edit flows have server-side autosave; draft would conflict.
+//   • Skips password + file inputs (browser security / privacy).
+//   • Capped at 50 KB per form — silently drops if over limit.
+//   • Draft survives Cancel (Close) but is cleared on successful Save.
+//   • On re-open, a small banner shows "Draft from N min ago — Discard?"
+
+const _FORM_DRAFT_MAX_BYTES = 50 * 1024; // 50 KB
+
+// Collect all saveable fields from a form container (div or form element).
+function _formDraftCollect(container) {
+  const out = {};
+  container.querySelectorAll('input,select,textarea').forEach(el => {
+    if (!el.id) return;
+    if (el.type === 'password' || el.type === 'file' || el.type === 'hidden') return;
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      out[el.id] = el.checked;
+    } else {
+      out[el.id] = (el.value || '').slice(0, 500);
+    }
+  });
+  out['__savedAt'] = Date.now();
+  return out;
+}
+
+// Restore field values from a draft object.
+function _formDraftApply(container, draft) {
+  container.querySelectorAll('input,select,textarea').forEach(el => {
+    if (!el.id || !(el.id in draft)) return;
+    if (el.type === 'password' || el.type === 'file' || el.type === 'hidden') return;
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      el.checked = !!draft[el.id];
+    } else {
+      el.value = draft[el.id];
+    }
+  });
+}
+
+// Start auto-saving draft every 2 s while the modal is open.
+// Returns a cleanup function that should be called when the modal closes
+// or the draft is discarded.
+function _formDraftAttach(storageKey, container, idFieldId) {
+  // Only draft NEW records — edits have autosave.
+  function shouldDraft() {
+    const idEl = idFieldId ? document.getElementById(idFieldId) : null;
+    return !idEl || !idEl.value;
+  }
+  function save() {
+    if (!shouldDraft()) return;
+    try {
+      const data = _formDraftCollect(container);
+      const json = JSON.stringify(data);
+      if (json.length > _FORM_DRAFT_MAX_BYTES) return; // too large — skip
+      localStorage.setItem(storageKey, json);
+    } catch (e) { /* localStorage full — ignore */ }
+  }
+  // Save on every input event AND on a 2-second interval as a safety net.
+  const handler = () => { if (shouldDraft()) save(); };
+  container.addEventListener('input',  handler);
+  container.addEventListener('change', handler);
+  const timer = setInterval(save, 2000);
+  return function cleanup() {
+    container.removeEventListener('input',  handler);
+    container.removeEventListener('change', handler);
+    clearInterval(timer);
+  };
+}
+
+// Show the draft-restore banner inside a modal body if a draft exists.
+// Returns true if a draft was found and shown.
+function _formDraftShowBanner(storageKey, container, discardCallback) {
+  const raw = localStorage.getItem(storageKey);
+  if (!raw) return false;
+  let draft;
+  try { draft = JSON.parse(raw); } catch { return false; }
+  const savedAt = draft['__savedAt'];
+  const minutesAgo = savedAt ? Math.round((Date.now() - savedAt) / 60000) : null;
+  const timeLabel = minutesAgo === null ? 'earlier'
+                  : minutesAgo < 1     ? 'just now'
+                  : minutesAgo === 1   ? '1 min ago'
+                  : minutesAgo + ' min ago';
+  // Inject banner at the top of the modal body.
+  const bannerId = storageKey.replace(/[^a-z0-9]/gi, '_') + '_banner';
+  let banner = document.getElementById(bannerId);
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = bannerId;
+    banner.style.cssText = 'background:var(--warning-light,#fff3cd);border:1px solid var(--warning,#ffc107);border-radius:6px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text)';
+    container.insertBefore(banner, container.firstChild);
+  }
+  banner.innerHTML = `<i class="fa-solid fa-clock-rotate-left" style="color:var(--warning,#ffc107)"></i>
+    <span><strong>Draft restored</strong> — saved ${timeLabel}</span>
+    <button onclick="(function(){${JSON.stringify('localStorage.removeItem('+JSON.stringify(storageKey)+')')};document.getElementById(${JSON.stringify(bannerId)}).remove();if(typeof discardCb==='function')discardCb();})()" style="margin-left:auto;background:none;border:1px solid var(--gray-border);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px" id="${bannerId}_discard">Discard draft</button>`;
+  // Wire the discard button properly (can't use closures in innerHTML)
+  banner.querySelector('#' + bannerId + '_discard').onclick = () => {
+    localStorage.removeItem(storageKey);
+    banner.remove();
+    if (typeof discardCallback === 'function') discardCallback();
+  };
+  // Apply the draft values to the form.
+  _formDraftApply(container, draft);
+  return true;
+}
+
+// Clear a draft on successful save.
+function _formDraftClear(storageKey) {
+  localStorage.removeItem(storageKey);
+}
+
+// Per-modal draft cleanup function registry — stored so we can tear down
+// listeners when the modal closes.
+const _formDraftCleanups = {};
 
 // ═══════════════════════════════════════════════════════════
 // MODAL HELPERS
