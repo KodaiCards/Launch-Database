@@ -456,6 +456,17 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   .inspector:not(.inspector-closed){transform:translateX(0)}
 }
 
+/* ── 5.H.5 Map legend overlay ─────────────────────────────────────────────── */
+.map-legend{position:absolute;bottom:62px;right:10px;z-index:10;font-size:11px}
+.map-legend-pill{background:var(--surface-2);border:1px solid var(--border-weak);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(0,0,0,.1);user-select:none;transition:background .12s}
+.map-legend-pill:hover{background:var(--surface-3)}
+.map-legend-panel{display:none;background:var(--surface-2);border:1px solid var(--border-weak);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);padding:8px 10px;margin-top:4px;min-width:160px;max-height:50vh;overflow-y:auto}
+.map-legend-panel.open{display:block}
+.map-legend-group{margin-bottom:6px}
+.map-legend-group-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--vetro-text-muted);margin-bottom:3px}
+.map-legend-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px;color:var(--text)}
+.map-legend-swatch{flex-shrink:0;width:12px;height:12px;border-radius:2px}
+
 /* ── 5.H.2 Sidebar tabs ───────────────────────────────────────────────────── */
 .sb-tabs{display:none;flex-direction:row;border-bottom:1px solid var(--vetro-divider);margin:0 -10px 10px -10px;background:var(--vetro-bg-panel-secondary,#F4F5F7)}
 .sb-tabs.visible{display:flex}
@@ -802,6 +813,16 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
     <div class="split-divider" id="split-divider"></div>
+    <!-- 5.H.5 — Map legend overlay (bottom-right of map canvas) -->
+    <div class="map-legend" id="map-legend" style="display:none">
+      <div class="map-legend-pill" onclick="toggleMapLegend()">
+        <i class="fa-solid fa-circle-info"></i> Legend
+        <i class="fa-solid fa-chevron-up" id="map-legend-chevron" style="font-size:9px;transition:transform .2s"></i>
+      </div>
+      <div class="map-legend-panel" id="map-legend-panel">
+        <!-- populated by renderMapLegend() -->
+      </div>
+    </div>
     <div id="map-stage" style="display:none;width:100%;height:100%"></div>
     <!-- Phase 4.4: matrix tabular editor -->
     <div id="matrix-stage" style="display:none;width:100%;height:100%;overflow:auto;background:var(--surface)">
@@ -5960,6 +5981,7 @@ function switchView(view) {
     document.getElementById('map-stage').style.display    = 'none';
     document.getElementById('map-toolbar').style.display  = 'none';
     document.getElementById('matrix-stage').style.display = 'block';
+    _showMapLegend(false); // 5.H.5
     renderMatrixView();
     return;
   }
@@ -5976,6 +5998,7 @@ function switchView(view) {
     document.getElementById('map-toolbar').style.display = 'flex';
     _applySplitRatio(loadSplitRatio());
     initMapIfNeeded();
+    _showMapLegend(true); // 5.H.5
     setTimeout(() => {
       if (state.konva) { state.konva.stage.size({ width: document.getElementById('stage').clientWidth, height: document.getElementById('stage').clientHeight }); state.konva.stage.batchDraw(); }
       if (state.map) state.map.resize();
@@ -5990,6 +6013,7 @@ function switchView(view) {
   document.getElementById('toolbar').style.display    = isMap ? 'none' : 'flex';
   document.getElementById('map-stage').style.display  = isMap ? 'block' : 'none';
   document.getElementById('map-toolbar').style.display = isMap ? 'flex' : 'none';
+  _showMapLegend(isMap || isSplit); // 5.H.5
   if (isMap) {
     initMapIfNeeded().then(() => {
       // 5.E.1 — MapLibre caches 0×0 if the canvas pane had no width when
@@ -6958,6 +6982,9 @@ function toggleLayerVisibility(layerKey, visible) {
   if (state.currentId) {
     api(`/api/splice/projects/${state.currentId}/layer-styles/${encodeURIComponent(layerKey)}`, 'PUT', { visible }).catch(() => {});
   }
+  // 5.H.5 — re-render legend if it's open
+  const legendPanel = document.getElementById('map-legend-panel');
+  if (legendPanel?.classList.contains('open')) renderMapLegend();
 }
 
 function toggleGroupVisibility(groupKey, visible) {
@@ -7286,6 +7313,68 @@ async function submitCreateLayer() {
   } catch (ex) {
     toast('Create failed: ' + ex.message, 'error');
   }
+}
+
+// ── 5.H.5 — Map legend overlay ────────────────────────────────────────────────
+function toggleMapLegend() {
+  const panel = document.getElementById('map-legend-panel');
+  const chevron = document.getElementById('map-legend-chevron');
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+  if (isOpen) renderMapLegend();
+}
+
+function renderMapLegend() {
+  const panel = document.getElementById('map-legend-panel');
+  if (!panel) return;
+  const styles = state.data?.layer_styles || [];
+  const getVis = k => { const s = styles.find(s => s.layer_key === k); return s?.visible !== false; };
+  const getColor = k => { const s = styles.find(s => s.layer_key === k); return s?.color || LAYER_DEFAULTS[k]?.color || '#888'; };
+
+  // Cable legend rows
+  const visibleCables = CABLE_CATEGORIES.filter(cat => getVis(`cable.${cat}`));
+  const cableHtml = visibleCables.length ? `
+    <div class="map-legend-group">
+      <div class="map-legend-group-label">Fiber Cables</div>
+      ${visibleCables.map(cat => `
+        <div class="map-legend-row">
+          <div class="map-legend-swatch" style="background:${getColor(`cable.${cat}`)};height:4px;border-radius:2px"></div>
+          <span>${cat.charAt(0).toUpperCase()+cat.slice(1)}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  // Location type legend rows
+  const visibleLocs = LOC_TYPES.filter(t => getVis(`location.${t}`));
+  const locHtml = visibleLocs.length ? `
+    <div class="map-legend-group">
+      <div class="map-legend-group-label">Network Points</div>
+      ${visibleLocs.map(t => `
+        <div class="map-legend-row">
+          ${_locTypeShapeIcon(t, getColor(`location.${t}`))}
+          <span>${t.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  // Custom layers
+  const customLayers = (state.data?.custom_layers || []);
+  const customHtml = customLayers.length ? `
+    <div class="map-legend-group">
+      <div class="map-legend-group-label">Custom Layers</div>
+      ${customLayers.map(cl => `
+        <div class="map-legend-row">
+          <div class="map-legend-swatch" style="background:${cl.default_style?.color||'#6366F1'};border-radius:50%"></div>
+          <span>${esc(cl.name)}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  panel.innerHTML = cableHtml + locHtml + customHtml ||
+    '<div style="color:var(--text-muted);font-size:10px;padding:4px">No visible layers</div>';
+}
+
+function _showMapLegend(show) {
+  const el = document.getElementById('map-legend');
+  if (el) el.style.display = show ? 'block' : 'none';
 }
 
 function toggleCustomLayerVisibility(layerId, visible) {
