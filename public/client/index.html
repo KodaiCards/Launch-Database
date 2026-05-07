@@ -193,6 +193,15 @@ body{
 .launcher-grid:not([data-count="1"]) .tile:hover{
   transform:translateY(-2px);
 }
+/* Outline on hover — black in light mode, white in dark mode */
+.launcher-grid:not([data-count="1"]) .tile:hover{
+  outline:2px solid #000;
+  outline-offset:-2px;
+}
+html[data-theme="dark"] .launcher-grid:not([data-count="1"]) .tile:hover{
+  outline:2px solid #fff;
+  outline-offset:-2px;
+}
 .tile-icon{
   width:clamp(44px, 7vw, 72px);
   height:clamp(44px, 7vw, 72px);
