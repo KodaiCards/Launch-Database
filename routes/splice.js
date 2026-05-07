@@ -273,7 +273,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Splice project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes, layerStylesRes, customLayersRes] =
+      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes, lossRes, layerStylesRes, customLayersRes, customFeaturesRes] =
         await Promise.all([
           pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
           pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
@@ -373,6 +373,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             `SELECT * FROM splice_custom_layers WHERE project_id = $1 ORDER BY created_at`,
             [projectId]
           ).catch(() => ({ rows: [] })),
+          // 5.H.7 — custom feature geometries + attributes
+          pool.query(
+            `SELECT cf.* FROM splice_custom_features cf
+              WHERE cf.project_id = $1
+              ORDER BY cf.layer_id, cf.created_at`,
+            [projectId]
+          ).catch(() => ({ rows: [] })),
         ]);
 
       // Annotate each cable with its path length in feet, computed from
@@ -421,7 +428,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         cable_states:     cableStatesRes.rows,
         loss_records:     lossRes.rows,
         layer_styles:     layerStyles,        // 5.D.4: per-project style overrides
-        custom_layers:    customLayersRes.rows, // 5.D.7: custom layer definitions
+        custom_layers:    customLayersRes.rows,   // 5.D.7: custom layer definitions
+        custom_features:  customFeaturesRes.rows, // 5.H.7: custom feature geometries
       };
       // Phase 1 lightweight metrics — kept for backwards-compat with the
       // existing UI pane that reads `warnings.unspliced_fiber_count` etc.
@@ -529,6 +537,62 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows.rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── 5.H.7: Custom feature endpoints ─────────────────────────────────────────
+
+  // POST /api/splice/custom-layers/:layerId/features — add a feature to a custom layer
+  app.post('/api/splice/custom-layers/:layerId/features', requireAuth(), async (req, res) => {
+    const { layerId } = req.params;
+    const { name, geometry_json, attributes_jsonb } = req.body;
+    if (!geometry_json || typeof geometry_json !== 'object') {
+      return res.status(400).json({ error: 'geometry_json is required (GeoJSON geometry object)' });
+    }
+    try {
+      // Resolve project_id from the layer
+      const layerRow = await pool.query(
+        `SELECT project_id FROM splice_custom_layers WHERE id = $1`, [layerId]);
+      if (!layerRow.rows.length) return res.status(404).json({ error: 'Layer not found' });
+      const projectId = layerRow.rows[0].project_id;
+
+      const row = await pool.query(
+        `INSERT INTO splice_custom_features (layer_id, project_id, name, geometry_json, attributes_jsonb)
+         VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+         RETURNING *`,
+        [layerId, projectId, name || null, JSON.stringify(geometry_json),
+          JSON.stringify(attributes_jsonb || {})]
+      );
+      res.status(201).json(row.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // PUT /api/splice/custom-features/:id — update a custom feature
+  app.put('/api/splice/custom-features/:id', requireAuth(), async (req, res) => {
+    const { name, geometry_json, attributes_jsonb } = req.body;
+    try {
+      const row = await pool.query(
+        `UPDATE splice_custom_features
+            SET name = COALESCE($2, name),
+                geometry_json = COALESCE($3::jsonb, geometry_json),
+                attributes_jsonb = COALESCE($4::jsonb, attributes_jsonb),
+                updated_at = NOW()
+          WHERE id = $1
+          RETURNING *`,
+        [req.params.id, name ?? null,
+          geometry_json ? JSON.stringify(geometry_json) : null,
+          attributes_jsonb ? JSON.stringify(attributes_jsonb) : null]
+      );
+      if (!row.rows.length) return res.status(404).json({ error: 'Feature not found' });
+      res.json(row.rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // DELETE /api/splice/custom-features/:id
+  app.delete('/api/splice/custom-features/:id', requireAuth(), async (req, res) => {
+    try {
+      await pool.query(`DELETE FROM splice_custom_features WHERE id = $1`, [req.params.id]);
+      res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

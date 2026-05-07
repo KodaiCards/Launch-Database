@@ -6947,13 +6947,17 @@ function renderLayerTree() {
   if (customGroup && customContainer) {
     if (customLayers.length > 0) {
       customGroup.style.display = '';
-      customContainer.innerHTML = customLayers.map(cl =>
-        `<div class="layer-leaf" data-custom-layer="${cl.id}">
+      customContainer.innerHTML = customLayers.map(cl => {
+        const color = cl.default_style?.color || '#6366F1';
+        const featCount = (state.data?.custom_features || []).filter(f => f.layer_id === cl.id).length;
+        return `<div class="layer-leaf" data-custom-layer="${cl.id}" style="flex-wrap:wrap;gap:3px">
           <input type="checkbox" checked onchange="toggleCustomLayerVisibility('${cl.id}',this.checked)">
-          <span class="layer-color-dot" style="background:${cl.default_style?.color||'#6366F1'}"></span>
-          <span class="layer-leaf-name">${esc(cl.name)}</span>
-        </div>`
-      ).join('');
+          <span class="layer-color-dot" style="background:${color}"></span>
+          <span class="layer-leaf-name">${esc(cl.name)}${featCount?' <span style="color:var(--text-muted);font-size:9px">('+featCount+')</span>':''}</span>
+          <button class="btn btn-sm" style="font-size:9px;padding:1px 5px;margin-left:auto" title="Add feature to this layer"
+            onclick="startCustomFeatureDraw('${cl.id}')"><i class="fa-solid fa-plus"></i> Add</button>
+        </div>`;
+      }).join('');
     } else {
       customGroup.style.display = 'none';
     }
@@ -7409,10 +7413,221 @@ function _showMapLegend(show) {
 }
 
 function toggleCustomLayerVisibility(layerId, visible) {
-  // TODO Phase 5.E: wire to map layer when custom features are added
   const map = state.map;
-  if (map && map.getLayer(`custom-${layerId}`)) {
-    map.setLayoutProperty(`custom-${layerId}`, 'visibility', visible ? 'visible' : 'none');
+  if (!map) return;
+  // 5.H.7: each custom layer has its own MapLibre source + layer
+  [`custom-${layerId}`, `custom-${layerId}-line`].forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+  });
+}
+
+// ── 5.H.7 — Custom feature rendering + drawing tools ──────────────────────────
+
+// Render all custom features from state.data into MapLibre sources + layers.
+function renderCustomFeatures() {
+  const map = state.map;
+  if (!map || !state.data) return;
+  const layers = state.data.custom_layers || [];
+  const features = state.data.custom_features || [];
+
+  for (const cl of layers) {
+    const srcId = `custom-src-${cl.id}`;
+    const color = cl.default_style?.color || '#6366F1';
+    const lineWidth = cl.default_style?.lineWidth || 3;
+    const geomType = cl.geometry_type || 'point';
+
+    // Build GeoJSON FeatureCollection for this layer
+    const fc = {
+      type: 'FeatureCollection',
+      features: features
+        .filter(f => f.layer_id === cl.id)
+        .map(f => ({
+          type: 'Feature',
+          id: f.id,
+          geometry: f.geometry_json,
+          properties: { id: f.id, name: f.name || '', layer_id: cl.id },
+        })),
+    };
+
+    if (map.getSource(srcId)) {
+      map.getSource(srcId).setData(fc);
+    } else {
+      map.addSource(srcId, { type: 'geojson', data: fc });
+    }
+
+    const layerId = `custom-${cl.id}`;
+    const lineLayerId = `custom-${cl.id}-line`;
+
+    if (geomType === 'point') {
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId, type: 'circle', source: srcId,
+          paint: { 'circle-color': color, 'circle-radius': 7, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 },
+        });
+      }
+    } else if (geomType === 'line') {
+      if (!map.getLayer(lineLayerId)) {
+        map.addLayer({
+          id: lineLayerId, type: 'line', source: srcId,
+          paint: { 'line-color': color, 'line-width': lineWidth },
+        });
+      }
+    } else if (geomType === 'polygon') {
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId, type: 'fill', source: srcId,
+          paint: { 'fill-color': color, 'fill-opacity': 0.35 },
+        });
+      }
+      if (!map.getLayer(lineLayerId)) {
+        map.addLayer({
+          id: lineLayerId, type: 'line', source: srcId,
+          paint: { 'line-color': color, 'line-width': 1.5 },
+        });
+      }
+    }
+  }
+}
+
+// State for the active feature-drawing session
+let _cfDrawing = null; // { layerId, geomType, coords[] }
+let _cfMarkers = [];   // MapLibre Markers for waypoints
+let _cfTempSrc = 'custom-draw-temp';
+
+function startCustomFeatureDraw(layerId) {
+  const map = state.map;
+  if (!map) { switchView('map'); setTimeout(() => startCustomFeatureDraw(layerId), 600); return; }
+  const layer = (state.data?.custom_layers || []).find(l => l.id === layerId);
+  if (!layer) return;
+
+  // Cancel any in-progress draw
+  cancelCustomFeatureDraw();
+
+  _cfDrawing = { layerId, geomType: layer.geometry_type, coords: [], layer };
+
+  // Ensure temp source exists
+  if (!map.getSource(_cfTempSrc)) {
+    map.addSource(_cfTempSrc, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'custom-draw-line', type: 'line', source: _cfTempSrc,
+      paint: { 'line-color': layer.default_style?.color||'#6366F1', 'line-width': 2, 'line-dasharray': [4,3] } });
+    map.addLayer({ id: 'custom-draw-fill', type: 'fill', source: _cfTempSrc,
+      filter: ['==','$type','Polygon'],
+      paint: { 'fill-color': layer.default_style?.color||'#6366F1', 'fill-opacity': 0.2 } });
+  }
+
+  state.mapMode = 'custom-draw';
+  map.getCanvas().style.cursor = 'crosshair';
+
+  const hint = `Click map to place ${layer.geometry_type} points. Double-click to finish. Esc to cancel.`;
+  const modeHint = document.getElementById('map-mode-hint');
+  if (modeHint) modeHint.textContent = hint;
+
+  toast(`Drawing ${layer.geometry_type} for "${layer.name}" — click to add points`, 'info');
+}
+
+function _cfAddPoint(lngLat) {
+  if (!_cfDrawing) return;
+  const { geomType, coords } = _cfDrawing;
+  coords.push([lngLat.lng, lngLat.lat]);
+
+  if (geomType === 'point') {
+    // Single-click places immediately
+    _cfFinish();
+    return;
+  }
+
+  // Update temp preview
+  _cfUpdatePreview();
+}
+
+function _cfUpdatePreview() {
+  const map = state.map;
+  if (!map || !_cfDrawing) return;
+  const { geomType, coords } = _cfDrawing;
+  if (coords.length < 2) return;
+  let geom;
+  if (geomType === 'line') {
+    geom = { type: 'LineString', coordinates: coords };
+  } else {
+    geom = { type: 'Polygon', coordinates: [coords.length >= 3 ? [...coords, coords[0]] : coords] };
+  }
+  const src = map.getSource(_cfTempSrc);
+  if (src) src.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: geom, properties: {} }] });
+}
+
+async function _cfFinish() {
+  if (!_cfDrawing) return;
+  const { layerId, geomType, coords } = _cfDrawing;
+  let geometry_json;
+  if (geomType === 'point') {
+    if (!coords.length) return;
+    geometry_json = { type: 'Point', coordinates: coords[0] };
+  } else if (geomType === 'line') {
+    if (coords.length < 2) { toast('Need at least 2 points for a line', 'error'); return; }
+    geometry_json = { type: 'LineString', coordinates: coords };
+  } else {
+    if (coords.length < 3) { toast('Need at least 3 points for a polygon', 'error'); return; }
+    geometry_json = { type: 'Polygon', coordinates: [[...coords, coords[0]]] };
+  }
+
+  cancelCustomFeatureDraw(true); // clean up UI but keep geometry
+
+  // Show naming form
+  const name = await _cfNamePrompt(_cfDrawing?.layer?.name || 'Feature');
+  if (name === null) return; // cancelled
+
+  try {
+    const res = await api(`/api/splice/custom-layers/${layerId}/features`, 'POST', {
+      name: name || null, geometry_json, attributes_jsonb: {},
+    });
+    if (!state.data.custom_features) state.data.custom_features = [];
+    state.data.custom_features.push(res);
+    renderCustomFeatures();
+    toast(`Feature added to layer`, 'success');
+  } catch (e) {
+    toast('Failed to save feature: ' + e.message, 'error');
+  }
+}
+
+function _cfNamePrompt(layerName) {
+  return new Promise(resolve => {
+    showModal({
+      title: `Name this feature`,
+      body: `<div class="field">
+        <label>Feature name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <input id="cf-name-input" placeholder="e.g. Slack Loop A" autofocus>
+      </div>
+      <div class="field">
+        <label>Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <textarea id="cf-attrs-input" placeholder='{"notes": "…"}' style="font-family:monospace;font-size:11px"></textarea>
+      </div>`,
+      onSubmit: (close) => {
+        const name = document.getElementById('cf-name-input')?.value.trim() || null;
+        close();
+        resolve(name);
+      },
+      onCancel: () => resolve(null),
+    });
+  });
+}
+
+function cancelCustomFeatureDraw(keepGeom) {
+  const map = state.map;
+  _cfDrawing = keepGeom ? _cfDrawing : null;
+  _cfMarkers.forEach(m => m.remove());
+  _cfMarkers = [];
+  if (map) {
+    ['custom-draw-line','custom-draw-fill'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    });
+    const src = map.getSource(_cfTempSrc);
+    if (src) src.setData({ type: 'FeatureCollection', features: [] });
+    if (!keepGeom) {
+      state.mapMode = null;
+      map.getCanvas().style.cursor = '';
+      const modeHint = document.getElementById('map-mode-hint');
+      if (modeHint) modeHint.textContent = '';
+    }
   }
 }
 
@@ -7769,6 +7984,10 @@ function _wireMapClickHandlers(map) {
     } else if (state.mapMode === 'place-add-location') {
       // 5.E.5 — sidebar Add Location placement mode
       _applyAddLocationClick(e.lngLat);
+    } else if (state.mapMode === 'custom-draw') {
+      // 5.H.7 — custom feature drawing
+      _cfAddPoint(e.lngLat);
+      return;
     } else if (state.mapMode === 'multistop') {
       mapMsAddStop(e.lngLat);
     } else {
@@ -7783,6 +8002,7 @@ function _wireMapClickHandlers(map) {
   });
   map.on('dblclick', (e) => {
     if (state.mapMode === 'multistop') { e.preventDefault(); mapMsFinish(); }
+    if (state.mapMode === 'custom-draw') { e.preventDefault(); _cfFinish(); }
   });
 }
 
@@ -8012,6 +8232,9 @@ function refreshMapLayers() {
       .addTo(map);
     state._mapLabelMarkers.push(m);
   }
+
+  // 5.H.7 — render custom feature layers
+  renderCustomFeatures();
 }
 
 // Push current location data into the 'locations' GeoJSON source.
@@ -8482,6 +8705,8 @@ function mapClearMode() {
   state._cableHandleMarkers = [];
   state._editingCableId = null;
   state._editPathCoords = [];
+  // 5.H.7 — clean up custom feature drawing
+  cancelCustomFeatureDraw(false);
 
   state.mapMode = null;
   state.mapPlaceType = null;
