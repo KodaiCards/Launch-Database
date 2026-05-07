@@ -290,6 +290,14 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .map-palette-item{display:block;width:100%;padding:6px 12px;font-size:11px;font-weight:500;text-align:left;background:none;border:none;color:var(--text);cursor:pointer;white-space:nowrap}
 .map-palette-item:hover{background:var(--surface-3)}
 .map-palette-sep{border:none;border-top:1px solid var(--border-weak);margin:3px 0}
+/* 5.E.5 — Placement mode banner (shown above map when entering add-location mode) */
+.placement-banner{position:absolute;top:0;left:0;right:0;z-index:20;background:#0B1A2E;color:#fff;font-size:12px;font-weight:600;padding:8px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:default}
+.placement-banner .pb-hint{flex:1;opacity:0.9;font-weight:400}
+.placement-banner .pb-chips{display:flex;gap:4px;flex-wrap:wrap}
+.placement-banner .pb-chip{padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);font-size:11px;cursor:pointer;transition:background 0.1s}
+.placement-banner .pb-chip:hover,.placement-banner .pb-chip.active{background:var(--vetro-route-active,#68BD45);border-color:var(--vetro-route-active,#68BD45);color:#fff}
+.placement-banner .pb-cancel{padding:4px 12px;border-radius:4px;background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:11px;cursor:pointer}
+.placement-banner .pb-cancel:hover{background:rgba(255,255,255,.15)}
 /* Cable edit handles */
 .cable-handle{width:10px;height:10px;border-radius:50%;background:#FFD400;border:2px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.4);cursor:grab;position:absolute;transform:translate(-50%,-50%)}
 .cable-handle.mid{background:#FF6E00;opacity:0.7}
@@ -694,6 +702,20 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
       </div>
       <button class="btn btn-sm" id="btn-draw-cable" onclick="mapToggleMultistop()" title="Draw a cable route across multiple locations"><i class="fa-solid fa-route"></i> Draw cable</button>
       <span id="map-mode-hint" class="map-mode-hint"></span>
+    </div>
+    <!-- 5.E.5 — Add Location placement mode banner (hidden until mode active) -->
+    <div class="placement-banner" id="placement-banner" style="display:none">
+      <i class="fa-solid fa-map-pin"></i>
+      <span class="pb-hint">Click the map to place the new location. Press Esc to cancel.</span>
+      <span class="pb-chips" id="placement-type-chips">
+        <button class="pb-chip active" data-type="splice_point" onclick="placementSetType('splice_point')">SP</button>
+        <button class="pb-chip" data-type="handhole"    onclick="placementSetType('handhole')">HH</button>
+        <button class="pb-chip" data-type="manhole"     onclick="placementSetType('manhole')">MH</button>
+        <button class="pb-chip" data-type="pedestal"    onclick="placementSetType('pedestal')">PED</button>
+        <button class="pb-chip" data-type="vault"       onclick="placementSetType('vault')">VLT</button>
+        <button class="pb-chip" data-type="fdh"         onclick="placementSetType('fdh')">FDH</button>
+      </span>
+      <button class="pb-cancel" onclick="cancelAddLocationPlacement()">Cancel</button>
     </div>
     <div class="lock-banner" id="lock-banner" style="display:none"></div>
     <div id="stage"></div>
@@ -3928,22 +3950,71 @@ function _renderTracePathSidebar(result) {
 // Mutations — locations / cables / closures / splices
 // ───────────────────────────────────────────────────────────────────────────
 
-// 5.B.1 — openAddLocation creates a location immediately with a placeholder
-// name (no modal). The inspector becomes the rename/configure surface.
-async function openAddLocation() {
+// 5.E.5 — openAddLocation enters placement mode instead of silently creating
+// an orphan row. User clicks the map to place; Esc cancels with no mutation.
+function openAddLocation() {
   if (isReadOnly()) return toast('View-only mode', 'error');
+  if (!state.currentId) return;
+  // Enter map view so the click-to-place affordance makes sense.
+  if (state.activeView !== 'map' && state.activeView !== 'split') switchView('map');
+  // Reuse the map's existing place-new mechanism with a default type of splice_point.
+  // The placement banner lets the user switch types before clicking.
+  state._addLocationType = 'splice_point';
+  const banner = document.getElementById('placement-banner');
+  if (banner) banner.style.display = 'flex';
+  // Highlight the first chip.
+  document.querySelectorAll('#placement-type-chips .pb-chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.type === 'splice_point')
+  );
+  // Activate placement mode on the map (same path as mapStartPlace).
+  initMapIfNeeded().then(() => {
+    mapClearMode();
+    state.mapMode = 'place-add-location';
+    document.getElementById('map-stage').classList.add('placing');
+    document.getElementById('map-mode-hint').textContent = 'Click the map to place the new location. Esc to cancel.';
+  });
+  // Esc handler.
+  const onEsc = (e) => {
+    if (e.key === 'Escape') { document.removeEventListener('keydown', onEsc); cancelAddLocationPlacement(); }
+  };
+  document.addEventListener('keydown', onEsc);
+  state._addLocEscHandler = onEsc;
+}
+
+window.placementSetType = function(type) {
+  state._addLocationType = type;
+  document.querySelectorAll('#placement-type-chips .pb-chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.type === type)
+  );
+};
+
+window.cancelAddLocationPlacement = function() {
+  const banner = document.getElementById('placement-banner');
+  if (banner) banner.style.display = 'none';
+  if (state._addLocEscHandler) { document.removeEventListener('keydown', state._addLocEscHandler); state._addLocEscHandler = null; }
+  if (state.mapMode === 'place-add-location') mapClearMode();
+  document.getElementById('map-mode-hint').textContent = '';
+};
+
+// Intercept map clicks in place-add-location mode.
+// This is wired into the main map click handler via the mode switch.
+async function _applyAddLocationClick(lngLat) {
+  const type = state._addLocationType || 'splice_point';
+  const TYPE_PREFIX = { handhole:'HH', manhole:'MH', pole:'PL', pedestal:'PED', vault:'VLT', fdh:'FDH', splice_point:'SP', co:'CO', terminal:'TERM', ring_cut:'RC' };
+  const prefix = TYPE_PREFIX[type] || type.toUpperCase().slice(0, 4);
+  const existing = (state.data.locations || []).filter(l => l.name.startsWith(prefix + '-') || l.name.startsWith(prefix));
+  const seq = existing.length + 1;
+  const name = `${prefix}-${seq}`;
   try {
-    const seq = state.data.locations.length + 1;
-    const name = `SP-${seq}`;
-    const loc = await api('/api/splice/projects/' + state.currentId + '/locations', 'POST', {
-      name,
-      sequence_index: seq,
-      type: 'splice_point',
+    const loc = await api(`/api/splice/projects/${state.currentId}/locations`, 'POST', {
+      type, name, latitude: lngLat.lat, longitude: lngLat.lng,
     });
+    cancelAddLocationPlacement();
     await hydrateProject();
+    if (state.activeView === 'map' || state.activeView === 'split') refreshMapLayers();
     selectThing('location', loc.id);
-    toast(`Location "${name}" added — rename it in the inspector`, 'success');
-  } catch (e) { toast(e.message, 'error'); }
+    toast(`${name} placed — rename in the inspector`, 'success');
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
 }
 
 function openAddCable() {
@@ -6540,6 +6611,9 @@ function _wireMapClickHandlers(map) {
   map.on('click', (e) => {
     if (state.mapMode === 'place-new') {
       mapApplyNewLocation(e.lngLat);
+    } else if (state.mapMode === 'place-add-location') {
+      // 5.E.5 — sidebar Add Location placement mode
+      _applyAddLocationClick(e.lngLat);
     } else if (state.mapMode === 'multistop') {
       mapMsAddStop(e.lngLat);
     } else {
