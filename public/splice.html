@@ -1693,6 +1693,8 @@ function renderCanvas() {
   });
 
   // Wheel zoom centered on cursor — Konva idiom.
+  // 5.F.2: LOD bucket changes trigger a full drawCanvasContents() redraw.
+  let _lastLodBucket = 0;
   stage.on('wheel', (e) => {
     e.evt.preventDefault();
     const oldScale = stage.scaleX();
@@ -1703,12 +1705,19 @@ function renderCanvas() {
       y: (pointer.y - stage.y()) / oldScale,
     };
     const direction = e.evt.deltaY > 0 ? -1 : 1;
-    const newScale = direction > 0 ? oldScale * 1.1 : oldScale / 1.1;
+    const newScale = Math.max(0.1, Math.min(10, direction > 0 ? oldScale * 1.12 : oldScale / 1.12));
     stage.scale({ x: newScale, y: newScale });
     stage.position({
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale,
     });
+    const newBucket = _lodBucket(newScale);
+    if (newBucket !== _lastLodBucket) {
+      _lastLodBucket = newBucket;
+      drawCanvasContents();
+    } else {
+      stage.batchDraw();
+    }
   });
 
   drawCanvasContents();
@@ -1729,6 +1738,30 @@ function renderCanvas() {
   }
 }
 
+// ── 5.F.1 — Topology graph layout ─────────────────────────────────────────
+// localStorage key for per-location diagram position overrides.
+// Shape: { [locationId]: { x: number, y: number } }
+const DIAG_POS_KEY = 'splice_diagram_positions_v1';
+
+function _diagLoadPositions() {
+  try { return JSON.parse(localStorage.getItem(DIAG_POS_KEY) || '{}'); } catch { return {}; }
+}
+function _diagSavePosition(locId, x, y) {
+  const pos = _diagLoadPositions();
+  pos[locId] = { x, y };
+  try { localStorage.setItem(DIAG_POS_KEY, JSON.stringify(pos)); } catch {}
+}
+
+// LOD bucket helper. Returns 0 (thin), 1 (tubes), or 2 (fibers).
+function _lodBucket(scale) {
+  if (scale >= 2.5) return 2;
+  if (scale >= 1.0) return 1;
+  return 0;
+}
+
+// Per-cable-pair stacking index so parallel edges don't overlap.
+const _cablePairIndex = new Map();
+
 function drawCanvasContents() {
   if (!state.konva || !state.data) return;
   const { cableLayer, closureLayer, spliceLayer, traceLayer } = state.konva;
@@ -1736,115 +1769,353 @@ function drawCanvasContents() {
   closureLayer.destroyChildren();
   spliceLayer.destroyChildren();
   traceLayer.destroyChildren();
+  _cablePairIndex.clear();
 
   const d = state.data;
+  const scale = state.konva.stage.scaleX();
+  const lod = _lodBucket(scale);
 
-  // Layout heuristic for Phase 1:
-  //   Locations are arranged in a horizontal row (sequence_index order).
-  //   Each location gets a column. Cables connecting two locations are
-  //   drawn as horizontal pipes between the relevant columns. Closures
-  //   appear as boxes anchored to their location column.
-  //   It's not topologically precise (a cable spanning 3 locations has no
-  //   midpoint), but Phase 1 only uses 'splice_point' so this works.
-
+  // ── Location ordering + layout ────────────────────────────────────────────
   const orderedLocations = [...d.locations].sort((a, b) =>
     (a.sequence_index || 0) - (b.sequence_index || 0) || a.name.localeCompare(b.name)
   );
-  const colX = new Map();
-  const COL_GAP = 280;
-  const X_START = 60;
-  orderedLocations.forEach((loc, i) => colX.set(loc.id, X_START + i * COL_GAP));
 
-  // Locations as labeled vertical guidelines. The label is clickable
-  // (opens the location inspector); the dashed line is decorative
-  // (listening:false so it doesn't intercept canvas drag).
-  orderedLocations.forEach(loc => {
-    const x = colX.get(loc.id);
-    closureLayer.add(new Konva.Line({
-      points: [x, 40, x, 600], stroke:'#9AA5B5', dash:[4,4], strokeWidth:1,
-      listening: false,
-    }));
-    const labelGroup = new Konva.Group({ x: x - 60, y: 6 });
-    labelGroup.add(new Konva.Rect({
-      x: 0, y: 0, width: 120, height: 28, fill: 'transparent',
-    }));
-    labelGroup.add(new Konva.Text({
-      x: 0, y: 8, width: 120, align:'center',
-      text: loc.name, fontSize: 13, fontStyle:'bold', fill:'#1B5FA0',
-    }));
-    labelGroup.on('click tap', () => selectThing('location', loc.id));
-    labelGroup.on('mouseenter', () => { document.body.style.cursor='pointer'; });
-    labelGroup.on('mouseleave', () => { document.body.style.cursor='default'; });
-    closureLayer.add(labelGroup);
+  const savedPos = _diagLoadPositions();
+  // NODE_W: width of each location rectangle.
+  const NODE_W    = 140;
+  const NODE_H_BASE = 56;  // title bar (24) + body placeholder (32)
+  const COL_GAP   = 240;
+  const X_START   = 60;
+  const LANE_Y    = [60, 180];  // two stagger lanes to reduce label collision
+
+  // colX/nodeY: default positions.  savedPos overrides on a per-location basis.
+  const colX  = new Map();
+  const nodeY = new Map();
+  orderedLocations.forEach((loc, i) => {
+    const def = { x: X_START + i * COL_GAP, y: LANE_Y[i % 2] };
+    const over = savedPos[loc.id] || {};
+    colX.set(loc.id,  over.x ?? def.x);
+    nodeY.set(loc.id, over.y ?? def.y);
   });
 
-  // Cables between locations. Each cable is wrapped in a Group with a
-  // transparent hit-area rect so the whole strip is clickable. Cable Y
-  // positions are stashed in cableYById so the splice-line renderer can
-  // anchor curves at the right vertical position.
-  const cableYById = new Map();
-  d.cables.forEach((cable, i) => {
-    const from = colX.get(cable.from_location_id);
-    const to   = colX.get(cable.to_location_id);
-    const y = 80 + i * 60;
-    if (from && to) {
-      const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id).sort((a,b)=>a.position-b.position);
-      const tubeGap = 2;
-      const stripHeight = Math.max(8, tubes.length * tubeGap + 2);
-      const cableCenterY = y + (tubes.length * tubeGap) / 2;
-      cableYById.set(cable.id, cableCenterY);
+  // ── Location node groups ───────────────────────────────────────────────────
+  // Each location is a draggable Konva.Group containing:
+  //   • title bar rect (24px, type-color fill, navy stroke)
+  //   • name text (white, bold)
+  //   • body rect (32px placeholder, white fill)
+  //   • type label text in body
+  // Closure sub-nodes are drawn INSIDE the body (see closure loop below).
+  const locNodeById = new Map();  // locId → { group, bodyY, bodyH, x, y }
+
+  orderedLocations.forEach(loc => {
+    const nx = colX.get(loc.id);
+    const ny = nodeY.get(loc.id);
+    const typeColor = _locColor(loc);
+    const closuresHere = d.closures.filter(c => c.location_id === loc.id);
+    // Body height expands to fit closures (each closure gets 36px).
+    const bodyH = Math.max(32, closuresHere.length * 40 + 8);
+    const totalH = 24 + bodyH;
+
+    const group = new Konva.Group({ x: nx, y: ny, draggable: true });
+
+    // Title bar
+    group.add(new Konva.Rect({
+      x: 0, y: 0, width: NODE_W, height: 24,
+      fill: typeColor, stroke: '#003F72', strokeWidth: 1.5,
+      cornerRadius: [6, 6, 0, 0],
+      listening: false,
+    }));
+    group.add(new Konva.Text({
+      x: 4, y: 6, width: NODE_W - 8,
+      text: loc.name, fontSize: 12, fontStyle: 'bold', fill: '#fff',
+      ellipsis: true, listening: false,
+    }));
+
+    // Body rect
+    group.add(new Konva.Rect({
+      x: 0, y: 24, width: NODE_W, height: bodyH,
+      fill: '#FFFFFF', stroke: '#003F72', strokeWidth: 1.5,
+      cornerRadius: [0, 0, 6, 6],
+      listening: false,
+    }));
+    // Type label in body
+    group.add(new Konva.Text({
+      x: 4, y: 28, width: NODE_W - 8,
+      text: (loc.type || 'location').replace(/_/g, ' '),
+      fontSize: 9, fill: '#6C757D', listening: false,
+    }));
+
+    // Hit area over the full node (for click-to-select)
+    const hitRect = new Konva.Rect({
+      x: 0, y: 0, width: NODE_W, height: totalH, fill: 'rgba(0,0,0,0.001)',
+    });
+    group.add(hitRect);
+
+    // Drag: persist new position to localStorage, then redraw edges.
+    group.on('dragend', () => {
+      _diagSavePosition(loc.id, group.x(), group.y());
+      colX.set(loc.id, group.x());
+      nodeY.set(loc.id, group.y());
+      // Redraw cable edges by re-running canvas contents.
+      drawCanvasContents();
+    });
+    group.on('click tap', (e) => {
+      if (e.target === hitRect || e.target.listening() === false) {
+        selectThing('location', loc.id);
+      }
+    });
+    group.on('mouseenter', () => { document.body.style.cursor = 'pointer'; });
+    group.on('mouseleave', () => { document.body.style.cursor = 'default'; });
+
+    // Selection highlight ring
+    if (state.selection?.type === 'location' && state.selection?.id === loc.id) {
+      group.add(new Konva.Rect({
+        x: -3, y: -3, width: NODE_W + 6, height: totalH + 6,
+        stroke: '#F59E0B', strokeWidth: 2.5, fill: 'transparent',
+        cornerRadius: 8, listening: false,
+      }));
+    }
+
+    closureLayer.add(group);
+    locNodeById.set(loc.id, { group, bodyY: 24, bodyH, x: nx, y: ny, totalH, typeColor });
+  });
+
+  // Helper: get the current canvas-space right/left edge midpoint of a location node.
+  function nodeRightEdge(locId) {
+    const n = locNodeById.get(locId);
+    if (!n) return null;
+    const g = n.group;
+    return { x: g.x() + NODE_W, y: g.y() + n.totalH / 2 };
+  }
+  function nodeLeftEdge(locId) {
+    const n = locNodeById.get(locId);
+    if (!n) return null;
+    const g = n.group;
+    return { x: g.x(), y: g.y() + n.totalH / 2 };
+  }
+
+  // ── Cable edges ────────────────────────────────────────────────────────────
+  // Key for a pair of locations (order-independent).
+  function pairKey(a, b) { return [a, b].sort().join('|'); }
+
+  const cableYById = new Map();  // cable.id → midpoint Y (for splice arc anchoring)
+
+  // Sort cables so edges render consistently.
+  const sortedCables = [...d.cables].sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '')
+  );
+
+  sortedCables.forEach(cable => {
+    const fromId = cable.from_location_id;
+    const toId   = cable.to_location_id;
+
+    // Resolve endpoint positions from node groups (post-drag or default).
+    const fromNode = locNodeById.get(fromId);
+    const toNode   = locNodeById.get(toId);
+
+    if (fromNode && toNode) {
+      const fromG = fromNode.group;
+      const toG   = toNode.group;
+
+      // Which side is left/right is determined by x position.
+      const fromIsLeft = fromG.x() <= toG.x();
+      const srcX  = fromIsLeft ? fromG.x() + NODE_W : fromG.x();
+      const dstX  = fromIsLeft ? toG.x()             : toG.x() + NODE_W;
+
+      // Parallel-cable stacking: count how many cables share this pair.
+      const pk = pairKey(fromId, toId);
+      const stackIdx = _cablePairIndex.get(pk) || 0;
+      _cablePairIndex.set(pk, stackIdx + 1);
+      const STACK_GAP = 20;
+      const baseY = (fromG.y() + fromNode.totalH / 2 + toG.y() + toNode.totalH / 2) / 2;
+      const edgeY = baseY + stackIdx * STACK_GAP - ((_cablePairIndex.get(pk) - 1) * STACK_GAP) / 2;
+      cableYById.set(cable.id, edgeY);
+
+      const srcPt = { x: srcX, y: fromIsLeft ? fromG.y() + fromNode.totalH / 2 : fromG.y() + fromNode.totalH / 2 };
+      const dstPt = { x: dstX, y: fromIsLeft ? toG.y()   + toNode.totalH / 2   : toG.y()   + toNode.totalH / 2   };
+
+      // Adjust Y for stacking.
+      srcPt.y = edgeY;
+      dstPt.y = edgeY;
+
+      const isSelected = state.selection?.type === 'cable' && state.selection?.id === cable.id;
+      const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id).sort((a, b) => a.position - b.position);
+      const tubeCount = tubes.length || 1;
 
       const group = new Konva.Group();
-      // Hit-area rect: covers the strands so a click anywhere on the
-      // cable strip selects the cable. Transparent fill, no stroke.
-      group.add(new Konva.Rect({
-        x: from + 6, y: y - 4, width: to - from - 12, height: stripHeight + 8,
-        fill: 'rgba(0,0,0,0.001)',  // near-transparent but listenable
-      }));
-      tubes.forEach((tube, ti) => {
+
+      if (lod === 0) {
+        // z=0: thin colored line + label at midpoint.
+        const cableColor = tubes.length ? (COLORS[tubes[0].color] || '#1660C9') : '#1660C9';
         group.add(new Konva.Line({
-          points: [from + 6, y + ti * tubeGap, to - 6, y + ti * tubeGap],
-          stroke: COLORS[tube.color] || '#666',
-          strokeWidth: 2, listening: false,
+          points: [srcPt.x, srcPt.y, dstPt.x, dstPt.y],
+          stroke: isSelected ? '#F59E0B' : cableColor,
+          strokeWidth: isSelected ? 4 : 3,
+          lineCap: 'round',
+          listening: false,
         }));
-        // Phase 4.2 — TIA-598 two-letter abbreviation on the left end of each tube stripe.
-        const abbrev = TIA_598_ABBREV[tube.color];
-        if (abbrev) {
-          group.add(new Konva.Text({
-            x: from + 6, y: y + ti * tubeGap - 5,
-            text: abbrev, fontSize: 7, fill: COLORS[tube.color] || '#666',
-            fontStyle: 'bold', listening: false,
+        // Midpoint label: "144f / 12T"
+        const midX = (srcPt.x + dstPt.x) / 2 - 30;
+        const midY = (srcPt.y + dstPt.y) / 2 - 16;
+        group.add(new Konva.Rect({
+          x: midX - 2, y: midY - 1, width: 64, height: 14,
+          fill: 'rgba(255,255,255,0.85)', cornerRadius: 3, listening: false,
+        }));
+        group.add(new Konva.Text({
+          x: midX, y: midY,
+          text: cable.fiber_count + 'f / ' + tubeCount + 'T',
+          fontSize: 10, fill: '#1B5FA0', fontStyle: 'bold', listening: false,
+        }));
+        // Hit area
+        group.add(new Konva.Line({
+          points: [srcPt.x, srcPt.y, dstPt.x, dstPt.y],
+          stroke: 'rgba(0,0,0,0.001)', strokeWidth: 14,
+        }));
+      } else if (lod === 1) {
+        // z=1: 12 tube rows, each colored to TIA-598, with 2-letter code.
+        const TUBE_H = 6;
+        const TUBE_GAP = 2;
+        const totalH = tubeCount * (TUBE_H + TUBE_GAP);
+        const topY = edgeY - totalH / 2;
+        // Background bar
+        group.add(new Konva.Rect({
+          x: srcPt.x, y: topY - 2, width: dstPt.x - srcPt.x, height: totalH + 4,
+          fill: isSelected ? 'rgba(245,158,11,0.12)' : 'rgba(0,63,114,0.06)',
+          stroke: isSelected ? '#F59E0B' : '#9AA5B5',
+          strokeWidth: isSelected ? 2 : 1,
+          cornerRadius: 3, listening: false,
+        }));
+        tubes.forEach((tube, ti) => {
+          const ty = topY + ti * (TUBE_H + TUBE_GAP);
+          group.add(new Konva.Rect({
+            x: srcPt.x + 2, y: ty, width: dstPt.x - srcPt.x - 4, height: TUBE_H,
+            fill: COLORS[tube.color] || '#666',
+            listening: false,
           }));
-        }
-      });
-      group.add(new Konva.Text({
-        x: (from + to) / 2 - 80, y: y - 14, width: 160, align:'center',
-        text: cable.name + ' (' + cable.fiber_count + 'f, ' + cable.construction_type + ')',
-        fontSize: 11, fill:'#444', listening: false,
-      }));
+          const abbrev = TIA_598_ABBREV[tube.color] || '';
+          if (abbrev) {
+            group.add(new Konva.Text({
+              x: srcPt.x + 4, y: ty,
+              text: abbrev, fontSize: 6, fontStyle: 'bold',
+              fill: TIA_598_DARK_FILLS.has(tube.color) ? '#fff' : '#222',
+              listening: false,
+            }));
+          }
+        });
+        // Cable name label above
+        const midX = (srcPt.x + dstPt.x) / 2 - 60;
+        group.add(new Konva.Text({
+          x: midX, y: topY - 14, width: 120, align: 'center',
+          text: cable.name + ' · ' + cable.fiber_count + 'f',
+          fontSize: 10, fill: '#1B5FA0', fontStyle: 'bold', listening: false,
+        }));
+        // Hit area
+        group.add(new Konva.Rect({
+          x: srcPt.x, y: topY - 2, width: dstPt.x - srcPt.x, height: totalH + 4,
+          fill: 'rgba(0,0,0,0.001)',
+        }));
+      } else {
+        // z=2: fiber lines — 12 tubes × 12 fibers each.
+        const fibers = d.fibers.filter(f => {
+          const tube = d.buffer_tubes.find(t => t.id === f.buffer_tube_id);
+          return tube && tube.cable_id === cable.id;
+        });
+        const FIBER_H = 3;
+        const FIBER_GAP = 1;
+        const fiberCount = Math.max(fibers.length, tubeCount * 12);
+        const totalH = fiberCount * (FIBER_H + FIBER_GAP);
+        const topY = edgeY - totalH / 2;
+
+        // Background
+        group.add(new Konva.Rect({
+          x: srcPt.x, y: topY - 2, width: dstPt.x - srcPt.x, height: totalH + 4,
+          fill: isSelected ? 'rgba(245,158,11,0.10)' : 'rgba(0,63,114,0.04)',
+          stroke: isSelected ? '#F59E0B' : '#9AA5B5',
+          strokeWidth: isSelected ? 2 : 0.5,
+          cornerRadius: 2, listening: false,
+        }));
+        // Draw fibers grouped by tube
+        let rowIdx = 0;
+        tubes.forEach(tube => {
+          const fibersInTube = fibers.filter(f => f.buffer_tube_id === tube.id)
+            .sort((a, b) => a.position - b.position);
+          fibersInTube.forEach(fiber => {
+            const fy = topY + rowIdx * (FIBER_H + FIBER_GAP);
+            const fColor = COLORS[fiber.color] || COLORS[tube.color] || '#666';
+            group.add(new Konva.Rect({
+              x: srcPt.x + 2, y: fy, width: dstPt.x - srcPt.x - 4, height: FIBER_H,
+              fill: fColor, listening: false,
+            }));
+            const abbrev = TIA_598_ABBREV[fiber.color] || TIA_598_ABBREV[tube.color] || '';
+            if (abbrev) {
+              group.add(new Konva.Text({
+                x: srcPt.x + 4, y: fy - 0.5,
+                text: abbrev, fontSize: 4, fill: '#333', listening: false,
+              }));
+            }
+            rowIdx++;
+          });
+          // Tube separator line
+          if (rowIdx > 0) {
+            group.add(new Konva.Line({
+              points: [srcPt.x + 1, topY + rowIdx * (FIBER_H + FIBER_GAP) - 0.5,
+                       dstPt.x - 1, topY + rowIdx * (FIBER_H + FIBER_GAP) - 0.5],
+              stroke: '#9AA5B5', strokeWidth: 0.5, listening: false,
+            }));
+          }
+        });
+        // Cable name label
+        const midX = (srcPt.x + dstPt.x) / 2 - 60;
+        group.add(new Konva.Text({
+          x: midX, y: topY - 14, width: 120, align: 'center',
+          text: cable.name + ' · ' + cable.fiber_count + 'f',
+          fontSize: 10, fill: '#1B5FA0', fontStyle: 'bold', listening: false,
+        }));
+        // Hit area
+        group.add(new Konva.Rect({
+          x: srcPt.x, y: topY - 2, width: dstPt.x - srcPt.x, height: totalH + 4,
+          fill: 'rgba(0,0,0,0.001)',
+        }));
+      }
+
       group.on('click tap', () => selectThing('cable', cable.id));
-      group.on('mouseenter', () => { document.body.style.cursor='pointer'; });
-      group.on('mouseleave', () => { document.body.style.cursor='default'; });
+      group.on('mouseenter', () => { document.body.style.cursor = 'pointer'; });
+      group.on('mouseleave', () => { document.body.style.cursor = 'default'; });
       cableLayer.add(group);
     } else {
-      // Floating cable (no endpoints). Drop a click-target row at the bottom.
-      const ty = 600 + i * 22;
+      // Floating cable (no valid endpoints). Show warning row.
       const floatGroup = new Konva.Group();
+      const floatY = 30 + (d.cables.indexOf(cable)) * 22;
       floatGroup.add(new Konva.Rect({
-        x: 18, y: ty - 2, width: 360, height: 18, fill: 'rgba(0,0,0,0.001)',
+        x: 18, y: floatY - 2, width: 360, height: 18, fill: 'rgba(0,0,0,0.001)',
       }));
       floatGroup.add(new Konva.Text({
-        x: 20, y: ty, text: '⚠ Unrouted cable: ' + cable.name,
-        fontSize: 11, fill:'#856404', listening: false,
+        x: 20, y: floatY, text: '⚠ Unrouted cable: ' + cable.name,
+        fontSize: 11, fill: '#856404', listening: false,
       }));
       floatGroup.on('click tap', () => selectThing('cable', cable.id));
-      floatGroup.on('mouseenter', () => { document.body.style.cursor='pointer'; });
-      floatGroup.on('mouseleave', () => { document.body.style.cursor='default'; });
+      floatGroup.on('mouseenter', () => { document.body.style.cursor = 'pointer'; });
+      floatGroup.on('mouseleave', () => { document.body.style.cursor = 'default'; });
       cableLayer.add(floatGroup);
     }
   });
 
-  // Closures at each location, stacked vertically below the location label.
+  // ── LOD bucket label (when zoomed out) ────────────────────────────────────
+  // Show a small indicator of current LOD in the top-left corner.
+  if (lod === 0) {
+    const lodLabel = new Konva.Text({
+      x: 8, y: 8, text: 'Zoom in for tube/fiber detail',
+      fontSize: 10, fill: '#9AA5B5',
+      listening: false,
+    });
+    // Place in stage absolute coords by accounting for stage transform.
+    // We add it to a separate static ref via a non-scaled group trick — simplest
+    // is just to put it on the cableLayer and let zoom affect it; at z=0 the stage
+    // scale is < 1 so the text shrinks, but that's acceptable for a hint label.
+    cableLayer.add(lodLabel);
+  }
+
+  // ── Closure nodes inside location bodies ──────────────────────────────────
   const closuresByLoc = new Map();
   d.closures.forEach(cl => {
     if (!closuresByLoc.has(cl.location_id)) closuresByLoc.set(cl.location_id, []);
@@ -2058,70 +2329,116 @@ function drawCanvasContents() {
     closureLayer.add(group);
   }
 
+  // ── Closure sub-nodes inside location body ────────────────────────────────
+  // Each closure draws as a smaller rounded rect INSIDE the location node's body.
+  // The location node body was pre-sized (bodyH) to fit all closures at 40px each.
   for (const loc of orderedLocations) {
+    const nodeInfo = locNodeById.get(loc.id);
+    if (!nodeInfo) continue;
     const list = closuresByLoc.get(loc.id) || [];
-    const x = colX.get(loc.id);
-    // Cables that terminate (from or to) at this location — used to decide
-    // whether to use the rich layout for a given closure.
+    if (!list.length) continue;
+
+    const locGroup = nodeInfo.group;
     const cablesAtLoc = d.cables.filter(c =>
       c.from_location_id === loc.id || c.to_location_id === loc.id
     );
+
     list.forEach((cl, idx) => {
-      const baseY    = 380 + idx * 110;
-      const trayList = d.trays.filter(t => t.closure_id === cl.id).sort((a,b)=>a.position-b.position);
+      const trayList = d.trays.filter(t => t.closure_id === cl.id).sort((a, b) => a.position - b.position);
       const splicesIn = (tray) => d.splices.filter(s => s.tray_id === tray.id).length;
       const overCap  = trayList.some(t => splicesIn(t) > cl.tray_capacity);
       const totalSpliceCount = trayList.reduce((sum, t) => sum + splicesIn(t), 0);
+      const isSelected = state.selection?.type === 'closure' && state.selection?.id === cl.id;
 
-      // Rich layout for closures where 3 or more cables converge. The standard
-      // two-cable layout (120px box) is kept unchanged — generalising it just
-      // to handle the common case adds complexity without benefit.
-      if (cablesAtLoc.length >= 3) {
-        _drawRichClosure(cl, x, baseY, cablesAtLoc, trayList, totalSpliceCount);
-        return;
+      // Closure rect inside body area (body starts at y=24 in node-local coords)
+      const cly = 24 + 4 + idx * 40;
+      const CLW = NODE_W - 8;  // 4px margin each side
+      const CLH = 34;
+
+      const clRect = new Konva.Rect({
+        x: 4, y: cly, width: CLW, height: CLH,
+        fill: overCap ? '#FFF3CD' : '#F4F5F7',
+        stroke: isSelected ? '#F59E0B' : (overCap ? '#DC3545' : '#6C757D'),
+        strokeWidth: isSelected ? 2 : 1, cornerRadius: 4,
+      });
+      locGroup.add(clRect);
+
+      locGroup.add(new Konva.Text({
+        x: 8, y: cly + 3, width: CLW - 4,
+        text: cl.model || 'Closure',
+        fontSize: 10, fontStyle: 'bold', fill: isSelected ? '#F59E0B' : '#1B5FA0',
+        listening: false,
+      }));
+      locGroup.add(new Konva.Text({
+        x: 8, y: cly + 14, width: CLW - 4,
+        text: trayList.length + ' trays · ' + totalSpliceCount + ' sp',
+        fontSize: 9, fill: '#6C757D', listening: false,
+      }));
+
+      // Tray fill sparkline (compact — one bar per tray across full width).
+      if (trayList.length) {
+        const sparkW = CLW - 8;
+        const tw = sparkW / trayList.length;
+        trayList.forEach((tray, ti) => {
+          const fill = splicesIn(tray) / Math.max(cl.tray_capacity, 1);
+          locGroup.add(new Konva.Rect({
+            x: 8 + ti * tw, y: cly + 25, width: tw - 1, height: 5,
+            fill: '#E9ECEF', listening: false,
+          }));
+          locGroup.add(new Konva.Rect({
+            x: 8 + ti * tw, y: cly + 25,
+            width: (tw - 1) * Math.min(fill, 1), height: 5,
+            fill: fill > 1 ? '#DC3545' : (fill > 0.85 ? '#FFC107' : '#28A745'),
+            listening: false,
+          }));
+        });
       }
 
-      const isSelected = state.selection?.type === 'closure' && state.selection?.id === cl.id;
-      const group = new Konva.Group({ x: x - 60, y: baseY, width: 120 });
-      group.add(new Konva.Rect({
-        width: 120, height: 90,
-        fill: overCap ? '#FFF3CD' : '#FFFFFF',
-        stroke: isSelected ? '#F59E0B' : (overCap ? '#DC3545' : '#1B5FA0'),
-        strokeWidth: isSelected ? 3 : 2, cornerRadius: 4,
-      }));
-      group.add(new Konva.Text({
-        x: 4, y: 4, width: 112,
-        text: cl.model || 'Closure',
-        fontSize: 11, fontStyle:'bold', fill:'#1B5FA0',
-      }));
-      group.add(new Konva.Text({
-        x: 4, y: 18, width: 112,
-        text: trayList.length + '×' + cl.tray_capacity + ' trays',
-        fontSize: 10, fill:'#6C757D',
-      }));
-      // Tray sparkline — small bars showing fill ratio per tray.
-      trayList.forEach((tray, ti) => {
-        const fill = splicesIn(tray) / cl.tray_capacity;
-        const tx = 4 + ti * (112 / Math.max(trayList.length, 1));
-        const tw = 112 / Math.max(trayList.length, 1) - 1;
-        group.add(new Konva.Rect({
-          x: tx, y: 36, width: tw, height: 12,
-          fill:'#F0F0F0', stroke:'#DEE2E6', strokeWidth:0.5,
-        }));
-        group.add(new Konva.Rect({
-          x: tx, y: 36, width: tw * Math.min(fill, 1), height: 12,
-          fill: fill > 1 ? '#DC3545' : (fill > 0.85 ? '#FFC107' : '#28A745'),
-        }));
+      // Click hit area for the closure inside the location group.
+      const clHit = new Konva.Rect({
+        x: 4, y: cly, width: CLW, height: CLH, fill: 'rgba(0,0,0,0.001)',
       });
-      group.add(new Konva.Text({
-        x: 4, y: 56, width: 112, align:'center',
-        text: 'Open trays →', fontSize: 10, fill:'#1B5FA0',
-      }));
-      // Click → open closure inspector
-      group.on('click tap', () => selectThing('closure', cl.id));
-      group.on('mouseenter', () => { document.body.style.cursor='pointer'; });
-      group.on('mouseleave', () => { document.body.style.cursor='default'; });
-      closureLayer.add(group);
+      clHit.on('click tap', (e) => {
+        e.cancelBubble = true;
+        selectThing('closure', cl.id);
+      });
+      clHit.on('mouseenter', () => { document.body.style.cursor = 'pointer'; });
+      clHit.on('mouseleave', () => { document.body.style.cursor = 'default'; });
+      locGroup.add(clHit);
+
+      // For rich closure view (3+ cables), also add stubs if zoomed in enough.
+      if (cablesAtLoc.length >= 3 && lod >= 1) {
+        const strandStatesByLocCable = new Map();
+        (d.strand_states || []).forEach(ss => {
+          if (ss.state !== 'stored') return;
+          const key = ss.cable_id + ':' + cl.location_id;
+          strandStatesByLocCable.set(key, (strandStatesByLocCable.get(key) || 0) + 1);
+        });
+        const trayIds = new Set(trayList.map(t => t.id));
+        const splicesHere2 = d.splices.filter(s => trayIds.has(s.tray_id));
+        const fiberById2 = new Map(d.fibers.map(f => [f.id, f]));
+        const tubeById2  = new Map(d.buffer_tubes.map(t => [t.id, t]));
+        const splicedPerCable2 = new Map();
+        splicesHere2.forEach(s => {
+          [s.fiber_a_id, s.fiber_b_id].forEach(fid => {
+            const f = fiberById2.get(fid);
+            const tb = f && tubeById2.get(f.buffer_tube_id);
+            const cid = tb && tb.cable_id;
+            if (cid) splicedPerCable2.set(cid, (splicedPerCable2.get(cid) || 0) + 1);
+          });
+        });
+        cablesAtLoc.slice(0, 3).forEach((cable, ci) => {
+          const spliced = Math.floor((splicedPerCable2.get(cable.id) || 0) / 2);
+          const badgeY = cly + 4 + ci * 9;
+          if (badgeY < cly + CLH - 4) {
+            locGroup.add(new Konva.Text({
+              x: 8, y: badgeY, width: CLW - 8,
+              text: (cable.name || '').slice(0, 12) + (spliced ? ' · ' + spliced + 'sp' : ''),
+              fontSize: 7, fill: '#444', listening: false, ellipsis: true,
+            }));
+          }
+        });
+      }
     });
   }
 
@@ -2171,7 +2488,9 @@ function drawCanvasContents() {
     if (!tray) return;
     const closure = closureById.get(tray.closure_id);
     if (!closure) return;
-    const x = colX.get(closure.location_id);
+    // Splice arc anchor: use the center of the closure's location node.
+    const nodeInfo = locNodeById.get(closure.location_id);
+    const x = nodeInfo ? nodeInfo.group.x() + NODE_W / 2 : null;
     if (x == null) return;
     const aInfo = spliceCableForFiber(s.fiber_a_id);
     const bInfo = spliceCableForFiber(s.fiber_b_id);
@@ -2186,6 +2505,8 @@ function drawCanvasContents() {
     const offset = nextOffsetForTray(s.tray_id);
     const ctrlX = x + offset;
     const ctrlY = (yA + yB) / 2;
+    // 5.F.4: Source-fiber TIA color (per audit §5.5 — more visually informative
+    // than neutral gray; splice.me convention).
     const stroke = tubeColorOfFiber(s.fiber_a_id);
 
     // Quadratic bezier as a Konva.Shape (custom sceneFunc) — Konva's
@@ -2218,18 +2539,18 @@ function drawCanvasContents() {
     }
   });
 
-  // ── Path-trace overlay (Phase 2C #11) ──────────────────────────────────
+  // ── Path-trace overlay (Phase 2C #11 / 5.F.4) ────────────────────────────
   // When a strand path is active, glow every cable in the chain and accent
-  // every closure that hosts a splice-to-next hop.
+  // every closure that hosts a splice-to-next hop. Uses node positions from
+  // locNodeById so highlights follow dragged location nodes.
   if (state.tracePath && state.tracePath.chain && state.tracePath.chain.length) {
-    const TRACE_CABLE_COLOR    = '#FF6B00';  // vivid orange — spliced hops
-    const TRACE_CLOSURE_COLOR  = '#FF6B00';
-    const TRACE_EXPRESS_COLOR  = '#00BCD4';  // teal/cyan — express (pass-through) locations
+    const TRACE_CABLE_COLOR   = '#FF6B00';  // vivid orange — spliced hops
+    const TRACE_CLOSURE_COLOR = '#FF6B00';
+    const TRACE_EXPRESS_COLOR = '#00BCD4';  // teal/cyan — express (pass-through)
 
-    // Collect the set of cable IDs, closure IDs, and express location IDs.
     const traceCableIds      = new Set();
     const traceClosureIds    = new Set();
-    const traceExpressLocIds = new Set(); // locations where fiber passes through unspliced
+    const traceExpressLocIds = new Set();
 
     for (const entry of state.tracePath.chain) {
       const f = entry.fiber;
@@ -2237,95 +2558,173 @@ function drawCanvasContents() {
       if (entry.splice_to_next && entry.splice_to_next.closure_id) {
         traceClosureIds.add(entry.splice_to_next.closure_id);
       }
-      // pass_through_locations added by Phase 5A.5 cable-graph walk
       if (Array.isArray(entry.pass_through_locations)) {
         for (const ptl of entry.pass_through_locations) traceExpressLocIds.add(ptl.id);
       }
     }
 
-    // For each traced cable, draw a thick glowing outline around its strip.
-    d.cables.forEach((cable, i) => {
+    // Glow cable edges for traced cables.
+    sortedCables.forEach(cable => {
       if (!traceCableIds.has(cable.id)) return;
-      const from = colX.get(cable.from_location_id);
-      const to   = colX.get(cable.to_location_id);
-      if (from == null || to == null) return;
-      const tubes = d.buffer_tubes.filter(t => t.cable_id === cable.id);
-      const y = 80 + i * 60;
-      const tubeGap = 2;
-      const stripHeight = Math.max(8, tubes.length * tubeGap + 2);
-      // Glow rect behind the cable strip.
-      traceLayer.add(new Konva.Rect({
-        x: from + 4, y: y - 6,
-        width: to - from - 8, height: stripHeight + 12,
-        stroke: TRACE_CABLE_COLOR, strokeWidth: 3,
-        fill: 'rgba(255,107,0,0.10)',
-        cornerRadius: 4, listening: false,
+      const yMid = cableYById.get(cable.id);
+      if (yMid == null) return;
+      const fromNode2 = locNodeById.get(cable.from_location_id);
+      const toNode2   = locNodeById.get(cable.to_location_id);
+      if (!fromNode2 || !toNode2) return;
+      const fromIsLeft2 = fromNode2.group.x() <= toNode2.group.x();
+      const sx2 = fromIsLeft2 ? fromNode2.group.x() + NODE_W : fromNode2.group.x();
+      const dx2 = fromIsLeft2 ? toNode2.group.x()             : toNode2.group.x() + NODE_W;
+      traceLayer.add(new Konva.Line({
+        points: [sx2, yMid, dx2, yMid],
+        stroke: TRACE_CABLE_COLOR, strokeWidth: 8,
+        opacity: 0.35, lineCap: 'round', listening: false,
       }));
     });
 
-    // For each traced closure, draw a colored accent ring around its box.
-    // Rich closures (3+ cables) use a wider rectangle; standard ones use 120px.
+    // Glow location nodes for express (pass-through) locations.
     for (const loc of orderedLocations) {
-      const list = closuresByLoc.get(loc.id) || [];
-      const x = colX.get(loc.id);
-      const cablesHere = d.cables.filter(c =>
-        c.from_location_id === loc.id || c.to_location_id === loc.id
-      );
-      const isRich = cablesHere.length >= 3;
-      const ringW = isRich ? 208 : 128;
-
-      // Express (pass-through) location — teal dashed ring above/around closures.
-      // Drawn first so splice rings render on top.
+      const ni = locNodeById.get(loc.id);
+      if (!ni) continue;
       if (traceExpressLocIds.has(loc.id)) {
-        const ptRingW = ringW + 16;
         traceLayer.add(new Konva.Rect({
-          x: x - ptRingW / 2, y: 372,
-          width: ptRingW, height: list.length ? (list.length * 110 + 8) : 40,
+          x: ni.group.x() - 4, y: ni.group.y() - 4,
+          width: NODE_W + 8, height: ni.totalH + 8,
           stroke: TRACE_EXPRESS_COLOR, strokeWidth: 2,
-          dash: [6, 4],
-          fill: 'rgba(0,188,212,0.06)',
-          cornerRadius: 8, listening: false,
+          dash: [6, 4], fill: 'rgba(0,188,212,0.08)',
+          cornerRadius: 10, listening: false,
         }));
-        // Small label: "express through"
         traceLayer.add(new Konva.Text({
-          x: x - ptRingW / 2 + 4, y: 374,
-          text: '⟶ express',
-          fontSize: 9, fill: TRACE_EXPRESS_COLOR, listening: false,
+          x: ni.group.x(), y: ni.group.y() + ni.totalH + 6,
+          text: '⟶ express', fontSize: 9, fill: TRACE_EXPRESS_COLOR, listening: false,
         }));
       }
-
-      list.forEach((cl, idx) => {
-        if (!traceClosureIds.has(cl.id)) return;
-        const baseY = 380 + idx * 110;
+      // Glow location nodes containing a traced closure.
+      const list2 = closuresByLoc.get(loc.id) || [];
+      const hasTracedClosure = list2.some(cl => traceClosureIds.has(cl.id));
+      if (hasTracedClosure) {
         traceLayer.add(new Konva.Rect({
-          x: x - ringW / 2 - 4, y: baseY - 4,
-          width: ringW, height: 98,
+          x: ni.group.x() - 3, y: ni.group.y() - 3,
+          width: NODE_W + 6, height: ni.totalH + 6,
           stroke: TRACE_CLOSURE_COLOR, strokeWidth: 3,
           fill: 'rgba(255,107,0,0.08)',
-          cornerRadius: 6, listening: false,
+          cornerRadius: 9, listening: false,
         }));
-      });
+      }
     }
   }
 
+  // ── 5.F.5: Minimap (for projects with 5+ locations) ─────────────────────
+  // A small overview in the bottom-left corner of the Konva stage showing all
+  // location nodes as dots with a viewport rectangle. Drawn on traceLayer
+  // (above everything else) so it's always visible.
+  _drawMinimap(orderedLocations, locNodeById, NODE_W);
+
   state.konva.stage.batchDraw();
-  resetView();
+  // Only reset view on initial load (not on every LOD redraw).
+  if (!drawCanvasContents._initialDone) {
+    resetView();
+    drawCanvasContents._initialDone = true;
+  }
 }
+
+// ── 5.F.5: Minimap ───────────────────────────────────────────────────────────
+// Drawn onto the traceLayer in SCREEN-SPACE (compensated for stage transform)
+// so it stays pinned bottom-left regardless of pan/zoom.
+// Only visible when there are 5+ locations.
+function _drawMinimap(orderedLocations, locNodeById, nodeW) {
+  if (!state.konva || orderedLocations.length < 5) return;
+  const stage = state.konva.stage;
+  const { traceLayer } = state.konva;
+  const MM_W = 200, MM_H = 120, MM_PAD = 10;
+  // Screen-space bottom-left position (compensated for stage transform).
+  const stageW = stage.width();
+  const stageH = stage.height();
+  const scale  = stage.scaleX();
+  const pos    = stage.position();
+
+  // Convert screen bottom-left to stage canvas coords.
+  const mmX = (MM_PAD - pos.x) / scale;
+  const mmY = (stageH - MM_H - MM_PAD - pos.y) / scale;
+  const mmScaleX = MM_W / scale;
+  const mmScaleY = MM_H / scale;
+
+  // Bounding box of all nodes in canvas coords.
+  let minNX = Infinity, maxNX = -Infinity, minNY = Infinity, maxNY = -Infinity;
+  locNodeById.forEach(ni => {
+    minNX = Math.min(minNX, ni.group.x());
+    maxNX = Math.max(maxNX, ni.group.x() + nodeW);
+    minNY = Math.min(minNY, ni.group.y());
+    maxNY = Math.max(maxNY, ni.group.y() + ni.totalH);
+  });
+  const diagW = Math.max(maxNX - minNX, 1);
+  const diagH = Math.max(maxNY - minNY, 1);
+
+  // Background panel.
+  traceLayer.add(new Konva.Rect({
+    x: mmX, y: mmY, width: mmScaleX, height: mmScaleY,
+    fill: 'rgba(0,63,114,0.82)', stroke: '#003F72', strokeWidth: 1 / scale,
+    cornerRadius: 6 / scale, listening: false,
+  }));
+  // Label.
+  traceLayer.add(new Konva.Text({
+    x: mmX + 4 / scale, y: mmY + 3 / scale,
+    text: 'Overview', fontSize: 9 / scale, fill: 'rgba(255,255,255,0.7)',
+    listening: false,
+  }));
+
+  // Node dots in minimap coords.
+  locNodeById.forEach((ni, locId) => {
+    const nx = (ni.group.x() - minNX) / diagW * (MM_W - 16) / scale;
+    const ny = (ni.group.y() - minNY) / diagH * (MM_H - 24) / scale;
+    traceLayer.add(new Konva.Rect({
+      x: mmX + 8 / scale + nx, y: mmY + 16 / scale + ny,
+      width: Math.max(nodeW / diagW * (MM_W - 16) / scale, 4 / scale),
+      height: Math.max(3 / scale, 2 / scale),
+      fill: ni.typeColor || '#1B5FA0', cornerRadius: 1 / scale, listening: false,
+    }));
+  });
+
+  // Viewport rectangle in minimap coords.
+  // Viewport in canvas coords: top-left = (-pos.x/scale, -pos.y/scale), size = (stageW/scale, stageH/scale)
+  const vpX1 = (-pos.x / scale - minNX) / diagW * (MM_W - 16) / scale;
+  const vpY1 = (-pos.y / scale - minNY) / diagH * (MM_H - 24) / scale;
+  const vpW  = (stageW / scale) / diagW * (MM_W - 16) / scale;
+  const vpH  = (stageH / scale) / diagH * (MM_H - 24) / scale;
+  traceLayer.add(new Konva.Rect({
+    x: mmX + 8 / scale + vpX1, y: mmY + 16 / scale + vpY1,
+    width: Math.max(vpW, 4 / scale), height: Math.max(vpH, 4 / scale),
+    stroke: '#F59E0B', strokeWidth: 1 / scale,
+    fill: 'rgba(245,158,11,0.15)', listening: false,
+  }));
+}
+
+// ── 5.F.5: Sticky location labels ────────────────────────────────────────────
+// When panning/zooming, draw a row of sticky name labels at the very top of the
+// visible canvas so location names don't scroll off-screen. These live on the
+// traceLayer and are re-added each drawCanvasContents call.
+// (Implemented as part of the minimap pass since both use screen-space offsets.)
 
 function resetView() {
   if (!state.konva) return;
   const stage = state.konva.stage;
   stage.scale({ x: 1, y: 1 });
   stage.position({ x: 0, y: 0 });
+  drawCanvasContents._initialDone = false;
   stage.batchDraw();
 }
 
 function zoom(factor) {
   if (!state.konva) return;
   const stage = state.konva.stage;
-  const newScale = stage.scaleX() * factor;
+  const oldScale = stage.scaleX();
+  const newScale = oldScale * factor;
   stage.scale({ x: newScale, y: newScale });
-  stage.batchDraw();
+  // LOD bucket change → full redraw.
+  if (_lodBucket(newScale) !== _lodBucket(oldScale)) {
+    drawCanvasContents();
+  } else {
+    stage.batchDraw();
+  }
 }
 
 // ───────────────────────────────────────────────────────────────────────────
