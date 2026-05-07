@@ -4367,21 +4367,30 @@ async function _fetchMapboxStaticDataUrl(geoLocs, mapboxToken) {
 
   const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${markers}/${position}/600x300@2x?access_token=${mapboxToken}`;
 
+  // 8-second timeout — PDF render already waits 30s; we don't want the
+  // map fetch to eat most of that budget.
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    const req = https.get(url, (res) => {
       if (res.statusCode !== 200) {
         res.resume();
-        return reject(new Error(`Mapbox static API returned HTTP ${res.statusCode}`));
+        return reject(new Error(`Mapbox static API HTTP ${res.statusCode}`));
+      }
+      // Guard against non-image responses (e.g. JSON error body when
+      // the token has no static-images scope).
+      const ct = res.headers['content-type'] || '';
+      if (!ct.startsWith('image/')) {
+        res.resume();
+        return reject(new Error(`Mapbox returned unexpected content-type: ${ct}`));
       }
       const chunks = [];
       res.on('data', c => chunks.push(c));
       res.on('end', () => {
-        const buf = Buffer.concat(chunks);
-        const mime = res.headers['content-type'] || 'image/png';
-        resolve(`data:${mime};base64,${buf.toString('base64')}`);
+        resolve(`data:${ct.split(';')[0].trim()};base64,${Buffer.concat(chunks).toString('base64')}`);
       });
       res.on('error', reject);
-    }).on('error', reject);
+    });
+    req.on('error', reject);
+    req.setTimeout(8000, () => { req.destroy(); reject(new Error('Mapbox static API timeout')); });
   });
 }
 
