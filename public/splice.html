@@ -2394,6 +2394,53 @@ function drawCanvasContents() {
         });
       }
 
+      // ── 5.F.3: Tray drill-down at z=2 (closure open in inspector) ──────────
+      // When zoomed to z=2 AND this closure is selected in the inspector, expand
+      // the closure node to show individual tray rows with splice connection arcs.
+      // The closure body height was pre-calculated; at z=2 we draw inside it.
+      const isOpenInInspector = lod === 2 && state.selection?.type === 'closure' && state.selection?.id === cl.id;
+      if (isOpenInInspector && trayList.length) {
+        const trayDrawH = Math.min(CLH - 8, 6 * trayList.length);
+        trayList.forEach((tray, ti) => {
+          const trayY = cly + 4 + ti * Math.floor(trayDrawH / trayList.length);
+          const trayH = Math.floor(trayDrawH / trayList.length) - 1;
+          // Tray background bar.
+          locGroup.add(new Konva.Rect({
+            x: 6, y: trayY, width: CLW - 4, height: trayH,
+            fill: '#E9F0FB', stroke: '#9AA5B5', strokeWidth: 0.5,
+            cornerRadius: 2, listening: false,
+          }));
+          locGroup.add(new Konva.Text({
+            x: 8, y: trayY + 1, text: 'T' + tray.position,
+            fontSize: 7, fill: '#1B5FA0', fontStyle: 'bold', listening: false,
+          }));
+          // Splice fiber-to-fiber arcs inside the tray row.
+          const traySplices = d.splices.filter(s => s.tray_id === tray.id);
+          const fiberById3 = new Map(d.fibers.map(f => [f.id, f]));
+          const tubeById3  = new Map(d.buffer_tubes.map(t => [t.id, t]));
+          traySplices.slice(0, 8).forEach((sp, si) => {
+            const fa = fiberById3.get(sp.fiber_a_id);
+            const fb = fiberById3.get(sp.fiber_b_id);
+            const ta = fa && tubeById3.get(fa.buffer_tube_id);
+            const tb = fb && tubeById3.get(fb.buffer_tube_id);
+            const colA = ta ? (COLORS[ta.color] || '#666') : '#666';
+            const colB = tb ? (COLORS[tb.color] || '#666') : '#666';
+            const arcX1 = 6 + si * ((CLW - 12) / Math.max(traySplices.length, 1));
+            const arcX2 = arcX1 + (CLW - 12) / Math.max(traySplices.length, 1) - 1;
+            const arcMidX = (arcX1 + arcX2) / 2;
+            const arcY1 = trayY + 1;
+            const arcY2 = trayY + trayH - 1;
+            // Simplified arc: two colored dots (one per fiber side).
+            locGroup.add(new Konva.Circle({
+              x: arcMidX, y: arcY1 + 1, radius: 2, fill: colA, listening: false,
+            }));
+            locGroup.add(new Konva.Circle({
+              x: arcMidX, y: arcY2 - 1, radius: 2, fill: colB, listening: false,
+            }));
+          });
+        });
+      }
+
       // Click hit area for the closure inside the location group.
       const clHit = new Konva.Rect({
         x: 4, y: cly, width: CLW, height: CLH, fill: 'rgba(0,0,0,0.001)',
