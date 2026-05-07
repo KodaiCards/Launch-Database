@@ -860,10 +860,59 @@ individual cables via the cable inspector Category dropdown, or via
 - **Undo-last endpoint:** full transaction — deletes live rows, re-inserts from snapshot JSONB. Pre-snapshots current state so undo is itself undoable. Broadcasts `state_reverted` SSE.
 - **Range selection anchor:** tracked in `state._ddropAnchor[ddKey+'|'+side]`. Plain click sets anchor + clears selection. Shift-click fills range from anchor. Ctrl/⌘-click toggles individual fiber (replaces old shift-click additive behavior).
 
-### Phase 5.F (next): Diagram view topology graph
-Connect cable bars to location nodes on the Konva canvas. Source: `SPLICE_MATRIX_SUGGESTIONS.md §5`.
+---
+
+## Phase 5.F — Diagram view topology graph
+
+Konva canvas rewrite: location nodes + cable edges with LOD zoom.
+Parallel with Phase 5.G. Modifies `public/splice.html` Konva regions only.
+
+| # | SHA | Task |
+|---|-----|------|
+| 1 | `b1a4d8d` | Topology graph layout — location nodes + cable edges on Konva canvas |
+| 2 | `263a668` | Cable LOD zoom — thin line → tube rows → fiber lines |
 
 ---
 
-*Last updated 2026-05-07 — Phase 5.E bug fixes + UX polish + fiber range selection complete.*
-*Phase 5.D shipped at b35d4a6; Phase 5.E opened at 4c60c58.*
+## Phase 5.G — PDF deliverable v2
+
+**Audit reference:** `SPLICE_MATRIX_SUGGESTIONS.md §6` — "this is the actual product."
+Splicers carry this document in the field. Ran in parallel with Phase 5.F.
+**Files touched:** `routes/splice.js` (PDF render path + export endpoint), `package.json`.
+
+### Commits
+
+| # | SHA | Task |
+|---|-----|------|
+| 1 | `8eb9a69` | Cover page metadata block: navy table with Revision label (Rev N), Project, Designer, Exported-by user, Generated UTC, gen hash, Status. Staleness warning. Flex layout. |
+| 2 | `0f40c2d` | QR code on cover page: 240px raster PNG, navy modules, URL text label below for manual fallback. Points to `/splice/view/:project_token`. |
+| 3 | `8549523` | Mapbox Static map on cover: 600×300 @2x with pin markers, 15% bbox padding, 8s timeout, content-type guard, graceful skip when no token or no GPS coords. |
+| 4 | `c0cf31c` | Per-closure page polish: explicit navy thead (Puppeteer-safe), alternating row bg (#F4F5F7 / white), 8pt body font, color swatch + 2-letter TIA-598 code verified. |
+| 5 | `494a87b` | Per-closure QR deep-links: each closure QR encodes `/splice/view/:token?closure=<id>`. Splicer scans → opens live record scoped to that closure. QR label updated. |
+| 6 | *(this commit)* | Plan doc — Phase 5.G documentation |
+
+### Key design decisions
+
+- **`qrcode` package:** already listed in `package.json` (v1.5.4); `npm install` run to add to `node_modules`. The existing `_qr()` lazy-loader + `_renderQrSvg()` were extended; no new lazy-loader needed.
+- **Cover QR vs per-closure QR:** Cover QR → project-level public view (`/splice/view/:token`). Per-closure QR → same view with `?closure=<id>` query param for scoped deep-link. Field markup upload URL (`/splice/field/:closure_token`) is fallback when no project token exists.
+- **Mint-on-export:** If the project has no active public token, one is minted automatically when PDF is exported. Label: "Auto-minted on PDF export". No expiry.
+- **Map bbox padding:** 15% on each side (minimum 0.002° to handle co-located points). Single-location projects use zoom-14 instead of bbox fit.
+- **Per-closure QR placement:** top-right of closure page header (existing `.qr` div position unchanged). Label updated to "live record / this closure" when project token is available.
+- **`designerName` conflict:** existing `const designerName` in `_renderSpliceHtml` renamed to `effectiveDesignerName`; the new `designerName` from opts takes precedence.
+
+### Owner-test checklist
+
+1. Cover page shows project name + client + `Rev N` + generated UTC + generated-by user — YES
+2. Cover page has a QR code linking to public read view — YES (240px navy PNG + URL text)
+3. Cover page has Mapbox Static map snippet — YES (skip gracefully when no token / no GPS)
+4. Cover page has staleness warning — YES (amber banner with project token URL)
+5. Per-closure pages have navy headers + alternating row bg + 10 cols — YES
+6. Color columns show swatch + 2-letter code — YES (Phase 4.2, verified in PDF path)
+7. Each closure page has its own QR linking to that closure on public view — YES
+8. PDF generation works without MAPBOX_TOKEN — YES (graceful skip)
+
+---
+
+*Last updated 2026-05-07 — Phase 5.G PDF v2 complete (5 commits).*
+*Phase 5.F ran in parallel at b1a4d8d–263a668.*
+*Phase 5.E shipped at 4c60c58–2268ca9.*
