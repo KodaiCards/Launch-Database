@@ -44,9 +44,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           -- Server-computed YTD revenue for this project + all descendants
           COALESCE((
             WITH RECURSIVE tree AS (
-              SELECT p.id AS tid
+              SELECT p.id AS tid, 0 AS depth
               UNION ALL
-              SELECT c.id FROM projects c JOIN tree t ON c.parent_id = t.tid
+              SELECT c.id, t.depth + 1 FROM projects c JOIN tree t ON c.parent_id = t.tid WHERE t.depth < 10
             )
             SELECT SUM(
               CASE
