@@ -25,10 +25,11 @@ Status glyphs: `✓ <short-sha>` done · `⏳ running` · `📋 queued` · `⚠ 
 
 | Name    | Role / activity                                        | Status        | Notes |
 |---------|--------------------------------------------------------|---------------|-------|
-| Recon-A | `db.js` add `connectionTimeoutMillis: 10000`           | ✓ uncommitted | Diagnosed: pg-pool default timeout is 0 → `pool.connect()` hangs forever when Postgres degrades (which it does when the volume fills — accepts TCP, hangs handshake/queries). Server never reaches `app.listen()`, no port binds, Railway returns 502. Fix lets boot complete in 10 s on a sick DB. Tests 154/154 green. **NOT a complete fix on its own** — it converts opaque 502 → meaningful 500, but the disk still has to be freed for the app to actually serve traffic. |
-| Disk-A  | Identify the 250GB-in-8h volume leak (read-only)       | ⏳ running    | Spawned after user reported the volume filled in 8h. Read-only research. Outputs written report only. |
-| Red-A   | Red-team review of merged fix (Recon-A + Disk-A)       | 📋 queued     | Fresh Sonnet, gets diff + both reports, scoped to regressions + side effects. Forward Recon-A's 4 self-flagged items (see below). |
-| Ship    | Commit + push + monitor Railway redeploy               | 📋 queued     | Manager handles this directly, not delegated. |
+| Recon-A | `db.js` add `connectionTimeoutMillis: 10000`           | ✓ 234454f     | Pushed to `origin/claude/debug-previous-issues-MoN9D`. Tests 154/154. Converts opaque 502 → meaningful 500. Does NOT fix the disk-fill root cause. |
+| Disk-A  | Identify the 250GB-in-8h volume leak (read-only)       | ⚠ aborted     | Died on Anthropic usage cap (`You're out of extra usage · resets 11:10pm UTC`). 4609 tokens used, no report produced. |
+| Disk-B  | Re-run the 250GB volume leak hunt                      | ⚠ blocked     | Holding until usage cap resets (11:10pm UTC) or user explicitly says try anyway. |
+| Red-A   | Red-team review of Recon-A diff                        | ✓ inline      | Manager (Opus) did the review on the 9-line config-only diff: pg-pool default is 0, fix is correct, doesn't affect query timeouts, pool-queue side-effect noted but acceptable at default `max=10`. Cleared. |
+| Deploy  | Wait for Railway to redeploy after PR/merge to main    | 📋 queued     | User decides: open PR / merge directly / branch-deploy. Manager does NOT open PRs unilaterally. |
 | OSP-1   | OSP Design Training portal/tile bring-up               | 📋 queued     | Sister repo. User said "later". |
 
 ### Recon-A self-flagged items for Red-A
