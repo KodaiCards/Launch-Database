@@ -8,7 +8,8 @@
 2. **At every status change, emit a dashboard** in the box-drawing format below. The user wants visibility into agent state without asking.
 3. **Update this file often** — at every task start/complete, and especially when the manager swaps. The user rotates Claudes roughly every ~15 messages, so the next PM must be able to pick up cold.
 4. **Manager pattern** the user wants on every code change: `implementer Sonnet → red-team Sonnet → manager VERIFIES → manager pushes/deploys`. **The manager (Opus) never does the red-team review themselves.** A separate Sonnet agent always performs the review; the manager's job is to verify the work (read the diff, run tests, sanity-check the report) and then deploy. Inline review by the manager is NOT acceptable, even for tiny diffs.
-5. **Sister project**: `KodaiCards/OSP-Design-Training` (path `/home/user/OSP-Design-Training`, branch `claude/debug-previous-issues-MoN9D`) is a future portal/tile. Not active yet — add to the dashboard queue, don't start work without explicit go-ahead.
+5. **The manager NEVER does code research, grep sweeps, or file walks themselves — those go to a Sonnet (Explore or general-purpose). The manager only does:** dashboard updates, brief writing, diff reading, test running, commit/push/merge, and reading agent reports. Even a single `grep` for routing/code is delegation territory. The user's rule, verbatim: "YOU ALWAYS NEED TO DISPATCH AGENTS YOU ARE JUST A MANAGER".
+6. **Sister project**: `KodaiCards/OSP-Design-Training` (path `/home/user/OSP-Design-Training`, branch `claude/debug-previous-issues-MoN9D`) is a future portal/tile. Not active yet — add to the dashboard queue, don't start work without explicit go-ahead.
 
 ### Live dashboard format (use this exact shape)
 
@@ -25,7 +26,11 @@ Status glyphs: `✓ <short-sha>` done · `⏳ running` · `📋 queued` · `⚠ 
 
 | Name    | Role / activity                                        | Status        | Notes |
 |---------|--------------------------------------------------------|---------------|-------|
-| Recon-A | `db.js` add `connectionTimeoutMillis: 10000`           | ✓ 234454f     | Boot-path fix. Tests 154/154. Converts opaque 502 → meaningful 500. |
+| Recon-A | `db.js` add `connectionTimeoutMillis: 10000`           | ✓ 234454f     | Boot-path fix (insufficient on its own — only helps the first DB query, not subsequent bootstrap awaits). Superseded by Fix-B. |
+| Fix-B   | Wrap 5 bootstrap awaits + scheduler in try/catch       | ✓ unmerged    | server.js `start()` now uses `safeBootstrap(label, fn)` so any DB-bootstrap throw is logged and skipped, guaranteeing `app.listen()` runs. Pushed to feature branch; gated on Red-C before main merge. |
+| Red-C   | Sonnet review of Fix-B                                 | ⏳ running    | 14 inspection points incl. timeclock-module `this`-binding, FK ordering preservation, log visibility, test-suite false-greens. |
+| URL-A   | Recent portal/URL change audit                         | ✓ done        | **NEW UPSTREAM FINDING**: post-3feeef2 the new `/` handler and `/api/me/portals` both call `requireAuth()` which does a DB lookup. If the DB pool is starved (the actual 502 mode), those requests block until Railway's edge times out → 502 BEFORE the launcher even renders. URL-A also flagged: PORTAL_MODE may still be set on Railway with a bogus value (falls back to `design.html`); admin users may need to bookmark `/admin.html` instead of `/` going forward; Railway edge cache can serve stale HTML for hours after a deploy. **Fix-C will be needed to make `/` + `/api/me/portals` survive a sick DB.** |
+| Diag    | User-side Railway dashboard / logs / volume check      | ⚠ blocking    | Manager cannot reach Railway from sandbox. Need: deploy status, runtime log tail, volume %, env vars (PORTAL_MODE, UPLOAD_DIR, DATABASE_URL present, PORT). |
 | Mgr-Res | Inline disk-leak research (manager, Opus)              | ✓ done        | Identified candidates: orphan multer files, audit JSONB blobs, Postgres WAL pressure. Wrote Fix-A's brief from the findings. |
 | Fix-A   | DB-indep recovery + audit caps                         | ✓ f6681eb     | `/api/_admin/disk-stats` + `/api/_admin/uploads-cleanup` + `X-Admin-Bypass-Token`, audit retention 90→14d (env `AUDIT_RETENTION_DAYS_LOW`), 64 KB payload cap, AI upload catch-block unlink. |
 | Red-B   | Sonnet red-team review (Fix-A diff, 20 points)         | ✓ SHIP        | Zero deploy-blockers. 5 minor follow-ups (see "Open follow-ups" below). |
