@@ -549,6 +549,49 @@ stale flag and triggers a 100 ms deferred reload.
 | permitting portal | permit_*, time_entry_*, project_* |
 | design portal | time_entry_*, project_*, staff_* |
 
+### Coverage commitment
+
+**Every interactive view that reads data MUST refresh via SSE. Polling is a
+recovery heartbeat only — never the primary refresh mechanism.**
+
+- Default poll interval is 60 s, intended solely to recover from a silently
+  dropped EventSource (proxy reset, suspend/resume, network blip). It is NOT
+  a substitute for SSE coverage.
+- A view added without SSE wiring is a regression — reviewers should reject
+  the PR and ask "what events does this view need to subscribe to?"
+
+#### Outstanding views to migrate (admin portal)
+
+These admin-portal handlers are still polling-only — each needs broadcast hooks
+in the matching write path AND a `document.addEventListener('sse:<event>', …)`
+subscription in the tab module:
+
+| Handler | Likely events to subscribe |
+|---|---|
+| `loadPipeline` (permit pipeline view) | `permit_*`, `project_updated/deleted` |
+| `loadPotential` (potential permits) | `project_*` (filter on `project_type='potential_permit'`), `permit_*` |
+| `loadDesign` (admin design view) | `project_*` (design-typed), `time_entry_*` |
+| `loadPermits` (permits list) | `permit_*`, `project_updated/deleted` |
+| `refreshProjectDetail` (project detail popup) | `project_*`, `time_entry_*`, `invoice_*` (scoped to the open project_id) |
+| `refreshApprovalsBadge` (top-bar approvals counter) | `pending_*` events when the approvals routes broadcast |
+
+For each row above:
+1. Confirm the corresponding write routes already broadcast — if not, add the
+   `broadcast('admin', '<event>', { id })` line at the end of the success path.
+2. Subscribe in the module, debounce through the existing 500 ms `_tabDebounce`
+   helper, and respect the visibility-aware staleness flag pattern.
+3. After SSE is wired, drop the `setInterval(loadX, POLL_MS)` call (or keep it
+   as a 60 s recovery heartbeat — match whatever the rest of admin.html does).
+
+#### Out-of-scope (intentionally polling)
+
+Views that genuinely don't need real-time updates and stay on a slow poll or
+no poll at all:
+
+- One-shot dialogs / modal pickers (open-fetch-close — not subscribed).
+- Customer portal (`public/customer.html`) — read-only, low-frequency.
+- Splice tool — has its own project-scoped SSE channel; not bridged into admin.
+
 ### Scope boundaries
 
 - `routes/splice.js` has its own project-scoped SSE (`GET /api/splice/projects/:id/events`). Splice events are NOT bridged into the admin SSE — the two systems are intentionally separate.
