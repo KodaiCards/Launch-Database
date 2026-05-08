@@ -2989,6 +2989,11 @@ async function init() {
 // ═══════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
+// Tab modules push stale-refresh callbacks here at load time (before this
+// inline script runs). showView walks the array on every navigation so the
+// hooks fire regardless of script-load order.
+window._showViewHooks = window._showViewHooks || [];
+
 function showView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -3010,6 +3015,7 @@ function showView(view) {
   // if (view==='clients') loadClientProgress();
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
+  window._showViewHooks.forEach(fn => fn(view));
 }
 
 

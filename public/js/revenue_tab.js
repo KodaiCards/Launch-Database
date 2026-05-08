@@ -278,15 +278,11 @@
   ];
   _revSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _revDebounce));
 
-  const _prevShowViewRev = window.showView;
-  if (typeof _prevShowViewRev === 'function') {
-    window.showView = function(view) {
-      _prevShowViewRev(view);
-      if (view === 'revenue' && _revStale) {
-        _revStale = false;
-        clearTimeout(_revStaleTimer);
-        _revStaleTimer = setTimeout(loadRevenue, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'revenue' && _revStale) {
+      _revStale = false;
+      clearTimeout(_revStaleTimer);
+      _revStaleTimer = setTimeout(loadRevenue, 100);
+    }
+  });
 })();

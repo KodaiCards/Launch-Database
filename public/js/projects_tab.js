@@ -356,15 +356,11 @@
   ];
   _projSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _projDebounce));
 
-  const _prevShowViewProj = window.showView;
-  if (typeof _prevShowViewProj === 'function') {
-    window.showView = function(view) {
-      _prevShowViewProj(view);
-      if (view === 'projects' && _projStale) {
-        _projStale = false;
-        clearTimeout(_projStaleTimer);
-        _projStaleTimer = setTimeout(loadProjects, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'projects' && _projStale) {
+      _projStale = false;
+      clearTimeout(_projStaleTimer);
+      _projStaleTimer = setTimeout(loadProjects, 100);
+    }
+  });
 })();

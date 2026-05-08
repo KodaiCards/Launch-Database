@@ -647,15 +647,11 @@
   ];
   _hoursSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _hoursDebounce));
 
-  const _prevShowViewHours = window.showView;
-  if (typeof _prevShowViewHours === 'function') {
-    window.showView = function(view) {
-      _prevShowViewHours(view);
-      if (view === 'hours' && _hoursStale) {
-        _hoursStale = false;
-        clearTimeout(_hoursStaleTimer);
-        _hoursStaleTimer = setTimeout(loadHours, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'hours' && _hoursStale) {
+      _hoursStale = false;
+      clearTimeout(_hoursStaleTimer);
+      _hoursStaleTimer = setTimeout(loadHours, 100);
+    }
+  });
 })();
