@@ -993,8 +993,17 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
 // or VACUUM FULL (manual, locks the table — leave it to the admin
 // endpoint).
 async function runAuditCleanup(pool, opts = {}) {
+  // Default trivial-row retention: 14 days, overridable via env var.
+  // 14 days is enough to verify "did yesterday's import work" and debug
+  // recent bulk CSV imports, which are the primary source of meaningful=FALSE
+  // rows on this deployment. The previous 90-day default allowed bulk imports
+  // to accumulate ~1 GB of trivial audit rows before the cleanup made a dent.
+  // Set AUDIT_RETENTION_DAYS_LOW=N in Railway Variables to override.
+  const envTrivialDays = parseInt(process.env.AUDIT_RETENTION_DAYS_LOW, 10);
+  const defaultTrivialDays = Number.isFinite(envTrivialDays) && envTrivialDays > 0
+    ? envTrivialDays : 14;
   const trivialDays    = Number.isFinite(opts.retainTrivialDays)
-    ? Math.max(1, opts.retainTrivialDays) : 90;
+    ? Math.max(1, opts.retainTrivialDays) : defaultTrivialDays;
   const hardMonths     = Number.isFinite(opts.retainHardMonths)
     ? Math.max(1, opts.retainHardMonths) : 18;
   const skipVacuum     = opts.skipVacuum === true;
