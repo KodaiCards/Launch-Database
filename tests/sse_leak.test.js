@@ -30,19 +30,15 @@ test('SSE subscriber count returns to zero after N connections are closed', asyn
   const token = await adminLogin();
 
   const N = 5;
-  const controllers = [];
   const openedPromises = [];
 
   // Open N SSE connections. We detect "open" by reading the first chunk
   // (the ": connected\n\n" comment), which confirms the server has called
-  // _subscribe() before we abort.
+  // _subscribe() before we close.
   for (let i = 0; i < N; i++) {
-    const ac = new AbortController();
-    controllers.push(ac);
     openedPromises.push(
       fetch(`${baseUrl()}/api/events/stream`, {
         headers: { Authorization: `Bearer ${token}` },
-        signal: ac.signal,
       }).then(res => {
         const reader = res.body.getReader();
         return reader.read().then(() => reader);
@@ -57,17 +53,14 @@ test('SSE subscriber count returns to zero after N connections are closed', asyn
   const afterOpen = _subscriberCount();
   assert.equal(afterOpen, N * 4, `expected ${N * 4} subscribers after open, got ${afterOpen}`);
 
-  // Abort all connections. req.on('close') fires on the server and calls _purge().
-  controllers.forEach(ac => ac.abort());
+  // Close from the client side via reader.cancel(). This terminates the
+  // underlying fetch stream cleanly (no AbortError leak) and triggers
+  // req.on('close') on the server, which calls _purge().
+  await Promise.all(readers.map(r => r.cancel().catch(() => {})));
 
   // Give the event loop a few ticks to process the close events.
   await new Promise(r => setTimeout(r, 300));
 
   const afterClose = _subscriberCount();
   assert.equal(afterClose, 0, `expected 0 subscribers after close, got ${afterClose}`);
-
-  // Suppress "body not consumed" warnings from aborted readers.
-  for (const reader of readers) {
-    try { reader.cancel(); } catch {}
-  }
 });
