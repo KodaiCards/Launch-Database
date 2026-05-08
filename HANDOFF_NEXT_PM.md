@@ -2,6 +2,48 @@
 
 > **Read this whole file before doing anything.** The user explicitly named you a project manager. Your value is in delegation + review, not in writing code yourself.
 
+## Session working agreement (locked-in by the user — do NOT violate)
+
+1. **When the user types a message mid-task, do not pause the running agents.** Add their request to the queue, answer if it's a question, and keep agents working.
+2. **At every status change, emit a dashboard** in the box-drawing format below. The user wants visibility into agent state without asking.
+3. **Update this file often** — at every task start/complete, and especially when the manager swaps. The user rotates Claudes roughly every ~15 messages, so the next PM must be able to pick up cold.
+4. **Manager pattern** the user wants on every code change: `implementer Sonnet → red-team Sonnet review → manager pushes & monitors`. Don't write code yourself unless it's truly trivial.
+5. **Sister project**: `KodaiCards/OSP-Design-Training` (path `/home/user/OSP-Design-Training`, branch `claude/debug-previous-issues-MoN9D`) is a future portal/tile. Not active yet — add to the dashboard queue, don't start work without explicit go-ahead.
+
+### Live dashboard format (use this exact shape)
+
+```
+                    Launch-Fiber Manager Dashboard
+┌─────────┬──────────────────────────────────────────────┬──────────────┐
+│ <name>  │ <one-line activity>                          │ <status>     │
+└─────────┴──────────────────────────────────────────────┴──────────────┘
+```
+
+Status glyphs: `✓ <short-sha>` done · `⏳ running` · `📋 queued` · `⚠ blocked`. Agent names are short labels (Recon-A, Red-A, Ship, OSP-1). Reuse names across sessions so the user can track them.
+
+### Live agent ledger (current session)
+
+| Name    | Role / activity                                        | Status        | Notes |
+|---------|--------------------------------------------------------|---------------|-------|
+| Recon-A | `db.js` add `connectionTimeoutMillis: 10000`           | ✓ uncommitted | Diagnosed: pg-pool default timeout is 0 → `pool.connect()` hangs forever when Postgres degrades (which it does when the volume fills — accepts TCP, hangs handshake/queries). Server never reaches `app.listen()`, no port binds, Railway returns 502. Fix lets boot complete in 10 s on a sick DB. Tests 154/154 green. **NOT a complete fix on its own** — it converts opaque 502 → meaningful 500, but the disk still has to be freed for the app to actually serve traffic. |
+| Disk-A  | Identify the 250GB-in-8h volume leak (read-only)       | ⏳ running    | Spawned after user reported the volume filled in 8h. Read-only research. Outputs written report only. |
+| Red-A   | Red-team review of merged fix (Recon-A + Disk-A)       | 📋 queued     | Fresh Sonnet, gets diff + both reports, scoped to regressions + side effects. Forward Recon-A's 4 self-flagged items (see below). |
+| Ship    | Commit + push + monitor Railway redeploy               | 📋 queued     | Manager handles this directly, not delegated. |
+| OSP-1   | OSP Design Training portal/tile bring-up               | 📋 queued     | Sister repo. User said "later". |
+
+### Recon-A self-flagged items for Red-A
+
+1. `connectionTimeoutMillis: 10000` is also the pool-queue wait when `max=10` is exhausted. Under peak load this 10 s queue wait could time out legit requests. Acceptable for current load; revisit if throughput rises.
+2. `VACUUM time_entry_audit` (non-FULL) inside scheduler can take minutes on a large table, holding a connection. Pool exhaustion possible during the vacuum window.
+3. `setImmediate(() => tick('boot'))` in automation.js:1117 has no `.catch()`. Tasks have inner try/catch so it's safe today, but a future task throwing outside try/catch would become an unhandled rejection.
+4. Migration 0029's `ADD COLUMN ... NOT NULL DEFAULT TRUE` is a metadata-only op on Postgres 11+. Railway is on PG 14+, so safe — but worth confirming the user's Postgres major version in case any RDS-style replica lags.
+
+### Critical context the next PM needs
+
+- **The 502 is almost certainly downstream of a runaway disk producer**, not a code crash on its own. User reported a 250 GB Railway volume filled in ~8 hours (≈ 9 MB/sec sustained). When the volume fills, Postgres or the app crashes, `restartPolicyMaxRetries: 3` exhausts, and the proxy returns 502.
+- **Top suspects** (Disk-A is investigating): `uploads/` dir (multer 3 GB cap, no cleanup pass observed), PDF generation loop, audit JSON blobs, Puppeteer cache, AI route logging, splice imports, scheduler tight-loop writes.
+- **Two-pronged fix needed**: (1) stop the bleeding (find producer + cap/clean), (2) reclaim space so the app can boot. The user can't easily SSH to Railway, so any cleanup must be triggerable via the new `/api/_admin/db-sizes` and `/api/_admin/audit-cleanup` endpoints, OR via a Railway CLI command, OR by a shipped script the user runs.
+
 ## Your role
 
 You are a **project manager**. Your job is to:

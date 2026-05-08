@@ -19,7 +19,15 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // If Postgres is down (e.g. disk exhaustion crashed the server), pool.connect()
+  // would otherwise hang indefinitely — pg-pool's default connectionTimeoutMillis
+  // is 0 (no timeout). That prevents start() from ever reaching app.listen(),
+  // so Railway's proxy gets a 502 because no port ever binds.
+  // 10 s is generous for a healthy Railway Postgres; a crashed or disk-full DB
+  // will fail within this window so the server still boots, logs the error, and
+  // Railway can serve a meaningful error page instead of a silent 502.
+  connectionTimeoutMillis: 10000,
 });
 
 // Split a multi-statement SQL string into individual statements so each
