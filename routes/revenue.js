@@ -228,6 +228,58 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Hours utilization for the Revenue tab tile: total hours, billed
+  // hours, and unbilled hours over a period — drives the "% of hours
+  // billed" stat. Counts time_entries directly (no projects join) so
+  // unbilled rows with project_id=NULL still get tallied. Period
+  // matches the existing revenue endpoints: ?year=Y[&month=M].
+  // Optional ?staff_id=N filters to a single person.
+  app.get('/api/revenue/hours-utilization', requireManagerOrAdmin, async (req, res) => {
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+    const month = req.query.month ? parseInt(req.query.month, 10) : null;
+    const staffId = req.query.staff_id || null;
+    try {
+      const params = [year];
+      let where = `EXTRACT(YEAR FROM te.entry_date) = $1`;
+      if (month) {
+        params.push(month);
+        where += ` AND EXTRACT(MONTH FROM te.entry_date) = $${params.length}`;
+      }
+      if (staffId) {
+        params.push(staffId);
+        where += ` AND te.staff_id = $${params.length}`;
+      }
+      const { rows } = await pool.query(`
+        SELECT
+          COALESCE(SUM(te.hours), 0)::float AS total_hours,
+          COALESCE(SUM(te.hours) FILTER (WHERE te.is_billable = TRUE),  0)::float AS billed_hours,
+          COALESCE(SUM(te.hours) FILTER (WHERE te.is_billable = FALSE), 0)::float AS unbilled_hours,
+          COALESCE(SUM(te.hours) FILTER (WHERE te.is_billable = FALSE AND te.unbilled_category = 'misc'),       0)::float AS unbilled_misc_hours,
+          COALESCE(SUM(te.hours) FILTER (WHERE te.is_billable = FALSE AND te.unbilled_category = 'permitting'), 0)::float AS unbilled_permitting_hours,
+          COALESCE(SUM(te.hours) FILTER (WHERE te.is_billable = FALSE AND te.unbilled_category = 'wo_only'),    0)::float AS unbilled_wo_only_hours
+        FROM time_entries te
+        WHERE ${where}
+      `, params);
+      const r = rows[0];
+      const billedPct = r.total_hours > 0 ? (r.billed_hours / r.total_hours) * 100 : 0;
+      res.json({
+        year, month, staff_id: staffId,
+        total_hours: r.total_hours,
+        billed_hours: r.billed_hours,
+        unbilled_hours: r.unbilled_hours,
+        billed_pct: Math.round(billedPct * 10) / 10,
+        unbilled_breakdown: {
+          misc: r.unbilled_misc_hours,
+          permitting: r.unbilled_permitting_hours,
+          wo_only: r.unbilled_wo_only_hours
+        }
+      });
+    } catch (e) {
+      console.error('hours-utilization error:', e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.get('/api/revenue/projected-total', requireManagerOrAdmin, async (req, res) => {
     try {
       // Total = sum of projected_revenue from LEAVES only (no double-counting).

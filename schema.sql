@@ -139,6 +139,12 @@ CREATE TABLE IF NOT EXISTS time_entries (
   job_title VARCHAR(100),
   notes TEXT,
   import_batch VARCHAR(200),
+  -- Billed vs unbilled (migration 0029). FALSE for hours imported from
+  -- timeclock placeholder customers (Miscellaneous, Permitting, or a bare
+  -- "WO #N" with no real customer prefix). project_id is NULL for these
+  -- rows. unbilled_category is one of 'misc' | 'permitting' | 'wo_only'.
+  is_billable BOOLEAN NOT NULL DEFAULT TRUE,
+  unbilled_category TEXT,
   -- pending_project_request_id (held-timecard FK to setting_change_requests)
   -- is added by the v3 bootstrap in server.js — see ALTER TABLE block there.
   -- It can't live here because setting_change_requests is created later in

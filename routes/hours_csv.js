@@ -58,8 +58,35 @@ function detectColumns(headers) {
     wo: findOne('wo', 'wo#', 'wo #', 'work_order', 'work order', 'work_order_number', 'wo_number', 'work order #', 'work order#', 'job', 'job#'),
     hours: findOne('hours', 'hrs', 'time', 'qty'),
     job_title: findOne('job_title', 'title', 'position', 'role', 'classification'),
-    billing_code: findOne('billing code', 'billing_code', 'code', 'rus code', 'rus billing code')
+    billing_code: findOne('billing code', 'billing_code', 'code', 'rus code', 'rus billing code'),
+    // Timeclock app exports the picked customer label here. Used by
+    // classifyUnbilled() to detect placeholder customers (Miscellaneous,
+    // Permitting, bare "WO #N") whose hours are not billable.
+    customer: findOne('customer', 'client', 'customer_name', 'customer name', 'client_name', 'client name', 'cust')
   };
+}
+
+// Classify a CSV row's customer label into a billing bucket.
+//   { unbilled: true,  category: 'misc' }       — "Miscellaneous" / "MISC"
+//   { unbilled: true,  category: 'permitting' } — "Permitting"
+//   { unbilled: true,  category: 'wo_only' }    — bare "WO #16295" with
+//                                                  no real customer prefix
+//   { unbilled: false, category: null }         — real customer (e.g.
+//                                                  "Butler Inspecting WO #16295")
+//
+// Empty / missing input is treated as billed (preserves the legacy
+// "no customer column at all" behavior — those CSVs never carried an
+// unbilled marker, so they should still default to billed).
+function classifyUnbilled(rawCustomer) {
+  if (rawCustomer === null || rawCustomer === undefined) return { unbilled: false, category: null };
+  const s = String(rawCustomer).trim();
+  if (!s) return { unbilled: false, category: null };
+  const lc = s.toLowerCase();
+  if (lc === 'miscellaneous' || lc === 'misc') return { unbilled: true, category: 'misc' };
+  if (lc === 'permitting') return { unbilled: true, category: 'permitting' };
+  // Bare WO label with no customer prefix: "WO #16295", "WO 16295", "WO16295".
+  if (/^wo\s*[#-]?\s*\d+$/i.test(s)) return { unbilled: true, category: 'wo_only' };
+  return { unbilled: false, category: null };
 }
 
 const MONTH_LOOKUP = {
@@ -363,6 +390,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const rawHrs = r[cols.hours];
         const rawTitle = cols.job_title ? r[cols.job_title] : null;
         const rawWeekEnding = cols.week_ending ? r[cols.week_ending] : null;
+        const rawCustomer = cols.customer ? r[cols.customer] : null;
 
         const allBlank = !String(rawName ?? '').trim()
           && !String(rawWO ?? '').trim()
@@ -374,6 +402,8 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           const we = parseDateCell(rawWeekEnding);
           if (we) { anchorYear = parseInt(we.split('-')[0], 10); anchorDate = we; }
         }
+
+        const { unbilled, category: unbilledCategory } = classifyUnbilled(rawCustomer);
 
         const issues = [];
         const name = (rawName || '').toString().trim();
@@ -388,12 +418,14 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           if (d > today) issues.push('date is in the future');
           else if (d < past18) issues.push('date is more than 18 months ago');
         }
-        if (!woNorm) issues.push('missing work order');
+        // Unbilled rows are allowed to have no WO# — they're overhead
+        // hours that don't map to a real project.
+        if (!woNorm && !unbilled) issues.push('missing work order');
         if (isNaN(hrs) || hrs <= 0) issues.push('invalid hours');
         if (hrs > 24) issues.push('hours > 24 in a single entry');
 
         if (issues.length) {
-          invalidRows.push({ row_num: rowNum, raw: { name: rawName, date: rawDate, wo: rawWO, hours: rawHrs }, issues });
+          invalidRows.push({ row_num: rowNum, raw: { name: rawName, date: rawDate, wo: rawWO, hours: rawHrs, customer: rawCustomer }, issues });
           return;
         }
 
@@ -407,16 +439,22 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const jobSource = codeLookup ? 'billing_code' : (rowTitle ? 'column' : (inferredJobTitle ? 'filename' : null));
         const jobMissing = !finalTitle;
 
-        const proj = pickProject(woNorm, codeLookup);
-        const woKnown = !!proj;
+        // Unbilled rows skip project matching entirely — they live with
+        // project_id=NULL and is_billable=FALSE. wo_known stays TRUE for
+        // unbilled rows so the commit step doesn't bucket them into the
+        // "skipped_unknown_wo" tally; they're intentionally project-less,
+        // not unmatched.
+        const proj = unbilled ? null : pickProject(woNorm, codeLookup);
+        const woKnown = unbilled ? true : !!proj;
 
         if (!staffKnown) unknownStaff.set(normalizeName(name), name);
-        if (!woKnown) unknownWOs.set(woNorm, String(rawWO).trim());
+        if (!unbilled && !proj) unknownWOs.set(woNorm, String(rawWO).trim());
 
         validRows.push({
           row_num: rowNum,
           name, name_norm: normalizeName(name),
-          wo: String(rawWO).trim(), wo_norm: woNorm,
+          wo: String(rawWO ?? '').trim(), wo_norm: woNorm,
+          customer: rawCustomer ? String(rawCustomer).trim() : null,
           date, hours: hrs,
           job_title: finalTitle,
           job_source: jobSource,
@@ -427,7 +465,9 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           project_name: proj?.name || null,
           project_job_name: proj?.job_name || null,
           staff_known: staffKnown,
-          wo_known: woKnown
+          wo_known: woKnown,
+          is_billable: !unbilled,
+          unbilled_category: unbilledCategory
         });
       });
 
@@ -556,6 +596,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
           rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
           rows_in_billed_periods: billedConflictCount,
+          unbilled_rows: validRows.filter(r => !r.is_billable).length,
           invalid: invalidRows.length,
           would_add: csvClassTally.new || 0,
           would_skip_duplicate: csvClassTally.duplicate || 0,
@@ -821,7 +862,15 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       const skipDuplicates = req.body?.skip_duplicates !== false;
 
       for (const r of staged.validRows) {
-        if (!r.wo_known) { skipped_unknown_wo++; continue; }
+        // Unbilled rows are allowed to commit without a project (they're
+        // overhead, not pinned to a customer). r.wo_known is set to TRUE
+        // on the validate side for unbilled rows so this guard only fires
+        // for real WO matches that failed.
+        if (!r.is_billable) {
+          // Defensive: if a billed row somehow ends up flagged unbilled
+          // here, it would commit with project_id=NULL. Only allow that
+          // when the validate side actually classified it.
+        } else if (!r.wo_known) { skipped_unknown_wo++; continue; }
         const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
         if (!staffId) { skipped_unresolved_staff++; continue; }
         if (skip_billed_period_rows && r.already_billed_period) { skipped_billed_period++; continue; }
@@ -853,13 +902,14 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const snappedHours = snapHoursToQuarter(r.hours);
 
         const { rows: insRows } = await client.query(
-          `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
-           VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-          [r.project_id, staffId, r.date, snappedHours, finalJobTitle, importBatch]
+          `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch, is_billable, unbilled_category)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+          [r.project_id, staffId, r.date, snappedHours, finalJobTitle, importBatch,
+           r.is_billable !== false, r.unbilled_category || null]
         );
         if (insRows[0]) insertedRows.push(insRows[0]);
         inserted++;
-        projectIds.add(r.project_id);
+        if (r.project_id) projectIds.add(r.project_id);
       }
 
       await client.query('COMMIT');
@@ -912,4 +962,5 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 module.exports._helpers = {
   normalizeWO, normalizeName, detectColumns, MONTH_LOOKUP,
   parseDateCell, inferYear, findHeaderRow, arrayToObjects, inferJobTitle,
+  classifyUnbilled,
 };

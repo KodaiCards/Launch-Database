@@ -17,12 +17,17 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
 
   app.get('/api/time-entries', async (req, res) => {
-    const { project_id, staff_id, month, year } = req.query;
+    const { project_id, staff_id, month, year, billable } = req.query;
     let where = [];
     let params = [];
     let i = 1;
     if (project_id) { where.push(`te.project_id=$${i++}`); params.push(project_id); }
     if (staff_id) { where.push(`te.staff_id=$${i++}`); params.push(staff_id); }
+    // billable=billed → only billable rows; billable=unbilled → only
+    // unbilled rows; absent or 'all' → no filter. The Hours tab uses this
+    // to drive its Billed / Unbilled / All segment toggle.
+    if (billable === 'billed') where.push(`te.is_billable = TRUE`);
+    else if (billable === 'unbilled') where.push(`te.is_billable = FALSE`);
     if (month && year) {
       where.push(`EXTRACT(MONTH FROM te.entry_date)=$${i++} AND EXTRACT(YEAR FROM te.entry_date)=$${i++}`);
       params.push(month, year);

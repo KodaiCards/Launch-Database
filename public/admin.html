@@ -1059,9 +1059,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="job">By job</option>
             <option value="calendar">📅 Calendar grid</option>
           </select>
+          <select class="filter" id="hrs-staff" onchange="loadHours()" title="Filter by person">
+            <option value="">All staff</option>
+          </select>
+          <select class="filter" id="hrs-billable" onchange="loadHours()" title="Billed vs unbilled hours">
+            <option value="all">Billed + Unbilled</option>
+            <option value="billed">Billed only</option>
+            <option value="unbilled">Unbilled only</option>
+          </select>
           <button class="btn btn-secondary btn-sm" onclick="loadHours()"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openAuditDrawer()" title="View time-entry audit log"><i class="fa-solid fa-history"></i> Audit Log</button>
-          <button class="btn btn-secondary btn-sm" id="hrs-clear-filters-btn" title="Clear saved Hours filters" onclick="(function(){['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+          <button class="btn btn-secondary btn-sm" id="hrs-clear-filters-btn" title="Clear saved Hours filters" onclick="(function(){['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby','lf_filter:hours:hrs-staff','lf_filter:hours:hrs-billable'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import</button>
           <button class="btn btn-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
           <button class="btn btn-primary btn-sm" onclick="openTimeEntryModal()"><i class="fa-solid fa-plus"></i> Add Hours</button>
@@ -1078,6 +1086,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warning,#FFC107)"></i> Needs Project Assignment <span id="held-timecards-count" style="margin-left:8px;color:var(--text-muted);font-weight:400"></span></span>
         </div>
         <div id="held-timecards-body" style="padding:0"></div>
+      </div>
+      <!-- Unbilled hours surface: time_entries rows with is_billable=FALSE,
+           bucketed by unbilled_category (Miscellaneous / Permitting / bare
+           WO #). These are CSV-imported overhead hours where the timeclock
+           customer was a placeholder (no real customer prefix). -->
+      <div id="unbilled-hours-panel" class="card" style="display:none;margin-bottom:14px;border-left:4px solid var(--gray-border)">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title"><i class="fa-regular fa-clock"></i> Unbilled Hours <span id="unbilled-hours-count" style="margin-left:8px;color:var(--text-muted);font-weight:400"></span></span>
+          <span style="color:var(--text-muted);font-size:13px">Total: <span id="unbilled-hours-total" style="font-weight:600;color:var(--text)">0 hrs</span></span>
+        </div>
+        <div id="unbilled-hours-body" style="padding:0"></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title" id="hrs-report-title">Hours Report</span></div>
@@ -2656,6 +2675,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/audit_drawer.js"></script>
 <script src="/js/bulk_bill_modal.js"></script>
 <script src="/js/held_timecards.js"></script>
+<script src="/js/unbilled_hours_panel.js"></script>
 <script src="/js/dashboard_layout.js"></script>
 <script src="/js/engineering_contracts.js"></script>
 <script src="/js/invoice_templates.js"></script>
@@ -2924,6 +2944,8 @@ async function init() {
     ['lf_filter:hours:hrs-month',    'hrs-month'],
     ['lf_filter:hours:hrs-year',     'hrs-year'],
     ['lf_filter:hours:hrs-groupby',  'hrs-groupby'],
+    ['lf_filter:hours:hrs-staff',    'hrs-staff'],
+    ['lf_filter:hours:hrs-billable', 'hrs-billable'],
     ['lf_filter:billing:billing-year','billing-year'],
     ['lf_filter:revenue:rev-year',   'rev-year'],
     ['lf_filter:rus:insp-period',    'insp-period'],
@@ -2937,7 +2959,7 @@ async function init() {
     const tabKeys = {
       'proj-clear-filters-btn': ['lf_filter:projects:proj-status-filter','lf_filter:projects:proj-type-filter','lf_filter:projects:proj-search','lf_filter:projects:proj-client-filter'],
       'rus-clear-filters-btn':  ['lf_filter:rus:insp-period','lf_filter:rus:insp-month','lf_filter:rus:insp-status'],
-      'hrs-clear-filters-btn':  ['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby'],
+      'hrs-clear-filters-btn':  ['lf_filter:hours:hrs-period','lf_filter:hours:hrs-month','lf_filter:hours:hrs-year','lf_filter:hours:hrs-groupby','lf_filter:hours:hrs-staff','lf_filter:hours:hrs-billable'],
       'billing-clear-filters-btn': ['lf_filter:billing:billing-year'],
       'rev-clear-filters-btn':  ['lf_filter:revenue:rev-year'],
     };
@@ -3053,6 +3075,17 @@ async function loadStaff() {
   const sel = document.getElementById('te-staff');
   while (sel.options.length > 1) sel.remove(1);
   staff.forEach(s => sel.add(new Option(s.name, s.id)));
+  // Hours tab person filter (added with billed-vs-unbilled feature).
+  // Preserve the currently-selected staff_id across re-loads so a refresh
+  // of the staff list (e.g. after creating a new staff record) doesn't
+  // reset the filter to "All staff".
+  const hrsSel = document.getElementById('hrs-staff');
+  if (hrsSel) {
+    const prev = hrsSel.value;
+    while (hrsSel.options.length > 1) hrsSel.remove(1);
+    staff.forEach(s => hrsSel.add(new Option(s.name, s.id)));
+    if (prev) hrsSel.value = prev;
+  }
 }
 
 let allConcentrators = [];
