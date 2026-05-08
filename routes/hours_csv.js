@@ -515,18 +515,37 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       // distinct entries — this matches the per-day, per-job ledger the
       // operator actually keeps. Duplicate vs modify within a single
       // (staff, project, date, job) bucket comes down to hours.
+      //
+      // Unbilled rows (project_id IS NULL, is_billable=FALSE) carry their
+      // OWN match key with `UNB:<category>` standing in for project_id,
+      // so re-importing the same week's CSV doesn't pile dup
+      // Miscellaneous / Permitting rows on top of the previous pass.
       function jobKey(j) {
         return String(j || '').trim().replace(/\s+/g, ' ').toLowerCase();
       }
-      const matchKeys = [];
+      const matchKeys = [];           // billed rows (project_id present)
+      const unbilledMatchKeys = [];   // unbilled rows (project_id NULL)
       for (const r of validRows) {
-        if (r.staff_id && r.project_id && r.date) {
+        if (!r.staff_id || !r.date) {
+          r.csv_classification = 'new';
+          continue;
+        }
+        if (r.is_billable === false) {
+          // Unbilled row: dedup against existing unbilled rows for the
+          // same (staff, date, category, job).
+          const cat = r.unbilled_category || 'misc';
+          unbilledMatchKeys.push({ staff_id: r.staff_id, entry_date: r.date });
+          r.match_key = `${r.staff_id}|UNB:${cat}|${r.date}|${jobKey(r.job_title)}`;
+        } else if (r.project_id) {
           matchKeys.push({ staff_id: r.staff_id, project_id: r.project_id, entry_date: r.date });
           r.match_key = `${r.staff_id}|${r.project_id}|${r.date}|${jobKey(r.job_title)}`;
         } else {
+          // Billed row that didn't resolve a project — leave as 'new';
+          // commit will skip via skipped_unknown_wo.
           r.csv_classification = 'new';
         }
       }
+      const byKey = new Map();
       if (matchKeys.length) {
         const staffArr = matchKeys.map(k => k.staff_id);
         const projArr = matchKeys.map(k => k.project_id);
@@ -543,14 +562,38 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
              AND project_id = ANY($2::uuid[])
              AND entry_date = ANY($3::date[])
         `, [staffArr, projArr, dateArr]);
-        const byKey = new Map();
         for (const e of existing) {
           const k = `${e.staff_id}|${e.project_id}|${e.entry_date}|${jobKey(e.job_title)}`;
           if (!byKey.has(k)) byKey.set(k, []);
           byKey.get(k).push(e);
         }
+      }
+      if (unbilledMatchKeys.length) {
+        // Separate query — the billed-row lookup uses `project_id = ANY(...)`
+        // which can't tolerate NULL. Look up the unbilled siblings of every
+        // CSV row at (staff, date) and bucket them by `UNB:<category>` so
+        // the four-part match key matches the validate-side keys above.
+        const sArr = unbilledMatchKeys.map(k => k.staff_id);
+        const dArr = unbilledMatchKeys.map(k => k.entry_date);
+        const { rows: existing } = await pool.query(`
+          SELECT id, staff_id, entry_date::text AS entry_date,
+                 hours::float AS hours, job_title, unbilled_category
+            FROM time_entries
+           WHERE staff_id = ANY($1::uuid[])
+             AND entry_date = ANY($2::date[])
+             AND project_id IS NULL
+             AND is_billable = FALSE
+        `, [sArr, dArr]);
+        for (const e of existing) {
+          const cat = e.unbilled_category || 'misc';
+          const k = `${e.staff_id}|UNB:${cat}|${e.entry_date}|${jobKey(e.job_title)}`;
+          if (!byKey.has(k)) byKey.set(k, []);
+          byKey.get(k).push(e);
+        }
+      }
+      if (byKey.size > 0) {
         for (const r of validRows) {
-          if (r.csv_classification === 'new') continue;
+          if (r.csv_classification === 'new' || !r.match_key) continue;
           const matches = byKey.get(r.match_key) || [];
           if (matches.length === 0) {
             r.csv_classification = 'new';

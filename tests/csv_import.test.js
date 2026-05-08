@@ -325,6 +325,93 @@ test('CSV with customer column: unbilled rows persist with project_id=NULL and i
   await pool.query(`DELETE FROM time_entries WHERE staff_id = $1 AND project_id IS NULL`, [s.id]);
 });
 
+test('Re-importing the same CSV with unbilled rows skips them as duplicates (no dups)', async () => {
+  // Regression: unbilled rows have project_id=NULL, so the legacy
+  // dedup path (which keys on project_id) classified them as 'new'
+  // forever — re-importing piled duplicates. The fix adds an unbilled-
+  // aware match key (staff|UNB:<category>|date|job) and a separate
+  // lookup for project_id IS NULL, so a second pass classifies them as
+  // duplicates and the commit step skips them.
+  const token = await adminLogin();
+  const c = await fixtures.client({ name: uniqueTag('csv-unb-dup-client') });
+  trash.clients.push(c.id);
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'construction' });
+  trash.jobs.push(j.id);
+  const wo = String(910000000 + (Date.now() % 99999999));
+  const p = await fixtures.project({
+    name: uniqueTag('csv-unb-dup-proj'), client_id: c.id, job_id: j.id,
+    work_order_number: wo,
+  });
+  trash.projects.push(p.id);
+  const s = await fixtures.staff({ name: uniqueTag('Dup Tech') });
+  trash.staff.push(s.id);
+
+  const csv = buildCsvWithCustomer([
+    { name: s.name, date: '2026-02-01', customer: `Real Customer WO #${wo}`, wo, hours: 8 },
+    { name: s.name, date: '2026-02-02', customer: 'Miscellaneous', wo: '', hours: 2 },
+    { name: s.name, date: '2026-02-03', customer: 'Permitting',    wo: '', hours: 3 },
+  ]);
+
+  // First pass — all 3 rows commit.
+  const v1 = await uploadCsv(token, 'unb-dup-1.csv', csv);
+  assert.equal(v1.summary.would_add, 3);
+  assert.equal(v1.summary.would_skip_duplicate, 0);
+  await requestJson('POST', '/api/hours/csv-commit', {
+    token, body: { stage_id: v1.stage_id },
+  });
+
+  // Second pass — same CSV. All 3 should classify as duplicate.
+  const v2 = await uploadCsv(token, 'unb-dup-2.csv', csv);
+  assert.equal(v2.summary.would_add, 0, 'no rows should be net-new on re-import');
+  assert.equal(v2.summary.would_skip_duplicate, 3, 'all 3 (1 billed + 2 unbilled) should dedup');
+
+  const c2 = await requestJson('POST', '/api/hours/csv-commit', {
+    token, body: { stage_id: v2.stage_id },
+  });
+  assert.equal(c2.inserted, 0);
+  assert.equal(c2.skipped_duplicate, 3);
+
+  // Sanity check — count by category, no duplication on disk.
+  const { rows: counts } = await pool.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE is_billable = TRUE)::int  AS billed,
+       COUNT(*) FILTER (WHERE is_billable = FALSE AND unbilled_category = 'misc')::int AS misc,
+       COUNT(*) FILTER (WHERE is_billable = FALSE AND unbilled_category = 'permitting')::int AS perm
+     FROM time_entries WHERE staff_id = $1`, [s.id]);
+  assert.equal(counts[0].billed, 1);
+  assert.equal(counts[0].misc, 1);
+  assert.equal(counts[0].perm, 1);
+
+  await pool.query(`DELETE FROM time_entries WHERE staff_id = $1 AND project_id IS NULL`, [s.id]);
+});
+
+test('Re-importing unbilled row with different hours classifies as modify', async () => {
+  // Sister case to the dedup test: same staff+date+category but the
+  // hours changed. Should classify as 'modify', not 'new' or 'duplicate'.
+  const token = await adminLogin();
+  const c = await fixtures.client({ name: uniqueTag('csv-unb-mod-client') });
+  trash.clients.push(c.id);
+  const j = await fixtures.job({ name: uniqueTag('Inspector'), default_billing_type: 'hourly', team: 'construction' });
+  trash.jobs.push(j.id);
+  const s = await fixtures.staff({ name: uniqueTag('Mod Tech') });
+  trash.staff.push(s.id);
+
+  // Seed an existing unbilled row directly.
+  await pool.query(
+    `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, is_billable, unbilled_category)
+     VALUES (NULL, $1, '2026-02-15', 2, 'Inspector', FALSE, 'misc')`, [s.id]);
+
+  const csv = buildCsvWithCustomer([
+    { name: s.name, date: '2026-02-15', customer: 'Miscellaneous', wo: '', hours: 4 },
+  ]);
+  const v = await uploadCsv(token, 'unb-modify.csv', csv);
+  assert.equal(v.summary.would_add, 0);
+  assert.equal(v.summary.would_skip_duplicate, 0);
+  assert.equal(v.summary.would_modify, 1, 'unbilled row with new hours should classify as modify');
+
+  await pool.query(`DELETE FROM time_entries WHERE staff_id = $1`, [s.id]);
+});
+
 test('Hours utilization endpoint segments billed vs unbilled correctly', async () => {
   const token = await adminLogin();
   const c = await fixtures.client({ name: uniqueTag('csv-util-client') });
