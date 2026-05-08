@@ -7668,18 +7668,16 @@ function progressBar(actual, expected) {
 init();
 
 // ─── AUTO-POLLING ────────────────────────────────────────────────────────────
-// Refreshes the active view and any open modal data every POLL_MS while the
-// tab is visible. Pauses on hidden tabs (visibilitychange). Skips refresh
-// when a form modal (project, settings sub-form) is open AND the user has
-// focus inside an input/textarea, so typing isn't interrupted.
-//
-// 8-second cadence is a deliberate balance: fast enough that other people's
-// edits surface within ~10s, slow enough that the table re-render at 50+
-// projects doesn't drop input focus, kill battery on phones, or hammer the
-// API. Previous 1.5s value caused tbody.innerHTML to rebuild ~40x/min per
-// open tab. Visibility change + a manual "Refresh" button (if added later)
-// cover the cases where users want sooner data.
-const POLL_MS = 8000;
+// Recovery heartbeat — most data is now pushed via SSE (projects, hours,
+// billing, invoices, dashboard, etc.). This poll is a fallback for:
+//   - Views that don't yet have SSE broadcast hooks (pipeline, potential,
+//     design, permits, project-detail modal, approvals badge).
+//   - SSE reconnect gaps: if the EventSource drops and the 5s reconnect
+//     hasn't fired yet, users will see stale data at most 60s before this
+//     catches it.
+// 60s is enough to catch a silent SSE drop without hammering the API.
+// Visibility change still triggers an immediate tick on focus return.
+const POLL_MS = 60000;
 let _pollTimer = null;
 let _pollTickCount = 0;
 function _isUserTyping() {

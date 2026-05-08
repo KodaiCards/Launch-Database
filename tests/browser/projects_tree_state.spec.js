@@ -1,17 +1,21 @@
-// Browser smoke test — Projects tree expand/collapse state survives the
-// polling re-render. This is the regression net for CLEANUP_PLAN.md
-// Track 1.2.3 (introducing the makeTreeState() primitive). Without this
-// test, refactoring the bespoke `expandedRollups` Set to the new API risks
-// the bug fixed in commit 35d22e6: the polling tick rebuilt the tbody
-// every 8 seconds and re-collapsed every expanded rollup.
+// Browser smoke test — Projects tree expand/collapse state survives an
+// SSE-driven re-render. This is the regression net for the tree expand
+// state persistence introduced in CLEANUP_PLAN.md Track 1.2.3.
+//
+// Original test guarded against a 8s polling tick re-collapsing expanded
+// rollups (commit 35d22e6). With POLL_MS now 60s, SSE is the primary
+// refresh path. This test verifies the same invariant via an SSE event:
+// the tree state must survive a loadProjects() triggered by SSE.
 //
 // Flow:
 //   1. Seed a parent project + a child project under it.
 //   2. Login as admin, navigate to Projects.
-//   3. Confirm child row exists in DOM but is hidden (parent collapsed).
-//   4. Click the parent's chevron → child row becomes visible.
-//   5. Wait 9 s — past one POLL_MS=8000 polling tick.
-//   6. Assert child row is STILL visible (state survived re-render).
+//   3. Confirm child row is hidden (parent collapsed by default).
+//   4. Click the parent's chevron — child row becomes visible.
+//   5. Dispatch a fake SSE project_updated event via page.evaluate() to
+//      trigger the same debounced loadProjects() the real SSE would fire.
+//   6. Wait for the debounce (600ms) + re-render to complete.
+//   7. Assert child row is STILL visible (expanded state survived re-render).
 
 const { test, expect } = require('@playwright/test');
 const { seedClient, seedProject, cleanup, close } = require('./_db');
@@ -22,8 +26,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'test_admin_password_123';
 let parent, child;
 
 test.beforeAll(async () => {
-  // Plain non-RUS client + a unique parent + child. parent_id link forms
-  // a 2-level rollup tree, which is exactly the shape ptreeToggle walks.
   const client = await seedClient({ name: 'tree-state-' + Date.now() });
   parent = await seedProject({
     client_id: client.id,
@@ -41,7 +43,7 @@ test.afterAll(async () => {
   await close();
 });
 
-test('expanded rollup survives the 8s poll re-render', async ({ page }) => {
+test('expanded rollup survives an SSE-driven re-render', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', (err) => {
     pageErrors.push(err);
@@ -55,11 +57,11 @@ test('expanded rollup survives the 8s poll re-render', async ({ page }) => {
   await page.click('#submit-btn');
   await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
 
+  // Admin users land on the launcher; navigate explicitly to the admin SPA.
+  await page.goto('/admin.html');
+
   // 2. Navigate to Projects
   await page.locator('[data-view="projects"]').click();
-  // Wait for the projects table to render with our parent row. Loading
-  // state sets a single TR with colspan=9; once data lands the parent's
-  // chevron lives at id `pc-<parent.id>`.
   const chevSelector = `#pc-${parent.id}`;
   await page.locator(chevSelector).waitFor({ state: 'attached', timeout: 15_000 });
 
@@ -73,20 +75,22 @@ test('expanded rollup survives the 8s poll re-render', async ({ page }) => {
   await page.locator(chevSelector).click();
   await expect(childRow).toBeVisible({ timeout: 5_000 });
 
-  // 5. Wait ~9s — past one POLL_MS=8000 polling tick. The poll rebuilds
-  //    the tbody from scratch; the bug we're guarding against is "rebuild
-  //    drops the expanded state and child row goes hidden again."
-  await page.waitForTimeout(9_000);
+  // 5. Simulate an SSE project_updated event. The projects_tab.js module
+  //    listens for document CustomEvent 'sse:project_updated' and debounces
+  //    loadProjects() with a 500ms delay. This is the same code path that
+  //    fires when a real SSE message arrives from the server.
+  await page.evaluate(() => {
+    document.dispatchEvent(new CustomEvent('sse:project_updated', { detail: { id: 'synthetic' } }));
+  });
 
-  // 6. Same selector — assert STILL visible. setHtmlIfChanged may keep
-  //    the same DOM if nothing changed, but we don't care which path
-  //    served the visibility — we only care that the user-facing
-  //    expanded state survived.
+  // 6. Wait for the 500ms debounce + fetch + DOM render to complete.
+  //    600ms covers the debounce; add another 2s for the API round-trip.
+  await page.waitForTimeout(2_600);
+
+  // 7. Expanded state must have survived the re-render.
   await expect(page.locator(`tr.ptree-pt-${parent.id}`)).toBeVisible();
 
-  // 7. No uncaught exceptions during the whole flow. Catches any
-  //    ReferenceError introduced by a bad refactor of expandedRollups
-  //    call sites.
+  // 8. No uncaught exceptions during the flow.
   expect(pageErrors, `uncaught browser errors: ${pageErrors.map(e => e.message).join('; ')}`)
     .toEqual([]);
 });
