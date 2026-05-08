@@ -106,7 +106,7 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
         LEFT JOIN concentrators con2 ON con2.id = pp.concentrator_id
         LEFT JOIN concentrators con3 ON con3.id = ppp.concentrator_id
         WHERE COALESCE(p.is_rollup, FALSE) = FALSE
-          AND ec.program = 'rus'
+          AND (p.program = 'rus' OR ec.program = 'rus')
           AND ${statusClause}
         ORDER BY c.contract_number NULLS LAST,
                  COALESCE(con.area_name, con2.area_name, con3.area_name, pp.name, p.name),

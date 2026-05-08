@@ -226,3 +226,41 @@ test('ancestor entry on multi-leaf rollup → attributed to at most one leaf (no
   assert.ok(hoursB <= 4, `leafB hours (${hoursB}) should not exceed entry hours 4`);
   assert.ok(hoursA + hoursB <= 4, `total attributed hours (${hoursA + hoursB}) must not exceed 4 (no double-count)`);
 });
+
+// ─── Test 5: EC-picker project (program='rus', no contract_id) appears in RUS tab ─
+// Regression for: projects created via the EC picker with p.program='rus' but
+// contract_id=NULL were invisible to the RUS feed because the feed only
+// joined through contracts → engineering_contracts. Fix: also accept
+// p.program='rus' directly on the leaf.
+test('project with program=rus and no contract appears in RUS tab', async () => {
+  const token = await adminLogin();
+  const client = await fixtures.client({ name: uniqueTag('attr-client-t5') });
+  trash.clients.push(client.id);
+
+  const job = await fixtures.job({ name: uniqueTag('Inspection-t5'), team: 'construction' });
+  trash.jobs.push(job.id);
+
+  // Insert project directly with program='rus' and contract_id=NULL.
+  // This matches the save path when the EC picker is used without
+  // selecting a construction contract.
+  const { rows: [leaf] } = await pool.query(
+    `INSERT INTO projects
+       (name, client_id, contract_id, job_id, project_type, billing_type, billing_rate, status, program)
+     VALUES ($1, $2, NULL, $3, 'inspection', 'hourly', 90, 'active', 'rus') RETURNING *`,
+    [uniqueTag('leaf-t5'), client.id, job.id]
+  );
+  trash.projects.push(leaf.id);
+
+  const staff = await fixtures.staff({ name: uniqueTag('staff-t5') });
+  trash.staff.push(staff.id);
+  await fixtures.timeEntry({
+    project_id: leaf.id,
+    staff_id: staff.id,
+    entry_date: `${new Date().getFullYear()}-04-01`,
+    hours: 5,
+  });
+
+  const map = await fetchInspectionHours(token);
+  assert.ok(map.has(leaf.id), 'project with program=rus and no contract must appear in RUS tab');
+  assert.equal(map.get(leaf.id), 5, 'hours for contract-free RUS project should be 5');
+});
