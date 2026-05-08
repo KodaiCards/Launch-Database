@@ -41,10 +41,10 @@ module.exports = function installProjectDetailRoutes(app, pool, mw) {
       // popup is meaningful even when no time is logged directly to the container.
       const subtreeR = await pool.query(`
         WITH RECURSIVE subtree AS (
-          SELECT id FROM projects WHERE id = $1
+          SELECT id, 0 AS depth FROM projects WHERE id = $1
           UNION ALL
-          SELECT p.id FROM projects p
-          JOIN subtree s ON p.parent_id = s.id
+          SELECT p.id, s.depth + 1 FROM projects p
+          JOIN subtree s ON p.parent_id = s.id WHERE s.depth < 10
         )
         SELECT id FROM subtree
       `, [req.params.id]);
@@ -104,9 +104,9 @@ module.exports = function installProjectDetailRoutes(app, pool, mw) {
       // Direct children with computed revenue (handles NULL billing_rate via type inference)
       const childrenR = await pool.query(`
         WITH RECURSIVE child_tree AS (
-          SELECT id, parent_id FROM projects WHERE parent_id = $1
+          SELECT id, parent_id, 0 AS depth FROM projects WHERE parent_id = $1
           UNION ALL
-          SELECT p.id, p.parent_id FROM projects p JOIN child_tree ct ON p.parent_id = ct.id
+          SELECT p.id, p.parent_id, ct.depth + 1 FROM projects p JOIN child_tree ct ON p.parent_id = ct.id WHERE ct.depth < 10
         )
         SELECT c.id, c.name, c.project_type, c.status, c.billing_rate, c.billing_type,
                c.expected_revenue, c.actual_hours,
@@ -122,9 +122,9 @@ module.exports = function installProjectDetailRoutes(app, pool, mw) {
                -- Compute subtree revenue for this child
                COALESCE((
                  WITH RECURSIVE descendants AS (
-                   SELECT c.id AS did
+                   SELECT c.id AS did, 0 AS depth
                    UNION ALL
-                   SELECT p.id FROM projects p JOIN descendants d ON p.parent_id = d.did
+                   SELECT p.id, d.depth + 1 FROM projects p JOIN descendants d ON p.parent_id = d.did WHERE d.depth < 10
                  )
                  SELECT SUM(
                    CASE
