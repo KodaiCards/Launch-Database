@@ -597,3 +597,79 @@ no poll at all:
 - `routes/splice.js` has its own project-scoped SSE (`GET /api/splice/projects/:id/events`). Splice events are NOT bridged into the admin SSE — the two systems are intentionally separate.
 - `public/splice.html` has its own `EventSource` subscriber. No changes made.
 - Customer portal (`public/customer.html`) has no SSE — it is read-only and low-frequency. No changes made.
+
+## Scale follow-ups (queued)
+
+Surfaced during the SSE leak / CTE-bounds pass on branch
+`claude/scale-pass-sse-cte`. None are urgent today; all become real at
+500+ active projects, multi-tab admin sessions, or larger billing batches.
+Track as a single follow-up batch — fix together when one of them bites.
+
+### S-1 — N+1 in monthly invoice builder
+
+**File:** `routes/billing.js` ~line 80 (invoice builder)
+**Symptom:** Loops over `projR.rows` and fires a separate
+`SELECT SUM(hours) FROM time_entries WHERE project_id = $1` per
+monthly-cadence project. At 50+ monthly projects in one batch this is 50+
+sequential round-trips inside a transaction.
+**Fix:** Replace with a single
+`SELECT project_id, SUM(hours) FROM time_entries
+   WHERE project_id = ANY($1::uuid[]) AND entry_date BETWEEN $2 AND $3
+   GROUP BY project_id`
+hash the result by `project_id`, look up per row in JS.
+
+### S-2 — N+1 in `findLeafFor()` rollup-reattribution loop
+
+**File:** `routes/admin.js` ~line 669
+**Symptom:** Called inside a `for` loop over `candidates` with a
+recursive descendants CTE per iteration. The existing `targetCache` Map
+makes repeated combos free, but first-touch for each unique
+`(rollup_id, job_name)` is still one CTE.
+**Fix:** Pre-compute `(rollup_id → leaf_id)` for every candidate's rollup
+in a single batched recursive CTE before the loop, then look up in JS.
+Lower priority than S-1 since admin reattribution runs occasionally, not
+per request.
+
+### S-3 — Unbounded `SELECT *` from projects in billing route
+
+**File:** `routes/billing.js:44`
+**Symptom:** `SELECT * FROM projects WHERE id = ANY($1::uuid[])` with no
+`LIMIT`. Safe today because `project_ids` is caller-scoped, but a future
+caller passing all project IDs would fetch the whole projects table into
+Node heap.
+**Fix:** Add a defensive `LIMIT 5000` (or smaller) AND only select the
+columns the route actually reads — eliminates two scaling cliffs at once.
+
+### S-4 — `dashboard.js` ytd_revenue scalar subquery per row
+
+**File:** `routes/dashboard.js`
+**Symptom:** Active-projects query has a recursive subtree CTE inlined
+as a scalar subquery for each row's `ytd_revenue`. At 500+ active
+projects this is N recursive CTEs in one statement — Postgres can plan
+it but the cost is O(N × tree_depth).
+**Fix (low-cost):** Compute ytd_revenue once via a CTE and JOIN, instead
+of inlining as a per-row scalar.
+**Fix (right-shape):** Materialize `projects.ytd_revenue` as a column
+maintained on time-entry write (the same SSE write hooks already exist —
+piggyback there). Read becomes a plain `SELECT`. Required at 1000+
+active projects.
+
+### S-5 — SSE reconnect timer can stack in `admin.html`
+
+**File:** `public/admin.html` `startSse()`
+**Symptom:** `_sseSource.onerror` sets `_sseSource = null` then schedules
+`setTimeout(startSse, 5000)`. If `onerror` fires multiple times before
+the 5 s timer pops (Railway proxy resets in bursts), multiple
+reconnect timers land — N concurrent SSE connections per tab after a
+flaky network minute.
+**Fix:** Guard with `_reconnectTimer` — clearTimeout on existing handle
+before scheduling a new one. Mirrors the heartbeat-interval guard
+already in place server-side.
+
+### Done criteria for the batch
+
+- All 5 fixed in one PR or one focused commit chain.
+- Smoketests still green at 144/144 (or whatever the count is at the time).
+- For S-4, prefer the low-cost CTE-and-JOIN refactor unless the
+  active-project count has crossed ~1000 — at which point invest in the
+  materialized column.
