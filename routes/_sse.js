@@ -22,17 +22,31 @@
 //   broadcast('admin', 'project_added', row); // in route write handlers
 
 const _channels = new Map(); // channel -> Set<res>
+// Reverse map: res -> Set<channel> — allows O(1) full cleanup when a
+// connection closes or its write fails. Without this, we'd have to
+// scan every channel to remove a single dead connection.
+const _resChanMap = new Map(); // res -> Set<channel>
 
 function _subscribe(channel, res) {
   if (!_channels.has(channel)) _channels.set(channel, new Set());
   _channels.get(channel).add(res);
+
+  if (!_resChanMap.has(res)) _resChanMap.set(res, new Set());
+  _resChanMap.get(res).add(channel);
 }
 
-function _unsubscribe(channel, res) {
-  const set = _channels.get(channel);
-  if (!set) return;
-  set.delete(res);
-  if (!set.size) _channels.delete(channel);
+// Remove res from every channel it subscribed to and clean up the
+// reverse map entry. Safe to call multiple times (idempotent).
+function _purge(res) {
+  const chans = _resChanMap.get(res);
+  if (!chans) return;
+  for (const channel of chans) {
+    const set = _channels.get(channel);
+    if (!set) continue;
+    set.delete(res);
+    if (!set.size) _channels.delete(channel);
+  }
+  _resChanMap.delete(res);
 }
 
 /**
@@ -41,15 +55,27 @@ function _unsubscribe(channel, res) {
  * Sends a named SSE event to every subscriber on the given channel.
  * payload is serialised with JSON.stringify — keep it small (row id
  * or a few key fields; clients refetch on receipt).
- * Fire-and-forget: dead connections are silently skipped.
+ * Dead connections (write throws or returns false) are purged immediately
+ * so they don't accumulate between 'close' events.
  */
 function broadcast(channel, event, payload) {
   const subs = _channels.get(channel);
   if (!subs || !subs.size) return;
   const data = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
-  for (const res of subs) {
-    try { res.write(data); } catch { /* dead conn — cleaned up on 'close' */ }
+  // Snapshot the set before iterating so _purge() inside the loop
+  // doesn't invalidate the iterator.
+  for (const res of [...subs]) {
+    let ok;
+    try { ok = res.write(data); } catch { ok = false; }
+    if (ok === false) _purge(res);
   }
+}
+
+/** Exposed for testing only — returns total subscriber count across all channels. */
+function _subscriberCount() {
+  let n = 0;
+  for (const set of _channels.values()) n += set.size;
+  return n;
 }
 
 /**
@@ -100,15 +126,25 @@ function attach(app, mw) {
     try { res.write(`: connected\n\n`); } catch {}
 
     // Heartbeat: keeps Railway / nginx proxies from closing idle connections.
+    // If the write returns false (backpressure) or throws (dead socket),
+    // purge eagerly rather than waiting for the 'close' event — Railway's
+    // proxy sometimes drops the TCP connection without sending FIN, so
+    // 'close' may never fire for a dead tab.
     const heartbeat = setInterval(() => {
-      try { res.write(`: ping\n\n`); } catch {}
+      let ok;
+      try { ok = res.write(`: ping\n\n`); } catch { ok = false; }
+      if (ok === false) {
+        clearInterval(heartbeat);
+        _purge(res);
+      }
     }, 25000);
 
-    req.on('close', () => {
+    const cleanup = () => {
       clearInterval(heartbeat);
-      myChannels.forEach(c => _unsubscribe(c, res));
-    });
+      _purge(res);
+    };
+    req.on('close', cleanup);
   });
 }
 
-module.exports = { attach, broadcast };
+module.exports = { attach, broadcast, _subscriberCount };
