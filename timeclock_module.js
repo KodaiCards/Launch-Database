@@ -212,6 +212,30 @@ function makeAuditLogger(pool) {
         summary = changes.length ? changes.join('; ') : 'No-op save';
       }
 
+      // Payload size cap: if a single before/after blob would exceed 64 KB,
+      // store only the row's primary key + a truncation marker. This prevents
+      // a rogue mutation (e.g. a JSONB field that grew very large) from writing
+      // an MB+ audit row and contributing to the disk leak. The trade-off is
+      // that the full field-level diff is not recoverable from the audit row
+      // for that specific event — only the fact that a change happened (and on
+      // which time_entry_id) is preserved. Log a warning so operators know.
+      const AUDIT_PAYLOAD_CAP = 64 * 1024; // 64 KB
+      function capPayload(obj, label) {
+        if (!obj) return null;
+        const json = JSON.stringify(obj);
+        if (json.length <= AUDIT_PAYLOAD_CAP) return json;
+        console.warn(
+          `[timeclock] audit payload ${label} truncated: ${json.length} bytes > ${AUDIT_PAYLOAD_CAP}B`,
+          `time_entry_id=${timeEntryId}`
+        );
+        // Preserve only the primary key so the row is still linkable.
+        return JSON.stringify({
+          _truncated: true,
+          _original_bytes: json.length,
+          id: obj.id || null,
+        });
+      }
+
       await pool.query(`
         INSERT INTO time_entry_audit (
           time_entry_id, actor_user_id, actor_username, action,
@@ -224,8 +248,8 @@ function makeAuditLogger(pool) {
         actor.username || actor.full_name || null,
         action,
         summary,
-        before ? JSON.stringify(before) : null,
-        after ? JSON.stringify(after) : null,
+        capPayload(before, 'before'),
+        capPayload(after, 'after'),
         meaningful,
         source || 'api',
         req?.get?.('user-agent')?.slice(0, 500) || null,

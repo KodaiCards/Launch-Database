@@ -7,7 +7,7 @@
 1. **When the user types a message mid-task, do not pause the running agents.** Add their request to the queue, answer if it's a question, and keep agents working.
 2. **At every status change, emit a dashboard** in the box-drawing format below. The user wants visibility into agent state without asking.
 3. **Update this file often** — at every task start/complete, and especially when the manager swaps. The user rotates Claudes roughly every ~15 messages, so the next PM must be able to pick up cold.
-4. **Manager pattern** the user wants on every code change: `implementer Sonnet → red-team Sonnet review → manager pushes & monitors`. Don't write code yourself unless it's truly trivial.
+4. **Manager pattern** the user wants on every code change: `implementer Sonnet → red-team Sonnet → manager VERIFIES → manager pushes/deploys`. **The manager (Opus) never does the red-team review themselves.** A separate Sonnet agent always performs the review; the manager's job is to verify the work (read the diff, run tests, sanity-check the report) and then deploy. Inline review by the manager is NOT acceptable, even for tiny diffs.
 5. **Sister project**: `KodaiCards/OSP-Design-Training` (path `/home/user/OSP-Design-Training`, branch `claude/debug-previous-issues-MoN9D`) is a future portal/tile. Not active yet — add to the dashboard queue, don't start work without explicit go-ahead.
 
 ### Live dashboard format (use this exact shape)

@@ -1980,6 +1980,10 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
 
   } catch (e) {
     console.error('File parse error:', e.message);
+    // Unlink the temp file so multer write errors don't leak orphan files.
+    if (req.file && req.file.path) {
+      try { fs.unlink(req.file.path, () => {}); } catch {}
+    }
     res.status(500).json({ error: 'Failed to parse file: ' + e.message });
   }
 });

@@ -1004,6 +1004,207 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     }
   });
 
+  // ─── Disk stats — volume + uploads directory summary ─────────────────────
+  // GET /api/_admin/disk-stats
+  //
+  // Returns filesystem-level metrics for the Railway volume and a breakdown
+  // of files inside UPLOAD_DIR. Does NOT touch the database at all, so this
+  // works even when Postgres is degraded.
+  //
+  // Auth: normal requireAdmin session cookie (JWT token) OR a header
+  // X-Admin-Bypass-Token matching ADMIN_BYPASS_TOKEN env var. The bypass
+  // path allows access when Postgres is down and authMiddleware can't
+  // populate req.user (since it does a DB lookup per request). Without it
+  // the endpoint would always 401 when the DB is sick — defeating its purpose.
+  //
+  // If ADMIN_BYPASS_TOKEN is not set, the bypass path is disabled. The
+  // response body includes a hint telling the operator which env var to set.
+  app.get('/api/_admin/disk-stats', (req, res, next) => {
+    const bypass = process.env.ADMIN_BYPASS_TOKEN;
+    if (bypass && req.headers['x-admin-bypass-token'] === bypass) {
+      return diskStatsHandler(req, res);
+    }
+    // Fall through to requireAdmin for normal (DB-healthy) auth.
+    requireAdmin(req, res, () => diskStatsHandler(req, res));
+  });
+
+  function diskStatsHandler(req, res) {
+    try {
+      // Volume stats via statfsSync — no DB required.
+      let volume = null;
+      try {
+        const sf = fs.statfsSync(uploadDir);
+        // statfsSync fields: bsize (block size), blocks (total), bfree (free),
+        // bavail (available to non-root), files (inodes), ffree (free inodes).
+        const total     = sf.bsize * sf.blocks;
+        const available = sf.bsize * sf.bavail;
+        const used      = total - available;
+        const usedPct   = total > 0 ? Math.round((used / total) * 1000) / 10 : 0;
+        volume = { total_bytes: total, available_bytes: available, used_bytes: used, used_pct: usedPct };
+      } catch (e) {
+        volume = { error: e.message };
+      }
+
+      // Walk uploadDir (non-recursive at top level + invoice-templates subdir)
+      // to tally total bytes, file count, and surface the top-20 largest files.
+      let totalBytes = 0;
+      let fileCount  = 0;
+      const allFiles = [];
+
+      function walkDir(dir, relBase) {
+        let entries = [];
+        try { entries = fs.readdirSync(dir); } catch { return; }
+        for (const f of entries) {
+          const full = path.join(dir, f);
+          let st;
+          try { st = fs.statSync(full); } catch { continue; }
+          if (st.isDirectory()) {
+            // Recurse one level into known subdirectories only.
+            if (f === 'invoice-templates') walkDir(full, path.join(relBase, f));
+            continue;
+          }
+          totalBytes += st.size;
+          fileCount++;
+          allFiles.push({ path: path.join(relBase, f), size: st.size, mtime: st.mtime.toISOString() });
+        }
+      }
+      walkDir(uploadDir, '');
+      allFiles.sort((a, b) => b.size - a.size);
+
+      return res.json({
+        volume,
+        uploads_dir: {
+          path: uploadDir,
+          total_bytes: totalBytes,
+          file_count: fileCount,
+          top_20_largest: allFiles.slice(0, 20),
+        },
+        bypass_token_hint: !process.env.ADMIN_BYPASS_TOKEN
+          ? 'ADMIN_BYPASS_TOKEN env var is not set. Set it in Railway → Variables to enable DB-bypass access when Postgres is degraded. Requests with header X-Admin-Bypass-Token matching that value will skip the DB auth check.'
+          : undefined,
+      });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  // ─── Uploads cleanup — delete old files from UPLOAD_DIR ──────────────────
+  // POST /api/_admin/uploads-cleanup
+  //
+  // Body (all optional):
+  //   older_than_days  — delete files older than this many days (default 30)
+  //   dry_run          — true (default) = preview only; false = actually delete
+  //   max_delete       — cap on how many files to delete per call (default 1000)
+  //
+  // Returns: { scanned, would_delete|deleted, freed_bytes, sample_paths, warning }
+  //
+  // IMPORTANT: This is a filesystem-only operation — it does NOT consult the DB
+  // to check whether a file has a permit_documents or project_documents row.
+  // Files may be deleted that DO have DB references. This is the intentional
+  // trade-off when recovering disk space with a degraded DB. The `warning` field
+  // in the response documents this explicitly.
+  //
+  // Exclusions: invoice-templates/ subdirectory is never touched — those files
+  // are persistent template assets, not ephemeral uploads.
+  //
+  // Like disk-stats, supports X-Admin-Bypass-Token for DB-down access.
+  app.post('/api/_admin/uploads-cleanup', (req, res, next) => {
+    const bypass = process.env.ADMIN_BYPASS_TOKEN;
+    if (bypass && req.headers['x-admin-bypass-token'] === bypass) {
+      return uploadsCleanupHandler(req, res);
+    }
+    requireAdmin(req, res, () => uploadsCleanupHandler(req, res));
+  });
+
+  function uploadsCleanupHandler(req, res) {
+    const body = req.body || {};
+    const olderThanDays = Number.isFinite(Number(body.older_than_days))
+      ? Math.max(1, Number(body.older_than_days)) : 30;
+    const dryRun    = body.dry_run !== false;   // default true
+    const maxDelete = Number.isFinite(Number(body.max_delete))
+      ? Math.max(1, Math.min(10000, Number(body.max_delete))) : 1000;
+
+    const cutoffMs = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
+    let scanned = 0;
+    const candidates = [];
+
+    // Walk uploadDir (top-level only; explicitly skip invoice-templates/).
+    // invoice-templates/ files are persistent template assets and must never
+    // be deleted by this sweep — they are excluded regardless of age.
+    let entries = [];
+    try { entries = fs.readdirSync(uploadDir); } catch (e) {
+      return res.status(500).json({ error: 'Cannot read uploadDir: ' + e.message });
+    }
+    for (const f of entries) {
+      const full = path.join(uploadDir, f);
+      let st;
+      try { st = fs.statSync(full); } catch { continue; }
+      // Skip the invoice-templates subdir entirely.
+      if (st.isDirectory()) continue;
+      scanned++;
+      if (st.mtimeMs < cutoffMs) {
+        candidates.push({ file: f, full_path: full, size: st.size, mtime: st.mtime.toISOString() });
+      }
+    }
+
+    // Cap to max_delete (in case of a runaway).
+    const toDelete = candidates.slice(0, maxDelete);
+    const totalBytes = toDelete.reduce((s, c) => s + c.size, 0);
+    const samplePaths = toDelete.slice(0, 20).map(c => c.file);
+
+    const WARNING =
+      'This operation deletes files based on filesystem age only — the DB is NOT '
+      + 'consulted. Files with live permit_documents or project_documents rows may '
+      + 'be deleted. This is intentional when recovering disk space with a degraded '
+      + 'or unavailable database.';
+
+    if (dryRun) {
+      return res.json({
+        dry_run: true,
+        older_than_days: olderThanDays,
+        scanned,
+        would_delete: toDelete.length,
+        capped_at: maxDelete,
+        more_candidates: candidates.length > maxDelete ? candidates.length - maxDelete : 0,
+        freed_bytes: totalBytes,
+        sample_paths: samplePaths,
+        warning: WARNING,
+        hint: `Dry run. Would delete ${toDelete.length} file(s) totalling ${(totalBytes / 1024 / 1024).toFixed(2)} MB. Re-POST with {"dry_run": false} to apply.`,
+      });
+    }
+
+    // Real delete path.
+    let deleted = 0;
+    let freedBytes = 0;
+    const errors = [];
+    for (const c of toDelete) {
+      try {
+        fs.unlinkSync(c.full_path);
+        deleted++;
+        freedBytes += c.size;
+      } catch (e) {
+        errors.push({ file: c.file, error: e.message });
+      }
+    }
+
+    return res.json({
+      dry_run: false,
+      older_than_days: olderThanDays,
+      scanned,
+      deleted,
+      capped_at: maxDelete,
+      more_candidates: candidates.length > maxDelete ? candidates.length - maxDelete : 0,
+      freed_bytes: freedBytes,
+      sample_paths: samplePaths,
+      errors: errors.slice(0, 20),
+      warning: WARNING,
+      hint: `Deleted ${deleted} file(s), freed ${(freedBytes / 1024 / 1024).toFixed(2)} MB. `
+        + (candidates.length > maxDelete
+          ? `${candidates.length - maxDelete} more candidates were not touched (max_delete=${maxDelete}). Re-POST to continue.`
+          : 'All candidates processed.'),
+    });
+  }
+
   // ─── Create staff + linked user account in one transaction ───────────────
   // POST /api/admin/staff-with-user
   //
