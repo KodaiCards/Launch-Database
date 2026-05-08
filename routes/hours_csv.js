@@ -58,8 +58,35 @@ function detectColumns(headers) {
     wo: findOne('wo', 'wo#', 'wo #', 'work_order', 'work order', 'work_order_number', 'wo_number', 'work order #', 'work order#', 'job', 'job#'),
     hours: findOne('hours', 'hrs', 'time', 'qty'),
     job_title: findOne('job_title', 'title', 'position', 'role', 'classification'),
-    billing_code: findOne('billing code', 'billing_code', 'code', 'rus code', 'rus billing code')
+    billing_code: findOne('billing code', 'billing_code', 'code', 'rus code', 'rus billing code'),
+    // Timeclock app exports the picked customer label here. Used by
+    // classifyUnbilled() to detect placeholder customers (Miscellaneous,
+    // Permitting, bare "WO #N") whose hours are not billable.
+    customer: findOne('customer', 'client', 'customer_name', 'customer name', 'client_name', 'client name', 'cust')
   };
+}
+
+// Classify a CSV row's customer label into a billing bucket.
+//   { unbilled: true,  category: 'misc' }       — "Miscellaneous" / "MISC"
+//   { unbilled: true,  category: 'permitting' } — "Permitting"
+//   { unbilled: true,  category: 'wo_only' }    — bare "WO #16295" with
+//                                                  no real customer prefix
+//   { unbilled: false, category: null }         — real customer (e.g.
+//                                                  "Butler Inspecting WO #16295")
+//
+// Empty / missing input is treated as billed (preserves the legacy
+// "no customer column at all" behavior — those CSVs never carried an
+// unbilled marker, so they should still default to billed).
+function classifyUnbilled(rawCustomer) {
+  if (rawCustomer === null || rawCustomer === undefined) return { unbilled: false, category: null };
+  const s = String(rawCustomer).trim();
+  if (!s) return { unbilled: false, category: null };
+  const lc = s.toLowerCase();
+  if (lc === 'miscellaneous' || lc === 'misc') return { unbilled: true, category: 'misc' };
+  if (lc === 'permitting') return { unbilled: true, category: 'permitting' };
+  // Bare WO label with no customer prefix: "WO #16295", "WO 16295", "WO16295".
+  if (/^wo\s*[#-]?\s*\d+$/i.test(s)) return { unbilled: true, category: 'wo_only' };
+  return { unbilled: false, category: null };
 }
 
 const MONTH_LOOKUP = {
@@ -363,6 +390,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const rawHrs = r[cols.hours];
         const rawTitle = cols.job_title ? r[cols.job_title] : null;
         const rawWeekEnding = cols.week_ending ? r[cols.week_ending] : null;
+        const rawCustomer = cols.customer ? r[cols.customer] : null;
 
         const allBlank = !String(rawName ?? '').trim()
           && !String(rawWO ?? '').trim()
@@ -374,6 +402,8 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           const we = parseDateCell(rawWeekEnding);
           if (we) { anchorYear = parseInt(we.split('-')[0], 10); anchorDate = we; }
         }
+
+        const { unbilled, category: unbilledCategory } = classifyUnbilled(rawCustomer);
 
         const issues = [];
         const name = (rawName || '').toString().trim();
@@ -388,12 +418,14 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           if (d > today) issues.push('date is in the future');
           else if (d < past18) issues.push('date is more than 18 months ago');
         }
-        if (!woNorm) issues.push('missing work order');
+        // Unbilled rows are allowed to have no WO# — they're overhead
+        // hours that don't map to a real project.
+        if (!woNorm && !unbilled) issues.push('missing work order');
         if (isNaN(hrs) || hrs <= 0) issues.push('invalid hours');
         if (hrs > 24) issues.push('hours > 24 in a single entry');
 
         if (issues.length) {
-          invalidRows.push({ row_num: rowNum, raw: { name: rawName, date: rawDate, wo: rawWO, hours: rawHrs }, issues });
+          invalidRows.push({ row_num: rowNum, raw: { name: rawName, date: rawDate, wo: rawWO, hours: rawHrs, customer: rawCustomer }, issues });
           return;
         }
 
@@ -407,16 +439,22 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const jobSource = codeLookup ? 'billing_code' : (rowTitle ? 'column' : (inferredJobTitle ? 'filename' : null));
         const jobMissing = !finalTitle;
 
-        const proj = pickProject(woNorm, codeLookup);
-        const woKnown = !!proj;
+        // Unbilled rows skip project matching entirely — they live with
+        // project_id=NULL and is_billable=FALSE. wo_known stays TRUE for
+        // unbilled rows so the commit step doesn't bucket them into the
+        // "skipped_unknown_wo" tally; they're intentionally project-less,
+        // not unmatched.
+        const proj = unbilled ? null : pickProject(woNorm, codeLookup);
+        const woKnown = unbilled ? true : !!proj;
 
         if (!staffKnown) unknownStaff.set(normalizeName(name), name);
-        if (!woKnown) unknownWOs.set(woNorm, String(rawWO).trim());
+        if (!unbilled && !proj) unknownWOs.set(woNorm, String(rawWO).trim());
 
         validRows.push({
           row_num: rowNum,
           name, name_norm: normalizeName(name),
-          wo: String(rawWO).trim(), wo_norm: woNorm,
+          wo: String(rawWO ?? '').trim(), wo_norm: woNorm,
+          customer: rawCustomer ? String(rawCustomer).trim() : null,
           date, hours: hrs,
           job_title: finalTitle,
           job_source: jobSource,
@@ -427,7 +465,9 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           project_name: proj?.name || null,
           project_job_name: proj?.job_name || null,
           staff_known: staffKnown,
-          wo_known: woKnown
+          wo_known: woKnown,
+          is_billable: !unbilled,
+          unbilled_category: unbilledCategory
         });
       });
 
@@ -475,18 +515,37 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       // distinct entries — this matches the per-day, per-job ledger the
       // operator actually keeps. Duplicate vs modify within a single
       // (staff, project, date, job) bucket comes down to hours.
+      //
+      // Unbilled rows (project_id IS NULL, is_billable=FALSE) carry their
+      // OWN match key with `UNB:<category>` standing in for project_id,
+      // so re-importing the same week's CSV doesn't pile dup
+      // Miscellaneous / Permitting rows on top of the previous pass.
       function jobKey(j) {
         return String(j || '').trim().replace(/\s+/g, ' ').toLowerCase();
       }
-      const matchKeys = [];
+      const matchKeys = [];           // billed rows (project_id present)
+      const unbilledMatchKeys = [];   // unbilled rows (project_id NULL)
       for (const r of validRows) {
-        if (r.staff_id && r.project_id && r.date) {
+        if (!r.staff_id || !r.date) {
+          r.csv_classification = 'new';
+          continue;
+        }
+        if (r.is_billable === false) {
+          // Unbilled row: dedup against existing unbilled rows for the
+          // same (staff, date, category, job).
+          const cat = r.unbilled_category || 'misc';
+          unbilledMatchKeys.push({ staff_id: r.staff_id, entry_date: r.date });
+          r.match_key = `${r.staff_id}|UNB:${cat}|${r.date}|${jobKey(r.job_title)}`;
+        } else if (r.project_id) {
           matchKeys.push({ staff_id: r.staff_id, project_id: r.project_id, entry_date: r.date });
           r.match_key = `${r.staff_id}|${r.project_id}|${r.date}|${jobKey(r.job_title)}`;
         } else {
+          // Billed row that didn't resolve a project — leave as 'new';
+          // commit will skip via skipped_unknown_wo.
           r.csv_classification = 'new';
         }
       }
+      const byKey = new Map();
       if (matchKeys.length) {
         const staffArr = matchKeys.map(k => k.staff_id);
         const projArr = matchKeys.map(k => k.project_id);
@@ -503,14 +562,38 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
              AND project_id = ANY($2::uuid[])
              AND entry_date = ANY($3::date[])
         `, [staffArr, projArr, dateArr]);
-        const byKey = new Map();
         for (const e of existing) {
           const k = `${e.staff_id}|${e.project_id}|${e.entry_date}|${jobKey(e.job_title)}`;
           if (!byKey.has(k)) byKey.set(k, []);
           byKey.get(k).push(e);
         }
+      }
+      if (unbilledMatchKeys.length) {
+        // Separate query — the billed-row lookup uses `project_id = ANY(...)`
+        // which can't tolerate NULL. Look up the unbilled siblings of every
+        // CSV row at (staff, date) and bucket them by `UNB:<category>` so
+        // the four-part match key matches the validate-side keys above.
+        const sArr = unbilledMatchKeys.map(k => k.staff_id);
+        const dArr = unbilledMatchKeys.map(k => k.entry_date);
+        const { rows: existing } = await pool.query(`
+          SELECT id, staff_id, entry_date::text AS entry_date,
+                 hours::float AS hours, job_title, unbilled_category
+            FROM time_entries
+           WHERE staff_id = ANY($1::uuid[])
+             AND entry_date = ANY($2::date[])
+             AND project_id IS NULL
+             AND is_billable = FALSE
+        `, [sArr, dArr]);
+        for (const e of existing) {
+          const cat = e.unbilled_category || 'misc';
+          const k = `${e.staff_id}|UNB:${cat}|${e.entry_date}|${jobKey(e.job_title)}`;
+          if (!byKey.has(k)) byKey.set(k, []);
+          byKey.get(k).push(e);
+        }
+      }
+      if (byKey.size > 0) {
         for (const r of validRows) {
-          if (r.csv_classification === 'new') continue;
+          if (r.csv_classification === 'new' || !r.match_key) continue;
           const matches = byKey.get(r.match_key) || [];
           if (matches.length === 0) {
             r.csv_classification = 'new';
@@ -556,6 +639,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
           rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
           rows_in_billed_periods: billedConflictCount,
+          unbilled_rows: validRows.filter(r => !r.is_billable).length,
           invalid: invalidRows.length,
           would_add: csvClassTally.new || 0,
           would_skip_duplicate: csvClassTally.duplicate || 0,
@@ -821,7 +905,15 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       const skipDuplicates = req.body?.skip_duplicates !== false;
 
       for (const r of staged.validRows) {
-        if (!r.wo_known) { skipped_unknown_wo++; continue; }
+        // Unbilled rows are allowed to commit without a project (they're
+        // overhead, not pinned to a customer). r.wo_known is set to TRUE
+        // on the validate side for unbilled rows so this guard only fires
+        // for real WO matches that failed.
+        if (!r.is_billable) {
+          // Defensive: if a billed row somehow ends up flagged unbilled
+          // here, it would commit with project_id=NULL. Only allow that
+          // when the validate side actually classified it.
+        } else if (!r.wo_known) { skipped_unknown_wo++; continue; }
         const staffId = r.staff_id || staffByNorm[r.name_norm] || null;
         if (!staffId) { skipped_unresolved_staff++; continue; }
         if (skip_billed_period_rows && r.already_billed_period) { skipped_billed_period++; continue; }
@@ -853,13 +945,14 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const snappedHours = snapHoursToQuarter(r.hours);
 
         const { rows: insRows } = await client.query(
-          `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
-           VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-          [r.project_id, staffId, r.date, snappedHours, finalJobTitle, importBatch]
+          `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch, is_billable, unbilled_category)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+          [r.project_id, staffId, r.date, snappedHours, finalJobTitle, importBatch,
+           r.is_billable !== false, r.unbilled_category || null]
         );
         if (insRows[0]) insertedRows.push(insRows[0]);
         inserted++;
-        projectIds.add(r.project_id);
+        if (r.project_id) projectIds.add(r.project_id);
       }
 
       await client.query('COMMIT');
@@ -912,4 +1005,5 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 module.exports._helpers = {
   normalizeWO, normalizeName, detectColumns, MONTH_LOOKUP,
   parseDateCell, inferYear, findHeaderRow, arrayToObjects, inferJobTitle,
+  classifyUnbilled,
 };

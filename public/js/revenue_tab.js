@@ -131,12 +131,13 @@
     document.getElementById('rev-ytd-btn').className = 'btn btn-sm ' + (isYTD ? 'btn-primary' : 'btn-secondary');
 
     // Load all data
-    const [monthly, byClient, details, unbilled, projectedTotal] = await Promise.all([
+    const [monthly, byClient, details, unbilled, projectedTotal, hoursUtil] = await Promise.all([
       api('/api/revenue/monthly-summary?year=' + y),
       api('/api/revenue/by-client?year=' + y + (m ? '&month=' + m : '')),
       api('/api/revenue/details?year=' + y + (m ? '&month=' + m : '')),
       api('/api/revenue/unbilled'),
-      api('/api/revenue/projected-total')
+      api('/api/revenue/projected-total'),
+      api('/api/revenue/hours-utilization?year=' + y + (m ? '&month=' + m : ''))
     ]);
     revMonthlySummary = monthly;
 
@@ -187,6 +188,11 @@
         <div class="stat-label">Unbilled Completed</div>
         <div class="stat-value">${fmtMoney(totalUnbilled)}</div>
         <div class="stat-sub">${unbilled.length} project${unbilled.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="stat-card ${(hoursUtil?.unbilled_hours || 0) > 0 ? 'warn' : ''}" title="Share of staff hours that landed on a billable project. Unbilled = Miscellaneous, Permitting, or unassigned WO# rows from the timeclock CSV.">
+        <div class="stat-label">Hours Utilization</div>
+        <div class="stat-value">${(hoursUtil?.billed_pct ?? 0).toFixed(1)}%</div>
+        <div class="stat-sub">${fmt(hoursUtil?.billed_hours || 0, 'hrs')} billed / ${fmt(hoursUtil?.total_hours || 0, 'hrs')} total · ${fmt(hoursUtil?.unbilled_hours || 0, 'hrs')} unbilled</div>
       </div>
       <!-- Projected Revenue tile retired pending revisit. The drilldown
            list (showProjectedList → /api/revenue/projected-total)
@@ -278,15 +284,11 @@
   ];
   _revSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _revDebounce));
 
-  const _prevShowViewRev = window.showView;
-  if (typeof _prevShowViewRev === 'function') {
-    window.showView = function(view) {
-      _prevShowViewRev(view);
-      if (view === 'revenue' && _revStale) {
-        _revStale = false;
-        clearTimeout(_revStaleTimer);
-        _revStaleTimer = setTimeout(loadRevenue, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'revenue' && _revStale) {
+      _revStale = false;
+      clearTimeout(_revStaleTimer);
+      _revStaleTimer = setTimeout(loadRevenue, 100);
+    }
+  });
 })();

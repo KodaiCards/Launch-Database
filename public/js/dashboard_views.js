@@ -513,15 +513,11 @@
   ];
   _dashSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _dashDebounce));
 
-  const _prevShowViewDash = window.showView;
-  if (typeof _prevShowViewDash === 'function') {
-    window.showView = function(view) {
-      _prevShowViewDash(view);
-      if (view === 'dashboard' && _dashStale) {
-        _dashStale = false;
-        clearTimeout(_dashStaleTimer);
-        _dashStaleTimer = setTimeout(loadDashboard, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'dashboard' && _dashStale) {
+      _dashStale = false;
+      clearTimeout(_dashStaleTimer);
+      _dashStaleTimer = setTimeout(loadDashboard, 100);
+    }
+  });
 })();

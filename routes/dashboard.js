@@ -145,9 +145,9 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
                  COALESCE((SELECT SUM(te.hours) FROM time_entries te WHERE te.project_id = p.id), 0) as own_hours,
                  COALESCE((
                    WITH RECURSIVE tree AS (
-                     SELECT p.id AS tid
+                     SELECT p.id AS tid, 0 AS depth
                      UNION ALL
-                     SELECT c.id FROM projects c JOIN tree t ON c.parent_id = t.tid
+                     SELECT c.id, t.depth + 1 FROM projects c JOIN tree t ON c.parent_id = t.tid WHERE t.depth < 10
                    )
                    SELECT SUM(
                      CASE

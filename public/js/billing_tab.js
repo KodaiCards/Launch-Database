@@ -305,15 +305,11 @@
   ];
   _billSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _billDebounce));
 
-  const _prevShowViewBill = window.showView;
-  if (typeof _prevShowViewBill === 'function') {
-    window.showView = function(view) {
-      _prevShowViewBill(view);
-      if (view === 'billing' && _billStale) {
-        _billStale = false;
-        clearTimeout(_billStaleTimer);
-        _billStaleTimer = setTimeout(loadBilling, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'billing' && _billStale) {
+      _billStale = false;
+      clearTimeout(_billStaleTimer);
+      _billStaleTimer = setTimeout(loadBilling, 100);
+    }
+  });
 })();

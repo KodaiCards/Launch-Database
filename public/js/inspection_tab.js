@@ -321,17 +321,11 @@
   ];
   _inspSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _inspDebounce));
 
-  // Hook into showView so we reload when user switches to inspection tab
-  const _origShowViewInsp = typeof showView === 'function' ? showView : null;
-  if (_origShowViewInsp) {
-    const _prevShowView = window.showView;
-    window.showView = function(view) {
-      _prevShowView(view);
-      if (view === 'inspection' && _inspStale) {
-        _inspStale = false;
-        clearTimeout(_inspStaleTimer);
-        _inspStaleTimer = setTimeout(loadInspection, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'inspection' && _inspStale) {
+      _inspStale = false;
+      clearTimeout(_inspStaleTimer);
+      _inspStaleTimer = setTimeout(loadInspection, 100);
+    }
+  });
 })();

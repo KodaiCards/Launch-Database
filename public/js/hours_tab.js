@@ -62,17 +62,19 @@
     const period = document.getElementById('hrs-period')?.value || 'month';
     const m = document.getElementById('hrs-month').value;
     const y = document.getElementById('hrs-year').value;
+    const staffFilter = document.getElementById('hrs-staff')?.value || '';
+    const billableFilter = document.getElementById('hrs-billable')?.value || 'all';
     // Hide month picker in YTD mode (also done eagerly by syncHrsPeriodVisibility)
     const mEl = document.getElementById('hrs-month');
     if (mEl) mEl.style.display = period === 'ytd' ? 'none' : '';
 
     // Build query — month+year if month mode, year only for YTD
-    let qs;
-    if (period === 'ytd') {
-      qs = `year=${y}`;
-    } else {
-      qs = `month=${m}&year=${y}`;
-    }
+    const qsParts = [];
+    if (period === 'ytd') qsParts.push(`year=${y}`);
+    else qsParts.push(`month=${m}&year=${y}`);
+    if (staffFilter) qsParts.push(`staff_id=${encodeURIComponent(staffFilter)}`);
+    if (billableFilter && billableFilter !== 'all') qsParts.push(`billable=${encodeURIComponent(billableFilter)}`);
+    const qs = qsParts.join('&');
     let entries = await api(`/api/time-entries?${qs}`);
     const periodLabel = period === 'ytd'
       ? `YTD ${y}`
@@ -80,11 +82,16 @@
     document.getElementById('hrs-report-title').textContent = `Hours Report — ${periodLabel}`;
 
     const total = entries.reduce((s, e) => s + parseFloat(e.hours), 0);
+    const billedTotal   = entries.filter(e => e.is_billable !== false).reduce((s, e) => s + parseFloat(e.hours), 0);
+    const unbilledTotal = entries.filter(e => e.is_billable === false).reduce((s, e) => s + parseFloat(e.hours), 0);
+    const billedPct = total > 0 ? Math.round((billedTotal / total) * 100) : 0;
     const byType = {};
     entries.forEach(e => { byType[e.project_type] = (byType[e.project_type] || 0) + parseFloat(e.hours); });
     const staffCount = new Set(entries.map(e => e.staff_name).filter(Boolean)).size;
     document.getElementById('hrs-stats').innerHTML = [
       `<div class="stat-card accent"><div class="stat-label">Total Hours</div><div class="stat-value">${fmt(total, 'hrs')}</div><div class="stat-sub">${staffCount} staff member${staffCount !== 1 ? 's' : ''}</div></div>`,
+      `<div class="stat-card"><div class="stat-label">Billed Hours</div><div class="stat-value">${fmt(billedTotal, 'hrs')}</div><div class="stat-sub">${billedPct}% of total</div></div>`,
+      `<div class="stat-card" style="${unbilledTotal > 0 ? 'border-left:4px solid var(--warning,#FFC107)' : ''}"><div class="stat-label">Unbilled Hours</div><div class="stat-value">${fmt(unbilledTotal, 'hrs')}</div><div class="stat-sub">${total > 0 ? (100 - billedPct) : 0}% of total</div></div>`,
       ...Object.entries(byType).map(([t, h]) => `<div class="stat-card" style="cursor:pointer" onclick="showHoursTypeBreakdown('${esc(t)}','${esc(TYPE_LABELS[t] || t)}')" title="Click to see who logged these hours"><div class="stat-label">${TYPE_LABELS[t] || t}</div><div class="stat-value">${fmt(h, 'hrs')}</div></div>`)
     ].join('');
 
@@ -92,15 +99,18 @@
     const grouped = document.getElementById('hours-grouped-body');
     const groupBy = document.getElementById('hrs-groupby')?.value || 'project';
 
-    // Held timecards: rows with no real project. Surface them in the warning
-    // panel above the tree and filter them out of the regular entries list.
-    // Stash held rows in the entry-by-id map up front, BEFORE the tree-
-    // rendering loop replaces it; the held panel's [pencil] button looks up
-    // by id, and skipping this leaves held rows un-editable.
-    const heldEntries = entries.filter(e => !e.project_id);
+    // Held timecards (legacy): project_id IS NULL with no unbilled marker
+    // — these are pending-approval rows the admin still needs to attach.
+    // Unbilled rows (new): is_billable=FALSE; surfaced in their own
+    // section below the held panel and excluded from the project tree
+    // (which depends on a project_id to render).
+    const heldEntries = entries.filter(e => !e.project_id && e.is_billable !== false);
+    const unbilledEntries = entries.filter(e => e.is_billable === false);
     _hoursEntriesById.clear();
     for (const e of heldEntries) _hoursEntriesById.set(String(e.id), e);
+    for (const e of unbilledEntries) _hoursEntriesById.set(String(e.id), e);
     if (typeof renderHeldTimecardsPanel === 'function') renderHeldTimecardsPanel(heldEntries);
+    if (typeof renderUnbilledHoursPanel === 'function') renderUnbilledHoursPanel(unbilledEntries);
     entries = entries.filter(e => !!e.project_id);
     // Calendar / non-project group-by branches return before reaching the
     // project-tree loop that normally populates the map. Pre-populate here
@@ -647,15 +657,11 @@
   ];
   _hoursSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _hoursDebounce));
 
-  const _prevShowViewHours = window.showView;
-  if (typeof _prevShowViewHours === 'function') {
-    window.showView = function(view) {
-      _prevShowViewHours(view);
-      if (view === 'hours' && _hoursStale) {
-        _hoursStale = false;
-        clearTimeout(_hoursStaleTimer);
-        _hoursStaleTimer = setTimeout(loadHours, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'hours' && _hoursStale) {
+      _hoursStale = false;
+      clearTimeout(_hoursStaleTimer);
+      _hoursStaleTimer = setTimeout(loadHours, 100);
+    }
+  });
 })();

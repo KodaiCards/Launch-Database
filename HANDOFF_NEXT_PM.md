@@ -1,0 +1,132 @@
+# Handoff — Next Claude PM
+
+> **Read this whole file before doing anything.** The user explicitly named you a project manager. Your value is in delegation + review, not in writing code yourself.
+
+## Your role
+
+You are a **project manager**. Your job is to:
+
+1. **Understand the user's goal deeply** before any work starts. Ask focused questions when context is missing — but only when missing. Don't ask for things that are already in this doc.
+2. **Delegate to Sonnet sub-agents** via the `Agent` tool (`subagent_type: "general-purpose"` or one of the specialised agents). Brief them like a senior engineer briefing a smart colleague: explain the goal, the constraints, what's already been tried, and exactly what changes you expect.
+3. **Review what they produced** before reporting it as done. The Agent tool gives you a *summary* — that's the agent's intent, not necessarily reality. Always read the actual diff (`git diff`, `git show`, or `Read` on the changed files) before you tell the user it's complete. Run the tests yourself: `DATABASE_URL=postgresql://lftest:lftest@localhost:5432/launchfiber_test npm test`.
+4. **Take liberties only when you fully understand the goal.** The user values speed and judgment. If a small refactor or extra fix obviously serves the goal, do it. If you're not sure whether they'd want it, ask.
+5. **Don't write code yourself unless the task is trivial.** A 5-line fix or a one-file edit can be done inline. Anything bigger should be delegated so you stay focused on understanding + reviewing.
+
+The user is technical enough to spot sloppy work. They called out a missing dedup case the previous Claude failed to anticipate ("that should've been obvious") — they expect you to think one step ahead.
+
+## Repository
+
+- Path: `/home/user/Launch-Database`
+- Branch you must develop on: `claude/splice-matrix-railway-setup-IIG3Q`
+- Remote: `KodaiCards/launch-database`. **DO NOT push to any other branch without explicit permission.**
+- Test DB: `postgresql://lftest:lftest@localhost:5432/launchfiber_test` (local Postgres started via `sudo service postgresql start`).
+- Production runs on Railway. Schema migrations live in `migrations/NNNN_*.sql` and apply on boot via `db_migrations.js`.
+
+## What just shipped (last 2 commits on this branch)
+
+### Commit 1 — Track billed vs unbilled hours from timeclock CSVs
+
+Timeclock app exports a `customer` column. When the tech picks `Miscellaneous`, `Permitting`, or a bare `WO #N` (no customer prefix), those hours are overhead — not pinned to a project. Previously the importer dropped them silently because the WO# didn't match a project. Now they persist with `project_id=NULL`, `is_billable=FALSE`, and an `unbilled_category` ('misc' | 'permitting' | 'wo_only').
+
+**Files**: `migrations/0029_time_entries_billable.sql`, `routes/hours_csv.js`, `routes/time_entries.js`, `routes/revenue.js`, `public/admin.html`, `public/js/hours_tab.js`, `public/js/revenue_tab.js`, `public/js/unbilled_hours_panel.js`, `tests/csv_import.test.js`.
+
+**UI surfaces added**:
+- Hours tab toolbar: Person dropdown + Billed/Unbilled segment toggle.
+- Hours tab stat cards: Total / Billed / Unbilled (with % of total).
+- Hours tab body: new "Unbilled Hours" panel below "Needs Project Assignment", grouped by category.
+- Revenue tab: "Hours Utilization" tile showing `XX.X% billed` with `billed / total · unbilled` sub-line.
+
+**API surfaces added**:
+- `GET /api/time-entries?billable=billed|unbilled|all` — segment filter on top of existing `?staff_id=`.
+- `GET /api/revenue/hours-utilization?year=&month=&staff_id=` — returns total / billed / unbilled hours + per-category breakdown.
+
+### Commit 2 (in progress, not yet pushed) — Dedup fix + audit-table retention
+
+Two problems addressed in one commit:
+
+**(a) Unbilled-row dedup**: re-importing the same timeclock CSV would have created duplicate unbilled rows because the dedup match key relied on `project_id`, which is NULL for unbilled rows. Fixed by extending the match key to use `staff|UNB:<category>|date|job` for unbilled rows and running a separate `WHERE project_id IS NULL AND is_billable = FALSE` lookup query. Test coverage added.
+
+**(b) Postgres disk leak**: `time_entry_audit` table grew unbounded — every CSV-imported row + every admin/portal/timeclock mutation logs a row with full before/after JSON. With months of imports it filled the user's Railway Postgres disk. Fix:
+- `runAuditCleanup(pool, opts)` in `automation.js`: deletes `meaningful=FALSE` rows older than 90 days, then ANY rows older than 18 months, then a non-FULL `VACUUM`.
+- Wired into the daily scheduler tick — runs once per day automatically.
+- Admin endpoint `POST /api/_admin/audit-cleanup` for one-shot manual runs (with optional `vacuum_full: true` for OS-level disk reclaim during a maintenance window).
+- Diagnostic endpoint `GET /api/_admin/db-sizes` returns the top-20 tables by size (avoids forcing the user to find a psql shell).
+
+**Files**: `routes/hours_csv.js`, `routes/admin.js`, `automation.js`, `auth.js` (test bypass), `tests/csv_import.test.js`, `tests/audit_cleanup.test.js`.
+
+154/154 tests green at the time of writing.
+
+## What the user asked for next
+
+> "Fix the dedupe for unbilled projects, that should've been obvious. Once you fix both of these issues write down the context of this conversation to pass to another claude."
+
+Both issues are fixed in commit 2 (still uncommitted in your worktree as of this handoff — see `git status`). Your first job is to **commit + push** what's there, then mind the disk-space situation.
+
+## Immediate next steps for you (in order)
+
+1. **Commit + push the in-progress changes** (handle this carefully):
+   - `git status` — confirm: dedupe fix + audit cleanup + db-sizes endpoint + this handoff file.
+   - `git add` only the relevant files. Don't add anything you don't recognize.
+   - Commit message should explain BOTH the dedup fix AND the audit cleanup — they're related to the user's last message.
+   - `git push -u origin claude/splice-matrix-railway-setup-IIG3Q`.
+2. **The user has a live disk-space problem on Railway right now.** Tell them:
+   - "Your prod will pick up the new endpoints when you deploy. As soon as it's live, hit `GET /api/_admin/db-sizes` in your browser (admin login) — it returns the top tables. Then `POST /api/_admin/audit-cleanup` (no body needed) to delete old audit rows + VACUUM. If `time_entry_audit` was the culprit (most likely), you're done. If it wasn't the leak source, paste the db-sizes JSON back to me and I'll write a targeted prune for whichever table actually grew."
+   - The user couldn't find the Railway query console earlier. The endpoint approach removes that obstacle.
+3. **Stand by for the user to deploy + run the diagnostic.** When they paste the top tables back:
+   - If `time_entry_audit` dominates: they should run `POST /api/_admin/audit-cleanup {"vacuum_full": true}` during a maintenance window for OS-level reclaim.
+   - If a different table dominates (likely candidates: `splice_design_imports`, `splice_design_import_changes`, `ai_messages`, `splice_field_markups`, `splice_loss_records`): write a targeted retention pass for THAT table. Don't generalize prematurely — do the one that's actually bleeding.
+
+## Understanding the user's broader goal
+
+The user is the founder/operator of Launch Fiber Services. The repo is the operational backbone of the business — admin portal (project tracking, hours, billing, revenue), timeclock portal (engineers self-log), permitting portal, customer portal, splice matrix tool. The North Star (`PROJECT_NORTH_STAR.md`) is *don't lose time-entry rows* + *the data the operator is looking at must match reality*.
+
+Common pitfalls in this codebase that you should watch for when reviewing sub-agent work:
+
+- **Hours flowing to the wrong project**: WO# matching is non-trivial because RUS jobs use rollup trees (Cummings → 16299 → Inspection vs Resident Engineer). `pickProject()` in `routes/hours_csv.js` is the canonical resolver — never re-implement that logic elsewhere.
+- **Soft-delete + undo**: many destructive admin actions stage to `undo_buckets` with a 60s TTL. Don't bypass that.
+- **Audit trail**: `auditTimeEntry()` is called on every time-entry mutation. The retention policy now keeps things from blowing up; don't add new high-cardinality audit/event tables without retention.
+- **SSE broadcasts**: writes to canonical tables call `broadcast(channel, event, payload)` from `routes/_sse.js`. Subscribers in browser tabs refresh on relevant events. Don't add SSE writes inside DB transactions (they're fire-and-forget; should run AFTER commit).
+- **Project tree integrity**: `is_rollup` + `parent_id` form a hierarchy used by RUS reports + invoicing. Hours land on leaves, not rollups. The recursive CTE in `routes/hours_csv.js` line ~257 is the canonical "find leaves under a WO" logic — copy from there if you need similar.
+- **Test DB rate-limit bypass**: `auth.js`'s `rateLimitOk` short-circuits when `NODE_ENV=test` — added recently because the test suite hammers admin login. Don't remove this.
+
+## Recurring patterns the user prefers
+
+- **Migrations**: numbered `migrations/NNNN_label.sql`. Idempotent (`IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`). One concern per file.
+- **Comments on the WHY**: long comments explaining hidden constraints / past bugs that motivated a non-obvious choice. The codebase is heavy on these and they save real time during review. Match the style.
+- **Tests**: `tests/*.test.js` using `node --test`. Each test seeds via `fixtures.*` from `tests/_helpers.js`, registers cleanup in `trash`. Run with `DATABASE_URL=postgresql://lftest:lftest@localhost:5432/launchfiber_test npm test`.
+- **No emojis** in code or commit messages unless the user explicitly asks for them.
+- **Commit messages**: brief title (60 chars), body explains why. Trail with the Claude session URL the harness gives you.
+- **Don't use `git --amend`, `--force-push`, or `--no-verify`** without explicit permission.
+
+## The Splice Matrix sibling project
+
+The branch name (`claude/splice-matrix-railway-setup-IIG3Q`) is a session identifier — it's not splice-only work. The branch carries everything the user has done in this session, including the unbilled-hours feature. Don't let the name confuse you.
+
+That said: the Splice Matrix tool is a separate logical product inside the same repo (`public/splice.html` + `routes/splice.js` + tons of `splice_*` tables + `SPLICE_BUILD_PLAN.md`). If a task targets the splice tool, the `project-tracking` agent in your tool list explicitly excludes splice — use the `general-purpose` agent or write inline. The `project-tracking` agent is for the admin/timeclock/customer/permitting/design portals.
+
+## Tools you should use
+
+- `Agent` with `subagent_type: "general-purpose"` for anything ≥ 30 min of work.
+- `Agent` with `subagent_type: "Explore"` for "where is X defined / which files reference Y" — fast read-only.
+- `Agent` with `subagent_type: "Plan"` to design implementation strategy on bigger tasks before kicking off the implementer agent.
+- `Agent` with `subagent_type: "project-tracking"` ONLY for non-splice admin/portal work (it has full tool access and knows the project-tracking system).
+- Don't over-use sub-agents for trivia. A one-line fix doesn't need an agent — just edit and run tests.
+
+## Files that exist for orientation
+
+- `PROJECT_NORTH_STAR.md` — the user's north star. Read this first if you haven't.
+- `BUILD_PLAN.md` — historical roadmap.
+- `SPLICE_BUILD_PLAN.md` — splice-only roadmap (separate product).
+- `ADMIN_FIXES_PLAN.md` — recent fix queue.
+- `PORTAL_LAUNCHER_PLAN.md` — multi-portal architecture context.
+- `migrations/README.md` — migration conventions.
+- `tests/_helpers.js` — test infrastructure.
+- `routes/hours_csv.js` — the file you'll spend the most time in if more CSV-import work comes up.
+- `automation.js` — daily/hourly scheduler. Add new periodic jobs here.
+
+## Final reminders
+
+- The user trusts your judgment but rewards thoroughness. "Should've been obvious" is the worst feedback you can get; "you thought of X before I did" is the best.
+- When in doubt about scope: ask. One short clarifying question is cheaper than a 30-minute wrong implementation.
+- Keep responses tight. Write code, don't write essays.
+- Run the tests before saying "done."

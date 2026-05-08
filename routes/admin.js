@@ -367,6 +367,97 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     }
   });
 
+  // GET /api/_admin/db-sizes — diagnostic to find which tables are
+  // eating Postgres disk. Removes the need for the admin to find a
+  // psql shell on Railway. Returns the top 20 tables by total size
+  // (heap + indexes + TOAST), with live + dead row counts so a bloated
+  // table is obvious. Visit /api/_admin/db-sizes in the browser while
+  // logged in as admin.
+  app.get('/api/_admin/db-sizes', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT
+          schemaname || '.' || relname           AS table_name,
+          pg_total_relation_size(relid)::bigint  AS total_bytes,
+          pg_relation_size(relid)::bigint        AS heap_bytes,
+          pg_indexes_size(relid)::bigint         AS index_bytes,
+          pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+          pg_size_pretty(pg_relation_size(relid))       AS heap_size,
+          pg_size_pretty(pg_indexes_size(relid))        AS index_size,
+          n_live_tup::bigint                     AS live_rows,
+          n_dead_tup::bigint                     AS dead_rows
+        FROM pg_stat_user_tables
+        ORDER BY pg_total_relation_size(relid) DESC
+        LIMIT 20
+      `);
+      const dbSizeR = await pool.query(
+        `SELECT pg_size_pretty(pg_database_size(current_database())) AS db_size,
+                pg_database_size(current_database())::bigint AS db_bytes`);
+      res.json({
+        database_size:  dbSizeR.rows[0].db_size,
+        database_bytes: dbSizeR.rows[0].db_bytes,
+        top_tables: rows,
+        hint: 'If time_entry_audit dominates, POST /api/_admin/audit-cleanup '
+            + 'to prune it. To return disk space to the OS afterwards, '
+            + 'POST that endpoint with {"vacuum_full": true} during a '
+            + 'maintenance window (locks the table for the duration).',
+      });
+    } catch (e) {
+      console.error('[admin:db-sizes]', e && e.message);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // POST /api/_admin/audit-cleanup — one-shot manual audit-table
+  // cleanup. Used to reclaim Postgres disk when the daily scheduler
+  // hasn't kept up (e.g. after an initial deploy where months of
+  // history accumulated before the retention task existed). The
+  // scheduler also runs runAuditCleanup() once a day on its own.
+  //
+  // Body params (all optional):
+  //   retain_trivial_days  — keep meaningful=FALSE rows newer than this
+  //                          (default 90)
+  //   retain_hard_months   — keep ANY rows newer than this (default 18)
+  //   vacuum_full          — when TRUE, follow up with VACUUM FULL.
+  //                          ACCESS EXCLUSIVE lock on time_entry_audit
+  //                          for the duration; only run during a
+  //                          maintenance window.
+  app.post('/api/_admin/audit-cleanup', requireAdmin, async (req, res) => {
+    const { runAuditCleanup } = require('../automation');
+    const body = req.body || {};
+    try {
+      const result = await runAuditCleanup(pool, {
+        retainTrivialDays: body.retain_trivial_days,
+        retainHardMonths:  body.retain_hard_months,
+      });
+      let vacuumFullRan = false;
+      let vacuumFullError = null;
+      if (body.vacuum_full === true) {
+        try {
+          await pool.query(`VACUUM FULL time_entry_audit`);
+          vacuumFullRan = true;
+        } catch (e) {
+          vacuumFullError = e.message;
+        }
+      }
+      res.json({
+        ...result,
+        vacuum_full_ran:  vacuumFullRan,
+        vacuum_full_error: vacuumFullError,
+        hint: result.trivial_deleted + result.hard_deleted === 0
+          ? 'No rows old enough to prune at the requested retention windows.'
+          : `Removed ${result.trivial_deleted + result.hard_deleted} rows. `
+            + (vacuumFullRan
+                ? 'VACUUM FULL completed — disk space returned to OS.'
+                : 'Plain VACUUM ran (table space marked reusable). '
+                + 'POST {"vacuum_full": true} during a maintenance window to return disk space to the OS.'),
+      });
+    } catch (e) {
+      console.error('[admin:audit-cleanup]', e && e.message);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // GET /api/_admin/rus-hours-debug — diagnostic for the RUS tab
   // hours-attribution gap. Shows which time_entries fall inside RUS
   // projects but aren't captured by the leaf-matching CTE, and explains

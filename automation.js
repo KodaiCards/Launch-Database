@@ -974,12 +974,68 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
 }
 
 // ─── SCHEDULER ─────────────────────────────────────────────────────────────
+// Audit-table retention + reclaim. The time_entry_audit table records
+// every CSV-imported row + every admin/portal/timeclock mutation, with
+// full before/after JSON blobs. Without retention it grows linearly
+// with edits and (since each CSV import touches every uploaded row) can
+// fill a small Postgres disk in months.
+//
+// Policy:
+//   - Drop rows where meaningful=FALSE older than RETAIN_TRIVIAL_DAYS
+//     (default 90). These are notes/title-typo edits; payroll never
+//     looks at them past the current quarter.
+//   - Drop ALL rows older than RETAIN_HARD_MONTHS (default 18). Beyond
+//     that horizon the underlying time_entries themselves are typically
+//     locked + invoiced, so the forensic value drops sharply.
+//
+// Returns { trivial_deleted, hard_deleted, total_before, total_after }.
+// Caller decides whether to follow up with VACUUM (auto, by default)
+// or VACUUM FULL (manual, locks the table — leave it to the admin
+// endpoint).
+async function runAuditCleanup(pool, opts = {}) {
+  const trivialDays    = Number.isFinite(opts.retainTrivialDays)
+    ? Math.max(1, opts.retainTrivialDays) : 90;
+  const hardMonths     = Number.isFinite(opts.retainHardMonths)
+    ? Math.max(1, opts.retainHardMonths) : 18;
+  const skipVacuum     = opts.skipVacuum === true;
+
+  const before = await pool.query(`SELECT COUNT(*)::int AS n FROM time_entry_audit`);
+  const trivial = await pool.query(
+    `DELETE FROM time_entry_audit
+      WHERE meaningful = FALSE
+        AND at < NOW() - ($1 || ' days')::interval`,
+    [String(trivialDays)]);
+  const hard = await pool.query(
+    `DELETE FROM time_entry_audit
+      WHERE at < NOW() - ($1 || ' months')::interval`,
+    [String(hardMonths)]);
+  const after = await pool.query(`SELECT COUNT(*)::int AS n FROM time_entry_audit`);
+
+  // Plain VACUUM (no FULL) — non-blocking, marks freed pages reusable
+  // by Postgres so future writes land in-place instead of growing the
+  // file. Disk-level reclaim still requires VACUUM FULL during a
+  // maintenance window (admin endpoint surfaces that).
+  if (!skipVacuum) {
+    try { await pool.query(`VACUUM time_entry_audit`); }
+    catch (e) { console.error('[audit-cleanup] VACUUM failed:', e && e.message); }
+  }
+
+  return {
+    trivial_deleted: trivial.rowCount || 0,
+    hard_deleted:    hard.rowCount    || 0,
+    total_before:    before.rows[0].n,
+    total_after:     after.rows[0].n,
+    retain_trivial_days: trivialDays,
+    retain_hard_months:  hardMonths,
+  };
+}
+
 // Single setInterval that ticks hourly. Each task tracks its own last-run
 // timestamp so we don't have to align the scheduler with arbitrary clock
 // times. On boot, every task fires once so deploy logs immediately show
 // the current state — useful when triaging why no email/digest arrived.
 function startScheduler(pool, opts) {
-  const state = { lastDigest: 0, lastStale: 0, lastBurn: 0, lastFilePrune: 0 };
+  const state = { lastDigest: 0, lastStale: 0, lastBurn: 0, lastFilePrune: 0, lastAuditPrune: 0 };
   // Lazy-require admin.js so circular boot order doesn't matter — automation
   // is required from server.js before routes/admin.js installs, but at tick
   // time the module export is fully resolved.
@@ -1020,6 +1076,21 @@ function startScheduler(pool, opts) {
         }
         state.lastBurn = now;
       } catch (e) { console.error('[automation:scheduler:burn]', e && e.message); }
+    }
+    // Daily — prune the audit table. Skip the boot fire to keep redeploys
+    // light; first real tick after boot will do it. The DELETEs are quick
+    // (90-day index range) and a non-FULL VACUUM follows. Without this
+    // the table grew unbounded and ate Postgres disk in production.
+    if (reason !== 'boot' && now - state.lastAuditPrune >= DAILY_MS) {
+      try {
+        const result = await runAuditCleanup(pool);
+        if (result.trivial_deleted > 0 || result.hard_deleted > 0) {
+          console.log(`[automation:audit-prune]`,
+            `removed ${result.trivial_deleted} trivial + ${result.hard_deleted} aged rows`,
+            `(${result.total_before} → ${result.total_after})`);
+        }
+        state.lastAuditPrune = now;
+      } catch (e) { console.error('[automation:scheduler:audit-prune]', e && e.message); }
     }
     // Daily — prune orphan files older than 7 days. Conservative threshold
     // so the undo TTL (60s) and any manual recovery window safely pass
@@ -1062,5 +1133,6 @@ module.exports = {
   buildInspectionRevenueProjection,
   buildPscRusProjection,
   buildBillNowPreview,
+  runAuditCleanup,
   buildMonthlyBillingDraft,
 };

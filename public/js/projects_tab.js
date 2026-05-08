@@ -53,7 +53,15 @@
     if (status) q += `status=${status}&`;
     if (clientId) q += `client_id=${clientId}&`;
     if (type) q += `type=${type}&`;
-    allProjects = await api(q);
+    let data;
+    try {
+      data = await api(q);
+    } catch (e) {
+      const tbody = document.getElementById('projects-body');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="color:var(--danger)">Failed to load projects: ${e.message}</td></tr>`;
+      return;
+    }
+    allProjects = data;
     renderProjects(allProjects);
     // Time entry project dropdown — leaves only via the shared picker
     // helper. Picking a rollup never made sense (you can't log time
@@ -348,15 +356,11 @@
   ];
   _projSseEvents.forEach(ev => document.addEventListener('sse:' + ev, _projDebounce));
 
-  const _prevShowViewProj = window.showView;
-  if (typeof _prevShowViewProj === 'function') {
-    window.showView = function(view) {
-      _prevShowViewProj(view);
-      if (view === 'projects' && _projStale) {
-        _projStale = false;
-        clearTimeout(_projStaleTimer);
-        _projStaleTimer = setTimeout(loadProjects, 100);
-      }
-    };
-  }
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'projects' && _projStale) {
+      _projStale = false;
+      clearTimeout(_projStaleTimer);
+      _projStaleTimer = setTimeout(loadProjects, 100);
+    }
+  });
 })();
