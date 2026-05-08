@@ -35,6 +35,11 @@ test('admin can log in and open the PSC RUS tab without uncaught errors', async 
   // path because the redirect target depends on getRedirectTarget().
   await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
 
+  // Admin users land on the multi-tile launcher (no auto-redirect when
+  // multiple portals are accessible). Navigate explicitly to the admin
+  // SPA where the [data-view="inspection"] tab lives.
+  await page.goto('/admin.html');
+
   // 2. Click the PSC RUS tab. The label says "PSC RUS" but the data-view
   //    attribute still uses the historical "inspection" name. Use the
   //    attribute selector so we're robust to label tweaks.

@@ -32,3 +32,7 @@ Thumbs.db
 !.claude/agents/
 !.claude/agents/**
 package-lock.json
+
+# Playwright artifacts — regenerated each `npm run test:browser` run.
+playwright-report/
+test-results/

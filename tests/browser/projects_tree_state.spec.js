@@ -55,6 +55,11 @@ test('expanded rollup survives the 8s poll re-render', async ({ page }) => {
   await page.click('#submit-btn');
   await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
 
+  // Admin users have multiple portal tiles, so the launcher does not
+  // auto-redirect — navigate explicitly to the admin SPA where the
+  // [data-view="..."] tabs live.
+  await page.goto('/admin.html');
+
   // 2. Navigate to Projects
   await page.locator('[data-view="projects"]').click();
   // Wait for the projects table to render with our parent row. Loading
