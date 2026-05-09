@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS projects (
   name VARCHAR(200) NOT NULL,
   client_id UUID REFERENCES clients(id),
   contract_id UUID REFERENCES contracts(id),
+  engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL,
   work_order_number VARCHAR(100),
   project_type VARCHAR(50) NOT NULL,
   -- inspection | re | permitting | design | other
@@ -115,6 +116,10 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_projects_engineering_contract_id
+  ON projects (engineering_contract_id)
+  WHERE engineering_contract_id IS NOT NULL;
 
 -- ─────────────────────────────────────────
 -- TIME ENTRIES

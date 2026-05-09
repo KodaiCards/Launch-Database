@@ -1056,6 +1056,11 @@ async function bootstrapV3Schema() {
        expires_at TIMESTAMPTZ NOT NULL
      )`,
     `CREATE INDEX IF NOT EXISTS idx_undo_buckets_expires_at ON undo_buckets (expires_at)`,
+
+    // Add engineering_contract_id to projects — direct FK so rollup
+    // folders and leaf projects with contract_id=NULL are still linked
+    // to their umbrella EC. Belt-and-suspenders alongside migration 0023.
+    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL`,
   ];
   for (const sql of ddl) {
     try {

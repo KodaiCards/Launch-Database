@@ -69,7 +69,7 @@ async function isDuplicateProject(pool, name, parentId, excludeId = null) {
 // Builds (or finds) the Client → Service Area → Project Type → Team rollup
 // chain and returns the deepest existing rollup id, suitable for use as the
 // new project's parent_id.
-async function ensureRollupChain(pool, { client_id, concentrator_id, service_area_label, job_id }) {
+async function ensureRollupChain(pool, { client_id, concentrator_id, service_area_label, job_id, engineering_contract_id }, pgClient) {
   if (!client_id) return null;
 
   // Three-level rollup hierarchy: Client → Team → Service Area → (project).
@@ -107,8 +107,8 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
     rollup_level: 'client',
     rollup_key: client_id,
     name: clientName,
-    extras: { client_id }
-  });
+    extras: { client_id, engineering_contract_id: engineering_contract_id || null }
+  }, pgClient);
 
   // 2) Team folder — normalize anything that isn't 'design' or 'permitting'
   // into 'shared'. This guarantees only three possible team folders per client.
@@ -142,8 +142,8 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
     rollup_level: 'team',
     rollup_key: teamKey,
     name: teamLabel,
-    extras: { client_id }
-  });
+    extras: { client_id, engineering_contract_id: engineering_contract_id || null }
+  }, pgClient);
 
   // 3) Service Area folder — optional. Either concentrator-based (PSC) or
   // free-text label (non-PSC). If neither, skip this level.
@@ -163,16 +163,18 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
       rollup_level: 'service_area',
       rollup_key: areaKey,
       name: areaLabel,
-      extras: { client_id, concentrator_id: concentrator_id || null }
-    });
+      extras: { client_id, concentrator_id: concentrator_id || null, engineering_contract_id: engineering_contract_id || null }
+    }, pgClient);
   }
 
   return folder;
 }
 
-async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, name, extras }) {
+async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, name, extras }, pgClient) {
+  // Use pgClient (transaction client) when provided, otherwise pool
+  const db = pgClient || pool;
   // Try find first
-  const found = await pool.query(
+  const found = await db.query(
     `SELECT id FROM projects
        WHERE is_rollup = TRUE AND rollup_level = $1 AND rollup_key = $2
          AND COALESCE(parent_id::text, 'ROOT') = COALESCE($3::text, 'ROOT')
@@ -187,13 +189,15 @@ async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, n
   // of timing we retry with a suffixed name).
   const e = extras || {};
   try {
-    const r = await pool.query(`
+    const r = await db.query(`
       INSERT INTO projects (name, client_id, parent_id, concentrator_id, program,
-                            status, is_rollup, rollup_level, rollup_key, project_type)
-      VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
+                            status, is_rollup, rollup_level, rollup_key, project_type,
+                            engineering_contract_id)
+      VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup', $8)
       RETURNING id
     `, [name, e.client_id || null, parent_id || null, e.concentrator_id || null,
-        e.program || null, rollup_level, String(rollup_key)]);
+        e.program || null, rollup_level, String(rollup_key),
+        e.engineering_contract_id || null]);
     return r.rows[0].id;
   } catch (err) {
     if (err.code !== '23505') throw err;
@@ -202,7 +206,7 @@ async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, n
     //   (2) Old index still includes rollups, and a real project at this
     //       parent shares the rollup's name. In that case retry with a
     //       prefixed name that's unlikely to collide.
-    const refound = await pool.query(
+    const refound = await db.query(
       `SELECT id FROM projects
          WHERE is_rollup = TRUE AND rollup_level = $1 AND rollup_key = $2
            AND COALESCE(parent_id::text, 'ROOT') = COALESCE($3::text, 'ROOT')
@@ -212,13 +216,15 @@ async function findOrCreateRollup(pool, { parent_id, rollup_level, rollup_key, n
     if (refound.rows.length) return refound.rows[0].id;
     // Fallback: prefixed name to dodge collision with a real project
     const prefixed = `[${rollup_level.replace('_', ' ')}] ${name}`;
-    const r2 = await pool.query(`
+    const r2 = await db.query(`
       INSERT INTO projects (name, client_id, parent_id, concentrator_id, program,
-                            status, is_rollup, rollup_level, rollup_key, project_type)
-      VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup')
+                            status, is_rollup, rollup_level, rollup_key, project_type,
+                            engineering_contract_id)
+      VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, $7, 'rollup', $8)
       RETURNING id
     `, [prefixed, e.client_id || null, parent_id || null, e.concentrator_id || null,
-        e.program || null, rollup_level, String(rollup_key)]);
+        e.program || null, rollup_level, String(rollup_key),
+        e.engineering_contract_id || null]);
     return r2.rows[0].id;
   }
 }
@@ -312,19 +318,47 @@ async function applySettingChange(pool, sr) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+
+        // Derive engineering_contract_id from contract_id when available.
+        let engineeringContractId = p.engineering_contract_id || null;
+        if (!engineeringContractId && p.contract_id) {
+          const ecRow = await client.query(
+            `SELECT engineering_contract_id FROM contracts WHERE id = $1`,
+            [p.contract_id]
+          );
+          engineeringContractId = ecRow.rows[0]?.engineering_contract_id || null;
+        }
+
+        // Ensure the rollup chain exists so this project lands in the
+        // tree rather than as an orphan. Returns the deepest rollup
+        // folder id to use as parent_id.
+        let parentId = p.parent_id || null;
+        if (!parentId && p.client_id) {
+          parentId = await ensureRollupChain(pool, {
+            client_id: p.client_id,
+            concentrator_id: p.concentrator_id || null,
+            service_area_label: p.service_area_label || null,
+            job_id: p.job_id || null,
+            engineering_contract_id: engineeringContractId,
+          }, client);
+        }
+
         const ins = await client.query(
-          `INSERT INTO projects (name, client_id, work_order_number, project_type,
-                                 billing_type, status, notes)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO projects (name, client_id, contract_id, work_order_number, project_type,
+                                 billing_type, status, notes, parent_id, engineering_contract_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            RETURNING id`,
           [
             p.name,
             p.client_id || null,
+            p.contract_id || null,
             p.work_order_number || null,
             p.project_type || 'other',
             p.billing_type || 'hourly',
             'active',
             p.notes || null,
+            parentId,
+            engineeringContractId,
           ]
         );
         const newProjectId = ins.rows[0]?.id;

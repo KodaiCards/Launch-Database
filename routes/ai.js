@@ -1092,20 +1092,28 @@ async function executeTool(toolName, toolInput) {
           return null;
         };
         const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
-        // Cache contract_id → program lookups so a tree of 50 specs all
-        // pointing at the same contract resolves the EC join exactly once.
-        const programByContract = new Map();
-        async function programForContract(cid) {
-          if (!cid) return null;
-          if (programByContract.has(cid)) return programByContract.get(cid);
+        // Cache contract_id → (program, engineering_contract_id) lookups so a
+        // tree of 50 specs all pointing at the same contract resolves the EC
+        // join exactly once.
+        const contractCache = new Map();  // cid → { program, engineering_contract_id }
+        async function contractInfo(cid) {
+          if (!cid) return { program: null, engineering_contract_id: null };
+          if (contractCache.has(cid)) return contractCache.get(cid);
           const r = await pool.query(
-            `SELECT ec.program FROM contracts c
-               JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+            `SELECT c.engineering_contract_id, ec.program
+               FROM contracts c
+               LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
               WHERE c.id = $1`, [cid]
           );
-          const pgm = r.rows[0]?.program || null;
-          programByContract.set(cid, pgm);
-          return pgm;
+          const info = {
+            program: r.rows[0]?.program || null,
+            engineering_contract_id: r.rows[0]?.engineering_contract_id || null,
+          };
+          contractCache.set(cid, info);
+          return info;
+        }
+        async function programForContract(cid) {
+          return (await contractInfo(cid)).program;
         }
 
         for (const s of order) {
@@ -1124,9 +1132,10 @@ async function executeTool(toolName, toolInput) {
               continue;
             }
 
-            // Program: explicit input on the spec or any ancestor wins;
-            // otherwise derive from contractId's engineering contract.
+            // Program and engineering_contract_id: explicit input on the spec
+            // or any ancestor wins; otherwise derive from contractId's EC row.
             let program = resolveInherit(s, 'program');
+            let engineeringContractId = resolveInherit(s, 'engineering_contract_id');
             if (program) {
               const v = String(program).trim().toLowerCase();
               if (!ALLOWED_PROGRAMS.includes(v)) {
@@ -1134,8 +1143,12 @@ async function executeTool(toolName, toolInput) {
                 continue;
               }
               program = v;
-            } else {
-              program = await programForContract(contractId);
+            }
+            // Fill from contract if either is still missing
+            if (!program || !engineeringContractId) {
+              const info = await contractInfo(contractId);
+              if (!program) program = info.program;
+              if (!engineeringContractId) engineeringContractId = info.engineering_contract_id;
             }
 
             const fin = calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
@@ -1148,8 +1161,8 @@ async function executeTool(toolName, toolInput) {
                 project_type, program, status, billing_type, billing_rate,
                 footage, miles, expected_hours, expected_revenue,
                 start_date, notes, parent_id, concentrator_id,
-                is_rollup, billing_cadence
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+                is_rollup, billing_cadence, engineering_contract_id
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
               RETURNING id, name`,
               [
                 s.name,
@@ -1171,6 +1184,7 @@ async function executeTool(toolName, toolInput) {
                 concentratorId || null,
                 s.is_rollup === true,
                 s.billing_cadence || 'one_time',
+                engineeringContractId || null,
               ]
             );
             idMap[s.local_id] = rows[0].id;
