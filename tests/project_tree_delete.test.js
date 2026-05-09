@@ -18,7 +18,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   bootTestServer, close, adminLogin, requestJson,
-  fixtures, cleanupAll, pool,
+  fixtures, cleanupAll, uniqueTag, pool,
 } = require('./_helpers');
 
 let token;
@@ -122,4 +122,59 @@ test('with-tree DELETE on a non-existent project returns 404', async () => {
     { token, expectStatus: 404 }
   );
   assert.match(res.error || '', /not found/i);
+});
+
+// ─── Regression: contract-free RUS project appears in Projects tab ───────────
+// A project with program='rus' and contract_id=NULL (created via the EC picker
+// without selecting a construction contract) must appear in GET /api/projects.
+// Before the fix that introduced LEFT JOINs for contracts, the query could
+// have used an INNER JOIN which would silently exclude these rows. This test
+// is the regression net — if a future refactor reintroduces a contract filter
+// or switches to INNER JOIN, this will fail and catch the regression.
+test('project with program=rus and contract_id=null appears in GET /api/projects', async () => {
+  const client = await fixtures.client({ name: uniqueTag('ptree-rus-client') });
+  cleanup.clients.push(client.id);
+
+  const job = await fixtures.job({ name: uniqueTag('Inspection-ptree'), team: 'construction' });
+  cleanup.jobs.push(job.id);
+
+  // Seed a rollup parent (program=NULL, no contract, is_rollup=TRUE) and a
+  // leaf child (program='rus', contract_id=NULL). This mirrors the real
+  // EC-picker path: ensureRollupChain() creates the rollup with program=NULL
+  // and the leaf is inserted with program='rus' directly.
+  const { rows: [rollup] } = await pool.query(
+    `INSERT INTO projects
+       (name, client_id, contract_id, project_type, billing_type, status, is_rollup, program)
+     VALUES ($1, $2, NULL, 'other', 'hourly', 'active', TRUE, NULL) RETURNING *`,
+    [uniqueTag('ptree-rus-rollup'), client.id]
+  );
+  cleanup.projects.push(rollup.id);
+
+  const { rows: [leaf] } = await pool.query(
+    `INSERT INTO projects
+       (name, client_id, contract_id, job_id, parent_id, project_type, billing_type, billing_rate, status, program)
+     VALUES ($1, $2, NULL, $3, $4, 'inspection', 'hourly', 90, 'active', 'rus') RETURNING *`,
+    [uniqueTag('ptree-rus-leaf'), client.id, job.id, rollup.id]
+  );
+  cleanup.projects.push(leaf.id);
+
+  // GET /api/projects?status=active — the Projects tab default filter.
+  const list = await requestJson('GET', '/api/projects?status=active', { token });
+  assert.ok(Array.isArray(list), 'response should be an array');
+
+  const leafInList = list.find(p => p.id === leaf.id);
+  assert.ok(
+    leafInList,
+    `contract-free RUS leaf (id=${leaf.id}) must appear in GET /api/projects?status=active`
+  );
+  assert.equal(leafInList.program, 'rus',
+    'leaf.program should be "rus"');
+  assert.equal(leafInList.contract_id, null,
+    'leaf.contract_id must be null (contract-free)');
+
+  const rollupInList = list.find(p => p.id === rollup.id);
+  assert.ok(
+    rollupInList,
+    `rollup parent (id=${rollup.id}) must also appear so the tree can be assembled`
+  );
 });
