@@ -29,7 +29,7 @@ const path = require('path');
 // {{{company_logo}}} placeholder that materializes the actual image as
 // an inline base64 data URI at render time, and the system prompt
 // explicitly tells Claude to use it instead of inline text.
-const LOGO_PATH = path.join(__dirname, 'public', 'img', 'Launch Fiber PNG.png');
+const LOGO_PATH = path.join(__dirname, 'public', 'img', 'launch-fiber-logo-transparent.png');
 
 // Lazy logo loader — first call reads the file once and caches the data
 // URI for the lifetime of the process. Falls back to an empty string if
