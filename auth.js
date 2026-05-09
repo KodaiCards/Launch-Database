@@ -276,6 +276,14 @@ function authMiddleware(pool) {
         }
       }
       req.user = u;
+      // Wave 1.1 fix: merge JWT iat into req.user so downstream consumers
+      // (notably the SSE heartbeat in routes/_sse.js) can re-validate
+      // tokens_invalid_after against the token's issued-at timestamp.
+      // Without this, req.user.iat was always undefined, so the heartbeat
+      // computed tokenIssuedAt=0 and killed every SSE connection for any
+      // user with tokens_invalid_after set (i.e. anyone who'd ever
+      // changed their password).
+      req.user.iat = payload.iat;
     } catch (e) {
       console.error('[auth:authMiddleware] DB error reading user', e && e.message);
     }

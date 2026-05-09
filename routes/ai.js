@@ -1776,9 +1776,24 @@ async function executeTool(toolName, toolInput) {
         // must go through the normal migration pipeline, not the AI chat.
         // This guards against prompt-injection attacks that craft AI output
         // to execute destructive DDL through the approval card.
-        const ddlPattern = /^\s*(drop\s+(table|database|schema|index|sequence|view|function|trigger)|truncate\s+table|alter\s+table|create\s+(table|index|sequence|schema|view|function|trigger))/i;
-        if (ddlPattern.test(sql)) {
-          return { success: false, error: 'DDL operations (DROP, TRUNCATE, ALTER TABLE, CREATE TABLE/INDEX) are not permitted via write_sql. Use the migration pipeline for schema changes.' };
+        // Wave 1.1 fix: strip leading SQL comments and whitespace before
+        // the DDL test, otherwise `/* anything */ DROP TABLE users` slips
+        // past the `^\s*` anchor and runs after admin approval.
+        // Strip /* block */ and -- line comments at the start, repeatedly.
+        let probe = sql;
+        for (let i = 0; i < 10; i++) {
+          const before = probe;
+          probe = probe.replace(/^\s+/, '');
+          probe = probe.replace(/^\/\*[\s\S]*?\*\//, '');
+          probe = probe.replace(/^--[^\n]*\n?/, '');
+          if (probe === before) break;
+        }
+        // Wave 1.1 fix: PostgreSQL accepts `TRUNCATE tbl` without the
+        // `TABLE` keyword, so the original `truncate\s+table` regex missed
+        // `TRUNCATE time_entries`. Use `truncate\b` to catch both forms.
+        const ddlPattern = /^(drop\s+(table|database|schema|index|sequence|view|function|trigger)|truncate\b|alter\s+table|create\s+(table|index|sequence|schema|view|function|trigger)|grant\b|revoke\b|copy\s+\w+\s+(to|from))/i;
+        if (ddlPattern.test(probe)) {
+          return { success: false, error: 'DDL/privileged operations (DROP, TRUNCATE, ALTER TABLE, CREATE TABLE/INDEX, GRANT, REVOKE, COPY) are not permitted via write_sql. Use the migration pipeline for schema changes.' };
         }
         try {
           const result = await pool.query(sql, params);
