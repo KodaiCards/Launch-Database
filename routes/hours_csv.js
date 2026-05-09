@@ -370,8 +370,12 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         // 2. Any real leaf (no job constraint)
         const realLeaves = candidates.filter(isRealLeaf);
         if (realLeaves.length) return realLeaves[0];
-        // 4. Last resort — first candidate (probably a rollup)
-        return candidates[0];
+        // 4. Last resort — first non-rollup candidate. Rollup containers have
+        // no job or billing semantics; routing a time entry to a rollup would
+        // make it unresolvable in billing and the Hours tab. Return null instead
+        // so the row lands in the "Needs Project Assignment" panel rather than
+        // silently attaching to a folder that will never be billed.
+        return candidates.find(c => !c.is_rollup) || null;
       }
 
       const today = new Date(); today.setHours(0,0,0,0);

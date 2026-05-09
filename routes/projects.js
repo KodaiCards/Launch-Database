@@ -139,6 +139,13 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       program = null;
     }
 
+    // Validate service_area_label length. The rollup_key built from this is
+    // stored as TEXT and the rollup name is VARCHAR(200) — cap at 200 to
+    // prevent truncation silently creating duplicate rollup_key collisions.
+    if (service_area_label && String(service_area_label).trim().length > 200) {
+      return res.status(400).json({ error: 'service_area_label must be 200 characters or fewer.' });
+    }
+
     try {
       // Item 22 fix: if the caller explicitly passes a parent_id (rather than
       // letting ensureRollupChain derive one), verify the target parent
@@ -513,8 +520,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Recalculate actual_hours for a single project from its time_entries
-  app.post('/api/projects/:id/recalc-hours', async (req, res) => {
+  // Recalculate actual_hours for a single project from its time_entries.
+  // requireAuth() added — endpoint was unguarded (any network request could
+  // trigger a full upward propagation walk without being authenticated).
+  app.post('/api/projects/:id/recalc-hours', requireAuth(), async (req, res) => {
     try {
       await updateProjectHours(req.params.id);
       const { rows } = await pool.query('SELECT actual_hours FROM projects WHERE id=$1', [req.params.id]);
