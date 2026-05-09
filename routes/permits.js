@@ -1,18 +1,12 @@
 // routes/permits.js — permitting pipeline list + stage advance/regress + document upload.
 //
+// Items 2, 5, 8 fix:
+//   - requireAuth(['admin','permitting_manager','permitting_engineer']) added to advance/regress
+//   - Body actor fallback dropped — force req.user.username
+//   - uploaded_by sourced from req.user.id not body (item 5)
+//   - requireAuth role gate added to document upload (item 5)
+//
 // Pipeline stages: potential → started → submitted → approved → checklist.
-// "billed" was removed in a prior cleanup (older permit_stages rows with
-// stage='billed' may still exist; the pipeline UI ignores them and reads
-// billing status from projects.billed_date instead).
-//
-//   GET  /api/permits                          — projects with project_type='permitting'
-//                                                plus current stage + history + docs
-//   PUT  /api/permits/:projectId/advance       — move to next stage
-//   PUT  /api/permits/:projectId/regress       — back up one stage
-//   POST /api/permits/:projectId/documents     — upload a permit document (multer)
-//
-// Uses the multer `upload` instance from server.js, passed via mw.
-//
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 const PERMIT_STAGES = ['potential','started','submitted','approved','checklist'];
@@ -20,6 +14,7 @@ const { broadcast } = require('./_sse');
 
 module.exports = function installPermitsRoutes(app, pool, mw) {
   const { upload } = mw;
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
   app.get('/api/permits', async (req, res) => {
     try {
@@ -44,15 +39,15 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/permits/:projectId/advance', async (req, res) => {
-    const { updated_by, notes } = req.body;
+  // Items 2 + 8 fix: requireAuth added; body actor fallback removed.
+  app.put('/api/permits/:projectId/advance',
+    requireAuth(['admin', 'permitting_manager', 'permitting_engineer']),
+    async (req, res) => {
+    const { notes } = req.body;
     const { projectId } = req.params;
+    // Force actor from authenticated user — never trust body.updated_by
+    const actor = req.user.full_name || req.user.username;
     try {
-      // Actor is the logged-in user's full name or username; falls back to
-      // request body for legacy/non-authed callers, then to "system" so we
-      // always have something to write.
-      const actor = (req.user?.full_name || req.user?.username) || updated_by || 'system';
-
       // Get current stage
       const { rows: current } = await pool.query(
         'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
@@ -79,13 +74,13 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Regress (back up) the permit pipeline by one stage. Re-opens the previous
-  // stage row (clears its completed_at) and deletes the current stage's row
-  // entirely so it'll get re-created on the next advance with a fresh timestamp.
-  // Requires the project to NOT be at 'potential' (the very first stage).
-  app.put('/api/permits/:projectId/regress', async (req, res) => {
+  // Items 2 + 8 fix: requireAuth added; body actor fallback removed.
+  app.put('/api/permits/:projectId/regress',
+    requireAuth(['admin', 'permitting_manager', 'permitting_engineer']),
+    async (req, res) => {
     const { projectId } = req.params;
-    const actor = (req.user?.full_name || req.user?.username) || req.body?.updated_by || 'system';
+    // Force actor from authenticated user
+    const actor = req.user.full_name || req.user.username;
     try {
       const { rows: current } = await pool.query(
         'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
@@ -111,14 +106,20 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/permits/:projectId/documents', upload.single('file'), async (req, res) => {
-    const { doc_type, uploaded_by, notes, revision_number } = req.body;
+  // Item 5 fix: requireAuth role gate added; uploaded_by sourced from req.user.id not body
+  app.post('/api/permits/:projectId/documents',
+    requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']),
+    upload.single('file'),
+    async (req, res) => {
+    const { doc_type, notes, revision_number } = req.body;
     if (!req.file) return res.status(400).json({ error: 'No file' });
+    // uploaded_by sourced from authenticated user, never from body
+    const uploadedBy = req.user.id;
     try {
       const { rows } = await pool.query(`
         INSERT INTO permit_documents (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-      `, [req.params.projectId, doc_type, req.file.originalname, req.file.filename, req.file.size, revision_number || 1, uploaded_by, notes]);
+      `, [req.params.projectId, doc_type, req.file.originalname, req.file.filename, req.file.size, revision_number || 1, uploadedBy, notes]);
       broadcast('admin', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
       broadcast('team:permitting', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
       res.json(rows[0]);

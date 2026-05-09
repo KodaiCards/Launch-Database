@@ -18,8 +18,9 @@
 // /reset-override clears it so the next reseed reverts to canonical.
 
 module.exports = function installJobsRoutes(app, pool, mw) {
-  // No middleware bag is consumed — these endpoints have no role gate
-  // beyond the global authMiddleware that runs upstream of every route.
+  // Items 2 + 16: role gates added to mutation endpoints and _debug endpoint.
+  const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || requireAdmin;
 
   app.get('/api/jobs', async (req, res) => {
     try {
@@ -112,10 +113,8 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   });
 
   // DIAGNOSTIC — dumps raw job rows including inactive, with full column list.
-  // Use this to verify schema migration actually applied. Returns JSON like:
-  //   { count: 12, columns: [...], rows: [...] }
-  // Hit it via: https://your-admin-url/api/_debug/jobs
-  app.get('/api/_debug/jobs', async (req, res) => {
+  // Item 16 fix: requireAdmin gate added (was unprotected, leaked information_schema).
+  app.get('/api/_debug/jobs', requireAdmin, async (req, res) => {
     try {
       const cols = await pool.query(
         `SELECT column_name, data_type FROM information_schema.columns
@@ -135,7 +134,8 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // migrations/0006_jobs_program_scope.sql.
   const ALLOWED_PROGRAM_SCOPES = ['rus', 'non_rus', 'shared'];
 
-  app.post('/api/jobs', async (req, res) => {
+  // Item 2 fix: requireAdmin added (mutation endpoint missing role gate)
+  app.post('/api/jobs', requireAdmin, async (req, res) => {
     const {
       name, default_billing_type = 'hourly', default_rate = null,
       is_permitting = false, notes = null, team = null,
@@ -190,7 +190,8 @@ module.exports = function installJobsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/jobs/:id', async (req, res) => {
+  // Item 2 fix: requireAdmin added
+  app.put('/api/jobs/:id', requireAdmin, async (req, res) => {
     // Only update fields explicitly present in the request body. This makes
     // partial updates safe — e.g. PUT {name:"X"} only changes name, leaves
     // default_rate and notes alone. The previous version always wrote $4/$6
@@ -275,7 +276,8 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // will overwrite the job's canonical fields back to the hardcoded defaults.
   // This is the escape hatch when admin overrode something by mistake or wants
   // to opt back in to system-managed defaults.
-  app.post('/api/jobs/:id/reset-override', async (req, res) => {
+  // Item 2 fix: requireAdmin added
+  app.post('/api/jobs/:id/reset-override', requireAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `UPDATE jobs SET manually_overridden_at = NULL WHERE id = $1 RETURNING id, name`,
@@ -290,7 +292,8 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // existing real (non-rollup) projects that use this job. Useful when the
   // admin updates a job's rate and wants the change to flow through to
   // historical projects rather than only affecting new ones.
-  app.put('/api/jobs/:id/propagate-rate', async (req, res) => {
+  // Item 2 fix: requireAdmin added (this rewrites billing_rate across all projects)
+  app.put('/api/jobs/:id/propagate-rate', requireAdmin, async (req, res) => {
     try {
       const j = await pool.query('SELECT default_rate FROM jobs WHERE id = $1', [req.params.id]);
       if (!j.rows.length) return res.status(404).json({ error: 'Job not found' });
@@ -305,7 +308,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/jobs/:id', async (req, res) => {
+  app.delete('/api/jobs/:id', requireAdmin, async (req, res) => {
     try {
       // Soft-delete via active=false to preserve historical references in projects
       await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);

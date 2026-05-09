@@ -1,19 +1,13 @@
 // routes/budgets.js — budgets + budget_codes + by-area summary.
 //
-// A budget scopes to EXACTLY one of project_id OR engineering_contract_id
-// (CHECK constraint enforces it; the POST handler also validates up front
-// for a friendlier error). budget_codes are line items inside a budget;
-// their `allocated_amount` rolls up into `budgets.total_amount` after any
-// CRUD via the recompute query that runs at the end of each handler.
-//
-// /api/budgets/:id/summary returns the budget plus a `codes` array where
-// each code has its own `spent` and child projects.
-// /api/budgets/:id/by-area is the same shape but grouped by concentrator
-// instead of by code — used by the budget detail modal's "By area" tab.
+// Item 2 fix: requireManagerOrAdmin added to all mutation endpoints
+// (POST/PUT/DELETE on budgets and budget-codes).
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 module.exports = function installBudgetsRoutes(app, pool, mw) {
+  const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+
   app.get('/api/budgets', async (req, res) => {
     const { project_id, engineering_contract_id } = req.query;
     try {
@@ -100,7 +94,8 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/budgets', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.post('/api/budgets', requireManagerOrAdmin, async (req, res) => {
     const { project_id, engineering_contract_id, name, total_amount, notes } = req.body;
     // Exactly one of project_id / engineering_contract_id must be set — the
     // CHECK constraint enforces this at the DB level, but rejecting up front
@@ -122,7 +117,8 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/budgets/:id', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.put('/api/budgets/:id', requireManagerOrAdmin, async (req, res) => {
     const { name, total_amount, notes } = req.body;
     try {
       const { rows } = await pool.query(
@@ -133,7 +129,8 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/budgets/:id', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.delete('/api/budgets/:id', requireManagerOrAdmin, async (req, res) => {
     try {
       await pool.query('DELETE FROM budgets WHERE id=$1', [req.params.id]);
       res.json({ ok: true });
@@ -203,7 +200,8 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/budget-codes', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.post('/api/budget-codes', requireManagerOrAdmin, async (req, res) => {
     const { budget_id, code, description, allocated_amount, job_id } = req.body;
     try {
       const { rows } = await pool.query(
@@ -221,7 +219,8 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/budget-codes/:id', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.put('/api/budget-codes/:id', requireManagerOrAdmin, async (req, res) => {
     const { code, description, allocated_amount, job_id } = req.body;
     try {
       const { rows } = await pool.query(
@@ -241,7 +240,8 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/budget-codes/:id', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.delete('/api/budget-codes/:id', requireManagerOrAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query('DELETE FROM budget_codes WHERE id=$1 RETURNING budget_id', [req.params.id]);
       // Recalculate budget total

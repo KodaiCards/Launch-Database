@@ -174,7 +174,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     res.json(inserted);
   });
 
-  app.post('/api/time-entries/bulk', async (req, res) => {
+  // Item 7 fix: requireAuth() added — this endpoint was completely unguarded.
+  // Engineer staff_id coercion: mirrors POST /api/time-entries to prevent
+  // bulk import assigning hours to another employee's staff record.
+  app.post('/api/time-entries/bulk', requireAuth(), async (req, res) => {
     const { entries } = req.body; // [{project_id, staff_id, entry_date, hours, job_title}]
     if (!entries || !entries.length) return res.status(400).json({ error: 'No entries' });
 
@@ -184,11 +187,23 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       await client.query('BEGIN');
       const inserted = [];
       for (const e of entries) {
+        // Engineer-scope coercion: same invariant as the single-row POST path.
+        // Engineers may only log time as themselves — coerce staff_id to their
+        // own linked staff record and reject mismatched values.
+        let effectiveStaffId = e.staff_id || null;
+        if (req.user && (req.user.role === 'design_engineer' || req.user.role === 'permitting_engineer')) {
+          effectiveStaffId = req.user.staff_id || effectiveStaffId;
+          if (e.staff_id && req.user.staff_id && String(e.staff_id) !== String(req.user.staff_id)) {
+            await client.query('ROLLBACK');
+            client.release();
+            return res.status(403).json({ error: 'Engineers can only log time against their own staff record.' });
+          }
+        }
         // Snap to 0.25 grid — same invariant as the single-row POST path.
         const { rows } = await client.query(`
           INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch)
           VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
-        `, [e.project_id, e.staff_id || null, e.entry_date, snapHoursToQuarter(e.hours), e.job_title, importBatch]);
+        `, [e.project_id, effectiveStaffId, e.entry_date, snapHoursToQuarter(e.hours), e.job_title, importBatch]);
         inserted.push(rows[0]);
       }
       // Update actual_hours with hierarchy rollup
@@ -219,7 +234,11 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   // Engineers can ONLY edit their own entries (server enforces user_id match).
   // Managers can edit entries on their team's projects. Admin can edit anything.
   // All edits write to the audit log with before/after state.
-  app.put('/api/time-entries/:id', async (req, res) => {
+  //
+  // Item 7 fix: requireAuth() added — this endpoint was completely unguarded,
+  // allowing unauthenticated callers to overwrite any time entry including
+  // changing the staff_id to another employee's record.
+  app.put('/api/time-entries/:id', requireAuth(), async (req, res) => {
     const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
     try {
       // Fetch existing for audit + permission check
@@ -241,7 +260,19 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       const params = [req.params.id];
       let i = 2;
       if (project_id !== undefined) { sets.push(`project_id = $${i++}`); params.push(project_id); }
-      if (staff_id !== undefined)   { sets.push(`staff_id = $${i++}`);   params.push(staff_id || null); }
+      // Engineer staff_id coercion: if an engineer sends a staff_id update,
+      // coerce it to their own record and reject mismatches. Mirrors POST path.
+      if (staff_id !== undefined) {
+        let effectiveStaffId = staff_id;
+        if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+          effectiveStaffId = req.user.staff_id || effectiveStaffId;
+          if (staff_id && req.user.staff_id && String(staff_id) !== String(req.user.staff_id)) {
+            return res.status(403).json({ error: 'Engineers can only log time against their own staff record.' });
+          }
+        }
+        sets.push(`staff_id = $${i++}`);
+        params.push(effectiveStaffId || null);
+      }
       if (entry_date !== undefined) { sets.push(`entry_date = $${i++}`); params.push(entry_date); }
       if (hours !== undefined)      { sets.push(`hours = $${i++}`);      params.push(snapHoursToQuarter(hours)); }
       if (job_title !== undefined)  { sets.push(`job_title = $${i++}`);  params.push(job_title); }

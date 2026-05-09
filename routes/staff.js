@@ -33,7 +33,8 @@ module.exports = function installStaffRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/staff', async (req, res) => {
+  // Item 2 fix: requireAdmin added — creating staff is an admin operation
+  app.post('/api/staff', requireAdmin, async (req, res) => {
     const { name } = req.body;
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'name required' });

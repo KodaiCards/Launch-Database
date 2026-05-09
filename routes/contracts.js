@@ -38,7 +38,8 @@ module.exports = function installContractsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/contracts', async (req, res) => {
+  // Item 2 fix: requireAdmin added — creating contracts is an admin-only operation
+  app.post('/api/contracts', requireAdmin, async (req, res) => {
     const { client_id, contract_number, name, engineering_contract_id, friendly_label } = req.body;
     try {
       const { rows } = await pool.query(

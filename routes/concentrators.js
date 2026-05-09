@@ -7,6 +7,9 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 module.exports = function installConcentratorsRoutes(app, pool, mw) {
+  // Item 2 fix: requireAdmin added to POST (creating service areas is admin-only)
+  const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+
   app.get('/api/concentrators', async (req, res) => {
     const { contract_label } = req.query;
     try {
@@ -18,7 +21,8 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/concentrators', async (req, res) => {
+  // Item 2 fix: requireAdmin added
+  app.post('/api/concentrators', requireAdmin, async (req, res) => {
     const { contract_label, area_name, work_order_number, notes } = req.body;
     try {
       const { rows } = await pool.query(

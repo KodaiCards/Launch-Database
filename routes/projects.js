@@ -20,7 +20,10 @@ const {
 const { broadcast } = require('./_sse');
 
 module.exports = function installProjectsRoutes(app, pool, mw) {
-  const { requireAdmin } = mw;
+  // Item 2 + 22 fix: requireAuth added alongside requireAdmin.
+  // POST and PUT were entirely unguarded — any unauthenticated request
+  // could create or mutate projects. requireAuth() gates both handlers.
+  const { requireAdmin, requireAuth } = mw;
 
   app.get('/api/projects', async (req, res) => {
     const { status, client_id, type } = req.query;
@@ -98,7 +101,12 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/projects', async (req, res) => {
+  // Item 2 fix: requireAuth() added — POST was completely unguarded.
+  // Item 22 fix: parent_id validation — verify the target parent exists
+  // before accepting an explicit parent_id. Without this, a caller can
+  // nest a project under an arbitrary UUID (including a project from
+  // another client's tree), breaking the tree integrity invariant.
+  app.post('/api/projects', requireAuth(), async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -131,6 +139,17 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     }
 
     try {
+      // Item 22 fix: if the caller explicitly passes a parent_id (rather than
+      // letting ensureRollupChain derive one), verify the target parent
+      // actually exists. This prevents re-parenting a project under a
+      // non-existent or attacker-controlled UUID.
+      if (parent_id) {
+        const parentCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [parent_id]);
+        if (!parentCheck.rows.length) {
+          return res.status(400).json({ error: 'parent_id does not reference an existing project' });
+        }
+      }
+
       // Auto-nesting: when admin doesn't explicitly pick a parent, derive it
       // from the rollup chain Client → Team → Service Area → Project.
       // If admin DID pick a parent, respect that choice (legacy/manual nesting).
@@ -281,7 +300,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/projects/:id', async (req, res) => {
+  // Item 2 fix: requireAuth() added — PUT was completely unguarded.
+  // Item 22 fix: parent_id validation — verify the target parent exists
+  // before accepting a re-parent operation.
+  app.put('/api/projects/:id', requireAuth(), async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -314,6 +336,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     }
 
     try {
+      // Item 22 fix: verify the target parent exists when caller specifies
+      // an explicit parent_id (re-parent operation). This prevents tree
+      // corruption from attacker-controlled parent UUIDs.
+      if (parent_id !== undefined && parent_id !== null) {
+        const parentCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [parent_id]);
+        if (!parentCheck.rows.length) {
+          return res.status(400).json({ error: 'parent_id does not reference an existing project' });
+        }
+      }
+
       // Duplicate-project guard — only check if name OR parent is being changed
       if (name !== undefined || parent_id !== undefined) {
         const cur = await pool.query('SELECT name, parent_id FROM projects WHERE id = $1', [req.params.id]);

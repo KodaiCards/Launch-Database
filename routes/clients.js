@@ -26,7 +26,8 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   // The clients.is_rus column itself was retired in migration 0003;
   // any incoming `is_rus` in the request body is silently ignored
   // (req.body destructure simply doesn't read it).
-  app.post('/api/clients', async (req, res) => {
+  // Item 2 fix: requireAdmin added — creating clients is an admin-only operation
+  app.post('/api/clients', requireAdmin, async (req, res) => {
     const { name, notes } = req.body;
     try {
       const { rows } = await pool.query(
@@ -38,7 +39,8 @@ module.exports = function installClientsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/clients/:id', async (req, res) => {
+  // Item 2 fix: requireAdmin added — updating clients is an admin-only operation
+  app.put('/api/clients/:id', requireAdmin, async (req, res) => {
     const { name, notes, show_contract, show_work_order } = req.body;
     try {
       const { rows } = await pool.query(
