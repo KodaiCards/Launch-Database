@@ -5897,7 +5897,23 @@ function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
         </footer>
       </div>
     </div>`;
-  document.getElementById('modal-submit').onclick = () => onSubmit(closeModal);
+  const modalSubmitBtn = document.getElementById('modal-submit');
+  modalSubmitBtn.onclick = async () => {
+    if (modalSubmitBtn.dataset.uploading === '1') return;
+    modalSubmitBtn.dataset.uploading = '1';
+    modalSubmitBtn.disabled = true;
+    modalSubmitBtn.dataset.label = modalSubmitBtn.textContent;
+    modalSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + modalSubmitBtn.dataset.label + '…';
+    try {
+      await onSubmit(closeModal);
+    } finally {
+      if (modalSubmitBtn.isConnected) {
+        modalSubmitBtn.disabled = false;
+        modalSubmitBtn.textContent = modalSubmitBtn.dataset.label || submitText;
+        modalSubmitBtn.dataset.uploading = '0';
+      }
+    }
+  };
 }
 function closeModal() { document.getElementById('modal-host').innerHTML = ''; }
 

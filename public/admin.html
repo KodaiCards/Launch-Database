@@ -1390,7 +1390,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="display:flex;align-items:center;gap:6px">
           <input type="file" id="ai-file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none" onchange="handleAIFileUpload(event)">
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ai-file-input').click()" title="Upload Excel/CSV file"><i class="fa-solid fa-file-excel"></i> Upload</button>
+          <button id="ai-file-upload-btn" class="btn btn-secondary btn-sm" onclick="document.getElementById('ai-file-input').click()" title="Upload Excel/CSV file"><i class="fa-solid fa-file-excel"></i> Upload</button>
           <span style="font-size:11px;color:var(--text-muted)">Enter to send</span>
         </div>
         <button class="btn btn-primary btn-sm" onclick="sendAI()"><i class="fa-solid fa-paper-plane"></i> Send</button>
@@ -7177,6 +7177,10 @@ async function handleAIFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  const btn = document.getElementById('ai-file-upload-btn');
+  if (btn?.dataset.uploading === '1') return;
+  if (btn) { btn.dataset.uploading = '1'; btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = 'Uploading…'; }
+
   // Show preview
   document.getElementById('ai-file-preview').style.display = 'block';
   document.getElementById('ai-file-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
@@ -7207,10 +7211,11 @@ async function handleAIFileUpload(event) {
   } catch (e) {
     appendAIMessage('assistant', '⚠ Failed to parse file: ' + e.message);
     clearAIFile();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label || 'Upload'; btn.dataset.uploading = '0'; }
+    // Reset the input so the same file can be re-uploaded
+    event.target.value = '';
   }
-
-  // Reset the input so the same file can be re-uploaded
-  event.target.value = '';
 }
 
 function clearAIFile() {
