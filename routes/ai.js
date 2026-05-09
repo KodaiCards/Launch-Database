@@ -1770,6 +1770,16 @@ async function executeTool(toolName, toolInput) {
         const params = Array.isArray(toolInput.params) ? toolInput.params : [];
         if (!sql) return { success: false, error: 'sql required' };
         if (sql.includes(';')) return { success: false, error: 'Multiple statements not allowed in a single write_sql call.' };
+        // Item 11 fix: block DDL operations (DROP, TRUNCATE, ALTER TABLE,
+        // CREATE TABLE, CREATE INDEX, DROP INDEX) even with admin approval.
+        // The AI tool is intended for data migrations only — schema changes
+        // must go through the normal migration pipeline, not the AI chat.
+        // This guards against prompt-injection attacks that craft AI output
+        // to execute destructive DDL through the approval card.
+        const ddlPattern = /^\s*(drop\s+(table|database|schema|index|sequence|view|function|trigger)|truncate\s+table|alter\s+table|create\s+(table|index|sequence|schema|view|function|trigger))/i;
+        if (ddlPattern.test(sql)) {
+          return { success: false, error: 'DDL operations (DROP, TRUNCATE, ALTER TABLE, CREATE TABLE/INDEX) are not permitted via write_sql. Use the migration pipeline for schema changes.' };
+        }
         try {
           const result = await pool.query(sql, params);
           return {
@@ -2047,6 +2057,12 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       // ── Resume path ─────────────────────────────────────────────────
       const pending = _pendingApprovals.get(approval_id);
       if (!pending) return res.status(404).json({ error: 'Approval expired or not found. Resend your message.' });
+      // Item 12 fix: verify that the user submitting the decision is the
+      // same user who initiated the request. Prevents a second admin from
+      // approving or rejecting another admin's staged AI actions.
+      if (pending.user_id && req.user && String(pending.user_id) !== String(req.user.id)) {
+        return res.status(403).json({ error: 'This approval was initiated by a different user.' });
+      }
       _pendingApprovals.delete(approval_id);
 
       systemBlocks = pending.systemBlocks;
@@ -2153,6 +2169,10 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
           stagedToolUses: toolUseBlocks,
           toolResults, finalText,
           expires_at: Date.now() + APPROVAL_TTL_MS,
+          // Item 12 fix: bind approval to the initiating user so only the
+          // same admin can approve/reject — prevents another admin from
+          // hijacking a staged approval by guessing or leaking the approval_id.
+          user_id: req.user && req.user.id,
         });
 
         const proposed_actions = toolUseBlocks.map(tu => ({

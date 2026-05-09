@@ -6,7 +6,7 @@
 // they are intentionally separate.
 //
 // Channels:
-//   'admin'             — any admin or manager role (full-data visibility)
+//   'admin'             — any admin role (full-data visibility)
 //   'team:design'       — design_manager + design_engineer
 //   'team:permitting'   — permitting_manager + permitting_engineer
 //   'team:construction' — construction_manager + construction_engineer
@@ -16,9 +16,20 @@
 // The endpoint subscribes each connection to the appropriate channels
 // based on req.user.role. Heartbeat every 25 s keeps proxies alive.
 //
+// Item 15 fix (SSE channel pinning):
+//   - Heartbeat now re-validates session against live DB state (role,
+//     active flag, tokens_invalid_after). Stale or deactivated sessions
+//     are closed with a 'session_invalid' event so the browser knows to
+//     redirect to login rather than just silently disconnect.
+//   - Managers no longer subscribe to 'admin' channel. Previously,
+//     design_manager and permitting_manager received admin-channel events
+//     (broad-visibility broadcasts intended for the admin portal), leaking
+//     firm-wide cross-team data. They now receive only their own team
+//     channel events.
+//
 // Usage:
 //   const { attach, broadcast } = require('./_sse');
-//   attach(app, { requireAuth });             // in server.js boot
+//   attach(app, { requireAuth, pool }); // in server.js boot
 //   broadcast('admin', 'project_added', row); // in route write handlers
 
 const _channels = new Map(); // channel -> Set<res>
@@ -26,6 +37,10 @@ const _channels = new Map(); // channel -> Set<res>
 // connection closes or its write fails. Without this, we'd have to
 // scan every channel to remove a single dead connection.
 const _resChanMap = new Map(); // res -> Set<channel>
+
+// Per-connection metadata: userId, tokenIssuedAt (iat from JWT, seconds).
+// Used by heartbeat re-validation to detect session revocation.
+const _resMeta = new Map(); // res -> { userId, tokenIssuedAt }
 
 function _subscribe(channel, res) {
   if (!_channels.has(channel)) _channels.set(channel, new Set());
@@ -47,6 +62,7 @@ function _purge(res) {
     if (!set.size) _channels.delete(channel);
   }
   _resChanMap.delete(res);
+  _resMeta.delete(res);
 }
 
 /**
@@ -86,8 +102,11 @@ function _subscriberCount() {
  * file serving.
  *
  * mw.requireAuth() is the factory from auth.js.
+ * mw.pool is the pg Pool — needed for heartbeat re-validation.
  */
 function attach(app, mw) {
+  const pool = mw.pool;
+
   app.get('/api/events/stream', mw.requireAuth(), (req, res) => {
     // SSE headers. X-Accel-Buffering: no tells nginx / Railway's reverse
     // proxy not to buffer the response (otherwise events are held until
@@ -108,9 +127,12 @@ function attach(app, mw) {
       // multiple tabs open across portals and all stay live.
       myChannels.push('team:design', 'team:permitting', 'team:construction');
     } else if (role === 'design_manager') {
-      myChannels.push('admin', 'team:design');
+      // Item 15 fix: managers receive their own team channel only.
+      // Previously they also subscribed to 'admin', leaking firm-wide
+      // cross-team events (project additions from other teams, etc.).
+      myChannels.push('team:design');
     } else if (role === 'permitting_manager') {
-      myChannels.push('admin', 'team:permitting');
+      myChannels.push('team:permitting');
     } else if (role === 'design_engineer') {
       myChannels.push('team:design');
     } else if (role === 'permitting_engineer') {
@@ -121,16 +143,65 @@ function attach(app, mw) {
 
     myChannels.forEach(c => _subscribe(c, res));
 
+    // Store metadata needed for heartbeat re-validation.
+    // req.user.iat is the JWT issued-at timestamp (seconds since epoch),
+    // set by verifyToken. We compare it against users.tokens_invalid_after
+    // to detect password changes or explicit session revocations.
+    _resMeta.set(res, {
+      userId: req.user.id,
+      tokenIssuedAt: req.user.iat || 0,
+    });
+
     // Send an initial ping so the browser marks the connection as open
     // immediately rather than waiting for the first real event.
     try { res.write(`: connected\n\n`); } catch {}
 
     // Heartbeat: keeps Railway / nginx proxies from closing idle connections.
-    // If the write returns false (backpressure) or throws (dead socket),
-    // purge eagerly rather than waiting for the 'close' event — Railway's
-    // proxy sometimes drops the TCP connection without sending FIN, so
-    // 'close' may never fire for a dead tab.
-    const heartbeat = setInterval(() => {
+    // Item 15 fix: on each heartbeat tick, re-validate the session against
+    // live DB state. Close the connection if:
+    //   (a) the user row no longer exists
+    //   (b) the user has been deactivated (active = FALSE)
+    //   (c) the token predates tokens_invalid_after (password changed /
+    //       session explicitly invalidated by admin)
+    // This ensures demoted or deactivated users stop receiving events
+    // within at most one heartbeat interval (25 s) rather than holding
+    // their channel subscription until they close the browser tab.
+    const heartbeat = setInterval(async () => {
+      // Re-validate session
+      if (pool) {
+        try {
+          const meta = _resMeta.get(res);
+          if (meta) {
+            const { rows } = await pool.query(
+              'SELECT role, active, tokens_invalid_after FROM users WHERE id = $1',
+              [meta.userId]
+            );
+            const user = rows[0];
+            const invalid =
+              !user ||
+              !user.active ||
+              (user.tokens_invalid_after &&
+                meta.tokenIssuedAt < Math.floor(new Date(user.tokens_invalid_after).getTime() / 1000));
+            if (invalid) {
+              // Notify the client before closing so it can redirect to login
+              // rather than showing a confusing network error.
+              try {
+                res.write(`event: session_invalid\ndata: ${JSON.stringify({ reason: 'session_expired' })}\n\n`);
+              } catch {}
+              clearInterval(heartbeat);
+              _purge(res);
+              try { res.end(); } catch {}
+              return;
+            }
+          }
+        } catch (dbErr) {
+          // DB error during re-validation — log and continue. We don't
+          // close the connection on a transient DB hiccup; the next tick
+          // will retry.
+          console.error('[_sse:heartbeat:revalidate]', dbErr && dbErr.message);
+        }
+      }
+
       let ok;
       try { ok = res.write(`: ping\n\n`); } catch { ok = false; }
       if (ok === false) {

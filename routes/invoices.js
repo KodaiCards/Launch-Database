@@ -15,7 +15,7 @@ const invoiceGenerator = require('../invoice_generator');
 const { broadcast } = require('./_sse');
 
 module.exports = function installInvoicesRoutes(app, pool, mw) {
-  const { requireManagerOrAdmin } = mw;
+  const { requireManagerOrAdmin, requireAdmin } = mw;
 
   // List invoices with items, grouped by month
   app.get('/api/invoices', requireManagerOrAdmin, async (req, res) => {
@@ -172,8 +172,21 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
     }
   });
 
+  // DELETE /api/invoices/:id — void an invoice.
+  // ?wipe_hours=true additionally deletes ALL time_entries for the linked
+  // projects — a destructive and irreversible operation.
+  //
+  // Item 10 fix: wipe_hours=true is now admin-only. Previously any manager
+  // could invoke it, allowing a design_manager to wipe hours for permitting
+  // projects (cross-team data destruction) or any manager to silently erase
+  // the audit trail for an invoiced period. The base delete (no wipe_hours)
+  // remains manager+admin since it only unbills projects — no data is lost.
   app.delete('/api/invoices/:id', requireManagerOrAdmin, async (req, res) => {
     const { wipe_hours } = req.query; // ?wipe_hours=true
+    // Guard the destructive wipe_hours path to admin-only inline.
+    if (wipe_hours === 'true' && req.user && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can delete invoice hours. Contact an administrator.' });
+    }
     try {
       // Get invoice items to find linked projects
       const { rows: items } = await pool.query(
@@ -189,7 +202,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
         );
       }
 
-      // Optionally wipe hours for those projects
+      // Optionally wipe hours for those projects (admin-only — guarded above)
       if (wipe_hours === 'true') {
         for (const pid of projectIds) {
           await pool.query('DELETE FROM time_entries WHERE project_id=$1', [pid]);
