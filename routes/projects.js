@@ -522,13 +522,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Recalculate ALL projects' actual_hours from time_entries (bottom-up)
+  // Recalculate ALL projects' actual_hours from time_entries (bottom-up).
+  // Filters is_billable=TRUE so unbilled overhead entries don't inflate
+  // billing-driving actual_hours. Matches the updateProjectHours() helper.
   app.post('/api/projects/recalc-all', requireAdmin, async (req, res) => {
     try {
-      // First, set all to their own direct hours
+      // First, set all to their own direct billable hours
       await pool.query(`
         UPDATE projects SET actual_hours = COALESCE((
-          SELECT SUM(hours) FROM time_entries WHERE project_id = projects.id
+          SELECT SUM(hours) FROM time_entries
+           WHERE project_id = projects.id AND COALESCE(is_billable, TRUE) = TRUE
         ), 0)
       `);
       // Then propagate up: repeat until no changes (handles unlimited depth)
@@ -537,7 +540,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       while (changed > 0 && iterations < 20) {
         const result = await pool.query(`
           UPDATE projects p SET actual_hours = (
-            SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id = p.id
+            SELECT COALESCE(SUM(hours),0) FROM time_entries
+             WHERE project_id = p.id AND COALESCE(is_billable, TRUE) = TRUE
           ) + (
             SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id = p.id
           )

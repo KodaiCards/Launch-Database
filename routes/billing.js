@@ -77,12 +77,16 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         let hours = parseFloat(p.actual_hours) || 0;
         let periodLabel = null;
         if (isMonthly && override.period_year && override.period_month) {
+          // Filter is_billable=TRUE so unbilled overhead entries (e.g. Misc,
+          // Permitting overhead) don't inflate the invoice total for monthly
+          // projects. COALESCE handles pre-0029 rows that have is_billable NULL.
           const sumR = await client.query(`
             SELECT COALESCE(SUM(hours), 0)::float AS h
             FROM time_entries
             WHERE project_id = $1
               AND EXTRACT(YEAR FROM entry_date)::int = $2
               AND EXTRACT(MONTH FROM entry_date)::int = $3
+              AND COALESCE(is_billable, TRUE) = TRUE
           `, [p.id, override.period_year, override.period_month]);
           hours = parseFloat(sumR.rows[0].h) || 0;
           const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][override.period_month - 1];

@@ -27,7 +27,8 @@ async function updateProjectHours(projectId, _visited) {
 
   await pool.query(`
     UPDATE projects SET actual_hours = (
-      SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id=$1
+      SELECT COALESCE(SUM(hours),0) FROM time_entries
+       WHERE project_id=$1 AND COALESCE(is_billable, TRUE) = TRUE
     ) + (
       SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id=$1
     ) WHERE id=$1

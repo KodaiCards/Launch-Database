@@ -1809,6 +1809,15 @@ async function executeTool(toolName, toolInput) {
         if (ddlPattern.test(probe)) {
           return { success: false, error: 'DDL/privileged operations (DROP, TRUNCATE, ALTER TABLE, CREATE TABLE/INDEX, GRANT, REVOKE, COPY) are not permitted via write_sql. Use the migration pipeline for schema changes.' };
         }
+        // Block bare DELETE FROM on high-value tables that have route-level
+        // pre-checks (referential integrity, budget cascade, batch SET NULL).
+        // Bypassing those checks via AI SQL can silently destroy billing history.
+        // Use the dedicated endpoints instead: DELETE /api/engineering-contracts/:id,
+        // DELETE /api/clients/:id, etc.
+        const highRiskDeletePattern = /^delete\s+from\s+(engineering_contracts|users|clients|contracts)\b/i;
+        if (highRiskDeletePattern.test(probe)) {
+          return { success: false, error: 'Direct DELETE on engineering_contracts, users, clients, or contracts is blocked via write_sql. These tables have route-level pre-checks (budget cascades, billing batch references, auth log entries) that must not be bypassed. Use the dedicated admin endpoints instead.' };
+        }
         try {
           const result = await pool.query(sql, params);
           return {

@@ -109,6 +109,16 @@ module.exports = function installUndoRoutes(app, pool, mw) {
           }
         }
         await client.query('COMMIT');
+
+        // Recompute hours on every restored root after the transaction commits
+        // so actual_hours reflects the current state rather than the snapshot
+        // captured at delete time. Use the pool (not the released client) so
+        // each updateProjectHours call gets a fresh connection.
+        const rootIds = [...new Set(projects.filter(p => !p.parent_id).map(p => p.id))];
+        for (const rid of rootIds) {
+          try { await updateProjectHours(rid); } catch (uerr) { /* non-fatal */ }
+        }
+
         return res.json({
           ok: true,
           restored_projects: projects.length,
