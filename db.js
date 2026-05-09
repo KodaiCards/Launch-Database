@@ -28,6 +28,45 @@ const pool = new Pool({
   // will fail within this window so the server still boots, logs the error, and
   // Railway can serve a meaningful error page instead of a silent 502.
   connectionTimeoutMillis: 10000,
+  // statement_timeout: any single query that runs longer than this gets
+  // aborted by Postgres with error 57014 (query_canceled). This is the
+  // critical complement to connectionTimeoutMillis — a query stuck waiting
+  // on a row/table lock from a crashed previous session would otherwise
+  // hang the boot path indefinitely (the Railway 502 we just hit). 30 s
+  // is generous: schema.sql apply, the heaviest single-statement step at
+  // boot, completes in well under 5 s on a healthy DB. Long-running app
+  // queries (large CSV imports, full-tree CTE walks) are paginated and
+  // each page is well under 30 s. If a future feature needs a longer
+  // limit, override per-query with `SET LOCAL statement_timeout` inside
+  // a transaction rather than raising this default. Override the default
+  // via PG_STATEMENT_TIMEOUT_MS env var if needed.
+  statement_timeout: parseInt(process.env.PG_STATEMENT_TIMEOUT_MS, 10) || 30000,
+  // query_timeout: client-side fallback in case statement_timeout doesn't
+  // fire (e.g. server-side bug, network partition where the server's
+  // cancellation message can't reach us). Slightly higher than
+  // statement_timeout so the server-side cancel wins normally.
+  query_timeout: parseInt(process.env.PG_QUERY_TIMEOUT_MS, 10) || 35000,
+  // idle_in_transaction_session_timeout: if a session opens BEGIN, runs a
+  // statement, then idles (e.g. crashed before COMMIT/ROLLBACK), Postgres
+  // will force-rollback after this duration and release any held locks.
+  // 60 s catches a crashed boot-time transaction quickly enough that the
+  // NEXT boot doesn't block on its locks. (We already saw this exact
+  // failure: the first crashed boot held a lock on time_entry_audit, the
+  // next deploy's boot hung waiting for it.) Override via
+  // PG_IDLE_TX_TIMEOUT_MS env var.
+  // Note: this is set per-connection via SET on connect; pg-pool doesn't
+  // accept it as a constructor option directly, so we attach a 'connect'
+  // listener below.
+});
+
+pool.on('connect', (client) => {
+  // Apply idle_in_transaction_session_timeout to every new connection.
+  // SET LOCAL won't work here — we want it for the whole session, not
+  // a single transaction. Use a plain SET so it survives the connection's
+  // lifetime (and ends with the connection).
+  const idleMs = parseInt(process.env.PG_IDLE_TX_TIMEOUT_MS, 10) || 60000;
+  client.query(`SET idle_in_transaction_session_timeout = ${idleMs}`)
+    .catch((e) => console.warn('[db] failed to SET idle_in_transaction_session_timeout:', e.message));
 });
 
 // Split a multi-statement SQL string into individual statements so each

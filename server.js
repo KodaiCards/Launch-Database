@@ -1108,15 +1108,28 @@ async function bootstrapV3Schema() {
 }
 
 async function start(opts = {}) {
-  await initSchema();
-  await bootstrapV3Schema();   // runs AFTER initSchema, even if that errored
-  await bootstrapAuthSchema(pool);  // creates users table + seeds default admin
+  // Each bootstrap step is wrapped so any single DB-related failure
+  // (degraded Postgres, missing table, full disk on the DB volume) does
+  // NOT prevent the server from binding a port. Without this guard, an
+  // unawaitable rejection here makes Railway's proxy return 502 because
+  // app.listen() below never runs — exactly the failure mode the disk-
+  // recovery endpoints are designed to debug, so they must remain
+  // reachable even when the rest of the app can't talk to the DB.
+  async function safeBootstrap(label, fn) {
+    try { await fn(); }
+    catch (e) {
+      console.error(`[boot] ${label} failed (continuing without it):`, e && (e.message || e));
+    }
+  }
+  await safeBootstrap('initSchema',                    () => initSchema());
+  await safeBootstrap('bootstrapV3Schema',             () => bootstrapV3Schema());   // runs AFTER initSchema, even if that errored
+  await safeBootstrap('bootstrapAuthSchema',           () => bootstrapAuthSchema(pool));  // creates users table + seeds default admin
   // Re-run any schema.sql statements that initSchema deferred because
   // they reference the users table (billing_batches / invoice_templates
   // / customer_clients have FKs to users(id)). Now that users exists
   // they apply cleanly.
-  await applyDeferredSchemaStatements();
-  await timeclockModule.bootstrapTimeClockSchema(pool);  // staff_id + sessions + audit log
+  await safeBootstrap('applyDeferredSchemaStatements', () => applyDeferredSchemaStatements());
+  await safeBootstrap('bootstrapTimeClockSchema',      () => timeclockModule.bootstrapTimeClockSchema(pool));  // staff_id + sessions + audit log
   // Versioned migrations runner (Track 1.4) — applies anything in
   // /migrations that isn't recorded in schema_migrations yet. Coexists
   // with bootstrapV3Schema until the v3 ALTER soup is gradually moved
@@ -1139,7 +1152,11 @@ async function start(opts = {}) {
     // Pass uploadDir so the scheduler can run the daily orphan-file prune.
     // Without it, the prune step is skipped (still safe — manual endpoint
     // /api/_admin/prune-orphan-files works either way).
-    automationModule.startScheduler(pool, { uploadDir: UPLOAD_DIR });
+    try {
+      automationModule.startScheduler(pool, { uploadDir: UPLOAD_DIR });
+    } catch (e) {
+      console.error('[boot] startScheduler failed (continuing without it):', e && (e.message || e));
+    }
   }
   // listenPort: pass 0 from tests to bind to an ephemeral port; pass the
   // configured PORT in production. We log the resolved port (server.address())
