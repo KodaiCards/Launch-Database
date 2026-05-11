@@ -209,6 +209,16 @@
     _ecStaleTimer = setTimeout(async () => {
       await loadEngineeringContracts();
       renderEngineeringContractsList();
+      // If the project-create modal is currently open and its EC row is visible
+      // (RUS/GF(R) program selected), re-populate the EC dropdown so a newly
+      // created EC appears without the user having to close and reopen the modal.
+      const modal = document.getElementById('project-modal');
+      const ecRow = document.getElementById('proj-ec-row');
+      if (modal && modal.classList.contains('open') &&
+          ecRow && ecRow.style.display !== 'none' &&
+          typeof populateEcDropdown === 'function') {
+        populateEcDropdown();
+      }
     }, 500);
   }
 

@@ -968,7 +968,10 @@ function applyPortalProjectModalFieldGating() {
   const isNonRus = effective && !usesRusInfra;
   const clientId = document.getElementById('proj-client')?.value;
   const opt = document.getElementById('proj-client')?.selectedOptions[0];
-  const showContract = clientId && (usesRusInfra || opt?.dataset.showContract === '1');
+  // BAU/Other never show Construction Contract (free-text Service Area only).
+  // The per-client show_contract flag is honoured only when no program is
+  // explicitly selected (effective=null) — not when program is BAU or Other.
+  const showContract = clientId && (usesRusInfra || (!effective && opt?.dataset.showContract === '1'));
 
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';

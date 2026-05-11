@@ -3199,9 +3199,12 @@ function applyProjectModalFieldGating() {
   const usesFreeTextArea = !!effective && !usesRusInfra;
   const clientId = document.getElementById('proj-client')?.value;
   const client = (clients || []).find(c => c.id === clientId);
-  // Contract field: shown for RUS/GFR by default; for BAU/Other only if
-  // admin opted in per client (Settings → Clients "Show Contract").
-  const showContract = clientId && (usesRusInfra || client?.show_contract === true);
+  // Contract field: shown for RUS/GFR only. BAU and Other NEVER show
+  // the Construction Contract dropdown — they use free-text Service Area.
+  // The per-client show_contract flag is only honoured when no program has
+  // been explicitly selected (effective=null, mixed-EC client) so that an
+  // admin who opts in can still see the field before they pick a program.
+  const showContract = clientId && (usesRusInfra || (!effective && client?.show_contract === true));
 
   // Program select — always visible once a client is picked.
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
