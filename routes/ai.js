@@ -788,7 +788,10 @@ const AI_TOOLS = [
 ];
 
 // ─── TOOL EXECUTION ──────────────────────────────────────────────────────────
-async function executeTool(toolName, toolInput) {
+// actor = { id, username, staff_id } derived from req.user at call sites.
+// Passed explicitly so executeTool stays a pure function outside the request
+// lifecycle while still recording who initiated the action.
+async function executeTool(toolName, toolInput, actor = {}) {
   try {
     switch (toolName) {
       case 'create_project': {
@@ -1423,6 +1426,22 @@ async function executeTool(toolName, toolInput) {
       }
 
       case 'advance_permit_stage': {
+        // Guard: only permitting projects have a permit-stage pipeline.
+        // Advancing a non-permitting project was a silent no-op before (no
+        // permit_stages row exists so the UPDATE touches zero rows and the
+        // INSERT does nothing). Now we surface a clear error so the AI
+        // self-corrects instead of silently succeeding.
+        const { rows: projRows } = await pool.query(
+          'SELECT project_type FROM projects WHERE id = $1',
+          [toolInput.project_id]
+        );
+        if (!projRows.length) return { success: false, error: 'Project not found' };
+        if (projRows[0].project_type !== 'permitting') {
+          return {
+            success: false,
+            error: `Project is type "${projRows[0].project_type}", not "permitting". advance_permit_stage only works on permitting projects.`,
+          };
+        }
         const STAGES = ['potential','started','submitted','approved','checklist','billed'];
         const { rows: current } = await pool.query(
           'SELECT stage FROM permit_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at LIMIT 1',
@@ -1432,13 +1451,16 @@ async function executeTool(toolName, toolInput) {
         const nextIdx = STAGES.indexOf(currentStage) + 1;
         if (nextIdx >= STAGES.length) return { success: false, message: 'Already at final stage' };
         const nextStage = STAGES[nextIdx];
+        // Record the actor from req.user so the audit trail shows the real
+        // admin name, not an AI-supplied string that could be anything.
+        const actorName = actor.username || toolInput.updated_by || 'AI';
         await pool.query(
           'UPDATE permit_stages SET completed_at=NOW(), updated_by=$1, notes=$2 WHERE project_id=$3 AND stage=$4',
-          [toolInput.updated_by || 'AI', toolInput.notes || null, toolInput.project_id, currentStage]
+          [actorName, toolInput.notes || null, toolInput.project_id, currentStage]
         );
         await pool.query(
           'INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3) ON CONFLICT (project_id, stage) DO NOTHING',
-          [toolInput.project_id, nextStage, toolInput.updated_by || 'AI']
+          [toolInput.project_id, nextStage, actorName]
         );
         return { success: true, previous: currentStage, current: nextStage };
       }
@@ -1896,7 +1918,10 @@ const DESTRUCTIVE_AI_TOOLS = new Set([
   'set_billing_cadence',
   'advance_permit_stage',
   'csv_smart_import',
-  'create_engineering_contract',
+  // update_engineering_contract was missing — the AI could mutate EC fields
+  // (name, program, active) without triggering an approval card. Gated now
+  // alongside create_engineering_contract per PROJECT_NORTH_STAR §7.
+  'create_engineering_contract', 'update_engineering_contract',
   'bulk_update_projects',
   'write_sql',
   'create_user', 'deactivate_user',
@@ -2114,12 +2139,20 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       const stagedToolUses = pending.stagedToolUses;
       const decisionsMap = decisions || {};
       const toolResultContents = [];
+      // Bind actor to the user approving the actions so audit trails in
+      // mutating tools (advance_permit_stage, log_time_entries, etc.)
+      // record the real admin identity instead of a hardcoded 'AI' string.
+      const reqActor = {
+        id: req.user?.id,
+        username: req.user?.username || req.user?.full_name,
+        staff_id: req.user?.staff_id,
+      };
       for (const tu of stagedToolUses) {
         const approved = !!decisionsMap[tu.id];
         let result;
         if (approved) {
           console.log(`AI APPROVED tool: ${tu.name}`, JSON.stringify(tu.input).substring(0, 200));
-          result = await executeTool(tu.name, tu.input);
+          result = await executeTool(tu.name, tu.input, reqActor);
         } else {
           result = { success: false, error: 'User declined this action.', user_declined: true };
         }
@@ -2231,10 +2264,15 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       }
 
       // No destructive tools — execute all immediately
+      const immediateActor = {
+        id: req.user?.id,
+        username: req.user?.username || req.user?.full_name,
+        staff_id: req.user?.staff_id,
+      };
       const toolResultContents = [];
       for (const toolUseBlock of toolUseBlocks) {
         console.log(`AI Tool Call: ${toolUseBlock.name}`, JSON.stringify(toolUseBlock.input).substring(0, 200));
-        const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input);
+        const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input, immediateActor);
         console.log(`AI Tool Result: ${toolUseBlock.name}`, JSON.stringify(toolResult).substring(0, 200));
         toolResults.push({ tool: toolUseBlock.name, input: toolUseBlock.input, result: toolResult });
         toolResultContents.push({
