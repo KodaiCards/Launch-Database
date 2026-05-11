@@ -30,8 +30,10 @@ function normalizeProgram(input) {
 
 module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
+  // Wave 1.5 [UNGATED]: GET /api/engineering-contracts was missing auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/engineering-contracts', async (req, res) => {
+  app.get('/api/engineering-contracts', requireAuth(), async (req, res) => {
     const { client_id } = req.query;
     try {
       // For each engineering contract, also surface a count of child contracts
@@ -58,7 +60,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/engineering-contracts/:id', async (req, res) => {
+  app.get('/api/engineering-contracts/:id', requireAuth(), async (req, res) => {
     try {
       const { rows: ec } = await pool.query(
         `SELECT ec.*, cl.name AS client_name

@@ -16,7 +16,10 @@ const { broadcast } = require('./_sse');
 module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
 
-  app.get('/api/time-entries', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/time-entries was missing auth. The role-scoping
+  // logic below already gates engineers to their own entries — but only once
+  // req.user is set, which the gate enforces.
+  app.get('/api/time-entries', requireAuth(), async (req, res) => {
     const { project_id, staff_id, month, year, billable } = req.query;
     let where = [];
     let params = [];

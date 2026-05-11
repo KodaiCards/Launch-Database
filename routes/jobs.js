@@ -22,7 +22,8 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || requireAdmin;
 
-  app.get('/api/jobs', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/jobs and GET /api/jobs/:id were missing auth.
+  app.get('/api/jobs', requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']), async (req, res) => {
     try {
       // Filter precedence (most specific first):
       //   1. program (rus|bau|gfr|other) provided directly → filter
@@ -104,7 +105,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // excludes inactive jobs, but the project-edit modal still needs to be
   // able to surface a now-deactivated job that's referenced by an existing
   // project so the user can save without being forced to re-pick the job.
-  app.get('/api/jobs/:id', async (req, res) => {
+  app.get('/api/jobs/:id', requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']), async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Job not found' });

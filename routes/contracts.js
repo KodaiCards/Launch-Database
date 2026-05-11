@@ -10,8 +10,10 @@ const { broadcast } = require('./_sse');
 
 module.exports = function installContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
+  // Wave 1.5 [UNGATED]: GET /api/contracts was missing auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/contracts', async (req, res) => {
+  app.get('/api/contracts', requireAuth(), async (req, res) => {
     const { client_id, engineering_contract_id } = req.query;
     try {
       const where = [];
@@ -35,7 +37,10 @@ module.exports = function installContractsRoutes(app, pool, mw) {
         params
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[contracts:GET]', e && e.message);
+      res.status(500).json({ error: 'Failed to load contracts.' });
+    }
   });
 
   // Item 2 fix: requireAdmin added — creating contracts is an admin-only operation
@@ -49,7 +54,10 @@ module.exports = function installContractsRoutes(app, pool, mw) {
       );
       broadcast('admin', 'contract_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[contracts:POST]', e && e.message);
+      res.status(500).json({ error: 'Failed to create contract.' });
+    }
   });
 
   // PUT /api/contracts/:id — update a contract. Adds umbrella support so the
@@ -76,7 +84,10 @@ module.exports = function installContractsRoutes(app, pool, mw) {
       if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
       broadcast('admin', 'contract_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[contracts:PUT]', e && e.message);
+      res.status(500).json({ error: 'Failed to update contract.' });
+    }
   });
 
   // DELETE /api/contracts/:id — admin-only. Refuses if any project references

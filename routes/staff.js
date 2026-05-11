@@ -16,8 +16,11 @@ const { broadcast } = require('./_sse');
 
 module.exports = function installStaffRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // Wave 1.5 [UNGATED]: GET /api/staff was missing auth. Staff list is used
+  // by time-entry dropdowns across all portals, so requireAuth() (any role).
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/staff', async (req, res) => {
+  app.get('/api/staff', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT * FROM staff WHERE active=true ORDER BY name');
       res.json(rows);

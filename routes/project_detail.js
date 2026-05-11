@@ -17,7 +17,10 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 module.exports = function installProjectDetailRoutes(app, pool, mw) {
-  app.get('/api/projects/:id/detail', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/projects/:id/detail was missing auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+
+  app.get('/api/projects/:id/detail', requireAuth(), async (req, res) => {
     try {
       const projR = await pool.query(`
         SELECT p.*, cl.name as client_name, co.contract_number, co.name as contract_name,
@@ -257,8 +260,8 @@ module.exports = function installProjectDetailRoutes(app, pool, mw) {
         active_billable_count: activeBillableCount
       });
     } catch (e) {
-      console.error('project detail error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[project_detail:GET /api/projects/:id/detail]', e && e.message);
+      res.status(500).json({ error: 'Failed to load project detail.' });
     }
   });
 };

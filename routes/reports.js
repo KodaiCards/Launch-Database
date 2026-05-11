@@ -3,7 +3,11 @@
 // /api/reports/hours    — month/year filtered staff×project×date breakdown
 // /api/reports/billing  — billing queue (one-time + monthly cadence union)
 //
-// Both are read-only and unauthenticated beyond the global authMiddleware.
+// Wave 1.5 [UNGATED]: Both report endpoints were explicitly documented as
+// "unauthenticated beyond global authMiddleware" — that's wrong for an
+// internal tool. Reports include staff names, project names, client names,
+// and billing amounts. Now gated to admin + managers.
+//
 // /api/reports/billing has a similar shape to /api/revenue/unbilled but
 // with different filtering — kept as separate endpoints because the UI
 // flows are distinct (Reports tab vs Revenue tab).
@@ -11,7 +15,9 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 module.exports = function installReportsRoutes(app, pool, mw) {
-  app.get('/api/reports/hours', async (req, res) => {
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+
+  app.get('/api/reports/hours', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { month, year } = req.query;
     const m = month || new Date().getMonth() + 1;
     const y = year || new Date().getFullYear();
@@ -35,10 +41,13 @@ module.exports = function installReportsRoutes(app, pool, mw) {
         ORDER BY s.name, te.entry_date
       `, [m, y]);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[reports:GET /api/reports/hours]', e && e.message);
+      res.status(500).json({ error: 'Failed to load hours report.' });
+    }
   });
 
-  app.get('/api/reports/billing', async (req, res) => {
+  app.get('/api/reports/billing', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { month, year } = req.query;
     const m = month || new Date().getMonth() + 1;
     const y = year || new Date().getFullYear();
@@ -131,8 +140,8 @@ module.exports = function installReportsRoutes(app, pool, mw) {
       });
       res.json(all);
     } catch (e) {
-      console.error('billing queue error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[reports:GET /api/reports/billing]', e && e.message);
+      res.status(500).json({ error: 'Failed to load billing report.' });
     }
   });
 };
