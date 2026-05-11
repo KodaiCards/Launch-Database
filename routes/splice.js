@@ -3467,6 +3467,11 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   app.get('/api/splice/projects/:id/events', requireAuth(), requireSpliceAccess(req => req.params.id), (req, res) => {
     const projectId = req.params.id;
+    // Wave 1.5 [SPLICE-SSE-REVALIDATE]: capture session metadata at connect
+    // time so the heartbeat can re-validate against tokens_invalid_after.
+    const sseUserId      = req.user && req.user.id;
+    const sseTokenIatSec = req.user && req.user.iat ? req.user.iat : 0;
+
     res.set({
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
@@ -3476,9 +3481,42 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     res.flushHeaders?.();
     res.write(`event: hello\ndata: ${JSON.stringify({ project_id: projectId })}\n\n`);
     _addSseClient(projectId, res);
-    // Keep-alive ping every 25s so proxies don't kill the idle connection.
-    const pingTimer = setInterval(() => {
-      try { res.write(`: ping ${Date.now()}\n\n`); } catch {}
+    // Keep-alive ping every 25s with session re-validation so deactivated
+    // or logged-out users stop receiving events within one heartbeat interval.
+    const pingTimer = setInterval(async () => {
+      // Wave 1.5 [SPLICE-SSE-REVALIDATE]: cheap DB re-validation on each tick.
+      if (sseUserId) {
+        try {
+          const { rows } = await pool.query(
+            'SELECT active, tokens_invalid_after FROM users WHERE id = $1',
+            [sseUserId]
+          );
+          const u = rows[0];
+          const sessionInvalid =
+            !u ||
+            !u.active ||
+            (u.tokens_invalid_after &&
+              sseTokenIatSec < Math.floor(new Date(u.tokens_invalid_after).getTime() / 1000));
+          if (sessionInvalid) {
+            try {
+              res.write(`event: session_invalid\ndata: ${JSON.stringify({ reason: 'session_expired' })}\n\n`);
+            } catch {}
+            clearInterval(pingTimer);
+            _removeSseClient(projectId, res);
+            try { res.end(); } catch {}
+            return;
+          }
+        } catch (dbErr) {
+          // Transient DB error — log and keep the connection alive until next tick.
+          console.error('[splice:SSE:revalidate]', dbErr && dbErr.message);
+        }
+      }
+      let ok;
+      try { ok = res.write(`: ping ${Date.now()}\n\n`); } catch { ok = false; }
+      if (ok === false) {
+        clearInterval(pingTimer);
+        _removeSseClient(projectId, res);
+      }
     }, 25000);
     req.on('close', () => {
       clearInterval(pingTimer);
