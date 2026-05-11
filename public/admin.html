@@ -4229,10 +4229,18 @@ async function editProject(id) {
     if (typeof populateConcentratorDropdownForContract === 'function') {
       populateConcentratorDropdownForContract();
     }
+    // If the EC has EC-scoped service areas / work orders, load them into
+    // the modal pickers (replaces the concentrator dropdown + WO# input).
+    if (pcEcId && typeof populateEcScopedWoSaForModal === 'function') {
+      await populateEcScopedWoSaForModal(pcEcId);
+    }
   } catch (e) { /* contract dropdown might not have the option yet — non-fatal */ }
 
   try {
     document.getElementById('proj-concentrator').value = p.concentrator_id || '';
+    // If the concentrator dropdown was repopulated with EC-scoped SAs, also
+    // try to match by concentrator_id (the SA id in ec_service_areas uses
+    // the same uuid column, so a direct value set works when IDs match).
   } catch (e) { /* same */ }
 
   try {
@@ -4263,6 +4271,14 @@ function clearProjectForm() {
   if (ecInherited) { ecInherited.style.display='none'; ecInherited.dataset.ecId=''; }
   const ecRow = document.getElementById('proj-ec-row');
   if (ecRow) ecRow.style.display='none';
+  // Reset EC-scoped WO select (injected by populateEcScopedWoSaForModal)
+  const woSelect = document.getElementById('proj-wo-select');
+  if (woSelect) { woSelect.value = ''; woSelect.style.display = 'none'; }
+  const woIn = document.getElementById('proj-wo');
+  if (woIn) { woIn.value = ''; woIn.style.display = ''; }
+  // Clear the ecId marker on the concentrator select so legacy path resumes
+  const concSel = document.getElementById('proj-concentrator');
+  if (concSel) delete concSel.dataset.ecId;
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
   // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
@@ -4377,11 +4393,126 @@ function populateEcDropdown() {
 }
 
 // User changed the Engineering Contract picker. Filter the Construction Contract
-// dropdown to only show contracts under the selected EC.
+// dropdown to only show contracts under the selected EC, and load any
+// EC-scoped Service Areas / Work Orders into the modal pickers.
 function ecChanged() {
   populateContractDropdownForProgram();
   populateConcentratorDropdownForContract();
+  const ecId = document.getElementById('proj-ec')?.value;
+  if (ecId) populateEcScopedWoSaForModal(ecId);
 }
+
+// ─── EC-scoped WO# / Service Area support for the project modal ───────────────
+//
+// When the selected EC has at least one Service Area in ec_service_areas, the
+// Concentrator dropdown (proj-concentrator) is repopulated from those EC-scoped
+// records instead of the legacy concentrators table.  If the EC has zero
+// EC-scoped SAs the function is a no-op and the legacy concentrators path
+// continues to run unchanged.
+//
+// When the EC has at least one Work Order in ec_work_orders the WO# field
+// becomes a <select> (id=proj-wo-select) instead of a free-text input, fed
+// from those records.  Selecting a WO that is linked to a service area also
+// auto-selects that SA in the concentrator picker.
+//
+// Falls back to legacy behaviour (free-text WO#, concentrators-based SA) when
+// the EC has zero EC-scoped rows, so existing setups are unaffected.
+
+// Cache: ecId → { sas: [...], wos: [...] }
+const _ecModalCache = {};
+
+async function populateEcScopedWoSaForModal(ecId) {
+  if (!ecId) return;
+  try {
+    let data = _ecModalCache[ecId];
+    if (!data) {
+      const [sas, wos] = await Promise.all([
+        api('/api/engineering-contracts/' + ecId + '/service-areas'),
+        api('/api/engineering-contracts/' + ecId + '/work-orders'),
+      ]);
+      data = { sas, wos };
+      _ecModalCache[ecId] = data;
+    }
+    const { sas, wos } = data;
+
+    // ── Service Area picker ─────────────────────────────────────────────────
+    const concWrap = document.getElementById('proj-concentrator-wrap');
+    const concSel  = document.getElementById('proj-concentrator');
+    if (concWrap && concSel && sas.length > 0) {
+      // Overwrite options with EC-scoped SAs.  Keep an empty first option.
+      const prev = concSel.value;
+      concSel.innerHTML =
+        '<option value="">— Select service area —</option>' +
+        sas.map(sa => `<option value="${sa.id}" data-type="ec-sa">${escHtml(sa.name)}</option>`).join('');
+      // Restore prior selection if still in the new list.
+      if (sas.some(sa => sa.id === prev)) concSel.value = prev;
+      // Store EC id so concentratorChanged knows to look in EC-scoped data.
+      concSel.dataset.ecId = ecId;
+    } else if (concSel) {
+      // No EC-scoped SAs — clear the ecId marker and let legacy path run.
+      delete concSel.dataset.ecId;
+    }
+
+    // ── WO# picker ──────────────────────────────────────────────────────────
+    const woWrap = document.getElementById('proj-wo-wrap');
+    const woIn   = document.getElementById('proj-wo');
+    if (woWrap && wos.length > 0) {
+      // Only swap if the WO wrap is visible (RUS program).
+      if (woWrap.style.display !== 'none') {
+        // Replace free-text input with a select (idempotent).
+        if (!document.getElementById('proj-wo-select')) {
+          const sel = document.createElement('select');
+          sel.id = 'proj-wo-select';
+          sel.style.cssText = woIn ? woIn.style.cssText : '';
+          sel.style.width = '100%';
+          sel.onchange = function () {
+            // Mirror value into the hidden text input so saveProject() still reads it.
+            if (woIn) woIn.value = this.value;
+            // Auto-select linked SA when a WO is picked.
+            const picked = wos.find(w => w.number === this.value);
+            if (picked && picked.service_area_id) {
+              const concSel = document.getElementById('proj-concentrator');
+              if (concSel) {
+                concSel.value = picked.service_area_id;
+              }
+            }
+          };
+          if (woIn) {
+            woIn.style.display = 'none';
+            woIn.parentNode.insertBefore(sel, woIn.nextSibling);
+          }
+        }
+        const sel = document.getElementById('proj-wo-select');
+        const prev = sel.value;
+        sel.innerHTML =
+          '<option value="">— Select WO# —</option>' +
+          wos.map(wo => `<option value="${escHtml(wo.number)}">${escHtml(wo.number)}${wo.description ? ' — ' + escHtml(wo.description) : ''}${wo.service_area_name ? ' (' + escHtml(wo.service_area_name) + ')' : ''}</option>`).join('');
+        if (wos.some(w => w.number === prev)) sel.value = prev;
+        sel.style.display = '';
+      }
+    } else {
+      // No EC-scoped WOs — restore free-text input if the select was injected.
+      const sel = document.getElementById('proj-wo-select');
+      if (sel) sel.style.display = 'none';
+      if (woIn) woIn.style.display = '';
+    }
+  } catch (e) {
+    // Non-fatal: fall back to existing behaviour silently.
+    console.warn('[ec-wosa:modal]', e && e.message);
+  }
+}
+
+// Small HTML-escaping helper for inline use (mirrors the global esc() but
+// safe to call before the global is available during load).
+function escHtml(s) {
+  if (typeof esc === 'function') return esc(s);
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Note: clearProjectForm() (below) is extended to also reset the EC-scoped
+// WO select when the modal is cleared — see the proj-wo-select reset block.
 
 // User changed the Parent Project. Load budget codes (existing behaviour)
 // and re-run EC inheritance so child projects automatically pick up the

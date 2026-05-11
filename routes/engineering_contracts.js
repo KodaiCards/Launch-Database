@@ -193,4 +193,156 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       res.status(500).json({ error: 'Failed to delete engineering contract.' });
     }
   });
+
+  // ─── EC-SCOPED SERVICE AREAS ────────────────────────────────────────────────
+
+  app.get('/api/engineering-contracts/:id/service-areas', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT * FROM ec_service_areas
+          WHERE engineering_contract_id = $1
+          ORDER BY name`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[ec-wosa:sa-list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load service areas.' });
+    }
+  });
+
+  app.post('/api/engineering-contracts/:id/service-areas', requireAdmin, async (req, res) => {
+    const { name, notes } = req.body || {};
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'name required' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO ec_service_areas (engineering_contract_id, name, notes)
+           VALUES ($1, $2, $3) RETURNING *`,
+        [req.params.id, String(name).trim(), notes || null]
+      );
+      res.status(201).json(rows[0]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(409).json({ error: 'A service area with this name already exists on this engineering contract.' });
+      console.error('[ec-wosa:sa-create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create service area.' });
+    }
+  });
+
+  app.put('/api/ec-service-areas/:id', requireAdmin, async (req, res) => {
+    const { name, notes } = req.body || {};
+    try {
+      const sets = [];
+      const params = [req.params.id];
+      let i = 2;
+      if (name !== undefined) { sets.push(`name = $${i++}`); params.push(String(name).trim()); }
+      if (notes !== undefined) { sets.push(`notes = $${i++}`); params.push(notes || null); }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+      const { rows } = await pool.query(
+        `UPDATE ec_service_areas SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+        params
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Service area not found' });
+      res.json(rows[0]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(409).json({ error: 'A service area with this name already exists on this engineering contract.' });
+      console.error('[ec-wosa:sa-update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update service area.' });
+    }
+  });
+
+  app.delete('/api/ec-service-areas/:id', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `DELETE FROM ec_service_areas WHERE id = $1 RETURNING id`,
+        [req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Service area not found' });
+      res.status(204).end();
+    } catch (e) {
+      console.error('[ec-wosa:sa-delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete service area.' });
+    }
+  });
+
+  // ─── EC-SCOPED WORK ORDERS ───────────────────────────────────────────────────
+
+  app.get('/api/engineering-contracts/:id/work-orders', requireAdmin, async (req, res) => {
+    const { service_area_id } = req.query;
+    try {
+      const where = service_area_id
+        ? 'WHERE wo.engineering_contract_id = $1 AND wo.service_area_id = $2'
+        : 'WHERE wo.engineering_contract_id = $1';
+      const params = service_area_id ? [req.params.id, service_area_id] : [req.params.id];
+      const { rows } = await pool.query(
+        `SELECT wo.*, sa.name AS service_area_name
+           FROM ec_work_orders wo
+           LEFT JOIN ec_service_areas sa ON sa.id = wo.service_area_id
+           ${where}
+           ORDER BY wo.number`,
+        params
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[ec-wosa:wo-list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load work orders.' });
+    }
+  });
+
+  app.post('/api/engineering-contracts/:id/work-orders', requireAdmin, async (req, res) => {
+    const { number, description, service_area_id } = req.body || {};
+    if (!number || !String(number).trim()) {
+      return res.status(400).json({ error: 'number required' });
+    }
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO ec_work_orders (engineering_contract_id, number, description, service_area_id)
+           VALUES ($1, $2, $3, $4) RETURNING *`,
+        [req.params.id, String(number).trim(), description || null, service_area_id || null]
+      );
+      res.status(201).json(rows[0]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(409).json({ error: 'A work order with this number already exists on this engineering contract.' });
+      console.error('[ec-wosa:wo-create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create work order.' });
+    }
+  });
+
+  app.put('/api/ec-work-orders/:id', requireAdmin, async (req, res) => {
+    const { number, description, service_area_id } = req.body || {};
+    try {
+      const sets = [];
+      const params = [req.params.id];
+      let i = 2;
+      if (number !== undefined) { sets.push(`number = $${i++}`); params.push(String(number).trim()); }
+      if (description !== undefined) { sets.push(`description = $${i++}`); params.push(description || null); }
+      if (service_area_id !== undefined) { sets.push(`service_area_id = $${i++}`); params.push(service_area_id || null); }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+      const { rows } = await pool.query(
+        `UPDATE ec_work_orders SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
+        params
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Work order not found' });
+      res.json(rows[0]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(409).json({ error: 'A work order with this number already exists on this engineering contract.' });
+      console.error('[ec-wosa:wo-update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update work order.' });
+    }
+  });
+
+  app.delete('/api/ec-work-orders/:id', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `DELETE FROM ec_work_orders WHERE id = $1 RETURNING id`,
+        [req.params.id]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Work order not found' });
+      res.status(204).end();
+    } catch (e) {
+      console.error('[ec-wosa:wo-delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete work order.' });
+    }
+  });
 };
