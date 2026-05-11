@@ -14,6 +14,51 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+// ─── YTD revenue in-memory cache ─────────────────────────────────────────
+// Perf (Wave 3): the ytd_revenue query (correlated subquery per active leaf
+// project) is expensive and doesn't change more than once an hour. Cache the
+// result for up to 1 hour keyed by year so repeated dashboard hits don't
+// re-run the full scan. Cache is invalidated automatically when the year
+// changes. No persistence — cache is warm on first request per deploy.
+const YTD_CACHE_TTL_MS = 60 * 60 * 1000;  // 1 hour
+const _ytdCache = new Map(); // year → { value, computedAt }
+
+async function getYtdRevenue(pool, yyyy) {
+  const now = Date.now();
+  const cached = _ytdCache.get(yyyy);
+  if (cached && (now - cached.computedAt) < YTD_CACHE_TTL_MS) {
+    return cached.value;
+  }
+  const { rows } = await pool.query(`
+    SELECT COALESCE(SUM(
+      CASE
+        WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN COALESCE(p.expected_revenue, 0)
+        ELSE COALESCE(
+          (SELECT SUM(te.hours) FROM time_entries te
+           WHERE te.project_id = p.id
+             AND EXTRACT(YEAR FROM te.entry_date) = $1),
+          0
+        ) * COALESCE(p.billing_rate,
+          CASE LOWER(p.project_type)
+            WHEN 'inspection' THEN 90
+            WHEN 're' THEN 100
+            WHEN 'resident engineer' THEN 100
+            WHEN 'permitting' THEN 90
+            ELSE 0
+          END
+        )
+      END
+    ), 0) AS rev
+    FROM projects p
+    WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+      AND COALESCE(p.is_rollup, FALSE) = FALSE
+      AND p.status IN ('active','completed','billed')
+  `, [yyyy]);
+  const value = parseFloat(rows[0].rev) || 0;
+  _ytdCache.set(yyyy, { value, computedAt: now });
+  return value;
+}
+
 module.exports = function installDashboardRoutes(app, pool, mw) {
   const { requireAuth } = mw;
 
@@ -75,7 +120,12 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
         periodLabel = `YTD ${yyyy}`;
       }
 
-      const [activeR, unbilledR, monthRevR, ytdRevR, recentR, alertR] = await Promise.all([
+      // YTD revenue — served from the 1-hour in-memory cache (see getYtdRevenue
+      // above). Runs the full scan on first hit per year, then returns the cached
+      // value for subsequent dashboard loads until the TTL expires.
+      const ytdRevCached = await getYtdRevenue(pool, yyyy);
+
+      const [activeR, unbilledR, monthRevR, recentR, alertR] = await Promise.all([ // ytdRevR removed — now cached
         // Active = leaf projects (anything without children) AND not a rollup
         // folder. Rollups have is_rollup=TRUE and are organizational containers
         // (Client / Service Area / Team folders); they don't represent
@@ -112,34 +162,9 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
           WHERE te.entry_date BETWEEN $1 AND $2
             AND COALESCE(p.is_rollup, FALSE) = FALSE
         `, [periodStart, periodEnd]),
-        // YTD revenue: ALL earned revenue in the SELECTED YEAR (not period).
-        // Provides a year-context number alongside the period number above so
-        // admin can compare "this month" vs "year-to-date" at a glance.
-        pool.query(`
-          SELECT COALESCE(SUM(
-            CASE
-              WHEN p.billing_type = 'footage' AND p.status IN ('completed','billed') THEN COALESCE(p.expected_revenue, 0)
-              ELSE COALESCE(
-                (SELECT SUM(te.hours) FROM time_entries te
-                 WHERE te.project_id = p.id
-                   AND EXTRACT(YEAR FROM te.entry_date) = $1),
-                0
-              ) * COALESCE(p.billing_rate,
-                CASE LOWER(p.project_type)
-                  WHEN 'inspection' THEN 90
-                  WHEN 're' THEN 100
-                  WHEN 'resident engineer' THEN 100
-                  WHEN 'permitting' THEN 90
-                  ELSE 0
-                END
-              )
-            END
-          ), 0) AS rev
-          FROM projects p
-          WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
-            AND COALESCE(p.is_rollup, FALSE) = FALSE
-            AND p.status IN ('active','completed','billed')
-        `, [yyyy]),
+        // YTD revenue is now served from the 1-hour in-memory cache
+        // (computed above via getYtdRevenue). The pool.query for ytd_revenue
+        // has been removed from this Promise.all — ytdRevCached holds the value.
         pool.query(`
           SELECT p.id, p.name, p.project_type, p.status, p.work_order_number,
                  cl.name as client_name, p.expected_hours, p.actual_hours,
@@ -198,7 +223,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
         unbilled_count: parseInt(unbilledR.rows[0].count),
         unbilled_total: parseFloat(unbilledR.rows[0].total),
         month_revenue: parseFloat(monthRevR.rows[0].rev),  // now period_revenue (kept name for back-compat)
-        ytd_revenue: parseFloat(ytdRevR.rows[0].rev),
+        ytd_revenue: ytdRevCached,  // served from 1-hour in-memory cache
         recent_projects: recentR.rows,
         unbilled_projects: alertR.rows
       });

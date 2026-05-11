@@ -35,6 +35,29 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     if (client_id) { where.push(`p.client_id=$${i++}`); params.push(client_id); }
     if (type) { where.push(`p.project_type=$${i++}`); params.push(type); }
 
+    // Perf (Wave 3): default LIMIT 1000 to prevent full-table serialisation
+    // on large deployments. Use ?limit=N (max 5000) and ?offset=N for
+    // pagination. Pass ?limit=all to skip the cap (tree-view loads that need
+    // the full list can opt out; scoped queries with status/client_id
+    // filters should be small enough to not need it).
+    const rawLimit  = req.query.limit;
+    const rawOffset = parseInt(req.query.offset, 10);
+    const skipLimit = rawLimit === 'all';
+    const limitVal  = !skipLimit
+      ? (Number.isFinite(parseInt(rawLimit, 10)) && parseInt(rawLimit, 10) > 0
+          ? Math.min(parseInt(rawLimit, 10), 5000)
+          : 1000)
+      : null;
+    const offsetVal = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+    const limitClause = skipLimit
+      ? `OFFSET $${i++}`
+      : `LIMIT $${i++} OFFSET $${i++}`;
+    if (!skipLimit) {
+      params.push(limitVal, offsetVal);
+    } else {
+      params.push(offsetVal);
+    }
+
     const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
     try {
       const { rows } = await pool.query(`
@@ -78,6 +101,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         ${whereStr}
         GROUP BY p.id, cl.name, co.contract_number, co.name, pp.name
         ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
+        ${limitClause}
       `, params);
       res.json(rows);
     } catch (e) {
