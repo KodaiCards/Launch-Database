@@ -63,6 +63,13 @@
     }
     allProjects = data;
     renderProjects(allProjects);
+    // Re-apply text search if active — SSE-triggered reloads call loadProjects()
+    // which was resetting the visible list to all projects even when the user
+    // had typed a search term. Re-filter so the search doesn't visibly disappear.
+    const projSearchEl = document.getElementById('proj-search');
+    if (projSearchEl && projSearchEl.value.trim()) {
+      filterProjects();
+    }
     // Time entry project dropdown — leaves only via the shared picker
     // helper. Picking a rollup never made sense (you can't log time
     // against a folder); restricting to leaves is the same UX the

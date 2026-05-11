@@ -26,6 +26,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { ensureRollupChain } = require('../portal_module');
 
@@ -171,9 +172,17 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     if (!project_id || !file_path) {
       return res.status(400).json({ error: 'project_id and file_path required' });
     }
+    // Item 29 fix: path traversal guard. file_path comes from req.body and
+    // was passed directly to path.join without validation, allowing '..'
+    // sequences to escape UPLOAD_DIR. Resolve the full path and verify it
+    // still starts with the upload root before accessing the filesystem.
+    const uploadRoot = path.resolve(uploadDir) + path.sep;
+    const fullPath = path.resolve(uploadDir, file_path);
+    if (!fullPath.startsWith(uploadRoot)) {
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
     try {
       // Verify the file actually exists on disk
-      const fullPath = path.join(uploadDir, file_path);
       if (!fs.existsSync(fullPath)) {
         return res.status(404).json({ error: 'File not found on disk: ' + file_path });
       }
@@ -1021,8 +1030,17 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   // response body includes a hint telling the operator which env var to set.
   app.get('/api/_admin/disk-stats', (req, res, next) => {
     const bypass = process.env.ADMIN_BYPASS_TOKEN;
-    if (bypass && req.headers['x-admin-bypass-token'] === bypass) {
-      return diskStatsHandler(req, res);
+    if (bypass && req.headers['x-admin-bypass-token']) {
+      // Item 4 fix: constant-time comparison prevents timing attacks that
+      // could leak the bypass token character-by-character via response
+      // latency. An empty bypass env var is treated as disabled (not a
+      // valid token), so we require bypass to be non-empty before comparing.
+      const tokenBuf = Buffer.from(req.headers['x-admin-bypass-token']);
+      const bypassBuf = Buffer.from(bypass);
+      if (tokenBuf.length === bypassBuf.length && crypto.timingSafeEqual(tokenBuf, bypassBuf)) {
+        return diskStatsHandler(req, res);
+      }
+      // Wrong token — fall through to requireAdmin (will 401/403).
     }
     // Fall through to requireAdmin for normal (DB-healthy) auth.
     requireAdmin(req, res, () => diskStatsHandler(req, res));
@@ -1110,8 +1128,14 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   // Like disk-stats, supports X-Admin-Bypass-Token for DB-down access.
   app.post('/api/_admin/uploads-cleanup', (req, res, next) => {
     const bypass = process.env.ADMIN_BYPASS_TOKEN;
-    if (bypass && req.headers['x-admin-bypass-token'] === bypass) {
-      return uploadsCleanupHandler(req, res);
+    if (bypass && req.headers['x-admin-bypass-token']) {
+      // Item 4 fix: same constant-time guard as disk-stats bypass above.
+      const tokenBuf = Buffer.from(req.headers['x-admin-bypass-token']);
+      const bypassBuf = Buffer.from(bypass);
+      if (tokenBuf.length === bypassBuf.length && crypto.timingSafeEqual(tokenBuf, bypassBuf)) {
+        return uploadsCleanupHandler(req, res);
+      }
+      // Wrong token — fall through to requireAdmin.
     }
     requireAdmin(req, res, () => uploadsCleanupHandler(req, res));
   });
@@ -1216,7 +1240,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   // 3. Rolls back everything if either step fails (e.g. duplicate username).
   //
   // Returns: { staff, user } — the two created/updated rows.
-  const { VALID_ROLES, teamForRole } = require('../auth');
+  const { VALID_ROLES, MIN_PASSWORD_LEN, teamForRole } = require('../auth');
   const BCRYPT_ROUNDS = 12;
 
   app.post('/api/admin/staff-with-user', requireAdmin, async (req, res) => {
@@ -1227,8 +1251,11 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     if (!username || !String(username).trim()) {
       return res.status(400).json({ error: 'username required' });
     }
-    if (!password || password.length < 6) {
-      return res.status(400).json({ error: 'password must be at least 6 characters' });
+    if (!password || password.length < MIN_PASSWORD_LEN) {
+      // Item 23 fix: use MIN_PASSWORD_LEN from auth.js (currently 10) rather
+      // than the old hardcoded 6 — ensures the admin staff-with-user creation
+      // path enforces the same minimum as the normal login/change-password path.
+      return res.status(400).json({ error: `password must be at least ${MIN_PASSWORD_LEN} characters` });
     }
     if (!role || !VALID_ROLES.includes(role)) {
       return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });

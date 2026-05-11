@@ -150,17 +150,35 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   app.delete('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
     try {
-      // Pre-check: refuse to delete if contracts still point here. RESTRICT
-      // would also catch this but the explicit message is friendlier.
-      const { rows: kids } = await pool.query(
-        `SELECT COUNT(*)::int AS n FROM contracts WHERE engineering_contract_id = $1`,
-        [req.params.id]
-      );
-      if (kids[0].n > 0) {
+      // Pre-check: refuse to delete if contracts, budgets, or billing batches
+      // still reference this EC. Explicit counts give the admin a friendlier
+      // message than a constraint violation.
+      //
+      //   contracts        — FK ON DELETE SET NULL: would silently orphan them.
+      //   budgets          — FK ON DELETE CASCADE: would silently wipe budgets.
+      //   billing_batches  — FK ON DELETE SET NULL: would silently lose batch ref.
+      const [contractsRes, budgetsRes, batchesRes] = await Promise.all([
+        pool.query(`SELECT COUNT(*)::int AS n FROM contracts WHERE engineering_contract_id = $1`, [req.params.id]),
+        pool.query(`SELECT COUNT(*)::int AS n FROM budgets WHERE engineering_contract_id = $1`, [req.params.id]),
+        pool.query(`SELECT COUNT(*)::int AS n FROM billing_batches WHERE engineering_contract_id = $1`, [req.params.id]),
+      ]);
+      const contractCount = contractsRes.rows[0].n;
+      const budgetCount   = budgetsRes.rows[0].n;
+      const batchCount    = batchesRes.rows[0].n;
+
+      if (contractCount > 0 || budgetCount > 0 || batchCount > 0) {
+        const parts = [];
+        if (contractCount > 0) parts.push(`${contractCount} billing contract(s)`);
+        if (budgetCount   > 0) parts.push(`${budgetCount} budget(s) (would be cascade-deleted)`);
+        if (batchCount    > 0) parts.push(`${batchCount} billing batch(es) (would lose EC reference)`);
         return res.status(409).json({
-          error: `Cannot delete — ${kids[0].n} contract(s) still belong to this engineering contract. Move or delete them first.`,
+          error: `Cannot delete — this engineering contract is still referenced by: ${parts.join(', ')}. Move or delete them first.`,
+          contracts: contractCount,
+          budgets: budgetCount,
+          billing_batches: batchCount,
         });
       }
+
       const { rows } = await pool.query(
         `DELETE FROM engineering_contracts WHERE id = $1 RETURNING id`,
         [req.params.id]

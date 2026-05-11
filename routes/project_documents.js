@@ -1,20 +1,9 @@
 // routes/project_documents.js — generic per-project document storage.
 //
-// Reuses the permit_documents table (the schema is identical for our
-// needs), so admin Design pipeline can drop a "Final Map" PDF/DWG on any
-// project even if the project isn't a permit. Permit-specific upload
-// (which carries doc_type, revision_number, etc.) lives in routes/permits.js.
-//
-//   POST   /api/projects/:projectId/documents  — upload a file (multer)
-//   GET    /api/projects/:projectId/documents  — list project's documents
-//   DELETE /api/projects/documents/:docId      — remove DB row + disk file
-//   GET    /api/_debug/uploads                 — diagnostic: mismatch
-//                                                between disk and DB. Use
-//                                                this when "PDF won't open"
-//                                                issues happen — usually
-//                                                Railway volume not mounted.
-//
-// Uses the multer `upload` instance + UPLOAD_DIR (passed via mw).
+// Items 5 + 16 fix:
+//   - requireAuth role gate added to POST/GET/DELETE on documents
+//   - requireAdmin added to /api/_debug/uploads
+//   - uploaded_by sourced from req.user.id not body
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
@@ -23,25 +12,32 @@ const path = require('path');
 
 module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
   const { upload, uploadDir } = mw;
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
 
   // Generic project documents endpoint — works for ANY project (design or permit).
-  // Reuses permit_documents table since the schema is identical for our needs.
-  // Used by the admin Design pipeline's "Final Map" upload UI, which doesn't
-  // care about revision tracking or doc_type categorization (just a single
-  // drop slot for the final drawing/PDF/DWG).
-  app.post('/api/projects/:projectId/documents', upload.single('file'), async (req, res) => {
-    const { doc_type, uploaded_by, notes } = req.body;
+  // Item 5 fix: requireAuth role gate added; uploaded_by sourced from req.user.id
+  app.post('/api/projects/:projectId/documents',
+    requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']),
+    upload.single('file'),
+    async (req, res) => {
+    const { doc_type, notes } = req.body;
     if (!req.file) return res.status(400).json({ error: 'No file uploaded — check file size (2 GB max)' });
+    // uploaded_by sourced from authenticated user, never from body
+    const uploadedBy = req.user.id;
     try {
       const { rows } = await pool.query(`
         INSERT INTO permit_documents (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
         VALUES ($1,$2,$3,$4,$5,1,$6,$7) RETURNING *
-      `, [req.params.projectId, doc_type || 'document', req.file.originalname, req.file.filename, req.file.size, uploaded_by, notes]);
+      `, [req.params.projectId, doc_type || 'document', req.file.originalname, req.file.filename, req.file.size, uploadedBy, notes]);
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/projects/:projectId/documents', async (req, res) => {
+  // Item 5 fix: requireAuth gate added to document listing
+  app.get('/api/projects/:projectId/documents',
+    requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']),
+    async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM permit_documents WHERE project_id = $1 ORDER BY created_at DESC`,
@@ -51,7 +47,10 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/projects/documents/:docId', async (req, res) => {
+  // Item 5 fix: requireAuth gate added to document delete
+  app.delete('/api/projects/documents/:docId',
+    requireAuth(['admin', 'design_manager', 'permitting_manager']),
+    async (req, res) => {
     try {
       // Look up file_path so we can also remove the file from disk.
       const { rows } = await pool.query(
@@ -65,13 +64,10 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Diagnostic — useful when "PDF won't open" issues happen. Hit this in the
-  // browser to verify (a) where the server thinks UPLOAD_DIR is, (b) whether
-  // the directory actually has files, and (c) whether file_path values in the DB
-  // match what's on disk. Most "file not found" issues are caused by the Railway
-  // volume not being mounted at UPLOAD_DIR (so files write to ephemeral storage
-  // and disappear on redeploy).
-  app.get('/api/_debug/uploads', async (req, res) => {
+  // Diagnostic — useful when "PDF won't open" issues happen.
+  // Item 5/16 fix: requireAdmin gate added (was completely unprotected,
+  // leaked UPLOAD_DIR path and file listings)
+  app.get('/api/_debug/uploads', requireAdmin, async (req, res) => {
     try {
       const onDisk = fs.readdirSync(uploadDir);
       const dbDocs = await pool.query(
@@ -99,7 +95,7 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
           file_name: d.file_name, file_path: d.file_path, doc_type: d.doc_type
         })),
         hint: missingFiles.length > 0
-          ? '⚠ Files in DB but not on disk → Railway volume is NOT mounted at UPLOAD_DIR. Set the UPLOAD_DIR env var to your volume mount path (e.g. /data/uploads) and redeploy.'
+          ? 'Files in DB but not on disk → Railway volume is NOT mounted at UPLOAD_DIR. Set the UPLOAD_DIR env var to your volume mount path (e.g. /data/uploads) and redeploy.'
           : (onDisk.length === 0 ? 'No files on disk yet — upload a test file via the UI then refresh this endpoint.' : 'Looks healthy.')
       });
     } catch (e) {

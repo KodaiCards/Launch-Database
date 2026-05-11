@@ -178,14 +178,18 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
     try {
       let whereClause, params;
       if (month) {
-        whereClause = `WHERE EXISTS (
+        // Exclude rollup containers — they carry no direct time entries or
+        // revenue; including them would double-count inherited hours.
+        // Matches the COALESCE(p.is_rollup, FALSE) = FALSE pattern used by
+        // other revenue endpoints (lines 40, 50, 97, 105).
+        whereClause = `WHERE COALESCE(p.is_rollup, FALSE) = FALSE AND (EXISTS (
           SELECT 1 FROM time_entries te2 WHERE te2.project_id = p.id
           AND EXTRACT(MONTH FROM te2.entry_date) = $2
           AND EXTRACT(YEAR FROM te2.entry_date) = $1
-        ) OR (p.billing_type = 'footage' AND EXTRACT(MONTH FROM p.start_date) = $2 AND EXTRACT(YEAR FROM p.start_date) = $1)`;
+        ) OR (p.billing_type = 'footage' AND EXTRACT(MONTH FROM p.start_date) = $2 AND EXTRACT(YEAR FROM p.start_date) = $1))`;
         params = [year, month];
       } else {
-        whereClause = `WHERE (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL OR EXISTS (
+        whereClause = `WHERE COALESCE(p.is_rollup, FALSE) = FALSE AND (EXTRACT(YEAR FROM p.start_date) = $1 OR p.start_date IS NULL OR EXISTS (
           SELECT 1 FROM time_entries te2 WHERE te2.project_id = p.id AND EXTRACT(YEAR FROM te2.entry_date) = $1
         ))`;
         params = [year];

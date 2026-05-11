@@ -32,6 +32,9 @@ function normalizeProgram(input, opts) {
 }
 
 module.exports = function installPricingRoutes(app, pool, mw) {
+  // Item 2 fix: requireManagerOrAdmin gate on mutation endpoints
+  const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+
   app.get('/api/pricing', async (req, res) => {
     try {
       const { rows } = await pool.query(`
@@ -66,7 +69,8 @@ module.exports = function installPricingRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/pricing', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.post('/api/pricing', requireManagerOrAdmin, async (req, res) => {
     const { job_id, program, billing_code, billing_type, rate, notes } = req.body;
     let normalizedProgram;
     try { normalizedProgram = normalizeProgram(program, { required: true }); }
@@ -83,7 +87,8 @@ module.exports = function installPricingRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/pricing/:id', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.put('/api/pricing/:id', requireManagerOrAdmin, async (req, res) => {
     const { billing_type, rate, notes, billing_code, program } = req.body;
     let normalizedProgram = undefined;
     if (program !== undefined) {
@@ -105,7 +110,8 @@ module.exports = function installPricingRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/pricing/:id', async (req, res) => {
+  // Item 2 fix: requireManagerOrAdmin added
+  app.delete('/api/pricing/:id', requireManagerOrAdmin, async (req, res) => {
     try {
       await pool.query('DELETE FROM pricing_entries WHERE id = $1', [req.params.id]);
       res.json({ ok: true });

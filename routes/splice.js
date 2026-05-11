@@ -1,4 +1,3 @@
-// routes/splice.js — Splice Matrix tool, Phase 1.
 //
 // OSP fiber splice planning. Designers create a project, place cables and
 // closures, drag fibers (or whole 12-fiber ribbons) to define splices, and
@@ -220,6 +219,32 @@ function _getArchiver() {
 module.exports = function installSpliceRoutes(app, pool, mw) {
   const { requireAuth } = mw;
 
+  // requireSpliceAccess — project-scoped authorization (item 1 fix).
+  // Passes if: (a) user is admin, OR (b) user's staff_id matches the
+  // project's designer_id, OR (c) user has 'splice' in their extra_teams.
+  // Must be used AFTER requireAuth() so req.user is guaranteed set.
+  function requireSpliceAccess(getProjectId) {
+    return async (req, res, next) => {
+      if (!req.user) return res.status(401).json({ error: 'Login required' });
+      if (req.user.role === 'admin') return next();
+      if (Array.isArray(req.user.extra_teams) && req.user.extra_teams.includes('splice')) return next();
+      const projectId = typeof getProjectId === 'function' ? getProjectId(req) : getProjectId;
+      if (!projectId) return next(); // can't resolve — let the handler 404
+      try {
+        const { rows } = await pool.query(
+          'SELECT designer_id FROM splice_projects WHERE id = $1',
+          [projectId]
+        );
+        if (!rows.length) return res.status(404).json({ error: 'Splice project not found' });
+        if (req.user.staff_id && String(rows[0].designer_id) === String(req.user.staff_id)) return next();
+        return res.status(403).json({ error: 'Access to this splice project is restricted' });
+      } catch (e) {
+        console.error('[splice:requireSpliceAccess]', e && e.message);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    };
+  }
+
   // ─── Projects ─────────────────────────────────────────────────────────────
 
   app.get('/api/splice/projects', requireAuth(), async (req, res) => {
@@ -263,7 +288,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // Full hydrate: returns project + all locations, cables (with tubes and
   // fibers), closures (with trays and splices), and ribbon groups in one
   // payload so the editor can render the whole world from a single call.
-  app.get('/api/splice/projects/:id', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     try {
       const proj = await pool.query(
@@ -454,7 +479,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // ── 5.D.4: Layer style persistence endpoints ────────────────────────────────
 
   // PUT /api/splice/projects/:id/layer-styles/:layerId — upsert style + visibility
-  app.put('/api/splice/projects/:id/layer-styles/:layerId', requireAuth(), async (req, res) => {
+  app.put('/api/splice/projects/:id/layer-styles/:layerId', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const { id: projectId, layerId } = req.params;
     const { visible, color, opacity, lineWidth, dash, markerSize, ...rest } = req.body;
     const styleJson = {};
@@ -481,7 +506,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   });
 
   // DELETE /api/splice/projects/:id/layer-styles/:layerId — reset to code defaults
-  app.delete('/api/splice/projects/:id/layer-styles/:layerId', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/projects/:id/layer-styles/:layerId', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const { id: projectId, layerId } = req.params;
     try {
       await pool.query(
@@ -512,7 +537,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // ── 5.D.7: Custom layer endpoints ───────────────────────────────────────────
 
   // POST /api/splice/projects/:id/custom-layers — create a new custom layer
-  app.post('/api/splice/projects/:id/custom-layers', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/custom-layers', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const { name, geometry_type, default_style } = req.body;
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
     if (!['point','line','polygon'].includes(geometry_type)) {
@@ -534,7 +559,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   });
 
   // GET /api/splice/projects/:id/custom-layers — list custom layers for project
-  app.get('/api/splice/projects/:id/custom-layers', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/custom-layers', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const rows = await pool.query(
         `SELECT * FROM splice_custom_layers WHERE project_id = $1 ORDER BY created_at`,
@@ -604,7 +629,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // payload, but loads only what the rules need so a quick "is this project
   // shippable?" check is cheap. Useful for a debounced "save → revalidate"
   // loop on the frontend without re-rendering the whole canvas.
-  app.get('/api/splice/projects/:id/validation', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/validation', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
@@ -612,7 +637,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/splice/projects/:id', requireAuth(), async (req, res) => {
+  app.put('/api/splice/projects/:id', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const allowed = ['name', 'status', 'notes'];
     const sets = [];
     const vals = [req.params.id];
@@ -636,7 +661,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/splice/projects/:id', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/projects/:id', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const r = await pool.query('DELETE FROM splice_projects WHERE id = $1', [req.params.id]);
       if (!r.rowCount) return res.status(404).json({ error: 'Project not found' });
@@ -647,7 +672,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── Locking ─────────────────────────────────────────────────────────────
 
-  app.post('/api/splice/projects/:id/lock', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/lock', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     const staffId = req.user?.staff_id || null;
     const name = req.user?.full_name || req.user?.username || 'unknown';
@@ -686,7 +711,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // 60-second heartbeat — extends my lock. Returns 409 if the lock has
   // moved to someone else (because I went stale and they took over).
-  app.post('/api/splice/projects/:id/heartbeat', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/heartbeat', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const staffId = req.user?.staff_id || null;
     try {
       const cur = await pool.query(
@@ -705,7 +730,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/splice/projects/:id/unlock', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/unlock', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const staffId = req.user?.staff_id || null;
     try {
       // Allow self-release; admins can release anyone's lock.
@@ -723,7 +748,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // Force-take a stale lock. Refuses if the current lock is fresh (within
   // STALE_LOCK_MS) — non-admins can't yank a live lock from someone else.
-  app.post('/api/splice/projects/:id/take-over', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/take-over', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const staffId = req.user?.staff_id || null;
     const name = req.user?.full_name || req.user?.username || 'unknown';
     try {
@@ -752,7 +777,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── Locations ───────────────────────────────────────────────────────────
 
-  app.post('/api/splice/projects/:id/locations', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/locations', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     // Accept latitude/longitude at create time so the map palette can
     // POST a single request with coords (saves a PUT /coords round-trip).
     const { type = 'splice_point', name, sequence_index = 0, notes, latitude, longitude } = req.body;
@@ -852,7 +877,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // is the bulk of the schema work; the editor just drops a cable on the
   // canvas and the backend hydrates the whole tree.
 
-  app.post('/api/splice/projects/:id/cables', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/cables', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const {
       name, fiber_count, construction_type = 'ribbon',
       from_location_id, to_location_id, manufacturer_part, notes,
@@ -1572,7 +1597,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // overrides for 'express' and 'stored' decisions. See migration
   // 0007_splice_strand_state.sql for the rationale.
 
-  app.get('/api/splice/projects/:id/strand-states', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/strand-states', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT s.*
@@ -1678,7 +1703,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // rather than (cable_id, location_id, strand_position) — one slack value
   // per cable at each closure, not per strand.
 
-  app.get('/api/splice/projects/:id/cable-states', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/cable-states', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT cs.*
@@ -1817,7 +1842,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/splice/projects/:id/comments', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/comments', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT c.*,
@@ -2112,7 +2137,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   //
   // Body: { name?: string }  — optional name override; defaults to
   //                            "<source.name> (copy)".
-  app.post('/api/splice/projects/:id/clone', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/clone', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const sourceId = req.params.id;
     const requestedName = (req.body && req.body.name) ? String(req.body.name).trim() : null;
     const client = await pool.connect();
@@ -2327,7 +2352,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // ─── Version snapshots + diff (Phase 2B #6) ─────────────────────────────
   // Manual save: always records a row, never debounced. Use case:
   // "checkpoint before client redline review."
-  app.post('/api/splice/projects/:id/versions', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/versions', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const label = (req.body && req.body.label) ? String(req.body.label).slice(0, 200) : null;
       const v = await _takeSnapshot(pool, req.params.id, label, req.user?.staff_id);
@@ -2344,7 +2369,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // recording a new row when the splice graph is structurally the
   // same as the last snapshot (for example, the user opened the
   // project and hovered around but didn't change anything).
-  app.post('/api/splice/projects/:id/versions/auto', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/versions/auto', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const projectId = req.params.id;
       const last = await pool.query(
@@ -2367,7 +2392,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/splice/projects/:id/versions', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/versions', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT v.id, v.version_number, v.label, v.generation_hash,
@@ -2383,7 +2408,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/splice/projects/:id/versions/:n', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/versions/:n', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const v = await _loadVersion(pool, req.params.id, req.params.n);
       if (!v) return res.status(404).json({ error: 'Version not found' });
@@ -2391,7 +2416,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.delete('/api/splice/projects/:id/versions/:n', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/projects/:id/versions/:n', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const r = await pool.query(
         `DELETE FROM splice_project_versions
@@ -2407,7 +2432,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // version N-1 (the snapshot taken just before the most recent change).
   // The undo is itself snapshotted so it can be undone again.
   // Broadcasts state_reverted SSE so other open clients refresh.
-  app.post('/api/splice/projects/:id/undo-last', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/undo-last', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     try {
       // Load the two most recent snapshots. Index 0 = current, index 1 = N-1.
@@ -2542,7 +2567,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // Diff JSON: side B may be a numeric version OR the literal string
   // "current" to diff against the live tree.
-  app.get('/api/splice/projects/:id/diff/:a/:b', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/diff/:a/:b', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const a = await _loadVersion(pool, req.params.id, req.params.a);
       if (!a) return res.status(404).json({ error: `Version ${req.params.a} not found` });
@@ -2561,7 +2586,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // Diff PDF — puppeteer-rendered. Sections by closure → tray.
   // Light-gray strikethrough for removed splices, green-highlight
   // for added, side-by-side before/after for changed.
-  app.get('/api/splice/projects/:id/diff/:a/:b/pdf', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/diff/:a/:b/pdf', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const a = await _loadVersion(pool, req.params.id, req.params.a);
       if (!a) return res.status(404).json({ error: `Version ${req.params.a} not found` });
@@ -2688,7 +2713,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   //   GET  /splice/view/:token                     — public HTML shell
   //   GET  /api/splice/view/:token/hydrate         — public read-only data
 
-  app.post('/api/splice/projects/:id/public-tokens', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/public-tokens', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     const label = req.body?.label ? String(req.body.label).trim().slice(0, 200) : null;
     const expiresInDays = req.body?.expires_in_days != null
@@ -2712,7 +2737,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/splice/projects/:id/public-tokens', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/public-tokens', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT t.*, s.name AS created_by_name
@@ -3192,7 +3217,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   }
 
   // POST /api/splice/projects/:id/loss-records  (engineer, auth required)
-  app.post('/api/splice/projects/:id/loss-records', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/loss-records', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     try {
       const proj = await pool.query(`SELECT id FROM splice_projects WHERE id = $1`, [projectId]);
@@ -3218,7 +3243,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   });
 
   // GET /api/splice/projects/:id/loss-records  (engineer, auth required)
-  app.get('/api/splice/projects/:id/loss-records', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/loss-records', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     try {
       const { rows } = await pool.query(
@@ -3287,6 +3312,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!Array.isArray(raw) || !raw.length) {
         return res.status(400).json({ error: 'Expected a JSON array of Splice+ records.' });
       }
+      // Item 14 fix: cap ingest batch size to prevent unbounded Postgres BYTEA bloat
+      if (raw.length > 1000) {
+        return res.status(413).json({ error: 'Payload Too Large — maximum 1000 loss records per request.' });
+      }
 
       const result = await _ingestLossRecords(pool, {
         records: raw,
@@ -3317,7 +3346,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // GET /api/splice/projects/:id/search?q=foo
   // ILIKE search across locations, cables, closures, fibers in one project.
   // Returns up to 10 per category with entity type label for grouped dropdown.
-  app.get('/api/splice/projects/:id/search', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/search', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     const raw = (req.query.q || '').toString().trim();
     if (raw.length < 2) return res.json({ closures: [], cables: [], locations: [], fibers: [] });
@@ -3436,7 +3465,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── Server-Sent Events ──────────────────────────────────────────────────
 
-  app.get('/api/splice/projects/:id/events', requireAuth(), (req, res) => {
+  app.get('/api/splice/projects/:id/events', requireAuth(), requireSpliceAccess(req => req.params.id), (req, res) => {
     const projectId = req.params.id;
     res.set({
       'Content-Type': 'text/event-stream',
@@ -3459,7 +3488,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── PDF / HTML export ───────────────────────────────────────────────────
 
-  app.get('/api/splice/projects/:id/export-html', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/export-html', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
@@ -3469,7 +3498,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/splice/projects/:id/export-pdf', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/export-pdf', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
@@ -3588,7 +3617,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // in ExtendedData with the splice_location_id / splice_cable_id so
   // a round-trip through Phase 3C re-import re-binds to the same
   // rows. Streams as application/vnd.google-earth.kmz.
-  app.get('/api/splice/projects/:id/export-kmz', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/export-kmz', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
@@ -3718,7 +3747,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       }
     });
 
-  app.get('/api/splice/projects/:id/imports', requireAuth(), async (req, res) => {
+  app.get('/api/splice/projects/:id/imports', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT i.id, i.source_filename, i.source_format, i.source_size_bytes,
@@ -3776,7 +3805,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/splice/imports/:id/apply', requireAuth(), async (req, res) => {
+  app.post('/api/splice/imports/:id/apply', requireAuth(), async (req, res) => { // Wave1.5: requireSpliceAccess needs lookup from import->project
     const importId = req.params.id;
     // 5.B.2 — auto_approve_adds=true: approve all 'add' changes in the same
     // transaction before applying, so uploads land immediately without a
@@ -3904,7 +3933,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // the file-upload path now calls.  The master designer reviews CSV-pasted
   // changes in exactly the same modal as KMZ/DXF imports.
 
-  app.post('/api/splice/projects/:id/import-paste', requireAuth(), async (req, res) => {
+  app.post('/api/splice/projects/:id/import-paste', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const projectId = req.params.id;
     const { rows, kind } = req.body || {};
 

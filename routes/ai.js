@@ -1092,20 +1092,28 @@ async function executeTool(toolName, toolInput) {
           return null;
         };
         const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
-        // Cache contract_id → program lookups so a tree of 50 specs all
-        // pointing at the same contract resolves the EC join exactly once.
-        const programByContract = new Map();
-        async function programForContract(cid) {
-          if (!cid) return null;
-          if (programByContract.has(cid)) return programByContract.get(cid);
+        // Cache contract_id → (program, engineering_contract_id) lookups so a
+        // tree of 50 specs all pointing at the same contract resolves the EC
+        // join exactly once.
+        const contractCache = new Map();  // cid → { program, engineering_contract_id }
+        async function contractInfo(cid) {
+          if (!cid) return { program: null, engineering_contract_id: null };
+          if (contractCache.has(cid)) return contractCache.get(cid);
           const r = await pool.query(
-            `SELECT ec.program FROM contracts c
-               JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+            `SELECT c.engineering_contract_id, ec.program
+               FROM contracts c
+               LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
               WHERE c.id = $1`, [cid]
           );
-          const pgm = r.rows[0]?.program || null;
-          programByContract.set(cid, pgm);
-          return pgm;
+          const info = {
+            program: r.rows[0]?.program || null,
+            engineering_contract_id: r.rows[0]?.engineering_contract_id || null,
+          };
+          contractCache.set(cid, info);
+          return info;
+        }
+        async function programForContract(cid) {
+          return (await contractInfo(cid)).program;
         }
 
         for (const s of order) {
@@ -1124,9 +1132,10 @@ async function executeTool(toolName, toolInput) {
               continue;
             }
 
-            // Program: explicit input on the spec or any ancestor wins;
-            // otherwise derive from contractId's engineering contract.
+            // Program and engineering_contract_id: explicit input on the spec
+            // or any ancestor wins; otherwise derive from contractId's EC row.
             let program = resolveInherit(s, 'program');
+            let engineeringContractId = resolveInherit(s, 'engineering_contract_id');
             if (program) {
               const v = String(program).trim().toLowerCase();
               if (!ALLOWED_PROGRAMS.includes(v)) {
@@ -1134,8 +1143,12 @@ async function executeTool(toolName, toolInput) {
                 continue;
               }
               program = v;
-            } else {
-              program = await programForContract(contractId);
+            }
+            // Fill from contract if either is still missing
+            if (!program || !engineeringContractId) {
+              const info = await contractInfo(contractId);
+              if (!program) program = info.program;
+              if (!engineeringContractId) engineeringContractId = info.engineering_contract_id;
             }
 
             const fin = calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
@@ -1148,8 +1161,8 @@ async function executeTool(toolName, toolInput) {
                 project_type, program, status, billing_type, billing_rate,
                 footage, miles, expected_hours, expected_revenue,
                 start_date, notes, parent_id, concentrator_id,
-                is_rollup, billing_cadence
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+                is_rollup, billing_cadence, engineering_contract_id
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
               RETURNING id, name`,
               [
                 s.name,
@@ -1171,6 +1184,7 @@ async function executeTool(toolName, toolInput) {
                 concentratorId || null,
                 s.is_rollup === true,
                 s.billing_cadence || 'one_time',
+                engineeringContractId || null,
               ]
             );
             idMap[s.local_id] = rows[0].id;
@@ -1770,6 +1784,40 @@ async function executeTool(toolName, toolInput) {
         const params = Array.isArray(toolInput.params) ? toolInput.params : [];
         if (!sql) return { success: false, error: 'sql required' };
         if (sql.includes(';')) return { success: false, error: 'Multiple statements not allowed in a single write_sql call.' };
+        // Item 11 fix: block DDL operations (DROP, TRUNCATE, ALTER TABLE,
+        // CREATE TABLE, CREATE INDEX, DROP INDEX) even with admin approval.
+        // The AI tool is intended for data migrations only — schema changes
+        // must go through the normal migration pipeline, not the AI chat.
+        // This guards against prompt-injection attacks that craft AI output
+        // to execute destructive DDL through the approval card.
+        // Wave 1.1 fix: strip leading SQL comments and whitespace before
+        // the DDL test, otherwise `/* anything */ DROP TABLE users` slips
+        // past the `^\s*` anchor and runs after admin approval.
+        // Strip /* block */ and -- line comments at the start, repeatedly.
+        let probe = sql;
+        for (let i = 0; i < 10; i++) {
+          const before = probe;
+          probe = probe.replace(/^\s+/, '');
+          probe = probe.replace(/^\/\*[\s\S]*?\*\//, '');
+          probe = probe.replace(/^--[^\n]*\n?/, '');
+          if (probe === before) break;
+        }
+        // Wave 1.1 fix: PostgreSQL accepts `TRUNCATE tbl` without the
+        // `TABLE` keyword, so the original `truncate\s+table` regex missed
+        // `TRUNCATE time_entries`. Use `truncate\b` to catch both forms.
+        const ddlPattern = /^(drop\s+(table|database|schema|index|sequence|view|function|trigger)|truncate\b|alter\s+table|create\s+(table|index|sequence|schema|view|function|trigger)|grant\b|revoke\b|copy\s+\w+\s+(to|from))/i;
+        if (ddlPattern.test(probe)) {
+          return { success: false, error: 'DDL/privileged operations (DROP, TRUNCATE, ALTER TABLE, CREATE TABLE/INDEX, GRANT, REVOKE, COPY) are not permitted via write_sql. Use the migration pipeline for schema changes.' };
+        }
+        // Block bare DELETE FROM on high-value tables that have route-level
+        // pre-checks (referential integrity, budget cascade, batch SET NULL).
+        // Bypassing those checks via AI SQL can silently destroy billing history.
+        // Use the dedicated endpoints instead: DELETE /api/engineering-contracts/:id,
+        // DELETE /api/clients/:id, etc.
+        const highRiskDeletePattern = /^delete\s+from\s+(engineering_contracts|users|clients|contracts)\b/i;
+        if (highRiskDeletePattern.test(probe)) {
+          return { success: false, error: 'Direct DELETE on engineering_contracts, users, clients, or contracts is blocked via write_sql. These tables have route-level pre-checks (budget cascades, billing batch references, auth log entries) that must not be bypassed. Use the dedicated admin endpoints instead.' };
+        }
         try {
           const result = await pool.query(sql, params);
           return {
@@ -2047,6 +2095,12 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       // ── Resume path ─────────────────────────────────────────────────
       const pending = _pendingApprovals.get(approval_id);
       if (!pending) return res.status(404).json({ error: 'Approval expired or not found. Resend your message.' });
+      // Item 12 fix: verify that the user submitting the decision is the
+      // same user who initiated the request. Prevents a second admin from
+      // approving or rejecting another admin's staged AI actions.
+      if (pending.user_id && req.user && String(pending.user_id) !== String(req.user.id)) {
+        return res.status(403).json({ error: 'This approval was initiated by a different user.' });
+      }
       _pendingApprovals.delete(approval_id);
 
       systemBlocks = pending.systemBlocks;
@@ -2153,6 +2207,10 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
           stagedToolUses: toolUseBlocks,
           toolResults, finalText,
           expires_at: Date.now() + APPROVAL_TTL_MS,
+          // Item 12 fix: bind approval to the initiating user so only the
+          // same admin can approve/reject — prevents another admin from
+          // hijacking a staged approval by guessing or leaking the approval_id.
+          user_id: req.user && req.user.id,
         });
 
         const proposed_actions = toolUseBlocks.map(tu => ({

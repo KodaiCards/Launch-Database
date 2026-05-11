@@ -19,7 +19,12 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
 
   // Debug: returns the exact list of projects counted as "active" by the
   // dashboard tile. Visible from the dashboard for troubleshooting.
-  app.get('/api/dashboard/active-list', async (req, res) => {
+  //
+  // Item 17 fix: requireAuth(['admin','design_manager','permitting_manager'])
+  // added — the sibling /api/dashboard endpoint was properly gated but
+  // /api/dashboard/active-list was not, allowing any authenticated employee
+  // to enumerate all active projects with work order numbers and client names.
+  app.get('/api/dashboard/active-list', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.id, p.name, p.status, p.work_order_number,

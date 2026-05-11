@@ -20,7 +20,10 @@ const {
 const { broadcast } = require('./_sse');
 
 module.exports = function installProjectsRoutes(app, pool, mw) {
-  const { requireAdmin } = mw;
+  // Item 2 + 22 fix: requireAuth added alongside requireAdmin.
+  // POST and PUT were entirely unguarded — any unauthenticated request
+  // could create or mutate projects. requireAuth() gates both handlers.
+  const { requireAdmin, requireAuth } = mw;
 
   app.get('/api/projects', async (req, res) => {
     const { status, client_id, type } = req.query;
@@ -98,7 +101,12 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.post('/api/projects', async (req, res) => {
+  // Item 2 fix: requireAuth() added — POST was completely unguarded.
+  // Item 22 fix: parent_id validation — verify the target parent exists
+  // before accepting an explicit parent_id. Without this, a caller can
+  // nest a project under an arbitrary UUID (including a project from
+  // another client's tree), breaking the tree integrity invariant.
+  app.post('/api/projects', requireAuth(), async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -110,6 +118,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       manual_invoice_amount,
       is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
                              // TRUE = container/folder, no traits, no hours.
+      engineering_contract_id,  // direct EC FK — stored on the new project row
     } = req.body;
     // Coerce to boolean. JSON might arrive as 'true'/'false' strings from
     // form submissions; treat anything truthy as TRUE, everything else
@@ -130,7 +139,37 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       program = null;
     }
 
+    // Validate service_area_label length. The rollup_key built from this is
+    // stored as TEXT and the rollup name is VARCHAR(200) — cap at 200 to
+    // prevent truncation silently creating duplicate rollup_key collisions.
+    if (service_area_label && String(service_area_label).trim().length > 200) {
+      return res.status(400).json({ error: 'service_area_label must be 200 characters or fewer.' });
+    }
+
     try {
+      // Item 22 fix: if the caller explicitly passes a parent_id (rather than
+      // letting ensureRollupChain derive one), verify the target parent
+      // actually exists. This prevents re-parenting a project under a
+      // non-existent or attacker-controlled UUID.
+      if (parent_id) {
+        const parentCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [parent_id]);
+        if (!parentCheck.rows.length) {
+          return res.status(400).json({ error: 'parent_id does not reference an existing project' });
+        }
+      }
+
+      // Derive engineering_contract_id from contract_id when not explicitly
+      // supplied. This ensures every project that has a billing contract also
+      // carries the direct EC FK — enabling rollup-scope billing queries and
+      // RUS inspection tab scoping that depend on this column.
+      if (!engineering_contract_id && contract_id) {
+        const ecRow = await pool.query(
+          `SELECT engineering_contract_id FROM contracts WHERE id = $1`,
+          [contract_id]
+        );
+        engineering_contract_id = ecRow.rows[0]?.engineering_contract_id || null;
+      }
+
       // Auto-nesting: when admin doesn't explicitly pick a parent, derive it
       // from the rollup chain Client → Team → Service Area → Project.
       // If admin DID pick a parent, respect that choice (legacy/manual nesting).
@@ -146,7 +185,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           if (con.rows.length) concentrator_id = con.rows[0].id;
         }
         parent_id = await app.locals.ensureRollupChain({
-          client_id, concentrator_id, service_area_label, job_id
+          client_id, concentrator_id, service_area_label, job_id,
+          engineering_contract_id: engineering_contract_id || null
         });
       }
 
@@ -246,8 +286,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, budget_code_id, concentrator_id,
           permitting_hours_per_mile, billing_cadence, projected_revenue,
-          manual_invoice_amount, is_rollup
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+          manual_invoice_amount, is_rollup, engineering_contract_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
         RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
@@ -256,7 +296,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         insertFootage, insertMiles, insertExpHours, insertExpRev,
         start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
         insertHrPerMi, effectiveCadence, insertProjected,
-        insertManual, isRollupFlag,
+        insertManual, isRollupFlag, engineering_contract_id || null,
       ]);
 
       // Auto-create permit / design stages — but ONLY for real projects.
@@ -281,7 +321,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/projects/:id', async (req, res) => {
+  // Item 2 fix: requireAuth() added — PUT was completely unguarded.
+  // Item 22 fix: parent_id validation — verify the target parent exists
+  // before accepting a re-parent operation.
+  app.put('/api/projects/:id', requireAuth(), async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -291,6 +334,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
                              // Use COALESCE in the SET so omitting the field
                              // preserves the existing value.
+      engineering_contract_id,  // direct EC FK — re-derived if contract_id changes
     } = req.body;
     // Coerce is_rollup to a boolean (or undefined when omitted, so the
     // SQL leaves the existing value alone).
@@ -314,6 +358,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     }
 
     try {
+      // Item 22 fix: verify the target parent exists when caller specifies
+      // an explicit parent_id (re-parent operation). This prevents tree
+      // corruption from attacker-controlled parent UUIDs.
+      if (parent_id !== undefined && parent_id !== null) {
+        const parentCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [parent_id]);
+        if (!parentCheck.rows.length) {
+          return res.status(400).json({ error: 'parent_id does not reference an existing project' });
+        }
+      }
+
       // Duplicate-project guard — only check if name OR parent is being changed
       if (name !== undefined || parent_id !== undefined) {
         const cur = await pool.query('SELECT name, parent_id FROM projects WHERE id = $1', [req.params.id]);
@@ -376,6 +430,28 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
       }
 
+      // Re-derive engineering_contract_id if contract_id is being changed and
+      // engineering_contract_id wasn't explicitly supplied in the payload.
+      // When engineering_contract_id is explicitly supplied, trust the caller.
+      // When contract_id is cleared (null), also clear engineering_contract_id.
+      let updEngContractId = engineering_contract_id;
+      if (updEngContractId === undefined && contract_id !== undefined) {
+        if (contract_id) {
+          const ecIdRow = await pool.query(
+            `SELECT engineering_contract_id FROM contracts WHERE id = $1`,
+            [contract_id]
+          );
+          updEngContractId = ecIdRow.rows[0]?.engineering_contract_id || null;
+        } else {
+          updEngContractId = null;
+        }
+      }
+      // If neither engineering_contract_id nor contract_id was touched, leave it alone.
+      const ecIdForUpdate = updEngContractId !== undefined ? updEngContractId : null;
+      const ecIdSetClause = updEngContractId !== undefined
+        ? ', engineering_contract_id=$28'
+        : '';
+
       // Resolve the effective is_rollup for THIS save:
       //   - explicit param wins
       //   - otherwise read the current row's flag and use it for the
@@ -399,6 +475,20 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const updProjected    = willBeRollup ? null : newProjected;
       const updManual       = willBeRollup ? null : newManual;
 
+      const updateParams = [
+        name, client_id, contract_id || null, work_order_number,
+        project_type, effectiveProgram === undefined ? null : effectiveProgram, updJobId,
+        status, updBillingType, updBillingRate,
+        updFootage, updMiles, updExpHours, updExpRev,
+        start_date || null, completed_date || null, billed_date || null,
+        notes, parent_id || null, budget_code_id || null, concentrator_id || null,
+        updHrPerMi,
+        newCadence, updProjected, updManual,
+        req.params.id,
+        isRollupFlag === undefined ? null : isRollupFlag,
+      ];
+      if (updEngContractId !== undefined) updateParams.push(ecIdForUpdate);
+
       const { rows } = await pool.query(`
         UPDATE projects SET
           name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
@@ -410,20 +500,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           permitting_hours_per_mile=$22,
           billing_cadence=$23, projected_revenue=$24,
           manual_invoice_amount=$25,
-          is_rollup=COALESCE($27, is_rollup)
+          is_rollup=COALESCE($27, is_rollup)${ecIdSetClause}
         WHERE id=$26 RETURNING *
-      `, [
-        name, client_id, contract_id || null, work_order_number,
-        project_type, effectiveProgram === undefined ? null : effectiveProgram, updJobId,
-        status, updBillingType, updBillingRate,
-        updFootage, updMiles, updExpHours, updExpRev,
-        start_date || null, completed_date || null, billed_date || null,
-        notes, parent_id || null, budget_code_id || null, concentrator_id || null,
-        updHrPerMi,
-        newCadence, updProjected, updManual,
-        req.params.id,
-        isRollupFlag === undefined ? null : isRollupFlag,
-      ]);
+      `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -441,8 +520,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Recalculate actual_hours for a single project from its time_entries
-  app.post('/api/projects/:id/recalc-hours', async (req, res) => {
+  // Recalculate actual_hours for a single project from its time_entries.
+  // requireAuth() added — endpoint was unguarded (any network request could
+  // trigger a full upward propagation walk without being authenticated).
+  app.post('/api/projects/:id/recalc-hours', requireAuth(), async (req, res) => {
     try {
       await updateProjectHours(req.params.id);
       const { rows } = await pool.query('SELECT actual_hours FROM projects WHERE id=$1', [req.params.id]);
@@ -450,13 +531,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Recalculate ALL projects' actual_hours from time_entries (bottom-up)
+  // Recalculate ALL projects' actual_hours from time_entries (bottom-up).
+  // Filters is_billable=TRUE so unbilled overhead entries don't inflate
+  // billing-driving actual_hours. Matches the updateProjectHours() helper.
   app.post('/api/projects/recalc-all', requireAdmin, async (req, res) => {
     try {
-      // First, set all to their own direct hours
+      // First, set all to their own direct billable hours
       await pool.query(`
         UPDATE projects SET actual_hours = COALESCE((
-          SELECT SUM(hours) FROM time_entries WHERE project_id = projects.id
+          SELECT SUM(hours) FROM time_entries
+           WHERE project_id = projects.id AND COALESCE(is_billable, TRUE) = TRUE
         ), 0)
       `);
       // Then propagate up: repeat until no changes (handles unlimited depth)
@@ -465,7 +549,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       while (changed > 0 && iterations < 20) {
         const result = await pool.query(`
           UPDATE projects p SET actual_hours = (
-            SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE project_id = p.id
+            SELECT COALESCE(SUM(hours),0) FROM time_entries
+             WHERE project_id = p.id AND COALESCE(is_billable, TRUE) = TRUE
           ) + (
             SELECT COALESCE(SUM(actual_hours),0) FROM projects WHERE parent_id = p.id
           )

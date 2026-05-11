@@ -1,23 +1,14 @@
 // routes/design_pipeline.js — design-team pipeline endpoints.
 //
-// /api/design                              — list of design projects with
-//                                            current pipeline stage
-// /api/design/:projectId/advance           — move to next stage
-// /api/design/:projectId/regress           — move back one stage
-// /api/projects/:id/ongoing                — toggle is_ongoing flag (used by
-//                                            the Inspection view's checkbox
-//                                            but lives on the project, not
-//                                            the design pipeline; grouped
-//                                            here because it's small and
-//                                            project-status-adjacent)
+// Items 2 + 9 fix: requireAuth(['admin','design_manager','design_engineer'])
+// added to advance/regress; body actor fallback dropped (force req.user).
 //
 // Design pipeline stages: potential → started → review_process → completed.
-// Reaching 'completed' marks the project status='completed' + sets
-// completed_date; regressing from 'completed' un-marks both.
-//
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 module.exports = function installDesignPipelineRoutes(app, pool, mw) {
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+
   app.get('/api/design', async (req, res) => {
     try {
       const { rows } = await pool.query(`
@@ -47,11 +38,16 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.put('/api/design/:projectId/advance', async (req, res) => {
+  // Items 2 + 9 fix: requireAuth(['admin','design_manager','design_engineer']) added.
+  // Actor is forced from req.user — body fallback for unauthorized callers removed.
+  app.put('/api/design/:projectId/advance',
+    requireAuth(['admin', 'design_manager', 'design_engineer']),
+    async (req, res) => {
     const DESIGN_STAGES = ['potential', 'started', 'review_process', 'completed'];
-    const { updated_by, notes } = req.body;
+    const { notes } = req.body;
     const { projectId } = req.params;
-    const actor = (req.user?.full_name || req.user?.username) || updated_by || 'system';
+    // Force actor from authenticated user — never trust body.updated_by
+    const actor = req.user.full_name || req.user.username;
     try {
       const { rows: cur } = await pool.query(
         'SELECT stage FROM design_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at DESC LIMIT 1',
@@ -83,11 +79,14 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Design pipeline regress — back up one stage. Mirrors permits regress.
-  app.put('/api/design/:projectId/regress', async (req, res) => {
+  // Items 2 + 9 fix: requireAuth added; body actor fallback removed.
+  app.put('/api/design/:projectId/regress',
+    requireAuth(['admin', 'design_manager', 'design_engineer']),
+    async (req, res) => {
     const DESIGN_STAGES = ['potential', 'started', 'review_process', 'completed'];
     const { projectId } = req.params;
-    const actor = (req.user?.full_name || req.user?.username) || req.body?.updated_by || 'system';
+    // Force actor from authenticated user
+    const actor = req.user.full_name || req.user.username;
     try {
       const { rows: cur } = await pool.query(
         'SELECT stage FROM design_stages WHERE project_id=$1 AND completed_at IS NULL ORDER BY created_at DESC LIMIT 1',

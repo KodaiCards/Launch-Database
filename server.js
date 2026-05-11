@@ -1,4 +1,3 @@
-﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -86,9 +85,27 @@ app.use(express.json({ limit: '10mb' }));
 // safe (the header isn't sent automatically by browsers cross-site).
 app.use((req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
-  // Login is allowed cross-origin (otherwise legit users on portal subdomains
-  // couldn't authenticate). Rate limiting in auth.js prevents abuse.
-  if (req.path === '/api/auth/login') return next();
+  // Item 19 fix: Login CSRF — still allow login from known origins (portal subdomains)
+  // but reject cross-origin login from unknown/arbitrary origins.
+  if (req.path === '/api/auth/login') {
+    let loginOrigin = req.headers.origin;
+    if (!loginOrigin && req.headers.referer) {
+      try { loginOrigin = new URL(req.headers.referer).origin; } catch {}
+    }
+    // No origin = same-origin or server-to-server: allow
+    if (!loginOrigin) return next();
+    // Known allowed origin: allow
+    if (ALLOWED_ORIGINS.includes(loginOrigin)) return next();
+    // Localhost in dev: allow
+    if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(loginOrigin)) return next();
+    // Same-origin: allow
+    const reqHost = req.headers.host;
+    const reqProto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    if (reqHost && loginOrigin === `${reqProto}://${reqHost}`) return next();
+    // Unknown cross-origin login attempt: reject
+    console.warn(`[csrf:login] rejected cross-origin login from origin=${loginOrigin}`);
+    return res.status(403).json({ error: 'Cross-site login not permitted from this origin' });
+  }
   // If the caller authenticated via Authorization header, no CSRF risk.
   const hasBearer = (req.headers.authorization || '').startsWith('Bearer ');
   if (hasBearer) return next();
@@ -270,7 +287,8 @@ automationModule.installAutomationRoutes(app, pool, { requireAdmin, requireManag
 // BEFORE express.static (so the path isn't swallowed as a missing file).
 // routes/splice.js has its own project-scoped SSE — these are separate.
 const _sse = require('./routes/_sse');
-_sse.attach(app, { requireAuth });
+// Item 15 fix: pass pool so SSE heartbeat can re-validate sessions against live DB.
+_sse.attach(app, { requireAuth, pool });
 
 // Public routes (no login needed): /login page itself, /api/auth/login,
 // any /api/auth/me check, and static assets needed by the login page.
@@ -284,7 +302,8 @@ function pageRequiresAuth(reqPath) {
   // Allow login page, auth API, and a few static asset paths
   if (reqPath === '/login' || reqPath === '/login.html') return false;
   if (reqPath.startsWith('/api/auth/')) return false;
-  if (reqPath.startsWith('/uploads/')) return false;  // file serving handles its own auth-check
+  // Item 6 fix: /uploads/ auth is now enforced by the authenticated static route below.
+  // Do NOT add '/uploads/' back to this exemption list.
   // The login page itself loads /toast.js, /keyboard.js, /app-shell.css.
   // Without these in the allowlist the auth middleware 302s the asset
   // request to /login, the browser fetches HTML for a script tag, and
@@ -314,14 +333,23 @@ app.use((req, res, next) => {
   if (!pageRequiresAuth(req.path)) return next();
 
   // Transition: HTTP Basic Auth fallback if APP_PASSWORD is set.
-  // This keeps the legacy portal credentials working during user rollout.
+  // Item 3 fix: timing-safe compare + synthetic req.user so downstream
+  // role/ownership checks don't silently no-op.
   if (APP_PASSWORD) {
     const auth = req.headers.authorization;
     if (auth) {
       const [scheme, encoded] = auth.split(' ');
       if (scheme === 'Basic') {
         const [user, pass] = Buffer.from(encoded, 'base64').toString().split(':');
-        if (pass === APP_PASSWORD) return next();
+        // Timing-safe comparison — prevents timing-oracle attacks on APP_PASSWORD
+        const passOk = pass && APP_PASSWORD &&
+          pass.length === APP_PASSWORD.length &&
+          require('crypto').timingSafeEqual(Buffer.from(pass), Buffer.from(APP_PASSWORD));
+        if (passOk) {
+          // Populate synthetic req.user so downstream role checks don't silently no-op
+          req.user = req.user || { role: 'admin', username: 'app-password', id: 'app-password' };
+          return next();
+        }
       }
     }
     // No basic auth header. For HTML pages, redirect to /login;
@@ -375,25 +403,37 @@ app.get(['/login', '/login.html'], (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve uploads with correct Content-Type so PDFs render inline instead of
-// downloading as octet-stream, and 404 instead of falling through to the
-// SPA catch-all (which used to return the HTML page when a file was missing).
-app.use('/uploads', express.static(UPLOAD_DIR, {
-  setHeaders: (res, filePath) => {
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext === '.pdf') {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline');
-    }
-  },
-  fallthrough: false  // <-- hard 404 instead of next() to the SPA route
-}));
-// If express.static throws ENOENT, send a clean 404 (don't render SPA HTML).
-app.use('/uploads', (err, req, res, next) => {
-  if (err && (err.code === 'ENOENT' || err.statusCode === 404)) {
+// Serve uploads with auth enforcement (item 6 fix).
+// /uploads/* is no longer served via express.static — instead we use an
+// auth-gated route that verifies login, enforces path traversal guard,
+// and forces Content-Disposition: attachment for non-image/non-PDF content.
+// The splicer field-photo flow uses its own token-gated endpoints and
+// does NOT go through this route.
+app.use('/uploads', requireAuth(), (req, res) => {
+  // Traversal guard: resolve the requested path within UPLOAD_DIR and
+  // verify it still starts with UPLOAD_DIR + separator.
+  const requestedFile = decodeURIComponent(req.path.replace(/^\//, ''));
+  const resolved = path.resolve(UPLOAD_DIR, requestedFile);
+  const uploadRoot = path.resolve(UPLOAD_DIR) + path.sep;
+  if (!resolved.startsWith(uploadRoot) && resolved !== path.resolve(UPLOAD_DIR)) {
+    return res.status(400).json({ error: 'Invalid file path' });
+  }
+  if (!fs.existsSync(resolved) || fs.statSync(resolved).isDirectory()) {
     return res.status(404).json({ error: 'File not found' });
   }
-  return next(err);
+  const ext = path.extname(resolved).toLowerCase();
+  // Inline display only for PDFs and images; force download for everything else
+  // to prevent stored-XSS via uploaded HTML/SVG/JS files.
+  const imageExts = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']);
+  if (ext === '.pdf') {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+  } else if (imageExts.has(ext)) {
+    // sendFile sets Content-Type from extension; just don't force attachment
+  } else {
+    res.setHeader('Content-Disposition', 'attachment');
+  }
+  res.sendFile(resolved);
 });
 
 // ─── Anthropic client ─────────────────────────────────────────────────────────
@@ -462,7 +502,7 @@ require('./routes/engineering_contracts')(app, pool, { requireAdmin });
 // ─────────────────────────────────────────────────────────────────────────────
 // JOBS — extracted to routes/jobs.js (Track 1.3).
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/jobs')(app, pool, {});
+require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECT TYPES — program categories (BAU / GF(R) / RUS / Other / custom)
@@ -472,7 +512,7 @@ require('./routes/jobs')(app, pool, {});
 require('./routes/project_types')(app, pool, {});
 
 // Pricing list extracted to routes/pricing.js (Track 1.3).
-require('./routes/pricing')(app, pool, {});
+require('./routes/pricing')(app, pool, { requireManagerOrAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMITTING CALCULATION (universal, not just RUS)
@@ -505,7 +545,8 @@ require('./routes/staff')(app, pool, { requireAdmin });
 // endpoints (documents, detail, ongoing, unbill, mark-billed, bill-and-clone)
 // stay below for now and will move in a follow-up.
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/projects')(app, pool, { requireAdmin });
+// Item 2 + 22 fix: requireAuth added so projects.js can gate POST/PUT.
+require('./routes/projects')(app, pool, { requireAdmin, requireAuth });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
@@ -554,8 +595,8 @@ require('./routes/project_detail')(app, pool, {});
 
 // Permits pipeline + per-project documents + /api/_debug/uploads diagnostic
 // extracted to dedicated route modules (Track 1.3).
-require('./routes/permits')(app, pool, { upload });
-require('./routes/project_documents')(app, pool, { upload, uploadDir: UPLOAD_DIR });
+require('./routes/permits')(app, pool, { upload, requireAuth });
+require('./routes/project_documents')(app, pool, { upload, uploadDir: UPLOAD_DIR, requireAuth, requireAdmin });
 
 
 // Admin migration / cleanup endpoints (migrate-nesting, orphan-files,
@@ -565,19 +606,19 @@ require('./routes/admin')(app, pool, { requireAdmin, uploadDir: UPLOAD_DIR });
 
 
 // Budgets + budget_codes + by-area summary extracted to routes/budgets.js (Track 1.3).
-require('./routes/budgets')(app, pool, {});
+require('./routes/budgets')(app, pool, { requireManagerOrAdmin });
 
 // Potential permits (design-submitted candidates) extracted to
 // routes/potential_permits.js (Track 1.3).
 require('./routes/potential_permits')(app, pool, {});
 
 // Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
-require('./routes/concentrators')(app, pool, {});
+require('./routes/concentrators')(app, pool, { requireAdmin });
 
 // Dashboard, design pipeline, and inspection (PSC RUS) views extracted to
 // dedicated route modules (Track 1.3).
 require('./routes/dashboard')(app, pool, { requireAuth });
-require('./routes/design_pipeline')(app, pool, {});
+require('./routes/design_pipeline')(app, pool, { requireAuth });
 require('./routes/inspection')(app, pool, {});
 
 
@@ -588,7 +629,8 @@ require('./routes/revenue')(app, pool, { requireManagerOrAdmin });
 // ─────────────────────────────────────────────────────────────────────────────
 // INVOICE MANAGEMENT — extracted to routes/invoices.js (Track 1.3.5).
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/invoices')(app, pool, { requireManagerOrAdmin });
+// Item 10 fix: requireAdmin added so invoices.js can gate the wipe_hours path.
+require('./routes/invoices')(app, pool, { requireManagerOrAdmin, requireAdmin });
 
 // Reference-PDF-driven invoice templates: owner uploads a sample PDF for
 // each (job, client) pair, Claude vision analyses it once, and the system
@@ -1014,6 +1056,11 @@ async function bootstrapV3Schema() {
        expires_at TIMESTAMPTZ NOT NULL
      )`,
     `CREATE INDEX IF NOT EXISTS idx_undo_buckets_expires_at ON undo_buckets (expires_at)`,
+
+    // Add engineering_contract_id to projects — direct FK so rollup
+    // folders and leaf projects with contract_id=NULL are still linked
+    // to their umbrella EC. Belt-and-suspenders alongside migration 0023.
+    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS engineering_contract_id UUID REFERENCES engineering_contracts(id) ON DELETE SET NULL`,
   ];
   for (const sql of ddl) {
     try {

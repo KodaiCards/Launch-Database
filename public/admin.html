@@ -2964,7 +2964,7 @@ async function init() {
       'rev-clear-filters-btn':  ['lf_filter:revenue:rev-year'],
     };
     for (const [btnId, keys] of Object.entries(tabKeys)) {
-      if (keys.some(k => localStorage.getItem(k) !== null)) {
+      if (keys.some(k => localStorage.getItem(k) !== null && localStorage.getItem(k) !== '')) {
         const btn = document.getElementById(btnId);
         if (btn) btn.style.display = '';
       }

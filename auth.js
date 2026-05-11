@@ -16,22 +16,12 @@
 //   - permitting_manager   — same for Permitting team
 //   - design_engineer      — Design portal, sees own time entries only, no revenue
 //   - permitting_engineer  — same for Permitting
-//
-// Authentication mechanism:
-//   - Login produces a JWT signed with JWT_SECRET (env var, fallback to a derived value)
-//   - Token stored in httpOnly cookie 'lfs_session' AND returnable in response body
-//   - Frontend sends either via cookie (default) or Authorization: Bearer header
-//   - Default expiry: 7 days
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 
-// JWT secret — REQUIRED in production. In development we generate a random
-// per-process value if missing (so localhost dev works without setup), but
-// production deploys must set JWT_SECRET — refusing to boot otherwise.
-// In multi-service setups set the SAME JWT_SECRET on every service.
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   if (process.env.NODE_ENV === 'production') {
@@ -48,16 +38,20 @@ const COOKIE_NAME = 'lfs_session';
 const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LEN = 10;
 
-// Tiny in-memory sliding-window rate limiter. Single-process only — fine for
-// Railway's default 1-instance deploy. If we ever scale horizontally this
-// needs to move to Postgres or a shared cache. Key is usually IP:username for
-// login attempts.
+// Item 18 fix: JWT audience for cross-service token isolation.
+// Sign and verify tokens with an audience claim so a token minted on
+// one service cannot be reused on another (they share JWT_SECRET but
+// differ in audience). Configurable via JWT_AUDIENCE env var.
+const JWT_AUDIENCE = process.env.JWT_AUDIENCE || 'lfs';
+
+// Tiny in-memory sliding-window rate limiter. Single-process only.
 const _rlBuckets = new Map();
 function rateLimitOk(key, limit, windowMs) {
-  // Test runs hammer adminLogin() and would otherwise trip the 5-per-15min
-  // username limit on the shared `admin` user; skip in tests so the suite
-  // doesn't go red on rate limits unrelated to the SUT.
-  if (process.env.NODE_ENV === 'test') return true;
+  // Item 13 fix: NODE_ENV=test bypass now requires BOTH the test flag AND
+  // an explicit opt-in env var (LFS_DISABLE_RATELIMIT_FOR_TESTS=1).
+  // A misconfigured Railway deploy with NODE_ENV=test in production would
+  // otherwise disable login rate limiting entirely.
+  if (process.env.NODE_ENV === 'test' && process.env.LFS_DISABLE_RATELIMIT_FOR_TESTS === '1') return true;
   const now = Date.now();
   const arr = (_rlBuckets.get(key) || []).filter(t => now - t < windowMs);
   if (arr.length >= limit) {
@@ -68,7 +62,6 @@ function rateLimitOk(key, limit, windowMs) {
   _rlBuckets.set(key, arr);
   return true;
 }
-// Periodically drop empty buckets so the Map doesn't grow unbounded.
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of _rlBuckets) {
@@ -78,13 +71,8 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000).unref();
 
-// Pre-computed bcrypt hash of a never-valid password. Used to keep login
-// timing constant when the username doesn't exist (defends against username
-// enumeration via response timing).
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password-' + crypto.randomBytes(8).toString('hex'), BCRYPT_ROUNDS);
 
-// Cookie options shared by set + clear so clearCookie actually clears the
-// cookie (browsers require options to match).
 function cookieOpts() {
   return {
     httpOnly: true,
@@ -94,54 +82,29 @@ function cookieOpts() {
   };
 }
 
-// Generic safe error response — logs full error server-side, returns a
-// stable string to the client so we don't leak SQL errors / stack info.
 function serverError(res, e, where) {
   console.error(`[auth:${where}]`, e && e.stack ? e.stack : e);
   return res.status(500).json({ error: 'Internal server error' });
 }
 
-// Valid roles (used for validation when admin creates/edits a user)
 const VALID_ROLES = [
   'admin',
   'design_manager',
   'permitting_manager',
   'design_engineer',
   'permitting_engineer',
-  // Customers are external — they see ONLY data for the clients linked
-  // to their user via the customer_clients table. Read-only across the
-  // whole API surface; the customer portal exposes a curated subset of
-  // endpoints under /api/customer/*.
   'customer',
 ];
 
-// Helper: which team does a role belong to? Used for filtering data per user.
 function teamForRole(role) {
   if (!role) return null;
   if (role.startsWith('design_')) return 'design';
   if (role.startsWith('permitting_')) return 'permitting';
-  // 'construction_*' is the canonical prefix going forward (formerly
-  // 'inspection_'). Owner renamed the team 2026-05-06; the migration
-  // 0009_rename_inspection_team_to_construction.sql swept the data.
-  // We accept the old prefix too so any stale JWTs minted before the
-  // rename still resolve to the same team.
   if (role.startsWith('construction_')) return 'construction';
   if (role.startsWith('inspection_')) return 'construction';
-  return null;  // admin / customer sees no team scope (they're filtered differently)
+  return null;
 }
 
-// Helper: ALL teams a user can access. Combines their primary role's team
-// with any extra_teams they've been granted. Returns array of team strings:
-// 'design' | 'permitting' | 'construction'. Empty array means no team-scoped
-// access (admin sees everything regardless, so this only matters for
-// non-admin users in portal contexts).
-//
-// Example: a design_engineer with extra_teams=['permitting'] returns
-// ['design','permitting'] — they can use either portal and see both teams'
-// data inside whichever one they're viewing.
-//
-// Backward compat: extra_teams may still contain the legacy 'inspection'
-// string on rows that pre-date migration 0009. Treat it as 'construction'.
 function teamsForUser(user) {
   if (!user) return [];
   if (user.role === 'admin') return ['design','permitting','construction'];
@@ -151,20 +114,17 @@ function teamsForUser(user) {
   if (primary) set.add(primary);
   for (const t of extras) {
     if (t === 'design' || t === 'permitting' || t === 'construction') set.add(t);
-    else if (t === 'inspection') set.add('construction');  // legacy alias
+    else if (t === 'inspection') set.add('construction');
   }
   return [...set];
 }
 
-// Helper: can the given user access the given portal mode? Wraps teamsForUser
-// with PORTAL_MODE convention. Returns true for admin always.
 function canAccessPortal(user, portalMode) {
   if (!user) return false;
   if (user.role === 'admin') return true;
   return teamsForUser(user).includes(portalMode);
 }
 
-// Helper: is this user a manager-or-higher? Used for revenue/billing access.
 function isManagerOrAdmin(role) {
   return role === 'admin' || role === 'design_manager' || role === 'permitting_manager';
 }
@@ -188,31 +148,13 @@ async function bootstrapAuthSchema(pool) {
        updated_at TIMESTAMPTZ DEFAULT NOW()
      )`,
     `CREATE INDEX IF NOT EXISTS idx_users_username ON users (LOWER(username))`,
-    // Audit trail columns on key tables (Phase 3) — track who created and who
-    // last modified key records. Idempotent — IF NOT EXISTS skips if already added.
     `ALTER TABLE projects        ADD COLUMN IF NOT EXISTS created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL`,
     `ALTER TABLE projects        ADD COLUMN IF NOT EXISTS updated_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL`,
     `ALTER TABLE time_entries    ADD COLUMN IF NOT EXISTS user_id            UUID REFERENCES users(id) ON DELETE SET NULL`,
     `ALTER TABLE permit_documents ADD COLUMN IF NOT EXISTS uploaded_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL`,
-    // User-level UI preferences. theme: 'light' | 'dark' | NULL (NULL = follow
-    // system preference). Persisted server-side so it follows the user across
-    // browsers and devices instead of being trapped in one localStorage.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(10)`,
-    // Multi-team access. extra_teams is a TEXT[] of additional teams the user
-    // can access beyond their primary role's team. E.g. a design_engineer with
-    // extra_teams = '{permitting}' can use the permitting portal and see
-    // permitting data alongside their design work. Empty array = single-team
-    // access (the default). Admins always see everything regardless.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS extra_teams TEXT[] DEFAULT '{}'`,
-    // tokens_invalid_after — bumped on password change / forced logout.
-    // authMiddleware rejects any JWT whose iat is older than this timestamp,
-    // so changing your password (or an admin resetting it) invalidates every
-    // active session for that user immediately.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens_invalid_after TIMESTAMPTZ`,
-    // Per-user dashboard layout / widget visibility. JSONB blob — keys are
-    // widget IDs, values are { hidden?: bool, order?: int }. Frontend
-    // owns the schema; backend just stores/returns. Lets a manager hide
-    // widgets that don't apply to their team without affecting anyone else.
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS dashboard_layout JSONB DEFAULT '{}'::jsonb`,
   ];
   for (const sql of ddl) {
@@ -224,21 +166,6 @@ async function bootstrapAuthSchema(pool) {
     }
   }
 
-  // Seed/refresh the default admin account.
-  //
-  // Behavior:
-  //   - If no admin user exists at all → create one with the env password
-  //   - If admin user exists but ADMIN_PASSWORD env var is set → REFRESH the
-  //     password from env. This makes the env var always authoritative for
-  //     the default 'admin' username, so if you forget the password, you can
-  //     just set ADMIN_PASSWORD on Railway, redeploy, and sign back in.
-  //   - If admin user exists and ADMIN_PASSWORD is unset → leave it alone
-  //     (the user has presumably set their own password via the UI)
-  //
-  // We always log what happened so deploy logs are diagnostic. The previous
-  // version silently no-op'd if any admin existed, which made it impossible
-  // to recover from a partial-run state where the row existed but no one
-  // knew the password.
   try {
     const envPw = process.env.ADMIN_PASSWORD;
     const { rows: existing } = await pool.query(
@@ -246,9 +173,6 @@ async function bootstrapAuthSchema(pool) {
     );
 
     if (existing.length === 0) {
-      // No admin row at all — REQUIRE ADMIN_PASSWORD env var. We refuse to
-      // seed a known/default password because it would mean a fresh deploy
-      // ships with admin/admin until someone notices.
       if (!envPw) {
         console.error('  ✗ No admin user exists and ADMIN_PASSWORD env var is not set.');
         console.error('    Set ADMIN_PASSWORD in Railway → Variables (10+ chars), then redeploy.');
@@ -265,16 +189,27 @@ async function bootstrapAuthSchema(pool) {
         console.log(`  ✓ Default admin CREATED — username='admin' (password from ADMIN_PASSWORD env)`);
       }
     } else if (envPw) {
-      // Admin exists and env wants to override the password. Always refresh.
       const hash = await bcrypt.hash(envPw, BCRYPT_ROUNDS);
       await pool.query(
         `UPDATE users SET password_hash = $1, role = 'admin', active = TRUE, updated_at = NOW()
          WHERE LOWER(username) = 'admin'`,
         [hash]
       );
+      // Item 26 fix: audit log for admin password refresh
+      console.warn(`[SECURITY AUDIT] Admin password REFRESHED from ADMIN_PASSWORD env var at ${new Date().toISOString()} — username='admin'`);
+      try {
+        const fs = require('fs');
+        const logPath = process.env.ADMIN_BOOTSTRAP_LOG || '/var/log/lfs/admin_password_bootstrap.log';
+        const logDir = require('path').dirname(logPath);
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        fs.appendFileSync(logPath,
+          JSON.stringify({ ts: new Date().toISOString(), event: 'admin_password_refreshed', username: 'admin' }) + '\n'
+        );
+      } catch (logErr) {
+        console.warn('[auth:bootstrap] Could not write to audit log:', logErr.message);
+      }
       console.log(`  ✓ Admin password REFRESHED from ADMIN_PASSWORD env var (username='admin')`);
     } else {
-      // Admin exists, no env override. Leave password alone but ensure account active.
       if (!existing[0].active) {
         await pool.query(
           `UPDATE users SET active = TRUE, updated_at = NOW() WHERE id = $1`,
@@ -293,20 +228,25 @@ async function bootstrapAuthSchema(pool) {
 }
 
 // ─── TOKEN HELPERS ───────────────────────────────────────────────────────────
+// Item 18 fix: JWT audience pinning added to sign and verify.
 function signToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, role: user.role, team: user.team },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRY }
+    { expiresIn: JWT_EXPIRY, audience: JWT_AUDIENCE }
   );
 }
 
 function verifyToken(token) {
-  try { return jwt.verify(token, JWT_SECRET); }
+  try {
+    return jwt.verify(token, JWT_SECRET, {
+      algorithms: ['HS256'],
+      audience: JWT_AUDIENCE,
+    });
+  }
   catch (e) { return null; }
 }
 
-// Extract token from either cookie or Authorization: Bearer header
 function extractToken(req) {
   if (req.cookies && req.cookies[COOKIE_NAME]) return req.cookies[COOKIE_NAME];
   const auth = req.headers.authorization || '';
@@ -314,9 +254,6 @@ function extractToken(req) {
   return null;
 }
 
-// Middleware that decodes the token (if present) and attaches req.user.
-// Does NOT enforce auth — endpoints that require it should also use requireAuth.
-// This separation lets pages like /login skip the auth check entirely.
 function authMiddleware(pool) {
   return async (req, res, next) => {
     const token = extractToken(req);
@@ -332,9 +269,6 @@ function authMiddleware(pool) {
       );
       const u = rows[0];
       if (!u || !u.active) return next();
-      // Honor forced session invalidation: if the user's
-      // tokens_invalid_after is newer than this token's iat, treat as
-      // logged-out (e.g. after password change or admin reset).
       if (u.tokens_invalid_after && payload.iat) {
         const tokenIssuedMs = payload.iat * 1000;
         if (new Date(u.tokens_invalid_after).getTime() > tokenIssuedMs) {
@@ -342,6 +276,14 @@ function authMiddleware(pool) {
         }
       }
       req.user = u;
+      // Wave 1.1 fix: merge JWT iat into req.user so downstream consumers
+      // (notably the SSE heartbeat in routes/_sse.js) can re-validate
+      // tokens_invalid_after against the token's issued-at timestamp.
+      // Without this, req.user.iat was always undefined, so the heartbeat
+      // computed tokenIssuedAt=0 and killed every SSE connection for any
+      // user with tokens_invalid_after set (i.e. anyone who'd ever
+      // changed their password).
+      req.user.iat = payload.iat;
     } catch (e) {
       console.error('[auth:authMiddleware] DB error reading user', e && e.message);
     }
@@ -349,24 +291,24 @@ function authMiddleware(pool) {
   };
 }
 
-// requireAuth(roles) — returns middleware that 401s if no user OR 403s if role mismatch.
-// roles can be a string ('admin') or array (['admin','design_manager']) or omitted (any logged-in user).
+// Item 20 fix: requireAuth([]) empty-array trap.
+// An empty allowed array means "any authenticated role" — treat it as
+// if no roles were specified. The old code used `!allowed.includes(role)`,
+// which would always be true for an empty array, blocking every role.
 function requireAuth(roles) {
   const allowed = roles ? (Array.isArray(roles) ? roles : [roles]) : null;
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'Login required' });
-    if (allowed && !allowed.includes(req.user.role)) {
+    // Item 20 fix: empty array means any role is acceptable
+    if (allowed && allowed.length > 0 && !allowed.includes(req.user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions for this action' });
     }
     next();
   };
 }
 
-// requireAdmin shortcut
 const requireAdmin = requireAuth('admin');
 
-// requireManagerOrAdmin — for billing/revenue/financial endpoints that
-// managers should see for their own team but engineers should not.
 const requireManagerOrAdmin = requireAuth(['admin', 'design_manager', 'permitting_manager']);
 
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
@@ -374,17 +316,12 @@ function installAuthRoutes(app, pool) {
   app.use(cookieParser());
   app.use(authMiddleware(pool));
 
-  // POST /api/auth/login — exchange username + password for a JWT.
-  // Single uniform 401 error message + always run bcrypt to prevent
-  // username enumeration via response or timing differences. Rate limited
-  // per-IP and per-username to slow down credential stuffing.
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    // 10 attempts / 15 min per IP, 5 attempts / 15 min per username.
     if (!rateLimitOk('login:ip:' + ip, 10, 15 * 60 * 1000) ||
         !rateLimitOk('login:user:' + String(username).toLowerCase(), 5, 15 * 60 * 1000)) {
       return res.status(429).json({ error: 'Too many login attempts. Please wait 15 minutes.' });
@@ -396,10 +333,6 @@ function installAuthRoutes(app, pool) {
         [username]
       );
       const user = rows[0];
-      // Always run bcrypt against SOMETHING so timing is constant whether
-      // the user exists or not. We also collapse "wrong password",
-      // "user not found", and "account deactivated" into one generic 401
-      // so an attacker can't enumerate usernames.
       const hashToCompare = user ? user.password_hash : DUMMY_HASH;
       const passwordOk = await bcrypt.compare(password, hashToCompare);
       const accountOk = !!(user && user.active);
@@ -413,6 +346,8 @@ function installAuthRoutes(app, pool) {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]).catch(()=>{});
+      // Item 24 note: token is still returned in body for backward-compat with
+      // existing frontend; Wave 1.5 will remove body token + update frontend.
       res.json({
         token,
         user: {
@@ -426,19 +361,11 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  // POST /api/auth/logout — clears the cookie. Frontend should also clear
-  // any cached state and redirect to /login.
   app.post('/api/auth/logout', (req, res) => {
-    // clearCookie attrs MUST match the set attrs or the browser won't clear it
     res.clearCookie(COOKIE_NAME, cookieOpts());
     res.json({ ok: true });
   });
 
-  // GET /api/auth/me — returns the current user. Frontend calls this on page
-  // load to decide which UI to render. 401 if not logged in. We do a fresh DB
-  // read so theme + any other persisted preferences are current (the JWT only
-  // has id/username/role baked in for performance — preferences live in the
-  // users table and are read on demand).
   app.get('/api/auth/me', async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     try {
@@ -453,10 +380,6 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  // GET /api/auth/portal-urls — returns the cross-portal URL map so clients with
-  // extra_teams can navigate between portals. Reads the PORTAL_URLS env var
-  // (JSON object: {"design":"https://...", "permitting":"https://...", ...}).
-  // Returns an empty object if not configured — the frontend hides the tab.
   app.get('/api/auth/portal-urls', requireAuth(), (req, res) => {
     let urls = {};
     try {
@@ -466,10 +389,6 @@ function installAuthRoutes(app, pool) {
     res.json(urls);
   });
 
-  // PUT /api/auth/me/theme — persist current user's theme preference.
-  // Body: { theme: 'light' | 'dark' | null }. NULL clears the preference and
-  // the frontend falls back to system/OS preference. Persisted server-side so
-  // the choice follows the user across browsers and devices.
   app.put('/api/auth/me/theme', requireAuth(), async (req, res) => {
     const { theme } = req.body || {};
     if (theme !== null && theme !== 'light' && theme !== 'dark') {
@@ -484,9 +403,6 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  // GET /api/auth/me/dashboard-layout — return this user's saved layout.
-  // Empty object means "use defaults"; the frontend doesn't need to special
-  // case anything.
   app.get('/api/auth/me/dashboard-layout', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(
@@ -496,10 +412,6 @@ function installAuthRoutes(app, pool) {
     } catch (e) { return serverError(res, e, 'get-dashboard-layout'); }
   });
 
-  // PUT /api/auth/me/dashboard-layout — replace the saved layout. Body is
-  // the full layout object; partial-merge isn't supported (frontend already
-  // computes the full state before sending). Validated to be an object so
-  // a malformed POST can't poison the column.
   app.put('/api/auth/me/dashboard-layout', requireAuth(), async (req, res) => {
     const layout = req.body;
     if (layout == null || typeof layout !== 'object' || Array.isArray(layout)) {
@@ -514,10 +426,6 @@ function installAuthRoutes(app, pool) {
     } catch (e) { return serverError(res, e, 'put-dashboard-layout'); }
   });
 
-  // POST /api/auth/change-password — current user updates their own password.
-  // Requires current password to confirm identity (defense against open-tab
-  // hijacking and against helper popping a session and changing the password).
-  // Bumps tokens_invalid_after to log out every other active session.
   app.post('/api/auth/change-password', requireAuth(), async (req, res) => {
     const { current_password, new_password } = req.body || {};
     if (!current_password || !new_password) {
@@ -526,7 +434,6 @@ function installAuthRoutes(app, pool) {
     if (new_password.length < MIN_PASSWORD_LEN) {
       return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LEN} characters` });
     }
-    // Rate limit per user to slow current-password guessing
     if (!rateLimitOk('changepw:' + req.user.id, 5, 5 * 60 * 1000)) {
       return res.status(429).json({ error: 'Too many attempts. Please wait 5 minutes.' });
     }
@@ -539,14 +446,11 @@ function installAuthRoutes(app, pool) {
       const match = await bcrypt.compare(current_password, rows[0].password_hash);
       if (!match) return res.status(401).json({ error: 'Current password incorrect' });
       const hash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
-      // tokens_invalid_after bump invalidates every JWT issued before NOW(),
-      // including the one in the user's other open tabs/devices.
       await pool.query(
         `UPDATE users SET password_hash = $1, tokens_invalid_after = NOW(), updated_at = NOW()
          WHERE id = $2`,
         [hash, req.user.id]
       );
-      // Re-issue a fresh token for the current session so this caller stays logged in.
       const newToken = signToken({ ...req.user, password_hash: hash });
       res.cookie(COOKIE_NAME, newToken, {
         ...cookieOpts(),
@@ -559,7 +463,6 @@ function installAuthRoutes(app, pool) {
   });
 
   // ─── ADMIN USER MANAGEMENT ─────────────────────────────────────────────────
-  // GET /api/users — list (admin only)
   app.get('/api/users', requireAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query(`
@@ -574,7 +477,6 @@ function installAuthRoutes(app, pool) {
     } catch (e) { return serverError(res, e, 'list-users'); }
   });
 
-  // POST /api/users — create user (admin only)
   app.post('/api/users', requireAdmin, async (req, res) => {
     const { username, password, role, full_name, email, extra_teams } = req.body || {};
     if (!username || !password || !role) {
@@ -586,14 +488,12 @@ function installAuthRoutes(app, pool) {
     if (password.length < MIN_PASSWORD_LEN) {
       return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LEN} characters` });
     }
-    // Validate extra_teams if provided
     const cleanExtras = Array.isArray(extra_teams)
       ? extra_teams.filter(t => ['design','permitting','construction','inspection'].includes(t)).map(t => t === 'inspection' ? 'construction' : t)
       : [];
     try {
       const team = teamForRole(role);
       const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-      // Store username trimmed; uniqueness enforced via the LOWER() index.
       const cleanUsername = String(username).trim();
       const { rows } = await pool.query(
         `INSERT INTO users (username, password_hash, role, team, full_name, email, extra_teams)
@@ -608,7 +508,6 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  // PUT /api/users/:id — update user (admin only). Optional password reset via 'password' field.
   app.put('/api/users/:id', requireAdmin, async (req, res) => {
     const { username, role, full_name, email, active, password, extra_teams, staff_id } = req.body || {};
     if (role && !VALID_ROLES.includes(role)) {
@@ -617,7 +516,6 @@ function installAuthRoutes(app, pool) {
     if (password && password.length < MIN_PASSWORD_LEN) {
       return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LEN} characters` });
     }
-    // Prevent admin from deactivating themselves (lockout protection)
     if (active === false && req.user.id === req.params.id) {
       return res.status(400).json({ error: 'Cannot deactivate your own account' });
     }
@@ -639,21 +537,15 @@ function installAuthRoutes(app, pool) {
           : [];
         sets.push(`extra_teams = $${i++}`); vals.push(cleanExtras);
       }
-      // staff_id — links the user to a specific staff record. Required for
-      // Time Clock portal access. NULL clears the link. Validation could
-      // verify the staff record exists, but a bad UUID just produces a NULL
-      // FK on update which is harmless.
       if (staff_id !== undefined) {
         sets.push(`staff_id = $${i++}`); vals.push(staff_id || null);
       }
       if (password) {
         const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
         sets.push(`password_hash = $${i++}`); vals.push(hash);
-        // Admin-reset of password also kills all that user's existing sessions
         sets.push(`tokens_invalid_after = NOW()`);
       }
       if (active === false) {
-        // Deactivating a user immediately invalidates their existing tokens
         sets.push(`tokens_invalid_after = NOW()`);
       }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
@@ -671,17 +563,6 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  // DELETE /api/users/:id
-  //   default: soft-delete. Sets active=FALSE + invalidates tokens. Existing
-  //            FK references (customer_clients, billing_batches.created_by,
-  //            invoice_templates.created_by, ai_messages, etc.) stay intact.
-  //   ?hard=1: hard-delete the row. Refused if the user is still active OR
-  //            the user is the caller's own account. Requires the row to
-  //            be soft-deleted first as a safety gate (forces a two-step
-  //            "deactivate first, then permanently remove" flow). Cleans up
-  //            customer_clients links automatically (ON DELETE CASCADE).
-  //            Other FK columns are ON DELETE SET NULL so historical rows
-  //            survive but lose the audit pointer.
   app.delete('/api/users/:id', requireAdmin, async (req, res) => {
     if (req.user.id === req.params.id) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
@@ -727,5 +608,6 @@ module.exports = {
   teamsForUser,
   canAccessPortal,
   isManagerOrAdmin,
+  MIN_PASSWORD_LEN,
   VALID_ROLES,
 };
