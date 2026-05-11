@@ -236,6 +236,15 @@ const PORTAL_DEFS = [
     canAccess: u => u.role !== 'customer',
   },
   {
+    id: 'training',
+    audience: 'employee',
+    url: '/training.html',
+    name: 'OSP Training',
+    icon: 'graduation-cap',
+    description: 'OSP design training modules, references, and practice exercises.',
+    canAccess: u => u.role !== 'customer',
+  },
+  {
     id: 'customer',
     audience: 'client',
     url: '/customer.html',

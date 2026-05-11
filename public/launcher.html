@@ -32,7 +32,7 @@
   --radius-lg:10px;
   --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
   --shadow-lift:0 4px 16px rgba(0,0,0,0.16);
-  --topbar-h:68px;
+  --topbar-h:84px;
   --footer-h:48px;
 }
 html[data-theme="dark"]{
@@ -73,7 +73,7 @@ body{
   position:relative;
 }
 .topbar-logo-img{
-  height:44px;
+  height:60px;
   width:auto;
   object-fit:contain;
   display:block;
@@ -82,6 +82,9 @@ body{
   left:50%;
   transform:translateX(-50%);
   pointer-events:none;
+  /* logo's "FIBER SERVICES" is blue — invert+brightness on the blue topbar
+     so it reads as off-white instead of disappearing. */
+  filter:brightness(0) invert(1) opacity(0.95);
 }
 .topbar-spacer{flex:1}
 .user-pill{
