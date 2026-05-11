@@ -95,7 +95,10 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         ORDER BY te.entry_date DESC, te.created_at DESC
       `, params);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[time-entries:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load time entries.' });
+    }
   });
 
   app.post('/api/time-entries', requireAuth(), async (req, res) => {
@@ -223,7 +226,8 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       res.json({ inserted: inserted.length, batch: importBatch });
     } catch (e) {
       await client.query('ROLLBACK');
-      res.status(500).json({ error: e.message });
+      console.error('[time-entries:bulk-insert]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk-insert time entries.' });
     } finally {
       client.release();
     }
@@ -428,8 +432,8 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         undo_expires_at: undo.expires_at,
       });
     } catch (e) {
-      console.error('bulk delete by staff error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[time-entries:bulk-delete-by-staff]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk-delete time entries.' });
     }
   });
 };

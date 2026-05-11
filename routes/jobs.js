@@ -98,7 +98,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         `SELECT * FROM jobs WHERE ${conds.join(' AND ')} ORDER BY name`
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load jobs.' });
+    }
   });
 
   // Fetch a single job by id regardless of active state. The list endpoint
@@ -110,7 +113,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       const { rows } = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Job not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load job.' });
+    }
   });
 
   // DIAGNOSTIC — dumps raw job rows including inactive, with full column list.
@@ -128,7 +134,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         columns: cols.rows,
         rows: rows.rows
       });
-    } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
+    } catch (e) {
+      console.error('[jobs:debug]', e && e.message, e && e.stack);
+      res.status(500).json({ error: 'Failed to load debug jobs.' });
+    }
   });
 
   // Allowed program_scope values match the CHECK constraint in
@@ -188,7 +197,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
          mirrorPsc, mirrorGen, resolvedScope]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create job.' });
+    }
   });
 
   // Item 2 fix: requireAdmin added
@@ -270,7 +282,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       const { rows } = await pool.query(sql, values);
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update job.' });
+    }
   });
 
   // Reset a job's manual-override flag. After this, the next bootstrap reseed
@@ -286,7 +301,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
       res.json({ ok: true, name: rows[0].name });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:reset-override]', e && e.message);
+      res.status(500).json({ error: 'Failed to reset job override.' });
+    }
   });
 
   // Universal rate propagation: apply this job's current default_rate to ALL
@@ -306,7 +324,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         [req.params.id, rate]
       );
       res.json({ ok: true, updated: r.rowCount, applied_rate: rate });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:propagate-rate]', e && e.message);
+      res.status(500).json({ error: 'Failed to propagate job rate.' });
+    }
   });
 
   app.delete('/api/jobs/:id', requireAdmin, async (req, res) => {
@@ -314,6 +335,9 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       // Soft-delete via active=false to preserve historical references in projects
       await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete job.' });
+    }
   });
 };
