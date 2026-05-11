@@ -521,30 +521,27 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     }
   });
 
-  // Wave 1.5 [CASCADE-PREVIEW]: ?dry_run=1 returns the impact summary without
-  // deleting anything. Callers should request dry_run first, show the user the
-  // row counts, then re-issue with confirm=true to proceed.
+  // ?dry_run=1 returns an impact preview without deleting (opt-in).
+  // No confirm flag required — single-row delete; undo-bucket is safety net.
   app.delete('/api/projects/:id', requireAdmin, async (req, res) => {
-    const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
-    const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
+    const dryRun = req.query.dry_run === '1' || req.query.dry_run === 'true';
     try {
       const proj = await pool.query(
         'SELECT id, name, parent_id FROM projects WHERE id=$1', [req.params.id]
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
-      const children = await pool.query(
-        'SELECT COUNT(*)::int AS cnt FROM projects WHERE parent_id=$1', [req.params.id]
-      );
-      const childCount = children.rows[0].cnt;
-      const preview = {
-        id: req.params.id,
-        name: proj.rows[0].name,
-        child_projects: childCount,
-      };
-      if (dryRun || (!confirm && childCount > 0)) {
-        return res.json({ dry_run: true, preview, message: childCount > 0
-          ? `Project has ${childCount} child project(s). Pass confirm:true in the request body to force-delete (orphans children), or use DELETE /with-tree to delete the whole tree.`
-          : 'Pass confirm:true in the request body or ?dry_run=0 to execute.' });
+      if (dryRun) {
+        const children = await pool.query(
+          'SELECT COUNT(*)::int AS cnt FROM projects WHERE parent_id=$1', [req.params.id]
+        );
+        return res.json({
+          dry_run: true,
+          preview: {
+            id: req.params.id,
+            name: proj.rows[0].name,
+            child_projects: children.rows[0].cnt,
+          },
+        });
       }
       // Remove from any pending billing batches first — billing_batch_items
       // has ON DELETE RESTRICT on project_id, so leaving stale rows here would
@@ -609,12 +606,12 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     }
   });
 
-  // Delete a billed project entirely (removes from revenue, hours, everything)
-  // Wave 1.5 [CASCADE-PREVIEW]: ?dry_run=1 returns impact counts without deleting.
+  // Delete a billed project entirely (removes from revenue, hours, everything).
+  // ?dry_run=1 returns impact counts without deleting (opt-in).
+  // No confirm flag required — undo-bucket is the safety net.
   app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
-    const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
-    const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
-    if (dryRun || !confirm) {
+    const dryRun = req.query.dry_run === '1' || req.query.dry_run === 'true';
+    if (dryRun) {
       try {
         const teCount = await pool.query(
           'SELECT COUNT(*)::int AS cnt FROM time_entries WHERE project_id=$1', [req.params.id]
@@ -632,7 +629,6 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
             time_entries: teCount.rows[0].cnt,
             invoice_items: iiCount.rows[0].cnt,
           },
-          message: 'Pass confirm:true in the request body to execute the deletion.',
         });
       } catch (e) {
         console.error('[projects:with-hours:preview]', e && e.message);
