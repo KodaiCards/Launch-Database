@@ -58,11 +58,14 @@ test('with-tree DELETE removes parent + child + time entry; undo restores all th
   });
   cleanup.time_entries.push(entry.id);
 
-  // DELETE the tree at the parent
+  // DELETE the tree at the parent. Wave 1.5 [CASCADE-PREVIEW]: the endpoint
+  // now requires confirm:true in the body to execute (otherwise returns a
+  // dry-run preview). Pass it explicitly so the test exercises the real
+  // delete path.
   const delJson = await requestJson(
     'DELETE',
     `/api/projects/${parent.id}/with-tree`,
-    { token }
+    { token, body: { confirm: true } }
   );
   assert.equal(delJson.ok, true);
   assert.equal(delJson.deleted_projects, 2,
