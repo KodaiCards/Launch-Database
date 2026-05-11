@@ -1154,7 +1154,14 @@ async function executeTool(toolName, toolInput, actor = {}) {
               if (!engineeringContractId) engineeringContractId = info.engineering_contract_id;
             }
 
-            const fin = calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
+            const isSpecRollup = s.is_rollup === true;
+            // Rollups are organize-only folders: billing_type, billing_rate,
+            // footage, and financials must all be NULL. Mirroring the
+            // create_project gate (lines 826-828) so bulk_create_projects
+            // doesn't silently give rollup containers a billing profile.
+            const fin = isSpecRollup
+              ? { miles: null, expectedHours: null, expectedRevenue: null }
+              : calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
             const realParent = s.parent_local_id
               ? idMap[s.parent_local_id]
               : (s.parent_id || null);
@@ -1172,12 +1179,14 @@ async function executeTool(toolName, toolInput, actor = {}) {
                 clientId,
                 contractId || null,
                 workOrderNumber || null,
-                s.project_type || 'other',
+                // Rollups still get project_type stored (informational only,
+                // same as create_project), but billing fields force NULL.
+                s.project_type || (isSpecRollup ? 'other' : null),
                 program,
                 s.status || 'active',
-                s.billing_type || 'hourly',
-                s.billing_rate ?? 0,
-                s.footage || null,
+                isSpecRollup ? null : (s.billing_type || 'hourly'),
+                isSpecRollup ? null : (s.billing_rate ?? 0),
+                isSpecRollup ? null : (s.footage || null),
                 fin.miles,
                 fin.expectedHours,
                 fin.expectedRevenue,
@@ -1185,7 +1194,7 @@ async function executeTool(toolName, toolInput, actor = {}) {
                 s.notes || null,
                 realParent,
                 concentratorId || null,
-                s.is_rollup === true,
+                isSpecRollup,
                 s.billing_cadence || 'one_time',
                 engineeringContractId || null,
               ]
