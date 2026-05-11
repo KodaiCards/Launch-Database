@@ -16,7 +16,8 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
   const { upload } = mw;
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/permits', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/permits was missing auth.
+  app.get('/api/permits', requireAuth(['admin', 'permitting_manager', 'permitting_engineer']), async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.*,
@@ -36,7 +37,10 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
         ORDER BY p.created_at DESC
       `);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[permits:GET /api/permits]', e && e.message);
+      res.status(500).json({ error: 'Failed to load permits.' });
+    }
   });
 
   // Items 2 + 8 fix: requireAuth added; body actor fallback removed.

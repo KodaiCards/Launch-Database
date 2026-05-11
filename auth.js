@@ -346,10 +346,13 @@ function installAuthRoutes(app, pool) {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]).catch(()=>{});
-      // Item 24 note: token is still returned in body for backward-compat with
-      // existing frontend; Wave 1.5 will remove body token + update frontend.
+      // Wave 1.5 [TOKEN-FROM-BODY]: Token no longer returned in body — auth is
+      // cookie-only (httpOnly, sameSite=lax, secure in production). The old body
+      // token was stored in sessionStorage as a fallback; that's eliminated here
+      // because sessionStorage is accessible to any JS on the page (XSS risk).
+      // The Bearer-header path in api.js still works via the cookie — the browser
+      // sends it automatically on same-origin requests.
       res.json({
-        token,
         user: {
           id: user.id, username: user.username, role: user.role, team: user.team,
           full_name: user.full_name, email: user.email, theme: user.theme,
@@ -361,8 +364,23 @@ function installAuthRoutes(app, pool) {
     }
   });
 
-  app.post('/api/auth/logout', (req, res) => {
+  // Wave 1.5 [LOGOUT-INVALIDATE]: Bump tokens_invalid_after on logout so any
+  // JWT in flight (sessionStorage copy, another tab, stolen cookie) is
+  // rejected on next request. Cookie is cleared too; both paths are needed
+  // because the Bearer-header path in api.js doesn't rely on the cookie.
+  app.post('/api/auth/logout', async (req, res) => {
     res.clearCookie(COOKIE_NAME, cookieOpts());
+    if (req.user && req.user.id) {
+      try {
+        await pool.query(
+          `UPDATE users SET tokens_invalid_after = NOW() WHERE id = $1`,
+          [req.user.id]
+        );
+      } catch (e) {
+        // Non-fatal — cookie is already cleared. Log and continue.
+        console.error('[auth:logout] Failed to bump tokens_invalid_after:', e && e.message);
+      }
+    }
     res.json({ ok: true });
   });
 
@@ -456,7 +474,8 @@ function installAuthRoutes(app, pool) {
         ...cookieOpts(),
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      res.json({ ok: true, token: newToken });
+      // Wave 1.5 [TOKEN-FROM-BODY]: Token not returned in body — cookie only.
+      res.json({ ok: true });
     } catch (e) {
       return serverError(res, e, 'change-password');
     }

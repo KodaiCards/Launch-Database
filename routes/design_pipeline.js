@@ -9,7 +9,9 @@
 module.exports = function installDesignPipelineRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/design', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/design was missing requireAuth.
+  // Bonus item from audit: gated to design team + admin.
+  app.get('/api/design', requireAuth(['admin', 'design_manager', 'design_engineer']), async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.*, cl.name as client_name, co.contract_number,
@@ -21,12 +23,15 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
         ORDER BY p.created_at DESC
       `);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[design_pipeline:GET /api/design]', e && e.message);
+      res.status(500).json({ error: 'Failed to load design pipeline.' });
+    }
   });
 
   // PUT /api/projects/:id/ongoing — toggle the is_ongoing flag.
-  // Used by the Inspection view's checkbox column.
-  app.put('/api/projects/:id/ongoing', async (req, res) => {
+  // Wave 1.5 [UNGATED]: was missing requireAuth; gated to admin/managers.
+  app.put('/api/projects/:id/ongoing', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { is_ongoing } = req.body;
     try {
       const { rows } = await pool.query(
@@ -35,7 +40,10 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Project not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[design_pipeline:PUT /api/projects/:id/ongoing]', e && e.message);
+      res.status(500).json({ error: 'Failed to update project.' });
+    }
   });
 
   // Items 2 + 9 fix: requireAuth(['admin','design_manager','design_engineer']) added.
@@ -76,7 +84,10 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
         );
       }
       res.json({ previous: currentStage, current: nextStage });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[design_pipeline:advance]', e && e.message);
+      res.status(500).json({ error: 'Failed to advance design stage.' });
+    }
   });
 
   // Items 2 + 9 fix: requireAuth added; body actor fallback removed.
@@ -120,6 +131,9 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
         );
       }
       res.json({ previous: currentStage, current: prevStage });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[design_pipeline:regress]', e && e.message);
+      res.status(500).json({ error: 'Failed to regress design stage.' });
+    }
   });
 };

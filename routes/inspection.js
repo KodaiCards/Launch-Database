@@ -36,7 +36,11 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 module.exports = function installInspectionRoutes(app, pool, mw) {
-  app.get('/api/inspection', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/inspection was missing requireAuth.
+  // Gated to admin + managers (who use the Inspection tab).
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+
+  app.get('/api/inspection', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const period = (req.query.period || 'ytd').toLowerCase();
     let monthYear = req.query.month;  // 'YYYY-MM'
     let startDate, endDate;
@@ -340,6 +344,9 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
         totals: { ...totals, inspector_count: inspectorCount },
         projects: result,
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[inspection:GET /api/inspection]', e && e.message);
+      res.status(500).json({ error: 'Failed to load inspection data.' });
+    }
   });
 };

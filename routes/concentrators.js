@@ -9,8 +9,10 @@
 module.exports = function installConcentratorsRoutes(app, pool, mw) {
   // Item 2 fix: requireAdmin added to POST (creating service areas is admin-only)
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // Wave 1.5 [UNGATED]: GET /api/concentrators was missing auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/concentrators', async (req, res) => {
+  app.get('/api/concentrators', requireAuth(), async (req, res) => {
     const { contract_label } = req.query;
     try {
       const q = contract_label
@@ -18,7 +20,10 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
         : 'SELECT * FROM concentrators WHERE active=true ORDER BY contract_label, area_name';
       const { rows } = await pool.query(q, contract_label ? [contract_label] : []);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[concentrators:GET]', e && e.message);
+      res.status(500).json({ error: 'Failed to load concentrators.' });
+    }
   });
 
   // Item 2 fix: requireAdmin added
@@ -31,6 +36,9 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
         [contract_label, area_name, work_order_number || null, notes || null]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[concentrators:POST]', e && e.message);
+      res.status(500).json({ error: 'Failed to create concentrator.' });
+    }
   });
 };

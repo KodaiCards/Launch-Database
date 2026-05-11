@@ -24,8 +24,11 @@ const PROGRAM_ROWS = [
   { id: 'other', name: 'Other', active: true },
 ];
 
-module.exports = function installProjectTypesRoutes(app /*, pool, mw */) {
-  app.get('/api/project-types', async (req, res) => {
+module.exports = function installProjectTypesRoutes(app, pool, mw) {
+  // Wave 1.5 [UNGATED]: GET /api/project-types was missing auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+
+  app.get('/api/project-types', requireAuth(), async (req, res) => {
     res.json(PROGRAM_ROWS);
   });
 

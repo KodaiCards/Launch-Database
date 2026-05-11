@@ -25,7 +25,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // could create or mutate projects. requireAuth() gates both handlers.
   const { requireAdmin, requireAuth } = mw;
 
-  app.get('/api/projects', async (req, res) => {
+  // Wave 1.5 [UNGATED]: GET /api/projects and GET /api/projects/:id were missing auth.
+  app.get('/api/projects', requireAuth(), async (req, res) => {
     const { status, client_id, type } = req.query;
     let where = [];
     let params = [];
@@ -82,7 +83,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/projects/:id', async (req, res) => {
+  app.get('/api/projects/:id', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.*,

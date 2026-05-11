@@ -13,12 +13,18 @@ const { broadcast } = require('./_sse');
 
 module.exports = function installClientsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
+  // Wave 1.5 [UNGATED]: GET /api/clients was missing auth. All roles need
+  // client list access (portal create forms), so requireAuth() (any role).
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/clients', async (req, res) => {
+  app.get('/api/clients', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT * FROM clients ORDER BY name');
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[clients:GET /api/clients]', e && e.message);
+      res.status(500).json({ error: 'Failed to load clients.' });
+    }
   });
 
   // Path B (2026-05-04): the is_rus field is no longer accepted by these
@@ -36,7 +42,10 @@ module.exports = function installClientsRoutes(app, pool, mw) {
       );
       broadcast('admin', 'client_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[clients:POST]', e && e.message);
+      res.status(500).json({ error: 'Failed to create client.' });
+    }
   });
 
   // Item 2 fix: requireAdmin added — updating clients is an admin-only operation
@@ -57,7 +66,10 @@ module.exports = function installClientsRoutes(app, pool, mw) {
       if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
       broadcast('admin', 'client_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[clients:PUT]', e && e.message);
+      res.status(500).json({ error: 'Failed to update client.' });
+    }
   });
 
   // Delete a client. Cascades to contracts, projects, time entries, invoices.
@@ -83,6 +95,9 @@ module.exports = function installClientsRoutes(app, pool, mw) {
       if (!r.rows[0]) return res.status(404).json({ error: 'Client not found' });
       broadcast('admin', 'client_deleted', { id: req.params.id, name: r.rows[0].name });
       res.json({ ok: true, deleted_name: r.rows[0].name });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[clients:DELETE]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete client.' });
+    }
   });
 };

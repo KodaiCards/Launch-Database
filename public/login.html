@@ -173,11 +173,11 @@ async function doLogin(ev){
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Login failed');
-    // Cookie was set server-side; also stash the token in sessionStorage as
-    // a backup for environments that block cookies (some Cloudflare setups).
-    if (data.token) {
-      try { sessionStorage.setItem('lfs_token', data.token); } catch(e){}
-    }
+    // Wave 1.5 [TOKEN-FROM-BODY]: Token is no longer returned in the login
+    // response body — auth is cookie-only. sessionStorage.lfs_token is NOT
+    // written. The cookie is set server-side and sent automatically on
+    // same-origin requests. api.js still reads lfs_token as a fallback but
+    // it will simply be absent and the cookie path takes over.
     // If the server returned a saved theme on the user record, cache it locally
     // so the redirected page applies it pre-paint without a server round-trip.
     if (data.user && data.user.theme) {

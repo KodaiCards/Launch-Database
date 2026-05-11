@@ -34,8 +34,10 @@ function normalizeProgram(input, opts) {
 module.exports = function installPricingRoutes(app, pool, mw) {
   // Item 2 fix: requireManagerOrAdmin gate on mutation endpoints
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+  // Wave 1.5 [UNGATED]: all three GET pricing endpoints were missing auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/pricing', async (req, res) => {
+  app.get('/api/pricing', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT pe.*,
@@ -50,7 +52,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
 
   // Look up the default rate/billing for a job+program (and optionally a
   // billing code). Used by the project create form to auto-fill the rate.
-  app.get('/api/pricing/lookup', async (req, res) => {
+  app.get('/api/pricing/lookup', requireAuth(), async (req, res) => {
     const { job_id, program, billing_code } = req.query;
     if (!job_id) return res.status(400).json({ error: 'job_id required' });
     let normalizedProgram;
@@ -124,7 +126,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   // Programs are enumerated from the canonical list (since project_types
   // was dropped in Phase 3b); only programs that admin actually uses will
   // realistically gap, but listing the full enum keeps the UX consistent.
-  app.get('/api/pricing/gaps', async (req, res) => {
+  app.get('/api/pricing/gaps', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     try {
       // CROSS JOIN against the literal program list. unnest produces a
       // virtual table so the query stays a single round-trip.

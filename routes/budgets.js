@@ -7,8 +7,10 @@
 
 module.exports = function installBudgetsRoutes(app, pool, mw) {
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+  // Wave 1.5 [UNGATED]: GET budget/budget-code endpoints lacked auth.
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
-  app.get('/api/budgets', async (req, res) => {
+  app.get('/api/budgets', requireAuth(), async (req, res) => {
     const { project_id, engineering_contract_id } = req.query;
     try {
       const where = [];
@@ -35,7 +37,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  app.get('/api/budgets/:id/summary', async (req, res) => {
+  app.get('/api/budgets/:id/summary', requireAuth(), async (req, res) => {
     try {
       // Get the budget
       const { rows: budgetRows } = await pool.query(
@@ -139,7 +141,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
 
   // Budget summary broken down by area/concentrator. Used by the budget
   // detail modal's "By area" tab to show per-concentrator spend.
-  app.get('/api/budgets/:id/by-area', async (req, res) => {
+  app.get('/api/budgets/:id/by-area', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -189,7 +191,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
 
   // ─── BUDGET CODES ─────────────────────────────────────────────────────────
 
-  app.get('/api/budget-codes', async (req, res) => {
+  app.get('/api/budget-codes', requireAuth(), async (req, res) => {
     const { budget_id } = req.query;
     try {
       const q = budget_id
