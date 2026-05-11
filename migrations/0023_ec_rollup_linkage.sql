@@ -54,7 +54,7 @@ rollup_ec_counts AS (
   GROUP BY rollup_id, engineering_contract_id
 ),
 rollup_unique_ec AS (
-  SELECT rollup_id, MIN(engineering_contract_id) AS ec_id
+  SELECT rollup_id, (array_agg(engineering_contract_id))[1] AS ec_id
   FROM rollup_ec_counts
   GROUP BY rollup_id
   HAVING COUNT(DISTINCT engineering_contract_id) = 1
