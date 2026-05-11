@@ -24,7 +24,7 @@
 //   setHtmlIfChanged()               — flicker-free DOM write
 //   _restoreBillCheckboxes()         — selection re-tick after rerender
 //   updateBillSelectedFooter()       — footer count refresh
-//   htreeToggle()                    — generic tree expand/collapse
+//   billingHistoryTreeState          — separate state from hoursTreeState
 //   editProject(), confirmDeleteProject() — project edit/delete
 //   loadBatches(), loadRevenue(),    — neighbor refreshers
 //     loadDashboard(), loadHours(),
@@ -195,7 +195,7 @@
       const monthInvs = byMonth[m];
       const monthTotal = monthInvs.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0);
       const monthKey = 'inv-m-' + m;
-      hHtml += `<div onclick="htreeToggle('${monthKey}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-border);font-weight:700;background:var(--white)">
+      hHtml += `<div onclick="billingHtreeToggle('${monthKey}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--gray-border);font-weight:700;background:var(--white)">
         <div><i class="fa-solid fa-chevron-right" id="hc-${monthKey}" style="font-size:10px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-calendar-days" style="color:var(--primary);margin-right:6px"></i> ${MONTH_FULL[m - 1] || 'Unknown'} ${year}</div>
         <div style="display:flex;align-items:center;gap:12px"><span style="font-size:14px;color:var(--primary)">${fmtMoney(monthTotal)}</span><span style="font-size:11px;color:var(--text-muted)">${monthInvs.length} invoice${monthInvs.length !== 1 ? 's' : ''}</span></div>
       </div>`;
@@ -207,7 +207,7 @@
       for (const [client, clientInvs] of Object.entries(byClient)) {
         const clientKey = monthKey + '-c-' + client.replace(/\W/g, '');
         const clientTotal = clientInvs.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0);
-        hHtml += `<div class="htree htree-${monthKey}" onclick="event.stopPropagation();htreeToggle('${clientKey}')" style="display:none;cursor:pointer;padding:10px 16px 10px 40px;border-bottom:1px solid var(--border-weak);background:var(--gray-light);font-weight:600">
+        hHtml += `<div class="htree htree-${monthKey}" onclick="event.stopPropagation();billingHtreeToggle('${clientKey}')" style="display:none;cursor:pointer;padding:10px 16px 10px 40px;border-bottom:1px solid var(--border-weak);background:var(--gray-light);font-weight:600">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div><i class="fa-solid fa-chevron-right" id="hc-${clientKey}" style="font-size:9px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-building" style="color:var(--text-muted);margin-right:6px;font-size:12px"></i> ${esc(client)}</div>
             <div style="font-size:13px">${fmtMoney(clientTotal)}</div>
@@ -216,7 +216,7 @@
 
         for (const inv of clientInvs) {
           const invKey = clientKey + '-i-' + inv.id.substring(0, 8);
-          hHtml += `<div class="htree htree-${clientKey}" onclick="event.stopPropagation();htreeToggle('${invKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid var(--border-weak);background:var(--surface-3);font-size:13px;color:var(--text)">
+          hHtml += `<div class="htree htree-${clientKey}" onclick="event.stopPropagation();billingHtreeToggle('${invKey}')" style="display:none;cursor:pointer;padding:8px 16px 8px 64px;border-bottom:1px solid var(--border-weak);background:var(--surface-3);font-size:13px;color:var(--text)">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div><i class="fa-solid fa-chevron-right" id="hc-${invKey}" style="font-size:8px;color:var(--text-muted);margin-right:8px;transition:transform .2s"></i><i class="fa-solid fa-file-invoice" style="color:var(--text-muted);margin-right:6px;font-size:11px"></i> ${inv.invoice_number ? esc(inv.invoice_number) : 'Invoice'} — <span style="font-weight:600">${fmtMoney(inv.total_amount)}</span></div>
               <div style="display:flex;align-items:center;gap:6px">
@@ -250,6 +250,7 @@
       }
     }
     setHtmlIfChanged(historyContainer, hHtml);
+    restoreBillingHistoryExpandedState();
 
     // Saved batches — runs in parallel; the card stays hidden when none.
     if (typeof loadBatches === 'function') loadBatches().catch(() => {});
@@ -280,6 +281,43 @@
     } catch (e) { alert('Error: ' + e.message); }
   }
 
+  // ── Invoice-history tree toggle ────────────────────────────────────────────
+  // Dedicated toggle for the billing invoice-history tree so it uses
+  // billingHistoryTreeState (not hoursTreeState). Collapsing/expanding
+  // billing months/clients/invoices no longer bleeds into the Hours tree.
+  function billingHtreeToggle(key) {
+    const rows = document.querySelectorAll('.htree-' + key);
+    const chev = document.getElementById('hc-' + key);
+    const showing = rows[0] && rows[0].style.display !== 'none';
+    rows.forEach(r => {
+      r.style.display = showing ? 'none' : 'block';
+      if (showing) {
+        const nested = r.querySelectorAll('[id^="hc-"]');
+        nested.forEach(c => c.style.transform = 'rotate(0deg)');
+      }
+    });
+    if (showing) {
+      const allNested = document.querySelectorAll(`[class*="htree-${key}-"]`);
+      allNested.forEach(n => n.style.display = 'none');
+      billingHistoryTreeState.collapseChildren(key);
+      billingHistoryTreeState.collapse(key);
+    } else {
+      billingHistoryTreeState.expand(key);
+    }
+    if (chev) chev.style.transform = showing ? 'rotate(0deg)' : 'rotate(90deg)';
+  }
+
+  // Re-apply previously-expanded keys after the invoice history HTML is rebuilt.
+  function restoreBillingHistoryExpandedState() {
+    for (const key of billingHistoryTreeState.keys()) {
+      const rows = document.querySelectorAll('.htree-' + key);
+      rows.forEach(r => { r.style.display = 'block'; });
+      const chev = document.getElementById('hc-' + key);
+      if (chev) chev.style.transform = 'rotate(90deg)';
+    }
+  }
+
+  window.billingHtreeToggle = billingHtreeToggle;
   window.editInvoiceAmount = editInvoiceAmount;
   window.loadBilling = loadBilling;
   window.deleteInvoice = deleteInvoice;

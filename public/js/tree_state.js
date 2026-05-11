@@ -53,10 +53,11 @@ function makeTreeState(name) {
   };
 }
 
-// Two singleton instances used across the admin app. New trees should
+// Singleton instances used across the admin app. New trees should
 // allocate their own `makeTreeState()` instance — don't reuse these.
-const projectsTreeState = makeTreeState('projects');
-const hoursTreeState    = makeTreeState('hours');
+const projectsTreeState       = makeTreeState('projects');
+const hoursTreeState          = makeTreeState('hours');
+const billingHistoryTreeState = makeTreeState('billing-history');
 
 // Shared chevron-toggle for the three project-tree views (Projects,
 // Dashboard, Revenue) that all reuse projectsTreeState. Each view picks

@@ -634,9 +634,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <i class="fa-solid fa-clock" style="color:var(--primary);width:16px"></i>
           <span><b>Timeclock Portal</b><div style="font-size:11px;color:var(--text-muted)">launchfibertimeclock.xyz</div></span>
         </a>
-        <a href="https://launchfiber-splicematrix.xyz/"   target="_blank" rel="noopener" onclick="document.getElementById('portals-menu').style.display='none'" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+        <a href="/splice.html" onclick="document.getElementById('portals-menu').style.display='none'" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
           <i class="fa-solid fa-network-wired" style="color:var(--primary);width:16px"></i>
-          <span><b>Splice Matrix</b><div style="font-size:11px;color:var(--text-muted)">launchfiber-splicematrix.xyz</div></span>
+          <span><b>Splice Matrix</b><div style="font-size:11px;color:var(--text-muted)">Same-origin /splice.html</div></span>
         </a>
       </div>
     </div>
@@ -2883,7 +2883,13 @@ let currentView = 'dashboard';
 function persistFilter(storageKey, el) {
   if (!el) return;
   const stored = localStorage.getItem(storageKey);
-  if (stored !== null) el.value = stored.slice(0, 200);
+  if (stored !== null) {
+    el.value = stored.slice(0, 200);
+    // Fire a change event so any listeners that drive dependent UI
+    // (e.g. syncHrsPeriodVisibility hiding the month picker when
+    // period=ytd) pick up the restored value immediately.
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
   const save = () => {
     const v = (el.value || '').slice(0, 200);
     localStorage.setItem(storageKey, v);
@@ -4603,6 +4609,10 @@ async function saveProject(opts) {
     })(),
     is_rollup: isRollup,
   };
+  // Double-submit guard: disable Save button for the duration of the manual
+  // (non-silent) submit. Autosave ({silent:true}) doesn't touch the button.
+  const saveBtn = silent ? null : document.querySelector('#project-modal .btn-primary[onclick*="saveProject"]');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…'; }
   try {
     const id = document.getElementById('proj-id').value;
     if (id) await api('/api/projects/'+id, 'PUT', body);
@@ -4620,6 +4630,7 @@ async function saveProject(opts) {
     if (currentView==='dashboard') loadDashboard();
     if (currentView==='permitting') loadPermits();
   } catch (e) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Project'; }
     if (silent) {
       _autosaveError = e.message || String(e);
       _autosaveRenderStatus();
@@ -4728,15 +4739,26 @@ async function deleteProject() {
 }
 
 // Unified delete-project flow used by row trash buttons, the popup, and the
-// modal. Calls /with-tree which recursively removes the project, every
-// descendant rollup, and all their time entries / invoice items / permit
-// data — the entire snapshot is captured server-side and replayable for
-// 15 seconds via the undo bar.
+// modal. Uses the cascade-preview safety gate (?dry_run=1) first, shows the
+// user exactly what will be deleted, then sends {confirm:true} to execute.
+// The server captures an undo snapshot; the undo bar appears on success.
 async function confirmDeleteProject(id, name, afterDelete) {
-  const msg = `Delete "${name}"?\n\nThis will also delete:\n• All time entries for this project\n• All sub-projects (and their time entries)\n• All permit stages and documents\n\nYou'll get a 15-second undo window after the delete.`;
-  if (!confirm(msg)) return;
+  // Step 1: dry-run to get the exact impact count before asking the user.
+  let preview;
   try {
-    const r = await api('/api/projects/' + id + '/with-tree', 'DELETE');
+    preview = await api('/api/projects/' + id + '/with-tree?dry_run=1', 'DELETE');
+  } catch (e) {
+    alert('Could not fetch delete preview: ' + e.message);
+    return;
+  }
+  const p = preview && preview.preview;
+  const projCount = p ? p.total_projects : '?';
+  const teCount   = p ? p.time_entries   : '?';
+  const msg = `Delete "${name}"?\n\nCascade preview:\n• ${projCount} project${projCount === 1 ? '' : 's'} will be deleted\n• ${teCount} time entr${teCount === 1 ? 'y' : 'ies'} will be deleted\n• All permit stages and documents will be deleted\n\nYou'll get a 15-second undo window after the delete.`;
+  if (!confirm(msg)) return;
+  // Step 2: execute with confirm:true.
+  try {
+    const r = await api('/api/projects/' + id + '/with-tree', 'DELETE', { confirm: true });
     if (typeof afterDelete === 'function') afterDelete();
     // Refresh whatever views are likely affected
     loadProjects();
@@ -4744,9 +4766,7 @@ async function confirmDeleteProject(id, name, afterDelete) {
     if (typeof loadPermits === 'function') loadPermits();
     if (typeof loadHours === 'function') loadHours();
     if (typeof loadRevenue === 'function' && currentView === 'revenue') loadRevenue();
-    // Show undo bar with a summary line. Even a single-project delete
-    // gets the bar — gives the operator a safety net before the project
-    // tree-delete becomes permanent.
+    // Show undo bar with a summary line.
     if (r && r.undo_token) {
       const projWord  = r.deleted_projects === 1 ? 'project' : 'projects';
       const entryWord = r.deleted_time_entries === 1 ? 'entry' : 'entries';

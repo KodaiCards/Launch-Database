@@ -48,6 +48,23 @@
         if (typeof onClose === 'function') onClose();
       }
     });
+    // Escape-key dismissal — remove the listener when the overlay is gone
+    // so we don't accumulate stale keydown handlers on the document.
+    function _escHandler(e) {
+      if (e.key === 'Escape') {
+        overlay.remove();
+        document.removeEventListener('keydown', _escHandler);
+        if (typeof onClose === 'function') onClose();
+      }
+    }
+    document.addEventListener('keydown', _escHandler);
+    // Auto-clean if the overlay is removed by other means (e.g. closeOverlayModal).
+    new MutationObserver((_, obs) => {
+      if (!document.getElementById(id)) {
+        document.removeEventListener('keydown', _escHandler);
+        obs.disconnect();
+      }
+    }).observe(document.body, { childList: true, subtree: false });
     return overlay;
   }
 
