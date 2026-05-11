@@ -80,7 +80,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
       `, params);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load projects.' });
+    }
   });
 
   app.get('/api/projects/:id', requireAuth(), async (req, res) => {
@@ -99,7 +102,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       `, [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load project.' });
+    }
   });
 
   // Item 2 fix: requireAuth() added — POST was completely unguarded.
@@ -319,7 +325,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
       broadcast('admin', 'project_added', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create project.' });
+    }
   });
 
   // Item 2 fix: requireAuth() added — PUT was completely unguarded.
@@ -506,11 +515,37 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update project.' });
+    }
   });
 
+  // Wave 1.5 [CASCADE-PREVIEW]: ?dry_run=1 returns the impact summary without
+  // deleting anything. Callers should request dry_run first, show the user the
+  // row counts, then re-issue with confirm=true to proceed.
   app.delete('/api/projects/:id', requireAdmin, async (req, res) => {
+    const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
+    const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
     try {
+      const proj = await pool.query(
+        'SELECT id, name, parent_id FROM projects WHERE id=$1', [req.params.id]
+      );
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
+      const children = await pool.query(
+        'SELECT COUNT(*)::int AS cnt FROM projects WHERE parent_id=$1', [req.params.id]
+      );
+      const childCount = children.rows[0].cnt;
+      const preview = {
+        id: req.params.id,
+        name: proj.rows[0].name,
+        child_projects: childCount,
+      };
+      if (dryRun || (!confirm && childCount > 0)) {
+        return res.json({ dry_run: true, preview, message: childCount > 0
+          ? `Project has ${childCount} child project(s). Pass confirm:true in the request body to force-delete (orphans children), or use DELETE /with-tree to delete the whole tree.`
+          : 'Pass confirm:true in the request body or ?dry_run=0 to execute.' });
+      }
       // Remove from any pending billing batches first — billing_batch_items
       // has ON DELETE RESTRICT on project_id, so leaving stale rows here would
       // make the project undeletable AND keep it visible in the batch UI.
@@ -518,7 +553,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
       broadcast('admin', 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete project.' });
+    }
   });
 
   // Recalculate actual_hours for a single project from its time_entries.
@@ -529,7 +567,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       await updateProjectHours(req.params.id);
       const { rows } = await pool.query('SELECT actual_hours FROM projects WHERE id=$1', [req.params.id]);
       res.json({ ok: true, actual_hours: rows[0]?.actual_hours });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:recalc-hours]', e && e.message);
+      res.status(500).json({ error: 'Failed to recalculate project hours.' });
+    }
   });
 
   // Recalculate ALL projects' actual_hours from time_entries (bottom-up).
@@ -562,11 +603,42 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         iterations++;
       }
       res.json({ ok: true, iterations });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:recalc-all]', e && e.message);
+      res.status(500).json({ error: 'Failed to recalculate all project hours.' });
+    }
   });
 
   // Delete a billed project entirely (removes from revenue, hours, everything)
+  // Wave 1.5 [CASCADE-PREVIEW]: ?dry_run=1 returns impact counts without deleting.
   app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
+    const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
+    const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
+    if (dryRun || !confirm) {
+      try {
+        const teCount = await pool.query(
+          'SELECT COUNT(*)::int AS cnt FROM time_entries WHERE project_id=$1', [req.params.id]
+        );
+        const iiCount = await pool.query(
+          'SELECT COUNT(*)::int AS cnt FROM invoice_items WHERE project_id=$1', [req.params.id]
+        ).catch(() => ({ rows: [{ cnt: 0 }] }));
+        const proj = await pool.query('SELECT name FROM projects WHERE id=$1', [req.params.id]);
+        if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
+        return res.json({
+          dry_run: true,
+          preview: {
+            id: req.params.id,
+            name: proj.rows[0].name,
+            time_entries: teCount.rows[0].cnt,
+            invoice_items: iiCount.rows[0].cnt,
+          },
+          message: 'Pass confirm:true in the request body to execute the deletion.',
+        });
+      } catch (e) {
+        console.error('[projects:with-hours:preview]', e && e.message);
+        return res.status(500).json({ error: 'Failed to preview deletion.' });
+      }
+    }
     try {
       // Delete time entries first
       await pool.query('DELETE FROM time_entries WHERE project_id=$1', [req.params.id]);
@@ -584,7 +656,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       }
       broadcast('admin', 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:with-hours:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete project with hours.' });
+    }
   });
 
   // DELETE /api/projects/:id/with-tree — delete a project AND every descendant
@@ -594,14 +669,41 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // within ~60s. Use this for rollup deletion — the regular DELETE refuses
   // when there are children (ON DELETE RESTRICT) and even /with-hours only
   // handles a single leaf.
+  //
+  // Wave 1.5 [CASCADE-PREVIEW]: ?dry_run=1 returns a full impact summary
+  // (projects, time entries) WITHOUT deleting anything. Pass confirm:true in
+  // the request body to execute. This prevents accidental mass-deletion of
+  // large project trees triggered by a single mistimed click.
   app.delete('/api/projects/:id/with-tree', requireAdmin, async (req, res) => {
+    const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
+    const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
     let projects;
     try {
       projects = await collectProjectTree(req.params.id);
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to walk project tree: ' + e.message });
+      console.error('[projects:with-tree:walk]', e && e.message);
+      return res.status(500).json({ error: 'Failed to walk project tree.' });
     }
     if (!projects.length) return res.status(404).json({ error: 'Project not found.' });
+
+    // Dry-run mode OR no explicit confirm: return the impact preview only.
+    if (dryRun || !confirm) {
+      const projectIds = projects.map(p => p.id);
+      const teCount = await pool.query(
+        'SELECT COUNT(*)::int AS cnt FROM time_entries WHERE project_id = ANY($1::uuid[])',
+        [projectIds]
+      ).catch(() => ({ rows: [{ cnt: 0 }] }));
+      return res.json({
+        dry_run: true,
+        preview: {
+          root_id: req.params.id,
+          root_name: projects[0].name,
+          total_projects: projects.length,
+          time_entries: teCount.rows[0].cnt,
+        },
+        message: 'Pass confirm:true in the request body to execute this deletion. This action CANNOT be undone beyond the undo-bucket TTL (~60s).',
+      });
+    }
     const projectIds = projects.map(p => p.id);
     const rootParentId = projects[0].parent_id;
 
@@ -660,7 +762,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
       console.error('[projects:with-tree:delete]', e && e.message);
-      res.status(500).json({ error: 'Tree delete failed: ' + e.message });
+      res.status(500).json({ error: 'Tree delete failed. Check server logs.' });
     } finally {
       client.release();
     }
