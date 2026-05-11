@@ -21,6 +21,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // Items 2 + 16: role gates added to mutation endpoints and _debug endpoint.
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || requireAdmin;
+  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
   // Wave 1.5 [UNGATED]: GET /api/jobs and GET /api/jobs/:id were missing auth.
   app.get('/api/jobs', requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']), async (req, res) => {
