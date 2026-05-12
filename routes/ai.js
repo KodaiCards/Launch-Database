@@ -1097,7 +1097,8 @@ async function executeTool(toolName, toolInput, actor = {}) {
         const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
         // Cache contract_id → (program, engineering_contract_id) lookups so a
         // tree of 50 specs all pointing at the same contract resolves the EC
-        // join exactly once.
+        // join exactly once. These are read-only and run against pool (not the
+        // tx client) so they're safe to run before BEGIN.
         const contractCache = new Map();  // cid → { program, engineering_contract_id }
         async function contractInfo(cid) {
           if (!cid) return { program: null, engineering_contract_id: null };
@@ -1119,53 +1120,72 @@ async function executeTool(toolName, toolInput, actor = {}) {
           return (await contractInfo(cid)).program;
         }
 
+        // Pre-validate all specs (inheritance resolution + program check) before
+        // opening the transaction so we never enter BEGIN with known-bad input.
+        // contractInfo() reads are safe against pool here since they're read-only.
+        const preValidated = [];
         for (const s of order) {
-          try {
-            const clientId = resolveInherit(s, 'client_id');
-            const contractId = resolveInherit(s, 'contract_id');
-            const concentratorId = resolveInherit(s, 'concentrator_id');
-            // work_order_number now inherits from the parent chain too —
-            // critical for RUS Inspection trees where the AI sets WO# on
-            // a Service Area / WO rollup and expects the leaves under it
-            // to carry it through. Without inheritance, the leaves show
-            // with no WO# in the PSC RUS tab. Owner-flagged 2026-05-06.
-            const workOrderNumber = resolveInherit(s, 'work_order_number');
-            if (!clientId) {
-              failed.push({ local_id: s.local_id, name: s.name, error: 'no client_id (set on this spec or any ancestor via parent_local_id)' });
+          const clientId = resolveInherit(s, 'client_id');
+          const contractId = resolveInherit(s, 'contract_id');
+          const concentratorId = resolveInherit(s, 'concentrator_id');
+          const workOrderNumber = resolveInherit(s, 'work_order_number');
+          if (!clientId) {
+            failed.push({ local_id: s.local_id, name: s.name, error: 'no client_id (set on this spec or any ancestor via parent_local_id)' });
+            continue;
+          }
+          let program = resolveInherit(s, 'program');
+          let engineeringContractId = resolveInherit(s, 'engineering_contract_id');
+          if (program) {
+            const v = String(program).trim().toLowerCase();
+            if (!ALLOWED_PROGRAMS.includes(v)) {
+              failed.push({ local_id: s.local_id, name: s.name, error: `Invalid program "${program}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.` });
               continue;
             }
+            program = v;
+          }
+          if (!program || !engineeringContractId) {
+            const info = await contractInfo(contractId);
+            if (!program) program = info.program;
+            if (!engineeringContractId) engineeringContractId = info.engineering_contract_id;
+          }
+          preValidated.push({ s, clientId, contractId, concentratorId, workOrderNumber, program, engineeringContractId });
+        }
 
-            // Program and engineering_contract_id: explicit input on the spec
-            // or any ancestor wins; otherwise derive from contractId's EC row.
-            let program = resolveInherit(s, 'program');
-            let engineeringContractId = resolveInherit(s, 'engineering_contract_id');
-            if (program) {
-              const v = String(program).trim().toLowerCase();
-              if (!ALLOWED_PROGRAMS.includes(v)) {
-                failed.push({ local_id: s.local_id, name: s.name, error: `Invalid program "${program}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.` });
-                continue;
-              }
-              program = v;
-            }
-            // Fill from contract if either is still missing
-            if (!program || !engineeringContractId) {
-              const info = await contractInfo(contractId);
-              if (!program) program = info.program;
-              if (!engineeringContractId) engineeringContractId = info.engineering_contract_id;
-            }
+        // If any spec failed validation, bail before touching the DB.
+        // Matching the strict all-or-nothing pattern from bulk_delete_projects:
+        // a partial batch that would leave an orphaned tree is worse than a
+        // clean rollback with a clear error report.
+        if (failed.length > 0) {
+          return {
+            success: false,
+            created_count: 0,
+            failed_count: failed.length,
+            id_map: idMap,
+            created,
+            failed,
+          };
+        }
 
+        // All specs passed pre-validation. Now run all INSERTs inside a single
+        // transaction so any mid-batch DB failure rolls back the whole batch.
+        // Same all-or-nothing guarantee as bulk_delete_projects.
+        const txClient = await pool.connect();
+        try {
+          await txClient.query('BEGIN');
+
+          for (const { s, clientId, contractId, concentratorId, workOrderNumber, program, engineeringContractId } of preValidated) {
             const isSpecRollup = s.is_rollup === true;
             // Rollups are organize-only folders: billing_type, billing_rate,
             // footage, and financials must all be NULL. Mirroring the
-            // create_project gate (lines 826-828) so bulk_create_projects
-            // doesn't silently give rollup containers a billing profile.
+            // create_project gate so bulk_create_projects doesn't silently give
+            // rollup containers a billing profile.
             const fin = isSpecRollup
               ? { miles: null, expectedHours: null, expectedRevenue: null }
               : calcProjectFinancials(s.project_type, s.billing_rate, s.footage);
             const realParent = s.parent_local_id
               ? idMap[s.parent_local_id]
               : (s.parent_id || null);
-            const { rows } = await pool.query(`
+            const { rows } = await txClient.query(`
               INSERT INTO projects (
                 name, client_id, contract_id, work_order_number,
                 project_type, program, status, billing_type, billing_rate,
@@ -1201,19 +1221,34 @@ async function executeTool(toolName, toolInput, actor = {}) {
             );
             idMap[s.local_id] = rows[0].id;
             created.push({ local_id: s.local_id, id: rows[0].id, name: rows[0].name });
-            // Auto-stage logic: same as create_project.
+            // Auto-stage logic: same as create_project. Uses txClient so the
+            // permit_stages row is part of the same atomic batch.
             if (s.project_type === 'permitting' && !s.is_rollup) {
               try {
-                await pool.query(
+                await txClient.query(
                   'INSERT INTO permit_stages (project_id, stage) VALUES ($1,$2) ON CONFLICT (project_id, stage) DO NOTHING',
                   [rows[0].id, 'potential']
                 );
               } catch {}
             }
-          } catch (e) {
-            failed.push({ local_id: s.local_id, name: s.name, error: e.message });
           }
+
+          await txClient.query('COMMIT');
+        } catch (e) {
+          try { await txClient.query('ROLLBACK'); } catch {}
+          // Whole batch failed — report all specs as failed, clear partial idMap/created.
+          return {
+            success: false,
+            created_count: 0,
+            failed_count: preValidated.length,
+            id_map: {},
+            created: [],
+            failed: preValidated.map(({ s }) => ({ local_id: s.local_id, name: s.name, error: e.message })),
+          };
+        } finally {
+          txClient.release();
         }
+
         return {
           success: failed.length === 0,
           created_count: created.length,
