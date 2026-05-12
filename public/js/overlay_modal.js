@@ -23,7 +23,34 @@
 // (e.g. focus an input) using the returned element.
 
 (function () {
+  // ── A11y helpers ───────────────────────────────────────────────────────
+  // Selectors for elements that can receive keyboard focus.
+  const FOCUSABLE = [
+    'a[href]', 'button:not([disabled])', 'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])', 'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+
+  // Trap Tab / Shift+Tab inside the modal so focus can't escape to the page.
+  function _makeTrapHandler(overlay) {
+    return function _trapHandler(e) {
+      if (e.key !== 'Tab') return;
+      const focusables = Array.from(overlay.querySelectorAll(FOCUSABLE));
+      if (!focusables.length) { e.preventDefault(); return; }
+      const first = focusables[0];
+      const last  = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+      }
+    };
+  }
+
   function openOverlayModal({ id, titleHTML, bodyHTML, footerHTML, maxWidth = '680px', bodyStyle, onClose }) {
+    // Remember what had focus so we can restore it on close.
+    const _prevFocus = document.activeElement;
+
     const existing = document.getElementById(id);
     if (existing) existing.remove();
     const overlay = document.createElement('div');
@@ -47,26 +74,44 @@
       </div>
     `;
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) {
-        overlay.remove();
-        if (typeof onClose === 'function') onClose();
+
+    // Focus the first focusable element inside the modal.
+    const firstFocusable = overlay.querySelector(FOCUSABLE);
+    if (firstFocusable) firstFocusable.focus();
+    else overlay.setAttribute('tabindex', '-1'), overlay.focus();
+
+    // Focus trap — Tab / Shift+Tab stay inside the modal.
+    const _trapHandler = _makeTrapHandler(overlay);
+    document.addEventListener('keydown', _trapHandler);
+
+    function _cleanup(fireOnClose) {
+      document.removeEventListener('keydown', _trapHandler);
+      document.removeEventListener('keydown', _escHandler);
+      // Restore focus to the element that opened the modal.
+      if (_prevFocus && typeof _prevFocus.focus === 'function') {
+        try { _prevFocus.focus(); } catch (e) {}
       }
+      if (fireOnClose && typeof onClose === 'function') onClose();
+    }
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) { overlay.remove(); _cleanup(true); }
     });
+
     // Escape-key dismissal — remove the listener when the overlay is gone
     // so we don't accumulate stale keydown handlers on the document.
     function _escHandler(e) {
       if (e.key === 'Escape') {
         overlay.remove();
-        document.removeEventListener('keydown', _escHandler);
-        if (typeof onClose === 'function') onClose();
+        _cleanup(true);
       }
     }
     document.addEventListener('keydown', _escHandler);
+
     // Auto-clean if the overlay is removed by other means (e.g. closeOverlayModal).
     new MutationObserver((_, obs) => {
       if (!document.getElementById(id)) {
-        document.removeEventListener('keydown', _escHandler);
+        _cleanup(false);
         obs.disconnect();
       }
     }).observe(document.body, { childList: true, subtree: false });
@@ -76,6 +121,8 @@
   function closeOverlayModal(id) {
     const el = document.getElementById(id);
     if (el) el.remove();
+    // Note: focus restore is handled by the MutationObserver cleanup in
+    // openOverlayModal, so callers don't need to do anything extra.
   }
 
   window.openOverlayModal = openOverlayModal;

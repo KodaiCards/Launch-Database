@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/app-shell.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -395,34 +396,37 @@ html[data-theme="dark"] .tile-icon{
 </head>
 <body>
 
+<!-- a11y: skip-nav — first focusable element so keyboard users can jump past the top bar -->
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+
 <!-- Top bar -->
 <div class="topbar">
   <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber" class="topbar-logo-img">
   <div class="topbar-spacer"></div>
-  <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode" id="theme-btn">
-    <i class="fa-solid fa-moon" id="theme-icon"></i>
+  <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode" id="theme-btn">
+    <i class="fa-solid fa-moon" id="theme-icon" aria-hidden="true"></i>
   </button>
-  <div class="user-pill" id="user-pill">
-    <i class="fa-solid fa-user-circle"></i>
+  <div class="user-pill" id="user-pill" aria-label="Signed-in user">
+    <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
     <span id="user-name">Loading...</span>
   </div>
-  <button class="logout-btn" onclick="doLogout()">
-    <i class="fa-solid fa-right-from-bracket"></i>
+  <button class="logout-btn" onclick="doLogout()" aria-label="Sign out">
+    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
     Sign out
   </button>
 </div>
 
 <!-- Main content area -->
-<div class="main">
+<main class="main" id="main-content">
   <div id="tile-area">
     <div class="launcher-box">
       <div class="loading-state">
-        <i class="fa-solid fa-spinner fa-spin"></i>
+        <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
         Loading your portals...
       </div>
     </div>
   </div>
-</div>
+</main>
 
 <!-- Footer -->
 <div class="footer" id="footer-bar">

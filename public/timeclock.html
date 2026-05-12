@@ -343,32 +343,32 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
       <input type="hidden" id="entry-id">
       <input type="hidden" id="entry-pending-request-id">
       <div class="form-group">
-        <label>Client *</label>
+        <label for="entry-client">Client *</label>
         <select id="entry-client" onchange="entryClientChanged()"><option value="">— All clients —</option></select>
       </div>
       <div class="form-group">
-        <label>Project *
-          <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus"></i> Add New</button>
+        <label for="entry-project">Project *
+          <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add New</button>
         </label>
         <select id="entry-project" onchange="entryProjectChanged()"><option value="">Loading…</option></select>
-        <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning);border-radius:6px;font-size:11px"><i class="fa-solid fa-clock"></i> Pending project request — time will be held until admin approves.</div>
+        <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning);border-radius:6px;font-size:11px"><i class="fa-solid fa-clock" aria-hidden="true"></i> Pending project request — time will be held until admin approves.</div>
       </div>
       <div class="form-group">
-        <label>Job</label>
+        <label for="entry-job">Job</label>
         <select id="entry-job"><option value="">— Select project first —</option></select>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Date *</label>
+          <label for="entry-date">Date *</label>
           <input type="date" id="entry-date" required>
         </div>
         <div class="form-group">
-          <label>Hours *</label>
+          <label for="entry-hours">Hours *</label>
           <input type="number" id="entry-hours" step="0.25" min="0" max="24" required>
         </div>
       </div>
       <div class="form-group">
-        <label>Notes</label>
+        <label for="entry-notes">Notes</label>
         <textarea id="entry-notes" placeholder="Optional notes about this time entry…"></textarea>
       </div>
       <div id="entry-edit-warning" style="display:none;padding:10px;background:var(--gray-light);border-radius:6px;font-size:12px;color:var(--text-muted)">
@@ -401,23 +401,23 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
         <i class="fa-solid fa-circle-info"></i> The project doesn't merge into the system until admin approves. Any time you log against it stays HELD until then. If admin rejects, the timecard gets flagged for manual review.
       </div>
       <div class="form-group">
-        <label>Client *</label>
+        <label for="rnp-client">Client *</label>
         <select id="rnp-client"></select>
       </div>
       <div class="form-group">
-        <label>Project Name *</label>
+        <label for="rnp-name">Project Name *</label>
         <input type="text" id="rnp-name" placeholder="e.g. Crossroad School">
       </div>
       <div class="form-group">
-        <label>Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <label for="rnp-area">Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
         <select id="rnp-area" onchange="rnpAreaChanged()"><option value="">— Select area (PSC/RUS only) —</option></select>
       </div>
       <div class="form-group">
-        <label>Work Order # <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <label for="rnp-wo">Work Order # <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
         <input type="text" id="rnp-wo" placeholder="e.g. 1234">
       </div>
       <div class="form-group">
-        <label>Notes <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <label for="rnp-notes">Notes <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
         <textarea id="rnp-notes" placeholder="Any context for admin"></textarea>
       </div>
       <div id="rnp-error" style="display:none;color:var(--danger);font-size:12px;margin-top:6px"></div>
