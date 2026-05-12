@@ -400,6 +400,7 @@ fetch('/api/auth/me', { credentials: 'include' })
     </table></div>
   </div>
 </div>
+</main>
 
 <!-- ─────────────────────────────────────────────────────────────────
      PROJECT MODAL — clone of admin's New Project, money fields removed.
@@ -514,11 +515,11 @@ fetch('/api/auth/me', { credentials: 'include' })
      All changes are submitted as proposals for admin to approve.
      Bottom: My Pending Requests + collapsible Change Log.
 ───────────────────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="settings-modal">
+<div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
   <div class="modal" style="max-width:880px;width:95%">
     <div class="modal-header">
-      <span class="modal-title"><i class="fa-solid fa-gear" style="color:var(--portal-color)"></i> Settings</span>
-      <button class="btn btn-icon btn-secondary" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <span class="modal-title" id="settings-modal-title"><i class="fa-solid fa-gear" style="color:var(--portal-color)" aria-hidden="true"></i> Settings</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body">
       <div style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
@@ -641,9 +642,9 @@ fetch('/api/auth/me', { credentials: 'include' })
 </div>
 
 <!-- POTENTIAL PERMIT SUBMISSION MODAL (kept from original) -->
-<div class="modal-overlay" id="ppm">
+<div class="modal-overlay" id="ppm" role="dialog" aria-modal="true" aria-labelledby="ppm-title">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title"><i class="fa-solid fa-lightbulb"></i> Submit Potential Permit</span><button class="btn btn-icon btn-secondary" onclick="cm('ppm')"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-header"><span class="modal-title" id="ppm-title"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Submit Potential Permit</span><button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cm('ppm')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label>SR/HWY *</label><input id="ps" placeholder="e.g. SR 49, HWY 240"></div>
       <div class="form-group"><label>County</label><input id="pc" placeholder="e.g. Peach County"></div>

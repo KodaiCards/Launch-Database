@@ -30,12 +30,17 @@
     overlay.id = id;
     overlay.className = 'modal-overlay';
     overlay.style.display = 'flex';
+    // a11y: dialog role + label
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    const titleId = id + '-title';
+    overlay.setAttribute('aria-labelledby', titleId);
     const bodyStyleAttr = bodyStyle ? ` style="${bodyStyle}"` : '';
     overlay.innerHTML = `
       <div class="modal-content" style="max-width:${maxWidth};max-height:85vh;display:flex;flex-direction:column;width:90%">
         <div class="modal-header">
-          <span class="modal-title">${titleHTML || ''}</span>
-          <button class="btn btn-icon btn-secondary" onclick="closeOverlayModal('${id}')"><i class="fa-solid fa-xmark"></i></button>
+          <span class="modal-title" id="${titleId}">${titleHTML || ''}</span>
+          <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeOverlayModal('${id}')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="modal-body"${bodyStyleAttr}>${bodyHTML || ''}</div>
         ${footerHTML ? `<div class="modal-footer">${footerHTML}</div>` : ''}
