@@ -173,9 +173,20 @@
 
       // Diff rendering — show before/after side by side for updates only;
       // creates/deletes show just the new/old state respectively.
+      // _renderTruncatedBanner: returns a warning banner HTML string when the
+      // audit-cleanup logic capped the payload at 64 KB and flagged it with
+      // _truncated: true. Returns '' when the data is complete.
+      function _renderTruncatedBanner(parsed) {
+        if (!parsed || !parsed._truncated) return '';
+        return `<div class="audit-truncated-banner" style="background:var(--warning-light);color:var(--warning-text);padding:6px 10px;border-radius:4px;font-size:12px;margin-bottom:8px">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          Payload was truncated at 64 KB. Diff below may be incomplete.
+        </div>`;
+      }
       let diffHtml = '';
       if (h.action === 'updated' && h.before_data && h.after_data) {
-        diffHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+        const truncatedBanner = _renderTruncatedBanner(h.before_data) || _renderTruncatedBanner(h.after_data);
+        diffHtml = `<div style="margin-top:8px">${truncatedBanner}<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">BEFORE</div>
             <pre style="background:var(--gray-light);padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;margin:0">${esc(JSON.stringify(h.before_data, null, 2))}</pre>
@@ -184,11 +195,11 @@
             <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">AFTER</div>
             <pre style="background:var(--gray-light);padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;margin:0">${esc(JSON.stringify(h.after_data, null, 2))}</pre>
           </div>
-        </div>`;
+        </div></div>`;
       } else if (h.before_data || h.after_data) {
         const data = h.after_data || h.before_data;
-        diffHtml = `<div style="margin-top:8px">
-          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">${h.after_data ? 'NEW STATE' : 'DELETED STATE'}</div>
+        const truncatedBanner = _renderTruncatedBanner(data);
+        diffHtml = `<div style="margin-top:8px">${truncatedBanner}<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">${h.after_data ? 'NEW STATE' : 'DELETED STATE'}</div>
           <pre style="background:var(--gray-light);padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;margin:0">${esc(JSON.stringify(data, null, 2))}</pre>
         </div>`;
       }

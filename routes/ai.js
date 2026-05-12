@@ -2127,7 +2127,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
       // Bind upload to the uploading user so get_upload_data / csv_smart_import
       // reject cross-user access (Item 6 — uploadStore user binding).
       uploadStore.set(uploadId, { raw_text: content.substring(0, 50000), filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
-      fs.unlink(req.file.path, () => {});
+      fs.promises.unlink(req.file.path).catch(() => {});
       return res.json({ success: true, upload_id: uploadId, filename: req.file.originalname, raw_text: content.substring(0, 2000) });
     }
 
@@ -2136,7 +2136,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
     // Bind upload to the uploading user (Item 6 — uploadStore user binding).
     uploadStore.set(uploadId, { rows, headers, filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
 
-    fs.unlink(req.file.path, () => {});
+    fs.promises.unlink(req.file.path).catch(() => {});
 
     res.json({
       success: true,
@@ -2151,7 +2151,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
     console.error('File parse error:', e.message);
     // Unlink the temp file so multer write errors don't leak orphan files.
     if (req.file && req.file.path) {
-      try { fs.unlink(req.file.path, () => {}); } catch {}
+      fs.promises.unlink(req.file.path).catch(() => {});
     }
     res.status(500).json({ error: 'Failed to parse file: ' + e.message });
   }
