@@ -1230,37 +1230,78 @@ async function executeTool(toolName, toolInput, actor = {}) {
         const results = [];
         const deleted = [];
         const failed = [];
-        // Best-effort per-id deletion — keep going on individual failures so the
-        // user gets a complete status report. Each delete walks the project's
-        // subtree and removes all FK-dependent rows so that rollup-with-children
-        // deletes succeed cleanly (same fix pattern as delete_project above).
+
+        // Collect all subtrees BEFORE opening the transaction so we can report
+        // "not found" per-id without aborting the whole operation.
+        const subtreeMap = new Map(); // id → subtree rows
         for (const id of ids) {
           try {
             const subtree = await collectProjectTree(id);
             if (!subtree.length) {
               failed.push({ id, error: 'not found' });
               results.push({ id, status: 'not_found' });
-              continue;
+            } else {
+              subtreeMap.set(id, subtree);
             }
-            const subIds = subtree.map(p => p.id);
-            await pool.query('DELETE FROM time_entries        WHERE project_id = ANY($1::uuid[])', [subIds]);
-            await pool.query('DELETE FROM invoice_items       WHERE project_id = ANY($1::uuid[])', [subIds]);
-            try { await pool.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [subIds]); } catch {}
-            try { await pool.query('DELETE FROM permit_stages    WHERE project_id = ANY($1::uuid[])', [subIds]); } catch {}
-            try { await pool.query('DELETE FROM design_stages    WHERE project_id = ANY($1::uuid[])', [subIds]); } catch {}
-            await pool.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [subIds]);
-            const byDepth = [...subtree].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
+          } catch (e) {
+            failed.push({ id, error: 'Failed to walk project tree: ' + e.message });
+            results.push({ id, status: 'failed', error: 'Failed to walk project tree: ' + e.message });
+          }
+        }
+
+        if (subtreeMap.size === 0) {
+          return {
+            success: failed.length === 0,
+            deleted_count: 0,
+            failed_count: failed.length,
+            results,
+            reason: toolInput.reason || null,
+          };
+        }
+
+        // Flatten all sub-ids across every project to delete so we can run
+        // the FK-dependent table DELETEs in one round-trip each inside a
+        // single transaction. This is atomic — on any error the whole batch
+        // rolls back and no partial state is left.
+        const allSubIds = [];
+        for (const subtree of subtreeMap.values()) {
+          for (const p of subtree) allSubIds.push(p.id);
+        }
+
+        const txClient = await pool.connect();
+        try {
+          await txClient.query('BEGIN');
+          await txClient.query('DELETE FROM time_entries        WHERE project_id = ANY($1::uuid[])', [allSubIds]);
+          await txClient.query('DELETE FROM invoice_items       WHERE project_id = ANY($1::uuid[])', [allSubIds]);
+          try { await txClient.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allSubIds]); } catch {}
+          try { await txClient.query('DELETE FROM permit_stages    WHERE project_id = ANY($1::uuid[])', [allSubIds]); } catch {}
+          try { await txClient.query('DELETE FROM design_stages    WHERE project_id = ANY($1::uuid[])', [allSubIds]); } catch {}
+          await txClient.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [allSubIds]);
+          // Delete projects deepest-first across all subtrees so parent_id FKs stay valid.
+          const allRows = [];
+          for (const subtree of subtreeMap.values()) allRows.push(...subtree);
+          const byDepth = [...allRows].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
+          for (const p of byDepth) {
+            await txClient.query('DELETE FROM projects WHERE id = $1', [p.id]);
+          }
+          await txClient.query('COMMIT');
+
+          for (const [id, subtree] of subtreeMap) {
             const root = subtree.find(p => p.id === id);
-            for (const p of byDepth) {
-              await pool.query('DELETE FROM projects WHERE id = $1', [p.id]);
-            }
             deleted.push({ id, name: root ? root.name : id, included_descendants: subtree.length - 1 });
             results.push({ id, status: 'deleted', name: root ? root.name : id, included_descendants: subtree.length - 1 });
-          } catch (e) {
+          }
+        } catch (e) {
+          try { await txClient.query('ROLLBACK'); } catch {}
+          // The whole batch failed — mark every queued-but-not-yet-deleted id as failed.
+          for (const id of subtreeMap.keys()) {
             failed.push({ id, error: e.message });
             results.push({ id, status: 'failed', error: e.message });
           }
+        } finally {
+          txClient.release();
         }
+
         return {
           success: failed.length === 0,
           deleted_count: deleted.length,
@@ -1551,6 +1592,10 @@ async function executeTool(toolName, toolInput, actor = {}) {
       case 'get_upload_data': {
         const data = uploadStore.get(toolInput.upload_id);
         if (!data) return { success: false, error: 'Upload expired or not found. Ask the user to re-upload.' };
+        // Ownership check: reject cross-user upload access (Item 6).
+        if (data.owner_id && actor && actor.id && String(data.owner_id) !== String(actor.id)) {
+          return { success: false, error: 'Upload not found for this user. Ask the user to re-upload.' };
+        }
         if (data.raw_text) return { success: true, raw_text: data.raw_text, row_count: 0 };
 
         const offset = toolInput.offset || 0;
@@ -1575,6 +1620,10 @@ async function executeTool(toolName, toolInput, actor = {}) {
         // the same matching logic the manual UI uses, then commit.
         const upload = uploadStore.get(toolInput.upload_id);
         if (!upload) return { success: false, error: 'Upload expired or not found. Ask the user to re-upload.' };
+        // Ownership check: reject cross-user upload access (Item 6).
+        if (upload.owner_id && actor && actor.id && String(upload.owner_id) !== String(actor.id)) {
+          return { success: false, error: 'Upload not found for this user. Ask the user to re-upload.' };
+        }
         if (!upload.rows || !upload.rows.length) {
           return { success: false, error: 'No rows in the upload. The file may be empty or unreadable.' };
         }
@@ -2040,14 +2089,17 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
     } else {
       const content = fs.readFileSync(req.file.path, 'utf8');
       const uploadId = uuidv4();
-      uploadStore.set(uploadId, { raw_text: content.substring(0, 50000), filename: req.file.originalname, timestamp: Date.now() });
+      // Bind upload to the uploading user so get_upload_data / csv_smart_import
+      // reject cross-user access (Item 6 — uploadStore user binding).
+      uploadStore.set(uploadId, { raw_text: content.substring(0, 50000), filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
       fs.unlink(req.file.path, () => {});
       return res.json({ success: true, upload_id: uploadId, filename: req.file.originalname, raw_text: content.substring(0, 2000) });
     }
 
     // Store full data server-side, send only summary to client
     const uploadId = uuidv4();
-    uploadStore.set(uploadId, { rows, headers, filename: req.file.originalname, timestamp: Date.now() });
+    // Bind upload to the uploading user (Item 6 — uploadStore user binding).
+    uploadStore.set(uploadId, { rows, headers, filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
 
     fs.unlink(req.file.path, () => {});
 
@@ -2074,6 +2126,10 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
 app.get('/api/ai/upload/:id', requireAdmin, async (req, res) => {
   const data = uploadStore.get(req.params.id);
   if (!data) return res.status(404).json({ error: 'Upload expired or not found' });
+  // Ownership check: only the user who uploaded the file may fetch it.
+  if (data.owner_id && req.user && String(data.owner_id) !== String(req.user.id)) {
+    return res.status(403).json({ error: 'This upload belongs to a different user.' });
+  }
   if (data.raw_text) return res.json({ rows: [], raw_text: data.raw_text, row_count: 0 });
 
   const offset = parseInt(req.query.offset) || 0;
@@ -2187,7 +2243,27 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       cachedTools = AI_TOOLS.map((t, i) =>
         i === AI_TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t
       );
-      conversationMessages = messages.map(m => ({ role: m.role, content: m.content }));
+      // Wrap user-role text content in injection markers so a prompt-injection
+      // payload embedded in user input cannot masquerade as system instructions
+      // when echoed back in subsequent conversation turns (Item 5).
+      conversationMessages = messages.map(m => {
+        if (m.role !== 'user') return { role: m.role, content: m.content };
+        if (typeof m.content === 'string') {
+          return { role: 'user', content: `[user-supplied]${m.content}[/user-supplied]` };
+        }
+        if (Array.isArray(m.content)) {
+          return {
+            role: 'user',
+            content: m.content.map(block => {
+              if (block && block.type === 'text' && typeof block.text === 'string') {
+                return { ...block, text: `[user-supplied]${block.text}[/user-supplied]` };
+              }
+              return block;
+            }),
+          };
+        }
+        return { role: m.role, content: m.content };
+      });
     }
 
     // ── Main loop ─────────────────────────────────────────────────────
@@ -2197,9 +2273,12 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     // still gate through the approval card. Resume path stays on 'auto'
     // because the model needs room to finalize with text after a tool
     // already ran.
+    // NOTE: userWantsAction is evaluated against the original messages
+    // (pre-injection-markers) so the [user-supplied]...[/user-supplied]
+    // wrappers don't break the regex anchors that start with "^(yes|...".
     const initialToolChoice = approval_id
       ? { type: 'auto' }
-      : userWantsAction(conversationMessages)
+      : userWantsAction(messages || [])
         ? { type: 'any' }
         : { type: 'auto' };
     // max_tokens=8192 — Anthropic SDK refuses non-streaming requests
@@ -2301,6 +2380,12 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         tool_choice: { type: 'auto' },
         messages: conversationMessages,
       });
+    }
+
+    // MAX_ITERATIONS warning — surface to user instead of silently truncating.
+    if (iterations >= MAX_ITERATIONS) {
+      console.warn(`AI chat hit MAX_ITERATIONS (${MAX_ITERATIONS}) — some actions may not have completed.`);
+      finalText += '\n\n⚠️ **Reached iteration limit.** The assistant completed up to ' + MAX_ITERATIONS + ' tool-call rounds but may not have finished everything requested. Please review what was done and re-send any remaining tasks.';
     }
 
     // Get final text response
