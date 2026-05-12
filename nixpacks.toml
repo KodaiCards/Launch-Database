@@ -4,5 +4,8 @@ nixPkgs = ["nodejs_20"]
 [phases.install]
 cmds = ["npm install"]
 
+[phases.build]
+cmds = ["cd osp-training && npm ci --no-audit --no-fund && npm run build && cp -r dist/. ../public/training/"]
+
 [start]
 cmd = "node server.js"

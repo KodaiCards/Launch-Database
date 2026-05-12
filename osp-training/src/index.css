@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .panel {
+    @apply rounded-xl bg-ospsteel/40 border border-white/10 p-5 shadow-lg;
+  }
+  .badge {
+    @apply inline-block px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider;
+  }
+  .badge-book   { @apply badge bg-sky-700/40 text-sky-200 border border-sky-500/40; }
+  .badge-field  { @apply badge bg-ospamber/20 text-amber-200 border border-amber-400/40; }
+  .badge-warn   { @apply badge bg-rose-700/30 text-rose-200 border border-rose-400/40; }
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition border;
+  }
+  .btn-primary  { @apply btn bg-ospamber text-ospnavy border-ospamber hover:bg-amber-300; }
+  .btn-ghost    { @apply btn bg-transparent border-white/20 hover:bg-white/5; }
+}
+
+html, body, #root { height: 100%; }
