@@ -761,7 +761,12 @@ async function openProjectModal(){
   document.getElementById('proj-status').value = 'active';
   document.getElementById('proj-start').value = new Date().toISOString().split('T')[0];
   const concSel = document.getElementById('proj-concentrator');
-  if (concSel) concSel.value = '';
+  if (concSel) { concSel.value = ''; delete concSel.dataset.ecId; }
+  // Reset EC-scoped WO select if it was injected by a prior modal open.
+  const woSel = document.getElementById('proj-wo-select');
+  if (woSel) { woSel.value = ''; woSel.style.display = 'none'; }
+  const woIn = document.getElementById('proj-wo');
+  if (woIn) { woIn.value = ''; woIn.style.display = ''; }
   populateProjectFormDropdowns();
   document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
@@ -804,6 +809,14 @@ async function editProject(id){
       if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(preset) ? preset : '';
     }
     applyPortalProjectModalFieldGating();
+    // EC-scoped WO# / Service Area: if the project's contract resolves to an EC,
+    // populate the scoped pickers and then restore the project's existing values.
+    try {
+      const c2 = p.contract_id && (window.contractsCache || []).find(x => x.id === p.contract_id);
+      if (c2?.engineering_contract_id) {
+        await populateEcScopedWoSaForModal(c2.engineering_contract_id);
+      }
+    } catch (e) { console.warn('[ec-wosa:edit]', e && e.message); }
     const concSel = document.getElementById('proj-concentrator');
     if (concSel) {
       if (p.concentrator_id) {
@@ -812,6 +825,14 @@ async function editProject(id){
         const conc = allConcentrators.find(c => c.work_order_number === p.work_order_number);
         if (conc) concSel.value = conc.id;
       }
+    }
+    // Restore WO# value into proj-wo-select (or free-text) after population.
+    if (p.work_order_number) {
+      const woSel = document.getElementById('proj-wo-select');
+      if (woSel && woSel.style.display !== 'none') {
+        woSel.value = p.work_order_number;
+      }
+      document.getElementById('proj-wo').value = p.work_order_number;
     }
   } catch (e) { console.error('client/job hookup failed:', e); }
 
@@ -1003,6 +1024,102 @@ async function ptypeChanged(){
 async function contractChanged(){
   applyPortalProjectModalFieldGating();
   await refilterJobsDropdown();
+  // EC-scoped WO# / Service Area: resolve EC from the selected contract and
+  // populate the scoped pickers if that EC has ec_work_orders / ec_service_areas.
+  const contractId = document.getElementById('proj-contract')?.value;
+  const c = contractId && (window.contractsCache || []).find(x => x.id === contractId);
+  const ecId = c?.engineering_contract_id || null;
+  if (ecId) {
+    await populateEcScopedWoSaForModal(ecId);
+  } else {
+    // No EC selected — restore free-text input if a select was injected previously.
+    const woSel = document.getElementById('proj-wo-select');
+    if (woSel) { woSel.style.display = 'none'; woSel.value = ''; }
+    const woIn = document.getElementById('proj-wo');
+    if (woIn) woIn.style.display = '';
+    const concSel = document.getElementById('proj-concentrator');
+    if (concSel) delete concSel.dataset.ecId;
+  }
+}
+
+// ─── EC-scoped WO# / Service Area support for the project modal ───────────────
+//
+// When the selected contract's EC has ec_service_areas the concentrator
+// dropdown is repopulated from those EC-scoped records instead of the legacy
+// concentrators table.  When it has ec_work_orders the WO# free-text input is
+// replaced by a <select id="proj-wo-select"> fed from those records; choosing a
+// WO auto-selects the linked service area.  Falls back to legacy behaviour when
+// the EC has zero EC-scoped rows so existing setups are unaffected.
+
+// Cache: ecId → { sas: [...], wos: [...] }
+const _ecModalCache = {};
+
+async function populateEcScopedWoSaForModal(ecId) {
+  if (!ecId) return;
+  try {
+    let data = _ecModalCache[ecId];
+    if (!data) {
+      const [sas, wos] = await Promise.all([
+        api('/api/engineering-contracts/' + ecId + '/service-areas'),
+        api('/api/engineering-contracts/' + ecId + '/work-orders'),
+      ]);
+      data = { sas, wos };
+      _ecModalCache[ecId] = data;
+    }
+    const { sas, wos } = data;
+
+    // ── Service Area picker ───────────────────────────────────────────────
+    const concWrap = document.getElementById('proj-concentrator-wrap');
+    const concSel  = document.getElementById('proj-concentrator');
+    if (concWrap && concSel && sas.length > 0) {
+      const prev = concSel.value;
+      concSel.innerHTML =
+        '<option value="">— Select service area —</option>' +
+        sas.map(sa => `<option value="${sa.id}" data-type="ec-sa">${esc(sa.name)}</option>`).join('');
+      if (sas.some(sa => sa.id === prev)) concSel.value = prev;
+      concSel.dataset.ecId = ecId;
+    } else if (concSel) {
+      delete concSel.dataset.ecId;
+    }
+
+    // ── WO# picker ───────────────────────────────────────────────────────
+    const woWrap = document.getElementById('proj-wo-wrap');
+    const woIn   = document.getElementById('proj-wo');
+    if (woWrap && wos.length > 0) {
+      if (woWrap.style.display !== 'none') {
+        if (!document.getElementById('proj-wo-select')) {
+          const sel = document.createElement('select');
+          sel.id = 'proj-wo-select';
+          sel.style.width = '100%';
+          sel.onchange = function () {
+            if (woIn) woIn.value = this.value;
+            const picked = wos.find(w => w.number === this.value);
+            if (picked && picked.service_area_id) {
+              const cs = document.getElementById('proj-concentrator');
+              if (cs) cs.value = picked.service_area_id;
+            }
+          };
+          if (woIn) {
+            woIn.style.display = 'none';
+            woIn.parentNode.insertBefore(sel, woIn.nextSibling);
+          }
+        }
+        const sel = document.getElementById('proj-wo-select');
+        const prev = sel.value;
+        sel.innerHTML =
+          '<option value="">— Select WO# —</option>' +
+          wos.map(wo => `<option value="${esc(wo.number)}">${esc(wo.number)}${wo.description ? ' — ' + esc(wo.description) : ''}${wo.service_area_name ? ' (' + esc(wo.service_area_name) + ')' : ''}</option>`).join('');
+        if (wos.some(w => w.number === prev)) sel.value = prev;
+        sel.style.display = '';
+      }
+    } else {
+      const sel = document.getElementById('proj-wo-select');
+      if (sel) sel.style.display = 'none';
+      if (woIn) woIn.style.display = '';
+    }
+  } catch (e) {
+    console.warn('[ec-wosa:modal]', e && e.message);
+  }
 }
 
 async function clientChanged(preserveJobId){
