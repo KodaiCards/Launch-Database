@@ -79,13 +79,14 @@
         </td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
           ${j.manually_overridden_at ? `<button class="btn btn-sm btn-icon" style="color:var(--warning);background:transparent;border:1px solid var(--gray-border)" onclick="resetJobOverride('${j.id}','${esc(j.name)}')" title="Manual override active — click to reset to system default on next deploy"><i class="fa-solid fa-thumbtack"></i></button>` : ''}
+          <button class="btn btn-sm btn-icon" style="color:var(--primary);background:transparent;border:1px solid var(--gray-border)" onclick="openJobAssignmentsModal('${j.id}','${esc(j.name)}')" title="Manage scope pins — control which clients / ECs / teams see this job"><i class="fa-solid fa-link"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--primary);background:transparent;border:1px solid var(--gray-border)" onclick="propagateJobRate('${j.id}','${esc(j.name)}')" title="Apply current rate to all existing projects using this job"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteJob('${j.id}','${esc(j.name)}')" title="Deactivate (preserves history)"><i class="fa-solid fa-trash"></i></button>
         </td>
       </tr>`;
       }).join('')}</tbody></table>
       <div style="font-size:11px;color:var(--text-muted);margin-top:8px;padding:6px 4px;line-height:1.5">
-        <i class="fa-solid fa-circle-info"></i> Inline edits to <b>Billing</b>, <b>Rate</b>, <b>Team</b>, or <b>Program Scope</b> become a <b>manual override</b> — they survive deploys and the system stops trying to revert them. A <i class="fa-solid fa-thumbtack" style="color:var(--warning)"></i> pin appears on overridden rows; click it to reset to system defaults. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job.
+        <i class="fa-solid fa-circle-info"></i> Inline edits to <b>Billing</b>, <b>Rate</b>, <b>Team</b>, or <b>Program Scope</b> become a <b>manual override</b> — they survive deploys and the system stops trying to revert them. A <i class="fa-solid fa-thumbtack" style="color:var(--warning)"></i> pin appears on overridden rows; click it to reset to system defaults. Click <i class="fa-solid fa-arrow-right-arrow-left"></i> to push the current rate to <b>all existing projects</b> using this job. Click <i class="fa-solid fa-link"></i> to manage <b>scope pins</b> — when any pin is set, the job appears <em>only</em> in those scopes instead of using the program-based heuristic.
       </div>`;
   }
 
@@ -225,6 +226,183 @@
     } catch (e) { alert('Failed: ' + e.message); }
   }
 
+  // ── Job Assignments (scope pin) modal ─────────────────────────────────────
+  // Opens a lightweight modal listing the current pins for a job and letting
+  // the admin add or remove them. Each pin ties the job to a client, EC,
+  // team, or any combination thereof.
+  //
+  // When any pins exist for the request scope, GET /api/jobs uses ONLY those
+  // pinned jobs — the program_scope heuristic is bypassed entirely. Pins
+  // without ANY set on a job mean the job falls back to the heuristic.
+
+  let _jamJobId   = null;   // job currently being managed
+  let _jamJobName = null;
+
+  function _ensureJamModal() {
+    if (document.getElementById('jam-modal')) return;
+    const el = document.createElement('div');
+    el.id = 'jam-modal';
+    el.style.cssText = [
+      'display:none', 'position:fixed', 'inset:0', 'z-index:9999',
+      'background:rgba(0,0,0,.55)', 'align-items:center', 'justify-content:center'
+    ].join(';');
+    el.innerHTML = `
+      <div style="background:var(--surface-1);border:1px solid var(--border-weak);border-radius:10px;
+                  width:min(540px,95vw);max-height:85vh;display:flex;flex-direction:column;
+                  box-shadow:0 8px 32px rgba(0,0,0,.35)">
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:14px 18px 10px;border-bottom:1px solid var(--border-weak)">
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--text)" id="jam-title">Scope Pins</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+              Job appears <em>only</em> in pinned scopes when any pin is set. Leave empty to use the program heuristic.
+            </div>
+          </div>
+          <button onclick="closeJobAssignmentsModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;padding:4px 8px" title="Close">&times;</button>
+        </div>
+
+        <!-- Existing pins list -->
+        <div id="jam-pins-list" style="flex:1;overflow-y:auto;padding:12px 18px;min-height:60px"></div>
+
+        <!-- Add-pin form -->
+        <div style="padding:12px 18px;border-top:1px solid var(--border-weak);background:var(--surface-2);border-radius:0 0 10px 10px">
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Add pin</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Client</label>
+              <select id="jam-add-client" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--border-weak);border-radius:5px;background:var(--surface-1)">
+                <option value="">Any</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Engineering Contract</label>
+              <select id="jam-add-ec" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--border-weak);border-radius:5px;background:var(--surface-1)">
+                <option value="">Any</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Team</label>
+              <select id="jam-add-team" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--border-weak);border-radius:5px;background:var(--surface-1)">
+                <option value="">Any</option>
+                <option value="design">Design</option>
+                <option value="permitting">Permitting</option>
+                <option value="construction">Construction</option>
+              </select>
+            </div>
+            <button class="btn btn-sm" style="background:var(--primary);color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;white-space:nowrap"
+                    onclick="addJobAssignmentPin()">Add pin</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
+            "Any" means that axis is not restricted — e.g. Client=PSC + EC=Any pins the job for all of PSC's ECs.
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    // Close on backdrop click
+    el.addEventListener('click', e => { if (e.target === el) closeJobAssignmentsModal(); });
+  }
+
+  async function openJobAssignmentsModal(jobId, jobName) {
+    _jamJobId   = jobId;
+    _jamJobName = jobName;
+    _ensureJamModal();
+
+    document.getElementById('jam-title').textContent = `Scope Pins — ${jobName}`;
+
+    // Populate client dropdown
+    const clientSel = document.getElementById('jam-add-client');
+    const allClients = (typeof window.clients !== 'undefined' ? window.clients : []);
+    clientSel.innerHTML = '<option value="">Any</option>' +
+      allClients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+
+    // Populate EC dropdown
+    const ecSel = document.getElementById('jam-add-ec');
+    const allECs = (window.engineeringContractsCache || []);
+    ecSel.innerHTML = '<option value="">Any</option>' +
+      allECs.map(ec => `<option value="${ec.id}">${esc(ec.name)}</option>`).join('');
+
+    const modal = document.getElementById('jam-modal');
+    modal.style.display = 'flex';
+
+    await _jamRefreshPins();
+  }
+
+  function closeJobAssignmentsModal() {
+    const modal = document.getElementById('jam-modal');
+    if (modal) modal.style.display = 'none';
+    _jamJobId = _jamJobName = null;
+  }
+
+  async function _jamRefreshPins() {
+    const listEl = document.getElementById('jam-pins-list');
+    if (!listEl || !_jamJobId) return;
+    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Loading…</div>';
+    try {
+      const pins = await api('/api/jobs/' + _jamJobId + '/assignments');
+      if (!pins.length) {
+        listEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0">' +
+          'No pins — using the program heuristic for this job.</div>';
+        return;
+      }
+      listEl.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
+          <th style="text-align:left;padding:4px 8px">Client</th>
+          <th style="text-align:left;padding:4px 8px">Engineering Contract</th>
+          <th style="text-align:left;padding:4px 8px">Team</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${pins.map(p => `
+          <tr style="border-top:1px solid var(--border-weak)">
+            <td style="padding:5px 8px">${p.client_name ? esc(p.client_name) : '<span style="color:var(--text-muted)">Any</span>'}</td>
+            <td style="padding:5px 8px">${p.ec_name ? esc(p.ec_name) : '<span style="color:var(--text-muted)">Any</span>'}</td>
+            <td style="padding:5px 8px">${p.team ? esc(p.team.charAt(0).toUpperCase() + p.team.slice(1)) : '<span style="color:var(--text-muted)">Any</span>'}</td>
+            <td style="padding:5px 8px;text-align:right">
+              <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)"
+                      onclick="removeJobAssignmentPin('${p.id}')" title="Remove this pin">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>`).join('')}
+        </tbody></table>`;
+    } catch (e) {
+      listEl.innerHTML = '<div style="color:var(--danger);font-size:13px">Failed to load pins.</div>';
+    }
+  }
+
+  async function addJobAssignmentPin() {
+    if (!_jamJobId) return;
+    const clientId = document.getElementById('jam-add-client').value || null;
+    const ecId     = document.getElementById('jam-add-ec').value     || null;
+    const team     = document.getElementById('jam-add-team').value   || null;
+
+    if (!clientId && !ecId && !team) {
+      return alert('Select at least one of Client, Engineering Contract, or Team to add a pin.\n\nA pin with all three set to "Any" would be identical to having no pins at all.');
+    }
+    try {
+      await api('/api/jobs/' + _jamJobId + '/assignments', 'POST', {
+        client_id: clientId,
+        engineering_contract_id: ecId,
+        team
+      });
+      // Reset add-form selects
+      document.getElementById('jam-add-client').value = '';
+      document.getElementById('jam-add-ec').value     = '';
+      document.getElementById('jam-add-team').value   = '';
+      await _jamRefreshPins();
+    } catch (e) {
+      alert('Failed to add pin: ' + (e.message || 'unknown error'));
+    }
+  }
+
+  async function removeJobAssignmentPin(pinId) {
+    try {
+      await api('/api/job-assignments/' + pinId, 'DELETE');
+      await _jamRefreshPins();
+    } catch (e) {
+      alert('Failed to remove pin: ' + (e.message || 'unknown error'));
+    }
+  }
+
   window.renderJobsList = renderJobsList;
   window.setJobTeam = setJobTeam;
   window.setJobRate = setJobRate;
@@ -236,6 +414,10 @@
   window.updateRateLabel = updateRateLabel;
   window.saveNewJob = saveNewJob;
   window.deleteJob = deleteJob;
+  window.openJobAssignmentsModal  = openJobAssignmentsModal;
+  window.closeJobAssignmentsModal = closeJobAssignmentsModal;
+  window.addJobAssignmentPin      = addJobAssignmentPin;
+  window.removeJobAssignmentPin   = removeJobAssignmentPin;
 
   // ── SSE live-update hooks ──────────────────────────────────────────────────
   let _jobsStaleTimer = null;
