@@ -40,7 +40,7 @@ input{
   background:var(--white);color:var(--text);
   border:1px solid var(--gray-border);border-radius:8px;
 }
-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+input:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
 .field{margin-bottom:16px}
 .btn-primary{
   width:100%;padding:11px;font-size:14px;font-weight:600;font-family:inherit;
@@ -63,6 +63,9 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
   display:flex;align-items:center;justify-content:center;
 }
 .theme-toggle:hover{border-color:var(--primary);color:var(--primary)}
+/* a11y: skip-nav */
+.skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;text-decoration:none}
+.skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
 </style>
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
@@ -70,10 +73,13 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
 </head>
 <body>
 
-<button class="theme-toggle" onclick="toggleDark()" title="Toggle dark mode">
-  <i class="fa-solid fa-moon" id="dm-icon"></i>
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+
+<button class="theme-toggle" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+  <i class="fa-solid fa-moon" id="dm-icon" aria-hidden="true"></i>
 </button>
 
+<main id="main-content">
 <div class="login-card">
   <div class="logo">
     <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber Services">
@@ -81,7 +87,7 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
   <h1>Launch Fiber Services</h1>
   <p class="subtitle">Sign in to continue</p>
 
-  <div class="error" id="error-msg"></div>
+  <div class="error" id="error-msg" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
   <form id="login-form" onsubmit="return doLogin(event)">
     <div class="field">
@@ -99,6 +105,7 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
 
   <p class="footer" id="footer-text">Need access? Contact your administrator.</p>
 </div>
+</main>
 
 <script>
 // Apply saved theme before paint. Resolution order:
