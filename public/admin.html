@@ -584,13 +584,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </head>
 <body>
 
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+
 <!-- Undo bar — fixed to bottom of viewport. showUndoBar() makes it visible
      with a 15s countdown; user can click Undo to replay or X to dismiss. -->
-<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
-  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)"></i>
+<div id="lfs-undo-bar" role="status" aria-live="polite" aria-atomic="true" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
+  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)" aria-hidden="true"></i>
   <span id="lfs-undo-message" style="flex:1"></span>
   <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:var(--success,#28A745);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
-  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
+  <button onclick="hideUndoBar()" title="Dismiss" aria-label="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
 </div>
 
 <!-- HEADER -->
@@ -645,21 +647,21 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </header>
 
 <!-- NAV -->
-<nav class="nav">
-  <a class="nav-tab active" data-view="dashboard" onclick="showView('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-  <a class="nav-tab" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open"></i> Projects</a>
-  <a class="nav-tab" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature"></i> Permitting</a>
-  <a class="nav-tab" data-view="design" onclick="showView('design')"><i class="fa-solid fa-drafting-compass"></i> Design</a>
-  <a class="nav-tab" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety"></i> RUS</a>
-  <a class="nav-tab" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb"></i> Potential Permits</a>
-  <a class="nav-tab" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock"></i> Hours</a>
-  <a class="nav-tab" data-view="clients" onclick="showView('clients')"><i class="fa-solid fa-handshake"></i> Clients</a>
-  <a class="nav-tab" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
-  <a class="nav-tab" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign"></i> Revenue</a>
+<nav class="nav" role="tablist" aria-label="Main navigation">
+  <a class="nav-tab active" role="tab" aria-selected="true" aria-controls="view-dashboard" data-view="dashboard" onclick="showView('dashboard')"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-projects" data-view="projects" onclick="showView('projects')"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Projects</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-permitting" data-view="permitting" onclick="showView('permitting')"><i class="fa-solid fa-file-signature" aria-hidden="true"></i> Permitting</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-design" data-view="design" onclick="showView('design')"><i class="fa-solid fa-drafting-compass" aria-hidden="true"></i> Design</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-inspection" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety" aria-hidden="true"></i> RUS</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-potential-permits" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Potential Permits</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-hours" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock" aria-hidden="true"></i> Hours</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-clients" data-view="clients" onclick="showView('clients')"><i class="fa-solid fa-handshake" aria-hidden="true"></i> Clients</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-billing" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> Billing</a>
+  <a class="nav-tab" role="tab" aria-selected="false" aria-controls="view-revenue" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign" aria-hidden="true"></i> Revenue</a>
 </nav>
 
 <!-- MAIN -->
-<div class="main">
+<main class="main" id="main-content">
   <div>
 
     <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
