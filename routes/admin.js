@@ -88,7 +88,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           }
         } catch (e) {
           failed++;
-          errors.push({ project_id: p.id, name: p.name, error: e.message });
+          console.error('[admin:migrate-nesting] project', p.id, e && e.message);
+          errors.push({ project_id: p.id, name: p.name, error: 'Failed to re-nest project.' });
         }
       }
 
@@ -117,7 +118,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message, processed, moved, failed });
+      console.error('[admin:migrate-nesting]', e && e.message);
+      res.status(500).json({ error: 'Failed to migrate project nesting.', processed, moved, failed });
     } finally {
       client.release();
     }
@@ -169,7 +171,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           : `${orphans.length} files on disk have no matching permit_documents row. POST {project_id, file_path} to /api/_admin/adopt-orphan to attach one.`
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:orphan-files]', e && e.message);
+      res.status(500).json({ error: 'Failed to list orphan files.' });
     }
   });
 
@@ -214,7 +217,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       );
       res.json({ adopted: rows[0], project_name: proj.rows[0].name });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:adopt-orphan]', e && e.message);
+      res.status(500).json({ error: 'Failed to adopt orphan file.' });
     }
   });
 
@@ -251,7 +255,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       }
       res.json({ adopted, project_name: proj.rows[0].name });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:adopt-orphans-bulk]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk-adopt orphan files.' });
     }
   });
 
@@ -314,7 +319,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         matched, ambiguous, unmatched, noEntries
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:hours-backfill-preview]', e && e.message);
+      res.status(500).json({ error: 'Failed to preview hours backfill.' });
     }
   });
 
@@ -345,7 +351,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           : `Linked ${result.rowCount} time entries to user accounts based on matching name/full_name.`
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:hours-backfill]', e && e.message);
+      res.status(500).json({ error: 'Failed to run hours backfill.' });
     }
   });
 
@@ -382,7 +389,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
             + `${result.skippedTooRecent} files were left in place because they're newer than ${olderThanHours}h.`,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:prune-orphan-files]', e && e.message);
+      res.status(500).json({ error: 'Failed to prune orphan files.' });
     }
   });
 
@@ -423,7 +431,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       console.error('[admin:db-sizes]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to fetch database sizes.' });
     }
   });
 
@@ -473,7 +481,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       console.error('[admin:audit-cleanup]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to run audit cleanup.' });
     }
   });
 
@@ -689,7 +697,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         unattributed_breakdown: breakdown,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:rus-hours-debug]', e && e.message);
+      res.status(500).json({ error: 'Failed to load RUS hours debug.' });
     }
   });
 
@@ -717,7 +726,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         batches: rows,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:import-trace]', e && e.message);
+      res.status(500).json({ error: 'Failed to fetch import batches.' });
     }
   });
 
@@ -864,7 +874,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       } catch (e) {
         try { await client.query('ROLLBACK'); } catch {}
         client.release();
-        return res.status(500).json({ error: e.message });
+        console.error('[admin:reattribute-rollup-hours]', e && e.message);
+        return res.status(500).json({ error: 'Failed to reattribute rollup hours.' });
       }
       client.release();
 
@@ -886,7 +897,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         message: `Moved ${moves.length} time entries; recomputed actual_hours on ${affectedProjects.size} projects. Refresh the Hours tab and RUS tab to see the new attribution.`,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:reattribute-rollup-hours]', e && e.message);
+      res.status(500).json({ error: 'Failed to reattribute rollup hours.' });
     }
   });
 
@@ -1019,7 +1031,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         entries_truncated: entries.length > 50,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:import-trace-batch]', e && e.message);
+      res.status(500).json({ error: 'Failed to fetch import trace.' });
     }
   });
 
@@ -1049,14 +1062,16 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const bypassBuf = Buffer.from(bypass);
       if (tokenBuf.length === bypassBuf.length && crypto.timingSafeEqual(tokenBuf, bypassBuf)) {
         return diskStatsHandler(req, res).catch(e => {
-          if (!res.headersSent) res.status(500).json({ error: e.message });
+          console.error('[admin:disk-stats]', e && e.message);
+          if (!res.headersSent) res.status(500).json({ error: 'Failed to fetch disk stats.' });
         });
       }
       // Wrong token — fall through to requireAdmin (will 401/403).
     }
     // Fall through to requireAdmin for normal (DB-healthy) auth.
     requireAdmin(req, res, () => diskStatsHandler(req, res).catch(e => {
-      if (!res.headersSent) res.status(500).json({ error: e.message });
+      console.error('[admin:disk-stats]', e && e.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to fetch disk stats.' });
     }));
   });
 
@@ -1076,7 +1091,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const usedPct   = total > 0 ? Math.round((used / total) * 1000) / 10 : 0;
       volume = { total_bytes: total, available_bytes: available, used_bytes: used, used_pct: usedPct };
     } catch (e) {
-      volume = { error: e.message };
+      console.error('[admin:disk-stats:statfs]', e && e.message);
+      volume = { error: 'statfs failed — volume may be unmounted or path is wrong.' };
     }
 
     // Walk uploadDir (non-recursive at top level + invoice-templates subdir)
@@ -1147,13 +1163,15 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const bypassBuf = Buffer.from(bypass);
       if (tokenBuf.length === bypassBuf.length && crypto.timingSafeEqual(tokenBuf, bypassBuf)) {
         return uploadsCleanupHandler(req, res).catch(e => {
-          if (!res.headersSent) res.status(500).json({ error: e.message });
+          console.error('[admin:uploads-cleanup]', e && e.message);
+          if (!res.headersSent) res.status(500).json({ error: 'Failed to run uploads cleanup.' });
         });
       }
       // Wrong token — fall through to requireAdmin.
     }
     requireAdmin(req, res, () => uploadsCleanupHandler(req, res).catch(e => {
-      if (!res.headersSent) res.status(500).json({ error: e.message });
+      console.error('[admin:uploads-cleanup]', e && e.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to run uploads cleanup.' });
     }));
   });
 
@@ -1176,7 +1194,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     // be deleted by this sweep — they are excluded regardless of age.
     let entries = [];
     try { entries = await fs.promises.readdir(uploadDir); } catch (e) {
-      return res.status(500).json({ error: 'Cannot read uploadDir: ' + e.message });
+      console.error('[admin:uploads-cleanup:readdir]', e && e.message);
+      return res.status(500).json({ error: 'Cannot read upload directory — check UPLOAD_DIR configuration.' });
     }
     for (const f of entries) {
       const full = path.join(uploadDir, f);
@@ -1315,7 +1334,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     } catch (e) {
       await client.query('ROLLBACK');
       if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
-      res.status(500).json({ error: e.message });
+      console.error('[admin:staff-with-user]', e && e.message);
+      res.status(500).json({ error: 'Failed to create staff and user account.' });
     } finally {
       client.release();
     }
