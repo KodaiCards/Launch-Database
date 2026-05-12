@@ -1381,6 +1381,17 @@ async function executeTool(toolName, toolInput, actor = {}) {
       }
 
       case 'log_time_entries': {
+        // Cap entries per call to prevent pool OOM and Anthropic payload timeouts.
+        const MAX_ENTRIES = 100;
+        if (!Array.isArray(toolInput.entries) || toolInput.entries.length === 0) {
+          return { success: false, error: 'entries array is required and must be non-empty' };
+        }
+        if (toolInput.entries.length > MAX_ENTRIES) {
+          return {
+            success: false,
+            error: `Too many entries (${toolInput.entries.length}). Maximum per call is ${MAX_ENTRIES}. Split into batches of ${MAX_ENTRIES} or fewer and call log_time_entries multiple times.`,
+          };
+        }
         const importBatch = `ai_import_${Date.now()}`;
         const client = await pool.connect();
         try {
