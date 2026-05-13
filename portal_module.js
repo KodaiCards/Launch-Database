@@ -411,9 +411,14 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   }
   const requireAuth  = authHelpers.requireAuth;
   const requireAdmin = authHelpers.requireAdmin;
-  // Convenience: the actor for proposed_by / updated_by columns. Falls back
-  // to req.body.proposed_by for callers that haven't been migrated yet.
-  const actorOf = (req) => (req.user && (req.user.username || req.user.id)) || req.body?.proposed_by || null;
+  // Wave 1.5 H-4: actor for proposed_by / updated_by columns sources STRICTLY
+  // from the authenticated user (req.user). The previous body-fallback (`||
+  // req.body?.proposed_by`) allowed an attacker on any path where requireAuth
+  // didn't fire to forge their identity in the audit trail — and with the
+  // C-2/C-3 auth-bypass fixes still rolling out, that exposure was real.
+  // Returns null when req.user is absent; callers that need a system-actor
+  // string must hardcode it, not pull from request body.
+  const actorOf = (req) => (req.user && (req.user.username || req.user.id)) || null;
 
   // Make helpers accessible to server.js's admin POST/PUT.
   app.locals.isDuplicateProject = (name, parentId, excludeId) =>
@@ -438,7 +443,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         params
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // Pending count — used for the red badge on the Settings button.
@@ -452,7 +457,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         params
       );
       res.json({ pending: r.rows[0].pending });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // Approve — applies the change, marks approved. Admin only — enforced
@@ -489,7 +494,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
          JSON.stringify(typeof sr.payload === 'string' ? JSON.parse(sr.payload) : sr.payload)]
       );
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   app.put('/api/setting-requests/:id/reject', requireAdmin, async (req, res) => {
@@ -504,7 +509,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         [req.params.id, reviewed_by || null, review_notes || null]
       );
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // ─── Below this line: portal-mode-only routes ─────────────────────────────
@@ -614,7 +619,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         params
       );
       res.json(rows.map(stripMoneyFromJob));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   app.post('/api/jobs', requireAuth(), async (req, res) => {
@@ -629,7 +634,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         team: portal // hint — admin can change at approval time
       }, actorOf(req));
       res.json(proposalResponse(sr));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   app.put('/api/jobs/:id', requireAuth(), async (req, res) => {
@@ -640,7 +645,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       const sr = await proposeChange('job', 'update', req.params.id,
         { name, default_billing_type, is_permitting, notes, active }, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   app.delete('/api/jobs/:id', requireAuth(), async (req, res) => {
@@ -649,7 +654,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       if (!cur.rows.length) return res.status(404).json({ error: 'Job not found' });
       const sr = await proposeChange('job', 'delete', req.params.id, {}, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr, 'Deletion submitted'));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // ── PROJECT TYPES ──────────────────────────────────────────────────────
@@ -670,7 +675,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       const sr = await proposeChange('client', 'create', null,
         { name: String(name).trim(), notes: notes || null }, actorOf(req));
       res.json(proposalResponse(sr));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
   app.put('/api/clients/:id', requireAuth(), async (req, res) => {
     const { name, notes } = req.body;
@@ -680,7 +685,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       const sr = await proposeChange('client', 'update', req.params.id,
         { name, notes }, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
   app.delete('/api/clients/:id', requireAuth(), async (req, res) => {
     try {
@@ -689,7 +694,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       const sr = await proposeChange('client', 'delete', req.params.id,
         {}, actorOf(req), cur.rows[0]);
       res.json(proposalResponse(sr, 'Deletion submitted'));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // ── CONTRACTS ──────────────────────────────────────────────────────────
@@ -703,7 +708,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       const sr = await proposeChange('contract', 'create', null,
         { client_id, contract_number, name: name || null }, actorOf(req));
       res.json(proposalResponse(sr));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // ── PROJECT REQUESTS (timeclock add-new flow) ──────────────────────────
@@ -736,7 +741,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       // Return the request id so the timeclock UI can stamp it onto held
       // time_entries via POST /api/time-entries.
       res.json({ ...proposalResponse(sr, 'Requested'), request_id: sr.id });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // ── PROJECTS ───────────────────────────────────────────────────────────
@@ -793,7 +798,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         ORDER BY p.created_at DESC
       `, params);
       res.json(rows.map(stripMoneyFromProject));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   app.get('/api/projects/:id', requireAuth(), async (req, res) => {
@@ -822,7 +827,7 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       `, [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Not found' });
       res.json(stripMoneyFromProject(rows[0]));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[portal]', e && e.message); res.status(500).json({ error: 'Internal server error' }); }
   });
 
   // Create project from portal — validates team, blocks duplicates, strips money.
@@ -958,7 +963,12 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         await pool.query(
           `INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1,$2,$3)
            ON CONFLICT (project_id, stage) DO NOTHING`,
-          [rows[0].id, 'potential', permit_manager || null]
+          // Wave 1.5 H-5: source updated_by from the authenticated user, not
+          // from body.permit_manager. Any authenticated user could previously
+          // spoof attribution on the permit_stages audit row by sending an
+          // arbitrary string. permit_manager from body is still usable as a
+          // hint elsewhere (project assignment) but never as the audit actor.
+          [rows[0].id, 'potential', actorOf(req)]
         );
       }
       if (job.team === 'design') {
@@ -974,7 +984,8 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       if (e.code === '23505') {
         return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
       }
-      res.status(500).json({ error: e.message });
+      console.error('[portal]', e && e.message);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
@@ -1025,7 +1036,8 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       if (e.code === '23505') {
         return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
       }
-      res.status(500).json({ error: e.message });
+      console.error('[portal]', e && e.message);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
@@ -1067,7 +1079,8 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       });
     } catch (e) {
       console.error('[portal:projects:delete]', e && e.message);
-      res.status(500).json({ error: e.message });
+      console.error('[portal]', e && e.message);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 }

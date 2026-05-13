@@ -42,7 +42,15 @@ const MIN_PASSWORD_LEN = 10;
 // Sign and verify tokens with an audience claim so a token minted on
 // one service cannot be reused on another (they share JWT_SECRET but
 // differ in audience). Configurable via JWT_AUDIENCE env var.
+// Cross-deployment isolation: env var so staging + prod each pin their own
+// audience namespace even when JWT_SECRET happens to be shared (rotation
+// window, copied-config accident, etc.). 'lfs' is the default so dev still
+// works without the env var; production deploys MUST override.
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE || 'lfs';
+// Wave 1.5 M-5 — issuer claim. Defense-in-depth alongside audience. Tokens
+// minted on a different service that happens to share JWT_SECRET would still
+// fail the iss check on this service. Env-driven, default 'lfs-auth'.
+const JWT_ISSUER = process.env.JWT_ISSUER || 'lfs-auth';
 
 // Tiny in-memory sliding-window rate limiter. Single-process only.
 const _rlBuckets = new Map();
@@ -233,7 +241,7 @@ function signToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, role: user.role, team: user.team },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRY, audience: JWT_AUDIENCE }
+    { expiresIn: JWT_EXPIRY, audience: JWT_AUDIENCE, issuer: JWT_ISSUER }
   );
 }
 
@@ -242,6 +250,7 @@ function verifyToken(token) {
     return jwt.verify(token, JWT_SECRET, {
       algorithms: ['HS256'],
       audience: JWT_AUDIENCE,
+      issuer: JWT_ISSUER,
     });
   }
   catch (e) { return null; }
