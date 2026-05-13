@@ -2956,7 +2956,15 @@ function persistFilter(storageKey, el) {
     // Fire a change event so any listeners that drive dependent UI
     // (e.g. syncHrsPeriodVisibility hiding the month picker when
     // period=ytd) pick up the restored value immediately.
-    el.dispatchEvent(new Event('change', { bubbles: true }));
+    // L-1: skip the dispatch if the element's tab is not the currently active
+    // view — firing loadHours() / loadPermits() etc. on inactive tabs wastes
+    // API calls and can race with the tab's own showView() load trigger.
+    // showView() calls the load function directly when the user navigates there.
+    const tabView = el.closest && el.closest('.view');
+    const tabIsActive = tabView ? tabView.classList.contains('active') : true;
+    if (tabIsActive) {
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   }
   const save = () => {
     const v = (el.value || '').slice(0, 200);
