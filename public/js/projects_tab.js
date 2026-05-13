@@ -284,7 +284,7 @@
         // Only LEAF projects are bulk-selectable — rollups don't have hours
         // to bill or status worth toggling on their own.
         const checkbox = isLeaf
-          ? `<input type="checkbox" class="bulk-row-cb" data-id="${p.id}" data-status="${esc(p.status || '')}" onclick="event.stopPropagation();bulkOnChange()" ${bulkSelected.has(p.id) ? 'checked' : ''}>`
+          ? `<input type="checkbox" class="bulk-row-cb" aria-label="Select ${esc(p.name || 'project')} for bulk action" data-id="${p.id}" data-status="${esc(p.status || '')}" onclick="event.stopPropagation();bulkOnChange()" ${bulkSelected.has(p.id) ? 'checked' : ''}>`
           : '';
         html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
           <td style="text-align:center" onclick="event.stopPropagation()">${checkbox}</td>

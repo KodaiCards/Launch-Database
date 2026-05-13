@@ -114,8 +114,8 @@
                       <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Service Areas</div>
                       <div id="ec-sa-list-${ec.id}" style="margin-bottom:8px;font-size:13px"></div>
                       <div style="display:flex;gap:6px">
-                        <input type="text" id="ec-sa-new-name-${ec.id}" placeholder="Area name" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
-                        <input type="text" id="ec-sa-new-notes-${ec.id}" placeholder="Notes (optional)" style="flex:3;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
+                        <input type="text" id="ec-sa-new-name-${ec.id}" aria-label="New service area name" placeholder="Area name" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
+                        <input type="text" id="ec-sa-new-notes-${ec.id}" aria-label="New service area notes" placeholder="Notes (optional)" style="flex:3;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
                         <button class="btn btn-sm btn-primary" onclick="addEcServiceArea('${ec.id}')"><i class="fa-solid fa-plus"></i> Add</button>
                       </div>
                     </div>
@@ -124,9 +124,9 @@
                       <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Work Orders</div>
                       <div id="ec-wo-list-${ec.id}" style="margin-bottom:8px;font-size:13px"></div>
                       <div style="display:flex;gap:6px">
-                        <input type="text" id="ec-wo-new-num-${ec.id}" placeholder="WO# (e.g. 16316)" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
-                        <input type="text" id="ec-wo-new-desc-${ec.id}" placeholder="Description (optional)" style="flex:3;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
-                        <select id="ec-wo-new-sa-${ec.id}" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
+                        <input type="text" id="ec-wo-new-num-${ec.id}" aria-label="New work order number" placeholder="WO# (e.g. 16316)" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
+                        <input type="text" id="ec-wo-new-desc-${ec.id}" aria-label="New work order description" placeholder="Description (optional)" style="flex:3;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
+                        <select id="ec-wo-new-sa-${ec.id}" aria-label="New work order service area" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
                           <option value="">— No service area —</option>
                         </select>
                         <button class="btn btn-sm btn-primary" onclick="addEcWorkOrder('${ec.id}')"><i class="fa-solid fa-plus"></i> Add</button>
@@ -192,8 +192,8 @@
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--gray-border)">
         <span id="ec-sa-display-${sa.id}" style="flex:1">${esc(sa.name)}${sa.notes ? ` <span style="color:var(--text-muted);font-size:11px">· ${esc(sa.notes)}</span>` : ''}</span>
         <div id="ec-sa-edit-${sa.id}" style="display:none;flex:1;gap:4px">
-          <input type="text" id="ec-sa-edit-name-${sa.id}" value="${esc(sa.name)}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
-          <input type="text" id="ec-sa-edit-notes-${sa.id}" value="${esc(sa.notes || '')}" placeholder="Notes" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
+          <input type="text" id="ec-sa-edit-name-${sa.id}" aria-label="Service area name" value="${esc(sa.name)}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
+          <input type="text" id="ec-sa-edit-notes-${sa.id}" aria-label="Service area notes" value="${esc(sa.notes || '')}" placeholder="Notes" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
         </div>
         <button class="btn btn-sm btn-secondary" id="ec-sa-btn-edit-${sa.id}" onclick="startEcSaEdit('${sa.id}','${ecId}')" style="font-size:11px;padding:2px 6px">Edit</button>
         <button class="btn btn-sm btn-primary" id="ec-sa-btn-save-${sa.id}" onclick="saveEcSaEdit('${sa.id}','${ecId}')" style="display:none;font-size:11px;padding:2px 6px">Save</button>
@@ -216,9 +216,9 @@
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--gray-border)">
         <span id="ec-wo-display-${wo.id}" style="flex:1;font-family:monospace">WO# ${esc(wo.number)}${wo.service_area_name ? ` <span style="font-family:sans-serif;color:var(--text-muted);font-size:11px">· ${esc(wo.service_area_name)}</span>` : ''}${wo.description ? ` <span style="font-family:sans-serif;color:var(--text-muted);font-size:11px">· ${esc(wo.description)}</span>` : ''}</span>
         <div id="ec-wo-edit-${wo.id}" style="display:none;flex:1;gap:4px">
-          <input type="text" id="ec-wo-edit-num-${wo.id}" value="${esc(wo.number)}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;width:80px;font-family:monospace">
-          <input type="text" id="ec-wo-edit-desc-${wo.id}" value="${esc(wo.description || '')}" placeholder="Desc" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
-          <select id="ec-wo-edit-sa-${wo.id}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px">
+          <input type="text" id="ec-wo-edit-num-${wo.id}" aria-label="Work order number" value="${esc(wo.number)}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;width:80px;font-family:monospace">
+          <input type="text" id="ec-wo-edit-desc-${wo.id}" aria-label="Work order description" value="${esc(wo.description || '')}" placeholder="Desc" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
+          <select id="ec-wo-edit-sa-${wo.id}" aria-label="Work order service area" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px">
             <option value="">— No SA —</option>
             ${(sas || []).map(sa => `<option value="${sa.id}"${wo.service_area_id === sa.id ? ' selected' : ''}>${esc(sa.name)}</option>`).join('')}
           </select>
@@ -361,10 +361,10 @@
     if (!tr) return;
     tr.innerHTML = `
       <td style="padding:6px 8px;color:var(--text-muted)">${esc(ec.client_name || '—')}</td>
-      <td style="padding:6px 8px"><input type="text" id="ec-edit-name-${id}" value="${esc(ec.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
-      <td style="padding:6px 8px"><input type="text" id="ec-edit-num-${id}" value="${esc(ec.contract_number || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
-      <td style="padding:6px 8px"><input type="text" id="ec-edit-loan-${id}" value="${esc(ec.loan_name || '')}" placeholder="e.g. Reconnect 3" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
-      <td style="padding:6px 8px"><select id="ec-edit-program-${id}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">${programOptionsHtml(ec.program)}</select></td>
+      <td style="padding:6px 8px"><input type="text" id="ec-edit-name-${id}" aria-label="EC name" value="${esc(ec.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><input type="text" id="ec-edit-num-${id}" aria-label="EC contract number" value="${esc(ec.contract_number || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
+      <td style="padding:6px 8px"><input type="text" id="ec-edit-loan-${id}" aria-label="EC loan name" value="${esc(ec.loan_name || '')}" placeholder="e.g. Reconnect 3" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><select id="ec-edit-program-${id}" aria-label="EC program" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">${programOptionsHtml(ec.program)}</select></td>
       <td colspan="2" style="padding:6px 8px;text-align:right;color:var(--text-muted);font-size:11px">${ec.contract_count} contracts · ${ec.project_count} projects</td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
         <button class="btn btn-sm btn-primary" onclick="saveEngineeringContract('${id}')"><i class="fa-solid fa-check"></i></button>

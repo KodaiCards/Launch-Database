@@ -70,16 +70,16 @@
       <div class="form-grid">
         <div class="form-row">
           <div class="form-group">
-            <label>Invoice Number *</label>
+            <label for="bbm-inv-number">Invoice Number *</label>
             <input type="text" id="bbm-inv-number" placeholder="e.g. 2026-04-001">
           </div>
           <div class="form-group">
-            <label>Invoice Date</label>
+            <label for="bbm-inv-date">Invoice Date</label>
             <input type="date" id="bbm-inv-date" value="${today}">
           </div>
         </div>
         <div class="form-group">
-          <label>Invoice Name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+          <label for="bbm-inv-name">Invoice Name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
           <input type="text" id="bbm-inv-name" placeholder="e.g. Construction Inspection — April 2026">
         </div>
       </div>
