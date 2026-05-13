@@ -58,7 +58,27 @@
   document.getElementById('hrs-period')?.addEventListener('change', syncHrsPeriodVisibility);
   syncHrsPeriodVisibility();
 
+  // Load-guard: prevents double-fetch when multiple synchronous change events
+  // fire at the same time (e.g. persistFilter restoring month+year+period).
+  // The guard is set on the first entering call and cleared after it completes
+  // or errors. A debounce timer replaces any queued calls while the guard is
+  // active so the last change wins.
+  let _loadHoursGuard = false;
+  let _loadHoursPending = false;
+  let _loadHoursPendingTimer = null;
+
   async function loadHours() {
+    if (_loadHoursGuard) {
+      // Coalesce: schedule a single follow-up after the in-flight call lands.
+      _loadHoursPending = true;
+      clearTimeout(_loadHoursPendingTimer);
+      _loadHoursPendingTimer = setTimeout(() => {
+        if (_loadHoursPending) { _loadHoursPending = false; loadHours(); }
+      }, 50);
+      return;
+    }
+    _loadHoursGuard = true;
+    try {
     const period = document.getElementById('hrs-period')?.value || 'month';
     const m = document.getElementById('hrs-month').value;
     const y = document.getElementById('hrs-year').value;
@@ -351,6 +371,12 @@
     // Re-apply previously-expanded keys so polling re-renders don't visually
     // collapse rows the user had open.
     restoreHrsExpandedState();
+    } catch (e) {
+      const body = document.getElementById('hours-tree-body');
+      if (body) body.innerHTML = `<div class="empty-state" style="padding:40px;color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i><p>Failed to load hours: ${esc(e.message)}</p></div>`;
+    } finally {
+      _loadHoursGuard = false;
+    }
   }
 
   // Hours-tab tree state lives in hoursTreeState (shared instance from
