@@ -20,12 +20,16 @@
 > "Future feature."
 >
 > "I haven't found anything yet" (no reference tools).
+>
+> **Update 2026-05-13 (later same day):**
+> "No e-sign is ever needed, this is largely a read only thing with a couple features."
+> "Pull only for v1." (no email notifications)
 
 ## 2. Scope summary
 
 - **Audience:** Client organizations (e.g. PSC = Public Service Company). Multiple client orgs over time, one entry per org at minimum.
 - **Daily use:** Read project status + drop/pickup documents.
-- **Privileged actions (allowed):** Approve, sign, commit, upload.
+- **Privileged actions (allowed):** Approve, commit, upload. **No e-sign** (user confirmed never needed). Largely read-only with a couple of action features.
 - **Auth:** Token-based. Orchestrator creates token per client account; client uses token URL to enter; system loads their scoped data.
 - **Account model:** One primary account per company + optional additional accounts.
 - **Branding:** Launch Fiber logo + per-client logo on every portal page.
@@ -42,7 +46,7 @@ The existing token-based pattern is `routes/splice.js` — single-use OR persist
 
 **No `clients`, `client_organizations`, or `client_users` table exists today.** ECs have a `client` text field (e.g., `"PSC"`) which is informational, not relational. So this feature requires net-new schema.
 
-**No PDF signing flow exists today.** Documents are stored as files (splice PDFs, deliverables) but signing is offline. Adding e-signature is a meaningful scope addition.
+**No PDF signing flow exists today** — and per the 2026-05-13 update, e-sign is explicitly NOT in scope. Skip this entire surface.
 
 **No document drop / pickup surface exists today** in the way clients would expect. Splice contractors do upload field markup but that's per-job, not per-client.
 
@@ -99,12 +103,10 @@ CREATE TABLE client_documents (
   ec_id UUID REFERENCES engineering_contracts(id),
   filename TEXT NOT NULL,
   storage_path TEXT NOT NULL,
-  doc_type TEXT NOT NULL,                         -- 'deliverable' | 'signed_permit' | 'approval' | 'rfi' | 'invoice' | 'other'
+  doc_type TEXT NOT NULL,                         -- 'deliverable' | 'permit_return' | 'approval_doc' | 'rfi' | 'invoice' | 'other'
   direction TEXT NOT NULL,                        -- 'lf_to_client' (deliverable) | 'client_to_lf' (upload)
   uploaded_by_user UUID REFERENCES users(id),     -- internal user (if LF uploaded)
   uploaded_by_client UUID REFERENCES client_users(id), -- client user (if client uploaded)
-  signed_at TIMESTAMPTZ,
-  signed_by_client UUID REFERENCES client_users(id),
   approved_at TIMESTAMPTZ,
   approved_by_client UUID REFERENCES client_users(id),
   visibility TEXT NOT NULL DEFAULT 'client',      -- 'client' | 'internal_only'
@@ -158,7 +160,6 @@ GET  /client/projects/:id          → project detail (status, history, scoped d
 GET  /client/documents             → document drop (list + filters)
 GET  /client/documents/:id         → download document
 POST /client/documents             → upload document (multipart)
-POST /client/documents/:id/sign    → e-sign document (DocuSign or local PDF sig)
 GET  /client/approvals             → pending approval list
 POST /client/approvals/:id/decide  → approve/reject with note
 GET  /client/account               → team members + tokens (primary only)
@@ -216,12 +217,11 @@ Storage:
 ### 5c. Approve / sign / commit / upload
 
 - **Approve:** Client_approvals rows of `type='invoice'` or `type='milestone'`. Client sees pending list, opens detail, clicks Approve/Reject, optional note. Decision logged immutably (audit_logs entry).
-- **Sign:** PDF signing on `client_documents`. Two implementation options:
-  - **Local sig:** Generate signed PDF with embedded signer name + timestamp + cryptographic hash (no third-party). Sufficient for basic legal evidence; not the same as DocuSign.
-  - **DocuSign integration:** Third-party. Higher trust but adds vendor cost + complexity.
-  - **Recommendation:** local sig for v1; DocuSign as an optional enhancement.
+- **Sign:** OUT OF SCOPE — user confirmed 2026-05-13 e-sign is never needed. Delete this surface from the spec.
 - **Commit:** `client_approvals.type='commit'` — client commits to a scope or financial item. Same flow as approve but typically with `amount > 0` and more weight (could trigger downstream contract action).
 - **Upload:** Covered in 5b.
+
+**Pull-only for v1.** No email notifications, no SMS, no push. Clients check the portal manually. Adding notifications is a v2 enhancement.
 
 ## 6. Branding
 
@@ -246,13 +246,13 @@ Storage:
 
 ## 8. Open questions for build kickoff
 
-1. **E-sign legal strength.** Local-sig (timestamp + hash + signer name embedded in PDF) — is that legally adequate for the user's contract context, or do we need DocuSign / Adobe Sign?
+1. ~~**E-sign legal strength.**~~ **RESOLVED 2026-05-13:** No e-sign ever needed. Out of scope.
 2. **Document retention.** How long do client docs live? Forever? 7 years (typical engineering retention)? Per-doc retention?
-3. **Notifications.** When a deliverable lands or an approval becomes pending, does the client get an email? Daily digest, or real-time?
+3. ~~**Notifications.**~~ **RESOLVED 2026-05-13:** Pull-only for v1. No email/SMS/push.
 4. **Mobile.** Do clients access from phones? If yes, the layout needs mobile-first; the existing admin/permitting portals are desktop-first.
 5. **Audit export.** Do clients need to download their own audit log of their actions (for THEIR records), or is it internal-only?
 6. **Invoicing surface.** Should the portal also let clients pay or just view invoices? If pay, payment processor required.
-7. **Read-write split.** Some client users may be "view only" (e.g., a junior PM at PSC) vs "decision maker" (senior). Role enum (`viewer`/`approver`/`signer`/`admin`) sketched in section 4. Should all 4 roles exist or is it simpler (viewer vs full)?
+7. **Read-write split.** Some client users may be "view only" (e.g., a junior PM at PSC) vs "decision maker" (senior). With e-sign removed, roles collapse to `viewer` / `approver` / `admin` (3 instead of 4). Should we keep that split or even simpler (viewer vs full)?
 8. **EC linkage.** A client_org has multiple ECs. Show ALL of them in their portal, or scope tokens to specific ECs?
 9. **Project visibility default.** When a new project lands under a client's EC, does it auto-appear in their portal, or does an internal user have to mark it "client-visible"?
 10. **Logo upload UI.** Does LF admin upload client logos (current sketch), or can the primary client user upload their own?
@@ -261,7 +261,7 @@ Storage:
 
 Before dispatching a build pipeline, finalize:
 
-- [ ] Save PSC logo to `public/img/clients/psc-logo.png` (image already shared, just needs the file save)
+- [ ] Save PSC logo to `public/img/clients/psc-logo.png` — **STILL OUTSTANDING:** user attached logo to chat 2026-05-13 but image was inline data, not a file path. Orchestrator could not save bytes to disk. User needs to drop the PNG into the repo at this path (or share a filesystem path) before build kickoff.
 - [ ] Answer the 10 open questions above OR explicitly defer some to v2
 - [ ] Confirm the data model — adjust column names / types / FK shape if needed
 - [ ] Decide e-sign approach (local vs DocuSign)
