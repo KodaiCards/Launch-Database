@@ -424,7 +424,17 @@
     document.getElementById('te-history-btn').style.display = 'none';
     document.getElementById('te-save-btn').innerHTML = 'Save';
     document.getElementById('te-project').value = '';
-    document.getElementById('te-staff').value = '';
+    // Pre-select logged-in user's staff entry on the NEW path only.
+    // Only set if staff_id is present AND that option exists in the dropdown
+    // (prevents setting a stale id that renders as blank but isn't empty).
+    const teStaff = document.getElementById('te-staff');
+    const myStaffId = window.currentUser && window.currentUser.staff_id
+      ? String(window.currentUser.staff_id)
+      : '';
+    teStaff.value = '';
+    if (myStaffId && teStaff.querySelector(`option[value="${CSS.escape(myStaffId)}"]`)) {
+      teStaff.value = myStaffId;
+    }
     document.getElementById('te-hours').value = '';
     document.getElementById('te-title').value = '';
     document.getElementById('te-notes').value = '';
