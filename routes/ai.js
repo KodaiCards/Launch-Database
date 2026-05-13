@@ -74,7 +74,15 @@ function userWantsAction(messages) {
   if (/^(did you|have you|are you|why didn['‘’]?t|why haven['‘’]?t|why aren['‘’]?t|when will|when are|please just|just do|just create|just run|hurry up|c['‘’]?mon|come on|now do|now create|get on with|get started|get going|move on)/i.test(trimmed)) {
     return true;
   }
-  if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save|build|make|start|begin|run|execute|generate)\b/i.test(trimmed)) {
+  // M-1 fix: pattern 3 was unanchored — it fired on action verbs embedded
+  // anywhere in a message ("the status change I made yesterday" → false positive).
+  // Anchored to message start with an optional polite/interrogative prefix so
+  // "Can you generate a report" still fires but "the status change I made
+  // yesterday" does not. Test strings:
+  //   "The status change I made yesterday" → no fire ✓ (no leading action verb)
+  //   "Can you generate a report..."      → fires ✓  (polite prefix + action verb)
+  //   "Why did project X get set..."      → no fire ✓ (interrogative about past, not a request)
+  if (/^(?:please\s+|can\s+you\s+|could\s+you\s+|would\s+you\s+|i\s+(?:want\s+(?:you\s+)?to|need\s+(?:you\s+)?to|'d\s+like\s+(?:you\s+)?to)\s+)?(?:create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save|build|make|start|begin|run|execute|generate)\b/i.test(trimmed)) {
     return true;
   }
   return false;
