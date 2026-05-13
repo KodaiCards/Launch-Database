@@ -67,6 +67,55 @@ CREATE TABLE IF NOT EXISTS staff (
 );
 
 -- ─────────────────────────────────────────
+-- USERS
+-- ─────────────────────────────────────────
+--
+-- Wave 1.5 H-3: users table added to schema.sql for fresh-deploy parity.
+-- Previously this table was created only inside auth.js bootstrapAuthSchema(),
+-- causing 4 columns to be missing on fresh deploys (they existed as ALTER
+-- TABLE ADD COLUMN IF NOT EXISTS statements in auth.js but ran after schema.sql
+-- was applied, leaving a window where auth checks could silently fail).
+--
+-- The 4 columns added here (tokens_invalid_after, theme, extra_teams,
+-- dashboard_layout) are the ones that auth.js was adding via ALTER TABLE;
+-- they are now inline to ensure fresh-DB parity.
+--
+-- auth.js bootstrapAuthSchema() still runs its ALTER TABLE ADD COLUMN IF NOT
+-- EXISTS statements — those are now harmless no-ops if this schema.sql was
+-- applied first. If auth.js runs first (pre-schema.sql), this CREATE TABLE IF
+-- NOT EXISTS is a no-op.
+CREATE TABLE IF NOT EXISTS users (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username              VARCHAR(60) UNIQUE NOT NULL,
+  password_hash         TEXT NOT NULL,
+  role                  VARCHAR(40) NOT NULL,
+  team                  VARCHAR(20),
+  full_name             VARCHAR(120),
+  email                 VARCHAR(160),
+  active                BOOLEAN DEFAULT TRUE,
+  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  last_login            TIMESTAMPTZ,
+  updated_at            TIMESTAMPTZ DEFAULT NOW(),
+  -- Wave 1.5 H-3: 4 columns that previously existed only via ALTER TABLE in
+  -- auth.js, now inline so a fresh DB has them from the start.
+  -- tokens_invalid_after: bumped on logout/password-change to invalidate
+  --   any extant JWTs for that user (checked in authMiddleware against JWT iat).
+  --   Without this column on fresh deploy, authMiddleware silently skips
+  --   session revocation — the entire logout-invalidation security mechanism
+  --   breaks.
+  tokens_invalid_after  TIMESTAMPTZ,
+  -- theme: user's preferred color scheme ('light' | 'dark' | NULL = system).
+  theme                 VARCHAR(10),
+  -- extra_teams: additional team memberships beyond the primary `team` column.
+  --   Used for cross-team visibility (e.g. a permitter with design access).
+  extra_teams           TEXT[] DEFAULT '{}',
+  -- dashboard_layout: per-user JSONB blob for dashboard tile arrangement.
+  dashboard_layout      JSONB DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users (LOWER(username));
+
+-- ─────────────────────────────────────────
 -- PROJECTS
 -- ─────────────────────────────────────────
 
