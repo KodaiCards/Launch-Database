@@ -6,6 +6,8 @@
 // Design pipeline stages: potential → started → review_process → completed.
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+const { broadcast } = require('./_sse');
+
 module.exports = function installDesignPipelineRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
@@ -83,6 +85,8 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
           [projectId]
         );
       }
+      broadcast('admin', 'project_updated', { id: projectId });
+      broadcast('team:design', 'project_updated', { id: projectId });
       res.json({ previous: currentStage, current: nextStage });
     } catch (e) {
       console.error('[design_pipeline:advance]', e && e.message);
@@ -130,6 +134,8 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
           [projectId]
         );
       }
+      broadcast('admin', 'project_updated', { id: projectId });
+      broadcast('team:design', 'project_updated', { id: projectId });
       res.json({ previous: currentStage, current: prevStage });
     } catch (e) {
       console.error('[design_pipeline:regress]', e && e.message);

@@ -1911,7 +1911,9 @@ window.addEventListener('load', startPolling);
         setTimeout(startSse, 5000);
       });
       ['permit_added', 'permit_updated', 'permit_deleted'].forEach(ev => {
-        _sseSource.addEventListener(ev, () => _debounce('permits', () => callIfExists('loadPermits')));
+        // loadPermits was the original intent; the actual loader on this page is
+        // loadPipeline. Fixed: call the correct function name.
+        _sseSource.addEventListener(ev, () => _debounce('permits', () => callIfExists('loadPipeline')));
       });
       ['time_entry_added', 'time_entry_updated', 'time_entry_deleted',
        'time_entries_bulk_deleted'].forEach(ev => {

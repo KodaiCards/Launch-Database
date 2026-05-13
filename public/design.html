@@ -1904,6 +1904,9 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
       });
       ['project_added', 'project_updated', 'project_deleted'].forEach(ev => {
         _sseSource.addEventListener(ev, () => _debounce('projects', () => callIfExists('loadProjects')));
+        // Also refresh the design pipeline view on project changes — stage advances/
+        // regresses now broadcast project_updated so the pipeline stays live.
+        _sseSource.addEventListener(ev, () => _debounce('pipeline', () => callIfExists('loadPipeline')));
       });
       ['staff_added', 'staff_updated', 'staff_deleted'].forEach(ev => {
         _sseSource.addEventListener(ev, () => _debounce('staff', () => {
