@@ -262,8 +262,21 @@ CREATE TRIGGER projects_updated_at
 -- MIGRATIONS (safe to re-run)
 -- ─────────────────────────────────────────
 
--- Add parent_id for nested projects (existing databases)
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES projects(id) ON DELETE CASCADE;
+-- C-4 FIX: removed contradictory ALTER TABLE that declared parent_id ON DELETE CASCADE.
+-- The column is defined in CREATE TABLE above (line ~81) with ON DELETE RESTRICT, which
+-- is intentional — deleting a rollup parent must fail loudly if it still has children,
+-- not silently cascade and wipe billing history.
+--
+-- On a FRESH deploy (schema.sql used as the sole source): the CREATE TABLE wins with
+-- RESTRICT — this ALTER was a no-op anyway because ADD COLUMN IF NOT EXISTS skips when
+-- the column already exists.
+--
+-- On EXISTING databases where this migration previously ran BEFORE the CREATE TABLE was
+-- updated to RESTRICT: those databases got CASCADE. A separate corrective migration
+-- (ALTER TABLE projects DROP CONSTRAINT ...; ALTER TABLE projects ADD CONSTRAINT ...
+-- FOREIGN KEY (parent_id) REFERENCES projects(id) ON DELETE RESTRICT) is needed to fix
+-- those databases. That is out of scope for this wave — do not run cascade-to-restrict
+-- without first auditing any /api/projects/:id DELETE cascade paths.
 
 -- ─────────────────────────────────────────
 -- BUDGETS
