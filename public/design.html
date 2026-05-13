@@ -383,8 +383,8 @@ fetch('/api/auth/me', { credentials: 'include' })
        which made getElementById('dpb') return null and crashed loadProjects'
        catch (line 641) the moment any /api/projects call threw. -->
   <div style="display:none">
-    <input id="proj-search">
-    <select id="proj-status-filter"><option value="active" selected>Active</option></select>
+    <input id="proj-search" aria-label="Search projects">
+    <select id="proj-status-filter" aria-label="Project status filter"><option value="active" selected>Active</option></select>
     <table><tbody id="dpb"></tbody></table>
   </div>
 </div>
@@ -544,14 +544,14 @@ fetch('/api/auth/me', { credentials: 'include' })
         </div>
         <div id="jobs-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Job Name *</label><input type="text" id="njob-name" placeholder="e.g. CAD Drafting"></div>
-            <div class="form-group"><label>Default Type</label><select id="njob-bt"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
+            <div class="form-group"><label for="njob-name">Job Name *</label><input type="text" id="njob-name" placeholder="e.g. CAD Drafting"></div>
+            <div class="form-group"><label for="njob-bt">Default Type</label><select id="njob-bt"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label><input type="checkbox" id="njob-perm" style="width:auto;margin-right:6px"> Uses permit calc (for permitting jobs)</label>
             </div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="njob-by" placeholder="So admin knows who proposed this"></div>
+            <div class="form-group"><label for="njob-by">Your Name</label><input type="text" id="njob-by" placeholder="So admin knows who proposed this"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='none'">Cancel</button>
@@ -569,8 +569,8 @@ fetch('/api/auth/me', { credentials: 'include' })
         </div>
         <div id="ptype-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Type Name *</label><input type="text" id="nptype-name" placeholder="e.g. Construction"></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="nptype-by" placeholder="Who's proposing"></div>
+            <div class="form-group"><label for="nptype-name">Type Name *</label><input type="text" id="nptype-name" placeholder="e.g. Construction"></div>
+            <div class="form-group"><label for="nptype-by">Your Name</label><input type="text" id="nptype-by" placeholder="Who's proposing"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ptype-add-form').style.display='none'">Cancel</button>
@@ -588,10 +588,10 @@ fetch('/api/auth/me', { credentials: 'include' })
         </div>
         <div id="client-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Client Name *</label><input type="text" id="nclient-name" placeholder="e.g. Cox Communications"></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="nclient-by" placeholder="Who's proposing"></div>
+            <div class="form-group"><label for="nclient-name">Client Name *</label><input type="text" id="nclient-name" placeholder="e.g. Cox Communications"></div>
+            <div class="form-group"><label for="nclient-by">Your Name</label><input type="text" id="nclient-by" placeholder="Who's proposing"></div>
           </div>
-          <div class="form-group"><label>Notes</label><textarea id="nclient-notes" placeholder="Optional context..."></textarea></div>
+          <div class="form-group"><label for="nclient-notes">Notes</label><textarea id="nclient-notes" placeholder="Optional context..."></textarea></div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('client-add-form').style.display='none'">Cancel</button>
             <button class="btn btn-primary btn-sm" onclick="proposeClient()"><i class="fa-solid fa-paper-plane"></i> Submit for Approval</button>
@@ -608,12 +608,12 @@ fetch('/api/auth/me', { credentials: 'include' })
         </div>
         <div id="contract-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Client *</label><select id="ncontract-client"><option value="">Select...</option></select></div>
-            <div class="form-group"><label>Contract # *</label><input type="text" id="ncontract-num" placeholder="e.g. C-2025-001"></div>
+            <div class="form-group"><label for="ncontract-client">Client *</label><select id="ncontract-client"><option value="">Select...</option></select></div>
+            <div class="form-group"><label for="ncontract-num">Contract # *</label><input type="text" id="ncontract-num" placeholder="e.g. C-2025-001"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Name / Description</label><input type="text" id="ncontract-name" placeholder="Optional friendly name"></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="ncontract-by" placeholder="Who's proposing"></div>
+            <div class="form-group"><label for="ncontract-name">Name / Description</label><input type="text" id="ncontract-name" placeholder="Optional friendly name"></div>
+            <div class="form-group"><label for="ncontract-by">Your Name</label><input type="text" id="ncontract-by" placeholder="Who's proposing"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contract-add-form').style.display='none'">Cancel</button>
@@ -648,11 +648,11 @@ fetch('/api/auth/me', { credentials: 'include' })
   <div class="modal">
     <div class="modal-header"><span class="modal-title" id="ppm-title"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Submit Potential Permit</span><button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cm('ppm')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
     <div class="modal-body">
-      <div class="form-group"><label>SR/HWY *</label><input id="ps" placeholder="e.g. SR 49, HWY 240"></div>
-      <div class="form-group"><label>County</label><input id="pc" placeholder="e.g. Peach County"></div>
-      <div class="form-group"><label>Route</label><input id="pr" placeholder="Route description"></div>
-      <div class="form-group"><label>Your Name</label><input id="pn" placeholder="Your name"></div>
-      <div class="form-group"><label>Notes</label><textarea id="pno" placeholder="Additional details..."></textarea></div>
+      <div class="form-group"><label for="ps">SR/HWY *</label><input id="ps" placeholder="e.g. SR 49, HWY 240"></div>
+      <div class="form-group"><label for="pc">County</label><input id="pc" placeholder="e.g. Peach County"></div>
+      <div class="form-group"><label for="pr">Route</label><input id="pr" placeholder="Route description"></div>
+      <div class="form-group"><label for="pn">Your Name</label><input id="pn" placeholder="Your name"></div>
+      <div class="form-group"><label for="pno">Notes</label><textarea id="pno" placeholder="Additional details..."></textarea></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="cm('ppm')">Cancel</button><button class="btn btn-primary" onclick="spp()"><i class="fa-solid fa-paper-plane"></i> Submit</button></div>
   </div>

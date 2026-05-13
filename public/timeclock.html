@@ -289,7 +289,7 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
           <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)" title="Previous week"><i class="fa-solid fa-chevron-left"></i></button>
           <span class="week-nav-label" id="week-label">…</span>
           <button class="btn btn-secondary btn-sm" id="next-week-btn" onclick="changeWeek(1)" title="Next week"><i class="fa-solid fa-chevron-right"></i></button>
-          <select class="btn-secondary btn-sm" id="scrollback-select" onchange="scrollbackChanged()" style="padding:6px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white);color:var(--text);font-size:12px;margin-left:6px" title="Maximum weeks to scroll back">
+          <select class="btn-secondary btn-sm" id="scrollback-select" onchange="scrollbackChanged()" aria-label="Maximum weeks to scroll back" style="padding:6px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white);color:var(--text);font-size:12px;margin-left:6px" title="Maximum weeks to scroll back">
             <option value="4">4 weeks back</option>
             <option value="12" selected>12 weeks back</option>
             <option value="26">26 weeks back</option>
@@ -819,11 +819,11 @@ function renderClockCard(){
       <div id="quick-clock-row"></div>
       <div class="pre-clock-form">
         <div class="form-group">
-          <label>Project *</label>
+          <label for="ci-project">Project *</label>
           <select id="ci-project" onchange="ciProjectChanged()"><option value="">— Select project —</option></select>
         </div>
         <div class="form-group">
-          <label>Job</label>
+          <label for="ci-job">Job</label>
           <select id="ci-job"><option value="">— Select a job —</option></select>
         </div>
       </div>
@@ -934,11 +934,11 @@ function openSwitchModal(){
           <i class="fa-solid fa-circle-info"></i> Your current session will close and a new one will start. The hours so far will be saved as a time entry.
         </div>
         <div class="form-group">
-          <label>New Project *</label>
+          <label for="switch-project">New Project *</label>
           <select id="switch-project" onchange="switchProjectChanged()"><option value="">— Select project —</option></select>
         </div>
         <div class="form-group">
-          <label>Job</label>
+          <label for="switch-job">Job</label>
           <select id="switch-job"><option value="">— Default —</option></select>
         </div>
       </div>
