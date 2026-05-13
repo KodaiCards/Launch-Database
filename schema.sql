@@ -1026,3 +1026,255 @@ $migration_v3$;
 -- ═══════════════════════════════════════════════════════════════════════════
 -- End of v3 additions
 -- ═══════════════════════════════════════════════════════════════════════════
+
+
+-- ─── Wave 1.5 H-2: Append migrations 0012-0034 schema for fresh-deploy parity ───
+--
+-- These tables were introduced via numbered migrations after schema.sql was
+-- last updated. A fresh Railway deploy seeded from schema.sql alone would
+-- not have them, causing silent failures in:
+--   - splice public-token auth (splice_closure_public_tokens)
+--   - splicer field markup uploads (splice_field_markups)
+--   - threaded splice comments (splice_comments)
+--   - EC Service Areas + Work Orders UI (ec_service_areas, ec_work_orders)
+--   - Manual job-assignment overrides (job_assignments)
+--   - Projected revenue auto-sync for footage projects (trigger from 0033)
+--   - Projects parent_id FK correction (migration 0034)
+--
+-- NOTE: splice_closure_public_tokens, splice_field_markups, and
+-- splice_comments reference tables created in migration 0001
+-- (splice_projects, splice_closures). On a fresh deploy these FKs only
+-- succeed if migration 0001 has already run (which it does in the Railway
+-- migration runner before these tables are reached). All statements use
+-- CREATE TABLE IF NOT EXISTS for idempotency.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- ── Migration 0012: splice_closure_public_tokens + splice_field_markups ──────
+--
+-- Public QR tokens for splicer field access (no-login contractor flow).
+-- splice_closure_public_tokens: one opaque token per closure; QR printed on
+-- the field doc encodes /splice/field/{token}. Multiple tokens per closure
+-- are allowed; newest un-expired token is used on re-print.
+-- splice_field_markups: photos uploaded by splicers in the field, stored as
+-- BYTEA (capped at 2MB per upload). Token is a soft FK — markups outlive
+-- their tokens so as-built photos are retained after token revocation.
+
+CREATE TABLE IF NOT EXISTS splice_closure_public_tokens (
+  token                VARCHAR(64) PRIMARY KEY,
+  closure_id           UUID NOT NULL REFERENCES splice_closures(id) ON DELETE CASCADE,
+  project_id           UUID NOT NULL REFERENCES splice_projects(id) ON DELETE CASCADE,
+  expires_at           TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by_staff_id  UUID REFERENCES staff(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_splice_public_tokens_closure
+  ON splice_closure_public_tokens(closure_id);
+CREATE INDEX IF NOT EXISTS idx_splice_public_tokens_project
+  ON splice_closure_public_tokens(project_id);
+
+CREATE TABLE IF NOT EXISTS splice_field_markups (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  closure_id      UUID NOT NULL REFERENCES splice_closures(id) ON DELETE CASCADE,
+  project_id      UUID NOT NULL REFERENCES splice_projects(id) ON DELETE CASCADE,
+  token           VARCHAR(64) REFERENCES splice_closure_public_tokens(token) ON DELETE SET NULL,
+  splicer_name    VARCHAR(120),
+  notes           TEXT,
+  mime_type       VARCHAR(80) NOT NULL,
+  byte_size       INTEGER NOT NULL,
+  image_data      BYTEA NOT NULL,
+  uploaded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  uploader_ip     VARCHAR(45)
+);
+
+CREATE INDEX IF NOT EXISTS idx_splice_field_markups_closure
+  ON splice_field_markups(closure_id);
+CREATE INDEX IF NOT EXISTS idx_splice_field_markups_project
+  ON splice_field_markups(project_id);
+CREATE INDEX IF NOT EXISTS idx_splice_field_markups_uploaded_at
+  ON splice_field_markups(uploaded_at DESC);
+
+-- ── Migration 0021: splice_comments ──────────────────────────────────────────
+--
+-- Threaded comments anchored to closures or splices. GitHub PR-comment
+-- pattern adapted for splice review cycles. parent_comment_id NULL = top-level
+-- thread; non-null = reply. resolved_at marks a thread closed by the engineer.
+
+CREATE TABLE IF NOT EXISTS splice_comments (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id            UUID NOT NULL REFERENCES splice_projects(id) ON DELETE CASCADE,
+  target_table          VARCHAR(40) NOT NULL,
+  target_id             UUID NOT NULL,
+  body                  TEXT NOT NULL,
+  created_by_user_id    UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  resolved_at           TIMESTAMPTZ,
+  resolved_by_user_id   UUID REFERENCES users(id) ON DELETE SET NULL,
+  parent_comment_id     UUID REFERENCES splice_comments(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_splice_comments_target
+  ON splice_comments(target_table, target_id);
+CREATE INDEX IF NOT EXISTS idx_splice_comments_project
+  ON splice_comments(project_id, created_at DESC);
+
+-- ── Migration 0031: ec_service_areas + ec_work_orders ────────────────────────
+--
+-- EC-scoped Service Areas and Work Orders so the admin can define them once
+-- on the Engineering Contract and project-create modals populate from those
+-- lists. Unique per EC (same name can appear under two different ECs).
+
+CREATE TABLE IF NOT EXISTS ec_service_areas (
+  id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  engineering_contract_id uuid      NOT NULL
+                                    REFERENCES engineering_contracts(id)
+                                    ON DELETE CASCADE,
+  name                  text        NOT NULL,
+  notes                 text,
+  created_at            timestamptz DEFAULT NOW(),
+  UNIQUE (engineering_contract_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ec_service_areas_ec
+  ON ec_service_areas (engineering_contract_id);
+
+CREATE TABLE IF NOT EXISTS ec_work_orders (
+  id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  engineering_contract_id uuid      NOT NULL
+                                    REFERENCES engineering_contracts(id)
+                                    ON DELETE CASCADE,
+  service_area_id       uuid        REFERENCES ec_service_areas(id)
+                                    ON DELETE SET NULL,
+  number                text        NOT NULL,
+  description           text,
+  created_at            timestamptz DEFAULT NOW(),
+  UNIQUE (engineering_contract_id, number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ec_work_orders_ec
+  ON ec_work_orders (engineering_contract_id);
+
+CREATE INDEX IF NOT EXISTS idx_ec_work_orders_sa
+  ON ec_work_orders (service_area_id);
+
+-- ── Migration 0032: job_assignments ──────────────────────────────────────────
+--
+-- Manual job-assignment overrides for GET /api/jobs. Overrides the
+-- program_scope/for_*_client heuristic when matching rows exist.
+-- Scoping columns (client_id, engineering_contract_id, team) are nullable;
+-- NULL means "any" (matches any request value for that axis).
+-- The unique-pin uses CREATE UNIQUE INDEX with COALESCE so that two NULL
+-- rows are not treated as distinct (Postgres UNIQUE inline constraint treats
+-- NULLs as unequal; expression index does not).
+
+CREATE TABLE IF NOT EXISTS job_assignments (
+  id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  job_id                  uuid NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  client_id               uuid REFERENCES clients(id) ON DELETE CASCADE,
+  engineering_contract_id uuid REFERENCES engineering_contracts(id) ON DELETE CASCADE,
+  team                    text,
+  created_at              timestamptz NOT NULL DEFAULT NOW(),
+  CONSTRAINT job_assignments_at_least_one_scope
+    CHECK (client_id IS NOT NULL OR engineering_contract_id IS NOT NULL OR team IS NOT NULL)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS job_assignments_unique_pin
+  ON job_assignments (
+    job_id,
+    COALESCE(client_id,               '00000000-0000-0000-0000-000000000000'::uuid),
+    COALESCE(engineering_contract_id, '00000000-0000-0000-0000-000000000000'::uuid),
+    COALESCE(team, '')
+  );
+
+CREATE INDEX IF NOT EXISTS idx_job_assignments_job
+  ON job_assignments(job_id);
+
+CREATE INDEX IF NOT EXISTS idx_job_assignments_client
+  ON job_assignments(client_id)
+  WHERE client_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_job_assignments_ec
+  ON job_assignments(engineering_contract_id)
+  WHERE engineering_contract_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_job_assignments_team
+  ON job_assignments(team)
+  WHERE team IS NOT NULL;
+
+-- ── Migration 0033: projected_revenue footage trigger ─────────────────────────
+--
+-- Keeps projected_revenue in sync with expected_revenue for footage projects.
+-- For hourly projects, projected_revenue is derived at read time in
+-- /api/revenue/projected-total; the trigger does not touch those rows.
+-- Fires BEFORE UPDATE on projects so the INSERT sees the final value.
+
+CREATE OR REPLACE FUNCTION sync_projected_revenue_footage()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.billing_type = 'footage' AND (
+    OLD.expected_revenue IS DISTINCT FROM NEW.expected_revenue
+    OR OLD.billing_type IS DISTINCT FROM NEW.billing_type
+  ) THEN
+    NEW.projected_revenue := NEW.expected_revenue;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_projected_revenue_footage ON projects;
+
+CREATE TRIGGER trg_sync_projected_revenue_footage
+  BEFORE UPDATE ON projects
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_projected_revenue_footage();
+
+-- ── Migration 0034: projects.parent_id FK RESTRICT correction ────────────────
+--
+-- Wave 1.5 C-4 follow-up. Earlier schema.sql had a contradictory ALTER TABLE
+-- that set parent_id FK to CASCADE on databases where it ran before schema.sql
+-- was fixed. CASCADE would cascade-delete every descendant project + their
+-- time_entries (billing history loss) on rollup deletion.
+-- Fresh DBs (using this schema.sql) already land with RESTRICT from the
+-- CREATE TABLE above. This block corrects existing deployments that still have
+-- CASCADE. Idempotent: only runs the ALTER if CASCADE is currently set.
+
+DO $$
+DECLARE
+  current_action CHAR(1);
+  fk_name TEXT;
+BEGIN
+  SELECT conname, confdeltype INTO fk_name, current_action
+  FROM pg_constraint
+  WHERE conrelid = 'public.projects'::regclass
+    AND contype = 'f'
+    AND conkey = ARRAY[(
+      SELECT attnum FROM pg_attribute
+      WHERE attrelid = 'public.projects'::regclass AND attname = 'parent_id'
+    )]
+  LIMIT 1;
+
+  IF fk_name IS NULL THEN
+    RAISE NOTICE 'No FK found on projects.parent_id — skipping.';
+    RETURN;
+  END IF;
+
+  IF current_action = 'r' OR current_action = 'a' THEN
+    RAISE NOTICE 'projects.parent_id FK is already % — no change needed.',
+      CASE current_action WHEN 'r' THEN 'RESTRICT' ELSE 'NO ACTION' END;
+    RETURN;
+  END IF;
+
+  RAISE NOTICE 'Migrating projects.parent_id FK from action=% to RESTRICT (FK name: %)',
+    current_action, fk_name;
+
+  EXECUTE format('ALTER TABLE projects DROP CONSTRAINT %I', fk_name);
+
+  ALTER TABLE projects
+    ADD CONSTRAINT projects_parent_id_fkey
+    FOREIGN KEY (parent_id) REFERENCES projects(id) ON DELETE RESTRICT;
+
+  RAISE NOTICE 'projects.parent_id FK swapped to ON DELETE RESTRICT.';
+END $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- End of Wave 1.5 H-2 migration append
+-- ─────────────────────────────────────────────────────────────────────────────
