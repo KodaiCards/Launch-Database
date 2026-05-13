@@ -310,6 +310,7 @@ fetch('/api/auth/me', { credentials: 'include' })
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
 <script src="/js/dialog.js" defer></script>
+<script src="/js/focus_trap.js" defer></script>
 <script src="/js/undo_bar.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
 </head>
@@ -680,8 +681,25 @@ let allConcentrators = [];
 // ─── Tiny utilities ─────────────────────────────────────────────────────────
 function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
 function escUrl(s) { return encodeURIComponent(String(s||'')).replace(/%2F/g, '/'); }
-function om(id){document.getElementById(id).classList.add('open')}
-function cm(id){document.getElementById(id).classList.remove('open')}
+// Per-modal focus-trap registry for static .modal-overlay modals.
+const _omTraps = {};
+
+function om(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('open');
+  // A11y: trap focus; ESC closes.
+  if (window.trapFocus) {
+    if (_omTraps[id]) _omTraps[id].release();
+    _omTraps[id] = trapFocus(el, { escClose: true, onEsc: () => cm(id) });
+  }
+}
+function cm(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  if (_omTraps[id]) { _omTraps[id].release(); delete _omTraps[id]; }
+}
 async function api(p,m='GET',b=null){
   const o={method:m,headers:{'Content-Type':'application/json'},credentials:'include'};
   try{const tok=sessionStorage.getItem('lfs_token');if(tok)o.headers['Authorization']='Bearer '+tok;}catch(e){}
@@ -1730,9 +1748,15 @@ function togglePortalsDropdown() {
   }
 }
 // Centered profile modal (matches admin). Re-creates on each open.
+let _accountMenuTrap = null;
+function _closeAccountMenu() {
+  const m = document.getElementById('account-modal');
+  if (m) m.remove();
+  if (_accountMenuTrap) { _accountMenuTrap.release(); _accountMenuTrap = null; }
+}
 function showAccountMenu() {
   const existing = document.getElementById('account-modal');
-  if (existing) { existing.remove(); return; }
+  if (existing) { _closeAccountMenu(); return; }
   const u = currentUser || {};
   const teams = [];
   const primary = u.role === 'admin' ? null
@@ -1755,11 +1779,15 @@ function showAccountMenu() {
   overlay.id = 'account-modal';
   overlay.className = 'modal-overlay';
   overlay.style.display = 'flex';
+  // A11y: dialog role + label
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'account-modal-title');
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:420px;width:90%">
       <div class="modal-header">
-        <span class="modal-title"><i class="fa-solid fa-user-circle" style="margin-right:8px"></i>Account</span>
-        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('account-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+        <span class="modal-title" id="account-modal-title"><i class="fa-solid fa-user-circle" style="margin-right:8px" aria-hidden="true"></i>Account</span>
+        <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="_closeAccountMenu()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="modal-body">
         <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
@@ -1770,12 +1798,12 @@ function showAccountMenu() {
             ${teamPills}
           </div>
         </div>
-        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
-          <i class="fa-solid fa-key" style="margin-right:10px"></i>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="_closeAccountMenu();openChangePasswordModal()">
+          <i class="fa-solid fa-key" style="margin-right:10px" aria-hidden="true"></i>
           <span>Change Password</span>
         </button>
         <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
-          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i>
+          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px" aria-hidden="true"></i>
           <span>Sign Out</span>
         </button>
       </div>
@@ -1783,8 +1811,12 @@ function showAccountMenu() {
   `;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) _closeAccountMenu();
   });
+  // A11y: trap focus and handle ESC
+  if (window.trapFocus) {
+    _accountMenuTrap = trapFocus(overlay, { escClose: true, onEsc: _closeAccountMenu });
+  }
 }
 async function signOut() {
   // No confirm — modal already counts as the deliberate action.
