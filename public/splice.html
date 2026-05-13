@@ -436,6 +436,9 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .sp-order{position:absolute;top:-5px;right:-5px;background:var(--primary);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:0 3px;min-width:12px;text-align:center;line-height:14px}
 .fiber-cell.in-use{opacity:0.45;cursor:not-allowed}
 .fiber-cell.in-use:hover{background:var(--white);border-color:var(--border-weak)}
+/* H-7 a11y: keyboard focus indicator — visible ring that doesn't disturb layout */
+.fiber-cell:focus{outline:none}
+.fiber-cell:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:3px;z-index:1;position:relative}
 
 .splices-list{margin-top:12px;border-top:1px solid var(--border-weak);padding-top:10px}
 .splices-list h4{font-size:12px;margin-bottom:6px;color:var(--text-secondary)}
@@ -5690,17 +5693,40 @@ window.renderFiberPicker = function(side) {
 // the fiber grid for it. Does NOT touch the tube dropdown — that's
 // what the user just clicked, and rebuilding it would wipe their
 // selection.
+
+// H-7 a11y: fiber grid has 6 columns (matches .fiber-grid CSS repeat(6,1fr)).
+const FIBER_GRID_COLS = 6;
+
 window.renderFibersOnly = function(side) {
   if (state._spRibbon) return;  // ribbon mode doesn't show a fiber grid
   const tubeSel = document.getElementById('sp-tube-' + side);
   const tubeId = tubeSel.value;
   const grid = document.getElementById('sp-fibers-' + side);
-  if (!tubeId) { grid.innerHTML = '<div class="empty-pane">Pick a tube</div>'; return; }
+  if (!tubeId) {
+    // Reset ARIA attributes when no tube is selected.
+    grid.removeAttribute('role');
+    grid.removeAttribute('aria-label');
+    grid.removeAttribute('aria-colcount');
+    grid.removeAttribute('aria-rowcount');
+    grid.innerHTML = '<div class="empty-pane">Pick a tube</div>';
+    return;
+  }
   const fibers = state.data.fibers
     .filter(f => f.buffer_tube_id === tubeId)
     .sort((a,b)=>a.position-b.position);
   const selectedIds = side === 'a' ? (state._spA || []) : (state._spB || []);
-  grid.innerHTML = fibers.map(f => {
+
+  // H-7 a11y: expose ARIA grid semantics on the container.
+  const rowCount = Math.ceil(fibers.length / FIBER_GRID_COLS);
+  grid.setAttribute('role', 'grid');
+  grid.setAttribute('aria-label', 'Side ' + side.toUpperCase() + ' fiber selection');
+  grid.setAttribute('aria-colcount', String(FIBER_GRID_COLS));
+  grid.setAttribute('aria-rowcount', String(rowCount));
+
+  // H-7 a11y: preserve the last focused fiber id so re-renders keep focus.
+  const prevFocusId = grid._spFocusedFiberId || null;
+
+  grid.innerHTML = fibers.map((f, idx) => {
     const used = state._spUsed.has(f.id);
     const pickedAt = selectedIds.indexOf(f.id);
     const isPicked = pickedAt !== -1;
@@ -5715,9 +5741,20 @@ window.renderFibersOnly = function(side) {
     // Show pick order number when multiple fibers are selected.
     const orderBadge = isPicked && selectedIds.length > 1
       ? `<span class="sp-order">${pickedAt + 1}</span>` : '';
+    // H-7 a11y: roving tabindex — previously-focused cell gets 0, others -1.
+    // First cell gets 0 when there's no prior focus.
+    const isRovingActive = prevFocusId ? f.id === prevFocusId : idx === 0;
+    const col = (idx % FIBER_GRID_COLS) + 1;
+    const row = Math.floor(idx / FIBER_GRID_COLS) + 1;
     return `<div class="${cls}"
-      data-fiber-id="${f.id}" data-side="${side}"
-      onclick="pickFiber(event,this)">
+      role="gridcell"
+      aria-colindex="${col}"
+      aria-rowindex="${row}"
+      aria-label="Fiber ${f.position} ${f.color}${used ? ' (in use)' : ''}"
+      tabindex="${isRovingActive ? 0 : -1}"
+      data-fiber-id="${f.id}" data-side="${side}" data-fiber-idx="${idx}"
+      onclick="pickFiber(event,this)"
+      onkeydown="fiberGridKeydown(event,this)">
       <span class="fc fc-${f.color}" title="${f.color}"></span><span style="font-size:9px;font-weight:600;color:var(--text-secondary)">${abbrev}</span>${f.position}${orderBadge}
     </div>`;
   }).join('');
@@ -5728,6 +5765,16 @@ window.pickFiber = function(event, el) {
   const fid  = el.dataset.fiberId;
   const arr  = side === 'a' ? state._spA : state._spB;
   const inUse = state._spUsed && state._spUsed.has(fid);
+
+  // H-7 a11y: in-use cells are visually disabled and must not be selectable
+  // via keyboard (Space/Enter) either — same behaviour as mouse cursor:not-allowed.
+  if (inUse) return;
+
+  // H-7 a11y: track which fiber should retain roving-tabindex="0" after
+  // renderFibersOnly rebuilds the DOM. This keeps keyboard focus on the
+  // activated cell rather than jumping to the first cell on every selection.
+  const grid = el.closest('.fiber-grid');
+  if (grid) grid._spFocusedFiberId = fid;
 
   if (event && event.shiftKey) {
     // Shift-click: additive select / deselect toggle.
@@ -5750,6 +5797,94 @@ window.pickFiber = function(event, el) {
   // code that still reads them — point at the FIRST selected fiber.
   if (side === 'a') state._spA = arr;
   else              state._spB = arr;
+};
+
+// ───────────────────────────────────────────────────────────────────────────
+// H-7 a11y — Fiber grid keyboard navigation (roving tabindex / ARIA grid)
+// ───────────────────────────────────────────────────────────────────────────
+// Implements the ARIA grid keyboard interaction pattern:
+//   Arrow keys     — move focus between cells
+//   Home / End     — first / last cell in current row
+//   Ctrl+Home      — first cell in grid
+//   Ctrl+End       — last cell in grid
+//   Space / Enter  — activate cell (same as click, respects Shift modifier)
+//   Tab            — exit the grid to next focusable element (natural tabindex)
+//
+// Roving tabindex: only the active cell has tabindex="0"; all others are "-1".
+// On re-render (renderFibersOnly), the grid._spFocusedFiberId property carries
+// the previously-focused fiber-id so focus is restored to the same fiber after
+// selection changes rebuild the DOM.
+window.fiberGridKeydown = function(event, el) {
+  const grid = el.closest('.fiber-grid');
+  if (!grid) return;
+
+  const cells = Array.from(grid.querySelectorAll('[role="gridcell"]'));
+  const total = cells.length;
+  if (!total) return;
+
+  const idx = parseInt(el.dataset.fiberIdx, 10);
+  let next = -1;
+
+  switch (event.key) {
+    case 'ArrowRight':
+      event.preventDefault();
+      next = Math.min(idx + 1, total - 1);
+      break;
+    case 'ArrowLeft':
+      event.preventDefault();
+      next = Math.max(idx - 1, 0);
+      break;
+    case 'ArrowDown':
+      event.preventDefault();
+      next = Math.min(idx + FIBER_GRID_COLS, total - 1);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      next = Math.max(idx - FIBER_GRID_COLS, 0);
+      break;
+    case 'Home':
+      event.preventDefault();
+      if (event.ctrlKey || event.metaKey) {
+        next = 0;                                         // Ctrl+Home: grid start
+      } else {
+        next = idx - (idx % FIBER_GRID_COLS);             // row start
+      }
+      break;
+    case 'End':
+      event.preventDefault();
+      if (event.ctrlKey || event.metaKey) {
+        next = total - 1;                                 // Ctrl+End: grid end
+      } else {
+        const rowEnd = idx - (idx % FIBER_GRID_COLS) + FIBER_GRID_COLS - 1;
+        next = Math.min(rowEnd, total - 1);               // row end
+      }
+      break;
+    case ' ':
+    case 'Enter':
+      event.preventDefault();
+      // Activate the cell — same logic as a click, with Shift support.
+      pickFiber(event, el);
+      return;
+    case 'Tab':
+      // Let Tab escape naturally; clear roving state so re-focus lands on
+      // the right cell next time the user Tabs back in.
+      // No preventDefault — we want Tab to leave the grid.
+      return;
+    default:
+      return;
+  }
+
+  if (next < 0 || next === idx) return;
+
+  // Update roving tabindex: remove from current, assign to next.
+  el.setAttribute('tabindex', '-1');
+  const nextEl = cells[next];
+  nextEl.setAttribute('tabindex', '0');
+  nextEl.focus();
+
+  // Persist focused fiber-id on the grid element so renderFibersOnly can
+  // restore focus after DOM rebuild triggered by pickFiber.
+  grid._spFocusedFiberId = nextEl.dataset.fiberId;
 };
 
 // ───────────────────────────────────────────────────────────────────────────
