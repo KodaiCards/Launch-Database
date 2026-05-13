@@ -328,6 +328,12 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
           )::int AS without_projected
         FROM projects p
         WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
+          -- Intentionally excludes 'billed' status: this endpoint shows only the
+          -- open pipeline (work in progress or completed-but-not-yet-closed). A
+          -- 'billed' footage project with remaining projected_revenue would inflate
+          -- the forward-looking number — we want "what's still in flight," not
+          -- "what has already closed." The data-quality panel surfaces any billed
+          -- footage projects with leftover projected_revenue as a data-hygiene item.
           AND p.status IN ('active', 'completed')
           AND COALESCE(p.is_rollup, FALSE) = FALSE
       `);

@@ -702,9 +702,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              column on projects are intact; this tile (and its sibling
              card below) can be re-enabled when the projection logic is
              ready for a second pass. -->
-        <div class="stat-card" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:default" title="Projection logic retired pending revisit">
-          <div class="stat-label" style="color:rgba(255,255,255,.85)">Next 90 Day Projection</div>
+        <div class="stat-card" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:default" title="RUS billable-hours pace × billing rate over the next 13 weeks, capped at remaining EC budget">
+          <!-- M-5: renamed from "Next 90 Day Projection" → "RUS Next 13 Weeks" to
+               match horizonWeeks=13 in the backend. Sub-label shows MTD hours so
+               the two windows (MTD vs 13-wk pace) are visually distinct. -->
+          <div class="stat-label" style="color:rgba(255,255,255,.85)">RUS Next 13 Weeks</div>
           <div class="stat-value" id="s-90d-projection" style="font-size:13px;font-weight:600;letter-spacing:.05em;color:rgba(255,255,255,.85)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div>
+          <div class="stat-label" id="s-90d-mtd-label" style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px">MTD: — hrs &nbsp;|&nbsp; 13-wk pace: pending</div>
         </div>
       </div>
 
