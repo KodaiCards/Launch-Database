@@ -429,6 +429,14 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         LEFT JOIN projects pp ON pp.id = p.parent_id
         LEFT JOIN projects gp ON gp.id = pp.parent_id
         WHERE p.billed_date IS NULL
+          -- L-3 verification: SELECT COUNT(*) FROM projects WHERE billing_cadence IS NULL AND status='active'
+          -- DB access unavailable during this fix wave (no Railway credentials in agent env).
+          -- The query above intentionally treats NULL cadence as 'one_time' (safe default: routes
+          -- the project to the one-time unbilled queue rather than the monthly queue). Legacy rows
+          -- with NULL cadence are caught here rather than in the monthly query, so no double-billing
+          -- risk for NULL rows at this time. When DB access is available, run the verification query;
+          -- if count > 0, run: UPDATE projects SET billing_cadence='one_time' WHERE billing_cadence IS NULL;
+          -- and record the count in this comment.
           AND (p.billing_cadence IS NULL OR p.billing_cadence = 'one_time')
           AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND (

@@ -673,6 +673,14 @@ async function buildPscRusProjection(pool, opts) {
   };
 }
 
+/**
+ * @deprecated L-2 — The `/api/automation/inspection-projection` route now
+ *   aliases `buildPscRusProjection`, which is the canonical multi-bucket
+ *   projection for all RUS job types (Inspection + RE + Permitting + Misc).
+ *   `buildInspectionRevenueProjection` is exported for backward-compat only.
+ *   Do NOT call it from new code. Schedule removal in the next cleanup wave
+ *   once you've confirmed no external tests or scripts still reference it.
+ */
 // Inspection revenue projection — UMBRELLA-FIRST.
 //
 // The data model now allows a budget to attach at the engineering_contract
@@ -707,7 +715,18 @@ async function buildPscRusProjection(pool, opts) {
 // have different billing_rates (Resident Engineer at $100, Inspection at
 // $90). We weight by recent hours so the rate reflects what's actually
 // being billed.
+// L-2: emit a one-time deprecation warning so production logs surface any
+// call sites that are still using this function after the alias switch.
+let _inspectionProjectionWarnedOnce = false;
 async function buildInspectionRevenueProjection(pool, opts) {
+  if (!_inspectionProjectionWarnedOnce) {
+    _inspectionProjectionWarnedOnce = true;
+    console.warn(
+      '[automation] buildInspectionRevenueProjection is deprecated. ' +
+      'Use buildPscRusProjection instead. ' +
+      'Schedule removal in the next cleanup wave.'
+    );
+  }
   const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
   const horizonWeeks  = (opts && opts.horizonWeeks)  || 26;
 
