@@ -2283,7 +2283,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
       }
 
     } else if (ext === '.csv' || ext === '.tsv') {
-      const content = fs.readFileSync(req.file.path, 'utf8');
+      const content = await fs.promises.readFile(req.file.path, 'utf8');
       const workbook = XLSX.read(content, { type: 'string' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       rows = XLSX.utils.sheet_to_json(sheet, {
@@ -2294,7 +2294,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
       headers = Object.keys(rows[0] || {});
 
     } else {
-      const content = fs.readFileSync(req.file.path, 'utf8');
+      const content = await fs.promises.readFile(req.file.path, 'utf8');
       const uploadId = uuidv4();
       // Bind upload to the uploading user so get_upload_data / csv_smart_import
       // reject cross-user access (Item 6 — uploadStore user binding).
