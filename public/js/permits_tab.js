@@ -23,6 +23,11 @@
 //   openPermitDocs, loadPermitDocs, uploadDoc, deletePermitDoc
 
 (function () {
+  // Per-project document cache (M-5). Avoids re-fetching the full /api/permits
+  // list on every modal open. Keys: projectId (string), values: docs array.
+  // Busted after a successful upload so the next loadPermitDocs sees fresh data.
+  const _permitDocCache = new Map();
+
   // Local helper — only loadPermits reads this.
   function pipelineViz(currentIdx) {
     return '<div class="pipeline">' + STAGES.map((s, i) => {
@@ -148,15 +153,22 @@
 
   async function loadPermitDocs(projectId) {
     const list = document.getElementById('permit-doc-list');
-    let permits;
-    try {
-      permits = await api('/api/permits');
-    } catch (e) {
-      if (list) list.innerHTML = `<p style="color:var(--danger);font-size:13px">Failed to load documents: ${esc(e.message)}</p>`;
-      return;
+    let docs;
+    if (_permitDocCache.has(String(projectId))) {
+      // Use in-memory cache — avoids a full /api/permits fetch on modal open.
+      docs = _permitDocCache.get(String(projectId));
+    } else {
+      let permits;
+      try {
+        permits = await api('/api/permits');
+      } catch (e) {
+        if (list) list.innerHTML = `<p style="color:var(--danger);font-size:13px">Failed to load documents: ${esc(e.message)}</p>`;
+        return;
+      }
+      const p = permits.find(x => x.id === projectId);
+      docs = p?.documents || [];
+      _permitDocCache.set(String(projectId), docs);
     }
-    const p = permits.find(x => x.id === projectId);
-    const docs = p?.documents || [];
     if (!docs.length) { list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>'; return; }
     list.innerHTML = docs.map(d => {
       const ext = (d.file_name.split('.').pop() || '').toLowerCase();
@@ -198,6 +210,8 @@
       if (list && !list.querySelector('[data-doc-id]')) {
         list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>';
       }
+      // Bust cache so a subsequent re-open reflects the deletion.
+      if (window.currentPermitProjectId) _permitDocCache.delete(String(window.currentPermitProjectId));
     });
   }
 
@@ -235,6 +249,8 @@
         },
       });
       document.getElementById('doc-file').value = '';
+      // Bust cache so the post-upload reload fetches fresh server-side data.
+      _permitDocCache.delete(String(projectId));
       loadPermitDocs(projectId);
     } catch (e) {
       alert('Upload failed: ' + e.message);
