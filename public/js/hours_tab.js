@@ -505,7 +505,7 @@
   async function openEditTimeEntryModal(id) {
     const e = _hoursEntriesById.get(String(id));
     if (!e) {
-      alert('Entry no longer in view. Refresh and try again.');
+      await alertDialog({ title: 'Entry not found', message: 'Entry no longer in view. Refresh and try again.' });
       return;
     }
     if (typeof allProjects !== 'undefined' && !allProjects.length && typeof loadProjects === 'function') await loadProjects();
@@ -588,21 +588,27 @@
       ? `YTD ${y}`
       : new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const qs = period === 'ytd' ? `year=${y}` : `month=${m}&year=${y}`;
-    if (!confirm(`Delete ALL hours for ${name} in ${periodLabel}?\n\nThis will:\n• Remove every time entry this employee logged in this period\n• Recompute totals on every affected project\n\nYou'll get a 15-second undo window after the delete.`)) return;
+    const ok = await confirmDialog({
+      title: `Delete all hours for ${name}?`,
+      message: `Period: ${periodLabel}\n\nThis will:\n• Remove every time entry this employee logged in this period\n• Recompute totals on every affected project\n\nYou'll get a 15-second undo window after the delete.`,
+      confirmLabel: 'Delete All',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const r = await api(`/api/time-entries/by-staff/${staffId}?${qs}`, 'DELETE');
       if (r.undo_token && r.deleted > 0 && typeof showUndoBar === 'function') {
         showUndoBar(`Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'} for ${name}.`, r.undo_token);
       } else if (r.deleted === 0) {
-        alert(`No time entries found for ${name} in ${periodLabel}.`);
+        await alertDialog({ title: 'Nothing to delete', message: `No time entries found for ${name} in ${periodLabel}.` });
       } else {
-        alert(`Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'}.`);
+        await alertDialog({ title: 'Deleted', message: `Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'}.` });
       }
       loadHours();
       if (typeof loadDashboard === 'function') loadDashboard();
       if (typeof loadProjects === 'function') loadProjects();
     } catch (e) {
-      alert('Failed: ' + e.message);
+      await alertDialog({ title: 'Delete failed', message: e.message });
     }
   }
 

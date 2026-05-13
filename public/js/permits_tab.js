@@ -117,7 +117,7 @@
       if (typeof loadDashboard === 'function') loadDashboard();
     } catch (e) {
       if (btn) { btn.disabled = false; btn.innerHTML = '→ Next'; }
-      alert('Advance failed: ' + e.message);
+      alertDialog({ title: 'Advance failed', message: e.message });
     }
   }
 
@@ -218,8 +218,8 @@
   async function uploadDoc() {
     const file = document.getElementById('doc-file').files[0];
     const projectId = window.currentPermitProjectId;
-    if (!file || !projectId) return alert('Select a file first');
-    if (file.size > 2 * 1024 * 1024 * 1024) return alert('File exceeds 2 GB limit (got ' + (file.size / 1024 / 1024 / 1024).toFixed(2) + ' GB)');
+    if (!file || !projectId) { await alertDialog({ title: 'No file selected', message: 'Select a file first.' }); return; }
+    if (file.size > 2 * 1024 * 1024 * 1024) { await alertDialog({ title: 'File too large', message: 'File exceeds 2 GB limit (got ' + (file.size / 1024 / 1024 / 1024).toFixed(2) + ' GB).' }); return; }
     const fd = new FormData();
     fd.append('file', file);
     fd.append('doc_type', document.getElementById('doc-type').value);
@@ -253,7 +253,7 @@
       _permitDocCache.delete(String(projectId));
       loadPermitDocs(projectId);
     } catch (e) {
-      alert('Upload failed: ' + e.message);
+      await alertDialog({ title: 'Upload failed', message: e.message });
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload'; }
       if (wrap) wrap.style.display = 'none';

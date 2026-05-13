@@ -50,13 +50,16 @@
       manual_invoice_amount = null;  // clear override
     } else {
       const parsed = parseFloat(trimmed);
-      if (isNaN(parsed) || parsed < 0) return alert('Please enter a valid positive number, or leave blank to clear.');
+      if (isNaN(parsed) || parsed < 0) {
+        await alertDialog({ title: 'Invalid amount', message: 'Please enter a valid positive number, or leave blank to clear.' });
+        return;
+      }
       manual_invoice_amount = parsed;
     }
     try {
       await api(`/api/projects/${projectId}`, 'PUT', { manual_invoice_amount });
       loadBilling();  // refresh row + totals
-    } catch (e) { alert('Update failed: ' + e.message); }
+    } catch (e) { await alertDialog({ title: 'Update failed', message: e.message }); }
   }
 
   async function loadBilling() {
@@ -264,28 +267,30 @@
   }
 
   async function deleteInvoice(invoiceId, wipeHours) {
-    const action = wipeHours
+    const message = wipeHours
       ? 'Delete this invoice, unbill the projects, AND erase all their logged hours?'
       : 'Delete this invoice and unbill the linked projects? Hours will be kept.';
-    if (!confirm(action)) return;
+    const ok = await confirmDialog({ title: 'Delete invoice?', message, confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
     try {
       await api('/api/invoices/' + invoiceId + '?wipe_hours=' + wipeHours, 'DELETE');
       loadBilling();
       if (typeof loadRevenue === 'function') loadRevenue();
       if (typeof loadDashboard === 'function') loadDashboard();
       if (typeof loadHours === 'function') loadHours();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { await alertDialog({ title: 'Delete failed', message: e.message }); }
   }
 
   async function deleteBilledProject(projectId) {
-    if (!confirm('Delete this billed project and all its hours? This will remove it from revenue.')) return;
+    const ok = await confirmDialog({ title: 'Delete billed project?', message: 'Delete this billed project and all its hours? This will remove it from revenue.', confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
     try {
       await api('/api/projects/' + projectId + '/with-hours', 'DELETE');
       loadBilling();
       if (typeof loadRevenue === 'function') loadRevenue();
       if (typeof loadDashboard === 'function') loadDashboard();
       if (typeof loadProjects === 'function') loadProjects();
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { await alertDialog({ title: 'Delete failed', message: e.message }); }
   }
 
   // ── Invoice-history tree toggle ────────────────────────────────────────────
