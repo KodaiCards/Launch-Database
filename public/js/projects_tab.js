@@ -14,7 +14,7 @@
 //     context isn't lost when matches are deep.
 //   - renderProjects: recursive tree render with rollup-up YTD revenue,
 //     projected revenue, and hours. Persistent expand state via
-//     projectsTreeState (shared with Dashboard + Revenue trees).
+//     projectsTreeState (shared with Dashboard; Revenue has its own revenueTreeState).
 //   - ptreeToggle / ptreeExpandAll: tree expand/collapse with
 //     descendant cascade, mirrored to the persistent state so the
 //     1.5s polling re-render doesn't collapse the user's selection.

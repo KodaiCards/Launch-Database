@@ -17,7 +17,7 @@
 //   api(), esc(), fmt(), fmtMoney()  — global helpers
 //   typeBadge(), statusBadge()       — global badge renderers
 //   MONTH_NAMES, MONTH_FULL          — month-label constants
-//   projectsTreeState                — shared tree expand state
+//   revenueTreeState                 — Revenue-tab-only tree expand state (H-8)
 //   allProjects                      — global cache (for cascade collapse)
 //   showProjectDetail()              — drilldown opener
 //   showProjectedList()              — projected revenue tile drilldown
@@ -75,7 +75,7 @@
         const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:var(--row-alt)';
 
         const isVisible = depth === 0 || parentExpanded;
-        const thisExpanded = projectsTreeState.isExpanded(p.id);
+        const thisExpanded = revenueTreeState.isExpanded(p.id);
 
         const trClass = ['clickable'];
         if (parentGroupClass) trClass.push('rtree', 'rtree-' + parentGroupClass);
@@ -106,11 +106,12 @@
     tbody.innerHTML = buildRevRows(roots, 0, null, true);
   }
 
-  // Revenue tree toggle. The groupKey prefix is rv- (not rt-) for
-  // historical reasons; chev ids are rc-. See makeTreeToggle in
-  // tree_state.js for the shared implementation.
+  // Revenue tree toggle. Uses revenueTreeState (its own instance) so
+  // expand/collapse in Revenue does not bleed into Projects or Dashboard.
+  // The groupKey prefix is rv- (not rt-) for historical reasons; chev ids
+  // are rc-. See makeTreeToggle in tree_state.js for the shared implementation.
   const rtreeToggle = makeTreeToggle({
-    state: projectsTreeState,
+    state: revenueTreeState,
     chevIdPrefix: 'rc-',
     groupKeyPrefix: 'rv-',
     rowClassPrefix: 'rtree-',
