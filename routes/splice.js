@@ -2627,6 +2627,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       });
       try {
         const page = await browser.newPage();
+        // C-1 SSRF fix: block all non-data: network requests so user-controlled
+        // HTML fields (e.g. splice location names, notes) can't be used to reach
+        // Railway IMDS or internal services via crafted <img src="http://..."> tags.
+        await page.setRequestInterception(true);
+        page.on('request', req => {
+          const u = req.url();
+          if (u.startsWith('data:') || u === 'about:blank') return req.continue();
+          return req.abort();
+        });
         await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
         const pdf = await page.pdf({
           format: 'Letter',
@@ -3647,6 +3656,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       });
       try {
         const page = await browser.newPage();
+        // C-1 SSRF fix: block all non-data: network requests so user-controlled
+        // HTML fields (e.g. splice location names, notes) can't be used to reach
+        // Railway IMDS or internal services via crafted <img src="http://..."> tags.
+        await page.setRequestInterception(true);
+        page.on('request', req => {
+          const u = req.url();
+          if (u.startsWith('data:') || u === 'about:blank') return req.continue();
+          return req.abort();
+        });
         await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
         const pdf = await page.pdf({
           format: pageSize,
