@@ -6,8 +6,53 @@
     <title>OSP / ISP Master Training</title>
     <script type="module" crossorigin src="/training/assets/index-C1d2X0zu.js"></script>
     <link rel="stylesheet" crossorigin href="/training/assets/index-CxqtYakO.css">
+    <style>
+      #lfs-training-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px;
+        background: #0B1A2E;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+        height: 48px;
+        box-sizing: border-box;
+      }
+      #lfs-training-header img {
+        height: 28px;
+        width: auto;
+      }
+      #lfs-training-header a.back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.22);
+        transition: background .12s;
+        font-family: Inter, system-ui, sans-serif;
+      }
+      #lfs-training-header a.back-link:hover {
+        background: rgba(255,255,255,0.25);
+      }
+      /* Push app root below fixed header */
+      body { padding-top: 48px; }
+    </style>
   </head>
   <body class="bg-ospnavy text-slate-100 antialiased">
-    <div id="root"></div>
+    <header id="lfs-training-header">
+      <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber Services">
+      <a href="/" class="back-link">&#8592; Back to Launcher</a>
+    </header>
+    <div id="root"></div>
   </body>
 </html>

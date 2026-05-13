@@ -2417,16 +2417,18 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       });
     }
 
-    // MAX_ITERATIONS warning — surface to user instead of silently truncating.
-    if (iterations >= MAX_ITERATIONS) {
-      console.warn(`AI chat hit MAX_ITERATIONS (${MAX_ITERATIONS}) — some actions may not have completed.`);
-      finalText += '\n\n⚠️ **Reached iteration limit.** The assistant completed up to ' + MAX_ITERATIONS + ' tool-call rounds but may not have finished everything requested. Please review what was done and re-send any remaining tasks.';
-    }
-
     // Get final text response
     const lastTextBlocks = response.content.filter(b => b.type === 'text');
     for (const tb of lastTextBlocks) {
       if (tb.text.trim()) finalText += tb.text;
+    }
+
+    // MAX_ITERATIONS warning — appended AFTER lastTextBlocks so the warning
+    // lands at the end of the response, not mid-stream before the model's
+    // final text blocks are added.
+    if (iterations >= MAX_ITERATIONS) {
+      console.warn(`AI chat hit MAX_ITERATIONS (${MAX_ITERATIONS}) — some actions may not have completed.`);
+      finalText += '\n\n⚠️ **Reached iteration limit.** The assistant completed up to ' + MAX_ITERATIONS + ' tool-call rounds but may not have finished everything requested. Please review what was done and re-send any remaining tasks.';
     }
 
     // ── Hallucination guard ───────────────────────────────────────────────
