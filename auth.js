@@ -391,7 +391,7 @@ function installAuthRoutes(app, pool) {
     if (!req.user) return res.status(401).json({ error: 'Not logged in' });
     try {
       const { rows } = await pool.query(
-        `SELECT id, username, role, team, extra_teams, full_name, email, theme FROM users WHERE id = $1`,
+        `SELECT id, username, role, team, extra_teams, full_name, email, theme, staff_id FROM users WHERE id = $1`,
         [req.user.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
