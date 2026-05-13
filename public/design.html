@@ -309,6 +309,7 @@ fetch('/api/auth/me', { credentials: 'include' })
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
+<script src="/js/dialog.js" defer></script>
 <script src="/js/undo_bar.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
 </head>
@@ -1377,7 +1378,7 @@ async function loadPipeline(){
 // 202 + { pending: true }). The project stays visible in the pipeline
 // until admin approves, so the UI just shows a confirmation and reloads.
 async function deleteProjectFromPipeline(id, name){
-  if (!confirm(`Request deletion of "${name}"?\n\nThis sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`)) return;
+  if (!await confirmDialog({ title: `Request deletion of "${name}"?`, message: `This sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`, confirmLabel: 'Send Request', danger: true })) return;
   try {
     const resp = await api('/api/projects/' + id, 'DELETE');
     if (resp && resp.pending) {
@@ -1391,7 +1392,7 @@ async function deleteProjectFromPipeline(id, name){
 
 
 async function regressDesign(id, name){
-  if (!confirm(`Move "${name||''}" back one stage in the design pipeline?`)) return;
+  if (!await confirmDialog({ title: 'Regress design stage?', message: `Move "${name||''}" back one stage in the design pipeline?`, confirmLabel: 'Regress', danger: true })) return;
   try {
     await api('/api/design/' + id + '/regress', 'PUT', {});
     loadPipeline();

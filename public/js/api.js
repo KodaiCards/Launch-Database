@@ -36,7 +36,8 @@ async function api(path, method = 'GET', body = null) {
 // modal hit the same endpoint and run the same confirm/reload dance —
 // this keeps the two paths from drifting.
 async function deleteProjectDoc(docId, reload) {
-  if (!confirm('Delete this document? The file is removed from disk too.')) return;
+  const ok = await confirmDialog({ title: 'Delete document?', message: 'The file is removed from disk too.', confirmLabel: 'Delete', danger: true });
+  if (!ok) return;
   try {
     await api('/api/projects/documents/' + docId, 'DELETE');
     if (typeof reload === 'function') reload();

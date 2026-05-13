@@ -586,6 +586,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
+<script src="/js/dialog.js" defer></script>
 </head>
 <body>
 
@@ -2832,7 +2833,7 @@ function bulkToggleAll(check) {
 async function bulkSetStatus(newStatus) {
   if (!bulkSelected.size) return;
   const ids = [...bulkSelected];
-  const ok = confirm(`Set ${ids.length} project(s) to status "${newStatus}"?`);
+  const ok = await confirmDialog({ title: 'Bulk status change', message: `Set ${ids.length} project(s) to status "${newStatus}"?`, confirmLabel: 'Set Status', danger: false });
   if (!ok) return;
   let okCount = 0, failCount = 0;
   for (const id of ids) {
@@ -3934,7 +3935,7 @@ async function confirmBatch(batchId, name, total) {
 }
 
 async function breakBatch(batchId, name) {
-  if (!confirm(`Break batch "${name}"? The projects return to the unbilled queue. No invoice is created.`)) return;
+  if (!await confirmDialog({ title: `Break batch "${name}"?`, message: 'The projects return to the unbilled queue. No invoice is created.', confirmLabel: 'Break Batch', danger: true })) return;
   try {
     await api('/api/billing/batches/' + batchId, 'DELETE');
     if (window.LFS && window.LFS.toast) window.LFS.toast.success('Batch broken.');
@@ -4899,7 +4900,7 @@ async function confirmDeleteProject(id, name, afterDelete) {
   const projCount = p ? p.total_projects : '?';
   const teCount   = p ? p.time_entries   : '?';
   const msg = `Delete "${name}"?\n\nCascade preview:\n• ${projCount} project${projCount === 1 ? '' : 's'} will be deleted\n• ${teCount} time entr${teCount === 1 ? 'y' : 'ies'} will be deleted\n• All permit stages and documents will be deleted\n\nYou'll get a 15-second undo window after the delete.`;
-  if (!confirm(msg)) return;
+  if (!await confirmDialog({ title: `Delete "${name}"?`, message: msg, confirmLabel: 'Delete', danger: true })) return;
   // Step 2: execute with confirm:true.
   try {
     const r = await api('/api/projects/' + id + '/with-tree', 'DELETE', { confirm: true });
@@ -5387,7 +5388,7 @@ async function saveBudget() {
 }
 
 async function deleteBudget() {
-  if (!confirm('Delete this budget and all its codes? Projects linked to these codes will be unlinked.')) return;
+  if (!await confirmDialog({ title: 'Delete budget?', message: 'This will delete the budget and all its codes. Projects linked to these codes will be unlinked.', confirmLabel: 'Delete Budget', danger: true })) return;
   const budgetId = document.getElementById('budget-id').value;
   await api('/api/budgets/' + budgetId, 'DELETE');
   closeModal('budget-modal');
@@ -5453,7 +5454,7 @@ async function saveBudgetCode() {
 }
 
 async function deleteBudgetCode() {
-  if (!confirm('Delete this budget code?')) return;
+  if (!await confirmDialog({ title: 'Delete budget code?', message: 'This budget code will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   const id = document.getElementById('bc-id').value;
   await api('/api/budget-codes/' + id, 'DELETE');
   closeModal('budget-code-modal');
@@ -7307,7 +7308,7 @@ async function saveUser() {
 }
 
 async function deactivateUser(id, username) {
-  if (!confirm(`Deactivate user "${username}"?\n\nThey will no longer be able to sign in. Their history and time entries are preserved.`)) return;
+  if (!await confirmDialog({ title: `Deactivate "${username}"?`, message: `They will no longer be able to sign in. Their history and time entries are preserved.`, confirmLabel: 'Deactivate', danger: true })) return;
   try {
     await api('/api/users/' + id, 'DELETE');
     loadUsers();
