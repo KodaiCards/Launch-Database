@@ -74,7 +74,15 @@ function userWantsAction(messages) {
   if (/^(did you|have you|are you|why didn['‘’]?t|why haven['‘’]?t|why aren['‘’]?t|when will|when are|please just|just do|just create|just run|hurry up|c['‘’]?mon|come on|now do|now create|get on with|get started|get going|move on)/i.test(trimmed)) {
     return true;
   }
-  if (/\b(create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save|build|make|start|begin|run|execute|generate)\b/i.test(trimmed)) {
+  // M-1 fix: pattern 3 was unanchored — it fired on action verbs embedded
+  // anywhere in a message ("the status change I made yesterday" → false positive).
+  // Anchored to message start with an optional polite/interrogative prefix so
+  // "Can you generate a report" still fires but "the status change I made
+  // yesterday" does not. Test strings:
+  //   "The status change I made yesterday" → no fire ✓ (no leading action verb)
+  //   "Can you generate a report..."      → fires ✓  (polite prefix + action verb)
+  //   "Why did project X get set..."      → no fire ✓ (interrogative about past, not a request)
+  if (/^(?:please\s+|can\s+you\s+|could\s+you\s+|would\s+you\s+|i\s+(?:want\s+(?:you\s+)?to|need\s+(?:you\s+)?to|'d\s+like\s+(?:you\s+)?to)\s+)?(?:create|add|insert|log|update|change|set|edit|modify|delete|remove|drop|mark|advance|bill|complete|reject|import|upload|save|build|make|start|begin|run|execute|generate)\b/i.test(trimmed)) {
     return true;
   }
   return false;
@@ -562,6 +570,10 @@ const AI_TOOLS = [
       properties: {
         entries: {
           type: 'array',
+          // M-2 fix: cap at 100 entries. The 10MB body limit is upstream
+          // but an unbounded array still iterates in a DB transaction and
+          // can be costly without an explicit cap.
+          maxItems: 100,
           items: {
             type: 'object',
             properties: {
@@ -1466,6 +1478,17 @@ async function executeTool(toolName, toolInput, actor = {}) {
       }
 
       case 'log_time_entries': {
+        // M-2 fix: executor-level entry cap. maxItems:100 in the tool schema
+        // is the primary guard; this is a belt-and-suspenders check so even
+        // if the SDK strips JSON Schema constraints a huge array can't blow
+        // through the DB transaction unnoticed.
+        const LOG_TIME_ENTRIES_CAP = 100;
+        if (!Array.isArray(toolInput.entries) || toolInput.entries.length > LOG_TIME_ENTRIES_CAP) {
+          return {
+            success: false,
+            error: `log_time_entries accepts at most ${LOG_TIME_ENTRIES_CAP} entries per call. Got ${Array.isArray(toolInput.entries) ? toolInput.entries.length : 'non-array'}. Split into smaller batches.`,
+          };
+        }
         const importBatch = `ai_import_${Date.now()}`;
         const client = await pool.connect();
         try {
@@ -2499,15 +2522,22 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     // a corresponding modifying tool actually ran successfully. This catches
     // the case where Claude says "I've logged the entries" without actually
     // calling log_time_entries.
+    // H-1 fix: keep MODIFYING_TOOLS in sync with DESTRUCTIVE_AI_TOOLS.
+    // bulk_create_projects, bulk_delete_projects, csv_smart_import, and
+    // update_engineering_contract were in DESTRUCTIVE but missing here —
+    // the hallucination guard never fired when those tools claimed success.
     const MODIFYING_TOOLS = ['log_time_entries', 'create_project', 'update_project',
-      'delete_project', 'create_client', 'update_client', 'delete_client',
+      'delete_project', 'bulk_create_projects', 'bulk_delete_projects',
+      'create_client', 'update_client', 'delete_client',
       'create_staff', 'create_contract',
       'update_project_status', 'advance_permit_stage', 'create_budget',
       'create_budget_code', 'update_budget_code', 'set_billing_cadence',
+      'csv_smart_import',
       // Added 2026-05-02 alongside the new tools — keep in sync with
       // DESTRUCTIVE_AI_TOOLS so the hallucination guard catches false
       // success claims about these too.
-      'create_engineering_contract', 'update_contract_umbrella',
+      'create_engineering_contract', 'update_engineering_contract',
+      'update_contract_umbrella',
       'bulk_update_projects', 'write_sql',
       'create_user', 'deactivate_user'];
     const successfulModifications = toolResults.filter(
