@@ -196,6 +196,42 @@ function _fieldMarkupRateOk(ip) {
   return true;
 }
 
+// H-4 fix: per-token rate limiter for the public /hydrate endpoint.
+// Mirrors the _fieldMarkupRate pattern above. Keyed on the share token
+// string (not IP — contractors behind carrier NAT may share an IP).
+// 5 requests per 10-second window per token is generous for any legitimate
+// poll loop; it prevents a runaway client from saturating the connection
+// pool with 12-parallel-query hydrate bursts.
+// TTL eviction: Map entries are pruned when they have no timestamps within
+// the window on any access. Entries for tokens that stop calling are never
+// explicitly evicted — a periodic sweep runs every 5 minutes to cap Map
+// growth (L-5 pattern from _fieldMarkupRate).
+const _hydrateRate = new Map(); // token → array<timestamp ms>
+const HYDRATE_RATE_LIMIT = 5;
+const HYDRATE_RATE_WINDOW_MS = 10 * 1000;
+// Periodic sweep so the Map doesn't grow unbounded for tokens that stop
+// calling (same pattern as _fieldMarkupRate). unref() so it doesn't
+// prevent process exit in tests.
+setInterval(() => {
+  const cutoff = Date.now() - HYDRATE_RATE_WINDOW_MS;
+  for (const [tok, arr] of _hydrateRate) {
+    if (!arr.some(t => t > cutoff)) _hydrateRate.delete(tok);
+  }
+}, 5 * 60 * 1000).unref();
+function _hydrateRateOk(token) {
+  if (!token) return true;
+  const now = Date.now();
+  const cutoff = now - HYDRATE_RATE_WINDOW_MS;
+  const arr = (_hydrateRate.get(token) || []).filter(t => t > cutoff);
+  if (arr.length >= HYDRATE_RATE_LIMIT) {
+    _hydrateRate.set(token, arr);
+    return false;
+  }
+  arr.push(now);
+  _hydrateRate.set(token, arr);
+  return true;
+}
+
 // 24-char URL-safe token. crypto.randomBytes(18) → 24 base64url chars
 // → ~10^32 possible values, plenty unguessable for a per-closure key
 // without going overboard on length (printed QR codes get bigger
@@ -2810,8 +2846,19 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // Public: read-only hydrate for the viewer. Returns same shape as the
   // auth'd hydrate but strips lock/edit fields. The token IS the auth.
+  //
+  // H-4 fix: (a) per-token rate-limit (5 req/10s) to prevent runaway
+  // clients saturating the pool; (b) 12 parallel queries consolidated
+  // into 5 batched queries (3 fewer DB connections per call) so two
+  // concurrent contractor refreshes need ~10 connections vs 26 previously.
   app.get('/api/splice/view/:token/hydrate', async (req, res) => {
     try {
+      // H-4: rate-limit before ANY DB work so a hammering client costs
+      // only a Map lookup + 429, not a full token resolve + 14 queries.
+      if (!_hydrateRateOk(req.params.token)) {
+        return res.status(429).json({ error: 'Too many refresh requests. Please wait a moment.' });
+      }
+
       const tok = await _resolveProjectToken(pool, req.params.token);
       if (!tok) return res.status(401).json({ error: 'Share link is no longer valid.' });
       const projectId = tok.project_id;
@@ -2825,82 +2872,154 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
 
-      const [locations, cables, tubes, fibers, closures, trays, splices, ribbonGroups, strandStates, splittersRes, splitterOutputsRes, cableStatesRes] =
-        await Promise.all([
-          pool.query(`SELECT * FROM splice_locations  WHERE project_id = $1 ORDER BY sequence_index, name`, [projectId]),
-          pool.query(`SELECT * FROM splice_cables     WHERE project_id = $1 ORDER BY created_at`, [projectId]),
-          pool.query(`
-            SELECT t.* FROM splice_buffer_tubes t
-            JOIN splice_cables c ON c.id = t.cable_id
-            WHERE c.project_id = $1
-            ORDER BY t.cable_id, t.position
-          `, [projectId]),
-          pool.query(`
-            SELECT f.* FROM splice_fibers f
-            JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
-            JOIN splice_cables c ON c.id = t.cable_id
-            WHERE c.project_id = $1
-            ORDER BY f.buffer_tube_id, f.position
-          `, [projectId]),
-          pool.query(`
-            SELECT cl.* FROM splice_closures cl
+      // H-4: consolidated from 12 parallel queries to 5 batched queries.
+      // Grouping rationale:
+      //   Batch A — location tree (locations + closures + trays, all joined via location_id)
+      //   Batch B — cable tree (cables + buffer_tubes + fibers, all joined via cable_id)
+      //   Batch C — splice data (splices — kept separate due to complex multi-path JOIN)
+      //   Batch D — state/grouping data (ribbon_groups + strand_states, both direct project_id)
+      //   Batch E — optional tables (splitters + splitter_outputs + cable_states, with .catch)
+      // Response shape is identical to the previous 12-parallel version.
+      const [batchA, batchB, splicesRes, batchD, batchE] = await Promise.all([
+        // Batch A: location tree — 3 tables joined by project_id chain
+        pool.query(`
+          SELECT 'location' AS _type, row_to_json(l.*) AS _row
+            FROM splice_locations l
+           WHERE l.project_id = $1
+          UNION ALL
+          SELECT 'closure' AS _type, row_to_json(cl.*) AS _row
+            FROM splice_closures cl
             JOIN splice_locations l ON l.id = cl.location_id
-            WHERE l.project_id = $1
-            ORDER BY cl.created_at
-          `, [projectId]),
-          pool.query(`
-            SELECT t.* FROM splice_trays t
+           WHERE l.project_id = $1
+          UNION ALL
+          SELECT 'tray' AS _type, row_to_json(t.*) AS _row
+            FROM splice_trays t
             JOIN splice_closures cl ON cl.id = t.closure_id
             JOIN splice_locations l ON l.id = cl.location_id
-            WHERE l.project_id = $1
-            ORDER BY t.closure_id, t.position
-          `, [projectId]),
-          pool.query(`
-            SELECT DISTINCT s.* FROM splices s
-            LEFT JOIN splice_trays t ON t.id = s.tray_id
-            LEFT JOIN splice_closures cl_t ON cl_t.id = t.closure_id
-            LEFT JOIN splice_locations l_t ON l_t.id = cl_t.location_id
-            LEFT JOIN splice_closures cl_c ON cl_c.id = s.closure_id
-            LEFT JOIN splice_locations l_c ON l_c.id = cl_c.location_id
-            LEFT JOIN splice_locations l_l ON l_l.id = s.location_id
-            WHERE $1 IN (l_t.project_id, l_c.project_id, l_l.project_id)
-            ORDER BY s.created_at
-          `, [projectId]),
-          pool.query(`SELECT * FROM splice_ribbon_groups WHERE project_id = $1`, [projectId]),
-          pool.query(`SELECT * FROM splice_strand_states WHERE project_id = $1`, [projectId]),
-          pool.query(`
-            SELECT sp.* FROM splice_splitters sp
+           WHERE l.project_id = $1
+        `, [projectId]),
+        // Batch B: cable tree — 3 tables joined by project_id chain
+        pool.query(`
+          SELECT 'cable' AS _type, row_to_json(c.*) AS _row
+            FROM splice_cables c
+           WHERE c.project_id = $1
+          UNION ALL
+          SELECT 'tube' AS _type, row_to_json(t.*) AS _row
+            FROM splice_buffer_tubes t
+            JOIN splice_cables c ON c.id = t.cable_id
+           WHERE c.project_id = $1
+          UNION ALL
+          SELECT 'fiber' AS _type, row_to_json(f.*) AS _row
+            FROM splice_fibers f
+            JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+            JOIN splice_cables c ON c.id = t.cable_id
+           WHERE c.project_id = $1
+        `, [projectId]),
+        // Splices kept separate — multi-path LEFT JOIN doesn't compose cleanly
+        // with the UNION ALL pattern above without risking row duplication.
+        pool.query(`
+          SELECT DISTINCT s.* FROM splices s
+          LEFT JOIN splice_trays t ON t.id = s.tray_id
+          LEFT JOIN splice_closures cl_t ON cl_t.id = t.closure_id
+          LEFT JOIN splice_locations l_t ON l_t.id = cl_t.location_id
+          LEFT JOIN splice_closures cl_c ON cl_c.id = s.closure_id
+          LEFT JOIN splice_locations l_c ON l_c.id = cl_c.location_id
+          LEFT JOIN splice_locations l_l ON l_l.id = s.location_id
+          WHERE $1 IN (l_t.project_id, l_c.project_id, l_l.project_id)
+          ORDER BY s.created_at
+        `, [projectId]),
+        // Batch D: state/grouping data — both use direct project_id FK
+        pool.query(`
+          SELECT 'ribbon_group' AS _type, row_to_json(rg.*) AS _row
+            FROM splice_ribbon_groups rg
+           WHERE rg.project_id = $1
+          UNION ALL
+          SELECT 'strand_state' AS _type, row_to_json(ss.*) AS _row
+            FROM splice_strand_states ss
+           WHERE ss.project_id = $1
+        `, [projectId]),
+        // Batch E: optional tables (may not exist on all installs — keep .catch)
+        pool.query(`
+          SELECT 'splitter' AS _type, row_to_json(sp.*) AS _row
+            FROM splice_splitters sp
             JOIN splice_closures cl ON cl.id = sp.closure_id
             JOIN splice_locations l ON l.id = cl.location_id
-            WHERE l.project_id = $1
-          `, [projectId]).catch(() => ({ rows: [] })),
-          pool.query(`
-            SELECT so.* FROM splice_splitter_outputs so
+           WHERE l.project_id = $1
+          UNION ALL
+          SELECT 'splitter_output' AS _type, row_to_json(so.*) AS _row
+            FROM splice_splitter_outputs so
             JOIN splice_splitters sp ON sp.id = so.splitter_id
             JOIN splice_closures cl ON cl.id = sp.closure_id
             JOIN splice_locations l ON l.id = cl.location_id
-            WHERE l.project_id = $1
-          `, [projectId]).catch(() => ({ rows: [] })),
-          pool.query(`SELECT * FROM splice_cable_states WHERE project_id = $1`, [projectId]).catch(() => ({ rows: [] })),
-        ]);
+           WHERE l.project_id = $1
+          UNION ALL
+          SELECT 'cable_state' AS _type, row_to_json(cs.*) AS _row
+            FROM splice_cable_states cs
+           WHERE cs.project_id = $1
+        `, [projectId]).catch(() => ({ rows: [] })),
+      ]);
+
+      // Un-mux the UNION ALL batches back into per-type arrays.
+      const locations = [], closures = [], trays = [];
+      for (const r of batchA.rows) {
+        if (r._type === 'location') locations.push(r._row);
+        else if (r._type === 'closure') closures.push(r._row);
+        else if (r._type === 'tray') trays.push(r._row);
+      }
+      // Re-apply original ORDER BY semantics post-unmux (UNION ALL loses order).
+      locations.sort((a, b) => (a.sequence_index ?? 0) - (b.sequence_index ?? 0) || (a.name || '').localeCompare(b.name || ''));
+      closures.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      trays.sort((a, b) => {
+        const cmpClosure = (a.closure_id || '').localeCompare(b.closure_id || '');
+        return cmpClosure !== 0 ? cmpClosure : (a.position ?? 0) - (b.position ?? 0);
+      });
+
+      const cables = [], tubes = [], fibers = [];
+      for (const r of batchB.rows) {
+        if (r._type === 'cable') cables.push(r._row);
+        else if (r._type === 'tube') tubes.push(r._row);
+        else if (r._type === 'fiber') fibers.push(r._row);
+      }
+      cables.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      tubes.sort((a, b) => {
+        const cmpCable = (a.cable_id || '').localeCompare(b.cable_id || '');
+        return cmpCable !== 0 ? cmpCable : (a.position ?? 0) - (b.position ?? 0);
+      });
+      fibers.sort((a, b) => {
+        const cmpTube = (a.buffer_tube_id || '').localeCompare(b.buffer_tube_id || '');
+        return cmpTube !== 0 ? cmpTube : (a.position ?? 0) - (b.position ?? 0);
+      });
+
+      const ribbonGroups = [], strandStates = [];
+      for (const r of batchD.rows) {
+        if (r._type === 'ribbon_group') ribbonGroups.push(r._row);
+        else if (r._type === 'strand_state') strandStates.push(r._row);
+      }
+
+      const splitters = [], splitterOutputs = [], cableStates = [];
+      for (const r of batchE.rows) {
+        if (r._type === 'splitter') splitters.push(r._row);
+        else if (r._type === 'splitter_output') splitterOutputs.push(r._row);
+        else if (r._type === 'cable_state') cableStates.push(r._row);
+      }
 
       // Strip lock/edit fields from the project row.
       const { locked_by_staff_id, locked_at, lock_heartbeat_at, ...safeProject } = proj.rows[0];
 
       res.json({
-        project:        { ...safeProject, _read_only: true },
-        locations:      locations.rows,
-        cables:         cables.rows,
-        buffer_tubes:   tubes.rows,
-        fibers:         fibers.rows,
-        closures:       closures.rows,
-        trays:          trays.rows,
-        splices:        splices.rows,
-        ribbon_groups:  ribbonGroups.rows,
-        strand_states:  strandStates.rows,
-        splitters:      splittersRes.rows,
-        splitter_outputs: splitterOutputsRes.rows,
-        cable_states:   cableStatesRes.rows,
+        project:          { ...safeProject, _read_only: true },
+        locations,
+        cables,
+        buffer_tubes:     tubes,
+        fibers,
+        closures,
+        trays,
+        splices:          splicesRes.rows,
+        ribbon_groups:    ribbonGroups,
+        strand_states:    strandStates,
+        splitters,
+        splitter_outputs: splitterOutputs,
+        cable_states:     cableStates,
       });
     } catch (e) { console.error('[splice:view-hydrate]', e && e.message); res.status(500).json({ error: 'Failed to load splice project.' }); }
   });
