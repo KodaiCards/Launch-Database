@@ -524,7 +524,7 @@
     const proj = document.getElementById('te-project').value;
     const hrs = document.getElementById('te-hours').value;
     const date = document.getElementById('te-date').value;
-    if (!proj || !hrs || !date) return alertDialog('Project, hours and date are required');
+    if (!proj || !hrs || !date) return alertDialog({ title: 'Missing fields', message: 'Project, hours and date are required' });
     const body = {
       project_id: proj,
       staff_id: document.getElementById('te-staff').value || null,
@@ -542,20 +542,26 @@
       closeModal('time-modal');
       loadHours();
     } catch (e) {
-      alertDialog('Failed to save time entry: ' + e.message);
+      alertDialog({ title: 'Save failed', message: e.message });
       // modal stays open, input intact
     }
   }
 
   async function deleteTimeEntry(id) {
-    if (!confirm('Delete this time entry?')) return;
-    const resp = await api('/api/time-entries/' + id, 'DELETE');
-    loadHours();
-    if (typeof loadDashboard === 'function') loadDashboard();
-    // Server returns an undo_token snapshot of the deleted row; surface
-    // the standard 15s undo bar so accidental clicks are recoverable.
-    if (resp && resp.undo_token && typeof showUndoBar === 'function') {
-      showUndoBar('Time entry deleted.', resp.undo_token);
+    const ok = await confirmDialog({ title: 'Delete time entry?', message: 'This action cannot be undone (you will have a 15-second undo window).', confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
+    try {
+      const resp = await api('/api/time-entries/' + id, 'DELETE');
+      // Only reload on confirmed success — prevents entry reappearing after silent failure
+      loadHours();
+      if (typeof loadDashboard === 'function') loadDashboard();
+      // Server returns an undo_token snapshot of the deleted row; surface
+      // the standard 15s undo bar so accidental clicks are recoverable.
+      if (resp && resp.undo_token && typeof showUndoBar === 'function') {
+        showUndoBar('Time entry deleted.', resp.undo_token);
+      }
+    } catch (e) {
+      alertDialog({ title: 'Delete failed', message: e.message });
     }
   }
 

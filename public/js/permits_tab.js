@@ -129,7 +129,7 @@
       if (typeof loadPermits === 'function') loadPermits();
       if (typeof loadDashboard === 'function') loadDashboard();
     } catch (e) {
-      alertDialog('Advance failed: ' + e.message);
+      alertDialog({ title: 'Advance failed', message: e.message });
     }
   }
 
