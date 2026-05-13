@@ -28,10 +28,10 @@ Frontend state-management correctness across the admin SPA + extracted tab modul
 
 | # | Source | File:line | Issue | Fix shape |
 |---|---|---|---|---|
-| M-1 | A-10 + B-3 (2 auditors) | `public/js/hours_tab.js:395-407` | `openTimeEntryModal()` blanks `#te-staff` on open. `window.currentUser.staff_id` is available and unused. Every time-entry log requires manual staff dropdown selection — daily friction. | Pre-select `te-staff` to `window.currentUser?.staff_id` when present and the staff exists in the dropdown options. |
+| M-1 | A-10 + B-3 (2 auditors) | `public/js/hours_tab.js:395-407` | `openTimeEntryModal()` blanks `#te-staff` on open. `window.currentUser.staff_id` is supposed to be set but verification (NF-1) found `/api/auth/me` doesn't SELECT `staff_id`. Both ends need fixing. Every time-entry log requires manual staff dropdown selection. | **2-part fix:** (a) in `auth.js:394` `/api/auth/me` SELECT — add `staff_id` to the column list + return it in the response body. (b) in `openTimeEntryModal()` pre-select `te-staff` to `window.currentUser?.staff_id` when present and the staff exists in the dropdown options. |
 | M-2 | A-8 | `public/js/permits_tab.js:131-136` (admin.html:1918) | `openPermitDocs()` never pre-fills `#doc-uploader` with logged-in user name. | Set value from `window.currentUser?.full_name \|\| window.currentUser?.username` on modal open. |
 | M-3 | A-9 | `public/js/design_docs.js:18-23` (admin.html:1960) | `openDesignDocs()` never pre-fills `#design-doc-uploader`. | Same fix as M-2. |
-| M-4 | B-4 | `public/admin.html:3028-3035, 3103` | Client-filter restore race: `loadClients()` async wires `proj-client-filter` AFTER `showView('projects')` fires `loadProjects()` on hash-routing to projects-tab-first. Result: unfiltered data with filtered UI. | Re-trigger `loadProjects()` inside `loadClients()` callback when `proj-client-filter` restored value is non-empty. |
+| M-4 | B-4 | `public/admin.html:3028-3035, 3103` | Client-filter restore race: described as persistent mismatch, **verification (a413ec0) found this is OVERSTATED** — `Promise.all` actually completes before `showView()` so persistent mismatch doesn't occur. Real issue: transient unfiltered render from `proj-status-filter` early `change` dispatch that self-corrects. **Severity downgraded MEDIUM → LOW.** | Lower priority fix; re-trigger `loadProjects()` inside `loadClients()` callback when `proj-client-filter` restored value is non-empty. Optional — defer if time-constrained. |
 | M-5 | B-6 | `public/js/permits_tab.js:138-142` | `loadPermitDocs()` fetches the entire permits list to find one project's docs. Slow + wasteful, called per modal open + per upload. | Pass document list from `openPermitDocs()` caller context, OR hit a single-project endpoint (`GET /api/permits/:id/documents`), OR cache last-loaded project docs on modal open. |
 | M-6 | A-11 + A-12 + A-13 + B-8 (4 callouts) | `public/js/hours_tab.js` (6 sites: 520, 544, 501, 550, 552, 558), `billing_tab.js` (6 sites: 263, 274, 53, 59, 270, 281), `permits_tab.js` (4 sites: 115, 190, 191, 223) | Native `confirm()` / `alert()` survivors in extracted modules. Blocks thread, breaks dark-mode UX, inconsistent with Phase-1 sweep. | Replace each with `confirmDialog` / `alertDialog` from `dialog.js`. Already loaded. |
 
@@ -49,10 +49,17 @@ Frontend state-management correctness across the admin SPA + extracted tab modul
 - **Full `public/admin.html` inline script (~7000 unread lines)** — A and B both noted partial coverage. Significant remaining surface; defer to a follow-up wave once Phase 3 lands.
 - **Server-side SSE emission verification** — B noted SSE subscriptions in admin.html but didn't verify server emits all 6 event types. Out of FE scope; defer to a SSE plumbing wave.
 
-## Verification tier guide (for verification red-team)
+## Verification tier guide (for verification red-team) — COMPLETED a413ec0
 
-- **2-auditor convergence (quick spot-check):** H-1, H-3, M-1, M-6. Tier these to ~2 min each.
-- **1-auditor unique (full end-to-end verify):** All other items. Open file:line, read snippet, mark VERIFIED / OVERSTATED / FALSE-POSITIVE / UNCLEAR.
+- **2-auditor convergence (quick spot-check):** H-1, H-3, M-1, M-6 — all VERIFIED.
+- **1-auditor unique (full end-to-end verify):** 16/17 VERIFIED. M-4 OVERSTATED (downgraded LOW above). NF-1 new finding folded into M-1.
+
+## Regression-risk flags from verification (a413ec0) — fix-agent must address
+
+- **H-1 fix:** `closeModal()` + `loadHours()` must move to the success branch only — currently they run unconditionally even if `api(...)` would throw.
+- **H-4 fix:** Downstream calls (`reloadProjectDetail`, etc.) must be success-only — guard against running after the catch.
+- **H-7 + L-2 interact:** adding `onchange="loadHours()"` to month/year compounds L-2 (double-fire). Fix BOTH together — add a load-guard flag or debounce in `loadHours()` so multiple synchronous `change` dispatches collapse to one fetch.
+- **H-8 fix:** Revenue's `renderRevenueDetail` reads `projectsTreeState.isExpanded` directly at `revenue_tab.js:78` — that line MUST also be updated to use the new `revenueTreeState`. Don't miss it when refactoring the toggle constructor.
 
 ## Acceptance criteria for fix-agent
 
