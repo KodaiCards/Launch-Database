@@ -7944,6 +7944,17 @@ async function _loadRusProjectionTile() {
   const dqChip   = document.getElementById('rus-proj-dq-chip');
   if (!tile) return;
 
+  // NF-2: re-renders (SSE refresh, period filter change) should land on a
+  // collapsed expand panel. Without this, the next click after a re-render
+  // collapses instead of opens because _rusExpanded carries over stale state.
+  _rusExpanded = false;
+  const _expand = document.getElementById('rus-proj-expand');
+  const _tileEl = document.getElementById('rus-proj-tile');
+  const _chev   = document.getElementById('rus-proj-chev');
+  if (_expand) _expand.style.display = 'none';
+  if (_tileEl) _tileEl.setAttribute('aria-expanded', 'false');
+  if (_chev)   _chev.style.transform = '';
+
   let data;
   try {
     data = await api('/api/automation/psc-rus-projection');
@@ -8023,7 +8034,10 @@ async function _loadRusProjectionTile() {
 function _renderRusBucketTable(rows) {
   const body = document.getElementById('rus-proj-expand-body');
   if (!body) return;
-  const BUCKET_LABELS = { inspection: 'Inspection', re: 'RE', permitting: 'Permitting', misc: 'Misc' };
+  // NF-1: backend emits bucket key 'other' (not 'misc') for the catch-all
+  // bucket — keep the FE-facing label as "Misc" per the design spec but map
+  // it off the 'other' key the backend actually sends.
+  const BUCKET_LABELS = { inspection: 'Inspection', re: 'RE', permitting: 'Permitting', other: 'Misc' };
 
   let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:var(--gray-light)">
