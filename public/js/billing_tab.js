@@ -71,10 +71,17 @@
     }
     const year = yrSel.value;
 
-    const [unbilled, invoices] = await Promise.all([
-      api('/api/revenue/unbilled'),
-      api('/api/invoices?year=' + year)
-    ]);
+    let unbilled, invoices;
+    try {
+      [unbilled, invoices] = await Promise.all([
+        api('/api/revenue/unbilled'),
+        api('/api/invoices?year=' + year)
+      ]);
+    } catch (e) {
+      document.getElementById('billing-stats').innerHTML =
+        `<div class="stat-card" style="border-left:4px solid var(--danger)"><div class="stat-label">Error</div><div class="stat-value" style="font-size:14px;color:var(--danger)">Failed to load billing: ${esc(e.message)}</div></div>`;
+      return;
+    }
 
     // ── Unbilled section ──
     const totalUnbilled = unbilled.reduce((s, p) => s + parseFloat(p.earned_amount || 0), 0);
