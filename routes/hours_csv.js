@@ -23,6 +23,34 @@ const { csvStage, CSV_STAGE_TTL_MS } = require('./_csv_stage');
 const { snapHoursToQuarter } = require('./_helpers');
 const { updateProjectHours } = require('./_helpers');
 
+// ─── Upload concurrency semaphore ─────────────────────────────────────────
+// XLSX.readFile has no async API; limit concurrent uploads so a burst of
+// simultaneous uploads serialises through a slot cap rather than blocking
+// the event loop with unbounded parallel sync reads.
+const UPLOAD_CONCURRENCY_MAX = 2;
+let _activeUploads = 0;
+const _uploadQueue = [];
+
+function withUploadSlot(fn) {
+  return new Promise((resolve, reject) => {
+    function attempt() {
+      if (_activeUploads < UPLOAD_CONCURRENCY_MAX) {
+        _activeUploads++;
+        Promise.resolve()
+          .then(fn)
+          .then(resolve, reject)
+          .finally(() => {
+            _activeUploads--;
+            if (_uploadQueue.length > 0) _uploadQueue.shift()();
+          });
+      } else {
+        _uploadQueue.push(attempt);
+      }
+    }
+    attempt();
+  });
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────
 // Pure (no DB / state). Exported via module.exports._helpers so tests
 // can hit them directly if needed.
@@ -223,19 +251,28 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       const ext = path.extname(req.file.originalname).toLowerCase();
       let rows2d = [];
 
-      if (ext === '.xlsx' || ext === '.xls') {
-        const wb = XLSX.readFile(req.file.path);
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
-      } else if (ext === '.csv' || ext === '.tsv') {
-        const content = await fs.promises.readFile(req.file.path, 'utf8');
-        const wb = XLSX.read(content, { type: 'string' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
-      } else {
-        await fs.promises.unlink(req.file.path);
-        return res.status(400).json({ error: 'Unsupported file type. Use .csv, .xlsx, or .xls.' });
-      }
+      // Serialise XLSX/CSV parsing through a concurrency slot (max 2 simultaneous).
+      // XLSX.readFile has no async API; the semaphore prevents unbounded parallel
+      // sync reads from stacking up on the event loop under concurrent uploads.
+      await withUploadSlot(async () => {
+        if (ext === '.xlsx' || ext === '.xls') {
+          const wb = XLSX.readFile(req.file.path);
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
+        } else if (ext === '.csv' || ext === '.tsv') {
+          const content = await fs.promises.readFile(req.file.path, 'utf8');
+          const wb = XLSX.read(content, { type: 'string' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
+        } else {
+          await fs.promises.unlink(req.file.path);
+          // Signal unsupported type via a thrown error with a special code so the
+          // outer handler can send the 400 without re-throwing as a 500.
+          const err = new Error('Unsupported file type. Use .csv, .xlsx, or .xls.');
+          err.code = 'UNSUPPORTED_FILE_TYPE';
+          throw err;
+        }
+      });
 
       await fs.promises.unlink(req.file.path);
 
@@ -666,9 +703,12 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         valid_rows_total: validRows.length
       });
     } catch (e) {
+      if (e.code === 'UNSUPPORTED_FILE_TYPE') {
+        return res.status(400).json({ error: e.message });
+      }
       console.error('CSV validate error:', e);
       if (req.file?.path && fs.existsSync(req.file.path)) {
-        try { fs.unlinkSync(req.file.path); } catch {}
+        try { await fs.promises.unlink(req.file.path); } catch {}
       }
       res.status(500).json({ error: e.message });
     }
