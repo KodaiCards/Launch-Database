@@ -2499,15 +2499,22 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
     // a corresponding modifying tool actually ran successfully. This catches
     // the case where Claude says "I've logged the entries" without actually
     // calling log_time_entries.
+    // H-1 fix: keep MODIFYING_TOOLS in sync with DESTRUCTIVE_AI_TOOLS.
+    // bulk_create_projects, bulk_delete_projects, csv_smart_import, and
+    // update_engineering_contract were in DESTRUCTIVE but missing here —
+    // the hallucination guard never fired when those tools claimed success.
     const MODIFYING_TOOLS = ['log_time_entries', 'create_project', 'update_project',
-      'delete_project', 'create_client', 'update_client', 'delete_client',
+      'delete_project', 'bulk_create_projects', 'bulk_delete_projects',
+      'create_client', 'update_client', 'delete_client',
       'create_staff', 'create_contract',
       'update_project_status', 'advance_permit_stage', 'create_budget',
       'create_budget_code', 'update_budget_code', 'set_billing_cadence',
+      'csv_smart_import',
       // Added 2026-05-02 alongside the new tools — keep in sync with
       // DESTRUCTIVE_AI_TOOLS so the hallucination guard catches false
       // success claims about these too.
-      'create_engineering_contract', 'update_contract_umbrella',
+      'create_engineering_contract', 'update_engineering_contract',
+      'update_contract_umbrella',
       'bulk_update_projects', 'write_sql',
       'create_user', 'deactivate_user'];
     const successfulModifications = toolResults.filter(
