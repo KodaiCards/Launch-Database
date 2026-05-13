@@ -161,29 +161,43 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       );
       const invoiceId = invR.rows[0].id;
 
-      for (const li of lineItems) {
+      // Perf (Wave 3): batch-insert invoice_items via a single multi-row
+      // VALUES statement instead of one INSERT per line item (N→1 round
+      // trips). Batch close-out one_time projects with a single UPDATE
+      // using ANY($ids) instead of per-project UPDATEs (N→1 round trips).
+      if (lineItems.length) {
+        // Build parameterised multi-row INSERT for invoice_items.
+        const itemValues = [];
+        const itemParams = [];
+        let pi = 1;
+        for (const li of lineItems) {
+          itemValues.push(`($${pi},$${pi+1},$${pi+2},$${pi+3},$${pi+4},$${pi+5},$${pi+6})`);
+          itemParams.push(invoiceId, li.project_id, li.description, li.quantity, li.unit, li.rate, li.amount);
+          pi += 7;
+        }
         await client.query(
           `INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [invoiceId, li.project_id, li.description, li.quantity, li.unit, li.rate, li.amount]
+           VALUES ${itemValues.join(',')}`,
+          itemParams
         );
-        // Cadence-aware close-out:
-        //   • one_time projects close fully — billed_date set, status='billed'
-        //   • monthly projects stay active so they reappear in next month's queue.
-        //     The invoice line item itself records what was billed for which period.
-        const proj = projR.rows.find(p => p.id === li.project_id);
-        const cadence = proj?.billing_cadence || 'one_time';
-        if (cadence === 'monthly') {
-          // Don't change status. Don't set billed_date. The invoice line item
-          // (with its date) is the source of truth for "this month was billed".
-        } else {
-          await client.query(
-            `UPDATE projects SET billed_date=$1, status='billed' WHERE id=$2`,
-            [billDate, li.project_id]
-          );
-        }
-        // Permit pipeline ends at 'checklist'. Billing status is reflected by
-        // projects.billed_date — no need to write a 'billed' permit_stages row.
+      }
+      // Cadence-aware close-out:
+      //   • one_time projects close fully — billed_date set, status='billed'
+      //   • monthly projects stay active so they reappear in next month's queue.
+      //     The invoice line item itself records what was billed for which period.
+      // Permit pipeline ends at 'checklist'. Billing status is reflected by
+      // projects.billed_date — no need to write a 'billed' permit_stages row.
+      const oneTimeProjectIds = lineItems
+        .filter(li => {
+          const proj = projR.rows.find(p => p.id === li.project_id);
+          return (proj?.billing_cadence || 'one_time') !== 'monthly';
+        })
+        .map(li => li.project_id);
+      if (oneTimeProjectIds.length) {
+        await client.query(
+          `UPDATE projects SET billed_date=$1, status='billed' WHERE id = ANY($2::uuid[])`,
+          [billDate, oneTimeProjectIds]
+        );
       }
 
       await client.query('COMMIT');
@@ -380,12 +394,22 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       // until admin manually re-opens. The invoice_items row plus
       // invoices.billing_period_start (or invoice_date) is the source
       // of truth for "this month was billed" via the queue's check.
+      // Perf (Wave 3): batch-fetch all project names + cadences in ONE query
+      // instead of one SELECT per item inside the loop (N+1 → 1).
+      const itemProjectIds = itemRows.map(it => it.project_id).filter(Boolean);
+      const projMapRows = itemProjectIds.length
+        ? (await client.query(
+            `SELECT id, name, billing_cadence FROM projects WHERE id = ANY($1::uuid[])`,
+            [itemProjectIds]
+          )).rows
+        : [];
+      const projMap = new Map(projMapRows.map(p => [p.id, p]));
+
       let lineCount = 0;
+      // Collect one_time project IDs for a single bulk UPDATE at the end.
+      const oneTimeIds = [];
       for (const it of itemRows) {
-        const { rows: pr } = await client.query(
-          `SELECT name, billing_cadence FROM projects WHERE id = $1`, [it.project_id]
-        );
-        const proj = pr[0];
+        const proj = projMap.get(it.project_id);
         const desc = proj ? proj.name : 'Project';
         const cadence = proj?.billing_cadence || 'one_time';
         await client.query(
@@ -394,12 +418,16 @@ module.exports = function installBillingRoutes(app, pool, mw) {
           [inv.id, it.project_id, desc, it.snapshot_amount || 0]
         );
         if (cadence !== 'monthly') {
-          await client.query(
-            `UPDATE projects SET status = 'billed', billed_date = $1 WHERE id = $2`,
-            [invDate, it.project_id]
-          );
+          oneTimeIds.push(it.project_id);
         }
         lineCount++;
+      }
+      // Batch close-out for one_time projects (one UPDATE instead of N).
+      if (oneTimeIds.length) {
+        await client.query(
+          `UPDATE projects SET status = 'billed', billed_date = $1 WHERE id = ANY($2::uuid[])`,
+          [invDate, oneTimeIds]
+        );
       }
       // Delete the batch (cascades items)
       await client.query(`DELETE FROM billing_batches WHERE id = $1`, [req.params.id]);

@@ -34,7 +34,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         params
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budgets:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load budgets.' });
+    }
   });
 
   app.get('/api/budgets/:id/summary', requireAuth(), async (req, res) => {
@@ -93,7 +96,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         total_spent: totalSpent,
         total_remaining: totalAllocated - totalSpent
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budgets:summary]', e && e.message);
+      res.status(500).json({ error: 'Failed to load budget summary.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -116,7 +122,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         [project_id || null, engineering_contract_id || null, name, total_amount || 0, notes || null]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budgets:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create budget.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -128,7 +137,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         [name, total_amount, notes || null, req.params.id]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budgets:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update budget.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -136,7 +148,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     try {
       await pool.query('DELETE FROM budgets WHERE id=$1', [req.params.id]);
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budgets:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete budget.' });
+    }
   });
 
   // Budget summary broken down by area/concentrator. Used by the budget
@@ -186,7 +201,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         total_remaining: budgetTotal - totalSpent,
         areas: rows
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budgets:by-area]', e && e.message);
+      res.status(500).json({ error: 'Failed to load budget by-area summary.' });
+    }
   });
 
   // ─── BUDGET CODES ─────────────────────────────────────────────────────────
@@ -199,7 +217,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         : 'SELECT bc.*, b.name as budget_name FROM budget_codes bc JOIN budgets b ON b.id=bc.budget_id ORDER BY b.name, bc.code';
       const { rows } = await pool.query(q, budget_id ? [budget_id] : []);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budget-codes:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load budget codes.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -218,7 +239,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         ) WHERE id=$1`, [budget_id]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budget-codes:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create budget code.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -239,7 +263,10 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         );
       }
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budget-codes:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update budget code.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -255,6 +282,9 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
         );
       }
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[budget-codes:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete budget code.' });
+    }
   });
 };

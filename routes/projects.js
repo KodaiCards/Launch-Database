@@ -35,6 +35,29 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     if (client_id) { where.push(`p.client_id=$${i++}`); params.push(client_id); }
     if (type) { where.push(`p.project_type=$${i++}`); params.push(type); }
 
+    // Perf (Wave 3): default LIMIT 1000 to prevent full-table serialisation
+    // on large deployments. Use ?limit=N (max 5000) and ?offset=N for
+    // pagination. Pass ?limit=all to skip the cap (tree-view loads that need
+    // the full list can opt out; scoped queries with status/client_id
+    // filters should be small enough to not need it).
+    const rawLimit  = req.query.limit;
+    const rawOffset = parseInt(req.query.offset, 10);
+    const skipLimit = rawLimit === 'all';
+    const limitVal  = !skipLimit
+      ? (Number.isFinite(parseInt(rawLimit, 10)) && parseInt(rawLimit, 10) > 0
+          ? Math.min(parseInt(rawLimit, 10), 5000)
+          : 1000)
+      : null;
+    const offsetVal = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+    const limitClause = skipLimit
+      ? `OFFSET $${i++}`
+      : `LIMIT $${i++} OFFSET $${i++}`;
+    if (!skipLimit) {
+      params.push(limitVal, offsetVal);
+    } else {
+      params.push(offsetVal);
+    }
+
     const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
     try {
       const { rows } = await pool.query(`
@@ -78,9 +101,13 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         ${whereStr}
         GROUP BY p.id, cl.name, co.contract_number, co.name, pp.name
         ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
+        ${limitClause}
       `, params);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load projects.' });
+    }
   });
 
   app.get('/api/projects/:id', requireAuth(), async (req, res) => {
@@ -99,7 +126,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       `, [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load project.' });
+    }
   });
 
   // Item 2 fix: requireAuth() added — POST was completely unguarded.
@@ -319,7 +349,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
       broadcast('admin', 'project_added', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create project.' });
+    }
   });
 
   // Item 2 fix: requireAuth() added — PUT was completely unguarded.
@@ -506,11 +539,34 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update project.' });
+    }
   });
 
+  // ?dry_run=1 returns an impact preview without deleting (opt-in).
+  // No confirm flag required — single-row delete; undo-bucket is safety net.
   app.delete('/api/projects/:id', requireAdmin, async (req, res) => {
+    const dryRun = req.query.dry_run === '1' || req.query.dry_run === 'true';
     try {
+      const proj = await pool.query(
+        'SELECT id, name, parent_id FROM projects WHERE id=$1', [req.params.id]
+      );
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
+      if (dryRun) {
+        const children = await pool.query(
+          'SELECT COUNT(*)::int AS cnt FROM projects WHERE parent_id=$1', [req.params.id]
+        );
+        return res.json({
+          dry_run: true,
+          preview: {
+            id: req.params.id,
+            name: proj.rows[0].name,
+            child_projects: children.rows[0].cnt,
+          },
+        });
+      }
       // Remove from any pending billing batches first — billing_batch_items
       // has ON DELETE RESTRICT on project_id, so leaving stale rows here would
       // make the project undeletable AND keep it visible in the batch UI.
@@ -518,7 +574,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
       broadcast('admin', 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete project.' });
+    }
   });
 
   // Recalculate actual_hours for a single project from its time_entries.
@@ -529,7 +588,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       await updateProjectHours(req.params.id);
       const { rows } = await pool.query('SELECT actual_hours FROM projects WHERE id=$1', [req.params.id]);
       res.json({ ok: true, actual_hours: rows[0]?.actual_hours });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:recalc-hours]', e && e.message);
+      res.status(500).json({ error: 'Failed to recalculate project hours.' });
+    }
   });
 
   // Recalculate ALL projects' actual_hours from time_entries (bottom-up).
@@ -562,11 +624,41 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         iterations++;
       }
       res.json({ ok: true, iterations });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:recalc-all]', e && e.message);
+      res.status(500).json({ error: 'Failed to recalculate all project hours.' });
+    }
   });
 
-  // Delete a billed project entirely (removes from revenue, hours, everything)
+  // Delete a billed project entirely (removes from revenue, hours, everything).
+  // ?dry_run=1 returns impact counts without deleting (opt-in).
+  // No confirm flag required — undo-bucket is the safety net.
   app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
+    const dryRun = req.query.dry_run === '1' || req.query.dry_run === 'true';
+    if (dryRun) {
+      try {
+        const teCount = await pool.query(
+          'SELECT COUNT(*)::int AS cnt FROM time_entries WHERE project_id=$1', [req.params.id]
+        );
+        const iiCount = await pool.query(
+          'SELECT COUNT(*)::int AS cnt FROM invoice_items WHERE project_id=$1', [req.params.id]
+        ).catch(() => ({ rows: [{ cnt: 0 }] }));
+        const proj = await pool.query('SELECT name FROM projects WHERE id=$1', [req.params.id]);
+        if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
+        return res.json({
+          dry_run: true,
+          preview: {
+            id: req.params.id,
+            name: proj.rows[0].name,
+            time_entries: teCount.rows[0].cnt,
+            invoice_items: iiCount.rows[0].cnt,
+          },
+        });
+      } catch (e) {
+        console.error('[projects:with-hours:preview]', e && e.message);
+        return res.status(500).json({ error: 'Failed to preview deletion.' });
+      }
+    }
     try {
       // Delete time entries first
       await pool.query('DELETE FROM time_entries WHERE project_id=$1', [req.params.id]);
@@ -584,7 +676,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       }
       broadcast('admin', 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[projects:with-hours:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete project with hours.' });
+    }
   });
 
   // DELETE /api/projects/:id/with-tree — delete a project AND every descendant
@@ -594,14 +689,41 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // within ~60s. Use this for rollup deletion — the regular DELETE refuses
   // when there are children (ON DELETE RESTRICT) and even /with-hours only
   // handles a single leaf.
+  //
+  // Wave 1.5 [CASCADE-PREVIEW]: ?dry_run=1 returns a full impact summary
+  // (projects, time entries) WITHOUT deleting anything. Pass confirm:true in
+  // the request body to execute. This prevents accidental mass-deletion of
+  // large project trees triggered by a single mistimed click.
   app.delete('/api/projects/:id/with-tree', requireAdmin, async (req, res) => {
+    const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
+    const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
     let projects;
     try {
       projects = await collectProjectTree(req.params.id);
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to walk project tree: ' + e.message });
+      console.error('[projects:with-tree:walk]', e && e.message);
+      return res.status(500).json({ error: 'Failed to walk project tree.' });
     }
     if (!projects.length) return res.status(404).json({ error: 'Project not found.' });
+
+    // Dry-run mode OR no explicit confirm: return the impact preview only.
+    if (dryRun || !confirm) {
+      const projectIds = projects.map(p => p.id);
+      const teCount = await pool.query(
+        'SELECT COUNT(*)::int AS cnt FROM time_entries WHERE project_id = ANY($1::uuid[])',
+        [projectIds]
+      ).catch(() => ({ rows: [{ cnt: 0 }] }));
+      return res.json({
+        dry_run: true,
+        preview: {
+          root_id: req.params.id,
+          root_name: projects[0].name,
+          total_projects: projects.length,
+          time_entries: teCount.rows[0].cnt,
+        },
+        message: 'Pass confirm:true in the request body to execute this deletion. This action CANNOT be undone beyond the undo-bucket TTL (~60s).',
+      });
+    }
     const projectIds = projects.map(p => p.id);
     const rootParentId = projects[0].parent_id;
 
@@ -660,7 +782,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
       console.error('[projects:with-tree:delete]', e && e.message);
-      res.status(500).json({ error: 'Tree delete failed: ' + e.message });
+      res.status(500).json({ error: 'Tree delete failed. Check server logs.' });
     } finally {
       client.release();
     }

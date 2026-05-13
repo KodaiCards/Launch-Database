@@ -80,6 +80,19 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       params.push(team);
       i++;
     }
+    // Perf (Wave 3): cap rows returned. Without a LIMIT the query can return
+    // tens-of-thousands of rows on large deployments, saturating the network
+    // and serialising the entire table into JSON on every tab load.
+    // Default cap: 1000. Callers may pass ?limit=N (max 5000) and ?offset=N
+    // for pagination. The existing month/year/project_id filters narrow this
+    // further in the common case so the cap rarely bites normal usage.
+    const rawLimit = parseInt(req.query.limit, 10);
+    const rawOffset = parseInt(req.query.offset, 10);
+    const limitVal  = Number.isFinite(rawLimit)  && rawLimit  > 0 ? Math.min(rawLimit, 5000)  : 1000;
+    const offsetVal = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+    params.push(limitVal, offsetVal);
+    const limitPlaceholder  = `$${i++}`;
+    const offsetPlaceholder = `$${i++}`;
     const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
     try {
       const { rows } = await pool.query(`
@@ -93,9 +106,13 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         LEFT JOIN clients cl ON cl.id = p.client_id
         ${whereStr}
         ORDER BY te.entry_date DESC, te.created_at DESC
+        LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}
       `, params);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[time-entries:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load time entries.' });
+    }
   });
 
   app.post('/api/time-entries', requireAuth(), async (req, res) => {
@@ -223,7 +240,8 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       res.json({ inserted: inserted.length, batch: importBatch });
     } catch (e) {
       await client.query('ROLLBACK');
-      res.status(500).json({ error: e.message });
+      console.error('[time-entries:bulk-insert]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk-insert time entries.' });
     } finally {
       client.release();
     }
@@ -428,8 +446,8 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         undo_expires_at: undo.expires_at,
       });
     } catch (e) {
-      console.error('bulk delete by staff error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[time-entries:bulk-delete-by-staff]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk-delete time entries.' });
     }
   });
 };

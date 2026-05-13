@@ -88,7 +88,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           }
         } catch (e) {
           failed++;
-          errors.push({ project_id: p.id, name: p.name, error: e.message });
+          console.error('[admin:migrate-nesting] project', p.id, e && e.message);
+          errors.push({ project_id: p.id, name: p.name, error: 'Failed to re-nest project.' });
         }
       }
 
@@ -117,7 +118,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message, processed, moved, failed });
+      console.error('[admin:migrate-nesting]', e && e.message);
+      res.status(500).json({ error: 'Failed to migrate project nesting.', processed, moved, failed });
     } finally {
       client.release();
     }
@@ -134,27 +136,33 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   // to see what's available, then POST one per file you want to attach.
   app.get('/api/_admin/orphan-files', requireAdmin, async (req, res) => {
     try {
-      const onDisk = fs.readdirSync(uploadDir);
+      // Perf (Wave 3): use async fs.promises to avoid blocking the event loop.
+      const onDisk = await fs.promises.readdir(uploadDir);
       const { rows: dbDocs } = await pool.query(
         `SELECT file_path FROM permit_documents`
       );
       const dbPaths = new Set(dbDocs.map(d => d.file_path));
-      const orphans = onDisk
-        .filter(f => !dbPaths.has(f))
-        .map(f => {
-          const stat = fs.statSync(path.join(uploadDir, f));
-          // Recover the original filename — our naming convention is
-          // ${uuid}_${originalname}, so split on the first underscore after
-          // the uuid (uuids are 36 chars).
-          const original = f.length > 37 && f[36] === '_' ? f.substring(37) : f;
-          return {
-            file_path: f,
-            file_name: original,
-            file_size: stat.size,
-            modified: stat.mtime.toISOString()
-          };
-        })
-        .sort((a, b) => b.modified.localeCompare(a.modified));
+      const orphans = (
+        await Promise.all(
+          onDisk
+            .filter(f => !dbPaths.has(f))
+            .map(async f => {
+              try {
+                const stat = await fs.promises.stat(path.join(uploadDir, f));
+                // Recover the original filename — our naming convention is
+                // ${uuid}_${originalname}, so split on the first underscore after
+                // the uuid (uuids are 36 chars).
+                const original = f.length > 37 && f[36] === '_' ? f.substring(37) : f;
+                return {
+                  file_path: f,
+                  file_name: original,
+                  file_size: stat.size,
+                  modified: stat.mtime.toISOString()
+                };
+              } catch { return null; }
+            })
+        )
+      ).filter(Boolean).sort((a, b) => b.modified.localeCompare(a.modified));
       res.json({
         orphan_count: orphans.length,
         orphans,
@@ -163,7 +171,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           : `${orphans.length} files on disk have no matching permit_documents row. POST {project_id, file_path} to /api/_admin/adopt-orphan to attach one.`
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:orphan-files]', e && e.message);
+      res.status(500).json({ error: 'Failed to list orphan files.' });
     }
   });
 
@@ -182,11 +191,13 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       return res.status(400).json({ error: 'Invalid file path' });
     }
     try {
-      // Verify the file actually exists on disk
-      if (!fs.existsSync(fullPath)) {
+      // Perf (Wave 3): use async fs.promises to avoid blocking the event loop.
+      let stat;
+      try {
+        stat = await fs.promises.stat(fullPath);
+      } catch {
         return res.status(404).json({ error: 'File not found on disk: ' + file_path });
       }
-      const stat = fs.statSync(fullPath);
       // Verify project exists
       const proj = await pool.query('SELECT name FROM projects WHERE id = $1', [project_id]);
       if (!proj.rows.length) {
@@ -206,7 +217,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       );
       res.json({ adopted: rows[0], project_name: proj.rows[0].name });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:adopt-orphan]', e && e.message);
+      res.status(500).json({ error: 'Failed to adopt orphan file.' });
     }
   });
 
@@ -221,14 +233,16 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const proj = await pool.query('SELECT name FROM projects WHERE id = $1', [project_id]);
       if (!proj.rows.length) return res.status(404).json({ error: 'Project not found' });
 
-      const onDisk = fs.readdirSync(uploadDir);
+      // Perf (Wave 3): use async fs.promises to avoid blocking the event loop.
+      const onDisk = await fs.promises.readdir(uploadDir);
       const { rows: dbDocs } = await pool.query(`SELECT file_path FROM permit_documents`);
       const dbPaths = new Set(dbDocs.map(d => d.file_path));
       const orphans = onDisk.filter(f => !dbPaths.has(f));
 
       let adopted = 0;
       for (const f of orphans) {
-        const stat = fs.statSync(path.join(uploadDir, f));
+        let stat;
+        try { stat = await fs.promises.stat(path.join(uploadDir, f)); } catch { continue; }
         const original = f.length > 37 && f[36] === '_' ? f.substring(37) : f;
         await pool.query(`
           INSERT INTO permit_documents
@@ -241,7 +255,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       }
       res.json({ adopted, project_name: proj.rows[0].name });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:adopt-orphans-bulk]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk-adopt orphan files.' });
     }
   });
 
@@ -304,7 +319,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         matched, ambiguous, unmatched, noEntries
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:hours-backfill-preview]', e && e.message);
+      res.status(500).json({ error: 'Failed to preview hours backfill.' });
     }
   });
 
@@ -335,7 +351,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           : `Linked ${result.rowCount} time entries to user accounts based on matching name/full_name.`
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:hours-backfill]', e && e.message);
+      res.status(500).json({ error: 'Failed to run hours backfill.' });
     }
   });
 
@@ -372,7 +389,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
             + `${result.skippedTooRecent} files were left in place because they're newer than ${olderThanHours}h.`,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:prune-orphan-files]', e && e.message);
+      res.status(500).json({ error: 'Failed to prune orphan files.' });
     }
   });
 
@@ -413,7 +431,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       console.error('[admin:db-sizes]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to fetch database sizes.' });
     }
   });
 
@@ -463,7 +481,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       });
     } catch (e) {
       console.error('[admin:audit-cleanup]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to run audit cleanup.' });
     }
   });
 
@@ -679,7 +697,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         unattributed_breakdown: breakdown,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:rus-hours-debug]', e && e.message);
+      res.status(500).json({ error: 'Failed to load RUS hours debug.' });
     }
   });
 
@@ -707,7 +726,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         batches: rows,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:import-trace]', e && e.message);
+      res.status(500).json({ error: 'Failed to fetch import batches.' });
     }
   });
 
@@ -854,7 +874,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       } catch (e) {
         try { await client.query('ROLLBACK'); } catch {}
         client.release();
-        return res.status(500).json({ error: e.message });
+        console.error('[admin:reattribute-rollup-hours]', e && e.message);
+        return res.status(500).json({ error: 'Failed to reattribute rollup hours.' });
       }
       client.release();
 
@@ -876,7 +897,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         message: `Moved ${moves.length} time entries; recomputed actual_hours on ${affectedProjects.size} projects. Refresh the Hours tab and RUS tab to see the new attribution.`,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:reattribute-rollup-hours]', e && e.message);
+      res.status(500).json({ error: 'Failed to reattribute rollup hours.' });
     }
   });
 
@@ -1009,7 +1031,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         entries_truncated: entries.length > 50,
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[admin:import-trace-batch]', e && e.message);
+      res.status(500).json({ error: 'Failed to fetch import trace.' });
     }
   });
 
@@ -1038,72 +1061,78 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const tokenBuf = Buffer.from(req.headers['x-admin-bypass-token']);
       const bypassBuf = Buffer.from(bypass);
       if (tokenBuf.length === bypassBuf.length && crypto.timingSafeEqual(tokenBuf, bypassBuf)) {
-        return diskStatsHandler(req, res);
+        return diskStatsHandler(req, res).catch(e => {
+          console.error('[admin:disk-stats]', e && e.message);
+          if (!res.headersSent) res.status(500).json({ error: 'Failed to fetch disk stats.' });
+        });
       }
       // Wrong token — fall through to requireAdmin (will 401/403).
     }
     // Fall through to requireAdmin for normal (DB-healthy) auth.
-    requireAdmin(req, res, () => diskStatsHandler(req, res));
+    requireAdmin(req, res, () => diskStatsHandler(req, res).catch(e => {
+      console.error('[admin:disk-stats]', e && e.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to fetch disk stats.' });
+    }));
   });
 
-  function diskStatsHandler(req, res) {
+  // Perf (Wave 3): converted to async — uses fs.promises for readdir/stat so
+  // the directory walk doesn't block the event loop. statfsSync has no async
+  // equivalent in Node.js and is fast (kernel call, no I/O), so it's kept sync.
+  async function diskStatsHandler(req, res) {
+    // Volume stats via statfsSync — no DB required.
+    let volume = null;
     try {
-      // Volume stats via statfsSync — no DB required.
-      let volume = null;
-      try {
-        const sf = fs.statfsSync(uploadDir);
-        // statfsSync fields: bsize (block size), blocks (total), bfree (free),
-        // bavail (available to non-root), files (inodes), ffree (free inodes).
-        const total     = sf.bsize * sf.blocks;
-        const available = sf.bsize * sf.bavail;
-        const used      = total - available;
-        const usedPct   = total > 0 ? Math.round((used / total) * 1000) / 10 : 0;
-        volume = { total_bytes: total, available_bytes: available, used_bytes: used, used_pct: usedPct };
-      } catch (e) {
-        volume = { error: e.message };
-      }
-
-      // Walk uploadDir (non-recursive at top level + invoice-templates subdir)
-      // to tally total bytes, file count, and surface the top-20 largest files.
-      let totalBytes = 0;
-      let fileCount  = 0;
-      const allFiles = [];
-
-      function walkDir(dir, relBase) {
-        let entries = [];
-        try { entries = fs.readdirSync(dir); } catch { return; }
-        for (const f of entries) {
-          const full = path.join(dir, f);
-          let st;
-          try { st = fs.statSync(full); } catch { continue; }
-          if (st.isDirectory()) {
-            // Recurse one level into known subdirectories only.
-            if (f === 'invoice-templates') walkDir(full, path.join(relBase, f));
-            continue;
-          }
-          totalBytes += st.size;
-          fileCount++;
-          allFiles.push({ path: path.join(relBase, f), size: st.size, mtime: st.mtime.toISOString() });
-        }
-      }
-      walkDir(uploadDir, '');
-      allFiles.sort((a, b) => b.size - a.size);
-
-      return res.json({
-        volume,
-        uploads_dir: {
-          path: uploadDir,
-          total_bytes: totalBytes,
-          file_count: fileCount,
-          top_20_largest: allFiles.slice(0, 20),
-        },
-        bypass_token_hint: !process.env.ADMIN_BYPASS_TOKEN
-          ? 'ADMIN_BYPASS_TOKEN env var is not set. Set it in Railway → Variables to enable DB-bypass access when Postgres is degraded. Requests with header X-Admin-Bypass-Token matching that value will skip the DB auth check.'
-          : undefined,
-      });
+      const sf = fs.statfsSync(uploadDir);
+      // statfsSync fields: bsize (block size), blocks (total), bfree (free),
+      // bavail (available to non-root), files (inodes), ffree (free inodes).
+      const total     = sf.bsize * sf.blocks;
+      const available = sf.bsize * sf.bavail;
+      const used      = total - available;
+      const usedPct   = total > 0 ? Math.round((used / total) * 1000) / 10 : 0;
+      volume = { total_bytes: total, available_bytes: available, used_bytes: used, used_pct: usedPct };
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      console.error('[admin:disk-stats:statfs]', e && e.message);
+      volume = { error: 'statfs failed — volume may be unmounted or path is wrong.' };
     }
+
+    // Walk uploadDir (non-recursive at top level + invoice-templates subdir)
+    // to tally total bytes, file count, and surface the top-20 largest files.
+    let totalBytes = 0;
+    let fileCount  = 0;
+    const allFiles = [];
+
+    async function walkDir(dir, relBase) {
+      let entries = [];
+      try { entries = await fs.promises.readdir(dir); } catch { return; }
+      for (const f of entries) {
+        const full = path.join(dir, f);
+        let st;
+        try { st = await fs.promises.stat(full); } catch { continue; }
+        if (st.isDirectory()) {
+          // Recurse one level into known subdirectories only.
+          if (f === 'invoice-templates') await walkDir(full, path.join(relBase, f));
+          continue;
+        }
+        totalBytes += st.size;
+        fileCount++;
+        allFiles.push({ path: path.join(relBase, f), size: st.size, mtime: st.mtime.toISOString() });
+      }
+    }
+    await walkDir(uploadDir, '');
+    allFiles.sort((a, b) => b.size - a.size);
+
+    return res.json({
+      volume,
+      uploads_dir: {
+        path: uploadDir,
+        total_bytes: totalBytes,
+        file_count: fileCount,
+        top_20_largest: allFiles.slice(0, 20),
+      },
+      bypass_token_hint: !process.env.ADMIN_BYPASS_TOKEN
+        ? 'ADMIN_BYPASS_TOKEN env var is not set. Set it in Railway → Variables to enable DB-bypass access when Postgres is degraded. Requests with header X-Admin-Bypass-Token matching that value will skip the DB auth check.'
+        : undefined,
+    });
   }
 
   // ─── Uploads cleanup — delete old files from UPLOAD_DIR ──────────────────
@@ -1133,14 +1162,22 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const tokenBuf = Buffer.from(req.headers['x-admin-bypass-token']);
       const bypassBuf = Buffer.from(bypass);
       if (tokenBuf.length === bypassBuf.length && crypto.timingSafeEqual(tokenBuf, bypassBuf)) {
-        return uploadsCleanupHandler(req, res);
+        return uploadsCleanupHandler(req, res).catch(e => {
+          console.error('[admin:uploads-cleanup]', e && e.message);
+          if (!res.headersSent) res.status(500).json({ error: 'Failed to run uploads cleanup.' });
+        });
       }
       // Wrong token — fall through to requireAdmin.
     }
-    requireAdmin(req, res, () => uploadsCleanupHandler(req, res));
+    requireAdmin(req, res, () => uploadsCleanupHandler(req, res).catch(e => {
+      console.error('[admin:uploads-cleanup]', e && e.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to run uploads cleanup.' });
+    }));
   });
 
-  function uploadsCleanupHandler(req, res) {
+  // Perf (Wave 3): converted to async — uses fs.promises throughout so the
+  // readdir/stat/unlink calls don't block the event loop during a large scan.
+  async function uploadsCleanupHandler(req, res) {
     const body = req.body || {};
     const olderThanDays = Number.isFinite(Number(body.older_than_days))
       ? Math.max(1, Number(body.older_than_days)) : 30;
@@ -1156,13 +1193,14 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     // invoice-templates/ files are persistent template assets and must never
     // be deleted by this sweep — they are excluded regardless of age.
     let entries = [];
-    try { entries = fs.readdirSync(uploadDir); } catch (e) {
-      return res.status(500).json({ error: 'Cannot read uploadDir: ' + e.message });
+    try { entries = await fs.promises.readdir(uploadDir); } catch (e) {
+      console.error('[admin:uploads-cleanup:readdir]', e && e.message);
+      return res.status(500).json({ error: 'Cannot read upload directory — check UPLOAD_DIR configuration.' });
     }
     for (const f of entries) {
       const full = path.join(uploadDir, f);
       let st;
-      try { st = fs.statSync(full); } catch { continue; }
+      try { st = await fs.promises.stat(full); } catch { continue; }
       // Skip the invoice-templates subdir entirely.
       if (st.isDirectory()) continue;
       scanned++;
@@ -1203,7 +1241,7 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     const errors = [];
     for (const c of toDelete) {
       try {
-        fs.unlinkSync(c.full_path);
+        await fs.promises.unlink(c.full_path);
         deleted++;
         freedBytes += c.size;
       } catch (e) {
@@ -1296,7 +1334,8 @@ module.exports = function installAdminRoutes(app, pool, mw) {
     } catch (e) {
       await client.query('ROLLBACK');
       if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
-      res.status(500).json({ error: e.message });
+      console.error('[admin:staff-with-user]', e && e.message);
+      res.status(500).json({ error: 'Failed to create staff and user account.' });
     } finally {
       client.release();
     }
@@ -1313,11 +1352,16 @@ module.exports = function installAdminRoutes(app, pool, mw) {
 //
 // Conservative defaults: 7-day age cutoff so the undo TTL (60s) and any
 // manual recovery window safely pass before files actually disappear.
+// Perf (Wave 3): converted scanDir to async — uses fs.promises throughout
+// so readdir/stat/unlink calls don't block the event loop during large scans.
 async function pruneOrphanFiles({ pool, uploadDir, olderThanHours = 168, dryRun = true }) {
-  const fs = require('fs');
+  const fsp = require('fs').promises;
+  const fsSync = require('fs');
   const path = require('path');
   const out = { candidates: [], deleted: 0, bytesFreed: 0, skippedTooRecent: 0 };
-  if (!uploadDir || !fs.existsSync(uploadDir)) return out;
+  // Use sync existsSync only for the quick "does the dir even exist" guard —
+  // no async equivalent and this is a single stat with no directory traversal.
+  if (!uploadDir || !fsSync.existsSync(uploadDir)) return out;
 
   // In-use paths for the top-level upload directory
   const dbDocs = await pool.query(`SELECT file_path FROM permit_documents`).catch(() => ({ rows: [] }));
@@ -1332,13 +1376,13 @@ async function pruneOrphanFiles({ pool, uploadDir, olderThanHours = 168, dryRun 
 
   const cutoffMs = Date.now() - olderThanHours * 60 * 60 * 1000;
 
-  function scanDir(dir, inUseSet, label) {
+  async function scanDir(dir, inUseSet, label) {
     let entries = [];
-    try { entries = fs.readdirSync(dir); } catch { return; }
+    try { entries = await fsp.readdir(dir); } catch { return; }
     for (const f of entries) {
       const full = path.join(dir, f);
       let stat;
-      try { stat = fs.statSync(full); } catch { continue; }
+      try { stat = await fsp.stat(full); } catch { continue; }
       if (stat.isDirectory()) continue;  // don't recurse into other subdirs
       if (inUseSet.has(f)) continue;
       const ageHours = (Date.now() - stat.mtimeMs) / (60 * 60 * 1000);
@@ -1350,13 +1394,13 @@ async function pruneOrphanFiles({ pool, uploadDir, olderThanHours = 168, dryRun 
     }
   }
 
-  scanDir(uploadDir, inUseTop, 'top');
-  scanDir(path.join(uploadDir, 'invoice-templates'), inUseTpl, 'invoice-templates');
+  await scanDir(uploadDir, inUseTop, 'top');
+  await scanDir(path.join(uploadDir, 'invoice-templates'), inUseTpl, 'invoice-templates');
 
   if (!dryRun) {
     for (const c of out.candidates) {
       try {
-        require('fs').unlinkSync(c.full_path);
+        await fsp.unlink(c.full_path);
         out.deleted++;
         out.bytesFreed += c.size;
       } catch (e) {

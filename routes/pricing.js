@@ -47,7 +47,10 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         ORDER BY pe.program, j.name, pe.billing_code NULLS LAST
       `);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[pricing:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load pricing entries.' });
+    }
   });
 
   // Look up the default rate/billing for a job+program (and optionally a
@@ -68,7 +71,10 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         LIMIT 1
       `, [job_id, normalizedProgram, billing_code || null]);
       res.json(rows[0] || null);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[pricing:lookup]', e && e.message);
+      res.status(500).json({ error: 'Failed to look up pricing.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -86,7 +92,10 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         RETURNING *
       `, [job_id, normalizedProgram, billing_code || null, billing_type || 'hourly', rate, notes || null]);
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[pricing:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create pricing entry.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -109,7 +118,10 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         WHERE id = $1 RETURNING *
       `, [req.params.id, billing_type, rate, notes, billing_code, normalizedProgram === undefined ? null : normalizedProgram]);
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[pricing:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update pricing entry.' });
+    }
   });
 
   // Item 2 fix: requireManagerOrAdmin added
@@ -117,7 +129,10 @@ module.exports = function installPricingRoutes(app, pool, mw) {
     try {
       await pool.query('DELETE FROM pricing_entries WHERE id = $1', [req.params.id]);
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[pricing:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete pricing entry.' });
+    }
   });
 
   // Returns the count of "missing pricing" combinations — the red dot in the
@@ -143,6 +158,9 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         ORDER BY p.program, j.name
       `);
       res.json({ count: rows.length, gaps: rows });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[pricing:gaps]', e && e.message);
+      res.status(500).json({ error: 'Failed to load pricing gaps.' });
+    }
   });
 };

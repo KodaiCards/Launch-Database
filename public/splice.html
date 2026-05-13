@@ -496,9 +496,15 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
 .layer-ctx-menu{position:fixed;background:#fff;border:1px solid var(--vetro-divider,#D8DCE3);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:500;min-width:160px;padding:4px 0;font-size:12px}
 .layer-ctx-item{padding:6px 14px;cursor:pointer;color:var(--vetro-text-body,#3D4A5C)}
 .layer-ctx-item:hover{background:var(--vetro-bg-hover,#EBF2FF)}
+/* a11y */
+.skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;text-decoration:none}
+.skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--vetro-primary,#003F72);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 </head>
 <body>
+
+<a href="#main-content" class="skip-nav">Skip to main content</a>
 
 <header class="header">
   <a href="/" class="launcher-back-btn" data-launcher-back style="display:none">
@@ -520,7 +526,7 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   </div>
 </header>
 
-<div class="app">
+<div class="app" id="main-content">
 
   <!-- ─── Left rail: VETRO Map Data panel ─── -->
   <aside class="sidebar" id="sidebar">
@@ -5882,13 +5888,14 @@ document.addEventListener('click', (e) => {
 // ───────────────────────────────────────────────────────────────────────────
 
 function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
+  const modalId = 'modal-title-' + Date.now();
   const host = document.getElementById('modal-host');
   host.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="${modalId}" onclick="if(event.target===this)closeModal()">
       <div class="modal ${wide?'wide':''}">
         <header>
-          <h2>${esc(title)}</h2>
-          <button class="close" onclick="closeModal()">&times;</button>
+          <h2 id="${modalId}">${esc(title)}</h2>
+          <button class="close" aria-label="Close dialog" onclick="closeModal()">&times;</button>
         </header>
         <div class="body">${body}</div>
         <footer>
@@ -5924,12 +5931,13 @@ async function confirmDialog({ title, body, confirmLabel = 'Confirm', danger = f
   return new Promise(resolve => {
     const host = document.getElementById('modal-host');
     const btnCls = danger ? 'btn btn-danger' : 'btn btn-primary';
+    const confirmTitleId = 'confirm-title-' + Date.now();
     host.innerHTML = `
-      <div class="modal-overlay" id="confirm-overlay" style="z-index:9999">
+      <div class="modal-overlay" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="${confirmTitleId}" style="z-index:9999">
         <div class="modal" style="max-width:440px">
           <header>
-            <h2>${esc(title)}</h2>
-            <button class="close" id="confirm-cancel-x">&times;</button>
+            <h2 id="${confirmTitleId}">${esc(title)}</h2>
+            <button class="close" id="confirm-cancel-x" aria-label="Close dialog">&times;</button>
           </header>
           <div class="body" style="font-size:13px;line-height:1.5;white-space:pre-wrap">${body}</div>
           <footer>

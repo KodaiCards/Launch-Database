@@ -24,6 +24,61 @@
    if a touch laptop is in use. */
 html, body { -webkit-text-size-adjust: 100%; }
 
+/* ─── A11y: global focus-visible ring ─────────────────────────────────── */
+/* Visible keyboard-focus indicator on all interactive elements.
+   Uses :focus-visible so mouse clicks don't show the ring (pointer-friendly).
+   Individual pages may override with a tighter outline; this is the floor. */
+*:focus-visible {
+  outline: 2px solid var(--primary, #1B5FA0);
+  outline-offset: 2px;
+}
+
+/* ─── A11y: screen-reader-only utility ────────────────────────────────── */
+/* Visually hidden but readable by assistive technology. Shared across all
+   portals so each page doesn't need its own copy. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── A11y: skip-nav link ─────────────────────────────────────────────── */
+/* Off-screen until focused by keyboard. Each portal page just needs
+   <a href="#main-content" class="skip-nav">Skip to main content</a>
+   as the first child of <body> and <main id="main-content"> wrapping
+   the primary content area. */
+.skip-nav {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+  text-decoration: none;
+}
+.skip-nav:focus {
+  position: fixed;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  width: auto;
+  height: auto;
+  padding: 10px 20px;
+  background: var(--primary, #1B5FA0);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 9999;
+}
+
 /* Tables: when content overflows on narrow screens we need a wrapper that
    scrolls. The HTML doesn't have one, so we apply the scroll on the table
    itself and let it overflow horizontally. */

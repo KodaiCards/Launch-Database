@@ -33,8 +33,15 @@
   }
 
   async function loadPermits() {
-    const permits = await api('/api/permits');
-    const stageFilter = document.getElementById('perm-stage-filter').value;
+    let permits;
+    try {
+      permits = await api('/api/permits');
+    } catch (e) {
+      const tbody = document.getElementById('permits-body');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color:var(--danger)">Failed to load permits: ${esc(e.message)}</td></tr>`;
+      return;
+    }
+    const stageFilter = document.getElementById('perm-stage-filter')?.value || '';
     // Stage summary bar
     const bar = document.getElementById('permit-stage-bar');
     const stageCounts = {};
@@ -86,7 +93,7 @@
         <td>${pipelineViz(currentIdx)}</td>
         <td style="white-space:nowrap">
           ${currentIdx > 0 ? `<button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();regressPermit('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>` : ''}
-          ${currentIdx < STAGES.length - 1 ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();advancePermit('${p.id}')">→ ${STAGE_LABELS[STAGES[currentIdx + 1]]}</button>` : '<span style="color:var(--success);font-size:12px"><i class="fa-solid fa-check"></i> Done</span>'}
+          ${currentIdx < STAGES.length - 1 ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();advancePermit('${p.id}',this)">→ ${STAGE_LABELS[STAGES[currentIdx + 1]]}</button>` : '<span style="color:var(--success);font-size:12px"><i class="fa-solid fa-check"></i> Done</span>'}
           <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openPermitDocs('${p.id}','${esc(p.name)}')" title="Documents"><i class="fa-solid fa-paperclip"></i></button>
           <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
         </td>
@@ -94,12 +101,19 @@
     }).join('');
   }
 
-  async function advancePermit(projectId) {
-    // No name prompt — server uses the original creator's name (stored at
-    // permit creation) or 'unknown' as a fallback.
-    await api('/api/permits/' + projectId + '/advance', 'PUT', {});
-    loadPermits();
-    if (typeof loadDashboard === 'function') loadDashboard();
+  async function advancePermit(projectId, btn) {
+    // Double-submit guard: disable the clicked Advance button for the duration
+    // of the API call. loadPermits() re-renders the row so we don't need to
+    // re-enable on success (the button is destroyed by the re-render).
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+    try {
+      await api('/api/permits/' + projectId + '/advance', 'PUT', {});
+      loadPermits();
+      if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '→ Next'; }
+      alert('Advance failed: ' + e.message);
+    }
   }
 
   // Advance a permit from inside the project detail popup, then reload the
@@ -220,4 +234,32 @@
   window.loadPermitDocs = loadPermitDocs;
   window.uploadDoc = uploadDoc;
   window.deletePermitDoc = deletePermitDoc;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  // Mirror the debounce pattern used by billing_tab.js, hours_tab.js etc.
+  // Permit events were previously only caught by the 60s recovery poll;
+  // now they trigger an immediate (debounced 500ms) reload on the active view.
+  let _permitStaleTimer = null;
+  let _permitStale = false;
+
+  function _permitDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'permitting') {
+      _permitStale = true;
+      return;
+    }
+    clearTimeout(_permitStaleTimer);
+    _permitStaleTimer = setTimeout(loadPermits, 500);
+  }
+
+  ['permit_added', 'permit_updated', 'permit_deleted',
+   'project_added', 'project_updated', 'project_deleted',
+  ].forEach(ev => document.addEventListener('sse:' + ev, _permitDebounce));
+
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'permitting' && _permitStale) {
+      _permitStale = false;
+      clearTimeout(_permitStaleTimer);
+      _permitStaleTimer = setTimeout(loadPermits, 100);
+    }
+  });
 })();

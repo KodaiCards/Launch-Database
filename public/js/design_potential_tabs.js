@@ -39,7 +39,14 @@
   window.DESIGN_LABELS = DESIGN_LABELS;
 
   async function loadDesign() {
-    const projects = await api('/api/design');
+    let projects;
+    try {
+      projects = await api('/api/design');
+    } catch (e) {
+      const tbody = document.getElementById('design-body');
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--danger)">Failed to load design projects: ${esc(e.message)}</td></tr>`;
+      return;
+    }
     const stageFilter = document.getElementById('design-stage-filter')?.value || '';
     const counts = {}; DESIGN_STAGES.forEach(s => counts[s]=0);
     projects.forEach(p => { if(p.current_stage) counts[p.current_stage]++; });
@@ -84,7 +91,7 @@
         <td style="white-space:nowrap">
           <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();openDesignDocs('${p.id}','${esc(p.name)}')" title="Final Map / DWG"><i class="fa-solid fa-paperclip"></i></button>
           ${stage!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>` : ''}
-          ${stage!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')"><i class="fa-solid fa-forward"></i> Advance</button>`:'<span style="color:var(--success);font-weight:600"><i class="fa-solid fa-check"></i> Done</span>'}
+          ${stage!=='completed'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}',this)"><i class="fa-solid fa-forward"></i> Advance</button>`:'<span style="color:var(--success);font-weight:600"><i class="fa-solid fa-check"></i> Done</span>'}
         </td>
       </tr>`;
     }).join('');
@@ -110,14 +117,19 @@
     } catch (e) { alert('Regress failed: ' + e.message); }
   }
 
-  async function advanceDesign(projectId) {
-    // No name prompt — server uses the logged-in user (req.user) automatically.
+  async function advanceDesign(projectId, btn) {
+    // Double-submit guard: disable the clicked Advance button for the API call.
+    // loadDesign() re-renders the row on success so re-enable is only needed on error.
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
     try {
       const r = await api(`/api/design/${projectId}/advance`, 'PUT', {});
       if (r.current === 'completed') alert('Design completed! It will appear in your Billing tab.');
       loadDesign();
       if (typeof loadDashboard === 'function') loadDashboard();
-    } catch(e) { alert('Error: '+e.message); }
+    } catch(e) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-forward"></i> Advance'; }
+      alert('Error: '+e.message);
+    }
   }
 
   // ─── Potential Permits ──────────────────────────────────────────────
@@ -146,12 +158,22 @@
 
   function openPotentialPermitModal() {
     ['pp-sr-hwy','pp-county','pp-route','pp-submitted-by','pp-notes'].forEach(id=>document.getElementById(id).value='');
+    // Actor pre-fill: populate submitted_by from the logged-in user so the
+    // field isn't left blank. Backend still uses req.user as the authoritative
+    // actor; this is a UX convenience so the user sees who will be recorded.
+    const subByEl = document.getElementById('pp-submitted-by');
+    if (subByEl && typeof currentUser !== 'undefined' && currentUser) {
+      subByEl.value = currentUser.full_name || currentUser.username || '';
+    }
     openModal('pp-modal');
   }
 
   async function savePotentialPermit() {
     const sr = document.getElementById('pp-sr-hwy').value.trim();
     if (!sr) return alert('SR/HWY is required');
+    // Double-submit guard
+    const saveBtn = document.querySelector('#pp-modal .btn-primary[onclick*="savePotentialPermit"]');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…'; }
     try {
       await api('/api/potential-permits','POST',{
         sr_hwy:sr, county:document.getElementById('pp-county').value.trim(),
@@ -160,7 +182,10 @@
         notes:document.getElementById('pp-notes').value.trim()
       });
       closeModal('pp-modal'); loadPotentialPermits();
-    } catch(e) { alert('Error: '+e.message); }
+    } catch(e) {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit'; }
+      alert('Error: '+e.message);
+    }
   }
 
   async function acceptPotentialPermit(ppId, srHwy, county, route) {
@@ -198,4 +223,50 @@
   window.acceptPotentialPermit = acceptPotentialPermit;
   window.rejectPotentialPermit = rejectPotentialPermit;
   window.deletePotentialPermit = deletePotentialPermit;
+
+  // ── SSE live-update hooks ──────────────────────────────────────────────────
+  // Design pipeline and potential-permits views previously only refreshed on
+  // the 60s recovery poll. Wire SSE events so changes appear within 500ms.
+  let _designStaleTimer = null;
+  let _designStale = false;
+  let _potentialStaleTimer = null;
+  let _potentialStale = false;
+
+  function _designDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'design') {
+      _designStale = true;
+      return;
+    }
+    clearTimeout(_designStaleTimer);
+    _designStaleTimer = setTimeout(loadDesign, 500);
+  }
+
+  function _potentialDebounce() {
+    if (typeof currentView !== 'undefined' && currentView !== 'potential-permits') {
+      _potentialStale = true;
+      return;
+    }
+    clearTimeout(_potentialStaleTimer);
+    _potentialStaleTimer = setTimeout(loadPotentialPermits, 500);
+  }
+
+  ['project_added', 'project_updated', 'project_deleted',
+   'permit_added', 'permit_updated', 'permit_deleted',
+  ].forEach(ev => document.addEventListener('sse:' + ev, _designDebounce));
+
+  ['project_added', 'project_updated', 'project_deleted',
+  ].forEach(ev => document.addEventListener('sse:' + ev, _potentialDebounce));
+
+  (window._showViewHooks = window._showViewHooks || []).push(function(view) {
+    if (view === 'design' && _designStale) {
+      _designStale = false;
+      clearTimeout(_designStaleTimer);
+      _designStaleTimer = setTimeout(loadDesign, 100);
+    }
+    if (view === 'potential-permits' && _potentialStale) {
+      _potentialStale = false;
+      clearTimeout(_potentialStaleTimer);
+      _potentialStaleTimer = setTimeout(loadPotentialPermits, 100);
+    }
+  });
 })();

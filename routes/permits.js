@@ -75,7 +75,10 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
       broadcast('admin', 'permit_updated', { project_id: projectId, stage: nextStage });
       broadcast('team:permitting', 'permit_updated', { project_id: projectId, stage: nextStage });
       res.json({ previous: currentStage, current: nextStage });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[permits:advance]', e && e.message);
+      res.status(500).json({ error: 'Failed to advance permit stage.' });
+    }
   });
 
   // Items 2 + 8 fix: requireAuth added; body actor fallback removed.
@@ -107,7 +110,10 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
       broadcast('admin', 'permit_updated', { project_id: projectId, stage: prevStage });
       broadcast('team:permitting', 'permit_updated', { project_id: projectId, stage: prevStage });
       res.json({ previous: currentStage, current: prevStage });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[permits:regress]', e && e.message);
+      res.status(500).json({ error: 'Failed to regress permit stage.' });
+    }
   });
 
   // Item 5 fix: requireAuth role gate added; uploaded_by sourced from req.user.id not body
@@ -127,6 +133,9 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
       broadcast('admin', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
       broadcast('team:permitting', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[permits:upload-document]', e && e.message);
+      res.status(500).json({ error: 'Failed to save permit document.' });
+    }
   });
 };

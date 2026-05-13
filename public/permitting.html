@@ -211,7 +211,7 @@ tbody tr:hover td{background:var(--gray-light)}
 .form-group.span2{grid-column:1/-1}
 label{font-size:12px;font-weight:600;color:var(--text-muted)}
 input,select,textarea{border:1px solid var(--gray-border);border-radius:7px;padding:8px 10px;font-size:13px;font-family:var(--font);width:100%;background:#fff}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--portal-color)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--portal-color);outline-offset:1px;border-color:var(--portal-color)}
 textarea{resize:vertical;min-height:60px}
 .form-hint{font-size:11px;color:var(--text-muted);margin-top:2px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -229,6 +229,10 @@ textarea{resize:vertical;min-height:60px}
    still get the help text and we can re-enable them later by removing this
    single rule. */
 .form-hint{display:none !important}
+/* a11y */
+.skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;text-decoration:none}
+.skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 <script>
 
@@ -307,12 +311,14 @@ fetch('/api/auth/me', { credentials: 'include' })
 </head>
 <body>
 
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+
 <!-- Undo bar — fires after restorable mutations that return an undo token. -->
-<div id="lfs-undo-bar" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
-  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)"></i>
+<div id="lfs-undo-bar" role="status" aria-live="polite" aria-atomic="true" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;background:var(--surface-2,#212529);color:var(--text,#fff);border:1px solid var(--border-strong,#212529);border-radius:8px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:14px;min-width:320px;max-width:560px">
+  <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)" aria-hidden="true"></i>
   <span id="lfs-undo-message" style="flex:1"></span>
   <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:var(--success,#28A745);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
-  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">&times;</button>
+  <button onclick="hideUndoBar()" title="Dismiss" aria-label="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">&times;</button>
 </div>
 
 <header class="header">
@@ -343,13 +349,14 @@ fetch('/api/auth/me', { credentials: 'include' })
   </div>
 </header>
 
-<nav class="nav">
-  <a class="nav-tab active" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-file-signature"></i> Permit Pipeline</a>
-  <a class="nav-tab" data-view="potential" onclick="sv('potential')"><i class="fa-solid fa-lightbulb"></i> Review Submissions</a>
+<nav class="nav" role="tablist" aria-label="Main navigation">
+  <a id="tab-pipeline" class="nav-tab active" role="tab" aria-selected="true" aria-controls="view-pipeline" data-view="pipeline" onclick="sv('pipeline')"><i class="fa-solid fa-file-signature" aria-hidden="true"></i> Permit Pipeline</a>
+  <a id="tab-potential" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-potential" data-view="potential" onclick="sv('potential')"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Review Submissions</a>
 </nav>
 
 <!-- ───────── PIPELINE VIEW (also where projects are added) ───────── -->
-<div id="view-pipeline" class="view active">
+<main id="main-content">
+<div id="view-pipeline" class="view active" role="tabpanel" aria-labelledby="tab-pipeline">
   <div class="section-header">
     <div><div class="section-title">Permit Pipeline</div></div>
     <div style="display:flex;gap:8px">
@@ -375,7 +382,7 @@ fetch('/api/auth/me', { credentials: 'include' })
 </div>
 
 <!-- ───────── REVIEW SUBMISSIONS VIEW ───────── -->
-<div id="view-potential" class="view">
+<div id="view-potential" class="view" role="tabpanel" aria-labelledby="tab-potential">
   <div class="section-header">
     <div><div class="section-title">Review Submissions from Design</div><div class="section-sub">Accept and convert into a permitting project, or reject</div></div>
     <select class="filter" id="ppf" onchange="loadPotential()">
@@ -393,35 +400,37 @@ fetch('/api/auth/me', { credentials: 'include' })
   </div>
 </div>
 
+</main>
+
 <!-- ─────────────────────────────────────────────────────────────────
      PROJECT MODAL — clone of admin's New Project, money fields removed.
      Job dropdown is filtered server-side to this portal's team.
      The single optional Footage / Hours field shows the right unit
      based on the chosen Job's billing type.
 ───────────────────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="project-modal">
+<div class="modal-overlay" id="project-modal" role="dialog" aria-modal="true" aria-labelledby="proj-modal-title">
   <div class="modal" style="max-width:720px">
     <div class="modal-header">
       <span class="modal-title" id="proj-modal-title">New Project</span>
-      <button class="btn btn-icon btn-secondary" onclick="cm('project-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cm('project-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="proj-id">
       <div class="form-grid">
         <div class="form-row">
           <div class="form-group span2">
-            <label>Project Name *</label>
+            <label for="proj-name">Project Name *</label>
             <input type="text" id="proj-name" placeholder="e.g. SR 49 Fiber Design">
             <span class="form-hint">Must be unique under its parent project (no duplicates allowed)</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Client *</label>
+            <label for="proj-client">Client *</label>
             <select id="proj-client" onchange="clientChanged()"><option value="">Select...</option></select>
           </div>
           <div class="form-group" id="proj-contract-wrap" style="display:none">
-            <label>Contract</label>
+            <label for="proj-contract">Contract</label>
             <select id="proj-contract" onchange="contractChanged()"><option value="">None / N/A</option></select>
           </div>
         </div>
@@ -432,47 +441,47 @@ fetch('/api/auth/me', { credentials: 'include' })
              project that's already in the system. -->
         <div class="form-row" id="proj-existing-wrap" style="display:none">
           <div class="form-group span2">
-            <label>Existing Project for this Client <span style="font-weight:400;color:var(--text-muted)">(optional — pick to edit instead of creating new)</span></label>
+            <label for="proj-existing">Existing Project for this Client <span style="font-weight:400;color:var(--text-muted)">(optional — pick to edit instead of creating new)</span></label>
             <select id="proj-existing" onchange="existingProjectPicked(this.value)"><option value="">— Create new below —</option></select>
             <span class="form-hint" id="proj-existing-hint">Showing existing leaf projects under this client — with WO# in label when applicable.</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group" id="proj-concentrator-wrap" style="display:none">
-            <label>Service Area</label>
+            <label for="proj-concentrator">Service Area</label>
             <select id="proj-concentrator" onchange="concentratorChanged()"><option value="">— Pick area —</option></select>
           </div>
           <div class="form-group" id="proj-wo-wrap" style="display:none">
-            <label>Work Order Number</label>
+            <label for="proj-wo">Work Order Number</label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
             <span class="form-hint">Auto-filled when an area is selected above.</span>
           </div>
           <div class="form-group" id="proj-service-area-wrap" style="display:none">
-            <label>Service Area</label>
+            <label for="proj-service-area">Service Area</label>
             <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc.">
             <span class="form-hint">Free text — projects with the same service area get grouped together under this client + team.</span>
           </div>
           <div class="form-group" id="proj-ptype-wrap" style="display:none">
-            <label>Project Type</label>
+            <label for="proj-ptype">Project Type</label>
             <select id="proj-ptype" onchange="ptypeChanged()"><option value="">— Select —</option></select>
             <span class="form-hint">PSC only</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Job *</label>
+            <label for="proj-job">Job *</label>
             <select id="proj-job" onchange="jobChanged()"><option value="">— Select —</option></select>
             <span class="form-hint">Filtered by client (PSC vs other) and the Permitting team</span>
           </div>
           <div class="form-group">
-            <label id="proj-amount-label">Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+            <label for="proj-amount" id="proj-amount-label">Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
             <input type="number" id="proj-amount" step="0.01" placeholder="0">
             <span class="form-hint" id="proj-amount-hint">Pick a job to see the right unit</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Status</label>
+            <label for="proj-status">Status</label>
             <select id="proj-status">
               <option value="active">Active</option>
               <option value="on_hold">On Hold</option>
@@ -480,12 +489,12 @@ fetch('/api/auth/me', { credentials: 'include' })
             </select>
           </div>
           <div class="form-group">
-            <label>Start Date</label>
+            <label for="proj-start">Start Date</label>
             <input type="date" id="proj-start">
           </div>
         </div>
         <div class="form-group">
-          <label>Notes</label>
+          <label for="proj-notes">Notes</label>
           <textarea id="proj-notes" placeholder="Any additional notes..."></textarea>
         </div>
       </div>
@@ -502,11 +511,11 @@ fetch('/api/auth/me', { credentials: 'include' })
      All changes are submitted as proposals for admin to approve.
      Bottom: My Pending Requests + collapsible Change Log.
 ───────────────────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="settings-modal">
+<div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
   <div class="modal" style="max-width:880px;width:95%">
     <div class="modal-header">
-      <span class="modal-title"><i class="fa-solid fa-gear" style="color:var(--portal-color)"></i> Settings</span>
-      <button class="btn btn-icon btn-secondary" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
+      <span class="modal-title" id="settings-modal-title"><i class="fa-solid fa-gear" style="color:var(--portal-color)" aria-hidden="true"></i> Settings</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cm('settings-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body">
       <div style="background:var(--warning-light);border:1px solid var(--warning);color:var(--warning-text);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px">
@@ -752,7 +761,12 @@ async function openProjectModal(){
   document.getElementById('proj-status').value = 'active';
   document.getElementById('proj-start').value = new Date().toISOString().split('T')[0];
   const concSel = document.getElementById('proj-concentrator');
-  if (concSel) concSel.value = '';
+  if (concSel) { concSel.value = ''; delete concSel.dataset.ecId; }
+  // Reset EC-scoped WO select if it was injected by a prior modal open.
+  const woSel = document.getElementById('proj-wo-select');
+  if (woSel) { woSel.value = ''; woSel.style.display = 'none'; }
+  const woIn = document.getElementById('proj-wo');
+  if (woIn) { woIn.value = ''; woIn.style.display = ''; }
   populateProjectFormDropdowns();
   document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
@@ -795,6 +809,14 @@ async function editProject(id){
       if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(preset) ? preset : '';
     }
     applyPortalProjectModalFieldGating();
+    // EC-scoped WO# / Service Area: if the project's contract resolves to an EC,
+    // populate the scoped pickers and then restore the project's existing values.
+    try {
+      const c2 = p.contract_id && (window.contractsCache || []).find(x => x.id === p.contract_id);
+      if (c2?.engineering_contract_id) {
+        await populateEcScopedWoSaForModal(c2.engineering_contract_id);
+      }
+    } catch (e) { console.warn('[ec-wosa:edit]', e && e.message); }
     const concSel = document.getElementById('proj-concentrator');
     if (concSel) {
       if (p.concentrator_id) {
@@ -803,6 +825,14 @@ async function editProject(id){
         const conc = allConcentrators.find(c => c.work_order_number === p.work_order_number);
         if (conc) concSel.value = conc.id;
       }
+    }
+    // Restore WO# value into proj-wo-select (or free-text) after population.
+    if (p.work_order_number) {
+      const woSel = document.getElementById('proj-wo-select');
+      if (woSel && woSel.style.display !== 'none') {
+        woSel.value = p.work_order_number;
+      }
+      document.getElementById('proj-wo').value = p.work_order_number;
     }
   } catch (e) { console.error('client/job hookup failed:', e); }
 
@@ -946,7 +976,10 @@ function applyPortalProjectModalFieldGating() {
   const isNonRus = effective && !usesRusInfra;
   const clientId = document.getElementById('proj-client')?.value;
   const opt = document.getElementById('proj-client')?.selectedOptions[0];
-  const showContract = clientId && (usesRusInfra || opt?.dataset.showContract === '1');
+  // BAU/Other never show Construction Contract (free-text Service Area only).
+  // The per-client show_contract flag is honoured only when no program is
+  // explicitly selected (effective=null) — not when program is BAU or Other.
+  const showContract = clientId && (usesRusInfra || (!effective && opt?.dataset.showContract === '1'));
 
   const ptypeWrap = document.getElementById('proj-ptype-wrap');
   if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
@@ -991,6 +1024,102 @@ async function ptypeChanged(){
 async function contractChanged(){
   applyPortalProjectModalFieldGating();
   await refilterJobsDropdown();
+  // EC-scoped WO# / Service Area: resolve EC from the selected contract and
+  // populate the scoped pickers if that EC has ec_work_orders / ec_service_areas.
+  const contractId = document.getElementById('proj-contract')?.value;
+  const c = contractId && (window.contractsCache || []).find(x => x.id === contractId);
+  const ecId = c?.engineering_contract_id || null;
+  if (ecId) {
+    await populateEcScopedWoSaForModal(ecId);
+  } else {
+    // No EC selected — restore free-text input if a select was injected previously.
+    const woSel = document.getElementById('proj-wo-select');
+    if (woSel) { woSel.style.display = 'none'; woSel.value = ''; }
+    const woIn = document.getElementById('proj-wo');
+    if (woIn) woIn.style.display = '';
+    const concSel = document.getElementById('proj-concentrator');
+    if (concSel) delete concSel.dataset.ecId;
+  }
+}
+
+// ─── EC-scoped WO# / Service Area support for the project modal ───────────────
+//
+// When the selected contract's EC has ec_service_areas the concentrator
+// dropdown is repopulated from those EC-scoped records instead of the legacy
+// concentrators table.  When it has ec_work_orders the WO# free-text input is
+// replaced by a <select id="proj-wo-select"> fed from those records; choosing a
+// WO auto-selects the linked service area.  Falls back to legacy behaviour when
+// the EC has zero EC-scoped rows so existing setups are unaffected.
+
+// Cache: ecId → { sas: [...], wos: [...] }
+const _ecModalCache = {};
+
+async function populateEcScopedWoSaForModal(ecId) {
+  if (!ecId) return;
+  try {
+    let data = _ecModalCache[ecId];
+    if (!data) {
+      const [sas, wos] = await Promise.all([
+        api('/api/engineering-contracts/' + ecId + '/service-areas'),
+        api('/api/engineering-contracts/' + ecId + '/work-orders'),
+      ]);
+      data = { sas, wos };
+      _ecModalCache[ecId] = data;
+    }
+    const { sas, wos } = data;
+
+    // ── Service Area picker ───────────────────────────────────────────────
+    const concWrap = document.getElementById('proj-concentrator-wrap');
+    const concSel  = document.getElementById('proj-concentrator');
+    if (concWrap && concSel && sas.length > 0) {
+      const prev = concSel.value;
+      concSel.innerHTML =
+        '<option value="">— Select service area —</option>' +
+        sas.map(sa => `<option value="${sa.id}" data-type="ec-sa">${esc(sa.name)}</option>`).join('');
+      if (sas.some(sa => sa.id === prev)) concSel.value = prev;
+      concSel.dataset.ecId = ecId;
+    } else if (concSel) {
+      delete concSel.dataset.ecId;
+    }
+
+    // ── WO# picker ───────────────────────────────────────────────────────
+    const woWrap = document.getElementById('proj-wo-wrap');
+    const woIn   = document.getElementById('proj-wo');
+    if (woWrap && wos.length > 0) {
+      if (woWrap.style.display !== 'none') {
+        if (!document.getElementById('proj-wo-select')) {
+          const sel = document.createElement('select');
+          sel.id = 'proj-wo-select';
+          sel.style.width = '100%';
+          sel.onchange = function () {
+            if (woIn) woIn.value = this.value;
+            const picked = wos.find(w => w.number === this.value);
+            if (picked && picked.service_area_id) {
+              const cs = document.getElementById('proj-concentrator');
+              if (cs) cs.value = picked.service_area_id;
+            }
+          };
+          if (woIn) {
+            woIn.style.display = 'none';
+            woIn.parentNode.insertBefore(sel, woIn.nextSibling);
+          }
+        }
+        const sel = document.getElementById('proj-wo-select');
+        const prev = sel.value;
+        sel.innerHTML =
+          '<option value="">— Select WO# —</option>' +
+          wos.map(wo => `<option value="${esc(wo.number)}">${esc(wo.number)}${wo.description ? ' — ' + esc(wo.description) : ''}${wo.service_area_name ? ' (' + esc(wo.service_area_name) + ')' : ''}</option>`).join('');
+        if (wos.some(w => w.number === prev)) sel.value = prev;
+        sel.style.display = '';
+      }
+    } else {
+      const sel = document.getElementById('proj-wo-select');
+      if (sel) sel.style.display = 'none';
+      if (woIn) woIn.style.display = '';
+    }
+  } catch (e) {
+    console.warn('[ec-wosa:modal]', e && e.message);
+  }
 }
 
 async function clientChanged(preserveJobId){

@@ -94,11 +94,12 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: Install Playwright browsers
-        # Skip the download when the cache already has chromium for this
-        # Playwright version. 8-min step timeout: a fresh download on a
-        # cold cache should finish in ~2 min; anything past 8 means the
-        # download is wedged.
-        if: steps.pw-cache.outputs.cache-hit != 'true'
+        # Always run so the binary is guaranteed to exist even when the cache
+        # restores a stale entry (mismatched Chromium build number). A cache
+        # hit still avoids the download; npx playwright install is a no-op
+        # when the binary is already present. 8-min step timeout: a fresh
+        # download on a cold cache should finish in ~2 min; anything past 8
+        # means the download is wedged.
         timeout-minutes: 8
         run: npx playwright install chromium
 

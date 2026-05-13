@@ -24,7 +24,10 @@ module.exports = function installStaffRoutes(app, pool, mw) {
     try {
       const { rows } = await pool.query('SELECT * FROM staff WHERE active=true ORDER BY name');
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[staff:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load staff.' });
+    }
   });
 
   // Include inactive staff. Used by admin Settings to surface soft-deleted
@@ -33,7 +36,10 @@ module.exports = function installStaffRoutes(app, pool, mw) {
     try {
       const { rows } = await pool.query('SELECT * FROM staff ORDER BY active DESC, name');
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[staff:list-all]', e && e.message);
+      res.status(500).json({ error: 'Failed to load all staff.' });
+    }
   });
 
   // Item 2 fix: requireAdmin added — creating staff is an admin operation
@@ -52,7 +58,10 @@ module.exports = function installStaffRoutes(app, pool, mw) {
       broadcast('team:permitting', 'staff_added', { id: rows[0].id, name: rows[0].name });
       broadcast('team:construction', 'staff_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[staff:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create staff member.' });
+    }
   });
 
   // PUT — rename and/or toggle active. Partial update: only fields present
@@ -85,7 +94,8 @@ module.exports = function installStaffRoutes(app, pool, mw) {
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'Another staff member already uses that name' });
-      res.status(500).json({ error: e.message });
+      console.error('[staff:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update staff member.' });
     }
   });
 
@@ -146,6 +156,9 @@ module.exports = function installStaffRoutes(app, pool, mw) {
       broadcast('team:permitting', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
       broadcast('team:construction', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
       res.json({ ok: true, mode: 'soft', deactivated_name: cur.rows[0].name, time_entries });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[staff:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete staff member.' });
+    }
   });
 };

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSP Training — Launch Fiber Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --bg:#FAFAFA;--panel:#FFFFFF;--border:#E5E7EB;
+  --text:#1F2937;--text-muted:#6B7280;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#111827;--panel:#1F2937;--border:#374151;
+  --text:#F9FAFB;--text-muted:#9CA3AF;--primary-light:#1E3A5C;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;
+}
+.topbar{
+  background:#003F72;color:#fff;height:84px;display:flex;align-items:center;
+  padding:0 20px;gap:12px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);
+  position:relative;
+}
+.topbar img{
+  height:60px;width:auto;object-fit:contain;display:block;
+  position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;
+  filter:brightness(0) invert(1) opacity(0.95);
+}
+.topbar-spacer{flex:1}
+.back-btn{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;
+  padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;font-family:inherit;
+  cursor:pointer;display:flex;align-items:center;gap:6px;text-decoration:none;
+}
+.back-btn:hover{background:rgba(255,255,255,.22)}
+.main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:48px 40px;max-width:560px;width:100%;text-align:center;
+  box-shadow:0 4px 24px rgba(0,0,0,.06);
+}
+.card i.fa-graduation-cap{font-size:64px;color:var(--primary);margin-bottom:20px;display:block}
+.card h1{font-size:26px;font-weight:600;margin-bottom:10px}
+.card p{font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:8px}
+.card .small{font-size:12px;margin-top:18px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Portals</a>
+  <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber Services">
+  <div class="topbar-spacer"></div>
+</div>
+
+<div class="main">
+  <div class="card">
+    <i class="fa-solid fa-graduation-cap"></i>
+    <h1>OSP Training</h1>
+    <p>The training portal is being merged in from a sibling project. When it's live, you'll find modules covering ribbon vs loose-tube construction, ring cuts, TIA-598 color codes, and field-design practice exercises.</p>
+    <p class="small">Coming soon — check back after the next deploy.</p>
+  </div>
+</div>
+
+</body>
+</html>

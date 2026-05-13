@@ -236,6 +236,15 @@ const PORTAL_DEFS = [
     canAccess: u => u.role !== 'customer',
   },
   {
+    id: 'training',
+    audience: 'employee',
+    url: '/training/',
+    name: 'OSP Training',
+    icon: 'graduation-cap',
+    description: 'OSP design training modules, references, and practice exercises.',
+    canAccess: u => u.role !== 'customer',
+  },
+  {
     id: 'customer',
     audience: 'client',
     url: '/customer.html',
@@ -399,6 +408,17 @@ app.get(['/login', '/login.html'], (req, res) => {
   const inPublic = path.join(__dirname, 'public', 'login.html');
   const inRoot = path.join(__dirname, 'login.html');
   res.sendFile(fs.existsSync(inPublic) ? inPublic : inRoot);
+});
+
+// Auth-gated static serve for the OSP Design Training SPA.
+// Must be registered BEFORE the public/ static fallback so that /training/*
+// requests are intercepted and require a valid session. The built Vite app
+// lives in public/training/ (base: '/training/' in vite.config.js ensures
+// all asset paths are prefixed correctly).
+app.use('/training', requireAuth(), express.static(path.join(__dirname, 'public', 'training')));
+// SPA client-side routing fallback: any unmatched /training/* path serves index.html
+app.get('/training/*', requireAuth(), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'training', 'index.html'));
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

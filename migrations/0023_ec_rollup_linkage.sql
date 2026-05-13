@@ -73,6 +73,6 @@ BEGIN
   SELECT COUNT(*) INTO leaf_null     FROM projects WHERE is_rollup=FALSE AND engineering_contract_id IS NULL;
   SELECT COUNT(*) INTO rollup_linked FROM projects WHERE is_rollup=TRUE  AND engineering_contract_id IS NOT NULL;
   SELECT COUNT(*) INTO rollup_null   FROM projects WHERE is_rollup=TRUE  AND engineering_contract_id IS NULL;
-  RAISE NOTICE '[0023] projects.engineering_contract_id: leaves linked=%%, null=%%. rollups linked=%%, null=%%.',
+  RAISE NOTICE '[0023] projects.engineering_contract_id: leaves linked=%, null=%. rollups linked=%, null=%.',
                leaf_linked, leaf_null, rollup_linked, rollup_null;
 END $log$;

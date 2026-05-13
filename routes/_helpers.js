@@ -71,26 +71,31 @@ async function popUndoBucket(token) {
   return rows[0] || null;
 }
 
-// Walk the descendant tree of a project (BFS via parent_id). Returns each
-// project row with a __depth field so the undo restorer can re-insert
-// parents before children. Used by both the project tree-delete and the
-// contract cascade-delete.
+// Walk the descendant tree of a project. Returns each project row with a
+// __depth field so the undo restorer can re-insert parents before children.
+// Used by both the project tree-delete and the contract cascade-delete.
+//
+// Perf (Wave 3): replaced application-level BFS (one SELECT per node, 2N+2
+// round trips) with a single WITH RECURSIVE CTE (1 round trip). The depth
+// column is computed inside Postgres; results are sorted depth-ASC so parents
+// always precede their children, matching the old BFS order the undo restorer
+// expects. Depth cap of 30 keeps this safe against malformed parent_id chains.
 async function collectProjectTree(rootId) {
-  const all = [];
-  const queue = [{ id: rootId, depth: 0 }];
-  const seen = new Set();
-  while (queue.length) {
-    const { id, depth } = queue.shift();
-    if (seen.has(id)) continue;
-    seen.add(id);
-    const { rows } = await pool.query('SELECT * FROM projects WHERE id = $1', [id]);
-    if (!rows[0]) continue;
-    rows[0].__depth = depth;
-    all.push(rows[0]);
-    const { rows: kids } = await pool.query('SELECT id FROM projects WHERE parent_id = $1', [id]);
-    for (const k of kids) queue.push({ id: k.id, depth: depth + 1 });
-  }
-  return all;
+  const { rows } = await pool.query(`
+    WITH RECURSIVE tree AS (
+      SELECT *, 0 AS __depth
+        FROM projects
+       WHERE id = $1
+      UNION ALL
+      SELECT p.*, t.__depth + 1
+        FROM projects p
+        JOIN tree t ON p.parent_id = t.id
+       WHERE t.__depth < 30
+    )
+    SELECT * FROM tree
+    ORDER BY __depth ASC
+  `, [rootId]);
+  return rows;
 }
 
 // Permitting hours calc — taper rule (added 2026-05-05 per owner spec).

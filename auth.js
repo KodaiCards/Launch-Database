@@ -346,13 +346,16 @@ function installAuthRoutes(app, pool) {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]).catch(()=>{});
-      // Wave 1.5 [TOKEN-FROM-BODY]: Token no longer returned in body — auth is
-      // cookie-only (httpOnly, sameSite=lax, secure in production). The old body
-      // token was stored in sessionStorage as a fallback; that's eliminated here
-      // because sessionStorage is accessible to any JS on the page (XSS risk).
-      // The Bearer-header path in api.js still works via the cookie — the browser
-      // sends it automatically on same-origin requests.
+      // Token is returned in BOTH cookie + body. The cookie is the canonical
+      // session carrier (httpOnly, sameSite=lax, secure in production). The
+      // body token is the sessionStorage fallback used by api.js when the
+      // cookie isn't available (cross-subdomain portals, third-party-cookie
+      // blockers, etc.). Wave 1.5 tried to drop the body token and broke
+      // smoke tests + every client that relies on the Bearer-header fallback;
+      // restoring it. Proper hardening (rotate-on-use + same-site=strict +
+      // first-party domain consolidation) is deferred to a future wave.
       res.json({
+        token,
         user: {
           id: user.id, username: user.username, role: user.role, team: user.team,
           full_name: user.full_name, email: user.email, theme: user.theme,
@@ -474,8 +477,9 @@ function installAuthRoutes(app, pool) {
         ...cookieOpts(),
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      // Wave 1.5 [TOKEN-FROM-BODY]: Token not returned in body — cookie only.
-      res.json({ ok: true });
+      // Token returned in both cookie + body (sessionStorage fallback). See
+      // POST /api/auth/login above for the full rationale.
+      res.json({ ok: true, token: newToken });
     } catch (e) {
       return serverError(res, e, 'change-password');
     }

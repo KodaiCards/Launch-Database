@@ -26,6 +26,53 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/jobs and GET /api/jobs/:id were missing auth.
   app.get('/api/jobs', requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']), async (req, res) => {
     try {
+      // ── Manual assignment override (migration 0032) ────────────────────────
+      // If any job_assignments rows exist that overlap the request scope,
+      // return ONLY those jobs (bypass the heuristic entirely).
+      // Fall through to the heuristic only when no assignments match.
+      //
+      // NULL in an assignment column means "any" — a row with client_id=X,
+      // engineering_contract_id=NULL matches any request that includes client X
+      // regardless of which EC was specified.
+      const clientId        = req.query.client_id || null;
+      const ecId            = req.query.engineering_contract_id || null;
+      const teamParam       = req.query.team || null;
+      const explicitProgram = req.query.program ? String(req.query.program).trim().toLowerCase() : null;
+
+      if (clientId || ecId || teamParam) {
+        const scopeConds  = [];
+        const scopeParams = [];
+
+        if (clientId) {
+          scopeParams.push(clientId);
+          scopeConds.push(`(ja.client_id = $${scopeParams.length} OR ja.client_id IS NULL)`);
+        }
+        if (ecId) {
+          scopeParams.push(ecId);
+          scopeConds.push(`(ja.engineering_contract_id = $${scopeParams.length} OR ja.engineering_contract_id IS NULL)`);
+        }
+        if (teamParam) {
+          scopeParams.push(teamParam);
+          scopeConds.push(`(ja.team = $${scopeParams.length} OR ja.team IS NULL)`);
+        }
+
+        const pinnedRes = await pool.query(
+          `SELECT DISTINCT j.*
+           FROM jobs j
+           JOIN job_assignments ja ON ja.job_id = j.id
+           WHERE j.active = true
+             AND ${scopeConds.join(' AND ')}
+           ORDER BY j.name`,
+          scopeParams
+        );
+        if (pinnedRes.rows.length > 0) {
+          // Override path — explicit assignments win; heuristic bypassed.
+          return res.json(pinnedRes.rows);
+        }
+        // No matching assignments → fall through to the heuristic below.
+      }
+
+      // ── Heuristic (unchanged) ──────────────────────────────────────────────
       // Filter precedence (most specific first):
       //   1. program (rus|bau|gfr|other) provided directly → filter
       //      program_scope IN (rus|non_rus, 'shared') as appropriate.
@@ -45,9 +92,6 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       //        only other ECs → program_scope IN ('non_rus', 'shared')
       //        no ECs         → all (treat fresh client as generic-friendly)
       //   4. No client → return every active job.
-      const clientId = req.query.client_id || null;
-      const ecId = req.query.engineering_contract_id || null;
-      const explicitProgram = req.query.program ? String(req.query.program).trim().toLowerCase() : null;
 
       const conds = [`active = true`];
 
@@ -99,7 +143,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         `SELECT * FROM jobs WHERE ${conds.join(' AND ')} ORDER BY name`
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load jobs.' });
+    }
   });
 
   // Fetch a single job by id regardless of active state. The list endpoint
@@ -111,7 +158,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       const { rows } = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Job not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:get]', e && e.message);
+      res.status(500).json({ error: 'Failed to load job.' });
+    }
   });
 
   // DIAGNOSTIC — dumps raw job rows including inactive, with full column list.
@@ -129,7 +179,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         columns: cols.rows,
         rows: rows.rows
       });
-    } catch (e) { res.status(500).json({ error: e.message, stack: e.stack }); }
+    } catch (e) {
+      console.error('[jobs:debug]', e && e.message, e && e.stack);
+      res.status(500).json({ error: 'Failed to load debug jobs.' });
+    }
   });
 
   // Allowed program_scope values match the CHECK constraint in
@@ -189,7 +242,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
          mirrorPsc, mirrorGen, resolvedScope]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create job.' });
+    }
   });
 
   // Item 2 fix: requireAdmin added
@@ -271,7 +327,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       const { rows } = await pool.query(sql, values);
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:update]', e && e.message);
+      res.status(500).json({ error: 'Failed to update job.' });
+    }
   });
 
   // Reset a job's manual-override flag. After this, the next bootstrap reseed
@@ -287,7 +346,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
       res.json({ ok: true, name: rows[0].name });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:reset-override]', e && e.message);
+      res.status(500).json({ error: 'Failed to reset job override.' });
+    }
   });
 
   // Universal rate propagation: apply this job's current default_rate to ALL
@@ -307,7 +369,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         [req.params.id, rate]
       );
       res.json({ ok: true, updated: r.rowCount, applied_rate: rate });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:propagate-rate]', e && e.message);
+      res.status(500).json({ error: 'Failed to propagate job rate.' });
+    }
   });
 
   app.delete('/api/jobs/:id', requireAdmin, async (req, res) => {
@@ -315,6 +380,83 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       // Soft-delete via active=false to preserve historical references in projects
       await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[jobs:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete job.' });
+    }
+  });
+
+  // ── Manual job-assignment endpoints (migration 0032) ──────────────────────
+  // These three routes manage the job_assignments table.
+  // An assignment pins a job to a specific scope (client, EC, team, or any
+  // combination). When at least one pin matches the request scope, GET /api/jobs
+  // returns only the pinned jobs instead of running the program_scope heuristic.
+
+  // List all assignment pins for a single job.
+  app.get('/api/jobs/:id/assignments', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT ja.*,
+                c.name  AS client_name,
+                ec.name AS ec_name
+         FROM job_assignments ja
+         LEFT JOIN clients              c  ON c.id  = ja.client_id
+         LEFT JOIN engineering_contracts ec ON ec.id = ja.engineering_contract_id
+         WHERE ja.job_id = $1
+         ORDER BY ja.created_at`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[job-assignments:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load job assignments.' });
+    }
+  });
+
+  // Create a new pin for a job.
+  // Body: { client_id?, engineering_contract_id?, team? }
+  // At least one scoping column must be non-null (enforced by DB CHECK, but
+  // we validate here first to return a useful 400 rather than a 500).
+  app.post('/api/jobs/:id/assignments', requireAdmin, async (req, res) => {
+    const jobId = req.params.id;
+    const clientId = req.body.client_id || null;
+    const ecId     = req.body.engineering_contract_id || null;
+    const team     = req.body.team || null;
+
+    if (!clientId && !ecId && !team) {
+      return res.status(400).json({ error: 'At least one of client_id, engineering_contract_id, or team must be provided.' });
+    }
+
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO job_assignments (job_id, client_id, engineering_contract_id, team)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT ON CONSTRAINT job_assignments_unique_pin DO NOTHING
+         RETURNING *`,
+        [jobId, clientId, ecId, team]
+      );
+      if (!rows.length) {
+        return res.status(409).json({ error: 'This assignment already exists.' });
+      }
+      res.status(201).json(rows[0]);
+    } catch (e) {
+      console.error('[job-assignments:create]', e && e.message);
+      res.status(500).json({ error: 'Failed to create job assignment.' });
+    }
+  });
+
+  // Delete a single assignment pin by its own UUID.
+  app.delete('/api/job-assignments/:id', requireAdmin, async (req, res) => {
+    try {
+      const { rowCount } = await pool.query(
+        'DELETE FROM job_assignments WHERE id = $1',
+        [req.params.id]
+      );
+      if (!rowCount) return res.status(404).json({ error: 'Assignment not found.' });
+      res.json({ ok: true });
+    } catch (e) {
+      console.error('[job-assignments:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to delete job assignment.' });
+    }
   });
 };

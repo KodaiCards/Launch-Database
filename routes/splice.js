@@ -265,7 +265,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         ORDER BY p.updated_at DESC, p.created_at DESC
       `);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-projects]', e && e.message); res.status(500).json({ error: 'Failed to list splice projects.' }); }
   });
 
   app.post('/api/splice/projects', requireAuth(), async (req, res) => {
@@ -282,7 +282,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [String(name).trim(), designerId, notes || null]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:create-project]', e && e.message); res.status(500).json({ error: 'Failed to create splice project.' }); }
   });
 
   // Full hydrate: returns project + all locations, cables (with tubes and
@@ -473,7 +473,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       // warnings surface in the UI but don't block.
       hydrate.validation = validateProject(hydrate);
       res.json(hydrate);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:hydrate]', e && e.message); res.status(500).json({ error: 'Failed to load splice project.' }); }
   });
 
   // ── 5.D.4: Layer style persistence endpoints ────────────────────────────────
@@ -502,7 +502,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           visible !== undefined ? visible : null]
       );
       res.json(row.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:upsert-layer-style]', e && e.message); res.status(500).json({ error: 'Failed to update layer style.' }); }
   });
 
   // DELETE /api/splice/projects/:id/layer-styles/:layerId — reset to code defaults
@@ -514,7 +514,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [projectId, layerId]
       );
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-layer-style]', e && e.message); res.status(500).json({ error: 'Failed to delete layer style.' }); }
   });
 
   // PUT /api/splice/cables/:id/category — update a cable's OSP category
@@ -531,7 +531,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!row.rows.length) return res.status(404).json({ error: 'Cable not found' });
       res.json(row.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-cable-category]', e && e.message); res.status(500).json({ error: 'Failed to update cable category.' }); }
   });
 
   // ── 5.D.7: Custom layer endpoints ───────────────────────────────────────────
@@ -554,7 +554,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.status(201).json(row.rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'A layer with that name already exists' });
-      res.status(500).json({ error: e.message });
+      console.error('[splice:create-custom-layer]', e && e.message);
+      res.status(500).json({ error: 'Failed to create custom layer.' });
     }
   });
 
@@ -566,7 +567,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows.rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-custom-layers]', e && e.message); res.status(500).json({ error: 'Failed to list custom layers.' }); }
   });
 
   // ── 5.H.7: Custom feature endpoints ─────────────────────────────────────────
@@ -593,7 +594,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           JSON.stringify(attributes_jsonb || {})]
       );
       res.status(201).json(row.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:create-custom-feature]', e && e.message); res.status(500).json({ error: 'Failed to create custom feature.' }); }
   });
 
   // PUT /api/splice/custom-features/:id — update a custom feature
@@ -614,7 +615,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!row.rows.length) return res.status(404).json({ error: 'Feature not found' });
       res.json(row.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-custom-feature]', e && e.message); res.status(500).json({ error: 'Failed to update custom feature.' }); }
   });
 
   // DELETE /api/splice/custom-features/:id
@@ -622,7 +623,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       await pool.query(`DELETE FROM splice_custom_features WHERE id = $1`, [req.params.id]);
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-custom-feature]', e && e.message); res.status(500).json({ error: 'Failed to delete custom feature.' }); }
   });
 
   // Dedicated validation endpoint. Same rules as the hydrate's `validation`
@@ -634,7 +635,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const data = await _loadProjectForExport(pool, req.params.id);
       if (!data) return res.status(404).json({ error: 'Project not found' });
       res.json(validateProject(data));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:validate-project]', e && e.message); res.status(500).json({ error: 'Failed to validate splice project.' }); }
   });
 
   app.put('/api/splice/projects/:id', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -658,7 +659,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!rows[0]) return res.status(404).json({ error: 'Project not found' });
       _broadcast(req.params.id, 'project_updated', { project: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-project]', e && e.message); res.status(500).json({ error: 'Failed to update splice project.' }); }
   });
 
   app.delete('/api/splice/projects/:id', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -667,7 +668,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!r.rowCount) return res.status(404).json({ error: 'Project not found' });
       _broadcast(req.params.id, 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-project]', e && e.message); res.status(500).json({ error: 'Failed to delete splice project.' }); }
   });
 
   // ─── Locking ─────────────────────────────────────────────────────────────
@@ -706,7 +707,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       _broadcast(projectId, 'lock_acquired', rows[0]);
       res.json({ ok: true, ...rows[0] });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:acquire-lock]', e && e.message); res.status(500).json({ error: 'Failed to acquire project lock.' }); }
   });
 
   // 60-second heartbeat — extends my lock. Returns 409 if the lock has
@@ -727,7 +728,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json({ ok: true, locked_at: new Date().toISOString() });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:lock-heartbeat]', e && e.message); res.status(500).json({ error: 'Failed to update lock heartbeat.' }); }
   });
 
   app.post('/api/splice/projects/:id/unlock', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -743,7 +744,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!r.rowCount) return res.status(409).json({ error: 'Lock not held by you' });
       _broadcast(req.params.id, 'lock_released', { by: staffId });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:release-lock]', e && e.message); res.status(500).json({ error: 'Failed to release project lock.' }); }
   });
 
   // Force-take a stale lock. Refuses if the current lock is fresh (within
@@ -772,7 +773,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       _broadcast(req.params.id, 'lock_taken_over', rows[0]);
       res.json({ ok: true, ...rows[0] });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:take-over-lock]', e && e.message); res.status(500).json({ error: 'Failed to take over project lock.' }); }
   });
 
   // ─── Locations ───────────────────────────────────────────────────────────
@@ -794,7 +795,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, req.params.id);
       _broadcast(req.params.id, 'location_added', { location: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:add-location]', e && e.message); res.status(500).json({ error: 'Failed to add location.' }); }
   });
 
   app.put('/api/splice/locations/:id', requireAuth(), async (req, res) => {
@@ -822,7 +823,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, rows[0].project_id);
       _broadcast(rows[0].project_id, 'location_updated', { location: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-location]', e && e.message); res.status(500).json({ error: 'Failed to update location.' }); }
   });
 
   // Phase 3A — drag-a-marker fast path. Drops the rest of the location
@@ -854,7 +855,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         longitude: rows[0].longitude,
       });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-location-coords]', e && e.message); res.status(500).json({ error: 'Failed to update location coordinates.' }); }
   });
 
   app.delete('/api/splice/locations/:id', requireAuth(), async (req, res) => {
@@ -868,7 +869,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'location_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-location]', e && e.message); res.status(500).json({ error: 'Failed to delete location.' }); }
   });
 
   // ─── Cables ──────────────────────────────────────────────────────────────
@@ -947,7 +948,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ cable: cable.rows[0], tubes });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:add-cable]', e && e.message);
+      res.status(500).json({ error: 'Failed to add cable.' });
     } finally {
       client.release();
     }
@@ -977,7 +979,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, rows[0].project_id);
       _broadcast(rows[0].project_id, 'cable_updated', { cable: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-cable]', e && e.message); res.status(500).json({ error: 'Failed to update cable.' }); }
   });
 
   app.delete('/api/splice/cables/:id', requireAuth(), async (req, res) => {
@@ -988,7 +990,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'cable_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-cable]', e && e.message); res.status(500).json({ error: 'Failed to delete cable.' }); }
   });
 
   // Phase 3A — set the geographic path of a cable. Body shape:
@@ -1029,7 +1031,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         cable_id: rows[0].id, path_geojson: rows[0].path_geojson,
       });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-cable-path]', e && e.message); res.status(500).json({ error: 'Failed to update cable path.' }); }
   });
 
   // ─── Closures ────────────────────────────────────────────────────────────
@@ -1087,7 +1089,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ closure: closure.rows[0], trays });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:add-closure]', e && e.message);
+      res.status(500).json({ error: 'Failed to add closure.' });
     } finally {
       client.release();
     }
@@ -1171,7 +1174,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json(upd.rows[0]);
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:update-closure]', e && e.message);
+      res.status(500).json({ error: 'Failed to update closure.' });
     } finally {
       client.release();
     }
@@ -1191,7 +1195,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'closure_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-closure]', e && e.message); res.status(500).json({ error: 'Failed to delete closure.' }); }
   });
 
   // Bulk-delete multiple closures in one transaction.
@@ -1241,7 +1245,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ ok: true, deleted: ids.length });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:bulk-delete-closures]', e && e.message);
+      res.status(500).json({ error: 'Failed to bulk delete closures.' });
     } finally {
       client.release();
     }
@@ -1287,7 +1292,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, tray.rows[0].project_id);
       _broadcast(tray.rows[0].project_id, 'splice_added', { splice: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:add-splice]', e && e.message); res.status(500).json({ error: 'Failed to add splice.' }); }
   });
 
   // 5.B.3 — Trayless splice endpoint: splice anchored to a closure or
@@ -1346,7 +1351,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, projectId);
       _broadcast(projectId, 'splice_added', { splices: created });
       res.json(created.length === 1 ? created[0] : { splices: created });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:add-trayless-splice]', e && e.message); res.status(500).json({ error: 'Failed to add trayless splice.' }); }
   });
 
   // Ribbon splice: 12 fibers fused as one mass-fusion unit. Caller passes
@@ -1410,7 +1415,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ ribbon_group: group.rows[0], splices });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:add-ribbon-splice]', e && e.message);
+      res.status(500).json({ error: 'Failed to add ribbon splice.' });
     } finally {
       client.release();
     }
@@ -1432,7 +1438,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'splice_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-splice]', e && e.message); res.status(500).json({ error: 'Failed to delete splice.' }); }
   });
 
   // Phase 4.4 — inline splice-type edit from the matrix tabular view.
@@ -1461,7 +1467,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'splice_updated', { splice: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-splice]', e && e.message); res.status(500).json({ error: 'Failed to update splice.' }); }
   });
 
   app.delete('/api/splice/ribbon-groups/:id', requireAuth(), async (req, res) => {
@@ -1484,7 +1490,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'ribbon_group_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-ribbon-group]', e && e.message); res.status(500).json({ error: 'Failed to delete ribbon group.' }); }
   });
 
   // ─── Strand metadata (circuit naming, Phase 2A #4) ───────────────────────
@@ -1523,7 +1529,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, projectId);
       _broadcast(projectId, 'fiber_metadata_updated', { fiber: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-fiber]', e && e.message); res.status(500).json({ error: 'Failed to update fiber.' }); }
   });
 
   // Bulk update fibers — efficient for designers editing many circuit
@@ -1585,7 +1591,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ ok: true, updated_count: updated.length });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:bulk-update-fiber-metadata]', e && e.message);
+      res.status(500).json({ error: 'Failed to update fiber metadata.' });
     } finally {
       client.release();
     }
@@ -1608,7 +1615,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-strand-states]', e && e.message); res.status(500).json({ error: 'Failed to list strand states.' }); }
   });
 
   // Bulk upsert: pass an array of { strand_position, state, stored_length_inches?, notes? }
@@ -1674,7 +1681,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ ok: true, strand_states: inserted });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:upsert-strand-states]', e && e.message);
+      res.status(500).json({ error: 'Failed to save strand states.' });
     } finally {
       client.release();
     }
@@ -1694,7 +1702,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'strand_state_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-strand-state]', e && e.message); res.status(500).json({ error: 'Failed to delete strand state.' }); }
   });
 
   // ─── Cable states — Phase 2C #10 (slack / service loop) ──────────────────
@@ -1714,7 +1722,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-cable-states]', e && e.message); res.status(500).json({ error: 'Failed to list cable states.' }); }
   });
 
   // UPSERT on the UNIQUE(cable_id, location_id) constraint — idempotent.
@@ -1757,7 +1765,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       // other splice PUT/POST that writes a single row, and what the
       // smoke tests + UI hydrate flow expect.
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:upsert-cable-state]', e && e.message); res.status(500).json({ error: 'Failed to save cable state.' }); }
   });
 
   app.delete('/api/splice/cable-states/:id', requireAuth(), async (req, res) => {
@@ -1774,7 +1782,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'cable_state_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-cable-state]', e && e.message); res.status(500).json({ error: 'Failed to delete cable state.' }); }
   });
 
   // ─── Phase 4.5: Threaded comments on closures + splices ─────────────────
@@ -1815,7 +1823,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const comment = { ...rows[0], created_by_name: author.rows[0]?.name || null };
       _broadcast(project_id, 'comment_added', { comment });
       res.json(comment);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:add-comment]', e && e.message); res.status(500).json({ error: 'Failed to add comment.' }); }
   });
 
   app.get('/api/splice/comments', requireAuth(), async (req, res) => {
@@ -1839,7 +1847,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [target_table, target_id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-comments]', e && e.message); res.status(500).json({ error: 'Failed to list comments.' }); }
   });
 
   app.get('/api/splice/projects/:id/comments', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -1855,7 +1863,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-project-comments]', e && e.message); res.status(500).json({ error: 'Failed to list project comments.' }); }
   });
 
   app.post('/api/splice/comments/:id/resolve', requireAuth(), async (req, res) => {
@@ -1879,7 +1887,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       _broadcast(cur.rows[0].project_id, 'comment_resolved', { comment: rows[0] });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:resolve-comment]', e && e.message); res.status(500).json({ error: 'Failed to resolve comment.' }); }
   });
 
   app.delete('/api/splice/comments/:id', requireAuth(), async (req, res) => {
@@ -1892,7 +1900,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       await pool.query(`DELETE FROM splice_comments WHERE id = $1`, [req.params.id]);
       _broadcast(cur.rows[0].project_id, 'comment_removed', { id: req.params.id, target_table: cur.rows[0].target_table, target_id: cur.rows[0].target_id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-comment]', e && e.message); res.status(500).json({ error: 'Failed to delete comment.' }); }
   });
 
   // ─── Closure templates (Phase 2B #5) ─────────────────────────────────────
@@ -1942,7 +1950,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         ));
       }
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-closure-templates]', e && e.message); res.status(500).json({ error: 'Failed to list closure templates.' }); }
   });
 
   app.post('/api/splice/closure-templates', requireAuth(), async (req, res) => {
@@ -1974,7 +1982,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         ]
       );
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:create-closure-template]', e && e.message); res.status(500).json({ error: 'Failed to create closure template.' }); }
   });
 
   app.put('/api/splice/closure-templates/:id', requireAuth(), async (req, res) => {
@@ -2004,7 +2012,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-closure-template]', e && e.message); res.status(500).json({ error: 'Failed to update closure template.' }); }
   });
 
   app.delete('/api/splice/closure-templates/:id', requireAuth(), async (req, res) => {
@@ -2012,7 +2020,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const r = await pool.query(`DELETE FROM splice_closure_templates WHERE id = $1`, [req.params.id]);
       if (!r.rowCount) return res.status(404).json({ error: 'Template not found' });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-closure-template]', e && e.message); res.status(500).json({ error: 'Failed to delete closure template.' }); }
   });
 
   // Phase 4.6 — publish / unpublish (admin-only). Sets/clears published_at
@@ -2030,7 +2038,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:publish-closure-template]', e && e.message); res.status(500).json({ error: 'Failed to publish closure template.' }); }
   });
 
   app.post('/api/splice/closure-templates/:id/unpublish', requireAuth(), async (req, res) => {
@@ -2046,7 +2054,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Template not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:unpublish-closure-template]', e && e.message); res.status(500).json({ error: 'Failed to unpublish closure template.' }); }
   });
 
   // Apply a template to create a new closure at the given location.
@@ -2121,7 +2129,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         res.json({ closure: closure.rows[0], trays, template: t });
       } catch (e) {
         try { await client.query('ROLLBACK'); } catch {}
-        res.status(500).json({ error: e.message });
+        console.error('[splice:apply-closure-template]', e && e.message);
+        res.status(500).json({ error: 'Failed to apply closure template.' });
       } finally {
         client.release();
       }
@@ -2343,7 +2352,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:clone-project]', e && e.message);
+      res.status(500).json({ error: 'Failed to clone splice project.' });
     } finally {
       client.release();
     }
@@ -2359,7 +2369,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json(v);
     } catch (e) {
       const code = /not found/i.test(e.message) ? 404 : 500;
-      res.status(code).json({ error: e.message });
+      console.error('[splice:create-version]', e && e.message);
+      res.status(code).json({ error: code === 404 ? 'Project not found.' : 'Failed to save version.' });
     }
   });
 
@@ -2388,7 +2399,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json(v);
     } catch (e) {
       const code = /not found/i.test(e.message) ? 404 : 500;
-      res.status(code).json({ error: e.message });
+      console.error('[splice:auto-version]', e && e.message);
+      res.status(code).json({ error: code === 404 ? 'Project not found.' : 'Failed to save auto-version.' });
     }
   });
 
@@ -2405,7 +2417,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-versions]', e && e.message); res.status(500).json({ error: 'Failed to list versions.' }); }
   });
 
   app.get('/api/splice/projects/:id/versions/:n', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -2413,7 +2425,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const v = await _loadVersion(pool, req.params.id, req.params.n);
       if (!v) return res.status(404).json({ error: 'Version not found' });
       res.json(v);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:get-version]', e && e.message); res.status(500).json({ error: 'Failed to load version.' }); }
   });
 
   app.delete('/api/splice/projects/:id/versions/:n', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -2425,7 +2437,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!r.rowCount) return res.status(404).json({ error: 'Version not found' });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-version]', e && e.message); res.status(500).json({ error: 'Failed to delete version.' }); }
   });
 
   // 5.E.7 — Undo the last destructive operation by reverting the project to
@@ -2560,8 +2572,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         reverted_to_created_at: target.created_at,
       });
     } catch (e) {
-      console.error('undo-last error', e);
-      res.status(500).json({ error: e.message });
+      console.error('[splice:undo-last]', e && e.message);
+      res.status(500).json({ error: 'Failed to undo last change.' });
     }
   });
 
@@ -2580,7 +2592,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         b: { version_number: b.version_number, label: b.label || null, generation_hash: b.generation_hash || null, created_at: b.created_at || null },
         diff: _computeDiff(a.snapshot, b.snapshot),
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:diff-versions]', e && e.message); res.status(500).json({ error: 'Failed to compute version diff.' }); }
   });
 
   // Diff PDF — puppeteer-rendered. Sections by closure → tray.
@@ -2630,7 +2642,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       } finally {
         try { await browser.close(); } catch {}
       }
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:diff-pdf]', e && e.message); res.status(500).json({ error: 'Failed to generate diff PDF.' }); }
   });
 
   // ─── Field markup public token + upload (Phase 2B #7) ───────────────────
@@ -2677,7 +2689,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       const url = (SPLICE_PUBLIC_URL || '') + '/splice/field/' + token;
       res.json({ ...ins.rows[0], url });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:mint-closure-token]', e && e.message); res.status(500).json({ error: 'Failed to create field token.' }); }
   });
 
   app.get('/api/splice/closures/:id/public-tokens', requireAuth(), async (req, res) => {
@@ -2692,7 +2704,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       const base = SPLICE_PUBLIC_URL || '';
       res.json(rows.map(r => ({ ...r, url: base + '/splice/field/' + r.token })));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-closure-tokens]', e && e.message); res.status(500).json({ error: 'Failed to list field tokens.' }); }
   });
 
   app.delete('/api/splice/public-tokens/:token', requireAuth(), async (req, res) => {
@@ -2703,7 +2715,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!r.rowCount) return res.status(404).json({ error: 'Token not found' });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:revoke-closure-token]', e && e.message); res.status(500).json({ error: 'Failed to revoke field token.' }); }
   });
 
   // ─── Phase 4.1 — Project-level public tokens (read-only stakeholder view)
@@ -2734,7 +2746,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       const url = (SPLICE_PUBLIC_URL || '') + '/splice/view/' + token;
       res.json({ ...ins.rows[0], url });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:mint-project-token]', e && e.message); res.status(500).json({ error: 'Failed to create project share token.' }); }
   });
 
   app.get('/api/splice/projects/:id/public-tokens', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -2749,7 +2761,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       const base = SPLICE_PUBLIC_URL || '';
       res.json(rows.map(r => ({ ...r, url: base + '/splice/view/' + r.token })));
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-project-tokens]', e && e.message); res.status(500).json({ error: 'Failed to list project share tokens.' }); }
   });
 
   app.delete('/api/splice/public-tokens/project/:token', requireAuth(), async (req, res) => {
@@ -2760,7 +2772,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!r.rowCount) return res.status(404).json({ error: 'Token not found' });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:revoke-project-token]', e && e.message); res.status(500).json({ error: 'Failed to revoke project share token.' }); }
   });
 
   // Public: render the read-only viewer HTML shell. No requireAuth —
@@ -2778,7 +2790,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       html = html.replace('__SPLICE_TOKEN__', _esc(req.params.token));
       res.type('html').send(html);
     } catch (e) {
-      res.status(500).type('html').send(_renderViewErrorHtml('Server error: ' + e.message));
+      console.error('[splice:view-token-html]', e && e.message);
+      res.status(500).type('html').send(_renderViewErrorHtml('A server error occurred. Please try again later.'));
     }
   });
 
@@ -2876,7 +2889,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         splitter_outputs: splitterOutputsRes.rows,
         cable_states:   cableStatesRes.rows,
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:view-hydrate]', e && e.message); res.status(500).json({ error: 'Failed to load splice project.' }); }
   });
 
   // Public: render minimal HTML for the splicer. Resolves the token to
@@ -2901,7 +2914,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         markups: markups.rows,
       }));
     } catch (e) {
-      res.status(500).type('html').send(_renderFieldErrorHtml('Server error: ' + e.message));
+      console.error('[splice:field-html]', e && e.message);
+      res.status(500).type('html').send(_renderFieldErrorHtml('A server error occurred. Please try again later.'));
     }
   });
 
@@ -2910,7 +2924,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   const _fieldMarkupMiddleware = (req, res, next) => {
     let upload;
     try { upload = _getFieldMarkupUpload(); }
-    catch (e) { return res.status(500).json({ error: e.message }); }
+    catch (e) { console.error('[splice:field-markup-middleware]', e && e.message); return res.status(500).json({ error: 'Field markup upload is not configured.' }); }
     upload.single('photo')(req, res, next);
   };
 
@@ -2948,7 +2962,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
         res.json({ ok: true, markup_id: ins.rows[0].id });
       } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error('[splice:field-markup-upload]', e && e.message);
+        res.status(500).json({ error: 'Failed to save field markup.' });
       }
     });
 
@@ -2990,7 +3005,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-markups]', e && e.message); res.status(500).json({ error: 'Failed to list field markups.' }); }
   });
 
   // Engineer-side image fetch. Goes through requireAuth so a public
@@ -3022,7 +3037,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         markup_id: req.params.id, closure_id: r.rows[0].closure_id,
       });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-markup]', e && e.message); res.status(500).json({ error: 'Failed to delete field markup.' }); }
   });
 
   // ─── Phase 4.7 — Fusion-splicer loss records ────────────────────────────
@@ -3239,7 +3254,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
       _broadcast(projectId, 'loss_records_added', { count: result.inserted });
       res.json(result);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:ingest-loss-records]', e && e.message); res.status(500).json({ error: 'Failed to ingest loss records.' }); }
   });
 
   // GET /api/splice/projects/:id/loss-records  (engineer, auth required)
@@ -3257,7 +3272,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [projectId]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-loss-records]', e && e.message); res.status(500).json({ error: 'Failed to list loss records.' }); }
   });
 
   // PUT /api/splice/loss-records/:id/bind  (engineer, manual attach)
@@ -3282,7 +3297,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       _broadcast(cur.rows[0].project_id, 'loss_records_added', { count: 0 });
       res.json(upd.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:bind-loss-record]', e && e.message); res.status(500).json({ error: 'Failed to bind loss record.' }); }
   });
 
   // DELETE /api/splice/loss-records/:id  (engineer)
@@ -3295,7 +3310,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!r.rowCount) return res.status(404).json({ error: 'Loss record not found' });
       _broadcast(r.rows[0].project_id, 'loss_records_removed', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-loss-record]', e && e.message); res.status(500).json({ error: 'Failed to delete loss record.' }); }
   });
 
   // POST /splice/field/:token/loss-records  (splicer-side, public)
@@ -3327,7 +3342,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
       _broadcast(tok.project_id, 'loss_records_added', { count: result.inserted });
       res.json({ inserted: result.inserted });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:field-loss-records]', e && e.message); res.status(500).json({ error: 'Failed to save loss records.' }); }
   });
 
   // ─── Closure models picklist ─────────────────────────────────────────────
@@ -3339,7 +3354,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         `SELECT * FROM splice_closure_models ORDER BY use_count DESC, last_used_at DESC, model`
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-closure-models]', e && e.message); res.status(500).json({ error: 'Failed to list closure models.' }); }
   });
 
   // ─── Per-project scoped search (5.H.6) ──────────────────────────────────
@@ -3384,7 +3399,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         ),
       ]);
       res.json({ locations: locations.rows, cables: cables.rows, closures: closures.rows, fibers: fibers.rows });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:project-search]', e && e.message); res.status(500).json({ error: 'Failed to search project.' }); }
   });
 
   // ─── Cross-project search ────────────────────────────────────────────────
@@ -3460,13 +3475,18 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         closures:  closures.rows,
         fibers:    fibers.rows,
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:global-search]', e && e.message); res.status(500).json({ error: 'Failed to run global search.' }); }
   });
 
   // ─── Server-Sent Events ──────────────────────────────────────────────────
 
   app.get('/api/splice/projects/:id/events', requireAuth(), requireSpliceAccess(req => req.params.id), (req, res) => {
     const projectId = req.params.id;
+    // Wave 1.5 [SPLICE-SSE-REVALIDATE]: capture session metadata at connect
+    // time so the heartbeat can re-validate against tokens_invalid_after.
+    const sseUserId      = req.user && req.user.id;
+    const sseTokenIatSec = req.user && req.user.iat ? req.user.iat : 0;
+
     res.set({
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
@@ -3476,9 +3496,42 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     res.flushHeaders?.();
     res.write(`event: hello\ndata: ${JSON.stringify({ project_id: projectId })}\n\n`);
     _addSseClient(projectId, res);
-    // Keep-alive ping every 25s so proxies don't kill the idle connection.
-    const pingTimer = setInterval(() => {
-      try { res.write(`: ping ${Date.now()}\n\n`); } catch {}
+    // Keep-alive ping every 25s with session re-validation so deactivated
+    // or logged-out users stop receiving events within one heartbeat interval.
+    const pingTimer = setInterval(async () => {
+      // Wave 1.5 [SPLICE-SSE-REVALIDATE]: cheap DB re-validation on each tick.
+      if (sseUserId) {
+        try {
+          const { rows } = await pool.query(
+            'SELECT active, tokens_invalid_after FROM users WHERE id = $1',
+            [sseUserId]
+          );
+          const u = rows[0];
+          const sessionInvalid =
+            !u ||
+            !u.active ||
+            (u.tokens_invalid_after &&
+              sseTokenIatSec < Math.floor(new Date(u.tokens_invalid_after).getTime() / 1000));
+          if (sessionInvalid) {
+            try {
+              res.write(`event: session_invalid\ndata: ${JSON.stringify({ reason: 'session_expired' })}\n\n`);
+            } catch {}
+            clearInterval(pingTimer);
+            _removeSseClient(projectId, res);
+            try { res.end(); } catch {}
+            return;
+          }
+        } catch (dbErr) {
+          // Transient DB error — log and keep the connection alive until next tick.
+          console.error('[splice:SSE:revalidate]', dbErr && dbErr.message);
+        }
+      }
+      let ok;
+      try { ok = res.write(`: ping ${Date.now()}\n\n`); } catch { ok = false; }
+      if (ok === false) {
+        clearInterval(pingTimer);
+        _removeSseClient(projectId, res);
+      }
     }, 25000);
     req.on('close', () => {
       clearInterval(pingTimer);
@@ -3495,7 +3548,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const tokensByClosureId = await _ensureFieldTokens(pool, data, req.user?.staff_id);
       const html = await _renderSpliceHtml(data, req.query.page_size || 'Tabloid', { tokensByClosureId });
       res.set('Content-Type', 'text/html; charset=utf-8').send(html);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:export-html]', e && e.message); res.status(500).json({ error: 'Failed to export splice HTML.' }); }
   });
 
   app.get('/api/splice/projects/:id/export-pdf', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -3609,7 +3662,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       } finally {
         try { await browser.close(); } catch {}
       }
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:export-pdf]', e && e.message); res.status(500).json({ error: 'Failed to export splice PDF.' }); }
   });
 
   // Phase 3B — KMZ export. Generates a KML document covering every
@@ -3642,7 +3695,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       archive.append(kml, { name: 'doc.kml' });
       await archive.finalize();
     } catch (e) {
-      if (!res.headersSent) res.status(500).json({ error: e.message });
+      console.error('[splice:export-kmz]', e && e.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Failed to export splice KMZ.' });
     }
   });
 
@@ -3678,7 +3732,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   const _designImportMiddleware = (req, res, next) => {
     let upload;
     try { upload = _getDesignImportUpload(); }
-    catch (e) { return res.status(500).json({ error: e.message }); }
+    catch (e) { console.error('[splice:import-middleware]', e && e.message); return res.status(500).json({ error: 'Design import is not configured.' }); }
     upload.single('file')(req, res, next);
   };
 
@@ -3760,7 +3814,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-imports]', e && e.message); res.status(500).json({ error: 'Failed to list imports.' }); }
   });
 
   app.get('/api/splice/imports/:id', requireAuth(), async (req, res) => {
@@ -3780,7 +3834,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id]
       );
       res.json({ import: imp.rows[0], changes: ch.rows });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:get-import]', e && e.message); res.status(500).json({ error: 'Failed to get import.' }); }
   });
 
   app.post('/api/splice/imports/:id/changes/:cid/decision', requireAuth(), async (req, res) => {
@@ -3802,7 +3856,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Change not found' });
       res.json(rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:import-change-decision]', e && e.message); res.status(500).json({ error: 'Failed to record import decision.' }); }
   });
 
   app.post('/api/splice/imports/:id/apply', requireAuth(), async (req, res) => { // Wave1.5: requireSpliceAccess needs lookup from import->project
@@ -3922,7 +3976,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       );
       _broadcast(rows[0].project_id, 'design_import_rejected', { import_id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:reject-import]', e && e.message); res.status(500).json({ error: 'Failed to reject import.' }); }
   });
 
   // ─── CSV/Excel paste import (Phase 2C #13) ──────────────────────────────
@@ -4051,7 +4105,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
       const chain = _traceStrandPath(fiberId, data);
       res.json(chain);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:trace-fiber-path]', e && e.message); res.status(500).json({ error: 'Failed to trace fiber path.' }); }
   });
 
   // ─── Splitters (Phase 2C #9) ──────────────────────────────────────────────
@@ -4120,7 +4174,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json({ splitter, outputs });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:add-splitter]', e && e.message);
+      res.status(500).json({ error: 'Failed to add splitter.' });
     } finally {
       client.release();
     }
@@ -4152,7 +4207,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         ),
       ]);
       res.json({ splitters: splitters.rows, splitter_outputs: outputs.rows });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:list-splitters]', e && e.message); res.status(500).json({ error: 'Failed to list splitters.' }); }
   });
 
   app.put('/api/splice/splitters/:id', requireAuth(), async (req, res) => {
@@ -4242,7 +4297,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       res.json(upd.rows[0]);
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      res.status(500).json({ error: e.message });
+      console.error('[splice:update-splitter]', e && e.message);
+      res.status(500).json({ error: 'Failed to update splitter.' });
     } finally {
       client.release();
     }
@@ -4263,7 +4319,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, cur.rows[0].project_id);
       _broadcast(cur.rows[0].project_id, 'splitter_deleted', { id: req.params.id });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:delete-splitter]', e && e.message); res.status(500).json({ error: 'Failed to delete splitter.' }); }
   });
 
   // Wire (or unwire) a single output port to a downstream fiber.
@@ -4289,7 +4345,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _bumpProjectMtime(pool, projectId);
       _broadcast(projectId, 'splitter_output_wired', { output: upd.rows[0] });
       res.json(upd.rows[0]);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { console.error('[splice:update-splitter-output]', e && e.message); res.status(500).json({ error: 'Failed to update splitter output.' }); }
   });
 
 };
