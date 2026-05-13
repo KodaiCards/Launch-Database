@@ -570,6 +570,10 @@ const AI_TOOLS = [
       properties: {
         entries: {
           type: 'array',
+          // M-2 fix: cap at 100 entries. The 10MB body limit is upstream
+          // but an unbounded array still iterates in a DB transaction and
+          // can be costly without an explicit cap.
+          maxItems: 100,
           items: {
             type: 'object',
             properties: {
@@ -1474,6 +1478,17 @@ async function executeTool(toolName, toolInput, actor = {}) {
       }
 
       case 'log_time_entries': {
+        // M-2 fix: executor-level entry cap. maxItems:100 in the tool schema
+        // is the primary guard; this is a belt-and-suspenders check so even
+        // if the SDK strips JSON Schema constraints a huge array can't blow
+        // through the DB transaction unnoticed.
+        const LOG_TIME_ENTRIES_CAP = 100;
+        if (!Array.isArray(toolInput.entries) || toolInput.entries.length > LOG_TIME_ENTRIES_CAP) {
+          return {
+            success: false,
+            error: `log_time_entries accepts at most ${LOG_TIME_ENTRIES_CAP} entries per call. Got ${Array.isArray(toolInput.entries) ? toolInput.entries.length : 'non-array'}. Split into smaller batches.`,
+          };
+        }
         const importBatch = `ai_import_${Date.now()}`;
         const client = await pool.connect();
         try {
