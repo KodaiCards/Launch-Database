@@ -1543,6 +1543,232 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
       res.status(500).json({ error: 'Failed to build billing draft.' });
     }
   });
+
+  /*
+   * BE-1 — Projection data-quality audit endpoint (admin only)
+   * ──────────────────────────────────────────────────────────────────────────
+   * GET /api/automation/projection-data-quality
+   *
+   * Access: admin only (requireAdmin).
+   * No query params. Read-only — no side effects.
+   *
+   * Response shape:
+   * {
+   *   as_of: ISO timestamp,
+   *   lists: {
+   *     null_or_zero_rate: [ProjectRow],       // List 1 — billing_rate NULL or 0
+   *     null_expected_revenue: [ProjectRow],   // List 2 — permitting projects with no expected_revenue
+   *     stale_footage_revenue: [ProjectRow],   // List 3 — footage projects where projected_revenue != expected_revenue
+   *     sparse_history: [ProjectRow],          // List 4 — active projects with <3 weeks of time-entry history
+   *     ec_no_budget: [EcRow],                 // List 5 — ECs with budget_allocated NULL or 0
+   *   },
+   *   summary: {
+   *     null_or_zero_rate_count: number,
+   *     null_expected_revenue_count: number,
+   *     stale_footage_revenue_count: number,
+   *     sparse_history_count: number,
+   *     ec_no_budget_count: number,
+   *     total_issues: number,
+   *   }
+   * }
+   *
+   * ProjectRow shape (Lists 1–4):
+   * {
+   *   project_id: UUID,
+   *   name: string,
+   *   client_name: string | null,
+   *   ec_name: string | null,         // engineering contract name, if any
+   *   billing_type: string,
+   *   status: string,
+   *   suggested_action: string,       // human-readable hint for the admin
+   * }
+   *
+   * EcRow shape (List 5):
+   * {
+   *   ec_id: UUID,
+   *   ec_name: string,
+   *   client_name: string | null,
+   *   program: string | null,
+   *   suggested_action: string,
+   * }
+   *
+   * Frontend surface: Settings → Admin → "Projection Data Quality" panel (FE-4).
+   * The data-quality chip on the projection tile (FE-1/FE-2) queries total_issues
+   * to show "All clear" vs "N issues — view in settings".
+   */
+  app.get('/api/automation/projection-data-quality', requireAdmin, async (req, res) => {
+    try {
+      // ── List 1: projects with billing_rate NULL or 0 (active only) ────────
+      // These projects produce $0 projections even when they have hours.
+      // The admin should set a billing_rate so pace × rate yields a real dollar figure.
+      const { rows: nullRateRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          'Set a billing_rate on this project so pace-based projection produces a real dollar figure' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        WHERE p.status = 'active'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND (p.billing_rate IS NULL OR p.billing_rate = 0)
+        ORDER BY cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 2: permitting projects missing expected_revenue ──────────────
+      // Permitting projects are projected by expected_revenue (footage/fixed-fee),
+      // not by pace × rate. A NULL value means $0 projection for those projects.
+      const { rows: nullExpRevRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          'Set expected_revenue (the fixed or per-unit fee) so this permitting project appears in the projection' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        LEFT JOIN jobs j ON j.id = p.job_id
+        WHERE p.status IN ('active', 'completed')
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND (j.team = 'permitting' OR p.project_type = 'permitting')
+          AND p.expected_revenue IS NULL
+        ORDER BY cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 3: footage projects where projected_revenue ≠ expected_revenue ─
+      // Migration 0033 added a DB trigger to keep projected_revenue in sync with
+      // expected_revenue for footage projects (ARC-3). This list surfaces backfill
+      // gaps — projects created before the trigger existed, or projects where the
+      // trigger was not applied. The backfill SQL is:
+      //   UPDATE projects SET projected_revenue = expected_revenue
+      //   WHERE billing_type = 'footage' AND projected_revenue IS DISTINCT FROM expected_revenue;
+      const { rows: staleFootageRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          'Run the ARC-3 backfill: UPDATE projects SET projected_revenue=expected_revenue WHERE billing_type=''footage'' AND projected_revenue IS DISTINCT FROM expected_revenue' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        WHERE p.billing_type = 'footage'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND p.projected_revenue IS DISTINCT FROM p.expected_revenue
+        ORDER BY cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 4: active projects with <3 weeks of time-entry history ────────
+      // Pace is computed over lookbackWeeks (default 8). Projects with fewer than
+      // 3 distinct weeks of entries have high-variance pace estimates. The admin
+      // should be aware that their projection numbers are especially unreliable.
+      // H-6 already uses effective_lookback_weeks to reduce the divisor for new
+      // projects; this list is the visibility layer.
+      const { rows: sparseHistoryRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          week_count.distinct_weeks,
+          'Fewer than 3 weeks of time-entry history — pace-based projection has high variance; consider waiting before acting on the number' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        JOIN (
+          SELECT te.project_id,
+                 COUNT(DISTINCT DATE_TRUNC('week', te.entry_date))::int AS distinct_weeks
+          FROM time_entries te
+          GROUP BY te.project_id
+        ) week_count ON week_count.project_id = p.id
+        WHERE p.status = 'active'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND week_count.distinct_weeks < 3
+        ORDER BY week_count.distinct_weeks, cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 5: engineering contracts with no budget ───────────────────────
+      // ECs without a budget mean the projection is uncapped — pace × horizon
+      // runs to its full value without a budget-remaining floor. For RUS program
+      // ECs this is usually a data-entry omission. Admin should set budget_allocated
+      // via the Budgets UI.
+      const { rows: ecNoBudgetRows } = await pool.query(`
+        SELECT
+          ec.id         AS ec_id,
+          ec.name       AS ec_name,
+          cl.name       AS client_name,
+          ec.program,
+          'Set budget_allocated for this engineering contract in the Budgets UI so projections are capped correctly' AS suggested_action
+        FROM engineering_contracts ec
+        LEFT JOIN clients cl ON cl.id = ec.client_id
+        -- Only flag ECs that have at least one active project under them
+        WHERE EXISTS (
+          SELECT 1
+          FROM projects p
+          JOIN contracts c ON c.id = p.contract_id
+          WHERE c.engineering_contract_id = ec.id
+            AND p.status = 'active'
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM budgets b
+          JOIN budget_codes bc ON bc.budget_id = b.id
+          WHERE b.engineering_contract_id = ec.id
+            AND COALESCE(bc.allocated_amount, 0) > 0
+        )
+        ORDER BY cl.name NULLS LAST, ec.name
+      `);
+
+      const summary = {
+        null_or_zero_rate_count:      nullRateRows.length,
+        null_expected_revenue_count:  nullExpRevRows.length,
+        stale_footage_revenue_count:  staleFootageRows.length,
+        sparse_history_count:         sparseHistoryRows.length,
+        ec_no_budget_count:           ecNoBudgetRows.length,
+        total_issues:
+          nullRateRows.length +
+          nullExpRevRows.length +
+          staleFootageRows.length +
+          sparseHistoryRows.length +
+          ecNoBudgetRows.length,
+      };
+
+      res.json({
+        as_of: new Date().toISOString(),
+        lists: {
+          null_or_zero_rate:      nullRateRows,
+          null_expected_revenue:  nullExpRevRows,
+          stale_footage_revenue:  staleFootageRows,
+          sparse_history:         sparseHistoryRows,
+          ec_no_budget:           ecNoBudgetRows,
+        },
+        summary,
+      });
+    } catch (e) {
+      console.error('[automation:projection-data-quality]', e && e.message);
+      res.status(500).json({ error: 'Failed to build projection data quality report.' });
+    }
+  });
 }
 
 // ─── SCHEDULER ─────────────────────────────────────────────────────────────
