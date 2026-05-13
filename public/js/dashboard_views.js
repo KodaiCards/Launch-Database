@@ -367,6 +367,7 @@
     loadInspectionProjection().catch(() => {});
     loadBillNowPreview().catch(() => {});
 
+    try {
     // Initialize dashboard period controls on first load.
     const yEl = document.getElementById('dash-year');
     const pEl = document.getElementById('dash-period');
@@ -473,6 +474,12 @@
     // Avoids the destroy+recreate flicker that closed open dropdowns and
     // wiped focus/hover state inside the dashboard tree.
     setHtmlIfChanged(tbody, buildRows(roots, 0, null, true));
+    } catch (err) {
+      console.error('[loadDashboard] failed:', err);
+      if (window.LFS && window.LFS.toast) {
+        window.LFS.toast.error('Dashboard failed to load: ' + (err.message || 'Unknown error'));
+      }
+    }
   }
 
   // Dashboard tree toggle. Dashboard-specific dt-/dc- prefixes avoid

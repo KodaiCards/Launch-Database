@@ -117,6 +117,7 @@
   });
 
   async function loadRevenue() {
+    try {
     const y = document.getElementById('rev-year').value;
     const m = window.revSelectedMonth;
     const isYTD = m === null;
@@ -257,6 +258,12 @@
         <td><button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Bill...</button></td>
       </tr>`;
     }).join('') : '<tr><td colspan="6" class="empty-state" style="padding:24px;text-align:center">No unbilled work</td></tr>';
+    } catch (err) {
+      console.error('[loadRevenue] failed:', err);
+      if (window.LFS && window.LFS.toast) {
+        window.LFS.toast.error('Revenue tab failed to load: ' + (err.message || 'Unknown error'));
+      }
+    }
   }
 
   window.selectRevMonth = selectRevMonth;
