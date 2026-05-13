@@ -119,13 +119,18 @@
   // Advance a permit from inside the project detail popup, then reload the
   // popup contents so the new stage shows immediately.
   async function advancePermitFromPopup(projectId) {
-    await api('/api/permits/' + projectId + '/advance', 'PUT', {});
-    const yEl = document.getElementById('rev-year');
-    const y = (yEl && yEl.value) || String(new Date().getFullYear());
-    const m = (typeof revSelectedMonth !== 'undefined') ? revSelectedMonth : null;
-    if (typeof reloadProjectDetail === 'function') reloadProjectDetail(projectId, m, y);
-    if (typeof loadPermits === 'function') loadPermits();
-    if (typeof loadDashboard === 'function') loadDashboard();
+    try {
+      await api('/api/permits/' + projectId + '/advance', 'PUT', {});
+      // Success-only: only reload popup/lists after a confirmed advance
+      const yEl = document.getElementById('rev-year');
+      const y = (yEl && yEl.value) || String(new Date().getFullYear());
+      const m = (typeof revSelectedMonth !== 'undefined') ? revSelectedMonth : null;
+      if (typeof reloadProjectDetail === 'function') reloadProjectDetail(projectId, m, y);
+      if (typeof loadPermits === 'function') loadPermits();
+      if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (e) {
+      alertDialog('Advance failed: ' + e.message);
+    }
   }
 
   function openPermitDocs(projectId, name) {
@@ -136,10 +141,16 @@
   }
 
   async function loadPermitDocs(projectId) {
-    const permits = await api('/api/permits');
+    const list = document.getElementById('permit-doc-list');
+    let permits;
+    try {
+      permits = await api('/api/permits');
+    } catch (e) {
+      if (list) list.innerHTML = `<p style="color:var(--danger);font-size:13px">Failed to load documents: ${esc(e.message)}</p>`;
+      return;
+    }
     const p = permits.find(x => x.id === projectId);
     const docs = p?.documents || [];
-    const list = document.getElementById('permit-doc-list');
     if (!docs.length) { list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>'; return; }
     list.innerHTML = docs.map(d => {
       const ext = (d.file_name.split('.').pop() || '').toLowerCase();
