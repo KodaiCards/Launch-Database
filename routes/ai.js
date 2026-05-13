@@ -2364,6 +2364,19 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
       cachedTools = AI_TOOLS.map((t, i) =>
         i === AI_TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t
       );
+      // H-4 + M-4 fix: validate message roles to the {user, assistant}
+      // allowlist before passing to the Anthropic SDK. A malformed role
+      // (e.g., "system", "fake") causes the SDK to throw, and without this
+      // guard that exception propagates as a raw 500 with internal error
+      // detail. Reject with a clear 400 before touching the SDK.
+      const VALID_CHAT_ROLES = new Set(['user', 'assistant']);
+      for (const m of messages) {
+        if (!VALID_CHAT_ROLES.has(m.role)) {
+          return res.status(400).json({
+            error: `Invalid message role "${m.role}". Only "user" and "assistant" are accepted.`,
+          });
+        }
+      }
       // Wrap user-role text content in injection markers so a prompt-injection
       // payload embedded in user input cannot masquerade as system instructions
       // when echoed back in subsequent conversation turns (Item 5).
