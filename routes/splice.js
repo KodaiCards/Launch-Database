@@ -3505,6 +3505,12 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     res.flushHeaders?.();
     res.write(`event: hello\ndata: ${JSON.stringify({ project_id: projectId })}\n\n`);
     _addSseClient(projectId, res);
+    // Wave 1.5 M-4: track consecutive DB-revalidate failures so a sustained
+    // outage doesn't leave a revoked session's channel open for minutes. After
+    // 2 consecutive failed ticks, terminate the channel (fail-closed) — the
+    // client can reconnect once the DB is back, and the reconnect re-runs
+    // authMiddleware end-to-end. A single transient failure is still tolerated.
+    let consecutiveDbErrors = 0;
     // Keep-alive ping every 25s with session re-validation so deactivated
     // or logged-out users stop receiving events within one heartbeat interval.
     const pingTimer = setInterval(async () => {
@@ -3530,9 +3536,22 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
             try { res.end(); } catch {}
             return;
           }
+          consecutiveDbErrors = 0;
         } catch (dbErr) {
-          // Transient DB error — log and keep the connection alive until next tick.
+          // Transient DB error — log and tolerate ONE tick. On the second
+          // consecutive failure, fail-closed: terminate the channel so a
+          // logout during sustained DB degradation isn't left dangling.
           console.error('[splice:SSE:revalidate]', dbErr && dbErr.message);
+          consecutiveDbErrors++;
+          if (consecutiveDbErrors >= 2) {
+            try {
+              res.write(`event: session_invalid\ndata: ${JSON.stringify({ reason: 'revalidate_unavailable' })}\n\n`);
+            } catch {}
+            clearInterval(pingTimer);
+            _removeSseClient(projectId, res);
+            try { res.end(); } catch {}
+            return;
+          }
         }
       }
       let ok;
