@@ -506,13 +506,13 @@ const invoiceGenerator = require('./invoice_generator');
 
 // Clients CRUD lives in routes/clients.js (extracted as part of
 // CLEANUP_PLAN.md Track 1.3).
-require('./routes/clients')(app, pool, { requireAdmin });
+require('./routes/clients')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/clients was unauthenticated
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACTS + ENGINEERING CONTRACTS — extracted as part of Track 1.3.
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/contracts')(app, pool, { requireAdmin });
-require('./routes/engineering_contracts')(app, pool, { requireAdmin });
+require('./routes/contracts')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/contracts was unauthenticated
+require('./routes/engineering_contracts')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/engineering-contracts was unauthenticated
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -532,7 +532,7 @@ require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin });
 require('./routes/project_types')(app, pool, {});
 
 // Pricing list extracted to routes/pricing.js (Track 1.3).
-require('./routes/pricing')(app, pool, { requireManagerOrAdmin });
+require('./routes/pricing')(app, pool, { requireManagerOrAdmin, requireAuth }); // H-1: requireAuth added — GET /api/pricing* was unauthenticated (competitive-intel leak)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMITTING CALCULATION (universal, not just RUS)
@@ -557,7 +557,7 @@ function calcPermittingHours(miles) {
 // Staff extracted to routes/staff.js (Track 1.3).
 // Pass requireAdmin so the new DELETE/PUT/all endpoints (added 2026-05-05)
 // are admin-only. GET + POST stay open to any authed user as before.
-require('./routes/staff')(app, pool, { requireAdmin });
+require('./routes/staff')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/staff was unauthenticated
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECTS — core CRUD + recalc + tree/with-hours delete extracted to
@@ -610,7 +610,7 @@ require('./routes/ai')(app, pool, { requireAdmin, upload });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project detail drill-down extracted to routes/project_detail.js (Track 1.3).
-require('./routes/project_detail')(app, pool, {});
+require('./routes/project_detail')(app, pool, { requireAuth }); // H-1: requireAuth added — GET /api/projects/:id/detail was unauthenticated
 
 
 // Permits pipeline + per-project documents + /api/_debug/uploads diagnostic
@@ -626,14 +626,14 @@ require('./routes/admin')(app, pool, { requireAdmin, uploadDir: UPLOAD_DIR });
 
 
 // Budgets + budget_codes + by-area summary extracted to routes/budgets.js (Track 1.3).
-require('./routes/budgets')(app, pool, { requireManagerOrAdmin });
+require('./routes/budgets')(app, pool, { requireManagerOrAdmin, requireAuth }); // H-1: requireAuth added — GET /api/budgets* was unauthenticated
 
 // Potential permits (design-submitted candidates) extracted to
 // routes/potential_permits.js (Track 1.3).
 require('./routes/potential_permits')(app, pool, { requireAuth }); // C-2: was {} — no-op stub fired instead of real requireAuth
 
 // Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
-require('./routes/concentrators')(app, pool, { requireAdmin });
+require('./routes/concentrators')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/concentrators was unauthenticated
 
 // Dashboard, design pipeline, and inspection (PSC RUS) views extracted to
 // dedicated route modules (Track 1.3).
@@ -677,7 +677,7 @@ require('./routes/project_billing')(app, pool, { requireManagerOrAdmin });
 // routes/projects.js (CLEANUP_PLAN.md Track 1.3.3).
 
 // Reports endpoints extracted to routes/reports.js (Track 1.3).
-require('./routes/reports')(app, pool, {});
+require('./routes/reports')(app, pool, { requireAuth }); // H-1: requireAuth added — GET /api/reports/* was unauthenticated (manager-role reports leaked)
 
 // Billing endpoints (bill-multiple, batches, report) extracted to
 // routes/billing.js (Track 1.3).
