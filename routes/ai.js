@@ -1939,9 +1939,27 @@ async function executeTool(toolName, toolInput, actor = {}) {
         // `UPDATE users SET password_hash='...'` and own every account. Same
         // rationale: route-level admin endpoints handle credential changes
         // (password reset endpoint hashes via bcrypt; AI must not bypass).
+        // B3 hotfix: the original regex matched only `UPDATE <tablename>` as
+        // the first token. PostgreSQL alias syntax lets an attacker write
+        // `UPDATE u SET password_hash='x' FROM users u WHERE u.id=1`, placing
+        // alias `u` as the first token and bypassing the regex entirely.
+        // Fix: two-layer guard — (a) keep the simple start-anchor check for
+        // the common case, (b) add a full-probe scan that blocks any UPDATE
+        // statement that references a high-value table *anywhere* (including
+        // FROM clauses, CTEs, and aliases).
         const highRiskUpdatePattern = /^update\s+(engineering_contracts|users|clients|contracts)\b/i;
-        if (highRiskUpdatePattern.test(probe)) {
+        const highRiskUpdateTableAnywhere = /\b(engineering_contracts|users|clients|contracts)\b/i;
+        const isUpdateStatement = /^update\b/i.test(probe);
+        if (highRiskUpdatePattern.test(probe) || (isUpdateStatement && highRiskUpdateTableAnywhere.test(probe))) {
           return { success: false, error: 'Direct UPDATE on engineering_contracts, users, clients, or contracts is blocked via write_sql. Use the dedicated admin endpoints (which enforce hashing, validation, and audit-log entries).' };
+        }
+        // B2 hotfix: INSERT INTO high-value tables was never blocked. A prompt-
+        // injected note could induce Claude to call write_sql with a raw INSERT
+        // INTO users, bypassing create_user's bcrypt hashing entirely and landing
+        // a plaintext password_hash in the DB. Symmetric guard with DELETE/UPDATE.
+        const highRiskInsertPattern = /^insert\s+into\s+(users|engineering_contracts|clients|contracts)\b/i;
+        if (highRiskInsertPattern.test(probe)) {
+          return { success: false, error: 'Direct INSERT INTO users, engineering_contracts, clients, or contracts is blocked via write_sql. Use the dedicated admin endpoints (create_user, route-level contract creation) which enforce bcrypt hashing, input validation, and audit-log entries.' };
         }
         try {
           const result = await pool.query(sql, params);
