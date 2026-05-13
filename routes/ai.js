@@ -2139,8 +2139,26 @@ const DESTRUCTIVE_AI_TOOLS = new Set([
 // state needed to resume the chat after the user approves/rejects the
 // staged actions. Single-instance only — for multi-instance deploys this
 // would need to move to Postgres.
+//
+// M-3 fix: add a size cap with LRU eviction. Without a cap, a DoS can
+// fill the Map faster than the 5-minute GC interval because each entry
+// holds full systemBlocks + cachedTools + conversationMessages (15+ turns).
+// When the cap is hit we evict the oldest entry (Map preserves insertion
+// order so the first key is the oldest).
 const _pendingApprovals = new Map();
 const APPROVAL_TTL_MS = 15 * 60 * 1000;
+const PENDING_APPROVALS_MAX = 1000;
+function pendingApprovalsSet(key, value) {
+  // LRU eviction: if at cap, delete oldest entry before inserting new one
+  if (_pendingApprovals.size >= PENDING_APPROVALS_MAX && !_pendingApprovals.has(key)) {
+    const oldestKey = _pendingApprovals.keys().next().value;
+    if (oldestKey !== undefined) {
+      console.warn(`_pendingApprovals at cap (${PENDING_APPROVALS_MAX}); evicting oldest entry ${oldestKey}`);
+      _pendingApprovals.delete(oldestKey);
+    }
+  }
+  _pendingApprovals.set(key, value);
+}
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of _pendingApprovals) {
@@ -2510,7 +2528,9 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         conversationMessages.push({ role: 'assistant', content: response.content });
 
         const approvalId = uuidv4();
-        _pendingApprovals.set(approvalId, {
+        // M-3 fix: use pendingApprovalsSet wrapper (LRU eviction + size cap)
+        // instead of _pendingApprovals.set directly.
+        pendingApprovalsSet(approvalId, {
           systemBlocks, cachedTools, conversationMessages,
           stagedToolUses: toolUseBlocks,
           toolResults, finalText,
