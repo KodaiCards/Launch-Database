@@ -522,7 +522,7 @@ require('./routes/engineering_contracts')(app, pool, { requireAdmin, requireAuth
 // ─────────────────────────────────────────────────────────────────────────────
 // JOBS — extracted to routes/jobs.js (Track 1.3).
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin });
+require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin, requireAuth });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECT TYPES — program categories (BAU / GF(R) / RUS / Other / custom)
