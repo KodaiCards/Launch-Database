@@ -2620,16 +2620,17 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         b: b.snapshot,
         diff,
       });
-      const puppeteer = _puppet();
-      const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      });
+      // H-2 fix: use shared browser pool instead of launching per request.
+      // getBrowser() returns a pooled Browser; we create a fresh Page for
+      // isolation and releasePage() closes it (not the browser) when done.
+      const { getBrowser, releasePage } = require('../lib/browser_pool');
+      const browser = await getBrowser();
+      const page = await browser.newPage();
       try {
-        const page = await browser.newPage();
         // C-1 SSRF fix: block all non-data: network requests so user-controlled
         // HTML fields (e.g. splice location names, notes) can't be used to reach
         // Railway IMDS or internal services via crafted <img src="http://..."> tags.
+        // setRequestInterception is per-page, so sharing the browser is safe.
         await page.setRequestInterception(true);
         page.on('request', req => {
           const u = req.url();
@@ -2649,7 +2650,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
         res.send(pdf);
       } finally {
-        try { await browser.close(); } catch {}
+        await releasePage(page);
       }
     } catch (e) { console.error('[splice:diff-pdf]', e && e.message); res.status(500).json({ error: 'Failed to generate diff PDF.' }); }
   });
@@ -3671,16 +3672,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         projectPublicToken,
         mapImageDataUrl,
       });
-      const puppeteer = _puppet();
-      const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      });
+      // H-2 fix: use shared browser pool instead of launching per request.
+      const { getBrowser, releasePage } = require('../lib/browser_pool');
+      const browser = await getBrowser();
+      const page = await browser.newPage();
       try {
-        const page = await browser.newPage();
         // C-1 SSRF fix: block all non-data: network requests so user-controlled
         // HTML fields (e.g. splice location names, notes) can't be used to reach
         // Railway IMDS or internal services via crafted <img src="http://..."> tags.
+        // setRequestInterception is per-page, so sharing the browser is safe.
         await page.setRequestInterception(true);
         page.on('request', req => {
           const u = req.url();
@@ -3700,7 +3700,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
         res.send(pdf);
       } finally {
-        try { await browser.close(); } catch {}
+        await releasePage(page);
       }
     } catch (e) { console.error('[splice:export-pdf]', e && e.message); res.status(500).json({ error: 'Failed to export splice PDF.' }); }
   });
