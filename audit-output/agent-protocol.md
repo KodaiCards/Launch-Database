@@ -13,6 +13,7 @@
 ## Hard rules (apply to every agent)
 
 - **Push policy.** Repo's signing wrapper returns 400. Unsigned commits are the working norm (explicitly approved). Use `git -c commit.gpgsign=false commit ...` per commit. Never `--no-verify`. Never amend published commits.
+- **Pre-push pull-rebase (mandatory for parallel agents).** Before EVERY push, run `git pull --rebase origin claude/debug-previous-issues-MoN9D`. Without this, an agent whose local clone pre-dates a sibling agent's push can record a "delete" of the sibling's report file when committing. Pull-rebase puts your commit on top of remote state and avoids the deletion.
 - **STOP and surface on safety-net failures** (lint, type-check, test, pre-commit hook other than signing). Do NOT disable, bypass, or work around. The orchestrator decides.
 - **No scope creep.** Implement / audit only the items in your prompt. Surface adjacent observations as notes in your final report, never as additional commits or findings.
 - **Branch discipline.** Push only to `claude/debug-previous-issues-MoN9D`. Never push to `main` or any other branch.
