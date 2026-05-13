@@ -31,28 +31,32 @@ Today's flow:
 1. **Auto-create with existing rollup structure for organization.** When `(client, job, WO#)` selected and no matching project exists, system auto-creates a new leaf project, slotted into the appropriate rollup containers (client-level → team-level → service-area-level whatever exists for this client). Doesn't require the user to leave timeclock.
 2. **WO# is optional.** Blank WO# allowed. Hours land in a "no WO#" project per `(client, job)` combo. Common for overhead, training, internal work.
 3. **One Job dropdown** filtered by the selected client. NOT two separate filters.
+4. **Dropdown sources (2026-05-13 follow-up):**
+   - **Client dropdown** — pulled from admin clients (active clients the user has access to).
+   - **Job dropdown** — pulled from all jobs that apply to the selected client (filtered by client's program / EC / job availability).
+   - **WO# dropdown** — pulled from WO#s under the selected client. **Display format: `{service_area_name} - {wo_number}` (e.g., `"Crossroad School - 16300"`).** Service area is the WO's grouping context; showing both helps the user pick the right WO# at a glance when one client has many.
 
 ## 4. New behavior — picker UX
 
 Replace the project leaf-select with three cascading dropdowns:
 
 ```
-┌─ Clock In ────────────────────────────────────────────┐
-│                                                       │
-│  Client:  [PSC ▾]              ← Required             │
-│  Job:     [Inspection ▾]       ← Required             │
-│  WO# :    [SE-2025-014 ▾] (or blank)  ← Optional     │
-│                                                       │
-│  ▶ Will clock into: PSC / Inspection / SE-2025-014   │
-│    (auto-created if needed)                           │
-│                                                       │
-│  [Clock In]                                           │
-└───────────────────────────────────────────────────────┘
+┌─ Clock In ─────────────────────────────────────────────────────┐
+│                                                                │
+│  Client:  [PSC ▾]                       ← Required             │
+│  Job:     [Inspection ▾]                ← Required             │
+│  WO# :    [Crossroad School - 16300 ▾]  ← Optional (blank OK)  │
+│                                                                │
+│  ▶ Will clock into: PSC / Inspection / Crossroad School-16300 │
+│    (auto-created if needed)                                    │
+│                                                                │
+│  [Clock In]                                                    │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-- **Client dropdown:** lists clients user has access to. Same source as the existing client filter.
-- **Job dropdown:** lists jobs available for the selected client (filtered by program / EC). Disabled until client is picked.
-- **WO# dropdown:** lists work-order numbers from `engineering_contracts.work_order_number` (and possibly `projects.work_order_number`) for the selected client. Includes a blank/"— No WO# —" option. Disabled until client is picked.
+- **Client dropdown:** lists clients user has access to. Source = admin clients table (same as the existing client filter).
+- **Job dropdown:** lists jobs available for the selected client (filtered by program / EC / job availability). Disabled until client is picked.
+- **WO# dropdown:** lists work orders under the selected client. **Each option displays as `"{service_area_name} - {wo_number}"`** (e.g., `"Crossroad School - 16300"`). Source: join `engineering_contracts` (or `service_areas`) with WO# table, scoped to selected client. Includes blank/"— No WO# —" option. Disabled until client is picked.
 - **Will clock into preview line:** real-time text showing the resolved project — name, status (existing vs new), rollup ancestors.
 
 ## 5. Resolution logic — `resolveOrCreateProject({client_id, job_id, work_order_number})`
