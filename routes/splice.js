@@ -2791,11 +2791,14 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       const tok = await _resolveProjectToken(pool, req.params.token);
       if (!tok) return res.status(404).type('html').send(_renderViewErrorHtml('This share link is no longer valid. Ask the engineer for a fresh link.'));
-      // Serve the static file with the token embedded as a meta tag.
-      const fs = require('fs');
+      // Phase 6 BE-Perf: serve the static file asynchronously so contractor
+      // share-link hits don't block the event loop. This is a public-facing
+      // route called frequently by contractor browsers; readFileSync here
+      // was a per-request synchronous disk hit.
+      const fsp = require('fs').promises;
       const path = require('path');
       const filePath = path.join(__dirname, '..', 'public', 'splice_view.html');
-      let html = fs.readFileSync(filePath, 'utf8');
+      let html = await fsp.readFile(filePath, 'utf8');
       html = html.replace('__SPLICE_TOKEN__', _esc(req.params.token));
       res.type('html').send(html);
     } catch (e) {
