@@ -228,16 +228,16 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         const sheet = wb.Sheets[wb.SheetNames[0]];
         rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
       } else if (ext === '.csv' || ext === '.tsv') {
-        const content = fs.readFileSync(req.file.path, 'utf8');
+        const content = await fs.promises.readFile(req.file.path, 'utf8');
         const wb = XLSX.read(content, { type: 'string' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
       } else {
-        fs.unlinkSync(req.file.path);
+        await fs.promises.unlink(req.file.path);
         return res.status(400).json({ error: 'Unsupported file type. Use .csv, .xlsx, or .xls.' });
       }
 
-      fs.unlinkSync(req.file.path);
+      await fs.promises.unlink(req.file.path);
 
       const headerIdx = findHeaderRow(rows2d);
       if (headerIdx < 0) {
