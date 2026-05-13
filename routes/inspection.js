@@ -35,6 +35,10 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+// H-7: Use business-timezone date helper so entries logged 6-11 PM Chicago
+// don't fall outside the YTD window due to UTC boundary mismatch.
+const { dateInBusinessTz } = require('../automation');
+
 module.exports = function installInspectionRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/inspection was missing requireAuth.
   // Gated to admin + managers (who use the Inspection tab).
@@ -45,6 +49,9 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
     let monthYear = req.query.month;  // 'YYYY-MM'
     let startDate, endDate;
     const now = new Date();
+    // H-7: use Chicago-tz date for all "today" references so entries
+    // logged 6-11 PM Chicago don't fall outside the intended window.
+    const todayChicago = dateInBusinessTz(now);
     if (period === 'month') {
       if (!monthYear || !/^\d{4}-\d{2}$/.test(monthYear)) {
         const yyyy = now.getFullYear();
@@ -56,9 +63,8 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
       const last = new Date(y, m, 0).getDate();
       endDate = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
     } else {
-      const yyyy = now.getFullYear();
-      startDate = `${yyyy}-01-01`;
-      endDate = now.toISOString().slice(0,10);
+      startDate = `${todayChicago.slice(0, 4)}-01-01`;
+      endDate = todayChicago;  // H-7: was now.toISOString().slice(0,10) (UTC)
     }
 
     const statusFilter = String(req.query.status || '').toLowerCase();
