@@ -20,6 +20,12 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // Maximum pool connections. pg-pool's built-in default is 10, which is
+  // easily exhausted when SSE clients, contractor hydrate bursts (12 parallel
+  // queries/call), and dashboard refreshes overlap. 20 is safe on Railway
+  // shared Postgres plans (max_connections ≈ 20-25); set PG_POOL_MAX higher
+  // only after verifying your Railway plan's actual max_connections limit.
+  max: parseInt(process.env.PG_POOL_MAX, 10) || 20,
   // If Postgres is down (e.g. disk exhaustion crashed the server), pool.connect()
   // would otherwise hang indefinitely — pg-pool's default connectionTimeoutMillis
   // is 0 (no timeout). That prevents start() from ever reaching app.listen(),
