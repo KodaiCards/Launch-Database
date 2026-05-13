@@ -702,13 +702,56 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              column on projects are intact; this tile (and its sibling
              card below) can be re-enabled when the projection logic is
              ready for a second pass. -->
-        <div class="stat-card" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:default" title="RUS billable-hours pace × billing rate over the next 13 weeks, capped at remaining EC budget">
-          <!-- M-5: renamed from "Next 90 Day Projection" → "RUS Next 13 Weeks" to
-               match horizonWeeks=13 in the backend. Sub-label shows MTD hours so
-               the two windows (MTD vs 13-wk pace) are visually distinct. -->
-          <div class="stat-label" style="color:rgba(255,255,255,.85)">RUS Next 13 Weeks</div>
-          <div class="stat-value" id="s-90d-projection" style="font-size:13px;font-weight:600;letter-spacing:.05em;color:rgba(255,255,255,.85)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div>
-          <div class="stat-label" id="s-90d-mtd-label" style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px">MTD: — hrs &nbsp;|&nbsp; 13-wk pace: pending</div>
+        <!-- FE-1: RUS Next 13 Weeks tile — rendered by loadInspectionProjection()
+             in dashboard_views.js. Clicking the tile expands the per-bucket
+             drill-in (FE-2) in the card below. -->
+        <div class="stat-card" id="rus-proj-tile" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:pointer" onclick="rusToggleExpand()"
+             aria-expanded="false" aria-controls="rus-proj-expand">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="stat-label" style="color:rgba(255,255,255,.85)">RUS Next 13 Weeks</div>
+            <span id="rus-proj-dq-chip" style="display:none;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;margin-left:6px;white-space:nowrap"></span>
+            <!-- FE-5: methodology ? icon -->
+            <span title="Based on 8-week billable-hours pace × billing rate, capped at remaining EC budget. WIP is hours logged but not yet on an invoice."
+                  style="cursor:help;font-size:11px;color:rgba(255,255,255,.5);margin-left:4px;flex-shrink:0">&#63;</span>
+          </div>
+          <div class="stat-value" id="s-90d-projection" style="font-size:22px;font-weight:700;color:#fff;margin:6px 0 2px">—</div>
+          <!-- sub-rows: billed / WIP / projected -->
+          <div id="s-90d-subnumbers" style="display:none;font-size:11px;color:rgba(255,255,255,.75);line-height:1.6">
+            <div><span style="opacity:.7">Billed (MTD): </span><span id="s-90d-billed">—</span></div>
+            <div><span style="opacity:.7">Logged, not invoiced (WIP): </span><span id="s-90d-wip">—</span></div>
+            <div><span style="opacity:.7">Projected new work: </span><span id="s-90d-projected-new">—</span></div>
+          </div>
+          <div class="stat-label" id="s-90d-mtd-label" style="color:rgba(255,255,255,.55);font-size:10px;margin-top:4px">MTD: — hrs &nbsp;|&nbsp; 13-wk pace: pending</div>
+          <!-- sparkline SVG placeholder; filled by JS -->
+          <svg id="rus-proj-sparkline" viewBox="0 0 200 35" preserveAspectRatio="none"
+               style="display:none;width:100%;height:35px;margin-top:6px;opacity:.8"
+               aria-hidden="true"></svg>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">
+            <i class="fa-solid fa-chevron-down" id="rus-proj-chev" style="transition:transform .2s"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- FE-2: RUS per-bucket drill-in expansion card.
+           Replaces the old display:none psc-rus-projection-card block.
+           Shown/hidden by rusToggleExpand() on tile click. -->
+      <div id="rus-proj-expand" class="card lfs-widget" data-widget-id="psc-rus-projection"
+           style="margin-bottom:14px;display:none">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title">
+            <i class="fa-solid fa-chart-bar" style="color:var(--primary);margin-right:6px"></i>RUS Next 13 Weeks — Bucket Detail
+            <!-- FE-5 tile-2 tooltip -->
+            <span title="Per bucket. Horizon shrinks to 3 weeks for projects with ≥80% of budget already billed."
+                  style="cursor:help;font-size:11px;color:var(--text-muted);margin-left:4px">&#63;</span>
+          </span>
+          <button class="btn btn-icon btn-secondary btn-sm" onclick="rusToggleExpand()" aria-label="Collapse bucket detail">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="card-body" id="rus-proj-expand-body" style="padding:0">
+          <div style="padding:20px;text-align:center;color:var(--text-muted)">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading…
+          </div>
         </div>
       </div>
 
@@ -761,22 +804,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
       </div>
 
-      <!-- PSC RUS revenue projection — RETIRED pending revisit. The card
-           is hidden by default (display:none); loadInspectionProjection
-           in dashboard_views.js no longer toggles it on. The card body
-           shows an UNDER CONSTRUCTION placeholder if it's ever forced
-           visible. /api/inspection still serves the breakdown data so
-           reviving the card later is a one-line removal of display:none. -->
-      <div id="psc-rus-projection-card" class="card lfs-widget" data-widget-id="psc-rus-projection" style="margin-bottom:14px;display:none">
-        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title"><i class="fa-solid fa-screwdriver-wrench" style="color:var(--text-muted);margin-right:6px"></i>RUS Revenue Projection</span>
-          <span style="font-size:11px;color:var(--text-muted)">retired pending revisit</span>
-        </div>
-        <div class="card-body" id="psc-rus-projection-body" style="padding:30px 16px;text-align:center;color:var(--text-muted)">
-          <i class="fa-solid fa-screwdriver-wrench" style="font-size:24px;display:block;margin-bottom:8px;opacity:.5"></i>
-          UNDER CONSTRUCTION
-        </div>
-      </div>
+      <!-- FE-2: psc-rus-projection-card DELETED — replaced by #rus-proj-expand
+           above (the inline expansion below the stat tile). -->
 
       <!-- Needs Attention — surfaces the /api/automation/* alerts so admin
            sees stale permits, billing draft availability, and flagged
@@ -2665,6 +2694,30 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               </div>
             </div>
             <div id="prune-result" style="display:none;margin-top:10px;padding:8px;background:var(--white);border-radius:6px;font-size:12px;font-family:monospace;white-space:pre-wrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FE-4: Projection Data Quality panel (admin only).
+           Surfaces 5 categories of bad/missing data that degrade projection
+           accuracy. Hidden from non-admins by the openSettings() visibility
+           gate (same .settings-section class as Users & Roles). -->
+      <div class="settings-section" id="proj-dq-section" style="margin-top:24px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0">
+            <i class="fa-solid fa-chart-bar" style="margin-right:6px;color:var(--text-muted)"></i>Projection Data Quality
+          </h4>
+          <button class="btn btn-secondary btn-sm" onclick="loadProjectionDQ()" title="Refresh">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">
+          Projects and engineering contracts with missing or stale data that reduce projection accuracy.
+          Fix issues by clicking the project link to open its detail view.
+        </p>
+        <div id="proj-dq-body">
+          <div style="padding:20px;text-align:center;color:var(--text-muted)">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading…
           </div>
         </div>
       </div>
@@ -6208,6 +6261,8 @@ async function showProjectDetail(projectId) {
   try {
     const data = await api(`/api/projects/${projectId}/detail?${params.toString()}`);
     renderProjectDetail(data, m, y);
+    // FE-3: fire projection tile load after detail renders (async, non-blocking)
+    loadProjectProjection(projectId).catch(() => {});
   } catch (e) {
     document.getElementById('pd-body').innerHTML = '<div class="alert alert-warn"><i class="fa-solid fa-triangle-exclamation"></i> Failed to load: ' + esc(e.message) + '</div>';
   }
@@ -6348,12 +6403,9 @@ function renderProjectDetail(data, month, year) {
       ? (['completed', 'billed'].includes(p.status) ? parseFloat(p.expected_revenue || 0) : lifetimeHrs * rate)
       : lifetimeHrs * rate;
 
-    // Projected Revenue tile retired pending revisit. Always render the
-    // placeholder so users don't think the figure is missing — it's just
-    // intentionally not surfaced right now. The expected_revenue column
-    // and permit calc are still computed; this is purely the displayed
-    // tile that's shelved.
-    html += `<div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Projected Revenue</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>`;
+    // FE-3: Projected Revenue tile — async-filled by loadProjectProjection().
+    // Placeholder spinner shown inline; BE-3 fills it after detail loads.
+    html += `<div class="stat-card" id="pd-proj-tile"><div class="stat-label" style="display:flex;align-items:center;gap:4px">Projected Revenue <span title="Single-project completion forecast. Bar segments: billed / WIP / projected new / red = overage." style="cursor:help;font-size:10px;color:var(--text-muted)">&#63;</span></div><div id="pd-proj-inner" style="margin-top:4px"><i class="fa-solid fa-spinner fa-spin" style="color:var(--text-muted)"></i></div></div>`;
     html += `<div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value">${fmt(lifetimeHrs || totalHrs)}</div><div class="stat-sub">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div>`;
     html += `<div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" style="color:var(--success)">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">earned to date</div></div>`;
     if (isFootage && p.footage) {
@@ -6372,11 +6424,10 @@ function renderProjectDetail(data, month, year) {
     if (lifetimeHrs > 0 && !isContainer) {
       html += `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>`;
     }
-    // Projected Revenue + Remaining tiles retired pending revisit. Same
-    // story as the footage variant above — figures still compute under
-    // the hood, just not displayed.
-    html += `<div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Projected Revenue</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>
-      <div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Remaining</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>`;
+    // FE-3: Projected Revenue tile — async-filled by loadProjectProjection().
+    // Single tile covers all four numbers + burn bar; the Remaining value
+    // is shown as projected_remaining inside the tile content.
+    html += `<div class="stat-card" id="pd-proj-tile"><div class="stat-label" style="display:flex;align-items:center;gap:4px">Projected Revenue <span title="Single-project completion forecast. Bar segments: billed / WIP / projected new / red = overage." style="cursor:help;font-size:10px;color:var(--text-muted)">&#63;</span></div><div id="pd-proj-inner" style="margin-top:4px"><i class="fa-solid fa-spinner fa-spin" style="color:var(--text-muted)"></i></div></div>`;
     if (isFootage && p.footage) {
       html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
     }
@@ -6733,6 +6784,15 @@ async function openSettings() {
   }
 
   refreshSettingsDot();
+
+  // FE-4: show + load Projection Data Quality panel for admins
+  try {
+    const dqSection = document.getElementById('proj-dq-section');
+    if (dqSection && typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+      dqSection.style.display = '';
+      loadProjectionDQ().catch(() => {});
+    }
+  } catch (e) { console.warn('proj-dq load skipped:', e.message); }
 }
 
 
@@ -7838,6 +7898,363 @@ document.addEventListener('click', (e) => {
   }
 });
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+// ═══════════════════════════════════════════════════════════
+// FE-1 / FE-2: RUS 13-WEEK PROJECTION TILE + BUCKET DRILL-IN
+// ═══════════════════════════════════════════════════════════
+
+let _rusExpanded = false;
+
+function rusToggleExpand() {
+  const expand = document.getElementById('rus-proj-expand');
+  const tile   = document.getElementById('rus-proj-tile');
+  const chev   = document.getElementById('rus-proj-chev');
+  if (!expand) return;
+  _rusExpanded = !_rusExpanded;
+  expand.style.display = _rusExpanded ? '' : 'none';
+  if (tile)  tile.setAttribute('aria-expanded', String(_rusExpanded));
+  if (chev)  chev.style.transform = _rusExpanded ? 'rotate(180deg)' : '';
+}
+
+// Renders an inline SVG sparkline from an array of 13 weekly values.
+// Width = viewBox width (200), height = viewBox height (35).
+function _rusSparklineSvg(values) {
+  const svg = document.getElementById('rus-proj-sparkline');
+  if (!svg || !values || !values.length) return;
+  const W = 200, H = 35, pad = 2;
+  const max = Math.max(...values, 1);
+  const pts = values.map((v, i) => {
+    const x = pad + (i / (values.length - 1 || 1)) * (W - pad * 2);
+    const y = H - pad - ((v / max) * (H - pad * 2));
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  svg.innerHTML =
+    `<polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<polyline points="${pts[0]} ${pts.join(' ')} ${(W - pad).toFixed(1)},${H} ${pad},${H}" fill="rgba(255,255,255,.12)" stroke="none"/>`;
+  svg.style.display = '';
+}
+
+// FE-1: loads /api/automation/psc-rus-projection and populates the tile.
+// Called by loadInspectionProjection() in dashboard_views.js (which we
+// replace below to actually fire this).
+async function _loadRusProjectionTile() {
+  const tile     = document.getElementById('s-90d-projection');
+  const subNums  = document.getElementById('s-90d-subnumbers');
+  const mtdLabel = document.getElementById('s-90d-mtd-label');
+  const dqChip   = document.getElementById('rus-proj-dq-chip');
+  if (!tile) return;
+
+  let data;
+  try {
+    data = await api('/api/automation/psc-rus-projection');
+  } catch (e) {
+    tile.textContent = '—';
+    if (mtdLabel) mtdLabel.textContent = 'Projection unavailable';
+    return;
+  }
+
+  const gt = data.grand_total || {};
+  const totalBilled      = parseFloat(gt.billed        || data.total_billed        || 0);
+  const totalWip         = parseFloat(gt.wip           || data.total_wip           || 0);
+  const totalProjectedNew= parseFloat(gt.projected_new || data.total_projected_new || 0);
+  const grandTotal       = totalBilled + totalWip + totalProjectedNew;
+
+  const rows = data.rows || data.umbrellas || [];
+
+  // Empty state
+  if (!rows.length) {
+    tile.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,.6)">No RUS projection data — set up an EC with program=\'rus\' to populate.</span>';
+    if (mtdLabel) mtdLabel.textContent = '';
+    return;
+  }
+
+  // Main headline number
+  tile.textContent = fmtMoney(grandTotal);
+  tile.style.fontSize = '22px';
+  tile.style.fontWeight = '700';
+
+  // Sub-rows
+  if (subNums) {
+    document.getElementById('s-90d-billed').textContent        = fmtMoney(totalBilled);
+    document.getElementById('s-90d-wip').textContent           = fmtMoney(totalWip);
+    document.getElementById('s-90d-projected-new').textContent = fmtMoney(totalProjectedNew);
+    subNums.style.display = '';
+  }
+
+  // MTD label — sum MTD hours across umbrellas
+  const totalMtdHrs = rows.reduce((s, r) => s + (parseFloat(r.mtd_hours) || 0), 0);
+  if (mtdLabel) {
+    mtdLabel.textContent = `MTD: ${fmt(totalMtdHrs, 'hrs')}  |  13-wk pace: ${fmtMoney(totalProjectedNew)}`;
+  }
+
+  // Aggregate sparkline across all umbrellas (sum by week index)
+  const sparkline = new Array(13).fill(0);
+  for (const r of rows) {
+    const sp = r.sparkline_weekly || [];
+    sp.forEach((v, i) => { if (i < 13) sparkline[i] += parseFloat(v) || 0; });
+  }
+  _rusSparklineSvg(sparkline);
+
+  // Data-quality chip
+  if (dqChip) {
+    try {
+      const dq = await api('/api/automation/projection-data-quality');
+      const total = (dq.summary && dq.summary.total_issues) || 0;
+      if (total === 0) {
+        dqChip.textContent = '✓ All clear';
+        dqChip.style.background = 'rgba(40,167,69,.25)';
+        dqChip.style.color = '#7ee89f';
+      } else {
+        dqChip.textContent = `${total} issue${total > 1 ? 's' : ''} — view in Settings`;
+        dqChip.style.background = 'rgba(240,165,0,.25)';
+        dqChip.style.color = '#ffd070';
+        dqChip.style.cursor = 'pointer';
+        dqChip.onclick = (e) => { e.stopPropagation(); openSettings(); };
+      }
+      dqChip.style.display = '';
+    } catch (_) { /* DQ chip is best-effort */ }
+  }
+
+  // FE-2: render bucket drill-in body (pre-populate so it's instant on expand)
+  _renderRusBucketTable(rows);
+}
+
+// FE-2: renders the per-bucket expansion table.
+function _renderRusBucketTable(rows) {
+  const body = document.getElementById('rus-proj-expand-body');
+  if (!body) return;
+  const BUCKET_LABELS = { inspection: 'Inspection', re: 'RE', permitting: 'Permitting', misc: 'Misc' };
+
+  let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:var(--gray-light)">
+      <th style="padding:7px 10px;text-align:left">Bucket / EC</th>
+      <th style="padding:7px 8px;text-align:right">Billed</th>
+      <th style="padding:7px 8px;text-align:right">WIP</th>
+      <th style="padding:7px 8px;text-align:right">Projected New</th>
+      <th style="padding:7px 8px;text-align:right">Total</th>
+      <th style="padding:7px 8px;text-align:right">Pace/wk</th>
+      <th style="padding:7px 8px;text-align:right">Budget Rem.</th>
+      <th style="padding:7px 8px;text-align:left">Horizon</th>
+    </tr></thead><tbody>`;
+
+  for (const umbrella of rows) {
+    const ecName = esc(umbrella.engineering_contract_name || umbrella.ec_name || '—');
+    // Umbrella header row
+    html += `<tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);border-left:3px solid var(--primary)">
+      <td style="padding:8px 10px;font-weight:700" colspan="8">
+        <i class="fa-solid fa-folder-tree" style="color:var(--primary);margin-right:6px"></i>${ecName}
+        <span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:6px">${esc(umbrella.client_name || '')}</span>
+      </td></tr>`;
+
+    const buckets = umbrella.buckets || umbrella.breakdown || [];
+    for (const b of buckets) {
+      const label = BUCKET_LABELS[b.bucket || b.job_bucket] || esc(b.bucket || b.job_bucket || '—');
+      const isCloseOut = b.horizon_reason === 'close_out_80pct';
+      const rowStyle = isCloseOut ? 'background:rgba(240,165,0,.08);' : '';
+      const closeOutBadge = isCloseOut
+        ? `<span title="Project &gt;80% billed — horizon shortened to 3 weeks" style="margin-left:6px;font-size:10px;background:var(--warning-light,#FFF8E7);color:#8B5E00;padding:1px 5px;border-radius:8px;cursor:help">&#9888; Close-out</span>`
+        : '';
+      const noRate = b.bucket_no_rate
+        ? `<span style="font-size:10px;color:var(--danger);margin-left:4px" title="No billing rate — $0 projected">no rate</span>`
+        : '';
+
+      // Pace per week: projected_new / horizon_weeks (13 or 3)
+      const horizonWks = isCloseOut ? 3 : 13;
+      const pacePerWk = b.pace_per_week != null
+        ? parseFloat(b.pace_per_week)
+        : (parseFloat(b.projected_new || 0) / horizonWks);
+      const budgetRem = b.budget_remaining != null ? fmtMoney(b.budget_remaining) : '—';
+      const horizonLabel = isCloseOut ? '3 wks' : '13 wks';
+
+      html += `<tr style="border-top:1px solid var(--gray-border);${rowStyle}">
+        <td style="padding:6px 10px 6px 28px;color:var(--text)">
+          ${label}${closeOutBadge}${noRate}
+        </td>
+        <td style="padding:6px 8px;text-align:right">${fmtMoney(b.billed || b.billed_to_date || 0)}</td>
+        <td style="padding:6px 8px;text-align:right">${fmtMoney(b.wip || 0)}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(b.projected_new || b.projected_remaining_revenue || 0)}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:600">${fmtMoney(b.total || 0)}</td>
+        <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${fmtMoney(pacePerWk)}</td>
+        <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${budgetRem}</td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--text-muted)">${horizonLabel}</td>
+      </tr>`;
+    }
+  }
+
+  html += `</tbody></table></div>`;
+  body.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FE-3: PROJECT DRILL-DOWN PROJECTED REVENUE TILE
+// ═══════════════════════════════════════════════════════════
+
+async function loadProjectProjection(projectId) {
+  const inner = document.getElementById('pd-proj-inner');
+  if (!inner) return;
+
+  let d;
+  try {
+    d = await api(`/api/automation/project-projection/${projectId}`);
+  } catch (e) {
+    inner.innerHTML = '<span style="font-size:11px;color:var(--text-muted)">Projection unavailable</span>';
+    return;
+  }
+
+  if (!d) {
+    inner.innerHTML = '<span style="font-size:11px;color:var(--text-muted)">No projection data</span>';
+    return;
+  }
+
+  // Empty / insufficient data state
+  if (d.rate_missing && !d.actual_billed) {
+    inner.innerHTML = `<span style="font-size:11px;color:var(--text-muted)">Projection not available — project needs <code>billing_rate</code> and either <code>expected_hours</code> or recent time entries.</span>`;
+    return;
+  }
+
+  const bb = d.burn_bar || {};
+  const billedPct    = parseFloat(bb.billed_pct    || 0);
+  const wipPct       = parseFloat(bb.wip_pct       || 0);
+  const projPct      = parseFloat(bb.projected_pct || 0);
+  const overagePct   = parseFloat(bb.overage_pct   || 0);
+  const isOverage    = overagePct > 0;
+
+  // 4 numbers block
+  const numsHtml = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px">
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">Billed</div>
+        <div style="font-weight:700;color:var(--success)">${fmtMoney(d.actual_billed)}</div>
+      </div>
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">WIP</div>
+        <div style="font-weight:700;color:#e6a817">${fmtMoney(d.wip)}</div>
+      </div>
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">Projected</div>
+        <div style="font-weight:700;color:var(--primary)">${fmtMoney(d.projected_remaining)}</div>
+      </div>
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">At completion</div>
+        <div style="font-weight:700;${isOverage ? 'color:var(--danger)' : ''}">${fmtMoney(d.total_at_completion)}</div>
+      </div>
+    </div>`;
+
+  // Horizontal burn bar
+  const barHtml = `
+    <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:4px" title="${esc(d.methodology_note || '')}">
+      ${billedPct  > 0 ? `<div style="width:${billedPct}%;background:#28A745" title="Billed: ${billedPct.toFixed(1)}%"></div>` : ''}
+      ${wipPct     > 0 ? `<div style="width:${wipPct}%;background:#e6a817" title="WIP: ${wipPct.toFixed(1)}%"></div>` : ''}
+      ${projPct    > 0 ? `<div style="width:${projPct}%;background:var(--primary,#1B5FA0)" title="Projected: ${projPct.toFixed(1)}%"></div>` : ''}
+      ${overagePct > 0 ? `<div style="width:${overagePct}%;background:var(--danger,#dc3545)" title="Overage: ${overagePct.toFixed(1)}%"></div>` : ''}
+      <div style="flex:1;background:var(--gray-border)"></div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;color:var(--text-muted)">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#28A745;margin-right:2px"></span>Billed</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#e6a817;margin-right:2px"></span>WIP</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--primary);margin-right:2px"></span>Projected</span>
+      ${isOverage ? `<span style="color:var(--danger)"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--danger);margin-right:2px"></span>Overage</span>` : ''}
+    </div>`;
+
+  // Close-out note
+  const horizonNote = d.horizon_reason === 'close_out_80pct'
+    ? `<div style="margin-top:6px;font-size:10px;color:#8B5E00;background:rgba(240,165,0,.1);padding:3px 6px;border-radius:4px">&#9888; &gt;80% billed — horizon shortened to 3 weeks</div>`
+    : '';
+
+  inner.innerHTML = numsHtml + barHtml + horizonNote;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FE-4: PROJECTION DATA QUALITY PANEL
+// ═══════════════════════════════════════════════════════════
+
+async function loadProjectionDQ() {
+  const body = document.getElementById('proj-dq-body');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+
+  let dq;
+  try {
+    dq = await api('/api/automation/projection-data-quality');
+  } catch (e) {
+    body.innerHTML = '<div class="alert alert-warn"><i class="fa-solid fa-triangle-exclamation"></i> Failed to load data quality report: ' + esc(e.message) + '</div>';
+    return;
+  }
+
+  const lists = dq.lists || {};
+  const summary = dq.summary || {};
+  const totalIssues = summary.total_issues || 0;
+
+  if (totalIssues === 0) {
+    body.innerHTML = `<div style="padding:16px;text-align:center;color:var(--success,#28A745)">
+      <i class="fa-solid fa-circle-check" style="font-size:20px;display:block;margin-bottom:6px"></i>
+      <strong>All projection inputs clean</strong> — no data quality issues.
+    </div>`;
+    return;
+  }
+
+  const SECTIONS = [
+    { key: 'null_or_zero_rate',     label: 'Null or zero billing rate',             icon: 'fa-dollar-sign',    isProject: true,
+      desc: 'These projects have no billing rate set. Their hours are excluded from pace calculations and project $0.' },
+    { key: 'null_expected_revenue', label: 'Permitting projects with no expected revenue', icon: 'fa-file-invoice-dollar', isProject: true,
+      desc: 'Expected revenue is required for permitting/footage projects. Without it the project contributes $0 to projection.' },
+    { key: 'stale_footage_revenue', label: 'Footage projects with stale expected revenue', icon: 'fa-arrows-rotate', isProject: true,
+      desc: 'Footage was edited but expected_revenue was not updated. Projection may be overstated or understated.' },
+    { key: 'sparse_history',        label: 'Projects with sparse time-entry history (<3 weeks)', icon: 'fa-clock', isProject: true,
+      desc: 'Fewer than 3 weeks of billable time entries reduces pace accuracy. Consider adding historical entries or treating projection as rough estimate.' },
+    { key: 'ec_no_budget',          label: 'Engineering contracts with no budget',   icon: 'fa-wallet',         isProject: false,
+      desc: 'Without a budget allocation the EC projection has no cap — hours will project as if work is unlimited.' },
+  ];
+
+  let html = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">As of ${new Date(dq.as_of || Date.now()).toLocaleString()} — ${totalIssues} issue${totalIssues !== 1 ? 's' : ''} total</div>`;
+
+  for (const sec of SECTIONS) {
+    const items = lists[sec.key] || [];
+    if (!items.length) continue;
+
+    html += `
+      <details style="margin-bottom:10px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden" open>
+        <summary style="padding:10px 12px;cursor:pointer;background:var(--gray-light);display:flex;align-items:center;gap:8px;list-style:none;font-weight:600;font-size:13px">
+          <i class="fa-solid ${sec.icon}" style="color:var(--text-muted);width:16px;text-align:center"></i>
+          ${esc(sec.label)}
+          <span style="margin-left:auto;background:var(--warning,#F0A500);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">${items.length}</span>
+        </summary>
+        <div style="padding:8px 12px">
+          <p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">${esc(sec.desc)}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="border-bottom:1px solid var(--gray-border)">
+              <th style="padding:4px 8px;text-align:left">Name</th>
+              <th style="padding:4px 8px;text-align:left">Client</th>
+              <th style="padding:4px 8px;text-align:left">EC</th>
+              ${sec.isProject ? '<th style="padding:4px 8px;text-align:left">Action</th>' : ''}
+            </tr></thead>
+            <tbody>`;
+
+    for (const item of items) {
+      if (sec.isProject) {
+        html += `<tr style="border-bottom:1px solid var(--gray-border)">
+          <td style="padding:5px 8px;font-weight:500">
+            <a href="#" onclick="closeModal('settings-modal');showProjectDetail('${esc(item.project_id)}');return false;"
+               style="color:var(--primary);text-decoration:none">${esc(item.name)}</a>
+          </td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.client_name || '—')}</td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.ec_name || '—')}</td>
+          <td style="padding:5px 8px;font-size:11px;color:var(--text-muted)">${esc(item.suggested_action || '—')}</td>
+        </tr>`;
+      } else {
+        html += `<tr style="border-bottom:1px solid var(--gray-border)">
+          <td style="padding:5px 8px;font-weight:500">${esc(item.ec_name || '—')}</td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.client_name || '—')}</td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.program || '—')}</td>
+        </tr>`;
+      }
+    }
+
+    html += `</tbody></table></div></details>`;
+  }
+
+  body.innerHTML = html;
+}
 
 // ═══════════════════════════════════════════════════════════
 // FORMATTERS
