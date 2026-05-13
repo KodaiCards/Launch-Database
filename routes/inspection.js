@@ -266,6 +266,13 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
           display_name = p.name;
         }
 
+        // M-6: Mark is_ongoing projects with 0 hours in the period as stale.
+        // They remain in the result list for visibility but are excluded from
+        // the active_projects count (below) so the count reflects projects
+        // that are actually generating work in this window, not just projects
+        // whose is_ongoing flag was never cleared.
+        const stale = p.is_ongoing && hours === 0;
+
         result.push({
           ...p,
           period: { start: startDate, end: endDate, mode: period, label: monthYear || null },
@@ -275,13 +282,15 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
           service_area: area,
           display_name,
           contract_label: p.contract_label || p.contract_number || null,
+          stale,
         });
       }
 
       const totals = result.reduce((acc, p) => {
         acc.hours += p.hours_in_period;
         acc.revenue += p.revenue_in_period;
-        if (p.status === 'active' || p.is_ongoing) acc.active_projects++;
+        // M-6: exclude stale is_ongoing projects from active_projects count.
+        if ((p.status === 'active' || p.is_ongoing) && !p.stale) acc.active_projects++;
         return acc;
       }, { hours: 0, revenue: 0, active_projects: 0 });
 

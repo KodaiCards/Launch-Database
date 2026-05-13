@@ -869,6 +869,9 @@ async function buildInspectionRevenueProjection(pool, opts) {
       budget_remaining: +budgetRemaining.toFixed(2),
       projected_remaining_hours: +projHours.toFixed(1),
       projected_remaining_revenue: +projRevenue.toFixed(2),
+      // L-1: strict > (not >=). At exact equality pace fits the remaining
+      //      budget exactly — the flag should only fire when pace would
+      //      EXCEED the budget, not when it precisely meets it.
       will_exhaust_budget: budget_allocated > 0 && paceHours > budgetHours,
     };
   }
