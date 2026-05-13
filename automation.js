@@ -1106,10 +1106,26 @@ async function buildMonthlyBillingDraft(pool, year, month) {
        GROUP BY te.project_id
      ),
      already_billed AS (
+       -- M-4: Two-branch match mirrors the revenue.js monthly-CTE pattern.
+       -- Branch 1 (strict): invoices that explicitly cover this exact period.
+       --   Most modern invoices have billing_period_start/end set on creation.
+       -- Branch 2 (fallback): legacy invoices where billing_period_start IS NULL
+       --   are matched by invoice_date year+month instead. Without this fallback
+       --   a legacy invoice for e.g. May 2025 (NULL period_start) would not block
+       --   the draft, causing buildMonthlyBillingDraft to include the project
+       --   again and risk a double-bill when the admin processes the draft.
        SELECT DISTINCT ii.project_id
        FROM invoice_items ii
        JOIN invoices i ON i.id = ii.invoice_id
-       WHERE i.billing_period_start = $1 AND i.billing_period_end = $2
+       WHERE (
+         -- Strict: period columns explicitly match
+         (i.billing_period_start = $1 AND i.billing_period_end = $2)
+         OR
+         -- Fallback: legacy invoice with NULL period — match by year+month of invoice_date
+         (i.billing_period_start IS NULL
+          AND EXTRACT(YEAR  FROM i.invoice_date) = EXTRACT(YEAR  FROM $1::date)
+          AND EXTRACT(MONTH FROM i.invoice_date) = EXTRACT(MONTH FROM $1::date))
+       )
      )
      SELECT
        p.id AS project_id,
