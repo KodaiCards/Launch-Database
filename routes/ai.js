@@ -1933,6 +1933,16 @@ async function executeTool(toolName, toolInput, actor = {}) {
         if (highRiskDeletePattern.test(probe)) {
           return { success: false, error: 'Direct DELETE on engineering_contracts, users, clients, or contracts is blocked via write_sql. These tables have route-level pre-checks (budget cascades, billing batch references, auth log entries) that must not be bypassed. Use the dedicated admin endpoints instead.' };
         }
+        // Wave 2 BE-AI A3 (Phase 5 auditor): symmetric block on UPDATE for the
+        // same high-value tables. DELETE was blocked but UPDATE was wide open
+        // — a prompt-injection (or admin approval click) could land
+        // `UPDATE users SET password_hash='...'` and own every account. Same
+        // rationale: route-level admin endpoints handle credential changes
+        // (password reset endpoint hashes via bcrypt; AI must not bypass).
+        const highRiskUpdatePattern = /^update\s+(engineering_contracts|users|clients|contracts)\b/i;
+        if (highRiskUpdatePattern.test(probe)) {
+          return { success: false, error: 'Direct UPDATE on engineering_contracts, users, clients, or contracts is blocked via write_sql. Use the dedicated admin endpoints (which enforce hashing, validation, and audit-log entries).' };
+        }
         try {
           const result = await pool.query(sql, params);
           return {
