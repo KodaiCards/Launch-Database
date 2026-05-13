@@ -39,6 +39,35 @@ const path = require('path');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
+// H-5 fix: per-user sliding-window rate limiter for /api/ai/chat.
+// 20 requests per 5-minute window per user. The auth.js rateLimitOk helper
+// is not exported, so this is a local copy of the same pattern.
+// Single-process only (Railway single-instance — matches _pendingApprovals scope).
+const _aiChatRlBuckets = new Map();
+function aiChatRateLimitOk(userId) {
+  const AI_CHAT_RL_LIMIT = 20;
+  const AI_CHAT_RL_WINDOW_MS = 5 * 60 * 1000;
+  if (process.env.NODE_ENV === 'test' && process.env.LFS_DISABLE_RATELIMIT_FOR_TESTS === '1') return true;
+  const key = 'ai:chat:' + String(userId);
+  const now = Date.now();
+  const arr = (_aiChatRlBuckets.get(key) || []).filter(t => now - t < AI_CHAT_RL_WINDOW_MS);
+  if (arr.length >= AI_CHAT_RL_LIMIT) {
+    _aiChatRlBuckets.set(key, arr);
+    return false;
+  }
+  arr.push(now);
+  _aiChatRlBuckets.set(key, arr);
+  return true;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _aiChatRlBuckets) {
+    const fresh = v.filter(t => now - t < 60 * 60 * 1000);
+    if (fresh.length === 0) _aiChatRlBuckets.delete(k);
+    else _aiChatRlBuckets.set(k, fresh);
+  }
+}, 5 * 60 * 1000).unref();
+
 // Detect when the user's last message asks for an action OR confirms one,
 // so the chat handler can force tool_choice='any' on the next API call.
 // Without this the model can choose to skip emitting a tool_use and
@@ -2290,6 +2319,30 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(503).json({
       error: 'AI is unavailable: ANTHROPIC_API_KEY is not set. Add it in Railway → Variables and redeploy.',
+    });
+  }
+
+  // H-5 fix: per-user rate limit. Approval-resume paths are exempt —
+  // they're not new Anthropic calls, just decision submissions for an
+  // already-staged request that was already rate-limited at intake.
+  const { approval_id: _preflight_approval_id } = req.body || {};
+  if (!_preflight_approval_id) {
+    if (!aiChatRateLimitOk(req.user?.id || 'anonymous')) {
+      return res.status(429).json({
+        error: 'Too many AI chat requests. Please wait a moment before sending another message.',
+      });
+    }
+  }
+
+  // H-5 fix: conversation history turn cap. Prevents a client from sending
+  // an arbitrarily long history to force large Anthropic context windows.
+  // 50 turns = 100 messages (user + assistant alternating) — well within
+  // normal session length, comfortably under Anthropic context limits.
+  const AI_CHAT_HISTORY_CAP = 50;
+  const { messages: _preflight_messages } = req.body || {};
+  if (Array.isArray(_preflight_messages) && _preflight_messages.length > AI_CHAT_HISTORY_CAP) {
+    return res.status(400).json({
+      error: `Conversation history exceeds the ${AI_CHAT_HISTORY_CAP}-message cap. Start a new session to continue.`,
     });
   }
 
