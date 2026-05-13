@@ -630,7 +630,7 @@ require('./routes/budgets')(app, pool, { requireManagerOrAdmin });
 
 // Potential permits (design-submitted candidates) extracted to
 // routes/potential_permits.js (Track 1.3).
-require('./routes/potential_permits')(app, pool, {});
+require('./routes/potential_permits')(app, pool, { requireAuth }); // C-2: was {} — no-op stub fired instead of real requireAuth
 
 // Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
 require('./routes/concentrators')(app, pool, { requireAdmin });
@@ -639,7 +639,7 @@ require('./routes/concentrators')(app, pool, { requireAdmin });
 // dedicated route modules (Track 1.3).
 require('./routes/dashboard')(app, pool, { requireAuth });
 require('./routes/design_pipeline')(app, pool, { requireAuth });
-require('./routes/inspection')(app, pool, {});
+require('./routes/inspection')(app, pool, { requireAuth }); // C-3: was {} — no-op stub fired instead of real requireAuth
 
 
 // Revenue endpoints extracted to routes/revenue.js (Track 1.3).
