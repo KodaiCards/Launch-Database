@@ -498,7 +498,7 @@
     const proj = document.getElementById('te-project').value;
     const hrs = document.getElementById('te-hours').value;
     const date = document.getElementById('te-date').value;
-    if (!proj || !hrs || !date) return alert('Project, hours and date are required');
+    if (!proj || !hrs || !date) return alertDialog('Project, hours and date are required');
     const body = {
       project_id: proj,
       staff_id: document.getElementById('te-staff').value || null,
@@ -507,13 +507,18 @@
       job_title: document.getElementById('te-title').value,
       notes: document.getElementById('te-notes').value,
     };
-    if (id) {
-      await api('/api/time-entries/' + encodeURIComponent(id), 'PUT', body);
-    } else {
-      await api('/api/time-entries', 'POST', body);
+    try {
+      if (id) {
+        await api('/api/time-entries/' + encodeURIComponent(id), 'PUT', body);
+      } else {
+        await api('/api/time-entries', 'POST', body);
+      }
+      closeModal('time-modal');
+      loadHours();
+    } catch (e) {
+      alertDialog('Failed to save time entry: ' + e.message);
+      // modal stays open, input intact
     }
-    closeModal('time-modal');
-    loadHours();
   }
 
   async function deleteTimeEntry(id) {
