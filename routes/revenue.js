@@ -286,34 +286,79 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
 
   app.get('/api/revenue/projected-total', requireManagerOrAdmin, async (req, res) => {
     try {
-      // Total = sum of projected_revenue from LEAVES only (no double-counting).
-      // Also returns count of leaves with a projected value vs. without, so the
-      // UI can show "X of Y projects" coverage if needed.
+      // ARC-3: For hourly projects, derive projected_revenue at read time as
+      // expected_hours × billing_rate rather than reading the stored column.
+      // The stored projected_revenue column is the canonical source ONLY for
+      // footage projects (kept in sync by the DB trigger from migration 0033).
+      // For hourly projects the stored column is user-entered, often NULL or
+      // stale — the live derivation is always more accurate.
+      //
+      // Computed projected value per leaf:
+      //   hourly  → COALESCE(expected_hours, 0) × COALESCE(billing_rate, 0)
+      //             (returns 0 when either is NULL — flagged by data-quality panel)
+      //   footage → stored projected_revenue (trigger-synced to expected_revenue)
+      //   other   → stored projected_revenue (no reliable derivation)
+      //
+      // "with_projected" / "without_projected" counts: a project counts as
+      // "with" if the effective projected value (derived or stored) is > 0.
       const totalR = await pool.query(`
         SELECT
-          COALESCE(SUM(projected_revenue), 0)::float AS total,
-          COUNT(*) FILTER (WHERE projected_revenue IS NOT NULL)::int AS with_projected,
-          COUNT(*) FILTER (WHERE projected_revenue IS NULL)::int AS without_projected
+          COALESCE(SUM(
+            CASE
+              WHEN p.billing_type = 'hourly'
+                THEN COALESCE(p.expected_hours, 0) * COALESCE(p.billing_rate, 0)
+              ELSE COALESCE(p.projected_revenue, 0)
+            END
+          ), 0)::float AS total,
+          COUNT(*) FILTER (WHERE
+            CASE
+              WHEN p.billing_type = 'hourly'
+                THEN (p.expected_hours IS NOT NULL AND p.billing_rate IS NOT NULL
+                       AND p.expected_hours > 0 AND p.billing_rate > 0)
+              ELSE p.projected_revenue IS NOT NULL
+            END
+          )::int AS with_projected,
+          COUNT(*) FILTER (WHERE
+            CASE
+              WHEN p.billing_type = 'hourly'
+                THEN (p.expected_hours IS NULL OR p.billing_rate IS NULL
+                       OR p.expected_hours = 0 OR p.billing_rate = 0)
+              ELSE p.projected_revenue IS NULL
+            END
+          )::int AS without_projected
         FROM projects p
         WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND p.status IN ('active', 'completed')
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
       `);
-      // Per-client breakdown
+      // Per-client breakdown — same derivation as totals above.
       const byClientR = await pool.query(`
         SELECT cl.name AS client_name,
-               COALESCE(SUM(p.projected_revenue), 0)::float AS projected
+               COALESCE(SUM(
+                 CASE
+                   WHEN p.billing_type = 'hourly'
+                     THEN COALESCE(p.expected_hours, 0) * COALESCE(p.billing_rate, 0)
+                   ELSE COALESCE(p.projected_revenue, 0)
+                 END
+               ), 0)::float AS projected
         FROM projects p
         LEFT JOIN clients cl ON cl.id = p.client_id
         WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND p.status IN ('active', 'completed')
-          AND p.projected_revenue IS NOT NULL
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
         GROUP BY cl.name
         ORDER BY projected DESC
       `);
-      // Per-project list: every leaf that has a projected_revenue, with parent
-      // ancestry so the user can see which contracts are contributing.
+      // Per-project list with ancestry for the drill-down modal.
+      // Includes effective_projected so the UI can render the right number.
       const projectsR = await pool.query(`
         SELECT p.id, p.name, p.projected_revenue, p.status, p.work_order_number,
+               p.billing_type, p.expected_hours, p.billing_rate,
+               CASE
+                 WHEN p.billing_type = 'hourly'
+                   THEN COALESCE(p.expected_hours, 0) * COALESCE(p.billing_rate, 0)
+                 ELSE COALESCE(p.projected_revenue, 0)
+               END AS effective_projected,
                cl.name AS client_name,
                pp.name AS parent_name,
                gp.name AS grandparent_name,
@@ -325,7 +370,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         LEFT JOIN jobs j ON j.id = p.job_id
         WHERE NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id)
           AND p.status IN ('active', 'completed')
-          AND p.projected_revenue IS NOT NULL
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
         ORDER BY cl.name, gp.name NULLS LAST, pp.name NULLS LAST, p.name
       `);
       res.json({
@@ -333,7 +378,9 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         with_projected: totalR.rows[0].with_projected,
         without_projected: totalR.rows[0].without_projected,
         by_client: byClientR.rows,
-        projects: projectsR.rows
+        projects: projectsR.rows,
+        // Coverage note for the tile: "X of Y projects have projected revenue set."
+        coverage_note: `${totalR.rows[0].with_projected} of ${(totalR.rows[0].with_projected || 0) + (totalR.rows[0].without_projected || 0)} projects have projected revenue set`,
       });
     } catch (e) {
       console.error('projected-total error:', e);
