@@ -274,6 +274,10 @@
     if (!ok) return;
     try {
       await api('/api/invoices/' + invoiceId + '?wipe_hours=' + wipeHours, 'DELETE');
+      // L-3: clear tree state so deleted invoice/client keys don't leave a
+      // dangling chevron-expanded entry when the invoice was the last in its
+      // client group. loadBilling() rebuilds the tree from fresh API data.
+      billingHistoryTreeState.clear();
       loadBilling();
       if (typeof loadRevenue === 'function') loadRevenue();
       if (typeof loadDashboard === 'function') loadDashboard();
