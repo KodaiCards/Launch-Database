@@ -2739,6 +2739,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/undo_bar.js"></script>
 <script src="/js/tree_state.js"></script>
 <script src="/js/overlay_modal.js"></script>
+<script src="/js/focus_trap.js"></script>
 <script src="/js/project_picker.js"></script>
 <script src="/js/audit_drawer.js"></script>
 <script src="/js/bulk_bill_modal.js"></script>
@@ -7886,26 +7887,44 @@ const _formDraftCleanups = {};
 // ═══════════════════════════════════════════════════════════
 // MODAL HELPERS
 // ═══════════════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// Per-modal focus-trap registry. Maps modal-id → trap object returned by trapFocus().
+const _modalTraps = {};
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('open');
+  // A11y: trap focus inside the modal; ESC closes it.
+  if (window.trapFocus) {
+    if (_modalTraps[id]) _modalTraps[id].release();
+    _modalTraps[id] = trapFocus(el, {
+      escClose: true,
+      onEsc: () => closeModal(id),
+    });
+  }
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  // Release the focus trap and restore focus to the trigger element.
+  if (_modalTraps[id]) {
+    _modalTraps[id].release();
+    delete _modalTraps[id];
+  }
+}
 
 // Global modal-close behaviors:
-// (1) ESC key closes the topmost open modal
-// (2) Clicking the overlay (outside the .modal box) closes it
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  const open = document.querySelectorAll('.modal-overlay.open');
-  if (!open.length) return;
-  // Close just the last-opened (visually topmost) one
-  open[open.length - 1].classList.remove('open');
-});
+// (1) Clicking the overlay (outside the .modal box) closes it
+// Note: ESC is now handled per-modal by trapFocus (above).
 document.addEventListener('click', (e) => {
   // Only fire when the click target IS the overlay itself, not its children
-  if (e.target.classList && e.target.classList.contains('modal-overlay')) {
-    e.target.classList.remove('open');
+  if (e.target.classList && e.target.classList.contains('modal-overlay') && e.target.classList.contains('open')) {
+    closeModal(e.target.id);
   }
 });
-document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) closeModal(m.id); }));
 
 // ═══════════════════════════════════════════════════════════
 // FE-1 / FE-2: RUS 13-WEEK PROJECTION TILE + BUCKET DRILL-IN
