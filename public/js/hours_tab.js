@@ -375,7 +375,13 @@
       const body = document.getElementById('hours-tree-body');
       if (body) body.innerHTML = `<div class="empty-state" style="padding:40px;color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i><p>Failed to load hours: ${esc(e.message)}</p></div>`;
     } finally {
+      // NF-2: when a guarded call completes successfully, cancel any pending
+      // coalesced fetch — the just-finished load already has the latest filter
+      // state, so the trailing setTimeout would be a redundant duplicate fetch.
       _loadHoursGuard = false;
+      _loadHoursPending = false;
+      clearTimeout(_loadHoursPendingTimer);
+      _loadHoursPendingTimer = null;
     }
   }
 
