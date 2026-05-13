@@ -18,6 +18,11 @@
   function openDesignDocs(projectId, name) {
     currentDesignProjectId = projectId;
     document.getElementById('design-doc-title').textContent = 'Final Map — ' + name;
+    // Pre-fill uploader field with logged-in user's display name.
+    const uploaderEl = document.getElementById('design-doc-uploader');
+    if (uploaderEl) {
+      uploaderEl.value = (window.currentUser && (window.currentUser.full_name || window.currentUser.username)) || '';
+    }
     openModal('design-doc-modal');
     loadDesignDocs(projectId);
   }

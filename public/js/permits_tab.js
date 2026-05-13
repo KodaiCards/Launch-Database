@@ -136,6 +136,12 @@
   function openPermitDocs(projectId, name) {
     window.currentPermitProjectId = projectId;
     document.getElementById('permit-doc-title').textContent = 'Documents — ' + name;
+    // Pre-fill uploader field with logged-in user's display name so staff
+    // don't have to type it on every upload.
+    const uploaderEl = document.getElementById('doc-uploader');
+    if (uploaderEl) {
+      uploaderEl.value = (window.currentUser && (window.currentUser.full_name || window.currentUser.username)) || '';
+    }
     openModal('permit-doc-modal');
     loadPermitDocs(projectId);
   }
