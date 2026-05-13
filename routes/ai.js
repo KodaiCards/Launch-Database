@@ -1559,6 +1559,11 @@ async function executeTool(toolName, toolInput, actor = {}) {
         //      (`WITH x AS (DELETE … RETURNING *) SELECT …`) get rejected by
         //      Postgres itself, not just by our regex.
         //   4. Cap result set to 100 rows.
+        //   5. [C-1 fix] Executor-level denylist: block any reference to
+        //      high-value / meta tables even in a SELECT — the READ ONLY
+        //      transaction prevents writes but still returns credential rows
+        //      for `SELECT username, password_hash FROM users`. Use the
+        //      dedicated role-checked endpoints instead.
         const sqlClean = toolInput.sql.trim().replace(/;+\s*$/, '');
         if (sqlClean.includes(';')) {
           return { success: false, error: 'Multiple statements are not allowed. Submit one SELECT at a time.' };
@@ -1566,6 +1571,14 @@ async function executeTool(toolName, toolInput, actor = {}) {
         const firstWord = sqlClean.split(/\s+/)[0].toUpperCase();
         if (firstWord !== 'SELECT' && firstWord !== 'WITH') {
           return { success: false, error: 'Only SELECT/WITH queries are allowed. Use the specific action tools for modifications.' };
+        }
+        // C-1: Denylist for high-value and meta tables. Token-scan the full
+        // query so aliased references (`SELECT u.password_hash FROM users u`)
+        // and CTE-wrapped queries are also caught.
+        // Covers: users table, all pg_* catalog tables, information_schema.
+        const queryDenylistPattern = /\b(users|pg_[a-z_]+|information_schema)\b/i;
+        if (queryDenylistPattern.test(sqlClean)) {
+          return { success: false, error: 'Direct query on users, pg_* catalog tables, or information_schema is blocked. Use specific role-checked endpoints or dedicated tools for credential and schema introspection.' };
         }
         const client = await pool.connect();
         try {
@@ -1960,6 +1973,28 @@ async function executeTool(toolName, toolInput, actor = {}) {
         const highRiskInsertPattern = /^insert\s+into\s+(users|engineering_contracts|clients|contracts)\b/i;
         if (highRiskInsertPattern.test(probe)) {
           return { success: false, error: 'Direct INSERT INTO users, engineering_contracts, clients, or contracts is blocked via write_sql. Use the dedicated admin endpoints (create_user, route-level contract creation) which enforce bcrypt hashing, input validation, and audit-log entries.' };
+        }
+        // Verification residual gap #1: MERGE INTO high-value tables.
+        // `MERGE INTO users USING … WHEN MATCHED THEN UPDATE SET password_hash=…`
+        // passes all prior guards (DDL pattern doesn't cover MERGE, DELETE/UPDATE/INSERT
+        // checks all use different anchors). Block any MERGE statement that references
+        // a high-value table — MERGE is DML that can UPDATE or INSERT in one statement.
+        const highRiskMergePattern = /^merge\s+(into\s+)?(engineering_contracts|users|clients|contracts)\b/i;
+        const mergeHighValueTableAnywhere = /\b(engineering_contracts|users|clients|contracts)\b/i;
+        const isMergeStatement = /^merge\b/i.test(probe);
+        if (highRiskMergePattern.test(probe) || (isMergeStatement && mergeHighValueTableAnywhere.test(probe))) {
+          return { success: false, error: 'Direct MERGE on engineering_contracts, users, clients, or contracts is blocked via write_sql. Use the dedicated admin endpoints which enforce hashing, validation, and audit-log entries.' };
+        }
+        // Verification residual gap #2: CTE-prefixed UPDATE/DELETE/MERGE on
+        // high-value tables. `WITH cte AS (…) UPDATE users SET …` starts with
+        // WITH, so the UPDATE anchor (`^update\b`) never fires and the
+        // `isUpdateStatement` flag stays false — disabling the full-probe scan.
+        // Fix: for any non-SELECT statement (i.e. probe doesn't start with
+        // SELECT or EXPLAIN), run a standalone high-value table token scan.
+        // This catches CTE-prefixed DML regardless of which keyword follows WITH.
+        const isSelectOrExplain = /^(select|explain)\b/i.test(probe);
+        if (!isSelectOrExplain && mergeHighValueTableAnywhere.test(probe)) {
+          return { success: false, error: 'Statements that reference engineering_contracts, users, clients, or contracts in any DML context (including CTE-prefixed UPDATE/DELETE/MERGE) are blocked via write_sql. Use the dedicated admin endpoints.' };
         }
         try {
           const result = await pool.query(sql, params);
