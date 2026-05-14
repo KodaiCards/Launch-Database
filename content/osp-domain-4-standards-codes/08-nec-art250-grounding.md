@@ -65,7 +65,7 @@ The grounding electrode system to which the IBT ultimately bonds is made up of o
 |---|---|---|
 | **Metal underground water pipe** | 250.52(A)(1) | Common at commercial buildings — a metallic water main within 5 ft of building entry is a recognized electrode; also a permitted direct termination point under Art. 800.100 |
 | **Metal frame of the building (structural steel)** | 250.52(A)(2) | Commercial/industrial buildings with steel frames; structure itself is the electrode |
-| **Concrete-encased electrode (Ufer ground)** | 250.52(A)(3) | Steel rebar ≥ 20 ft encased in concrete foundation footing; highly effective, commonly required for new construction |
+| **Concrete-encased electrode (Ufer ground)** | 250.52(A)(3) | Steel rebar ≥ 20 ft encased in concrete foundation footing — the most common form. Also permitted: bare copper conductor ≥ 20 ft (minimum 4 AWG) encased in ≥ 2 in. of concrete, located within and near the bottom of a concrete foundation or footing. Both forms highly effective; rebar variant is the standard for new light-frame construction. |
 | **Ground ring** | 250.52(A)(4) | Bare copper conductor ≥ 20 ft encircling the building, buried ≥ 2.5 ft; used where soil conditions favor it |
 | **Rod and pipe electrodes** | 250.52(A)(5) | Ground rods (8 ft minimum for copper-clad steel, galvanized steel); the most commonly installed supplemental electrode when other types are unavailable |
 | **Plate electrodes** | 250.52(A)(7) | Buried metal plates; less common for commercial OSP entry |
@@ -122,7 +122,7 @@ If you find yourself wanting to know "how deep does the ground rod go?" or "what
 
 > **Grounding Electrode Conductor (GEC):** The conductor connecting the grounding electrode to the electrical service equipment. The IBT bonds to the GEC or to the grounding electrode system it feeds.
 
-> **Concrete-Encased Electrode (Ufer Ground):** Grounding electrode per NEC 250.52(A)(3) — steel reinforcing bar(s) ≥ 20 ft long encased in concrete at the building foundation; one of the most effective electrode types due to moisture retention and large contact surface.
+> **Concrete-Encased Electrode (Ufer Ground):** Grounding electrode per NEC 250.52(A)(3). Two recognized forms: (1) steel reinforcing bar(s) ≥ 20 ft long encased in concrete at the building foundation — the common form for new light-frame construction; (2) bare copper conductor ≥ 20 ft long, minimum 4 AWG, encased by at least 2 inches of concrete, located within and near the bottom of a concrete foundation or footing. Both forms are highly effective due to moisture retention and large surface contact area.
 
 > **Ground Rod:** Supplemental grounding electrode per NEC 250.52(A)(5) — typically 8-ft copper-clad steel or galvanized steel driven into the earth; common retrofit choice when Ufer or structural electrodes are unavailable.
 
