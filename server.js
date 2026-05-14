@@ -77,6 +77,10 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
+// OAuth2 token endpoint POSTs application/x-www-form-urlencoded per the spec.
+// No existing routes use form bodies, so this only activates for matching
+// Content-Type headers and is safe to enable globally.
+app.use(express.urlencoded({ extended: false }));
 
 // CSRF defense via Origin/Referer validation. Cookie-auth + a cross-site form
 // POST is the classic CSRF vector. For any state-changing request, require
@@ -330,6 +334,15 @@ function pageRequiresAuth(reqPath) {
   // Stakeholders click a share link; the token in the path is the auth.
   if (reqPath.startsWith('/splice/view/')) return false;
   if (reqPath.startsWith('/api/splice/view/')) return false;
+  // OAuth2 SSO bridge — all three endpoints manage their own auth internally:
+  //   GET  /oauth2/authorize  → validates client_id/redirect_uri THEN redirects
+  //                             to /login if unauthenticated (oauth2.js:168)
+  //   POST /oauth2/token      → server-to-server, no session cookie
+  //   GET  /oauth2/userinfo   → validates Bearer access token itself
+  // The global auth middleware must NOT intercept these or it returns a 302
+  // before oauth2.js can validate the client_id/redirect_uri params, causing
+  // oauth2.test.js assertions (expecting 400 on bad client_id) to see 302.
+  if (reqPath.startsWith('/oauth2/')) return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }
