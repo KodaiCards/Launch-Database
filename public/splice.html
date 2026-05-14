@@ -40,7 +40,7 @@
 
   /* ── Text hierarchy ── */
   --vetro-text-primary:#1F2937;
-  --vetro-text-secondary:#6B7280;
+  --vetro-text-secondary:#4B5563;
   --vetro-text-muted:#9CA3AF;
   --vetro-text-link:#1A6AAF;
 
@@ -3551,7 +3551,7 @@ function renderLocationInspector(locationId) {
     </div>
 
     <!-- ── 7. Drag-drop splice panel (5.B.5/5.B.6) ── -->
-    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)" id="ddrop-panel-location-${locationId}">
+    <div style="padding:10px 12px;border-bottom:1px solid var(--vetro-divider)" id="ddrop-panel-location-${locationId}" role="region" aria-label="Fiber splicing — ${esc(loc.name)}">
       ${renderDragDropPanel('location', locationId, locationId)}
     </div>
 
@@ -3714,7 +3714,7 @@ function renderClosureInspector(closureId) {
     </div>
 
     <!-- 5.B.5 — Drag-drop fiber splicing panel (closure anchor) -->
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)" id="ddrop-panel-closure-${closureId}">
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-weak)" id="ddrop-panel-closure-${closureId}" role="region" aria-label="Fiber splicing — ${esc(cl.model || 'Closure')}">
       ${renderDragDropPanel('closure', closureId, cl.location_id)}
     </div>
 
