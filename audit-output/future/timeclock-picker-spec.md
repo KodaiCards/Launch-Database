@@ -179,7 +179,96 @@ All columns needed by `resolveOrCreateProject` already exist:
 - [x] `projects.is_rollup`, `projects.rollup_level`, `projects.rollup_key` — confirmed `server.js:891-893`
 - [x] `projects.engineering_contract_id` — confirmed, added by Wave RUS-Fix migration 0023
 - [x] `ensureRollupChain` callable from new code — exported at `portal_module.js:1091`
-- [ ] Confirm: how to map `client_id` → `contract_label` for the concentrators lookup (via `engineering_contracts.contract_number` or name? Need to verify which field `concentrators.contract_label` matches)
+- [x] `client_id` → `contract_label` mapping — RESOLVED (see Area E Q4 below)
 - [ ] Confirm job_assignments behavior when no assignments exist for a client: the heuristic in `routes/jobs.js` falls back to `program_scope` filter — verify it returns the right jobs for non-PSC clients
+
+---
+
+### Area E Q4 — RESOLVED
+
+**Question:** How does `client_id` map to `concentrators.contract_label`? Is there a stable derivation?
+
+---
+
+#### The JOIN path (legacy `concentrators` table)
+
+`concentrators.contract_label` matches `contracts.friendly_label` — confirmed by two independent sources:
+
+1. `public/admin.html:3419-3424` — explicit comment documenting the matching strategy:
+   > `concentrators.contract_label === contracts.friendly_label` (clean schema match — what new contracts will use)
+   > fallback: `contracts.contract_number.startsWith(concentrators.contract_label)` (legacy production data)
+
+2. `invoice_generator.js:996` — the invoice engine aliases `c.friendly_label AS contract_label` when querying projects, confirming the two fields are semantically equivalent.
+
+**Three-step JOIN path from `client_id` to concentrators:**
+
+```sql
+-- Step 1: client_id → contracts (via contracts.client_id FK)
+-- Step 2: contracts.friendly_label → concentrators.contract_label (string equality, with startsWith fallback)
+-- Step 3: filter concentrators by that label
+
+SELECT con.*
+FROM contracts c
+JOIN concentrators con
+  ON  (c.friendly_label IS NOT NULL AND con.contract_label = c.friendly_label)
+  OR  (c.friendly_label IS NULL     AND c.contract_number LIKE con.contract_label || '%')
+WHERE c.client_id = $1        -- the chosen client_id
+  AND con.active = TRUE
+ORDER BY con.area_name;
+```
+
+For `picker-data` endpoint use, prefer the cleaner two-call approach:
+
+```sql
+-- 1. Get all contracts for this client
+SELECT id, friendly_label, contract_number
+FROM contracts
+WHERE client_id = $1;
+
+-- 2. For each unique friendly_label (or contract_number prefix), fetch concentrators
+SELECT area_name, work_order_number, contract_label
+FROM concentrators
+WHERE contract_label = $1   -- friendly_label from step 1
+  AND active = TRUE
+ORDER BY area_name;
+```
+
+**Verified by reading:**
+- `scripts/schema_core.sql:47-60` — `contracts` table: `client_id` FK + `friendly_label` column
+- `scripts/schema_core.sql:417-445` — `concentrators` table: `contract_label` column + seed data (`Contract 3/4/5`)
+- `public/admin.html:3415-3454` — `populateConcentratorDropdownForContract()` implements the exact matching strategy
+- `invoice_generator.js:996` — `c.friendly_label AS contract_label` alias
+
+---
+
+#### Is `concentrators` PSC-only?
+
+**YES — PSC-only.** Evidence:
+
+1. **Schema seed data** (`scripts/schema_core.sql:432-445`): the only `INSERT INTO concentrators` rows in any `.sql` file use labels `'Contract 3'`, `'Contract 4'`, `'Contract 5'` — these are PSC RUS billing contract labels exclusively.
+
+2. **Only two INSERT sites exist in the entire codebase:**
+   - `scripts/schema_core.sql:432` — seed (PSC contracts only)
+   - `routes/concentrators.js:34` — the admin POST endpoint (UI-driven, no client-scoping)
+
+3. **Other clients** (COX, IFT, TRI-CO) are seeded in `scripts/schema_core.sql:286-291` but have zero concentrator rows.
+
+4. **Migration 0031** (`migrations/0031_ec_wo_service_areas.sql:6,16`) explicitly notes: _"The existing concentrators table is untouched (legacy path)"_ — the new EC-scoped `ec_service_areas` + `ec_work_orders` tables were introduced precisely to give non-PSC (or new PSC) ECs a clean, FK-linked WO# structure instead of the `contract_label` string-match hack.
+
+---
+
+#### Recommendation: WO# dropdown behavior for non-PSC clients
+
+**Hide the WO# dropdown for non-PSC clients** (or more precisely: for clients whose ECs have no rows in either `concentrators` OR `ec_work_orders`).
+
+Preferred implementation path for `picker-data`:
+
+1. **Check `ec_work_orders` first** (modern path, FK-clean): query `ec_work_orders JOIN ec_service_areas` via `engineering_contract_id`. If rows exist → use them for the WO# dropdown.
+2. **Fall back to legacy `concentrators`** (PSC-only): query via `contracts.friendly_label → concentrators.contract_label`. If rows exist → use them.
+3. **If both are empty** → omit the WO# dropdown entirely (don't render it). This covers COX, IFT, TRI-CO today and any new client without configured WOs.
+
+This logic is already implemented for the project-create modal in `public/design.html:1091-1098` and `public/admin.html:4486-4492` — the timeclock picker should follow the same two-tier fallback pattern.
+
+**Note for Batch 1 spec update:** the `GET /api/timeclock/picker-data?client_id=X` endpoint should return `work_orders: []` (empty array, not null) for non-PSC clients. The frontend renders the dropdown only when `work_orders.length > 0`. This is cleaner than a boolean `has_work_orders` flag.
 
 === TIMECLOCK PICKER DISCOVERY END ===
