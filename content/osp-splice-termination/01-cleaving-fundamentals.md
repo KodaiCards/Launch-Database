@@ -52,7 +52,7 @@ A precision fiber cleaver for OSP fusion splicing work consists of the following
 
 ### Cleave Angle Requirements
 
-Fusion splice loss increases approximately as the square of the angular misalignment between two fiber end-faces. For typical OS2 SMF, a 1° cleave angle on one fiber face raises estimated splice loss by approximately 0.2–0.5 dB beyond what a perpendicular cleave would produce; two angled faces compounding can push loss over 0.5 dB on a single splice — exceeding BICSI acceptance thresholds [IEC 61300-3-35 §4.1; BICSI OSP-DRD Manual, Ch. 7.4].
+Fusion splice loss increases approximately as the square of the angular misalignment between two fiber end-faces. For typical OS2 SMF, a 1° cleave angle on one fiber face raises estimated splice loss by approximately 0.2–0.5 dB beyond what a perpendicular cleave would produce; two angled faces compounding can push loss over 0.5 dB on a single splice — exceeding BICSI acceptance thresholds [BICSI OSP-DRD Manual, Ch. 7.4; IEC 61300-3-35 §4.1 (connector end-face geometry standard, applied by convention to cleave angle loss physics)].
 
 Standard angle acceptance thresholds are as follows:
 
@@ -145,7 +145,7 @@ Optical fiber from which the primary buffer coating (250 µm acrylate) and any s
 The length of bare fiber that protrudes from the holder into the cleaver's blade zone, setting the distance between the blade score point and the holder edge. Must match the splicer's fiber slot depth specification (typically 8–16 mm for single-fiber fusion splicers). [Fujikura CT-30A Manual, §3.2]
 
 **IEC 61300-3-35**
-The IEC standard governing fiber end-face geometry — defines pass/fail criteria for end-face angle, surface quality, and core defects as used in fusion splice acceptance and connector end-face inspection.
+The IEC standard governing fiber end-face geometry for connector end-face inspection — defines pass/fail criteria for end-face angle, surface quality, and core defects as applied to connector terminations. Its primary scope is connector end-face inspection; its cleave angle loss estimates are applied by convention to fusion splice cleave angle criteria, where it serves as a supplementary reference rather than the primary governing standard. For fusion splice acceptance, BICSI OSP-DRD Manual, Ch. 7.4 is the governing reference.
 
 ---
 
