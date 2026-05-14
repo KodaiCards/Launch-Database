@@ -132,7 +132,7 @@ For PSC program routes, FDH procurement and installation must comply with:
 - **7 CFR Part 1755 Subpart D** — Materials and construction standards for RUS-funded telecommunications facilities. Hardened FDH units must meet 7 CFR Part 1755 material specifications for enclosures used in RUS-funded outside plant.
 - **RUS PE-60** — Specifications and Drawings for 7 CFR Part 1755 facilities. PE-60 is the operational standard governing how FDH units are specified, installed, and accepted on PSC program routes.
 
-**Citation note — NOT RUS 1738.** RUS Bulletin 1738 governs the Distance Learning and Telemedicine grant program — a separate USDA program with different applicability. PSC program work is funded under the standard RUS Telecom Program, governed by 7 CFR Part 1755 and PE-60. Do not cite RUS 1738 on PSC program submittals; it will trigger a review comment from the RUS area engineer. [7 CFR Part 1755; RUS PE-60]
+**Citation note — NOT RUS 1738.** RUS Bulletin 1738 governs the Electric Borrowers Program — a separate USDA program with different applicability. PSC program work is funded under the standard RUS Telecom Program, governed by 7 CFR Part 1755 and PE-60. Do not cite RUS 1738 on PSC program submittals; it will trigger a review comment from the RUS area engineer. [7 CFR Part 1755; RUS PE-60]
 
 ---
 
@@ -154,7 +154,7 @@ The standard hardened FDH size selected for service areas of 192–240 subscribe
 Straight-tip 2.5-mm ferrule connector with angle-polished contact face. Standard for residential FTTH GPON distribution in hardened FDH applications. Widely field-serviceable; 24–48 ports per cassette panel. Distinguished from LC-APC (1.25-mm ferrule, higher density, hub-site preferred). [TIA-758-C §8]
 
 **7 CFR Part 1755 + RUS PE-60**
-The RUS Telecom Program regulatory and operational framework governing materials and construction for PSC-funded OSP facilities, including hardened FDH units. 7 CFR Part 1755 Subpart D governs material approval; PE-60 governs specifications and drawings. NOT to be confused with RUS Bulletin 1738, which governs the Distance Learning/Telemedicine grant program. [7 CFR Part 1755; RUS PE-60]
+The RUS Telecom Program regulatory and operational framework governing materials and construction for PSC-funded OSP facilities, including hardened FDH units. 7 CFR Part 1755 Subpart D governs material approval; PE-60 governs specifications and drawings. NOT to be confused with RUS Bulletin 1738, which governs the Electric Borrowers Program. [7 CFR Part 1755; RUS PE-60]
 
 ---
 
@@ -216,9 +216,9 @@ The RUS Telecom Program regulatory and operational framework governing materials
 - D) NEMA 250 and IEC 60529 only
 
 *Rationale:*
-- **A — Incorrect.** RUS Bulletin 1738 governs the Distance Learning and Telemedicine (DLT) grant program — a separate USDA program with different eligibility, purposes, and construction standards from the RUS Telecom Program. PSC program work is funded under the RUS Telecom Program. Citing 1738 on a PSC program submittal will trigger a review comment. [7 CFR Part 1755; RUS PE-60]
+- **A — Incorrect.** RUS Bulletin 1738 governs the Electric Borrowers Program — a separate USDA program with different eligibility, purposes, and construction standards from the RUS Telecom Program. PSC program work is funded under the RUS Telecom Program. Citing 1738 on a PSC program submittal will trigger a review comment. [7 CFR Part 1755; RUS PE-60]
 - **B — Correct.** PSC program routes are funded under the RUS Telecom Program, which is governed by **7 CFR Part 1755** (materials and construction standards for RUS-funded telecommunications facilities) and **RUS PE-60** (specifications and drawings for those facilities). These are the correct citations for FDH procurement and installation submittals. [7 CFR Part 1755; RUS PE-60]
-- **C — Incorrect.** RUS Bulletin 1738 is the wrong RUS reference for PSC program work (see option A explanation). While TIA-758-C §8 is a valid technical reference for FDH hardware, the RUS regulatory citation must be 7 CFR Part 1755 + PE-60 on PSC-funded submittals. [7 CFR Part 1755; RUS PE-60]
+- **C — Incorrect.** RUS Bulletin 1738 is the wrong RUS reference for PSC program work (it governs the Electric Borrowers Program, not the RUS Telecom Program). While TIA-758-C §8 is a valid technical reference for FDH hardware, the RUS regulatory citation must be 7 CFR Part 1755 + PE-60 on PSC-funded submittals. [7 CFR Part 1755; RUS PE-60]
 - **D — Incorrect.** NEMA 250 and IEC 60529 are enclosure environmental rating standards — they govern the FDH enclosure type selection but do not constitute the RUS program citation framework. The regulatory procurement compliance standard is 7 CFR Part 1755 with PE-60 as the operational specification. [7 CFR Part 1755; RUS PE-60]
 
 ---
@@ -263,7 +263,7 @@ The GPON split ratio (1:32) is the internal splitter cassette architecture — i
 
 **Pulse 2.** Which RUS regulatory references govern hardened FDH procurement on PSC program routes, and what is the key distinction from RUS Bulletin 1738?
 
-*Expected answer:* **7 CFR Part 1755** (materials and construction standards for RUS-funded telecommunications facilities) and **RUS PE-60** (specifications and drawings) govern FDH procurement on PSC program routes. RUS Bulletin 1738 governs the USDA Distance Learning and Telemedicine (DLT) grant program — a completely separate RUS program with different eligibility and applicability. PSC program work is funded under the RUS Telecom Program (7 CFR Part 1755), not the DLT program. Citing 1738 on a PSC program submittal is a regulatory error that will trigger a review comment from the RUS area engineer. [7 CFR Part 1755; RUS PE-60]
+*Expected answer:* **7 CFR Part 1755** (materials and construction standards for RUS-funded telecommunications facilities) and **RUS PE-60** (specifications and drawings) govern FDH procurement on PSC program routes. RUS Bulletin 1738 governs the Electric Borrowers Program — a completely separate RUS program with different eligibility and applicability. PSC program work is funded under the RUS Telecom Program (7 CFR Part 1755), not the Electric Borrowers Program. Citing 1738 on a PSC program submittal is a regulatory error that will trigger a review comment from the RUS area engineer. [7 CFR Part 1755; RUS PE-60]
 
 ---
 

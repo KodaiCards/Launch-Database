@@ -232,7 +232,7 @@ A proprietary hardened SC-APC-compatible push-to-latch connector used in FTTH ae
 - **A — Incorrect.** NEMA 250 and IEC 60529 are enclosure environmental rating standards — relevant for housing selection but not the regulatory compliance framework for RUS-funded procurement. The regulatory citation must be the RUS program authority. [7 CFR Part 1755; RUS PE-60]
 - **B — Incorrect.** TIA-758-C §8 is the technical standard for terminal hardware specifications, but it is not the RUS program regulatory authority. PSC-funded submittals require the RUS program citation (7 CFR Part 1755 + PE-60) in addition to the technical standard reference. [7 CFR Part 1755; RUS PE-60]
 - **C — Correct.** PSC program routes are funded under the RUS Telecom Program, governed by **7 CFR Part 1755** (materials and construction standards) and **RUS PE-60** (specifications and drawings). These are the correct citations on PSC-funded terminal hardware submittals. TIA-758-C §8 is the supporting technical standard but does not substitute for the RUS program citation. [7 CFR Part 1755; RUS PE-60]
-- **D — Incorrect.** RUS Bulletin 1738 governs the Distance Learning and Telemedicine grant program — not the standard RUS Telecom Program under which PSC routes are funded. Citing 1738 on a PSC submittal is a regulatory error. [7 CFR Part 1755; RUS PE-60]
+- **D — Incorrect.** RUS Bulletin 1738 governs the Electric Borrowers Program — not the standard RUS Telecom Program under which PSC routes are funded. Citing 1738 on a PSC submittal is a regulatory error. [7 CFR Part 1755; RUS PE-60]
 
 ---
 
