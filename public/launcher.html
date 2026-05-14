@@ -125,7 +125,7 @@ body{
   display:flex;
   flex-direction:column;
   min-height:0;
-  overflow:hidden;
+  overflow:hidden; /* clip at main boundary; tile-area handles inner scroll */
 }
 
 /* ── Launcher shell + constrained box ── */
@@ -135,41 +135,45 @@ body{
   align-items:center;
   justify-content:center;
   min-height:0;
-  overflow:hidden;
+  overflow:auto;
   padding:20px;
   box-sizing:border-box;
 }
 .launcher-box{
   width:100%;
   max-width:720px;
-  height:min(480px, calc(100vh - var(--topbar-h) - var(--footer-h) - 40px));
+  /* Height is driven by tile content (aspect-ratio 1/1) — no fixed height needed.
+     max-height keeps it from overflowing the available viewport area. */
+  height:auto;
+  max-height:calc(100vh - var(--topbar-h) - var(--footer-h) - 40px);
   display:flex;
-  align-items:stretch;
+  align-items:flex-start;
 }
 
-/* ── Tile grid (bento adaptive layout) ──
-   Tiles fill the launcher-box, not the full viewport. */
+/* ── Tile grid (uniform-square bento layout) ──
+   Rows are auto so each tile's aspect-ratio:1/1 drives the row height.
+   Columns are count-driven fr tracks so tiles share available width equally.
+   Result: every tile is a perfect square, all the same size. */
 .launcher-grid{
   display:grid;
   width:100%;
-  height:100%;
+  height:auto;
   gap:10px;
   box-sizing:border-box;
 }
-/* Count-driven layouts */
-.launcher-grid[data-count="1"]{grid-template:1fr / 1fr}
-.launcher-grid[data-count="2"]{grid-template:1fr / 1fr 1fr}
-.launcher-grid[data-count="3"]{grid-template:1fr / 1fr 1fr 1fr}
-.launcher-grid[data-count="4"]{grid-template:1fr 1fr / 1fr 1fr}
+/* Count-driven column layouts — rows are always auto (driven by aspect-ratio) */
+.launcher-grid[data-count="1"]{grid-template-columns:1fr}
+.launcher-grid[data-count="2"]{grid-template-columns:1fr 1fr}
+.launcher-grid[data-count="3"]{grid-template-columns:1fr 1fr 1fr}
+.launcher-grid[data-count="4"]{grid-template-columns:1fr 1fr}
 .launcher-grid[data-count="5"],
-.launcher-grid[data-count="6"]{grid-template:1fr 1fr / repeat(3, 1fr)}
+.launcher-grid[data-count="6"]{grid-template-columns:repeat(3, 1fr)}
 .launcher-grid[data-count="7"],
 .launcher-grid[data-count="8"],
-.launcher-grid[data-count="9"]{grid-template:repeat(3, 1fr) / repeat(3, 1fr)}
+.launcher-grid[data-count="9"]{grid-template-columns:repeat(3, 1fr)}
 /* 10+ falls back to auto-fill at standard tile size */
 .launcher-grid[data-count="10"]{
-  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
-  grid-auto-rows:minmax(160px, 1fr);
+  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
   overflow-y:auto;
 }
 
@@ -193,6 +197,9 @@ body{
   min-width:0;
   min-height:0;
   text-align:center;
+  /* Uniform square: width is set by grid column, height matches via aspect-ratio */
+  aspect-ratio:1 / 1;
+  width:100%;
 }
 .tile:hover{
   box-shadow:var(--shadow-lift);
@@ -242,7 +249,8 @@ html[data-theme="dark"] .tile-icon{
   max-width:36ch;
 }
 
-/* Hero (count=1) — single tile fills the constrained box */
+/* Hero (count=1) — single square tile, capped at a reasonable max size */
+.launcher-grid[data-count="1"]{max-width:320px;margin:0 auto}
 .launcher-grid[data-count="1"] .tile{
   gap:20px;
   padding:40px;
@@ -351,8 +359,7 @@ html[data-theme="dark"] .tile-icon{
 }
 .theme-btn:hover{background:rgba(255,255,255,0.22)}
 
-/* ── Mobile (< 600px) — single column, scrollable;
-   single-tile users still get a hero filling the constrained box ── */
+/* ── Mobile (< 600px) — 2-column square tiles, scrollable ── */
 @media(max-width:600px){
   body{overflow:auto}
   .main{overflow:visible}
@@ -364,30 +371,31 @@ html[data-theme="dark"] .tile-icon{
   .launcher-box{
     max-width:calc(100vw - 24px);
     height:auto;
-    min-height:calc(100vh - var(--topbar-h) - var(--footer-h) - 24px);
+    max-height:none;
   }
   .launcher-grid{
-    grid-template-columns:1fr !important;
+    /* 2-col grid on mobile so tiles stay square and fit the screen */
+    grid-template-columns:1fr 1fr !important;
     grid-template-rows:auto !important;
-    grid-auto-rows:minmax(140px, auto);
     height:auto;
     gap:10px;
   }
+  /* Single-tile hero: full-width square */
   .launcher-grid[data-count="1"]{
-    grid-auto-rows:1fr;
-    min-height:calc(100vh - var(--topbar-h) - var(--footer-h) - 24px);
+    grid-template-columns:1fr !important;
   }
-  /* On mobile, multi-tile users see normal sized tiles */
-  .launcher-grid:not([data-count="1"]) .tile{
-    padding:16px;
+  /* Consistent tile style at mobile size */
+  .tile{
+    padding:14px;
     gap:8px;
   }
-  .launcher-grid:not([data-count="1"]) .tile-icon{
-    width:52px;height:52px;
+  .tile-icon{
+    width:clamp(40px,10vw,56px);
+    height:clamp(40px,10vw,56px);
   }
-  .launcher-grid:not([data-count="1"]) .tile-icon i{font-size:22px}
-  .launcher-grid:not([data-count="1"]) .tile-name{font-size:15px}
-  .launcher-grid:not([data-count="1"]) .tile-desc{
+  .tile-icon i{font-size:clamp(18px,4vw,24px)}
+  .tile-name{font-size:clamp(12px,3.5vw,15px)}
+  .tile-desc{
     display:block;
     font-size:12px;
   }
