@@ -50,7 +50,7 @@ No single sheath material meets all these requirements equally well. The cable d
 - **Chemical resistance:** PE resists the soil acids, alkalis, and salt compounds encountered in agricultural, roadside, and coastal OSP deployments better than most alternative sheath polymers.
 - **Installation toughness:** HDPE offers higher tensile and impact strength than MDPE, making it the preferred choice for armored direct-bury designs where the sheath experiences installation abuse [ANSI/TIA-758-C §5.6; CommScope Reference Manual, Ch. 7.1].
 
-**Critical limitation: PE is not flame-retardant.** When ignited, PE burns freely and propagates flame. NEC Article 770 prohibits unlisted PE-jacketed OSP cable inside buildings beyond a 50-foot (15-meter) transition allowance [NEC Article 770.48(A)]. The OSP-to-premises transition is discussed below.
+**Critical limitation: PE is not flame-retardant.** When ignited, PE burns freely and propagates flame. NEC Article 770 prohibits unlisted PE-jacketed OSP cable inside buildings beyond a 50-foot (15-meter) transition allowance [NEC Article 770.113 (formerly 770.48 in pre-2011 editions)]. The OSP-to-premises transition is discussed below.
 
 **MDPE vs. HDPE: practical distinction**
 
@@ -68,7 +68,7 @@ No single sheath material meets all these requirements equally well. The cable d
 
 Some manufacturers produce hybrid sheath compounds described as "OSP-rated" or "outdoor/indoor dual-rated" that add flame retardant additives to a polyolefin base while maintaining sufficient moisture resistance for outdoor runs. These compounds aim to reduce transition complexity by allowing the same cable to be used for a short outdoor run terminating inside a building in a riser or plenum environment [ANSI/TIA-568.3-D §6.4.3].
 
-In practice, dual-rated cables must carry the appropriate NEC Article 770 listing (OFNR, OFNP, OFCR, or OFCP) to be used in the indoor environment without the 50-foot transition allowance. The "OSP-rated" marketing designation alone is not a substitute for NEC listing — the listing must appear on the cable jacket as a printed mark and in the UL Product Spec database [NEC Article 770.48(A); BICSI OSP-DRD Manual, Ch. 7.1].
+In practice, dual-rated cables must carry the appropriate NEC Article 770 listing (OFNR, OFNP, OFCR, or OFCP) to be used in the indoor environment without the 50-foot transition allowance. The "OSP-rated" marketing designation alone is not a substitute for NEC listing — the listing must appear on the cable jacket as a printed mark and in the UL Product Spec database [NEC Article 770.113; BICSI OSP-DRD Manual, Ch. 7.1].
 
 ### Flame-Retardant (FR) and NEC Article 770 Ratings
 
@@ -92,7 +92,7 @@ When an optical fiber cable enters a building — even briefly, to connect an ou
 
 ### The OSP-to-Premises Transition Rule
 
-OSP cable (PE sheath, unlisted) is permitted to enter a building under NEC Article 770.48(A) **only if the length inside the building does not exceed 50 feet (15 meters) AND the cable terminates in a listed splicing enclosure, distribution panel, or connector housing that confines the unlisted cable end within an approved termination point.** Beyond 50 feet, the run must transition to a listed indoor cable (OFNR or OFNP as applicable) at the building entry point [NEC Article 770.48(A)].
+OSP cable (PE sheath, unlisted) is permitted to enter a building under NEC Article 770.113 **only if the length inside the building does not exceed 50 feet (15 meters) AND the cable terminates in a listed splicing enclosure, distribution panel, or connector housing that confines the unlisted cable end within an approved termination point.** Beyond 50 feet, the run must transition to a listed indoor cable (OFNR or OFNP as applicable) at the building entry point [NEC Article 770.113].
 
 Practical implementation: most OSP runs terminate at a **building entrance terminal (BET)** or **outside plant transition closure** at the building exterior wall or just inside the wall penetration. Listed indoor cable fanouts from the BET to the equipment room. This keeps the PE-jacketed OSP cable entirely outside (or within the 50-foot transition allowance) while ensuring all in-building runs meet the applicable NEC flame rating [BICSI OSP-DRD Manual, Ch. 7.1; ANSI/TIA-758-C §6.5].
 
@@ -151,13 +151,13 @@ The base indoor NEC Article 770 rating. Tested per UL 1581 VW-1 vertical flame t
 NEC Article 770 designations for optical fiber cables containing metallic elements (steel armor, metallic CSM, metallic vapor barrier). Conductive variants of OFN/OFNR/OFNP respectively. Metallic elements must be grounded per NEC Article 770.100 when run inside a building. [NEC Article 770.179(B)]
 
 **Building entrance terminal (BET)**
-A listed splice enclosure or distribution panel installed at the OSP/premises boundary — typically at the building exterior wall — where OSP cable terminates and listed indoor cable connects. Permits PE-jacketed OSP cable to enter the building within the NEC 50-foot transition allowance without requiring a listed cable run for the full indoor distance. [BICSI OSP-DRD Manual, Ch. 7.1; NEC Article 770.48(A)]
+A listed splice enclosure or distribution panel installed at the OSP/premises boundary — typically at the building exterior wall — where OSP cable terminates and listed indoor cable connects. Permits PE-jacketed OSP cable to enter the building within the NEC 50-foot transition allowance without requiring a listed cable run for the full indoor distance. [BICSI OSP-DRD Manual, Ch. 7.1; NEC Article 770.113]
 
 **Tracking resistance**
 A sheath material property required for ADSS cable installed on energized electric utility pole lines. Tracking refers to progressive sheath surface erosion caused by dry-band arcing — partial discharges that occur across contaminated sheath sections in the differential voltage field near energized conductors. ADSS sheath compounds for high-voltage applications are specified for tracking resistance per IEEE 1222 §5.3. [IEEE 1222 §5.3]
 
 **NEC Article 770 50-foot transition rule**
-NEC Article 770.48(A) provision allowing unlisted OSP cable (PE-jacketed, not flame-rated) to penetrate a building by up to 50 feet (15 meters), provided the cable terminates in an approved enclosure. Beyond 50 feet, listed indoor cable (OFNR or OFNP) is required for the indoor portion. [NEC Article 770.48(A)]
+NEC Article 770.113 provision allowing unlisted OSP cable (PE-jacketed, not flame-rated) to penetrate a building by up to 50 feet (15 meters), provided the cable terminates in an approved enclosure. Beyond 50 feet, listed indoor cable (OFNR or OFNP) is required for the indoor portion. [NEC Article 770.113]
 
 **Carbon-black UV stabilizer**
 The UV absorption compound blended into black polyethylene sheath material that prevents UV photodegradation of the polymer matrix during outdoor aerial and exposed installation service. A cable with UV-stabilized black PE sheath has a rated outdoor service life of 20–30 years. Non-stabilized or light-colored PE degrades measurably within 2–3 years of UV exposure. [IEC 60794-1-2, §F.5]
@@ -203,10 +203,10 @@ Deployment context cards:
 - D) Unlisted PE cable is permitted for any run that terminates in a distribution panel
 
 *Rationale:*
-- **A — Incorrect.** NEC Article 770.48(A) limits unlisted OSP cable inside a building to a maximum of **50 feet (15 meters)**. This run is 75 feet — 25 feet beyond the limit. The unlisted OSP cable must transition to listed indoor cable at or before the 50-foot mark. [NEC Article 770.48(A)]
-- **B — Correct.** For the 75-foot indoor run to the equipment room, listed cable is required beyond the 50-foot transition allowance. Since the route passes through a vertical riser or a general building space (not an air-handling plenum), OFNR (riser-rated) is the minimum required designation. OFNR is tested per UL 1666 for vertical flame propagation. [NEC Article 770.48(A); NEC Article 770.179(A); UL 1666]
+- **A — Incorrect.** NEC Article 770.113 limits unlisted OSP cable inside a building to a maximum of **50 feet (15 meters)**. This run is 75 feet — 25 feet beyond the limit. The unlisted OSP cable must transition to listed indoor cable at or before the 50-foot mark. [NEC Article 770.113]
+- **B — Correct.** For the 75-foot indoor run to the equipment room, listed cable is required beyond the 50-foot transition allowance. Since the route passes through a vertical riser or a general building space (not an air-handling plenum), OFNR (riser-rated) is the minimum required designation. OFNR is tested per UL 1666 for vertical flame propagation. [NEC Article 770.113; NEC Article 770.179(A); UL 1666]
 - **C — Incorrect.** OFNP (plenum-rated) is required only for runs in air-handling spaces — supply air plenums, return air plenums, and spaces used for air circulation. A main equipment room is not typically an air-handling plenum unless specifically designed as such. Requiring OFNP across the board would be over-specification. The correct minimum for a riser or general building run is OFNR. [NEC Article 770.179(A)]
-- **D — Incorrect.** The 50-foot transition exception does not apply universally to cable runs that terminate in listed enclosures — it applies to the length of cable, not the type of termination. Even if the distribution panel is listed, the cable itself cannot exceed 50 feet inside the building if it is unlisted. [NEC Article 770.48(A)]
+- **D — Incorrect.** The 50-foot transition exception does not apply universally to cable runs that terminate in listed enclosures — it applies to the length of cable, not the type of termination. Even if the distribution panel is listed, the cable itself cannot exceed 50 feet inside the building if it is unlisted. [NEC Article 770.113]
 
 ---
 
@@ -220,7 +220,7 @@ Deployment context cards:
 *Rationale:*
 - **A — Incorrect.** While GRP CSM and PE sheath are appropriate for many aerial applications, a 7.2 kV energized distribution line introduces an additional sheath requirement: tracking resistance. Standard black PE sheath is not specified for dry-band tracking resistance on high-voltage lines. [IEEE 1222 §5.3]
 - **B — Incorrect.** ADSS cable on energized utility lines must be **fully dielectric** — a steel CSM is prohibited because it creates a metallic conductor on the energized line requiring bonding and grounding. GRP (fiberglass rod) or other dielectric CSM designs are correct. [IEEE 1222; ANSI/TIA-758-C §5.6.3]
-- **C — Correct.** On a 7.2 kV energized line, ADSS cable must be specified with a **tracking-resistant sheath compound** per IEEE 1222 §5.3. Standard black PE provides UV resistance but is not formulated to resist dry-band arcing — partial discharges that erode the sheath surface over time when voltage differentials exist along the cable. Without tracking resistance, the PE sheath degrades progressively in the arc-exposed sections, eventually exposing the fiber core. [IEEE 1222 §5.3; ANSI/TIA-758-C §5.6.3]
+- **C — Correct.** On a 7.2 kV energized line, ADSS cable must be specified with a **tracking-resistant sheath compound** per IEEE 1222 §4.3. Tracking-resistant sheath is mandated above 69 kV (transmission class); below 69 kV it is prudent engineering practice but not universally mandated. At 7.2 kV distribution voltage, tracking-resistant sheath is the correct specification because dry-band arcing — partial discharges that erode the sheath surface over time in the differential voltage field — can still occur at distribution voltages. Standard black PE provides UV resistance but is not formulated to resist dry-band arcing. Without tracking resistance, the PE sheath degrades progressively in arc-exposed sections, eventually exposing the fiber core. [IEEE 1222 §4.3; ANSI/TIA-758-C §5.6.3]
 - **D — Incorrect.** OFNR is an NEC Article 770 indoor cable designation. It is entirely inapplicable to outdoor aerial cable on a utility line — there is no NEC Article 770 flame-rating requirement for cable remaining outdoors on a utility pole. [NEC Article 770.179; ANSI/TIA-758-C §5.2]
 
 ---
@@ -276,7 +276,7 @@ Answer before proceeding to Lesson 8 (Drop / Distribution / Feeder Hierarchy).
 
 **Pulse 1.** State the maximum indoor penetration distance for unlisted PE-jacketed OSP cable under NEC Article 770, and describe the correct transition hardware.
 
-*Expected answer:* **50 feet (15 meters)** is the maximum indoor run for unlisted PE-jacketed OSP cable under NEC Article 770.48(A). The correct transition hardware is a **listed building entrance terminal (BET)** or outside-plant transition closure, installed at the building exterior wall or just inside the penetration. Listed indoor cable (OFNR for riser, OFNP for plenum) connects from the BET to indoor equipment. If metallic elements are present in the OSP cable, they must be bonded to a ground electrode at the BET per NEC Article 770.100. [NEC Article 770.48(A); NEC Article 770.100; BICSI OSP-DRD Manual, Ch. 7.1]
+*Expected answer:* **50 feet (15 meters)** is the maximum indoor run for unlisted PE-jacketed OSP cable under NEC Article 770.113. The correct transition hardware is a **listed building entrance terminal (BET)** or outside-plant transition closure, installed at the building exterior wall or just inside the penetration. Listed indoor cable (OFNR for riser, OFNP for plenum) connects from the BET to indoor equipment. If metallic elements are present in the OSP cable, they must be bonded to a ground electrode at the BET per NEC Article 770.100. [NEC Article 770.113; NEC Article 770.100; BICSI OSP-DRD Manual, Ch. 7.1]
 
 **Pulse 2.** Rank the three NEC Article 770 flame ratings (OFN, OFNR, OFNP) from least to most stringent, and state the test standard for each.
 

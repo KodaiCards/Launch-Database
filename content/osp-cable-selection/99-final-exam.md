@@ -139,13 +139,13 @@ Randomization of question and answer order is applied at Moodle import. The ques
 **Q7.** A high-fiber-count feeder (432-fiber ribbon cable) requires mid-route splicing at a splice closure. The splicing crew proposes using a single-fiber fusion splicer for all 432 splices. What is the primary operational reason this approach is problematic?
 
 - A) Single-fiber fusion splicers cannot achieve the ≤0.1 dB splice loss required for 432-fiber ribbon cable
-- B) Ribbon cable requires mass-fusion splicing — the ribbon fiber matrix must be spliced as a complete row simultaneously to maintain the fiber-matrix registration required for downstream connectorization **[CORRECT]**
+- B) Mass-fusion splicing reduces splice time by approximately 12× compared to single-fiber splicing — a 432-fiber splice takes hours with mass fusion vs. days with single-fiber methods, making single-fiber splicing operationally impractical for high-fiber-count ribbon feeder work **[CORRECT]**
 - C) Single-fiber fusion splicers cannot accept the larger outer diameter of ribbon cable buffer tubes
-- D) There is no operational problem — single-fiber fusion splicing is fully compatible with ribbon cable applications
+- D) Single-fiber fusion splicing eliminates the need for fusion splicing in the field entirely
 
 *Source: [BICSI OSP-DRD Manual, Ch. 5.4; Corning OSP Reference, Ch. 4.2]*
 
-*Rationale:* Ribbon cable splicing requires a **mass-fusion splicer** that splices an entire fiber row (12 or more fibers simultaneously) in a single arc operation. The reason is not merely speed (though mass fusion reduces splice time from hours to minutes for 432 fibers): ribbon cable's fibers are bonded in a planar matrix that maintains positional registration for mass-fusion splice joints and downstream connectivity. Stripping a ribbon to individual fibers for single-fiber splicing destroys the ribbon matrix, produces individual fiber ends that must be handled separately, and eliminates the efficiency advantage of ribbon construction. A 432-fiber splice using single-fiber methods would take days vs. hours with mass fusion. [BICSI OSP-DRD Manual, Ch. 5.4; Corning OSP Reference, Ch. 4.2]
+*Rationale:* Mass-fusion splicing is preferred for ribbon cable because of the **labor efficiency advantage** — a 12-fiber mass-fusion splicer splices an entire ribbon row in a single arc operation (~15–30 seconds per ribbon), compared to 12 separate single-fiber splices at ~3–5 minutes each. For a 432-fiber cable (36 ribbons), mass fusion takes approximately 9–18 minutes of arc time; single-fiber methods take approximately 3–6 hours. The efficiency gap compounds over a feeder project with dozens of splice closures. Single-fiber splicing of ribbon cable is physically possible — the ribbon matrix can be separated into individual fibers — but it destroys the efficiency advantage of ribbon construction and is not operationally viable for high-fiber-count feeder work. Answer D ("eliminates need for fusion splicing in the field") is incorrect: ribbon cable still requires fusion splicing. The distinction is that mass fusion, not single-fiber splicing, is the correct method for ribbon cable. [BICSI OSP-DRD Manual, Ch. 5.4; Corning OSP Reference, Ch. 4.2]
 
 ---
 

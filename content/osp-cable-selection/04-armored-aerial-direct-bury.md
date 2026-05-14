@@ -104,7 +104,7 @@ ADSS design parameters are span-dependent. A cable designed for a 100-foot (30 m
 - **Span sag:** The vertical drop at mid-span under EDS conditions. Minimum ground clearance must comply with NESC Rule 232 for the crossing type (roadway, railway, water, etc.).
 
 ADSS is specified on routes where:
-- The pole line already carries electrical distribution (0–69 kV range); a metallic messenger would require expensive bonding hardware at every pole
+- The pole line already carries electrical distribution (0–69 kV range); a metallic messenger would require expensive bonding hardware at every pole. Note: tracking-resistant sheath is prudent above 15 kV and is mandated above 69 kV (transmission class) per IEEE 1222 §4.3 — ADSS cable specified for lines above 69 kV must include a tracking-resistant sheath compound.
 - Long spans between poles make messenger stringing impractical or costly
 - The network owner prefers a fully dielectric (lightning-tolerant) plant
 

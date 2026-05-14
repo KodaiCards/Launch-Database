@@ -187,7 +187,7 @@ End-face polish geometry producing a domed, near-flat ferrule end-face achieving
 **APC (Angled Physical Contact)**
 End-face polish geometry with an 8° angled ferrule face that directs Fresnel reflections away from the fiber core axis. Return loss ≥60 dB. Universally identified by **green** connector housing. Required for PON (GPON/XGS-PON), analog video overlay, and long-haul amplified SMF systems. Must not be directly mated to UPC connectors. [IEC 61754-4; BICSI OSP-DRD Manual, Ch. 7.2]
 
-**MPO/MTP (Multi-Fiber Push-On / Multi-Tenancy Push-On)**
+**MPO/MTP (Multi-Fiber Push-On / Multi-fiber Termination Push-on)**
 A rectangular-ferrule connector housing 12, 24, 32, or 72 fibers in a single connector body. Required for 100G+ parallel optic transceivers (QSFP28, QSFP-DD) and high-density cross-connect applications. Insertion loss ≤0.6 dB (low-loss grade). MTP is a trademarked commercial variant by US Conec. [IEC 61754-7-1; ANSI/TIA-604-5]
 
 **Fusion splice pigtail**
@@ -268,15 +268,15 @@ Application descriptions:
 **Q3.** A 400G data center interconnect uses QSFP-DD optics with 8 active lanes (4 TX + 4 RX) at 50G per lane. Which connector type is required at the cross-connect panel, and what is its minimum fiber count per connection?
 
 - A) Duplex LC — 2 fibers per connection (one TX, one RX)
-- B) MPO-12 — 12 fibers per connector, 8 active fibers plus 4 dark positions **[CORRECT]**
+- B) MPO-12 — 12 fibers per connector, 8 active fibers plus 4 dark positions
 - C) SC-APC — single SC connector per lane, 8 connectors per 400G port
-- D) MPO-24 — 400G SR requires 24 fibers for full-duplex transmission at this speed
+- D) MPO-16 — 400GBASE-SR8 uses 8 TX + 8 RX = 16 fibers total in a single MPO-16 connector **[CORRECT]**
 
 *Rationale:*
 - **A — Incorrect.** Duplex LC supports single-lane transmission (one TX fiber, one RX fiber). A QSFP-DD 400G SR8 transceiver uses 8 parallel lanes — 4 TX fibers and 4 RX fibers simultaneously. A duplex LC connection carries only 1/8 of the required optical interface. Eight duplex LC connections could theoretically replace one MPO-16 connection, but this is impractical in the field and is not how parallel-optic transceivers are designed to be connected. [IEEE 802.3bs; IEC 61754-7-4]
-- **B — Correct.** **QSFP-DD 400G SR8 uses an MPO-16 or MPO-12 interface** depending on implementation. The QSFP-DD 400G SR8 standard (IEEE 802.3bs, 400GBASE-SR8) uses **8 active fibers + 8 active fibers = 16 fibers total** in an MPO-16 connector. The MPO-12 variant (400GBASE-SR4.2, per IEEE 802.3bs alternate) uses 12-fiber MPO with 8 active lanes on 4 wavelengths per fiber. The key principle: parallel-optic 400G requires a multi-fiber push-on connector, not single-fiber duplex. An MPO-12 with 8 active positions is the closest standard configuration to the description in this question. [IEEE 802.3bs; IEC 61754-7-1; IEC 61754-7-4]
+- **B — Incorrect.** MPO-12 (12 fibers) is used for 100GBASE-SR4 (8 active fibers in an MPO-12) and some alternate 400G implementations (400GBASE-SR4.2). However, the standard 400GBASE-SR8 transceiver (QSFP-DD 400G SR8 per IEEE 802.3bs) uses **16 fibers total — 8 TX + 8 RX** — requiring an MPO-16, not an MPO-12. [IEEE 802.3bs; IEC 61754-7-1]
 - **C — Incorrect.** Individual SC connectors are single-fiber devices — one fiber per connector. Connecting 8 individual SC connectors to a QSFP-DD 400G port is physically impossible — the QSFP-DD transceiver has a single multi-fiber MPO interface, not 8 individual SC ports. SC is not used for parallel-optic 100G+ transceiver interfaces. [IEC 61754-7-1; CommScope Reference Manual, Ch. 8.3]
-- **D — Incorrect.** 400G SR8 does not require 24 fibers. The 400GBASE-SR8 standard uses 8 TX + 8 RX = 16 fibers in an MPO-16 or 8 fibers per MPO-12 in a bidirectional configuration. MPO-24 is used for higher-density aggregation (72-fiber MPO cassettes, or large-scale cross-connect applications) — not as the baseline 400G transceiver interface. [IEEE 802.3bs; IEC 61754-7-4]
+- **D — Correct.** The QSFP-DD 400G SR8 standard (IEEE 802.3bs, 400GBASE-SR8) uses **8 active TX fibers + 8 active RX fibers = 16 fibers total** in a single **MPO-16** connector. The key principle: parallel-optic 400G at 8 lanes per direction requires a 16-fiber multi-fiber push-on connector, not an MPO-12. An MPO-12 cannot accommodate 16 active fibers. [IEEE 802.3bs; IEC 61754-7-1; IEC 61754-7-4]
 
 ---
 

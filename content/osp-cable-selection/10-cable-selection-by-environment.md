@@ -91,7 +91,7 @@ The conduit provides mechanical protection: no armor is required on the cable it
 | Near electrical infrastructure (step-potential hazard) | Loose-tube OS2, dielectric (fiberglass) armor, gel-fill, PE | No metallic conductor; no bonding/grounding required [ANSI/TIA-758-C §5.6.2] |
 | Under roadways and highways | Loose-tube OS2, CST armor, PE sheath; bore — do not cut | Minimum burial depth: 36 in. (914 mm) under roads [ANSI/TIA-758-C §6.3] |
 | Under railroads | Loose-tube OS2, wire armor, heavy-duty PE; bore required | Contact railroad owner; typically ≥ 48 in. depth [ANSI/TIA-758-C §6.3] |
-| FTTH direct-bury drop, pedestal to premises | Small-diameter armored drop cable (6–12 fiber, CST, PE) | Vibratory plow installation; minimum depth 18 in. for residential drops |
+| FTTH direct-bury drop, pedestal to premises | Small-diameter armored drop cable (6–12 fiber, CST, PE) | Vibratory plow installation; minimum depth 24 in. (610 mm) per ANSI/TIA-758-C §6.3. Some municipalities permit 18 in. for conduit-enclosed residential drops; AHJ governs. |
 
 **Water-blocking:** direct-bury cable must be fully water-blocked — both at the tube level (flooding compound or water-swellable powder in each buffer tube) and at the core level (flooding compound or water-swellable tape wrap around the tube bundle). A cable that allows water wicking along the fiber-optic core for even a fraction of the 30-year service life accumulates microbend loss from ice crystal formation in the buffer tube and hydrogen darkening of the fiber [ANSI/TIA-472AAAB §5.4; Corning OSP Reference, Ch. 5.2].
 
@@ -360,13 +360,13 @@ Elements (a) and (d) are correct; elements (b) and (c) contain errors.
 
 - A) 3,800 m
 - B) 3,915 m
-- C) 4,015 m **[CORRECT]**
+- C) 4,058 m **[CORRECT]**
 - D) 4,200 m
 
 *Rationale:*
 - **A — Incorrect.** Route distance only; no slack, riser loop, or contingency included. This order will result in insufficient cable at multiple points. [ANSI/TIA-758-C §6.4]
-- **B — Incorrect.** 3,915 m = 3,800 + 50 (5 closures × 10 m) + 15 (riser loop) = 3,865 m × 1.0 would actually be 3,865 m flat — adding 5% contingency to 3,865 gives 3,865 × 1.05 = 4,058 m, rounded to 4,060. This answer matches neither the flat calculation nor the contingency-included calculation. [ANSI/TIA-758-C §6.4]
-- **C — Correct.** Step-by-step: (1) Route distance: 3,800 m. (2) Splice closure slack: 5 × 10 m = 50 m. (3) Riser loop: 15 m. (4) Subtotal before contingency: 3,800 + 50 + 15 = 3,865 m. (5) 5% contingency: 3,865 × 1.05 = 4,058 m, rounded up to a practical order quantity of **4,060–4,100 m** — answer C (4,015 m) is the nearest answer option representing the correct order of magnitude for this calculation. *(Designer note: to three significant figures, the exact answer is 4,058 m; answer C at 4,015 m represents the calculation without rounding the contingency upward; either is within normal engineering practice.)*  [ANSI/TIA-758-C §6.4]
+- **B — Incorrect.** 3,915 m = 3,800 + 50 (5 closures × 10 m) + 15 (riser loop) = 3,865 m flat — no contingency applied. The problem specifies a 5% contingency, which adds 3,865 × 0.05 = 193 m, yielding 4,058 m. Omitting the contingency produces a cable order that will run short at any route measurement error or terrain deviation. [ANSI/TIA-758-C §6.4]
+- **C — Correct.** Step-by-step: (1) Route distance: 3,800 m. (2) Splice closure slack: 5 × 10 m = 50 m. (3) Riser loop: 15 m. (4) Subtotal before contingency: 3,800 + 50 + 15 = 3,865 m. (5) 5% contingency: 3,865 × 1.05 = **4,058.25 m** → round up to **4,058 m** minimum order. [ANSI/TIA-758-C §6.4]
 - **D — Incorrect.** 4,200 m implies a 10% contingency over base route length — higher than the 5% stated in the problem. This would be appropriate for a more uncertain route but exceeds the problem's specification. [ANSI/TIA-758-C §6.4]
 
 ---
