@@ -320,18 +320,18 @@ Revised correct option:
 
 **Q17.** A PMLS test session uses Method A (one-jumper reference) instead of the project-required Method B (two-jumper reference). If each connector contributes 0.35 dB, how does the measured insertion loss compare to a Method B measurement on the same link?
 
-- A) Method A measures approximately 0.35 dB more loss than Method B
+- A) Method A measures approximately 0.35 dB more loss than Method B **[CORRECT]**
 - B) Method A and Method B produce identical results for calibrated PMLS equipment
-- C) Method A measures approximately 0.35 dB less loss than Method B **[CORRECT — see rationale for nuance]**
+- C) Method A measures approximately 0.35 dB less loss than Method B
 - D) Method A measures approximately 0.70 dB less loss than Method B
 
 *Source: ANSI/TIA-526-7 §5*
 
 *Rationale:*
-- **C — Correct.** Method A (one-jumper reference) calibrates out one less connection than Method B. When the launch jumper is connected directly to the meter as the reference (Method A), the reference includes only the source-to-launch-jumper connector. Method B uses a second (reference) jumper in the calibration path, zeroing out the connectors on both ends of the reference jumper. When the reference jumper is replaced by the fiber under test, Method B includes both the fiber's far-end launch connector and the receive connector in the measurement. Method A, which calibrated with only the source-side connection, will include a connector connection that Method B already zeroed in its reference step. Net difference: approximately one connector-pair loss (~0.35 dB in this example) less in the Method A measurement — Method A understates the loss relative to Method B. [ANSI/TIA-526-7 §5; BICSI OSP-DRD Manual, Ch. 9]
-- **A — Incorrect.** This reversal would mean Method A measures more than Method B — the opposite of the actual effect. [ANSI/TIA-526-7 §5]
+- **A — Correct.** Method A (one-jumper reference) zeroes only the source-side connection — the launch jumper is connected directly from the source to the meter, and that single connection is the reference baseline. When the fiber under test is then inserted, the far-end connector between the launch jumper and the fiber under test is NOT zeroed; it was not part of the Method A reference path. Method B uses a two-jumper reference that zeros out both end connectors of the reference jumper; when the fiber under test replaces the reference jumper, the two end connectors of the fiber under test are already zeroed by the reference step. Net result: Method A includes one extra connector pair in the measurement that Method B has already calibrated out — Method A **overstates** the loss by approximately one connector pair (~0.35 dB in this example) relative to Method B. This matches the lesson body (see "Reference Methods" section): Method A "overstates the fiber loss by approximately one extra connector pair loss." [ANSI/TIA-526-7 §5; BICSI OSP-DRD Manual, Ch. 9]
 - **B — Incorrect.** The reference methods produce different measured loss values; they are not equivalent. [ANSI/TIA-526-7 §5]
-- **D — Incorrect.** 0.70 dB (two connector pairs) would only occur if two full connector-pair losses were excluded from the Method A measurement relative to Method B. The difference between Method A and Method B is approximately one connector pair. [ANSI/TIA-526-7 §5]
+- **C — Incorrect.** This reversal would mean Method A measures less than Method B — the opposite of the actual effect. Method A includes an extra connector pair that Method B has zeroed, so Method A measures more, not less. [ANSI/TIA-526-7 §5]
+- **D — Incorrect.** 0.70 dB (two connector pairs) would occur only if two full extra connector-pair losses were included in Method A relative to Method B. The difference is one connector pair (~0.35 dB). [ANSI/TIA-526-7 §5]
 
 ---
 
