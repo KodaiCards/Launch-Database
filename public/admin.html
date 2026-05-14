@@ -41,7 +41,7 @@
      text-muted = supporting captions. */
   --text:#212529;
   --text-secondary:#495057;
-  --text-muted:#6C757D;
+  --text-muted:#5A6470;             /* darkened from #6C757D: 5.60:1 on #F5F7FA — WCAG AA pass */
 
   /* ── Status colors ───────────────────────────────────────────
      Each has a -light tinted background and a -text color sized for
@@ -82,9 +82,9 @@ html[data-theme="dark"]{
 
   /* Surfaces */
   --surface-1:#1A1F26;
-  --surface-2:#242B36;
+  --surface-2:#1D2430;              /* darkened from #242B36: --primary #4A90D9 now 4.66:1 — WCAG AA pass */
   --surface-3:#1F2630;
-  --white:#242B36;                  /* legacy alias */
+  --white:#1D2430;                  /* legacy alias */
   --gray-light:#1A1F26;             /* legacy alias */
   --row-alt:#1F2630;                /* legacy alias */
 
@@ -129,7 +129,7 @@ html[data-theme="dark"] textarea{background:var(--white);color:var(--text);borde
    the html-level color-scheme: dark covers them via OS theming. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
-  background:#242B36!important;
+  background:#1D2430!important;
   color:#E8EAED!important;
 }
 html[data-theme="dark"] select option:checked,
