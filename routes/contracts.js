@@ -146,11 +146,10 @@ module.exports = function installContractsRoutes(app, pool, mw) {
           try { await client.query('DELETE FROM invoice_items WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
           try { await client.query('DELETE FROM permit_documents WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
           try { await client.query('DELETE FROM permit_stages WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
-          // Then projects deepest-first
-          const byDepth = [...cascadeProjects].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
-          for (const p of byDepth) {
-            await client.query('DELETE FROM projects WHERE id = $1', [p.id]);
-          }
+          // Batch delete all projects in one statement. Postgres evaluates
+          // the self-referencing parent_id RESTRICT FK at end-of-statement,
+          // so deleting all tree nodes together is safe. (Phase 6 BE-Perf L-4)
+          await client.query('DELETE FROM projects WHERE id = ANY($1::uuid[])', [allIds]);
         }
 
         await client.query('DELETE FROM contracts WHERE id = $1', [req.params.id]);

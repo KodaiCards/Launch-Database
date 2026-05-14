@@ -1102,11 +1102,10 @@ async function executeTool(toolName, toolInput, actor = {}) {
           try { await pool.query('DELETE FROM permit_stages    WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
           try { await pool.query('DELETE FROM design_stages    WHERE project_id = ANY($1::uuid[])', [allIds]); } catch {}
           await pool.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [allIds]);
-          // Delete projects deepest-first so parent_id references stay valid.
-          const byDepth = [...tree].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
-          for (const p of byDepth) {
-            await pool.query('DELETE FROM projects WHERE id = $1', [p.id]);
-          }
+          // Batch delete all projects in one statement. Postgres evaluates
+          // the self-referencing parent_id RESTRICT FK at end-of-statement,
+          // so deleting all tree nodes together is safe. (Phase 6 BE-Perf L-4)
+          await pool.query('DELETE FROM projects WHERE id = ANY($1::uuid[])', [allIds]);
         } catch (e) {
           return { success: false, error: e.message };
         }

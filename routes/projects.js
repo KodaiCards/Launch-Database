@@ -751,10 +751,13 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       try { await client.query('DELETE FROM permit_stages WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
       // Pull from any pending billing batches so RESTRICT FK doesn't block.
       try { await client.query('DELETE FROM billing_batch_items WHERE project_id = ANY($1::uuid[])', [projectIds]); } catch {}
-      const byDepth = [...projects].sort((a, b) => (b.__depth || 0) - (a.__depth || 0));
-      for (const p of byDepth) {
-        await client.query('DELETE FROM projects WHERE id = $1', [p.id]);
-      }
+      // Batch delete all projects in one statement. Postgres evaluates the
+      // self-referencing parent_id RESTRICT FK at end-of-statement, so
+      // deleting all tree nodes together is safe — no remaining row will
+      // reference a deleted parent after the statement completes. The
+      // prior per-node depth-first loop was only needed for individual
+      // sequential DELETEs. (Phase 6 BE-Perf L-4)
+      await client.query('DELETE FROM projects WHERE id = ANY($1::uuid[])', [projectIds]);
       await client.query('COMMIT');
 
       // Save undo + bump parent hours OUTSIDE the transaction (best-effort)
