@@ -8,6 +8,7 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 const fs = require('fs');
+const fsp = fs.promises;
 const path = require('path');
 
 module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
@@ -69,7 +70,7 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
   // leaked UPLOAD_DIR path and file listings)
   app.get('/api/_debug/uploads', requireAdmin, async (req, res) => {
     try {
-      const onDisk = fs.readdirSync(uploadDir);
+      const onDisk = await fsp.readdir(uploadDir);
       const dbDocs = await pool.query(
         `SELECT id, file_name, file_path, file_size, doc_type, created_at
          FROM permit_documents ORDER BY created_at DESC LIMIT 25`
@@ -79,13 +80,17 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
       const orphanFiles = onDisk.filter(f => !dbPaths.has(f));
       const missingFiles = dbDocs.rows.filter(d => !onDisk.includes(d.file_path));
 
+      // Compute total size asynchronously — avoid blocking the event loop on stat.
+      const sizeBytes = await onDisk.reduce(async (accP, f) => {
+        const acc = await accP;
+        try { return acc + (await fsp.stat(path.join(uploadDir, f))).size; } catch { return acc; }
+      }, Promise.resolve(0));
+
       res.json({
         UPLOAD_DIR_resolved: uploadDir,
         env_UPLOAD_DIR: process.env.UPLOAD_DIR || '(not set — using default)',
         total_files_on_disk: onDisk.length,
-        total_size_mb: (onDisk.reduce((s, f) => {
-          try { return s + fs.statSync(path.join(uploadDir, f)).size; } catch { return s; }
-        }, 0) / (1024 * 1024)).toFixed(2),
+        total_size_mb: (sizeBytes / (1024 * 1024)).toFixed(2),
         db_doc_count_recent: dbDocs.rows.length,
         matched_count: matched.length,
         orphan_file_count: orphanFiles.length,
