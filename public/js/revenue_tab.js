@@ -225,6 +225,20 @@
       </div>`;
     }).join('');
 
+    // ── Screen-reader data table mirroring the bar chart (M-4) ──
+    // The chart container has role="img" + aria-label; this sr-only table
+    // is surfaced separately so AT users can navigate month-by-month data.
+    const srTableEl = document.getElementById('rev-trend-sr-table');
+    if (srTableEl) {
+      srTableEl.innerHTML = `<table><caption>Monthly Earnings Trend — ${y}</caption>
+        <thead><tr><th scope="col">Month</th><th scope="col">Earned</th><th scope="col">Billed</th></tr></thead>
+        <tbody>${monthly.map((mo, i) => {
+          const earned = parseFloat(mo.earned) || 0;
+          const billed = parseFloat(mo.billed) || 0;
+          return `<tr><th scope="row">${MONTH_NAMES[i]}</th><td>${fmtMoney(earned)}</td><td>${fmtMoney(billed)}</td></tr>`;
+        }).join('')}</tbody></table>`;
+    }
+
     // ── Revenue by client table ──
     document.getElementById('rev-client-title').textContent = isYTD ? 'Revenue by Client — YTD' : `Revenue by Client — ${MONTH_FULL[(m || 1) - 1]}`;
     const clientRows = byClient.filter(c => parseFloat(c.project_count) > 0);
