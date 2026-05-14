@@ -6039,6 +6039,14 @@ function showModal({ title, body, onSubmit, submitText='Save', wide=false }) {
         </footer>
       </div>
     </div>`;
+  // L-1: Move focus to the first focusable element inside the modal
+  // (autofocus handles the common case but is unreliable after innerHTML
+  // injection — explicit focus() is the WCAG-safe pattern).
+  const firstFocusable = host.querySelector(
+    'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  );
+  if (firstFocusable) firstFocusable.focus();
+
   const modalSubmitBtn = document.getElementById('modal-submit');
   modalSubmitBtn.onclick = async () => {
     if (modalSubmitBtn.dataset.uploading === '1') return;
