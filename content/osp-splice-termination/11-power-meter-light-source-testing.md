@@ -156,7 +156,7 @@ This procedure applies to a single-mode fiber OS2 link tested at 1310 nm and 155
 **Reference step (do this once per wavelength per test session):**
 1. Inspect and clean all connector end-faces (one-click cleaner or IPA + wipe).
 2. Connect: LS → [launch jumper] → [mating adapter] → [reference jumper] → OPM.
-3. Allow source to stabilize (typically 30–60 seconds from power-on).
+3. Allow source to warm up and stabilize (5–15 minutes for laser sources; use the stabilization LED if available — do not proceed until the source indicates stable output).
 4. Record the OPM reading as the reference power (in dBm). This is P_ref.
 5. Press "Zero" or "Set Reference" on the OPM — subsequent readings will display loss in dB relative to P_ref.
 

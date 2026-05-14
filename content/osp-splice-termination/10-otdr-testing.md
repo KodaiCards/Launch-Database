@@ -42,7 +42,7 @@ Two physical mechanisms generate the returning light:
 
 **Rayleigh backscatter.** As an optical pulse propagates through the fiber, a small fraction of the light scatters in all directions at each point along the fiber due to microscopic refractive-index fluctuations (Rayleigh scattering — the same mechanism that makes the sky blue). The fraction that scatters back toward the OTDR is called backscatter. Rayleigh backscatter is present continuously along the entire fiber length and decreases exponentially with distance as the pulse attenuates. On the OTDR trace, this appears as a smooth descending slope — the **backscatter level**. The slope of this line is the fiber's attenuation coefficient (dB/km); a steeper slope means higher attenuation [EXFO AN-014, §1.1; BICSI OSP-DRD Manual, Ch. 9; IEC 61300-3-4 §4].
 
-**Fresnel reflection.** At any abrupt change in refractive index along the fiber path — a connector end-face, a mechanical splice air gap, a fiber break, or the end of the fiber — a fraction of the light reflects directly back toward the OTDR (Fresnel reflection). Fresnel reflections appear on the trace as sharp spikes above the backscatter floor. The magnitude of the reflection depends on the index discontinuity: an open connector end-face in air produces a large Fresnel reflection (return loss ≈ 14 dB); an angled-polish (APC) connector end-face produces a much smaller reflection (return loss ≥ 55 dB) because the 8° angle redirects most of the reflected light away from the fiber core [EXFO AN-014, §1.2; BICSI OSP-DRD Manual, Ch. 9; IEC 61300-3-4 §4].
+**Fresnel reflection.** At any abrupt change in refractive index along the fiber path — a connector end-face, a mechanical splice air gap, a fiber break, or the end of the fiber — a fraction of the light reflects directly back toward the OTDR (Fresnel reflection). Fresnel reflections appear on the trace as sharp spikes above the backscatter floor. The magnitude of the reflection depends on the index discontinuity: an open connector end-face in air produces a large Fresnel reflection (return loss ≈ 14 dB); an angled-polish (APC) connector end-face produces a much smaller reflection (return loss ≥ 55 dB minimum per IEC 61300-3-6; ≥ 65 dB typical) because the 8° angle redirects most of the reflected light away from the fiber core [EXFO AN-014, §1.2; BICSI OSP-DRD Manual, Ch. 9; IEC 61300-3-4 §4; IEC 61300-3-6].
 
 ### Dead Zones: Why a Launch Cable Is Not Optional
 
@@ -53,7 +53,7 @@ Two dead zones must be understood:
 **Launch dead zone (also: connector dead zone).** After the large Fresnel reflection from the OTDR's own output connector, the OTDR receiver is saturated (overloaded) for a period of time. During this saturation period — which corresponds to a physical distance in the fiber — no event can be detected. For a typical OTDR with a standard pulse width setting:
 
 - Launch dead zone = the distance over which the OTDR cannot detect any event immediately after the launch connector reflection
-- Typical range: **0 to 10 m**, depending on pulse width and OTDR design
+- Typical range: **1–30 m, strongly dependent on pulse width** (see pulse-width table below); shorter pulse widths produce smaller dead zones, longer pulse widths produce larger dead zones
 [EXFO AN-014, §2.1; ANSI/TIA-455-61 §5.4]
 
 **Event dead zone.** After any reflection event (not just the launch connector), there is a shorter period during which the OTDR can detect that an event has occurred but cannot accurately measure its loss. The OTDR trace has not recovered enough to separate the current event from a closely following event.
@@ -140,6 +140,8 @@ Per BICSI OSP-DRD Manual, Ch. 9 and ANSI/TIA-526-7, the OSP OTDR acceptance thre
 | End-to-end link loss | Per project specification (≤ calculated link budget) | ANSI/TIA-526-7; BICSI OSP-DRD Ch. 9 |
 
 Note: project specifications on RUS-funded or government infrastructure projects may impose tighter thresholds (e.g., ≤ 0.05 dB per fusion splice). Always verify acceptance criteria against the project specification document — the BICSI defaults are minimums, not targets [BICSI OSP-DRD Manual, Ch. 9; ANSI/TIA-526-7 §6].
+
+**Dual-wavelength OTDR requirement.** Per ANSI/TIA-526-7, OTDR testing for OS2 SMF acceptance must be conducted at both 1310 nm and 1550 nm. Testing at 1310 nm only is insufficient — macrobend-induced attenuation is wavelength-dependent and may be invisible at 1310 nm while producing significant excess loss at 1550 nm. All per-event thresholds above apply at each test wavelength independently. [ANSI/TIA-526-7 §3; BICSI OSP-DRD Manual, Ch. 9]
 
 ### OTDR Trace Archive: .SOR Format
 

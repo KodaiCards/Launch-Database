@@ -58,7 +58,7 @@ The Corning OptiTap is the dominant hardened connector for FTTH drop-cable-to-FD
 - **IP67 when unmated with dust caps installed** (dust-tight + temporary immersion up to 1 m for 30 minutes)
 [Corning OptiTap Training Guide, §1.3; ANSI/TIA-758-C §6.5]
 
-**APC-only polishing standard.** OptiTap uses SC-APC (8° angled polish) ferrules only. APC polishing minimizes back-reflection (return loss ≥ 65 dB typical) at the FDT port — critical for RF overlay (cable TV over fiber) coexistence and for GPON OLT receiver sensitivity. All OptiTap deployments in FTTH applications are APC-to-APC; connecting an SC/UPC jumper into an SC-APC adapter will produce a mismatched polish angle and a return-loss catastrophe. Color convention: APC connectors and adapters are green; UPC connectors and adapters are blue. Never mix colors [BICSI OSP-DRD Manual, Ch. 7.5; Corning OptiTap Training Guide, §1.2].
+**APC-only polishing standard.** OptiTap uses SC-APC (8° angled polish) ferrules only. APC polishing minimizes back-reflection (return loss ≥ 55 dB minimum per IEC 61300-3-6; ≥ 65 dB typical) at the FDT port — critical for RF overlay (cable TV over fiber) coexistence and for GPON OLT receiver sensitivity. All OptiTap deployments in FTTH applications are APC-to-APC; connecting an SC/UPC jumper into an SC-APC adapter will produce a mismatched polish angle and a return-loss catastrophe. Color convention: APC connectors and adapters are green; UPC connectors and adapters are blue. Never mix colors [BICSI OSP-DRD Manual, Ch. 7.5; Corning OptiTap Training Guide, §1.2; IEC 61300-3-6].
 
 **Insertion loss.** Factory-polished OptiTap connectors: typical ≤ 0.3 dB per mated pair under field conditions; maximum ≤ 0.5 dB per ANSI/TIA-758-C §6.5 and IEC 61753-1 performance standard B. The ≤ 0.5 dB per-connector limit is the governing acceptance threshold for hardened outdoor connectors used in FTTH distribution networks [ANSI/TIA-758-C §6.5; IEC 61753-1].
 
@@ -102,7 +102,7 @@ A core design goal of every hardened OSP connector family is enabling a drop cab
 
 1. **Locate the FDT port.** The FDT port is labeled or identified by QR code, closure marking, or port map document. The installer scans the port label (if a QR-code workflow is deployed) to verify they are connecting to the correct subscriber port.
 2. **Inspect the adapter.** Remove the dust cap from the FDT adapter port. Visually inspect the adapter interior for contamination. If contaminated, clean with a one-click cleaner or IPA swab before mating.
-3. **Inspect the connector end-face.** Remove the dust cap from the pre-connectorized drop cable connector. Inspect the ferrule end-face with a scope or visual fault locator as applicable. Clean if necessary.
+3. **Inspect the connector end-face.** Remove the dust cap from the pre-connectorized drop cable connector. Inspect the ferrule end-face with a fiber inspection scope (≥ 200× magnification) per IEC 61300-3-35 criteria. Clean if necessary.
 4. **Mate and lock.** Insert the connector into the adapter and engage the locking mechanism (rotate bayonet ring to click for OptiTap; finger-tighten hex nut for HOC). Verify audible or tactile lock engagement.
 5. **Verify continuity.** At the NID or ONT end, verify signal presence (optical power or ONT link LED) to confirm the drop path is active.
 

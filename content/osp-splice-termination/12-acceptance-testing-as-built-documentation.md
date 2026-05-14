@@ -176,6 +176,8 @@ Projects funded by the USDA Rural Utilities Service (RUS) or other federal infra
 
 **Right-of-way compliance records.** RUS-funded OSP projects typically include easement and right-of-way records as part of the as-built package — cable route GPS coordinates must align with the permitted easement boundaries.
 
+**RUS Form 219 (OTDR test report).** Some RUS-funded projects require submission of USDA RUS Form 219 (the standard OTDR acceptance test report form) in addition to raw .sor trace files and the contractor-formatted splice loss log. Verify with the area engineer whether Form 219 is required for your specific project and contract; omitting it from the acceptance package can cause submission rejection. [BICSI OSP-DRD Manual, Ch. 9–10; USDA RUS project documentation requirements]
+
 ### Acceptance Checklist Summary
 
 | Item | Governing standard | Pass criterion |
