@@ -182,6 +182,15 @@ function _getFieldMarkupUpload() {
 const _fieldMarkupRate = new Map(); // ip → array<timestamp ms>
 const FIELD_MARKUP_LIMIT = 30;
 const FIELD_MARKUP_WINDOW_MS = 60 * 1000;
+// Periodic sweep so the Map doesn't grow unbounded for IPs that stop calling.
+// Mirrors the _hydrateRate sweep pattern below. unref() so it doesn't
+// prevent process exit in tests.
+setInterval(() => {
+  const cutoff = Date.now() - FIELD_MARKUP_WINDOW_MS;
+  for (const [ip, arr] of _fieldMarkupRate) {
+    if (!arr.some(t => t > cutoff)) _fieldMarkupRate.delete(ip);
+  }
+}, 5 * 60 * 1000).unref();
 function _fieldMarkupRateOk(ip) {
   if (!ip) return true;
   const now = Date.now();
