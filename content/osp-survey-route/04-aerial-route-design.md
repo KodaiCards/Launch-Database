@@ -98,7 +98,7 @@ EDS matters for route design because it determines the stringing tension — the
 - Loaded cable weight w = 0.220 + 0.072 = **0.292 lb/ft**
 - Attachment height at both poles: 28 ft above ground
 - Crossing type: county road (NESC Rule 232 minimum = 15.5 ft)
-- EDS at 59°F: 18% RTS; cable RTS = 2,800 lb; **H = 18% × 2,800 = 504 lb**
+- EDS at 59°F: 18% RTS; cable RTS = 2,800 lb; **H = 18% × 2,800 = 504 lb** *(18% is a conservatively low design choice; IEEE 1222 typical range is 20–25% RTS. Using a below-range EDS increases fatigue margin and reduces the risk of tension exceedance under ice load, but requires a higher attachment point or shorter spans to maintain NESC clearance at the larger resulting sag.)*
 
 **Step 1 — Maximum allowable sag:**
 

@@ -86,7 +86,7 @@ Field sketches do not need to be architectural-quality drawings — they need to
 ### Crew Composition and Equipment
 
 **Reconnaissance survey (1–2 persons):**
-- GPS-capable smartphone or handheld GPS receiver (WAAS-enabled, ±3 ft accuracy)
+- GPS-capable smartphone or handheld GPS receiver (WAAS-enabled, ±3 ft accuracy) *(WAAS-grade GPS is appropriate for route tracking and station referencing; resolving utility conflicts within ±2 ft requires survey-grade GPS or vacuum excavation — not WAAS alone. Combined with 811 atlas marking accuracy of ±3–10 ft, the compound error budget for WAAS reconnaissance is ±6–13 ft — insufficient for final utility separation design.)*
 - Measuring wheel
 - Survey spray paint (multiple colors — yellow for proposed cable, red for utilities, blue for water, orange for comm)
 - Photo log (phone camera with GPS tagging enabled)
