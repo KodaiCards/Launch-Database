@@ -6,9 +6,9 @@
 
 ---
 
-## §1 Lesson Plan — 15 Lessons
+## §1 Lesson Plan — 16 Lessons
 
-**Split rationale (Default #4):** CANONICAL_BRIEF_B clocked L4.2 at 40–45 min minimum — clearances (Rules 230–238) + loading districts (Rules 250–252) + IEEE 1222 sag-tension cannot fit 25 min at quality bar. Split into L4.2a (clearances) and L4.2b (loading + IEEE 1222) preserves depth and deconflicts from T3 L3.3 re-teaching risk. **L4.0 reverted per orchestrator instruction (Default #5 rescinded):** Critique B's argument is correct — a standalone L4.0 risks framework disconnection from the regulatory content; threaded callouts risk author drift. The conflict-resolution framework is instead embedded in the first 3 min of L4.1 (L4.1 extended to 23 min), keeping the framework immediately adjacent to its NESC anchor (the first major standard the framework mediates against TIA-758-C). Total: 15 lessons, ~5.0 hrs.
+**Split rationale (Default #4):** CANONICAL_BRIEF_B clocked L4.2 at 40–45 min minimum — clearances (Rules 230–238) + loading districts (Rules 250–252) + IEEE 1222 sag-tension cannot fit 25 min at quality bar. Split into L4.2a (clearances) and L4.2b (loading + IEEE 1222) preserves depth and deconflicts from T3 L3.3 re-teaching risk. **L4.0 reverted per orchestrator instruction (Default #5 rescinded):** Critique B's argument is correct — a standalone L4.0 risks framework disconnection from the regulatory content; threaded callouts risk author drift. The conflict-resolution framework is instead embedded in the first 3 min of L4.1 (L4.1 extended to 23 min), keeping the framework immediately adjacent to its NESC anchor (the first major standard the framework mediates against TIA-758-C). Total: 16 lessons, ~6.2 hrs.
 
 | # | Title | Scope (telegraphic) | Est. | Intensity | Citation Matrix (Primary / Supporting / RUS) | Interactive Elements | Worked-Example Anchor |
 |---|---|---|---|---|---|---|---|
@@ -29,13 +29,13 @@
 | 4.14 | RUS/USDA Bulletins | 1751F-630 (aerial, §1); 1751F-635 (underground, §1); 1715E-110 (design guide); Form 219 approval chain. Deliverable matrix scenario. Duration: 30 min (up from 25 per B §3 + CLAUDE.md RUS-primary framing) | 30 min | HIGH-INTENSITY | 1751F-630 (aerial); 1751F-635 (underground); 1715E-110; Form 219 / BICSI OSP-DRD Ch. 2.9; ANSI/TIA-758-C / All listed | Flashcards + scenario (RUS aerial + conduit project: map bulletin, form, close-out sequence) | 48-count SM aerial + conduit route, RUS funds — bulletin selection, Form 219 triggers, drawing deadline, close-out package |
 | 4.15 | DOT, Railroad, and USACE Permits | 23 CFR Part 645; USACE 33 CFR 320–332; NWP 12 (0.1-acre fill limit; regional suspension caveat — confirm with applicable USACE district); AAR clearances; **NHPA §106 / THPO coordination:** Federal action triggers Section 106 of NHPA (54 U.S.C. § 306108); coordinate with State Historic Preservation Office (SHPO) and Tribal Historic Preservation Office (THPO) for ROW affecting properties listed/eligible for the National Register. For RUS-funded projects (PSC-typical), this is a hard prerequisite to construction start. Cross-ref Topic 3 L3.1 + L3.11. Railroad: short-line (Class III) primary (30–60 day); Class I appendix (90–180 day). Cross-ref T3 L3.8 lead-time table. **Authoring guards:** NWP 12 must include (a) 0.1-acre limit and (b) regional suspension caveat. NHPA §106 must name SHPO + THPO coordination explicitly and call out RUS-funded = hard prerequisite. | 25 min | HIGH-INTENSITY | 23 CFR Part 645; USACE 33 CFR 320–332; AAR Engineering Standards; NHPA §106 (54 U.S.C. § 306108) / BICSI OSP-DRD Ch. 2.10; ANSI/TIA-758-C §6.1 / 1751F-630 §7, §10 | Flashcards + scenario (state highway + short-line RR + navigable creek: permit matrix + timeline + NHPA consultation trigger) | Route: state highway (23 CFR 645 ROW permit) + short-line RR (AAR clearance + railroad agreement, 30–60 days) + creek 0.05-acre fill (NWP 12 + PCN + 401 WQC) + RUS funding (NHPA §106 SHPO/THPO consultation — hard prerequisite before construction start). Class I appendix: 90–180 day contrast. |
 
-**Duration: ~5.0 hrs. 15 lessons. Intensity: 8 HIGH-INTENSITY / 7 STANDARD.**
+**Duration: ~6.2 hrs. 16 lessons. Intensity: 9 HIGH-INTENSITY / 7 STANDARD.**
 
 ---
 
 ## §2 Final Exam Specification
 
-- **Questions:** 30 (up from 25 — 15 lessons + controlling-standard framework embedded in L4.1 + upgraded recall-only lessons per Default #6)
+- **Questions:** 32 (up from 25 — 16 lessons × 2 per Default #6, controlling-standard framework embedded in L4.1)
 - **Pass threshold:** 21/30 (70%)
 - **Format:** Identical to Topics 1–3 — A–D options, `[CORRECT]` inline, `*Rationale:*` italic block with bold per-option citation sub-bullets, lesson-ordered in source, randomized at Moodle import
 
@@ -57,9 +57,9 @@
 | 4.13 OSHA 1910/1926 | 2 | 1 applicability trigger recall + 1 cite-CFR-for-condition scenario |
 | 4.14 RUS Bulletins | 2 | 1 bulletin selection + 1 Form 219 deliverable scenario |
 | 4.15 DOT/RR/USACE | 2 | 1 NWP 12 recall (0.1-acre + regional caveat) + 1 multi-crossing timeline (includes NHPA §106 THPO consultation trigger) |
-| **Total** | **30** | ~50% recall / ~50% applied scenario |
+| **Total** | **32** | ~50% recall / ~50% applied scenario |
 
-**Q distribution verified:** L4.1 = 2; L4.2a–L4.15 = 14 lessons × 2 = 28. Total: 30. Cross-standard controlling-standard scenario absorbed into L4.1 Q2 (framework now embedded in L4.1, not a standalone lesson). L4.1 / L4.4 / L4.7 / L4.13 all carry 2 Qs (recall + scenario) per Default #6.
+**Q distribution verified:** L4.1 = 2; L4.2a–L4.15 = 15 lessons × 2 = 30. Total: 32. Cross-standard controlling-standard scenario absorbed into L4.1 Q2 (framework now embedded in L4.1, not a standalone lesson). All 16 lessons carry 2 Qs (recall + scenario) per Default #6.
 
 ---
 
@@ -71,8 +71,8 @@
 | 2 | NESC loading district for L4.2b primary example | **Light** (Macon, GA) | RESOLVED by orchestrator. Macon, GA inland — NESC IEEE Std 5 designates Light loading for Zone south of ~35°N where ice load is rare. Extreme Wind overlay applies on projects within ~60mi of Atlantic/Gulf coast (lower SE coastal Georgia / Florida panhandle). Worker A's prior "Heavy" default is superseded. Sidebar shows Light + Extreme Wind worked examples; Medium/Heavy referenced for cross-territory awareness only. | **RESOLVED** — Light (Macon GA inland). Extreme Wind overlay for coastal-zone projects. |
 | 3 | Railroad scenario class for L4.15 | **Short-line (Class III)** primary (30–60 day lead); Class I appendix (90–180 day) | RUS rural routes encounter short-line carriers more frequently than Class I. Both are taught for contrast. Cross-ref T3 L3.8 lead-time table. | DEFAULTED, awaiting user confirmation — confirm whether office has active Class I crossing work warranting elevation to primary |
 | 4 | L4.2 split into two lessons | **YES — L4.2a + L4.2b** | Cannot teach clearances + loading districts + IEEE 1222 at quality bar in 25 min (CANONICAL_BRIEF_B: 40–45 min actual). Split eliminates re-teaching overlap with T3 L3.3 by giving each lesson a distinct code-structure scope. | DEFAULTED — pedagogically unambiguous |
-| 5 | Controlling-standard framework placement | **Extend L4.1 by 3 min** (not standalone L4.0 lesson) | RESOLVED by orchestrator. Critique B's argument accepted: a standalone L4.0 risks framework disconnection from the regulatory content it mediates; threaded callouts risk author drift. Framework embedded in the first 3 min of L4.1 (extended to 23 min) keeps it immediately adjacent to its NESC anchor — the first major standard the framework needs to mediate against TIA-758-C. Lesson count remains **15**. | **RESOLVED** — extend L4.1 to 23 min; no L4.0 lesson. |
-| 6 | Exam discrimination for recall-only lessons | **Upgrade to 2 Qs per lesson (1 recall + 1 scenario)** + 1 cross-lesson controlling-standard question | Single recall Q on L4.1, L4.4, L4.7, L4.13 produces an exam with a soft bottom — too easy at the million-dollar quality bar. Scenario questions separate understanding from memorization. Total: 30 Qs / 70% threshold. | DEFAULTED — orchestrator to confirm 30-Q exam consistent with Topics 1–3 progression |
+| 5 | Controlling-standard framework placement | **Extend L4.1 by 3 min** (not standalone L4.0 lesson) | RESOLVED by orchestrator. Critique B's argument accepted: a standalone L4.0 risks framework disconnection from the regulatory content it mediates; threaded callouts risk author drift. Framework embedded in the first 3 min of L4.1 (extended to 23 min) keeps it immediately adjacent to its NESC anchor — the first major standard the framework needs to mediate against TIA-758-C. Lesson count is **16** (L4.2 split into L4.2a + L4.2b). | **RESOLVED** — extend L4.1 to 23 min; no L4.0 lesson. L4.2 split into L4.2a + L4.2b brings total to 16 lessons. |
+| 6 | Exam discrimination for recall-only lessons | **Upgrade to 2 Qs per lesson (1 recall + 1 scenario)** + 1 cross-lesson controlling-standard question | Single recall Q on L4.1, L4.4, L4.7, L4.13 produces an exam with a soft bottom — too easy at the million-dollar quality bar. Scenario questions separate understanding from memorization. Total: 32 Qs / 70% threshold. | DEFAULTED — orchestrator to confirm 32-Q exam consistent with Topics 1–3 progression |
 
 ---
 
@@ -108,7 +108,7 @@ Topic 4 has **9 HIGH-INTENSITY lessons** (L4.2a, L4.2b, L4.3, L4.5, L4.8, L4.9, 
 |---|---|---|
 | 1 — Standards backbone | L4.1, L4.2a, L4.2b, L4.3, L4.4 | NESC family + conflict-resolution framework (embedded in L4.1 opening block). Needs NESC C2-2023 + IEEE 1222 access. HIGH: L4.2a, L4.2b, L4.3. |
 | 2 — NEC / TIA / IEC | L4.5, L4.6, L4.7, L4.8, L4.9, L4.10, L4.11, L4.12 | NEC + TIA + IEC family. Needs TIA-758-C, TIA-568.3-D, TIA-526, IEC 60529, NEMA 250 access. HIGH: L4.5, L4.8, L4.9, L4.11. |
-| 3 — Regulatory + Exam | L4.13, L4.14, L4.15 + Full 30-Q Exam | OSHA + RUS bulletins + federal permits. Needs 29 CFR, RUS bulletin set, NHPA §106, AAR standards. HIGH: L4.14, L4.15. Writes exam because they see all three regulatory families and all cross-topic threads. |
+| 3 — Regulatory + Exam | L4.13, L4.14, L4.15 + Full 32-Q Exam | OSHA + RUS bulletins + federal permits. Needs 29 CFR, RUS bulletin set, NHPA §106, AAR standards. HIGH: L4.14, L4.15. Writes exam because they see all three regulatory families and all cross-topic threads. |
 
 Guard: Authors 1 and 2 deliver Glossary Cross-References blocks before Author 3 writes the exam, so cross-lesson questions have accurate anchors.
 
