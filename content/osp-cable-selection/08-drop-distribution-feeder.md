@@ -189,7 +189,7 @@ Construction: Direct-bury 4.8 km agricultural route — loose-tube OS2, gel-fill
 
 *Assessment:*
 
-Fiber count is borderline — 72 fibers exceeds the 116-fiber minimum calculated above... actually it does not: 72 < 116. This specification is also undersized on fiber count. Additionally, the no-armor construction is inappropriate for direct-bury in agricultural soil. A 72-fiber cable is appropriate for a distribution route (where 3× design multiple is used and serving area is smaller), not a feeder route of this scale. [BICSI OSP-DRD Manual, Ch. 5.5; ANSI/TIA-758-C §5.6]
+Fiber count: 72 < 116-fiber minimum — insufficient. This specification is undersized on fiber count. Additionally, the no-armor construction is inappropriate for direct-bury in agricultural soil. A 72-fiber cable is appropriate for a distribution route (where 3× design multiple is used and serving area is smaller), not a feeder route of this scale. [BICSI OSP-DRD Manual, Ch. 5.5; ANSI/TIA-758-C §5.6]
 
 **Feedback: Incorrect.** 72 fibers does not meet the 116-fiber minimum for this feeder, and no-armor construction is inappropriate for direct-bury.
 
