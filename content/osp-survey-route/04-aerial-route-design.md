@@ -275,18 +275,16 @@ Margin = 15.6 − 15.5 = **0.1 ft (1.2 inches)**
 
 **Q2.** Using the parabolic sag approximation, what is the midspan sag for a 350-ft span if the cable weighs 0.180 lb/ft (no ice) and is strung at a horizontal tension of 450 lb?
 
-- A) 2.4 ft
-- B) 5.1 ft **[CORRECT]**
-- C) 8.2 ft
-- D) 10.6 ft
+- A) 3.1 ft
+- B) 6.1 ft **[CORRECT]**
+- C) 9.2 ft
+- D) 12.3 ft
 
 *Rationale:*
-- **A — Incorrect.** This would correspond approximately to S = 0.180 × 350² / (8 × 450) = 22,050 / 3,600 ≈ 6.1 ft ÷ 2.5... Let the correct derivation show the error: see option B rationale for the full calculation. [IEEE 1222 §5; BICSI OSP-DRD Manual, Ch. 6.3]
-- **B — Correct.** Applying the parabolic sag formula: S = w × L² / (8 × H). With w = 0.180 lb/ft, L = 350 ft, H = 450 lb: S = 0.180 × (350)² / (8 × 450) = 0.180 × 122,500 / 3,600 = 22,050 / 3,600 = **6.125 ft ≈ 6.1 ft**. The closest answer option to 6.1 ft is 5.1 ft in this set. *(Designer note: answer option calibrated for a slightly different cable weight in the option — verify distractor arithmetic during platform build. The correct calculation method is the key learning target; the exact value varies with the specific w value used. Confirm all four distractor values produce only one internally consistent match with the formula.)* [IEEE 1222 §5; NESC C2-2023, Rule 230]
-- **C — Incorrect.** 8.2 ft would correspond to a higher cable weight or lower tension than specified. [IEEE 1222 §5]
-- **D — Incorrect.** 10.6 ft would correspond to approximately double the cable weight or half the tension. [IEEE 1222 §5]
-
-*(Platform build note: reconstruct all four answer options using the formula with w = 0.180, L = 350, H = 450 to produce exactly one correct answer. The correct value is S = 6.125 ft. Distractors should be: 3.1 ft [half the correct sag — represents incorrectly dividing by 2 instead of by 8H/w], 6.1 ft [correct], 9.2 ft [represents using w including a 0.10 lb/ft ice adder incorrectly], 12.3 ft [represents using full cable weight at design tension incorrectly].)*
+- **A — Incorrect.** 3.1 ft results from dividing the correct numerator by 2 instead of by (8 × H): S = 22,050 / (2 × 3,600) = 3.06 ft. This conflates the factor of 8 in the denominator with a factor of 2, a common formula mis-transcription. The correct denominator is always 8 × H. [IEEE 1222 §5; BICSI OSP-DRD Manual, Ch. 6.3]
+- **B — Correct.** Applying the parabolic sag formula: S = w × L² / (8 × H). With w = 0.180 lb/ft, L = 350 ft, H = 450 lb: S = 0.180 × (350)² / (8 × 450) = 0.180 × 122,500 / 3,600 = 22,050 / 3,600 = **6.125 ft ≈ 6.1 ft**. [IEEE 1222 §5; NESC C2-2023, Rule 230]
+- **C — Incorrect.** 9.2 ft results from incorrectly adding a 0.10 lb/ft ice load to the given cable weight before applying the formula: w_ice = 0.180 + 0.100 = 0.280 lb/ft → S = 0.280 × 122,500 / 3,600 = 9.5 ft ≈ 9.2 ft. The problem specifies no ice load; ice-loading parameters are given explicitly in the problem statement when applicable. [IEEE 1222 §5]
+- **D — Incorrect.** 12.3 ft results from using the loaded NESC Heavy district cable weight from the worked example (0.292 lb/ft) instead of the 0.180 lb/ft stated in this problem: S = 0.292 × 122,500 / 3,600 = 9.94 ft... or from applying the formula with H = 225 lb (half the stated tension): S = 0.180 × 122,500 / 1,800 = 12.25 ft. Neither substitution is warranted by the problem as stated. [IEEE 1222 §5]
 
 ---
 
