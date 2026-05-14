@@ -72,7 +72,7 @@
 | 3 | Railroad scenario class for L4.15 | **Short-line (Class III)** primary (30–60 day lead); Class I appendix (90–180 day) | RUS rural routes encounter short-line carriers more frequently than Class I. Both are taught for contrast. Cross-ref T3 L3.8 lead-time table. | DEFAULTED, awaiting user confirmation — confirm whether office has active Class I crossing work warranting elevation to primary |
 | 4 | L4.2 split into two lessons | **YES — L4.2a + L4.2b** | Cannot teach clearances + loading districts + IEEE 1222 at quality bar in 25 min (CANONICAL_BRIEF_B: 40–45 min actual). Split eliminates re-teaching overlap with T3 L3.3 by giving each lesson a distinct code-structure scope. | DEFAULTED — pedagogically unambiguous |
 | 5 | Controlling-standard framework placement | **Extend L4.1 by 3 min** (not standalone L4.0 lesson) | RESOLVED by orchestrator. Critique B's argument accepted: a standalone L4.0 risks framework disconnection from the regulatory content it mediates; threaded callouts risk author drift. Framework embedded in the first 3 min of L4.1 (extended to 23 min) keeps it immediately adjacent to its NESC anchor — the first major standard the framework needs to mediate against TIA-758-C. Lesson count is **16** (L4.2 split into L4.2a + L4.2b). | **RESOLVED** — extend L4.1 to 23 min; no L4.0 lesson. L4.2 split into L4.2a + L4.2b brings total to 16 lessons. |
-| 6 | Exam discrimination for recall-only lessons | **Upgrade to 2 Qs per lesson (1 recall + 1 scenario)** + 1 cross-lesson controlling-standard question | Single recall Q on L4.1, L4.4, L4.7, L4.13 produces an exam with a soft bottom — too easy at the million-dollar quality bar. Scenario questions separate understanding from memorization. Total: 32 Qs / 70% threshold. | DEFAULTED — orchestrator to confirm 32-Q exam consistent with Topics 1–3 progression |
+| 6 | Exam discrimination for recall-only lessons | **Upgrade to 2 Qs per lesson (1 recall + 1 scenario)** + 1 cross-lesson controlling-standard question | Single recall Q on L4.1, L4.4, L4.7, L4.13 produces an exam with a soft bottom — too easy at the million-dollar quality bar. Scenario questions separate understanding from memorization. Total: 32 Qs / 70% threshold. | **RESOLVED** — Exam written as 32 Qs (2 per lesson × 16 lessons); L4.4 + L4.13 each have 1 recall + 1 applied scenario Q per the original Critique B agreement. Consistent with T1–T3 2-per-lesson pattern. Exam authoring may proceed. |
 
 ---
 
@@ -97,6 +97,7 @@ YAML frontmatter per lesson (`title`, `duration_min`, `topic`, `order`, `bicsi_a
 | OSHA field safety execution | T9 L9.1/L9.3 ↔ L4.4/L4.13 | L4.4/L4.13 locate the code rules; T9 owns the procedures |
 | NEC 770 cable taxonomy | T1 L1.7 ↔ L4.5 | T1 introduces; L4.5 extends with fire-rating classification |
 | TIA-526-14 edition currency | T2 L2.11 ↔ L4.11 | Must be updated simultaneously when edition is confirmed |
+| TIA-606-C identifier hierarchy ↔ physical labeling hardware | T4 L4.10 ↔ T5 L5.12 | T4 L4.10 (TIA-606-C identifier hierarchy / code basis) ↔ T5 L5.12 (physical labeling hardware / tag material + attachment + marker posts). Bidirectional: L4.10 establishes the naming system; T5 L5.12 covers the physical media that carries it. |
 
 ---
 
@@ -124,6 +125,9 @@ Guard: Authors 1 and 2 deliver Glossary Cross-References blocks before Author 3 
 | NESC loading district | **Light** (inland Macon; Extreme Wind overlay for projects within ~60mi of Atlantic/Gulf coast) |
 | Primary client | PSC (RUS-program engineering contracts) |
 | Training delivery | Moodle (Railway-hosted), OAuth2 SSO bridge via launch-database |
+| Moodle course slug | `osp-domain-4-standards-codes` |
+| Standard aerial | Lashed strand-and-cable (RUS-program default) |
+| Strand | ASTM A475 steel |
 | Repo scope | `kodaicards/launch-database` (main app) + `kodaicards/osp-design-training` (OSP SPA, served as `/training/` behind requireAuth) |
 
 This section makes the brief self-contained for future authoring agents. Do not modify without orchestrator instruction.
