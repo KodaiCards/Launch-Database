@@ -23,6 +23,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const fsp = fs.promises;
 const multer = require('multer');
 const invoiceGenerator = require('../invoice_generator');
 const tplEngine = require('../invoice_template_engine');
@@ -85,7 +86,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   // and the operator can hit /regenerate or paste their own HTML via PUT.
   async function runAnalysisAndPersist(templateId, pdfPath) {
     try {
-      const buf = fs.readFileSync(pdfPath);
+      const buf = await fsp.readFile(pdfPath);
       const html = await tplEngine.analyzeInvoicePdf(buf);
       await pool.query(
         `UPDATE invoice_templates
@@ -160,12 +161,12 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
     if (!req.file) return res.status(400).json({ error: 'PDF file required (field name "pdf").' });
     const { job_id, client_id, name, notes } = req.body || {};
     if (!job_id || !client_id) {
-      try { fs.unlinkSync(req.file.path); } catch {}
+      try { await fsp.unlink(req.file.path); } catch {}
       return res.status(400).json({ error: 'job_id and client_id are required.' });
     }
     // Magic-byte gate. file.mimetype was client-controlled.
     if (!await _verifyPdfMagic(req.file.path)) {
-      try { fs.unlinkSync(req.file.path); } catch {}
+      try { await fsp.unlink(req.file.path); } catch {}
       return res.status(400).json({ error: 'Uploaded file is not a valid PDF (header check failed).' });
     }
     try {
@@ -182,7 +183,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
         // missing) is fine — we'd rather leak a stale file than fail the
         // upload.
         if (existing[0].reference_pdf_path) {
-          try { fs.unlinkSync(existing[0].reference_pdf_path); } catch {}
+          try { await fsp.unlink(existing[0].reference_pdf_path); } catch {}
         }
         await pool.query(
           `UPDATE invoice_templates
@@ -225,7 +226,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       res.json({ ...out[0], analysis: result });
     } catch (e) {
       console.error('[invoice-templates:create]', e && e.stack || e);
-      try { fs.unlinkSync(req.file.path); } catch {}
+      try { await fsp.unlink(req.file.path); } catch {}
       res.status(500).json({ error: 'Failed to save template.' });
     }
   });
@@ -287,7 +288,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Template not found.' });
       if (rows[0].reference_pdf_path) {
-        try { fs.unlinkSync(rows[0].reference_pdf_path); } catch {}
+        try { await fsp.unlink(rows[0].reference_pdf_path); } catch {}
       }
       res.json({ ok: true });
     } catch (e) {

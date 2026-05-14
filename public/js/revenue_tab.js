@@ -17,7 +17,7 @@
 //   api(), esc(), fmt(), fmtMoney()  — global helpers
 //   typeBadge(), statusBadge()       — global badge renderers
 //   MONTH_NAMES, MONTH_FULL          — month-label constants
-//   projectsTreeState                — shared tree expand state
+//   revenueTreeState                 — Revenue-tab-only tree expand state (H-8)
 //   allProjects                      — global cache (for cascade collapse)
 //   showProjectDetail()              — drilldown opener
 //   showProjectedList()              — projected revenue tile drilldown
@@ -75,7 +75,7 @@
         const bg = depth === 0 ? '' : depth % 2 === 1 ? 'background:var(--gray-light)' : 'background:var(--row-alt)';
 
         const isVisible = depth === 0 || parentExpanded;
-        const thisExpanded = projectsTreeState.isExpanded(p.id);
+        const thisExpanded = revenueTreeState.isExpanded(p.id);
 
         const trClass = ['clickable'];
         if (parentGroupClass) trClass.push('rtree', 'rtree-' + parentGroupClass);
@@ -106,17 +106,19 @@
     tbody.innerHTML = buildRevRows(roots, 0, null, true);
   }
 
-  // Revenue tree toggle. The groupKey prefix is rv- (not rt-) for
-  // historical reasons; chev ids are rc-. See makeTreeToggle in
-  // tree_state.js for the shared implementation.
+  // Revenue tree toggle. Uses revenueTreeState (its own instance) so
+  // expand/collapse in Revenue does not bleed into Projects or Dashboard.
+  // The groupKey prefix is rv- (not rt-) for historical reasons; chev ids
+  // are rc-. See makeTreeToggle in tree_state.js for the shared implementation.
   const rtreeToggle = makeTreeToggle({
-    state: projectsTreeState,
+    state: revenueTreeState,
     chevIdPrefix: 'rc-',
     groupKeyPrefix: 'rv-',
     rowClassPrefix: 'rtree-',
   });
 
   async function loadRevenue() {
+    try {
     const y = document.getElementById('rev-year').value;
     const m = window.revSelectedMonth;
     const isYTD = m === null;
@@ -223,6 +225,20 @@
       </div>`;
     }).join('');
 
+    // ── Screen-reader data table mirroring the bar chart (M-4) ──
+    // The chart container has role="img" + aria-label; this sr-only table
+    // is surfaced separately so AT users can navigate month-by-month data.
+    const srTableEl = document.getElementById('rev-trend-sr-table');
+    if (srTableEl) {
+      srTableEl.innerHTML = `<table><caption>Monthly Earnings Trend — ${y}</caption>
+        <thead><tr><th scope="col">Month</th><th scope="col">Earned</th><th scope="col">Billed</th></tr></thead>
+        <tbody>${monthly.map((mo, i) => {
+          const earned = parseFloat(mo.earned) || 0;
+          const billed = parseFloat(mo.billed) || 0;
+          return `<tr><th scope="row">${MONTH_NAMES[i]}</th><td>${fmtMoney(earned)}</td><td>${fmtMoney(billed)}</td></tr>`;
+        }).join('')}</tbody></table>`;
+    }
+
     // ── Revenue by client table ──
     document.getElementById('rev-client-title').textContent = isYTD ? 'Revenue by Client — YTD' : `Revenue by Client — ${MONTH_FULL[(m || 1) - 1]}`;
     const clientRows = byClient.filter(c => parseFloat(c.project_count) > 0);
@@ -257,6 +273,12 @@
         <td><button class="btn btn-sm btn-success" onclick="markBilled('${p.id}')"><i class="fa-solid fa-check"></i> Bill...</button></td>
       </tr>`;
     }).join('') : '<tr><td colspan="6" class="empty-state" style="padding:24px;text-align:center">No unbilled work</td></tr>';
+    } catch (err) {
+      console.error('[loadRevenue] failed:', err);
+      if (window.LFS && window.LFS.toast) {
+        window.LFS.toast.error('Revenue tab failed to load: ' + (err.message || 'Unknown error'));
+      }
+    }
   }
 
   window.selectRevMonth = selectRevMonth;

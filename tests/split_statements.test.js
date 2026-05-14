@@ -112,10 +112,25 @@ test('processes the real schema.sql without crashing or losing CREATE TABLEs', (
   const out = splitStatements(sql);
   // No statement should be empty or just whitespace.
   for (const s of out) assert.ok(s.trim().length > 0, 'no empty statements');
-  // The number of CREATE TABLE statements in the file should equal the
-  // number of statements in `out` that contain CREATE TABLE. If the
-  // splitter joined two CREATE TABLEs into one statement, this trips.
-  const fileCount = (sql.match(/CREATE TABLE/gi) || []).length;
-  const splitCount = out.filter(s => /CREATE TABLE/i.test(s)).length;
+  // The number of CREATE TABLE *statements* in the file should equal the
+  // number of split output entries that contain a real CREATE TABLE DDL
+  // (outside comments). If the splitter joined two CREATE TABLEs into one
+  // statement this trips; if it split one CREATE TABLE across two entries
+  // it would also trip.
+  //
+  // We strip line comments (-- ...) and block comments (/* ... */) from
+  // both the raw file and each split statement before counting. This
+  // prevents "CREATE TABLE" appearing only inside a comment block
+  // (e.g. "-- CREATE TABLE above. This block corrects...") from being
+  // counted in either direction — the splitter correctly attaches leading
+  // comment blocks to the following statement's buffer, so a comment-only
+  // occurrence would inflate one counter but not the other.
+  function stripComments(s) {
+    return s
+      .replace(/--[^\n]*/g, '')          // strip line comments
+      .replace(/\/\*[\s\S]*?\*\//g, ''); // strip block comments
+  }
+  const fileCount  = (stripComments(sql).match(/CREATE TABLE/gi) || []).length;
+  const splitCount = out.filter(s => /CREATE TABLE/i.test(stripComments(s))).length;
   assert.equal(splitCount, fileCount, 'each CREATE TABLE in schema.sql should land in its own statement');
 });

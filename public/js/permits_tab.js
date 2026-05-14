@@ -23,6 +23,11 @@
 //   openPermitDocs, loadPermitDocs, uploadDoc, deletePermitDoc
 
 (function () {
+  // Per-project document cache (M-5). Avoids re-fetching the full /api/permits
+  // list on every modal open. Keys: projectId (string), values: docs array.
+  // Busted after a successful upload so the next loadPermitDocs sees fresh data.
+  const _permitDocCache = new Map();
+
   // Local helper — only loadPermits reads this.
   function pipelineViz(currentIdx) {
     return '<div class="pipeline">' + STAGES.map((s, i) => {
@@ -112,34 +117,58 @@
       if (typeof loadDashboard === 'function') loadDashboard();
     } catch (e) {
       if (btn) { btn.disabled = false; btn.innerHTML = '→ Next'; }
-      alert('Advance failed: ' + e.message);
+      alertDialog({ title: 'Advance failed', message: e.message });
     }
   }
 
   // Advance a permit from inside the project detail popup, then reload the
   // popup contents so the new stage shows immediately.
   async function advancePermitFromPopup(projectId) {
-    await api('/api/permits/' + projectId + '/advance', 'PUT', {});
-    const yEl = document.getElementById('rev-year');
-    const y = (yEl && yEl.value) || String(new Date().getFullYear());
-    const m = (typeof revSelectedMonth !== 'undefined') ? revSelectedMonth : null;
-    if (typeof reloadProjectDetail === 'function') reloadProjectDetail(projectId, m, y);
-    if (typeof loadPermits === 'function') loadPermits();
-    if (typeof loadDashboard === 'function') loadDashboard();
+    try {
+      await api('/api/permits/' + projectId + '/advance', 'PUT', {});
+      // Success-only: only reload popup/lists after a confirmed advance
+      const yEl = document.getElementById('rev-year');
+      const y = (yEl && yEl.value) || String(new Date().getFullYear());
+      const m = (typeof revSelectedMonth !== 'undefined') ? revSelectedMonth : null;
+      if (typeof reloadProjectDetail === 'function') reloadProjectDetail(projectId, m, y);
+      if (typeof loadPermits === 'function') loadPermits();
+      if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (e) {
+      alertDialog({ title: 'Advance failed', message: e.message });
+    }
   }
 
   function openPermitDocs(projectId, name) {
     window.currentPermitProjectId = projectId;
     document.getElementById('permit-doc-title').textContent = 'Documents — ' + name;
+    // Pre-fill uploader field with logged-in user's display name so staff
+    // don't have to type it on every upload.
+    const uploaderEl = document.getElementById('doc-uploader');
+    if (uploaderEl) {
+      uploaderEl.value = (window.currentUser && (window.currentUser.full_name || window.currentUser.username)) || '';
+    }
     openModal('permit-doc-modal');
     loadPermitDocs(projectId);
   }
 
   async function loadPermitDocs(projectId) {
-    const permits = await api('/api/permits');
-    const p = permits.find(x => x.id === projectId);
-    const docs = p?.documents || [];
     const list = document.getElementById('permit-doc-list');
+    let docs;
+    if (_permitDocCache.has(String(projectId))) {
+      // Use in-memory cache — avoids a full /api/permits fetch on modal open.
+      docs = _permitDocCache.get(String(projectId));
+    } else {
+      let permits;
+      try {
+        permits = await api('/api/permits');
+      } catch (e) {
+        if (list) list.innerHTML = `<p style="color:var(--danger);font-size:13px">Failed to load documents: ${esc(e.message)}</p>`;
+        return;
+      }
+      const p = permits.find(x => x.id === projectId);
+      docs = p?.documents || [];
+      _permitDocCache.set(String(projectId), docs);
+    }
     if (!docs.length) { list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>'; return; }
     list.innerHTML = docs.map(d => {
       const ext = (d.file_name.split('.').pop() || '').toLowerCase();
@@ -181,14 +210,16 @@
       if (list && !list.querySelector('[data-doc-id]')) {
         list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No documents uploaded yet.</p>';
       }
+      // Bust cache so a subsequent re-open reflects the deletion.
+      if (window.currentPermitProjectId) _permitDocCache.delete(String(window.currentPermitProjectId));
     });
   }
 
   async function uploadDoc() {
     const file = document.getElementById('doc-file').files[0];
     const projectId = window.currentPermitProjectId;
-    if (!file || !projectId) return alert('Select a file first');
-    if (file.size > 2 * 1024 * 1024 * 1024) return alert('File exceeds 2 GB limit (got ' + (file.size / 1024 / 1024 / 1024).toFixed(2) + ' GB)');
+    if (!file || !projectId) { await alertDialog({ title: 'No file selected', message: 'Select a file first.' }); return; }
+    if (file.size > 2 * 1024 * 1024 * 1024) { await alertDialog({ title: 'File too large', message: 'File exceeds 2 GB limit (got ' + (file.size / 1024 / 1024 / 1024).toFixed(2) + ' GB).' }); return; }
     const fd = new FormData();
     fd.append('file', file);
     fd.append('doc_type', document.getElementById('doc-type').value);
@@ -213,14 +244,17 @@
           if (!wrap) return;
           const p = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
           bar.style.width = p + '%';
+          bar.setAttribute('aria-valuenow', p);
           pct.textContent = p + '%';
           if (p >= 100) lbl.textContent = 'Saving on server…';
         },
       });
       document.getElementById('doc-file').value = '';
+      // Bust cache so the post-upload reload fetches fresh server-side data.
+      _permitDocCache.delete(String(projectId));
       loadPermitDocs(projectId);
     } catch (e) {
-      alert('Upload failed: ' + e.message);
+      await alertDialog({ title: 'Upload failed', message: e.message });
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload'; }
       if (wrap) wrap.style.display = 'none';

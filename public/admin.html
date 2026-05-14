@@ -41,7 +41,7 @@
      text-muted = supporting captions. */
   --text:#212529;
   --text-secondary:#495057;
-  --text-muted:#6C757D;
+  --text-muted:#5A6470;             /* darkened from #6C757D: 5.60:1 on #F5F7FA — WCAG AA pass */
 
   /* ── Status colors ───────────────────────────────────────────
      Each has a -light tinted background and a -text color sized for
@@ -82,9 +82,9 @@ html[data-theme="dark"]{
 
   /* Surfaces */
   --surface-1:#1A1F26;
-  --surface-2:#242B36;
+  --surface-2:#1D2430;              /* darkened from #242B36: --primary #4A90D9 now 4.66:1 — WCAG AA pass */
   --surface-3:#1F2630;
-  --white:#242B36;                  /* legacy alias */
+  --white:#1D2430;                  /* legacy alias */
   --gray-light:#1A1F26;             /* legacy alias */
   --row-alt:#1F2630;                /* legacy alias */
 
@@ -129,7 +129,7 @@ html[data-theme="dark"] textarea{background:var(--white);color:var(--text);borde
    the html-level color-scheme: dark covers them via OS theming. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
-  background:#242B36!important;
+  background:#1D2430!important;
   color:#E8EAED!important;
 }
 html[data-theme="dark"] select option:checked,
@@ -586,6 +586,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
+<script src="/js/dialog.js" defer></script>
 </head>
 <body>
 
@@ -599,7 +600,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <i class="fa-solid fa-trash" style="color:var(--warning,#FFC107)"></i>
   <span id="lfs-undo-message" style="flex:1"></span>
   <button id="lfs-undo-btn" onclick="lfsUndoClick()" style="background:var(--success,#28A745);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13px">Undo <span id="lfs-undo-countdown" style="opacity:.85;font-weight:400">15s</span></button>
-  <button onclick="hideUndoBar()" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7">×</button>
+  <button onclick="hideUndoBar()" aria-label="Dismiss" title="Dismiss" style="background:transparent;color:var(--text,#fff);border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:.7" aria-hidden="false">×</button>
 </div>
 
 <!-- HEADER -->
@@ -662,7 +663,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <a id="tab-inspection" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-inspection" data-view="inspection" onclick="showView('inspection')"><i class="fa-solid fa-helmet-safety" aria-hidden="true"></i> RUS</a>
   <a id="tab-potential-permits" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-potential-permits" data-view="potential-permits" onclick="showView('potential-permits')"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Potential Permits</a>
   <a id="tab-hours" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-hours" data-view="hours" onclick="showView('hours')"><i class="fa-regular fa-clock" aria-hidden="true"></i> Hours</a>
-  <a id="tab-clients" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-clients" data-view="clients" onclick="showView('clients')"><i class="fa-solid fa-handshake" aria-hidden="true"></i> Clients</a>
+  <!-- tab-clients hidden: Clients view is under construction; unhide when ready -->
+  <a id="tab-clients" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-clients" data-view="clients" onclick="showView('clients')" style="display:none"><i class="fa-solid fa-handshake" aria-hidden="true"></i> Clients</a>
   <a id="tab-billing" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-billing" data-view="billing" onclick="showView('billing')"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> Billing</a>
   <a id="tab-revenue" class="nav-tab" role="tab" aria-selected="false" aria-controls="view-revenue" data-view="revenue" onclick="showView('revenue')"><i class="fa-solid fa-dollar-sign" aria-hidden="true"></i> Revenue</a>
 </nav>
@@ -676,17 +678,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="section-header">
         <div><div class="section-title">Dashboard</div><div class="section-sub" id="dash-period-label">Live project overview</div></div>
         <div style="display:flex;gap:8px;align-items:center">
-          <select class="filter" id="dash-period" onchange="loadDashboard()">
+          <select class="filter" id="dash-period" onchange="loadDashboard()" aria-label="Dashboard period">
             <option value="ytd">Year to Date</option>
             <option value="month">Specific Month</option>
           </select>
-          <select class="filter" id="dash-month" style="display:none" onchange="loadDashboard()">
+          <select class="filter" id="dash-month" style="display:none" onchange="loadDashboard()" aria-label="Dashboard month">
             <option value="1">January</option><option value="2">February</option><option value="3">March</option>
             <option value="4">April</option><option value="5">May</option><option value="6">June</option>
             <option value="7">July</option><option value="8">August</option><option value="9">September</option>
             <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
-          <select class="filter" id="dash-year" onchange="loadDashboard()"></select>
+          <select class="filter" id="dash-year" onchange="loadDashboard()" aria-label="Dashboard year"></select>
           <button class="btn btn-secondary btn-sm" onclick="toggleDashboardCustomize()" title="Hide/show widgets"><i class="fa-solid fa-sliders"></i></button>
           <button class="btn btn-primary" onclick="showView('projects');openProjectModal()"><i class="fa-solid fa-plus"></i> New Project</button>
         </div>
@@ -700,9 +702,56 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              column on projects are intact; this tile (and its sibling
              card below) can be re-enabled when the projection logic is
              ready for a second pass. -->
-        <div class="stat-card" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:default" title="Projection logic retired pending revisit">
-          <div class="stat-label" style="color:rgba(255,255,255,.85)">Next 90 Day Projection</div>
-          <div class="stat-value" id="s-90d-projection" style="font-size:13px;font-weight:600;letter-spacing:.05em;color:rgba(255,255,255,.85)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div>
+        <!-- FE-1: RUS Next 13 Weeks tile — rendered by loadInspectionProjection()
+             in dashboard_views.js. Clicking the tile expands the per-bucket
+             drill-in (FE-2) in the card below. -->
+        <div class="stat-card" id="rus-proj-tile" style="background:linear-gradient(135deg,#3a3f4a,#2a2f38);color:#fff;cursor:pointer" onclick="rusToggleExpand()"
+             aria-expanded="false" aria-controls="rus-proj-expand">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="stat-label" style="color:rgba(255,255,255,.85)">RUS Next 13 Weeks</div>
+            <span id="rus-proj-dq-chip" style="display:none;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;margin-left:6px;white-space:nowrap"></span>
+            <!-- FE-5: methodology ? icon -->
+            <span title="Based on 8-week billable-hours pace × billing rate, capped at remaining EC budget. WIP is hours logged but not yet on an invoice."
+                  style="cursor:help;font-size:11px;color:rgba(255,255,255,.5);margin-left:4px;flex-shrink:0">&#63;</span>
+          </div>
+          <div class="stat-value" id="s-90d-projection" style="font-size:22px;font-weight:700;color:#fff;margin:6px 0 2px">—</div>
+          <!-- sub-rows: billed / WIP / projected -->
+          <div id="s-90d-subnumbers" style="display:none;font-size:11px;color:rgba(255,255,255,.75);line-height:1.6">
+            <div><span style="opacity:.7">Billed (MTD): </span><span id="s-90d-billed">—</span></div>
+            <div><span style="opacity:.7">Logged, not invoiced (WIP): </span><span id="s-90d-wip">—</span></div>
+            <div><span style="opacity:.7">Projected new work: </span><span id="s-90d-projected-new">—</span></div>
+          </div>
+          <div class="stat-label" id="s-90d-mtd-label" style="color:rgba(255,255,255,.55);font-size:10px;margin-top:4px">MTD: — hrs &nbsp;|&nbsp; 13-wk pace: pending</div>
+          <!-- sparkline SVG placeholder; filled by JS -->
+          <svg id="rus-proj-sparkline" viewBox="0 0 200 35" preserveAspectRatio="none"
+               style="display:none;width:100%;height:35px;margin-top:6px;opacity:.8"
+               aria-hidden="true"></svg>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px;text-align:right">
+            <i class="fa-solid fa-chevron-down" id="rus-proj-chev" style="transition:transform .2s"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- FE-2: RUS per-bucket drill-in expansion card.
+           Replaces the old display:none psc-rus-projection-card block.
+           Shown/hidden by rusToggleExpand() on tile click. -->
+      <div id="rus-proj-expand" class="card lfs-widget" data-widget-id="psc-rus-projection"
+           style="margin-bottom:14px;display:none">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title">
+            <i class="fa-solid fa-chart-bar" style="color:var(--primary);margin-right:6px"></i>RUS Next 13 Weeks — Bucket Detail
+            <!-- FE-5 tile-2 tooltip -->
+            <span title="Per bucket. Horizon shrinks to 3 weeks for projects with ≥80% of budget already billed."
+                  style="cursor:help;font-size:11px;color:var(--text-muted);margin-left:4px">&#63;</span>
+          </span>
+          <button class="btn btn-icon btn-secondary btn-sm" onclick="rusToggleExpand()" aria-label="Collapse bucket detail">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="card-body" id="rus-proj-expand-body" style="padding:0">
+          <div style="padding:20px;text-align:center;color:var(--text-muted)">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading…
+          </div>
         </div>
       </div>
 
@@ -732,16 +781,16 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <div class="modal-body">
             <p style="margin:0 0 14px 0;font-size:12px;color:var(--text-muted)">Generates a summary page (with optional timecards detail for hourly jobs) for the selected engineering contract, job, and period. Format is exclusive to RUS-program work (engineering contracts whose program is set to RUS).</p>
             <div class="form-group">
-              <label>Engineering Contract</label>
+              <label for="prp-ec">Engineering Contract</label>
               <select id="prp-ec" onchange="prpReloadJobs()"><option value="">Loading…</option></select>
             </div>
             <div class="form-group">
-              <label>Job</label>
+              <label for="prp-job">Job</label>
               <select id="prp-job"><option value="">— Select engineering contract first —</option></select>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Period start</label><input type="date" id="prp-start"></div>
-              <div class="form-group"><label>Period end</label><input type="date" id="prp-end"></div>
+              <div class="form-group"><label for="prp-start">Period start</label><input type="date" id="prp-start"></div>
+              <div class="form-group"><label for="prp-end">Period end</label><input type="date" id="prp-end"></div>
             </div>
             <div id="prp-preview" style="margin-top:10px;padding:10px;background:var(--gray-light);border-radius:6px;font-size:12px;color:var(--text-muted);display:none">
               <strong>Preview:</strong> <span id="prp-preview-text"></span>
@@ -755,22 +804,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
       </div>
 
-      <!-- PSC RUS revenue projection — RETIRED pending revisit. The card
-           is hidden by default (display:none); loadInspectionProjection
-           in dashboard_views.js no longer toggles it on. The card body
-           shows an UNDER CONSTRUCTION placeholder if it's ever forced
-           visible. /api/inspection still serves the breakdown data so
-           reviving the card later is a one-line removal of display:none. -->
-      <div id="psc-rus-projection-card" class="card lfs-widget" data-widget-id="psc-rus-projection" style="margin-bottom:14px;display:none">
-        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title"><i class="fa-solid fa-screwdriver-wrench" style="color:var(--text-muted);margin-right:6px"></i>RUS Revenue Projection</span>
-          <span style="font-size:11px;color:var(--text-muted)">retired pending revisit</span>
-        </div>
-        <div class="card-body" id="psc-rus-projection-body" style="padding:30px 16px;text-align:center;color:var(--text-muted)">
-          <i class="fa-solid fa-screwdriver-wrench" style="font-size:24px;display:block;margin-bottom:8px;opacity:.5"></i>
-          UNDER CONSTRUCTION
-        </div>
-      </div>
+      <!-- FE-2: psc-rus-projection-card DELETED — replaced by #rus-proj-expand
+           above (the inline expansion below the stat tile). -->
 
       <!-- Needs Attention — surfaces the /api/automation/* alerts so admin
            sees stale permits, billing draft availability, and flagged
@@ -799,15 +834,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
       <div class="toolbar">
         <input class="search-input" placeholder="Search projects..." oninput="filterProjects()" id="proj-search" aria-label="Search projects">
-        <select class="filter" id="proj-status-filter" onchange="loadProjects()">
+        <select class="filter" id="proj-status-filter" onchange="loadProjects()" aria-label="Filter by project status">
           <option value="">All statuses</option>
           <option value="active" selected>Active</option>
           <option value="completed">Completed</option>
           <option value="billed">Billed</option>
           <option value="on_hold">On Hold</option>
         </select>
-        <select class="filter" id="proj-client-filter" onchange="loadProjects()"><option value="">All clients</option></select>
-        <select class="filter" id="proj-type-filter" onchange="loadProjects()">
+        <select class="filter" id="proj-client-filter" onchange="loadProjects()" aria-label="Filter by client"><option value="">All clients</option></select>
+        <select class="filter" id="proj-type-filter" onchange="loadProjects()" aria-label="Filter by project type">
           <option value="">All types</option>
           <option value="inspection">Inspection</option>
           <option value="re">Resident Engineer</option>
@@ -834,7 +869,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)"></th><th>Project</th><th>Client / Const. Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th style="width:36px"><input type="checkbox" id="bulk-select-all" onclick="bulkToggleAll(this.checked)" aria-label="Select all projects"></th><th>Project</th><th>Client / Const. Contract</th><th>WO #</th><th>Type</th><th>Projected</th><th>YTD Revenue</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="projects-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -874,7 +909,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              title="Open the Permitting Portal in a new tab">
             <i class="fa-solid fa-up-right-from-square"></i> Open Portal
           </a>
-          <select class="filter" id="perm-stage-filter" onchange="loadPermits()">
+          <select class="filter" id="perm-stage-filter" onchange="loadPermits()" aria-label="Filter by permitting stage">
             <option value="">All stages</option>
             <option value="potential">Potential</option>
             <option value="started">Started</option>
@@ -909,7 +944,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              title="Open the Design Portal in a new tab">
             <i class="fa-solid fa-up-right-from-square"></i> Open Portal
           </a>
-          <select class="filter" id="design-stage-filter" onchange="loadDesign()">
+          <select class="filter" id="design-stage-filter" onchange="loadDesign()" aria-label="Filter by design stage">
             <option value="">All stages</option>
             <option value="potential">Potential</option>
             <option value="started">Started</option>
@@ -939,13 +974,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="section-header">
         <div><div class="section-title">RUS</div><div class="section-sub">All RUS-program projects (any client) with monthly hours and revenue rollups</div></div>
         <div style="display:flex;gap:10px;align-items:center">
-          <label style="font-size:12px;color:var(--text-muted)">Period:</label>
+          <label for="insp-period" style="font-size:12px;color:var(--text-muted)">Period:</label>
           <select id="insp-period" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
             <option value="ytd">Year to Date</option>
             <option value="month" selected>Specific Month</option>
           </select>
-          <input type="month" id="insp-month" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
-          <label style="font-size:12px;color:var(--text-muted);margin-left:6px">Status:</label>
+          <input type="month" id="insp-month" onchange="loadInspection()" aria-label="Inspection month" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
+          <label for="insp-status" style="font-size:12px;color:var(--text-muted);margin-left:6px">Status:</label>
           <select id="insp-status" onchange="loadInspection()" style="font-size:13px;padding:5px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white)">
             <option value="">Active + Billed</option>
             <option value="active">Active only</option>
@@ -1025,11 +1060,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('pp-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="modal-body">
-          <div class="form-group"><label>SR/HWY *</label><input type="text" id="pp-sr-hwy" placeholder="e.g. SR 49, HWY 240"></div>
-          <div class="form-group"><label>County</label><input type="text" id="pp-county" placeholder="e.g. Peach County"></div>
-          <div class="form-group"><label>Route</label><input type="text" id="pp-route" placeholder="Route description"></div>
-          <div class="form-group"><label>Submitted By</label><input type="text" id="pp-submitted-by" placeholder="Your name"></div>
-          <div class="form-group"><label>Notes</label><textarea id="pp-notes" placeholder="Additional details..."></textarea></div>
+          <div class="form-group"><label for="pp-sr-hwy">SR/HWY *</label><input type="text" id="pp-sr-hwy" placeholder="e.g. SR 49, HWY 240"></div>
+          <div class="form-group"><label for="pp-county">County</label><input type="text" id="pp-county" placeholder="e.g. Peach County"></div>
+          <div class="form-group"><label for="pp-route">Route</label><input type="text" id="pp-route" placeholder="Route description"></div>
+          <div class="form-group"><label for="pp-submitted-by">Submitted By</label><input type="text" id="pp-submitted-by" placeholder="Your name"></div>
+          <div class="form-group"><label for="pp-notes">Notes</label><textarea id="pp-notes" placeholder="Additional details..."></textarea></div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal('pp-modal')">Cancel</button>
@@ -1048,18 +1083,18 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              title="Open the Timeclock Portal in a new tab">
             <i class="fa-solid fa-up-right-from-square"></i> Open Portal
           </a>
-          <select class="filter" id="hrs-period" onchange="loadHours()">
+          <select class="filter" id="hrs-period" onchange="loadHours()" aria-label="Hours period">
             <option value="month" selected>Specific Month</option>
             <option value="ytd">Year to Date</option>
           </select>
-          <select class="filter" id="hrs-month">
+          <select class="filter" id="hrs-month" onchange="loadHours()" aria-label="Hours month">
             <option value="1">January</option><option value="2">February</option><option value="3">March</option>
             <option value="4">April</option><option value="5">May</option><option value="6">June</option>
             <option value="7">July</option><option value="8">August</option><option value="9">September</option>
             <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
-          <select class="filter" id="hrs-year"></select>
-          <select class="filter" id="hrs-groupby" onchange="loadHours()" title="Group hours by">
+          <select class="filter" id="hrs-year" onchange="loadHours()" aria-label="Hours year"></select>
+          <select class="filter" id="hrs-groupby" onchange="loadHours()" aria-label="Group hours by" title="Group hours by">
             <option value="project">By project (default)</option>
             <option value="client">By client</option>
             <option value="contract">By contract</option>
@@ -1068,10 +1103,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <option value="job">By job</option>
             <option value="calendar">📅 Calendar grid</option>
           </select>
-          <select class="filter" id="hrs-staff" onchange="loadHours()" title="Filter by person">
+          <select class="filter" id="hrs-staff" onchange="loadHours()" aria-label="Filter by staff member" title="Filter by person">
             <option value="">All staff</option>
           </select>
-          <select class="filter" id="hrs-billable" onchange="loadHours()" title="Billed vs unbilled hours">
+          <select class="filter" id="hrs-billable" onchange="loadHours()" aria-label="Filter billed vs unbilled hours" title="Billed vs unbilled hours">
             <option value="all">Billed + Unbilled</option>
             <option value="billed">Billed only</option>
             <option value="unbilled">Unbilled only</option>
@@ -1130,7 +1165,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="loadAuditLog()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-          <button class="btn btn-icon btn-secondary" onclick="closeAuditDrawer()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          <button class="btn btn-icon btn-secondary" onclick="closeAuditDrawer()" aria-label="Close audit drawer" title="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
       </div>
       <div style="padding:12px 14px;border-bottom:1px solid var(--gray-border);background:var(--gray-light)">
@@ -1235,8 +1270,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
            crash on null lookups. The data fetch runs once on first
            click but writes into off-screen elements. -->
       <div style="display:none">
-        <input type="search" id="cp-search">
-        <select id="cp-status-filter"></select>
+        <input type="search" id="cp-search" aria-label="Search clients">
+        <select id="cp-status-filter" aria-label="Client status filter"></select>
         <div id="cp-stats"></div>
         <div id="cp-clients-body"></div>
       </div>
@@ -1247,7 +1282,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="section-header">
         <div><div class="section-title">Billing</div><div class="section-sub">Manage unbilled work and view invoice history</div></div>
         <div style="display:flex;gap:8px">
-          <select class="filter" id="billing-year" onchange="loadBilling()"></select>
+          <select class="filter" id="billing-year" onchange="loadBilling()" aria-label="Billing year"></select>
           <button class="btn btn-secondary btn-sm" onclick="loadBilling()"><i class="fa-solid fa-rotate"></i></button>
           <button class="btn btn-secondary btn-sm" id="billing-clear-filters-btn" title="Clear saved billing filters" onclick="(function(){['lf_filter:billing:billing-year'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
         </div>
@@ -1262,7 +1297,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th style="width:36px;text-align:center"><input type="checkbox" id="bill-select-all" onchange="toggleBillSelectAll(this.checked)" title="Select all"></th>
+              <th style="width:36px;text-align:center"><input type="checkbox" id="bill-select-all" onchange="toggleBillSelectAll(this.checked)" aria-label="Select all billing rows" title="Select all"></th>
               <th>Project</th><th>Client / Area</th><th>Type</th><th>Hours</th><th>Rate</th><th>Billable Amount</th><th>Completed</th><th style="text-align:right">Actions</th>
             </tr></thead>
             <tbody id="billing-body"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
@@ -1323,7 +1358,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="section-header">
         <div><div class="section-title">Revenue</div><div class="section-sub" id="rev-period-label"></div></div>
         <div style="display:flex;gap:8px;align-items:center">
-          <select class="filter" id="rev-year" onchange="loadRevenue()"></select>
+          <select class="filter" id="rev-year" onchange="loadRevenue()" aria-label="Revenue year"></select>
           <button class="btn btn-secondary btn-sm" onclick="selectRevMonth(null)" id="rev-ytd-btn"><i class="fa-solid fa-calendar"></i> YTD</button>
           <button class="btn btn-secondary btn-sm" id="rev-clear-filters-btn" title="Clear saved revenue filters" onclick="(function(){['lf_filter:revenue:rev-year'].forEach(k=>localStorage.removeItem(k));location.reload();})()" style="display:none"><i class="fa-solid fa-filter-circle-xmark"></i></button>
           <button class="btn btn-secondary btn-sm" onclick="showBillingReport()"><i class="fa-solid fa-file-invoice-dollar"></i> Billing Report</button>
@@ -1337,7 +1372,8 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <!-- Monthly trend mini-chart -->
       <div class="card" id="rev-trend-card">
         <div class="card-header"><span class="card-title">Monthly Earnings Trend</span></div>
-        <div class="card-body" id="rev-trend-body" style="height:120px;display:flex;align-items:flex-end;gap:4px;padding-bottom:24px;position:relative"></div>
+        <div class="card-body" id="rev-trend-body" role="img" aria-label="Monthly Earnings Trend bar chart" style="height:120px;display:flex;align-items:flex-end;gap:4px;padding-bottom:24px;position:relative"></div>
+        <div id="rev-trend-sr-table" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"></div>
       </div>
       <!-- By client -->
       <div class="card">
@@ -1381,7 +1417,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div class="ai-header">
       <div class="ai-dot"></div>
       <span class="ai-header-title">AI Assistant</span>
-      <button onclick="toggleAI()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px"><i class="fa-solid fa-xmark"></i></button>
+      <button onclick="toggleAI()" aria-label="Close AI panel" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="ai-messages" id="ai-messages">
       <div class="ai-msg assistant">Hi! I'm your AI project manager. I can:<br><br>
@@ -1395,10 +1431,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
     </div>
     <div class="ai-input-area">
-      <textarea class="ai-input" id="ai-input" placeholder="Ask anything or describe a project..." onkeydown="aiKeydown(event)"></textarea>
+      <textarea class="ai-input" id="ai-input" placeholder="Ask anything or describe a project..." onkeydown="aiKeydown(event)" aria-label="AI assistant message"></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="display:flex;align-items:center;gap:6px">
-          <input type="file" id="ai-file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none" onchange="handleAIFileUpload(event)">
+          <input type="file" id="ai-file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" aria-label="Upload file for AI" style="display:none" onchange="handleAIFileUpload(event)">
           <button id="ai-file-upload-btn" class="btn btn-secondary btn-sm" onclick="document.getElementById('ai-file-input').click()" title="Upload Excel/CSV file"><i class="fa-solid fa-file-excel"></i> Upload</button>
           <span style="font-size:11px;color:var(--text-muted)">Enter to send</span>
         </div>
@@ -1407,7 +1443,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div id="ai-file-preview" style="display:none;padding:6px 8px;background:var(--primary-light);border-radius:6px;font-size:12px;display:none">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <span><i class="fa-solid fa-file-excel" style="color:var(--primary)"></i> <span id="ai-file-name"></span></span>
-          <button class="btn btn-sm btn-icon" onclick="clearAIFile()" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-xmark"></i></button>
+          <button class="btn btn-sm btn-icon" onclick="clearAIFile()" aria-label="Clear attached file" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>
@@ -1415,7 +1451,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 </main><!-- end main -->
 
 <!-- ═══ FLOATING AI TOGGLE (mobile) ═══ -->
-<button class="ai-toggle" onclick="toggleAI()"><i class="fa-solid fa-robot"></i></button>
+<button class="ai-toggle" onclick="toggleAI()" aria-label="Open AI assistant"><i class="fa-solid fa-robot" aria-hidden="true"></i></button>
 
 <!-- ═══════════════════════════════════════════════════════
      MODALS
@@ -1433,7 +1469,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="form-grid">
         <div class="form-row">
           <div class="form-group span2">
-            <label>Project Name *</label>
+            <label for="proj-name">Project Name *</label>
             <input type="text" id="proj-name" placeholder="e.g. RUS WO-001 Inspection">
           </div>
         </div>
@@ -1458,13 +1494,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="form-row">
           <div class="form-group span2">
-            <label>Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
+            <label for="proj-parent">Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
             <div style="display:flex;gap:6px">
               <select id="proj-parent" onchange="parentChanged(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('parent')" title="Add new parent project"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <input type="text" id="qa-parent-name" placeholder="Parent project name (e.g. Reconnect 3 — Contract 3)" style="margin-bottom:6px">
+              <input type="text" id="qa-parent-name" placeholder="Parent project name (e.g. Reconnect 3 — Contract 3)" aria-label="Quick-add parent project name" style="margin-bottom:6px">
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/construction contract will be inherited.</div>
               <div style="display:flex;gap:6px;justify-content:flex-end">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('parent', false)">Cancel</button>
@@ -1476,14 +1512,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <!-- ROW 1: Client | Program -->
         <div class="form-row">
           <div class="form-group">
-            <label>Client *</label>
+            <label for="proj-client">Client *</label>
             <div style="display:flex;gap:6px">
               <select id="proj-client" onchange="clientChanged()" style="flex:1"><option value="">Select client...</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('client')" title="Add new client"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-client" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-                <input type="text" id="qa-client-name" placeholder="Client name (e.g. PSC)" style="flex:1">
+                <input type="text" id="qa-client-name" placeholder="Client name (e.g. PSC)" aria-label="Quick-add client name" style="flex:1">
               </div>
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">After saving, set the program (RUS / BAU / GFR / Other) on each engineering contract you create for this client.</div>
               <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -1493,7 +1529,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
           </div>
           <div class="form-group" id="proj-ptype-wrap">
-            <label>Program * <span style="color:var(--text-muted);font-weight:400">(drives which fields populate)</span></label>
+            <label for="proj-ptype">Program * <span style="color:var(--text-muted);font-weight:400">(drives which fields populate)</span></label>
             <select id="proj-ptype" onchange="ptypeChanged()">
               <option value="">Select program...</option>
             </select>
@@ -1502,7 +1538,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <!-- ROW 1b: Engineering Contract (shown for RUS / GF(R) only) -->
         <div class="form-row" id="proj-ec-row" style="display:none">
           <div class="form-group span2" id="proj-ec-wrap">
-            <label id="proj-ec-label">Engineering Contract *</label>
+            <label id="proj-ec-label" for="proj-ec">Engineering Contract *</label>
             <!-- Top-level: active picker dropdown -->
             <select id="proj-ec" onchange="ecChanged()" style="width:100%">
               <option value="">— Select engineering contract —</option>
@@ -1515,15 +1551,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <!-- ROW 2: Construction Contract | Service Area -->
         <div class="form-row" id="proj-row-contract-area">
           <div class="form-group" id="proj-contract-wrap">
-            <label>Construction Contract</label>
+            <label for="proj-contract">Construction Contract</label>
             <div style="display:flex;gap:6px">
               <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new construction contract"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-contract-num" placeholder="Contract # (e.g. RUS-217)" style="flex:1">
-                <input type="text" id="qa-contract-name" placeholder="Display name (optional)" style="flex:2">
+                <input type="text" id="qa-contract-num" placeholder="Contract # (e.g. RUS-217)" aria-label="Quick-add contract number" style="flex:1">
+                <input type="text" id="qa-contract-name" placeholder="Display name (optional)" aria-label="Quick-add contract display name" style="flex:2">
               </div>
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Will be added under the currently-selected client.</div>
               <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -1536,7 +1572,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
                Both wrappers live in the same form-row column slot — gating shows
                exactly one at a time (or neither if no program signal yet). -->
           <div class="form-group" id="proj-concentrator-wrap">
-            <label>Service Area</label>
+            <label for="proj-concentrator">Service Area</label>
             <div style="display:flex;gap:6px">
               <select id="proj-concentrator" onchange="concentratorChanged()" style="flex:1">
                 <option value="">— Pick contract first —</option>
@@ -1545,9 +1581,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
             <div id="qa-conc" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Contract 3)" style="flex:1">
-                <input type="text" id="qa-conc-area" placeholder="Area name (e.g. Mt. Paran)" style="flex:1">
-                <input type="text" id="qa-conc-wo" placeholder="WO# (optional)" style="flex:1">
+                <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Contract 3)" aria-label="Quick-add concentrator contract label" style="flex:1">
+                <input type="text" id="qa-conc-area" placeholder="Area name (e.g. Mt. Paran)" aria-label="Quick-add concentrator area name" style="flex:1">
+                <input type="text" id="qa-conc-wo" placeholder="WO# (optional)" aria-label="Quick-add concentrator work order number" style="flex:1">
               </div>
               <div style="display:flex;gap:6px;justify-content:flex-end">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('conc', false)">Cancel</button>
@@ -1556,7 +1592,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
           </div>
           <div class="form-group" id="proj-service-area-wrap" style="display:none">
-            <label>Service Area</label>
+            <label for="proj-service-area">Service Area</label>
             <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc.">
             <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client + team.</span>
           </div>
@@ -1564,11 +1600,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <!-- ROW 3: WO# | Job -->
         <div class="form-row" id="proj-row-wo-job">
           <div class="form-group" id="proj-wo-wrap">
-            <label>Work Order Number <span style="color:var(--text-muted);font-weight:400">(RUS only)</span></label>
+            <label for="proj-wo">Work Order Number <span style="color:var(--text-muted);font-weight:400">(RUS only)</span></label>
             <input type="text" id="proj-wo" placeholder="e.g. 16316">
           </div>
           <div class="form-group">
-            <label>Job * <span style="color:var(--text-muted);font-weight:400">(work category)</span></label>
+            <label for="proj-job">Job * <span style="color:var(--text-muted);font-weight:400">(work category)</span></label>
             <div style="display:flex;gap:6px">
               <select id="proj-job" onchange="jobChanged()" style="flex:1">
                 <option value="">Select job...</option>
@@ -1577,11 +1613,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </div>
             <div id="qa-job" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-job-name" placeholder="Job name (e.g. Surveyor)" style="flex:2">
-                <input type="number" id="qa-job-rate" placeholder="Default rate" step="0.01" style="flex:1">
+                <input type="text" id="qa-job-name" placeholder="Job name (e.g. Surveyor)" aria-label="Quick-add job name" style="flex:2">
+                <input type="number" id="qa-job-rate" placeholder="Default rate" aria-label="Quick-add job default rate" step="0.01" style="flex:1">
               </div>
               <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
-                <select id="qa-job-billing" style="flex:1;font-size:12px">
+                <select id="qa-job-billing" aria-label="Quick-add job billing type" style="flex:1;font-size:12px">
                   <option value="hourly">Hourly ($/hr)</option>
                   <option value="footage">Footage ($/mile)</option>
                 </select>
@@ -1597,7 +1633,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <!-- Rate section — shown/hidden by type -->
         <div id="rate-section" class="form-row">
           <div class="form-group" id="rate-group">
-            <label id="rate-label">Billing Rate ($/hr)</label>
+            <label id="rate-label" for="proj-rate">Billing Rate ($/hr)</label>
             <div class="input-group">
               <input type="number" id="proj-rate" placeholder="0.00" step="0.01" oninput="calcExpected()">
               <span class="input-addon">/hr</span>
@@ -1605,14 +1641,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <span class="form-hint" id="rate-hint">Optional. Leave blank if billing by flat amount instead.</span>
           </div>
           <div class="form-group" id="footage-group" style="display:none">
-            <label>Linear Footage</label>
+            <label for="proj-footage">Linear Footage</label>
             <div class="input-group">
               <input type="number" id="proj-footage" placeholder="0" oninput="calcExpected()">
               <span class="input-addon">LF</span>
             </div>
           </div>
           <div class="form-group" id="manual-amount-group">
-            <label>Flat Invoice Amount <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <label for="proj-manual-amount">Flat Invoice Amount <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
             <div class="input-group">
               <span class="input-addon">$</span>
               <input type="number" id="proj-manual-amount" placeholder="0.00" step="0.01">
@@ -1634,7 +1670,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
              at parent levels. Optional. -->
         <div class="form-row" id="proj-row-cadence">
           <div class="form-group">
-            <label>Billing Cadence</label>
+            <label for="proj-cadence">Billing Cadence</label>
             <select id="proj-cadence" style="width:100%">
               <option value="one_time">One-time (single invoice when complete)</option>
               <option value="monthly">Monthly (bills hours each month, project stays active)</option>
@@ -1648,7 +1684,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
                in the create/edit POST. To re-enable, change display:none
                to display:block on the wrapper. -->
           <div class="form-group" style="display:none">
-            <label>Projected Revenue <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <label for="proj-projected">Projected Revenue <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
             <div class="input-group">
               <span class="input-addon">$</span>
               <input type="number" id="proj-projected" placeholder="0.00" step="0.01">
@@ -1658,7 +1694,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Status</label>
+            <label for="proj-status">Status</label>
             <select id="proj-status">
               <option value="active">Active</option>
               <option value="completed">Completed</option>
@@ -1667,20 +1703,20 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             </select>
           </div>
           <div class="form-group" id="proj-start-wrap">
-            <label>Start Date</label>
+            <label for="proj-start">Start Date</label>
             <input type="date" id="proj-start">
           </div>
         </div>
         <div class="form-group" id="budget-code-group" style="display:none">
-          <label>Budget Code <span style="font-weight:400;color:var(--text-muted)">(bills against this allocation)</span></label>
+          <label for="proj-budget-code">Budget Code <span style="font-weight:400;color:var(--text-muted)">(bills against this allocation)</span></label>
           <div style="display:flex;gap:6px">
             <select id="proj-budget-code" style="flex:1"><option value="">None — No budget link</option></select>
             <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('bcode')" title="Add new budget code"><i class="fa-solid fa-plus"></i></button>
           </div>
           <div id="qa-bcode" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
             <div style="display:flex;gap:6px;margin-bottom:6px">
-              <input type="text" id="qa-bcode-code" placeholder="Code (e.g. Inspection)" style="flex:1">
-              <input type="number" id="qa-bcode-amount" placeholder="Allocated $" style="flex:1" step="0.01">
+              <input type="text" id="qa-bcode-code" placeholder="Code (e.g. Inspection)" aria-label="Quick-add budget code name" style="flex:1">
+              <input type="number" id="qa-bcode-amount" placeholder="Allocated $" aria-label="Quick-add budget code amount" style="flex:1" step="0.01">
             </div>
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Will be added under the parent project's budget. The parent must have a budget already.</div>
             <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -1690,11 +1726,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <div class="form-group" id="permit-manager-group" style="display:none">
-          <label>Permit Manager / Created by <span style="font-weight:400;color:var(--text-muted)">(used for permit pipeline tracking)</span></label>
+          <label for="proj-permit-manager">Permit Manager / Created by <span style="font-weight:400;color:var(--text-muted)">(used for permit pipeline tracking)</span></label>
           <input type="text" id="proj-permit-manager" placeholder="Your name">
         </div>
         <div class="form-group" id="proj-notes-wrap">
-          <label>Notes</label>
+          <label for="proj-notes">Notes</label>
           <textarea id="proj-notes" placeholder="Any additional notes..."></textarea>
         </div>
       </div>
@@ -1725,31 +1761,31 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <input type="hidden" id="te-id" value="">
       <div class="form-grid">
         <div class="form-group">
-          <label>Project *</label>
+          <label for="te-project">Project *</label>
           <select id="te-project"><option value="">Select project...</option></select>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Staff Member *</label>
+            <label for="te-staff">Staff Member *</label>
             <select id="te-staff"><option value="">Select staff...</option></select>
           </div>
           <div class="form-group">
-            <label>Date *</label>
+            <label for="te-date">Date *</label>
             <input type="date" id="te-date">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Hours *</label>
+            <label for="te-hours">Hours *</label>
             <input type="number" id="te-hours" step="0.25" placeholder="0.00">
           </div>
           <div class="form-group">
-            <label>Job Title</label>
+            <label for="te-title">Job Title</label>
             <input type="text" id="te-title" placeholder="e.g. Inspection">
           </div>
         </div>
         <div class="form-group">
-          <label>Notes</label>
+          <label for="te-notes">Notes</label>
           <input type="text" id="te-notes" placeholder="Optional notes">
         </div>
       </div>
@@ -1776,11 +1812,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           Upload a CSV or Excel file with timecard data. Required columns: <strong>name, date, work_order, hours</strong> (optional: job_title). The importer will check for unknown staff, unknown work orders, and date issues before saving anything.
         </div>
         <div class="form-group">
-          <label>Choose file</label>
+          <label for="csv-import-file">Choose file</label>
           <input type="file" id="csv-import-file" accept=".csv,.tsv,.xlsx,.xls">
         </div>
         <div class="form-group" style="margin-top:8px">
-          <label>Year Override <span style="font-weight:400;color:var(--text-muted)">(auto-detects by default — only change for special cases)</span></label>
+          <label for="csv-import-year-override">Year Override <span style="font-weight:400;color:var(--text-muted)">(auto-detects by default — only change for special cases)</span></label>
           <select id="csv-import-year-override" class="filter" style="width:auto">
             <option value="">Auto-detect (smart assumption)</option>
           </select>
@@ -1858,7 +1894,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="form-grid">
           <div class="form-row">
             <div class="form-group">
-              <label>Document Type</label>
+              <label for="doc-type">Document Type</label>
               <select id="doc-type">
                 <option value="submitted_permit">Submitted Permit</option>
                 <option value="checklist">Checklist</option>
@@ -1869,17 +1905,17 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               </select>
             </div>
             <div class="form-group">
-              <label>Revision #</label>
+              <label for="doc-rev">Revision #</label>
               <input type="number" id="doc-rev" value="1" min="1">
             </div>
           </div>
           <div class="form-group">
-            <label>Upload File</label>
+            <label for="doc-file">Upload File</label>
             <input type="file" id="doc-file" accept=".pdf,.doc,.docx,.dwg,.dxf,.zip,.png,.jpg,.jpeg">
             <span class="form-hint">Up to 2&nbsp;GB. PDF, DOC, DWG, DXF, ZIP, PNG, JPG accepted.</span>
           </div>
           <div class="form-group">
-            <label>Uploaded by</label>
+            <label for="doc-uploader">Uploaded by</label>
             <input type="text" id="doc-uploader" placeholder="Your name">
           </div>
           <div id="permit-doc-progress-wrap" style="display:none">
@@ -1888,7 +1924,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <span id="permit-doc-progress-pct" style="font-variant-numeric:tabular-nums">0%</span>
             </div>
             <div style="height:8px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:4px;overflow:hidden">
-              <div id="permit-doc-progress-bar" style="height:100%;width:0;background:var(--primary);transition:width .15s ease-out"></div>
+              <div id="permit-doc-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Upload progress" style="height:100%;width:0;background:var(--primary);transition:width .15s ease-out"></div>
             </div>
           </div>
         </div>
@@ -1916,12 +1952,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div id="design-doc-list" style="margin-bottom:16px"></div>
       <div style="border-top:1px solid var(--gray-border);padding-top:16px">
         <div class="form-group">
-          <label>Final Map / DWG / Drawing</label>
+          <label for="design-doc-file">Final Map / DWG / Drawing</label>
           <input type="file" id="design-doc-file" accept=".pdf,.dwg,.dxf,.zip,.png,.jpg,.jpeg">
           <span class="form-hint">Up to 2&nbsp;GB. PDF, DWG, DXF, ZIP, PNG, JPG accepted. DWG files cannot be previewed in the browser — use Download to open in AutoCAD.</span>
         </div>
         <div class="form-group">
-          <label>Uploaded by</label>
+          <label for="design-doc-uploader">Uploaded by</label>
           <input type="text" id="design-doc-uploader" placeholder="Your name">
         </div>
         <div id="design-doc-progress-wrap" style="display:none">
@@ -1930,7 +1966,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <span id="design-doc-progress-pct" style="font-variant-numeric:tabular-nums">0%</span>
           </div>
           <div style="height:8px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:4px;overflow:hidden">
-            <div id="design-doc-progress-bar" style="height:100%;width:0;background:var(--primary);transition:width .15s ease-out"></div>
+            <div id="design-doc-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Upload progress" style="height:100%;width:0;background:var(--primary);transition:width .15s ease-out"></div>
           </div>
         </div>
       </div>
@@ -1957,22 +1993,22 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <input type="hidden" id="user-id">
       <div class="form-row">
         <div class="form-group">
-          <label>Username *</label>
+          <label for="user-username">Username *</label>
           <input type="text" id="user-username" placeholder="e.g. jsmith" autocapitalize="off" autocomplete="off">
           <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Used for sign-in. Cannot contain spaces.</span>
         </div>
         <div class="form-group">
-          <label>Full Name</label>
+          <label for="user-fullname">Full Name</label>
           <input type="text" id="user-fullname" placeholder="e.g. Jane Smith">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Email</label>
+          <label for="user-email">Email</label>
           <input type="email" id="user-email" placeholder="optional">
         </div>
         <div class="form-group">
-          <label>Role *</label>
+          <label for="user-role">Role *</label>
           <select id="user-role" onchange="userRoleChanged()">
             <option value="admin">Admin (full access)</option>
             <option value="design_manager">Design Manager (sees Design team data + revenue)</option>
@@ -2001,14 +2037,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label id="user-password-label">Password *</label>
+          <label id="user-password-label" for="user-password">Password *</label>
           <input type="password" id="user-password" placeholder="min 6 characters" autocomplete="new-password">
           <span class="form-hint" style="font-size:11px;color:var(--text-muted)" id="user-password-hint">Will be required at first sign-in. Tell the user their password — there's no email reset yet.</span>
         </div>
       </div>
       <div class="form-row" id="user-staff-link-row">
         <div class="form-group" style="flex:1">
-          <label>Linked Staff Record <span style="font-weight:400;color:var(--text-muted);font-size:11px">(required for Time Clock portal access)</span></label>
+          <label for="user-staff-id">Linked Staff Record <span style="font-weight:400;color:var(--text-muted);font-size:11px">(required for Time Clock portal access)</span></label>
           <div style="display:flex;gap:6px;align-items:stretch">
             <select id="user-staff-id" style="flex:1">
               <option value="">— Not linked —</option>
@@ -2016,7 +2052,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('staff')" title="Create a new staff record" style="white-space:nowrap"><i class="fa-solid fa-plus"></i> New staff</button>
           </div>
           <div id="qa-staff" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-            <input type="text" id="qa-staff-name" placeholder="Staff member name (e.g. Jane Smith)" style="width:100%;margin-bottom:6px">
+            <input type="text" id="qa-staff-name" placeholder="Staff member name (e.g. Jane Smith)" aria-label="Quick-add staff member name" style="width:100%;margin-bottom:6px">
             <div style="display:flex;gap:6px;justify-content:flex-end">
               <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('staff', false)">Cancel</button>
               <button type="button" class="btn btn-primary btn-sm" onclick="quickAddStaff()"><i class="fa-solid fa-check"></i> Add</button>
@@ -2050,30 +2086,30 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <p style="font-size:12px;color:var(--text-muted);margin:0 0 14px 0">Creates a staff record (used for time-entry attribution) and a linked login account in one step. The staff name and username can be different — use full name for staff (e.g. "Jane Smith") and a short login for username (e.g. "jsmith").</p>
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Staff Name *</label>
+          <label for="su-staff-name">Staff Name *</label>
           <input type="text" id="su-staff-name" placeholder="e.g. Jane Smith">
           <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Shown on time entries and hours reports.</span>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Username *</label>
+          <label for="su-username">Username *</label>
           <input type="text" id="su-username" placeholder="e.g. jsmith" autocapitalize="off" autocomplete="off">
         </div>
         <div class="form-group">
-          <label>Password *</label>
+          <label for="su-password">Password *</label>
           <input type="password" id="su-password" placeholder="min 6 characters" autocomplete="new-password">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Full Name</label>
+          <label for="su-fullname">Full Name</label>
           <input type="text" id="su-fullname" placeholder="e.g. Jane Smith (optional, used for display)">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
-          <label>Role *</label>
+          <label for="su-role">Role *</label>
           <select id="su-role">
             <option value="design_engineer">Design Engineer (own hours only)</option>
             <option value="permitting_engineer">Permitting Engineer (own hours only)</option>
@@ -2099,15 +2135,15 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>Current Password</label>
+        <label for="cp-current">Current Password</label>
         <input type="password" id="cp-current" autocomplete="current-password">
       </div>
       <div class="form-group">
-        <label>New Password</label>
+        <label for="cp-new">New Password</label>
         <input type="password" id="cp-new" autocomplete="new-password" placeholder="min 6 characters">
       </div>
       <div class="form-group">
-        <label>Confirm New Password</label>
+        <label for="cp-confirm">Confirm New Password</label>
         <input type="password" id="cp-confirm" autocomplete="new-password">
       </div>
     </div>
@@ -2136,25 +2172,25 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="form-grid">
         <div class="form-row">
           <div class="form-group">
-            <label>Job *</label>
+            <label for="itu-job">Job *</label>
             <select id="itu-job"><option value="">— Select —</option></select>
           </div>
           <div class="form-group">
-            <label>Client *</label>
+            <label for="itu-client">Client *</label>
             <select id="itu-client"><option value="">— Select —</option></select>
           </div>
         </div>
         <div class="form-group">
-          <label>Template Name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <label for="itu-name">Template Name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
           <input type="text" id="itu-name" placeholder="e.g. PSC Inspection v2">
         </div>
         <div class="form-group">
-          <label>Reference PDF *</label>
+          <label for="itu-file">Reference PDF *</label>
           <input type="file" id="itu-file" accept=".pdf,application/pdf">
           <span class="form-hint">Max 50 MB. Should be a complete sample of the desired layout.</span>
         </div>
         <div class="form-group">
-          <label>Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <label for="itu-notes">Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
           <textarea id="itu-notes" placeholder="Anything the AI should know about this template" rows="2"></textarea>
         </div>
         <div id="itu-error" style="display:none;color:var(--danger);font-size:13px"></div>
@@ -2164,7 +2200,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <span id="itu-progress-pct" style="font-variant-numeric:tabular-nums">0%</span>
           </div>
           <div style="height:8px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:4px;overflow:hidden">
-            <div id="itu-progress-bar" style="height:100%;width:0;background:var(--primary);transition:width .15s ease-out"></div>
+            <div id="itu-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Upload progress" style="height:100%;width:0;background:var(--primary);transition:width .15s ease-out"></div>
           </div>
         </div>
       </div>
@@ -2193,7 +2229,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     <div class="modal-body" style="flex:1;overflow:auto;display:flex;gap:14px;flex-wrap:wrap">
       <input type="hidden" id="ite-id">
       <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
-        <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Template HTML <span style="font-weight:400;color:var(--text-muted)">(use {{placeholders}} — see field reference below)</span></label>
+        <label for="ite-html" style="font-size:12px;font-weight:600;color:var(--text-muted)">Template HTML <span style="font-weight:400;color:var(--text-muted)">(use {{placeholders}} — see field reference below)</span></label>
         <textarea id="ite-html" style="flex:1;min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;padding:10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--surface-2);color:var(--text);white-space:pre"></textarea>
         <details style="font-size:11px;color:var(--text-muted)">
           <summary style="cursor:pointer">Available placeholders</summary>
@@ -2234,7 +2270,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-body" style="flex:1;overflow:auto;display:flex;gap:14px;flex-wrap:wrap">
       <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
-        <label style="font-size:12px;font-weight:600;color:var(--text-muted)">Filled HTML <span style="font-weight:400;color:var(--text-muted)">— edit if needed before generating PDF</span></label>
+        <label for="ipv-html" style="font-size:12px;font-weight:600;color:var(--text-muted)">Filled HTML <span style="font-weight:400;color:var(--text-muted)">— edit if needed before generating PDF</span></label>
         <textarea id="ipv-html" style="flex:1;min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;padding:10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--surface-2);color:var(--text);white-space:pre"></textarea>
       </div>
       <div style="flex:1;min-width:380px;display:flex;flex-direction:column;gap:8px">
@@ -2267,11 +2303,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <input type="hidden" id="budget-project-id">
       <div class="form-grid">
         <div class="form-group">
-          <label>Budget Name *</label>
+          <label for="budget-name">Budget Name *</label>
           <input type="text" id="budget-name" placeholder="e.g. RUS 217 Reconnect 3">
         </div>
         <div class="form-group">
-          <label>Notes</label>
+          <label for="budget-notes">Notes</label>
           <textarea id="budget-notes" placeholder="Contract details, funding source, etc."></textarea>
         </div>
       </div>
@@ -2296,11 +2332,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
       <div class="form-grid">
         <div class="form-row">
           <div class="form-group">
-            <label>Code Name *</label>
+            <label for="bc-code">Code Name *</label>
             <input type="text" id="bc-code" placeholder="e.g. Inspection">
           </div>
           <div class="form-group">
-            <label>Allocated Amount *</label>
+            <label for="bc-amount">Allocated Amount *</label>
             <div class="input-group">
               <input type="number" id="bc-amount" placeholder="0.00" step="0.01">
               <span class="input-addon">$</span>
@@ -2308,11 +2344,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
         <div class="form-group">
-          <label>Description</label>
+          <label for="bc-description">Description</label>
           <input type="text" id="bc-description" placeholder="Optional description">
         </div>
         <div class="form-group">
-          <label>Linked Job <span style="font-weight:400;color:var(--text-muted)">(optional — only this job's earned revenue will be subtracted from this allocation)</span></label>
+          <label for="bc-job-id">Linked Job <span style="font-weight:400;color:var(--text-muted)">(optional — only this job's earned revenue will be subtracted from this allocation)</span></label>
           <select id="bc-job-id">
             <option value="">— Any job —</option>
           </select>
@@ -2429,12 +2465,12 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 
       <!-- Hidden compatibility shims so legacy JS that touches these IDs doesn't crash -->
       <div style="display:none">
-        <select id="new-pe-type"></select>
-        <select id="new-pe-job"></select>
-        <input id="new-pe-code">
-        <select id="new-pe-billing-type"><option value="hourly">Hourly</option></select>
-        <input id="new-pe-rate">
-        <input id="new-pe-notes">
+        <select id="new-pe-type" aria-label="Pricing entry type"></select>
+        <select id="new-pe-job" aria-label="Pricing entry job"></select>
+        <input id="new-pe-code" aria-label="Pricing entry code">
+        <select id="new-pe-billing-type" aria-label="Pricing entry billing type"><option value="hourly">Hourly</option></select>
+        <input id="new-pe-rate" aria-label="Pricing entry rate">
+        <input id="new-pe-notes" aria-label="Pricing entry notes">
         <div id="pricing-list-body"></div>
       </div>
 
@@ -2446,18 +2482,18 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div id="jobs-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row" style="gap:6px">
-            <div class="form-group"><label style="font-size:11px">Job Name</label><input type="text" id="new-job-name" placeholder="e.g. Surveyor" style="font-size:13px"></div>
-            <div class="form-group"><label style="font-size:11px">Billing Code</label><input type="text" id="new-job-code" placeholder="e.g. g-1-B-4" style="font-size:13px"></div>
-            <div class="form-group"><label style="font-size:11px">Default Type</label><select id="new-job-bt" style="font-size:13px" onchange="updateRateLabel()"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
-            <div class="form-group"><label style="font-size:11px" id="new-job-rate-label">Default Rate ($/hr)</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
+            <div class="form-group"><label for="new-job-name" style="font-size:11px">Job Name</label><input type="text" id="new-job-name" placeholder="e.g. Surveyor" style="font-size:13px"></div>
+            <div class="form-group"><label for="new-job-code" style="font-size:11px">Billing Code</label><input type="text" id="new-job-code" placeholder="e.g. g-1-B-4" style="font-size:13px"></div>
+            <div class="form-group"><label for="new-job-bt" style="font-size:11px">Default Type</label><select id="new-job-bt" style="font-size:13px" onchange="updateRateLabel()"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
+            <div class="form-group"><label for="new-job-rate" style="font-size:11px" id="new-job-rate-label">Default Rate ($/hr)</label><input type="number" id="new-job-rate" placeholder="0.00" step="0.01" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
-            <div class="form-group"><label style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="construction">Construction only</option><option value="both">Both (explicit)</option></select></div>
+            <div class="form-group"><label for="new-job-team" style="font-size:11px" title="Controls which portal can pick this job. Permit calc is independent.">Team</label><select id="new-job-team" style="font-size:13px"><option value="">Both / Unassigned</option><option value="design">Design only</option><option value="permitting">Permitting only</option><option value="construction">Construction only</option><option value="both">Both (explicit)</option></select></div>
             <div class="form-group" style="align-items:flex-start;padding-top:18px">
               <label style="font-size:11px;display:flex;align-items:center;gap:4px" title="Auto-applied to permitting jobs"><input type="checkbox" id="new-job-perm" style="width:auto"> Uses permit calc</label>
             </div>
             <div class="form-group" title="RUS = USDA work, billing code required. Non-RUS = ordinary work. Shared = shows in both contexts.">
-              <label style="font-size:11px">Program Scope</label>
+              <label for="new-job-scope" style="font-size:11px">Program Scope</label>
               <select id="new-job-scope" style="font-size:13px">
                 <option value="rus">RUS (billing code required)</option>
                 <option value="non_rus">Non-RUS</option>
@@ -2478,7 +2514,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--text)">Project Types</span>
           <div style="display:flex;gap:6px;align-items:center">
-            <input type="text" id="new-pt-name" placeholder="e.g. Custom" style="font-size:13px;padding:4px 8px;border:1px solid var(--gray-border);border-radius:4px">
+            <input type="text" id="new-pt-name" placeholder="e.g. Custom" aria-label="New project type name" style="font-size:13px;padding:4px 8px;border:1px solid var(--gray-border);border-radius:4px">
             <button class="btn btn-secondary btn-sm" onclick="saveNewProjectType()"><i class="fa-solid fa-plus"></i> Add</button>
           </div>
         </div>
@@ -2493,10 +2529,10 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div id="clients-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row" style="gap:6px">
-            <div class="form-group" style="flex:2"><label style="font-size:11px">Name</label><input type="text" id="new-client-name" placeholder="e.g. PSC" style="font-size:13px"></div>
+            <div class="form-group" style="flex:2"><label for="new-client-name" style="font-size:11px">Name</label><input type="text" id="new-client-name" placeholder="e.g. PSC" style="font-size:13px"></div>
           </div>
           <div class="form-group" style="margin-top:6px">
-            <label style="font-size:11px">Notes</label>
+            <label for="new-client-notes" style="font-size:11px">Notes</label>
             <input type="text" id="new-client-notes" placeholder="Optional" style="font-size:13px">
           </div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Program (RUS / BAU / GFR / Other) is set per engineering contract — see the Engineering Contracts panel below.</div>
@@ -2519,14 +2555,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div id="eng-contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row" style="gap:6px">
-            <div class="form-group" style="flex:2"><label style="font-size:11px">Name *</label><input type="text" id="new-ec-name" placeholder='e.g. "RUS 217 Engineering Contract GA 1706 -A72"' style="font-size:13px"></div>
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Contract Number</label><input type="text" id="new-ec-number" placeholder="e.g. RUS 217" style="font-size:13px"></div>
-            <div class="form-group" style="flex:1" title="Loan name shown on PSC RUS invoice summaries (e.g. 'Reconnect 3'). Leave blank for non-loan contracts."><label style="font-size:11px">Loan name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" id="new-ec-loan" placeholder="e.g. Reconnect 3" style="font-size:13px"></div>
+            <div class="form-group" style="flex:2"><label for="new-ec-name" style="font-size:11px">Name *</label><input type="text" id="new-ec-name" placeholder='e.g. "RUS 217 Engineering Contract GA 1706 -A72"' style="font-size:13px"></div>
+            <div class="form-group" style="flex:1"><label for="new-ec-number" style="font-size:11px">Contract Number</label><input type="text" id="new-ec-number" placeholder="e.g. RUS 217" style="font-size:13px"></div>
+            <div class="form-group" style="flex:1" title="Loan name shown on PSC RUS invoice summaries (e.g. 'Reconnect 3'). Leave blank for non-loan contracts."><label for="new-ec-loan" style="font-size:11px">Loan name <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" id="new-ec-loan" placeholder="e.g. Reconnect 3" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-ec-client" style="font-size:13px"><option value="">— Select —</option></select></div>
+            <div class="form-group" style="flex:1"><label for="new-ec-client" style="font-size:11px">Client *</label><select id="new-ec-client" style="font-size:13px"><option value="">— Select —</option></select></div>
             <div class="form-group" style="flex:1" title="Program classification. RUS triggers the PSC RUS PDF template, the dedicated projection, and inspection-tab scoping. BAU/GFR/Other use generic billing.">
-              <label style="font-size:11px">Program</label>
+              <label for="new-ec-program" style="font-size:11px">Program</label>
               <select id="new-ec-program" style="font-size:13px">
                 <option value="">— Not set —</option>
                 <option value="rus">RUS (USDA Rural Utilities Service)</option>
@@ -2535,7 +2571,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
                 <option value="other">Other</option>
               </select>
             </div>
-            <div class="form-group" style="flex:2"><label style="font-size:11px">Notes</label><input type="text" id="new-ec-notes" placeholder="Optional" style="font-size:13px"></div>
+            <div class="form-group" style="flex:2"><label for="new-ec-notes" style="font-size:11px">Notes</label><input type="text" id="new-ec-notes" placeholder="Optional" style="font-size:13px"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('eng-contracts-add-form').style.display='none'">Cancel</button>
@@ -2558,13 +2594,13 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div id="contracts-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row" style="gap:6px">
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Client *</label><select id="new-contract-client" style="font-size:13px" onchange="filterContractEcDropdown()"><option value="">— Select —</option></select></div>
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Contract Number *</label><input type="text" id="new-contract-number" placeholder="e.g. 515-3" style="font-size:13px"></div>
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Name</label><input type="text" id="new-contract-name" placeholder="Optional descriptive name" style="font-size:13px"></div>
+            <div class="form-group" style="flex:1"><label for="new-contract-client" style="font-size:11px">Client *</label><select id="new-contract-client" style="font-size:13px" onchange="filterContractEcDropdown()"><option value="">— Select —</option></select></div>
+            <div class="form-group" style="flex:1"><label for="new-contract-number" style="font-size:11px">Contract Number *</label><input type="text" id="new-contract-number" placeholder="e.g. 515-3" style="font-size:13px"></div>
+            <div class="form-group" style="flex:1"><label for="new-contract-name" style="font-size:11px">Name</label><input type="text" id="new-contract-name" placeholder="Optional descriptive name" style="font-size:13px"></div>
           </div>
           <div class="form-row" style="gap:6px;margin-top:6px">
-            <div class="form-group" style="flex:1"><label style="font-size:11px">Engineering Contract <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><select id="new-contract-ec" style="font-size:13px"><option value="">— None (standalone) —</option></select></div>
-            <div class="form-group" style="flex:1" title="Friendly label shown on PSC RUS invoice summaries (e.g. 'Contract 3' for 515-3)"><label style="font-size:11px">Friendly Label <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" id="new-contract-label" placeholder="e.g. Contract 3" style="font-size:13px"></div>
+            <div class="form-group" style="flex:1"><label for="new-contract-ec" style="font-size:11px">Engineering Contract <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><select id="new-contract-ec" style="font-size:13px"><option value="">— None (standalone) —</option></select></div>
+            <div class="form-group" style="flex:1" title="Friendly label shown on PSC RUS invoice summaries (e.g. 'Contract 3' for 515-3)"><label for="new-contract-label" style="font-size:11px">Friendly Label <span style="color:var(--text-muted);font-weight:400">(optional)</span></label><input type="text" id="new-contract-label" placeholder="e.g. Contract 3" style="font-size:13px"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contracts-add-form').style.display='none'">Cancel</button>
@@ -2662,6 +2698,30 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
           </div>
         </div>
       </div>
+
+      <!-- FE-4: Projection Data Quality panel (admin only).
+           Surfaces 5 categories of bad/missing data that degrade projection
+           accuracy. Hidden from non-admins by the openSettings() visibility
+           gate (same .settings-section class as Users & Roles). -->
+      <div class="settings-section" id="proj-dq-section" style="margin-top:24px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0">
+            <i class="fa-solid fa-chart-bar" style="margin-right:6px;color:var(--text-muted)"></i>Projection Data Quality
+          </h4>
+          <button class="btn btn-secondary btn-sm" onclick="loadProjectionDQ()" title="Refresh">
+            <i class="fa-solid fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">
+          Projects and engineering contracts with missing or stale data that reduce projection accuracy.
+          Fix issues by clicking the project link to open its detail view.
+        </p>
+        <div id="proj-dq-body">
+          <div style="padding:20px;text-align:center;color:var(--text-muted)">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading…
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <span id="pricing-gaps-summary" style="font-size:12px;color:var(--text-muted);flex:1"></span>
@@ -2680,6 +2740,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/undo_bar.js"></script>
 <script src="/js/tree_state.js"></script>
 <script src="/js/overlay_modal.js"></script>
+<script src="/js/focus_trap.js"></script>
 <script src="/js/project_picker.js"></script>
 <script src="/js/audit_drawer.js"></script>
 <script src="/js/bulk_bill_modal.js"></script>
@@ -2832,7 +2893,7 @@ function bulkToggleAll(check) {
 async function bulkSetStatus(newStatus) {
   if (!bulkSelected.size) return;
   const ids = [...bulkSelected];
-  const ok = confirm(`Set ${ids.length} project(s) to status "${newStatus}"?`);
+  const ok = await confirmDialog({ title: 'Bulk status change', message: `Set ${ids.length} project(s) to status "${newStatus}"?`, confirmLabel: 'Set Status', danger: false });
   if (!ok) return;
   let okCount = 0, failCount = 0;
   for (const id of ids) {
@@ -2897,7 +2958,15 @@ function persistFilter(storageKey, el) {
     // Fire a change event so any listeners that drive dependent UI
     // (e.g. syncHrsPeriodVisibility hiding the month picker when
     // period=ytd) pick up the restored value immediately.
-    el.dispatchEvent(new Event('change', { bubbles: true }));
+    // L-1: skip the dispatch if the element's tab is not the currently active
+    // view — firing loadHours() / loadPermits() etc. on inactive tabs wastes
+    // API calls and can race with the tab's own showView() load trigger.
+    // showView() calls the load function directly when the user navigates there.
+    const tabView = el.closest && el.closest('.view');
+    const tabIsActive = tabView ? tabView.classList.contains('active') : true;
+    if (tabIsActive) {
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   }
   const save = () => {
     const v = (el.value || '').slice(0, 200);
@@ -3666,7 +3735,7 @@ function renderPrintPdfBody(result) {
       <div style="color:var(--text-muted)">Projects</div><div>${m.project_count || 0}</div>
       <div style="color:var(--text-muted)">Billing Month</div>
       <div>
-        <input type="month" id="print-pdf-billing-month" value="${defaultBillingMonth(m)}" style="padding:4px 8px;border:1px solid var(--gray-border);border-radius:4px;font-size:13px">
+        <input type="month" id="print-pdf-billing-month" value="${defaultBillingMonth(m)}" aria-label="Billing month for PDF" style="padding:4px 8px;border:1px solid var(--gray-border);border-radius:4px;font-size:13px">
         <span style="color:var(--text-muted);font-size:11px;margin-left:8px">Shown on the PDF; also filters time entries to this month for hourly jobs.${m.inferred_period_start ? ` Detected range: ${m.inferred_period_start} → ${m.inferred_period_end}` : ''}</span>
       </div>
     </div>
@@ -3934,7 +4003,7 @@ async function confirmBatch(batchId, name, total) {
 }
 
 async function breakBatch(batchId, name) {
-  if (!confirm(`Break batch "${name}"? The projects return to the unbilled queue. No invoice is created.`)) return;
+  if (!await confirmDialog({ title: `Break batch "${name}"?`, message: 'The projects return to the unbilled queue. No invoice is created.', confirmLabel: 'Break Batch', danger: true })) return;
   try {
     await api('/api/billing/batches/' + batchId, 'DELETE');
     if (window.LFS && window.LFS.toast) window.LFS.toast.success('Batch broken.');
@@ -4899,7 +4968,7 @@ async function confirmDeleteProject(id, name, afterDelete) {
   const projCount = p ? p.total_projects : '?';
   const teCount   = p ? p.time_entries   : '?';
   const msg = `Delete "${name}"?\n\nCascade preview:\n• ${projCount} project${projCount === 1 ? '' : 's'} will be deleted\n• ${teCount} time entr${teCount === 1 ? 'y' : 'ies'} will be deleted\n• All permit stages and documents will be deleted\n\nYou'll get a 15-second undo window after the delete.`;
-  if (!confirm(msg)) return;
+  if (!await confirmDialog({ title: `Delete "${name}"?`, message: msg, confirmLabel: 'Delete', danger: true })) return;
   // Step 2: execute with confirm:true.
   try {
     const r = await api('/api/projects/' + id + '/with-tree', 'DELETE', { confirm: true });
@@ -5060,16 +5129,16 @@ async function openBillSelectedModal() {
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Invoice Number / Name *</label>
+        <label for="bs-invoice-num">Invoice Number / Name *</label>
         <input type="text" id="bs-invoice-num" placeholder="e.g. INV-2026-Q1-Knoxville">
       </div>
       <div class="form-group">
-        <label>Invoice Date</label>
+        <label for="bs-invoice-date">Invoice Date</label>
         <input type="date" id="bs-invoice-date" value="${today}">
       </div>
     </div>
     <div class="form-group">
-      <label>Notes / Description (optional)</label>
+      <label for="bs-invoice-name">Notes / Description (optional)</label>
       <input type="text" id="bs-invoice-name" placeholder="e.g. Knoxville inspection — Q1 2026">
     </div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:14px">
@@ -5173,11 +5242,11 @@ async function markBilled(id) {
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Invoice Number <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <label for="bv-invoice-num">Invoice Number <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
         <input type="text" id="bv-invoice-num" placeholder="e.g. INV-2026-0042">
       </div>
       <div class="form-group">
-        <label>Invoice Date</label>
+        <label for="bv-invoice-date">Invoice Date</label>
         <input type="date" id="bv-invoice-date" value="${today}">
       </div>
     </div>
@@ -5188,7 +5257,7 @@ async function markBilled(id) {
           <span><strong>Create follow-on project</strong> for ongoing work after this billing</span>
         </label>
         <div style="margin-top:8px;display:none" id="bv-follow-on-name-row">
-          <input type="text" id="bv-follow-on-name" value="${esc(p.name)} (continued)" style="width:100%">
+          <input type="text" id="bv-follow-on-name" value="${esc(p.name)} (continued)" aria-label="Follow-on project name" style="width:100%">
         </div>
       </div>` : ''}
     <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
@@ -5387,7 +5456,7 @@ async function saveBudget() {
 }
 
 async function deleteBudget() {
-  if (!confirm('Delete this budget and all its codes? Projects linked to these codes will be unlinked.')) return;
+  if (!await confirmDialog({ title: 'Delete budget?', message: 'This will delete the budget and all its codes. Projects linked to these codes will be unlinked.', confirmLabel: 'Delete Budget', danger: true })) return;
   const budgetId = document.getElementById('budget-id').value;
   await api('/api/budgets/' + budgetId, 'DELETE');
   closeModal('budget-modal');
@@ -5453,7 +5522,7 @@ async function saveBudgetCode() {
 }
 
 async function deleteBudgetCode() {
-  if (!confirm('Delete this budget code?')) return;
+  if (!await confirmDialog({ title: 'Delete budget code?', message: 'This budget code will be permanently removed.', confirmLabel: 'Delete', danger: true })) return;
   const id = document.getElementById('bc-id').value;
   await api('/api/budget-codes/' + id, 'DELETE');
   closeModal('budget-code-modal');
@@ -5759,7 +5828,7 @@ function renderImportReview(d) {
             ${missingJTCount > 0 ? `${missingJTCount} row${missingJTCount!==1?'s':''} have no job title. ` : ''}Apply this job title to ${missingJTCount > 0 ? 'those rows' : 'all rows'}:
           </label>
           <div style="display:flex;gap:8px;align-items:center">
-            <select id="apply-job-title" onchange="document.getElementById('apply-job-title-custom').style.display = this.value === '__custom__' ? 'block' : 'none'" style="flex:1;padding:6px;border:1px solid var(--gray-border);border-radius:6px">
+            <select id="apply-job-title" onchange="document.getElementById('apply-job-title-custom').style.display = this.value === '__custom__' ? 'block' : 'none'" aria-label="Apply job title" style="flex:1;padding:6px;border:1px solid var(--gray-border);border-radius:6px">
               <option value="">— Leave blank —</option>
               <option value="Inspector"${inferredJT==='Inspector'?' selected':''}>Inspector</option>
               <option value="Resident Engineer"${inferredJT==='Resident Engineer'?' selected':''}>Resident Engineer</option>
@@ -5770,7 +5839,7 @@ function renderImportReview(d) {
               <option value="Foreman"${inferredJT==='Foreman'?' selected':''}>Foreman</option>
               <option value="__custom__">Other (enter below)…</option>
             </select>
-            <input type="text" id="apply-job-title-custom" placeholder="Custom title" style="flex:1;padding:6px;border:1px solid var(--gray-border);border-radius:6px;display:none">
+            <input type="text" id="apply-job-title-custom" placeholder="Custom title" aria-label="Custom job title" style="flex:1;padding:6px;border:1px solid var(--gray-border);border-radius:6px;display:none">
           </div>
         ` : ''}
       </div>
@@ -5787,7 +5856,7 @@ function renderImportReview(d) {
           ${d.unknown_staff.map((u, i) => `
             <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-border)">
               <strong style="flex:1;min-width:140px">${esc(u.name)}</strong>
-              <select id="staff-action-${i}" style="flex:2;padding:6px;border:1px solid var(--gray-border);border-radius:6px">
+              <select id="staff-action-${i}" aria-label="Action for ${esc(u.name)}" style="flex:2;padding:6px;border:1px solid var(--gray-border);border-radius:6px">
                 <option value="create" data-name="${esc(u.name)}">Create as new staff: "${esc(u.name)}"</option>
                 ${u.similar.map(sim => `<option value="map:${sim.id}">Use existing: ${esc(sim.name)}</option>`).join('')}
                 <option value="skip">Skip rows for this name</option>
@@ -5829,15 +5898,15 @@ function renderImportReview(d) {
               <tr style="border-top:1px solid var(--gray-border)" data-unknown-wo="${esc(wo)}">
                 <td style="padding:6px 8px;font-family:monospace;font-weight:600">${esc(wo)}</td>
                 <td style="padding:6px 8px">
-                  <select class="csv-wo-action" data-i="${i}" onchange="csvToggleWoCreate(${i})" style="width:100%;padding:4px;font-size:11px">
+                  <select class="csv-wo-action" data-i="${i}" onchange="csvToggleWoCreate(${i})" aria-label="Action for WO ${esc(wo)}" style="width:100%;padding:4px;font-size:11px">
                     <option value="skip">Skip rows</option>
                     <option value="create">Create new project</option>
                   </select>
                 </td>
-                <td style="padding:6px 8px"><input type="text" class="csv-wo-name" data-i="${i}" placeholder="WO ${esc(wo)}" disabled style="width:100%;padding:4px;font-size:11px"></td>
-                <td style="padding:6px 8px"><select class="csv-wo-client" data-i="${i}" disabled style="width:100%;padding:4px;font-size:11px"><option value="">— Pick client —</option>${clientOptions}</select></td>
-                <td style="padding:6px 8px"><select class="csv-wo-job" data-i="${i}" disabled style="width:100%;padding:4px;font-size:11px"><option value="">— Pick job —</option>${jobOpts2}</select></td>
-                <td style="padding:6px 8px"><input type="text" class="csv-wo-area" data-i="${i}" placeholder="optional" disabled style="width:100%;padding:4px;font-size:11px"></td>
+                <td style="padding:6px 8px"><input type="text" class="csv-wo-name" data-i="${i}" placeholder="WO ${esc(wo)}" aria-label="Project name for WO ${esc(wo)}" disabled style="width:100%;padding:4px;font-size:11px"></td>
+                <td style="padding:6px 8px"><select class="csv-wo-client" data-i="${i}" disabled aria-label="Client for WO ${esc(wo)}" style="width:100%;padding:4px;font-size:11px"><option value="">— Pick client —</option>${clientOptions}</select></td>
+                <td style="padding:6px 8px"><select class="csv-wo-job" data-i="${i}" disabled aria-label="Job for WO ${esc(wo)}" style="width:100%;padding:4px;font-size:11px"><option value="">— Pick job —</option>${jobOpts2}</select></td>
+                <td style="padding:6px 8px"><input type="text" class="csv-wo-area" data-i="${i}" placeholder="optional" aria-label="Service area for WO ${esc(wo)}" disabled style="width:100%;padding:4px;font-size:11px"></td>
               </tr>
             `).join('')}
           </tbody>
@@ -5942,24 +6011,24 @@ function csvLedgerRow(r, projOptions, staffOptions, jobOptions) {
     <td style="padding:6px 8px;color:var(--text-muted)">${r.row_num}</td>
     <td style="padding:6px 8px">${esc(r.date || '—')}</td>
     <td style="padding:6px 8px">
-      <select onchange="csvLedgerEdit(${r.row_num}, 'staff_id', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid ${staffWarn?'var(--warning)':'var(--gray-border)'};border-radius:4px;max-width:140px">
+      <select onchange="csvLedgerEdit(${r.row_num}, 'staff_id', this.value)" aria-label="Staff member for row ${r.row_num}" style="font-size:11px;padding:2px 4px;border:1px solid ${staffWarn?'var(--warning)':'var(--gray-border)'};border-radius:4px;max-width:140px">
         ${staffSel}
       </select>
       ${staffWarn ? `<div style="font-size:10px;color:var(--warning);margin-top:2px">Original: ${esc(r.name)}</div>` : ''}
     </td>
     <td style="padding:6px 8px;text-align:right">
-      <input type="number" value="${r.hours}" step="0.0001" min="0" onchange="csvLedgerEdit(${r.row_num}, 'hours', this.value)" style="width:70px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;text-align:right">
+      <input type="number" value="${r.hours}" step="0.0001" min="0" onchange="csvLedgerEdit(${r.row_num}, 'hours', this.value)" aria-label="Hours for row ${r.row_num}" style="width:70px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;text-align:right">
     </td>
     <td style="padding:6px 8px;font-family:monospace;font-size:11px">${esc(r.wo)}</td>
     <td style="padding:6px 8px">
-      <select onchange="csvLedgerEdit(${r.row_num}, 'project_id', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid ${woWarn?'var(--warning)':'var(--gray-border)'};border-radius:4px;max-width:240px">
+      <select onchange="csvLedgerEdit(${r.row_num}, 'project_id', this.value)" aria-label="Project for row ${r.row_num}" style="font-size:11px;padding:2px 4px;border:1px solid ${woWarn?'var(--warning)':'var(--gray-border)'};border-radius:4px;max-width:240px">
         ${projSel}
       </select>
       ${woWarn ? `<div style="font-size:10px;color:var(--warning);margin-top:2px">No project found for WO ${esc(r.wo)}</div>` : ''}
     </td>
     <td style="padding:6px 8px;font-family:monospace;font-size:11px;color:var(--text-muted)">${esc(r.billing_code || '—')}</td>
     <td style="padding:6px 8px">
-      <input type="text" list="csv-job-titles" value="${esc(r.job_title || '')}" onchange="csvLedgerEdit(${r.row_num}, 'job_title', this.value)" style="width:130px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px">
+      <input type="text" list="csv-job-titles" value="${esc(r.job_title || '')}" onchange="csvLedgerEdit(${r.row_num}, 'job_title', this.value)" aria-label="Job title for row ${r.row_num}" style="width:130px;font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px">
     </td>
     <td style="padding:6px 8px;font-size:10px;color:var(--text-muted)">
       ${r.already_billed_period ? `<span style="background:var(--warning);color:#fff;padding:2px 6px;border-radius:8px;font-weight:600">⚠ Month already billed</span><br>` : ''}
@@ -6202,6 +6271,8 @@ async function showProjectDetail(projectId) {
   try {
     const data = await api(`/api/projects/${projectId}/detail?${params.toString()}`);
     renderProjectDetail(data, m, y);
+    // FE-3: fire projection tile load after detail renders (async, non-blocking)
+    loadProjectProjection(projectId).catch(() => {});
   } catch (e) {
     document.getElementById('pd-body').innerHTML = '<div class="alert alert-warn"><i class="fa-solid fa-triangle-exclamation"></i> Failed to load: ' + esc(e.message) + '</div>';
   }
@@ -6342,12 +6413,9 @@ function renderProjectDetail(data, month, year) {
       ? (['completed', 'billed'].includes(p.status) ? parseFloat(p.expected_revenue || 0) : lifetimeHrs * rate)
       : lifetimeHrs * rate;
 
-    // Projected Revenue tile retired pending revisit. Always render the
-    // placeholder so users don't think the figure is missing — it's just
-    // intentionally not surfaced right now. The expected_revenue column
-    // and permit calc are still computed; this is purely the displayed
-    // tile that's shelved.
-    html += `<div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Projected Revenue</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>`;
+    // FE-3: Projected Revenue tile — async-filled by loadProjectProjection().
+    // Placeholder spinner shown inline; BE-3 fills it after detail loads.
+    html += `<div class="stat-card" id="pd-proj-tile"><div class="stat-label" style="display:flex;align-items:center;gap:4px">Projected Revenue <span title="Single-project completion forecast. Bar segments: billed / WIP / projected new / red = overage." style="cursor:help;font-size:10px;color:var(--text-muted)">&#63;</span></div><div id="pd-proj-inner" style="margin-top:4px"><i class="fa-solid fa-spinner fa-spin" style="color:var(--text-muted)"></i></div></div>`;
     html += `<div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value">${fmt(lifetimeHrs || totalHrs)}</div><div class="stat-sub">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div>`;
     html += `<div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" style="color:var(--success)">${fmtMoney(earnedAllTime)}</div><div class="stat-sub">earned to date</div></div>`;
     if (isFootage && p.footage) {
@@ -6366,11 +6434,10 @@ function renderProjectDetail(data, month, year) {
     if (lifetimeHrs > 0 && !isContainer) {
       html += `<div class="stat-card"><div class="stat-label">Lifetime Hours</div><div class="stat-value">${fmt(lifetimeHrs)}</div></div>`;
     }
-    // Projected Revenue + Remaining tiles retired pending revisit. Same
-    // story as the footage variant above — figures still compute under
-    // the hood, just not displayed.
-    html += `<div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Projected Revenue</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>
-      <div class="stat-card" style="background:var(--surface-2,#f5f5f5)"><div class="stat-label">Remaining</div><div class="stat-value" style="font-size:14px;font-weight:600;letter-spacing:.05em;color:var(--text-muted)"><i class="fa-solid fa-screwdriver-wrench" style="margin-right:6px"></i>UNDER CONSTRUCTION</div><div class="stat-sub">retired pending revisit</div></div>`;
+    // FE-3: Projected Revenue tile — async-filled by loadProjectProjection().
+    // Single tile covers all four numbers + burn bar; the Remaining value
+    // is shown as projected_remaining inside the tile content.
+    html += `<div class="stat-card" id="pd-proj-tile"><div class="stat-label" style="display:flex;align-items:center;gap:4px">Projected Revenue <span title="Single-project completion forecast. Bar segments: billed / WIP / projected new / red = overage." style="cursor:help;font-size:10px;color:var(--text-muted)">&#63;</span></div><div id="pd-proj-inner" style="margin-top:4px"><i class="fa-solid fa-spinner fa-spin" style="color:var(--text-muted)"></i></div></div>`;
     if (isFootage && p.footage) {
       html += `<div class="stat-card"><div class="stat-label">Footage</div><div class="stat-value">${parseFloat(p.footage).toLocaleString()}</div><div class="stat-sub">${(p.footage / 5280).toFixed(2)} mi</div></div>`;
     }
@@ -6727,6 +6794,15 @@ async function openSettings() {
   }
 
   refreshSettingsDot();
+
+  // FE-4: show + load Projection Data Quality panel for admins
+  try {
+    const dqSection = document.getElementById('proj-dq-section');
+    if (dqSection && typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+      dqSection.style.display = '';
+      loadProjectionDQ().catch(() => {});
+    }
+  } catch (e) { console.warn('proj-dq load skipped:', e.message); }
 }
 
 
@@ -6811,7 +6887,7 @@ function formatRequestCard(sr, isPending) {
     overrideUI = `<div style="margin-top:10px;padding:8px 10px;background:var(--gray-light);border-radius:6px">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Set on approval (admin)</div>
       <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
-        <div><label style="font-size:11px;display:block">Team</label>
+        <div><label for="ovr-team-${sr.id}" style="font-size:11px;display:block">Team</label>
           <select id="ovr-team-${sr.id}" style="font-size:12px;padding:3px 6px">
             <option value="">Both / Unassigned</option>
             <option value="design"${payload.team==='design'?' selected':''}>Design only</option>
@@ -6820,7 +6896,7 @@ function formatRequestCard(sr, isPending) {
             <option value="both"${payload.team==='both'?' selected':''}>Both (explicit)</option>
           </select>
         </div>
-        <div><label style="font-size:11px;display:block">Default Rate</label>
+        <div><label for="ovr-rate-${sr.id}" style="font-size:11px;display:block">Default Rate</label>
           <input type="number" id="ovr-rate-${sr.id}" step="0.01" placeholder="0.00" style="font-size:12px;padding:3px 6px;width:80px" value="${payload.default_rate ?? ''}">
         </div>
       </div>
@@ -7307,7 +7383,7 @@ async function saveUser() {
 }
 
 async function deactivateUser(id, username) {
-  if (!confirm(`Deactivate user "${username}"?\n\nThey will no longer be able to sign in. Their history and time entries are preserved.`)) return;
+  if (!await confirmDialog({ title: `Deactivate "${username}"?`, message: `They will no longer be able to sign in. Their history and time entries are preserved.`, confirmLabel: 'Deactivate', danger: true })) return;
   try {
     await api('/api/users/' + id, 'DELETE');
     loadUsers();
@@ -7812,26 +7888,415 @@ const _formDraftCleanups = {};
 // ═══════════════════════════════════════════════════════════
 // MODAL HELPERS
 // ═══════════════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// Per-modal focus-trap registry. Maps modal-id → trap object returned by trapFocus().
+const _modalTraps = {};
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('open');
+  // A11y: trap focus inside the modal; ESC closes it.
+  if (window.trapFocus) {
+    if (_modalTraps[id]) _modalTraps[id].release();
+    _modalTraps[id] = trapFocus(el, {
+      escClose: true,
+      onEsc: () => closeModal(id),
+    });
+  }
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  // Release the focus trap and restore focus to the trigger element.
+  if (_modalTraps[id]) {
+    _modalTraps[id].release();
+    delete _modalTraps[id];
+  }
+}
 
 // Global modal-close behaviors:
-// (1) ESC key closes the topmost open modal
-// (2) Clicking the overlay (outside the .modal box) closes it
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  const open = document.querySelectorAll('.modal-overlay.open');
-  if (!open.length) return;
-  // Close just the last-opened (visually topmost) one
-  open[open.length - 1].classList.remove('open');
-});
+// (1) Clicking the overlay (outside the .modal box) closes it
+// Note: ESC is now handled per-modal by trapFocus (above).
 document.addEventListener('click', (e) => {
   // Only fire when the click target IS the overlay itself, not its children
-  if (e.target.classList && e.target.classList.contains('modal-overlay')) {
-    e.target.classList.remove('open');
+  if (e.target.classList && e.target.classList.contains('modal-overlay') && e.target.classList.contains('open')) {
+    closeModal(e.target.id);
   }
 });
-document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) closeModal(m.id); }));
+
+// ═══════════════════════════════════════════════════════════
+// FE-1 / FE-2: RUS 13-WEEK PROJECTION TILE + BUCKET DRILL-IN
+// ═══════════════════════════════════════════════════════════
+
+let _rusExpanded = false;
+
+function rusToggleExpand() {
+  const expand = document.getElementById('rus-proj-expand');
+  const tile   = document.getElementById('rus-proj-tile');
+  const chev   = document.getElementById('rus-proj-chev');
+  if (!expand) return;
+  _rusExpanded = !_rusExpanded;
+  expand.style.display = _rusExpanded ? '' : 'none';
+  if (tile)  tile.setAttribute('aria-expanded', String(_rusExpanded));
+  if (chev)  chev.style.transform = _rusExpanded ? 'rotate(180deg)' : '';
+}
+
+// Renders an inline SVG sparkline from an array of 13 weekly values.
+// Width = viewBox width (200), height = viewBox height (35).
+function _rusSparklineSvg(values) {
+  const svg = document.getElementById('rus-proj-sparkline');
+  if (!svg || !values || !values.length) return;
+  const W = 200, H = 35, pad = 2;
+  const max = Math.max(...values, 1);
+  const pts = values.map((v, i) => {
+    const x = pad + (i / (values.length - 1 || 1)) * (W - pad * 2);
+    const y = H - pad - ((v / max) * (H - pad * 2));
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  svg.innerHTML =
+    `<polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<polyline points="${pts[0]} ${pts.join(' ')} ${(W - pad).toFixed(1)},${H} ${pad},${H}" fill="rgba(255,255,255,.12)" stroke="none"/>`;
+  svg.style.display = '';
+}
+
+// FE-1: loads /api/automation/psc-rus-projection and populates the tile.
+// Called by loadInspectionProjection() in dashboard_views.js (which we
+// replace below to actually fire this).
+async function _loadRusProjectionTile() {
+  const tile     = document.getElementById('s-90d-projection');
+  const subNums  = document.getElementById('s-90d-subnumbers');
+  const mtdLabel = document.getElementById('s-90d-mtd-label');
+  const dqChip   = document.getElementById('rus-proj-dq-chip');
+  if (!tile) return;
+
+  // NF-2: re-renders (SSE refresh, period filter change) should land on a
+  // collapsed expand panel. Without this, the next click after a re-render
+  // collapses instead of opens because _rusExpanded carries over stale state.
+  _rusExpanded = false;
+  const _expand = document.getElementById('rus-proj-expand');
+  const _tileEl = document.getElementById('rus-proj-tile');
+  const _chev   = document.getElementById('rus-proj-chev');
+  if (_expand) _expand.style.display = 'none';
+  if (_tileEl) _tileEl.setAttribute('aria-expanded', 'false');
+  if (_chev)   _chev.style.transform = '';
+
+  let data;
+  try {
+    data = await api('/api/automation/psc-rus-projection');
+  } catch (e) {
+    tile.textContent = '—';
+    if (mtdLabel) mtdLabel.textContent = 'Projection unavailable';
+    return;
+  }
+
+  const gt = data.grand_total || {};
+  const totalBilled      = parseFloat(gt.billed        || data.total_billed        || 0);
+  const totalWip         = parseFloat(gt.wip           || data.total_wip           || 0);
+  const totalProjectedNew= parseFloat(gt.projected_new || data.total_projected_new || 0);
+  const grandTotal       = totalBilled + totalWip + totalProjectedNew;
+
+  const rows = data.rows || data.umbrellas || [];
+
+  // Empty state
+  if (!rows.length) {
+    tile.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,.6)">No RUS projection data — set up an EC with program=\'rus\' to populate.</span>';
+    if (mtdLabel) mtdLabel.textContent = '';
+    return;
+  }
+
+  // Main headline number
+  tile.textContent = fmtMoney(grandTotal);
+  tile.style.fontSize = '22px';
+  tile.style.fontWeight = '700';
+
+  // Sub-rows
+  if (subNums) {
+    document.getElementById('s-90d-billed').textContent        = fmtMoney(totalBilled);
+    document.getElementById('s-90d-wip').textContent           = fmtMoney(totalWip);
+    document.getElementById('s-90d-projected-new').textContent = fmtMoney(totalProjectedNew);
+    subNums.style.display = '';
+  }
+
+  // MTD label — sum MTD hours across umbrellas
+  const totalMtdHrs = rows.reduce((s, r) => s + (parseFloat(r.mtd_hours) || 0), 0);
+  if (mtdLabel) {
+    mtdLabel.textContent = `MTD: ${fmt(totalMtdHrs, 'hrs')}  |  13-wk pace: ${fmtMoney(totalProjectedNew)}`;
+  }
+
+  // Aggregate sparkline across all umbrellas (sum by week index)
+  const sparkline = new Array(13).fill(0);
+  for (const r of rows) {
+    const sp = r.sparkline_weekly || [];
+    sp.forEach((v, i) => { if (i < 13) sparkline[i] += parseFloat(v) || 0; });
+  }
+  _rusSparklineSvg(sparkline);
+
+  // Data-quality chip
+  if (dqChip) {
+    try {
+      const dq = await api('/api/automation/projection-data-quality');
+      const total = (dq.summary && dq.summary.total_issues) || 0;
+      if (total === 0) {
+        dqChip.textContent = '✓ All clear';
+        dqChip.style.background = 'rgba(40,167,69,.25)';
+        dqChip.style.color = '#7ee89f';
+      } else {
+        dqChip.textContent = `${total} issue${total > 1 ? 's' : ''} — view in Settings`;
+        dqChip.style.background = 'rgba(240,165,0,.25)';
+        dqChip.style.color = '#ffd070';
+        dqChip.style.cursor = 'pointer';
+        dqChip.onclick = (e) => { e.stopPropagation(); openSettings(); };
+      }
+      dqChip.style.display = '';
+    } catch (_) { /* DQ chip is best-effort */ }
+  }
+
+  // FE-2: render bucket drill-in body (pre-populate so it's instant on expand)
+  _renderRusBucketTable(rows);
+}
+
+// FE-2: renders the per-bucket expansion table.
+function _renderRusBucketTable(rows) {
+  const body = document.getElementById('rus-proj-expand-body');
+  if (!body) return;
+  // NF-1: backend emits bucket key 'other' (not 'misc') for the catch-all
+  // bucket — keep the FE-facing label as "Misc" per the design spec but map
+  // it off the 'other' key the backend actually sends.
+  const BUCKET_LABELS = { inspection: 'Inspection', re: 'RE', permitting: 'Permitting', other: 'Misc' };
+
+  let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:var(--gray-light)">
+      <th style="padding:7px 10px;text-align:left">Bucket / EC</th>
+      <th style="padding:7px 8px;text-align:right">Billed</th>
+      <th style="padding:7px 8px;text-align:right">WIP</th>
+      <th style="padding:7px 8px;text-align:right">Projected New</th>
+      <th style="padding:7px 8px;text-align:right">Total</th>
+      <th style="padding:7px 8px;text-align:right">Pace/wk</th>
+      <th style="padding:7px 8px;text-align:right">Budget Rem.</th>
+      <th style="padding:7px 8px;text-align:left">Horizon</th>
+    </tr></thead><tbody>`;
+
+  for (const umbrella of rows) {
+    const ecName = esc(umbrella.engineering_contract_name || umbrella.ec_name || '—');
+    // Umbrella header row
+    html += `<tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);border-left:3px solid var(--primary)">
+      <td style="padding:8px 10px;font-weight:700" colspan="8">
+        <i class="fa-solid fa-folder-tree" style="color:var(--primary);margin-right:6px"></i>${ecName}
+        <span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:6px">${esc(umbrella.client_name || '')}</span>
+      </td></tr>`;
+
+    const buckets = umbrella.buckets || umbrella.breakdown || [];
+    for (const b of buckets) {
+      const label = BUCKET_LABELS[b.bucket || b.job_bucket] || esc(b.bucket || b.job_bucket || '—');
+      const isCloseOut = b.horizon_reason === 'close_out_80pct';
+      const rowStyle = isCloseOut ? 'background:rgba(240,165,0,.08);' : '';
+      const closeOutBadge = isCloseOut
+        ? `<span title="Project &gt;80% billed — horizon shortened to 3 weeks" style="margin-left:6px;font-size:10px;background:var(--warning-light,#FFF8E7);color:#8B5E00;padding:1px 5px;border-radius:8px;cursor:help">&#9888; Close-out</span>`
+        : '';
+      const noRate = b.bucket_no_rate
+        ? `<span style="font-size:10px;color:var(--danger);margin-left:4px" title="No billing rate — $0 projected">no rate</span>`
+        : '';
+
+      // Pace per week: projected_new / horizon_weeks (13 or 3)
+      const horizonWks = isCloseOut ? 3 : 13;
+      const pacePerWk = b.pace_per_week != null
+        ? parseFloat(b.pace_per_week)
+        : (parseFloat(b.projected_new || 0) / horizonWks);
+      const budgetRem = b.budget_remaining != null ? fmtMoney(b.budget_remaining) : '—';
+      const horizonLabel = isCloseOut ? '3 wks' : '13 wks';
+
+      html += `<tr style="border-top:1px solid var(--gray-border);${rowStyle}">
+        <td style="padding:6px 10px 6px 28px;color:var(--text)">
+          ${label}${closeOutBadge}${noRate}
+        </td>
+        <td style="padding:6px 8px;text-align:right">${fmtMoney(b.billed || b.billed_to_date || 0)}</td>
+        <td style="padding:6px 8px;text-align:right">${fmtMoney(b.wip || 0)}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:600;color:var(--primary)">${fmtMoney(b.projected_new || b.projected_remaining_revenue || 0)}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:600">${fmtMoney(b.total || 0)}</td>
+        <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${fmtMoney(pacePerWk)}</td>
+        <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${budgetRem}</td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--text-muted)">${horizonLabel}</td>
+      </tr>`;
+    }
+  }
+
+  html += `</tbody></table></div>`;
+  body.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FE-3: PROJECT DRILL-DOWN PROJECTED REVENUE TILE
+// ═══════════════════════════════════════════════════════════
+
+async function loadProjectProjection(projectId) {
+  const inner = document.getElementById('pd-proj-inner');
+  if (!inner) return;
+
+  let d;
+  try {
+    d = await api(`/api/automation/project-projection/${projectId}`);
+  } catch (e) {
+    inner.innerHTML = '<span style="font-size:11px;color:var(--text-muted)">Projection unavailable</span>';
+    return;
+  }
+
+  if (!d) {
+    inner.innerHTML = '<span style="font-size:11px;color:var(--text-muted)">No projection data</span>';
+    return;
+  }
+
+  // Empty / insufficient data state
+  if (d.rate_missing && !d.actual_billed) {
+    inner.innerHTML = `<span style="font-size:11px;color:var(--text-muted)">Projection not available — project needs <code>billing_rate</code> and either <code>expected_hours</code> or recent time entries.</span>`;
+    return;
+  }
+
+  const bb = d.burn_bar || {};
+  const billedPct    = parseFloat(bb.billed_pct    || 0);
+  const wipPct       = parseFloat(bb.wip_pct       || 0);
+  const projPct      = parseFloat(bb.projected_pct || 0);
+  const overagePct   = parseFloat(bb.overage_pct   || 0);
+  const isOverage    = overagePct > 0;
+
+  // 4 numbers block
+  const numsHtml = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px">
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">Billed</div>
+        <div style="font-weight:700;color:var(--success)">${fmtMoney(d.actual_billed)}</div>
+      </div>
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">WIP</div>
+        <div style="font-weight:700;color:#e6a817">${fmtMoney(d.wip)}</div>
+      </div>
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">Projected</div>
+        <div style="font-weight:700;color:var(--primary)">${fmtMoney(d.projected_remaining)}</div>
+      </div>
+      <div style="flex:1;min-width:70px">
+        <div style="color:var(--text-muted)">At completion</div>
+        <div style="font-weight:700;${isOverage ? 'color:var(--danger)' : ''}">${fmtMoney(d.total_at_completion)}</div>
+      </div>
+    </div>`;
+
+  // Horizontal burn bar
+  const barHtml = `
+    <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:4px" title="${esc(d.methodology_note || '')}">
+      ${billedPct  > 0 ? `<div style="width:${billedPct}%;background:#28A745" title="Billed: ${billedPct.toFixed(1)}%"></div>` : ''}
+      ${wipPct     > 0 ? `<div style="width:${wipPct}%;background:#e6a817" title="WIP: ${wipPct.toFixed(1)}%"></div>` : ''}
+      ${projPct    > 0 ? `<div style="width:${projPct}%;background:var(--primary,#1B5FA0)" title="Projected: ${projPct.toFixed(1)}%"></div>` : ''}
+      ${overagePct > 0 ? `<div style="width:${overagePct}%;background:var(--danger,#dc3545)" title="Overage: ${overagePct.toFixed(1)}%"></div>` : ''}
+      <div style="flex:1;background:var(--gray-border)"></div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;color:var(--text-muted)">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#28A745;margin-right:2px"></span>Billed</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#e6a817;margin-right:2px"></span>WIP</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--primary);margin-right:2px"></span>Projected</span>
+      ${isOverage ? `<span style="color:var(--danger)"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--danger);margin-right:2px"></span>Overage</span>` : ''}
+    </div>`;
+
+  // Close-out note
+  const horizonNote = d.horizon_reason === 'close_out_80pct'
+    ? `<div style="margin-top:6px;font-size:10px;color:#8B5E00;background:rgba(240,165,0,.1);padding:3px 6px;border-radius:4px">&#9888; &gt;80% billed — horizon shortened to 3 weeks</div>`
+    : '';
+
+  inner.innerHTML = numsHtml + barHtml + horizonNote;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FE-4: PROJECTION DATA QUALITY PANEL
+// ═══════════════════════════════════════════════════════════
+
+async function loadProjectionDQ() {
+  const body = document.getElementById('proj-dq-body');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+
+  let dq;
+  try {
+    dq = await api('/api/automation/projection-data-quality');
+  } catch (e) {
+    body.innerHTML = '<div class="alert alert-warn"><i class="fa-solid fa-triangle-exclamation"></i> Failed to load data quality report: ' + esc(e.message) + '</div>';
+    return;
+  }
+
+  const lists = dq.lists || {};
+  const summary = dq.summary || {};
+  const totalIssues = summary.total_issues || 0;
+
+  if (totalIssues === 0) {
+    body.innerHTML = `<div style="padding:16px;text-align:center;color:var(--success,#28A745)">
+      <i class="fa-solid fa-circle-check" style="font-size:20px;display:block;margin-bottom:6px"></i>
+      <strong>All projection inputs clean</strong> — no data quality issues.
+    </div>`;
+    return;
+  }
+
+  const SECTIONS = [
+    { key: 'null_or_zero_rate',     label: 'Null or zero billing rate',             icon: 'fa-dollar-sign',    isProject: true,
+      desc: 'These projects have no billing rate set. Their hours are excluded from pace calculations and project $0.' },
+    { key: 'null_expected_revenue', label: 'Permitting projects with no expected revenue', icon: 'fa-file-invoice-dollar', isProject: true,
+      desc: 'Expected revenue is required for permitting/footage projects. Without it the project contributes $0 to projection.' },
+    { key: 'stale_footage_revenue', label: 'Footage projects with stale expected revenue', icon: 'fa-arrows-rotate', isProject: true,
+      desc: 'Footage was edited but expected_revenue was not updated. Projection may be overstated or understated.' },
+    { key: 'sparse_history',        label: 'Projects with sparse time-entry history (<3 weeks)', icon: 'fa-clock', isProject: true,
+      desc: 'Fewer than 3 weeks of billable time entries reduces pace accuracy. Consider adding historical entries or treating projection as rough estimate.' },
+    { key: 'ec_no_budget',          label: 'Engineering contracts with no budget',   icon: 'fa-wallet',         isProject: false,
+      desc: 'Without a budget allocation the EC projection has no cap — hours will project as if work is unlimited.' },
+  ];
+
+  let html = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">As of ${new Date(dq.as_of || Date.now()).toLocaleString()} — ${totalIssues} issue${totalIssues !== 1 ? 's' : ''} total</div>`;
+
+  for (const sec of SECTIONS) {
+    const items = lists[sec.key] || [];
+    if (!items.length) continue;
+
+    html += `
+      <details style="margin-bottom:10px;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden" open>
+        <summary style="padding:10px 12px;cursor:pointer;background:var(--gray-light);display:flex;align-items:center;gap:8px;list-style:none;font-weight:600;font-size:13px">
+          <i class="fa-solid ${sec.icon}" style="color:var(--text-muted);width:16px;text-align:center"></i>
+          ${esc(sec.label)}
+          <span style="margin-left:auto;background:var(--warning,#F0A500);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">${items.length}</span>
+        </summary>
+        <div style="padding:8px 12px">
+          <p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">${esc(sec.desc)}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="border-bottom:1px solid var(--gray-border)">
+              <th style="padding:4px 8px;text-align:left">Name</th>
+              <th style="padding:4px 8px;text-align:left">Client</th>
+              <th style="padding:4px 8px;text-align:left">EC</th>
+              ${sec.isProject ? '<th style="padding:4px 8px;text-align:left">Action</th>' : ''}
+            </tr></thead>
+            <tbody>`;
+
+    for (const item of items) {
+      if (sec.isProject) {
+        html += `<tr style="border-bottom:1px solid var(--gray-border)">
+          <td style="padding:5px 8px;font-weight:500">
+            <a href="#" onclick="closeModal('settings-modal');showProjectDetail('${esc(item.project_id)}');return false;"
+               style="color:var(--primary);text-decoration:none">${esc(item.name)}</a>
+          </td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.client_name || '—')}</td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.ec_name || '—')}</td>
+          <td style="padding:5px 8px;font-size:11px;color:var(--text-muted)">${esc(item.suggested_action || '—')}</td>
+        </tr>`;
+      } else {
+        html += `<tr style="border-bottom:1px solid var(--gray-border)">
+          <td style="padding:5px 8px;font-weight:500">${esc(item.ec_name || '—')}</td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.client_name || '—')}</td>
+          <td style="padding:5px 8px;color:var(--text-muted)">${esc(item.program || '—')}</td>
+        </tr>`;
+      }
+    }
+
+    html += `</tbody></table></div></details>`;
+  }
+
+  body.innerHTML = html;
+}
 
 // ═══════════════════════════════════════════════════════════
 // FORMATTERS

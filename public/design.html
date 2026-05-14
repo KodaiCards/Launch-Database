@@ -16,7 +16,7 @@
   --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
   --gray-light:#F5F7FA;--white:#FFFFFF;--row-alt:#F0F0F0;
   --border-strong:#DEE2E6;--border-weak:#EEF1F5;--gray-border:#DEE2E6;--gray:#6B6B6B;
-  --text:#212529;--text-secondary:#495057;--text-muted:#6C757D;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
   --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
   --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
   --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#B71C1C;
@@ -35,8 +35,8 @@
    window.toggleDarkMode(). */
 html[data-theme="dark"]{
   --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;--primary-text:#FFFFFF;
-  --surface-1:#1A1F26;--surface-2:#242B36;--surface-3:#1F2630;
-  --gray-light:#1A1F26;--white:#242B36;--row-alt:#1F2630;
+  --surface-1:#1A1F26;--surface-2:#1D2430;--surface-3:#1F2630;
+  --gray-light:#1A1F26;--white:#1D2430;--row-alt:#1F2630;
   --border-strong:#2D3540;--border-weak:#252A33;--gray-border:#2D3540;
   --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
   --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
@@ -58,7 +58,7 @@ html[data-theme="dark"] textarea{background:var(--white);color:var(--text);borde
    color-scheme:dark covers them. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
-  background:#242B36!important;
+  background:#1D2430!important;
   color:#E8EAED!important;
 }
 html[data-theme="dark"] select option:checked,
@@ -309,6 +309,8 @@ fetch('/api/auth/me', { credentials: 'include' })
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
+<script src="/js/dialog.js" defer></script>
+<script src="/js/focus_trap.js" defer></script>
 <script src="/js/undo_bar.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
 </head>
@@ -381,8 +383,8 @@ fetch('/api/auth/me', { credentials: 'include' })
        which made getElementById('dpb') return null and crashed loadProjects'
        catch (line 641) the moment any /api/projects call threw. -->
   <div style="display:none">
-    <input id="proj-search">
-    <select id="proj-status-filter"><option value="active" selected>Active</option></select>
+    <input id="proj-search" aria-label="Search projects">
+    <select id="proj-status-filter" aria-label="Project status filter"><option value="active" selected>Active</option></select>
     <table><tbody id="dpb"></tbody></table>
   </div>
 </div>
@@ -527,29 +529,29 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- Tabs inside settings -->
-      <div style="display:flex;gap:4px;border-bottom:2px solid var(--gray-border);margin-bottom:14px;overflow-x:auto">
-        <button class="settings-tab active" data-tab="jobs" onclick="setStab('jobs')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--portal-color);border-bottom:2px solid var(--portal-color);margin-bottom:-2px">Jobs</button>
-        <button class="settings-tab" data-tab="ptypes" onclick="setStab('ptypes')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Project Types</button>
-        <button class="settings-tab" data-tab="clients" onclick="setStab('clients')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Clients</button>
-        <button class="settings-tab" data-tab="contracts" onclick="setStab('contracts')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Contracts</button>
+      <div role="tablist" aria-label="Settings sections" style="display:flex;gap:4px;border-bottom:2px solid var(--gray-border);margin-bottom:14px;overflow-x:auto">
+        <button class="settings-tab active" role="tab" aria-selected="true" aria-controls="stab-jobs" id="stab-tab-jobs" data-tab="jobs" onclick="setStab('jobs')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--portal-color);border-bottom:2px solid var(--portal-color);margin-bottom:-2px">Jobs</button>
+        <button class="settings-tab" role="tab" aria-selected="false" aria-controls="stab-ptypes" id="stab-tab-ptypes" data-tab="ptypes" onclick="setStab('ptypes')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Project Types</button>
+        <button class="settings-tab" role="tab" aria-selected="false" aria-controls="stab-clients" id="stab-tab-clients" data-tab="clients" onclick="setStab('clients')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Clients</button>
+        <button class="settings-tab" role="tab" aria-selected="false" aria-controls="stab-contracts" id="stab-tab-contracts" data-tab="contracts" onclick="setStab('contracts')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Contracts</button>
       </div>
 
       <!-- JOBS pane -->
-      <div id="stab-jobs" class="stab" style="display:block">
+      <div id="stab-jobs" class="stab" role="tabpanel" aria-labelledby="stab-tab-jobs" style="display:block">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Jobs available to the Design team. Add a new one to propose it for admin review.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Job</button>
         </div>
         <div id="jobs-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Job Name *</label><input type="text" id="njob-name" placeholder="e.g. CAD Drafting"></div>
-            <div class="form-group"><label>Default Type</label><select id="njob-bt"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
+            <div class="form-group"><label for="njob-name">Job Name *</label><input type="text" id="njob-name" placeholder="e.g. CAD Drafting"></div>
+            <div class="form-group"><label for="njob-bt">Default Type</label><select id="njob-bt"><option value="hourly">Hourly</option><option value="footage">Footage</option></select></div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label><input type="checkbox" id="njob-perm" style="width:auto;margin-right:6px"> Uses permit calc (for permitting jobs)</label>
             </div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="njob-by" placeholder="So admin knows who proposed this"></div>
+            <div class="form-group"><label for="njob-by">Your Name</label><input type="text" id="njob-by" placeholder="So admin knows who proposed this"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='none'">Cancel</button>
@@ -560,15 +562,15 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- PROJECT TYPES pane -->
-      <div id="stab-ptypes" class="stab" style="display:none">
+      <div id="stab-ptypes" class="stab" role="tabpanel" aria-labelledby="stab-tab-ptypes" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Program categories used when classifying projects.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ptype-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Type</button>
         </div>
         <div id="ptype-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Type Name *</label><input type="text" id="nptype-name" placeholder="e.g. Construction"></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="nptype-by" placeholder="Who's proposing"></div>
+            <div class="form-group"><label for="nptype-name">Type Name *</label><input type="text" id="nptype-name" placeholder="e.g. Construction"></div>
+            <div class="form-group"><label for="nptype-by">Your Name</label><input type="text" id="nptype-by" placeholder="Who's proposing"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ptype-add-form').style.display='none'">Cancel</button>
@@ -579,17 +581,17 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- CLIENTS pane -->
-      <div id="stab-clients" class="stab" style="display:none">
+      <div id="stab-clients" class="stab" role="tabpanel" aria-labelledby="stab-tab-clients" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Clients available across the firm.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('client-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Client</button>
         </div>
         <div id="client-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Client Name *</label><input type="text" id="nclient-name" placeholder="e.g. Cox Communications"></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="nclient-by" placeholder="Who's proposing"></div>
+            <div class="form-group"><label for="nclient-name">Client Name *</label><input type="text" id="nclient-name" placeholder="e.g. Cox Communications"></div>
+            <div class="form-group"><label for="nclient-by">Your Name</label><input type="text" id="nclient-by" placeholder="Who's proposing"></div>
           </div>
-          <div class="form-group"><label>Notes</label><textarea id="nclient-notes" placeholder="Optional context..."></textarea></div>
+          <div class="form-group"><label for="nclient-notes">Notes</label><textarea id="nclient-notes" placeholder="Optional context..."></textarea></div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('client-add-form').style.display='none'">Cancel</button>
             <button class="btn btn-primary btn-sm" onclick="proposeClient()"><i class="fa-solid fa-paper-plane"></i> Submit for Approval</button>
@@ -599,19 +601,19 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- CONTRACTS pane -->
-      <div id="stab-contracts" class="stab" style="display:none">
+      <div id="stab-contracts" class="stab" role="tabpanel" aria-labelledby="stab-tab-contracts" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Contracts under each client.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contract-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Contract</button>
         </div>
         <div id="contract-add-form" style="display:none;background:var(--gray-light);padding:10px 12px;border-radius:6px;margin-bottom:10px">
           <div class="form-row">
-            <div class="form-group"><label>Client *</label><select id="ncontract-client"><option value="">Select...</option></select></div>
-            <div class="form-group"><label>Contract # *</label><input type="text" id="ncontract-num" placeholder="e.g. C-2025-001"></div>
+            <div class="form-group"><label for="ncontract-client">Client *</label><select id="ncontract-client"><option value="">Select...</option></select></div>
+            <div class="form-group"><label for="ncontract-num">Contract # *</label><input type="text" id="ncontract-num" placeholder="e.g. C-2025-001"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Name / Description</label><input type="text" id="ncontract-name" placeholder="Optional friendly name"></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="ncontract-by" placeholder="Who's proposing"></div>
+            <div class="form-group"><label for="ncontract-name">Name / Description</label><input type="text" id="ncontract-name" placeholder="Optional friendly name"></div>
+            <div class="form-group"><label for="ncontract-by">Your Name</label><input type="text" id="ncontract-by" placeholder="Who's proposing"></div>
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
             <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contract-add-form').style.display='none'">Cancel</button>
@@ -646,11 +648,11 @@ fetch('/api/auth/me', { credentials: 'include' })
   <div class="modal">
     <div class="modal-header"><span class="modal-title" id="ppm-title"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Submit Potential Permit</span><button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cm('ppm')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
     <div class="modal-body">
-      <div class="form-group"><label>SR/HWY *</label><input id="ps" placeholder="e.g. SR 49, HWY 240"></div>
-      <div class="form-group"><label>County</label><input id="pc" placeholder="e.g. Peach County"></div>
-      <div class="form-group"><label>Route</label><input id="pr" placeholder="Route description"></div>
-      <div class="form-group"><label>Your Name</label><input id="pn" placeholder="Your name"></div>
-      <div class="form-group"><label>Notes</label><textarea id="pno" placeholder="Additional details..."></textarea></div>
+      <div class="form-group"><label for="ps">SR/HWY *</label><input id="ps" placeholder="e.g. SR 49, HWY 240"></div>
+      <div class="form-group"><label for="pc">County</label><input id="pc" placeholder="e.g. Peach County"></div>
+      <div class="form-group"><label for="pr">Route</label><input id="pr" placeholder="Route description"></div>
+      <div class="form-group"><label for="pn">Your Name</label><input id="pn" placeholder="Your name"></div>
+      <div class="form-group"><label for="pno">Notes</label><textarea id="pno" placeholder="Additional details..."></textarea></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="cm('ppm')">Cancel</button><button class="btn btn-primary" onclick="spp()"><i class="fa-solid fa-paper-plane"></i> Submit</button></div>
   </div>
@@ -679,8 +681,25 @@ let allConcentrators = [];
 // ─── Tiny utilities ─────────────────────────────────────────────────────────
 function esc(s){if(s==null)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
 function escUrl(s) { return encodeURIComponent(String(s||'')).replace(/%2F/g, '/'); }
-function om(id){document.getElementById(id).classList.add('open')}
-function cm(id){document.getElementById(id).classList.remove('open')}
+// Per-modal focus-trap registry for static .modal-overlay modals.
+const _omTraps = {};
+
+function om(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('open');
+  // A11y: trap focus; ESC closes.
+  if (window.trapFocus) {
+    if (_omTraps[id]) _omTraps[id].release();
+    _omTraps[id] = trapFocus(el, { escClose: true, onEsc: () => cm(id) });
+  }
+}
+function cm(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('open');
+  if (_omTraps[id]) { _omTraps[id].release(); delete _omTraps[id]; }
+}
 async function api(p,m='GET',b=null){
   const o={method:m,headers:{'Content-Type':'application/json'},credentials:'include'};
   try{const tok=sessionStorage.getItem('lfs_token');if(tok)o.headers['Authorization']='Bearer '+tok;}catch(e){}
@@ -705,7 +724,11 @@ async function api(p,m='GET',b=null){
 function sv(v){
   document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  document.querySelectorAll('.nav-tab').forEach(t=>{
+    const active = t.dataset.view===v;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
   if(v==='pipeline')   loadPipeline();
   if(v==='potential')  loadPotential();
 }
@@ -718,6 +741,7 @@ function setStab(name){
     t.style.borderBottom = active ? '2px solid var(--portal-color)' : 'none';
     t.style.fontWeight = active ? '600' : '500';
     t.style.marginBottom = active ? '-2px' : '0';
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
   });
   document.querySelectorAll('.stab').forEach(p=>p.style.display='none');
   document.getElementById('stab-'+name).style.display='block';
@@ -1377,7 +1401,7 @@ async function loadPipeline(){
 // 202 + { pending: true }). The project stays visible in the pipeline
 // until admin approves, so the UI just shows a confirmation and reloads.
 async function deleteProjectFromPipeline(id, name){
-  if (!confirm(`Request deletion of "${name}"?\n\nThis sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`)) return;
+  if (!await confirmDialog({ title: `Request deletion of "${name}"?`, message: `This sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`, confirmLabel: 'Send Request', danger: true })) return;
   try {
     const resp = await api('/api/projects/' + id, 'DELETE');
     if (resp && resp.pending) {
@@ -1391,7 +1415,7 @@ async function deleteProjectFromPipeline(id, name){
 
 
 async function regressDesign(id, name){
-  if (!confirm(`Move "${name||''}" back one stage in the design pipeline?`)) return;
+  if (!await confirmDialog({ title: 'Regress design stage?', message: `Move "${name||''}" back one stage in the design pipeline?`, confirmLabel: 'Regress', danger: true })) return;
   try {
     await api('/api/design/' + id + '/regress', 'PUT', {});
     loadPipeline();
@@ -1729,9 +1753,15 @@ function togglePortalsDropdown() {
   }
 }
 // Centered profile modal (matches admin). Re-creates on each open.
+let _accountMenuTrap = null;
+function _closeAccountMenu() {
+  const m = document.getElementById('account-modal');
+  if (m) m.remove();
+  if (_accountMenuTrap) { _accountMenuTrap.release(); _accountMenuTrap = null; }
+}
 function showAccountMenu() {
   const existing = document.getElementById('account-modal');
-  if (existing) { existing.remove(); return; }
+  if (existing) { _closeAccountMenu(); return; }
   const u = currentUser || {};
   const teams = [];
   const primary = u.role === 'admin' ? null
@@ -1754,11 +1784,15 @@ function showAccountMenu() {
   overlay.id = 'account-modal';
   overlay.className = 'modal-overlay';
   overlay.style.display = 'flex';
+  // A11y: dialog role + label
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'account-modal-title');
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:420px;width:90%">
       <div class="modal-header">
-        <span class="modal-title"><i class="fa-solid fa-user-circle" style="margin-right:8px"></i>Account</span>
-        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('account-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+        <span class="modal-title" id="account-modal-title"><i class="fa-solid fa-user-circle" style="margin-right:8px" aria-hidden="true"></i>Account</span>
+        <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="_closeAccountMenu()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="modal-body">
         <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
@@ -1769,12 +1803,12 @@ function showAccountMenu() {
             ${teamPills}
           </div>
         </div>
-        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
-          <i class="fa-solid fa-key" style="margin-right:10px"></i>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="_closeAccountMenu();openChangePasswordModal()">
+          <i class="fa-solid fa-key" style="margin-right:10px" aria-hidden="true"></i>
           <span>Change Password</span>
         </button>
         <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
-          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i>
+          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px" aria-hidden="true"></i>
           <span>Sign Out</span>
         </button>
       </div>
@@ -1782,8 +1816,12 @@ function showAccountMenu() {
   `;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) _closeAccountMenu();
   });
+  // A11y: trap focus and handle ESC
+  if (window.trapFocus) {
+    _accountMenuTrap = trapFocus(overlay, { escClose: true, onEsc: _closeAccountMenu });
+  }
 }
 async function signOut() {
   // No confirm — modal already counts as the deliberate action.
@@ -1904,6 +1942,9 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
       });
       ['project_added', 'project_updated', 'project_deleted'].forEach(ev => {
         _sseSource.addEventListener(ev, () => _debounce('projects', () => callIfExists('loadProjects')));
+        // Also refresh the design pipeline view on project changes — stage advances/
+        // regresses now broadcast project_updated so the pipeline stays live.
+        _sseSource.addEventListener(ev, () => _debounce('pipeline', () => callIfExists('loadPipeline')));
       });
       ['staff_added', 'staff_updated', 'staff_deleted'].forEach(ev => {
         _sseSource.addEventListener(ev, () => _debounce('staff', () => {

@@ -159,7 +159,7 @@
         <details style="margin-bottom:10px;padding:10px;background:var(--gray-light);border-radius:6px">
           <summary style="cursor:pointer;font-size:12px;font-weight:600">Bulk attach: send all ${r.orphan_count} to one project</summary>
           <div style="display:flex;gap:6px;margin-top:8px">
-            <select id="orphan-bulk-project" style="flex:1;font-size:12px;padding:4px 6px">${projectOptions}</select>
+            <select id="orphan-bulk-project" aria-label="Select project for bulk attach" style="flex:1;font-size:12px;padding:4px 6px">${projectOptions}</select>
             <button class="btn btn-primary btn-sm" onclick="adoptOrphansBulk()">Attach All</button>
           </div>
         </details>
@@ -172,7 +172,7 @@
               <tr style="border-top:1px solid var(--gray-border)">
                 <td style="padding:6px 8px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(o.file_name)}">${esc(o.file_name)}</td>
                 <td style="padding:6px 8px;text-align:right;color:var(--text-muted)">${fmtSize(o.file_size)}</td>
-                <td style="padding:6px 8px"><select id="orphan-proj-${i}" style="font-size:11px;padding:2px 4px;width:100%">${projectOptions}</select></td>
+                <td style="padding:6px 8px"><select id="orphan-proj-${i}" aria-label="Select project for ${esc(o.file_name)}" style="font-size:11px;padding:2px 4px;width:100%">${projectOptions}</select></td>
                 <td style="padding:6px 8px"><button class="btn btn-sm btn-primary" onclick="adoptOrphan('${esc(o.file_path)}', ${i})"><i class="fa-solid fa-link"></i></button></td>
               </tr>`).join('')}
             </tbody>

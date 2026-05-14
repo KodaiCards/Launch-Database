@@ -250,10 +250,10 @@
         .filter(ec => ec.client_id === c.client_id)
         .map(ec => `<option value="${esc(ec.id)}"${c.engineering_contract_id === ec.id ? ' selected' : ''}>${esc(ec.name)}</option>`));
     tr.innerHTML = `
-      <td style="padding:6px 8px;font-family:monospace"><input type="text" id="ct-edit-num-${id}" value="${esc(c.contract_number)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
-      <td style="padding:6px 8px"><input type="text" id="ct-edit-name-${id}" value="${esc(c.name || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
-      <td style="padding:6px 8px"><select id="ct-edit-ec-${id}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">${ecOpts.join('')}</select></td>
-      <td style="padding:6px 8px"><input type="text" id="ct-edit-label-${id}" value="${esc(c.friendly_label || '')}" placeholder="e.g. Contract 3" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+      <td style="padding:6px 8px;font-family:monospace"><input type="text" id="ct-edit-num-${id}" aria-label="Contract number" value="${esc(c.contract_number)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace"></td>
+      <td style="padding:6px 8px"><input type="text" id="ct-edit-name-${id}" aria-label="Contract name" value="${esc(c.name || '')}" placeholder="—" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><select id="ct-edit-ec-${id}" aria-label="Engineering contract" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">${ecOpts.join('')}</select></td>
+      <td style="padding:6px 8px"><input type="text" id="ct-edit-label-${id}" aria-label="Friendly label" value="${esc(c.friendly_label || '')}" placeholder="e.g. Contract 3" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
         <button class="btn btn-sm btn-primary" onclick="saveContractEdit('${id}')"><i class="fa-solid fa-check"></i></button>
         <button class="btn btn-sm btn-secondary" onclick="renderContractsList()"><i class="fa-solid fa-xmark"></i></button>

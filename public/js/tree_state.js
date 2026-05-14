@@ -58,6 +58,9 @@ function makeTreeState(name) {
 const projectsTreeState       = makeTreeState('projects');
 const hoursTreeState          = makeTreeState('hours');
 const billingHistoryTreeState = makeTreeState('billing-history');
+// Revenue tree gets its own instance so expand/collapse in the Revenue tab
+// does not bleed into the Projects or Dashboard trees (H-8 fix).
+const revenueTreeState        = makeTreeState('revenue');
 
 // Shared chevron-toggle for the three project-tree views (Projects,
 // Dashboard, Revenue) that all reuse projectsTreeState. Each view picks

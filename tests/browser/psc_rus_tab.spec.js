@@ -47,15 +47,17 @@ test('admin can log in and open the PSC RUS tab without uncaught errors', async 
   await expect(pscTab).toBeVisible();
   await pscTab.click();
 
-  // 3. The PSC RUS projection card lives at #psc-rus-projection-card. It's
-  //    rendered display:none initially and shown by JS once data lands.
-  //    For an empty test DB it may stay hidden; what matters is that the
-  //    container element exists in the DOM (i.e. the section renders) and
-  //    no exception fired during the click. We also wait briefly for the
-  //    section's projects table to render — that's the part most exposed
-  //    to clientsCache-style bugs because it iterates cached data.
-  await expect(page.locator('#psc-rus-projection-card')).toHaveCount(1);
-  await expect(page.locator('#psc-rus-projection-body')).toHaveCount(1);
+  // 3. After clicking the tab, the inspection view must be visible. Wave
+  //    Projection FE-2 (commit d0bc210) deleted the old
+  //    #psc-rus-projection-card placeholder (replaced by the dashboard's
+  //    #rus-proj-tile + #rus-proj-expand). The new gate: confirm the
+  //    inspection view actually opened by checking #view-inspection is
+  //    visible, and confirm its filter controls (the part most exposed to
+  //    clientsCache-style bugs because they reference cached data) are
+  //    in the DOM.
+  await expect(page.locator('#view-inspection')).toBeVisible();
+  await expect(page.locator('#insp-period')).toHaveCount(1);
+  await expect(page.locator('#insp-status')).toHaveCount(1);
 
   // 4. Brief settle so any async loaders trigger their error paths if they
   //    were going to. 1500ms is enough for the polling tick + the

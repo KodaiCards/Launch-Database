@@ -301,6 +301,41 @@ async function buildInvoiceData(pool, opts) {
     const wos = [];
     let contractHours = 0, contractFootage = 0, contractAmount = 0;
 
+    // H-1 fix: for hourly jobs, batch-fetch hours for ALL leaf projects in
+    // this contract in a single query instead of one per leaf (the N+1).
+    // Uses the same ANY($1::uuid[]) pattern as the timecards query at line 395.
+    // Build a Map<projectId, hours> so the per-leaf loop is a cheap lookup.
+    let hoursByProjectId = new Map();
+    if (!isFootage && projRes.rows.length > 0) {
+      const leafIds = projRes.rows.map(p => p.id);
+      const batchTeRes = await pool.query(`
+        WITH RECURSIVE leaf_ctx AS (
+          SELECT p.id AS leaf_id, p.id AS cursor_id, p.parent_id,
+                 LOWER(j.name) AS job_name_lc, 0 AS depth
+            FROM projects p
+            LEFT JOIN jobs j ON j.id = p.job_id
+           WHERE p.id = ANY($1::uuid[])
+          UNION ALL
+          SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.depth + 1
+            FROM leaf_ctx lc
+            JOIN projects p ON p.id = lc.parent_id
+           WHERE lc.depth < 10
+        )
+        SELECT lc.leaf_id AS project_id,
+               COALESCE(SUM(te.hours), 0)::float AS h
+          FROM leaf_ctx lc
+          JOIN time_entries te ON te.project_id = lc.cursor_id
+         WHERE te.entry_date BETWEEN $2 AND $3
+           AND (lc.cursor_id = lc.leaf_id
+                OR (lc.job_name_lc IS NOT NULL
+                    AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc))
+         GROUP BY lc.leaf_id
+      `, [leafIds, period_start, period_end]);
+      for (const row of batchTeRes.rows) {
+        hoursByProjectId.set(row.project_id, row.h);
+      }
+    }
+
     for (const p of projRes.rows) {
       let hours = 0, footage = 0, amount = 0;
       if (isFootage) {
@@ -313,35 +348,10 @@ async function buildInvoiceData(pool, opts) {
           ? p.expected_revenue
           : (footage / 5280) * rate;
       } else {
-        // Hourly: sum time_entries.hours within the period. Walks the
-        // leaf's parent chain so entries that landed on a WO rollup
-        // (CSV importer matched the rollup because the leaf had no
-        // WO#) get attributed back to the matching leaf. Ancestor
-        // entries only count when their job_title matches the leaf's
-        // job — otherwise sibling jobs under the same WO would each
-        // claim all the hours.
-        const teRes = await pool.query(`
-          WITH RECURSIVE leaf_ctx AS (
-            SELECT p.id AS leaf_id, p.id AS cursor_id, p.parent_id,
-                   LOWER(j.name) AS job_name_lc, 0 AS depth
-              FROM projects p
-              LEFT JOIN jobs j ON j.id = p.job_id
-             WHERE p.id = $1
-            UNION ALL
-            SELECT lc.leaf_id, p.id, p.parent_id, lc.job_name_lc, lc.depth + 1
-              FROM leaf_ctx lc
-              JOIN projects p ON p.id = lc.parent_id
-             WHERE lc.depth < 10
-          )
-          SELECT COALESCE(SUM(te.hours), 0)::float AS h
-            FROM leaf_ctx lc
-            JOIN time_entries te ON te.project_id = lc.cursor_id
-           WHERE te.entry_date BETWEEN $2 AND $3
-             AND (lc.cursor_id = lc.leaf_id
-                  OR (lc.job_name_lc IS NOT NULL
-                      AND LOWER(COALESCE(te.job_title, '')) = lc.job_name_lc))
-        `, [p.id, period_start, period_end]);
-        hours = teRes.rows[0].h;
+        // H-1 fix: look up from pre-fetched batch Map — zero round-trips here.
+        // Projects with no time entries in the period are absent from the Map;
+        // default to 0 so the zero-activity filter below skips them correctly.
+        hours = hoursByProjectId.get(p.id) || 0;
         amount = hours * rate;
       }
       // Skip WOs with zero activity — they'd render as junk rows

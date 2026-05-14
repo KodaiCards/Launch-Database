@@ -465,17 +465,30 @@ function _render(nodes, scope) {
 // ─── HTML → PDF via puppeteer ────────────────────────────────────────────────
 
 async function renderHtmlToPdf(html, opts = {}) {
-  const puppeteer = _puppet();
-  // Launch flags chosen for Linux containers (Railway). --no-sandbox is
-  // the unfortunate norm for headless Chrome in restricted environments;
-  // the alternative is configuring the kernel to allow user namespaces,
-  // which is outside our control on Railway.
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  });
+  // C-1 SSRF fix: sanitize HTML before handing to Puppeteer so that
+  // caller-controlled <img src="http://169.254.169.254/..."> tags can't
+  // exfiltrate Railway IMDS or internal network resources.
+  html = sanitizeTemplateHtml(html);
+  // H-2 fix: use shared browser pool instead of launching per request.
+  // getBrowser() returns a pooled Browser; we create a fresh Page for
+  // render isolation. releasePage() closes the page (not the browser)
+  // when done so the pool stays warm for the next PDF request.
+  const { getBrowser, releasePage } = require('./lib/browser_pool');
+  const browser = await getBrowser();
+  const page = await browser.newPage();
   try {
-    const page = await browser.newPage();
+    // C-1 SSRF fix: intercept all outbound requests and abort anything
+    // that isn't a data: URI or about:blank. This is a belt-and-braces
+    // guard — sanitizeTemplateHtml strips most attack vectors above, but
+    // setRequestInterception ensures Puppeteer itself never makes a
+    // network call regardless of how the HTML was constructed.
+    // setRequestInterception is per-page, so sharing the browser is safe.
+    await page.setRequestInterception(true);
+    page.on('request', req => {
+      const u = req.url();
+      if (u.startsWith('data:') || u === 'about:blank') return req.continue();
+      return req.abort();
+    });
     // setContent waits for network idle so any inline images / fonts that
     // are referenced finish loading before we paginate. waitUntil:'load'
     // is the right balance — domcontentloaded misses images, networkidle0
@@ -496,7 +509,7 @@ async function renderHtmlToPdf(html, opts = {}) {
     });
     return pdf;
   } finally {
-    try { await browser.close(); } catch {}
+    await releasePage(page);
   }
 }
 

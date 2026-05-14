@@ -261,102 +261,16 @@
   }
 
   // ─── Inspection revenue projection card ────────────────────────────────
-  // RETIRED pending revisit. Loader is now a no-op — leaves the
-  // dashboard tile + the projection card in their static
-  // "UNDER CONSTRUCTION" state set in the HTML. Skips the
-  // /api/automation/psc-rus-projection fetch entirely so the dashboard
-  // doesn't pay that round-trip on every page load.
-  // To re-enable, restore the body of this function from git history
-  // (or the version below this line, which we'd un-comment).
+  // FE-1: Delegates to _loadRusProjectionTile() defined in admin.html inline
+  // script. That function handles: API fetch, empty state, headline number,
+  // sub-rows, MTD label, sparkline, DQ chip, and pre-populates FE-2 table.
   async function loadInspectionProjection() {
-    return;  // retired — see comment above
-    /* original body retained for revival:
-    const card = document.getElementById('psc-rus-projection-card');
-    const body = document.getElementById('psc-rus-projection-body');
+    if (typeof _loadRusProjectionTile === 'function') {
+      return _loadRusProjectionTile();
+    }
+    // Fallback: just clear the "pending" state if the function isn't loaded yet
     const tile = document.getElementById('s-90d-projection');
-    if (!card || !body) return;
-    let data;
-    try {
-      data = await api('/api/automation/psc-rus-projection');
-    } catch (e) {
-      card.style.display = 'none';
-      if (tile) tile.textContent = '—';
-      return;
-    }
-    const rows = data.rows || [];
-    if (tile) tile.textContent = fmtMoney(data.total_projected_revenue || 0);
-    if (!rows.length) {
-      card.style.display = 'none';
-      return;
-    }
-    card.style.display = '';
-
-    // Each umbrella row carries a per-job breakdown (Inspection / RE /
-    // Permitting / Other). Render the umbrella headline + projection on top,
-    // then the breakdown rows underneath. Other-bucket projects are listed
-    // for visibility but show "Not projected" instead of a $ figure.
-    body.innerHTML = `
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="background:var(--gray-light)">
-            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Engineering Contract / Job</th>
-            <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Hrs (MTD)</th>
-            <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget</th>
-            <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">90-Day Projection</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(r => {
-            const exhaustBg = r.will_exhaust_budget ? 'background:var(--warning-light);' : '';
-            const headline = esc(r.engineering_contract_name || 'Engineering contract');
-            const subBits = [esc(r.client_name || '—')];
-            if (r.loan_name) subBits.push(`loan: ${esc(r.loan_name)}`);
-            subBits.push(`${r.project_count} project${r.project_count !== 1 ? 's' : ''}`);
-            const sub = subBits.join(' · ');
-            const budgetCell = r.budget_allocated > 0
-              ? `<div style="font-weight:600">${fmtMoney(r.budget_remaining)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">left</span></div>
-                 <div style="font-size:11px;color:var(--text-muted)">of ${fmtMoney(r.budget_allocated)} total</div>
-                 <div style="font-size:11px;color:var(--text-muted)">${fmtMoney(r.billed_to_date)} billed</div>`
-              : '—';
-            // Umbrella header row
-            let html = `<tr style="border-top:2px solid var(--gray-border);${exhaustBg}border-left:3px solid var(--primary,#1B5FA0);background:var(--gray-light)">
-              <td style="padding:10px 12px">
-                <div style="font-weight:700;font-size:13px">
-                  <i class="fa-solid fa-folder-tree" style="color:var(--primary,#1B5FA0);margin-right:6px"></i>${headline}
-                  ${r.will_exhaust_budget ? '<span style="margin-left:6px;font-size:10px;color:#e65100;background:#FFE0B2;padding:1px 6px;border-radius:8px;font-weight:600">BUDGET CAP REACHED</span>' : ''}
-                </div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${sub}</div>
-              </td>
-              <td style="padding:10px 12px;text-align:right;font-weight:600">${fmt(r.mtd_hours, 'hrs')}</td>
-              <td style="padding:10px 12px;text-align:right">${budgetCell}</td>
-              <td style="padding:10px 12px;text-align:right;font-weight:700;color:var(--primary);font-size:14px">${fmtMoney(r.projected_remaining_revenue)}</td>
-            </tr>`;
-            // Per-job breakdown rows
-            for (const b of (r.breakdown || [])) {
-              const projCell = b.projectable
-                ? `<span style="font-weight:500">${fmtMoney(b.projected_remaining_revenue)}</span>`
-                : `<span style="color:var(--text-muted);font-size:11px;font-style:italic">Not projected</span>`;
-              html += `<tr style="border-top:1px solid var(--gray-border)">
-                <td style="padding:6px 12px 6px 36px;color:var(--text-muted);font-size:12px">
-                  <span style="color:var(--text);font-weight:500">${esc(b.job_label)}</span>
-                  <span style="margin-left:6px">· ${b.project_count} project${b.project_count !== 1 ? 's' : ''}</span>
-                  ${b.billed_to_date > 0 ? `<span style="margin-left:6px">· ${fmtMoney(b.billed_to_date)} billed</span>` : ''}
-                </td>
-                <td style="padding:6px 12px;text-align:right;font-size:12px">${fmt(b.mtd_hours, 'hrs')}</td>
-                <td style="padding:6px 12px;text-align:right;color:var(--text-muted);font-size:11px">—</td>
-                <td style="padding:6px 12px;text-align:right;font-size:12px">${projCell}</td>
-              </tr>`;
-            }
-            return html;
-          }).join('')}
-          <tr style="background:var(--gray-light);border-top:2px solid var(--gray-border);font-weight:700">
-            <td style="padding:10px 12px" colspan="3">Total 90-day projection</td>
-            <td style="padding:10px 12px;text-align:right;color:var(--primary);font-size:14px">${fmtMoney(data.total_projected_revenue)}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    */
+    if (tile) tile.textContent = '—';
   }
 
   async function loadDashboard() {
@@ -367,6 +281,7 @@
     loadInspectionProjection().catch(() => {});
     loadBillNowPreview().catch(() => {});
 
+    try {
     // Initialize dashboard period controls on first load.
     const yEl = document.getElementById('dash-year');
     const pEl = document.getElementById('dash-period');
@@ -473,6 +388,12 @@
     // Avoids the destroy+recreate flicker that closed open dropdowns and
     // wiped focus/hover state inside the dashboard tree.
     setHtmlIfChanged(tbody, buildRows(roots, 0, null, true));
+    } catch (err) {
+      console.error('[loadDashboard] failed:', err);
+      if (window.LFS && window.LFS.toast) {
+        window.LFS.toast.error('Dashboard failed to load: ' + (err.message || 'Unknown error'));
+      }
+    }
   }
 
   // Dashboard tree toggle. Dashboard-specific dt-/dc- prefixes avoid

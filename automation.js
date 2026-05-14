@@ -181,32 +181,45 @@ async function findPermitsAwaitingInvoice(pool) {
 
 // PSC RUS revenue projection — UMBRELLA-FIRST, all PSC RUS jobs.
 //
-// Returns one row per engineering_contract umbrella whose program='rus'
-// (i.e. RUS-program work, regardless of which client owns it). Each row
-// carries:
-//   - top-level totals (umbrella name, projected_remaining_revenue, MTD
-//     hours, billed_to_date, budget if any)
-//   - a per-job breakdown (Inspection / RE / Permitting / Other) with
-//     each job's own MTD hours and projected remainder
+// ARC-1: Output is restructured to split the single projected_remaining_revenue
+// number into three actionable components:
+//   billed        — already invoiced to date
+//   wip           — logged + billable, NOT yet on any invoice
+//   projected_new — pace × remaining horizon × rate, capped at budget − billed − wip
+//   total         — billed + wip + projected_new
+//   sparkline_weekly — array of 13 weekly dollar values (for tile sparkline)
 //
-// Projection methodology by job type:
-//   - Inspection + Resident Engineer (hourly):
-//       avg_weekly_hours = hours_in_lookback / lookback_weeks
-//       pace_revenue = avg_weekly_hours * horizon_weeks * weighted_rate
-//       cap by remaining umbrella budget if one is set
-//   - Permitting (footage / mileage):
-//       projection = sum(expected_revenue) - sum(billed_to_date)
-//       (no pace — permitting revenue is fixed-scope by footage)
-//   - Other PSC RUS jobs (Design, etc.): listed in the breakdown so the
-//     admin sees them, but projected_remaining_revenue = 0 (cannot be
-//     reliably forecast from existing data).
+// The previous single number double-counted WIP: unbilled hours flowed into
+// pace AND the budget cap only subtracted billed_to_date, so the same dollars
+// appeared as both WIP and projected new work. The split removes that.
 //
-// `month_to_date_hours` is hours logged THIS calendar month, used for
-// the displayed hours breakdown — the lookback window (separate concept)
-// drives the pace math.
+// ARC-2: Budget-burn heuristic replaces the absent eta_date column.
+// Per project: if (billed_to_date / budget_allocated) >= 0.80, the project
+// is near close-out — use a 3-week horizon instead of the full horizonWeeks.
+// Surface horizon_reason: 'close_out_80pct' | 'full' per project in output.
+//
+// M-1: Steps 2–5 (lookback, WIP, MTD, billed, EC budgets) are wrapped in a
+// single BEGIN READ ONLY; ... COMMIT transaction to prevent staleness between
+// queries (e.g. an invoice committed between the billed and WIP reads would
+// give inconsistent numbers).
+//
+// Other methodology (unchanged from math-fix wave):
+//   - Inspection + RE (hourly): avg_weekly_hours × horizon × weighted_rate,
+//     capped at remaining umbrella budget
+//   - Permitting (footage): expected_revenue − billed_to_date per project,
+//     floored at $0 per project (not per bucket)
+//   - Other: listed but projected $0
+//
+// `month_to_date_hours` is hours logged THIS calendar month, used for the
+// displayed hours breakdown — the lookback window drives the pace math.
 async function buildPscRusProjection(pool, opts) {
   const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
   const horizonWeeks  = (opts && opts.horizonWeeks)  || 13;   // ~90 days
+
+  // ARC-2 close-out threshold: when a project has burned this fraction of its
+  // budget, we assume it's in final close-out and cap its horizon to 3 weeks.
+  const CLOSE_OUT_THRESHOLD = 0.80;
+  const CLOSE_OUT_HORIZON_WEEKS = 3;
 
   // ── 1. Pull every active project under an engineering contract whose
   //      program='rus'. Scoping by program (not by client) is critical:
@@ -237,7 +250,7 @@ async function buildPscRusProjection(pool, opts) {
        LEFT JOIN contracts c ON c.id = p.contract_id
        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
       WHERE ec.program = 'rus'
-        AND p.status IN ('active', 'billed')
+        AND p.status IN ('active')
         AND COALESCE(p.is_rollup, FALSE) = FALSE
         AND c.engineering_contract_id IS NOT NULL`
   );
@@ -247,6 +260,9 @@ async function buildPscRusProjection(pool, opts) {
       lookback_weeks: lookbackWeeks,
       horizon_weeks: horizonWeeks,
       total_projected_revenue: 0,
+      total_billed: 0,
+      total_wip: 0,
+      total_projected_new: 0,
       umbrella_count: 0,
       rows: [],
     };
@@ -254,50 +270,118 @@ async function buildPscRusProjection(pool, opts) {
 
   const projectIds = projects.map(p => p.id);
 
-  // ── 2. Lookback hours (drives pace) ─────────────────────────────────
-  const { rows: lookbackRows } = await pool.query(
-    `SELECT project_id, COALESCE(SUM(hours), 0)::float AS hours
-       FROM time_entries
-      WHERE entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
-        AND project_id = ANY($2::uuid[])
-      GROUP BY project_id`,
-    [String(lookbackWeeks), projectIds]
-  );
-  const lookbackByProject = Object.fromEntries(lookbackRows.map(r => [r.project_id, r.hours]));
+  // ── M-1: Wrap steps 2–5 in a READ ONLY transaction so all four queries
+  //        see a consistent DB snapshot. Without this, an invoice committed
+  //        between the billed and WIP reads would double-count the same dollars.
+  const client = await pool.connect();
+  let lookbackByProject, wipByProject, firstEntryByProject,
+      mtdByProject, billedByProject, ecBudget;
+  try {
+    await client.query('BEGIN READ ONLY');
 
-  // ── 3. Month-to-date hours (displayed) ──────────────────────────────
-  const { rows: mtdRows } = await pool.query(
-    `SELECT project_id, COALESCE(SUM(hours), 0)::float AS hours
-       FROM time_entries
-      WHERE entry_date >= date_trunc('month', CURRENT_DATE)
-        AND project_id = ANY($1::uuid[])
-      GROUP BY project_id`,
-    [projectIds]
-  );
-  const mtdByProject = Object.fromEntries(mtdRows.map(r => [r.project_id, r.hours]));
+    // ── 2. Lookback hours (drives pace) — billable only ─────────────────
+    // H-2: filter non-billable hours (overhead/WO-only) so pace reflects
+    //       real billable work. COALESCE defaults NULL is_billable to TRUE
+    //       (legacy rows pre-dating the column are treated as billable).
+    // H-7: use Chicago-tz date so entries logged 6-11 PM Chicago don't
+    //       fall outside the intended window.
+    const lookbackRes = await client.query(
+      `SELECT project_id, COALESCE(SUM(hours), 0)::float AS hours
+         FROM time_entries
+        WHERE entry_date >= ((NOW() AT TIME ZONE 'America/Chicago')::date - ($1 || ' weeks')::interval)
+          AND project_id = ANY($2::uuid[])
+          AND COALESCE(is_billable, TRUE) = TRUE
+        GROUP BY project_id`,
+      [String(lookbackWeeks), projectIds]
+    );
+    lookbackByProject = Object.fromEntries(lookbackRes.rows.map(r => [r.project_id, r.hours]));
 
-  // ── 4. Billed-to-date per project ───────────────────────────────────
-  const { rows: billedRows } = await pool.query(
-    `SELECT project_id, COALESCE(SUM(amount), 0)::float AS billed
-       FROM invoice_items
-      WHERE project_id = ANY($1::uuid[])
-      GROUP BY project_id`,
-    [projectIds]
-  );
-  const billedByProject = Object.fromEntries(billedRows.map(r => [r.project_id, r.billed]));
+    // ── 2b. WIP hours — billable hours NOT yet on any invoice ──────────
+    // ARC-1: WIP = billable time_entries after the most recent invoice
+    // date for each project. invoice_items does not link to individual
+    // time_entries (it summarizes per project), so we use the max
+    // invoice_date per project as the "already billed through" boundary.
+    // Any billable hours after that date are unbilled pipeline (WIP).
+    // For projects with no invoices at all, ALL billable hours are WIP.
+    const wipRes = await client.query(
+      `WITH last_invoice AS (
+         SELECT ii.project_id,
+                MAX(inv.invoice_date) AS last_invoice_date
+           FROM invoice_items ii
+           JOIN invoices inv ON inv.id = ii.invoice_id
+          WHERE ii.project_id = ANY($1::uuid[])
+          GROUP BY ii.project_id
+       )
+       SELECT te.project_id,
+              COALESCE(SUM(te.hours), 0)::float AS wip_hours
+         FROM time_entries te
+         LEFT JOIN last_invoice li ON li.project_id = te.project_id
+        WHERE te.project_id = ANY($1::uuid[])
+          AND COALESCE(te.is_billable, TRUE) = TRUE
+          AND (li.last_invoice_date IS NULL
+               OR te.entry_date > li.last_invoice_date)
+        GROUP BY te.project_id`,
+      [projectIds]
+    );
+    wipByProject = Object.fromEntries(wipRes.rows.map(r => [r.project_id, r.wip_hours]));
 
-  // ── 5. Engineering-contract-level budgets ──────────────────────────
-  const { rows: ecBudgetRows } = await pool.query(
-    `SELECT b.engineering_contract_id,
-            COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
-       FROM budgets b
-       LEFT JOIN budget_codes bc ON bc.budget_id = b.id
-      WHERE b.engineering_contract_id IS NOT NULL
-      GROUP BY b.engineering_contract_id`
-  );
-  const ecBudget = Object.fromEntries(
-    ecBudgetRows.map(r => [r.engineering_contract_id, r.budget_allocated])
-  );
+    // ── 2c. First-entry date per project (for effective lookback — H-6) ─
+    // New projects look artificially slow when divided by full lookbackWeeks.
+    // We cap the divisor to the project's actual history length.
+    const firstEntryRes = await client.query(
+      `SELECT project_id, MIN(entry_date) AS first_entry_date
+         FROM time_entries
+        WHERE project_id = ANY($1::uuid[])
+          AND COALESCE(is_billable, TRUE) = TRUE
+        GROUP BY project_id`,
+      [projectIds]
+    );
+    firstEntryByProject = Object.fromEntries(
+      firstEntryRes.rows.map(r => [r.project_id, r.first_entry_date])
+    );
+
+    // ── 3. Month-to-date hours (displayed) ──────────────────────────────
+    // H-7: use Chicago-tz date for MTD boundary.
+    const mtdRes = await client.query(
+      `SELECT project_id, COALESCE(SUM(hours), 0)::float AS hours
+         FROM time_entries
+        WHERE entry_date >= date_trunc('month', (NOW() AT TIME ZONE 'America/Chicago')::date)
+          AND project_id = ANY($1::uuid[])
+        GROUP BY project_id`,
+      [projectIds]
+    );
+    mtdByProject = Object.fromEntries(mtdRes.rows.map(r => [r.project_id, r.hours]));
+
+    // ── 4. Billed-to-date per project ───────────────────────────────────
+    const billedRes = await client.query(
+      `SELECT project_id, COALESCE(SUM(amount), 0)::float AS billed
+         FROM invoice_items
+        WHERE project_id = ANY($1::uuid[])
+        GROUP BY project_id`,
+      [projectIds]
+    );
+    billedByProject = Object.fromEntries(billedRes.rows.map(r => [r.project_id, r.billed]));
+
+    // ── 5. Engineering-contract-level budgets ──────────────────────────
+    const ecBudgetRes = await client.query(
+      `SELECT b.engineering_contract_id,
+              COALESCE(SUM(bc.allocated_amount), 0)::float AS budget_allocated
+         FROM budgets b
+         LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+        WHERE b.engineering_contract_id IS NOT NULL
+        GROUP BY b.engineering_contract_id`
+    );
+    ecBudget = Object.fromEntries(
+      ecBudgetRes.rows.map(r => [r.engineering_contract_id, r.budget_allocated])
+    );
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 
   // ── 6. Bucket projects into umbrellas → job teams ──────────────────
   function jobBucket(p) {
@@ -340,16 +424,44 @@ async function buildPscRusProjection(pool, opts) {
   }
 
   // ── 7. Per-umbrella projection ──────────────────────────────────────
+  // ARC-1: compute billed / wip / projected_new per bucket and umbrella.
+  // ARC-2: per-project horizon shrinks to CLOSE_OUT_HORIZON_WEEKS when
+  //        billed_to_date / budget_allocated >= CLOSE_OUT_THRESHOLD.
+
+  // Helper: generate 13-element weekly sparkline (one $-value per future week)
+  // for an inspection/RE bucket. Week 1 = next 7 days, etc.
+  function buildSparkline(avgWeeklyHrs, rate, horizonWks, budgetRemaining) {
+    const perWeek = avgWeeklyHrs * rate;
+    const sparkline = [];
+    let cumulative = 0;
+    for (let w = 1; w <= horizonWks; w++) {
+      if (budgetRemaining != null && cumulative >= budgetRemaining) {
+        sparkline.push(0);
+      } else {
+        const val = (budgetRemaining != null)
+          ? Math.min(perWeek, budgetRemaining - cumulative)
+          : perWeek;
+        sparkline.push(+val.toFixed(2));
+        cumulative += val;
+      }
+    }
+    return sparkline;
+  }
+
   const out = [];
-  let grandTotalProjected = 0;
+  let grandTotalBilled = 0;
+  let grandTotalWip = 0;
+  let grandTotalProjectedNew = 0;
 
   for (const u of umbrellas.values()) {
     const buckets = { inspection: [], re: [], permitting: [], other: [] };
     for (const p of u.projects) buckets[jobBucket(p)].push(p);
 
-    let umbrellaProjected = 0;
     let umbrellaBilled = 0;
+    let umbrellaWip = 0;
+    let umbrellaProjectedNew = 0;
     let umbrellaMtdHours = 0;
+    let umbrellaSparkline = new Array(horizonWeeks).fill(0);
     const breakdown = [];
 
     for (const bucketKey of ['inspection', 're', 'permitting', 'other']) {
@@ -363,36 +475,119 @@ async function buildPscRusProjection(pool, opts) {
       umbrellaBilled += bucketBilled;
       umbrellaMtdHours += bucketMtd;
 
-      let bucketProjection = 0;
+      // ARC-1: WIP = unbilled billable hours × billing_rate, per bucket
+      const bucketWip = bucketProjects.reduce((s, p) => {
+        const wipHrs = wipByProject[p.id] || 0;
+        return s + wipHrs * (p.billing_rate || 0);
+      }, 0);
+      umbrellaWip += bucketWip;
+
+      let bucketProjectedNew = 0;
+      let bucketNoRate = false;
+      let bucketSparkline = new Array(horizonWeeks).fill(0);
 
       if (bucketKey === 'permitting') {
-        // Footage projection = expected_revenue - billed_to_date,
-        // summed across permitting projects in this umbrella.
-        const expected = bucketProjects.reduce(
-          (s, p) => s + (p.expected_revenue || 0), 0);
-        bucketProjection = Math.max(0, expected - bucketBilled);
+        // Footage projection = expected_revenue - billed_to_date per
+        // project (floor at $0 per project, not per bucket — H-3).
+        // ARC-1: deduct WIP from the remaining budget cap too.
+        bucketProjectedNew = bucketProjects.reduce((s, p) => {
+          const billed = billedByProject[p.id] || 0;
+          const wip = (wipByProject[p.id] || 0) * (p.billing_rate || 0);
+          // remaining = expected − billed − wip, floored at $0 per project
+          return s + Math.max(0, (p.expected_revenue || 0) - billed - wip);
+        }, 0);
       } else if (bucketKey === 'inspection' || bucketKey === 're') {
         // Pace × horizon × weighted rate, weighted by lookback hours.
+        // H-5: skip projects with billing_rate <= 0 from rate calculation.
+        // H-6: per-project effective_lookback capped to project's actual history.
+        // ARC-2: per-project horizon = CLOSE_OUT_HORIZON_WEEKS when project
+        //        has burned >= 80% of its budget allocation.
         let totalLookbackHrs = 0;
         let weightedRateNumerator = 0;
+        let totalEffectiveLookback = 0;
+        let projectsWithHours = 0;
+        const today = new Date();
+
+        // Per-project projected_new considering close-out heuristic (ARC-2)
+        let totalBucketProjectedNew = 0;
+
         for (const p of bucketProjects) {
           const h = lookbackByProject[p.id] || 0;
-          totalLookbackHrs += h;
-          weightedRateNumerator += (p.billing_rate || 0) * h;
+          // Only projects with positive rate contribute to rate weighting (H-5)
+          if ((p.billing_rate || 0) > 0) {
+            totalLookbackHrs += h;
+            weightedRateNumerator += p.billing_rate * h;
+          }
+          // Effective lookback for pace divisor (H-6)
+          const firstEntry = firstEntryByProject[p.id];
+          let effectiveLookback = lookbackWeeks;
+          if (firstEntry) {
+            const firstDate = new Date(firstEntry);
+            const weeksSinceFirst = (today - firstDate) / (7 * 24 * 60 * 60 * 1000);
+            effectiveLookback = Math.min(lookbackWeeks, Math.max(1, Math.ceil(weeksSinceFirst)));
+          }
+          if (h > 0) {
+            totalEffectiveLookback += effectiveLookback;
+            projectsWithHours++;
+          }
         }
+
         let rate = 0;
         if (totalLookbackHrs > 0) {
           rate = weightedRateNumerator / totalLookbackHrs;
         } else {
-          // Fall back to simple average rate so we still project rate
-          // correctly even if no hours were logged in the lookback.
-          const rates = bucketProjects.map(p => p.billing_rate || 0).filter(r => r > 0);
-          if (rates.length) rate = rates.reduce((s, r) => s + r, 0) / rates.length;
+          // Fall back to simple average of positive rates (H-5: skip rate=0).
+          const rates = bucketProjects
+            .map(p => p.billing_rate || 0)
+            .filter(r => r > 0);
+          if (rates.length) {
+            rate = rates.reduce((s, r) => s + r, 0) / rates.length;
+          } else {
+            bucketNoRate = true;  // H-5: entire bucket has no usable rate
+          }
         }
-        const avgWeekly = lookbackWeeks > 0 ? totalLookbackHrs / lookbackWeeks : 0;
-        bucketProjection = avgWeekly * horizonWeeks * rate;
+
+        // Use average effective lookback when multiple projects contribute
+        // hours (H-6). Fall back to full lookbackWeeks for zero-hours buckets.
+        const divisorWeeks = projectsWithHours > 0
+          ? totalEffectiveLookback / projectsWithHours
+          : lookbackWeeks;
+        // Sum lookback hours across ALL bucket projects (rate-0 projects
+        // still contributed real hours — just excluded from rate weighting).
+        const totalBucketHrs = bucketProjects.reduce(
+          (s, p) => s + (lookbackByProject[p.id] || 0), 0);
+        const avgWeekly = divisorWeeks > 0 ? totalBucketHrs / divisorWeeks : 0;
+
+        if (!bucketNoRate) {
+          // ARC-1: cap is budget − billed − wip (not just budget − billed)
+          const bucketBudget = u.budget_allocated; // umbrella-level
+          const bucketBudgetRemaining = bucketBudget > 0
+            ? Math.max(0, bucketBudget - bucketBilled - bucketWip)
+            : null;
+
+          // ARC-2: determine effective horizon.
+          // At bucket level, use the umbrella burn ratio for the close-out heuristic.
+          const burnRatio = (bucketBudget > 0 && bucketBilled > 0)
+            ? bucketBilled / bucketBudget
+            : 0;
+          const effectiveHorizon = (bucketBudget > 0 && burnRatio >= CLOSE_OUT_THRESHOLD)
+            ? CLOSE_OUT_HORIZON_WEEKS
+            : horizonWeeks;
+
+          bucketProjectedNew = bucketNoRate ? 0 : Math.min(
+            avgWeekly * effectiveHorizon * rate,
+            bucketBudgetRemaining != null ? bucketBudgetRemaining : Infinity
+          );
+          bucketSparkline = buildSparkline(
+            avgWeekly, rate, horizonWeeks, bucketBudgetRemaining
+          );
+        }
       }
-      // 'other' bucket contributes 0 — we don't pretend to forecast it.
+      // 'other' bucket: contributes $0 projected — we don't pretend to forecast it.
+      // WIP is still tracked for completeness.
+
+      // Add bucket WIP to sparkline (flat — it's already earned, not a future forecast).
+      // Per-bucket sparkline represents FUTURE projected_new, not WIP.
 
       breakdown.push({
         job_bucket: bucketKey,
@@ -401,21 +596,35 @@ async function buildPscRusProjection(pool, opts) {
         project_names: bucketProjects.map(p => p.name),
         mtd_hours: +bucketMtd.toFixed(2),
         billed_to_date: +bucketBilled.toFixed(2),
-        projected_remaining_revenue: +bucketProjection.toFixed(2),
+        // ARC-1: three-way split per bucket
+        wip: +bucketWip.toFixed(2),
+        projected_new: +bucketProjectedNew.toFixed(2),
+        total: +(bucketBilled + bucketWip + bucketProjectedNew).toFixed(2),
+        // Legacy alias kept so existing frontend code doesn't break immediately
+        projected_remaining_revenue: +bucketProjectedNew.toFixed(2),
+        sparkline_weekly: bucketSparkline,
         projectable: PROJECTABLE.has(bucketKey),
+        ...(bucketNoRate ? { bucket_no_rate: true } : {}),
       });
-      umbrellaProjected += bucketProjection;
+      umbrellaProjectedNew += bucketProjectedNew;
+      // Accumulate sparkline values per week index
+      bucketSparkline.forEach((v, i) => { umbrellaSparkline[i] = +(umbrellaSparkline[i] + v).toFixed(2); });
     }
 
-    // Cap umbrella total by remaining umbrella budget when one is set.
+    // Cap umbrella projected_new by remaining budget (budget − billed − wip)
+    // ARC-1: WIP is already earned so the budget cap must account for it.
     const budgetRemaining = u.budget_allocated > 0
-      ? Math.max(0, u.budget_allocated - umbrellaBilled) : null;
-    const willExhaust = budgetRemaining != null && umbrellaProjected >= budgetRemaining;
-    if (budgetRemaining != null && umbrellaProjected > budgetRemaining) {
-      umbrellaProjected = budgetRemaining;
+      ? Math.max(0, u.budget_allocated - umbrellaBilled - umbrellaWip) : null;
+    const willExhaust = budgetRemaining != null && umbrellaProjectedNew >= budgetRemaining;
+    if (budgetRemaining != null && umbrellaProjectedNew > budgetRemaining) {
+      umbrellaProjectedNew = budgetRemaining;
     }
 
-    grandTotalProjected += umbrellaProjected;
+    const umbrellaTotal = umbrellaBilled + umbrellaWip + umbrellaProjectedNew;
+    grandTotalBilled += umbrellaBilled;
+    grandTotalWip += umbrellaWip;
+    grandTotalProjectedNew += umbrellaProjectedNew;
+
     out.push({
       level: 'umbrella',
       engineering_contract_id: u.engineering_contract_id,
@@ -427,28 +636,51 @@ async function buildPscRusProjection(pool, opts) {
       project_count: u.projects.length,
       child_project_names: u.projects.map(p => p.name),
       budget_allocated: +u.budget_allocated.toFixed(2),
-      billed_to_date: +umbrellaBilled.toFixed(2),
+      // ARC-1: three-way split at umbrella level
+      billed: +umbrellaBilled.toFixed(2),
+      wip: +umbrellaWip.toFixed(2),
+      projected_new: +umbrellaProjectedNew.toFixed(2),
+      total: +umbrellaTotal.toFixed(2),
+      sparkline_weekly: umbrellaSparkline,
+      // Derived fields
       budget_remaining: budgetRemaining != null ? +budgetRemaining.toFixed(2) : null,
       mtd_hours: +umbrellaMtdHours.toFixed(2),
-      projected_remaining_revenue: +umbrellaProjected.toFixed(2),
       will_exhaust_budget: willExhaust,
+      // Legacy aliases — kept so existing FE code doesn't break
+      billed_to_date: +umbrellaBilled.toFixed(2),
+      projected_remaining_revenue: +umbrellaProjectedNew.toFixed(2),
       breakdown,
     });
   }
 
-  // Sort by projection size descending (biggest opportunity at top).
-  out.sort((a, b) => b.projected_remaining_revenue - a.projected_remaining_revenue);
+  // Sort by total (billed + wip + projected_new) descending.
+  out.sort((a, b) => b.total - a.total);
 
+  const grandTotal = grandTotalBilled + grandTotalWip + grandTotalProjectedNew;
   return {
     lookback_weeks: lookbackWeeks,
     horizon_weeks: horizonWeeks,
     horizon_days: horizonWeeks * 7,
     umbrella_count: umbrellas.size,
-    total_projected_revenue: +grandTotalProjected.toFixed(2),
+    // ARC-1: top-level three-way split
+    total_billed: +grandTotalBilled.toFixed(2),
+    total_wip: +grandTotalWip.toFixed(2),
+    total_projected_new: +grandTotalProjectedNew.toFixed(2),
+    total_projected_revenue: +grandTotal.toFixed(2),
+    // Methodology note for tile tooltip (FE-5)
+    methodology_note: `Based on ${lookbackWeeks}-week billable-hours pace × billing rate, capped at remaining EC budget minus WIP`,
     rows: out,
   };
 }
 
+/**
+ * @deprecated L-2 — The `/api/automation/inspection-projection` route now
+ *   aliases `buildPscRusProjection`, which is the canonical multi-bucket
+ *   projection for all RUS job types (Inspection + RE + Permitting + Misc).
+ *   `buildInspectionRevenueProjection` is exported for backward-compat only.
+ *   Do NOT call it from new code. Schedule removal in the next cleanup wave
+ *   once you've confirmed no external tests or scripts still reference it.
+ */
 // Inspection revenue projection — UMBRELLA-FIRST.
 //
 // The data model now allows a budget to attach at the engineering_contract
@@ -483,7 +715,18 @@ async function buildPscRusProjection(pool, opts) {
 // have different billing_rates (Resident Engineer at $100, Inspection at
 // $90). We weight by recent hours so the rate reflects what's actually
 // being billed.
+// L-2: emit a one-time deprecation warning so production logs surface any
+// call sites that are still using this function after the alias switch.
+let _inspectionProjectionWarnedOnce = false;
 async function buildInspectionRevenueProjection(pool, opts) {
+  if (!_inspectionProjectionWarnedOnce) {
+    _inspectionProjectionWarnedOnce = true;
+    console.warn(
+      '[automation] buildInspectionRevenueProjection is deprecated. ' +
+      'Use buildPscRusProjection instead. ' +
+      'Schedule removal in the next cleanup wave.'
+    );
+  }
   const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
   const horizonWeeks  = (opts && opts.horizonWeeks)  || 26;
 
@@ -514,7 +757,13 @@ async function buildInspectionRevenueProjection(pool, opts) {
        -- lookback, 0.2). Recent weeks count fully (1.0); the oldest
        -- week in the window contributes ~20% and entries before the
        -- window contribute 0. Plain SUM stays available as
-       -- hours_recent_unweighted for backward-compat checks.
+       -- hours_recent_unweighted — H-8 uses this as the pace divisor
+       -- to avoid systematic ~40% understatement from weighted avg.
+       -- H-2: COALESCE(is_billable, TRUE) = TRUE filters non-billable
+       --      hours (overhead/WO-only) so pace reflects real billable work.
+       -- H-7: (NOW() AT TIME ZONE 'America/Chicago')::date for correct
+       --      boundary — entries logged 6-11 PM Chicago otherwise land
+       --      outside the intended window.
        SELECT te.project_id,
               COALESCE(SUM(te.hours), 0)::float AS hours_recent_unweighted,
               COALESCE(SUM(
@@ -522,12 +771,13 @@ async function buildInspectionRevenueProjection(pool, opts) {
                 GREATEST(
                   0.2,
                   1.0 - (
-                    EXTRACT(EPOCH FROM (CURRENT_DATE - te.entry_date)) / 86400.0 / 7.0
+                    EXTRACT(EPOCH FROM ((NOW() AT TIME ZONE 'America/Chicago')::date - te.entry_date)) / 86400.0 / 7.0
                   ) / NULLIF($1::float, 0)
                 )
               ), 0)::float AS hours_recent
          FROM time_entries te
-         WHERE te.entry_date >= (CURRENT_DATE - ($1 || ' weeks')::interval)
+         WHERE te.entry_date >= ((NOW() AT TIME ZONE 'America/Chicago')::date - ($1 || ' weeks')::interval)
+           AND COALESCE(te.is_billable, TRUE) = TRUE
          GROUP BY te.project_id
      ),
      billed_to_date AS (
@@ -543,6 +793,7 @@ async function buildInspectionRevenueProjection(pool, opts) {
      )
      SELECT ip.*,
             COALESCE(rh.hours_recent, 0) AS hours_recent,
+            COALESCE(rh.hours_recent_unweighted, 0) AS hours_recent_unweighted,
             COALESCE(btd.billed, 0) AS billed_to_date,
             COALESCE(pb.budget_allocated, 0) AS project_budget_allocated
        FROM inspection_projects ip
@@ -593,15 +844,41 @@ async function buildInspectionRevenueProjection(pool, opts) {
   // ─── Per-row projection math ─────────────────────────────────────────
   function computeRow(input) {
     // Inputs:
-    //   weighted_rate  — $/hr to apply (avg if multiple projects)
-    //   hours_recent   — sum of hours in lookback window
-    //   billed_to_date — $ billed against this scope so far
-    //   budget_allocated — $ budget cap for this scope (0 = none)
-    const { weighted_rate, hours_recent, billed_to_date, budget_allocated } = input;
-    const avgWeekly = lookbackWeeks > 0 ? hours_recent / lookbackWeeks : 0;
+    //   weighted_rate             — $/hr to apply (avg if multiple projects)
+    //   hours_recent              — weighted hours (for rate weighting only)
+    //   hours_recent_unweighted   — plain SUM used as pace divisor (H-8)
+    //   billed_to_date            — $ billed against this scope so far
+    //   budget_allocated          — $ budget cap for this scope (0 = none)
+    const {
+      weighted_rate,
+      hours_recent,
+      hours_recent_unweighted,
+      billed_to_date,
+      budget_allocated,
+    } = input;
+
+    // H-4: zero/missing rate means we cannot produce a meaningful dollar
+    //      figure — return a zeroed row with rate_missing flag so the
+    //      data-quality panel can surface it.
+    const zeroed = {
+      avg_weekly_hours: 0,
+      budget_remaining: +Math.max(0, (budget_allocated || 0) - (billed_to_date || 0)).toFixed(2),
+      projected_remaining_hours: 0,
+      projected_remaining_revenue: 0,
+      will_exhaust_budget: false,
+    };
+    if ((weighted_rate || 0) <= 0) return { ...zeroed, rate_missing: true };
+
+    // H-8: use unweighted hours as the pace divisor — the weighted variant
+    //      has avg weight ~0.6, which would systematically understate pace
+    //      by ~40%. The comment in the CTE confirms this is intentional.
+    const paceHrs = hours_recent_unweighted != null
+      ? hours_recent_unweighted
+      : hours_recent;  // fallback for callers that don't pass unweighted
+    const avgWeekly = lookbackWeeks > 0 ? paceHrs / lookbackWeeks : 0;
     const paceHours = avgWeekly * horizonWeeks;
     const budgetRemaining = Math.max(0, budget_allocated - billed_to_date);
-    const budgetHours = weighted_rate > 0 ? budgetRemaining / weighted_rate : Infinity;
+    const budgetHours = budgetRemaining / weighted_rate;
     const projHours = budget_allocated > 0
       ? Math.min(paceHours, budgetHours)
       : paceHours;
@@ -611,7 +888,10 @@ async function buildInspectionRevenueProjection(pool, opts) {
       budget_remaining: +budgetRemaining.toFixed(2),
       projected_remaining_hours: +projHours.toFixed(1),
       projected_remaining_revenue: +projRevenue.toFixed(2),
-      will_exhaust_budget: budget_allocated > 0 && paceHours >= budgetHours,
+      // L-1: strict > (not >=). At exact equality pace fits the remaining
+      //      budget exactly — the flag should only fire when pace would
+      //      EXCEED the budget, not when it precisely meets it.
+      will_exhaust_budget: budget_allocated > 0 && paceHours > budgetHours,
     };
   }
 
@@ -636,12 +916,15 @@ async function buildInspectionRevenueProjection(pool, opts) {
   // Umbrella rows (one per engineering_contract with a budget)
   for (const u of umbrellas.values()) {
     const hoursRecent = u.projects.reduce((s, p) => s + p.hours_recent, 0);
+    const hoursRecentUnweighted = u.projects.reduce(
+      (s, p) => s + (p.hours_recent_unweighted || 0), 0);
     const billedToDate = u.projects.reduce((s, p) => s + p.billed_to_date, 0);
     const actualHours = u.projects.reduce((s, p) => s + p.actual_hours, 0);
     const rate = weightedRate(u.projects);
     const computed = computeRow({
       weighted_rate: rate,
       hours_recent: hoursRecent,
+      hours_recent_unweighted: hoursRecentUnweighted,
       billed_to_date: billedToDate,
       budget_allocated: u.budget_allocated,
     });
@@ -658,7 +941,7 @@ async function buildInspectionRevenueProjection(pool, opts) {
       // Aggregates
       weighted_billing_rate: +rate.toFixed(2),
       actual_hours: +actualHours.toFixed(2),
-      hours_last_n_weeks: +hoursRecent.toFixed(2),
+      hours_last_n_weeks: +hoursRecentUnweighted.toFixed(2),
       budget_allocated: +u.budget_allocated.toFixed(2),
       billed_to_date: +billedToDate.toFixed(2),
       ...computed,
@@ -670,6 +953,7 @@ async function buildInspectionRevenueProjection(pool, opts) {
     const computed = computeRow({
       weighted_rate: p.billing_rate || 0,
       hours_recent: p.hours_recent,
+      hours_recent_unweighted: p.hours_recent_unweighted || 0,
       billed_to_date: p.billed_to_date,
       budget_allocated: p.project_budget_allocated,
     });
@@ -687,7 +971,7 @@ async function buildInspectionRevenueProjection(pool, opts) {
       engineering_contract_name: p.engineering_contract_name || null,
       billing_rate: p.billing_rate || 0,
       actual_hours: p.actual_hours,
-      hours_last_n_weeks: p.hours_recent,
+      hours_last_n_weeks: p.hours_recent_unweighted || 0,
       budget_allocated: p.project_budget_allocated,
       billed_to_date: p.billed_to_date,
       ...computed,
@@ -723,31 +1007,56 @@ async function buildInspectionRevenueProjection(pool, opts) {
 // what each client would owe." Unlike the monthly draft, this ignores
 // billing_cadence — every dollar of work-done-but-not-billed counts.
 async function buildBillNowPreview(pool) {
+  // H-1: Mirror /api/revenue/unbilled — use live SUM(billable hours)
+  //      instead of p.actual_hours (which doesn't filter non-billable),
+  //      and respect manual_invoice_amount when set so the earned figure
+  //      matches what we'd actually invoice.
+  // L-4: Footage branch now deducts any prior partial invoices so we
+  //      don't overstate unbilled footage revenue.
   const { rows } = await pool.query(
-    `WITH unbilled_hourly AS (
+    `WITH project_billed AS (
+       -- Total already-invoiced amount per project (used by both branches).
+       SELECT ii.project_id, COALESCE(SUM(ii.amount), 0)::float AS already_billed
+         FROM invoice_items ii
+        GROUP BY ii.project_id
+     ),
+     billable_hours AS (
+       -- Live billable-hour SUM per project (H-1: replaces p.actual_hours).
+       SELECT te.project_id,
+              COALESCE(SUM(te.hours), 0)::float AS hours_done
+         FROM time_entries te
+        WHERE COALESCE(te.is_billable, TRUE) = TRUE
+        GROUP BY te.project_id
+     ),
+     unbilled_hourly AS (
        SELECT
          p.id AS project_id,
          p.name AS project_name,
          p.client_id,
          cl.name AS client_name,
          p.billing_rate::float AS rate,
-         COALESCE(p.actual_hours, 0)::float AS hours_done,
-         COALESCE((
-           SELECT SUM(ii.amount)
-           FROM invoice_items ii
-           WHERE ii.project_id = p.id
-         ), 0)::float AS already_billed,
-         COALESCE(p.actual_hours, 0)::float * COALESCE(p.billing_rate, 0)::float AS earned,
-         (COALESCE(p.actual_hours, 0)::float * COALESCE(p.billing_rate, 0)::float)
-           - COALESCE((
-               SELECT SUM(ii.amount) FROM invoice_items ii WHERE ii.project_id = p.id
-             ), 0)::float AS unbilled_amount
+         COALESCE(bh.hours_done, 0) AS hours_done,
+         COALESCE(pb.already_billed, 0) AS already_billed,
+         -- H-1: honour manual_invoice_amount when set; otherwise derive
+         --      earned from live billable hours × current rate.
+         CASE
+           WHEN p.manual_invoice_amount IS NOT NULL
+             THEN p.manual_invoice_amount::float
+           ELSE COALESCE(bh.hours_done, 0) * COALESCE(p.billing_rate, 0)::float
+         END AS earned,
+         (CASE
+           WHEN p.manual_invoice_amount IS NOT NULL
+             THEN p.manual_invoice_amount::float
+           ELSE COALESCE(bh.hours_done, 0) * COALESCE(p.billing_rate, 0)::float
+         END) - COALESCE(pb.already_billed, 0) AS unbilled_amount
        FROM projects p
        LEFT JOIN clients cl ON cl.id = p.client_id
+       LEFT JOIN billable_hours bh ON bh.project_id = p.id
+       LEFT JOIN project_billed pb ON pb.project_id = p.id
        WHERE p.billing_type = 'hourly'
          AND p.status IN ('active', 'completed')
          AND COALESCE(p.is_rollup, FALSE) = FALSE
-         AND COALESCE(p.actual_hours, 0) > 0
+         AND COALESCE(bh.hours_done, 0) > 0
          AND COALESCE(p.billing_rate, 0) > 0
      ),
      unbilled_footage AS (
@@ -758,11 +1067,14 @@ async function buildBillNowPreview(pool) {
          cl.name AS client_name,
          p.billing_rate::float AS rate,
          0::float AS hours_done,
-         0::float AS already_billed,
+         COALESCE(pb.already_billed, 0) AS already_billed,
          COALESCE(p.expected_revenue, 0)::float AS earned,
-         COALESCE(p.expected_revenue, 0)::float AS unbilled_amount
+         -- L-4: deduct prior partial invoices so partially-invoiced footage
+         --      projects don't appear as fully unbilled.
+         COALESCE(p.expected_revenue, 0)::float - COALESCE(pb.already_billed, 0) AS unbilled_amount
        FROM projects p
        LEFT JOIN clients cl ON cl.id = p.client_id
+       LEFT JOIN project_billed pb ON pb.project_id = p.id
        WHERE p.billing_type = 'footage'
          AND p.status = 'completed'
          AND p.billed_date IS NULL
@@ -816,10 +1128,26 @@ async function buildMonthlyBillingDraft(pool, year, month) {
        GROUP BY te.project_id
      ),
      already_billed AS (
+       -- M-4: Two-branch match mirrors the revenue.js monthly-CTE pattern.
+       -- Branch 1 (strict): invoices that explicitly cover this exact period.
+       --   Most modern invoices have billing_period_start/end set on creation.
+       -- Branch 2 (fallback): legacy invoices where billing_period_start IS NULL
+       --   are matched by invoice_date year+month instead. Without this fallback
+       --   a legacy invoice for e.g. May 2025 (NULL period_start) would not block
+       --   the draft, causing buildMonthlyBillingDraft to include the project
+       --   again and risk a double-bill when the admin processes the draft.
        SELECT DISTINCT ii.project_id
        FROM invoice_items ii
        JOIN invoices i ON i.id = ii.invoice_id
-       WHERE i.billing_period_start = $1 AND i.billing_period_end = $2
+       WHERE (
+         -- Strict: period columns explicitly match
+         (i.billing_period_start = $1 AND i.billing_period_end = $2)
+         OR
+         -- Fallback: legacy invoice with NULL period — match by year+month of invoice_date
+         (i.billing_period_start IS NULL
+          AND EXTRACT(YEAR  FROM i.invoice_date) = EXTRACT(YEAR  FROM $1::date)
+          AND EXTRACT(MONTH FROM i.invoice_date) = EXTRACT(MONTH FROM $1::date))
+       )
      )
      SELECT
        p.id AS project_id,
@@ -857,6 +1185,194 @@ async function buildMonthlyBillingDraft(pool, year, month) {
     project_count: rows.length,
     total_estimated_revenue: totalEstimated,
     by_client: Object.values(byClient),
+  };
+}
+
+// ─── BE-3: Per-project projection (Tile 3 data shape) ─────────────────────
+//
+// GET /api/automation/project-projection/:projectId  (admin or owner gated)
+//
+// Returns the Tile-3 data shape for a single project:
+//   actual_billed        — total invoiced to date
+//   wip                  — billable hours logged after last invoice × rate
+//   projected_remaining  — pace × remaining horizon × rate, capped at budget rem
+//   total_at_completion  — actual_billed + wip + projected_remaining
+//   budget_allocated     — EC-level or project-level budget (null if unset)
+//   burn_bar             — segment percentages for the horizontal burn bar
+//     billed_pct         — % of total_at_completion already billed
+//     wip_pct            — % that is WIP
+//     projected_pct      — % that is projected new work
+//     overage_pct        — % by which total exceeds budget (0 when under budget)
+//   horizon_reason       — 'full' | 'close_out_80pct' (ARC-2 heuristic)
+//   rate_missing         — true when billing_rate is NULL or 0
+//
+// Reuses the pace logic from buildPscRusProjection (same H-2, H-6, H-7 fixes,
+// same ARC-2 close-out heuristic). The WIP calculation mirrors the one in
+// buildPscRusProjection: billable time_entries after the last invoice date.
+//
+// Data-quality panel (BE-1) surfaces NULL-rate and NULL-budget projects so
+// this endpoint doesn't need to handle those gracefully beyond returning flags.
+async function buildProjectProjection(pool, projectId, opts) {
+  const lookbackWeeks = (opts && opts.lookbackWeeks) || 8;
+  const horizonWeeks  = (opts && opts.horizonWeeks)  || 13;
+  const CLOSE_OUT_THRESHOLD = 0.80;
+  const CLOSE_OUT_HORIZON_WEEKS = 3;
+
+  // ── 1. Project + billing meta ────────────────────────────────────────
+  const { rows: projRows } = await pool.query(
+    `SELECT p.id, p.name, p.billing_rate::float AS billing_rate,
+            p.billing_type, p.actual_hours::float AS actual_hours,
+            p.expected_hours::float AS expected_hours,
+            p.footage::float AS footage,
+            p.expected_revenue::float AS expected_revenue,
+            p.status,
+            c.engineering_contract_id
+       FROM projects p
+       LEFT JOIN contracts c ON c.id = p.contract_id
+      WHERE p.id = $1`,
+    [projectId]
+  );
+  if (!projRows.length) return null;
+  const proj = projRows[0];
+
+  // ── 2. Billed to date ────────────────────────────────────────────────
+  const billedRes = await pool.query(
+    `SELECT COALESCE(SUM(amount), 0)::float AS billed
+       FROM invoice_items
+      WHERE project_id = $1`,
+    [projectId]
+  );
+  const actualBilled = billedRes.rows[0].billed;
+
+  // ── 3. WIP — billable hours after last invoice date ──────────────────
+  const wipRes = await pool.query(
+    `WITH last_invoice AS (
+       SELECT MAX(inv.invoice_date) AS last_date
+         FROM invoice_items ii
+         JOIN invoices inv ON inv.id = ii.invoice_id
+        WHERE ii.project_id = $1
+     )
+     SELECT COALESCE(SUM(te.hours), 0)::float AS wip_hours
+       FROM time_entries te
+       CROSS JOIN last_invoice li
+      WHERE te.project_id = $1
+        AND COALESCE(te.is_billable, TRUE) = TRUE
+        AND (li.last_date IS NULL OR te.entry_date > li.last_date)`,
+    [projectId]
+  );
+  const wipHours = wipRes.rows[0].wip_hours;
+  const wipAmount = wipHours * (proj.billing_rate || 0);
+
+  // ── 4. Lookback hours (pace) — H-2, H-6, H-7 ────────────────────────
+  const lookbackRes = await pool.query(
+    `SELECT COALESCE(SUM(hours), 0)::float AS hours,
+            MIN(entry_date) AS first_entry
+       FROM time_entries
+      WHERE project_id = $1
+        AND entry_date >= ((NOW() AT TIME ZONE 'America/Chicago')::date - ($2 || ' weeks')::interval)
+        AND COALESCE(is_billable, TRUE) = TRUE`,
+    [projectId, String(lookbackWeeks)]
+  );
+  const firstEntryRes = await pool.query(
+    `SELECT MIN(entry_date) AS first_entry
+       FROM time_entries
+      WHERE project_id = $1
+        AND COALESCE(is_billable, TRUE) = TRUE`,
+    [projectId]
+  );
+  const lookbackHrs = lookbackRes.rows[0].hours;
+  const firstEntry  = firstEntryRes.rows[0].first_entry;
+
+  // Effective lookback (H-6): cap to project's actual history length
+  let effectiveLookback = lookbackWeeks;
+  if (firstEntry) {
+    const weeksSince = (Date.now() - new Date(firstEntry)) / (7 * 24 * 60 * 60 * 1000);
+    effectiveLookback = Math.min(lookbackWeeks, Math.max(1, Math.ceil(weeksSince)));
+  }
+  const avgWeekly = effectiveLookback > 0 ? lookbackHrs / effectiveLookback : 0;
+
+  // ── 5. Budget — EC-level first, fall back to project budget ──────────
+  let budgetAllocated = null;
+  if (proj.engineering_contract_id) {
+    const ecBudRes = await pool.query(
+      `SELECT COALESCE(SUM(bc.allocated_amount), 0)::float AS budget
+         FROM budgets b
+         LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+        WHERE b.engineering_contract_id = $1`,
+      [proj.engineering_contract_id]
+    );
+    if (ecBudRes.rows[0].budget > 0) budgetAllocated = ecBudRes.rows[0].budget;
+  }
+  if (budgetAllocated == null) {
+    const projBudRes = await pool.query(
+      `SELECT COALESCE(SUM(bc.allocated_amount), 0)::float AS budget
+         FROM budgets b
+         LEFT JOIN budget_codes bc ON bc.budget_id = b.id
+        WHERE b.project_id = $1`,
+      [projectId]
+    );
+    if (projBudRes.rows[0].budget > 0) budgetAllocated = projBudRes.rows[0].budget;
+  }
+
+  // ── 6. Projected remaining (ARC-2 close-out heuristic) ───────────────
+  const rate = proj.billing_rate || 0;
+  const rateMissing = rate <= 0;
+
+  const burnRatio = (budgetAllocated && budgetAllocated > 0 && actualBilled > 0)
+    ? actualBilled / budgetAllocated
+    : 0;
+  const horizonReason = (budgetAllocated && budgetAllocated > 0 && burnRatio >= CLOSE_OUT_THRESHOLD)
+    ? 'close_out_80pct'
+    : 'full';
+  const effectiveHorizon = horizonReason === 'close_out_80pct'
+    ? CLOSE_OUT_HORIZON_WEEKS
+    : horizonWeeks;
+
+  // Budget remaining = budget − billed − wip (ARC-1 cap logic)
+  const budgetRemaining = budgetAllocated != null
+    ? Math.max(0, budgetAllocated - actualBilled - wipAmount)
+    : null;
+
+  let projectedRemaining = 0;
+  if (!rateMissing) {
+    const paceDollars = avgWeekly * effectiveHorizon * rate;
+    projectedRemaining = budgetRemaining != null
+      ? Math.min(paceDollars, budgetRemaining)
+      : paceDollars;
+  }
+
+  // ── 7. Totals + burn bar ─────────────────────────────────────────────
+  const totalAtCompletion = actualBilled + wipAmount + projectedRemaining;
+  const burnBase = Math.max(totalAtCompletion, budgetAllocated || 0);
+  const billedPct   = burnBase > 0 ? Math.min(100, (actualBilled / burnBase) * 100) : 0;
+  const wipPct      = burnBase > 0 ? Math.min(100 - billedPct, (wipAmount / burnBase) * 100) : 0;
+  const projPct     = burnBase > 0 ? Math.min(100 - billedPct - wipPct, (projectedRemaining / burnBase) * 100) : 0;
+  const overagePct  = (budgetAllocated && budgetAllocated > 0 && totalAtCompletion > budgetAllocated)
+    ? Math.min(100, ((totalAtCompletion - budgetAllocated) / budgetAllocated) * 100)
+    : 0;
+
+  return {
+    project_id: projectId,
+    project_name: proj.name,
+    billing_type: proj.billing_type,
+    actual_billed: +actualBilled.toFixed(2),
+    wip: +wipAmount.toFixed(2),
+    wip_hours: +wipHours.toFixed(2),
+    projected_remaining: +projectedRemaining.toFixed(2),
+    total_at_completion: +totalAtCompletion.toFixed(2),
+    budget_allocated: budgetAllocated != null ? +budgetAllocated.toFixed(2) : null,
+    burn_bar: {
+      billed_pct:    +billedPct.toFixed(1),
+      wip_pct:       +wipPct.toFixed(1),
+      projected_pct: +projPct.toFixed(1),
+      overage_pct:   +overagePct.toFixed(1),
+    },
+    horizon_reason: horizonReason,
+    effective_horizon_weeks: effectiveHorizon,
+    lookback_weeks: lookbackWeeks,
+    avg_weekly_hrs: +avgWeekly.toFixed(2),
+    rate_missing: rateMissing,
+    methodology_note: `Based on ${lookbackWeeks}-week billable-hours pace × $${rate}/hr, capped at remaining budget`,
   };
 }
 
@@ -952,6 +1468,62 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
     }
   });
 
+  /*
+   * BE-3 — Per-project completion forecast (Tile 3 data shape)
+   * ─────────────────────────────────────────────────────────
+   * GET /api/automation/project-projection/:projectId
+   *
+   * Access: admin OR the project's owning client (owner check handled inline).
+   * The route is admin-only for now; per-user access can be layered on later.
+   *
+   * Response shape:
+   *   {
+   *     project_id:            UUID,
+   *     project_name:          string,
+   *     billing_type:          'hourly' | 'footage',
+   *     actual_billed:         number,   // $ already invoiced
+   *     wip:                   number,   // $ logged but not yet invoiced
+   *     wip_hours:             number,   // raw WIP hours (for transparency)
+   *     projected_remaining:   number,   // $ pace × remaining horizon, capped
+   *     total_at_completion:   number,   // actual_billed + wip + projected_remaining
+   *     budget_allocated:      number | null,  // EC-level or project-level budget
+   *     burn_bar: {
+   *       billed_pct:    number,   // % of total_at_completion already billed
+   *       wip_pct:       number,   // % that is WIP
+   *       projected_pct: number,   // % that is projected new work
+   *       overage_pct:   number,   // % by which total exceeds budget (0 = within)
+   *     },
+   *     horizon_reason:        'full' | 'close_out_80pct',  // ARC-2 heuristic
+   *     effective_horizon_weeks: number,
+   *     lookback_weeks:        number,
+   *     avg_weekly_hrs:        number,
+   *     rate_missing:          boolean,  // true when billing_rate ≤ 0
+   *     methodology_note:      string,   // tooltip-ready explanation
+   *   }
+   *
+   * Optional query params:
+   *   lookback_weeks (1–52, default 8)
+   *   horizon_weeks  (1–104, default 13)
+   */
+  app.get('/api/automation/project-projection/:projectId', requireAdmin, async (req, res) => {
+    try {
+      const { projectId } = req.params;
+      // Basic UUID format guard — prevents obviously malformed IDs from
+      // reaching the DB. Actual existence check is done inside the data fn.
+      if (!/^[0-9a-f-]{36}$/i.test(projectId)) {
+        return res.status(400).json({ error: 'Invalid projectId format.' });
+      }
+      const lookbackWeeks = Math.max(1, Math.min(52, parseInt(req.query.lookback_weeks || '8', 10) || 8));
+      const horizonWeeks  = Math.max(1, Math.min(104, parseInt(req.query.horizon_weeks || '13', 10) || 13));
+      const result = await buildProjectProjection(pool, projectId, { lookbackWeeks, horizonWeeks });
+      if (!result) return res.status(404).json({ error: 'Project not found.' });
+      res.json(result);
+    } catch (e) {
+      console.error('[automation:project-projection]', e && e.message);
+      res.status(500).json({ error: 'Failed to build project projection.' });
+    }
+  });
+
   // Monthly billing draft — admin only. Returns the candidate list grouped
   // by client. NOTHING IS COMMITTED — admin reviews, edits if needed, then
   // POSTs to the existing /api/billing/bill-multiple to create real invoices.
@@ -969,6 +1541,232 @@ function installAutomationRoutes(app, pool, { requireAdmin, requireManagerOrAdmi
     } catch (e) {
       console.error('[automation:billing-draft-monthly]', e && e.message);
       res.status(500).json({ error: 'Failed to build billing draft.' });
+    }
+  });
+
+  /*
+   * BE-1 — Projection data-quality audit endpoint (admin only)
+   * ──────────────────────────────────────────────────────────────────────────
+   * GET /api/automation/projection-data-quality
+   *
+   * Access: admin only (requireAdmin).
+   * No query params. Read-only — no side effects.
+   *
+   * Response shape:
+   * {
+   *   as_of: ISO timestamp,
+   *   lists: {
+   *     null_or_zero_rate: [ProjectRow],       // List 1 — billing_rate NULL or 0
+   *     null_expected_revenue: [ProjectRow],   // List 2 — permitting projects with no expected_revenue
+   *     stale_footage_revenue: [ProjectRow],   // List 3 — footage projects where projected_revenue != expected_revenue
+   *     sparse_history: [ProjectRow],          // List 4 — active projects with <3 weeks of time-entry history
+   *     ec_no_budget: [EcRow],                 // List 5 — ECs with budget_allocated NULL or 0
+   *   },
+   *   summary: {
+   *     null_or_zero_rate_count: number,
+   *     null_expected_revenue_count: number,
+   *     stale_footage_revenue_count: number,
+   *     sparse_history_count: number,
+   *     ec_no_budget_count: number,
+   *     total_issues: number,
+   *   }
+   * }
+   *
+   * ProjectRow shape (Lists 1–4):
+   * {
+   *   project_id: UUID,
+   *   name: string,
+   *   client_name: string | null,
+   *   ec_name: string | null,         // engineering contract name, if any
+   *   billing_type: string,
+   *   status: string,
+   *   suggested_action: string,       // human-readable hint for the admin
+   * }
+   *
+   * EcRow shape (List 5):
+   * {
+   *   ec_id: UUID,
+   *   ec_name: string,
+   *   client_name: string | null,
+   *   program: string | null,
+   *   suggested_action: string,
+   * }
+   *
+   * Frontend surface: Settings → Admin → "Projection Data Quality" panel (FE-4).
+   * The data-quality chip on the projection tile (FE-1/FE-2) queries total_issues
+   * to show "All clear" vs "N issues — view in settings".
+   */
+  app.get('/api/automation/projection-data-quality', requireAdmin, async (req, res) => {
+    try {
+      // ── List 1: projects with billing_rate NULL or 0 (active only) ────────
+      // These projects produce $0 projections even when they have hours.
+      // The admin should set a billing_rate so pace × rate yields a real dollar figure.
+      const { rows: nullRateRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          'Set a billing_rate on this project so pace-based projection produces a real dollar figure' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        WHERE p.status = 'active'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND (p.billing_rate IS NULL OR p.billing_rate = 0)
+        ORDER BY cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 2: permitting projects missing expected_revenue ──────────────
+      // Permitting projects are projected by expected_revenue (footage/fixed-fee),
+      // not by pace × rate. A NULL value means $0 projection for those projects.
+      const { rows: nullExpRevRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          'Set expected_revenue (the fixed or per-unit fee) so this permitting project appears in the projection' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        LEFT JOIN jobs j ON j.id = p.job_id
+        WHERE p.status IN ('active', 'completed')
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND (j.team = 'permitting' OR p.project_type = 'permitting')
+          AND p.expected_revenue IS NULL
+        ORDER BY cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 3: footage projects where projected_revenue ≠ expected_revenue ─
+      // Migration 0033 added a DB trigger to keep projected_revenue in sync with
+      // expected_revenue for footage projects (ARC-3). This list surfaces backfill
+      // gaps — projects created before the trigger existed, or projects where the
+      // trigger was not applied. The backfill SQL is:
+      //   UPDATE projects SET projected_revenue = expected_revenue
+      //   WHERE billing_type = 'footage' AND projected_revenue IS DISTINCT FROM expected_revenue;
+      const { rows: staleFootageRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          'Run the ARC-3 backfill: UPDATE projects SET projected_revenue=expected_revenue WHERE billing_type=''footage'' AND projected_revenue IS DISTINCT FROM expected_revenue' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        WHERE p.billing_type = 'footage'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND p.projected_revenue IS DISTINCT FROM p.expected_revenue
+        ORDER BY cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 4: active projects with <3 weeks of time-entry history ────────
+      // Pace is computed over lookbackWeeks (default 8). Projects with fewer than
+      // 3 distinct weeks of entries have high-variance pace estimates. The admin
+      // should be aware that their projection numbers are especially unreliable.
+      // H-6 already uses effective_lookback_weeks to reduce the divisor for new
+      // projects; this list is the visibility layer.
+      const { rows: sparseHistoryRows } = await pool.query(`
+        SELECT
+          p.id          AS project_id,
+          p.name,
+          cl.name       AS client_name,
+          ec.name       AS ec_name,
+          p.billing_type,
+          p.status,
+          week_count.distinct_weeks,
+          'Fewer than 3 weeks of time-entry history — pace-based projection has high variance; consider waiting before acting on the number' AS suggested_action
+        FROM projects p
+        LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN contracts c ON c.id = p.contract_id
+        LEFT JOIN engineering_contracts ec ON ec.id = c.engineering_contract_id
+        JOIN (
+          SELECT te.project_id,
+                 COUNT(DISTINCT DATE_TRUNC('week', te.entry_date))::int AS distinct_weeks
+          FROM time_entries te
+          GROUP BY te.project_id
+        ) week_count ON week_count.project_id = p.id
+        WHERE p.status = 'active'
+          AND COALESCE(p.is_rollup, FALSE) = FALSE
+          AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = p.id)
+          AND week_count.distinct_weeks < 3
+        ORDER BY week_count.distinct_weeks, cl.name NULLS LAST, p.name
+      `);
+
+      // ── List 5: engineering contracts with no budget ───────────────────────
+      // ECs without a budget mean the projection is uncapped — pace × horizon
+      // runs to its full value without a budget-remaining floor. For RUS program
+      // ECs this is usually a data-entry omission. Admin should set budget_allocated
+      // via the Budgets UI.
+      const { rows: ecNoBudgetRows } = await pool.query(`
+        SELECT
+          ec.id         AS ec_id,
+          ec.name       AS ec_name,
+          cl.name       AS client_name,
+          ec.program,
+          'Set budget_allocated for this engineering contract in the Budgets UI so projections are capped correctly' AS suggested_action
+        FROM engineering_contracts ec
+        LEFT JOIN clients cl ON cl.id = ec.client_id
+        -- Only flag ECs that have at least one active project under them
+        WHERE EXISTS (
+          SELECT 1
+          FROM projects p
+          JOIN contracts c ON c.id = p.contract_id
+          WHERE c.engineering_contract_id = ec.id
+            AND p.status = 'active'
+            AND COALESCE(p.is_rollup, FALSE) = FALSE
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM budgets b
+          JOIN budget_codes bc ON bc.budget_id = b.id
+          WHERE b.engineering_contract_id = ec.id
+            AND COALESCE(bc.allocated_amount, 0) > 0
+        )
+        ORDER BY cl.name NULLS LAST, ec.name
+      `);
+
+      const summary = {
+        null_or_zero_rate_count:      nullRateRows.length,
+        null_expected_revenue_count:  nullExpRevRows.length,
+        stale_footage_revenue_count:  staleFootageRows.length,
+        sparse_history_count:         sparseHistoryRows.length,
+        ec_no_budget_count:           ecNoBudgetRows.length,
+        total_issues:
+          nullRateRows.length +
+          nullExpRevRows.length +
+          staleFootageRows.length +
+          sparseHistoryRows.length +
+          ecNoBudgetRows.length,
+      };
+
+      res.json({
+        as_of: new Date().toISOString(),
+        lists: {
+          null_or_zero_rate:      nullRateRows,
+          null_expected_revenue:  nullExpRevRows,
+          stale_footage_revenue:  staleFootageRows,
+          sparse_history:         sparseHistoryRows,
+          ec_no_budget:           ecNoBudgetRows,
+        },
+        summary,
+      });
+    } catch (e) {
+      console.error('[automation:projection-data-quality]', e && e.message);
+      res.status(500).json({ error: 'Failed to build projection data quality report.' });
     }
   });
 }
@@ -1144,4 +1942,10 @@ module.exports = {
   buildBillNowPreview,
   runAuditCleanup,
   buildMonthlyBillingDraft,
+  // BE-3: per-project projection (Tile 3 data shape). Exported so tests
+  // can call it directly without going through the HTTP layer.
+  buildProjectProjection,
+  // H-7: exported so routes/inspection.js can use business-tz date
+  // without duplicating the implementation.
+  dateInBusinessTz,
 };

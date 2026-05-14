@@ -58,7 +58,27 @@
   document.getElementById('hrs-period')?.addEventListener('change', syncHrsPeriodVisibility);
   syncHrsPeriodVisibility();
 
+  // Load-guard: prevents double-fetch when multiple synchronous change events
+  // fire at the same time (e.g. persistFilter restoring month+year+period).
+  // The guard is set on the first entering call and cleared after it completes
+  // or errors. A debounce timer replaces any queued calls while the guard is
+  // active so the last change wins.
+  let _loadHoursGuard = false;
+  let _loadHoursPending = false;
+  let _loadHoursPendingTimer = null;
+
   async function loadHours() {
+    if (_loadHoursGuard) {
+      // Coalesce: schedule a single follow-up after the in-flight call lands.
+      _loadHoursPending = true;
+      clearTimeout(_loadHoursPendingTimer);
+      _loadHoursPendingTimer = setTimeout(() => {
+        if (_loadHoursPending) { _loadHoursPending = false; loadHours(); }
+      }, 50);
+      return;
+    }
+    _loadHoursGuard = true;
+    try {
     const period = document.getElementById('hrs-period')?.value || 'month';
     const m = document.getElementById('hrs-month').value;
     const y = document.getElementById('hrs-year').value;
@@ -351,6 +371,18 @@
     // Re-apply previously-expanded keys so polling re-renders don't visually
     // collapse rows the user had open.
     restoreHrsExpandedState();
+    } catch (e) {
+      const body = document.getElementById('hours-tree-body');
+      if (body) body.innerHTML = `<div class="empty-state" style="padding:40px;color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i><p>Failed to load hours: ${esc(e.message)}</p></div>`;
+    } finally {
+      // NF-2: when a guarded call completes successfully, cancel any pending
+      // coalesced fetch — the just-finished load already has the latest filter
+      // state, so the trailing setTimeout would be a redundant duplicate fetch.
+      _loadHoursGuard = false;
+      _loadHoursPending = false;
+      clearTimeout(_loadHoursPendingTimer);
+      _loadHoursPendingTimer = null;
+    }
   }
 
   // Hours-tab tree state lives in hoursTreeState (shared instance from
@@ -398,7 +430,17 @@
     document.getElementById('te-history-btn').style.display = 'none';
     document.getElementById('te-save-btn').innerHTML = 'Save';
     document.getElementById('te-project').value = '';
-    document.getElementById('te-staff').value = '';
+    // Pre-select logged-in user's staff entry on the NEW path only.
+    // Only set if staff_id is present AND that option exists in the dropdown
+    // (prevents setting a stale id that renders as blank but isn't empty).
+    const teStaff = document.getElementById('te-staff');
+    const myStaffId = window.currentUser && window.currentUser.staff_id
+      ? String(window.currentUser.staff_id)
+      : '';
+    teStaff.value = '';
+    if (myStaffId && teStaff.querySelector(`option[value="${CSS.escape(myStaffId)}"]`)) {
+      teStaff.value = myStaffId;
+    }
     document.getElementById('te-hours').value = '';
     document.getElementById('te-title').value = '';
     document.getElementById('te-notes').value = '';
@@ -469,7 +511,7 @@
   async function openEditTimeEntryModal(id) {
     const e = _hoursEntriesById.get(String(id));
     if (!e) {
-      alert('Entry no longer in view. Refresh and try again.');
+      await alertDialog({ title: 'Entry not found', message: 'Entry no longer in view. Refresh and try again.' });
       return;
     }
     if (typeof allProjects !== 'undefined' && !allProjects.length && typeof loadProjects === 'function') await loadProjects();
@@ -498,7 +540,7 @@
     const proj = document.getElementById('te-project').value;
     const hrs = document.getElementById('te-hours').value;
     const date = document.getElementById('te-date').value;
-    if (!proj || !hrs || !date) return alert('Project, hours and date are required');
+    if (!proj || !hrs || !date) return alertDialog({ title: 'Missing fields', message: 'Project, hours and date are required' });
     const body = {
       project_id: proj,
       staff_id: document.getElementById('te-staff').value || null,
@@ -507,24 +549,35 @@
       job_title: document.getElementById('te-title').value,
       notes: document.getElementById('te-notes').value,
     };
-    if (id) {
-      await api('/api/time-entries/' + encodeURIComponent(id), 'PUT', body);
-    } else {
-      await api('/api/time-entries', 'POST', body);
+    try {
+      if (id) {
+        await api('/api/time-entries/' + encodeURIComponent(id), 'PUT', body);
+      } else {
+        await api('/api/time-entries', 'POST', body);
+      }
+      closeModal('time-modal');
+      loadHours();
+    } catch (e) {
+      alertDialog({ title: 'Save failed', message: e.message });
+      // modal stays open, input intact
     }
-    closeModal('time-modal');
-    loadHours();
   }
 
   async function deleteTimeEntry(id) {
-    if (!confirm('Delete this time entry?')) return;
-    const resp = await api('/api/time-entries/' + id, 'DELETE');
-    loadHours();
-    if (typeof loadDashboard === 'function') loadDashboard();
-    // Server returns an undo_token snapshot of the deleted row; surface
-    // the standard 15s undo bar so accidental clicks are recoverable.
-    if (resp && resp.undo_token && typeof showUndoBar === 'function') {
-      showUndoBar('Time entry deleted.', resp.undo_token);
+    const ok = await confirmDialog({ title: 'Delete time entry?', message: 'This action cannot be undone (you will have a 15-second undo window).', confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
+    try {
+      const resp = await api('/api/time-entries/' + id, 'DELETE');
+      // Only reload on confirmed success — prevents entry reappearing after silent failure
+      loadHours();
+      if (typeof loadDashboard === 'function') loadDashboard();
+      // Server returns an undo_token snapshot of the deleted row; surface
+      // the standard 15s undo bar so accidental clicks are recoverable.
+      if (resp && resp.undo_token && typeof showUndoBar === 'function') {
+        showUndoBar('Time entry deleted.', resp.undo_token);
+      }
+    } catch (e) {
+      alertDialog({ title: 'Delete failed', message: e.message });
     }
   }
 
@@ -541,21 +594,27 @@
       ? `YTD ${y}`
       : new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const qs = period === 'ytd' ? `year=${y}` : `month=${m}&year=${y}`;
-    if (!confirm(`Delete ALL hours for ${name} in ${periodLabel}?\n\nThis will:\n• Remove every time entry this employee logged in this period\n• Recompute totals on every affected project\n\nYou'll get a 15-second undo window after the delete.`)) return;
+    const ok = await confirmDialog({
+      title: `Delete all hours for ${name}?`,
+      message: `Period: ${periodLabel}\n\nThis will:\n• Remove every time entry this employee logged in this period\n• Recompute totals on every affected project\n\nYou'll get a 15-second undo window after the delete.`,
+      confirmLabel: 'Delete All',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const r = await api(`/api/time-entries/by-staff/${staffId}?${qs}`, 'DELETE');
       if (r.undo_token && r.deleted > 0 && typeof showUndoBar === 'function') {
         showUndoBar(`Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'} for ${name}.`, r.undo_token);
       } else if (r.deleted === 0) {
-        alert(`No time entries found for ${name} in ${periodLabel}.`);
+        await alertDialog({ title: 'Nothing to delete', message: `No time entries found for ${name} in ${periodLabel}.` });
       } else {
-        alert(`Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'}.`);
+        await alertDialog({ title: 'Deleted', message: `Deleted ${r.deleted} time ${r.deleted === 1 ? 'entry' : 'entries'}.` });
       }
       loadHours();
       if (typeof loadDashboard === 'function') loadDashboard();
       if (typeof loadProjects === 'function') loadProjects();
     } catch (e) {
-      alert('Failed: ' + e.message);
+      await alertDialog({ title: 'Delete failed', message: e.message });
     }
   }
 

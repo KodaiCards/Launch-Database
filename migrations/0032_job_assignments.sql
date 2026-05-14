@@ -14,9 +14,13 @@
 --   3. If matching assignment rows exist → return ONLY those jobs. Heuristic bypassed.
 --   4. If no matching rows → fall through to the existing program_scope heuristic.
 --
--- The UNIQUE constraint uses COALESCE with sentinel UUIDs/strings because Postgres
+-- The unique-pin index uses COALESCE with sentinel UUIDs/strings because Postgres
 -- treats two NULLs as NOT equal in standard UNIQUE indexes, which would allow
--- inserting the same (job_id, NULL, NULL, NULL) row twice.
+-- inserting the same (job_id, NULL, NULL, NULL) row twice. PostgreSQL only
+-- accepts expressions in CREATE UNIQUE INDEX, not in inline UNIQUE table
+-- constraints — earlier version of this migration tried the latter and failed
+-- with `syntax error at or near "("`. The unique-pin lives as a separate
+-- expression index below.
 
 CREATE TABLE IF NOT EXISTS job_assignments (
   id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -26,15 +30,16 @@ CREATE TABLE IF NOT EXISTS job_assignments (
   team                    text,
   created_at              timestamptz NOT NULL DEFAULT NOW(),
   CONSTRAINT job_assignments_at_least_one_scope
-    CHECK (client_id IS NOT NULL OR engineering_contract_id IS NOT NULL OR team IS NOT NULL),
-  CONSTRAINT job_assignments_unique_pin
-    UNIQUE (
-      job_id,
-      COALESCE(client_id,               '00000000-0000-0000-0000-000000000000'::uuid),
-      COALESCE(engineering_contract_id, '00000000-0000-0000-0000-000000000000'::uuid),
-      COALESCE(team, '')
-    )
+    CHECK (client_id IS NOT NULL OR engineering_contract_id IS NOT NULL OR team IS NOT NULL)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS job_assignments_unique_pin
+  ON job_assignments (
+    job_id,
+    COALESCE(client_id,               '00000000-0000-0000-0000-000000000000'::uuid),
+    COALESCE(engineering_contract_id, '00000000-0000-0000-0000-000000000000'::uuid),
+    COALESCE(team, '')
+  );
 
 CREATE INDEX IF NOT EXISTS idx_job_assignments_job
   ON job_assignments(job_id);

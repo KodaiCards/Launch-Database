@@ -31,7 +31,7 @@
   --gray:#6B6B6B;
   --text:#212529;
   --text-secondary:#495057;
-  --text-muted:#6C757D;
+  --text-muted:#5A6470;
   --success:#28A745;
   --success-light:#E8F5E9;
   --success-text:#1B5E20;
@@ -52,9 +52,9 @@ html[data-theme="dark"]{
   --primary-light:#1E3A5C;
   --primary-text:#FFFFFF;
   --surface-1:#1A1F26;
-  --surface-2:#242B36;
+  --surface-2:#1D2430;
   --surface-3:#1F2630;
-  --white:#242B36;
+  --white:#1D2430;
   --gray-light:#1A1F26;
   --row-alt:#1F2630;
   --border-strong:#2D3540;
@@ -230,6 +230,7 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
 <script src="/js/undo_bar.js" defer></script>
+<script src="/js/focus_trap.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
 <script src="/js/project_picker.js" defer></script>
 </head>
@@ -288,7 +289,7 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
           <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)" title="Previous week"><i class="fa-solid fa-chevron-left"></i></button>
           <span class="week-nav-label" id="week-label">…</span>
           <button class="btn btn-secondary btn-sm" id="next-week-btn" onclick="changeWeek(1)" title="Next week"><i class="fa-solid fa-chevron-right"></i></button>
-          <select class="btn-secondary btn-sm" id="scrollback-select" onchange="scrollbackChanged()" style="padding:6px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white);color:var(--text);font-size:12px;margin-left:6px" title="Maximum weeks to scroll back">
+          <select class="btn-secondary btn-sm" id="scrollback-select" onchange="scrollbackChanged()" aria-label="Maximum weeks to scroll back" style="padding:6px 8px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white);color:var(--text);font-size:12px;margin-left:6px" title="Maximum weeks to scroll back">
             <option value="4">4 weeks back</option>
             <option value="12" selected>12 weeks back</option>
             <option value="26">26 weeks back</option>
@@ -596,38 +597,52 @@ function togglePortalsDropdown() {
 }
 
 // Account modal — same pattern as design/permitting portals
+let _accountMenuTrap = null;
+function _closeAccountMenu() {
+  const m = document.getElementById('account-modal');
+  if (m) m.remove();
+  if (_accountMenuTrap) { _accountMenuTrap.release(); _accountMenuTrap = null; }
+}
 function showAccountMenu(){
   const existing = document.getElementById('account-modal');
-  if (existing){ existing.remove(); return; }
+  if (existing){ _closeAccountMenu(); return; }
   const u = currentUser || {};
   const overlay = document.createElement('div');
   overlay.id = 'account-modal';
   overlay.className = 'modal-overlay';
   overlay.style.display = 'flex';
+  // A11y: dialog role + label
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'account-modal-title');
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:380px">
       <div class="modal-header">
-        <span class="modal-title"><i class="fa-solid fa-user-circle"></i> Account</span>
-        <button class="btn btn-icon btn-secondary" onclick="document.getElementById('account-modal').remove()"><i class="fa-solid fa-xmark"></i></button>
+        <span class="modal-title" id="account-modal-title"><i class="fa-solid fa-user-circle" aria-hidden="true"></i> Account</span>
+        <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="_closeAccountMenu()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="modal-body">
         <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
           <div style="font-size:18px;font-weight:600;margin-bottom:4px">${esc(u.full_name || u.username || '')}</div>
           <div style="font-size:12px;color:var(--text-muted)">${esc(u.email || u.username || '')}</div>
         </div>
-        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
-          <i class="fa-solid fa-key" style="margin-right:10px"></i>
+        <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="_closeAccountMenu();openChangePasswordModal()">
+          <i class="fa-solid fa-key" style="margin-right:10px" aria-hidden="true"></i>
           <span>Change Password</span>
         </button>
         <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;color:var(--danger)" onclick="signOut()">
-          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px"></i>
+          <i class="fa-solid fa-right-from-bracket" style="margin-right:10px" aria-hidden="true"></i>
           <span>Sign Out</span>
         </button>
       </div>
     </div>
   `;
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) _closeAccountMenu(); });
+  // A11y: trap focus and handle ESC
+  if (window.trapFocus) {
+    _accountMenuTrap = trapFocus(overlay, { escClose: true, onEsc: _closeAccountMenu });
+  }
 }
 async function signOut(){
   try { await fetch('/api/auth/logout', {method:'POST', credentials:'same-origin'}); } catch(e){}
@@ -804,11 +819,11 @@ function renderClockCard(){
       <div id="quick-clock-row"></div>
       <div class="pre-clock-form">
         <div class="form-group">
-          <label>Project *</label>
+          <label for="ci-project">Project *</label>
           <select id="ci-project" onchange="ciProjectChanged()"><option value="">— Select project —</option></select>
         </div>
         <div class="form-group">
-          <label>Job</label>
+          <label for="ci-job">Job</label>
           <select id="ci-job"><option value="">— Select a job —</option></select>
         </div>
       </div>
@@ -919,11 +934,11 @@ function openSwitchModal(){
           <i class="fa-solid fa-circle-info"></i> Your current session will close and a new one will start. The hours so far will be saved as a time entry.
         </div>
         <div class="form-group">
-          <label>New Project *</label>
+          <label for="switch-project">New Project *</label>
           <select id="switch-project" onchange="switchProjectChanged()"><option value="">— Select project —</option></select>
         </div>
         <div class="form-group">
-          <label>Job</label>
+          <label for="switch-job">Job</label>
           <select id="switch-job"><option value="">— Default —</option></select>
         </div>
       </div>
@@ -1044,6 +1059,18 @@ function renderEntries(){
 }
 
 // ─── ENTRY EDIT MODAL ───────────────────────────────────────────────────────
+let _entryModalTrap = null;
+
+function _openEntryModalCommon() {
+  const modal = document.getElementById('entry-modal');
+  modal.style.display = 'flex';
+  // A11y: trap focus; ESC closes.
+  if (window.trapFocus) {
+    if (_entryModalTrap) _entryModalTrap.release();
+    _entryModalTrap = trapFocus(modal, { escClose: true, onEsc: closeEntryModal });
+  }
+}
+
 function openManualEntryModal(){
   document.getElementById('entry-modal-title').textContent = 'Add Time Entry';
   document.getElementById('entry-id').value = '';
@@ -1057,7 +1084,7 @@ function openManualEntryModal(){
   document.getElementById('entry-pending-banner').style.display = 'none';
   document.getElementById('entry-edit-warning').style.display = 'none';
   document.getElementById('entry-delete-btn').style.display = 'none';
-  document.getElementById('entry-modal').style.display = 'flex';
+  _openEntryModalCommon();
 }
 
 function openEditEntryModal(id){
@@ -1078,11 +1105,13 @@ function openEditEntryModal(id){
   document.getElementById('entry-pending-banner').style.display = e.pending_project_request_id ? '' : 'none';
   document.getElementById('entry-edit-warning').style.display = '';
   document.getElementById('entry-delete-btn').style.display = '';
-  document.getElementById('entry-modal').style.display = 'flex';
+  _openEntryModalCommon();
 }
 
 function closeEntryModal(){
   document.getElementById('entry-modal').style.display = 'none';
+  // Release focus trap and restore focus to the trigger element.
+  if (_entryModalTrap) { _entryModalTrap.release(); _entryModalTrap = null; }
 }
 
 async function entryProjectChanged(){

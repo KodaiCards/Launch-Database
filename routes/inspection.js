@@ -35,6 +35,10 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+// H-7: Use business-timezone date helper so entries logged 6-11 PM Chicago
+// don't fall outside the YTD window due to UTC boundary mismatch.
+const { dateInBusinessTz } = require('../automation');
+
 module.exports = function installInspectionRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/inspection was missing requireAuth.
   // Gated to admin + managers (who use the Inspection tab).
@@ -45,6 +49,9 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
     let monthYear = req.query.month;  // 'YYYY-MM'
     let startDate, endDate;
     const now = new Date();
+    // H-7: use Chicago-tz date for all "today" references so entries
+    // logged 6-11 PM Chicago don't fall outside the intended window.
+    const todayChicago = dateInBusinessTz(now);
     if (period === 'month') {
       if (!monthYear || !/^\d{4}-\d{2}$/.test(monthYear)) {
         const yyyy = now.getFullYear();
@@ -56,9 +63,8 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
       const last = new Date(y, m, 0).getDate();
       endDate = `${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
     } else {
-      const yyyy = now.getFullYear();
-      startDate = `${yyyy}-01-01`;
-      endDate = now.toISOString().slice(0,10);
+      startDate = `${todayChicago.slice(0, 4)}-01-01`;
+      endDate = todayChicago;  // H-7: was now.toISOString().slice(0,10) (UTC)
     }
 
     const statusFilter = String(req.query.status || '').toLowerCase();
@@ -260,6 +266,13 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
           display_name = p.name;
         }
 
+        // M-6: Mark is_ongoing projects with 0 hours in the period as stale.
+        // They remain in the result list for visibility but are excluded from
+        // the active_projects count (below) so the count reflects projects
+        // that are actually generating work in this window, not just projects
+        // whose is_ongoing flag was never cleared.
+        const stale = p.is_ongoing && hours === 0;
+
         result.push({
           ...p,
           period: { start: startDate, end: endDate, mode: period, label: monthYear || null },
@@ -269,13 +282,15 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
           service_area: area,
           display_name,
           contract_label: p.contract_label || p.contract_number || null,
+          stale,
         });
       }
 
       const totals = result.reduce((acc, p) => {
         acc.hours += p.hours_in_period;
         acc.revenue += p.revenue_in_period;
-        if (p.status === 'active' || p.is_ongoing) acc.active_projects++;
+        // M-6: exclude stale is_ongoing projects from active_projects count.
+        if ((p.status === 'active' || p.is_ongoing) && !p.stale) acc.active_projects++;
         return acc;
       }, { hours: 0, revenue: 0, active_projects: 0 });
 

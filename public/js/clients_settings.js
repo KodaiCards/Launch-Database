@@ -43,8 +43,8 @@
       </tr></thead>
       <tbody>${list.map(c => `<tr data-client-id="${c.id}" style="border-top:1px solid var(--gray-border)">
         <td style="padding:6px 8px;font-weight:600">${esc(c.name)}</td>
-        <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${c.show_contract ? 'checked' : ''} onchange="setClientFlag('${c.id}','show_contract',this.checked)"></td>
-        <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${c.show_work_order ? 'checked' : ''} onchange="setClientFlag('${c.id}','show_work_order',this.checked)"></td>
+        <td style="padding:6px 8px;text-align:center"><input type="checkbox" aria-label="Show construction contract field for ${esc(c.name)}" ${c.show_contract ? 'checked' : ''} onchange="setClientFlag('${c.id}','show_contract',this.checked)"></td>
+        <td style="padding:6px 8px;text-align:center"><input type="checkbox" aria-label="Show work order field for ${esc(c.name)}" ${c.show_work_order ? 'checked' : ''} onchange="setClientFlag('${c.id}','show_work_order',this.checked)"></td>
         <td style="padding:6px 8px;color:var(--text-muted)">${esc(c.notes || '—')}</td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
           <button class="btn btn-sm btn-secondary btn-icon" onclick="editClient('${c.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -85,9 +85,9 @@
     const tr = document.querySelector(`#clients-list-body tr[data-client-id="${id}"]`);
     if (!tr) return;
     tr.innerHTML = `
-      <td style="padding:6px 8px"><input type="text" id="ec-name-${id}" value="${esc(client.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><input type="text" id="ec-name-${id}" aria-label="Client name" value="${esc(client.name)}" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
       <td colspan="2" style="padding:6px 8px;text-align:center;color:var(--text-muted);font-size:11px">— preserved —</td>
-      <td style="padding:6px 8px"><input type="text" id="ec-notes-${id}" value="${esc(client.notes || '')}" placeholder="Optional" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><input type="text" id="ec-notes-${id}" aria-label="Client notes" value="${esc(client.notes || '')}" placeholder="Optional" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px"></td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
         <button class="btn btn-sm btn-primary" onclick="saveClient('${id}')"><i class="fa-solid fa-check"></i></button>
         <button class="btn btn-sm btn-secondary" onclick="renderClientsList()"><i class="fa-solid fa-xmark"></i></button>

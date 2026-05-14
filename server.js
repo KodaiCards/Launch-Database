@@ -77,6 +77,10 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
+// OAuth2 token endpoint POSTs application/x-www-form-urlencoded per the spec.
+// No existing routes use form bodies, so this only activates for matching
+// Content-Type headers and is safe to enable globally.
+app.use(express.urlencoded({ extended: false }));
 
 // CSRF defense via Origin/Referer validation. Cookie-auth + a cross-site form
 // POST is the classic CSRF vector. For any state-changing request, require
@@ -161,7 +165,7 @@ if (PORTAL_MODE) {
 // portal routes can read req.user / req.cookies. Express middleware runs in
 // registration order, so a route registered before authMiddleware never
 // sees req.user.
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal } = require('./auth');
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, signToken, verifyToken, rateLimitOk } = require('./auth');
 installAuthRoutes(app, pool);
 
 // Customer scope guard. Per auth.js's role doc: "Customers are external —
@@ -189,6 +193,13 @@ app.use((req, res, next) => {
 // canAccess: receives the user object from req.user and returns true/false.
 // canAccessPortal(user, portalMode) from auth.js is the source of truth for
 // splice/design/permitting access (it uses teamsForUser internally).
+
+// Training tile URL: defaults to the bundled Vite SPA at /training/.
+// When Moodle is live, set TRAINING_URL=https://training.launchfiber.com
+// in Railway Variables on the launch-database service; the tile will redirect
+// there automatically. No code change needed — just the env var.
+const TRAINING_URL = process.env.TRAINING_URL || '/training/';
+
 const PORTAL_DEFS = [
   {
     id: 'admin',
@@ -238,7 +249,7 @@ const PORTAL_DEFS = [
   {
     id: 'training',
     audience: 'employee',
-    url: '/training/',
+    url: TRAINING_URL,
     name: 'OSP Training',
     icon: 'graduation-cap',
     description: 'OSP design training modules, references, and practice exercises.',
@@ -330,6 +341,15 @@ function pageRequiresAuth(reqPath) {
   // Stakeholders click a share link; the token in the path is the auth.
   if (reqPath.startsWith('/splice/view/')) return false;
   if (reqPath.startsWith('/api/splice/view/')) return false;
+  // OAuth2 SSO bridge — all three endpoints manage their own auth internally:
+  //   GET  /oauth2/authorize  → validates client_id/redirect_uri THEN redirects
+  //                             to /login if unauthenticated (oauth2.js:168)
+  //   POST /oauth2/token      → server-to-server, no session cookie
+  //   GET  /oauth2/userinfo   → validates Bearer access token itself
+  // The global auth middleware must NOT intercept these or it returns a 302
+  // before oauth2.js can validate the client_id/redirect_uri params, causing
+  // oauth2.test.js assertions (expecting 400 on bad client_id) to see 302.
+  if (reqPath.startsWith('/oauth2/')) return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }
@@ -506,13 +526,13 @@ const invoiceGenerator = require('./invoice_generator');
 
 // Clients CRUD lives in routes/clients.js (extracted as part of
 // CLEANUP_PLAN.md Track 1.3).
-require('./routes/clients')(app, pool, { requireAdmin });
+require('./routes/clients')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/clients was unauthenticated
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACTS + ENGINEERING CONTRACTS — extracted as part of Track 1.3.
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/contracts')(app, pool, { requireAdmin });
-require('./routes/engineering_contracts')(app, pool, { requireAdmin });
+require('./routes/contracts')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/contracts was unauthenticated
+require('./routes/engineering_contracts')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/engineering-contracts was unauthenticated
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -522,7 +542,7 @@ require('./routes/engineering_contracts')(app, pool, { requireAdmin });
 // ─────────────────────────────────────────────────────────────────────────────
 // JOBS — extracted to routes/jobs.js (Track 1.3).
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin });
+require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin, requireAuth });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECT TYPES — program categories (BAU / GF(R) / RUS / Other / custom)
@@ -532,7 +552,7 @@ require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin });
 require('./routes/project_types')(app, pool, {});
 
 // Pricing list extracted to routes/pricing.js (Track 1.3).
-require('./routes/pricing')(app, pool, { requireManagerOrAdmin });
+require('./routes/pricing')(app, pool, { requireManagerOrAdmin, requireAuth }); // H-1: requireAuth added — GET /api/pricing* was unauthenticated (competitive-intel leak)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMITTING CALCULATION (universal, not just RUS)
@@ -557,7 +577,7 @@ function calcPermittingHours(miles) {
 // Staff extracted to routes/staff.js (Track 1.3).
 // Pass requireAdmin so the new DELETE/PUT/all endpoints (added 2026-05-05)
 // are admin-only. GET + POST stay open to any authed user as before.
-require('./routes/staff')(app, pool, { requireAdmin });
+require('./routes/staff')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/staff was unauthenticated
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECTS — core CRUD + recalc + tree/with-hours delete extracted to
@@ -610,7 +630,7 @@ require('./routes/ai')(app, pool, { requireAdmin, upload });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project detail drill-down extracted to routes/project_detail.js (Track 1.3).
-require('./routes/project_detail')(app, pool, {});
+require('./routes/project_detail')(app, pool, { requireAuth }); // H-1: requireAuth added — GET /api/projects/:id/detail was unauthenticated
 
 
 // Permits pipeline + per-project documents + /api/_debug/uploads diagnostic
@@ -626,20 +646,20 @@ require('./routes/admin')(app, pool, { requireAdmin, uploadDir: UPLOAD_DIR });
 
 
 // Budgets + budget_codes + by-area summary extracted to routes/budgets.js (Track 1.3).
-require('./routes/budgets')(app, pool, { requireManagerOrAdmin });
+require('./routes/budgets')(app, pool, { requireManagerOrAdmin, requireAuth }); // H-1: requireAuth added — GET /api/budgets* was unauthenticated
 
 // Potential permits (design-submitted candidates) extracted to
 // routes/potential_permits.js (Track 1.3).
-require('./routes/potential_permits')(app, pool, {});
+require('./routes/potential_permits')(app, pool, { requireAuth }); // C-2: was {} — no-op stub fired instead of real requireAuth
 
 // Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
-require('./routes/concentrators')(app, pool, { requireAdmin });
+require('./routes/concentrators')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/concentrators was unauthenticated
 
 // Dashboard, design pipeline, and inspection (PSC RUS) views extracted to
 // dedicated route modules (Track 1.3).
 require('./routes/dashboard')(app, pool, { requireAuth });
 require('./routes/design_pipeline')(app, pool, { requireAuth });
-require('./routes/inspection')(app, pool, {});
+require('./routes/inspection')(app, pool, { requireAuth }); // C-3: was {} — no-op stub fired instead of real requireAuth
 
 
 // Revenue endpoints extracted to routes/revenue.js (Track 1.3).
@@ -677,7 +697,7 @@ require('./routes/project_billing')(app, pool, { requireManagerOrAdmin });
 // routes/projects.js (CLEANUP_PLAN.md Track 1.3.3).
 
 // Reports endpoints extracted to routes/reports.js (Track 1.3).
-require('./routes/reports')(app, pool, {});
+require('./routes/reports')(app, pool, { requireAuth }); // H-1: requireAuth added — GET /api/reports/* was unauthenticated (manager-role reports leaked)
 
 // Billing endpoints (bill-multiple, batches, report) extracted to
 // routes/billing.js (Track 1.3).
@@ -700,6 +720,15 @@ app.get('/api/config/mapbox', requireAuth(), (req, res) => {
   res.json({ token, available: !!token });
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OAUTH2 SSO BRIDGE — Authorization Code flow for Moodle auth_oauth2 plugin.
+// Three endpoints: GET /oauth2/authorize, POST /oauth2/token, GET /oauth2/userinfo.
+// Secrets via env vars: OAUTH2_CLIENT_ID, OAUTH2_CLIENT_SECRET,
+//   OAUTH2_ALLOWED_REDIRECT_URIS (comma-separated).
+// See routes/oauth2.js for full implementation notes.
+// ─────────────────────────────────────────────────────────────────────────────
+require('./routes/oauth2')(app, pool, { requireAuth, signToken, verifyToken, rateLimitOk });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API ERROR HANDLER — catches anything thrown out of an /api/* route AND

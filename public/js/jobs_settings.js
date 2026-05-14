@@ -45,23 +45,23 @@
         const rateUnit = billType === 'footage' ? '/mile' : '/hr';
         return `<tr style="border-top:1px solid var(--gray-border)">
         <td style="padding:6px 8px">
-          <input type="text" value="${esc(label)}" onchange="setJobField('${j.id}','name',this.value)" style="width:100%;font-weight:600;font-size:13px;padding:3px 6px;border:1px solid transparent;border-radius:4px;background:transparent" onfocus="this.style.borderColor='var(--gray-border)';this.style.background='var(--surface-2)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" title="Click to rename">
+          <input type="text" aria-label="Job name" value="${esc(label)}" onchange="setJobField('${j.id}','name',this.value)" style="width:100%;font-weight:600;font-size:13px;padding:3px 6px;border:1px solid transparent;border-radius:4px;background:transparent" onfocus="this.style.borderColor='var(--gray-border)';this.style.background='var(--surface-2)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" title="Click to rename">
         </td>
         <td style="padding:6px 8px">
-          <input type="text" value="${esc(j.billing_code || '')}" placeholder="—" onchange="setJobField('${j.id}','billing_code',this.value)" style="width:90px;font-family:monospace;font-size:11px;color:var(--text-muted);padding:2px 6px;border:1px solid transparent;border-radius:4px;background:transparent" onfocus="this.style.borderColor='var(--gray-border)';this.style.background='var(--surface-2)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" title="RUS billing code">
+          <input type="text" aria-label="RUS billing code" value="${esc(j.billing_code || '')}" placeholder="—" onchange="setJobField('${j.id}','billing_code',this.value)" style="width:90px;font-family:monospace;font-size:11px;color:var(--text-muted);padding:2px 6px;border:1px solid transparent;border-radius:4px;background:transparent" onfocus="this.style.borderColor='var(--gray-border)';this.style.background='var(--surface-2)'" onblur="this.style.borderColor='transparent';this.style.background='transparent'" title="RUS billing code">
         </td>
         <td style="padding:6px 8px">
-          <select onchange="setJobBillingType('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)" title="Switch hourly vs footage billing">
+          <select aria-label="Billing type" onchange="setJobBillingType('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)" title="Switch hourly vs footage billing">
             <option value="hourly"  ${billType==='hourly'  ? 'selected':''}>hourly</option>
             <option value="footage" ${billType==='footage' ? 'selected':''}>footage</option>
           </select>
         </td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
-          <input type="number" step="0.01" placeholder="—" value="${rateNullish ? '' : j.default_rate}" data-job-id="${j.id}" onchange="setJobRate('${j.id}', this.value)" style="width:80px;text-align:right;font-size:12px;padding:2px 6px;border:1px solid var(--gray-border);border-radius:4px">
+          <input type="number" aria-label="Default rate" step="0.01" placeholder="—" value="${rateNullish ? '' : j.default_rate}" data-job-id="${j.id}" onchange="setJobRate('${j.id}', this.value)" style="width:80px;text-align:right;font-size:12px;padding:2px 6px;border:1px solid var(--gray-border);border-radius:4px">
           <span style="font-size:11px;color:var(--text-muted)">${rateUnit}</span>
         </td>
         <td style="padding:6px 8px;text-align:center">
-          <select onchange="setJobTeam('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)">
+          <select aria-label="Job team" onchange="setJobTeam('${j.id}', this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)">
             <option value="" ${!j.team ? 'selected':''}>—</option>
             <option value="design" ${j.team==='design' ? 'selected':''}>Design</option>
             <option value="permitting" ${j.team==='permitting' ? 'selected':''}>Permitting</option>
@@ -69,9 +69,9 @@
             <option value="both" ${j.team==='both' ? 'selected':''}>Both</option>
           </select>
         </td>
-        <td style="padding:6px 8px;text-align:center"><input type="checkbox" ${j.is_permitting ? 'checked' : ''} onchange="setJobField('${j.id}','is_permitting',this.checked)" title="Counts toward permit calc when checked"></td>
+        <td style="padding:6px 8px;text-align:center"><input type="checkbox" aria-label="Counts toward permitting" ${j.is_permitting ? 'checked' : ''} onchange="setJobField('${j.id}','is_permitting',this.checked)" title="Counts toward permit calc when checked"></td>
         <td style="padding:6px 8px;text-align:center">
-          <select onchange="setJobField('${j.id}','program_scope',this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)" title="RUS = USDA work (billing code required). Non-RUS = ordinary work. Shared = shows in both contexts.">
+          <select aria-label="Program scope" onchange="setJobField('${j.id}','program_scope',this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--gray-border);border-radius:4px;background:var(--surface-2)" title="RUS = USDA work (billing code required). Non-RUS = ordinary work. Shared = shows in both contexts.">
             <option value="rus"     ${j.program_scope==='rus'     ? 'selected':''}>RUS</option>
             <option value="non_rus" ${j.program_scope==='non_rus' ? 'selected':''}>Non-RUS</option>
             <option value="shared"  ${j.program_scope==='shared'  ? 'selected':''}>Shared</option>
@@ -269,19 +269,19 @@
           <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Add pin</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">
             <div>
-              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Client</label>
+              <label for="jam-add-client" style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Client</label>
               <select id="jam-add-client" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--border-weak);border-radius:5px;background:var(--surface-1)">
                 <option value="">Any</option>
               </select>
             </div>
             <div>
-              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Engineering Contract</label>
+              <label for="jam-add-ec" style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Engineering Contract</label>
               <select id="jam-add-ec" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--border-weak);border-radius:5px;background:var(--surface-1)">
                 <option value="">Any</option>
               </select>
             </div>
             <div>
-              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Team</label>
+              <label for="jam-add-team" style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Team</label>
               <select id="jam-add-team" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--border-weak);border-radius:5px;background:var(--surface-1)">
                 <option value="">Any</option>
                 <option value="design">Design</option>
