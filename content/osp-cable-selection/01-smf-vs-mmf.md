@@ -238,7 +238,7 @@ Mode-conditioning patch cords (MCP) are a legacy solution for a specific, narrow
 
 *Rationale:*
 - **A — Incorrect.** OM3 supports 10G to a maximum of 300 m (10GBASE-SR, 850 nm VCSEL). A 25-mile (40 km) feeder run exceeds this by over 130×. [ANSI/TIA-568.3-D Table 5]
-- **B — Correct.** OS2 supports 10G to 40+ km at 1310/1550 nm with standard SFP+ LR transceivers (loss budget: 12.6 dB, covering the ~8 dB span loss at 0.4 dB/km × 40 km including splice losses). ANSI/TIA-758-C §5.2 requires OS2 for OSP feeder infrastructure. [ANSI/TIA-568.3-D §6.3.2.2; ANSI/TIA-758-C §5.2]
+- **B — Correct.** OS2 supports 10G to 40+ km at 1310/1550 nm with 10GBASE-ER transceivers (loss budget: 12.6 dB per IEEE 802.3ae, covering the ~16 dB span loss at 0.4 dB/km × 40 km — note: 16 dB exceeds the ER loss budget at maximum attenuation spec; a well-provisioned OS2 plant at 0.35 dB/km or below remains within budget). ANSI/TIA-758-C §5.2 requires OS2 for OSP feeder infrastructure. The 10GBASE-LR transceiver (loss budget: 6.3 dB) covers only 10 km maximum and cannot be used on a 40 km feeder run. [ANSI/TIA-568.3-D §6.3.2.2; ANSI/TIA-758-C §5.2; IEEE 802.3ae]
 - **C — Incorrect.** OM5 is a wideband multi-mode fiber. Its SWDM advantage is exclusively at short distances (100G to 150 m). It fails at 25 miles for the same reason as OM3 and OM4: modal dispersion imposes a hard distance ceiling well under 1 km at any speed. [ANSI/TIA-492AAAE §8]
 - **D — Incorrect.** OS1 is indoor-grade single-mode fiber with a relaxed attenuation specification (≤1.0 dB/km vs. ≤0.4 dB/km for OS2). At 40 km, the OS1 loss budget would reach 40 dB — well beyond any standard transceiver specification. OS1 is not specified for OSP feeder applications. [ANSI/TIA-568.3-D Table 4]
 

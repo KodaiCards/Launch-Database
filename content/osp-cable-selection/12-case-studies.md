@@ -99,7 +99,7 @@ The next standard loose-tube cable configuration above 32 fibers is **36 fibers*
 
 **Cable required:** Loose-tube OS2, CST armor (documented gopher activity requires metallic armor deterrent), gel-fill, PE sheath [ANSI/TIA-758-C §5.6; AFL OSP Cable Design Guide, §5.2].
 
-**Burial depth:** 30 inches minimum — this exceeds the ANSI/TIA-758-C §6.3 minimum of 24 inches (general soil) and accommodates the 36-inch frost line. At the three county highway crossings: 36-inch minimum burial depth per ANSI/TIA-758-C §6.3, with directional bore installation (no pavement cut) [ANSI/TIA-758-C §6.3].
+**Burial depth:** 42 inches minimum — this exceeds the ANSI/TIA-758-C §6.3 minimum of 24 inches (general soil) and clears the 36-inch frost line with a 6-inch code margin (36 in. frost line + 6 in. margin = 42 in. minimum). At the three county highway crossings: 36-inch minimum burial depth per ANSI/TIA-758-C §6.3, with directional bore installation (no pavement cut) [ANSI/TIA-758-C §6.3].
 
 **Bonding and grounding:** CST armor must be bonded to a ground rod at each splice closure and at each aerial-to-underground transition. Minimum 6 AWG copper bonding conductor; ground rod resistance documented at each point per NESC Rule 352 [NESC C2-2023, Rule 352; ANSI/TIA-758-C §6.4].
 

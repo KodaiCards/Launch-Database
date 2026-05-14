@@ -197,13 +197,13 @@ Randomization of question and answer order is applied at Moodle import. The ques
 **Q11.** A 40-fiber distribution cable is terminated at an FDT pedestal using SC/APC connectors. A field technician proposes swapping the SC/APC connectors for SC/UPC connectors to use available inventory. What is the primary technical objection?
 
 - A) SC/UPC connectors are not compatible with single-mode fiber
-- B) SC/UPC and SC/APC connectors produce different back-reflection characteristics — APC connectors have ~60 dB return loss vs. ~35 dB for UPC; mixing connector types on an APC-specified link will degrade return loss and may cause laser instability in high-power or DWDM systems **[CORRECT]**
+- B) SC/UPC and SC/APC connectors produce different back-reflection characteristics — APC connectors have ~60 dB return loss vs. ≥50 dB for UPC; mixing connector types on an APC-specified link will degrade return loss and may cause laser instability in high-power or DWDM systems **[CORRECT]**
 - C) SC/UPC connectors have a larger physical footprint than SC/APC and will not fit the FDT pedestal hardware
 - D) SC/UPC connectors require a different fusion splice angle (8 degrees) compared to SC/APC connectors (0 degrees)
 
 *Source: [BICSI OSP-DRD Manual, Ch. 7.3; Corning OSP Reference, Ch. 8.2; ANSI/TIA-568.3-D §10]*
 
-*Rationale:* SC/APC connectors use an 8-degree angled end-face that redirects back-reflection away from the fiber core, achieving **~60 dB return loss (optical return loss, ORL)**. SC/UPC connectors use a flat end-face and achieve only **~35 dB ORL**. An APC-specified link using UPC connectors at the FDT will have degraded back-reflection performance. In PON downstream systems using distributed feedback (DFB) lasers (common in GPON OLT transmitters), back-reflection above a threshold induces laser frequency chirp and power instability. APC connectors are specified in PON architectures for this reason. Substituting UPC for APC violates the specification. The splice angle confusion (Answer D) is reversed — UPC connectors use a 0-degree end-face; APC connectors use an 8-degree end-face. [BICSI OSP-DRD Manual, Ch. 7.3; ANSI/TIA-568.3-D §10]
+*Rationale:* SC/APC connectors use an 8-degree angled end-face that redirects back-reflection away from the fiber core, achieving **~60 dB return loss (optical return loss, ORL)**. SC/UPC connectors use a flat end-face and achieve **≥50 dB ORL** per ANSI/TIA-568.3-D §6.6.1 — substantially better than a damaged or dirty connector (~35 dB), but still 10 dB below APC. An APC-specified link using UPC connectors at the FDT will have degraded back-reflection performance. In PON downstream systems using distributed feedback (DFB) lasers (common in GPON OLT transmitters), back-reflection above a threshold induces laser frequency chirp and power instability. APC connectors are specified in PON architectures for this reason. Substituting UPC for APC violates the specification. The splice angle confusion (Answer D) is reversed — UPC connectors use a 0-degree end-face; APC connectors use an 8-degree end-face. [BICSI OSP-DRD Manual, Ch. 7.3; ANSI/TIA-568.3-D §6.6.1]
 
 ---
 
