@@ -96,7 +96,7 @@ For OSP FTTH feeder infrastructure, 5G fiber fronthaul, and central-office-to-fi
 
 Mass-fusion splicers achieve per-fiber splice loss comparable to single-fiber splicers when ribbons are properly prepared. Typical mass-fusion splice loss: **0.05–0.10 dB per fiber** at 1310 nm for OS2 fiber [BICSI OSP-DRD Manual, Ch. 7.3.2]. The primary sources of elevated loss in ribbon splices are:
 
-- **Ribbon matrix not fully removed:** Residual matrix material on fiber ends causes cleave failures. The ribbon matrix stripper must be heated (most designs require 60–80°C) for clean matrix removal. Cold-stripping causes matrix fragments to remain on fiber surfaces. [Corning OSP Reference, §4.4]
+- **Ribbon matrix not fully removed:** Residual matrix material on fiber ends causes cleave failures. The ribbon matrix stripper must be heated (typical range: 60–80°C for Fujikura/Fitel tools; consult manufacturer documentation for actual temperature setting) for clean matrix removal. Cold-stripping causes matrix fragments to remain on fiber surfaces. [Corning OSP Reference, §4.4]
 - **Ribbon curl or twist:** If the ribbon is stored under tension in a tight coil, individual fibers within the ribbon may have slight lateral offset. A well-tensioned straightening fixture before the cleave is standard practice.
 - **Ribbon cleave angle variance:** The ribbon cleaver must produce cleave angles ≤0.5° across all 12 fibers simultaneously. A worn cleave blade produces non-uniform angles across the ribbon width, resulting in one or more high-loss splice pairs in the 12-fiber stack. Blade life is shorter for ribbon cleavers than single-fiber cleavers; blade replacement intervals should follow manufacturer specification.
 

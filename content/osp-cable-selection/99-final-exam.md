@@ -224,14 +224,14 @@ Randomization of question and answer order is applied at Moodle import. The ques
 
 **Q13.** An ABFU (air-blown fiber unit) with an 8.5 mm outer diameter is being specified for a 7/5.5 mm HDPE microduct (7 mm OD, 5.5 mm ID). Should this ABFU be installed in this microduct?
 
-- A) Yes — the ABFU OD (8.5 mm) is less than the microduct OD (7 mm)... wait, it is greater than the microduct OD — the ABFU cannot physically fit in the microduct **[CORRECT]**
+- A) Yes — the ABFU OD (8.5 mm) is less than the microduct outer diameter (7 mm), so the unit will fit with standard compressed-air blowing equipment
 - B) Yes — compressed air pressure of sufficient magnitude can force any ABFU through any microduct
-- C) No — ABFUs with OD greater than 7.2 mm require a 10/8 mm microduct minimum
+- C) No — the ABFU OD (8.5 mm) exceeds the microduct inner bore (5.5 mm); the unit cannot physically enter the microduct **[CORRECT]**
 - D) No — ABFU installation is not permitted in HDPE microduct; PVC microduct is required
 
 *Source: [BICSI OSP-DRD Manual, Ch. 6.5]*
 
-*Rationale:* The ABFU outer diameter (8.5 mm) is **larger than the microduct inner bore (5.5 mm)**. The ABFU physically cannot enter the microduct tube regardless of air pressure. The ABFU OD must be less than the microduct inner bore (not outer diameter) and should not exceed ~85% of the inner bore for adequate airflow clearance during blowing. For a 7/5.5 mm microduct (5.5 mm ID), the maximum ABFU OD is approximately 5.5 × 0.85 = 4.7 mm. An 8.5 mm ABFU is sized for a 10/8 mm microduct (8 mm ID × 0.85 = 6.8 mm max — still too large at 8.5 mm; this ABFU would require a microduct with ID ≥ ~10 mm). [BICSI OSP-DRD Manual, Ch. 6.5]
+*Rationale:* The ABFU outer diameter (8.5 mm) is **larger than the microduct inner bore (5.5 mm)**. The ABFU physically cannot enter the microduct tube regardless of air pressure. The ABFU OD must be compared to the microduct **inner bore (ID)**, not the outer diameter (OD); Answer A confuses OD with ID. The ABFU OD must not exceed ~85% of the microduct ID for adequate airflow clearance during blowing. For a 7/5.5 mm microduct (5.5 mm ID), the maximum ABFU OD is approximately 5.5 × 0.85 = 4.7 mm. An 8.5 mm ABFU is sized for a 10/8 mm microduct or larger (8 mm ID × 0.85 = 6.8 mm max — still too small at 8.5 mm; this ABFU would require a microduct with ID ≥ ~10 mm). HDPE is a valid microduct material (Answer D is incorrect). [BICSI OSP-DRD Manual, Ch. 6.5]
 
 ---
 

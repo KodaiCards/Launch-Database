@@ -62,7 +62,7 @@ The ANSI/TIA-568.3-D standard defines two SMF grades:
 - **OS1** is general-purpose indoor/tight-buffer single-mode fiber. Attenuation specification: ≤1.0 dB/km at 1310 nm, ≤1.0 dB/km at 1550 nm [ANSI/TIA-568.3-D Table 4]. Its attenuation ceiling is intentionally relaxed to accommodate the variety of indoor cabling environments.
 - **OS2** is the outdoor, low-water-peak SMF grade (sometimes called ZWPF — Zero Water Peak Fiber), specified at ≤0.4 dB/km at 1310 nm and ≤0.4 dB/km at 1550 nm [ANSI/TIA-568.3-D §6.3.2.2]. The lower attenuation rating permits multi-kilometer hauls without amplification. OS2 is the standard choice for OSP backbone, feeder, and long-haul applications.
 
-OS2 fiber conforms to ITU-T G.652.D (standard SMF) and/or G.657.A1 (macro-bend insensitive), the latter relevant for aerial routes with wind-induced bending stress [ITU-T G.657, §5.2].
+OS2 fiber conforms to ITU-T G.652.D (standard SMF). Bend-insensitive single-mode variants (G.657.A2, G.657.B3) are backward-compatible with OS2 infrastructure but are distinct subtypes, relevant for aerial routes with wind-induced bending stress where enhanced bend performance is specified [ITU-T G.652.D; ITU-T G.657, §5.2].
 
 **Practical rule:** any new OSP fiber installation should specify OS2. OS1 is encountered in legacy indoor installations; specifying OS1 for outdoor work is a design error.
 
@@ -75,7 +75,7 @@ The OM (Optical Multi-mode) grading system was introduced to classify MMF by ban
 | OM1 | ANSI/TIA-492AAAA | 200 MHz·km | 33 m | N/A | N/A |
 | OM2 | ANSI/TIA-492AAAB | 500 MHz·km | 82 m | N/A | N/A |
 | OM3 | ANSI/TIA-492AAAC | 2000 MHz·km | 300 m | 100 m | 70 m |
-| OM4 | ANSI/TIA-492AAAD | 4700 MHz·km | 550 m | 150 m | 100 m |
+| OM4 | ANSI/TIA-492AAAD | 4700 MHz·km | 550 m | 150 m | 100 m (SR4); 150 m (SR10) |
 | OM5 | ANSI/TIA-492AAAE | 4700 MHz·km (850 nm) + SWDM | 550 m | 150 m | 150 m (SWDM4) |
 
 *Sources: [ANSI/TIA-568.3-D Table 5]; [ANSI/TIA-492AAAD §8]; [ANSI/TIA-492AAAE §8]*
