@@ -24,6 +24,35 @@ sources:
 
 # Environment-Driven Cable Selection
 
+## In Plain English
+
+Think of cable like footwear. You wouldn't wear sandals to hike through a muddy field, and you wouldn't wear steel-toed boots to the beach. The job is the same — keeping your feet comfortable — but the environment determines what protection the outside needs. OSP fiber cable works the same way: the glass fiber inside is identical no matter where the cable goes. What changes is everything on the outside — the armor, the water-blocking, the jacket material, the strength members. This lesson teaches you how to match the right "boots" to the right environment. There are five environments: strung up on poles (aerial), pulled through pipe (conduit), buried directly in the ground (direct-bury), blown through tiny tubes (microduct), and run from outside a building to inside it (OSP-to-inside transition). Each environment has its own threats, and the cable you pick has to survive all of them for 30+ years.
+
+---
+
+## Quick Acronym Reference
+
+| Acronym | Full name | What it means in plain English |
+|---|---|---|
+| **OSP** | Outside Plant | Any cable infrastructure that lives outdoors |
+| **ADSS** | All-Dielectric Self-Supporting | An aerial cable with no metal in it at all — holds itself up by its own strength members |
+| **EDS** | Every Day Stress | The normal everyday tension on a hanging aerial cable; kept low so the cable doesn't fatigue |
+| **RTS** | Rated Tensile Strength | The maximum pull force the cable is rated to withstand before breaking |
+| **RTL** | Rated Tensile Load | Maximum tension allowed during a conduit pull installation |
+| **RSL** | Rated Sidewall Load | Maximum sidewall pressure allowed on bends during a conduit pull |
+| **CST** | Corrugated Steel Tape | A corrugated metal wrap around the cable core that acts like armor against crushing and rodents |
+| **PE** | Polyethylene | The plastic outer jacket on most OSP cables; UV-resistant black version used outdoors |
+| **BET** | Building Entry Terminal | A sealed box at the building wall where outdoor cable hands off to indoor-rated cable |
+| **OFNR** | Optical Fiber Non-conductive Riser | Indoor fiber cable rated for running vertically between floors |
+| **OFNP** | Optical Fiber Non-conductive Plenum | The strictest indoor fiber cable rating — required in ceiling air-handling spaces |
+| **ABFU** | Air-Blown Fiber Unit | A compact fiber bundle designed to be blown through tiny tubes using compressed air |
+| **HDPE** | High-Density Polyethylene | The plastic used for microduct tubes and conduit |
+| **NESC** | National Electrical Safety Code | The national standard governing electrical and telecom construction on utility poles |
+| **NEC** | National Electrical Code | The national standard governing electrical wiring inside buildings |
+| **AHJ** | Authority Having Jurisdiction | The local inspector or regulator who gives final approval |
+
+---
+
 ## Learning Objectives
 
 Upon completing this lesson, the learner will be able to:
@@ -40,13 +69,19 @@ Upon completing this lesson, the learner will be able to:
 
 ### The Fundamental Rule: Environment Drives Construction
 
-Every OSP cable selection decision begins with one question: *what will this cable survive for 30+ years?* Fiber counts, splitter ratios, and bandwidth requirements determine what goes inside the cable; the installation environment determines what protects it on the outside. A designer who selects fiber count correctly but specifies wrong construction for the environment has produced a specification that will fail — usually quietly, through accumulated microbend loss and water ingress, before the network's economic life ends.
+Every OSP cable selection decision begins with one question: *what will this cable survive for 30+ years?*
+
+Here's the key idea: the fiber itself — the glass strand that carries the light — is the same OS2 glass no matter where the cable goes. What changes is the protective shell around it. Think of the glass fiber as an egg: the egg is identical whether you're shipping it across town or hiking it up a mountain. What you put around the egg (bubble wrap vs. a hard-shell case vs. foam padding) depends entirely on the journey. A designer who picks the right fiber count but the wrong construction for the environment has produced a specification that will fail — usually quietly, through accumulated signal loss and water damage, long before the network's economic life ends.
 
 ANSI/TIA-758-C organizes cable specifications around five primary OSP environments. The following sections address each in sequence [ANSI/TIA-758-C §5.2–5.7].
 
+---
+
 ### Environment 1 — Aerial
 
-**Threat profile:** self-weight catenary tension, ice accumulation, wind-induced sway and vibration (Aeolian resonance), UV degradation of the outer sheath, hardware attachment stress at pole clamps.
+**What "aerial" means:** The cable is strung up in the air between poles. It hangs there like a clothesline — exposed to the sun, the wind, ice storms, and the tension of its own weight.
+
+**Threat profile:** self-weight catenary tension, ice accumulation, wind-induced sway and vibration (Aeolian resonance — a low-frequency humming oscillation caused by wind passing across the cable, similar to a plucked guitar string), UV degradation of the outer jacket, and mechanical stress at the pole attachment clamps.
 
 **Cable selection matrix:**
 
@@ -57,13 +92,23 @@ ANSI/TIA-758-C organizes cable specifications around five primary OSP environmen
 | Dedicated fiber pole line, no messenger | ADSS or figure-8 integral messenger | Span-rated; figure-8 only where pole line is isolated from electrical |
 | FTTH aerial drop, < 300 ft to premises | Flat all-dielectric drop cable | UV-stabilized PE sheath; 2–4 fiber; dielectric strength member [ANSI/TIA-758-C §5.7] |
 
+**Why ADSS on an energized pole line?** Imagine you're running a cable alongside a live 12,000-volt power line. If your cable has a steel messenger wire running its entire length, that wire becomes a parallel electrical conductor. It picks up induced current, requires grounding at every single pole attachment, and creates a shock hazard for anyone who touches it. ADSS has no metal anywhere — its strength members are made of aramid fiber (the same material as Kevlar body armor) or fiberglass. No metal means no induced current, no bonding requirements, no shock hazard. That's why ADSS is mandatory on energized lines.
+
+**EDS in plain English:** EDS is essentially "how tight is the cable pulled at normal everyday temperature?" If you pull it too tight, it vibrates like a taut piano string in the wind and eventually fatigues. The rule is: everyday tension must stay at or below 20–25% of the cable's rated breaking strength. Think of it like a rubber band — you can stretch it a little every day without breaking it, but if you keep it stretched to 80% of its breaking point, it fails quickly.
+
 **Clearance requirements:** NESC C2-2023 Rules 232 and 250 establish minimum sag-to-clearance margins by crossing type (roadway, railway, navigable waterway). The applicable NESC loading district (light, medium, heavy, or extreme wind) determines the design ice thickness and wind pressure against which sag is calculated. Feeder and distribution cables must satisfy NESC clearance requirements at maximum ice load, not just at stringing temperature [NESC C2-2023, Rules 232, 250].
 
-**Sheath:** UV-stabilized black PE (polyethylene) or track-resistant PE for ADSS cables where induced electrical charge from proximity to high-voltage conductors can cause surface tracking (carbonization paths through the sheath). Track-resistant compounds are specified in IEEE 1222 for installations on transmission lines above 69 kV [IEEE 1222 §4.3].
+**Track-resistant sheath:** On transmission lines above 69 kV, electrical discharge from the nearby high-voltage conductors can create microscopic carbon tracks (like tiny burn marks) on the cable's outer jacket. Over years, these tracks grow and can damage the jacket. Track-resistant PE sheath compounds resist this carbonization. Below 69 kV (most distribution lines), standard black PE sheath is fine [IEEE 1222 §4.3].
+
+---
 
 ### Environment 2 — Underground Conduit
 
-**Threat profile:** installation pulling tension, sidewall pressure at bends, shared-conduit abrasion, rodent attack on conduit exterior (cable itself is protected), waterproofing at conduit entry points.
+**What "conduit" means:** The cable is pulled through a pipe — plastic (PVC or HDPE) or sometimes concrete duct — that is already buried in the ground. The cable never touches soil directly; it lives inside the pipe.
+
+**Threat profile:** installation pulling tension (the force of dragging the cable through the conduit), sidewall pressure at bends (where the cable presses against the inside of the bend), shared-conduit abrasion, and waterproofing at conduit entry points.
+
+**The big insight here:** Because the conduit is doing the mechanical protection work — shielding the cable from soil pressure, rodents, and crushing forces — the cable inside does NOT need armor. This is one of the most common over-specification mistakes in the field: ordering an armored cable for a conduit route. The armor just adds weight and makes it harder to pull.
 
 **Cable selection matrix:**
 
@@ -74,13 +119,21 @@ ANSI/TIA-758-C organizes cable specifications around five primary OSP environmen
 | Microduct (sub-environment — see below) | Air-blown fiber unit or microduct cable | Specialized — covered in Environment 4 |
 | Conduit with multiple 90° bends | Loose-tube OS2, no armor; calculate bend-point sidewall pressure | Add pulling lubricant; intermediate assist points if RSL approached |
 
-The conduit provides mechanical protection: no armor is required on the cable itself. Armor on a conduit-installed cable adds weight, stiffness, and pulling difficulty without contributing to protection [ANSI/TIA-758-C §5.3]. Specifying CST-armored cable for a conduit route is over-specification that impedes installation.
+**RTL and RSL in plain English:**
+- RTL (Rated Tensile Load) = the maximum pulling tension allowed during installation. Think of it as the maximum force you can apply at the end of the cable with a winch. If you exceed it, you stretch or damage the cable. The limit is 2,700 Newtons — roughly the weight of 600 lbs.
+- RSL (Rated Sidewall Load) = the maximum pressure the cable can take as it presses against the inside of a conduit bend. Think of squeezing a garden hose around a corner — too tight a bend, too much pulling force, and the hose kinks. The limit is 220 N/m of bend arc length.
 
-**Conduit material and fill:** ANSI/TIA-758-C §6.1 specifies minimum conduit diameter as the cable outer diameter × 1.5 for single-cable conduits. Multi-cable conduit fill must not exceed 40% fill ratio per NEC Article 358/352 conduit fill rules as applied to optical fiber (NEC Chapter 9, Table 1). Rounding bends in conduit must maintain a minimum bend radius ≥ 10× the cable outer diameter (installation) or ≥ 20× (long-term installed) [ANSI/TIA-758-C §6.2; BICSI OSP-DRD Manual, Ch. 6.1].
+**Conduit material and fill:** ANSI/TIA-758-C §6.1 specifies minimum conduit diameter as the cable outer diameter × 1.5 for single-cable conduits. Multi-cable conduit fill must not exceed 40% of the conduit's inner cross-section — if more than 40% of the space is occupied by cables, pulling any of them becomes too difficult and risks damage. Bends in conduit must maintain a minimum bend radius ≥ 10× the cable outer diameter during installation and ≥ 20× for the long-term installed condition [ANSI/TIA-758-C §6.2; BICSI OSP-DRD Manual, Ch. 6.1].
+
+---
 
 ### Environment 3 — Direct-Bury
 
-**Threat profile:** compressive soil overburden, frost heave (cyclical tensile and lateral stress), rodent attack, soil chemistry (acidic soils, agricultural chemicals), unplanned excavation.
+**What "direct-bury" means:** The cable goes straight into the ground — no pipe, no conduit. It's buried in native soil and lives there for 30+ years. This is the harshest of the underground environments because there's nothing between the cable and the earth.
+
+**Threat profile:** compressive soil overburden (the weight of all that dirt pressing down), frost heave (in cold climates, the ground freezes and thaws in cycles that literally pull and push the cable up and down — like bread rising and falling repeatedly), rodent attack, soil chemistry (acidic soils or agricultural chemicals can degrade the jacket over time), and unplanned excavation (someone digs without calling 811).
+
+**Think of it like this:** direct-bury cable is like a soldier in the field versus a soldier in a tank (conduit). The soldier in the field needs body armor, boots, and a helmet — the cable needs CST armor, good water-blocking, and a tough jacket. The soldier in the tank can travel lighter — the conduit protects the cable so it doesn't need to protect itself.
 
 **Cable selection matrix:**
 
@@ -93,13 +146,17 @@ The conduit provides mechanical protection: no armor is required on the cable it
 | Under railroads | Loose-tube OS2, wire armor, heavy-duty PE; bore required | Contact railroad owner; typically ≥ 48 in. depth [ANSI/TIA-758-C §6.3] |
 | FTTH direct-bury drop, pedestal to premises | Small-diameter armored drop cable (6–12 fiber, CST, PE) | Vibratory plow installation; minimum depth 24 in. (610 mm) per ANSI/TIA-758-C §6.3. Some municipalities permit 18 in. for conduit-enclosed residential drops; AHJ governs. |
 
-**Water-blocking:** direct-bury cable must be fully water-blocked — both at the tube level (flooding compound or water-swellable powder in each buffer tube) and at the core level (flooding compound or water-swellable tape wrap around the tube bundle). A cable that allows water wicking along the fiber-optic core for even a fraction of the 30-year service life accumulates microbend loss from ice crystal formation in the buffer tube and hydrogen darkening of the fiber [ANSI/TIA-472AAAB §5.4; Corning OSP Reference, Ch. 5.2].
+**Water-blocking — why it matters so much:** Water is the long-term enemy of buried cable. Not because it breaks fibers directly, but because in cold climates, water that wicks into the cable through a tiny breach can freeze inside the buffer tube. Ice crystals press against the glass fibers and cause microbend losses — tiny bends that scatter light and degrade signal. Over a 30-year service life, even minor ice crystal exposure accumulates. Gel-filled buffer tubes are the primary defense: the gel fills every void in the tube so there's no room for water, and it stays viscous even at low temperatures so it doesn't allow ice to form around the fibers. A direct-bury cable that isn't fully water-blocked is a maintenance liability waiting to happen [ANSI/TIA-472AAAB §5.4; Corning OSP Reference, Ch. 5.2].
 
-**Bonding and grounding:** CST and wire armor are metallic conductors. NESC C2-2023 Rules 352 and 354 require that metallic cable armor be bonded to a ground electrode at each splice closure, at cable ends, and at any point where the cable transitions from buried to aerial or building entry. Ungrounded metallic armor accumulates induced charge from nearby power lines and creates shock hazard for splicing crews [NESC C2-2023, Rules 352, 354; ANSI/TIA-758-C §6.4].
+**Bonding and grounding:** CST and wire armor are metal conductors. NESC C2-2023 Rules 352 and 354 require that metallic cable armor be connected (bonded) to a ground rod at each splice closure, at cable ends, and at any aerial-to-underground or building entry transition. This prevents static electrical charge from accumulating on the armor — ungrounded metal armor near power lines can build up charge and shock splice crews opening the closure. Think of it like the ground prong on an electrical plug: it gives stray electricity a safe path to drain away instead of building up [NESC C2-2023, Rules 352, 354; ANSI/TIA-758-C §6.4].
+
+---
 
 ### Environment 4 — Microduct
 
-**Threat profile:** compressed-air installation forces (shear stress on fiber units), microduct inner-wall friction, future-network flexibility requirements.
+**What "microduct" means:** Instead of large conduit (typically 1–4 inch diameter pipe), microduct systems use networks of tiny HDPE tubes — the most common are about the diameter of a pencil (10 mm outer diameter, 8 mm inner bore). Fiber units are blown through these tiny tubes using compressed air, like a pneumatic mail tube system. Because you're not pulling a cable, you're blowing it, the cable construction is completely different: extremely thin, lightweight, and smooth-surfaced to minimize friction.
+
+**Threat profile:** the air-pressure installation forces (the fiber unit has to flow like a dart through the tube without friction killing the blowing distance), future-network flexibility requirements, and compatibility between the fiber unit diameter and the tube bore.
 
 Microduct systems replace traditional large-bore conduit with networks of small-bore HDPE tubes (typically 5/3.5 mm, 7/5.5 mm, or 10/8 mm OD/ID) through which fiber units or microduct cables are blown using compressed air or propellant. ANSI/TIA-758-C §5.4 recognizes microduct as a distinct OSP infrastructure category [ANSI/TIA-758-C §5.4; BICSI OSP-DRD Manual, Ch. 6.5].
 
@@ -111,13 +168,21 @@ Microduct systems replace traditional large-bore conduit with networks of small-
 | Multiple microduct tubes in a bundle | Microduct cable: loose-tube OS2 in HDPE microduct bundle | Pre-cabled at factory; blown as one unit |
 | Long blow (> 2 km) | ABFU with intermediate push-assist points | Calculated blowing distance per manufacturer's air-flow model |
 
-**Advantage of microduct:** additional fiber units can be installed in existing microduct without trenching. This compounding time-savings makes microduct attractive for dense urban routes and future-proofed rural builds where electronics will be upgraded faster than the duct system [BICSI OSP-DRD Manual, Ch. 6.5].
+**The 85% rule explained:** For compressed air to blow a fiber unit through a tube, there must be a ring-shaped gap between the outside of the fiber unit and the inside wall of the tube. That annular air gap is what the compressed air pushes against to propel the unit. If the fiber unit's outer diameter is more than 85% of the tube's inner bore, the gap is too small for adequate airflow — the unit jams, and adding more pressure just risks bursting the tube rather than moving the fiber. For a 10/8 mm microduct: 8 mm × 0.85 = 6.8 mm maximum ABFU outer diameter. A fiber unit larger than 6.8 mm simply cannot be blown through it.
+
+**The big advantage of microduct:** The fiber units can be upgraded or added years later — new units blown into existing microduct tubes without digging up the ground. This is the "future-proof" play on dense urban routes: install the tube network once, blow different fiber configurations as demand grows [BICSI OSP-DRD Manual, Ch. 6.5].
+
+---
 
 ### Environment 5 — OSP-to-Inside Transition
 
-**Threat profile:** fire-rating change (outdoor PE is not fire-rated; NEC Article 770 prohibits non-listed cable inside buildings), mechanical transition from burial/aerial to building entry, moisture entry point.
+**What this means:** At some point, every outdoor cable has to enter a building. This is where the outdoor world meets the indoor world — and those two worlds have completely different fire-safety rules.
 
-The OSP-to-inside transition is one of the highest-consequence design decisions in cable selection. Outdoor PE-jacketed cable — the standard for all OSP environments above — is not permitted to extend more than 50 feet into a building without transitioning to a listed indoor optical fiber cable [NEC Article 770.113; ANSI/TIA-758-C §5.2].
+**The core problem:** Outdoor cable jackets are made of polyethylene (PE), which burns and produces thick black smoke when lit. Buildings have strict fire codes (enforced by NEC Article 770) that prohibit PE-jacketed cable from running through a building — if there's a fire, burning PE cable acts like a fuse that carries flames from floor to floor. Indoor-rated fiber cable uses low-smoke, flame-retardant jacket materials that self-extinguish. You cannot substitute one for the other.
+
+**The NEC 50-foot rule:** NEC Article 770.113 allows outdoor cable to enter a building and run a maximum of 50 feet inside before it must transition to indoor-rated cable. If your equipment room is 80 feet from the building entry point, the OSP cable can only run 50 of those 80 feet. The remaining 30 feet must use OFNR or OFNP cable.
+
+**Threat profile:** fire-rating change (outdoor PE is not fire-rated; NEC Article 770 prohibits non-listed cable inside buildings), mechanical transition from burial/aerial to building entry, and moisture entry point.
 
 **Transition options:**
 
@@ -139,6 +204,12 @@ The OSP-to-inside transition is one of the highest-consequence design decisions 
 
 *Source: [NEC Article 770.113; ANSI/TIA-758-C §5.2]*
 
+**BET explained:** The Building Entry Terminal is essentially a weatherproof junction box mounted at the building wall where the outdoor cable ends and the indoor cable begins. It does three things: (1) seals the building penetration against water entry, (2) provides a mechanical anchor for both cables, and (3) contains the splice tray where the outdoor fibers are connected to the indoor fibers. Think of it like the airlock on a submarine — it's the transition zone between two incompatible environments.
+
+**Drip loop explained:** Before an aerial or buried cable enters a building through a wall penetration, it forms a downward loop (like the letter U, or a hook) below the point of entry. Any rainwater or condensation running down the cable hits the bottom of that loop and drips off — gravity prevents it from following the cable into the building wall. This simple hardware trick prevents the most common water-entry path at building penetrations.
+
+---
+
 ### The Selection Matrix — Integrated View
 
 Combining tier (feeder / distribution / drop) with environment produces the actionable selection matrix:
@@ -156,13 +227,13 @@ Combining tier (feeder / distribution / drop) with environment produces the acti
 ## Key Terms (Flashcard Candidates)
 
 **Environment-driven cable selection**
-The design principle that outside plant cable construction (armor, water-blocking, sheath compound, strength member type) is determined first by the physical installation environment, then by tier-specific fiber count and mechanical load requirements. Fiber type (OS2) is constant across OSP environments; construction varies. [ANSI/TIA-758-C §5.2]
+The design principle that outside plant cable construction (armor, water-blocking, sheath compound, strength member type) is determined first by the physical installation environment, then by tier-specific fiber count and mechanical load requirements. Fiber type (OS2) is constant across OSP environments; construction varies. Think of it like choosing the right vehicle for the terrain — the passenger (fiber) is the same, the vehicle (cable construction) changes. [ANSI/TIA-758-C §5.2]
 
 **Track-resistant sheath**
 A PE sheath compound formulated to resist carbonization surface paths caused by electrical discharge, required for ADSS cables installed on transmission lines above 69 kV. Standard PE sheath is adequate for ADSS on distribution lines (0–69 kV range). [IEEE 1222 §4.3]
 
 **Conduit fill ratio**
-The ratio of total cable cross-sectional area to conduit inner bore area. NEC Chapter 9 Table 1 limits fill to 40% for three or more cables in a conduit. Exceeding the fill ratio increases installation pulling tension and risks cable damage. [NEC Chapter 9, Table 1; ANSI/TIA-758-C §6.1]
+The ratio of total cable cross-sectional area to conduit inner bore area. NEC Chapter 9 Table 1 limits fill to 40% for three or more cables in a conduit. Exceeding the fill ratio increases installation pulling tension and risks cable damage. Think of stuffing too many clothes into a suitcase — eventually it zips shut but nothing comes out clean. [NEC Chapter 9, Table 1; ANSI/TIA-758-C §6.1]
 
 **BET (Building Entry Terminal)**
 A waterproof sealed enclosure located at the building entry penetration where the outdoor (PE-jacketed, OSP-rated) cable is spliced to an indoor-rated (OFNR or OFNP) cable. The BET provides the fire-rating transition required by NEC Article 770 and serves as the mechanical anchor and water-seal at the building penetration. [NEC 770.113; ANSI/TIA-758-C §5.2]
@@ -177,7 +248,7 @@ The most restrictive NEC indoor fiber optic cable rating, required in air-handli
 A compact, low-friction fiber assembly designed for installation by compressed-air propulsion through microduct. Fiber counts: 1–24 per unit. Outer diameter must not exceed ~85% of the microduct inner bore to maintain adequate air-flow around the unit during blowing. [BICSI OSP-DRD Manual, Ch. 6.5]
 
 **Water-swellable tape**
-A dry-water-blocking tape applied around the buffer tube bundle (core water-block) in OSP cable. The tape contains superabsorbent polymer crystals that expand rapidly on contact with water, sealing the cable core against water migration. Preferred over flooding compound in dry-water-block cable designs that require lower cable weight and easier mid-span access. [ANSI/TIA-472AAAB §5.4]
+A dry-water-blocking tape applied around the buffer tube bundle (core water-block) in OSP cable. The tape contains superabsorbent polymer crystals that expand rapidly on contact with water, sealing the cable core against water migration. Think of those tiny dried sponges in a capsule — add water and they expand to fill the space. Preferred over flooding compound in dry-water-block cable designs that require lower cable weight and easier mid-span access. [ANSI/TIA-472AAAB §5.4]
 
 **Frost line**
 The depth below which soil temperature remains above freezing even at peak winter conditions, varying by USDA climate zone. Cables buried above the frost line experience seasonal frost heave — cyclic tension and lateral displacement as the surrounding soil freezes and thaws. NESC C2-2023 Rule 352 and local AHJ requirements establish minimum burial depths accounting for frost-line conditions. [NESC C2-2023, Rule 352; BICSI OSP-DRD Manual, Ch. 6.2]
@@ -365,9 +436,16 @@ Elements (a) and (d) are correct; elements (b) and (c) contain errors.
 
 *Rationale:*
 - **A — Incorrect.** Route distance only; no slack, riser loop, or contingency included. This order will result in insufficient cable at multiple points. [ANSI/TIA-758-C §6.4]
-- **B — Incorrect.** 3,915 m = 3,800 + 50 (5 closures × 10 m) + 15 (riser loop) = 3,865 m flat — no contingency applied. The problem specifies a 5% contingency, which adds 3,865 × 0.05 = 193 m, yielding 4,058 m. Omitting the contingency produces a cable order that will run short at any route measurement error or terrain deviation. [ANSI/TIA-758-C §6.4]
-- **C — Correct.** Step-by-step: (1) Route distance: 3,800 m. (2) Splice closure slack: 5 × 10 m = 50 m. (3) Riser loop: 15 m. (4) Subtotal before contingency: 3,800 + 50 + 15 = 3,865 m. (5) 5% contingency: 3,865 × 1.05 = **4,058.25 m** → round up to **4,058 m** minimum order. [ANSI/TIA-758-C §6.4]
-- **D — Incorrect.** 4,200 m implies a 10% contingency over base route length — higher than the 5% stated in the problem. This would be appropriate for a more uncertain route but exceeds the problem's specification. [ANSI/TIA-758-C §6.4]
+- **B — Incorrect.** 3,800 + 50 + 15 = 3,865 m (no contingency). The problem specifies a 5% contingency, which adds 3,865 × 0.05 = 193 m, yielding 4,058 m. [ANSI/TIA-758-C §6.4]
+- **C — Correct.** Here is every step:
+  - **Step 1 — Route distance:** 3,800 m
+  - **Step 2 — Splice closure slack:** 5 closures × 10 m per closure = **50 m**
+  - **Step 3 — Riser loop at aerial-to-underground transition:** **15 m**
+  - **Step 4 — Subtotal before contingency:** 3,800 + 50 + 15 = **3,865 m**
+  - **Step 5 — Apply 5% contingency:** 3,865 × 1.05 = **4,058.25 m**
+  - **Step 6 — Round up to whole meter:** **4,058 m minimum order**
+  - *Sanity check: the contingency adds about 193 m on a 3.8 km route — roughly 200 m of extra cable, which is about one reel. That's a reasonable cushion for measurement error and terrain deviations.* [ANSI/TIA-758-C §6.4]
+- **D — Incorrect.** 4,200 m implies a 10% contingency over base route length — higher than the 5% stated in the problem. [ANSI/TIA-758-C §6.4]
 
 ---
 
