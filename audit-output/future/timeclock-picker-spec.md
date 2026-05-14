@@ -1,149 +1,185 @@
 # Timeclock Project Picker — Rebuild Spec
 
-> **Status:** Design captured 2026-05-13. Build deferred until Phase 2 (projection wave) and Wave 2 FE-Crit remainder ship.
-> Daily-use bug + UX rework. Single source of truth for the picker rebuild.
+> **Status:** Discovery updated 2026-05-14 via full code read.
+> Original spec drafted 2026-05-13 from user conversation. This revision
+> adds verified schema facts, confirmed endpoint inventory, and corrected
+> gap analysis.
+> Build deferred until Phase 2 (projection) and Wave 2 FE-Crit remainder ship.
 
 ---
 
-## 1. User's complaint (verbatim 2026-05-13)
+## Area A — Current State
 
-> "In the timeclock the projects dont come up properly, It picks a leaf from existing projects when really it needs to pick creatia and the logic matches it. For example Job would be the available jobs and client, then optionally add the different WO# that populate from that client, jobs that populate from that client"
+### Files involved
+- `timeclock_module.js` (791 LOC) — all `/api/timeclock/*` routes + schema bootstrap + audit logger
+- `public/timeclock.html` (1343 LOC) — the full timeclock portal (styles + HTML + all JS inline)
+- `routes/time_entries.js` — CRUD for `time_entries` rows (the output of clock-out)
+- `routes/concentrators.js` — service area (concentrator) list
+- `routes/jobs.js` — jobs list with `client_id` / `engineering_contract_id` / `program` filter support
+- `routes/engineering_contracts.js` — EC CRUD (admin only)
+- `portal_module.js` — `ensureRollupChain`, `findOrCreateRollup`, project-request flow
 
-## 2. Today's behavior (what's wrong)
+### How the picker works TODAY
 
-**Files:** `timeclock_module.js` (~791 LOC), `public/js/project_picker.js`, `public/timeclock*.html` and the embedded picker in `public/admin.html`.
+**Clock-in flow (pre-clock form):**
+1. Page loads → `loadProjects()` fires `GET /api/projects?status=active` → all active projects into `projectsCache`
+2. `populateProjectSelect()` builds a flat `<select id="ci-project">` of leaf-only projects (rollups excluded), optionally scoped by a client filter
+3. Entries table and manual-entry modal have `Client → Project → Job` three-level dropdowns, but the main clock-in card has only `Project → Job`
+4. The client dropdown in the entry modal (`<select id="entry-client">`) is populated from `projectsCache` (distinct client_ids extracted in JS — no API call). This means the client list is bounded by which clients already have active leaf projects the user can see
+5. On project select → `populateJobSelect()` fires `GET /api/jobs` (all jobs, cached as `jobsCache._all`), then filters by the project's team in JS
+6. Clock-in body sent: `{ project_id, job_id? }` to `POST /api/timeclock/clock-in`
+7. The existing `timeclock.html` also loads concentrators once: `allConcentrators` is populated for use in the "Request New Project" modal only — concentrators drive the WO# display there but NOT in the main clock-in picker
 
-Today's flow:
+**What `time_clock_sessions` stores:**
+`user_id`, `staff_id`, `project_id`, `job_id`, `job_title`, `started_at`, `ended_at`, `notes`, `created_time_entry_id`, `forgot_clock_out`
 
-1. User opens timeclock → loads ALL projects user can see into a global `projectsCache`
-2. UI shows a single `<select id="ci-project">` dropdown populated with leaf-only projects (rollup containers excluded)
-3. User optionally filters by client first, which narrows the project list
-4. User picks a leaf project → `entryProjectChanged()` fires → job dropdown populates based on the picked project's team
-5. User picks a job → clocks in
+**What `time_entries` stores:**
+`id`, `project_id`, `staff_id`, `entry_date`, `hours`, `job_title`, `notes`, `import_batch`, `is_billable`, `pending_project_request_id`, `created_at` — plus `user_id` added by timeclock bootstrap
 
-**Why it's wrong for daily workflow:**
-- User has to find the EXACT leaf project. With many projects per client, the dropdown is long and unstable.
-- If the right project doesn't exist yet, the user has to leave timeclock, create a project in admin, then return. Friction kills daily clock-in time.
-- The mental model is inverted — workers think "I'm doing Inspection work on the WHE-2024-001 work order for PSC," not "I am clocking into project UUID xyz."
+**`/api/timeclock/recent`** returns the top-3 most-recently-clocked projects for quick-clock buttons, including `project_id`, `job_id`, `job_title`, `work_order_number`, `project_name`, `client_name`.
 
-## 3. Standing user decisions (2026-05-13)
+---
 
-1. **Auto-create with existing rollup structure for organization.** When `(client, job, WO#)` selected and no matching project exists, system auto-creates a new leaf project, slotted into the appropriate rollup containers (client-level → team-level → service-area-level whatever exists for this client). Doesn't require the user to leave timeclock.
-2. **WO# is optional.** Blank WO# allowed. Hours land in a "no WO#" project per `(client, job)` combo. Common for overhead, training, internal work.
-3. **One Job dropdown** filtered by the selected client. NOT two separate filters.
-4. **Dropdown sources (2026-05-13 follow-up):**
-   - **Client dropdown** — pulled from admin clients (active clients the user has access to).
-   - **Job dropdown** — pulled from all jobs that apply to the selected client (filtered by client's program / EC / job availability).
-   - **WO# dropdown** — pulled from WO#s under the selected client. **Display format: `{service_area_name} - {wo_number}` (e.g., `"Crossroad School - 16300"`).** Service area is the WO's grouping context; showing both helps the user pick the right WO# at a glance when one client has many.
+## Area B — Spec (What User Wants)
 
-## 4. New behavior — picker UX
+From CLAUDE.md §2 + user's own words (2026-05-13):
 
-Replace the project leaf-select with three cascading dropdowns:
+> "Job would be the available jobs and client, then optionally add the different WO# that populate from that client, jobs that populate from that client"
 
+Cascading picker flow:
 ```
-┌─ Clock In ─────────────────────────────────────────────────────┐
-│                                                                │
-│  Client:  [PSC ▾]                       ← Required             │
-│  Job:     [Inspection ▾]                ← Required             │
-│  WO# :    [Crossroad School - 16300 ▾]  ← Optional (blank OK)  │
-│                                                                │
-│  ▶ Will clock into: PSC / Inspection / Crossroad School-16300 │
-│    (auto-created if needed)                                    │
-│                                                                │
-│  [Clock In]                                                    │
-└────────────────────────────────────────────────────────────────┘
+Client (required) → Job (required, filtered by client) → WO# (optional, filtered by client)
 ```
 
-- **Client dropdown:** lists clients user has access to. Source = admin clients table (same as the existing client filter).
-- **Job dropdown:** lists jobs available for the selected client (filtered by program / EC / job availability). Disabled until client is picked.
-- **WO# dropdown:** lists work orders under the selected client. **Each option displays as `"{service_area_name} - {wo_number}"`** (e.g., `"Crossroad School - 16300"`). Source: join `engineering_contracts` (or `service_areas`) with WO# table, scoped to selected client. Includes blank/"— No WO# —" option. Disabled until client is picked.
-- **Will clock into preview line:** real-time text showing the resolved project — name, status (existing vs new), rollup ancestors.
+**WO# display format (confirmed from spec):** `"{service_area_name} - {wo_number}"` (e.g., `"Crossroad School - 16300"`). Source: `concentrators` table — each row has `area_name`, `work_order_number`, `contract_label`.
 
-## 5. Resolution logic — `resolveOrCreateProject({client_id, job_id, work_order_number})`
+**Auto-create behavior:** when `(client, job, WO#)` combination has no matching leaf project, system auto-creates a leaf project slotted into the correct rollup chain via `ensureRollupChain`. User never leaves timeclock.
 
-New server-side helper. Called by `POST /api/timeclock/clock-in` and the existing `POST /api/timeclock/switch`.
+**Preview line:** real-time "Will clock into: PSC / Construction / Crossroad School / PSC Inspection — 16300" before Clock In.
 
-```
-1. Look up existing leaf project where:
-   - client_id matches
-   - job_id matches (via projects.job_id or projects.team aligning with job's team)
-   - work_order_number matches (or both NULL/blank)
-   - is_rollup = FALSE
-   - status IN ('active', 'in_progress')   // not 'completed' / 'billed' / 'archived'
+**Quick-clock buttons preserved:** they use `project_id` directly from `time_clock_sessions`, so they survive the picker rebuild without changes.
 
-2. If exactly 1 match → return that project_id. Done.
+---
 
-3. If 0 matches → auto-create:
-   a. Resolve EC: find the active engineering_contract for (client_id, program) where program
-      matches the job's program_scope. If multiple, prefer the one matching work_order_number;
-      else most-recently-started.
-   b. Find rollup container chain for this (client, EC, team):
-      - client rollup (is_rollup=TRUE, rollup_key='client', client_id matches)
-      - team rollup (rollup_key='team', team matches job.team)
-      - service_area rollup (rollup_key='service_area') if EC has service areas configured
-      Create any missing rollup containers (existing patterns: routes/projects.js
-      bulk_create_projects style). All rollup containers get is_rollup=TRUE.
-   c. Create the leaf project under the appropriate parent rollup:
-      - name = generated from "{client.name} {job.name}{wo_suffix}" (or whatever the user-facing
-        convention is — e.g., "PSC Inspection — SE-2025-014" or "PSC Inspection — General")
-      - client_id = client_id
-      - job_id = job_id
-      - team = job.team
-      - work_order_number = work_order_number (or NULL)
-      - status = 'active'
-      - billing_type, billing_rate, billing_cadence: inherit defaults from EC or job-type defaults
-      - parent_id = lowest-level rollup
-      - engineering_contract_id = resolved EC
-   d. Return the new project_id.
+## Area C — Gap Analysis
 
-4. If 2+ matches → pick the most-recently-active OR surface a UI conflict.
-   PREFER: return the most recently-updated active project; log a warning to audit_logs
-   for admin review. Do NOT prompt the user (kills the daily workflow).
-```
+### What exists today vs what's needed
 
-## 6. Endpoints affected
+| Dimension | Today | Target |
+|---|---|---|
+| Client dropdown in clock-in | Absent from clock-in card (only in entry edit modal, populated from projectsCache) | Present in clock-in card; sourced from `/api/clients` directly |
+| Job dropdown in clock-in | Flat list of all jobs after project selected | Filtered by selected client's EC program using `?client_id=&engineering_contract_id=` params already supported by `/api/jobs` |
+| WO# dropdown | Absent from clock-in card | New dropdown; source: `/api/concentrators` (already exists) filtered by client's `contract_label` |
+| Clock-in body | `{ project_id, job_id }` | `{ client_id, job_id, work_order_number }` (project resolved server-side) |
+| Project resolution | Client picks an exact leaf project | New `resolveOrCreateProject()` helper: match or auto-create leaf |
+| Auto-create rollup | `ensureRollupChain` exists in `portal_module.js`, already used by `POST /api/projects` | Needs to be called from `POST /api/timeclock/clock-in` |
+| Preview line | None | New frontend reactive display |
+| Entry edit modal | Has Client → Project cascade (client from projectsCache; project filtered by client in JS) | Same cascade works; can optionally upgrade to Client → Job → WO# shape later |
 
-- **NEW:** `POST /api/timeclock/resolve-or-create-project` — admin/user-gated. Body: `{client_id, job_id, work_order_number}`. Response: `{project_id, project_name, was_created: bool, rollup_path: ['PSC', 'Construction', 'East Service Area', 'PSC Inspection — SE-2025-014'], action_summary: 'Existing project found' | 'Auto-created project under PSC / Construction'}`.
-- **MODIFY:** `POST /api/timeclock/clock-in` — now accepts `{client_id, job_id, work_order_number}` instead of (or in addition to, for backward compat) `{project_id, job_id}`. Internally calls resolve-or-create. Returns the resolved project_id + a `created` flag for UI feedback.
-- **MODIFY:** `POST /api/timeclock/switch` — same shape change.
-- **MODIFY:** `GET /api/timeclock/recent` — already returns project_id + job_id + client_name + work_order_number. No change needed; quick-clock buttons still work.
-- **NEW:** `GET /api/timeclock/picker-data?client_id=X` — returns `{jobs: [...], work_orders: [...]}` for the client. Single call to populate both filtered dropdowns.
+### Backend endpoints: what exists, what's missing
 
-## 7. Frontend changes
+**Exists today:**
+- `GET /api/clients` — `requireAuth()` gated, returns all clients (routes/clients.js)
+- `GET /api/jobs?client_id=&engineering_contract_id=&program=` — full cascade-aware filter already implemented in routes/jobs.js; supports manual `job_assignments` override + fallback heuristic by program_scope
+- `GET /api/concentrators?contract_label=` — `requireAuth()` gated (routes/concentrators.js)
+- `GET /api/engineering-contracts?client_id=` — `requireAuth()` gated; returns ECs for a client with child contract counts
+- `POST /api/timeclock/clock-in` — accepts `{ project_id, job_id }` today
+- `POST /api/timeclock/switch` — same shape
 
-- **Remove:** `populateProjectSelect()` and the `<select id="ci-project">` element from the clock-in UI.
-- **Add:** Three new `<select>` elements (`ci-client`, `ci-job`, `ci-wo`) with cascading population.
-- **Add:** "Will clock into" preview computed reactively.
-- **Modify:** `ciClockIn()` to send `{client_id, job_id, work_order_number}` instead of `project_id`.
-- **Keep:** Quick-clock recent buttons (they already use `project_id` + `job_id` directly).
-- **Preserve:** Manual entry tab uses the same pattern.
+**Missing / needs to be added:**
+- `GET /api/timeclock/picker-data?client_id=X` — single call returning `{ jobs: [...], work_orders: [...] }` for a client (avoids 2 waterfall calls on each client selection; debounces the network)
+- `POST /api/timeclock/resolve-or-create-project` — standalone resolution endpoint for the preview line (optional; clock-in can call internally)
+- Modify `POST /api/timeclock/clock-in` to accept `{ client_id, job_id, work_order_number }` and internally call `resolveOrCreateProject`
+- Modify `POST /api/timeclock/switch` — same
 
-## 8. Edge cases + open questions
+### Schema gaps: confirmed clean
 
-- **What if user clocks in to a tuple that creates a project, then SWITCHES to a different job with same client+WO#?** Two leaf projects under the same rollup, distinguished by `job_id`. Fine, intentional.
-- **What if a project exists but has `status = 'completed'`?** Resolution treats it as no-match → auto-create. Old completed work doesn't accumulate new hours. Confirm with user.
-- **What if `(client, job)` has no EC for the program?** Auto-create still needs an EC linkage for billing rollup integrity. Options: (a) create the project with `engineering_contract_id = NULL` (already supported per migration 0023), surface a warning chip; (b) refuse the clock-in with "No active EC for this client + program. Set one up first." Recommend (a) — don't block daily clock-in. Surface in admin alerts.
-- **Audit trail:** Auto-create writes an `audit_logs` entry with `actor=user, action='timeclock_autocreate_project'`. Admins can spot accidental project creation.
-- **Permission:** Can any user with timeclock access auto-create projects? Or only admin/manager? Probably: yes any user, since the daily friction is the point. But surface in admin alerts.
-- **Rollback:** What if auto-create fails mid-flight (e.g., EC lookup OK, rollup creation fails)? The whole resolve-or-create call must be wrapped in a transaction; partial creates are bugs.
+All columns needed by `resolveOrCreateProject` already exist:
+- `projects.client_id`, `projects.job_id`, `projects.work_order_number`, `projects.is_rollup`, `projects.status`, `projects.engineering_contract_id` ✓
+- `jobs.team`, `jobs.program_scope` (added by migration 0006: `rus | non_rus | shared`) ✓
+- `concentrators.area_name`, `concentrators.work_order_number`, `concentrators.contract_label` ✓
+- `ensureRollupChain` in portal_module.js — three-level hierarchy (client → team → service_area) ✓
+- `engineering_contracts.program` — drives job filter via program_scope ✓
 
-## 9. Pre-build checklist
+**One schema clarification needed:** `concentrators` is scoped by `contract_label` (a string, e.g., `"PSC RUS Contract 1706-A72"`) rather than by `client_id`. The picker must resolve: given `client_id`, find the right `contract_label` to filter concentrators. Path: `GET /api/engineering-contracts?client_id=X` → pick the active RUS EC → use its `contract_number` or name to look up concentrators. For non-PSC clients, the WO# dropdown may be empty or use `projects.work_order_number` as the source instead.
 
-- [ ] Confirm `jobs` table has the right shape: does each job row have a `team` column? `program_scope`? Verify via schema audit.
-- [ ] Confirm `engineering_contracts.work_order_number` is the right WO# source (Wave 7f3b6cb added EC WO# + service areas) — or is there a `projects.work_order_number`? Probably both — clarify hierarchy.
-- [ ] Decide: rollup path generation defaults (which rollup levels are always created vs optional)
-- [ ] Test plan: unit test for `resolveOrCreateProject` covering match / no-match / multi-match
-- [ ] Decide whether to keep the OLD `project_id`-based clock-in API path for backward compat or hard-cutover
+---
 
-## 10. Sequencing
+## Area D — Scope Decomposition
 
-**Recommended pipeline (after current Phase 2 projection wave + Wave 2 FE-Crit remainder land):**
+### Batch 1: Backend endpoints (new picker-data + resolve-or-create + modify clock-in/switch)
+**Scope:** `timeclock_module.js`, `routes/time_entries.js`
+**Work:**
+- Add `GET /api/timeclock/picker-data?client_id=X`: queries `/api/jobs` (with `client_id` filter) and `/api/concentrators` (with `contract_label` derived from client's active EC). Returns `{ jobs, work_orders }`.
+- Add `resolveOrCreateProject({ client_id, job_id, work_order_number }, pool)` helper function (wraps existing `ensureRollupChain`).
+- Modify `POST /api/timeclock/clock-in` to accept either `{ project_id }` (backward compat) or `{ client_id, job_id, work_order_number }` (new path).
+- Modify `POST /api/timeclock/switch` same shape.
+- Wrap resolve-or-create in a transaction (rollback if rollup creation fails mid-chain).
+- Write `audit_logs` entry on auto-create with `action='timeclock_autocreate_project'`.
 
-1. **Discovery wave** — short read of jobs / projects / engineering_contracts schemas, confirm field availability for the resolution logic.
-2. **Backend wave** — implement `resolveOrCreateProject` helper, new `/api/timeclock/picker-data` + `/api/timeclock/resolve-or-create-project` endpoints, modify clock-in/switch endpoints. Full audit/verify/fix pipeline.
-3. **Frontend wave** — rebuild picker UI with cascading dropdowns + preview line. Update manual-entry tab same shape. Audit/verify/fix.
-4. **Polish + smoke test wave** — admin alert surface for auto-create events, audit trail rendering, edge cases.
+**Acceptance criteria:** `POST /api/timeclock/clock-in` with `{client_id, job_id, work_order_number}` clocks in against an auto-resolved/created project. `was_created` in response body. `POST` with `{project_id}` still works unchanged.
 
-**Effort estimate:** 3-4 fix-agent dispatches across the pipeline. ~1 week of orchestration at current pace.
+**Risk:** MEDIUM — touches the clock-in hot path; requires transaction discipline for rollup creation.
+**Auditor count:** 2 (standard wave, code quality + adversarial race-condition check on rollup create)
 
-=== TIMECLOCK PICKER SPEC END ===
+### Batch 2: Frontend picker UI rebuild
+**Scope:** `public/timeclock.html` (clock-in card section + entry modal)
+**Work:**
+- Remove `<select id="ci-project">` from clock-in card.
+- Add `<select id="ci-client">`, `<select id="ci-job">`, `<select id="ci-wo">`.
+- Populate `ci-client` from `GET /api/clients` on page load.
+- On client change → `GET /api/timeclock/picker-data?client_id=X` → populate `ci-job` and `ci-wo`.
+- Add "Will clock into" preview `<div>` updated reactively.
+- Modify `clockIn()` to send `{ client_id, job_id, work_order_number }`.
+- Update Switch modal with same three dropdowns.
+- Quick-clock buttons: no change (they use `project_id` directly, still supported).
+- Entry edit modal: keep existing Client → Project cascade (separate UX, doesn't need the new cascade for now).
+
+**Acceptance criteria:** Clock-in with new cascade works end-to-end. Preview renders. Switch modal works. Quick-clock buttons unaffected. Mobile layout OK (`max-width:600px` breakpoint).
+
+**Risk:** LOW to MEDIUM — frontend-only except for the new API call pattern.
+**Auditor count:** 2 (standard)
+
+### Batch 3: Auto-create rollup flow (included in Batch 1 but needs separate smoke test)
+**Scope:** resolve-or-create path in `timeclock_module.js` + `portal_module.js:ensureRollupChain`
+**Work:** Integration tests: `resolveOrCreateProject` with (a) existing project match, (b) no match → auto-create, (c) multi-match → most-recent wins, (d) no EC → project created with `engineering_contract_id=NULL`.
+**Acceptance criteria:** Test suite passes all four cases. Rollback on partial-create verified.
+**Risk:** MEDIUM — touches rollup chain which is load-bearing for billing tree integrity.
+**Auditor count:** 2 (standard; treat like data-integrity wave)
+
+### Batch 4: Polish + a11y
+**Scope:** `public/timeclock.html`
+**Work:** Preview line SR-friendly (`aria-live="polite"`). Disabled state on `ci-job` and `ci-wo` until `ci-client` selected. Error state when resolve-or-create fails. Mobile thumb-friendly sizing (existing `@media(max-width:600px)` breakpoint already handles most of it).
+**Acceptance criteria:** Tab flow is Client → Job → WO → Clock In. NVDA announces preview updates. Mobile taps meet 44px minimum.
+**Risk:** LOW
+**Auditor count:** 1 (trivial polish)
+
+---
+
+## Area E — Open Questions for User
+
+1. **WO# source for non-PSC clients.** `concentrators` is tied to `contract_label` (PSC RUS contracts). Non-PSC clients use `service_area_label` (free text on projects). Should the WO# dropdown show `projects.work_order_number` values for non-PSC clients, or just hide the dropdown entirely? Or is WO# always PSC-only?
+
+2. **Default-select / stickiness.** Should the three dropdowns remember the last-used `(client, job, WO#)` across sessions (localStorage)? Or always start blank? Quick-clock buttons handle "resume yesterday's project" — so the picker can start blank without friction.
+
+3. **Permission: can any logged-in user auto-create projects?** Today, engineers can request a new project (admin approval required). The new auto-create path would bypass approval. Is that acceptable for the daily timeclock workflow, or should auto-create go through the existing approval queue too?
+
+4. **`status = 'completed'` match behavior.** If the only matching project for `(client, job, WO#)` is `status='completed'`, should the picker (a) auto-create a new project anyway, (b) use the completed one, or (c) surface an error? Recommendation: (a) auto-create new, but confirm.
+
+5. **Backward-compat cutover.** The Quick-clock buttons send `{ project_id }` to `POST /api/timeclock/clock-in`. Plan is to keep the old `project_id` path alive in parallel. Confirm this is acceptable rather than hard-cutover.
+
+---
+
+## Pre-build schema verification checklist
+
+- [x] `jobs.team` exists (VARCHAR(20), values: design/permitting/construction/both/shared/NULL) — confirmed `routes/jobs.js`
+- [x] `jobs.program_scope` exists (migration 0006: `rus | non_rus | shared`) — confirmed
+- [x] `concentrators.area_name` + `concentrators.work_order_number` + `concentrators.contract_label` — confirmed `scripts/schema_core.sql:417`
+- [x] `projects.work_order_number` (VARCHAR(100)) — confirmed `scripts/schema_core.sql:135`
+- [x] `projects.is_rollup`, `projects.rollup_level`, `projects.rollup_key` — confirmed `server.js:891-893`
+- [x] `projects.engineering_contract_id` — confirmed, added by Wave RUS-Fix migration 0023
+- [x] `ensureRollupChain` callable from new code — exported at `portal_module.js:1091`
+- [ ] Confirm: how to map `client_id` → `contract_label` for the concentrators lookup (via `engineering_contracts.contract_number` or name? Need to verify which field `concentrators.contract_label` matches)
+- [ ] Confirm job_assignments behavior when no assignments exist for a client: the heuristic in `routes/jobs.js` falls back to `program_scope` filter — verify it returns the right jobs for non-PSC clients
+
+=== TIMECLOCK PICKER DISCOVERY END ===
