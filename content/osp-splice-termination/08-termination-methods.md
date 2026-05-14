@@ -144,6 +144,8 @@ Epoxy-and-polish connectors use a two-part epoxy injected into the ferrule bore 
 
 **Equipment required:** Epoxy mixing kit, polishing machine with lapping films, interferometric inspection scope or magnification scope with IEC 61300-3-35 pass/fail overlay.
 
+**IEC 61300-3-35 end-face inspection — fail criteria and remediation:** IEC 61300-3-35 defines pass/fail zones on the connector end-face by radius from the fiber core center. A connector **fails** inspection if Zone A (the core region, ≤25 µm radius from center) contains any scratches, pits, or chips — even a single scratch in Zone A is a reject. Zone B (25–120 µm, the cladding) permits scratches below specified width thresholds; debris (particles) must be absent. A **failing end-face must be re-polished or the connector replaced** — cleaning alone (dry wipe, IPA wipe, or air-blast) does not remove a scratch or chip. Only re-polishing with the appropriate lapping film sequence can remedy a Zone A scratch; if the fiber is too short to re-polish, the connector must be cut off and re-terminated [IEC 61300-3-35; AFL Fitel Field-Polishing Guide, §5; BICSI OSP-DRD Manual, Ch. 7].
+
 **Best-fit applications:** High-volume cross-connect frames where the polishing machine justifies the setup cost and the volume amortizes the per-fiber time; applications requiring UPC return loss ≥50 dB or APC ≥60 dB where pigtails are impractical.
 
 ### UPC vs. APC: Where Each Is Specified
