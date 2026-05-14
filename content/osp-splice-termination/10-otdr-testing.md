@@ -69,7 +69,7 @@ Two dead zones must be understood:
 
 **Dead zone values for different pulse widths.** The OTDR operator selects the pulse width for each test:
 
-| Pulse width | Approx. event dead zone | Range (dynamic range) | Best use |
+| Pulse width | Approx. event dead zone | Dynamic Range (dB) | Best use |
 |---|---|---|---|
 | 3 ns (very short) | ~0.3 m | Low (~20 dB) | Short links, dense event spacing |
 | 30 ns | ~3 m | Medium (~30 dB) | Standard OSP splice testing |
@@ -277,15 +277,6 @@ Bidirectional average: (0.04 + 0.05) / 2 = **0.045 dB** → passes ≤ 0.10 dB t
 ---
 
 **Q3.** A fusion splice at km 7.3 reads +0.02 dB (a small apparent gain) from the forward direction (A→B) and 0.08 dB from the reverse direction (B→A). What is the bidirectional average splice loss, and does this splice pass the BICSI ≤0.10 dB acceptance threshold?
-
-- A) Bidirectional average = 0.08 dB; passes (only the reverse direction is valid when the forward shows a gainer)
-- B) Bidirectional average = 0.03 dB; passes (average of 0.02 and 0.04 — the gainer is rounded to 0.04)
-- C) Bidirectional average = 0.03 dB; passes (arithmetic mean of +0.02 and 0.08) **[CORRECT — see rationale for exact value]**
-- D) The splice fails because a gainer reading in the forward direction indicates a physical defect that makes OTDR measurement invalid
-
-*[Note: The correct bidirectional average is (0.02 + 0.08) / 2 = 0.05 dB — see rationale. Answer C is correct but the stated value (0.03 dB) contains an arithmetic error in the option text. The correct answer is C-intent: the average of forward and reverse, which equals 0.05 dB.]*
-
-Let me restate the options precisely:
 
 - A) The gainer reading is invalid; use only the reverse direction reading: **0.08 dB** — passes
 - B) Bidirectional average = **0.05 dB** — passes ≤ 0.10 dB threshold **[CORRECT]**

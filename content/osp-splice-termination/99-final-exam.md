@@ -65,7 +65,7 @@ notes: >
 
 ### L2.2 — Fusion Splicing I
 
-**Q3.** A 30 km OS2 SMF route has 6 splice closures. Cable attenuation spec is ≤ 0.4 dB/km. The project requires ≤ 0.10 dB/splice (BICSI default). Transceivers have a 14.4 dB loss budget (40GBASE-LR4, IEEE 802.3ba). What is the total calculated link loss and does the link close?
+**Q3.** A 30 km OS2 SMF route has 6 splice closures. Cable attenuation spec is ≤ 0.4 dB/km. The project requires ≤ 0.10 dB/splice (BICSI default). Transceivers have a 14.4 dB loss budget (40GBASE-LR4, IEEE 802.3ba). Assume no connectors at each end (feeder-to-feeder fusion spliced directly at OLT and FDH). What is the total calculated link loss and does the link close?
 
 - A) 12.6 dB total; the link closes with 1.8 dB margin **[CORRECT]**
 - B) 12.6 dB total; the link does not close — 12.6 dB exceeds the 14.4 dB budget
@@ -452,7 +452,7 @@ Revised correct option:
 
 **Q25.** (Standards integration: 2.10 + 2.11 + 2.12) A technician completes a Tier 2 acceptance test on an 18 km OS2 SMF backbone route. All bidirectional OTDR splice averages are ≤ 0.08 dB. The PMLS IL at 1310 nm is 9.1 dB; at 1550 nm is 10.3 dB. The IL_max calculated from route parameters (cable: 0.4 dB/km × 18 km = 7.2 dB; 4 splices × 0.10 dB = 0.4 dB; 2 connector pairs × 0.50 dB = 1.0 dB) = 8.6 dB. The splice records and equipment calibration are current. What is the correct acceptance decision?
 
-- A) Pass — all individual splice events pass; PMLS at 1310 nm (9.1 dB) is within the budget
+- A) Pass — all individual splice events pass ≤ 0.08 dB; per-event compliance means the end-to-end link passes
 - B) Pass — 1550 nm testing is not part of Tier 2 acceptance for OSP routes
 - C) Fail — the 1550 nm PMLS result (10.3 dB) exceeds the IL_max of 8.6 dB; the route fails end-to-end acceptance at 1550 nm **[CORRECT]**
 - D) Pass — the 1550 nm result is informational only; only 1310 nm governs acceptance under ANSI/TIA-526-7
@@ -460,9 +460,9 @@ Revised correct option:
 *Source: ANSI/TIA-526-7 §3, §6; BICSI OSP-DRD Manual, Ch. 9*
 
 *Rationale:*
-- **C — Correct.** IL_max = 7.2 + 0.4 + 1.0 = **8.6 dB**. PMLS at 1310 nm = 9.1 dB > 8.6 dB → also fails. PMLS at 1550 nm = 10.3 dB > 8.6 dB → also fails. Both wavelengths must be ≤ IL_max to pass. In fact, this route fails at both wavelengths. The 1550 nm excess (10.3 − 8.6 = 1.7 dB over budget) suggests a macrobend-induced loss component that is more visible at 1550 nm — the OTDR 1550 nm traces should be reviewed for a wavelength-dependent loss event not visible in the splice events alone. Note: the splice events all pass (≤ 0.08 dB), so the excess end-to-end loss must be from a macrobend or from cable attenuation higher than the specification maximum. OTDR review required before corrective action. [ANSI/TIA-526-7 §3, §6; BICSI OSP-DRD Manual, Ch. 9]
-- **A — Incorrect.** 9.1 dB > 8.6 dB — the 1310 nm PMLS also fails. [ANSI/TIA-526-7 §6]
+- **A — Incorrect.** Per-event splice compliance does not substitute for end-to-end PMLS acceptance. The splice events all pass (≤ 0.08 dB bidirectional average), but the end-to-end PMLS result independently must also be ≤ IL_max. In Tier 2 testing, both per-event OTDR thresholds AND the end-to-end PMLS budget must be satisfied. Here, 9.1 dB > 8.6 dB at 1310 nm — the PMLS also fails at 1310 nm. [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
 - **B — Incorrect.** 1550 nm is a required test wavelength under ANSI/TIA-526-7 for Tier 2 OS2 SMF testing. [ANSI/TIA-526-7 §3]
+- **C — Correct.** IL_max = 7.2 + 0.4 + 1.0 = **8.6 dB**. PMLS at 1310 nm = 9.1 dB > 8.6 dB → fails. PMLS at 1550 nm = 10.3 dB > 8.6 dB → fails. Both wavelengths must be ≤ IL_max to pass. In fact, this route fails at both wavelengths. The 1550 nm excess (10.3 − 8.6 = 1.7 dB over budget) suggests a macrobend-induced loss component more visible at 1550 nm — the OTDR 1550 nm traces should be reviewed for a wavelength-dependent loss event not visible in the splice events alone. [ANSI/TIA-526-7 §3, §6; BICSI OSP-DRD Manual, Ch. 9]
 - **D — Incorrect.** Both wavelengths are acceptance criteria; 1550 nm is not informational only. [ANSI/TIA-526-7 §3; BICSI OSP-DRD Manual, Ch. 9]
 
 ---
