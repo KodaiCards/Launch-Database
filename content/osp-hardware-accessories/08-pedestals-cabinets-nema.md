@@ -56,7 +56,7 @@ NEMA 250 defines enclosure type ratings for electrical and telecommunications eq
 - **Limitations:** Not suitable for sites subject to blowing rain, flooding, submersion, or spray from irrigation or road splash. Not suitable for coastal environments.
 
 **NEMA Type 4 — Watertight (Outdoor)**
-- **IEC 60529 approximate equivalent:** IP65 (dust-tight; protected against low-pressure water jets from any direction)
+- **IEC 60529 approximate equivalent:** IP56 (dust-protected; protected against powerful water jets from any direction). Note: approximate equivalents only — NEMA and IEC tests are not identical. Some industry sources cross-reference NEMA 4 to IP65 based on similar functional protection; T4 L4.12 uses IP56 per the NEMA 250 Annex cross-reference table.
 - **Construction:** Steel or cast aluminum body; full-perimeter gasket on door/lid; sealed cable entry ports; no ventilation openings
 - **Deploy where:** Outdoor locations subject to rain from any direction, hosing (utility yard enclosures), and temporary flooding at grade. Standard for most outdoor pedestal and roadside cabinet installations on PSC program routes. Meets RUS 1751F-635 §5 requirements for outdoor OSP enclosures.
 - **Key characteristic:** Watertight — rain, hose-down, and spray are repelled by the gasket and sealed body. Not rated for immersion.
@@ -71,7 +71,7 @@ NEMA 250 defines enclosure type ratings for electrical and telecommunications eq
 |---|---|---|---|
 | 1 | IP10 | General purpose (indoor) | Indoor telco room only |
 | 3R | IP14 | Rainproof (drip shield) | Covered outdoor, non-spray |
-| 4 | IP65 | Watertight (gasket seal) | Standard outdoor pedestal/cabinet |
+| 4 | IP56 | Watertight (gasket seal) | Standard outdoor pedestal/cabinet |
 | 4X | IP66 | Watertight + corrosion-resistant | Coastal, chemical, salt-air environments |
 
 *Cross-validation table: T4 L4.12 is the authoritative source. Apply operationally here.*
@@ -107,7 +107,7 @@ General-purpose indoor enclosure. IEC 60529 approximate IP10. Sheet metal or pla
 Rainproof outdoor enclosure. IEC 60529 approximate IP14. Drip-shield construction with ventilation openings protected from vertical rain. Suitable for covered outdoor locations not subject to spray or standing water. Not suitable for coastal or direct spray environments. [NEMA 250; T4 L4.12]
 
 **NEMA Type 4**
-Watertight outdoor enclosure. IEC 60529 approximate IP65. Full-perimeter gasketed door or lid; sealed cable entry ports; no ventilation openings. Standard for outdoor OSP pedestals and cabinets on RUS-funded routes. Resists rain from any direction, hosing, and temporary flooding. Not rated for submersion. [NEMA 250; RUS 1751F-635 §5; T4 L4.12]
+Watertight outdoor enclosure. IEC 60529 approximate IP56 (per NEMA 250 Annex cross-reference table; approximate equivalents only — NEMA and IEC tests are not identical). Full-perimeter gasketed door or lid; sealed cable entry ports; no ventilation openings. Standard for outdoor OSP pedestals and cabinets on RUS-funded routes. Resists rain from any direction, hosing, and temporary flooding. Not rated for submersion. [NEMA 250; RUS 1751F-635 §5; T4 L4.12]
 
 **NEMA Type 4X**
 Watertight and corrosion-resistant outdoor enclosure. IEC 60529 approximate IP66. Same sealing as NEMA 4 with corrosion-resistant materials (316 SS, fiberglass, or UV-stabilized HDPE). Specifies for coastal, salt-air, and chemical environments. [NEMA 250; T4 L4.12]
@@ -163,13 +163,13 @@ Larger pad-mounted outdoor enclosure (typically 18 in. W × 24 in. D × 36–72 
 
 - A) IP10
 - B) IP14
-- C) IP65 **[CORRECT]**
+- C) IP56 **[CORRECT]**
 - D) IP68
 
 *Rationale:*
 - **A — Incorrect.** IP10 is the approximate equivalent for NEMA Type 1 (indoor, general purpose — solid particle protection only). [NEMA 250; T4 L4.12]
 - **B — Incorrect.** IP14 is the approximate equivalent for NEMA Type 3R (rainproof — protected against vertically falling rain drops at 15° tilt). [NEMA 250; T4 L4.12]
-- **C — Correct.** NEMA Type 4 (watertight) is approximately equivalent to IEC 60529 IP65 — dust-tight (first digit 6) and protected against low-pressure water jets from any direction (second digit 5). The full-perimeter gasket and sealed cable ports provide this level of protection. Note that IP ratings and NEMA types are not exact equivalents — a NEMA 4 enclosure passes the NEMA 4 hose-test but is not rated for immersion, which distinguishes it from IP67/IP68. [NEMA 250; T4 L4.12; BICSI OSP-DRD Ch. 6.4]
+- **C — Correct.** Per the NEMA 250 Annex cross-reference table (as used in T4 L4.12), NEMA Type 4 (watertight) is approximately equivalent to IEC 60529 IP56 — dust-protected (first digit 5) and protected against powerful water jets from any direction (second digit 6). Note that IP ratings and NEMA types are not exact equivalents — NEMA and IEC use different test methodologies. Some industry sources cite IP65 due to similar functional protection language; the NEMA 250 Annex mapping used in this curriculum is IP56. [NEMA 250; T4 L4.12; BICSI OSP-DRD Ch. 6.4]
 - **D — Incorrect.** IP68 is the immersion rating applicable to buried splice closures (T2 L2.6). NEMA 4 is a surface-mount outdoor rating, not an immersion rating. NEMA 4 is not equivalent to IP68. [NEMA 250; T4 L4.12]
 
 ---
@@ -226,7 +226,7 @@ Larger pad-mounted outdoor enclosure (typically 18 in. W × 24 in. D × 36–72 
 *Expected answer:*
 - **NEMA 1 — IP10:** Indoor general-purpose. Scenario: climate-controlled central office equipment room, indoor terminal block enclosure.
 - **NEMA 3R — IP14:** Rainproof (drip shield). Scenario: covered utility yard cabinet with roof protection from direct rain; pole-mounted enclosure under overhead structure.
-- **NEMA 4 — IP65:** Watertight (full-perimeter gasket). Scenario: standard outdoor rural roadside pedestal in Bibb County, GA — rain exposure, no coastal corrosion risk.
+- **NEMA 4 — IP56:** Watertight (full-perimeter gasket). Scenario: standard outdoor rural roadside pedestal in Bibb County, GA — rain exposure, no coastal corrosion risk.
 - **NEMA 4X — IP66:** Watertight + corrosion-resistant. Scenario: coastal pedestal within 5 miles of tidal water in McIntosh County, GA — salt-air exposure requiring 316 SS or fiberglass body.
 
 [NEMA 250; T4 L4.12; RUS 1751F-635 §5]
