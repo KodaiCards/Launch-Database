@@ -101,8 +101,6 @@ Word counts are consistent with Batch A (Lessons 2–5 totaled ~19,391). Reading
 
 3. **Page-level citations:** Standard references are section-level. Page-pinned citations require access to licensed document copies held in the office.
 
-4. **Lesson 6 Q6 (binder group address calculation):** This question involves a multi-step fiber address calculation that produces an answer (279) inconsistent with the answer choices (135/147/159/171). The question is flagged for revision in Batch C pre-publish review — either revise the question for cleaner answer-choice math, or replace with a simpler 2-binder-group address question. The rationale body documents the discrepancy.
-
 ---
 
 === BATCH B REPORT END ===
