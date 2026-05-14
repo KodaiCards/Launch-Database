@@ -55,6 +55,26 @@ A dome closure (also called a cylindrical or re-enterable dome) is the most comm
 
 **Preferred environments:** Buried in conduit, buried direct, pedestal/vault, small aerial applications.
 
+#### Dome Closure Re-Entry Procedure
+
+Re-entry is the single largest cause of new fiber damage in existing outside plant. A poorly sequenced re-entry can break fibers at the tray entry anchor point, dislodge splice protection sleeves, and compromise port seals that were intact at initial installation. The following ordered procedure must be followed every time a dome closure is opened on existing plant [BICSI OSP-DRD Manual, Ch. 8; IEC 61753-1; Corning SCF/SCB Guide, §5]:
+
+> **⚠ CAUTION — PRESSURIZED CLOSURES:** Some buried feeder dome closures in Tier 1 carrier plant are nitrogen-pressurized for continuous integrity monitoring. This lesson covers non-pressurized closures only. Before beginning any re-entry, verify with network operations whether the closure is on a pressurized monitoring circuit. **A pressurized closure must have its pressure released per the manufacturer's depressurization protocol before the barrel is opened — never open a pressurized closure as if it were a standard dome.** Venting a pressurized closure without controlled release can force gel or debris into the fiber path and risk cable tension damage [BICSI OSP-DRD Manual, Ch. 8].
+
+1. **Site safety and lockout/tagout.** Notify the network operations center before opening any closure on live traffic. Place traffic cones and follow dig-safe / confined-space protocols as required. Confirm the closure is correctly identified (cable route ID, splice location tag) before breaking any seal. If the closure is associated with a pressurized monitoring system, complete the depressurization lockout per step 0 above before proceeding.
+
+2. **Cable tension relief.** Before removing the barrel, verify that all cables entering the closure have adequate slack in the vault or conduit — at minimum 0.3 m of loose cable at the base plate. If a cable is under tension (tight against the port entry), relieve the tension at the nearest slack point before opening the closure. Opening the barrel while cables are under tension causes the tray stack to shift toward the cable entry side, shearing fibers at the tray anchor slots.
+
+3. **Gasket and port seal inspection.** Before disturbing the tray stack, inspect the base plate gasket and all port seals while the barrel is first removed. Note any visible moisture ingress, gel migration out of port seals, or cracked blank plugs. Photograph the as-found condition. Seals showing ingress signs must be replaced before re-closing — do not defer seal repairs to a later visit.
+
+4. **Port re-sealing confirmation (pre-work).** For gel-seal closures, verify that all cable port gel blocks are still compliant (gel filling the full annular space, no voids). For heat-shrink-sealed ports, verify no shrink-tube lifting or cracking. If any port seal requires replacement, stage the new materials before disturbing the tray stack — replacing a port seal after re-splicing work is complete adds unnecessary re-entry risk.
+
+5. **Tray stack work.** Perform splicing, fiber adds, or re-routes with the minimum disturbance to fibers not involved in the work. Replace all splice protection sleeves in their indexed holder slots. Verify all fiber loops are seated in their retention clips before closing the tray cover.
+
+6. **Re-test seal before closing.** Before sliding the barrel back onto the base plate, compress the gasket by hand and verify it is fully seated in its groove with no gaps. Torque port compression nuts or gel-block clamps to the manufacturer's specified torque value (typically 2–4 N·m for gel-block clamps). Install a new blank plug in any port that was accessed. Do not re-use blank plugs removed during the re-entry.
+
+7. **Post-re-entry OTDR verification.** Perform an OTDR sweep on all fibers that were in the closure (not only the fibers that received work) before backfilling or re-lashing. Compare trace against the pre-re-entry baseline. Any fiber showing increased loss at the re-entry closure location must be investigated before the closure is resealed permanently. Document the post-re-entry trace in the as-built record [BICSI OSP-DRD Manual, Ch. 8; IEC 61753-1].
+
 ### In-Line (Butt) Closures
 
 An in-line closure (also called a butt closure or through closure) has a different geometry: cables enter from both ends of the closure body, passing through the organizer in a linear path. The closure body is typically a split-shell design — two half-shells (or a base and lid) that are bolted or clamped together around the splice organizer and cable entries [CommScope FOSC Manual, §1.3; TE Connectivity FIST Guide, §1.1].
