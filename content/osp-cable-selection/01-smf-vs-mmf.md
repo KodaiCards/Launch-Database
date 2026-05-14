@@ -262,18 +262,15 @@ Mode-conditioning patch cords (MCP) are a legacy solution for a specific, narrow
 **Q3.** A project engineer proposes using OM4 fiber for a 400-meter intra-campus link between two buildings at 40 Gbps. Which statement most accurately evaluates this proposal?
 
 - A) The proposal is invalid; OS2 is required for all campus cabling under ANSI/TIA-758-C.
-- B) The proposal is valid; OM4 supports 40G to 150 m and 400 m exceeds that limit — OS2 is required.
-- C) The proposal is valid; OM4 supports 40G to at least 400 m. **[CORRECT]**
+- B) The proposal is invalid; OM4 supports 40G only to 150 m — OS2 is required for this 400 m span. **[CORRECT]**
+- C) The proposal is valid; OM4 supports 40G to at least 400 m.
 - D) The proposal is invalid; OM5 is the minimum grade for any 40G application.
 
 *Rationale:*
-- **A — Incorrect.** ANSI/TIA-758-C governs outside plant (OSP) infrastructure — conduit, direct-bury, aerial runs. Intra-campus building-to-building horizontal cabling falls under ANSI/TIA-568.3-D. OM4 is a valid specification under TIA-568.3-D for campus horizontal runs within its distance specification. [ANSI/TIA-758-C Scope §1]
-- **B — Incorrect.** This statement gets the distance figure wrong. OM4 at 40G (40GBASE-SR4 using parallel optics) is specified to 150 m per ANSI/TIA-492AAAD. However, 400GBASE-SR8 over OM4 reaches to approximately 100 m. At 400 m, OM4 would indeed fail for 40G — but the rationale and numbers in this answer are muddled. The core issue is whether 400 m is within OM4's 40G spec, which it is not, making this statement partially correct in outcome but incorrect in reasoning.
-- **C — Correct.** OM4 supports 40GBASE-SR4 (using 4×10G parallel optics over MPO connectors) to a specified maximum channel length of **150 m** [ANSI/TIA-492AAAD §8]. A 400-meter run at 40 Gbps is within OM4's specification only if this answer choice is read as presenting a valid scenario — however, 400 m exceeds OM4's 150 m ceiling for 40G, making OM4 invalid at that distance. *Revision note: this question is intentionally structured to test careful reading of bandwidth-distance limits. The "correct" answer here is C as marked, meaning the learner must recognize that 400 m DOES exceed OM4's 40G ceiling, and OS2 would be required for this campus span.* Re-read the stem: "OM4 supports 40G to at least 400 m" is FALSE. See rationale for B above.
-
-  *Question key (corrected):* **B is correct** — OM4 at 40G tops out at 150 m; a 400 m span requires OS2. This question is flagged for revision before bank publication. [ANSI/TIA-492AAAD Table 8]
-
-- **D — Incorrect.** OM5 offers no distance advantage over OM4 for standard 40G transmission. OM5's additional specification is at 953 nm for SWDM applications. At 40G (40GBASE-SR4), OM5 and OM4 share the same 150 m reach. Requiring OM5 for all 40G applications would be over-specification with no technical benefit at standard distances. [ANSI/TIA-492AAAE §8]
+- **A — Incorrect.** ANSI/TIA-758-C governs outside plant (OSP) infrastructure — conduit, direct-bury, aerial runs. Intra-campus building-to-building horizontal cabling falls under ANSI/TIA-568.3-D. OM4 can be a valid specification under TIA-568.3-D for campus horizontal runs within its distance ceiling; the standard does not categorically prohibit OM4 from campus cabling. [ANSI/TIA-758-C Scope §1; ANSI/TIA-568.3-D §6.3]
+- **B — Correct.** OM4 supports 40GBASE-SR4 (using 4×10G parallel optics over MPO connectors) to a maximum channel length of **150 m** [ANSI/TIA-492AAAD §8]. A 400-meter run at 40 Gbps exceeds this specification by 2.7×. The engineer's proposal is invalid because OM4 will not sustain 40G over that distance due to modal dispersion. OS2 SMF with 40GBASE-LR4 transceivers is the correct specification for this span. [ANSI/TIA-492AAAD Table 8; ANSI/TIA-568.3-D §6.3.2.2]
+- **C — Incorrect.** OM4's 40G ceiling is **150 m** (40GBASE-SR4, 850 nm VCSEL, MPO parallel optics). At 400 m, modal dispersion accumulates beyond the receiver's tolerance regardless of transceiver selection; no 40G transceiver standard supports OM4 at 400 m. This claim is false. [ANSI/TIA-492AAAD §8]
+- **D — Incorrect.** OM5 offers no distance advantage over OM4 for standard 40GBASE-SR4 transmission. Both grades support 40G to the same 150 m ceiling under that standard. OM5's additional specification covers the 953 nm window for SWDM applications only. Requiring OM5 for all 40G applications would be over-specification with no technical benefit at standard distances and is not supported by any TIA or IEEE standard. [ANSI/TIA-492AAAE §8]
 
 ---
 
