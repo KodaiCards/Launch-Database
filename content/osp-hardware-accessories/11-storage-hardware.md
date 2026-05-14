@@ -2,7 +2,7 @@
 title: "Lesson 5.11: Storage Hardware — Slack Racks, Snowshoes, Figure-8 Coils, and Vault/Aerial Storage"
 duration_min: 20
 topic: osp-hardware-accessories
-order: 11
+order: 12
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 8.1: Fiber slack storage methods and hardware selection"
 sources:

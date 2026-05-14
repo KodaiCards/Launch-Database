@@ -2,7 +2,7 @@
 title: "Lesson 5.12: Identification and Labeling — Cable Tags, Route Markers, RFID, and Physical Attachment"
 duration_min: 20
 topic: osp-hardware-accessories
-order: 12
+order: 13
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 10.2: Outside plant identification and labeling hardware"
 sources:

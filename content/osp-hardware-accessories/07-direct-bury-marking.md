@@ -2,7 +2,7 @@
 title: "Lesson 5.7: Direct-Bury Marking System — Warning Tape, Tracer Wire, and Marker Posts"
 duration_min: 20
 topic: osp-hardware-accessories
-order: 7
+order: 8
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 6.2: Underground conduit and cable marking requirements"
 sources:

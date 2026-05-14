@@ -2,7 +2,7 @@
 title: "Lesson 5.9: Fiber Distribution Hubs — Construction-Grade vs. Rack-Mount, Port Configuration"
 duration_min: 30
 topic: osp-hardware-accessories
-order: 9
+order: 10
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 6.4: FDH enclosures and port configuration"
   - "BICSI OSP-DRD Ch. 8: Terminal hardware and distribution architecture"

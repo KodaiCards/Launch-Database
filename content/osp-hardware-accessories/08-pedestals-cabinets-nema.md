@@ -2,7 +2,7 @@
 title: "Lesson 5.8: Pedestals and Cabinets — Types, NEMA Ratings, and Locking"
 duration_min: 25
 topic: osp-hardware-accessories
-order: 8
+order: 9
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 6.4: Outside plant enclosures — pedestals, cabinets, and environmental ratings"
 sources:

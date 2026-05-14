@@ -2,7 +2,7 @@
 title: "Lesson 5.10: Terminal Hardware — Drop Terminals, MSTs, and NIDs"
 duration_min: 25
 topic: osp-hardware-accessories
-order: 10
+order: 11
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 6.4: Terminal hardware in the OSP distribution layer"
   - "BICSI OSP-DRD Ch. 8: Drop terminal, MST, and NID specification and placement"
