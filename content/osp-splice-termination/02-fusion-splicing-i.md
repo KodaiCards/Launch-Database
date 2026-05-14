@@ -113,7 +113,9 @@ If actual splices average 0.05 dB/splice (achievable with PAS splicer, good cond
 12 splices × 0.05 dB = **0.6 dB** splice loss
 Total: 9.6 + 0.6 = **10.2 dB** → margin improves to 2.4 dB.
 
-The splice loss contribution at BICSI default (1.2 dB) consumes **67% of the available margin** (1.8 dB) for this route. On longer routes or with higher cable attenuation, splice quality becomes the deciding factor in whether the link closes. This is why BICSI recommends minimizing unnecessary splice closures on feeder routes and using PAS splicers rather than cladding-aligned splicers for backbone work [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §4.3].
+The splice loss contribution at BICSI default (1.2 dB) consumes **40% of the available headroom** (3.0 dB = 12.6 dB budget − 9.6 dB cable loss) for this route. Put differently, of the 3.0 dB of total headroom above the cable loss, 1.2 dB (40%) is used by splices at the BICSI default quality level, leaving 1.8 dB remaining. On longer routes or with higher cable attenuation, splice quality becomes the deciding factor in whether the link closes. This is why BICSI recommends minimizing unnecessary splice closures on feeder routes and using PAS splicers rather than cladding-aligned splicers for backbone work [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §4.3].
+
+> **What this budget omits.** The worked example above accounts only for cable attenuation and splice loss — the two dominant components on a long OSP feeder. A complete link loss budget for an end-to-end path also includes: connector pair losses (typically 0.3–0.75 dB per mated pair at patch panels and FDH terminations), passive component losses (splitters, WDM filters, if present), and a system margin reserve (typically 1–3 dB per BICSI OSP-DRD Ch. 7.1 to account for aging, repair splices, and test equipment uncertainty). For splice-budget analysis in isolation, the two-component model above is sufficient; for full link design, all components must be included. [BICSI OSP-DRD Manual, Ch. 7.1; TIA-568.3-D §6.3]
 
 ### Causes of Elevated Splice Loss
 

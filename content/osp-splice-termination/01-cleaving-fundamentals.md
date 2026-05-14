@@ -58,7 +58,8 @@ Standard angle acceptance thresholds are as follows:
 
 | Application | Max cleave angle | Governing reference |
 |---|---|---|
-| Single-fiber fusion (SMF or MMF) | ≤ 0.5° | Fujikura FSM-series acceptance criteria; BICSI OSP-DRD Ch. 7.4 |
+| Single-fiber fusion (SMF — OS1/OS2) | ≤ 0.5° | Fujikura FSM-series acceptance criteria; BICSI OSP-DRD Ch. 7.4 |
+| Single-fiber fusion (MMF — OM1–OM4) | ≤ 1.0° | Fujikura FSM-series MMF splice program; Sumitomo Type-82C MMF program |
 | Mass-fusion ribbon splicing | ≤ 1.0° per fiber | Fujikura FSM-60R/70R/90R manual; Sumitomo Type-71M+ guide |
 | Mechanical splicing (field expedient) | ≤ 1.5° | BICSI OSP-DRD Ch. 7.3; Corning OSP Splicing Guide §4.1 |
 
@@ -117,7 +118,7 @@ The correct decision loop when approaching the minimum workable fiber length:
 ## Key Terms (Flashcard Candidates)
 
 **Cleave angle**
-The angular deviation of a cleaved fiber end-face from a plane perpendicular to the fiber axis. Measured in degrees; acceptance threshold is ≤0.5° for single-fiber fusion, ≤1.0° for mass-fusion ribbon, and ≤1.5° for mechanical splicing. [IEC 61300-3-35 §4.1; BICSI OSP-DRD Manual, Ch. 7.4]
+The angular deviation of a cleaved fiber end-face from a plane perpendicular to the fiber axis. Measured in degrees; acceptance thresholds: ≤0.5° for single-fiber SMF fusion, ≤1.0° for single-fiber MMF fusion and mass-fusion ribbon, and ≤1.5° for mechanical splicing. SMF and MMF have different thresholds because most splicer MMF splice programs are calibrated to accept ≤1.0° — a 0.7° MMF result that a splicer auto-accepts would be incorrectly re-cleaved if the SMF threshold were applied. [IEC 61300-3-35 §4.1; BICSI OSP-DRD Manual, Ch. 7.4]
 
 **Hackle**
 A cleave failure mode characterized by a rough or striated end-face surface. Caused by blade wear, fiber contamination, or excessive tension driving a non-planar fracture. Visible under the splicer's inspection camera as a textured surface. [IEC 61300-3-35 §4; Fujikura CT-30A Manual, §6]
