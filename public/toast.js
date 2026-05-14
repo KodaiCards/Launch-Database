@@ -51,6 +51,8 @@
     if (!stack) {
       stack = document.createElement('div');
       stack.id = 'lfs-toast-stack';
+      // Default to polite; individual error toasts use assertive via a
+      // peer alert div — see show() below.
       stack.setAttribute('role', 'status');
       stack.setAttribute('aria-live', 'polite');
       document.body.appendChild(stack);
@@ -68,6 +70,30 @@
     var onAction = opts.onAction;
 
     var stack = ensureStack();
+
+    // Error toasts use role="alert" + aria-live="assertive" so screen
+    // readers interrupt the current announcement. We append a temporary
+    // assertive div next to the polite stack, then move the toast element
+    // into the main stack where it renders visually.
+    var isError = (type === 'error');
+    var assertiveEl;
+    if (isError) {
+      assertiveEl = document.getElementById('lfs-toast-assertive');
+      if (!assertiveEl) {
+        assertiveEl = document.createElement('div');
+        assertiveEl.id = 'lfs-toast-assertive';
+        assertiveEl.setAttribute('role', 'alert');
+        assertiveEl.setAttribute('aria-live', 'assertive');
+        assertiveEl.setAttribute('aria-atomic', 'true');
+        assertiveEl.style.cssText = 'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0';
+        document.body.appendChild(assertiveEl);
+      }
+      // Briefly announce the message text into the assertive region so
+      // screen readers interrupt and read it immediately.
+      assertiveEl.textContent = message;
+      setTimeout(function () { if (assertiveEl) assertiveEl.textContent = ''; }, 1000);
+    }
+
     var el = document.createElement('div');
     el.className = 'lfs-toast lfs-toast-' + type;
 
