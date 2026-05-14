@@ -168,7 +168,7 @@ The correct termination method is determined by five site parameters [BICSI OSP-
 | Method | Typical insertion loss | Return loss (UPC) | Return loss (APC) | Splicer required | Approx. time per fiber |
 |---|---|---|---|---|---|
 | Pigtail + fusion splice | 0.12–0.25 dB | ≥ 50 dB | ≥ 60 dB | Yes | 4–6 min |
-| Cleave-and-crimp (pre-polished stub) | 0.3–0.5 dB | ≥ 40–45 dB | ≥ 45 dB | No | 3–5 min |
+| Cleave-and-crimp (pre-polished stub) | 0.3–0.5 dB | ≥ 40–45 dB | ≥ 55 dB | No | 3–5 min |
 | Hot-melt (field polish) | 0.2–0.4 dB | ≥ 45–50 dB | — (limited) | No | 13–20 min |
 | Epoxy-and-polish | 0.1–0.3 dB | ≥ 50–55 dB | ≥ 60 dB | No | 30–40 min |
 
