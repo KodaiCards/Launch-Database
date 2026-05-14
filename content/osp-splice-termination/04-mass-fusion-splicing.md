@@ -88,7 +88,7 @@ Mass-fusion splicers use different arc parameter sets from single-fiber splicers
 
 **Higher arc energy (duration and/or current).** More glass mass (12 or 24 fibers simultaneously) requires more total arc energy to bring all fibers to softening temperature in the same arc cycle. The outer fibers of the ribbon (fibers 1 and 12, or 1 and 24) receive slightly different arc energy than the center fibers due to electrode proximity variation — this is the primary reason ribbon splice loss per fiber is typically higher than single-fiber splice loss.
 
-**Temperature gradient effect.** The center fibers of a 12-fiber ribbon are slightly hotter during the arc (closer to the arc center) than the edge fibers. This gradient is managed by the splicer manufacturer's arc profile but cannot be entirely eliminated. Edge fibers (positions 1 and 12 in a 12-fiber ribbon) typically show slightly higher estimated splice loss than center fibers in the same arc cycle — this is normal and expected, not an operator error [Fujikura FSM-60R Manual, §4.2; BICSI OSP-DRD Manual, Ch. 7.4].
+**Temperature gradient effect.** The center fibers of a 12-fiber ribbon are slightly hotter during the arc (closer to the arc center) than the edge fibers. This gradient is managed by the splicer manufacturer's arc profile but cannot be entirely eliminated. Edge fibers (positions 1 and 12 in a 12-fiber ribbon) typically show slightly higher estimated splice loss than center fibers in the same arc cycle — this is normal and expected, not an operator error [Fujikura FSM-60R Manual, §4.2; Sumitomo Type-71M+ Guide, §3.3; BICSI OSP-DRD Manual, Ch. 7.4].
 
 ### Splice Loss for Mass-Fusion: Why It's Higher Than Single-Fiber
 

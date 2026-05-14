@@ -74,7 +74,7 @@ Understanding failure modes allows the operator to diagnose the root cause — n
 **1. Hackle (surface roughness)**
 *Appearance:* The end-face surface has a rough, grainy, or striated texture visible under the splicer's inspection camera. The fracture propagated in a non-planar path through the glass.
 *Root cause:* Blade wear (dull edge failing to produce a consistent score depth), contamination of the fiber surface before cleaving (gel residue, moisture), or incorrect tension (too high, driving a fast fracture that exceeds the critical crack velocity for a planar fracture).
-*Corrective action:* Index the blade to a fresh position; re-clean the fiber with isopropyl alcohol (IPA) on lint-free wipes; verify tension setting matches fiber type.
+*Corrective action:* Index the blade to a fresh position; re-clean the fiber with isopropyl alcohol (IPA) on lint-free wipes; verify tension setting matches fiber type. **Timing discipline:** Re-cleave immediately after cleaning — do not allow more than 30 seconds between cleaning and inserting the fiber in the cleaver. In humid OSP conditions, the cleaned bare glass re-contaminates from ambient moisture and airborne particles within seconds; a long delay between cleaning and cleaving can produce another hackle from freshly contaminated glass.
 
 **2. Mist (sub-surface haze)**
 *Appearance:* The end-face appears hazy or shows a circular cloudy region at the center or near the edge. The fiber surface is geometrically flat but optically diffuse.
@@ -165,7 +165,7 @@ The IEC standard governing fiber end-face geometry for connector end-face inspec
 
 **Card 4**
 *Front:* How does a precision cleaver's blade rotation mechanism prevent premature blade wear failure?
-*Back:* The blade indexes to a fresh, unused edge position with each cleave cycle, distributing wear across the full blade circumference or length rather than concentrating it at one contact point. A rotation counter tracks the cumulative cycle count; the blade is replaced when the counter reaches its rated maximum. [Fujikura CT-30A Manual, §5.1]
+*Back:* The blade indexes to a fresh, unused edge position with each cleave cycle, distributing wear across the full blade circumference or length rather than concentrating it at one contact point. A rotation counter tracks the cumulative cycle count; the blade is replaced when the counter reaches its rated maximum. [Fujikura CT-30A Manual, §5.1; Sumitomo FC-6S Guide, §4.3]
 
 **Card 5**
 *Front:* A technician is at the last workable fiber length before the stub is too short to reach the splicer. The previous cleave failed with hackle. What is the correct next step before re-cleaving?
