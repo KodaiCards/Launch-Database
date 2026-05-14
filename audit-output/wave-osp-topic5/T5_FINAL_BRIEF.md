@@ -34,7 +34,7 @@
 
 ## §2 Final Exam Spec
 
-**Questions: 26** (2 per lesson × 13 lessons). **Pass threshold: 18/26 (69.2% → meets 70% intent; recommend rounding to 19/26 = 73% or accepting 18/26 per Moodle integer constraint — orchestrator to confirm).** Alternative: 70% exactly = 18.2 → set Moodle pass at 18/26 and note the 69.2% rounding.
+**Questions: 26** (2 per lesson × 13 lessons). **Pass threshold: 19/26 (73%) — math: 26 × 0.70 = 18.2 → round up to 19 (cannot have fractional questions); 19/26 = 73.08%. Matches Topics 1–4 ≥70% standard.**
 
 **Format:** Identical to Topics 1–4 — A–D options, `[CORRECT]` inline on correct option, `*Rationale:*` italic block, bold per-option sub-bullets (`**A — Incorrect.**` / `**B — Correct.**`) with 1-line rationale + citation section. Lesson-number-ordered in source file; randomized at Moodle import. Math derivations independently verified before any `[CORRECT]` tag is written.
 
