@@ -17,15 +17,33 @@ sources:
 
 # Fusion Splicing II: Automated Splice Estimation, QA Criteria, and Re-splicing
 
-## Learning Objectives
+## In Plain English
 
-Upon completing this lesson, the learner will be able to:
+In Lesson 2.2 you learned how to make a fusion splice — the machine zaps an arc between the two fiber ends and welds them together. This lesson covers what happens right after the weld: **How does the machine decide whether the weld is good enough?** The splicer has a tiny camera inside that looks at the weld zone and scores it — kind of like a quality inspector on an assembly line. The score it gives you is called the *estimated splice loss*. If the score is too high (meaning too much light will be lost at that weld), you have three choices: (1) accept it anyway if it just squeaks under the limit, (2) fire the arc a second time to try to improve it (called a *re-arc*), or (3) throw the weld away and start over (called a *re-splice*). This lesson walks through that decision tree, explains why the machine's score is always slightly optimistic (the camera can't see everything), and covers how to protect the finished weld with a heat-shrink sleeve before you put it in the tray.
 
-- Explain how a fusion splicer's automated image processor generates an estimated splice loss value and identify the geometric parameters it measures
-- Apply a three-tier QA decision tree (accept / re-arc / re-splice) to a given splicer screen readout
-- Describe re-arc capability — what it corrects, what it does not, and when it must not be used
-- Execute the correct splice protection sleeve application procedure, including cooling time and holder selection
-- State the BICSI-default and project-spec tight acceptance thresholds and explain how to determine which governs a given project
+---
+
+## Acronym Glossary
+
+Every abbreviation used in this lesson, defined up front so nothing sneaks up on you.
+
+| Acronym | Stands For | What It Means in Plain English |
+|---|---|---|
+| **OSP** | Outside Plant | Any fiber infrastructure installed outdoors — aerial cables, buried conduit, underground vaults — as opposed to equipment inside a building |
+| **SMF** | Single-Mode Fiber | A fiber type with a very narrow core (~9 µm) that carries only one path of light; used for long-distance runs. The "OS2" type in this lesson is SMF. |
+| **OS2** | Optical Single-mode 2 | A specific flavor of SMF optimized for low water-peak loss; the standard fiber type for OSP backbone and feeder construction |
+| **MFD** | Mode Field Diameter | The effective width of the light beam as it travels through the fiber core. For OS2, MFD ≈ 10.4 µm (roughly the width of a human hair, divided by 8). Matters because misalignment between two fibers wastes light. |
+| **PAS** | Profile Alignment System | The alignment method in high-end fusion splicers that uses cameras to look at the fiber cores directly and nudge them into alignment before firing the arc — like a robotic mechanic that lines up two pipes before welding |
+| **CCD** | Charge-Coupled Device | The type of camera sensor inside the splicer that takes pictures of the fiber ends and the weld zone. Same basic technology as a digital camera. |
+| **QA** | Quality Assurance | The process of checking your work to make sure it meets the standard before you move on |
+| **BICSI** | Building Industry Consulting Service International | The organization that publishes the OSP Design Reference and sets the fiber industry's standard practices |
+| **OSP-DRD** | Outside Plant Design Reference and Design Manual | BICSI's master reference book for fiber splicing, termination, testing, and documentation |
+| **IEC** | International Electrotechnical Commission | International standards body; publishes measurement standards for fiber components and splices |
+| **dB** | Decibel | A way to express how much signal is lost or gained. For splices, 0.10 dB is a good weld; 1.0 dB is a terrible weld. Lower is always better. (Think of it like a leak in a water pipe — the dB number tells you how bad the leak is.) |
+| **OTDR** | Optical Time-Domain Reflectometer | A test instrument that fires light pulses down a fiber and reads the reflections back, like a sonar for fiber. Used to verify splice quality after the fact. Covered in detail in Lesson 2.10. |
+| **IPA** | Isopropyl Alcohol | The cleaning solvent for fiber surfaces. Pure 99% grade only — the same thing as high-purity rubbing alcohol. |
+| **RUS** | Rural Utilities Service | USDA agency that funds rural broadband construction through loan programs; sets requirements for how fiber infrastructure must be built and documented |
+| **DWDM** | Dense Wavelength Division Multiplexing | A technique for packing many data channels onto a single fiber strand using different light colors (wavelengths). DWDM links use tighter splice tolerances because they're more sensitive to signal loss. |
 
 ---
 
@@ -33,23 +51,61 @@ Upon completing this lesson, the learner will be able to:
 
 ### How the Splicer Computes Estimated Loss
 
-Every modern fusion splicer integrates an automated splice estimation algorithm that evaluates the completed splice immediately after the main arc cycle. The estimation runs without operator intervention and produces a loss value displayed on screen within seconds of arc completion. Understanding how this estimate is generated — and its limits — prevents both over-reliance and misinterpretation [Fujikura FSM-series Manual, §5.1; Sumitomo Type-82C Guide, §4.1].
+Think of the fusion splicer like a quality inspector on a welding line. After it fires the arc and fuses the two fiber ends together, it doesn't just hand you the weld and say "good luck." It immediately takes a photo of the weld zone with its built-in cameras (CCD cameras — same technology as a digital camera), analyzes what it sees, and gives you a loss score: the **estimated splice loss**, displayed in dB on the screen within a few seconds of arc completion.
 
-**What the image processor measures:** After the arc, the splicer's CCD cameras capture an image of the splice zone from two orthogonal axes. The image processor analyzes this image for four geometric parameters:
+This happens automatically, without you doing anything. Understanding how that score is calculated — and critically, what the camera *cannot* see — is what separates a technician who understands their equipment from one who just blindly trusts the number. [Fujikura FSM-series Manual, §5.1; Sumitomo Type-82C Guide, §4.1]
 
-1. **Core offset.** The lateral displacement between the two fiber core centers in the splice zone. Even after PAS alignment, a small residual offset (typically <0.5 µm) may remain. The offset contribution to estimated loss is computed from the Gaussian mode field overlap integral: loss ≈ (offset / MFD)² × 4.34 dB, approximated linearly for small offsets [Fujikura FSM-series Manual, §5.1].
+**What the image processor measures:** After the arc, the splicer's CCD cameras capture an image of the splice zone from two orthogonal angles (two cameras, 90° apart — front-and-side view). The image-processing software analyzes this image for four geometric parameters:
 
-2. **Core deformation.** The degree to which the arc heated the fiber core unevenly, producing an elliptical or irregular cross-section. Severe deformation (visible as a distorted core image) increases mode field mismatch loss.
+**1. Core offset** — how far apart the two fiber cores are in the weld zone.
 
-3. **Bubble presence.** A bubble in the splice zone appears as a bright or dark circular inclusion on the core axis. Bubbles form from trapped gas or volatile contamination on the fiber surface that vaporizes during the arc. A core-axis bubble is grounds for automatic splice rejection by the splicer; an off-axis bubble may produce a marginal estimated loss value.
+Imagine trying to connect two drinking straws by holding them end-to-end. If you hold them perfectly straight, the hole lines up and water flows through easily. If one straw is shifted sideways even a tiny bit, the opening is partially blocked. That blockage is the core offset. Even with PAS alignment doing its best to line things up, a tiny residual offset (typically less than 0.5 µm — about 1/20th of a human hair) often remains.
 
-4. **End-face angle (cleave residual).** The residual angular deviation of the cleaved end-faces, measured before the arc fires. Both Fujikura and Sumitomo splicers incorporate cleave angle measurement as part of the pre-splice inspection, and the estimated loss model includes cleave angle contribution [Fujikura FSM-series Manual, §5.1; Sumitomo Type-82C Guide, §4.1].
+The amount of light lost due to core offset follows a specific formula. Here's how it works, step by step:
 
-**What the image processor cannot measure:** The arc heating cycle changes the glass's refractive index profile in the splice zone — diffusion of dopants (germanium, fluorine) across the original core/cladding boundary. This "chemical diffusion" component of splice loss is invisible to the camera. It produces the systematic difference between estimated and OTDR-measured loss, particularly notable on fibers with steep refractive index profiles (high-delta fibers, non-zero DSF) [BICSI OSP-DRD Manual, Ch. 7.4; AT&T OSP Construction Practices §7.2].
+**Formula: Core offset loss contribution**
+
+> **What this calculates:** How much light is lost because the two fiber cores are not perfectly lined up — their centers are shifted sideways by some small amount.
+>
+> **Why it matters:** Even a tiny offset wastes light because the beam from Fiber A doesn't land perfectly inside the core of Fiber B. Some of that light misses and gets absorbed by the cladding.
+
+$$\text{loss} \approx \left(\frac{\text{offset}}{\text{MFD}}\right)^2 \times 4.34 \text{ dB}$$
+
+**Every variable defined:**
+- **loss** = the estimated splice loss contribution from core offset, in **dB** (decibels)
+- **offset** = the lateral distance between the two core centers in the weld zone, measured in **µm** (micrometers; 1 µm = 0.000001 meters)
+- **MFD** = Mode Field Diameter — the effective width of the light beam as it travels through the fiber core, in **µm**. For OS2 SMF, MFD ≈ **10.4 µm**.
+- **4.34** = a conversion factor (it converts from a natural-log ratio to decibels; you don't need to memorize why — just know it's always 4.34)
+- The **²** means you square the ratio (multiply it by itself)
+
+**Worked example:** Suppose the splicer measures a core offset of **0.5 µm** on OS2 fiber (MFD = 10.4 µm).
+
+Step 1 — Compute the ratio:
+$$\frac{0.5}{10.4} = 0.0481$$
+
+Step 2 — Square it:
+$$0.0481^2 = 0.00231$$
+
+Step 3 — Multiply by 4.34:
+$$0.00231 \times 4.34 \approx 0.010 \text{ dB}$$
+
+**Sanity check:** A 0.5 µm offset on OS2 contributes about 0.010 dB of loss — roughly 1/10th of the 0.10 dB acceptance threshold. That's actually pretty small, which is why PAS alignment works so well: even at 0.5 µm off-center, the core-offset loss contribution alone wouldn't fail the splice. It's when offsets stack with other defects (deformation, bad cleave) that the total loss climbs above threshold. [Fujikura FSM-series Manual, §5.1]
+
+**2. Core deformation** — whether the arc heated the fiber unevenly, distorting the shape of the core from a perfect circle into an oval or irregular shape. Imagine squeezing a round tube of toothpaste from one side — the opening goes from round to squashed. A squashed core sends light in the wrong direction. Severe deformation (visible as a distorted core shape on the screen) increases loss beyond what core offset alone would predict.
+
+**3. Bubble presence** — a gas pocket trapped in the weld zone. Picture welding two metal pipes and accidentally trapping an air bubble in the molten joint. The bubble blocks part of the connection. Bubbles in fiber form from trapped gas or from contamination on the fiber surface (oil, gel residue, moisture) that vaporizes instantly when hit by the arc. A bubble sitting directly on the fiber core axis is the most serious: the splicer is supposed to automatically reject that splice and refuse to give you a passing score. An off-axis bubble (near the edge of the core) will still show as elevated estimated loss.
+
+**4. End-face angle (cleave residual)** — the splicer also measures the angle of each fiber end before the arc fires (you learned about cleave angles in Lesson 2.1). It factors that measured angle into the estimated loss. A perfect cleave at 0° contributes nothing to loss; a cleave at the maximum allowed limit (~0.5° for SMF) contributes a small but measurable amount. [Fujikura FSM-series Manual, §5.1; Sumitomo Type-82C Guide, §4.1]
+
+**What the image processor cannot measure:** Here's the catch — and it's important. The arc heating doesn't just melt and fuse the glass. It also bakes the chemicals inside the glass: dopants (germanium, fluorine) that are deliberately added to the glass recipe to control how light travels. When the arc fires, those dopants migrate — they spread outward from the core into the surrounding glass (the cladding), slightly blurring the sharp optical boundary that makes the fiber work. This migration is called **dopant diffusion**.
+
+Dopant diffusion is *invisible to the camera*. It changes the optical properties of the glass in the weld zone, but it doesn't change the shape of what the camera sees. It's like internal rust forming inside a metal pipe that looks perfectly clean on the outside — the camera sees a clean-looking weld, but the optical performance is slightly degraded from the inside out.
+
+This is the main reason the splicer's estimated loss almost always *underestimates* the true loss you'll measure with an OTDR later. A splice that shows 0.04 dB estimated on screen will commonly measure 0.06–0.08 dB by OTDR. This is **normal expected behavior**, not a calibration error. Think of the splicer's score like a bathroom scale that always reads about 3 pounds light — useful for trending and comparison, but not the definitive number. [BICSI OSP-DRD Manual, Ch. 7.4; AT&T OSP Construction Practices §7.2]
 
 ### Acceptance Thresholds: Three Tiers
 
-Project specifications set the governing acceptance criterion; the technician applies it to every splice. Three tiers are encountered in OSP work:
+Before you can use the accept/re-arc/re-splice decision tree, you need to know your target number — the acceptance threshold. This is the maximum loss (in dB) that a splice is allowed to have. Three tiers show up in OSP work:
 
 | Tier | Estimated loss threshold | OTDR-measured threshold | Applicable standard or source |
 |---|---|---|---|
@@ -59,13 +115,13 @@ Project specifications set the governing acceptance criterion; the technician ap
 
 *Sources: [BICSI OSP-DRD Manual, Ch. 7.4; AT&T OSP Construction Practices §7.2]*
 
-In the absence of a project-specific specification, BICSI default applies. For government-funded (RUS / USDA) rural broadband projects, the BICSI default is typically the floor; state-level program offices sometimes impose tighter thresholds on trunk routes.
+**Which threshold governs your job:** In the absence of a project-specific spec sheet, BICSI default (≤0.10 dB) applies — it's the industry floor. For government-funded rural broadband (RUS / USDA) projects, BICSI default is typically the floor; some state program offices impose tighter thresholds on trunk (backbone) routes.
 
-When two thresholds conflict (e.g., a project spec says ≤0.05 dB but the splicer screen shows an estimate of 0.07 dB), the project specification governs and the splice must be re-evaluated by OTDR. The estimated loss is not a substitute for OTDR measurement when operating near or above the acceptance threshold [BICSI OSP-DRD Manual, Ch. 7.4].
+**When thresholds conflict:** If your project spec says ≤0.05 dB and the screen shows 0.07 dB estimated — the tighter project spec wins. You can't override a project requirement with the industry default. And the splicer's estimated loss is not a substitute for OTDR measurement when you're near or over the acceptance line. When in doubt, OTDR measures. [BICSI OSP-DRD Manual, Ch. 7.4]
 
 ### The QA Decision Tree: Accept / Re-Arc / Re-Splice
 
-After each splice cycle, the technician follows a systematic decision tree. The governing logic is: address the root cause at the lowest-cost intervention first; escalate only when the lower intervention cannot resolve it [BICSI OSP-DRD Manual, Ch. 7.4; Fujikura FSM-series Manual, §5.2].
+After each splice, you run through this decision tree. The logic is: fix the problem at the cheapest level first; only step up to the more expensive option when the cheaper one won't work. [BICSI OSP-DRD Manual, Ch. 7.4; Fujikura FSM-series Manual, §5.2]
 
 ```
 SPLICE COMPLETE
@@ -100,69 +156,92 @@ and repeat                                         │                       │
                                                            ACCEPT         RE-SPLICE
 ```
 
-**Accept:** Estimated loss is at or below the project acceptance threshold, no splicer-detected defects. Apply splice protection sleeve immediately; proceed to next splice.
+**ACCEPT:** The score is at or below your threshold, no defects flagged. Grab the sleeve and apply it immediately. Proceed to the next splice.
 
-**Re-arc:** Fire the arc a second time on an already-fused splice. Re-arc supplies additional heat to the splice zone, allowing further diffusion to reduce residual stress and slightly reduce loss in some cases. Re-arc is effective when the splice zone looks geometrically good but estimated loss is above threshold — the typical working guidance for where re-arc tends to be beneficial is 0.10–0.20 dB, but this is not a hard ceiling. A geometrically clean splice above 0.20 dB may still be re-arced at the technician's discretion; however, if loss is substantially elevated (e.g., >0.30 dB) without any identifiable geometric defect, dopant diffusion or sub-surface contamination is the more likely root cause and re-splice is the better first action. **Re-arc is not effective and must not be used when:** (a) there is visible core offset or bubble in the splice zone (re-arc will not correct geometric misalignment); (b) the end-face shows a defect (re-arc adds energy without repositioning the fiber); (c) the splice has already received one re-arc (repeated re-arcs anneal the glass further, increasing splice zone fragility) [Fujikura FSM-series Manual, §5.3; Sumitomo Type-82C Guide, §4.2; BICSI OSP-DRD Manual, Ch. 7.4].
+**RE-ARC — what it is and when to use it**
 
-**Re-splice:** Pull the completed splice apart, re-strip the fiber if sufficient length allows, re-clean, re-cleave both ends, and attempt a new splice. Re-splice is required when: (a) the splicer auto-rejects due to cleave error or bubble; (b) re-arc does not improve the estimated loss to below threshold; (c) visible geometric defects are present (core offset, deformation). Re-splice consumes fiber length — 15–25 mm per attempt — and the technician must confirm sufficient slack coil remains before proceeding. **Minimum re-splice threshold:** After sleeve removal, each fiber end must have at least 50–60 mm of prepared length remaining (approximately 20 mm additional bare fiber beyond what the sleeve occupied on each side, plus re-strip and re-cleave margin). If either fiber end falls below this threshold, re-splice at the current location is not possible and the closure must be repositioned to expose additional slack [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §4.5].
+Re-arc is firing the arc a second time on an already-fused splice. Think of it like a second welding pass on a joint that didn't flow quite right the first time — the extra heat lets the glass relax and settle a little more, which can shave off a few hundredths of a dB in the final score.
+
+Re-arc is useful in a narrow window: the weld looks geometrically good (cores aligned, no bubble, no deformation), but the loss came back slightly high — typically in the 0.10–0.20 dB range. One re-arc, and often the score drops below threshold.
+
+**Re-arc is NOT useful and must NOT be used when:**
+- There is visible core offset or a bubble in the splice zone — extra heat doesn't fix a geometry problem. The cores are still misaligned after re-arc; you've just added heat without fixing the root cause.
+- You've already done one re-arc on this splice — repeated re-arcs anneal (soften and weaken) the glass in the splice zone. The more you re-arc, the more brittle the joint becomes.
+- The end-face had a defect before the arc — re-arc can't undo a bad cleave.
+
+[Fujikura FSM-series Manual, §5.3; Sumitomo Type-82C Guide, §4.2; BICSI OSP-DRD Manual, Ch. 7.4]
+
+**RE-SPLICE — starting over**
+
+Re-splice means pulling the fused splice apart, re-stripping (if you have enough fiber length left), re-cleaning, re-cleaving both ends, and running the full splice cycle again from scratch. It's the equivalent of scrapping the weld and re-doing it.
+
+Re-splice is required when:
+- The splicer auto-rejects because of a cleave error or core-axis bubble.
+- Re-arc didn't bring the loss below threshold.
+- You can see a visible geometric defect (offset, deformation) on the screen.
+
+**The catch: re-splice costs fiber.** Each re-splice attempt consumes 15–25 mm of fiber length. Before you re-splice, confirm you have enough slack remaining. You need at least 50–60 mm of prepared fiber length on each end after the sleeve is removed — roughly 20 mm of bare fiber beyond what the sleeve occupied on each side, plus room to re-strip and re-cleave. If either fiber end is too short, you can't re-splice at the current location — the whole closure has to move to expose more cable slack. [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §4.5]
 
 ### Splice Protection Sleeve Application
 
-Immediately after an accepted splice, the bare glass in the splice zone must be protected before the closure is loaded. Splice protection sleeves (heat-shrink reinforcement sleeves) are the standard field protection method for single-fiber fusion splices [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §5.1].
+Once the splice passes QA, the bare glass in the weld zone has zero physical protection — it's naked glass hanging in mid-air. Before you put it in the tray, you have to protect it with a **splice protection sleeve**: a heat-shrink reinforcement sleeve that goes over the weld zone and stiffens it so it won't over-bend when you coil it into the tray.
 
-**Sleeve anatomy:** A splice protection sleeve consists of an outer heat-shrink polymer tube, an inner stainless steel strength rod (or ceramic rod), and optional inner hot-melt adhesive liner. When heated, the outer tube shrinks to grip the fiber coating on both sides of the splice zone; the steel rod provides bend resistance across the splice to prevent over-bending during closure loading.
+Think of it like heat-shrink tubing on an electrical splice — same basic idea. You shrink the sleeve around the joint, and it holds everything together and prevents sharp bends.
+
+**Sleeve anatomy:** An outer heat-shrink polymer tube (shrinks when heated) + an inner stainless steel strength rod (rigid — prevents the fiber from bending too sharply at the weld point) + an inner hot-melt adhesive liner (melts during heating, flows around the fiber, re-solidifies as a grip during cooling).
 
 **Application procedure:**
-1. Thread the sleeve onto the fiber before cleaving one end (sleeve must be pre-loaded — once the splice is made, both fiber ends are joined and the sleeve cannot be added without re-splicing).
-2. Center the sleeve over the splice zone, with equal fiber coating extending on each side.
-3. Place the sleeved splice in the splicer's heat oven (integrated into all field fusion splicers; the oven is sized for standard splice protection sleeves).
-4. Activate the heat cycle per the splicer's program. The cycle time is typically 30–60 seconds for standard 40 mm or 60 mm sleeves.
-5. After the cycle, remove the sleeve from the oven and allow it to cool on the cooling shelf (integrated tray on most splicers) until the adhesive has set — typically 30–60 seconds of cooling time before placing in the splice tray.
+1. **Pre-load the sleeve.** Thread the sleeve onto one of the fibers *before* you cleave that end and make the splice. Once the two fibers are fused together, you can't slide a sleeve on — both ends are joined. If you forget to pre-load the sleeve, you'll have to re-splice. This is one of the most common rookie mistakes.
+2. **Center the sleeve** over the weld zone, with equal coating extending on each side.
+3. **Place in the splicer's heat oven.** Every field fusion splicer has a built-in oven for this — same machine, different compartment. It's sized exactly for standard protection sleeves.
+4. **Run the heat cycle.** Typically 30–60 seconds for a standard 40 mm or 60 mm sleeve. The splicer's programmed oven cycle is calibrated for this — just press the button.
+5. **Remove and cool on the cooling shelf.** The splicer also has a small cooling shelf (a flat tray on the outside of the machine). Let the sleeve sit there for 30–60 seconds until the adhesive has re-solidified and the sleeve feels rigid.
+6. **Only then** place it in the splice tray.
 
-**Do not place a sleeve in the closure tray before it has cooled.** A still-hot sleeve in a curved tray can induce a bend set in the glass during cooling, potentially causing micro-crack initiation at the splice zone or elevated loss from bend-induced attenuation [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §5.1].
+**The cooling step is not optional.** Here's why: while the sleeve is still hot, the inner adhesive is still liquid — the sleeve is thermally compliant (bendy). If you put it straight into the curved splice tray, the tray forces the fiber into a small-radius bend while the adhesive is still molten. When the adhesive re-solidifies, it locks in that bent shape permanently. A permanent tight bend at the splice zone acts like a hinge — it creates micro-stress concentrations in the glass that can either cause micro-cracks over time or increase optical loss from bend-induced light leakage. Thirty seconds of patience on the cooling shelf prevents that entirely. [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §5.1]
 
-**Sleeve length selection:** Standard single-fiber sleeves are 40 mm (for use with standard splicers) or 60 mm (for longer bare fiber sections or when the 40 mm sleeve is too short to cover the stripped zone). Ribbon splices use dedicated ribbon protection sleeves — wider, stiffer, with a multi-fiber strength element. Do not use a single-fiber sleeve on a mass-fusion ribbon splice.
+**Sleeve length selection:** Standard single-fiber sleeves are 40 mm (common — fits most stripped/cleaved fiber sections) or 60 mm (for longer bare fiber sections or when the 40 mm sleeve won't cover the full stripped zone). Ribbon splices use dedicated ribbon protection sleeves — wider, with a multi-fiber strength element. Never use a single-fiber sleeve on a mass-fusion ribbon splice.
 
 ### Environmental Factors Affecting Estimation Accuracy
 
-The splicer's estimation algorithm is calibrated for nominal conditions (standard temperature and humidity, calibrated electrodes, standard fiber type). Deviations from nominal conditions affect estimation accuracy:
+The splicer's score is calibrated for normal conditions — room temperature, properly calibrated electrodes, standard fiber type. Several field conditions can throw it off:
 
-**Electrode wear.** As tungsten electrodes erode over thousands of arc cycles, the arc geometry changes — the arc becomes slightly asymmetric and less focused. This causes the arc to heat fibers unevenly, producing slight deformations that the image processor interprets as higher estimated loss. Both Fujikura and Sumitomo splicers include electrode calibration/ARC CHECK routines that should be run daily (or whenever arc quality degrades). Some Fujikura models include automatic electrode wear compensation that adjusts arc current without operator intervention [Fujikura FSM-series Manual, §4.4; Sumitomo Type-82C Guide, §3.5].
+**Electrode wear.** The tungsten electrodes inside the arc chamber erode over thousands of arc cycles — like a spark plug slowly wearing down. As they wear, the arc geometry changes: it becomes slightly asymmetric, heats fibers unevenly, and produces minor deformation that the camera reads as elevated loss. Both Fujikura and Sumitomo splicers include an electrode calibration routine (called "ARC CHECK" on some models) that should be run at the start of each work day — or whenever you notice the arc quality changing. Some Fujikura models adjust automatically. [Fujikura FSM-series Manual, §4.4; Sumitomo Type-82C Guide, §3.5]
 
-**Temperature extremes.** Below freezing, glass becomes less plastic during fusion — the same arc energy softens the glass less effectively, sometimes requiring the operator to switch to a cold-weather splice program (higher arc current or longer duration). Above 40°C (104°F), the opposite effect applies. Most field splicers include temperature-compensated splice programs for both extremes [Fujikura FSM-series Manual, §4.3].
+**Temperature extremes.** Below freezing, glass is less plastic (less willing to flow during the arc). The same arc energy that fuses fiber perfectly at 70°F might not fully soften the glass at 20°F. Most splicers have cold-weather splice programs that increase arc energy for low-temperature conditions. The opposite happens in heat (above 40°C / 104°F) — glass flows more easily, and you might need a lower-energy program. [Fujikura FSM-series Manual, §4.3]
 
-**Fiber contamination post-cleave.** Any finger contact, oil from a skin surface, gel residue not fully removed during stripping, or moisture condensation on the fiber after cleaning produces an inclusion in the splice zone. The image processor may not detect a sub-surface contamination inclusion; the resulting splice may pass estimated loss screening while having elevated OTDR-measured loss or long-term reliability issues. Clean twice with IPA, let dry, and do not re-contact the cleaned surface before loading the cleaver [Corning OSP Splicing Guide, §3.3; BICSI OSP-DRD Manual, Ch. 7.3].
+**Contamination after cleaning.** Any finger contact, gel residue not fully removed, oil from your skin, or moisture condensation on the fiber after cleaning introduces contamination that vaporizes when hit by the arc — creating that bubble discussed above. The camera may not see sub-surface contamination; the splice can pass estimated loss screening while having real degraded performance or long-term reliability problems. Clean twice with IPA, let dry fully, and don't touch the cleaned surface again before loading into the cleaver. [Corning OSP Splicing Guide, §3.3; BICSI OSP-DRD Manual, Ch. 7.3]
 
 ---
 
 ## Key Terms (Flashcard Candidates)
 
 **Automated splice estimation**
-The image-processor function in a fusion splicer that measures geometric parameters of the completed splice zone (core offset, deformation, bubble, cleave residual) and computes an estimated loss value. Displayed on screen within seconds of arc completion. Not equivalent to OTDR-measured optical loss; used as a field QA screening tool. [Fujikura FSM-series Manual, §5.1]
+The image-processor function in a fusion splicer that measures geometric parameters of the completed splice zone (core offset, deformation, bubble, cleave residual) and computes an estimated loss value. Displayed on screen within seconds of arc completion. *In plain English: the splicer's built-in quality inspector that looks at the weld with a camera and gives you a loss score.* Not equivalent to OTDR-measured optical loss; used as a field QA screening tool. [Fujikura FSM-series Manual, §5.1]
 
 **Core deformation**
-A splice zone defect in which the arc heating produces an elliptical or distorted core cross-section, visible on the splicer's inspection image. Increases mode field mismatch loss beyond the level predicted by core offset alone. [Fujikura FSM-series Manual, §5.1]
+A splice zone defect in which the arc heating produces an elliptical or distorted core cross-section, visible on the splicer's inspection image. *In plain English: the core got squashed or warped by uneven heating — like squeezing a round tube of toothpaste from one side.* Increases mode field mismatch loss beyond the level predicted by core offset alone. [Fujikura FSM-series Manual, §5.1]
 
 **Bubble**
-A gas or vaporized-contamination inclusion in the splice zone, visible as a bright or dark circular feature on the splicer's image. A bubble on the core axis is grounds for automatic splice rejection. Off-axis bubbles produce marginally elevated estimated loss and may require re-splice depending on the loss magnitude. [Fujikura FSM-series Manual, §5.1; Sumitomo Type-82C Guide, §4.1]
+A gas or vaporized-contamination inclusion in the splice zone, visible as a bright or dark circular feature on the splicer's image. *In plain English: a trapped air pocket in the weld — like a gas bubble in a welded metal joint. Blocks light.* A bubble on the core axis is grounds for automatic splice rejection. [Fujikura FSM-series Manual, §5.1; Sumitomo Type-82C Guide, §4.1]
 
 **Re-arc**
-A second arc cycle applied to an already-fused splice to supply additional heat, allowing further glass diffusion that can marginally reduce residual stress and slightly lower estimated loss. Effective only for marginally elevated loss on geometrically good splices; ineffective and contraindicated for splices with visible core offset, bubbles, or defects. Limited to one re-arc per splice. [Fujikura FSM-series Manual, §5.3; BICSI OSP-DRD Manual, Ch. 7.4]
+A second arc cycle applied to an already-fused splice to supply additional heat, allowing further glass diffusion that can marginally reduce residual stress and slightly lower estimated loss. *In plain English: a second welding pass on the same joint — useful only when the weld looks geometrically good but the score came back slightly too high.* Effective only for marginally elevated loss on geometrically clean splices; ineffective and contraindicated for splices with visible core offset, bubbles, or defects. Limited to one re-arc per splice. [Fujikura FSM-series Manual, §5.3; BICSI OSP-DRD Manual, Ch. 7.4]
 
 **Re-splice**
-The process of separating a completed (or failed) fusion splice, re-stripping the fiber (if sufficient length allows), re-cleaning, re-cleaving both ends, and performing a new splice cycle. Required when splicer auto-rejects, when re-arc fails to bring loss to threshold, or when visible geometric defects are present. Consumes 15–25 mm of fiber per attempt. [BICSI OSP-DRD Manual, Ch. 7.4]
+The process of separating a completed (or failed) fusion splice, re-stripping the fiber (if sufficient length allows), re-cleaning, re-cleaving both ends, and performing a new splice cycle. *In plain English: scrapping the weld and starting over.* Required when splicer auto-rejects, when re-arc fails to bring loss to threshold, or when visible geometric defects are present. Consumes 15–25 mm of fiber per attempt. [BICSI OSP-DRD Manual, Ch. 7.4]
 
 **Splice protection sleeve**
-A heat-shrink reinforcement sleeve placed over the bare splice zone after a successful fusion splice. Consists of an outer heat-shrink tube, inner steel or ceramic strength rod, and optional adhesive liner. Applied in the splicer's integrated heat oven. Must cool before placement in splice tray. [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §5.1]
+A heat-shrink reinforcement sleeve placed over the bare splice zone after a successful fusion splice. *In plain English: heat-shrink tubing for the fiber weld — it stiffens the joint so it won't break when you coil it into the tray.* Consists of an outer heat-shrink tube, inner steel or ceramic strength rod, and optional adhesive liner. Must cool before placement in splice tray. [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §5.1]
 
 **Electrode wear compensation**
-Splicer function that adjusts arc current to compensate for tungsten electrode erosion. Implemented as an automatic loop (Fujikura FSM-series) or as a manual ARC CHECK calibration cycle (Sumitomo Type-82C) run at the start of each work session. [Fujikura FSM-series Manual, §4.4; Sumitomo Type-82C Guide, §3.5]
+Splicer function that adjusts arc current to compensate for tungsten electrode erosion. *In plain English: automatic re-calibration as the spark plugs inside the machine wear down.* Implemented as an automatic loop (Fujikura FSM-series) or as a manual ARC CHECK calibration cycle (Sumitomo Type-82C) run at the start of each work session. [Fujikura FSM-series Manual, §4.4; Sumitomo Type-82C Guide, §3.5]
 
 **BICSI default acceptance threshold**
-≤0.10 dB estimated (or OTDR-measured bidirectional average) per splice for OS2 SMF fusion splices, per BICSI OSP-DRD Manual, Ch. 7.4. The floor specification for OSP construction and RUS-program projects in the absence of a tighter project-specific criterion.
+≤0.10 dB estimated (or OTDR-measured bidirectional average) per splice for OS2 SMF fusion splices, per BICSI OSP-DRD Manual, Ch. 7.4. *In plain English: the industry standard "passing grade" for a splice on a normal OSP construction project.* The floor specification for OSP construction and RUS-program projects in the absence of a tighter project-specific criterion.
 
 **Dopant diffusion**
-The migration of refractive-index-modifying dopants (germanium, fluorine) across the core/cladding boundary in the heat-affected zone of a fusion splice. Produces refractive index profile changes that are invisible to the splicer's camera, explaining the systematic difference between estimated and OTDR-measured splice loss. [AT&T OSP Construction Practices §7.2; BICSI OSP-DRD Manual, Ch. 7.4]
+The migration of refractive-index-modifying dopants (germanium, fluorine) across the core/cladding boundary in the heat-affected zone of a fusion splice. *In plain English: the chemical recipe of the glass changes slightly when heated — like dye spreading through water when the water gets warm. The camera can't see this happen, but it does affect how much light is lost.* Produces refractive index profile changes that are invisible to the splicer's camera, explaining the systematic difference between estimated and OTDR-measured splice loss. [AT&T OSP Construction Practices §7.2; BICSI OSP-DRD Manual, Ch. 7.4]
 
 ---
 
@@ -173,7 +252,7 @@ The migration of refractive-index-modifying dopants (germanium, fluorine) across
 A field technician is splicing OS2 SMF in a buried closure on a RUS-funded rural broadband feeder route. The project specification requires ≤0.10 dB per splice (BICSI default). After completing Splice 7 in the closure, the splicer screen shows the following:
 
 - Estimated splice loss: **0.18 dB**
-- Cleave angle reading: **0.3° / 0.4°** (both fibers within ≤0.5° acceptance)
+- Cleave angle reading: **0.3° / 0.4°** (both fibers — see Lesson 2.1 for cleave angle thresholds; ≤0.5° is the SMF acceptance limit)
 - Splicer image: core positions appear aligned; no visible bubble; slight brightness asymmetry at the splice zone suggesting minor electrode asymmetry
 
 Walk through the accept / re-arc / re-splice decision for this splice.
@@ -205,17 +284,17 @@ All eligibility criteria for re-arc are met. **Fire re-arc.** [Fujikura FSM-seri
 
 If re-arc had returned 0.16 dB:
 - Re-arc did not reduce loss to threshold.
-- Re-arc has now been used once on this splice (additional re-arcs are contraindicated).
+- Re-arc has now been used once on this splice — additional re-arcs are contraindicated (they weaken the splice zone glass without fixing the problem).
 - Core is visually aligned; no geometric defect explains the persistent loss.
-- Root cause is most likely dopant diffusion or sub-surface contamination invisible to the image processor.
+- Most likely cause: dopant diffusion or sub-surface contamination that the camera can't see (remember — the camera only measures geometry, not chemistry).
 
-**Action: Re-splice.** Pull the splice, confirm remaining fiber length (must allow for re-stripping and re-cleaving — minimum 20 mm additional from each fiber side after sleeve removal). Re-clean and re-cleave. If the fiber is too short to re-splice at this location, the closure must be repositioned to expose additional slack. [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §4.5]
+**Action: Re-splice.** Pull the splice, confirm remaining fiber length (at least 20 mm additional bare fiber from each side after sleeve removal). Re-clean and re-cleave. If the fiber is too short, the closure must be repositioned to expose additional slack. [BICSI OSP-DRD Manual, Ch. 7.4; Corning OSP Splicing Guide, §4.5]
 
 ---
 
 **Alternate branch — Bubble visible on core axis**
 
-If the post-arc image had shown a bubble on the core axis: the splicer should auto-reject. If the operator is working with an older splicer that does not auto-reject, or if the bubble appears on re-arc image inspection: **Re-splice immediately.** Re-arc cannot remove a bubble; additional heat will not vaporize or migrate a glass-trapped gas inclusion. A core-axis bubble produces an optical path obstruction and will result in measured splice loss far exceeding any acceptance threshold. [Fujikura FSM-series Manual, §5.2; BICSI OSP-DRD Manual, Ch. 7.4]
+If the post-arc image had shown a bubble on the core axis: the splicer should auto-reject. If the operator is working with an older splicer that does not auto-reject, or if the bubble appears on re-arc image inspection: **Re-splice immediately.** Re-arc cannot remove a bubble — you'd just be heating a weld with a trapped pocket of gas in it. More heat does not make the bubble disappear; it may shift it slightly but will not produce a clean splice zone. A core-axis bubble is an optical obstruction and will blow far past any acceptance threshold on OTDR. [Fujikura FSM-series Manual, §5.2; BICSI OSP-DRD Manual, Ch. 7.4]
 
 ---
 
@@ -304,11 +383,11 @@ Answer these three questions before advancing to Lesson 2.4 (Mass-Fusion Splicin
 
 **Pulse 1.** State the three eligibility conditions that must be met before a re-arc is appropriate, and identify one condition that disqualifies re-arc as an option.
 
-*Expected answer:* Re-arc is appropriate when: (1) estimated loss is marginally elevated (e.g., 0.10–0.20 dB) without visible geometric defects; (2) cleave angles are within spec; (3) this is the first arc on this splice (no previous re-arc applied). Re-arc is **disqualified** when any of the following are present: visible core offset, bubble on the core axis, core deformation, or a bad end-face. Re-arc cannot correct geometric defects — only re-splice can. [Fujikura FSM-series Manual, §5.3; BICSI OSP-DRD Manual, Ch. 7.4]
+*Expected answer:* Re-arc is appropriate when: (1) estimated loss is marginally elevated (e.g., 0.10–0.20 dB) without visible geometric defects; (2) cleave angles are within spec (≤0.5° for SMF, as established in Lesson 2.1); (3) this is the first arc on this splice (no previous re-arc applied). Re-arc is **disqualified** when any of the following are present: visible core offset, bubble on the core axis, core deformation, or a bad end-face. Re-arc cannot correct geometric defects — only re-splice can. [Fujikura FSM-series Manual, §5.3; BICSI OSP-DRD Manual, Ch. 7.4]
 
 **Pulse 2.** Why does a splicer's estimated splice loss typically underestimate the OTDR-measured optical loss, and what does this mean for field acceptance documentation?
 
-*Expected answer:* Estimated loss is computed from geometric measurements (core offset, deformation, bubble, cleave residual) by the image processor. It cannot see **dopant diffusion** — the migration of refractive index-modifying dopants across the core/cladding boundary during arc heating — which changes the waveguide's optical properties in the splice zone. This dopant-diffusion component is invisible to the camera but contributes to actual optical loss. As a result, estimated loss systematically underestimates true optical loss. For acceptance documentation, **OTDR-measured bidirectional average splice loss** is the governing value — not the splicer's estimated loss display. [BICSI OSP-DRD Manual, Ch. 7.4; Fujikura FSM-series Manual, §5.1; IEC 61300-3-4 §5]
+*Expected answer:* Estimated loss is computed from geometric measurements (core offset, deformation, bubble, cleave residual) by the image processor. It cannot see **dopant diffusion** — the migration of refractive index-modifying dopants across the core/cladding boundary during arc heating — which changes the waveguide's optical properties in the splice zone in a way that the camera is blind to. As a result, estimated loss systematically underestimates true optical loss. For acceptance documentation, **OTDR-measured bidirectional average splice loss** is the governing value — not the splicer's estimated loss display. [BICSI OSP-DRD Manual, Ch. 7.4; Fujikura FSM-series Manual, §5.1; IEC 61300-3-4 §5]
 
 **Pulse 3.** A splice protection sleeve has been heated in the splicer oven and removed. Describe the two steps remaining before this fiber is ready for placement in the splice tray.
 
