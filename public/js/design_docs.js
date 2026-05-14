@@ -95,6 +95,7 @@
           if (!wrap) return;
           const p = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
           bar.style.width = p + '%';
+          bar.setAttribute('aria-valuenow', p);
           pct.textContent = p + '%';
           if (p >= 100) lbl.textContent = 'Saving on server…';
         },

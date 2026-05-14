@@ -146,6 +146,7 @@
         onProgress: (loaded, total) => {
           const pct = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
           progBar.style.width = pct + '%';
+          progBar.setAttribute('aria-valuenow', pct);
           progPct.textContent = pct + '%';
           if (pct >= 100) {
             // Upload finished — server is now running Claude analysis (15-30s).
