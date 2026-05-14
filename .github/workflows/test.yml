@@ -69,6 +69,25 @@ jobs:
       - name: Run backend smoke tests
         run: npm test
 
+      - name: Schema sync check
+        # Regenerates schema.sql from scratch (bootstrap + all migrations) and
+        # fails if the committed schema.sql is out of sync with the migration set.
+        # Runs AFTER backend smoke tests so a broken migration surface here, not
+        # in an earlier unrelated step.
+        # TEST_DATABASE_URL points at the Postgres service container above;
+        # the sync script uses it as the parent connection to CREATE/DROP the
+        # throwaway temp DB (schemauser is not available in CI — postgres role
+        # has CREATEDB by default on the service container).
+        run: |
+          npm run schema:sync
+          if ! git diff --exit-code schema.sql; then
+            echo ""
+            echo "ERROR: schema.sql is out of sync with migrations."
+            echo "Run 'npm run schema:sync' locally and commit the result."
+            exit 1
+          fi
+          echo "schema.sql is in sync with migrations — OK"
+
       # Cache the chromium binaries between runs so we don't re-download the
       # ~150 MB tarball on every push. Key on the playwright version so the
       # cache invalidates when we bump it.

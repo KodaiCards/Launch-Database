@@ -64,8 +64,14 @@ function replacePgDb(url, newDb) {
 
 const TEMP_URL = replacePgDb(PARENT_URL, tmpName);
 
-// ─── Schema.sql output path ───────────────────────────────────────────────
-const SCHEMA_OUT = path.join(ROOT, 'schema.sql');
+// ─── File paths ───────────────────────────────────────────────────────────
+const SCHEMA_OUT  = path.join(ROOT, 'schema.sql');
+// schema_core.sql is the hand-authored core CREATE TABLE bootstrap (the
+// original schema.sql before migration-runner era).  It is the stable INPUT
+// to the sync script and is never regenerated.  Add new tables here if you
+// ever need them in the pre-migration bootstrap layer; otherwise prefer
+// adding a migration file.
+const SCHEMA_CORE = path.join(__dirname, 'schema_core.sql');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -388,46 +394,28 @@ async function main() {
     log('Installing pgcrypto...');
     await tempPool.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
 
-    // ── 3. bootstrapV3Schema DDL (schema.sql core tables) ─────────────
-    // schema.sql's core CREATE TABLE statements are what bootstrapV3Schema
-    // expects to exist before altering them.  We need a minimal core first.
-    // Read the original schema.sql up to the point before migrations added
-    // content; but since schema.sql IS our output file we can't trust it.
-    // Instead we apply the full V3_DDL which is safe via IF NOT EXISTS /
-    // ALTER IF NOT EXISTS — any ordering failures (forward FKs) are normal.
-    //
-    // The original schema.sql contains the core CREATE TABLE statements.
-    // We need to apply those before running V3 ALTERs.
-    // The trick: load the canonical schema.sql from git (HEAD on the branch)
-    // to get the original core tables, not the generated version.
-    log('Applying core schema tables from git HEAD schema.sql...');
-    let coreSchemaSql;
-    try {
-      coreSchemaSql = execFileSync('git', ['-C', ROOT, 'show', 'HEAD:schema.sql'], {
-        maxBuffer: 16 * 1024 * 1024,
-      }).toString('utf8');
-    } catch {
-      // If git show fails (e.g. first commit), fall back to the file on disk
-      // — this is safe on first run since migrations haven't run yet.
-      warn('git show HEAD:schema.sql failed; using schema.sql from disk (first-run fallback)');
-      coreSchemaSql = fs.existsSync(SCHEMA_OUT) ? fs.readFileSync(SCHEMA_OUT, 'utf8') : '';
+    // ── 3. Core tables (schema_core.sql) ──────────────────────────────
+    // scripts/schema_core.sql is the hand-authored original CREATE TABLE
+    // bootstrap — the tables that existed before the migration runner era.
+    // It is the STABLE INPUT to this script and is never regenerated.
+    // schema.sql (the OUTPUT) must not be used here: it is in pg_dump format
+    // and would include migration-added constraints that conflict on re-apply.
+    log('Applying core tables from scripts/schema_core.sql...');
+    const coreSchemaSql = fs.readFileSync(SCHEMA_CORE, 'utf8');
+    const coreStmts     = splitStatements(coreSchemaSql);
+    // Two-pass: forward-FK failures on pass 1 succeed on pass 2 once their
+    // referenced tables exist.
+    const corePass1 = [];
+    for (const s of coreStmts) {
+      try { await tempPool.query(s); }
+      catch { corePass1.push(s); }
     }
-
-    if (coreSchemaSql) {
-      // Apply the core schema two-pass (same as db.js initSchema)
-      const coreStmts = splitStatements(coreSchemaSql);
-      const corePass1 = [];
-      for (const s of coreStmts) {
-        try { await tempPool.query(s); }
-        catch { corePass1.push(s); }
+    if (corePass1.length) {
+      for (const s of corePass1) {
+        try { await tempPool.query(s); } catch { /* forward-FK, silently ignored */ }
       }
-      if (corePass1.length) {
-        for (const s of corePass1) {
-          try { await tempPool.query(s); } catch { /* forward-FK, expected */ }
-        }
-      }
-      log(`Core schema applied (${coreStmts.length} stmts)`);
     }
+    log(`Core schema applied (${coreStmts.length} stmts)`);
 
     // ── 4. bootstrapAuthSchema DDL (users table) ───────────────────────
     log('Applying auth DDL (users table)...');
