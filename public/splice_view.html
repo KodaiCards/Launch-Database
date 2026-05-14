@@ -121,8 +121,8 @@ a{color:var(--primary);text-decoration:none}
     </div>
     <div class="toolbar" id="toolbar">
       <button class="btn btn-sm" onclick="resetView()"><i class="fa-solid fa-expand"></i> Fit</button>
-      <button class="btn btn-sm" onclick="zoom(1.2)"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-      <button class="btn btn-sm" onclick="zoom(0.83)"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+      <button class="btn btn-sm" onclick="zoom(1.2)" aria-label="Zoom in"><i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i></button>
+      <button class="btn btn-sm" onclick="zoom(0.83)" aria-label="Zoom out"><i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i></button>
     </div>
     <div class="map-toolbar" id="map-toolbar" style="display:none">
       <button class="btn btn-sm" onclick="mapFitData()"><i class="fa-solid fa-expand"></i> Fit</button>
