@@ -21,6 +21,40 @@ sources:
 
 # Microduct & Air-Blown Fiber
 
+## In Plain English — What This Lesson Is About and Why It Matters
+
+Most fiber cables are installed once and stay put. If the route needs more fiber years later, you're digging a new trench. Microduct flips that model: instead of burying the cable itself, you bury a small smooth plastic tube first — the microduct — and then blow the fiber cable in later using compressed air. When capacity grows, you blow in more cable through another duct in the same bundle. No new trench. This lesson explains how microduct works, when it makes sense financially, and the specs a designer needs to get the cable-to-duct sizing right.
+
+## Acronym Glossary
+
+**OSP** — Outside Plant. The fiber infrastructure that lives outdoors between buildings and between hubs.
+
+**FTTH** — Fiber To The Home. Running a fiber all the way from a distribution point to an individual residence.
+
+**ABF** — Air-Blown Fiber. The installation method where compressed air pushes a fiber cable through a microduct.
+
+**HDPE** — High-Density Polyethylene. A tough, slightly flexible plastic used to make conduit, microducts, and cable sheaths. Think of it like heavy-duty PVC pipe.
+
+**SIL** — Silicone Inner Lining. A slippery silicone coating bonded to the inside of a microduct that drastically reduces friction between the cable jacket and the duct wall. Without it, the cable wouldn't slide easily enough for air-blowing to work.
+
+**COF** — Coefficient of Friction. A number (no units) that measures how "grippy" two surfaces are against each other. Lower COF = slicker surface = cable slides easier. SIL-lined duct has COF around 0.1–0.2 vs. 0.3–0.5 for unlubricated pipe.
+
+**ID** — Inner Diameter. The measurement of the inside opening of the duct or tube — the space the cable has to fit through.
+
+**OD** — Outer Diameter. The measurement of the outside surface of the cable (or duct).
+
+**HDD** — Horizontal Directional Drilling. A trenchless boring method that steers a drill bit underground in a controlled curve to pass under roads, rivers, and utilities, then pulls a duct or cable back through the bore. Like drilling under a road without tearing up the pavement.
+
+**ANSI/TIA** — American National Standards Institute / Telecommunications Industry Association. The U.S. standards body that publishes the engineering rules (like TIA-758-C) that govern OSP installations.
+
+**IEC / ETSI** — International Electrotechnical Commission / European Telecommunications Standards Institute. The international equivalent standards bodies whose microduct specs (IEC 60794-5, ETSI EN 187003) are widely adopted.
+
+**BICSI** — Building Industry Consulting Service International. Publishes the OSP-DRD (Outside Plant Design Reference/Delivery) Manual — the field handbook for OSP design.
+
+**ROW** — Right-of-Way. The legal corridor — typically alongside roads, under streets, or between properties — where utilities are permitted to install cables, conduit, and poles.
+
+---
+
 ## Learning Objectives
 
 Upon completing this lesson, the learner will be able to:
@@ -36,6 +70,10 @@ Upon completing this lesson, the learner will be able to:
 
 ### Why Microduct?
 
+Picture the traditional way of installing fiber like burying a garden hose: you dig the trench, lay the hose, fill it in. The garden hose is permanent — it has exactly as many fibers as you planned when you dug the trench. If you need more capacity next year, you're digging again.
+
+Microduct works like burying empty conduit instead of the hose. You bury the tube first. Later, whenever you need to run cable (fiber), you push it through using compressed air. When you need more, you push more through another tube in the bundle — no new trench.
+
 Traditional OSP infrastructure installs cable once and leaves it in place. The cable's fiber count is chosen at design time, with a capacity estimate for 10–20 years of growth. If growth exceeds the estimate, a new trench must be opened, a new cable pulled, and new splice closures added — a major capital expenditure for each network expansion cycle.
 
 Microduct systems invert this model. Instead of installing the final fiber cable in the trench, the installer places a **microduct** — a small-diameter, smooth-bore, semi-rigid tube — in the trench. The microduct is permanently installed; it is the infrastructure. The fiber cable is blown in later, at installation time or any time in the future, using compressed air and a cable-blowing machine. When network demand grows, additional cables can be blown through additional microducts, or the original cable can be retrieved and replaced with a higher-fiber-count version, without reopening the trench [BICSI OSP-DRD Manual, Ch. 5.7].
@@ -44,7 +82,7 @@ The operational philosophy is **conduit infrastructure first, cable when needed.
 
 ### Microduct Physical Characteristics
 
-Microducts are small-bore, semi-rigid tubes manufactured from high-density polyethylene (HDPE) or similar polymer. Key dimensional characteristics:
+Microducts are small-bore, semi-rigid tubes manufactured from HDPE or similar polymer. Key dimensional characteristics:
 
 | Inner diameter (ID) | Outer diameter (OD) | Typical cable OD range | Application |
 |---|---|---|---|
@@ -55,9 +93,9 @@ Microducts are small-bore, semi-rigid tubes manufactured from high-density polye
 
 *Sources: [IEC 60794-5, §4.1; ETSI EN 187003, Table 1; Corning OSP Reference, §6.1]*
 
-Microducts are manufactured with a smooth, lubricated inner surface — either a co-extruded silicone compound lining (SIL) or a Teflon-impregnated inner bore. This low-friction surface is what makes the air-blown installation method possible [IEC 60794-5, §4.2; AFL OSP Cable Design Guide, §6.1].
+The critical feature that makes air-blown installation work is the **SIL — silicone inner lining** on the inside of the microduct. This co-extruded silicone layer is extremely slippery — imagine the inside of a Teflon pan versus a cast-iron pan. It's the reason a cable can be pushed through a long, winding duct by compressed air instead of requiring a mechanical pull with a winch. Without that slick inner surface, friction would stall the cable within a few hundred feet [IEC 60794-5, §4.2; AFL OSP Cable Design Guide, §6.1].
 
-**Multi-microduct bundles:** Individual microducts are commonly assembled into multi-duct bundles at the factory. A typical bundle contains 2, 4, 7, or 12 individual microducts packaged together in a common outer sheath, sometimes with a shared armor layer. A 12-microduct bundle installs 12 independent fiber pathways in a single trench in one pull — the same footprint as a single conduit, but with 12 separable capacity slots [Corning OSP Reference, §6.2; CommScope Reference Manual, Ch. 8.1].
+**Multi-microduct bundles:** Individual microducts are commonly assembled into multi-duct bundles at the factory. A typical bundle contains 2, 4, 7, or 12 individual microducts packaged together in a common outer sheath — think of it like a bundle of capillary tubes inside a larger pipe. A 12-microduct bundle installs 12 independent fiber pathways in a single trench in one pull — the same excavation footprint as a single conduit, but with 12 separable capacity slots for future cable [Corning OSP Reference, §6.2; CommScope Reference Manual, Ch. 8.1].
 
 **Microduct vs. conventional HDPE conduit:**
 
@@ -68,17 +106,21 @@ Microducts are manufactured with a smooth, lubricated inner surface — either a
 | Minimum bend radius | Tighter (more flexible) | Stiffer per unit area |
 | Conduit fill ratio | Designed for 50–60% max | Designed for 50% NEC/TIA max |
 | Deployment method | Trench with bundle, or microtrench | Standard conduit trench or bore |
-| Future cable addition | Blow additional duct; no trench | Open new trench |
+| Future cable addition | Blow into unused duct; no trench | Open new trench |
 
 The key operational distinction is that microducts are designed for air-blown installation throughout their service life — every microduct in the bundle is a future cable pathway. [ANSI/TIA-758-C §5.7; BICSI OSP-DRD Manual, Ch. 5.7]
 
 ### Air-Blown Fiber: The Installation Method
 
-Air-blown fiber (ABF) installation uses a **cable-blowing machine** that simultaneously:
-1. Grips the cable with an assisted-drive roller system (pulling/pushing the cable forward into the microduct opening)
-2. Injects compressed air at the duct entry, flowing toward the far end of the duct
+Think of air-blown cable installation like blowing a straw wrapper off a restaurant straw. You put the straw to your lips, the wrapper sits on the end, and a puff of air sends it flying down the table. Now scale that up: a compressed-air machine pushes the cable through hundreds or thousands of feet of duct.
 
-The compressed air creates a viscous drag force along the entire length of the cable surface — the air flowing past the cable jacket pushes the cable forward along the duct. Combined with the roller drive at the entry point, this system can install cable over distances of **1,000–4,000 meters in a single blow** depending on duct ID, cable OD, cable weight, and duct route geometry (number of bends) [AFL OSP Cable Design Guide, §6.3; Plumettaz Blown Fiber Guide, §2.1].
+More precisely, **air-blown fiber (ABF)** installation uses a **cable-blowing machine** that simultaneously does two things:
+1. **Grips and pushes the cable** with driven roller wheels at the duct entry — like powered guide rollers pushing the cable forward into the duct
+2. **Injects compressed air** at the duct entry, flowing toward the far end of the duct
+
+The compressed air doesn't just push from behind like a piston. It creates an aerodynamic drag force *along the entire length* of the cable surface as it flows past — the moving air grabs the cable all the way down its length and carries it forward simultaneously. Combined with the roller-driven push at the entry point, this gets cable through long duct runs that a mechanical pull alone could never manage without overloading the cable.
+
+This combination can install cable over distances of **1,000–4,000 meters in a single blow** depending on duct size, cable size and weight, and how many bends are in the route [AFL OSP Cable Design Guide, §6.3; Plumettaz Blown Fiber Guide, §2.1].
 
 **Air-blown operating parameters:**
 
@@ -91,58 +133,84 @@ The compressed air creates a viscous drag force along the entire length of the c
 
 *Sources: [IEC 60794-5, §6.1; AFL OSP Cable Design Guide, §6.3; Plumettaz Blown Fiber Guide, §2.2]*
 
-For routes requiring greater distance than a single blow can achieve, **intermediate access points** (manholes or above-grade blow-in boxes) are placed along the route at 2,000–4,000 m intervals, and a second blow is initiated from each access point [BICSI OSP-DRD Manual, Ch. 6.5].
+For routes longer than a single blow can reach, **intermediate access points** (manholes or above-grade blow-in boxes) are placed along the route at 2,000–4,000 m intervals. A crew sets up at each access point and blows the next segment [BICSI OSP-DRD Manual, Ch. 6.5].
 
 **Advantages of air-blown installation over pull-in:**
 
-1. **Lower tensile stress on cable:** In a conventional pull-in installation, all pulling tension accumulates at the pulling head. At the beginning of a long pull, the Kellems grip applies the full route tension to the cable front end. Air-blown installation distributes force along the cable length — the cable is pushed from behind and blown along its entire surface simultaneously. Peak cable tension is dramatically lower. Fibers are not subject to the tensile risk of conventional pulling [Corning OSP Reference, §6.3].
+1. **Lower tensile stress on cable.** In a conventional pull-in installation, a Kellems grip (a mesh sleeve) grabs the front of the cable and a winch pulls from that point. All the tension accumulates at the cable's leading end — on a long run with many bends, that tension can approach or exceed the cable's rated limit. Air-blown installation distributes force along the cable length aerodynamically. The peak tension on any part of the cable is dramatically lower, reducing the risk of stretching or cracking fibers [Corning OSP Reference, §6.3].
 
-2. **Retrieval and replacement:** A cable blown into a microduct can be **retrieved** by blowing it back out (reversing the airflow) or by pulling it out from the far end. This makes upgrading the fiber plant — replacing a 96-fiber cable with a 432-fiber cable in the same duct — a practical operation without trenching. Pull-in cable, once installed in conduit with cement or compacted fill, is typically cut and abandoned rather than retrieved when replacement is needed. [AFL OSP Cable Design Guide, §6.4]
+2. **Retrieval and replacement.** A cable blown into a microduct can be **pulled back out** — either by reversing the airflow or pulling from the far end. This makes future upgrades practical: pull out the 96-fiber cable that's now too small, blow in a 432-fiber replacement. Conventional pull-in cable in a conduit, once in and surrounded by backfill, typically gets cut and abandoned rather than retrieved when replacement is needed. [AFL OSP Cable Design Guide, §6.4]
 
-3. **Speed of installation:** Air-blown cable installation at 40–80 m/min is significantly faster than pull-in installation at typical rates of 3–10 m/min for long conduit runs, reducing crew time on the route [Plumettaz Blown Fiber Guide, §2.1].
+3. **Speed.** Air-blown cable installation at 40–80 m/min is much faster than pull-in rates of 3–10 m/min for long conduit runs. Less time on the route = lower crew cost [Plumettaz Blown Fiber Guide, §2.1].
 
-4. **Future capacity management:** Unused microducts in a bundle are sealed with a pressurized end plug. When capacity is needed, the plug is removed, a blowing machine is set up at the nearest access point, and cable is installed in hours. There is no trench or conduit to provision — the infrastructure is already in place [BICSI OSP-DRD Manual, Ch. 6.5].
+4. **Future capacity without excavation.** Unused microducts in a bundle sit sealed with a pressurized end plug. When capacity is needed, pop the plug, set up the blowing machine, and the cable is in within hours. No permit applications for new trenching. No pavement restoration. [BICSI OSP-DRD Manual, Ch. 6.5]
 
 ### Microduct-Compatible Cable Construction
 
-Standard loose-tube OSP cable (as described in Lesson 2) is not optimized for air-blown installation. The air-blown installation method requires cables with specific physical properties:
+Standard loose-tube OSP cable (as described in Lesson 2) is not built for air-blown installation. Air-blown cable needs specific physical properties:
 
-**Low coefficient of friction (COF):** Air-blown cable jackets are formulated with a low-friction HDPE compound, often with embedded lubricant or surface-textured finishes that allow the cable to slide along the duct bore with minimal aerodynamic drag at duct bends. Standard PE sheath compounds used on conventional OSP cable have higher friction. [IEC 60794-5, §5.3; AFL OSP Cable Design Guide, §6.2]
+**Low coefficient of friction (COF).** Air-blown cable jackets are formulated with low-friction HDPE — often with embedded lubricant or a textured surface finish that slides along the duct bore with minimal resistance at bends. Standard PE sheath compounds on conventional OSP cable have higher friction. [IEC 60794-5, §5.3; AFL OSP Cable Design Guide, §6.2]
 
-**Low cable weight (mass per unit length):** Heavier cable requires more air force to blow. Microduct cable designs minimize mass by:
-- Using fewer or smaller strength members (relying on the duct for crush protection — the duct handles what armor provides in direct-bury)
-- Using rollable ribbon or dry water-blocking instead of gel (gel adds mass per meter)
-- Minimizing sheath thickness to the minimum compatible with installation forces [IEC 60794-5, §5.2; Corning OSP Reference, §6.4]
+**Low mass per unit length.** Heavier cable requires more air force to push. Microduct cable designs trim weight by:
+- Smaller or fewer strength members (the duct itself provides crush protection — the job that armor does on a direct-bury cable)
+- Dry water-blocking instead of gel fill (gel is heavy per meter)
+- Thinner sheath walls
+[IEC 60794-5, §5.2; Corning OSP Reference, §6.4]
 
-**Consistent outer diameter tolerance:** Air-blown installation is sensitive to cable OD variation. If the cable OD varies along its length, the cable-to-duct clearance changes, altering the air drag force and potentially causing the blow to stall at a high-friction section. Microduct cable OD is controlled to tight tolerances — typically ±0.1 mm. [IEC 60794-5, §5.1]
+**Tight OD tolerance.** Air-blown installation is sensitive to cable OD variation. If the cable gets wider and narrower along its length, the gap between cable and duct wall changes, which changes the aerodynamic drag force — and a stiff, grippy section can stall the blow. Microduct cable OD is controlled to ±0.1 mm. [IEC 60794-5, §5.1]
 
-**Rollable ribbon core:** As discussed in Lesson 3, rollable ribbon (intermittent-bond ribbon fiber) achieves the highest fiber packing density in a small-OD cable. A 288-fiber rollable ribbon cable may have an OD of 8–9 mm, compatible with a 12 mm ID microduct. An equivalent-count conventional round-tube loose-tube cable would have an OD of 12–14 mm, requiring a larger duct. Rollable ribbon in microduct is the dominant technology for new high-fiber-count metropolitan FTTH deployments [AFL OSP Cable Design Guide, §6.2; Corning OSP Reference, §6.4].
+**Rollable ribbon core.** As described in Lesson 3, rollable ribbon (intermittent-bond ribbon fiber) achieves the highest fiber density in a small-OD cable. A 288-fiber rollable ribbon cable may have an OD of 8–9 mm, fitting comfortably in a 14 mm ID microduct. A conventional 288-fiber round-tube loose-tube cable would be 12–14 mm OD, requiring a much larger duct. Rollable ribbon in microduct is the dominant approach for new high-count metropolitan FTTH deployments [AFL OSP Cable Design Guide, §6.2; Corning OSP Reference, §6.4].
 
 ### Duct Fill Ratio and Capacity Planning
 
-The fill ratio for microduct is the cable OD divided by the microduct ID:
+The **fill ratio** tells you how much of the duct's inside opening is occupied by the cable. Picture looking down the open end of a duct: the cable is a circle sitting inside a larger circle. The fill ratio is how big that inner circle is relative to the outer one.
 
-**Fill ratio = Cable OD / Duct ID**
+The formula is simple:
 
-IEC 60794-5 and ETSI EN 187003 recommend a maximum fill ratio of **0.50–0.60** (50–60%) for reliable air-blown installation. Higher fill ratios reduce the annular air space around the cable, reducing the aerodynamic lift force and increasing the risk of a stalled blow [IEC 60794-5, §6.2; ETSI EN 187003, §5.2].
+**Fill ratio = Cable OD ÷ Duct ID**
 
-Example: A 12 mm ID microduct (0.60 max ratio) can accommodate a cable with a maximum OD of **7.2 mm**. A 288-fiber rollable ribbon cable at 8.0 mm OD would require a 14 mm ID microduct (8.0/14.0 = 0.57 — within spec).
+Where:
+- **Cable OD** = the outer diameter of the cable you're planning to blow, in millimeters
+- **Duct ID** = the inner diameter of the microduct, in millimeters
+- **Fill ratio** = a decimal number between 0 and 1 (you can convert to a percentage by multiplying by 100)
 
-**Planning for the future:** Microduct systems are sized for the ultimate design capacity, not the immediate fiber requirement. If the route will eventually need 576 fibers, the designer installs a microduct bundle that can accommodate a 576-fiber cable (or two 288-fiber cables in two ducts), even if only a 48-fiber cable is blown in on day one. The incremental cost of installing a larger-bore duct on day one is small compared to the cost of opening the trench again for a duct upgrade [BICSI OSP-DRD Manual, Ch. 6.5; ANSI/TIA-758-C §5.7].
+IEC 60794-5 and ETSI EN 187003 recommend a maximum fill ratio of **0.50–0.60** (50–60%) for reliable air-blown installation.
+
+**Why 50–60%?** If the cable fills too much of the duct, the thin ring of air around the cable is too narrow to generate the aerodynamic drag force that moves the cable forward. Think of it like blowing air through a straw with a marshmallow stuck in it — if the marshmallow fills the whole straw, no air gets past it. If it fills only half the straw, air flows freely around it and pushes it along. The cable needs enough clearance for air to flow and create lift. [IEC 60794-5, §6.2; ETSI EN 187003, §5.2]
+
+**Worked example — checking a cable/duct combination:**
+
+Given:
+- Duct inner diameter (ID): 14 mm
+- Cable outer diameter (OD): 9.0 mm
+
+Step 1: Calculate fill ratio.
+Fill ratio = Cable OD ÷ Duct ID = 9.0 mm ÷ 14 mm = **0.643**
+
+Step 2: Compare to the 0.60 maximum.
+0.643 > 0.60 — **this combination fails the fill ratio check.**
+
+Step 3: Select a larger duct.
+Try the 20 mm ID duct:
+Fill ratio = 9.0 ÷ 20.0 = **0.45** — within spec. Use the 20 mm duct.
+
+Sanity check: 0.45 means the cable occupies 45% of the duct opening, leaving 55% of the cross-sectional area for airflow. Plenty of room for the aerodynamic drag to work. [IEC 60794-5, §6.2]
+
+**Planning for the future.** Microduct systems should be sized for the *ultimate design capacity*, not just the immediate need. If the route will eventually need 576 fibers, install the microduct bundle capable of accommodating a 576-fiber cable — even if only a 48-fiber cable gets blown in on day one. The cost difference between a 10 mm ID and a 14 mm ID duct at time-of-installation is a fraction of the cost of reopening a trench to swap out undersized duct years later [BICSI OSP-DRD Manual, Ch. 6.5; ANSI/TIA-758-C §5.7].
 
 ### When Microduct is the Right Choice
 
-Microduct is specified when one or more of the following apply:
+Specify microduct when one or more of the following apply:
 
-- **Future capacity growth is expected but not quantifiable today.** The infrastructure investment is made once; capacity is added incrementally by blowing additional cable into additional ducts as demand materializes. This is the canonical FTTH greenfield build scenario.
-- **Route excavation is expensive or disruptive.** Urban areas, paved rights-of-way, and existing utility corridors make reopening a trench prohibitively expensive. Installing a microduct bundle on day one is insurance against future trench costs.
-- **Cable retrieval/replacement is part of the lifecycle plan.** If the network owner plans to upgrade fiber counts as technology evolves (e.g., moving from 96-fiber distribution to 288-fiber as FTTH pass rates grow), microduct makes retrieval and replacement operationally feasible.
-- **Microtrench construction methods are used.** Microduct is the natural cable vessel for microtrench (narrow-slot trench cut) and horizontal directional drilling (HDD) installations where conventional conduit or cable sizes are too large for the bore. Microducts of 10–16 mm OD are compatible with HDD bores at diameters that would exclude conventional conduit. [BICSI OSP-DRD Manual, Ch. 6.5; ANSI/TIA-758-C §6.5]
+- **Future capacity growth is expected but unpredictable.** Build the infrastructure once, blow in cable as demand materializes. The canonical FTTH greenfield build scenario.
+- **Trench excavation is expensive or permits are hard to get.** Urban areas, paved ROWs (rights-of-way — the legal corridor where utilities are allowed to install infrastructure), and existing utility corridors make reopening a trench prohibitively expensive. A microduct bundle on day one is insurance against future trench costs.
+- **Cable retrieval and replacement are part of the network lifecycle plan.** Microduct makes upgrading fiber counts a practical field operation without excavation.
+- **Microtrench construction methods are used.** A microtrench is a narrow-slot cut (15–50 mm wide, 200–400 mm deep) in pavement for microduct installation — much faster and cheaper than a full utility trench. Conventional conduit is too large for microtrench; microducts (10–16 mm OD) are sized for it. Same for HDD (horizontal directional drilling) under roads — microducts fit through bore diameters that would exclude conventional conduit. [BICSI OSP-DRD Manual, Ch. 6.5; ANSI/TIA-758-C §6.5]
 
 Microduct is **not appropriate** when:
-- The route is a one-time, fixed-capacity installation with no foreseeable growth (e.g., a 12-fiber dedicated point-to-point link between two fixed sites)
+- The route is a one-time, fixed-capacity installation with no foreseeable growth (e.g., a 12-fiber dedicated point-to-point link between two fixed structures)
 - The crew lacks air-blowing equipment and training
-- Very short routes (under 100 m) where the infrastructure overhead of microduct installation exceeds the benefit
+- Very short routes (under 100 m) where the setup overhead of microduct blowing equipment exceeds the benefit
 
 ---
 
@@ -170,7 +238,7 @@ Equipment that simultaneously drives cable into a microduct via roller assist an
 Co-extruded silicone compound lining the inner bore of a microduct, reducing the coefficient of friction between cable and duct to enable air-blown installation. Typical COF with SIL: 0.1–0.2 vs. 0.3–0.5 for unlubricated HDPE. [IEC 60794-5, §4.2; AFL OSP Cable Design Guide, §6.1]
 
 **Microtrench**
-A narrow-slot trench (typically 15–50 mm wide, 200–400 mm deep) cut into pavement or soil for microduct installation. Smaller than conventional utility trench, enabling higher-speed installation and reduced excavation cost per linear foot in urban areas. Compatible only with microduct or small-diameter conduit. [ANSI/TIA-758-C §6.5; BICSI OSP-DRD Manual, Ch. 6.5]
+A narrow-slot trench (typically 15–50 mm wide, 200–400 mm deep) cut into pavement or soil for microduct installation. Smaller than a conventional utility trench, enabling higher-speed installation and reduced excavation cost per linear foot in urban areas. Compatible only with microduct or small-diameter conduit. [ANSI/TIA-758-C §6.5; BICSI OSP-DRD Manual, Ch. 6.5]
 
 ---
 
@@ -184,7 +252,7 @@ Back: **0.50–0.60 (50–60%).** Above this ratio, the annular air space is ins
 
 **Card 2**
 Front: A 10 mm ID microduct (0.55 max fill ratio) — what is the maximum cable OD?
-Back: **5.5 mm.** (0.55 × 10 mm = 5.5 mm max cable OD.) [IEC 60794-5, §6.2]
+Back: **5.5 mm.** Formula: max cable OD = fill ratio × duct ID = 0.55 × 10 mm = 5.5 mm. [IEC 60794-5, §6.2]
 
 **Card 3**
 Front: What physical cable property allows retrieval from a microduct?
