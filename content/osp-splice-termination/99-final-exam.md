@@ -370,18 +370,18 @@ Revised correct option:
 
 **Q20.** A 25 km OS2 SMF route has 5 splice closures and 2 hardened connector pairs (at each end). Using BICSI default values (cable max 0.4 dB/km; splice max 0.10 dB; connector max 0.50 dB per pair), calculate the IL_max. A PMLS test measures 11.5 dB at 1310 nm. Does the link pass or fail end-to-end acceptance?
 
-- A) IL_max = 11.0 dB; measured 11.5 dB — link FAILS **[CORRECT]**
-- B) IL_max = 11.5 dB; measured 11.5 dB — link passes (exactly at limit)
+- A) IL_max = 11.5 dB; measured 11.5 dB — link FAILS
+- B) IL_max = 11.5 dB; measured 11.5 dB — link passes (exactly at limit) **[CORRECT]**
 - C) IL_max = 10.5 dB; measured 11.5 dB — link FAILS
 - D) IL_max = 12.0 dB; measured 11.5 dB — link passes
 
 *Source: ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9*
 
 *Rationale:*
-- **A — Correct.** IL_max = (25 × 0.4) + (5 × 0.10) + (2 × 0.50) = 10.0 + 0.5 + 1.0 = **11.0 dB**. Measured IL = 11.5 dB. 11.5 > 11.0 → the link **FAILS** end-to-end acceptance at 1310 nm. OTDR review required to identify the excess-loss event(s). [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
-- **B — Incorrect.** IL_max is 11.0 dB, not 11.5 dB. The calculation: 25 × 0.4 = 10.0; 5 × 0.10 = 0.5; 2 × 0.50 = 1.0 → total 11.5 would require one extra connector or a different cable spec. [ANSI/TIA-526-7 §6]
-- **C — Incorrect.** 10.5 dB: 25 × 0.4 = 10.0 + 5 × 0.10 = 0.5 + 0 connectors = 10.5 — this omits the 2 connector pairs (1.0 dB). [ANSI/TIA-526-7 §6]
-- **D — Incorrect.** 12.0 dB: overstates the budget by 1.0 dB. The correct IL_max is 11.0 dB. [ANSI/TIA-526-7 §6]
+- **A — Incorrect.** IL_max = 11.5 dB is correct, but "FAILS" is the wrong conclusion. ANSI/TIA-526-7 acceptance uses a ≤ rule: measured IL must be ≤ IL_max. Since 11.5 dB ≤ 11.5 dB (exactly at limit), the link passes. [ANSI/TIA-526-7 §6]
+- **B — Correct.** IL_max = (25 × 0.4) + (5 × 0.10) + (2 × 0.50) = 10.0 + 0.5 + 1.0 = **11.5 dB**. Measured IL = 11.5 dB. Per the ≤ acceptance rule: 11.5 ≤ 11.5 → the link **passes** end-to-end acceptance at 1310 nm (exactly at the calculated limit). Note: while the link passes, a margin of 0 dB is operationally tight; good practice is to review the OTDR traces for any event approaching its per-event threshold. [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
+- **C — Incorrect.** 10.5 dB: 25 × 0.4 = 10.0 + 5 × 0.10 = 0.5 + 0 connectors = 10.5 — omits the 2 connector pairs (1.0 dB). [ANSI/TIA-526-7 §6]
+- **D — Incorrect.** 12.0 dB overstates the budget by 0.5 dB. The correct IL_max is 11.5 dB. [ANSI/TIA-526-7 §6]
 
 ---
 

@@ -285,20 +285,15 @@ The OTDR calibration date is 14 months ago. The standard calibration interval fo
 **Q2.** A 22 km OS2 SMF backbone route has 4 splice closures and 2 hardened connector pairs (at the FDH and OLT ends). Calculate the maximum allowable end-to-end insertion loss per ANSI/TIA-526-7 using BICSI-default acceptance values (0.4 dB/km cable max; 0.10 dB/splice; 0.50 dB/hardened connector).
 
 - A) 10.8 dB
-- B) 9.8 dB **[CORRECT]**
+- B) 10.2 dB **[CORRECT]**
 - C) 11.4 dB
 - D) 8.8 dB
 
 *Rationale:*
-- **A — Incorrect.** 10.8 dB: 22 × 0.4 = 8.8 dB cable + 4 × 0.10 = 0.4 dB splices + 2 × 0.50 = 1.0 dB connectors → **10.2 dB** — not 10.8 dB. Let's verify the correct calculation. [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
-- **B — Correct.** Cable: 22 km × 0.4 dB/km = **8.8 dB**. Splices: 4 × 0.10 dB = **0.4 dB**. Connectors: 2 pairs × 0.50 dB/pair = **1.0 dB**. Total: 8.8 + 0.4 + 1.0 = **10.2 dB**. *[Note: Answer B label states 9.8 dB but the correct derivation is 10.2 dB — the question's answer key is corrected here. The correct answer choice by derivation is: 8.8 + 0.4 + 1.0 = 10.2 dB. When taking this exam, apply the formula and derive the answer rather than trusting the option label.]*
-
-  The IL_max formula: IL_max = (length × att_coeff) + (splice_count × IL_splice_max) + (connector_pairs × IL_conn_max) = (22 × 0.4) + (4 × 0.10) + (2 × 0.50) = 8.8 + 0.4 + 1.0 = **10.2 dB**. [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
-
-- **C — Incorrect.** 11.4 dB would require either higher per-km attenuation (e.g., 0.4 × 22 = 8.8, then larger splice or connector allowances) or more connectors. Check: 8.8 + 0.4 + 1.0 = 10.2, not 11.4. [ANSI/TIA-526-7 §6]
-- **D — Incorrect.** 8.8 dB is the cable-only loss before splices and connectors are added. Omitting the splice and connector contributions (0.4 + 1.0 = 1.4 dB) understates the total IL_max. [ANSI/TIA-526-7 §6]
-
-*(Instructor note: Confirm numeric options before use in Moodle; the formula derivation = 10.2 dB is the authoritative answer.)*
+- **A — Incorrect.** 10.8 dB does not match the BICSI-default formula. Check: 22 × 0.4 = 8.8; 4 × 0.10 = 0.4; 2 × 0.50 = 1.0 → total 10.2 dB, not 10.8 dB. [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
+- **B — Correct.** IL_max = (length × att_coeff) + (splice_count × IL_splice_max) + (connector_pairs × IL_conn_max) = (22 × 0.4) + (4 × 0.10) + (2 × 0.50) = **8.8 + 0.4 + 1.0 = 10.2 dB**. [ANSI/TIA-526-7 §6; BICSI OSP-DRD Manual, Ch. 9]
+- **C — Incorrect.** 11.4 dB would require higher per-km attenuation or more connectors than specified. With BICSI defaults: 8.8 + 0.4 + 1.0 = 10.2, not 11.4. [ANSI/TIA-526-7 §6]
+- **D — Incorrect.** 8.8 dB is the cable-only loss. Omitting the splice and connector contributions (0.4 + 1.0 = 1.4 dB) understates the total IL_max. [ANSI/TIA-526-7 §6]
 
 ---
 
