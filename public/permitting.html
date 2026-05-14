@@ -525,15 +525,15 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- Tabs inside settings -->
-      <div style="display:flex;gap:4px;border-bottom:2px solid var(--gray-border);margin-bottom:14px;overflow-x:auto">
-        <button class="settings-tab active" data-tab="jobs" onclick="setStab('jobs')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--portal-color);border-bottom:2px solid var(--portal-color);margin-bottom:-2px">Jobs</button>
-        <button class="settings-tab" data-tab="ptypes" onclick="setStab('ptypes')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Project Types</button>
-        <button class="settings-tab" data-tab="clients" onclick="setStab('clients')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Clients</button>
-        <button class="settings-tab" data-tab="contracts" onclick="setStab('contracts')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Contracts</button>
+      <div role="tablist" aria-label="Settings sections" style="display:flex;gap:4px;border-bottom:2px solid var(--gray-border);margin-bottom:14px;overflow-x:auto">
+        <button class="settings-tab active" role="tab" aria-selected="true" aria-controls="stab-jobs" id="stab-tab-jobs" data-tab="jobs" onclick="setStab('jobs')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--portal-color);border-bottom:2px solid var(--portal-color);margin-bottom:-2px">Jobs</button>
+        <button class="settings-tab" role="tab" aria-selected="false" aria-controls="stab-ptypes" id="stab-tab-ptypes" data-tab="ptypes" onclick="setStab('ptypes')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Project Types</button>
+        <button class="settings-tab" role="tab" aria-selected="false" aria-controls="stab-clients" id="stab-tab-clients" data-tab="clients" onclick="setStab('clients')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Clients</button>
+        <button class="settings-tab" role="tab" aria-selected="false" aria-controls="stab-contracts" id="stab-tab-contracts" data-tab="contracts" onclick="setStab('contracts')" style="background:none;border:none;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted)">Contracts</button>
       </div>
 
       <!-- JOBS pane -->
-      <div id="stab-jobs" class="stab" style="display:block">
+      <div id="stab-jobs" class="stab" role="tabpanel" aria-labelledby="stab-tab-jobs" style="display:block">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Jobs available to the Permitting team. Add a new one to propose it for admin review.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('jobs-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Job</button>
@@ -558,7 +558,7 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- PROJECT TYPES pane -->
-      <div id="stab-ptypes" class="stab" style="display:none">
+      <div id="stab-ptypes" class="stab" role="tabpanel" aria-labelledby="stab-tab-ptypes" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Program categories used when classifying projects.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ptype-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Type</button>
@@ -577,7 +577,7 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- CLIENTS pane -->
-      <div id="stab-clients" class="stab" style="display:none">
+      <div id="stab-clients" class="stab" role="tabpanel" aria-labelledby="stab-tab-clients" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Clients available across the firm.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('client-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Client</button>
@@ -597,7 +597,7 @@ fetch('/api/auth/me', { credentials: 'include' })
       </div>
 
       <!-- CONTRACTS pane -->
-      <div id="stab-contracts" class="stab" style="display:none">
+      <div id="stab-contracts" class="stab" role="tabpanel" aria-labelledby="stab-tab-contracts" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--text-muted)">Contracts under each client.</span>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('contract-add-form').style.display='block'"><i class="fa-solid fa-plus"></i> Propose Contract</button>
@@ -728,6 +728,7 @@ function setStab(name){
     t.style.borderBottom = active ? '2px solid var(--portal-color)' : 'none';
     t.style.fontWeight = active ? '600' : '500';
     t.style.marginBottom = active ? '-2px' : '0';
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
   });
   document.querySelectorAll('.stab').forEach(p=>p.style.display='none');
   document.getElementById('stab-'+name).style.display='block';
