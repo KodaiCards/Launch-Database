@@ -6,16 +6,15 @@
 
 ---
 
-## §1 Lesson Plan — 16 Lessons
+## §1 Lesson Plan — 15 Lessons
 
-**Split rationale (Default #4):** CANONICAL_BRIEF_B clocked L4.2 at 40–45 min minimum — clearances (Rules 230–238) + loading districts (Rules 250–252) + IEEE 1222 sag-tension cannot fit 25 min at quality bar. Split into L4.2a (clearances) and L4.2b (loading + IEEE 1222) preserves depth and deconflicts from T3 L3.3 re-teaching risk. New L4.0 (Default #5) adds one 20-min intro lesson. Total: 16 lessons, ~5.25 hrs.
+**Split rationale (Default #4):** CANONICAL_BRIEF_B clocked L4.2 at 40–45 min minimum — clearances (Rules 230–238) + loading districts (Rules 250–252) + IEEE 1222 sag-tension cannot fit 25 min at quality bar. Split into L4.2a (clearances) and L4.2b (loading + IEEE 1222) preserves depth and deconflicts from T3 L3.3 re-teaching risk. **L4.0 reverted per orchestrator instruction (Default #5 rescinded):** Critique B's argument is correct — a standalone L4.0 risks framework disconnection from the regulatory content; threaded callouts risk author drift. The conflict-resolution framework is instead embedded in the first 3 min of L4.1 (L4.1 extended to 23 min), keeping the framework immediately adjacent to its NESC anchor (the first major standard the framework mediates against TIA-758-C). Total: 15 lessons, ~5.0 hrs.
 
 | # | Title | Scope (telegraphic) | Est. | Intensity | Citation Matrix (Primary / Supporting / RUS) | Interactive Elements | Worked-Example Anchor |
 |---|---|---|---|---|---|---|---|
-| 4.0 | Standards Hierarchy + Conflict Resolution | Controlling-standard framework: more-restrictive governs; AHJ edition governs code compliance; NESC = utility ROW/joint-use; TIA-758-C = customer-owned private easement; federal permits layer over both. Callout-box template for subsequent lessons | 20 min | STANDARD | BICSI OSP-DRD Ch. 2.1 / NESC Rules 010–019; TIA-758-C §1; NFPA 70 Art. 90 / 1751F-630 §2.1 | Drag-drop: route segments into controlling-standard tier (campus / utility pole / federal crossing) | Single route triggering NESC, TIA-758-C, NEC 770, and NWP 12 simultaneously — identify controlling standard per segment |
-| 4.1 | NESC Overview | IEEE Std 5-2023 designation; edition history; state-adoption lag caveat; Parts 1–4 structure; applicability trigger (utility ROW / joint-use = NESC; private easement = TIA-758-C) | 20 min | STANDARD | NESC C2-2023 Rules 010–019 / BICSI OSP-DRD Ch. 2.1 / 1751F-630 §2.1 | Flashcards + scenario (does NESC apply?) | Decision tree: project type → NESC binding or not |
+| 4.1 | NESC Overview + Conflict-Resolution Framework | **First 3 min — Standards Hierarchy:** more-restrictive governs; AHJ edition governs code compliance; NESC = utility ROW/joint-use; TIA-758-C = customer-owned private easement; federal permits layer over both. Callout-box template introduced here and cross-referenced in every subsequent lesson. **Remainder:** IEEE Std 5-2023 designation; edition history; state-adoption lag caveat; Parts 1–4 structure; applicability trigger (utility ROW / joint-use = NESC; private easement = TIA-758-C) | 23 min | STANDARD | BICSI OSP-DRD Ch. 2.1; NESC C2-2023 Rules 010–019 / TIA-758-C §1; NFPA 70 Art. 90; BICSI OSP-DRD Ch. 2.1 / 1751F-630 §2.1 | Drag-drop: route segments into controlling-standard tier (campus / utility pole / federal crossing) + flashcards + scenario (does NESC apply?) | Decision tree: project type → NESC binding or not; single route triggering NESC, TIA-758-C, NEC 770, and NWP 12 simultaneously — identify controlling standard per segment |
 | 4.2a | NESC Part 2 — Clearances | Rules 230–238; Table 232-1 row lookup with road-class specified; 50-ft exception; Rules 230–231 applicability scope; 6-step midspan calc. Cross-ref T3 L3.3 — do NOT re-derive. **Authoring guard:** derive answer independently in all 6 steps; use values ≠ Framing A example | 25 min | HIGH-INTENSITY | NESC C2-2023 Rules 230–238, Tables 232-1, 234-1 / BICSI OSP-DRD Ch. 2.2, 6.3 / 1751F-630 §4 | Drag-drop (clearance arrows on aerial cross-section) + flashcards + quiz | 175-ft span, 30-ft attachment, 3.8-ft sag, road open to commercial traffic — derive midspan height, cite Table 232-1 row (include voltage class), compute margin |
-| 4.2b | NESC Part 2 — Loading Districts + Sag-Tension | Rules 250–252 (Light/Medium/Heavy/Extreme Wind); IEEE Std 1222 §5 sag-tension method. Sidebar: same span run for Medium / Heavy / Extreme Wind side-by-side. Primary district = **Heavy** (DEFAULTED — §3 #2) | 20 min | HIGH-INTENSITY | NESC C2-2023 Rules 250–252 / IEEE Std 1222 §5; BICSI OSP-DRD Ch. 2.2 / 1751F-630 §4 | Flashcards (district → ice/wind loads) + scenario (district choice shifts sag outcome) | Same span as L4.2a — show sag-tension result under Medium, Heavy, Extreme Wind; identify how clearance margin shrinks |
+| 4.2b | NESC Part 2 — Loading Districts + Sag-Tension | Rules 250–252 (Light/Medium/Heavy/Extreme Wind); IEEE Std 1222 §5 sag-tension method. Primary district = **Light** (RESOLVED — §3 #2): Macon, GA inland — NESC IEEE Std 5 designates Light loading for Zone south of ~35°N where ice load is rare. Extreme Wind overlay applies on projects within ~60mi of Atlantic/Gulf coast. Sidebar: Light worked example (primary) + Extreme Wind worked example (coastal-project overlay). Medium/Heavy referenced as one-paragraph sidebar for cross-territory awareness. **Duration trim note:** cross-territory loading coverage condensed to one sidebar paragraph (not full derivations) to keep 20-min slot viable; marquee sag-tension worked example uses Light district parameters. | 20 min | HIGH-INTENSITY | NESC C2-2023 Rules 250–252 / IEEE Std 1222 §5; BICSI OSP-DRD Ch. 2.2 / 1751F-630 §4 | Flashcards (district → ice/wind loads) + scenario (district choice shifts sag outcome) | Same span as L4.2a — show sag-tension result under Light (primary) and Extreme Wind (coastal overlay); identify how clearance margin shifts between districts |
 | 4.3 | NESC Part 3 — Underground Cover | Rules 320–355, Rule 354; TIA-758-C §6.3 as stricter controlling requirement; HDD/direct-bury/conduit cover-depth matrix. Code structure only — defer depth derivation to T3 L3.5 cross-ref | 20 min | HIGH-INTENSITY | 1751F-635 §3 / NESC Rules 320–355, Rule 354; ANSI/TIA-758-C §6.1, §6.3; NEC Ch. 9 | Flashcards + scenario (mixed-method route — select cover per segment) | Route crosses public road (conduit) and open field (direct-bury) — cite controlling standard and value for each |
 | 4.4 | NESC Part 4 — Work Rules | Rules 400–499; approach distances (Rules 420–424); hazard class → rule number mapping. Code-citation only — zero field safety execution (Topic 9). Do not pad with T9 content | 20 min | STANDARD | NESC Rules 400–499, 420–424 / BICSI OSP-DRD Ch. 2.4 / 1751F-630 §2.2 | Flashcards (rule → hazard category) + quiz | Given aerial crew on utility pole + underground crew entering manhole — cite applicable NESC rule for each; refer T9 for procedure |
 | 4.5 | NEC Article 770 — Optical Fiber In-Building | OFN/OFNR/OFNP/OFC/OFCR/OFCP hierarchy; 770.113 listing; 770.24 firestop; 50-ft unlisted PE exception; AHJ edition lag caveat | 25 min | HIGH-INTENSITY | NEC Art. 770 (NFPA 70-2023); 770.113, 770.24 / BICSI OSP-DRD Ch. 2.5 / — | Drag-drop (assign 770 cable type: OSP → riser → horizontal) + flashcards + quiz | RUS aerial ADSS → building entry → vertical riser → horizontal office run — specify cable type at each transition with code citation |
@@ -28,22 +27,21 @@
 | 4.12 | IEC Standards + NEMA 250 Cross-Reference | IEC 60794-1-2 (cable); IEC 61300-3-4 (attenuation); IEC 61753-1 P/O/G-class [**pin edition — UNCONFIRMED EDITION**]; IEC 60529 IP derivation; NEMA 250 ↔ IEC 60529 mapping (NEMA 3R ≠ IP68). TIA-568.3-D is the spec instrument; IEC = datasheet literacy. Gap G1 absorbed. Duration: 30 min | 30 min | STANDARD | IEC 60794-1-2; IEC 61300-3-4; IEC 61753-1; IEC 60529 / ANSI/TIA-568.3-D; NEMA 250; BICSI OSP-DRD Ch. 2.7 / — | Drag-drop (IP rating to environment) + flashcards + quiz | Closure datasheet: NEMA 3R + IP54 — direct-bury requires IP68. Show NEMA 250 ↔ IEC 60529 mapping table; confirm closure fails |
 | 4.13 | OSHA 1910 / 1926 — Code-Reference Overview | 29 CFR 1910 vs. 1926 applicability trigger; Subpart S, §1910.146 confined space; 1926 Subpart K, Subpart V. Zero field safety execution — Topic 9 owns procedures | 20 min | STANDARD | 29 CFR 1910 Subpart S, §1910.146; 29 CFR 1926 Subpart K, Subpart V / BICSI OSP-DRD Ch. 2.8 / 1751F-630 §2.2 | Flashcards (CFR part → trigger) + quiz | Crew leader: confined-space manhole entry + pole approach distances — cite applicable CFR part/section for each; refer T9 |
 | 4.14 | RUS/USDA Bulletins | 1751F-630 (aerial, §1); 1751F-635 (underground, §1); 1715E-110 (design guide); Form 219 approval chain. Deliverable matrix scenario. Duration: 30 min (up from 25 per B §3 + CLAUDE.md RUS-primary framing) | 30 min | HIGH-INTENSITY | 1751F-630 (aerial); 1751F-635 (underground); 1715E-110; Form 219 / BICSI OSP-DRD Ch. 2.9; ANSI/TIA-758-C / All listed | Flashcards + scenario (RUS aerial + conduit project: map bulletin, form, close-out sequence) | 48-count SM aerial + conduit route, RUS funds — bulletin selection, Form 219 triggers, drawing deadline, close-out package |
-| 4.15 | DOT, Railroad, and USACE Permits | 23 CFR Part 645; USACE 33 CFR 320–332; NWP 12 (0.1-acre fill limit; regional suspension caveat — confirm with applicable USACE district); AAR clearances; **NHPA §106 / THPO coordination** (federal nexus via RUS = §106 consultation required before permit). Railroad: short-line (Class III) primary (30–60 day); Class I appendix (90–180 day). Cross-ref T3 L3.8 lead-time table. **Authoring guard:** NWP 12 must include (a) 0.1-acre limit and (b) regional suspension caveat. | 25 min | HIGH-INTENSITY | 23 CFR Part 645; USACE 33 CFR 320–332; AAR Engineering Standards; NHPA §106 / BICSI OSP-DRD Ch. 2.10; ANSI/TIA-758-C §6.1 / 1751F-630 §7, §10 | Flashcards + scenario (state highway + short-line RR + navigable creek: permit matrix + timeline) | Route: state highway (23 CFR 645 ROW permit) + short-line RR (AAR clearance + railroad agreement, 30–60 days) + creek 0.05-acre fill (NWP 12 + PCN + 401 WQC) + RUS funding (NHPA §106 THPO consultation). Class I appendix: 90–180 day contrast. |
+| 4.15 | DOT, Railroad, and USACE Permits | 23 CFR Part 645; USACE 33 CFR 320–332; NWP 12 (0.1-acre fill limit; regional suspension caveat — confirm with applicable USACE district); AAR clearances; **NHPA §106 / THPO coordination:** Federal action triggers Section 106 of NHPA (54 U.S.C. § 306108); coordinate with State Historic Preservation Office (SHPO) and Tribal Historic Preservation Office (THPO) for ROW affecting properties listed/eligible for the National Register. For RUS-funded projects (PSC-typical), this is a hard prerequisite to construction start. Cross-ref Topic 3 L3.1 + L3.11. Railroad: short-line (Class III) primary (30–60 day); Class I appendix (90–180 day). Cross-ref T3 L3.8 lead-time table. **Authoring guards:** NWP 12 must include (a) 0.1-acre limit and (b) regional suspension caveat. NHPA §106 must name SHPO + THPO coordination explicitly and call out RUS-funded = hard prerequisite. | 25 min | HIGH-INTENSITY | 23 CFR Part 645; USACE 33 CFR 320–332; AAR Engineering Standards; NHPA §106 (54 U.S.C. § 306108) / BICSI OSP-DRD Ch. 2.10; ANSI/TIA-758-C §6.1 / 1751F-630 §7, §10 | Flashcards + scenario (state highway + short-line RR + navigable creek: permit matrix + timeline + NHPA consultation trigger) | Route: state highway (23 CFR 645 ROW permit) + short-line RR (AAR clearance + railroad agreement, 30–60 days) + creek 0.05-acre fill (NWP 12 + PCN + 401 WQC) + RUS funding (NHPA §106 SHPO/THPO consultation — hard prerequisite before construction start). Class I appendix: 90–180 day contrast. |
 
-**Duration: ~5.25 hrs. 16 lessons. Intensity: 8 HIGH-INTENSITY / 8 STANDARD.**
+**Duration: ~5.0 hrs. 15 lessons. Intensity: 8 HIGH-INTENSITY / 7 STANDARD.**
 
 ---
 
 ## §2 Final Exam Specification
 
-- **Questions:** 30 (up from 25 — 16 lessons + controlling-standard framework + upgraded recall-only lessons per Default #6)
+- **Questions:** 30 (up from 25 — 15 lessons + controlling-standard framework embedded in L4.1 + upgraded recall-only lessons per Default #6)
 - **Pass threshold:** 21/30 (70%)
 - **Format:** Identical to Topics 1–3 — A–D options, `[CORRECT]` inline, `*Rationale:*` italic block with bold per-option citation sub-bullets, lesson-ordered in source, randomized at Moodle import
 
 | Lesson | Qs | Types |
 |---|---|---|
-| 4.0 Standards Hierarchy | 2 | 1 framework recall + 1 cross-standard scenario |
-| 4.1 NESC Overview | 1 | Applicability trigger scenario |
+| 4.1 NESC Overview + Conflict Framework | 2 | 1 NESC applicability trigger scenario + 1 cross-standard controlling-standard scenario (3-segment route: NESC / TIA-758-C / federal — identify controlling standard per segment) |
 | 4.2a Clearances | 2 | 1 Table 232-1 row recall + 1 calc scenario |
 | 4.2b Loading Districts | 2 | 1 district definition recall + 1 district-choice → sag scenario |
 | 4.3 Underground Cover | 2 | 1 standard-selection scenario + 1 controlling-standard scenario |
@@ -58,11 +56,10 @@
 | 4.12 IEC + NEMA 250 | 2 | 1 IP derivation + 1 NEMA↔IEC cross-validation |
 | 4.13 OSHA 1910/1926 | 2 | 1 applicability trigger recall + 1 cite-CFR-for-condition scenario |
 | 4.14 RUS Bulletins | 2 | 1 bulletin selection + 1 Form 219 deliverable scenario |
-| 4.15 DOT/RR/USACE | 2 | 1 NWP 12 recall (0.1-acre + regional caveat) + 1 multi-crossing timeline |
-| Cross-lesson controlling-standard | 1 | 3-segment route — identify controlling standard per segment |
+| 4.15 DOT/RR/USACE | 2 | 1 NWP 12 recall (0.1-acre + regional caveat) + 1 multi-crossing timeline (includes NHPA §106 THPO consultation trigger) |
 | **Total** | **30** | ~50% recall / ~50% applied scenario |
 
-L4.1 / L4.4 / L4.7 / L4.13 previously had 1 recall Q each — all upgraded to 2 Qs (recall + scenario) per Default #6.
+**Q distribution verified:** L4.1 = 2; L4.2a–L4.15 = 14 lessons × 2 = 28. Total: 30. Cross-standard controlling-standard scenario absorbed into L4.1 Q2 (framework now embedded in L4.1, not a standalone lesson). L4.1 / L4.4 / L4.7 / L4.13 all carry 2 Qs (recall + scenario) per Default #6.
 
 ---
 
@@ -71,17 +68,17 @@ L4.1 / L4.4 / L4.7 / L4.13 previously had 1 recall Q each — all upgraded to 2 
 | # | Decision | Default | Rationale | Flag |
 |---|---|---|---|---|
 | 1 | TIA-526-14 edition suffix | Write `ANSI/TIA-526-14 [confirm edition before publication]` — do NOT pin -14-B or -14-C | Both framings cited -14-B; CANONICAL_BRIEF_B flags -14-C may be current (late 2023). T2 L2.11 uses "-14" without suffix. Pinning an unconfirmed suffix creates cross-topic citation drift. Orchestrator confirms; single global search-replace before ship. | DEFAULTED, awaiting user confirmation — confirm TIA-526-14 current edition; update T2 L2.11 simultaneously |
-| 2 | NESC loading district for L4.2b primary example | **Heavy** | Rural/Southeast RUS service territories typically fall in Heavy. Heavy is the more demanding default — protects learner from over-optimistic conclusions. Medium and Extreme Wind are shown in sidebar so learner sees the full loading-district range. | DEFAULTED, awaiting user confirmation — confirm office primary service territory NESC loading district |
+| 2 | NESC loading district for L4.2b primary example | **Light** (Macon, GA) | RESOLVED by orchestrator. Macon, GA inland — NESC IEEE Std 5 designates Light loading for Zone south of ~35°N where ice load is rare. Extreme Wind overlay applies on projects within ~60mi of Atlantic/Gulf coast (lower SE coastal Georgia / Florida panhandle). Worker A's prior "Heavy" default is superseded. Sidebar shows Light + Extreme Wind worked examples; Medium/Heavy referenced for cross-territory awareness only. | **RESOLVED** — Light (Macon GA inland). Extreme Wind overlay for coastal-zone projects. |
 | 3 | Railroad scenario class for L4.15 | **Short-line (Class III)** primary (30–60 day lead); Class I appendix (90–180 day) | RUS rural routes encounter short-line carriers more frequently than Class I. Both are taught for contrast. Cross-ref T3 L3.8 lead-time table. | DEFAULTED, awaiting user confirmation — confirm whether office has active Class I crossing work warranting elevation to primary |
 | 4 | L4.2 split into two lessons | **YES — L4.2a + L4.2b** | Cannot teach clearances + loading districts + IEEE 1222 at quality bar in 25 min (CANONICAL_BRIEF_B: 40–45 min actual). Split eliminates re-teaching overlap with T3 L3.3 by giving each lesson a distinct code-structure scope. | DEFAULTED — pedagogically unambiguous |
-| 5 | Controlling-standard framework placement | **New L4.0 intro lesson** (not threaded callout boxes) | Standalone lesson codifies the framework before learners encounter individual standards. Threaded callout boxes require every author to implement independently — inconsistent results guaranteed. L4.0 pays off across 15 subsequent lessons and all future topics citing Topic 4. | DEFAULTED — orchestrator to confirm 16-lesson total stays within topic budget |
+| 5 | Controlling-standard framework placement | **Extend L4.1 by 3 min** (not standalone L4.0 lesson) | RESOLVED by orchestrator. Critique B's argument accepted: a standalone L4.0 risks framework disconnection from the regulatory content it mediates; threaded callouts risk author drift. Framework embedded in the first 3 min of L4.1 (extended to 23 min) keeps it immediately adjacent to its NESC anchor — the first major standard the framework needs to mediate against TIA-758-C. Lesson count remains **15**. | **RESOLVED** — extend L4.1 to 23 min; no L4.0 lesson. |
 | 6 | Exam discrimination for recall-only lessons | **Upgrade to 2 Qs per lesson (1 recall + 1 scenario)** + 1 cross-lesson controlling-standard question | Single recall Q on L4.1, L4.4, L4.7, L4.13 produces an exam with a soft bottom — too easy at the million-dollar quality bar. Scenario questions separate understanding from memorization. Total: 30 Qs / 70% threshold. | DEFAULTED — orchestrator to confirm 30-Q exam consistent with Topics 1–3 progression |
 
 ---
 
 ## §4 Authoring Conventions
 
-YAML frontmatter per lesson (`title`, `duration_min`, `topic`, `order`, `bicsi_alignment`, `sources`). Section order invariant: Learning Objectives → Reading Content → Key Terms → Interactive(s) → Final Check (2 pulse questions with full worked expected answers — mandatory, no exceptions) → Glossary Cross-References. Citations inline at sentence end. Q-structure locked: stem → A/B/C/D → `[CORRECT]` inline → `*Rationale:*` italic → bold per-option sub-bullets → one-line rationale + citation → `---`. Pulse format: `**Pulse N.**` → question → `*Expected answer:*` → full worked answer. RUS bulletin cited first when co-applicable with ANSI/TIA. Vendor-agnostic. Math verified before any `[CORRECT]` tag. NESC/TIA-758-C applicability trigger stated once (L4.0/L4.1); cross-referenced thereafter. Railroad lead times always split — never a flat value.
+YAML frontmatter per lesson (`title`, `duration_min`, `topic`, `order`, `bicsi_alignment`, `sources`). Section order invariant: Learning Objectives → Reading Content → Key Terms → Interactive(s) → Final Check (2 pulse questions with full worked expected answers — mandatory, no exceptions) → Glossary Cross-References. Citations inline at sentence end. Q-structure locked: stem → A/B/C/D → `[CORRECT]` inline → `*Rationale:*` italic → bold per-option sub-bullets → one-line rationale + citation → `---`. Pulse format: `**Pulse N.**` → question → `*Expected answer:*` → full worked answer. RUS bulletin cited first when co-applicable with ANSI/TIA. Vendor-agnostic. Math verified before any `[CORRECT]` tag. NESC/TIA-758-C applicability trigger stated once (L4.1); cross-referenced thereafter. Railroad lead times always split — never a flat value.
 
 ---
 
@@ -109,11 +106,27 @@ Topic 4 has **9 HIGH-INTENSITY lessons** (L4.2a, L4.2b, L4.3, L4.5, L4.8, L4.9, 
 
 | Author | Lessons | Rationale |
 |---|---|---|
-| 1 — Standards backbone | L4.0, L4.1, L4.2a, L4.2b, L4.3, L4.4 | NESC family + controlling-standard framework. Needs NESC C2-2023 + IEEE 1222 access. HIGH: L4.2a, L4.2b, L4.3. |
+| 1 — Standards backbone | L4.1, L4.2a, L4.2b, L4.3, L4.4 | NESC family + conflict-resolution framework (embedded in L4.1 opening block). Needs NESC C2-2023 + IEEE 1222 access. HIGH: L4.2a, L4.2b, L4.3. |
 | 2 — NEC / TIA / IEC | L4.5, L4.6, L4.7, L4.8, L4.9, L4.10, L4.11, L4.12 | NEC + TIA + IEC family. Needs TIA-758-C, TIA-568.3-D, TIA-526, IEC 60529, NEMA 250 access. HIGH: L4.5, L4.8, L4.9, L4.11. |
 | 3 — Regulatory + Exam | L4.13, L4.14, L4.15 + Full 30-Q Exam | OSHA + RUS bulletins + federal permits. Needs 29 CFR, RUS bulletin set, NHPA §106, AAR standards. HIGH: L4.14, L4.15. Writes exam because they see all three regulatory families and all cross-topic threads. |
 
 Guard: Authors 1 and 2 deliver Glossary Cross-References blocks before Author 3 writes the exam, so cross-lesson questions have accurate anchors.
+
+---
+
+## Office context (locked)
+
+| Field | Value |
+|---|---|
+| Office name | Launch Fiber Services |
+| Owner | Carter Trantham |
+| Location | Macon, GA |
+| NESC loading district | **Light** (inland Macon; Extreme Wind overlay for projects within ~60mi of Atlantic/Gulf coast) |
+| Primary client | PSC (RUS-program engineering contracts) |
+| Training delivery | Moodle (Railway-hosted), OAuth2 SSO bridge via launch-database |
+| Repo scope | `kodaicards/launch-database` (main app) + `kodaicards/osp-design-training` (OSP SPA, served as `/training/` behind requireAuth) |
+
+This section makes the brief self-contained for future authoring agents. Do not modify without orchestrator instruction.
 
 ---
 
