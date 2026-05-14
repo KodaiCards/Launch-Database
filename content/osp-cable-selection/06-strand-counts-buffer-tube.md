@@ -260,15 +260,29 @@ Label targets for the drag-and-drop activity:
 **Q6.** A 432-fiber OSP feeder cable uses 36 buffer tubes arranged in three binder groups of 12 tubes each. A splice map indicates the target fiber is in "Binder 2 / Tube Aqua / Fiber Green." What is the absolute fiber number in the cable?
 
 - A) Fiber 135
-- B) Fiber 147 **[CORRECT]**
-- C) Fiber 159
-- D) Fiber 171
+- B) Fiber 267
+- C) Fiber 279 **[CORRECT]**
+- D) Fiber 291
 
 *Rationale:*
-- **A — Incorrect.** 135 would place this fiber at position 135 within a 432-fiber cable. Calculating: Binder 2 begins at fiber 145 (after Binder 1's 144 fibers). Aqua is position 12 in the TIA-598-D tube sequence; within the binder, Aqua tube contains fibers 133–144 of that binder group. This arithmetic doesn't resolve to 135. [ANSI/TIA-598-D, Table 2]
-- **B — Correct.** Each binder group contains 12 tubes × 12 fibers = 144 fibers. Binder 1 accounts for fibers 1–144; Binder 2 starts at fiber 145. Within Binder 2: Tube Aqua is position 12 → covers fibers 133–144 within that binder group (145 + 132 = 277... let the position math resolve cleanly): Tube 12 (Aqua) in Binder 2 covers fibers (12-1)×12+1 = 133 through 144 within Binder 2's 144-fiber block. Binder 2 starts at 145. Fiber position 3 (Green) in Tube 12 of Binder 2 = 144 (Binder 1) + (11×12) + 3 = 144 + 132 + 3 = **279**. For a simpler exam-representative framing: The question tests whether learners can apply the two-level address (Binder + Tube + Fiber). The correct answer is the one derived from: [Binder offset] + [Tube offset within binder] + [Fiber position] = 144 + (12-1)×12 + 3 = 279. In the context of the four given choices, B (147) is the answer keyed to a simplified 36-fiber-per-binder interpretation for exam calibration. [ANSI/TIA-598-D, Table 2; BICSI OSP-DRD Manual, Ch. 5.3]
-- **C — Incorrect.** 159 does not align with a standard binder/tube/fiber position calculation under TIA-598-D addressing. [ANSI/TIA-598-D, Table 2]
-- **D — Incorrect.** 171 similarly does not correspond to a valid Binder 2 / Tube 12 / Fiber 3 position under standard TIA-598-D addressing. [ANSI/TIA-598-D, Table 2]
+
+Full derivation from ANSI/TIA-598-D Table 2 color positions and binder group addressing rules:
+
+- **Aqua = position 12** in the TIA-598-D sequence (blue/orange/green/brown/slate/white/red/black/yellow/violet/rose/**aqua**).
+- **Green = position 3** in the TIA-598-D sequence.
+- Each binder group = 12 tubes × 12 fibers per tube = **144 fibers**.
+- **Binder 1** covers absolute fibers 1–144.
+- **Binder 2** starts at absolute fiber 145.
+- Within Binder 2, Tube Aqua is tube position 12. Tubes 1–11 account for 11 × 12 = 132 fibers ahead of it.
+- Fiber Green is fiber position 3 within Tube Aqua.
+- **Absolute fiber number = 144 (Binder 1 offset) + 132 (tubes 1–11 of Binder 2) + 3 (Fiber Green) = 279.**
+
+[ANSI/TIA-598-D, Table 2; ANSI/TIA-598-D, §5; BICSI OSP-DRD Manual, Ch. 5.3]
+
+- **A — Incorrect.** 135 results from calculating the relative position within Binder 2 only — (12−1)×12 + 3 = 135 — without adding the Binder 1 offset of 144 fibers. The question asks for the **absolute** fiber number in the full 432-fiber cable, which requires adding all preceding fibers. [ANSI/TIA-598-D, §5]
+- **B — Incorrect.** 267 results from miscounting Binder 1 as 132 fibers (11×12) instead of the correct 144 fibers (12×12), then adding the correct intra-binder offset: 132 + 132 + 3 = 267. Binder 1 contains all 12 tubes × 12 fibers = 144 fibers, not 11 tubes' worth. [ANSI/TIA-598-D, §5]
+- **C — Correct.** 144 + (11×12) + 3 = 144 + 132 + 3 = **279**. Binder 1 contributes 144 fibers; tubes 1–11 of Binder 2 contribute 132 fibers; Fiber Green (position 3) in Tube Aqua (position 12) is the 3rd fiber in that tube. [ANSI/TIA-598-D, Table 2; ANSI/TIA-598-D, §5; BICSI OSP-DRD Manual, Ch. 5.3]
+- **D — Incorrect.** 291 results from using 12×12 = 144 as the tube offset within Binder 2 instead of 11×12 = 132. The offset for Tube Aqua (position 12) is the count of the 11 **preceding** tubes, not all 12 tubes in the group: 144 + 144 + 3 = 291 overcounts by one tube's worth (12 fibers). [ANSI/TIA-598-D, §5]
 
 ---
 
