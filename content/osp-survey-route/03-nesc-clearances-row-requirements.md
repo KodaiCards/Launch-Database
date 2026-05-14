@@ -118,6 +118,8 @@ Good design practice: maintain at least 2 ft of margin above the NESC minimum cl
 
 **Joint-use (co-location) agreement:** An agreement between two utilities allowing one utility's infrastructure to use the other's pole, conduit, or ROW. Joint-use poles are the most common application: an electric utility owns the pole, and a telecom utility attaches fiber cable under a joint-use agreement that specifies attachment height, loading contribution, and maintenance responsibility. Joint-use attachment positions must comply with NESC Rule 238. [NESC C2-2023, Rule 238; BICSI OSP-DRD Manual, Ch. 3.3]
 
+Before a new joint-use attachment can be made, the pole owner performs a make-ready analysis to determine whether the existing pole can structurally carry the additional load. Make-ready costs for any required hardware relocations or pole reinforcements are typically borne by the attaching party and generally range from $500 to $2,000 per pole, though complex rearrangements can exceed this. NESC Rule 261 requires a pole loading analysis before any new attachment that changes the load distribution; if the existing pole cannot support the added load within its class rating, it must be replaced — again at the attaching party's expense. In addition to make-ready costs, annual FCC pole attachment fees apply on poles owned by investor-owned utilities subject to FCC jurisdiction; these are calculated per the FCC formula and typically run approximately $10 to $20 per pole per year. Budget planning for joint-use routes must account for both the up-front make-ready cost and the ongoing attachment fee obligation. [NESC C2-2023, Rules 238, 261; BICSI OSP-DRD Manual, Ch. 3.3]
+
 **Permitted ROW vs. owned ROW:**
 
 | Type | Route holder's rights | Construction access |
@@ -170,7 +172,7 @@ Outright government ownership of the land in a road or utility corridor. Utility
 A recorded right to use a strip of private property for a specified utility purpose. The property owner retains title; the easement holder has construction and maintenance access within the easement strip. Fiber cable requires a telecommunications easement — electric or pipeline easements do not automatically cover fiber. [RUS Bulletin 1751F-630 §4]
 
 **Joint-use (co-location) agreement**
-An agreement between utilities permitting attachment of one utility's infrastructure to another's poles, conduit, or ROW. Joint-use pole attachments must comply with NESC Rule 238 communication-space position and horizontal clearance requirements. [NESC C2-2023, Rule 238]
+An agreement between utilities permitting attachment of one utility's infrastructure to another's poles, conduit, or ROW. Joint-use pole attachments must comply with NESC Rule 238 communication-space position and horizontal clearance requirements. Before attachment, a make-ready analysis is required per NESC Rule 261; make-ready costs ($500–$2,000/pole typical) and annual FCC attachment fees (~$10–$20/pole/yr) are borne by the attaching party and must be budgeted before the route is committed. [NESC C2-2023, Rules 238, 261]
 
 **Communication space**
 The designated vertical zone on a joint-use utility pole where communication conductors (telephone, cable TV, fiber) must be installed per NESC. Below supply conductors, above minimum ground clearance. Position and separation distances governed by NESC Rule 238. [NESC C2-2023, Rule 238]
