@@ -49,7 +49,7 @@ NESC C2-2023 divides the continental United States into three primary loading di
 | **Medium** | 0.25 in. (6.35 mm) | 4 psf | 15°F |
 | **Heavy** | 0.50 in. (12.7 mm) | 4 psf | 0°F |
 
-An additional **Extreme Wind** district applies in coastal areas where hurricane-force winds drive the design; the heavy-district ice load is replaced by a higher wind pressure. Check the NESC loading district map (available as a free supplement to NESC) for the specific geographic location of the route.
+An additional **Extreme Wind** district applies in coastal areas where hurricane-force winds drive the design; the heavy-district ice load is replaced by a higher wind pressure. Check the NESC loading district map (available as a free supplement to NESC) for the specific geographic location of the route. For routes in the SE Atlantic or Gulf Coast states, Extreme Wind is the primary governing district — do not assume the Heavy district applies without confirming the map.
 
 **Why loading district matters:** The same cable strung on the same poles at the same tension produces different sag in different loading districts. Heavy ice accumulation adds significant weight to the cable per unit length, increasing sag. Cold temperature (0°F) also increases cable tension (cables contract at lower temperatures, which raises tension and decreases sag — a counteracting effect, but ice weight dominates for most cable types). The manufacturer's sag-tension tables provide sag values for each NESC loading district and temperature condition; the design engineer uses the appropriate table column for the route geography.
 

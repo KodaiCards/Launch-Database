@@ -94,7 +94,7 @@ Fatal-flaw categories for OSP routes:
 | Flaw category | Data source | Result if identified at desk |
 |---|---|---|
 | Protected wetland across alignment | USFWS NWI layer; FEMA FIRM | Realign to avoid; or plan Section 404 permit and add 8–16 weeks to schedule |
-| Railroad ROW across alignment | DOT rail layer; county GIS | Identify railroad owner; initiate permit process 90 days before construction |
+| Railroad ROW across alignment | DOT rail layer; county GIS | Identify railroad owner; initiate permit process 90–180 days before construction (short-line railroads); 6–12 months (Class I: BNSF, CSX, NS, UP) — confirm current lead time with the specific carrier before schedule commitment |
 | Private easement conflict | County parcel; title search | Renegotiate easement or realign |
 | Depth to rock < 12 in. on planned conduit segment | NRCS WSS | Budget rock saw; or reroute to avoid |
 | 100-year floodplain on planned burial route | FEMA FIRM | Increase burial depth; obtain floodplain permit; evaluate aerial alternative |
