@@ -63,7 +63,9 @@ The most important single dimension in splice tray management is the minimum ben
 | OS2 SMF, 250 µm primary coating (bare fiber) | ≥ 30 mm | ANSI/TIA-758-C §7.2; BICSI OSP-DRD Manual, Ch. 8.2 |
 | OS2 SMF with 900 µm tight-buffer | ≥ 30 mm | ANSI/TIA-758-C §7.2 |
 | 50/125 µm OM3/OM4 MMF, 250 µm | ≥ 30 mm | ANSI/TIA-758-C §7.2 |
-| Ribbon fiber (12F), flat array | ≥ 37.5 mm (wider path needed for flat array) | Corning Splice Tray Guide, §3.1 |
+| Ribbon fiber (12F), flat array | ≥ 37.5 mm (Corning product specification; see note) | Corning Splice Tray Guide, §3.1 |
+
+*Ribbon MBR note:* The 37.5 mm ribbon minimum bend radius is from the Corning Splice Tray Guide and is product-specific. Other ribbon splice tray manufacturers (Fujikura, CommScope, AFL) may specify 40–50 mm minimum bend radius for 12-fiber ribbon flat arrays. Always verify the minimum bend radius in the tray manufacturer's installation guide for the specific tray being used — do not apply the Corning figure universally to non-Corning trays [Corning Splice Tray Guide, §3.1; BICSI OSP-DRD Manual, Ch. 8.2].
 
 **Why 30 mm matters.** When a glass fiber is bent, the outer surface of the cladding experiences tensile stress and the inner surface experiences compressive stress. For bends tighter than the fiber's minimum bend radius, two effects occur: (1) macrobend attenuation — light guided by total internal reflection "leaks" through the cladding at the bend point, increasing insertion loss; (2) fatigue — cyclic bending at sub-minimum radius generates fatigue cracks in the cladding over thousands of thermal cycles, eventually producing fiber breakage [BICSI OSP-DRD Manual, Ch. 8.2; ANSI/TIA-758-C §7.2].
 
@@ -123,6 +125,21 @@ This sequential mapping allows a technician with the cable's color-code sequence
 **Tray labeling.** Each tray should be labeled with the tube(s) it contains and the cable route(s) being spliced. Standard format: `[Cable A ID] Tube [n] → [Cable B ID] Tube [n]`. Labels should be printed or machine-written, not hand-written in pencil; gel and condensation in closures degrade pencil markings within months [BICSI OSP-DRD Manual, Ch. 8.2].
 
 **Exception: express fibers (non-spliced pass-throughs).** Some fibers in a feeder cable may pass through the closure location without being spliced — they are routing to a downstream terminal. These express fibers must be coiled and stored in a buffer-tube management loop inside the closure without being broken out of their buffer tube. They do not enter a splice tray. Their tube is identified with a "through" label at the tube management bracket [BICSI OSP-DRD Manual, Ch. 8.2].
+
+### Fiber Mapping Documentation
+
+A sequentially assigned tray map is self-explanatory to a technician who knows the cable's color-code convention. But that convention alone does not preserve the as-built state across re-entries, crew changes, and years of plant operation. Every closure splice event must be recorded in a **closure manifest document** that accompanies the as-built record for the cable route [BICSI OSP-DRD Manual, Ch. 8.2; ANSI/TIA-758-C §7.2]:
+
+**Minimum closure manifest contents:**
+- **Closure ID** — cable route identifier + closure sequence number (e.g., Route 12A, Closure 3)
+- **Cable identities** — cable designation and direction (e.g., "A-side: Route 12A feeder, toward CO"; "B-side: Route 12A feeder, toward Terminal 7")
+- **Tube-to-tray mapping** — which buffer tube is on which tray, including color codes per ANSI/TIA-598-D
+- **Express fiber identification** — which tubes are through-routed (not spliced) and their destination terminal
+- **Splice date and crew** — date of initial splicing; crew ID or technician name
+- **Re-entry log** — each subsequent re-entry: date, crew, work performed, fibers affected
+- **Document location** — where the hard-copy and/or digital record is filed (OSP records system, GIS database, paper record in the closest accessible location)
+
+Labels inside the closure (tray labels) capture the mapping for in-the-field access; the closure manifest is the permanent record that survives re-entries, crew changes, and the 20–40 year design life of the plant. A closure with correctly labeled trays but no manifest document cannot be re-entered by a different crew without risk of splicing to the wrong fibers [BICSI OSP-DRD Manual, Ch. 8.2].
 
 ### Microbend-Induced Attenuation from Tray Management Errors
 
