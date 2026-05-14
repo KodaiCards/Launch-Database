@@ -161,7 +161,7 @@ if (PORTAL_MODE) {
 // portal routes can read req.user / req.cookies. Express middleware runs in
 // registration order, so a route registered before authMiddleware never
 // sees req.user.
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal } = require('./auth');
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, signToken, verifyToken, rateLimitOk } = require('./auth');
 installAuthRoutes(app, pool);
 
 // Customer scope guard. Per auth.js's role doc: "Customers are external —
@@ -700,6 +700,15 @@ app.get('/api/config/mapbox', requireAuth(), (req, res) => {
   res.json({ token, available: !!token });
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OAUTH2 SSO BRIDGE — Authorization Code flow for Moodle auth_oauth2 plugin.
+// Three endpoints: GET /oauth2/authorize, POST /oauth2/token, GET /oauth2/userinfo.
+// Secrets via env vars: OAUTH2_CLIENT_ID, OAUTH2_CLIENT_SECRET,
+//   OAUTH2_ALLOWED_REDIRECT_URIS (comma-separated).
+// See routes/oauth2.js for full implementation notes.
+// ─────────────────────────────────────────────────────────────────────────────
+require('./routes/oauth2')(app, pool, { requireAuth, signToken, verifyToken, rateLimitOk });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API ERROR HANDLER — catches anything thrown out of an /api/* route AND

@@ -636,6 +636,7 @@ module.exports = {
   requireManagerOrAdmin,
   signToken,
   verifyToken,
+  rateLimitOk,
   teamForRole,
   teamsForUser,
   canAccessPortal,
