@@ -193,6 +193,13 @@ app.use((req, res, next) => {
 // canAccess: receives the user object from req.user and returns true/false.
 // canAccessPortal(user, portalMode) from auth.js is the source of truth for
 // splice/design/permitting access (it uses teamsForUser internally).
+
+// Training tile URL: defaults to the bundled Vite SPA at /training/.
+// When Moodle is live, set TRAINING_URL=https://training.launchfiber.com
+// in Railway Variables on the launch-database service; the tile will redirect
+// there automatically. No code change needed — just the env var.
+const TRAINING_URL = process.env.TRAINING_URL || '/training/';
+
 const PORTAL_DEFS = [
   {
     id: 'admin',
@@ -242,7 +249,7 @@ const PORTAL_DEFS = [
   {
     id: 'training',
     audience: 'employee',
-    url: '/training/',
+    url: TRAINING_URL,
     name: 'OSP Training',
     icon: 'graduation-cap',
     description: 'OSP design training modules, references, and practice exercises.',
