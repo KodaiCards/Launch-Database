@@ -31,9 +31,36 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     let where = [];
     let params = [];
     let i = 1;
-    if (status) { where.push(`p.status=$${i++}`); params.push(status); }
+    // Track which param slot `status` occupies so include_completed can
+    // widen the clause later without rebuilding the whole where array.
+    let statusParamSlot = null;
+    if (status) { statusParamSlot = i; where.push(`p.status=$${i++}`); params.push(status); }
     if (client_id) { where.push(`p.client_id=$${i++}`); params.push(client_id); }
     if (type) { where.push(`p.project_type=$${i++}`); params.push(type); }
+
+    // Phase 1 (timeclock-picker wave): opt-in leaf-only filter.
+    // Accepted values: 'true', '1', 'on' (case-insensitive). Anything else
+    // (e.g. 'yes', 'false', absent) leaves the default "return everything"
+    // behaviour intact so existing callers (admin tree, design picker, etc.)
+    // are completely unaffected.
+    // SQL form: IS NOT TRUE (not = FALSE) — handles nullable is_rollup rows.
+    const leavesOnly = ['true','1','on'].includes(String(req.query.leaves_only ?? '').toLowerCase());
+    if (leavesOnly) { where.push(`p.is_rollup IS NOT TRUE`); }
+
+    // Phase 1 (timeclock-picker wave): opt-in include-completed flag for the
+    // edit-entry / back-fill context. When present AND a status=active filter
+    // was also specified, OR in completed rows so back-fill against a completed
+    // project is possible. When present with no status filter, no extra clause
+    // is needed (all statuses already returned). When absent, behaviour is
+    // identical to before this change.
+    const includeCompleted = ['true','1','on'].includes(String(req.query.include_completed ?? '').toLowerCase());
+    if (includeCompleted && statusParamSlot !== null) {
+      // Widen the status equality to also include 'completed'.
+      const clauseIdx = where.findIndex(c => c === `p.status=$${statusParamSlot}`);
+      if (clauseIdx !== -1) {
+        where[clauseIdx] = `(p.status=$${statusParamSlot} OR p.status='completed')`;
+      }
+    }
 
     // Perf (Wave 3): default LIMIT 1000 to prevent full-table serialisation
     // on large deployments. Use ?limit=N (max 5000) and ?offset=N for

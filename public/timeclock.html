@@ -454,6 +454,12 @@ let activeSession = null;
 let currentWeekOffset = 0;
 let weekData = null;
 let projectsCache = [];
+// Separate cache for edit-entry context — includes completed projects for back-fill.
+// Populated during init() alongside projectsCache.
+let projectsCacheWithCompleted = [];
+// Tracks whether the entry modal was opened in "edit" mode (true) vs "new" mode
+// (false). entryClientChanged() uses this to decide which cache to draw from.
+let _entryModalIsEdit = false;
 let jobsCache = {};  // project_id → [{id, name, default_billing_type, default_rate}]
 let timerInterval = null;
 let allConcentrators = [];
@@ -653,9 +659,27 @@ async function signOut(){
 // ─── PROJECT + JOB LOADERS ──────────────────────────────────────────────────
 async function loadProjects(){
   try {
-    projectsCache = await api('/api/projects?status=active');
+    // Phase 1 (timeclock-picker wave): ?leaves_only=true filters out rollup
+    // containers server-side; ?limit=all bypasses the 1000-row default cap so
+    // large project lists aren't silently truncated; status=active keeps
+    // completed projects hidden from clock-in / switch-project pickers.
+    // See also loadProjectsForEdit() which uses include_completed=true for
+    // the back-fill / edit-entry context (Carter Q4 lock).
+    projectsCache = await api('/api/projects?status=active&leaves_only=true&limit=all');
   } catch(e){
     projectsCache = [];
+  }
+}
+// Separate cache for the edit-entry modal — includes completed projects so
+// back-fill against a completed project is possible (Carter Q4 lock).
+// Declaration is at the top of the module with projectsCache.
+async function loadProjectsForEdit(){
+  try {
+    // include_completed=true widens the status=active filter to also include
+    // status='completed'; leaves_only=true and limit=all apply as above.
+    projectsCacheWithCompleted = await api('/api/projects?status=active&leaves_only=true&limit=all&include_completed=true');
+  } catch(e){
+    projectsCacheWithCompleted = [];
   }
 }
 async function loadJobsForProject(projectId){
@@ -684,9 +708,17 @@ async function loadJobsForProject(projectId){
 function populateProjectSelect(selectEl, selectedId, opts){
   if (!selectEl) return;
   opts = opts || {};
+  // useCompleted: when true, draw from projectsCacheWithCompleted (edit-entry
+  // back-fill context) instead of the active-only projectsCache.
+  const srcCache = opts.useCompleted ? projectsCacheWithCompleted : projectsCache;
   const html = ['<option value="">— Select project —</option>'];
   // Show only leaf projects (no children); rollups are folders.
-  let leaves = projectsCache.filter(p => !p.is_rollup);
+  // Primary guard: !p.is_rollup (server already filters with IS NOT TRUE, but
+  // the client-side guard remains for defence-in-depth and Phase 2 compat).
+  // Secondary guard: !(Number(p.child_count) > 0) — undefined-safe:
+  //   Number(undefined) → NaN; NaN > 0 → false; !false → true (leaf-safe).
+  //   Number('0') → 0; 0 > 0 → false; !false → true.  Number(2) → 2; 2 > 0 → true; !true → false (excluded).
+  let leaves = srcCache.filter(p => !p.is_rollup && !(Number(p.child_count) > 0));
   if (opts.client_id) {
     leaves = leaves.filter(p => String(p.client_id) === String(opts.client_id));
   }
@@ -1072,6 +1104,7 @@ function _openEntryModalCommon() {
 }
 
 function openManualEntryModal(){
+  _entryModalIsEdit = false;  // New entries don't need the completed-projects cache.
   document.getElementById('entry-modal-title').textContent = 'Add Time Entry';
   document.getElementById('entry-id').value = '';
   document.getElementById('entry-pending-request-id').value = '';
@@ -1090,17 +1123,22 @@ function openManualEntryModal(){
 function openEditEntryModal(id){
   const e = weekData?.entries.find(x => String(x.id) === String(id));
   if (!e){ alert('Entry not found in current view'); return; }
+  _entryModalIsEdit = true;  // Signal entryClientChanged() to use completed cache.
   document.getElementById('entry-modal-title').textContent = 'Edit Time Entry';
   document.getElementById('entry-id').value = e.id;
   document.getElementById('entry-pending-request-id').value = e.pending_project_request_id || '';
   document.getElementById('entry-date').value = String(e.entry_date).slice(0,10);
   document.getElementById('entry-hours').value = e.hours;
   document.getElementById('entry-notes').value = e.notes || '';
-  // Pre-select the entry's client, then populate project filtered to that client.
-  const proj = projectsCache.find(p => String(p.id) === String(e.project_id));
+  // Pre-select the entry's client; search the completed-inclusive cache so a
+  // project that has since been marked completed is still found (Carter Q4 lock).
+  const editCache = projectsCacheWithCompleted.length ? projectsCacheWithCompleted : projectsCache;
+  const proj = editCache.find(p => String(p.id) === String(e.project_id));
   const cid = proj?.client_id || '';
   populateClientSelect(document.getElementById('entry-client'), cid);
-  populateProjectSelect(document.getElementById('entry-project'), e.project_id, { client_id: cid || null });
+  // useCompleted: true surfaces completed projects in the edit-entry picker for
+  // back-fill against completed work.
+  populateProjectSelect(document.getElementById('entry-project'), e.project_id, { client_id: cid || null, useCompleted: true });
   populateJobSelect(document.getElementById('entry-job'), e.project_id, null);
   document.getElementById('entry-pending-banner').style.display = e.pending_project_request_id ? '' : 'none';
   document.getElementById('entry-edit-warning').style.display = '';
@@ -1125,9 +1163,11 @@ async function entryProjectChanged(){
 }
 
 // Client filter narrows the project list. Empty resets to all leaves.
+// In edit mode (_entryModalIsEdit) pass useCompleted:true so completed
+// projects remain visible for back-fill.
 function entryClientChanged(){
   const cid = document.getElementById('entry-client').value || null;
-  populateProjectSelect(document.getElementById('entry-project'), null, { client_id: cid });
+  populateProjectSelect(document.getElementById('entry-project'), null, { client_id: cid, useCompleted: _entryModalIsEdit });
   populateJobSelect(document.getElementById('entry-job'), null);
 }
 
@@ -1277,7 +1317,9 @@ async function deleteEntry(){
 // ─── INITIAL LOAD + POLLING ─────────────────────────────────────────────────
 async function init(){
   await loadCurrentUser();
-  await loadProjects();
+  // Load both caches in parallel: active-only for clock-in/switch pickers,
+  // active+completed for the edit-entry back-fill picker (Carter Q4 lock).
+  await Promise.all([loadProjects(), loadProjectsForEdit()]);
   await loadActiveSession();
   await loadWeek();
   // Load concentrators for the Request New Project area dropdown

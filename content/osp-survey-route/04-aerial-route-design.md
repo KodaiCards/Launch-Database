@@ -15,6 +15,31 @@ sources:
 
 # Aerial Route Design — Pole Loading, Span Lengths, and Midspan Height
 
+## In Plain English
+
+When you string a fiber cable between two poles, it sags in the middle — like a jump rope held between two kids. This lesson is about figuring out exactly how much that cable will sag, whether it sags too far (low enough to hit a truck), and how to choose pole spacing so the cable stays safely above the road. You'll learn that ice and wind make the cable heavier and saggier, that the cable itself has a maximum tension it can handle before it breaks, and that poles must be strong enough to resist the forces those cables pull on them. By the end, you'll be able to look at a pole spacing on a drawing and tell whether it works or needs to be fixed.
+
+---
+
+## Acronym Quick-Reference
+
+Every term below is defined in full when it first appears in the reading. This table is your cheat sheet — come back to it any time.
+
+| Acronym | Stands For | What It Means in Plain English |
+|---|---|---|
+| **NESC** | National Electrical Safety Code | The national rulebook for utility poles and overhead wires — sets the minimum height cables must hang above roads |
+| **OSP** | Outside Plant | Fiber network infrastructure that lives outdoors, between buildings (poles, buried cable, vaults) |
+| **RUS** | Rural Utilities Service | USDA program that funds rural telecom and electric infrastructure — sets construction standards for program work |
+| **IEEE** | Institute of Electrical and Electronics Engineers | Engineering standards organization; IEEE 1222 covers self-supporting aerial cable design |
+| **ADSS** | All-Dielectric Self-Supporting | A fiber cable strong enough to hang on its own between poles — no metal wire needed |
+| **EDS** | Every Day Stress | The routine pull force on a cable at normal temperature, as a percentage of how hard you could pull before it breaks |
+| **RTS** | Rated Tensile Strength | The maximum pull force (in pounds) a cable can handle before its strength member fails |
+| **BICSI** | Building Industry Consulting Service International | Professional organization for telecom/IT design; publishes the OSP-DRD design reference manual |
+| **AASHTO** | American Association of State Highway and Transportation Officials | Sets clearance standards for cables crossing over roads |
+| **psf** | pounds per square foot | Unit for measuring wind pressure (like wind speed translated into a push force on flat surfaces) |
+
+---
+
 ## Learning Objectives
 
 Upon completing this lesson, the learner will be able to:
@@ -28,9 +53,16 @@ Upon completing this lesson, the learner will be able to:
 
 ## Reading Content
 
-### The Engineering Problem: Cable Hanging Between Poles
+### The Core Problem: Cable Hanging Between Poles
 
-Every aerial OSP fiber cable must satisfy two competing requirements: it must be strung tight enough to maintain NESC clearance under maximum ice and wind load, and loose enough (low enough tension) to prevent fatigue failure over a 30+ year service life. These requirements pull in opposite directions. Higher tension means less sag — better clearance at the cost of fatigue. Lower tension means more sag — longer service life at the cost of clearance margin. Aerial route design is the discipline of finding span lengths and attachment heights where both requirements are met simultaneously.
+**Picture a garden hose stretched between two fence posts.** If you hold the ends tight, the hose hangs nearly flat. If you let it go slack, it droops way down. Now imagine a truck has to drive under that hose — you need it to stay above a certain height so the truck doesn't hit it.
+
+That's exactly the engineering problem here. A fiber cable hung between poles must:
+
+1. **Not hang too low** — if it sags too close to the road, vehicles hit it (a clearance problem)
+2. **Not be pulled too tight** — a cable stretched too hard will fatigue and break over years of service (a tension problem)
+
+These two requirements fight each other. Tighten the cable → less sag, more clearance, but higher tension → shorter lifespan. Loosen the cable → more sag, less clearance, but lower tension → longer lifespan. Aerial route design is the discipline of finding pole spacings and attachment heights where both requirements are met at the same time.
 
 This analysis is governed by four NESC sections and the manufacturer's sag-tension tables for the specific cable:
 
@@ -39,135 +71,249 @@ This analysis is governed by four NESC sections and the manufacturer's sag-tensi
 - **NESC Rule 261:** Defines the pole loading analysis requirements (the structural target)
 - **NESC Rule 230:** Defines the general loading requirements for aerial conductors
 
-### NESC Loading Districts
+---
 
-NESC C2-2023 divides the continental United States into three primary loading districts, each defined by the combination of radial ice thickness and horizontal wind pressure that represent the design extreme for that geography. [NESC C2-2023, Rules 250–251]
+### NESC Loading Districts: How Much Ice and Wind Must Your Cable Survive?
+
+**Think of a loading district like a weather severity zone.** The United States is divided into three zones based on how bad the weather gets — how thick the ice gets on cables in winter, and how hard the wind blows. The heavier the ice and wind, the more the cable weighs and the more it sags.
+
+NESC C2-2023 divides the continental United States into three primary loading districts:
 
 | Loading district | Radial ice thickness | Wind pressure | Ambient temperature |
 |---|---|---|---|
-| **Light** | 0 in. | 9 psf (pounds per square foot) | 60°F |
+| **Light** | 0 in. (no ice) | 9 psf (pounds per square foot) | 60°F |
 | **Medium** | 0.25 in. (6.35 mm) | 4 psf | 15°F |
 | **Heavy** | 0.50 in. (12.7 mm) | 4 psf | 0°F |
 
-An additional **Extreme Wind** district applies in coastal areas where hurricane-force winds drive the design; the heavy-district ice load is replaced by a higher wind pressure. Check the NESC loading district map (available as a free supplement to NESC) for the specific geographic location of the route. For routes in the SE Atlantic or Gulf Coast states, Extreme Wind is the primary governing district — do not assume the Heavy district applies without confirming the map.
+**What "radial ice thickness" means:** Imagine the cable as a pipe. Ice builds up all the way around it — the radial thickness is how thick that ice ring gets. A 0.50-inch radial ice coating means the cable looks like a small pipe surrounded by a half-inch shell of ice on all sides. That ice adds significant weight per foot.
 
-**Why loading district matters:** The same cable strung on the same poles at the same tension produces different sag in different loading districts. Heavy ice accumulation adds significant weight to the cable per unit length, increasing sag. Cold temperature (0°F) also increases cable tension (cables contract at lower temperatures, which raises tension and decreases sag — a counteracting effect, but ice weight dominates for most cable types). The manufacturer's sag-tension tables provide sag values for each NESC loading district and temperature condition; the design engineer uses the appropriate table column for the route geography.
+An additional **Extreme Wind** district applies in coastal areas where hurricane-force winds drive the design; the heavy-district ice load is replaced by a higher wind pressure. Check the NESC loading district map for the specific geographic location of the route. For routes in the SE Atlantic or Gulf Coast states, Extreme Wind is the primary governing district — do not assume the Heavy district applies without confirming the map.
 
-### The Catenary: Sag, Tension, and Cable Weight
+**Why loading district matters:** The same cable strung on the same poles at the same tension produces different sag in different loading districts. Heavy ice accumulation adds significant weight to the cable per unit length, increasing sag. Cold temperature (0°F) also increases cable tension (cables contract in cold, which raises tension and decreases sag — a counteracting effect, but ice weight dominates for most cable types). The manufacturer's sag-tension tables provide sag values for each NESC loading district and temperature condition; the design engineer uses the appropriate table column for the route geography. [NESC C2-2023, Rules 250–251]
 
-A cable suspended between two attachment points hangs in a shape called a catenary. For engineering purposes, when the sag is less than approximately 10% of the span length (which covers most OSP route spans), the catenary is well-approximated by a parabola. The key sag-tension relationship is:
+---
 
-**S = w × L² / (8 × H)**
+### The Sag Formula: How Far Does the Cable Droop?
 
-Where:
-- **S** = sag at midspan (ft or m)
-- **w** = cable weight per unit length including ice load (lb/ft or N/m)
-- **L** = span length (ft or m)
-- **H** = horizontal component of tension at midspan (lb or N)
+**Before the formula, here's the concept.** A cable hanging between two poles takes the shape of a curve called a catenary. For most practical pole spacings (where the sag is less than about 10% of the span length), this curve is close enough to a simple parabola that we can use a simple algebraic formula instead of complicated calculus.
 
-Rearranging to find maximum span length given a required clearance:
+The formula tells you: given the cable's weight, the distance between poles, and how tight the cable is strung — how far will the cable hang down below the attachment points at the midpoint of the span?
 
-**L_max = √(8 × H × S_max / w)**
+**The sag-tension formula:**
 
-Where S_max is the maximum allowable sag before NESC clearance is violated:
+> S = w × L² / (8 × H)
 
-**S_max = Attachment height − Required clearance**
+**Every term, defined with units:**
 
-This formula reveals the design levers available to the route engineer:
-- **Increase attachment height** → increases S_max → longer spans possible
-- **Increase tension H** → directly increases maximum span
-- **Heavier cable (higher w)** → reduces maximum span for a given tension
-- **Shorter required clearance** → only possible over non-vehicle-accessible terrain per Rule 232
+- **S** = sag at midspan, measured in **feet** — this is how far the lowest point of the cable hangs below an imaginary straight line drawn from one attachment point to the other
+- **w** = cable weight per foot of length, in **lb/ft** (pounds per foot) — includes the weight of any ice coating during maximum load conditions
+- **L** = span length in **feet** — the horizontal distance from one pole to the next; **L²** means L multiplied by itself (L "squared")
+- **8** = a mathematical constant that comes from parabola geometry — it is always 8, no matter the cable, no matter the span; it never changes
+- **H** = horizontal tension in the cable at midspan, in **pounds** — the pull force along the cable direction
 
-In practice, the design engineer does not manually derive sag from first principles — manufacturer sag-tension tables provide sag values for specific cable types, span lengths, and loading conditions. The formula is used to verify that a proposed attachment height and span combination satisfies clearance at the tabulated sag value. [IEEE 1222 §5; BICSI OSP-DRD Manual, Ch. 6.3]
+**Sanity check on the formula's behavior:**
+- If you make the span longer (bigger L), L² gets much bigger, so sag S goes up. Makes sense — longer spans sag more.
+- If you pull the cable tighter (bigger H), the denominator gets bigger, so sag S goes down. Makes sense — tighter cable sags less.
+- If the cable weighs more per foot (bigger w), sag S goes up. Makes sense — heavier cable droops more.
 
-### Every Day Stress and Long-Term Tension Management
+**Rearranged to find maximum span:** The more useful form for design is rearranging the formula to solve for the maximum span length you can use before the cable sags too far:
 
-As introduced in Topic 1 (Cable Selection), **Every Day Stress (EDS)** is the sustained operating tension at average everyday temperature (typically 15°C / 59°F), expressed as a percentage of the cable's Rated Tensile Strength (RTS). NESC and IEEE 1222 recommend EDS ≤ 20–25% RTS. [IEEE 1222 §5.2; NESC C2-2023, Rule 230H]
+> L_max = √(8 × H × S_max / w)
 
-EDS matters for route design because it determines the stringing tension — the tension at which the cable is attached during installation. The installer targets a specific sag at stringing temperature that will produce the correct EDS. If the cable is strung too tight (low sag at stringing temperature), EDS is too high and the cable is at risk of fatigue failure and insufficient clearance margin. If strung too loose (excessive sag at stringing temperature), EDS is too low and ice loading can pull tension above safe limits.
+Where **S_max** is the maximum sag you can allow before the cable violates NESC clearance:
 
-**Creep:** Over years of service, synthetic strength members (aramid yarn) and metallic messengers elongate slightly under sustained tension — a phenomenon called creep. Creep increases sag over time, reducing the clearance margin. Manufacturers' sag-tension tables include a "final sag" value that accounts for the expected creep elongation over the cable's service life; design for NESC clearance must use the final sag value, not the initial installed sag. [IEEE 1222 §5.2]
+> S_max = Attachment height − Required clearance
 
-### Worked Example: Maximum Span Length from Sag-Tension Table
+**Plain English version:** The maximum sag you can tolerate equals how high the cable is attached on the pole minus the minimum height the cable must maintain above the ground (or road) below.
 
-**Given:**
-- Route geography: NESC Heavy loading district
-- Cable: ADSS, 48-fiber, manufacturer unit weight 0.220 lb/ft (without ice)
-- NESC Heavy ice load adds 0.072 lb/ft radial ice weight (0.50 in. radial ice on 0.60 in. cable diameter)
-- Loaded cable weight w = 0.220 + 0.072 = **0.292 lb/ft**
-- Attachment height at both poles: 28 ft above ground
-- Crossing type: county road (NESC Rule 232 minimum = 15.5 ft)
-- EDS at 59°F: 18% RTS; cable RTS = 2,800 lb; **H = 18% × 2,800 = 504 lb** *(18% is a conservatively low design choice; IEEE 1222 typical range is 20–25% RTS. Using a below-range EDS increases fatigue margin and reduces the risk of tension exceedance under ice load, but requires a higher attachment point or shorter spans to maintain NESC clearance at the larger resulting sag.)*
+This formula reveals the design levers:
+- **Raise the attachment point** → bigger S_max → longer spans possible
+- **Pull the cable tighter** (increase H) → longer spans possible
+- **Heavier cable** (higher w) → shorter spans required for the same tension
+- **Lower the required clearance** → only allowed over non-vehicle terrain per Rule 232
 
-**Step 1 — Maximum allowable sag:**
+In practice, the design engineer doesn't manually derive sag from scratch — manufacturer sag-tension tables provide sag values for specific cable types, span lengths, and loading conditions. The formula is used to verify that a proposed attachment height and span combination satisfies clearance at the tabulated sag value. [IEEE 1222 §5; BICSI OSP-DRD Manual, Ch. 6.3]
 
-S_max = Attachment height − Required clearance = 28 ft − 15.5 ft = **12.5 ft**
+---
 
-**Step 2 — Maximum span length:**
+### Every Day Stress (EDS): How Tight Is Too Tight?
 
-L_max = √(8 × H × S_max / w)
-L_max = √(8 × 504 × 12.5 / 0.292)
-L_max = √(50,400 / 0.292)
-L_max = √172,603
-**L_max ≈ 415 ft**
+**EDS stands for Every Day Stress.** Think of it as the cable's daily workout load — the tension it lives at on a normal day at normal temperature, expressed as a percentage of how hard you could pull before it breaks.
 
-**Step 3 — Verify with manufacturer table:**
+For example: if a cable has a **Rated Tensile Strength (RTS)** of 2,800 lb — meaning it would fail at 2,800 lb of tension — and you string it at 504 lb, then:
 
-The manufacturer's sag-tension table for this cable at NESC Heavy district, 28-ft attachment, shows final sag of **11.8 ft** at 400-ft span. Since 11.8 ft < 12.5 ft (maximum allowable), a 400-ft span provides **16.2 ft midspan clearance** — above the 15.5 ft NESC minimum with 0.7 ft of margin.
+> EDS = 504 / 2,800 = 18% of RTS
 
-**Decision:** A 400-ft span is acceptable. If poles on the proposed route are spaced at 350 ft on average, clearance margin is even higher. If any span must be extended to 450 ft (around an obstacle), recheck against the sag table for that span length.
+**NESC and IEEE 1222 recommend EDS ≤ 20–25% RTS.** That means you should never string a cable so tight that it's carrying more than 25% of its breaking strength on a regular day. The remaining 75–80% of capacity is your buffer for ice loading, wind, temperature changes, and the slow fatigue damage that accumulates over 30+ years. [IEEE 1222 §5.2; NESC C2-2023, Rule 230H]
+
+EDS matters for route design because it determines the stringing tension — the tension at which the cable is physically attached during installation. The installer targets a specific sag at the installation temperature that will produce the correct EDS. If the cable is strung too tight (too little sag at installation), EDS is too high and the cable is at risk of fatigue failure. If strung too loose (too much sag at installation), EDS is too low and ice loading can pull the tension above safe limits.
+
+---
+
+### Creep: Why Your Cable Sags More Over Time
+
+**Creep is the slow permanent stretching of a cable's strength members under sustained tension — like how a rubber band that's been stretched for years doesn't snap back to its original length.**
+
+Over years of service, the synthetic fibers (aramid yarn) or steel messenger that carry the cable's tension elongate slightly. This elongation increases sag over time, gradually reducing the clearance margin you designed in.
+
+**The practical implication:** Manufacturer sag-tension tables include both an "initial sag" (sag right after installation) and a "final sag" (sag after the creep elongation expected over the cable's service life). **You must always design NESC clearance against the final sag, not the initial sag.** A cable that has 16 ft of clearance the day it's installed might only have 15.2 ft of clearance after 20 years of creep. [IEEE 1222 §5.2]
+
+---
+
+### Worked Example: How to Calculate Maximum Span Length
+
+Let's work through a real calculation step by step.
+
+**Given information:**
+
+| Item | Value | What it means |
+|---|---|---|
+| Route geography | NESC Heavy loading district | 0.50 in. radial ice, 4 psf wind at 0°F |
+| Cable type | ADSS, 48-fiber | All-Dielectric Self-Supporting, 48 individual fibers |
+| Cable weight (bare) | 0.220 lb/ft | How much 1 foot of the cable weighs without ice |
+| Ice load added | 0.072 lb/ft | Weight of 0.50 in. radial ice on this cable diameter |
+| Loaded cable weight w | **0.292 lb/ft** | 0.220 + 0.072 = total weight per foot under design ice load |
+| Attachment height | 28 ft above ground | How high the cable is bolted to both poles |
+| Crossing type | County road | Truck traffic → 15.5 ft minimum clearance per NESC Rule 232 |
+| EDS at 59°F | 18% of RTS | Conservative design choice — within IEEE 1222's 20–25% recommendation range |
+| Cable RTS | 2,800 lb | The force that would break the cable's strength member |
+| Horizontal tension H | **504 lb** | 18% × 2,800 lb = the actual pull force in the cable |
+
+*Note on the 18% EDS choice: using 18% instead of the typical 20–25% is intentionally conservative. It provides more fatigue margin and more buffer against tension exceedance under ice load, but results in a slightly lower tension (smaller H), which means the cable sags more and requires shorter spans or taller poles to maintain NESC clearance. The engineer chose this trade-off deliberately.*
+
+---
+
+**Step 1 — Calculate maximum allowable sag:**
+
+The cable is attached at 28 ft. It must stay above 15.5 ft over the road. The sag can be at most:
+
+> S_max = Attachment height − Required clearance
+
+> S_max = 28 ft − 15.5 ft = **12.5 ft**
+
+*Sanity check: 12.5 ft is how far the cable could hang below the attachment points before its lowest point just barely touches the 15.5 ft clearance limit. More than 12.5 ft of sag = NESC violation.*
+
+---
+
+**Step 2 — Calculate maximum span length:**
+
+Plug into the rearranged formula:
+
+> L_max = √(8 × H × S_max / w)
+
+Work the inside of the square root first:
+
+> 8 × H = 8 × 504 = 4,032
+
+> 4,032 × S_max = 4,032 × 12.5 = 50,400
+
+> 50,400 / w = 50,400 / 0.292 = 172,603
+
+Now take the square root:
+
+> L_max = √172,603 ≈ **415 ft**
+
+*Sanity check: 415 ft is roughly the length of 1.5 football fields — a typical rural aerial span. This feels reasonable.*
+
+---
+
+**Step 3 — Verify with manufacturer sag-tension table:**
+
+The formula gives us a design starting point. The manufacturer's published table for this exact cable at NESC Heavy district shows the actual (more accurate) sag values:
+
+The manufacturer's table shows **final sag of 11.8 ft** at a **400-ft span**.
+
+- Does 11.8 ft sag satisfy our maximum of 12.5 ft? **Yes** — 11.8 < 12.5 ✓
+- What is the actual clearance at 400 ft? 28 ft − 11.8 ft = **16.2 ft clearance**
+- Is 16.2 ft above the 15.5 ft NESC minimum? **Yes** — margin is 0.7 ft ✓
+
+**Decision:** A 400-ft span is acceptable. If poles on the proposed route are spaced at 350 ft on average, clearance margin is even higher. If any span must be extended to 450 ft (around an obstacle), recheck against the sag table for that span length before finalizing the design.
 
 *Note: This calculation uses the simplified parabolic approximation. For spans with more than 5% elevation difference between attachment points or spans approaching 10% of the span length in sag, use the full catenary equation or manufacturer's computer-assisted sag-tension tool.* [NESC C2-2023, Rules 230, 232; IEEE 1222 §5; BICSI OSP-DRD Manual, Ch. 6.3]
 
-### Pole Loading Analysis
+---
 
-A utility pole supporting aerial cable must resist the loads the cable imposes on it. NESC Rule 261 requires that pole loading analysis be performed for any pole where the new attachment changes the load pattern. The three load components for a cable attachment on a tangent (straight-line) pole are:
+### Pole Loading Analysis: What Forces Act on a Pole?
 
-**Transverse load (wind-driven):**
-The horizontal force perpendicular to the cable direction caused by wind pressure on the cable. For each span on either side of the pole:
-- Wind load = Wind pressure (psf) × Cable OD (ft) × Span length (ft) / 2
-- Units: pounds (applied at the attachment height)
+**Think of a utility pole like a flagpole anchored in concrete.** If you only put a flag on it, the pole handles it fine. But if you run three cables from the top in different directions, each pulling at different angles with different tensions, the pole has to resist all those combined forces. If the pole is too skinny for the loads, it breaks. Pole loading analysis is the calculation that proves the pole can handle everything attached to it.
 
-For a pole mid-span between two equal-length spans, the transverse loads from each side act in opposite directions and may partially cancel. At a dead-end or corner pole, the transverse load is one-directional and fully accumulated.
+NESC Rule 261 requires a pole loading analysis for any pole where a new attachment changes the load pattern. Three load components act on a cable attachment:
 
-**Longitudinal load (tension differential):**
-At a dead-end pole, the full cable tension acts longitudinally (along the cable direction). At a corner pole, the vector sum of the tensions from each direction acts on the pole. On a tangent pole with equal spans, the longitudinal forces from each side cancel — no net longitudinal load in normal conditions, but a significant load if one span fails.
+---
 
-**Vertical load (cable weight):**
-The weight of cable and ice on each half-span loads the pole vertically at the attachment point. Vertical load per pole = w × (span1/2 + span2/2). This load is additive on any pole regardless of pole position. [NESC C2-2023, Rule 261; RUS Bulletin 1715E-110]
+**Load 1 — Transverse load (wind pushes the cable sideways):**
+
+This is the horizontal force perpendicular to the cable direction, caused by wind pressure pushing against the side of the cable (and any ice coating on it). It acts left-right relative to the cable run.
+
+- Wind load per span = Wind pressure (psf) × Cable outer diameter (ft) × Span length (ft) / 2
+- Units: **pounds**, applied horizontally at the attachment height
+
+*Analogy: imagine holding a sign in the wind. The bigger the sign and the harder the wind, the more force you feel in your arms. A long span is like a wide sign — more surface area catching the wind.*
+
+For a pole mid-span between two equal spans, the transverse loads from each side partially cancel. At a dead-end or corner pole, the load is one-directional and fully accumulated — this is where it's most severe.
+
+---
+
+**Load 2 — Longitudinal load (tension pulls along the cable direction):**
+
+This is the pull force along the direction the cable runs. At a mid-span tangent pole (pole in a straight line), the tension from each direction cancels out — equal pull from both sides. But at a **dead-end pole** (the last pole where the cable terminates), the full cable tension acts on the pole in one direction with nothing pulling back the other way.
+
+*Analogy: imagine playing tug-of-war. If two people pull the same rope with the same force from opposite ends, the middle post doesn't feel anything — forces cancel. But if one side lets go, the post feels the full pull.*
+
+Corner poles with large direction changes also experience significant longitudinal (or lateral) loads from the vector sum of tensions from both directions.
+
+---
+
+**Load 3 — Vertical load (cable weight presses down):**
+
+This is straightforward — the weight of cable and ice on the half-spans on each side of the pole presses down on the attachment hardware. Every pole on the route carries vertical load; it accumulates with every cable attached.
+
+> Vertical load per pole = w × (half-span₁ + half-span₂)
+
+[NESC C2-2023, Rule 261; RUS Bulletin 1715E-110]
+
+---
 
 ### When Guy Wires Are Required
 
-Guy wires (anchor wires running from the pole to a ground anchor) resist lateral and longitudinal loads that exceed the pole's unguyed capacity. Guy wire requirements arise at:
+**A guy wire is an anchor cable running from the pole down to a ground anchor — like a tent stake and rope holding a tent pole steady in the wind.** Guy wires resist lateral and longitudinal forces that would otherwise tip the pole over.
 
-**Dead-end poles:** The full cable tension acts longitudinally. Guy wires in the back-guy direction (away from the cable run) resist this tension. Back guying is always required at line terminations.
+**Dead-end poles:** The full cable tension acts longitudinally (no opposing cable on the other side). Guy wires in the back-guy direction (away from the cable run, opposing the tension) are always required at line terminations.
 
-**Corner poles (angle poles):** The vector resultant of tensions from two cable directions creates a net lateral force. Guy wires in the bisector direction of the corner angle resist this force. Corner guying is always required at angles greater than 3–5° from straight.
+**Corner poles (angle poles):** When the cable route turns a corner, the vector sum of tensions from two cable directions creates a net lateral force on the pole. Guy wires in the bisector direction of the corner angle resist this force. Corner guying is required whenever the angle exceeds approximately 3–5° from straight.
 
-**Excessive-load poles:** When the cumulative transverse and vertical loads from multiple attachments exceed the pole's class strength (determined by pole class per NESC Table 261-2A), a mid-span down-guy or replacement with a larger pole class is required. This is evaluated by the pole loading analysis.
+**Excessive-load poles:** When accumulated transverse and vertical loads exceed the pole's class strength, a mid-span down-guy or replacement with a larger pole class is required. This is determined by the pole loading calculation.
 
-**Long spans:** Spans significantly longer than the route average impose higher per-span loads. Poles at each end of a long span may require intermediate down-guys if the pole class is insufficient. [NESC C2-2023, Rule 261; BICSI OSP-DRD Manual, Ch. 6.3; RUS Bulletin 1715E-110]
+**Long spans:** Poles at each end of a long span may require intermediate down-guys if the pole class is insufficient for the elevated per-span loads. [NESC C2-2023, Rule 261; BICSI OSP-DRD Manual, Ch. 6.3; RUS Bulletin 1715E-110]
 
-### Joint-Use Poles: Communication Space Geometry
+---
 
-On joint-use poles shared with electric supply conductors, the cable attachment height is constrained by the communication space — the vertical zone on the pole below all supply conductors and above the NESC minimum ground clearance. This constrains the attachment height available for the fiber cable to the communication space height, which may be lower than the attachment height that would produce optimal clearance over road crossings.
+### Joint-Use Poles: The Communication Space
 
-If the communication space attachment height does not allow the required clearance over a road in the span, the design options are:
+**On a pole that already has electric power lines, your fiber cable can't just go anywhere.** The NESC assigns each wire type its own vertical zone. Power supply conductors get the top zone. Your fiber cable must go in the "communication space" — a designated zone below all the supply conductors and above the minimum ground clearance.
 
-1. **Reduce span length** — shorter span reduces sag, increases clearance at the same attachment height
-2. **Add an intermediate pole** — reducing span length to achieve the required clearance from the available attachment height
-3. **Request a higher attachment point** — in some joint-use agreements, renegotiating the attachment position is possible but requires pole loading analysis to confirm the pole can carry the revised load
+This constrains the attachment height available for your fiber cable. The communication space height may be lower than what would produce ideal clearance over road crossings.
 
-The joint-use attachment height is documented in the joint-use make-ready analysis, which is produced before construction drawings are finalized. [NESC C2-2023, Rule 238; RUS Bulletin 1715E-110; BICSI OSP-DRD Manual, Ch. 6.3]
+If the communication space attachment height doesn't allow enough clearance over a road in the span, your options are:
 
-### NESC Grade of Construction
+1. **Shorten the span** — shorter span means less sag at the same attachment height
+2. **Add an intermediate pole** — reduces the span length to achieve the required clearance
+3. **Negotiate a higher attachment point** — possible in some joint-use agreements, but requires pole loading analysis to confirm the pole can carry the revised load
 
-NESC grades of construction (Grade B, Grade C) specify the safety factors applied to pole and wire hardware. For communication conductors in standard OSP applications, **Grade C construction** is the applicable standard — lower safety factors than Grade B supply lines, reflecting the lower hazard level of communication conductors. Some applications require Grade B: communication lines attached to the same structure as supply conductors in certain configurations, or lines adjacent to railroads. [NESC C2-2023, Rule 261; BICSI OSP-DRD Manual, Ch. 6.3]
+The joint-use attachment height is documented in the joint-use make-ready analysis, produced before construction drawings are finalized. [NESC C2-2023, Rule 238; RUS Bulletin 1715E-110; BICSI OSP-DRD Manual, Ch. 6.3]
+
+---
+
+### NESC Grade of Construction: Safety Factor Level
+
+NESC grades of construction (Grade B, Grade C) specify the safety factors applied to pole and wire hardware.
+
+- **Grade C construction** is the standard for communication conductors in normal OSP applications — lower safety factors than Grade B supply lines, reflecting the lower hazard level of a non-energized cable.
+- **Grade B construction** is required when communication lines are adjacent to railroads or attached to structures with supply conductors in certain configurations.
 
 Pole selection by NESC class:
-- **Class 1–3** poles: most common for rural communication distribution, 40–45 ft, sufficient for standard spans and load conditions
-- **Class H1–H6** poles: heavy-duty, required at dead-ends on long spans, large-angle corners, and high-load accumulation points
+- **Class 1–3 poles:** most common for rural communication distribution, 40–45 ft, sufficient for standard spans and load conditions
+- **Class H1–H6 poles:** heavy-duty, required at dead-ends on long spans, large-angle corners, and high-load accumulation points
 
 Pole selection is confirmed by the pole loading analysis; the route design drives the minimum class requirement at each pole position. [NESC C2-2023, Rule 261; RUS Bulletin 1715E-110]
 
@@ -228,7 +374,9 @@ The county road requires 15.5 ft minimum clearance per NESC Rule 232.
 
 **Step 1 — Calculate maximum allowable sag:**
 
-S_max = Attachment height − Required clearance = 25 ft − 15.5 ft = **9.5 ft**
+> S_max = Attachment height − Required clearance = 25 ft − 15.5 ft = **9.5 ft**
+
+*Plain English: the cable can hang at most 9.5 ft below the attachment point before it dips below the 15.5 ft road clearance requirement.*
 
 **Step 2 — Find the maximum span from the table where final sag ≤ 9.5 ft:**
 
@@ -244,9 +392,11 @@ S_max = Attachment height − Required clearance = 25 ft − 15.5 ft = **9.5 ft*
 
 **Step 3 — Calculate clearance margin at 350-ft span:**
 
-Midspan clearance = 25 ft − 9.4 ft = **15.6 ft**
-NESC minimum = 15.5 ft
-Margin = 15.6 − 15.5 = **0.1 ft (1.2 inches)**
+> Midspan clearance = 25 ft − 9.4 ft = **15.6 ft**
+
+> NESC minimum = 15.5 ft
+
+> Margin = 15.6 − 15.5 = **0.1 ft (1.2 inches)**
 
 **Assessment:** The 350-ft span barely passes — 0.1 ft of margin is insufficient for engineering practice. Good practice requires at least 0.5–1.0 ft of margin to account for pole settlement, installation sag variation, and future span-length adjustments. A more conservative maximum span for this route is **300 ft**, providing a midspan clearance of 25 − 6.9 = 18.1 ft and a margin of 2.6 ft.
 

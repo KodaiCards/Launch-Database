@@ -2,7 +2,7 @@
 title: "Lesson 5.7: Direct-Bury Marking System — Warning Tape, Tracer Wire, and Marker Posts"
 duration_min: 20
 topic: osp-hardware-accessories
-order: 7
+order: 8
 bicsi_alignment:
   - "BICSI OSP-DRD Ch. 6.2: Underground conduit and cable marking requirements"
 sources:
@@ -252,7 +252,7 @@ You are specifying the direct-bury marking system for a 1.5-mile (7,920 ft) fibe
 
 ---
 
-**Q5.** A direct-bury route has the following configuration: total length 2,500 ft, one route start, one route end, two road crossings (each requiring posts on both approach sides), one direction change. How many marker posts are required by TIA-758-C §6.4?
+**Q5.** A direct-bury route has the following configuration: total length 2,500 ft, one route start, one route end, two road crossings (each requiring posts on both approach sides), one direction change. Assume 2 of the 500-ft intermediate post intervals coincide with the fixed-post locations (crossings and direction change), so only 2 additional intermediate posts are required beyond the fixed-post count. How many marker posts are required by TIA-758-C §6.4?
 
 - A) 6 posts
 - B) 9 posts **[CORRECT]**

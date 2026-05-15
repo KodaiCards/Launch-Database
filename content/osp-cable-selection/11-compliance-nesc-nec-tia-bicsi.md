@@ -21,6 +21,65 @@ sources:
 
 # Compliance — NESC, NEC, ANSI/TIA-758-C, BICSI
 
+## In Plain English
+
+When you install fiber cable in the outside world — strung on poles, buried in the ground, going into buildings — there are rules you have to follow. This lesson is about those rules.
+
+Think of it like building a house. You need to follow the building code for how the structure is framed, the electrical code for how the wiring is done, and your contractor's standard specifications for the materials to use. Miss any one of them and you fail inspection, void your insurance, or get a stop-work order.
+
+Fiber cable has its own version of that stack:
+
+1. **NESC** — the "power utility" safety code. Tells you how high the cable must hang over a road, how to protect against lightning, and how to connect metallic cable armor to the ground.
+2. **NEC** — the "inside buildings" safety code. Tells you what type of cable you're allowed to run through ceilings, walls, and ductwork, and how far you can bring outdoor cable inside before it becomes a fire hazard.
+3. **TIA-758-C** — the engineer's rulebook. Tells you how deep to bury cable, how much slack to leave at each splice point, and what tests to run when the job is done.
+4. **BICSI OSP-DRD** — the designer's checklist. Tells you what drawings and records to produce before you start digging and again when the job is complete.
+
+If you follow all four of these, your installation is "code-compliant, insurable, and professionally defensible" — meaning inspectors won't shut you down, your insurance covers problems, and your paperwork holds up if anyone questions the work later.
+
+---
+
+## Acronym Mini-Glossary
+
+Every acronym used in this lesson, expanded AND explained in plain terms:
+
+- **OSP** — Outside Plant. Everything outside the walls of a building: poles, buried conduit, direct-buried cable, aerial spans. Contrast with ISP (Inside Plant), which is the cabling inside buildings.
+- **NESC** — National Electrical Safety Code. The federal safety code (published by IEEE, adopted by OSHA and state utility commissions) that governs all work on utility poles, power lines, and communication lines in public rights-of-way. Think of it as the "rules of the road" for utility linemen.
+- **NEC** — National Electrical Code. The safety code (published by NFPA as NFPA 70) that governs all electrical wiring inside buildings in the United States. Local building codes almost universally adopt the NEC. Contains Article 770 specifically for fiber optic cables.
+- **NFPA** — National Fire Protection Association. The organization that writes and publishes the NEC (NFPA 70) and many other fire safety standards.
+- **AHJ** — Authority Having Jurisdiction. The government official or body who enforces the safety codes in a given area. Usually the local building department for NEC, and the state utility commission or OSHA for NESC. What the AHJ says goes — even if they're stricter than the written code.
+- **ANSI** — American National Standards Institute. The U.S. national body that formally approves standards like TIA's. When you see "ANSI/TIA," it means TIA wrote it and ANSI endorsed it as a national standard.
+- **TIA** — Telecommunications Industry Association. Publishes ANSI/TIA-758-C (the OSP engineering standard) and ANSI/TIA-568.3-D (the testing standard for fiber cabling).
+- **TIA-758-C** — The specific TIA standard for Outside Plant Telecommunications Infrastructure. The "engineering rulebook" for OSP installations. Covers cable specs, burial depths, slack loops, labeling, and documentation.
+- **BICSI** — Building Industry Consulting Service International. A professional association that publishes the OSP Design Reference (OSP-DRD), runs the RCDD and OSP certifications, and sets best-practice design guidelines.
+- **OSP-DRD** — Outside Plant Design Reference. BICSI's design manual for OSP fiber networks. Not a legal safety code — it's a professional reference and best-practice guide, but RUS contracts and BICSI certification exams require following it.
+- **ADSS** — All-Dielectric Self-Supporting. A type of aerial fiber cable that has no metal at all — no steel messenger wire, no metallic armor. It hangs from poles using its own non-metallic strength members. Because there's nothing metal to conduct electricity, it doesn't need to be grounded. See Lesson 4 for more on ADSS.
+- **CST** — Corrugated Steel Tape. A metallic armor layer wrapped around a cable to protect it from rodents and mechanical damage when buried. Because it's metal, it DOES need to be grounded to prevent electric shock and lightning damage. See Lesson 4.
+- **BET** — Building Entry Terminal. A sealed enclosure mounted at the point where a fiber cable enters a building. Provides the weatherproof seal where the outdoor cable ends and the indoor cable begins, and the mechanical transition between OSP sheath and indoor cable jacket. (Cross-reference: Lesson 7 introduced BET in the context of the NEC 50-foot rule.)
+- **OFNR** — Optical Fiber Nonconductive Riser. An indoor-rated fiber cable jacket that passes the UL 1666 riser burn test — meaning it won't spread fire up a vertical shaft between floors. The "N" means non-conductive (no metal), "R" means rated for risers. Required in vertical runs between floors.
+- **OFNP** — Optical Fiber Nonconductive Plenum. An indoor-rated fiber cable jacket that passes the stricter UL 910 plenum burn test — meaning it produces minimal smoke even if it catches fire. Required in air-handling plenum spaces (any space used for HVAC return air, typically above a drop ceiling). OFNP is the highest indoor rating and can substitute for OFNR anywhere.
+- **OFN** — Optical Fiber Nonconductive (general). The lowest indoor fire-rating for fiber cable — suitable only for horizontal runs in general spaces, not risers or plenum. Not commonly used; most designers go straight to OFNR or OFNP.
+- **PE** — Polyethylene. The black UV-resistant plastic used for outdoor OSP cable jackets. Tough, waterproof, and UV-stable for decades outdoors. Not fire-rated for indoor use. (Cross-reference: covered in Lesson 7 — sheath types.)
+- **AWG** — American Wire Gauge. The U.S. measurement system for wire diameter. Counter-intuitively, bigger AWG numbers = thinner wire. 6 AWG copper wire is about 4 mm diameter — the minimum size for grounding metallic cable armor.
+- **OTDR** — Optical Time-Domain Reflectometer. A test instrument that sends a laser pulse down the fiber and measures backscattered light to locate and measure splices, bends, breaks, and connectors — all without disconnecting the cable. Think of it like an ultrasound for fiber: you send a pulse in, and the echo pattern tells you what's happening along the entire length. Testing at 1310 nm AND 1550 nm is required for OSP fiber (explained in detail in the body).
+- **OLTS** — Optical Loss Test Set. A calibrated light source + power meter used to measure the total signal loss from one end of a fiber link to the other. Where the OTDR tells you WHERE every loss happens, the OLTS tells you the TOTAL. Both tests are required for a complete acceptance test.
+- **nm** — Nanometers. A unit of length used to describe light wavelength. 1 nanometer = 0.000000001 meters (one billionth of a meter). Fiber networks transmit at specific wavelengths: 1310 nm and 1550 nm for single-mode OSP cable, and 850 nm and 1300 nm for multimode.
+- **OS2** — Optical Standard 2. The specific fiber type required for all OSP single-mode cable per TIA-758-C. Low-loss, tight-tolerance single-mode glass fiber conforming to ITU-T G.652.D. (Cross-reference: introduced in Lesson 1.)
+- **SMF** — Single-Mode Fiber. Fiber with a very small core (8–10 µm) that carries one light mode at a time, enabling very long distances and high bandwidth. All OSP backbone and feeder fiber is SMF. (Cross-reference: Lesson 1.)
+- **OSHA** — Occupational Safety and Health Administration. The federal agency that enforces worker safety regulations, including NESC compliance for utility workers.
+- **RUS** — Rural Utilities Service. The USDA agency that provides loan funding for rural telecom infrastructure. RUS loan conditions require compliance with ANSI/TIA-758-C. If you're doing RUS-funded work — like Carter's PSC contracts — TIA-758-C compliance is a contractual requirement, not just a best practice.
+- **ROW** — Right of Way. The legal strip of land along a road, railway, or easement where utility poles and buried cables are permitted to run.
+- **RTL** — Rated Tensile Load. The maximum pulling force (in pounds or kilonewtons) that a cable is rated to withstand during installation — for example, when being pulled through a conduit. Exceeding RTL can stretch or break the fiber inside.
+- **RSL** — Rated Sidewall Load. The maximum lateral pressure (in pounds per foot) that a cable can handle when it bends around a conduit bend or inside a curved duct without crushing the fiber. Exceeding RSL can cause macro-bends or crush the buffer tubes.
+- **GPS** — Global Positioning System. Used in OSP documentation to record the exact location of buried cable runs, splice closures, and FDHs so that field crews can find them again years later.
+- **FDH** — Fiber Distribution Hub. A large outdoor enclosure where feeder cable fibers are cross-connected to distribution cables. (Cross-reference: Lessons 8 and 9.)
+- **FDT** — Fiber Distribution Terminal. A smaller outdoor enclosure closer to the customer. (Cross-reference: Lessons 8 and 9.)
+- **NOC** — Network Operations Center. The central building or room where a telecom operator's engineers monitor and manage the network.
+- **HVAC** — Heating, Ventilation, and Air Conditioning. Relevant in NEC Article 770 because plenum cable ratings apply to spaces used as HVAC return-air pathways.
+- **dB** — Decibel. The unit for measuring signal loss (insertion loss) and backreflection (return loss) in fiber. (Cross-reference: introduced in Lesson 1.)
+- **VFL** — Visual Fault Locator. A hand-held red-laser tester used to visually locate physical damage, tight bends, and broken connectors in a short fiber run. The red light leaks out visibly at the problem point. Not a precision instrument — more of a "sanity check" tool before pulling out the OTDR.
+
+---
+
 ## Learning Objectives
 
 Upon completing this lesson, the learner will be able to:
@@ -48,23 +107,47 @@ Four regulatory and standards bodies govern OSP fiber optic installations in the
 
 NESC and NEC are safety codes enforced by authorities having jurisdiction (AHJ) — local building departments, utility commissions, OSHA. ANSI/TIA-758-C and BICSI OSP-DRD are standards and guidelines; compliance is required by contracts, utility regulations, and RUS loan conditions (which typically cite TIA-758-C specifically).
 
+**Easy way to remember the difference:** NESC and NEC can get your job shut down by an inspector. TIA-758-C and BICSI OSP-DRD can get your contract canceled by your client. Both matter.
+
 ### NESC: Aerial Clearances and Grounding
 
-The National Electrical Safety Code governs all work on public rights-of-way, utility pole lines, and utility-owned underground infrastructure. Its primary fiber-relevant provisions:
+The NESC governs all work on public rights-of-way, utility pole lines, and utility-owned underground infrastructure. Think of it as the rulebook written specifically for the people hanging and burying cable along public roads. Here are the key fiber-relevant provisions:
 
-**NESC Rule 230 — Loading of aerial conductors:**
+**NESC Rule 230 — How much load can aerial cable handle?**
+
+"Loading" in this context means ice plus wind. In winter, ice builds up on aerial cable. In storms, wind pushes on it. The NESC divides the country into "loading districts" — zones defined by how bad the ice and wind conditions typically get. Every aerial cable and messenger wire must be designed to survive those worst-case conditions.
+
 All aerial cable and messenger wire must be designed to survive the ice, wind, and combined ice-plus-wind loads of the applicable NESC loading district (light, medium, heavy, or extreme wind). ADSS cable must be rated by the manufacturer for span length, sag, and tension within the district's design parameters [NESC C2-2023, Rule 230].
 
-**NESC Rule 232 — Clearances of wires from ground and other objects:**
+**NESC Rule 232 — Clearances of wires from ground and other objects**
+
+If a cable sags too much under ice load and droops down to where a truck can hit it, that's a code violation and a hazard. Rule 232 sets the minimum height the cable must clear over roads, railways, and waterways — even under maximum ice load when sag is at its worst.
+
 Establishes minimum sag-to-clearance margins at maximum ice load for aerial cable crossing roads, railways, navigable waterways, and other circuits. At road crossings, the cable must clear the road surface by at least **18 feet (5.5 m)** in the heavy loading district; lesser clearances apply in lighter districts and for non-traffic crossings [NESC C2-2023, Rule 232]. Engineering design must verify sag calculations meet these minimums — specifying ADSS cable for a long span without verifying clearance at maximum ice load is a design error.
 
-**NESC Rules 250 and 251 — Overhead line design:**
-Specify load cases (light: 0.00 in. ice + 9 psf wind; medium: 0.25 in. ice + 4 psf wind; heavy: 0.50 in. ice + 4 psf wind) and safety factors for conductor and hardware strength. All messenger wire, ADSS cable, and attachment hardware must comply [NESC C2-2023, Rules 250–251].
+**NESC Rules 250 and 251 — The specific numbers for ice and wind**
 
-**NESC Rules 352 and 354 — Underground installations:**
+These rules define the actual design loads for each district:
+- Light district: 0.00 inches of ice + 9 pounds per square foot of wind
+- Medium district: 0.25 inches of ice + 4 psf wind
+- Heavy district: 0.50 inches of ice + 4 psf wind
+
+All messenger wire, ADSS cable, and attachment hardware must comply with the appropriate district's load numbers [NESC C2-2023, Rules 250–251].
+
+Macon, Georgia — where Launch Fiber Services is based — falls in the **Light** loading district per NESC. Projects near the Gulf Coast may have an Extreme Wind overlay applied on top of the base district.
+
+**NESC Rules 352 and 354 — Underground installations**
+
 Rule 354 applies to underground optical fiber cable: it requires adequate mechanical protection (conduit, burial depth), appropriate markings, and bonding of metallic elements. Rule 352 requires that metallic cable armor be grounded at intervals not exceeding **3 miles (4.8 km)** for cables of general construction, and at every splice closure and building entry for practical field installations [NESC C2-2023, Rules 352, 354].
 
-**NESC bonding and grounding requirements for metallic armor:**
+**NESC bonding and grounding requirements for metallic armor**
+
+"Bonding" means connecting the metallic armor of a cable to a grounding rod driven into the earth. Why? Two reasons:
+
+1. **Lightning protection.** When lightning strikes a nearby pole or hits the ground nearby, the electromagnetic pulse can induce a high-voltage spike in any nearby metal — including cable armor. If that armor isn't grounded, the spike travels along the cable until it finds the first metal it can jump through — which is usually a splice closure or equipment port. A grounded armor gives the lightning spike a direct low-resistance path straight to earth, bypassing the sensitive electronics.
+
+2. **Shock hazard.** If a power line falls on a cable with ungrounded metal armor, the metal becomes energized at line voltage — potentially lethal for anyone touching the cable or opening a splice closure.
+
 Any cable with metallic armor (CST or wire armor) must be bonded to a ground electrode at:
 1. Each splice closure
 2. Each building entry point (BET or conduit entry)
@@ -77,15 +160,23 @@ Fully dielectric cable (ADSS, dielectric-armored cable, flat all-dielectric drop
 
 ### NEC Article 770 — Optical Fiber Cables in Buildings
 
-NEC Article 770 governs the installation of optical fiber cable inside buildings. Its fire-rating hierarchy is the most testable provision for OSP designers, because every OSP-to-building transition requires compliance with Article 770.
+NEC Article 770 governs the installation of optical fiber cable inside buildings. Here's the key insight: **outdoor cable and indoor cable are held to completely different fire-safety standards.** The black PE jacket on outdoor cable is tough and waterproof, but it burns and produces thick black smoke. If that smoke gets into an HVAC system, it can spread toxic fumes throughout a building in minutes. That's why you can't just run outdoor cable anywhere you want inside a building.
 
-**NEC 770.113 — Listing requirements:**
+**NEC 770.113 — Listing requirements**
+
 Optical fiber cable used inside buildings must be listed for the space in which it is installed. OSP-rated (outdoor PE jacket) cable is **not listed** for indoor use and cannot substitute for a listed indoor cable except for the first 50 feet from the point of building entry [NEC Article 770.113].
 
-**NEC 770.113 — 50-foot interior limit:**
+**NEC 770.113 — 50-foot interior limit (the rule Carter needs to know)**
+
+Think of the 50-foot rule as a "contamination zone" for outdoor cable inside a building. Outdoor PE cable is allowed to penetrate the wall and run up to 50 feet inside to reach a transition point. At that point, you must hand off to a rated indoor cable. Beyond 50 feet, outdoor cable is flat-out prohibited.
+
 OSP cable may penetrate a building and extend a maximum of **50 feet (15 m)** inside the structure, measured from the point of entry (exterior wall penetration). Beyond 50 feet, a listed indoor cable (OFNR or OFNP) must continue to the termination point. The transition from OSP to indoor cable is typically made at a Building Entry Terminal (BET) [NEC Article 770.113].
 
-**NEC 770 fire-rating hierarchy (OSP to most restrictive):**
+(Cross-reference: Lesson 7 — Sheath and Fire Ratings — introduced the 50-foot rule and the BET in the context of sheath selection. This lesson applies it in the compliance context.)
+
+**NEC 770 fire-rating hierarchy (OSP to most restrictive)**
+
+Think of the ratings like a ladder — each rung is a stricter test. A higher-rated cable can always substitute for a lower-rated one, but never the reverse. OFNP is the top of the ladder and can go anywhere; OFNR is the middle; OFN is the bottom.
 
 | Designation | Space permitted | Governing test | Substitute for |
 |---|---|---|---|
@@ -102,9 +193,10 @@ The substitution rule: a higher-listed cable may always substitute for a lower-l
 
 ### ANSI/TIA-758-C — Cable Specifications, Installation, and Documentation
 
-ANSI/TIA-758-C is the primary engineering standard for OSP telecommunications infrastructure. Its compliance provisions span cable specification, installation limits, testing, and documentation.
+ANSI/TIA-758-C is the primary engineering standard for OSP telecommunications infrastructure. Think of it as the construction specifications that your contract is built on — it tells the engineer exactly what "good" looks like for cable specs, installation work, and project documentation.
 
-**Section 5 — Cable specifications by environment:**
+**Section 5 — Cable specifications by environment**
+
 Covered in Lessons 4, 7, 8, and 10. Key specification cite points for compliance purposes:
 - §5.2: OS2 SMF required for all OSP backbone and feeder cable
 - §5.3: Loose-tube construction with gel-fill or dry water-block for all OSP environments
@@ -113,44 +205,77 @@ Covered in Lessons 4, 7, 8, and 10. Key specification cite points for compliance
 - §5.6.3: ADSS specifications for aerial on energized lines
 - §5.7: Drop cable specifications by installation method
 
-**Section 6 — Installation limits:**
-- §6.2: RTL (rated tensile load) and RSL (rated sidewall load) limits for conduit installation
-- §6.3: Minimum burial depths by crossing type (24 in. general soil, 36 in. under roads)
-- §6.4: Minimum slack loop at each splice closure: **10 meters (33 feet)**; cable end slack at FDH/FDT: **minimum 3 meters**
+**Section 6 — Installation limits**
 
-**Section 7 — Documentation requirements:**
-ANSI/TIA-758-C §7 requires that every completed OSP installation deliver an as-built documentation package including [ANSI/TIA-758-C §7]:
+These are measurable requirements that a field crew and inspector can verify:
+- **§6.2:** RTL (rated tensile load) and RSL (rated sidewall load) limits for conduit installation — don't pull harder on the cable than it's rated for, and don't bend it around corners tighter than it can handle.
+- **§6.3:** Minimum burial depths by crossing type (24 in. general soil, 36 in. under roads) — bury it deep enough that a backhoe won't hit it by accident.
+- **§6.4:** Minimum slack loop at each splice closure: **10 meters (33 feet)**; cable end slack at FDH/FDT: **minimum 3 meters** — always leave a safety margin of extra cable coiled at each splice point for future repairs.
+
+**Why the 10-meter slack loop matters — a plain-English explanation:**
+
+Imagine your cable gets cut by a backhoe right next to a splice closure. You need to repair it. That means:
+1. Pull cable out of the ground on both sides of the cut.
+2. Cut back past the damaged section to clean fiber.
+3. Set up a new splice closure.
+4. Re-splice everything.
+
+If there's only 2 meters of slack coiled at the closure, you might not have enough cable to reach the new splice point after cutting back past the damage. You'd have to trench a whole new section and pull in new cable — a much bigger, more expensive job. The 10-meter slack loop is insurance. It gives you enough working room to fix the most common cut-and-repair scenario without ordering new cable.
+
+**Section 7 — Documentation requirements**
+
+A job isn't done when the cable is buried — it's done when the paperwork is done. ANSI/TIA-758-C §7 requires that every completed OSP installation deliver an as-built documentation package including [ANSI/TIA-758-C §7]:
 1. **Route drawings:** GPS-referenced or survey-referenced maps showing cable centerline, all splice closure locations, all FDH/FDT locations, conduit runs, buried cable, and aerial attachment points
 2. **Burial depth records:** Depth measurements at minimum every 500 feet (152 m) on direct-bury routes, plus at every road crossing, to confirm compliance with §6.3 minimums
 3. **Splice loss records:** OTDR test results for each fiber through each splice closure, documenting splice loss in dB
 4. **Cable reel records:** Cable reel number, manufacturer, fiber count, and length for each reel installed
 5. **Bonding and grounding records:** Location, ground rod depth, and measured resistance-to-ground at each grounding point for metallic-armor installations
 
-**Section 6.5 — Cable identification and labeling:**
-ANSI/TIA-758-C §6.5 requires that all OSP cables be identified at each splice closure, BET, FDH, FDT, and building entry with a durable marker tag or cable label stating at minimum: cable type, fiber count, installation date, and the cable owner's identifier. Splice closures must bear a label identifying the incoming and outgoing cable IDs and the splice closure contents (splice count, tray configuration) [ANSI/TIA-758-C §6.5].
+**Section 6.5 — Cable identification and labeling**
+
+Every splice closure, BET, FDH, FDT, and building entry must have a durable tag on the cable showing at minimum: cable type, fiber count, installation date, and the cable owner's identifier. Splice closures must also identify the incoming and outgoing cable IDs and what's inside the closure (splice count, tray configuration) [ANSI/TIA-758-C §6.5].
+
+This matters years later when someone needs to trace a circuit or find a closure in the field. If there's no tag, the next crew has to guess — and guessing on a live fiber network is expensive.
 
 ### BICSI OSP-DRD — Design Documentation Requirements
 
-BICSI OSP-DRD Manual Chapter 8 establishes the design deliverable set for a completed OSP project. These deliverables go beyond the as-built documentation required by TIA-758-C §7 to include design-phase documentation that must be completed before construction begins.
+While TIA-758-C covers what you do DURING and AFTER construction, BICSI OSP-DRD Chapter 8 covers what you produce BEFORE construction starts. A professional fiber installation isn't just execution — it's planned on paper first.
 
-**Pre-construction design deliverables (BICSI OSP-DRD Ch. 8):**
+**Pre-construction design deliverables (BICSI OSP-DRD Ch. 8)**
+
 1. **Route survey report:** Field survey results documenting right-of-way, existing utilities, crossing locations, soil type, frost line depth, and documented hazards (rock ledge, high-groundwater areas, areas of known rodent activity)
 2. **Cable schedule:** Complete specification for each cable segment — cable type, fiber count, construction, reel size, installation method
-3. **Fiber assignment table:** Which fibers in which cable segments are assigned to which circuits (active) vs. reserved as dark fiber (future)
+3. **Fiber assignment table:** Which fibers in which cable segments are assigned to which circuits (active) vs. reserved as dark fiber (future) — think of this as the "seating chart" for every strand of glass in the network
 4. **Optical power budget calculation:** Per IEEE 802.3 or applicable transceiver specification, documenting that the total link loss (fiber attenuation + splice losses + connector losses + bend losses) is within the transceiver's loss budget for every active circuit
 5. **Splice closure placement plan:** Location, type (inline vs. branch), and splice count for each closure; linked to the route drawing
 
-**Testing requirements at project closeout (BICSI OSP-DRD Ch. 7; ANSI/TIA-526-7):**
-- **OTDR trace:** Each fiber in each cable segment, tested from both ends, at a minimum of two wavelengths (1310 nm and 1550 nm for OS2 feeder and distribution cable). OTDR traces must document each splice event, reflective event, and the end-of-fiber reflection
+**Testing requirements at project closeout (BICSI OSP-DRD Ch. 7; ANSI/TIA-526-7)**
+
+When construction is done, you test every fiber. Not because you distrust the crew, but because problems happen — a splice that looks clean sometimes isn't, a buried cable sometimes takes an accidental sharp bend. Testing before closing up the splice closures and backfilling the trenches lets you fix problems cheaply. Testing after the customer is already relying on the link is a much bigger emergency.
+
+Required tests:
+- **OTDR trace:** Each fiber in each cable segment, tested from both ends, at a minimum of two wavelengths (1310 nm and 1550 nm for OS2 feeder and distribution cable). OTDR traces must document each splice event, reflective event, and the end-of-fiber reflection.
 - **Optical loss test (OLTS / insertion loss):** Each installed link, tested per ANSI/TIA-568.3-D §11 using a calibrated light source and power meter. Pass/fail criterion: total link insertion loss ≤ calculated loss budget
 - **Visual fault locator (VFL) inspection:** Each splice closure opened and each connector inspected for physical damage or contamination before final documentation
 
-**OTDR wavelength requirements for OS2 OSP cable:**
-ANSI/TIA-526-7 and BICSI OSP-DRD Manual specify that OS2 OSP fiber should be tested at both **1310 nm and 1550 nm** [ANSI/TIA-526-7; BICSI OSP-DRD Manual, Ch. 7.2]. The 1310 nm trace identifies splice loss, connector loss, and macro-bend events efficiently (higher OTDR sensitivity at 1310 nm for some OTDRs). The 1550 nm trace is more sensitive to macro-bend loss events — bend losses are higher at longer wavelengths, making the 1550 nm trace the definitive test for bend-induced loss in direct-bury and conduit routes [BICSI OSP-DRD Manual, Ch. 7.2; Corning OSP Reference, Ch. 7.1].
+**OTDR wavelength requirements — why you need both 1310 nm AND 1550 nm**
+
+Here's the key concept: fiber loses light differently at different wavelengths. A tight bend in the cable doesn't look the same at 1310 nm as it does at 1550 nm.
+
+Think of it like looking at a small crack under two different lights. Regular white light might not show it. UV light makes it glow. Testing at both wavelengths is the optical equivalent of checking under both lights.
+
+ANSI/TIA-526-7 and BICSI OSP-DRD Manual specify that OS2 OSP fiber should be tested at both **1310 nm and 1550 nm** [ANSI/TIA-526-7; BICSI OSP-DRD Manual, Ch. 7.2]. The 1310 nm trace identifies splice loss, connector loss, and macro-bend events efficiently (higher OTDR sensitivity at 1310 nm for some OTDRs). The 1550 nm trace is more sensitive to **macro-bend loss events** — bend losses are higher at longer wavelengths, making the 1550 nm trace the definitive test for bend-induced loss in direct-bury and conduit routes [BICSI OSP-DRD Manual, Ch. 7.2; Corning OSP Reference, Ch. 7.1].
+
+**What is macro-bend loss?** When fiber is bent too tightly — like a kinked garden hose for water flow — light "leaks" out of the fiber core at the bend. The tighter the bend, the more light leaks. This is called macro-bend loss. It's dangerous because:
+- It's invisible at 1310 nm on a 1550 nm-sensitive event (easy to miss without dual-wavelength testing)
+- It gets worse over time if the bend stays sharp (ice, soil movement, or vibration worsens it)
+- It tells you a cable is stressed — which means it's also at risk of breaking later
+
+The 1550 nm test is specifically required because it's the wavelength that makes bend events visible. A 0.4 dB loss event at 1550 nm at a location with no splice is almost always a tight bend in the cable — and must be dug up and relieved before the project is closed out.
 
 ### The Compliance Checklist: Nine Items for Project Closeout
 
-The following checklist synthesizes the compliance requirements of all four bodies into a project closeout verification list:
+The following checklist synthesizes the compliance requirements of all four bodies into a project closeout verification list. If all nine items are checked off, the installation is defensible.
 
 | # | Item | Standard |
 |---|---|---|
@@ -180,7 +305,7 @@ The National Electrical Code article governing optical fiber cable installations
 The governmental body or official empowered to enforce safety codes — typically the local building department, utility commission, or OSHA regional office. AHJ may impose requirements more stringent than code minimums; the most stringent applicable requirement governs. [NESC C2-2023 §1; NEC §90.4]
 
 **NESC loading district**
-Geographic classification in NESC C2-2023 assigning design radial ice thickness and wind pressure for aerial line engineering. Three primary districts: light (0.00 in. ice, 9 psf wind), medium (0.25 in. ice, 4 psf wind), heavy (0.50 in. ice, 4 psf wind). Plus extreme wind zone for coastal areas. All aerial cable, messenger, and hardware must be rated for the applicable district. [NESC C2-2023, Rules 250–251]
+Geographic classification in NESC C2-2023 assigning design radial ice thickness and wind pressure for aerial line engineering. Three primary districts: light (0.00 in. ice, 9 psf wind), medium (0.25 in. ice, 4 psf wind), heavy (0.50 in. ice, 4 psf wind). Plus extreme wind zone for coastal areas. All aerial cable, messenger, and hardware must be rated for the applicable district. Macon, GA = Light district. [NESC C2-2023, Rules 250–251]
 
 **Bonding conductor**
 The copper wire (minimum 6 AWG) connecting metallic cable armor to a ground electrode (ground rod). Required at each splice closure, BET, and cable end for CST-armored or wire-armored cable. The bonding conductor ensures metallic armor potential equalizes with ground, preventing shock hazard and lightning-induced discharge through splice hardware. [NESC C2-2023, Rule 352; ANSI/TIA-758-C §6.4]
@@ -195,13 +320,13 @@ A calibrated light source and optical power meter used to measure total insertio
 The maximum total insertion loss (fiber + splices + connectors + bend losses) that an active circuit can tolerate and still meet the receiver's minimum sensitivity specification. Calculated from the transceiver datasheet. Every installed link's OLTS-measured insertion loss must be ≤ the optical power budget. [BICSI OSP-DRD Manual, Ch. 7.1; IEEE 802.3]
 
 **Slack loop**
-A coiled reserve of cable left at each splice closure location, providing extra length for future re-splicing, repair after cable damage, and closure repositioning. ANSI/TIA-758-C §6.4 requires a minimum of **10 meters** at each splice closure and 3 meters at FDH/FDT termination points. [ANSI/TIA-758-C §6.4]
+A coiled reserve of cable left at each splice closure location, providing extra length for future re-splicing, repair after cable damage, and closure repositioning. ANSI/TIA-758-C §6.4 requires a minimum of **10 meters** at each splice closure and 3 meters at FDH/FDT termination points. Think of it as the spare cable that lets you fix a cut without ordering new material. [ANSI/TIA-758-C §6.4]
 
 **Fiber assignment table**
 A project documentation deliverable mapping each fiber in each cable segment to its circuit assignment (active) or reserve status (dark). Required by BICSI OSP-DRD Manual Ch. 8 as a pre-construction deliverable. Updated in as-built form at project closeout. Essential for future network changes and repair dispatch. [BICSI OSP-DRD Manual, Ch. 8]
 
 **Macro-bend loss**
-Optical loss induced by a cable bend radius tighter than the fiber's rated minimum bend radius. Macro-bend loss is wavelength-dependent — higher at longer wavelengths — making the 1550 nm OTDR trace more sensitive to bend events than the 1310 nm trace. OS2 fiber conforming to ITU-T G.657.A1 has enhanced macro-bend tolerance compared to standard G.652.D. [ITU-T G.657 §5.2; Corning OSP Reference, Ch. 7.1]
+Optical loss induced by a cable bend radius tighter than the fiber's rated minimum bend radius. Picture a kinked garden hose — the kink blocks water flow; a tight cable bend "leaks" light out of the fiber core. Macro-bend loss is wavelength-dependent — higher at longer wavelengths — making the 1550 nm OTDR trace more sensitive to bend events than the 1310 nm trace. OS2 fiber conforming to ITU-T G.657.A1 has enhanced macro-bend tolerance compared to standard G.652.D. [ITU-T G.657 §5.2; Corning OSP Reference, Ch. 7.1]
 
 ---
 
@@ -311,7 +436,7 @@ Choices:
 
 *Rationale:*
 - **A — Incorrect.** An anomalous event at a specific location (2.1 km) on one wavelength but not another is not a calibration error — calibration errors affect the entire trace uniformly, not a single discrete location. [ANSI/TIA-526-7 §5]
-- **B — Correct.** Macro-bend loss is wavelength-dependent: loss at 1550 nm for a given bend radius is significantly higher than at 1310 nm. A 0.4 dB event at 2.1 km visible at 1550 nm but absent at 1310 nm is the classic signature of a **macro-bend** — the cable is bent tighter than its minimum bend radius at that location. This occurs in direct-bury cable where a rock ledge, root, or conduit bend forces the cable into a tight radius. The 1550 nm trace is specifically required for OSP acceptance because it reveals these events that are invisible or nearly invisible on the 1310 nm trace. Remediation: excavate at 2.1 km, identify and relieve the source of the tight bend, re-test [BICSI OSP-DRD Manual, Ch. 7.2; Corning OSP Reference, Ch. 7.1; ITU-T G.657 §5.2].
+- **B — Correct.** Macro-bend loss is wavelength-dependent: loss at 1550 nm for a given bend radius is significantly higher than at 1310 nm. A 0.4 dB event at 2.1 km visible at 1550 nm but absent at 1310 nm is the classic signature of a **macro-bend** — the cable is bent tighter than its minimum bend radius at that location. This occurs in direct-bury cable where a rock ledge, root, or conduit bend forces the cable into a tight radius. The 1550 nm trace is specifically required for OSP acceptance because it reveals these events that are invisible or nearly invisible on the 1310 nm trace. Remediation: excavate at 2.1 km, identify and relieve the source of the tight bend, re-test [BICSI OSP-DRD Manual, Ch. 7.2; ANSI/TIA-758-C §6.2; Corning OSP Reference, Ch. 7.1].
 - **C — Incorrect.** Water ingress that causes hydrogen darkening would typically appear as an elevated attenuation slope across the affected fiber length, not as a discrete 0.4 dB event at a single point. Hydrogen darkening is also more pronounced at 1383 nm (the water-peak wavelength) than at 1550 nm for G.652 fiber. A discrete event at a single point strongly suggests a bend, not water. [Corning OSP Reference, Ch. 7.2]
 - **D — Incorrect.** A partial fiber fracture (internal crack) typically appears as a reflective event (spike up from the noise floor) on the OTDR trace, not simply as a non-reflective loss event. A complete fiber break appears as a flat return-noise floor with no end reflection beyond the break. The description of a 0.4 dB loss event without reflective signature is more consistent with bend loss than fracture. [ANSI/TIA-526-7 §5; BICSI OSP-DRD Manual, Ch. 7.2]
 
@@ -378,7 +503,7 @@ Answer before proceeding to Lesson 12 (Hands-On Case Studies).
 Terms introduced in this lesson used across the Cable Selection topic:
 
 - **NESC loading district / Rules 250–251** → Lesson 4 (armored/aerial variants — NESC loading district first cited for ADSS span engineering), Lesson 10 (environment selection — NESC loading district governs aerial cable selection by geography)
-- **NEC Article 770 / OFNR / OFNP / BET** → Lesson 10 (environment selection — OSP-to-inside transition section; BET and fire ratings first introduced there)
+- **NEC Article 770 / OFNR / OFNP / BET** → Lesson 10 (environment selection — OSP-to-inside transition section; BET and fire ratings first introduced there in Lesson 7)
 - **OTDR / OLTS / optical power budget** → Lesson 12 (case studies — OTDR acceptance testing is documented in all three case study closeout deliverables)
 - **Bonding conductor / ground rod / CST armor grounding** → Lesson 4 (armored/aerial variants — CST armor bonding requirement first introduced there), Lesson 10 (direct-bury environment — bonding requirement repeated in compliance context)
 - **Slack loop / §6.4** → Lesson 8 (drop/distribution/feeder — slack loop calculation in feeder sizing example), Lesson 12 (case studies — slack loop is a line item in all three case study compliance checklists)

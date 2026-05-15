@@ -292,7 +292,7 @@ D) Sag would decrease because longer spans pull the cable into a flatter catenar
 
 *Rationale:*
 - **A — Incorrect.** 7.25 ft sag for a 300-ft span would require sag to scale linearly with span — but the sag formula scales with L² (span squared), not L. Linear scaling would give 6.04 × (300/250) = 7.25 ft, which underestimates the true sag. [IEEE Std 1222 §5]
-- **B — Correct.** Sag scales with L²: S_300 = S_250 × (300/250)² = 6.04 × (1.20)² = 6.04 × 1.44 = **8.698 ft ≈ 8.69 ft**. Equivalently, direct calculation: S = (0.476 × 300²) / (8 × 616) = (0.476 × 90,000) / 4,928 = 42,840 / 4,928 = 8.694 ft ≈ 8.69 ft. Midspan clearance = 28.0 − 8.69 = **19.31 ft**. Margin = 19.31 − 15.5 = **3.81 ft** — still compliant. [IEEE Std 1222 §5; NESC C2-2023, Rule 232]
+- **B — Correct.** Sag scales with L²: S_300 = S_250 × (300/250)² = 6.04 × (1.20)² = 6.04 × 1.44 = **8.6976 ft ≈ 8.69 ft**. Equivalently, direct calculation: S = (0.476 × 300²) / (8 × 616) = (0.476 × 90,000) / 4,928 = 42,840 / 4,928 = 8.693 ft ≈ 8.69 ft. Midspan clearance = 28.0 − 8.69 = **19.31 ft**. Margin = 19.31 − 15.5 = **3.81 ft** — still compliant. [IEEE Std 1222 §5; NESC C2-2023, Rule 232]
 - **C — Incorrect.** 12.5 ft sag at 300 ft would represent sag scaling as L^2.67 — no such relationship exists. This answer conflates the maximum allowable sag (12.5 ft) with the calculated sag at a different span. [IEEE Std 1222 §5]
 - **D — Incorrect.** Span length L appears in the sag formula numerator (L²), not the denominator. Longer spans always produce more sag, not less, at the same tension and cable weight. Tension at EDS (H) is fixed by the design; it does not increase because the span is longer. [IEEE Std 1222 §5]
 
