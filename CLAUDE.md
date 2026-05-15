@@ -574,7 +574,19 @@ This is the "no mistakes" lever. Cost is real but quality > cost per §1.
 
 ## Status graphs in chat
 
-User wants visual queue updates. Render an ASCII status graph on every meaningful state transition (wave kickoff, agent landing, push to repo, CI result). Format:
+User wants visual queue updates. Render an ASCII status graph on every meaningful state transition (wave kickoff, agent landing, push to repo, CI result).
+
+**Carter's lock 2026-05-15 evening:** "when you show the status reports I'd like to see the Queue for the entire project, every step of the learning module and the other stuff like portals and amin features." — full-project graph is the default, not the per-wave subset. Sections to render every time:
+
+1. **OSP TRAINING REWRITE** — current focus. Each phase (RW.0/0a/0b/1/1A/1B/2/3/4/5/6/7) listed; for RW.4, every one of the 22 topics broken out (T01-T18 general + C01-C04 cert).
+2. **LAUNCH-DB QUEUE** — deferred Phase 1-11 items.
+3. **SIDE-CHANNEL BRANCHES** — unmerged feature branches awaiting audit.
+4. **FUTURE BUILDS** — capture-only items not yet scoped.
+5. Legend (✓ ⏳ ⌛ ✗ ↻).
+
+Per-wave subset graphs are only acceptable for tight in-the-moment "this just changed" updates between major transitions. End-of-turn or major-state-change updates render the full-project version.
+
+Default per-row format:
 
 ```
 WAVE                    STATE                      SHA / NOTES
