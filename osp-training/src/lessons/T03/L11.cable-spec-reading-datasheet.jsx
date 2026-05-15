@@ -416,13 +416,13 @@ export default function T03L11_DatasheetReading() {
               'Why does a cable datasheet list two different minimum bend radius values — one for installation and one for long-term?',
             choices: [
               'They are the same value; listing both is just a formatting convention',
-              'The installation bend radius is the tighter limit; long-term is more generous because permanent bends are under lower load',
-              'The installation bend radius is more generous (larger) because it is a short-duration stress; the long-term (loaded) radius is the tighter limit for permanent installation',
+              'The installation bend radius is the tighter (smaller) limit; long-term allows a larger radius because permanent bends are under lower load',
+              'The installation bend radius requires a larger minimum radius (typically 20× cable OD) because dynamic pulling stress is more damaging; the long-term (loaded) radius allows a tighter (smaller) radius permanently — typically 10× cable OD — because sustained gentle bending is less damaging than dynamic stress',
               'The long-term value applies only to armored cable; unarmored cable uses the installation value for both',
             ],
             answerIndex: 2,
             explanation:
-              'Installation bend radius is a short-duration limit — the cable experiences the bend only during the brief pull or routing event. The long-term (loaded) bend radius is the limit for permanent installed position, where the cable may be stressed at that angle for 20+ years. The long-term value is typically the tighter (smaller radius allowed) of the two. Violating the long-term limit causes microbend loss over the life of the cable.',
+              'The installation bend radius requires a LARGER minimum radius number (e.g., 20× OD) — you cannot bend tighter than this number during the pull. The long-term (loaded) radius allows a SMALLER minimum radius (e.g., 10× OD) in the permanent installed position. Counter-intuitively, the long-term limit is the smaller number: you can route cable in a tighter permanent bend than you can during the dynamic stress of pulling. Violating the long-term limit causes microbend loss that builds up over years of installation.',
           },
           {
             id: 'T03-L11-Q05',
