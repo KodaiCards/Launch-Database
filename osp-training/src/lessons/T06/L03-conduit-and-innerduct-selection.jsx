@@ -143,67 +143,67 @@ const quizQuestions = [
   {
     id: 'q1',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A fiber conduit must be installed via HDD bore through 800 feet of mixed clay and gravel. The bore will include two 90° bends in the path profile. Which conduit material is most appropriate?',
-    options: [
+    choices: [
       'Schedule 40 PVC — standard conduit for all underground applications',
       'Schedule 80 PVC — thicker walls provide crush resistance for HDD pullback',
       'HDPE — flexible, withstands HDD pullback tension, torsion, and cold-temperature impact',
       'EMT (electrical metallic tubing) — maximum crush resistance for boring applications',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'HDPE is the standard for HDD applications. Its flexibility allows it to coil on a reel and navigate the bore path profile without joint failure. PVC (Schedule 40 or 80) is rigid and joined with solvent-cement bells — those joints can separate under HDD pullback tension. EMT is a metal electrical conduit not used in underground OSP fiber applications.',
   },
   {
     id: 'q2',
     type: 'multiple-choice',
-    question:
+    prompt:
       'What is the practical difference between Schedule 40 and Schedule 80 PVC for the same trade size (e.g., 2-inch)?',
-    options: [
+    choices: [
       'Schedule 80 has a larger outer diameter for the same nominal size',
       'Schedule 40 has thicker walls, providing more crush resistance',
       'Schedule 80 has thicker walls, providing more crush resistance, but smaller interior diameter',
       'Schedule 40 and Schedule 80 have identical inner and outer diameters; only the material grade differs',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'For the same trade size (e.g., 2-inch), Schedule 80 has thicker walls than Schedule 40. This means the outer diameter (OD) is the same, but the inner diameter (ID) is smaller — a 2-inch Schedule 40 PVC has ID ≈ 2.067 inches; 2-inch Schedule 80 has ID ≈ 1.939 inches. You pay for Schedule 80\'s crush resistance with a slightly smaller bore. In most OSP applications, Schedule 40 is sufficient; Schedule 80 is used under pavements and in high-traffic-load zones.',
   },
   {
     id: 'q3',
     type: 'multiple-choice',
-    question:
+    prompt:
       'Three fiber cables from three different carriers need to share a single conduit in an urban duct bank. What is the correct way to separate them?',
-    options: [
+    choices: [
       'Install all three cables directly in one large conduit with no separation',
       'Install three separate small conduits in the duct bank, one per carrier',
       'Install one host conduit with three innerducts, one per carrier, color-coded separately',
       'Wrap each cable in spiral split loom tubing inside the host conduit',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'Innerducts are the standard mechanism for separating multiple carriers in a shared host conduit. Each carrier gets their own innerduct, which provides physical separation (no fiber contact between carriers), separate pull capability, and clear identification by color code. Installing all cables directly in one conduit makes future access and re-pulling impossible. Three separate conduits in a duct bank is also valid but more expensive in conduit material and duct bank space.',
   },
   {
     id: 'q4',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A new conduit is being installed for a route expected to be upgraded to air-blown micro-cable in 3–5 years. What design feature should be included in the conduit system now?',
-    options: [
+    choices: [
       'Install a larger conduit (4-inch vs 2-inch) to accommodate future cable diameter',
       'Install microducts inside the host conduit so air-blown cable can be added without re-boring',
       'Leave the conduit empty and plan to re-bore with a new conduit when the micro-cable is needed',
       'Install innerducts rated for conventional pull instead — they can be converted to microducts later',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'The forward-thinking design for air-blown fiber is to install microducts inside the host conduit at initial construction. Microducts cost very little at initial installation (adding them later requires access at every structure), and air-blown fiber can be pushed through the microducts years later without any ground disturbance or re-boring. A 2-inch host conduit can contain 7 or more microducts. Innerducts are for conventional pull cable, not air-blown micro-cable.',
   },
   {
     id: 'q5',
     type: 'drag-match',
-    question: 'Match each conduit type to its primary application.',
+    prompt: 'Match each conduit type to its primary application.',
     pairs: [
       { left: 'Schedule 40 PVC', right: 'Direct-buried residential or utility-easement conduit' },
       { left: 'Schedule 80 PVC', right: 'Conduit under pavement or in high-traffic-load areas' },

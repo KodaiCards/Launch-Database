@@ -267,15 +267,15 @@ const quizQuestions = [
   {
     id: 'q1',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A 1.25-inch Schedule 40 PVC innerduct has an ID of 1.380 inches. Three 0.47-inch OD micro-cables are to be installed. What is the approximate fill percentage?',
-    options: [
+    choices: [
       '~18% — well under the 40% limit',
       '~34% — near the 40% limit but compliant',
       '~51% — over the 40% limit, select larger innerduct',
       '~67% — far over the limit',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'Fill% = (total cable area / conduit area) x 100%. ' +
       'Conduit area: pi x (0.690 in)^2 = 1.496 in^2. ' +
@@ -287,45 +287,45 @@ const quizQuestions = [
   {
     id: 'q2',
     type: 'multiple-choice',
-    question:
+    prompt:
       'Why does pull tension grow exponentially (not linearly) with the number of bends in a conduit route?',
-    options: [
+    choices: [
       'Each bend increases the weight of cable being pulled by adding a catenary',
       'At each bend, friction acts on the full accumulated tension from all previous bends and straight sections, multiplying it',
       'Bends reduce the effective conduit ID, increasing the fill percentage and therefore the friction force',
       'Cable jackets elongate at bends, adding extra length that must be pulled',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'The capstan equation (T_out = T_in × e^(µθ)) captures why tension grows exponentially: each bend multiplies the ACCUMULATED tension from everything upstream — straight sections plus all prior bends. If the straight-section tension is 40 lbf and one 90° bend multiplies it to 88 lbf, then the second 90° bend multiplies those 88 lbf to 193 lbf. The multiplication stacks. A linear model would only add friction, not multiply it.',
   },
   {
     id: 'q3',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A cable pull calculation shows a required pull tension of 780 lbf on a single-end pull. The cable is rated for 600 lbf maximum. What is the correct response?',
-    options: [
+    choices: [
       'Proceed — the 600 lbf rating has a built-in safety factor; 780 lbf is acceptable',
       'Add cable lubricant to reduce µ and recalculate; if still over 600 lbf, add a mid-assist pull point',
       'Use a smaller conduit — the fill percentage must be too high, increasing friction',
       'Split the cable into two separate smaller cables and pull them individually',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'The correct response is to first optimize what can be optimized: adding cable lubricant reduces µ from ~0.5 to ~0.2–0.35, which can significantly reduce the required pull tension. If the recalculation still exceeds 600 lbf, a mid-assist pull point is added at an intermediate structure, breaking the route into two shorter pulls each within the cable\'s rated tension. Exceeding the cable\'s rated maximum is not acceptable — it risks permanent fiber damage (microbending, jacket cracking) that may not be immediately detectable but degrades performance over time.',
   },
   {
     id: 'q4',
     type: 'multiple-choice',
-    question:
+    prompt:
       'What is the jam ratio, and why does it matter for conduit fill planning?',
-    options: [
+    choices: [
       'Jam ratio is the ratio of conduit OD to conduit ID; it determines wall thickness adequacy',
       'Jam ratio is conduit ID divided by cable OD; values between 2.8 and 3.2 indicate a risk of three same-size cables jamming together',
       'Jam ratio is the fill percentage above which cables can no longer be pulled; it equals 40% for three cables',
       'Jam ratio is the number of bends above which a mid-assist pull is required',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'Jam ratio = conduit ID / cable OD. When three cables of the same OD are pulled together, they are at highest risk of forming a triangular lock (jamming) when the jam ratio falls between 2.8 and 3.2. Outside this range — either smaller (cables fit into a tight triangle) or larger (conduit has room to separate them) — jamming risk drops. A fill calculation that comes in under 40% can still have a jam ratio in the danger zone, so engineers check both independently.',
   },
@@ -336,7 +336,7 @@ const quizQuestions = [
 const fixedQuizQuestions = [
   {
     ...quizQuestions[0],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'Fill% = (total cable area / conduit area) x 100%.' +
       ' Conduit area: pi x (1.380/2)^2 = pi x 0.4761 = 1.496 in^2.' +

@@ -151,67 +151,67 @@ const quizQuestions = [
   {
     id: 'q1',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A 811 locate ticket is returned with yellow flags marking a gas line along your proposed bore path. The flags show the gas line running parallel to your fiber route, approximately 3 feet to the south. Your bore path passes within 18 inches of the gas main at its closest point. What is the correct next step before boring begins?',
-    options: [
+    choices: [
       'Begin boring — 18 inches of separation exceeds the 6-inch NESC minimum, so the bore is code-compliant',
       'Pothole-expose the gas main at the point of closest approach to confirm actual depth and lateral position before boring',
       'Move the bore path to increase separation to at least 36 inches without exposing the utility',
       'Call the gas company and ask them to move the gas main before you proceed',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       '18 inches is a code-compliant clearance from the locate mark — but locate marks are approximate. The actual gas main may be 12–18 inches from the flag, which could put the actual separation well below the 6-inch NESC minimum once boring is underway. Standard practice (and CGA Best Practices v19 requirement) is to pothole-expose the utility at the point of closest approach to confirm actual position before mechanized excavation. You build your bore path from the confirmed position, not from the approximate locate mark.',
   },
   {
     id: 'q2',
     type: 'multiple-choice',
-    question:
+    prompt:
       'Orange flags are placed along the edge of a property during a residential 811 locate. What utility do the orange flags mark?',
-    options: [
+    choices: [
       'Electric power lines',
       'Gas or oil lines',
       'Telecommunications or CATV',
       'Potable water',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'Per the APWA Uniform Color Code: Orange = telecommunications and CATV. Red = electric power. Yellow = gas, oil, steam, petroleum. Blue = potable water. The orange flags mark existing telecommunications infrastructure — likely a copper or fiber run belonging to the incumbent telephone company, a cable TV provider, or a competitive fiber carrier.',
   },
   {
     id: 'q3',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A crew plowing a residential route notices orange paint markings in the yard that don\'t appear on the 811 locate sheet. What should they do?',
-    options: [
+    choices: [
       'Continue plowing — if it was important, it would be on the locate sheet',
       'Move the plow path 2 feet away from the orange marking and continue',
       'Stop work and manually investigate the marking before resuming mechanized excavation',
       'Report the discrepancy to the 811 center and continue while waiting for a response',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'Unidentified marks are a red flag. Orange paint may indicate: (1) an old locate from a prior 811 ticket now expired; (2) a private lateral not in the 811 system; (3) a contractor\'s own survey mark using the wrong color. Any mechanized excavation near unidentified marks risks a utility strike. Stop work, manually expose the area at the mark (pothole), and confirm what\'s there before the plow resumes. Moving the path by 2 feet does not address the unknown — the utility may extend laterally beyond the mark.',
   },
   {
     id: 'q4',
     type: 'multiple-choice',
-    question:
+    prompt:
       'Your fiber conduit runs parallel to an electric supply conduit for 600 feet in a utility corridor. The 811 locate shows the electric at 24-inch depth along the entire corridor. You plan to install the fiber at 36-inch depth, 18 inches to the south. Is there a problem?',
-    options: [
+    choices: [
       'No — vertical separation (12 inches) and horizontal separation (18 inches) both exceed typical minimums',
       'Yes — fiber must always be installed north of electric supply to comply with NESC §35',
       'Yes — 18-inch horizontal separation violates the RUS 1751F-635 §6 parallel separation requirement',
       'No problem in terms of depth, but a permit from the electric utility is still required for parallel runs in shared corridors',
     ],
-    correct: 3,
+    answerIndex: 3,
     rationale:
       'The separation distances are likely acceptable (12 inches vertical, 18 inches horizontal exceeds typical NESC §35 and APWA minimums [confirm current NESC edition]). However, parallel runs in a shared utility corridor typically require coordination with the existing utility owner. For a 600-foot parallel run adjacent to an electric supply line, the electric utility may require an encroachment permit, notification, or inspection even if the separation distances are met. "Code-compliant" and "no coordination required" are not the same thing in shared corridors.',
   },
   {
     id: 'q5',
     type: 'drag-match',
-    question: 'Match each APWA flag color to the utility it marks.',
+    prompt: 'Match each APWA flag color to the utility it marks.',
     pairs: [
       { left: 'Red flags', right: 'Electric power lines and conduit' },
       { left: 'Yellow flags', right: 'Gas, oil, steam, petroleum mains' },

@@ -136,75 +136,75 @@ const quizQuestions = [
   {
     id: 'q1',
     type: 'multiple-choice',
-    question:
+    prompt:
       'An RUS-financed buried fiber route crosses through a state highway ROW. The RUS standard requires 36-inch minimum cover; the state DOT permit requires 48-inch cover. Which depth governs?',
-    options: [
+    choices: [
       '18 inches — the NEC 830.47 national floor always takes precedence',
       '36 inches — the RUS requirement governs on RUS-funded projects',
       '48 inches — the state DOT permit (AHJ override) is the binding requirement',
       '42 inches — the average of the two conflicting requirements',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'The AHJ override is the binding requirement. The state DOT controls the highway ROW and issues the encroachment permit. If the permit says 48 inches, you build to 48 inches — regardless of what RUS or NEC specify as their floor. The permit is the contract document that governs on-site. RUS 36 inches is the minimum floor for the non-highway segments.',
   },
   {
     id: 'q2',
     type: 'multiple-choice',
-    question:
+    prompt:
       'What does "minimum cover" mean in the context of buried conduit installation?',
-    options: [
+    choices: [
       'The total depth of the trench from grade to trench bottom',
       'The vertical distance from the top of the conduit to the finished grade surface',
       'The concrete or soil thickness placed below the conduit for bedding',
       'The minimum wall thickness of the conduit itself',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'Minimum cover is the distance from the top of the conduit to the finished grade surface. A 36-inch minimum cover means the top of the conduit is 36 inches below the surface. Total trench depth would be cover + conduit OD + bedding thickness. The cover is what protects the conduit from frost, traffic load, and accidental excavation.',
   },
   {
     id: 'q3',
     type: 'multiple-choice',
-    question:
+    prompt:
       'Why does the frost line matter for burial depth in northern states, even when the RUS 36-inch standard is met?',
-    options: [
+    choices: [
       'Frost makes the soil harder and more difficult to excavate, requiring deeper burial for access',
       'Conduit buried above the frost line can heave vertically as soil freezes and thaws, potentially damaging cables and disrupting grade',
       'Frost line requirements only apply to potable water lines, not to fiber conduit',
       'The frost line determines the required conduit wall thickness, not the burial depth',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'When water in the soil freezes, it expands and can push buried objects upward — a process called frost heave. If the conduit is above the frost line, freeze-thaw cycles over multiple winters can shift the conduit vertically, crack fittings, and create sags or humps visible as grade changes on the surface. Standard practice: bury at least 6 inches below the local frost line depth to keep the conduit in stable, non-freezing soil.',
   },
   {
     id: 'q4',
     type: 'multiple-choice',
-    question:
+    prompt:
       'You are designing a non-RUS private fiber build. The route runs through residential yards with no specific AHJ permit depth requirement documented. What is the minimum burial depth for direct-buried cable per NEC 830.47?',
-    options: [
+    choices: [
       '6 inches',
       '12 inches',
       '18 inches',
       '36 inches',
     ],
-    correct: 2,
+    answerIndex: 2,
     rationale:
       'NEC 830.47 specifies 18 inches as the national floor for direct-buried network-powered broadband communications cable. This is the minimum if no AHJ override applies and this is not an RUS-funded project (RUS would require 36 inches). Note: 18 inches is genuinely shallow for buried fiber — most prudent designs exceed this floor even when not required.',
   },
   {
     id: 'q5',
     type: 'multiple-choice',
-    question:
+    prompt:
       'On a plan-and-profile drawing, you annotate a 42-inch burial depth for the county road crossing but fail to show the transition back to 36 inches on the residential segment on the other side. Why is this a problem?',
-    options: [
+    choices: [
       'It is not a problem — the deeper depth on one segment automatically applies to adjacent segments',
       'The construction crew may install the full route at 42 inches, wasting excavation cost on the residential segment',
       'The construction crew may install the residential segment at 42 inches also, which violates NEC',
       'The annotation error will cause the permit to be denied',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'Without a clear transition annotation, the crew defaults to what they see on the drawing — which at the road crossing shows 42 inches. They may simply keep the blade or trencher at 42 inches through the residential segment, adding unnecessary excavation cost (deeper trench, more backfill, more compaction) with no benefit. Plan-and-profile drawings must annotate depth changes at every surface-type transition to prevent this. The risk of going too shallow (hitting 30 inches where 36 is required) is the other side of the same annotation failure.',
   },

@@ -153,52 +153,52 @@ const quizQuestions = [
   {
     id: 'q1',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A handhole is being placed in a private residential driveway. The homeowner uses the driveway for daily car traffic. What cover rating is required?',
-    options: [
+    choices: [
       'NTC (non-traffic cover) — residential driveways are light-traffic and NTC is sufficient',
       'H-20 — driveways and parking areas with vehicle traffic require H-20 rated frame and cover',
       'H-25 — all residential applications require H-25 for future-proofing',
       'No cover rating is required — a plastic lid is acceptable in residential settings',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'H-20 (HS-20 equivalent, 20-ton axle) is the standard for driveways, parking areas, and any location subject to vehicle traffic including passenger vehicles. A personal car weighs 2–4 tons; even a small truck or delivery vehicle can overload an NTC cover. NTC is appropriate only in yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is a trip hazard and a permit violation.',
   },
   {
     id: 'q2',
     type: 'multiple-choice',
-    question:
+    prompt:
       'What is the functional difference between a splice handhole and a pull-point handhole?',
-    options: [
+    choices: [
       'A splice handhole is man-entry; a pull-point handhole is reach-in only',
       'A splice handhole contains fiber connections and may have splice trays; a pull-point handhole contains only slack cable with no splices — it exists to enable cable pulls to be extended',
       'A pull-point handhole is rated for H-25 traffic loading; a splice handhole uses an NTC cover',
       'There is no functional difference; the terms are interchangeable',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'The functional distinction matters for sizing: a splice handhole needs enough interior depth to accommodate bend-radius transitions, splice-tray mounting, and slack coils. A pull-point handhole only needs enough room to coil the cable briefly and attach a Kellems grip to continue the pull — it may be smaller. Confusing the two during design leads to either an oversized structure (wasted cost) or an undersized splice point (can\'t fit the trays needed).',
   },
   {
     id: 'q3',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A vault is being sized for a 12-cable splice node (each cable is 144-count, OD 0.75 inches). The minimum bend radius for these cables is 10× OD = 7.5 inches. What is the MINIMUM interior dimension consideration driven by the bend radius?',
-    options: [
+    choices: [
       'Minimum interior width must be ≥ 2 × bend radius = 15 inches to allow a U-turn inside the vault',
       'Minimum interior depth must be ≥ minimum bend radius = 7.5 inches',
       'Minimum interior width must be ≥ bend radius = 7.5 inches for each cable',
       'Bend radius does not affect vault sizing — only cable count and splice tray count matter',
     ],
-    correct: 0,
+    answerIndex: 0,
     rationale:
       'To make a 180° turnaround inside a vault (from conduit entry at the bottom up to the splice tray at working height), the interior dimension must accommodate the minimum bend radius on both sides of the turn. The cable sweeps through a semicircle with a minimum radius of 7.5 inches, requiring 2 × 7.5 = 15 inches of clearance width for the cable turn alone. The actual vault interior must be wider than 15 inches to allow for the cable body plus working clearance. Vendors provide tables matching cable OD, bend radius, and minimum interior dimension.',
   },
   {
     id: 'q4',
     type: 'drag-match',
-    question: 'Match each access structure to its primary use case.',
+    prompt: 'Match each access structure to its primary use case.',
     pairs: [
       { left: 'Handhole (NTC rated)', right: 'Pull point in a residential utility easement, no vehicle traffic' },
       { left: 'Handhole (H-20 rated)', right: 'Slack storage location in a commercial parking lot' },
@@ -211,15 +211,15 @@ const quizQuestions = [
   {
     id: 'q5',
     type: 'multiple-choice',
-    question:
+    prompt:
       'The rule of thumb for access structure spacing along a conduit route is 500–1,000 ft. What does this spacing actually optimize?',
-    options: [
+    choices: [
       'It ensures conduit fill stays below 40% by providing an intermediate access point to reduce cable count per segment',
       'It keeps the required pull tension within the cable\'s rated maximum by limiting the conduit-run length between pull points',
       'It satisfies the NESC §35 requirement for underground access spacing',
       'It ensures the access structures are visible to the 811 locate technician for marking',
     ],
-    correct: 1,
+    answerIndex: 1,
     rationale:
       'The 500–1,000 ft spacing is a pull-tension-management rule. Beyond 1,000 ft of conduit between pull points, bends and friction accumulate enough that a single-end pull frequently exceeds cable-rated tension. Access structures at ≤1,000 ft allow mid-assist pulls. In practice, the exact spacing is adjusted to the nearest safe access point — a textbook 1,000-ft spacing that falls in a highway median is moved to the nearest side street.',
   },
