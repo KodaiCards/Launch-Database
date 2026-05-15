@@ -127,4 +127,16 @@ For each research brief:
 4. RT-A + RT-B reports cross-checked by orchestrator
 5. Findings: any HALLUCINATED citation → block author dispatch + redo research; any wrong section → flag for correction; minor inconsistencies → batch into author wave as known patches.
 
+## Paywalled / inaccessible sources rule (added 2026-05-16, Carter)
+
+Some primary sources are paywalled (NESC C2, BICSI OSPDR/TDMM, FOA full Reference Guide, ITU-T historical recommendations). When the citation can't be independently verified by hitting the source:
+
+1. **Minimum 2 research agents** (not 1) for that topic — must independently derive the same number/threshold/procedure via DIFFERENT trusted-secondary sources (e.g., RUS Bulletin section that quotes the NESC clause + a state DOT design manual that re-states it). Convergence between independent paths is the verification.
+2. **Both RTs run independent verification AND PROCESS CHECK.** Process check = "where did the researcher get this? Was the reasoning chain sound? Could a plausible-sounding-but-wrong number have slipped in from the agent's training data?" RT specifically traces the researcher's logic and flags any "feels right but unconfirmed" reasoning.
+3. **If 2 research agents converge** AND both RTs verify the process is sound → claim is locked.
+4. **If 2 research agents diverge** OR RT flags weak process → escalate: 3rd research agent, OR flag as `[paywalled — verify against NESC C2 §X.Y when accessible]` in the lesson body.
+5. **If a number can't be verified at all** → omit from lesson OR mark "varies by jurisdiction / verify with AHJ" rather than guess.
+
+The process-check is the anti-hallucination lever for paywalled content. Cross-source convergence + RT-of-reasoning catches "researcher's training data leaked into a citation that doesn't actually say that."
+
 Goal: <1% margin of error per Carter's standard.
