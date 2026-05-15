@@ -32,15 +32,31 @@ export const meta = {
     'staking completeness checklist',
     'staking re-do trigger',
   ],
+  key_terms: [
+    {
+      term: 'QA review',
+      definition: 'The quality assurance review of a completed staking package performed by the engineer of record before the staking data is used for make-ready engineering, permitting, or construction. A QA review checks that every pole in the route has been visited (confirmed by GPS record or photo with a location-anchored timestamp), all required measurements are recorded with acceptable accuracy, all photos are usable, all make-ready flags are supported by documented evidence, and no design-vs-field conflicts were left unresolved.',
+    },
+    {
+      term: 'catch rate',
+      definition: 'In staking QA, the percentage of real make-ready conflicts that the staking crew correctly identified and documented. A catch rate of 100% means every pole that genuinely needed a make-ready flag was flagged. A catch rate of 85% means 15% of real conflicts were missed — and those 15% will be discovered later (during make-ready engineering, construction, or inspection), each triggering a change order or re-stake. A high catch rate is the single most important quality metric for a staking crew.',
+    },
+    {
+      term: 'field-vs-design conflict',
+      definition: 'Any difference between what the design plan shows for a pole or underground route and what the staker actually measured or observed in the field. Examples: the design shows a pole at STA 10+50 but the actual pole is at STA 10+35; the design shows a 35-ft pole but the field measurement shows a 30-ft pole; the design assumes the existing wire at 27 ft but the staker measures it at 24 ft. Every field-vs-design conflict must be documented with measurement and photo — not ignored just because the conflict is "small."',
+    },
+    {
+      term: 'staking completeness checklist',
+      definition: 'A structured list of deliverables that a staking package must include to be accepted for QA review. Typical items: (1) every pole in the route has a record (no missing pole IDs), (2) every pole has at least two photos (tag + condition overview), (3) attachment heights are recorded for every existing attachment within 5 ft of the design attachment height, (4) make-ready flags are documented with measurement + photo + confidence, (5) underground bore pits and pull pits have location confirmation notes, (6) any design-vs-field conflicts are documented with measurement and photo, (7) GPS record shows progression along the route (no apparent skipped sections).',
+    },
+    {
+      term: 'staking re-do trigger',
+      definition: 'A condition found during QA review that requires the staking crew to return to the field and re-stake some or all of a route section. Common triggers: a section of poles missing entirely from the package (GPS record shows the crew didn\'t visit them); attachment height measurements missing for multiple poles (the engineer cannot confirm make-ready requirements without them); photos for a section are missing, blurry, or don\'t show the measurement display; make-ready flags lack supporting measurement evidence. A re-stake adds time and cost to the project — the goal is to catch completeness gaps before leaving the field, not discover them in QA.',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'QA review': 'The quality assurance review of a completed staking package performed by the engineer of record before the staking data is used for make-ready engineering, permitting, or construction. A QA review checks that every pole in the route has been visited (confirmed by GPS record or photo with a location-anchored timestamp), all required measurements are recorded with acceptable accuracy, all photos are usable, all make-ready flags are supported by documented evidence, and no design-vs-field conflicts were left unresolved.',
-  'catch rate': 'In staking QA, the percentage of real make-ready conflicts that the staking crew correctly identified and documented. A catch rate of 100% means every pole that genuinely needed a make-ready flag was flagged. A catch rate of 85% means 15% of real conflicts were missed — and those 15% will be discovered later (during make-ready engineering, construction, or inspection), each triggering a change order or re-stake. A high catch rate is the single most important quality metric for a staking crew.',
-  'field-vs-design conflict': 'Any difference between what the design plan shows for a pole or underground route and what the staker actually measured or observed in the field. Examples: the design shows a pole at STA 10+50 but the actual pole is at STA 10+35; the design shows a 35-ft pole but the field measurement shows a 30-ft pole; the design assumes the existing wire at 27 ft but the staker measures it at 24 ft. Every field-vs-design conflict must be documented with measurement and photo — not ignored just because the conflict is "small."',
-  'staking completeness checklist': 'A structured list of deliverables that a staking package must include to be accepted for QA review. Typical items: (1) every pole in the route has a record (no missing pole IDs), (2) every pole has at least two photos (tag + condition overview), (3) attachment heights are recorded for every existing attachment within 5 ft of the design attachment height, (4) make-ready flags are documented with measurement + photo + confidence, (5) underground bore pits and pull pits have location confirmation notes, (6) any design-vs-field conflicts are documented with measurement and photo, (7) GPS record shows progression along the route (no apparent skipped sections).',
-  'staking re-do trigger': 'A condition found during QA review that requires the staking crew to return to the field and re-stake some or all of a route section. Common triggers: a section of poles missing entirely from the package (GPS record shows the crew didn\'t visit them); attachment height measurements missing for multiple poles (the engineer cannot confirm make-ready requirements without them); photos for a section are missing, blurry, or don\'t show the measurement display; make-ready flags lack supporting measurement evidence. A re-stake adds time and cost to the project — the goal is to catch completeness gaps before leaving the field, not discover them in QA.',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'staker', source_lesson_id: 'T07.L01' },
@@ -51,10 +67,7 @@ export const vocabulary_assumed = [
   { term: 'staking sheet', source_lesson_id: 'T07.L05' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T07L09_StakingQAWhatTheEngineerReviews() {
   return (

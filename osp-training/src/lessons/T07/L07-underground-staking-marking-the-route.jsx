@@ -33,16 +33,35 @@ export const meta = {
     'HDD pilot bore mark',
     'pull-pit setup diagram',
   ],
+  key_terms: [
+    {
+      term: 'survey stake',
+      definition: 'A wooden or plastic stake driven into the ground at a specific design stationing to mark the planned centerline of an underground utility route (also called a centerline stake when marking an underground route centerline). Survey stakes are placed at intervals — typically every 50 to 100 feet on straight runs, at every PI (point of intersection) where the route turns, and at every design stationing that corresponds to a bore pit, pull pit, or conduit change. Survey stakes align the construction crew to the design intent on the ground.',
+    },
+    {
+      term: 'offset stake',
+      definition: 'A stake placed perpendicular to the design centerline — typically 5 to 10 feet to the side of the centerline stake — to protect the design alignment reference from being knocked over by equipment during construction. Because construction crews drive heavy machinery along the route, centerline stakes are frequently damaged. Offset stakes survive because they are out of the machinery path; a crew member can re-establish the centerline by measuring back from the offset stake.',
+    },
+    {
+      term: 'flagging',
+      definition: 'Brightly colored plastic ribbon tied to stakes, trees, fence posts, or other fixed objects to make the underground route visible at a distance and in all weather. APWA (American Public Works Association) Uniform Color Code defines standard colors: orange = telecommunications/fiber, yellow = gas, red = electric power, blue = water, white = proposed excavation. Flagging must match the utility type so that other crews doing locate work can correctly identify the route.',
+    },
+    {
+      term: 'bore pit location',
+      definition: 'The surface location — marked with a stake and flagging — where an HDD (horizontal directional drill) machine will set up to begin a directional bore. The bore pit must be sized to accommodate the drill rig, rod racks, mud recycling system, and operator. Minimum clearances from traffic lanes and from overhead utilities are required. The staker verifies the bore pit location against the design plan and marks it clearly with a stake plus directional arrow showing the bore heading.',
+    },
+    {
+      term: 'HDD pilot bore mark',
+      definition: 'A mark (stake, flagging, or painted line) at the bore pit showing the design bearing and slope for the horizontal directional drill\'s pilot bore. The pilot bore is the first, small-diameter pass through the ground that establishes the bore path. Everything follows the pilot bore — reaming passes and final conduit pull. An incorrect pilot bore mark means the conduit exits at the wrong location, depth, or angle.',
+    },
+    {
+      term: 'pull-pit setup diagram',
+      definition: 'A sketch or field note at the pull pit location (the exit point of an HDD bore) showing: the exit angle of the conduit from the ground, the required trench dimensions for pulling conduit, the distance from the road or traffic-control boundary, and any overhead obstacles. The pull pit must be positioned so that the bore crew can feed the conduit back through from the exit point without vehicle conflicts.',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'survey stake': 'A wooden or plastic stake driven into the ground at a specific design stationing to mark the planned centerline of an underground utility route (also called a centerline stake when marking an underground route centerline). Survey stakes are placed at intervals — typically every 50 to 100 feet on straight runs, at every PI (point of intersection) where the route turns, and at every design stationing that corresponds to a bore pit, pull pit, or conduit change. Survey stakes align the construction crew to the design intent on the ground.',
-  'offset stake': 'A stake placed perpendicular to the design centerline — typically 5 to 10 feet to the side of the centerline stake — to protect the design alignment reference from being knocked over by equipment during construction. Because construction crews drive heavy machinery along the route, centerline stakes are frequently damaged. Offset stakes survive because they are out of the machinery path; a crew member can re-establish the centerline by measuring back from the offset stake.',
-  'flagging': 'Brightly colored plastic ribbon tied to stakes, trees, fence posts, or other fixed objects to make the underground route visible at a distance and in all weather. APWA (American Public Works Association) Uniform Color Code defines standard colors: orange = telecommunications/fiber, yellow = gas, red = electric power, blue = water, white = proposed excavation. Flagging must match the utility type so that other crews doing locate work can correctly identify the route.',
-  'bore pit location': 'The surface location — marked with a stake and flagging — where an HDD (horizontal directional drill) machine will set up to begin a directional bore. The bore pit must be sized to accommodate the drill rig, rod racks, mud recycling system, and operator. Minimum clearances from traffic lanes and from overhead utilities are required. The staker verifies the bore pit location against the design plan and marks it clearly with a stake plus directional arrow showing the bore heading.',
-  'HDD pilot bore mark': 'A mark (stake, flagging, or painted line) at the bore pit showing the design bearing and slope for the horizontal directional drill\'s pilot bore. The pilot bore is the first, small-diameter pass through the ground that establishes the bore path. Everything follows the pilot bore — reaming passes and final conduit pull. An incorrect pilot bore mark means the conduit exits at the wrong location, depth, or angle.',
-  'pull-pit setup diagram': 'A sketch or field note at the pull pit location (the exit point of an HDD bore) showing: the exit angle of the conduit from the ground, the required trench dimensions for pulling conduit, the distance from the road or traffic-control boundary, and any overhead obstacles. The pull pit must be positioned so that the bore crew can feed the conduit back through from the exit point without vehicle conflicts.',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'staker', source_lesson_id: 'T07.L01' },
@@ -53,10 +72,7 @@ export const vocabulary_assumed = [
   { term: 'minimum cover', source_lesson_id: 'T06.L02' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T07L07_UndergroundStakingMarkingTheRoute() {
   return (

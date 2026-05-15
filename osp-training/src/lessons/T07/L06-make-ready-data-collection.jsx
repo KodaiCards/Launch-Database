@@ -31,15 +31,31 @@ export const meta = {
     'burden of proof',
     'force pole',
   ],
+  key_terms: [
+    {
+      term: 'make-ready flag',
+      definition: 'A staker\'s notation on a staking sheet or digital tool indicating that a pole requires preparatory work before the new fiber can be attached. A make-ready flag is not a cost estimate — it is a field observation that tells the make-ready engineer or estimator exactly what was found and why the pole cannot accept the new attachment without additional work. Every make-ready flag must include: pole ID, what was found (measurement or condition), what work is likely needed (transfer, replacement, bracing), and the staker\'s confidence in the observation.',
+    },
+    {
+      term: 'transfer',
+      definition: 'Make-ready work in which an existing attachment (telecom wire, CATV cable, or similar) is moved to a different position on the pole — typically higher up — so that the new fiber can be attached at the design elevation with the required clearances. Transfers cost money and take time; the make-ready estimator prices them once the staker\'s flag identifies the conflict.',
+    },
+    {
+      term: 'replacement',
+      definition: 'Make-ready work in which a pole is so damaged (rot, woodpecker holes, burn, lean beyond tolerance, insufficient remaining strength) that it must be replaced before any new attachment can be installed. A replacement is more expensive and time-consuming than a transfer. The staker documents the condition with photographs and a clear description so the make-ready engineer can confirm or reclassify.',
+    },
+    {
+      term: 'burden of proof',
+      definition: 'In joint-use pole attachment (governed by 47 CFR Part 1.1411 — the One-Touch Make-Ready rule), the attaching party (the new fiber company) is responsible for demonstrating that make-ready work is needed. The existing pole owner cannot require make-ready just because they prefer it. The staker\'s documentation — measurements, photos, condition notes — is the evidence that supports or refutes whether make-ready is genuinely required. This is why staking documentation quality directly affects cost and timeline.',
+    },
+    {
+      term: 'force pole',
+      definition: 'A pole that is so compromised that it cannot safely support any new attachment without first being replaced. Unlike a simple replacement (where the existing attachments can remain while a new pole is set next to the old one), a force pole triggers an emergency replacement because leaving the pole in service poses a risk to the existing attachments and to anyone working near it. The staker documents a force pole with photos and a condition description; the engineer escalates to the pole owner immediately.',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'make-ready flag': 'A staker\'s notation on a staking sheet or digital tool indicating that a pole requires preparatory work before the new fiber can be attached. A make-ready flag is not a cost estimate — it is a field observation that tells the make-ready engineer or estimator exactly what was found and why the pole cannot accept the new attachment without additional work. Every make-ready flag must include: pole ID, what was found (measurement or condition), what work is likely needed (transfer, replacement, bracing), and the staker\'s confidence in the observation.',
-  'transfer': 'Make-ready work in which an existing attachment (telecom wire, CATV cable, or similar) is moved to a different position on the pole — typically higher up — so that the new fiber can be attached at the design elevation with the required clearances. Transfers cost money and take time; the make-ready estimator prices them once the staker\'s flag identifies the conflict.',
-  'replacement': 'Make-ready work in which a pole is so damaged (rot, woodpecker holes, burn, lean beyond tolerance, insufficient remaining strength) that it must be replaced before any new attachment can be installed. A replacement is more expensive and time-consuming than a transfer. The staker documents the condition with photographs and a clear description so the make-ready engineer can confirm or reclassify.',
-  'burden of proof': 'In joint-use pole attachment (governed by 47 CFR Part 1.1411 — the One-Touch Make-Ready rule), the attaching party (the new fiber company) is responsible for demonstrating that make-ready work is needed. The existing pole owner cannot require make-ready just because they prefer it. The staker\'s documentation — measurements, photos, condition notes — is the evidence that supports or refutes whether make-ready is genuinely required. This is why staking documentation quality directly affects cost and timeline.',
-  'force pole': 'A pole that is so compromised that it cannot safely support any new attachment without first being replaced. Unlike a simple replacement (where the existing attachments can remain while a new pole is set next to the old one), a force pole triggers an emergency replacement because leaving the pole in service poses a risk to the existing attachments and to anyone working near it. The staker documents a force pole with photos and a condition description; the engineer escalates to the pole owner immediately.',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'staker', source_lesson_id: 'T07.L01' },
@@ -51,10 +67,7 @@ export const vocabulary_assumed = [
   { term: 'pole audit', source_lesson_id: 'T04.L01' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T07L06_MakeReadyDataCollection() {
   return (
@@ -284,8 +297,9 @@ export default function T07L06_MakeReadyDataCollection() {
             simple make-ready work on utility poles without waiting for the pole owner to schedule it.
             The attaching party pays for that make-ready. For complex make-ready (touching the power
             company's wires), the pole owner's crew must do the work, but the pole owner has a defined
-            timeline to respond. The staker's documentation determines whether work is "simple" or
-            "complex" — a critical threshold for scheduling and cost.
+            timeline to respond. The staker's documentation evidences the determination of whether
+            work is "simple" or "complex" — the nature of the work itself makes that classification,
+            and the staker's documentation supports it.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> Many rural pole owners (electric cooperatives, telephone companies)

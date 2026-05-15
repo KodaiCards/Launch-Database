@@ -32,16 +32,35 @@ export const meta = {
     'GPS accuracy',
     'field-to-office real-time sync',
   ],
+  key_terms: [
+    {
+      term: 'Katapult',
+      definition: 'A cloud-based utility mapping and staking platform used by OSP engineering firms and crews to document poles, attachments, and route surveys on a mobile device (tablet or smartphone). Katapult imports design geometry (pole locations, route lines) from the engineering office, allows field crews to navigate to each pole, capture photos, record attachment heights and conditions, and sync data back to the office in real time over a cellular connection. Katapult is widely used in RUS-program staking because it directly generates the data formats used in pole-loading software and make-ready engineering.',
+    },
+    {
+      term: 'FieldCom',
+      definition: 'A field data collection platform used for utility asset management, pole inspection, and staking. Similar in purpose to Katapult but with a broader asset management scope. FieldCom integrates with GIS databases, allowing field crews to update pole records directly in the utility\'s asset management system. The name may refer to different vendor implementations; the underlying concept — mobile field data collection with real-time sync — is the same.',
+    },
+    {
+      term: 'digital staking',
+      definition: 'A staking method in which measurements, photos, GPS coordinates, and condition notes are captured on a mobile device (tablet or phone) using a specialized application, rather than written by hand on paper staking sheets. Digital staking produces structured data that can be directly imported into design, engineering, and billing workflows — eliminating the transcription step required with paper staking (and the associated transcription errors).',
+    },
+    {
+      term: 'photo-attach',
+      definition: 'A digital staking workflow step in which a photograph captured in the field is directly linked to a specific pole record in the staking application. The photo-attach creates a permanent association between the image and the pole\'s data record — so when an engineer opens the pole record in the office, they see the field photo alongside the measurements and notes. In Katapult, a photo-attach at a pole typically includes: the pole tag photograph, one or more attachment-height photographs (showing the laser measurement display), and a condition overview photo.',
+    },
+    {
+      term: 'GPS accuracy',
+      definition: 'The precision with which a GPS or GNSS receiver can determine a geographic location. Accuracy depends on the receiver technology: smartphone GNSS (built-in phone) typically achieves ±5–10 meters in open sky. Handheld GPS devices (Garmin, Trimble consumer units) typically achieve ±3–5 meters. Survey-grade RTK (Real-Time Kinematic) GPS achieves ±2–5 centimeters with a ground-base station. For staking purposes — matching a pole to a design location and creating GIS records — handheld GPS accuracy of ±3–5 meters is generally sufficient. RTK is required for high-precision work (property boundary, road centerline survey, cadastral mapping).',
+    },
+    {
+      term: 'field-to-office real-time sync',
+      definition: 'The automatic transfer of field-collected data (photos, measurements, GPS coordinates, condition notes) from a field device to a cloud database accessible in the engineering office, occurring via cellular data connection while the staker is still in the field. Real-time sync means the office engineer can review a pole\'s data while the staker is still two poles away — allowing real-time QA questions ("can you re-photograph pole 47? the photo is blurry") without requiring a separate re-stake visit.',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'Katapult': 'A cloud-based utility mapping and staking platform used by OSP engineering firms and crews to document poles, attachments, and route surveys on a mobile device (tablet or smartphone). Katapult imports design geometry (pole locations, route lines) from the engineering office, allows field crews to navigate to each pole, capture photos, record attachment heights and conditions, and sync data back to the office in real time over a cellular connection. Katapult is widely used in RUS-program staking because it directly generates the data formats used in pole-loading software and make-ready engineering.',
-  'FieldCom': 'A field data collection platform used for utility asset management, pole inspection, and staking. Similar in purpose to Katapult but with a broader asset management scope. FieldCom integrates with GIS databases, allowing field crews to update pole records directly in the utility\'s asset management system. The name may refer to different vendor implementations; the underlying concept — mobile field data collection with real-time sync — is the same.',
-  'digital staking': 'A staking method in which measurements, photos, GPS coordinates, and condition notes are captured on a mobile device (tablet or phone) using a specialized application, rather than written by hand on paper staking sheets. Digital staking produces structured data that can be directly imported into design, engineering, and billing workflows — eliminating the transcription step required with paper staking (and the associated transcription errors).',
-  'photo-attach': 'A digital staking workflow step in which a photograph captured in the field is directly linked to a specific pole record in the staking application. The photo-attach creates a permanent association between the image and the pole\'s data record — so when an engineer opens the pole record in the office, they see the field photo alongside the measurements and notes. In Katapult, a photo-attach at a pole typically includes: the pole tag photograph, one or more attachment-height photographs (showing the laser measurement display), and a condition overview photo.',
-  'GPS accuracy': 'The precision with which a GPS or GNSS receiver can determine a geographic location. Accuracy depends on the receiver technology: smartphone GNSS (built-in phone) typically achieves ±5–10 meters in open sky. Handheld GPS devices (Garmin, Trimble consumer units) typically achieve ±3–5 meters. Survey-grade RTK (Real-Time Kinematic) GPS achieves ±2–5 centimeters with a ground-base station. For staking purposes — matching a pole to a design location and creating GIS records — handheld GPS accuracy of ±3–5 meters is generally sufficient. RTK is required for high-precision work (property boundary, road centerline survey, cadastral mapping).',
-  'field-to-office real-time sync': 'The automatic transfer of field-collected data (photos, measurements, GPS coordinates, condition notes) from a field device to a cloud database accessible in the engineering office, occurring via cellular data connection while the staker is still in the field. Real-time sync means the office engineer can review a pole\'s data while the staker is still two poles away — allowing real-time QA questions ("can you re-photograph pole 47? the photo is blurry") without requiring a separate re-stake visit.',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'staker', source_lesson_id: 'T07.L01' },
@@ -53,10 +72,7 @@ export const vocabulary_assumed = [
   { term: 'make-ready flag', source_lesson_id: 'T07.L06' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T07L08_KatapultAndGISStakingTools() {
   return (
