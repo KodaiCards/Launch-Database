@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L07',
@@ -14,6 +15,16 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L03'],
   vocabulary_introduced: ['wavelength window', 'O-band', 'C-band', 'L-band', 'CWDM', 'DWDM', 'WDM', 'PON'],
+  key_terms: [
+    { term: 'wavelength window', definition: 'A range of wavelengths where fiber loss is low enough to be usable for optical communications -- like a "lane" that fiber optic systems actually use. The main windows for OSP work: O-band (1310 nm), C-band (1550 nm), and L-band (1625 nm diagnostic).' },
+    { term: 'O-band', definition: 'Original band (1260-1360 nm). Sits near the zero-dispersion wavelength of G.652.D SMF. Low chromatic dispersion makes it forgiving for short-to-medium runs. GPON upstream (ONT to OLT) uses 1310 nm. Attenuation spec max <= 0.40 dB/km.' },
+    { term: 'C-band', definition: 'Conventional band (1530-1565 nm). The 1550 nm window with the lowest attenuation in G.652.D SMF (spec max <= 0.30 dB/km; typical 0.18-0.22 dB/km). The workhorse of long-haul, metro, and DWDM systems. Higher chromatic dispersion (~17 ps/nm-km) requires dispersion management on 10G+ links.' },
+    { term: 'L-band', definition: 'L-band (1565-1625 nm) -- where in-service OTDR testing lives. Macrobend loss grows with wavelength, so a bend barely visible at 1550 nm stands out clearly at 1625 nm. Allows the test crew to locate kinks and tight bends on a live fiber without interrupting 1310/1490/1550 nm traffic.' },
+    { term: 'WDM', definition: 'Wavelength Division Multiplexing -- sending multiple data streams on one fiber by using different wavelengths simultaneously, increasing capacity without adding fiber. Two flavors: CWDM (coarse, 20 nm spacing) and DWDM (dense, 0.8 nm spacing).' },
+    { term: 'CWDM', definition: 'Coarse WDM -- wavelengths spaced 20 nm apart (1270-1610 nm, 18 possible channels). Because channels are far apart, the lasers and filters are less precise and less expensive. Used for metro access rings and suburban loop distribution needing 4-8 channels on existing fiber.' },
+    { term: 'DWDM', definition: 'Dense WDM -- channels spaced 0.8 nm (100 GHz) or 0.4 nm (50 GHz) apart in the C-band, up to 80-96 channels on one fiber pair. Each channel can carry 100G or 400G. Requires extremely precise lasers and temperature-controlled filters. Backbone of long-haul networks.' },
+    { term: 'PON', definition: 'Passive Optical Network -- the FTTH distribution architecture that uses 1310/1490/1550 nm on the same fiber to/from homes. The "passive" means no powered equipment (amplifiers) between the OLT at the headend and the ONT at the customer premise -- only fiber splitters.' },
+  ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'dispersion', source_lesson_id: 'T02.L03' },
@@ -92,6 +103,19 @@ export default function T02L07_WavelengthWindows() {
             </tr>
           </tbody>
         </table>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L07"
+          cards={[
+            { id: 'T02-L07-fc-window', front: 'What is a wavelength window in fiber optics?', back: 'A range of wavelengths where fiber loss is low enough to be usable for optical communications -- like a "lane" that fiber optic systems actually use. The main OSP windows: O-band (1310 nm), C-band (1550 nm), and L-band diagnostic (1625 nm).' },
+            { id: 'T02-L07-fc-oband', front: 'What is the O-band?', back: 'Original band (1260-1360 nm). Sits near the zero-dispersion wavelength of G.652.D SMF (~1310 nm). Low chromatic dispersion makes it forgiving for short-to-medium runs. GPON upstream (ONT to OLT) uses 1310 nm. Attenuation spec max <= 0.40 dB/km.' },
+            { id: 'T02-L07-fc-cband', front: 'What is the C-band?', back: 'Conventional band (1530-1565 nm). The 1550 nm window with the lowest attenuation in G.652.D SMF (spec max <= 0.30 dB/km; typical 0.18-0.22 dB/km). Workhorse of long-haul, metro, and DWDM. Higher chromatic dispersion (~17 ps/nm-km) requires dispersion management on 10G+ links.' },
+            { id: 'T02-L07-fc-lband', front: 'What is the L-band used for in OSP?', back: 'In-service OTDR diagnostic wavelength (1565-1625 nm). Macrobend loss grows with wavelength, so bends barely visible at 1550 nm stand out clearly at 1625 nm. Lets the test crew locate kinks and tight bends on a live fiber without interrupting 1310/1490/1550 nm traffic.' },
+            { id: 'T02-L07-fc-wdm', front: 'What is WDM?', back: 'Wavelength Division Multiplexing -- sending multiple data streams on one fiber using different wavelengths simultaneously. Like sending radio stations on different frequencies on the same cable. Two flavors: CWDM (coarse, 20 nm spacing, lower cost) and DWDM (dense, 0.8 nm spacing, high capacity long-haul).' },
+            { id: 'T02-L07-fc-pon', front: 'What is a PON?', back: 'Passive Optical Network -- the FTTH distribution architecture using 1310 nm upstream and 1490 nm downstream on the same fiber to/from homes. "Passive" means no powered amplifiers between the OLT at the headend and the ONT at the customer. Fiber splitters are passive (no power required).' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

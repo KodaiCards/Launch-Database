@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L09',
@@ -14,6 +15,14 @@ export const meta = {
   lesson_type: 'advanced',
   prerequisites: ['T02.L03'],
   vocabulary_introduced: ['DGD', 'SOPMD', 'PMD-limited span', 'ps/√km', 'birefringence', 'polarization'],
+  key_terms: [
+    { term: 'DGD', definition: 'Differential Group Delay -- the time delay between the two polarization components of light when they arrive at the receiver, caused by PMD. Measured in picoseconds (ps). If DGD is a significant fraction of the bit period, the signal becomes undecodable. Formula: DGD_rms = PMD_coefficient x sqrt(L).' },
+    { term: 'SOPMD', definition: 'Second-Order PMD -- describes the wavelength dependence of the PMD vector, meaning how fast PMD changes across the signal spectrum. For wideband coherent signals or DWDM channels, SOPMD can cause differential signal distortion even when first-order DGD is within tolerance. Measured in ps-squared/km.' },
+    { term: 'PMD-limited span', definition: 'A fiber link where Polarization Mode Dispersion (PMD) is the limiting factor for the maximum usable bit rate or distance -- not attenuation or chromatic dispersion. Occurs primarily on older (pre-G.652.D) fiber at 40 Gb/s and above, or on any fiber under chronic mechanical stress.' },
+    { term: 'ps/sqrt(km)', definition: 'Picoseconds per square-root-kilometer -- the unit of the PMD coefficient. PMD accumulates with the square root of length (not linearly) because it is a random-walk process. G.652.D specification maximum: 0.2 ps/sqrt(km).' },
+    { term: 'birefringence', definition: 'A property of a medium (like real fiber) where it has different refractive indices for different polarization orientations due to geometric imperfections or stress. Birefringence causes the two polarization axes of light to travel at different speeds, which is the root cause of PMD.' },
+    { term: 'polarization', definition: 'The orientation of the oscillation of a light wave perpendicular to its direction of travel. In single-mode fiber, you can think of the light as having two orthogonal polarization states (X and Y). In a perfect fiber, they travel at the same speed. In real fiber, they do not -- causing PMD.' },
+  ],
   vocabulary_assumed: [
     { term: 'dispersion', source_lesson_id: 'T02.L03' },
     { term: 'chromatic dispersion', source_lesson_id: 'T02.L03' },
@@ -52,6 +61,18 @@ export default function T02L09_PolarizationModeDispersion() {
           make the two polarization "axes" of the light travel at different speeds, smearing the
           signal over time.
         </p>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L09"
+          cards={[
+            { id: 'T02-L09-fc-dgd', front: 'What is Differential Group Delay (DGD)?', back: 'The time delay between the two polarization components of light arriving at the receiver, caused by PMD. Measured in picoseconds (ps). Formula: DGD_rms = PMD_coefficient x sqrt(L). If DGD exceeds ~10% of the bit period, the link may fail.' },
+            { id: 'T02-L09-fc-psskm', front: 'What does ps/sqrt(km) measure?', back: 'The unit of the PMD coefficient -- picoseconds per square-root-kilometer. PMD accumulates with the square root of length (not linearly) because it is a random-walk process. G.652.D specification maximum: 0.2 ps/sqrt(km). Older fiber can be 0.5-2.0 ps/sqrt(km).' },
+            { id: 'T02-L09-fc-biref', front: 'What is birefringence in fiber?', back: 'A property of real fiber where it has different refractive indices for different polarization orientations due to geometric imperfections (non-circular core) or stress. Birefringence causes the two polarization axes of light to travel at different speeds -- the root cause of PMD.' },
+            { id: 'T02-L09-fc-polar', front: 'What is polarization in the context of fiber PMD?', back: 'The orientation of the oscillation of a light wave. In single-mode fiber, light has two orthogonal polarization states (X and Y). In a perfect fiber, both travel at the same speed. In real fiber with imperfections or stress, they travel at slightly different speeds, causing PMD.' },
+            { id: 'T02-L09-fc-pmdspan', front: 'When is a fiber link "PMD-limited"?', back: 'When PMD is the factor limiting the maximum usable bit rate or distance -- not attenuation or chromatic dispersion. Occurs primarily on older (pre-G.652.D) fiber at 40 Gb/s and above, or on fiber under chronic mechanical stress from over-tensioned lashing, conduit overfill, or tight bends.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

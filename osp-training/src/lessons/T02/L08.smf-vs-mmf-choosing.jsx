@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L08',
@@ -14,6 +15,16 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L01', 'T02.L07'],
   vocabulary_introduced: ['OM1', 'OM2', 'OM3', 'OM4', 'OM5', 'OS2', 'reach table', 'laser-optimized MMF'],
+  key_terms: [
+    { term: 'OM1', definition: 'Multimode fiber grade: 62.5 µm core, 200 MHz-km bandwidth @ 850 nm, max 33 m at 10GbE. Orange jacket. Legacy grade -- do not specify for new 10G+ installations.' },
+    { term: 'OM2', definition: 'Multimode fiber grade: 50 µm core, 500 MHz-km bandwidth @ 850 nm, max 82 m at 10GbE. Orange jacket. Legacy grade -- use OM3 or OM4 for modern 10G+ data center work.' },
+    { term: 'OM3', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 2000 MHz-km bandwidth @ 850 nm, max 300 m at 10GbE. Aqua jacket. The common modern data center MMF for 10GbE at typical inter-row distances.' },
+    { term: 'OM4', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket (sometimes magenta in some regions). Use when run distance exceeds OM3\'s 300 m limit.' },
+    { term: 'OM5', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 28000 MHz-km @ 953 nm, max 400 m (supports SWDM4). Lime green jacket. Designed for short-wavelength WDM to achieve 100G over a single MMF pair at data center distances.' },
+    { term: 'OS2', definition: 'Single-mode fiber grade corresponding to ITU-T G.652.D -- the current standard OSP SMF. Maximum attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D. Yellow jacket.' },
+    { term: 'reach table', definition: 'A table showing the maximum distance a given fiber type (OM1-OM5, OS2) can support for a specific Ethernet speed (1GbE, 10GbE, 40GbE, 100GbE) per IEEE 802.3. Used to quickly determine if MMF or SMF is required for a given application and distance.' },
+    { term: 'laser-optimized MMF', definition: 'OM3/OM4/OM5 multimode fiber with a graded-index core profile specifically optimized for 850 nm VCSEL (vertical-cavity surface-emitting laser) launch conditions. This reduces modal dispersion by restricting which modes are excited, dramatically increasing effective bandwidth vs. older LED-compatible OM1/OM2.' },
+  ],
   vocabulary_assumed: [
     { term: 'SMF', source_lesson_id: 'T01.L08' },
     { term: 'MMF', source_lesson_id: 'T01.L08' },
@@ -99,6 +110,18 @@ export default function T02L08_SMFvsMMFChoosing() {
           the print on the cable sheath or the markings on patch cords. This is why mixing them
           up (and having a total signal loss) is more common than you'd think.
         </p>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L08"
+          cards={[
+            { id: 'T02-L08-fc-os2', front: 'What is OS2 fiber?', back: 'Single-mode fiber grade per ITU-T G.652.D -- the current standard for OSP work. Max attenuation 0.4 dB/km @ 1310 nm and 0.3 dB/km @ 1550 nm. Reduced water peak. Yellow patch cord jacket. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D.' },
+            { id: 'T02-L08-fc-om3', front: 'What is OM3 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 2000 MHz-km bandwidth @ 850 nm, max 300 m at 10GbE. Aqua jacket. The common modern data center MMF for inter-row 10GbE runs. Not usable for OSP runs over a few hundred meters.' },
+            { id: 'T02-L08-fc-om4', front: 'What is OM4 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket. Use when OM3\'s 300 m limit is insufficient. Still only for data center/campus -- not OSP.' },
+            { id: 'T02-L08-fc-om5', front: 'What is OM5 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 28000 MHz-km @ 953 nm, lime green jacket. Designed for short-wavelength WDM (SWDM4) to achieve 100G over a single MMF pair at data center distances (max ~400 m). Not for OSP.' },
+            { id: 'T02-L08-fc-laseropt', front: 'What does "laser-optimized" mean for MMF?', back: 'OM3/OM4/OM5 fiber has a graded-index core profile specifically optimized for 850 nm VCSEL laser launch conditions. This restricts which modes are excited, reducing modal dispersion and dramatically increasing bandwidth compared to older LED-compatible OM1/OM2 fiber.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
