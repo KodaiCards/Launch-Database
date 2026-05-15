@@ -1,4 +1,47 @@
+/**
+ * App.jsx — OSP Training SPA root
+ *
+ * BACKWARDS-COMPAT STRATEGY: PARALLEL ROUTER
+ * ─────────────────────────────────────────────────────────────────────────────
+ * The existing useState-based sidebar nav (12 modules) continues to work until
+ * OSP-RW.7's production cut. The new React Router tree runs ALONGSIDE it.
+ *
+ * Feature flag: USE_NEW_ROUTER (env var or localStorage override)
+ *   - VITE_USE_NEW_ROUTER=true  → serves the new Router-based SPA (OSP-RW build)
+ *   - Default (no flag)         → serves the original module sidebar (existing behavior)
+ *   - Override in browser: localStorage.setItem('ospUseNewRouter', 'true')
+ *
+ * The production cut (OSP-RW.7) will flip USE_NEW_ROUTER to the default-true
+ * value by removing the flag check entirely and deleting the legacy block.
+ *
+ * This means:
+ *   • The live /training/ URL still shows the original 12-module sidebar until
+ *     OSP-RW.7 runs. No user-facing change during the rewrite.
+ *   • Developers/reviewers can set the localStorage flag to preview the new SPA.
+ *   • Both code paths compile and ship in the same build — no branching builds.
+ */
+
 import React, { useState } from 'react';
+
+// ── New Router imports ───────────────────────────────────────────────────────
+import {
+  HashRouter,
+  Routes,
+  Route,
+  Link,
+  NavLink,
+  useLocation,
+} from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import Splash      from './pages/Splash.jsx';
+import CourseView  from './pages/CourseView.jsx';
+import LessonRouter from './pages/LessonRouter.jsx';
+import FieldTools  from './pages/FieldTools.jsx';
+import CertTrack   from './pages/CertTrack.jsx';
+import NotFound    from './pages/NotFound.jsx';
+
+// ── Legacy module imports (existing behavior, keep until OSP-RW.7) ───────────
 import Module01_FiberPhysics       from './modules/Module01_FiberPhysics.jsx';
 import Module02_OSPDesign          from './modules/Module02_OSPDesign.jsx';
 import Module03_PermittingPlanning from './modules/Module03_PermittingPlanning.jsx';
@@ -12,6 +55,133 @@ import Module10_DataCenter         from './modules/Module10_DataCenter.jsx';
 import Module11_RevenueEstimation  from './modules/Module11_RevenueEstimation.jsx';
 import Module12_CertificationSim   from './modules/Module12_CertificationSim.jsx';
 import ToolsPage from './modules/ToolsPage.jsx';
+
+// ── Feature flag check ───────────────────────────────────────────────────────
+const ENV_FLAG = import.meta.env.VITE_USE_NEW_ROUTER === 'true';
+function isNewRouterEnabled() {
+  if (ENV_FLAG) return true;
+  try {
+    return localStorage.getItem('ospUseNewRouter') === 'true';
+  } catch {
+    return false;
+  }
+}
+
+// ── React Query client (shared across new router tree) ───────────────────────
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,  // 5 min stale time
+      retry: 1,
+    },
+  },
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NEW ROUTER TREE (OSP-RW rewrite)
+// ══════════════════════════════════════════════════════════════════════════════
+
+function NewAppLayout() {
+  const location = useLocation();
+
+  // Active link helper
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const navLinks = [
+    { to: '/training/', exact: true, label: 'All Courses' },
+    { to: '/training/tools', label: 'Field Tools' },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <header className="border-b border-white/10 bg-ospnavy/90 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-amber-300/80">
+              Launch Fiber Services · OSP Training
+            </div>
+            <Link to="/training/" className="text-lg font-semibold hover:text-amber-200 transition">
+              BICSI OSP · RCDD · FOA CFOS
+            </Link>
+          </div>
+
+          <nav className="flex items-center gap-4" aria-label="Training navigation">
+            {navLinks.map(({ to, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/training/'}
+                className={({ isActive: active }) =>
+                  [
+                    'text-sm transition px-3 py-1 rounded-md',
+                    active
+                      ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30'
+                      : 'text-slate-300 hover:text-amber-200 hover:bg-white/5',
+                  ].join(' ')
+                }
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      </header>
+
+      {/* ── Main content ────────────────────────────────────────────── */}
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
+        <Routes>
+          {/* Splash — course catalog */}
+          <Route path="/training/" element={<Splash />} />
+
+          {/* Field Tools sandbox */}
+          <Route path="/training/tools" element={<FieldTools />} />
+
+          {/* Cert track */}
+          <Route path="/training/cert/:certId" element={<CertTrack />} />
+
+          {/* Course view */}
+          <Route path="/training/course/:courseId" element={<CourseView />} />
+
+          {/* Lesson */}
+          <Route path="/training/course/:courseId/lesson/:lessonOrder" element={<LessonRouter />} />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+
+      {/* ── Footer ──────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/10 text-xs text-slate-400/70">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between flex-wrap gap-2">
+          <span>
+            Training content includes textbook references and field practice.
+            Not a substitute for AHJ-issued permits or stamped engineering drawings.
+          </span>
+          <span className="text-slate-500">
+            Macon, GA · NESC Light loading district
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function NewApp() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* HashRouter: base path /training/ is handled by Express static;
+          in-SPA routing uses hash so React Router doesn't fight the server. */}
+      <HashRouter>
+        <NewAppLayout />
+      </HashRouter>
+    </QueryClientProvider>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LEGACY APP (existing module sidebar — unchanged until OSP-RW.7)
+// ══════════════════════════════════════════════════════════════════════════════
 
 const MODULES = [
   { id: 1,  title: 'Fiber Physics',                 status: 'ready',     component: Module01_FiberPhysics },
@@ -29,7 +199,7 @@ const MODULES = [
   { id: 'tools', title: 'Interactive Tools',        status: 'ready',     component: ToolsPage },
 ];
 
-export default function App() {
+function LegacyApp() {
   const [activeId, setActiveId] = useState(1);
   const active = MODULES.find(m => m.id === activeId);
   const ActiveComponent = active?.component;
@@ -103,4 +273,14 @@ export default function App() {
       </footer>
     </div>
   );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ROOT EXPORT — feature-flag switch
+// ══════════════════════════════════════════════════════════════════════════════
+
+export default function App() {
+  // Check flag once at mount (no reactivity needed — page reload to switch)
+  const [useNew] = useState(() => isNewRouterEnabled());
+  return useNew ? <NewApp /> : <LegacyApp />;
 }
