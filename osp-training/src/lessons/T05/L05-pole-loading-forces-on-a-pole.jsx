@@ -33,11 +33,11 @@ export const meta = {
     'dead-end pole',
     'running pole',
     'guying',
+    'w_wind',
   ],
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
     { term: 'Rule 250', source_lesson_id: 'T05.L01' },
-    { term: 'loading district', source_lesson_id: 'T05.L01' },
     { term: 'grade of construction', source_lesson_id: 'T05.L04' },
     { term: 'Section 26', source_lesson_id: 'T05.L04' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
