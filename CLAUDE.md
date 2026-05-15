@@ -152,6 +152,22 @@ Carter's verbatim message:
 1. **Full OSP engineering coverage** — design, staking, make-ready, physics, splicing, inspection, ETC. The "etc" is real — the curriculum-scoping research wave proposes the complete topic list. The prior 12-module structure is treated as source material to migrate into the new structure, NOT as the topic boundary.
 2. **Strict prerequisite invariant (CROSS-CURRICULUM):** Nothing can be taught that hasn't been explained, broken down, or given context to before. Every term, every concept, every formula has a single first-introduction lesson, and that lesson MUST precede every other lesson that references it. Enforced via a curriculum-wide prerequisite DAG (Directed Acyclic Graph). Lesson authors verify against the DAG; verification red-team checks every cross-lesson reference for prerequisite coverage. **The DAG is THE design constraint that drives topic ordering, lesson ordering within topics, and cert-prep placement.**
 3. **Three quiz tiers:** (a) per-lesson quiz at end of every lesson, (b) per-topic capstone quiz at end of every topic (broader, integrative), (c) cert-track mock exam at end of each cert-prep track (full timed practice exam).
+
+**Interactivity primitives (expanded 2026-05-15 evening per Carter — "interactive activities within each lesson"):**
+
+The 4 originally-planned primitives + 5 expansions. Every lesson gets multiple interactive elements WOVEN INTO the content, not parked in a separate tab. The standalone Tools tab pattern (current `ToolsPage.jsx`) is killed; reusable tools (calculators, viewers) live both embedded-in-lessons AND in a sandbox "Field Tools" page.
+
+1. **Quiz** — multiple choice, drag-to-match, fill-in-blank (extends existing `InteractiveQuiz`)
+2. **AnnotatedDiagram** — SVG/photo overlay with click-to-label + hover-explain
+3. **WorkedExample** — generalized calculator (formula spec + variable inputs + every algebra step + sanity-check sentence). Reuses LinkBudgetCalculator pattern.
+4. **BranchingScenario** — FSM decision tree with state persistence; multi-step consequences
+5. **HotSpot** — click the violation/issue in a real photo (safety violation, make-ready issue, wrong closure type)
+6. **Sortable/Ranking** — drag items into the right order or rank by criterion
+7. **Slider exploration** — live-recomputing dependent values as variables move (link budget, sag/tension, conduit fill)
+8. **Side-by-side compare** — toggle two scenarios (aerial vs UG, splice vs connector) with tradeoff surfacing
+9. **Timeline/sequence ordering** — drag construction events into chronological order
+
+Plus existing reusable components stay alive: `LinkBudgetCalculator`, `OTDRTraceViewer`, `TopologyCanvas`, `Flashcard`, `CertificationSim`. They get embedded in lessons where relevant AND stay accessible via a "Field Tools" sandbox page (renamed from ToolsPage).
 4. **Cert prep tracks (locked 2026-05-15):** BICSI OSP Designer + BICSI RCDD + FOA CFOS/CFOT. NOT NCATT. Each cert track is a sequence of cert-specific advanced lessons culminating in a mock exam aligned to the cert blueprint. Cert prep lessons live AFTER the corresponding general topic in the DAG (i.e., a learner can only access RCDD prep after completing the general topics RCDD assumes).
 5. **Content reuse policy (locked 2026-05-15):** migrate the good stuff, scrap the rest. Existing modules with shipped content (M02 OSP Design even sections, M09 OSP Construction odd sections, M01 Physics, M04 Splicing, M07 Topology, M08 Testing) are SOURCE MATERIAL — authors weave usable prose into new per-lesson files that conform to the prerequisite DAG. Existing reusable components (`LinkBudgetCalculator`, `OTDRTraceViewer`, `TopologyCanvas`, `InteractiveQuiz`) get reused. Aged or invariant-violating content scrapped.
 
