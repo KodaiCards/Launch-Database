@@ -45,6 +45,10 @@ Updated continuously. Entries older than 5h fall out of the rolling sum but stay
 **Approximate session total:** ~3.1M tokens
 **Estimated % of 50M cap:** ~6.2%
 
+## Ground-truth recalibration 2026-05-16 ~1:55 AM ET
+
+Carter reported: 12% used since timer ended (~1:24 AM). Rate: 24%/hr — above sustainable ~19-20%/hr. Carter notes "most of that is you specifically while the agents have done minimal" — confirms Opus chat is the dominant burn, not Sonnet agents. My ~5× weighting estimate may even be low — Carter's data suggests Opus weighted heavier than 5×. Cutting chat aggressively. **Updated rule of thumb: assume Opus weighting closer to 7-8× when budgeting.**
+
 (Carter's Anthropic dashboard showed ~88% used at ~12:30 AM ET — that includes prior sessions in the same 5h rolling window. From now forward, I'm tracking just this session's contribution.)
 
 ## Rolling-window calculation
