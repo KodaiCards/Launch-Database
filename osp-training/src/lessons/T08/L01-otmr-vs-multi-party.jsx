@@ -69,10 +69,10 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'pole attachment', source_lesson_id: 'T07.L01' },
-    { term: 'make-ready', source_lesson_id: 'T07.L02' },
-    { term: 'pole owner', source_lesson_id: 'T05.L03' },
-    { term: 'transfer', source_lesson_id: 'T07.L02' },
+    { term: 'pole attachment', source_lesson_id: 'T05.L08' },
+    { term: 'make-ready', source_lesson_id: 'T07.L06' },
+    { term: 'pole owner', source_lesson_id: 'T05.L08' },
+    { term: 'transfer', source_lesson_id: 'T07.L06' },
     { term: 'coordination', source_lesson_id: 'T07.L02' },
   ],
 };

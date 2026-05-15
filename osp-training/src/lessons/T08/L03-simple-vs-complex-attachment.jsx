@@ -56,7 +56,7 @@ export const meta = {
     { term: 'multi-party make-ready', source_lesson_id: 'T08.L01' },
     { term: 'pole audit', source_lesson_id: 'T07.L02' },
     { term: 'existing attachments', source_lesson_id: 'T07.L02' },
-    { term: 'clearance', source_lesson_id: 'T05.L04' },
+    { term: 'clearance', source_lesson_id: 'T05.L02' },
   ],
 };
 
