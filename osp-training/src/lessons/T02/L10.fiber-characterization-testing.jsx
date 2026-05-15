@@ -148,10 +148,17 @@ export default function T02L10_FiberCharacterizationTesting() {
           fiber route for a new network design.
         </p>
         <p className="mt-2 text-sm text-slate-300/80">
-          Per ITU-T G.652.D, the dispersion coefficient at 1550 nm should be in the range
-          17 ± 4 ps/(nm·km) for standard SMF. The <strong>dispersion slope</strong> (how fast
-          dispersion changes with wavelength, in ps/nm²·km) determines how much CD varies
-          across a DWDM channel group — also measured in CD characterization.
+          G.652.D does not directly specify a dispersion coefficient range at 1550 nm. Instead,
+          it specifies: (1) zero-dispersion wavelength λ₀ ∈ [1300, 1324] nm, and (2) maximum
+          dispersion slope at λ₀: S₀ ≤ 0.092 ps/(nm²·km). From these parameters, the implied
+          dispersion at 1550 nm is approximately <strong>16.7–18.0 ps/(nm·km)</strong>. The
+          commonly cited engineering approximation of ~17 ps/(nm·km) is a useful field value
+          derived from this spec, not a direct tolerance stated in the standard.
+        </p>
+        <p className="mt-2 text-sm text-slate-300/80">
+          The <strong>dispersion slope</strong> (how fast dispersion changes with wavelength,
+          in ps/nm²·km) determines how much CD varies across a DWDM channel group — also
+          measured in CD characterization.
         </p>
 
         <h3 className="mt-5 font-semibold">3. PMD measurement</h3>

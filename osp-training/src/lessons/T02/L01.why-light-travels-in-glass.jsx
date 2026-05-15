@@ -240,7 +240,7 @@ export default function T02L01_WhyLightTravelsInGlass() {
           power is contained — it's always larger than the physical core diameter.
         </p>
         <p className="mt-2">
-          G.652.D specifies MFD @ 1310 nm as 8.6–9.2 µm (compared to the 9-µm nominal core).
+          G.652.D specifies MFD @ 1310 nm as 8.8–9.6 µm (9.2 ± 0.4 µm per ITU-T G.652.D; compared to the 9-µm nominal core).
           MFD matters for splicing: two fibers with different MFDs will produce splice loss even
           if the cores are perfectly aligned, because the mode fields don't overlap completely.
           This is why mixing fiber brands or grades in the same link requires care — even if
