@@ -358,12 +358,12 @@ export default function T08L07_ReadingAMakeReadyEstimate() {
             prompt: 'A make-ready estimate shows: telecom labor $1,200, power company sub-contractor $2,340, materials $890, contingency 15%. What is the total MRE?',
             choices: [
               '$4,430',
-              '$4,816.50',
-              '$5,096.50',
+              '$4,994.50',
+              '$5,094.50',
               '$5,096',
             ],
-            answerIndex: 1,
-            explanation: 'Subtotal = $1,200 + $2,340 + $890 = $4,430. Contingency = $4,430 × 15% = $664.50. Total = $4,430 + $664.50 = $4,816.50. The contingency is applied to the full subtotal including sub-contractor labor and materials. (T08.L07 — MRE calculation.)',
+            answerIndex: 2,
+            explanation: 'Subtotal = $1,200 + $2,340 + $890 = $4,430. Contingency = $4,430 × 15% = $664.50. Total = $4,430 + $664.50 = $5,094.50. The contingency is applied to the full subtotal including sub-contractor labor and materials. (T08.L07 — MRE calculation.)',
           },
           {
             id: 'T08-L07-Q2',
