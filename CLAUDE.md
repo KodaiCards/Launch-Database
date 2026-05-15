@@ -614,6 +614,8 @@ User-stated directives that MUST survive every compaction:
 13. **Decide, don't ask + NO sign-off gates (locked 2026-05-15 evening, re-locked when orchestrator drifted):** Carter's verbatim — "I really dont want to be asked questions unless its really needed, I want you to make decisions and allocate work based on the goals." And later: "Why do you need my sign off for anything? You know the scope." Use `AskUserQuestion` ONLY when (a) the decision is genuinely irreversible (force-push, dropping data, deleting a real repo), (b) genuinely ambiguous after grepping CLAUDE.md + HANDOFF.md + audit-output/, or (c) NEW scope being added that Carter hasn't authorized yet. **Do NOT insert "Carter sign-off" gates between waves.** Scope is locked; orchestrator executes against the locks; Carter sees deliverables land on main and pushes back as veto if needed. The gate isn't approval-to-proceed, it's veto-on-deliverable. Treat every wave's output as "land it and move to the next wave" unless an explicit veto comes in.
 14. **Token budget discipline (locked 2026-05-15):** Carter's verbatim — "limit yourself to 95% of those tokens within a 5 hour window. You have half that amount of tokens for the next 3 hours." Claude Max 5x estimated cap ~50M tokens / 5hr rolling window. Operating cap: 47.5M / 5hr; ~23.75M for any 3-hour push. Include timestamps (`[HH:MM UTC]`) on meaningful chat turns. Cap each major wave at ≤4M tokens; cap small waves at ≤1M. Push agents aggressively to avoid mid-run re-do.
 15. **Timestamps in chat (locked 2026-05-15):** prepend `[HH:MM UTC]` to meaningful turn-openers. Use `date -u "+%H:%M UTC"` via Bash when needed.
+16. **Compaction protection (locked 2026-05-15 evening, Carter re-emphasized):** "This conversation will get condensed every 1m tokens for context. Make sure you have a document you reference and are constantly updating, its unacceptable to forget anything contextual." Every substantive Carter message → immediate CLAUDE.md / HANDOFF.md update BEFORE the next dispatch. New scope, new locks, new "future build" items, corrections, lessons — capture and PUSH before moving. The doc is the only memory that survives compaction.
+17. **Burn rate tracking (locked 2026-05-15 evening):** Carter's actual data point — ~14%/hr burn observed = ~67% of sustainable rate when 42% budget remains across 2hr. Working target: stay at 12-15%/hr to leave ~15% buffer at end of window. Recompute on every meaningful state update; do not assume.
 
 If a directive is unclear, ask via `AskUserQuestion` — but only after grepping this file. Re-asking a captured directive erodes trust.
 
@@ -1004,6 +1006,10 @@ The temp Claude landed ~50% of Friday's canonical items, primarily on main (now 
 Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New sequencing reflects (a) Carter's scope expansion (full OSP eng coverage, strict prerequisite invariant, 3 quiz tiers, 3 cert tracks), and (b) the discovery findings (clean-sheet topic list, in-tree osp-training/ source).
 
 1. **OSP-RW.0 Discovery** (✓ LANDED 2026-05-15 evening — `5442e2f` Agent A doc→repo, `a189bca` Agent B repo→doc)
+
+**OSP-RW.0a Curriculum Scoping Research** (✓ LANDED 2026-05-15 evening — `83bf4aa` R-A Domain Coverage, `fb418a7` R-B Cert Blueprints, `b7ee1b9` R-C Existing Content Audit. Plus context maps `71c3611` + `dfcd0fc`.)
+
+**OSP-RW.0b Curriculum Architecture** (✓ LANDED 2026-05-15 evening — Architect `1080145`, RT YELLOW verdict at `c121405`, 5-patch fix at `786f138`. Final ARCH.md: 22 topics, 245 lessons (209 general + 36 cert), Option C source-of-truth (JSX-led 3-way merge with markdown depth + verified pitch revisions), ~858 authoring hours estimate. All orchestrator decisions baked in: 22 topics kept, RCDD = OSP-relevant + signposts, CFOT folded into C04.)
 2. **OSP-RW.0a Curriculum Scoping Research** — 3 read-only research agents in parallel:
    - **R-A Domain Coverage:** What does a comprehensive OSP engineering curriculum need to cover? Survey RUS bulletins (1751F-630/635/815, 1738), NESC (loading districts, clearance, grounding, joint-use), BICSI OSPDR + OSP Designer blueprint, FOA CFOS-O/CFOS-T blueprints, RCDD TDMM ToC, real engineering firm internal training programs, university OSP/communications-construction curricula.
    - **R-B Cert Exam Blueprints:** OSP Designer (BICSI) + RCDD (BICSI) + CFOS/CFOT (FOA) — exam domains + percentages + sample-question structures + recommended prep materials.
@@ -1038,7 +1044,9 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 - **Audit `claude/scale-pass-sse-cte`** — 3 commits: SSE memory leak fix, recursive-CTE depth guard, poll heartbeat tune. Read-only audit; if clean, merge.
 - **Audit `claude/splice-matrix-railway-setup-IIG3Q`** — uncharacterized. Read-only audit.
 
-### Phase Launch-DB queue (deferred until OSP-RW lands)
+### Phase Launch-DB queue (deferred until OSP-RW lands — REAFFIRMED 2026-05-15 evening per Carter)
+
+Carter explicitly flagged 2026-05-15 evening: "there should be some stuff about fixing the time clock and design portal and stuff." Confirming these are tracked below — the design picker (Phase 9) and timeclock picker (Phase 10) waves are locked + spec'd. They run AFTER OSP-RW lands, not in parallel. If Carter wants them sooner, he can re-prioritize anytime.
 
 - **Phase 1 — Demo-blocker cleanup** (Wave 1.7) — Phase 1 fix-agent `3d66c69` already pushed; CI-green check needed. 8 surgical items.
 - **Phase 2 — Projection wave (Path B)** — finish 3 UC tiles. 3 auditors high-stakes wave.
@@ -1048,9 +1056,16 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 - **Phase 6 — Wave 3 BE-Perf remainder.**
 - **Phase 7 — Wave 3 FE-A11y remainder.**
 - **Phase 8 — UI-A polish.**
-- **Phase 9 — Design Picker fix wave** (3 known bugs from f1be9e7/aaf3b5d).
-- **Phase 10 — Timeclock picker P2-A/B/C** (locked spec, gated on Phase 1 CI).
+- **Phase 9 — Design Picker fix wave** (3 known bugs D1/D2/D3 from `f1be9e7`/`aaf3b5d`: clientId undeclared in design.html, ?project_type vs ?type param mismatch, rollup leak in WHERE clause).
+- **Phase 10 — Timeclock picker P2-A/B/C** (locked spec, see ## Timeclock picker canonical section above; sessionStorage stickiness, no auto-create, completed projects hidden from clock-in cascade).
 - **Phase 11 — Cleanup per CLEANUP_CANDIDATES.md.**
+
+### Future-build queue (NOT scoped, NOT scheduled — capture-only)
+
+Items Carter has flagged as "future build" — not on the active wave queue, captured here so they're not lost across compaction. Re-prioritize when ready.
+
+- **Attenuation calculator tool** (added 2026-05-15 evening per Carter): an interactive attenuation calc embedded in TWO surfaces — (a) the design portal (`public/design.html` or its component), and (b) the splice matrix tool (`routes/splice.js` + `public/splice.html`). Likely candidate: the existing OSP-side `LinkBudgetCalculator` from `osp-training/src/components/` migrated to a launch-database utility component, or a tighter purpose-built tool. Inputs: span length, fiber type (G.652/G.655/G.657), wavelength (1310/1490/1550), splice count, connector count. Output: total expected loss in dB + sanity check vs link budget for the project's source/receiver. Field-crew use case.
+- **Client portal v1** (already in CLAUDE.md `audit-output/future/client-portal-spec.md`): token-based auth per client_organization, project status + document drop, approve/sign/commit/upload allowed. PSC = first client. Logo at `public/img/clients/psc-logo.png` before kickoff. Build is future-phase.
 
 ### Retired (obsoleted by OSP-RW rewrite)
 
