@@ -494,12 +494,12 @@ export default function T03L09_ADSSSpanWindIceLoading() {
             choices: [
               '0.750 lb/ft',
               '0.377 lb/ft',
-              '1.244 × 0.50 × 1.21 = 0.752 lb/ft',
+              '1.244 × 0.50 × 1.21 ≈ 0.752 lb/ft',
               '0.068 lb/ft',
             ],
             answerIndex: 2,
             explanation:
-              'w_ice = 1.244 × t × (D + t) = 1.244 × 0.50 × (0.71 + 0.50) = 1.244 × 0.50 × 1.21 = 0.752 lb/ft. Step-by-step: D + t = 0.71 + 0.50 = 1.21 in.; 1.244 × 0.50 = 0.622; 0.622 × 1.21 = 0.752 lb/ft of ice weight added to the cable. This adds substantially to the vertical load in the Heavy district.',
+              'w_ice = 1.244 × t × (D + t) = 1.244 × 0.50 × (0.71 + 0.50) = 1.244 × 0.50 × 1.21 ≈ 0.752 lb/ft. Step-by-step: D + t = 0.71 + 0.50 = 1.21 in.; 1.244 × 0.50 = 0.622; 0.622 × 1.21 = 0.75262 → rounds to ≈ 0.752 lb/ft using the exact constant π×57/144 = 1.2435. This adds substantially to the vertical load in the Heavy district.',
           },
           {
             id: 'T03-L09-Q3',
