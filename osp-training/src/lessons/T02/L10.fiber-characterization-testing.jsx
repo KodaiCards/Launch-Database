@@ -182,7 +182,7 @@ export default function T02L10_FiberCharacterizationTesting() {
               min: 1,
               max: 400,
               step: 1,
-              default: 80,
+              default: 45,
             },
             {
               key: 'D_coeff',
