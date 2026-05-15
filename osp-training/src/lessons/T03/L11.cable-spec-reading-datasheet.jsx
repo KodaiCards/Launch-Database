@@ -236,15 +236,19 @@ export default function T03L11_DatasheetReading() {
         <h4 className="mt-3 font-semibold">Bend Radius</h4>
         <ul className="list-disc ml-6 mt-1 space-y-1">
           <li>
-            <strong>Installation bend radius</strong> — the minimum allowed during pulling or
-            routing. Typically 10× to 20× the cable OD. Exceeding this temporarily during
-            installation can stress the fiber.
+            <strong>Installation bend radius</strong> — the minimum radius allowed during pulling or
+            routing. This lesson uses <strong>20× cable OD</strong> as the conservative limit
+            for dynamic installation stress. (Some references quote a range of 10–20× OD depending
+            on cable design; 20× is the safe upper boundary to plan to.)
+            Exceeding this temporarily during installation can stress the fiber.
           </li>
           <li>
-            <strong>Long-term (loaded) bend radius</strong> — the minimum allowed in the
-            permanent installed position, under load (e.g., inside a splice case or duct
-            transition). Typically 10× to 15× OD. Tighter than this permanently can cause
-            microbend loss over years.
+            <strong>Long-term (loaded) bend radius</strong> — the minimum radius allowed in the
+            permanent installed position, under sustained load (e.g., inside a splice case or duct
+            transition). This lesson uses <strong>10× cable OD</strong> as the standard long-term
+            limit. (Some references quote 10–15× OD; 10× represents the tightest commonly accepted
+            permanent bend.) Tighter than this permanently can cause microbend loss that builds up
+            over years.
           </li>
         </ul>
         <p className="mt-3">
