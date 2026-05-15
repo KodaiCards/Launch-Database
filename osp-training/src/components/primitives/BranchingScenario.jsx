@@ -9,7 +9,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
  * can resume across page navigations.
  *
  * @param {string}   scenarioId    - Unique key for localStorage persistence.
- *                                   Use a stable string like "m02-makeready-scenario".
+ *                                   REQUIRED to be unique per-instance. The localStorage
+ *                                   key is `osp-scenario-${scenarioId}`, so two instances
+ *                                   on the same page with the same id will share state.
+ *                                   Recommended convention for authors:
+ *                                     `${topicId}-L${lessonOrder}-scenario-${ordinal}`
+ *                                   e.g. `T05-L06-scenario-1` or `T08-L03-scenario-2`.
+ *                                   Do NOT use generic names like "scenario-1" — these
+ *                                   will collide across lessons if reused.
  * @param {string}   title         - Scenario title shown in the header.
  * @param {string}   [description] - Short intro paragraph before the first node.
  * @param {string}   startNodeId   - id of the first node to display.

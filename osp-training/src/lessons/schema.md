@@ -205,11 +205,17 @@ All 9 primitives are **default exports**. Use `import PrimitiveName from '...'` 
 
 ## How `meta` + Body Interact with `LessonLayout`
 
-1. `LessonRouter` (in `App.jsx`) dynamically imports the lesson file using `React.lazy`.
-2. It reads the file's named `meta` export and passes it as a prop to `<LessonLayout meta={meta}>`.
-3. `LessonLayout` uses `meta` to render: header (title, type badge, est. time), prereq links, tier accordion wrappers, and footer nav (next/back).
-4. The default-exported component's JSX becomes the `children` of `LessonLayout`.
-5. The `useProgress(meta.id)` hook in `LessonLayout` stubs progress persistence — wired to API in OSP-RW.2.
+1. `LessonRouter` resolves the lesson file path from `lessonFileIndex` in `course-catalog.js`,
+   then calls the matching loader from `import.meta.glob('../lessons/**/*.jsx')`.
+2. The loader returns the module. `LessonRouter` reads `mod.default` (the lesson component)
+   and renders it directly — it does **not** extract or pass `meta` itself.
+3. The lesson's default-export component renders `<LessonLayout meta={meta}>` internally,
+   using its own named `meta` export. All wiring of `meta` to `LessonLayout` happens inside
+   the lesson file, not in `LessonRouter`.
+4. `LessonLayout` uses `meta` to render: header (title, type badge, est. time), prereq links,
+   tier accordion wrappers, and footer nav (next/back).
+5. The `useProgress(meta.id)` hook in `LessonLayout` stubs progress persistence — wired to
+   the real API in OSP-RW.2.
 
 ---
 
@@ -246,9 +252,13 @@ src/lessons/
 ## Authoring Rules (inherited from agent-protocol.md)
 
 - No AI references anywhere in lesson content.
-- Every [CORRECT] answer independently derivable.
+- Every correct answer independently derivable.
 - Every assumed term has a `source_lesson_id` in `vocabulary_assumed`.
 - Book vs. field practice distinction maintained throughout.
 - All math steps shown — no skipped intermediates.
 - All acronyms defined on first use within each lesson.
 - Citations: use `[confirm edition]` for standards where edition is in flux.
+- `BranchingScenario` `scenarioId` must be unique per lesson instance.
+  Convention: `${topicId}-L${lessonOrder}-scenario-${ordinal}` (e.g. `T05-L06-scenario-1`).
+  Do NOT use generic names like `"scenario-1"` — localStorage key is
+  `osp-scenario-${scenarioId}` and will bleed state across lessons if reused.

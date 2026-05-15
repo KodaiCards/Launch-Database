@@ -20,9 +20,11 @@ import React, { useMemo, useState } from 'react';
  *     default:  number,   // initial value
  *     format?:  Function  // optional: (value) => string for custom display
  *   }
- * @param {Function} compute        - (values: {key: number}) => {result: number, label: string, unit: string, status?: 'ok'|'warn'|'error', statusMessage?: string}
+ * @param {Function} compute        - (values: {key: number}) => {result: number, label: string, unit: string, status?: 'ok'|'warn'|'error', statusMessage?: string, decimals?: number}
  *                                    Called on every slider change. Return object shape:
- *                                    { result, label, unit, status?, statusMessage? }
+ *                                    { result, label, unit, status?, statusMessage?, decimals? }
+ *                                    decimals?: number — optional, defaults to 2. Controls decimal
+ *                                    places shown on the live result display.
  * @param {Array}    [annotations]  - Optional reference lines on the result display:
  *   [{ value: number, label: string, color?: string }]
  *   Shown as reference markers alongside the live result for comparison.
