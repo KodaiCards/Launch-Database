@@ -30,7 +30,7 @@ These terms are available to ALL downstream topics once T18 completes. Authors o
 | General duty clause | T18.L01 | Section 5(a)(1) of the OSH Act; requires employers to provide a workplace free from recognized hazards causing or likely to cause death or serious harm |
 | 1910.268 | T18.L01 | OSHA Subpart R — Telecommunications; the workhorse safety standard for OSP field work |
 | hazard recognition | T18.L01 | The trained skill of identifying physical, electrical, chemical, and environmental dangers before work begins |
-| hierarchy of controls | T18.L01 | Engineering controls → administrative controls → PPE, in order of effectiveness; preferred over PPE-first approach |
+| hierarchy of controls | T18.L01 | Elimination → Substitution → Engineering Controls → Administrative Controls → PPE, ordered most-effective to least-effective; preferred over PPE-first approach |
 | SDS (Safety Data Sheet) | T18.L01 (DAG first-intro; brief concept only — L08 is the deep dive) | Document supplied with hazardous chemicals listing composition, exposure limits, PPE, and first-aid; replaces old MSDS |
 | LOTO | T18.L02 | Lockout/Tagout: the procedure for de-energizing equipment before service, governed by 29 CFR 1910.147 |
 | energy isolating device | T18.L02 | A mechanical device that physically prevents transmission or release of energy (breaker, valve, disconnect switch) |
@@ -103,7 +103,7 @@ The following sources are not on the current allowlist but are required for T18.
 | T18.L07 | Working Near Energized Conductors — MAD/MAB | working | 25 | MAD, MAB, qualified electrical worker (1910.269), Table R-6, unqualified approach limit | WorkedExample (read Table R-6 for a given kV); Quiz | net-new |
 | T18.L08 | Hazardous Materials on an OSP Job | working | 20 | SDS (full detail), fill-gel exposure, HDPE fumes, silica dust, OSHA PEL/TLV | Quiz (MC); HotSpot (identify hazmat labels on job site photo) | net-new |
 | T18.L09 | Incident Reporting & OSHA 300 | foundation | 20 | OSHA 300 log, recordable incident, near-miss, first report of injury, OSHA 300A annual summary | Quiz (MC) | net-new |
-| T18.L10 | T18 Capstone Quiz | capstone-quiz | 30 | — | Quiz (20Q MC + 2 scenario-based items) | net-new |
+| T18.L10 | T18 Capstone Quiz | capstone-quiz | 30 | — | Quiz (22Q MC + 2 scenario-based items) | net-new |
 
 **Total: ~240 minutes (~4 hours). 9 content lessons + 1 capstone.**
 
