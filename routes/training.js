@@ -120,13 +120,17 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
                             END,
            last_seen_at   = NOW(),
            course_id      = EXCLUDED.course_id
-         RETURNING *`,
+         RETURNING *, (xmax = 0) AS is_insert`,
         [req.user.id, course_id, lesson_id, status, Math.round(pct),
           score !== undefined && score !== null ? Math.round(Number(score)) : null]
       );
-      // Return 201 on first insert (attempts === 1), 200 on subsequent upserts.
-      const isInsert = rows[0].attempts === 1;
-      res.status(isInsert ? 201 : 200).json({ progress: rows[0] });
+      // xmax = 0 means the row was freshly inserted; xmax != 0 means it was
+      // updated in the ON CONFLICT path. Using xmax is reliable whereas
+      // checking attempts === 1 breaks for upserts that don't increment attempts
+      // (e.g. in_progress update with no score).
+      const isInsert = rows[0].is_insert;
+      const { is_insert: _drop, ...progress } = rows[0];
+      res.status(isInsert ? 201 : 200).json({ progress });
     } catch (err) {
       console.error('[training] POST /progress error:', err.message);
       res.status(500).json({ error: 'Failed to save training progress' });

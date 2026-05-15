@@ -117,12 +117,13 @@ test('POST /api/training/progress creates a row in training_progress', async () 
 });
 
 test('POST /api/training/progress upsert advances status to completed', async () => {
-  // First mark in_progress
+  // First mark in_progress — fresh insert returns 201
   await requestJson('POST', '/api/training/progress', {
     token: nonAdminToken,
+    expectStatus: 201,
     body: { course_id: 'T99', lesson_id: 'T99.L02', status: 'in_progress', completion_pct: 50 },
   });
-  // Now mark completed with score
+  // Now mark completed with score — upsert over existing row returns 200
   const r = await requestJson('POST', '/api/training/progress', {
     token: nonAdminToken,
     body: { course_id: 'T99', lesson_id: 'T99.L02', status: 'completed', completion_pct: 100, score: 88 },
@@ -132,12 +133,13 @@ test('POST /api/training/progress upsert advances status to completed', async ()
 });
 
 test('POST /api/training/progress does not regress completed status', async () => {
-  // Pre-seed a completed row
+  // Pre-seed a completed row — fresh insert returns 201
   await requestJson('POST', '/api/training/progress', {
     token: nonAdminToken,
+    expectStatus: 201,
     body: { course_id: 'T99', lesson_id: 'T99.L03', status: 'completed', completion_pct: 100 },
   });
-  // Try to regress to in_progress
+  // Try to regress to in_progress — upsert over existing row returns 200
   const r = await requestJson('POST', '/api/training/progress', {
     token: nonAdminToken,
     body: { course_id: 'T99', lesson_id: 'T99.L03', status: 'in_progress', completion_pct: 30 },
