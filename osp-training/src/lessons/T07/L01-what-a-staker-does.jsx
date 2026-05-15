@@ -1,0 +1,465 @@
+// T07.L01 — What a Staker Does — Field Role
+// Foundation lesson: staking as a precision data-capture role
+// Sources: RUS Bulletin 1751F-630 §2/§7, OSHA 1910.268(g)(1), NESC Rule 232 [confirm edition]
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T07.L01',
+  course_id: 'T07',
+  title: 'What a Staker Does — Field Role',
+  order: 1,
+  lesson_type: 'foundation',
+  prerequisites: ['T01.L01', 'T04.L01', 'T05.L01', 'T18.L01'],
+  learning_objectives: [
+    'Explain staking as a precision data-collection role, not a laborer\'s role',
+    'Name the four outputs a staker produces and describe how each is used downstream',
+    'Identify what data the make-ready crew, construction crew, and engineer each depend on from staking',
+  ],
+  estimated_minutes: 20,
+  vocabulary_introduced: ['staker', 'stake', 'call-out', 'field verification', 'measurement tolerance'],
+  vocabulary_assumed: [
+    { term: 'span', source_lesson_id: 'T05.L02' },
+    { term: 'attachment point', source_lesson_id: 'T05.L02' },
+    { term: 'clearance', source_lesson_id: 'T05.L04' },
+    { term: 'safety zone', source_lesson_id: 'T18.L01' },
+    { term: 'sag', source_lesson_id: 'T05.L05' },
+  ],
+  key_terms: [
+    {
+      term: 'staker',
+      definition:
+        'A field technician responsible for walking a design route, marking pole locations, measuring heights and clearances, and documenting field conditions via photos, GPS, and notes on RUS Form 740. The staker is the bridge between the designer\'s plan and the crew that builds from it.',
+    },
+    {
+      term: 'stake',
+      definition:
+        'A physical marker — typically a wood lath, pin flag, or spray-painted mark — placed on the ground at a proposed pole location or underground route centerline to guide construction. Stakes are placed to match design stationing within the measurement tolerance.',
+    },
+    {
+      term: 'call-out',
+      definition:
+        'A staker\'s written or digital notation on a staking note indicating a field condition that differs from the design, requires engineering review, or affects downstream construction. Examples: "pole too close to ditch," "existing wire height mismatches design assumption," "rocky soil — bore required."',
+    },
+    {
+      term: 'field verification',
+      definition:
+        'The process of physically confirming that design assumptions (pole locations, attachment heights, clearances, soil conditions) match actual conditions in the field before construction begins. Field verification catches design errors early, when corrections are cheap.',
+    },
+    {
+      term: 'measurement tolerance',
+      definition:
+        'The acceptable range of error in a field measurement. For staking, pole position tolerance is typically ±3 feet of design stationing. Attachment height tolerance is ±0.5 feet using a laser measurer. Exceeding tolerance requires a design call-out.',
+    },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T07L01_WhatAStakerDoes() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Before a single bucket truck rolls or a drill rig fires up, someone has to walk the
+          route and figure out if the engineer's design will actually work in the real world.
+          That person is the <strong>staker</strong>.
+        </p>
+        <p className="mt-2">
+          Staking isn't about driving a lot of wooden stakes in the ground — that's just one
+          small piece of it. The real job is <em>data collection</em>. The staker walks every
+          pole location, measures existing attachment heights, photographs existing poles and
+          infrastructure, records GPS coordinates, and writes up field notes that tell the
+          engineer, the make-ready crew, and the construction crew exactly what they'll find
+          when they get there.
+        </p>
+        <p className="mt-2">
+          Think of it like a pre-flight checklist on an airplane. The pilot (engineer) wrote
+          the flight plan (design). The staker does the walk-around — checks that everything
+          actually matches what the instruments say before the engines start.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">RUS</td>
+              <td className="px-3 py-2">Rural Utilities Service</td>
+              <td className="px-3 py-2">Federal program that funds rural telecom buildouts; has its own documentation standards including Form 740</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">NESC</td>
+              <td className="px-3 py-2">National Electrical Safety Code</td>
+              <td className="px-3 py-2">The rulebook for overhead utility clearances — stakers verify clearance requirements in the field</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">OSHA</td>
+              <td className="px-3 py-2">Occupational Safety and Health Administration</td>
+              <td className="px-3 py-2">Federal agency setting worker safety rules; OSHA 1910.268 covers telecommunications pole work</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">GPS</td>
+              <td className="px-3 py-2">Global Positioning System</td>
+              <td className="px-3 py-2">Satellite-based location system; stakers use it to geo-tag pole photos and record pole positions</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-5 font-semibold">What a staker produces</h3>
+        <p className="mt-2">
+          By the time a staker is done with a route, they hand off four things:
+        </p>
+        <ol className="list-decimal pl-5 space-y-2 mt-2">
+          <li>
+            <strong>Physical stakes</strong> — wooden laths or pin flags at each proposed
+            pole location, painted or flagged to match the design's stationing.
+          </li>
+          <li>
+            <strong>Pole photos and GPS coordinates</strong> — photographs of every existing
+            pole from a consistent angle, with GPS coordinates recorded to within about ±5 meters
+            using a handheld device.
+          </li>
+          <li>
+            <strong>Height and clearance measurements</strong> — laser or tape measurements of
+            existing attachment heights, documented to ±0.5 feet, so the engineer and make-ready
+            crew know exactly where everything sits today.
+          </li>
+          <li>
+            <strong>Staking notes (RUS Form 740)</strong> — written field notes recording
+            stationing, offset, design vs. actual dimensions, and call-outs for any field
+            condition that differs from the design.
+          </li>
+        </ol>
+
+        <h3 className="mt-5 font-semibold">Who uses staking data</h3>
+        <p className="mt-2">
+          This is why staking accuracy matters so much: multiple crews downstream depend
+          on what the staker recorded.
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2">
+          <li>
+            <strong>The engineer</strong> uses staking data to confirm the design matches
+            real conditions — or revise the design where it doesn't.
+          </li>
+          <li>
+            <strong>The make-ready crew</strong> uses staking data to identify which poles
+            need attachment-height adjustments, transfers, or replacements before the fiber
+            crew can attach.
+          </li>
+          <li>
+            <strong>The construction crew</strong> uses the physical stakes and staking notes
+            to place poles in the right locations and verify clearances after attachment.
+          </li>
+        </ul>
+
+        <p className="mt-4 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <strong className="text-amber-300">Why precision matters:</strong> A staking error
+          that goes undetected can mean a pole gets set in the wrong location, a clearance
+          violation slips through to construction, or a make-ready crew shows up unprepared
+          for a conflict that staking should have caught. Corrections after construction costs
+          3–10× more than corrections at the staking stage.
+        </p>
+
+        {/* ── FLASHCARDS ──────────────────────────────────────────────────── */}
+        <Flashcard
+          deckId="T07-L01"
+          cards={[
+            {
+              id: 'T07-L01-fc-staker',
+              front: 'What is a staker?',
+              back: 'A field technician responsible for walking a design route, marking pole locations, measuring heights and clearances, and documenting field conditions via photos, GPS, and notes on RUS Form 740. The staker is the bridge between the designer\'s plan and the crew that builds from it.',
+            },
+            {
+              id: 'T07-L01-fc-stake',
+              front: 'What is a stake (in OSP staking)?',
+              back: 'A physical marker — typically a wood lath, pin flag, or spray-painted mark — placed on the ground at a proposed pole location or underground route centerline to guide construction. Stakes are placed to match design stationing within the measurement tolerance.',
+            },
+            {
+              id: 'T07-L01-fc-callout',
+              front: 'What is a call-out on a staking note?',
+              back: 'A staker\'s written or digital notation indicating a field condition that differs from the design, requires engineering review, or affects downstream construction. Examples: "pole too close to ditch," "existing wire height mismatches design assumption," "rocky soil — bore required."',
+            },
+            {
+              id: 'T07-L01-fc-field-verification',
+              front: 'What is field verification?',
+              back: 'The process of physically confirming that design assumptions (pole locations, attachment heights, clearances, soil conditions) match actual conditions in the field before construction begins. Field verification catches design errors early, when corrections are cheap.',
+            },
+            {
+              id: 'T07-L01-fc-tolerance',
+              front: 'What is measurement tolerance in staking?',
+              back: 'The acceptable range of error in a field measurement. For staking, pole position tolerance is typically ±3 feet of design stationing. Attachment height tolerance is ±0.5 feet using a laser measurer. Exceeding tolerance requires a design call-out.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The Staking Role in the Project Timeline</h2>
+
+        <h3 className="mt-4 font-semibold">Staking happens between design and construction</h3>
+        <p>
+          In a typical OSP project, the sequence is: route survey (T04) → design (T05/T06) →
+          <strong> staking (T07)</strong> → make-ready (T08) → construction (T10) → inspection (T13).
+          Staking is the handoff from the drawing board to the ground.
+        </p>
+        <p className="mt-2">
+          The designer creates plans based on survey data and field conditions as-they-were
+          during the survey. But conditions change. A landowner may have added a fence. A road
+          may have been widened. A pole may have shifted or leaned. The staker's job is to close
+          the gap between "what the survey recorded" and "what's actually there today."
+        </p>
+
+        <h3 className="mt-5 font-semibold">Field verification — the staker's core duty</h3>
+        <p>
+          <strong>Field verification</strong> means physically checking each design assumption
+          against what's in the field. For each pole location in the design, the staker:
+        </p>
+        <ol className="list-decimal pl-5 space-y-2 mt-2 text-sm">
+          <li>Finds the proposed pole location on the ground using the design stationing and offset.</li>
+          <li>Checks whether a usable pole already exists there (or nearby within tolerance).</li>
+          <li>If an existing pole is present, measures existing attachment heights and records the highest and lowest wires.</li>
+          <li>Photographs the pole from the approach angle (usually downline, showing all attachments).</li>
+          <li>Records GPS coordinates.</li>
+          <li>Writes up the staking note — stationing, offset, design vs. measured, call-outs.</li>
+          <li>Places a physical stake if the pole position is confirmed or adjusted.</li>
+        </ol>
+
+        <h3 className="mt-5 font-semibold">Measurement tolerance — when to issue a call-out</h3>
+        <p>
+          Not every difference between design and field triggers a call-out. The staker
+          applies <strong>measurement tolerance</strong> rules:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
+          <li>
+            <strong>Pole position:</strong> Design says Pole 12 is at station 2+50 (250 feet
+            from the last reference point). You find a usable pole at 2+47 — only 3 feet off.
+            That's within ±3-foot position tolerance. Record the actual location, mark it as
+            within tolerance, move on.
+          </li>
+          <li>
+            <strong>Pole position:</strong> Design says pole at 2+50, closest pole is at
+            2+80 — 30 feet off. That's outside tolerance. Call-out required. The engineer
+            decides whether to move the design location or accept the shift.
+          </li>
+          <li>
+            <strong>Attachment height:</strong> Design assumes an existing wire at 28.0 feet.
+            You measure it at 27.6 feet with a laser measurer. That's 0.4 feet off, within
+            the ±0.5-foot tolerance. Document it, no call-out required.
+          </li>
+          <li>
+            <strong>Attachment height:</strong> Design assumes 28.0 feet, you measure 25.2
+            feet. That's 2.8 feet off — well outside tolerance and possibly a clearance issue.
+            Call-out required; likely triggers a make-ready flag.
+          </li>
+        </ul>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
+          <p className="text-slate-300/90">
+            <strong>Book (OSHA 1910.268(g)(1)):</strong> Fall protection is required for
+            pole work above 10 feet. In theory, stakers measuring high attachment heights
+            should climb with tie-off.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> Most experienced stakers measure from the ground using a
+            laser distance measurer, never climbing. Ground-level laser measurement is accurate
+            to ±0.1 feet, better than tape-on-a-pole. Climbing is reserved for cases where
+            the laser line-of-sight is blocked (dense foliage, crowded pole). When climbing
+            is needed, 100% tie-off is universal practice. The ground-laser method isn't a
+            safety shortcut — it's a more accurate technique that also happens to be safer.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Risk of confusion:</strong> A new staker who only reads the regulation might
+            assume they must climb every pole to measure. Don't climb when the laser gives you
+            a cleaner, faster, safer measurement from the ground.
+          </p>
+        </div>
+      </section>
+
+      {/* ── ADVANCED ────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Staking as a Career Foundation</h2>
+
+        <h3 className="mt-4 font-semibold">Why stakers become good designers</h3>
+        <p>
+          Many of the best OSP designers started as stakers. Walking routes — seeing where designs
+          break against reality, noticing the field conditions that drove cost overruns, understanding
+          what construction crews actually need in their notes — builds intuition that no design
+          course can replicate.
+        </p>
+        <p className="mt-2">
+          When you've staked a hundred poles, you start to see the design from both sides: what
+          the engineer was thinking when they drew the plan, and what the crew will deal with when
+          they execute it. That dual perspective is what separates a designer who makes good designs
+          from a designer who makes buildable designs.
+        </p>
+
+        <h3 className="mt-5 font-semibold">RUS context — why staking documentation is non-optional</h3>
+        <p>
+          On RUS-funded projects (Rural Utilities Service broadband and telephone programs),
+          staking documentation isn't just good practice — it's a contractual and program
+          compliance requirement. RUS Bulletin 1751F-630 §2 defines the engineering and
+          construction documentation chain, and staking notes (primarily RUS Form 740) are a
+          required deliverable.
+        </p>
+        <p className="mt-2">
+          If a project is audited (and RUS-funded projects frequently are), missing or incomplete
+          staking documentation can trigger findings that affect reimbursement. A staker's sloppy
+          notes aren't just inconvenient — they're a financial risk to the whole project.
+        </p>
+      </section>
+
+      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
+      <AnnotatedDiagram
+        title="A Pole in the Field — What the Staker Records"
+        description="Click any labeled point to see what the staker measures, photographs, or records at that point. This is one pole's worth of staking data — a typical route may have 50 to 500 poles."
+        src="/training/diagrams/t07-staking-pole-overview.svg"
+        alt="Utility pole diagram showing staking measurement points: ground stake, attachment heights, existing wires, GPS tag, and photo angle"
+        aspectRatio={1.6}
+        hotPoints={[
+          {
+            id: 'ground-stake',
+            x: 50,
+            y: 92,
+            label: 'Ground stake',
+            type: 'click',
+            explanation:
+              'A physical stake or paint mark on the ground at the proposed pole location. Placed by the staker to match design stationing within ±3 feet. Construction crews follow these marks to set new poles.',
+          },
+          {
+            id: 'attachment-height',
+            x: 55,
+            y: 45,
+            label: 'Existing attachment',
+            type: 'click',
+            explanation:
+              'The staker measures the height of every existing wire attachment on the pole using a laser measurer from the ground. Target accuracy: ±0.1 feet (laser) or ±0.5 feet (tape). This height is compared against the design\'s assumption.',
+          },
+          {
+            id: 'top-of-pole',
+            x: 50,
+            y: 10,
+            label: 'Top of pole',
+            type: 'click',
+            explanation:
+              'The staker records the approximate top-of-pole height. For a standard 40-foot distribution pole, about 6 feet is buried, leaving 34 feet of usable above-ground height. The staker notes the pole class and condition.',
+          },
+          {
+            id: 'photo-angle',
+            x: 20,
+            y: 50,
+            label: 'Photo angle',
+            type: 'click',
+            explanation:
+              'The staker photographs the pole from a consistent downline angle (looking along the route direction) to show all attachments and their spacing. A second photo from the crossline direction confirms the attachment layout. GPS coordinates are recorded at this position.',
+          },
+          {
+            id: 'callout-flag',
+            x: 75,
+            y: 60,
+            label: 'Call-out flag',
+            type: 'click',
+            explanation:
+              'A bright flag tied to the stake or pole indicates a call-out — a field condition that differs from design. The staker writes the specific issue in the staking notes: "existing wire 25.2 ft, design assumed 28 ft — make-ready likely."',
+          },
+        ]}
+      />
+
+      {/* ── PER-LESSON QUIZ ─────────────────────────────────────────────── */}
+      <Quiz
+        title="T07.L01 Check — What a Staker Does"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T07-L01-Q1',
+            type: 'mc',
+            prompt: 'Which of the following best describes a staker\'s primary role on an OSP project?',
+            choices: [
+              'Operating bucket trucks and setting poles in the field',
+              'Collecting field measurements, photos, and notes that validate design assumptions before construction',
+              'Writing the engineering design and pole-loading calculations',
+              'Inspecting completed construction for regulatory compliance',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Staking is a data-collection role. The staker walks the route before construction, validates what the design assumes against what\'s actually there, and documents field conditions for the engineer, make-ready crew, and construction crew. They\'re not operating equipment or writing designs.',
+            citation: 'RUS Bulletin 1751F-630 §2 — Engineering documentation chain.',
+          },
+          {
+            id: 'T07-L01-Q2',
+            type: 'mc',
+            prompt:
+              'A staker finds an existing pole at station 2+47 when the design calls for a pole at station 2+50. The position tolerance is ±3 feet. What should the staker do?',
+            choices: [
+              'Issue a call-out — any deviation from design requires engineer review',
+              'Skip the pole — if it\'s not exactly on stationing, it shouldn\'t be used',
+              'Record the actual location (2+47) as within tolerance and continue staking',
+              'Move the physical stake to exactly 2+50 to match the design',
+            ],
+            answerIndex: 2,
+            explanation:
+              '2+47 vs. 2+50 is a 3-foot difference, which is exactly at the ±3-foot position tolerance limit. The staker records the actual location, notes it as within tolerance, and moves on. Only deviations that exceed tolerance require a call-out for engineer review.',
+          },
+          {
+            id: 'T07-L01-Q3',
+            type: 'mc',
+            prompt:
+              'Which downstream crew depends on staking data to determine which poles need attachment-height adjustments before fiber installation?',
+            choices: [
+              'The survey crew',
+              'The make-ready crew',
+              'The billing department',
+              'The permit office',
+            ],
+            answerIndex: 1,
+            explanation:
+              'The make-ready crew uses staking data to identify poles where existing attachments are too low, damaged, or crowded, requiring height transfers or other work before the fiber crew can attach. Without accurate staking, the make-ready crew shows up without knowing what work awaits them.',
+          },
+          {
+            id: 'T07-L01-Q4',
+            type: 'mc',
+            prompt:
+              'OSHA 1910.268(g)(1) requires fall protection for pole work above 10 feet. How do most experienced field stakers handle measuring attachment heights on tall poles?',
+            choices: [
+              'Always climb the pole with full tie-off for every measurement',
+              'Skip measuring any attachment above 15 feet as too dangerous',
+              'Use a laser distance measurer from the ground, reserving climbing for cases where laser line-of-sight is blocked',
+              'Estimate from the ground using visual reference points and report "approximately" values',
+            ],
+            answerIndex: 2,
+            explanation:
+              'Ground-level laser measurement provides ±0.1-foot accuracy — better than tape on a pole — and eliminates unnecessary climbing. Climbing is reserved for situations where the laser line-of-sight is blocked. When climbing is needed, 100% tie-off is always required per OSHA 1910.268(g)(1). Laser measurement is not a safety shortcut; it\'s the more accurate and safer technique for most measurements.',
+            citation: 'OSHA 1910.268(g)(1) — Fall protection requirements for pole work.',
+          },
+          {
+            id: 'T07-L01-Q5',
+            type: 'fill-in-blank',
+            prompt:
+              'A staker\'s written notation of a field condition that differs from the design and requires engineering review is called a ____.',
+            answer: 'call-out',
+            answerDisplay: 'call-out',
+            explanation:
+              'A call-out documents any field condition that doesn\'t match the design or that requires engineer attention before construction can proceed. It\'s the staker\'s primary communication tool for surfacing problems while they\'re still cheap to fix.',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
