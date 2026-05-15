@@ -1,0 +1,510 @@
+// Net-new — T05.L12 PON / FTTH Aerial Topology
+// Working lesson: PON architecture, GPON/EPON/XGS-PON, split ratio, power budget, FDH placement
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T05.L12',
+  course_id: 'T05',
+  title: 'PON / FTTH Aerial Topology',
+  order: 12,
+  lesson_type: 'working',
+  prerequisites: ['T05.L07', 'T05.L10', 'T02.L06', 'T03.L07'],
+  learning_objectives: [
+    'Explain the PON architecture and why passive optical splitters eliminate powered equipment in the field',
+    'Calculate a GPON link budget from OLT to ONT, showing all loss contributions',
+    'Determine how far a feeder fiber can run before the link budget is exceeded',
+    'Identify where an FDH is placed in a PON design and how the split ratio affects subscriber capacity',
+  ],
+  estimated_minutes: 30,
+  vocabulary_introduced: [
+    'PON',
+    'GPON',
+    'EPON',
+    'XGS-PON',
+    'split ratio',
+    'ODN',
+    'splitter insertion loss',
+    'feeder fiber',
+    'distribution fiber',
+    'drop fiber',
+  ],
+  vocabulary_assumed: [
+    { term: 'FDH', source_lesson_id: 'T01.L01' },
+    { term: 'NAP', source_lesson_id: 'T01.L01' },
+    { term: 'OLT', source_lesson_id: 'T01.L01' },
+    { term: 'ONT', source_lesson_id: 'T01.L01' },
+    { term: 'link budget', source_lesson_id: 'T02.L06' },
+    { term: 'attenuation (dB/km)', source_lesson_id: 'T02.L02' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L08' },
+    { term: 'ADSS', source_lesson_id: 'T03.L04' },
+    { term: 'messenger', source_lesson_id: 'T03.L04' },
+    { term: 'sag (s)', source_lesson_id: 'T05.L07' },
+    { term: 'joint use', source_lesson_id: 'T05.L08' },
+    { term: 'span', source_lesson_id: 'T01.L01' },
+  ],
+  key_terms: [
+    {
+      term: 'PON',
+      definition:
+        'Passive Optical Network — a fiber distribution architecture that uses unpowered (passive) optical splitters to share one upstream fiber strand among multiple end users. "Passive" means there are no powered amplifiers, switches, or active electronics between the central office and the subscriber — only unpowered glass splitters. This dramatically reduces field maintenance costs compared to active distribution networks.',
+    },
+    {
+      term: 'GPON',
+      definition:
+        'Gigabit Passive Optical Network — the dominant standard for residential FTTH PON deployments, defined by ITU-T G.984. GPON delivers 2.488 Gbps downstream (from OLT to ONTs) and 1.244 Gbps upstream (from ONTs to OLT) on a single fiber strand, shared among all ONTs on the PON port. The shared capacity is managed by time-division multiplexing (TDM) so each ONT gets a time slot. Maximum reach per G.984: 20 km logical (10 km physical differential between closest and farthest ONT).',
+    },
+    {
+      term: 'EPON',
+      definition:
+        'Ethernet Passive Optical Network — a PON standard defined by IEEE 802.3ah. EPON delivers symmetric 1 Gbps (downstream and upstream) on a single fiber. EPON is less common in new deployments than GPON in North America but remains in service in many existing fiber networks. XGS-PON (ITU-T G.9807.1) is the successor to GPON, delivering symmetric 10 Gbps and becoming the standard for new deployments.',
+    },
+    {
+      term: 'XGS-PON',
+      definition:
+        '10-Gigabit Symmetric Passive Optical Network — defined by ITU-T G.9807.1. XGS-PON delivers symmetric 10 Gbps (both downstream and upstream) on a single fiber, making it suitable for business services and high-demand residential deployments. XGS-PON is backward-compatible with GPON on the same fiber infrastructure — operators can mix GPON and XGS-PON ONTs on the same ODN, transitioning subscribers as demand grows.',
+    },
+    {
+      term: 'split ratio',
+      definition:
+        'The ratio of one upstream fiber to downstream output ports at a passive optical splitter. Common split ratios: 1:32 (one feeder fiber serves 32 subscribers — standard residential GPON), 1:64 (denser deployment, lower margin), 1:8 (business-grade PON). The split ratio directly determines the splitter insertion loss: a 1:32 splitter has ≈ 17–17.5 dB of insertion loss. The split ratio is the key design variable that balances subscriber capacity against link budget.',
+    },
+    {
+      term: 'ODN',
+      definition:
+        'Optical Distribution Network — the collection of passive optical components between the OLT and the ONTs: feeder fiber, splitters, distribution fiber, NAPs, and drop cables. The ODN is the passive infrastructure of the PON — everything between the OLT output and the ONT input. Designing the ODN means sizing each segment\'s fiber count, calculating the cumulative loss, and verifying the total loss fits within the OLT/ONT power budget.',
+    },
+    {
+      term: 'splitter insertion loss',
+      definition:
+        'The optical power loss introduced by a passive splitter, expressed in dB. A 1:32 PLC (Planar Lightwave Circuit) splitter has typical insertion loss of 17–17.5 dB. This accounts for the power being divided among 32 output ports (theoretical: 10 × log₁₀(32) = 15.05 dB ideal) plus excess loss from the splitting technology (≈ 2–2.5 dB above the theoretical minimum). A 1:64 splitter has ≈ 20.5–21 dB insertion loss.',
+    },
+    {
+      term: 'feeder fiber',
+      definition:
+        'The high-fiber-count cable segment that runs from the central office or OLT headend to the FDH (Fiber Distribution Hub) in the field. Each fiber in the feeder feeds one PON port at the OLT. The feeder is the trunk of the distribution tree — it carries concentrated traffic between the OLT and the point where the network branches out to individual subscribers via splitters.',
+    },
+    {
+      term: 'distribution fiber',
+      definition:
+        'The fiber segment from the FDH (where the splitter is) out to the NAPs (Network Access Points) in the field. Each distribution fiber strand carries the shared downstream signal from one splitter output port to a NAP serving a cluster of homes. Distribution fiber counts are typically lower than feeder (one per splitter output, then shared further at the NAP).',
+    },
+    {
+      term: 'drop fiber',
+      definition:
+        'The final cable segment from the NAP to the individual subscriber\'s ONT at the premises. Drop cables are typically 2-fiber (one active, one spare), often ADSS or micro-duct drop, and may be aerial, direct-buried, or pulled through existing conduit. Drop length in residential aerial deployments is typically 50–300 ft.',
+    },
+  ],
+};
+
+export const key_terms = meta.key_terms;
+
+export default function T05L12_PONFTTHAerialTopology() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Think about how cable TV used to work. One signal went out of a headend,
+          traveled down a coaxial cable, hit a powered amplifier every mile or so to
+          boost the signal, and eventually reached your house. Those amplifiers needed
+          power, cost money to maintain, and failed during storms. Every failure = an
+          outage for everyone downstream.
+        </p>
+        <p className="mt-2">
+          A <strong>Passive Optical Network (PON)</strong> works differently. Instead
+          of powered amplifiers, it uses simple glass splitters — small passive devices
+          with no power, no moving parts, no failure modes. One fiber leaves the central
+          office and travels to a box in the neighborhood called an FDH (Fiber Distribution
+          Hub). Inside the FDH, a glass splitter takes that one fiber and splits the
+          optical signal into 32 or 64 copies, one for each subscriber. Each copy then
+          runs a drop cable to a home's ONT (Optical Network Terminal) — the fiber "modem"
+          on the side of the house.
+        </p>
+        <p className="mt-2">
+          The result: one fiber strand from the central office serves 32 subscribers,
+          with nothing between the CO and the home except passive glass. No amplifiers.
+          No street cabinets with power supplies. No electronics to fail in the field.
+          This is why FTTH (Fiber to the Home) using PON technology is so dominant —
+          it's cheaper to build and dramatically cheaper to operate than alternatives.
+        </p>
+        <p className="mt-2">
+          The engineering challenge is the <strong>link budget</strong>. The splitter
+          that divides the signal to 32 subscribers also absorbs about 17 dB of optical
+          power. The fiber losses add more. The total loss from the OLT to the ONT must
+          stay within the power budget the standards define — otherwise subscribers at
+          the far end get no signal. This lesson shows you how to calculate that budget.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full form</th>
+              <th className="px-3 py-2 text-left">Role in the network</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">PON</td>
+              <td className="px-3 py-2">Passive Optical Network</td>
+              <td className="px-3 py-2">The overall architecture; uses passive splitters, no field electronics</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">GPON</td>
+              <td className="px-3 py-2">Gigabit Passive Optical Network</td>
+              <td className="px-3 py-2">The dominant FTTH standard (ITU-T G.984); 2.5G down / 1.25G up, shared</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">OLT</td>
+              <td className="px-3 py-2">Optical Line Terminal</td>
+              <td className="px-3 py-2">The active equipment at the headend/central office; sources the optical signal</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">ONT</td>
+              <td className="px-3 py-2">Optical Network Terminal</td>
+              <td className="px-3 py-2">The subscriber's "fiber modem" at the premises; terminates the drop</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">FDH</td>
+              <td className="px-3 py-2">Fiber Distribution Hub</td>
+              <td className="px-3 py-2">The field enclosure housing the passive splitter; where feeder meets distribution</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">ODN</td>
+              <td className="px-3 py-2">Optical Distribution Network</td>
+              <td className="px-3 py-2">Everything passive between OLT and ONTs: feeder + splitter + distribution + drops</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">NAP</td>
+              <td className="px-3 py-2">Network Access Point</td>
+              <td className="px-3 py-2">Field enclosure where distribution fiber terminates and drop cables connect to individual homes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T05-L12"
+          cards={[
+            {
+              id: 'T05-L12-fc-pon',
+              front: 'What makes a PON "passive" and why does that matter for field maintenance?',
+              back: 'A PON uses unpowered (passive) optical splitters — simple glass devices with no electronics, no power supply, and no moving parts. Between the OLT at the headend and the ONT at the subscriber premises, there is no active powered equipment in the field. This means no amplifiers to fail during storms, no street cabinets with power supplies, and dramatically lower field maintenance costs than active distribution networks.',
+            },
+            {
+              id: 'T05-L12-fc-gpon',
+              front: 'State the GPON standard, speed, and maximum power budget.',
+              back: 'GPON standard: ITU-T G.984. Speed: 2.488 Gbps downstream, 1.244 Gbps upstream (shared among all ONTs on the PON port via TDM). Maximum power budget: 28 dB for GPON Class B+ (defined by OLT transmit power + ONT receiver sensitivity per ITU-T G.984.2). This 28 dB must accommodate all losses from feeder fiber + connectors + splitter + distribution fiber + drop.',
+            },
+            {
+              id: 'T05-L12-fc-split',
+              front: 'A 1:32 PLC splitter has approximately what insertion loss, and how is that derived?',
+              back: 'A 1:32 splitter has approximately 17–17.5 dB insertion loss. Theoretical: 10 × log₁₀(32) = 10 × 1.505 = 15.05 dB (just the power division). PLC excess loss adds ≈ 2–2.5 dB above theoretical, for a total of ≈ 17–17.5 dB. A 1:64 splitter adds another ~3 dB (≈ 20.5–21 dB) because log₂(64) = 6 doublings vs log₂(32) = 5 doublings.',
+            },
+            {
+              id: 'T05-L12-fc-feeder',
+              front: 'In a PON ODN, what is the difference between feeder fiber and distribution fiber?',
+              back: 'Feeder fiber runs from the OLT/headend to the FDH (the field splitter location). Each feeder strand feeds one PON port/splitter. Distribution fiber runs from the FDH splitter output ports to the NAPs in the neighborhoods. Each distribution strand serves the cluster of homes hanging off one NAP. Drop fibers complete the last leg from NAP to individual ONTs.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The PON Tree: From OLT to ONT</h2>
+
+        <AnnotatedDiagram
+          src="/training/diagrams/pon-ftth-topology.svg"
+          alt="PON FTTH topology diagram showing OLT at headend, feeder fiber to FDH with 1:32 splitter, distribution fibers to NAPs, and drop fibers to individual ONTs"
+          hotPoints={[
+            {
+              x: 5,
+              y: 50,
+              label: 'OLT (Optical Line Terminal)',
+              explanation: 'Active equipment at the headend or central office. The OLT sources the optical signal (1490 nm downstream, 1310 nm upstream for GPON). Each OLT port feeds one PON — one feeder fiber strand serving up to 32 (or 64) subscribers through a passive splitter. The OLT is the only active powered equipment in the PON.',
+            },
+            {
+              x: 30,
+              y: 50,
+              label: 'Feeder fiber (high fiber count)',
+              explanation: 'The trunk cable from the OLT to the FDH. Typically a 72-, 144-, or 288-fiber count cable — one fiber per PON port. Each strand is a separate GPON carrier. Feeder runs 0.5–5 miles depending on the network design. Feeder is typically a high-count ADSS or lashed plant cable on aerial runs.',
+            },
+            {
+              x: 50,
+              y: 50,
+              label: 'FDH with 1:32 passive splitter',
+              explanation: 'The Fiber Distribution Hub is a hardened outdoor enclosure (aerial or pedestal-mounted) that houses passive optical splitters and the splice/connector panel. One feeder fiber enters and 32 distribution fibers exit — no power, no electronics. The splitter insertion loss at this point is approximately 17–17.5 dB for a 1:32 PLC splitter.',
+            },
+            {
+              x: 72,
+              y: 30,
+              label: 'Distribution fiber to NAP',
+              explanation: 'Lower-fiber-count cables (12–24 fiber) that run from the FDH through the neighborhood to Network Access Points. Each distribution strand carries the shared signal for one splitter output port — so each strand ultimately feeds one ONT (or, in a two-stage split design, a cluster of ONTs at the NAP). Distribution cables are typically lashed plant or ADSS on aerial runs.',
+            },
+            {
+              x: 88,
+              y: 50,
+              label: 'NAP → Drop → ONT',
+              explanation: 'The NAP (Network Access Point) is a field enclosure where distribution fiber terminates and individual drop cables connect to each subscriber. Drops are typically 2-fiber (one active, one spare), 50–300 ft long. The ONT at the subscriber premise terminates the drop and provides the Ethernet/voice/video interface inside the home.',
+            },
+          ]}
+        />
+
+        <h3 className="mt-6 font-semibold">FTTH aerial link budget — full worked example</h3>
+        <p className="mt-2">
+          This is the calculation that tells you whether your feeder fiber is too long
+          before you build anything. If the total loss exceeds the OLT/ONT power budget,
+          subscribers at the end of the feeder won't receive a usable signal.
+        </p>
+
+        <div className="rounded-lg bg-black/30 border border-white/10 p-5 my-4">
+          <p className="font-semibold text-slate-200 mb-3">Given — GPON aerial FTTH design</p>
+          <ul className="text-sm space-y-1 text-slate-300 mb-4">
+            <li>OLT to FDH: 1.5-mile aerial feeder run (ADSS, G.652.D fiber, 1310 nm)</li>
+            <li>FDH: 1:32 passive PLC splitter</li>
+            <li>FDH to ONT drop: 0.3-mile aerial drop (G.652.D fiber, same wavelength)</li>
+            <li>Connectors: 2 patch panels at FDH (one on feeder side, one on drop side)</li>
+            <li>GPON Class B+ power budget: 28 dB available</li>
+            <li>G.652.D attenuation spec at 1310 nm: ≤ 0.40 dB/km maximum</li>
+            <li>Connector loss: 0.75 dB per mated pair (industry standard budgeting value)</li>
+            <li>1:32 PLC splitter insertion loss: 17.0 dB (lower end of 17–17.5 dB range)</li>
+          </ul>
+
+          <p className="font-semibold text-slate-200 mb-2">Step 1: Convert distances to kilometers</p>
+          <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1 mb-3">
+            <p>Feeder: 1.5 mi × 1.61 km/mi = <strong>2.415 km</strong></p>
+            <p>Drop: 0.3 mi × 1.61 km/mi = <strong>0.483 km</strong></p>
+          </div>
+
+          <p className="font-semibold text-slate-200 mb-2">Step 2: Fiber loss for each segment</p>
+          <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1 mb-3">
+            <p>Feeder fiber loss = 2.415 km × 0.40 dB/km = <strong>0.966 dB</strong></p>
+            <p>Drop fiber loss = 0.483 km × 0.40 dB/km = <strong>0.193 dB</strong></p>
+          </div>
+          <p className="text-sm text-slate-300/80 mb-4">
+            Sanity check: Using the maximum spec attenuation (0.40 dB/km) is the conservative
+            approach — field-measured attenuation on high-quality G.652.D fiber is typically
+            0.34–0.36 dB/km at 1310 nm, giving you a small performance cushion vs the spec.
+          </p>
+
+          <p className="font-semibold text-slate-200 mb-2">Step 3: Connector losses</p>
+          <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1 mb-3">
+            <p>2 patch panels × 0.75 dB each = <strong>1.50 dB</strong></p>
+          </div>
+
+          <p className="font-semibold text-slate-200 mb-2">Step 4: Splitter insertion loss</p>
+          <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1 mb-3">
+            <p>1:32 PLC splitter = <strong>17.0 dB</strong></p>
+            <p>Note: Typical PLC 1:32 range is 17–17.5 dB. Budget uses 17.0 dB (low end).</p>
+            <p>At the high end (17.5 dB), the margin would be 0.5 dB lower.</p>
+          </div>
+
+          <p className="font-semibold text-slate-200 mb-2">Step 5: Connector at ONT</p>
+          <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1 mb-3">
+            <p>ONT input connector = <strong>0.75 dB</strong></p>
+          </div>
+
+          <p className="font-semibold text-slate-200 mb-2">Step 6: Total loss and margin</p>
+          <div className="bg-black/40 rounded p-3 font-mono text-sm text-yellow-200 space-y-1 mb-3">
+            <p>Total loss = feeder + connectors + splitter + drop + ONT connector</p>
+            <p>Total loss = 0.966 + 1.50 + 17.0 + 0.193 + 0.75</p>
+            <p>Total loss = <strong>20.409 dB ≈ 20.41 dB</strong></p>
+            <p></p>
+            <p>GPON Class B+ budget = 28 dB</p>
+            <p>Margin = 28 − 20.41 = <strong>7.59 dB</strong> ✓ PASS</p>
+          </div>
+          <p className="text-sm text-slate-300/80">
+            Sanity check: 7.6 dB of margin is excellent. GPON designers typically want a minimum
+            of 3 dB margin to account for measurement uncertainty, aging, and any field splices.
+            This design has 2.5× the minimum margin — if the feeder run needs to grow, there's
+            room. At 3 miles of feeder (4.83 km at 0.40 dB/km = 1.93 dB), the margin would be
+            approximately 28 − (1.93 + 1.50 + 17.0 + 0.19 + 0.75) = 6.63 dB — still healthy.
+          </p>
+        </div>
+
+        {/* WorkedExample widget — FTTH link budget */}
+        <WorkedExample
+          title="GPON FTTH Link Budget Calculator"
+          description="Calculate total ODN loss from OLT to ONT and check against the GPON Class B+ power budget of 28 dB. All losses must sum to ≤ 28 dB for a passing design."
+          variables={[
+            { id: 'feeder_mi', label: 'Feeder length (miles)', defaultValue: 1.5, min: 0.1, max: 10, step: 0.1 },
+            { id: 'drop_mi', label: 'Drop length (miles)', defaultValue: 0.3, min: 0.05, max: 2.0, step: 0.05 },
+            { id: 'atten_dBkm', label: 'Fiber attenuation (dB/km) — G.652.D max at 1310nm = 0.40', defaultValue: 0.40, min: 0.30, max: 0.50, step: 0.01 },
+            { id: 'n_connectors', label: 'Number of mated connector pairs', defaultValue: 3, min: 1, max: 10, step: 1 },
+            { id: 'conn_loss', label: 'Loss per connector pair (dB)', defaultValue: 0.75, min: 0.30, max: 1.50, step: 0.05 },
+            { id: 'split_loss', label: 'Splitter insertion loss (dB) — 1:32 ≈ 17.0, 1:64 ≈ 20.5', defaultValue: 17.0, min: 10, max: 23, step: 0.5 },
+            { id: 'budget_dB', label: 'OLT/ONT power budget (dB) — GPON Class B+ = 28', defaultValue: 28, min: 20, max: 35, step: 1 },
+          ]}
+          formula="Total loss = (feeder_km + drop_km) × dB/km + n_connectors × conn_loss + split_loss; Margin = budget − total"
+          steps={[
+            { label: 'Total fiber distance (km)', expression: '(feeder_mi * 1.61) + (drop_mi * 1.61)', varIds: ['feeder_mi', 'drop_mi'] },
+            { label: 'Total fiber loss (dB)', expression: '((feeder_mi + drop_mi) * 1.61) * atten_dBkm', varIds: ['feeder_mi', 'drop_mi', 'atten_dBkm'] },
+            { label: 'Total connector loss (dB)', expression: 'n_connectors * conn_loss', varIds: ['n_connectors', 'conn_loss'] },
+            { label: 'Total ODN loss (dB)', expression: '((feeder_mi + drop_mi) * 1.61 * atten_dBkm) + (n_connectors * conn_loss) + split_loss', varIds: ['feeder_mi', 'drop_mi', 'atten_dBkm', 'n_connectors', 'conn_loss', 'split_loss'] },
+            { label: 'Link margin (dB)', expression: 'budget_dB - (((feeder_mi + drop_mi) * 1.61 * atten_dBkm) + (n_connectors * conn_loss) + split_loss)', varIds: ['budget_dB', 'feeder_mi', 'drop_mi', 'atten_dBkm', 'n_connectors', 'conn_loss', 'split_loss'] },
+          ]}
+          sanityCheck="Positive margin = design passes the power budget. Negative = signal too weak at ONT. Each additional mile of feeder at 0.40 dB/km = 0.644 dB more loss. A 1:64 splitter adds ~3 dB vs a 1:32 — reducing the margin by 3 dB for 2× subscriber density."
+        />
+
+        <h3 className="mt-6 font-semibold">FDH placement in aerial design</h3>
+        <p className="mt-2">
+          Where you put the FDH determines how long the feeder runs are and how
+          many distribution strands you need. For aerial deployment:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
+          <li>
+            <strong>Pole-mount FDH:</strong> A weatherproof enclosure mounted directly
+            to a pole, typically 12–48 ports. Used in residential aerial deployments.
+            The enclosure must be rated for the loading zone and must be installed in
+            the communication space, observing NESC Rule 235 clearances from supply conductors.
+          </li>
+          <li>
+            <strong>Placement logic:</strong> FDHs are typically placed at the geographic
+            centroid of the subscriber cluster they serve. For a 1:32 FDH serving a
+            neighborhood of 32 homes spread over 0.5 square miles, place the FDH
+            near the center to minimize the maximum distribution cable length.
+          </li>
+          <li>
+            <strong>Feeder design:</strong> Each FDH requires one feeder fiber strand
+            from the OLT. If you have 10 FDHs, you need a 10-fiber minimum feeder cable
+            from the OLT — plus growth fibers for future PON ports. RUS design guidance
+            typically calls for 20–50% dark fiber growth margin in the feeder cable.
+          </li>
+        </ul>
+      </section>
+
+      {/* ── ADVANCED ────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Two-Stage Splitting and XGS-PON</h2>
+        <p>
+          The link budget worked example above assumes <strong>single-stage splitting</strong>:
+          one 1:32 splitter at the FDH. Some designs use <strong>two-stage splitting</strong>
+          to improve flexibility:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
+          <li>
+            Stage 1: 1:4 or 1:8 splitter at the FDH (2–4.5 dB loss)
+          </li>
+          <li>
+            Stage 2: 1:8 or 1:4 splitter at a neighborhood NAP (further split)
+            — total effective ratio 1:32 or 1:64
+          </li>
+          <li>
+            <strong>Advantage:</strong> Stage 2 splitters at NAPs allow you to deploy
+            fiber to a new area and only install the NAP splitter when subscribers
+            actually sign up — deferring capital cost to when it's needed.
+          </li>
+          <li>
+            <strong>Cost:</strong> Two splitters add ~1–2 dB more excess loss than a
+            single-stage split to the same ratio. Verify the combined loss still fits
+            within the power budget.
+          </li>
+        </ul>
+        <p className="mt-3">
+          <strong>XGS-PON (ITU-T G.9807.1)</strong> delivers symmetric 10 Gbps on the
+          same single-mode fiber infrastructure as GPON. Critically, XGS-PON uses
+          the same ODN (same fiber, same splitters) as GPON — you can operate GPON
+          ONTs and XGS-PON ONTs on the same distribution fiber simultaneously by
+          using different wavelengths. This means new FTTH builds can use XGS-PON-ready
+          OLTs and hardware from day one, without designing a separate fiber plant for
+          future capacity.
+        </p>
+        <p className="mt-2 text-sm text-slate-300/80">
+          Sources: ITU-T G.984.1/G.984.2 (GPON, public ITU-T summaries); ITU-T G.9807.1
+          (XGS-PON, public ITU-T summaries); FOA Reference Guide to Fiber Optics
+          (PON architecture); fibermall.com/bativ.com PLC splitter insertion loss
+          datasheets (17–17.5 dB confirmed for 1:32 PLC).
+        </p>
+      </section>
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <Quiz
+        title="T05.L12 Check — PON / FTTH Aerial Topology"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T05-L12-Q1',
+            type: 'mc',
+            prompt:
+              'Why is PON called a "passive" optical network?',
+            choices: [
+              'The fiber itself is passive — it carries light without emitting any',
+              'There are no powered active electronics between the OLT at the headend and the ONT at the subscriber premises — only passive glass splitters',
+              'The OLT does not require electrical power',
+              'The network transmits passively only — it cannot carry upstream traffic from subscribers',
+            ],
+            answerIndex: 1,
+            explanation:
+              'PON is "passive" because the field infrastructure — feeder fiber, passive splitters, distribution fiber, drops — contains no powered electronics. Only the OLT at the headend and the ONT at each subscriber require power. The field splitters are simple glass devices that divide the optical signal without any active components. This eliminates the field maintenance burden of powered street-side equipment.',
+          },
+          {
+            id: 'T05-L12-Q2',
+            type: 'mc',
+            prompt:
+              'A 1:32 PLC splitter has approximately 17 dB of insertion loss. A 1:64 PLC splitter has approximately how much insertion loss?',
+            choices: [
+              '8.5 dB (half of 17 dB since twice the ports)',
+              '20.5 dB (adds ~3 dB for doubling from 32 to 64 ports)',
+              '34 dB (doubles because ports double)',
+              '17.5 dB (almost the same, splitters are very efficient at 64 ports)',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Doubling the port count from 32 to 64 adds 10 × log₁₀(2) = 3.01 dB of theoretical loss. So 1:64 ≈ 17 + 3 = 20 dB, plus excess loss ≈ 20.5–21 dB. Each time you double the split ratio (halve the power per port), you add ~3 dB. This is why split ratio is the biggest single driver of link budget margin.',
+          },
+          {
+            id: 'T05-L12-Q3',
+            type: 'mc',
+            prompt:
+              'Using the worked example setup (feeder = 1.5 mi, drop = 0.3 mi, G.652.D at 0.40 dB/km, 3 connector pairs at 0.75 dB, 1:32 splitter at 17 dB, GPON Class B+ = 28 dB), the total ODN loss is approximately:',
+            choices: [
+              '14.5 dB',
+              '20.4 dB',
+              '25.8 dB',
+              '28.0 dB',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Fiber loss: (1.5 + 0.3) mi × 1.61 km/mi × 0.40 dB/km = 1.8 × 1.61 × 0.40 = 1.159 dB. Connector loss: 3 × 0.75 = 2.25 dB. Splitter: 17 dB. Total = 1.159 + 2.25 + 17 = 20.41 dB. Margin = 28 − 20.41 = 7.59 dB.',
+          },
+          {
+            id: 'T05-L12-Q4',
+            type: 'fill-in-blank',
+            prompt:
+              'GPON delivers ____ Gbps downstream and ____ Gbps upstream, defined by ITU-T standard ____.',
+            answer: '2.488 / 1.244 / G.984',
+            answerDisplay: '2.488 Gbps downstream / 1.244 Gbps upstream / ITU-T G.984',
+            explanation:
+              'GPON per ITU-T G.984: 2.488 Gbps downstream (OLT to ONT), 1.244 Gbps upstream (ONTs to OLT), shared via TDM among all ONTs on the PON port. XGS-PON (G.9807.1) succeeds GPON with symmetric 10 Gbps.',
+          },
+          {
+            id: 'T05-L12-Q5',
+            type: 'mc',
+            prompt:
+              'You need to place an FDH to serve 32 homes spread across a neighborhood. The FDH houses a 1:32 passive splitter. What cable segment runs FROM the OLT TO the FDH?',
+            choices: [
+              'Distribution fiber — a 32-strand cable serving individual homes',
+              'Drop fiber — individual 2-fiber cables to each of the 32 homes',
+              'Feeder fiber — one strand per PON port, carrying the signal from the OLT to the splitter',
+              'OPGW — since the feeder carries a concentrated signal that could induce voltage',
+            ],
+            answerIndex: 2,
+            explanation:
+              'Feeder fiber runs from the OLT to the FDH. ONE fiber strand per PON port enters the FDH splitter. The 32 distribution fibers exit the FDH toward the NAPs. Drops go from NAPs to individual homes. OPGW is a transmission-structure product, completely unrelated to FTTH distribution.',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
