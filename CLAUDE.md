@@ -1087,7 +1087,19 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 | T18 | Safety & OSHA | General | ⏳ Brief authoring in flight (teaching-order #2; gates T04/T07/T08/T10/T13/T14) | — |
 | T06-T17, T19-T22 | (general) + (cert prep) | mixed | ⌛ NOT-STARTED | — |
 
-**T03 pre-existing LOW for future polish:** L11 bend-radius body says 10–20× installation / 10–15× long-term; quiz simplifies to 20× / 10×. Not introduced by patches; surface in a future T03 touch-up wave if a learner reports the inconsistency.
+**T03 pre-existing LOW for future polish:** L11 bend-radius body says 10–20× installation / 10–15× long-term; quiz simplifies to 20× / 10×. Not introduced by patches; tracked in Polish Queue below.
+
+### Polish Queue (durable — visit on every status pass)
+
+Small carryovers that aren't worth a dedicated wave but MUST NOT be forgotten. Carter's rule 2026-05-16: either fix on discovery or track here; "things get forgotten otherwise."
+
+| # | Item | Source | Status | Notes |
+|---|---|---|---|---|
+| P1 | T03 L11 bend-radius wording mismatch (body 10–20× / 10–15× vs quiz 20× / 10×) | T03 post-patch RT `035b829` | ⌛ queued | Pick a single set of numbers + harmonize body + quiz. Likely use 20× install / 10× long-term to match quiz simplicity; update body. |
+| P2 | T05 brief GPON splitter author note | T05 brief fix `674322d` | ⌛ flagged | Brief tells author "state the range 17–17.5 dB in lesson prose"; ensure T05 lesson author honors when authoring. |
+| P3 | T02 L11 TIA-526 edition hardcoded | Old T4 RT-B finding (pre-rewrite) | 🔒 needs user input | Carter must lock TIA-526 edition before fix; `[confirm edition]` marker on the existing reference. |
+
+**Policy going forward:** when discovering a polish item DURING a wave, prefer to fix it in that wave's fix-agent rather than deferring. Only defer when the fix needs separate user input or is genuinely out of scope. Anything deferred → row in this table same turn it's discovered.
 
 **Carry-forward: each topic dispatch must verify the prerequisite DAG ordering before launch.** T18 at teaching-position #2 blocks 6 downstream field-touching topics. Don't kick off T04 authors until T18 lessons land + RT clean, or the prerequisite invariant will be violated.
 
