@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -221,6 +222,22 @@ export default function T01L09_OspStandardsLandscape() {
           </p>
         </div>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L09"
+        cards={[
+          { id: 'T01-L09-FC-ieee', front: 'IEEE', back: 'Institute of Electrical and Electronics Engineers — publishes the NESC (C2), the code governing aerial utility line clearances, loading, and construction for OSP work.' },
+          { id: 'T01-L09-FC-nfpa', front: 'NFPA', back: 'National Fire Protection Association — publishes the NEC (NFPA 70), which governs electrical installations including cable entries into buildings, grounding, and bonding. Adopted by most jurisdictions.' },
+          { id: 'T01-L09-FC-itu-t', front: 'ITU-T', back: 'International Telecommunication Union – Telecommunication Standardization Sector — publishes the G-series fiber standards used globally (G.652.D for SMF, G.984 for GPON). International body; TIA aligns with ITU-T specs for North American use.' },
+          { id: 'T01-L09-FC-icea', front: 'ICEA', back: 'Insulated Cable Engineers Association — publishes cable construction standards including ICEA S-87-640 (OSP fiber cable construction). Not a regulatory body but widely cited in cable specifications and RUS material lists.' },
+          { id: 'T01-L09-FC-fcc', front: 'FCC', back: 'Federal Communications Commission — regulates pole attachment rates and processes (47 CFR Part 1.1411), the one-touch make-ready (OTMR) rules, and spectrum licensing. Critical authority for any project attaching to utility poles.' },
+          { id: 'T01-L09-FC-usace', front: 'USACE', back: 'U.S. Army Corps of Engineers — issues Section 404 permits for any work disturbing waters of the United States (river crossings, wetland crossings). Required permit for HDD or bore under navigable waterways on fiber routes.' },
+          { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 36 CFR (Corps of Engineers Section 404).' },
+          { id: 'T01-L09-FC-ansi', front: 'ANSI', back: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
+          { id: 'T01-L09-FC-code-adoption', front: 'Code adoption', back: 'The process by which a state or jurisdiction officially incorporates a standards document into law. Example: most states adopt the NEC and NESC by reference in their electrical codes. Until adopted, a standard is voluntary; after adoption it is legally enforceable in that jurisdiction.' },
+        ]}
+      />
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
