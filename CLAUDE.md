@@ -578,6 +578,8 @@ User-stated directives that MUST survive every compaction:
 9. Status graphs on state transitions (above).
 10. Sequential push discipline — no parallel fix-agents pushing to same branch (§3).
 11. Write everything down (this section).
+12. **Model policy (locked 2026-05-15):** Sonnet for coding/audit/verify/fix, Haiku for research, Opus reserved for orchestrator + rare intricate-architecture waves. EVERY dispatch must set `model:` explicitly. Orchestrator's discretion to upgrade research to Sonnet when domain judgement needed.
+13. **Decide, don't ask (locked 2026-05-15):** Carter's verbatim — "I really dont want to be asked questions unless its really needed, I want you to make decisions and allocate work based on the goals." Use `AskUserQuestion` only when (a) the decision is genuinely irreversible, (b) genuinely ambiguous after grepping the docs, or (c) requires Carter's authority (cert scope, scope expansion, sign-off checkpoints). Default to deciding from the goals + this doc.
 
 If a directive is unclear, ask via `AskUserQuestion` — but only after grepping this file. Re-asking a captured directive erodes trust.
 
@@ -693,11 +695,13 @@ User asked to keep accuracy + haste with less usage. Apply on every wave going f
 11. Status updates in chat ≤80 words unless the user asks for the full picture. "Wave X landed SHA, N items, Y deferrals. Dispatching Z next." is the right shape.
 12. No graph re-renders unless state actually changed.
 
-### Models
+### Models (UPDATED 2026-05-15 evening — Carter's lock)
 
-- **Sonnet floor for audit/verify/fix work.** Sonnet 4.6 (`model: "sonnet"` in Agent dispatch). High-precision and cheaper per token than Opus.
-- **Haiku is only for purely mechanical tasks** (file moves, search-and-replace where the regex is verified safe). Never for audit/verify/fix work — Haiku would compromise quality on intricate code.
-- **Opus stays on the orchestrator (you).** Don't downgrade the orchestrator; it's where the multi-step reasoning earns its keep.
+- **Sonnet for coding, audit, verify, fix.** `model: "sonnet"` on every dispatch in that class. Cheaper than Opus at similar precision for these tasks.
+- **Haiku for research.** `model: "haiku"` for read-only research/enumeration/WebSearch/lookup tasks. The cost savings are real (~10x cheaper than Opus). Orchestrator's discretion to upgrade to Sonnet when the research requires real domain judgement (e.g., proposing topic orderings, multi-step synthesis) rather than enumeration.
+- **Opus stays on the orchestrator (me).** Don't downgrade the orchestrator. May also be used for genuinely intricate architecture/design waves where multi-step trade-off reasoning earns the premium — but this is the exception, not the default.
+- **Orchestrator has discretion.** Carter's verbatim 2026-05-15: "You have the discretion to pick because you are the leader but you need to have token usage in mind." Decide per dispatch from goals + cost.
+- **Every Agent dispatch MUST include an explicit `model:` parameter.** Inheriting from parent = Opus, which is the expensive default. Forgetting to set this is how the orchestrator burned the token budget on 2026-05-15.
 
 ### What's still NOT a cost optimization (do not cut)
 
