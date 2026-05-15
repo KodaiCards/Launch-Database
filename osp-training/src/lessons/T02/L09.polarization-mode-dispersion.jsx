@@ -61,6 +61,17 @@ export default function T02L09_PolarizationModeDispersion() {
           make the two polarization "axes" of the light travel at different speeds, smearing the
           signal over time.
         </p>
+        <p className="mt-2">
+          Here's how the bicycle wheel maps to the fiber: the wheel's oval shape is the fiber's
+          slightly non-circular core — stress from bending, over-tensioned lashing, or imperfect
+          manufacturing during drawing makes the core oval instead of round. The two "paths" in
+          PMD are the two polarization axes — light's electric field can vibrate side-to-side
+          (X-polarization) OR up-and-down (Y-polarization) inside the fiber. In a perfectly
+          round core, both axes travel at exactly the same speed. In an oval core, one axis
+          is traveling through a slightly different amount of glass than the other, so it arrives
+          a little later. That arrival-time difference is the DGD — Differential Group Delay —
+          and when it's large enough, the receiver can't cleanly separate the signal.
+        </p>
 
         {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
         <Flashcard

@@ -262,3 +262,8 @@ src/lessons/
   Convention: `${topicId}-L${lessonOrder}-scenario-${ordinal}` (e.g. `T05-L06-scenario-1`).
   Do NOT use generic names like `"scenario-1"` — localStorage key is
   `osp-scenario-${scenarioId}` and will bleed state across lessons if reused.
+- Lessons with `lesson_type: 'capstone-quiz'` are **exempt from the per-lesson Flashcard
+  requirement**. Capstone-quiz lessons introduce no new vocabulary (`vocabulary_introduced: []`)
+  — they assess vocabulary introduced in prior lessons. Adding a Flashcard deck to a capstone
+  is redundant and incorrect. L12 (or the final lesson) of any topic typically follows this
+  pattern. Red teams: do NOT flag missing Flashcard on capstone-quiz lessons.
