@@ -31,7 +31,7 @@ These terms are available to ALL downstream topics once T18 completes. Authors o
 | 1910.268 | T18.L01 | OSHA Subpart R — Telecommunications; the workhorse safety standard for OSP field work |
 | hazard recognition | T18.L01 | The trained skill of identifying physical, electrical, chemical, and environmental dangers before work begins |
 | hierarchy of controls | T18.L01 | Engineering controls → administrative controls → PPE, in order of effectiveness; preferred over PPE-first approach |
-| SDS (Safety Data Sheet) | T18.L01 / T18.L08 | Document supplied with hazardous chemicals listing composition, exposure limits, PPE, and first-aid; replaces old MSDS |
+| SDS (Safety Data Sheet) | T18.L01 (DAG first-intro; brief concept only — L08 is the deep dive) | Document supplied with hazardous chemicals listing composition, exposure limits, PPE, and first-aid; replaces old MSDS |
 | LOTO | T18.L02 | Lockout/Tagout: the procedure for de-energizing equipment before service, governed by 29 CFR 1910.147 |
 | energy isolating device | T18.L02 | A mechanical device that physically prevents transmission or release of energy (breaker, valve, disconnect switch) |
 | authorized employee (LOTO) | T18.L02 | The employee who applies the lockout or tagout device |
@@ -44,6 +44,8 @@ These terms are available to ALL downstream topics once T18 completes. Authors o
 | lanyard | T18.L04 | The energy-absorbing connector between a harness and an anchor point; limits fall arrest forces |
 | self-retracting lifeline (SRL) | T18.L04 | A fall protection device that extends/retracts with worker movement and locks immediately on fall |
 | 100% tie-off | T18.L04 | Policy requiring workers to always be connected to fall protection — even during transitioning between anchor points; no gap in fall protection |
+| positioning system | T18.L04 | A combination of a body belt or harness and lanyard that supports the worker at a work position on a pole or structure; holds the worker in place but is NOT a fall arrest device — a separate PFAS is required for fall arrest |
+| aerial lift | T18.L04 | Any vehicle-mounted or self-propelled extensible or articulating device used to elevate workers, including bucket trucks and boom lifts; 29 CFR 1910.67 governs aerial lift safety |
 | PPG glove class | T18.L05 | Protective Personal Gloves — rubber insulating gloves rated by voltage class per ASTM D120 (Class 00 through Class 4) |
 | ANSI Z89.1 Class E | T18.L05 | Hard hat rated for 20,000 volts electrical protection (Class E = Electrical); required near energized conductors |
 | ANSI Z89.1 Class G | T18.L05 | Hard hat rated for 2,200 volts general electrical protection |
@@ -52,12 +54,19 @@ These terms are available to ALL downstream topics once T18 completes. Authors o
 | MUTCD | T18.L06 | Manual on Uniform Traffic Control Devices; FHWA document governing traffic control in work zones; Part 6 covers temporary traffic control |
 | TCP (Traffic Control Plan) | T18.L06 | Site-specific drawing showing device placement, lane control, and worker protection for a roadway work zone |
 | flagger certification | T18.L06 | State-required training for personnel controlling traffic with paddles; many states require a card (ATSSA, ANSI/ISEA training providers) |
+| taper | T18.L06 | The section of a work zone where traffic lanes are shifted or reduced using a series of cones or devices placed at an angle; MUTCD prescribes minimum taper lengths based on lane width and speed |
+| buffer | T18.L06 | A space within the work zone — either lateral (between the traffic lane and the work space) or longitudinal (between the taper and the work space) — that provides a margin of protection if a vehicle leaves the travel lane |
+| work zone | T18.L06 | The area between the first warning device (advance warning sign) and the last work zone device (termination area); includes the advance warning area, transition area, activity area, and termination area per MUTCD Part 6 |
 | MAD (Minimum Approach Distance) | T18.L07 | The minimum safe distance between an unprotected qualified worker and an energized conductor, per 29 CFR 1910.269(l)(2) Table R-6 |
 | MAB (Minimum Approach Boundary) | T18.L07 | A visual/physical boundary established at the MAD to prevent unqualified personnel from entering the approach zone |
 | qualified electrical worker (1910.269) | T18.L07 | A person trained and authorized under 29 CFR 1910.269 to work within MAD; telecom OSP crew members are typically NOT 1910.269-qualified — awareness only |
+| PEL (Permissible Exposure Limit) | T18.L08 | The legally enforceable maximum airborne concentration of a chemical substance per OSHA (29 CFR 1910.1000 Table Z-1 or substance-specific standards such as 1910.1053 for silica); an 8-hour time-weighted average (TWA) unless noted |
+| TLV (Threshold Limit Value) | T18.L08 | A recommended (not legally binding) occupational exposure limit published by ACGIH; often more conservative than OSHA PELs; used as a best-practice benchmark on job sites even where OSHA PEL is the legal floor |
+| GHS (Globally Harmonized System) | T18.L08 | The international standard for classifying and labeling hazardous chemicals; OSHA's HazCom 2012 (29 CFR 1910.1200) adopted GHS, which is why modern SDS documents use a standardized 16-section format and pictograms |
 | OSHA 300 log | T18.L09 | OSHA Form 300 — the employer's log of work-related injuries and illnesses; must be maintained and posted annually |
 | recordable incident | T18.L09 | A work-related injury or illness that results in death, days away from work, restricted duty, job transfer, medical treatment beyond first aid, loss of consciousness, or diagnosis by a licensed health care professional |
 | near-miss | T18.L09 | An unplanned event that did not result in injury but had the potential to; reporting near-misses is voluntary but best practice |
+| DART | T18.L09 | Days Away, Restricted, or Transferred — the OSHA metric that counts incidents resulting in days away from work, job transfer, or restricted duty; used to calculate the DART rate for OSHA 300 recordkeeping and injury benchmarking |
 
 ---
 
@@ -88,7 +97,7 @@ The following sources are not on the current allowlist but are required for T18.
 | T18.L01 | Hazard Awareness & the Risk Hierarchy | foundation | 20 | general duty clause, 1910.268, hazard recognition, hierarchy of controls, SDS | Quiz (MC + drag-match hierarchy levels) | net-new |
 | T18.L02 | Lockout/Tagout (LOTO) — 1910.147 | working | 25 | LOTO, energy isolating device, authorized employee, affected employee | BranchingScenario (LOTO sequence at hut site); Quiz | net-new |
 | T18.L03 | Confined Space Entry — Manholes & Vaults | working | 30 | confined space, permit-required confined space, atmospheric testing, attendant, oxygen-deficient atmosphere | AnnotatedDiagram (manhole entry setup); BranchingScenario (classify vault as PRCS or not) | net-new |
-| T18.L04 | Fall Protection — Poles & Aerial Lifts | working | 25 | lanyard, SRL, 100% tie-off, positioning system, aerial lift | Quiz (MC + drag-match); AnnotatedDiagram (pole worker anchor system) | net-new |
+| T18.L04 | Fall Protection — Poles & Aerial Lifts | working | 25 | lanyard, SRL, 100% tie-off, positioning system, aerial lift | Quiz (MC + drag-match); AnnotatedDiagram (pole worker anchor system); SideBySide (body belt positioning vs. full-body harness PFAS) | net-new |
 | T18.L05 | PPE — Hands, Head, Eyes, Feet | foundation | 20 | PPG glove class, ANSI Z89.1 Class E/G, dielectric boots, hi-vis vest | AnnotatedDiagram (PPE selection chart); Sortable (PPE by hazard class) | net-new |
 | T18.L06 | Traffic Control & Flagging — MUTCD Part 6 | working | 25 | MUTCD, TCP, flagger certification, taper, buffer, work zone | BranchingScenario (work zone setup); AnnotatedDiagram (TCP lane closure diagram) | net-new |
 | T18.L07 | Working Near Energized Conductors — MAD/MAB | working | 25 | MAD, MAB, qualified electrical worker (1910.269), Table R-6, unqualified approach limit | WorkedExample (read Table R-6 for a given kV); Quiz | net-new |
@@ -291,7 +300,7 @@ T18.L07 is **awareness only**. OSP/telecom crew members are typically NOT 1910.2
 | Claim | Source | Status |
 |---|---|---|
 | "29 CFR 1910.269(l)(2) Table R-6 specifies MAD for qualified workers by voltage class" | 29 CFR 1910.269(l)(2) and Table R-6 (osha.gov; ecfr.gov) — VERIFIED primary source |
-| "Table R-6 example: 1–15 kV phase-to-ground = 2 ft 2 in (0.66 m) MAD for qualified worker" | OSHA MAD Calculator text version (osha.gov/power-generation/rulemaking/madcalculator/tables) — VERIFIED free public source |
+| "Table R-6 / Appendix B example: at 14.4 kV phase-to-ground (common distribution voltage), the MAD for a qualified worker is approximately 2 ft 1–2 in depending on system parameters — authors must use the OSHA MAD Calculator (osha.gov/power-generation/rulemaking/madcalculator) for the specific system voltage at the job site; do NOT cite a fixed table row for '1–15 kV' because the 2014 rule uses Appendix B formulas per specific voltage, not fixed range rows" | 29 CFR 1910.269(l)(2) + Appendix B (osha.gov MAD calculator — VERIFIED free public tool); note: search results returned conflicting values (2 ft 1 in vs 2 ft 2 in) for distribution voltages in this range; lesson must direct crew to the calculator, not cite a static value |
 | "Table R-6 example: 46.1–72.5 kV = 3 ft 0 in (0.9 m) MAD" | OSHA MAD Calculator tables (osha.gov) — VERIFIED free public source |
 | "Unqualified workers (non-1910.269-trained) must stay outside the MAB — which is farther than the MAD by an additional safety margin" | 29 CFR 1910.269(l)(1); OSHA eTools on energized vs. de-energized work — VERIFIED |
 | "1910.269 applies when telecom work is performed on joint-use poles where supply conductors are energized" | 29 CFR 1910.269(a)(1) scope; OSHA eTool Electric Power — VERIFIED |
@@ -302,7 +311,7 @@ T18.L07 is **awareness only**. OSP/telecom crew members are typically NOT 1910.2
 - **Field:** On joint-use poles, telecom crews routinely work within 5–6 feet of distribution conductors. Most crews are NOT 1910.269-qualified. The informal crew rule is: "I'm below the neutral, I'm in the comm space, I don't touch anything above me." This is the practical approach and it's correct in most situations — the communication space IS separated from the supply space per NESC Rule 235, and if supply conductors are properly insulated, physical contact is the only real hazard. BUT: (a) insulation can be deteriorated and invisible, (b) induced voltage in the messenger builds at parallel-run spans, (c) accidental contact with a fallen supply conductor. Teach the standard, teach the field norm, teach where the norm fails.
 
 #### Interactive primitives
-1. **WorkedExample:** "A distribution line on a joint-use pole runs at 14.4 kV phase-to-ground. Read Table R-6: what is the MAD for a qualified worker?" → 2 ft 2 in. "Your crew is not 1910.269-qualified. What is the unqualified approach limit?" → Stay outside the MAB; in practice, do not work within arm's reach + tool length without utility supervision.
+1. **WorkedExample:** "A distribution line on a joint-use pole runs at 14.4 kV phase-to-ground. Use the OSHA MAD Calculator (osha.gov/power-generation/rulemaking/madcalculator) to find the MAD for a qualified worker at this voltage — the calculator uses the Appendix B formula from 29 CFR 1910.269(l)(2) and returns a value in feet and inches for the specific voltage entered. (Authors: walk through the calculator inputs step by step; do NOT cite a fixed table value for a voltage range.) Your crew is not 1910.269-qualified. What is the unqualified approach limit?" → Stay outside the MAB; in practice, do not work within arm's reach + tool length without utility supervision.
 2. **Quiz (MC):** As a telecom worker who is not 1910.269-qualified, you need to do splice work 18 inches from an energized 14.4 kV conductor. You should: A) Proceed quickly B) Have someone call 911 in case C) Stop work, notify your supervisor, request utility de-energize or observation D) Put on rubber gloves and proceed → **C**
 3. **Flashcards:** MAD, MAB, qualified electrical worker (5 terms)
 
@@ -361,7 +370,7 @@ T18.L07 is **awareness only**. OSP/telecom crew members are typically NOT 1910.2
 
 ### T18.L10 — T18 Capstone Quiz
 
-20 questions spanning all T18 content:
+22 questions spanning all T18 content (20 MC + 2 scenario-based items noted below):
 - Hierarchy of controls placement (3Q)
 - LOTO sequence steps and who applies locks (3Q)
 - Manhole atmospheric test requirements under 1910.268(o) (3Q)
@@ -369,6 +378,7 @@ T18.L07 is **awareness only**. OSP/telecom crew members are typically NOT 1910.2
 - PPE: glove class for a given voltage, hard hat class for energized work (3Q)
 - MUTCD Part 6: work zone components and flagger requirements (2Q)
 - MAD/MAB: read Table R-6, unqualified worker rule (2Q)
+- Hazardous materials / SDS: which SDS section covers PPE; PEL vs. TLV distinction (2Q)
 - Recordable incident classification (2Q)
 
 Include 2 scenario-based items: one confined space entry decision tree, one incident classification with multiple events to sort.
@@ -386,7 +396,7 @@ Include 2 scenario-based items: one confined space entry decision tree, one inci
 | C5 | 1910.147 LOTO procedure steps | 1910.147(d)–(e) | Primary (ecfr.gov) | VERIFIED |
 | C6 | 1910.146 PRCS definition | 1910.146(b) | Primary (ecfr.gov) | VERIFIED |
 | C7 | 1910.268 supersedes 1910.146 for telecom | OSHA interpretation 1993-05-19 | Primary (osha.gov) | VERIFIED |
-| C8 | 1910.269(l)(2) Table R-6 MAD values | 1910.269(l)(2), Appendix B | Primary (osha.gov MAD calculator) | VERIFIED |
+| C8 | 1910.269(l)(2) / Appendix B MAD values — lesson directs crew to OSHA MAD Calculator for specific voltage; '1–15 kV' range row removed (2014 rule uses per-voltage formula, not fixed range) | 1910.269(l)(2), Appendix B | Primary (osha.gov MAD calculator — free public tool) | VERIFIED; static '2 ft 2 in' claim replaced with calculator reference per RT-A F3 |
 | C9 | 1910.132 hazard assessment requirement | 1910.132(d)(1) | Primary (ecfr.gov) | VERIFIED |
 | C10 | 1910.137 rubber insulating glove classes | 1910.137 + OSHA eTool | Primary (osha.gov eTool) | VERIFIED |
 | C11 | MUTCD Part 6 TTC requirements | Part 6, Chapter 6A, 6E | Primary (mutcd.fhwa.dot.gov free PDF) | VERIFIED |
