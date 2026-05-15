@@ -964,6 +964,97 @@ CREATE SEQUENCE public.time_entry_audit_id_seq
 ALTER SEQUENCE public.time_entry_audit_id_seq OWNED BY public.time_entry_audit.id;
 
 --
+-- Name: training_cert_attempts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.training_cert_attempts (
+    id integer NOT NULL,
+    user_id uuid NOT NULL,
+    cert_track text NOT NULL,
+    attempt_date timestamp with time zone DEFAULT now() NOT NULL,
+    score smallint NOT NULL,
+    passed boolean NOT NULL,
+    time_taken_seconds integer,
+    domain_scores jsonb,
+    total_items integer NOT NULL,
+    correct_items integer NOT NULL,
+    CONSTRAINT training_cert_attempts_cert_track_check CHECK ((cert_track = ANY (ARRAY['OSP-Designer'::text, 'RCDD'::text, 'CFOT'::text, 'CFOS-O'::text]))),
+    CONSTRAINT training_cert_attempts_score_check CHECK (((score >= 0) AND (score <= 100)))
+);
+
+--
+-- Name: training_cert_attempts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.training_cert_attempts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: training_cert_attempts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.training_cert_attempts_id_seq OWNED BY public.training_cert_attempts.id;
+
+--
+-- Name: training_progress; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.training_progress (
+    user_id uuid NOT NULL,
+    course_id text NOT NULL,
+    lesson_id text NOT NULL,
+    status text DEFAULT 'not_started'::text NOT NULL,
+    completion_pct smallint DEFAULT 0 NOT NULL,
+    best_score smallint,
+    attempts integer DEFAULT 0 NOT NULL,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT training_progress_best_score_check CHECK (((best_score >= 0) AND (best_score <= 100))),
+    CONSTRAINT training_progress_completion_pct_check CHECK (((completion_pct >= 0) AND (completion_pct <= 100))),
+    CONSTRAINT training_progress_status_check CHECK ((status = ANY (ARRAY['not_started'::text, 'in_progress'::text, 'completed'::text])))
+);
+
+--
+-- Name: training_topic_capstone_attempts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.training_topic_capstone_attempts (
+    id integer NOT NULL,
+    user_id uuid NOT NULL,
+    course_id text NOT NULL,
+    attempt_date timestamp with time zone DEFAULT now() NOT NULL,
+    score smallint NOT NULL,
+    passed boolean NOT NULL,
+    total_items integer NOT NULL,
+    correct_items integer NOT NULL,
+    CONSTRAINT training_topic_capstone_attempts_score_check CHECK (((score >= 0) AND (score <= 100)))
+);
+
+--
+-- Name: training_topic_capstone_attempts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.training_topic_capstone_attempts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: training_topic_capstone_attempts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.training_topic_capstone_attempts_id_seq OWNED BY public.training_topic_capstone_attempts.id;
+
+--
 -- Name: undo_buckets; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1004,6 +1095,18 @@ CREATE TABLE public.users (
 --
 
 ALTER TABLE ONLY public.time_entry_audit ALTER COLUMN id SET DEFAULT nextval('public.time_entry_audit_id_seq'::regclass);
+
+--
+-- Name: training_cert_attempts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_cert_attempts ALTER COLUMN id SET DEFAULT nextval('public.training_cert_attempts_id_seq'::regclass);
+
+--
+-- Name: training_topic_capstone_attempts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_topic_capstone_attempts ALTER COLUMN id SET DEFAULT nextval('public.training_topic_capstone_attempts_id_seq'::regclass);
 
 --
 -- Name: ai_messages ai_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1529,6 +1632,27 @@ ALTER TABLE ONLY public.time_entries
 
 ALTER TABLE ONLY public.time_entry_audit
     ADD CONSTRAINT time_entry_audit_pkey PRIMARY KEY (id);
+
+--
+-- Name: training_cert_attempts training_cert_attempts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_cert_attempts
+    ADD CONSTRAINT training_cert_attempts_pkey PRIMARY KEY (id);
+
+--
+-- Name: training_progress training_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_progress
+    ADD CONSTRAINT training_progress_pkey PRIMARY KEY (user_id, lesson_id);
+
+--
+-- Name: training_topic_capstone_attempts training_topic_capstone_attempts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_topic_capstone_attempts
+    ADD CONSTRAINT training_topic_capstone_attempts_pkey PRIMARY KEY (id);
 
 --
 -- Name: undo_buckets undo_buckets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2102,6 +2226,24 @@ CREATE INDEX idx_time_entries_staff_id ON public.time_entries USING btree (staff
 --
 
 CREATE INDEX idx_time_entries_unbilled ON public.time_entries USING btree (entry_date) WHERE (is_billable = false);
+
+--
+-- Name: idx_training_capstone_user_course_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_training_capstone_user_course_date ON public.training_topic_capstone_attempts USING btree (user_id, course_id, attempt_date DESC);
+
+--
+-- Name: idx_training_cert_attempts_user_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_training_cert_attempts_user_date ON public.training_cert_attempts USING btree (user_id, attempt_date DESC);
+
+--
+-- Name: idx_training_progress_user_course; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_training_progress_user_course ON public.training_progress USING btree (user_id, course_id);
 
 --
 -- Name: idx_undo_buckets_expires_at; Type: INDEX; Schema: public; Owner: -
@@ -2939,123 +3081,11 @@ ALTER TABLE ONLY public.time_entry_audit
     ADD CONSTRAINT time_entry_audit_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
--- Name: users users_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: training_cert_attempts training_cert_attempts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id) ON DELETE SET NULL;
-
---
--- Name: training_progress; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.training_progress (
-    user_id uuid NOT NULL,
-    course_id text NOT NULL,
-    lesson_id text NOT NULL,
-    status text DEFAULT 'not_started'::text NOT NULL,
-    completion_pct smallint DEFAULT 0 NOT NULL,
-    best_score smallint,
-    attempts integer DEFAULT 0 NOT NULL,
-    started_at timestamp with time zone,
-    completed_at timestamp with time zone,
-    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT training_progress_pkey PRIMARY KEY (user_id, lesson_id),
-    CONSTRAINT training_progress_completion_pct_check CHECK (((completion_pct >= 0) AND (completion_pct <= 100))),
-    CONSTRAINT training_progress_status_check CHECK ((status = ANY (ARRAY['not_started'::text, 'in_progress'::text, 'completed'::text]))),
-    CONSTRAINT training_progress_best_score_check CHECK (((best_score >= 0) AND (best_score <= 100)))
-);
-
---
--- Name: training_cert_attempts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.training_cert_attempts (
-    id integer NOT NULL,
-    user_id uuid NOT NULL,
-    cert_track text NOT NULL,
-    attempt_date timestamp with time zone DEFAULT now() NOT NULL,
-    score smallint NOT NULL,
-    passed boolean NOT NULL,
-    time_taken_seconds integer,
-    domain_scores jsonb,
-    total_items integer NOT NULL,
-    correct_items integer NOT NULL,
-    CONSTRAINT training_cert_attempts_cert_track_check CHECK ((cert_track = ANY (ARRAY['OSP-Designer'::text, 'RCDD'::text, 'CFOT'::text, 'CFOS-O'::text]))),
-    CONSTRAINT training_cert_attempts_score_check CHECK (((score >= 0) AND (score <= 100)))
-);
-
---
--- Name: training_cert_attempts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.training_cert_attempts_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE public.training_cert_attempts_id_seq OWNED BY public.training_cert_attempts.id;
-
-ALTER TABLE ONLY public.training_cert_attempts ALTER COLUMN id SET DEFAULT nextval('public.training_cert_attempts_id_seq'::regclass);
 
 ALTER TABLE ONLY public.training_cert_attempts
-    ADD CONSTRAINT training_cert_attempts_pkey PRIMARY KEY (id);
-
---
--- Name: training_topic_capstone_attempts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.training_topic_capstone_attempts (
-    id integer NOT NULL,
-    user_id uuid NOT NULL,
-    course_id text NOT NULL,
-    attempt_date timestamp with time zone DEFAULT now() NOT NULL,
-    score smallint NOT NULL,
-    passed boolean NOT NULL,
-    total_items integer NOT NULL,
-    correct_items integer NOT NULL,
-    CONSTRAINT training_topic_capstone_attempts_score_check CHECK (((score >= 0) AND (score <= 100)))
-);
-
---
--- Name: training_topic_capstone_attempts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.training_topic_capstone_attempts_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE public.training_topic_capstone_attempts_id_seq OWNED BY public.training_topic_capstone_attempts.id;
-
-ALTER TABLE ONLY public.training_topic_capstone_attempts ALTER COLUMN id SET DEFAULT nextval('public.training_topic_capstone_attempts_id_seq'::regclass);
-
-ALTER TABLE ONLY public.training_topic_capstone_attempts
-    ADD CONSTRAINT training_topic_capstone_attempts_pkey PRIMARY KEY (id);
-
---
--- Name: idx_training_progress_user_course; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_training_progress_user_course ON public.training_progress USING btree (user_id, course_id);
-
---
--- Name: idx_training_cert_attempts_user_date; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_training_cert_attempts_user_date ON public.training_cert_attempts USING btree (user_id, attempt_date DESC);
-
---
--- Name: idx_training_capstone_user_course_date; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_training_capstone_user_course_date ON public.training_topic_capstone_attempts USING btree (user_id, course_id, attempt_date DESC);
+    ADD CONSTRAINT training_cert_attempts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
 -- Name: training_progress training_progress_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3065,18 +3095,18 @@ ALTER TABLE ONLY public.training_progress
     ADD CONSTRAINT training_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
--- Name: training_cert_attempts training_cert_attempts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.training_cert_attempts
-    ADD CONSTRAINT training_cert_attempts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
---
 -- Name: training_topic_capstone_attempts training_topic_capstone_attempts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.training_topic_capstone_attempts
     ADD CONSTRAINT training_topic_capstone_attempts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+--
+-- Name: users users_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id) ON DELETE SET NULL;
 
 --
 --
