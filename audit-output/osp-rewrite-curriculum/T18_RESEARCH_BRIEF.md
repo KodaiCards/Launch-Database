@@ -128,7 +128,7 @@ The following sources are not on the current allowlist but are required for T18.
 
 #### Interactive primitives
 1. **Sortable:** drag the 5 hierarchy levels from least effective to most effective; immediate feedback
-2. **Quiz (MC):** Which level of control is most effective? A) PPE B) Engineering controls C) Administrative procedures D) Substitution → **D**
+2. **Quiz (MC):** Which level of control is most effective? A) Elimination B) Engineering controls C) Administrative procedures D) PPE → **A** (Elimination removes the hazard entirely; all other controls merely reduce exposure to a hazard that still exists)
 3. **Flashcards:** key vocabulary introduced (8 terms)
 
 ---
