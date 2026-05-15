@@ -347,6 +347,17 @@ export const lessonFileIndex = {
   'T02.L10': '../lessons/T02/L10.fiber-characterization-testing.jsx',
   'T02.L11': '../lessons/T02/L11.fiber-physics-field-vs-book.jsx',
   'T02.L12': '../lessons/T02/L12.t02-capstone-quiz.jsx',
+  // ── T01 Fundamentals & Vocabulary ────────────────────────────────────────
+  'T01.L01': '../lessons/T01/L01.osp-vs-isp.jsx',
+  'T01.L02': '../lessons/T01/L02.parts-of-a-pole.jsx',
+  'T01.L03': '../lessons/T01/L03.parts-of-a-cable.jsx',
+  'T01.L04': '../lessons/T01/L04.inside-a-splice-case.jsx',
+  'T01.L05': '../lessons/T01/L05.osp-project-lifecycle.jsx',
+  'T01.L06': '../lessons/T01/L06.who-does-what.jsx',
+  'T01.L07': '../lessons/T01/L07.reading-a-strand-map.jsx',
+  'T01.L08': '../lessons/T01/L08.key-acronyms-field-reference.jsx',
+  'T01.L09': '../lessons/T01/L09.osp-standards-landscape.jsx',
+  'T01.L10': '../lessons/T01/L10.t01-capstone-quiz.jsx',
   // ── Additional topics populated by authoring agents in OSP-RW.4/5 ────────
   // NOTE: Each authoring agent MUST add their lesson entries here as part of
   //       each lesson commit. An uncommented entry is mandatory — lessons not
