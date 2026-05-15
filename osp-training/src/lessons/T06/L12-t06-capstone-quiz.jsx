@@ -291,13 +291,13 @@ export default function T06L12_CapstoneQuiz() {
             type: 'mc',
             prompt: 'A 2-inch Schedule 40 PVC conduit (ID = 2.067 inches) will carry one 1.25-inch OD cable. What is the fill percentage, and is it compliant?',
             choices: [
-              '36.5% — compliant (under 40% limit)',
+              '36.6% — compliant (under 40% limit)',
               '43.3% — non-compliant (exceeds 40% limit)',
               '62.5% — OD ratio; fill calculation is always based on diameter ratio not area ratio',
               '29.0% — compliant',
             ],
             answerIndex: 0,
-            explanation: 'Fill = (cable area / conduit area) × 100 = (π × 0.625²) / (π × 1.0335²) × 100 = (1.2272) / (3.3605) × 100 = 36.5%. This is under the 40% maximum — compliant. The fill calculation is ALWAYS based on cross-sectional AREA ratios (radius squared), not diameter ratios. (Source: T06.L04; 40% fill rule.)',
+            explanation: 'Fill = (cable area / conduit area) × 100 = (π × 0.625²) / (π × 1.0335²) × 100 = (1.2272) / (3.3556) × 100 = 36.6%. This is under the 40% maximum — compliant. The fill calculation is ALWAYS based on cross-sectional AREA ratios (radius squared), not diameter ratios. (Source: T06.L04; 40% fill rule.)',
           },
           // L04: Pull tension
           {

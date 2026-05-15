@@ -442,7 +442,8 @@ export default function T06L05_ManholeHanhholeVaultSizing() {
             the manhole can fill the space in hours. The two most common incidents at new-installation
             manholes are O₂ displacement (unexpected soil gas) and delayed H₂S accumulation. The
             permit and monitoring exist because "new" doesn't mean "safe." This is also why T18
-            (Safety and OSHA) is a prerequisite to T06 in the teaching order.
+            (Safety and OSHA) is taught before T06 in the curriculum — the safety foundation
+            comes first, before the underground construction content that builds on it.
           </p>
         </div>
       </section>
