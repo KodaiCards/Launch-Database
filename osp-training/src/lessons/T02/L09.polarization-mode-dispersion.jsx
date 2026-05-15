@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -113,6 +114,60 @@ Step 4:          = 1.41 ps`}
           could tolerate. This is why upgrading old fiber to 100G without checking PMD
           can cause unexpected link failures.
         </p>
+
+        <SliderExploration
+          title="PMD — Interactive DGD Calculator"
+          description="Drag the sliders to explore how PMD coefficient and fiber length combine to produce rms Differential Group Delay (DGD). The status compares against the 10% bit-period rule for common bit rates."
+          variables={[
+            {
+              key: 'pmd_coeff',
+              label: 'PMD coefficient',
+              units: 'ps/√km',
+              min: 0.01,
+              max: 2.0,
+              step: 0.01,
+              default: 0.1,
+              format: (v) => v.toFixed(2),
+            },
+            {
+              key: 'length_km',
+              label: 'Fiber length',
+              units: 'km',
+              min: 1,
+              max: 500,
+              step: 1,
+              default: 200,
+            },
+          ]}
+          compute={({ pmd_coeff, length_km }) => {
+            const dgd = pmd_coeff * Math.sqrt(length_km);
+            // 10% of bit period rules: 10G=10ps, 40G=2.5ps, 100G DSP=1ps
+            let status = 'ok';
+            let statusMessage = `DGD = ${dgd.toFixed(2)} ps — within 10G limit (< 10 ps). New G.652.D cable. No PMD concern at 10G or 100G coherent.`;
+            if (dgd >= 1 && dgd < 2.5) {
+              status = 'ok';
+              statusMessage = `DGD = ${dgd.toFixed(2)} ps — within 10G limit but approaching 40G limit (2.5 ps). Flag for review if upgrading to 40G.`;
+            } else if (dgd >= 2.5 && dgd < 10) {
+              status = 'warn';
+              statusMessage = `DGD = ${dgd.toFixed(2)} ps — exceeds 40G tolerance (2.5 ps). 40G upgrade not viable without PMD compensation. 10G is still OK (limit: 10 ps).`;
+            } else if (dgd >= 10) {
+              status = 'error';
+              statusMessage = `DGD = ${dgd.toFixed(2)} ps — exceeds 10G limit (10 ps). High-PMD fiber — request PMD measurement before any upgrade above 2.5G. Likely pre-G.652 legacy cable.`;
+            }
+            return {
+              result: dgd,
+              label: 'rms Differential Group Delay (DGD)',
+              unit: 'ps',
+              status,
+              statusMessage,
+              decimals: 2,
+            };
+          }}
+          annotations={[
+            { value: 10,  label: '10G limit (10 ps)', color: '#fbbf24' },
+            { value: 2.5, label: '40G limit (2.5 ps)', color: '#f87171' },
+          ]}
+        />
 
         <h3 className="mt-5 font-semibold">When does PMD become a problem?</h3>
         <p>

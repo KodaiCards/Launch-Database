@@ -25,6 +25,8 @@ export const meta = {
     { term: 'MMF', source_lesson_id: 'T01.L08' },
     { term: 'OLT', source_lesson_id: 'T01.L01' },
     { term: 'ONT', source_lesson_id: 'T01.L01' },
+    // OTDR is forward-referenced in the 1625 nm window discussion (introduced fully in T12)
+    { term: 'OTDR', source_lesson_id: null },
   ],
   estimated_minutes: 25,
 };

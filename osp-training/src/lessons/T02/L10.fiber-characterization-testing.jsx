@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -169,6 +170,60 @@ export default function T02L10_FiberCharacterizationTesting() {
           <li>Stress-induced loss (often shows up as a section with elevated attenuation at all wavelengths)</li>
           <li>Gainer events (apparent negative-loss splices from index/backscatter discontinuities — an artifact, not real gain)</li>
         </ul>
+
+        <SliderExploration
+          title="CD Accumulation at 1550 nm — Is This Route DWDM-Ready?"
+          description="Drag the sliders to see how total chromatic dispersion accumulates on a candidate DWDM upgrade route. The result tells you how much dispersion compensation (in ps/nm) you'd need to bring the route within tolerance for 10G direct-detection systems."
+          variables={[
+            {
+              key: 'length_km',
+              label: 'Route length',
+              units: 'km',
+              min: 1,
+              max: 400,
+              step: 1,
+              default: 80,
+            },
+            {
+              key: 'D_coeff',
+              label: 'Dispersion coefficient at 1550 nm',
+              units: 'ps/(nm·km)',
+              min: 13,
+              max: 21,
+              step: 0.5,
+              default: 17,
+              format: (v) => v.toFixed(1),
+            },
+          ]}
+          compute={({ length_km, D_coeff }) => {
+            const total_cd = D_coeff * length_km; // ps/nm total accumulated CD
+            // 10G NRZ direct-detection tolerance: typically ±800 ps/nm
+            // 40G tolerance: ±40 ps/nm; 100G coherent: managed by DSP
+            const limit_10g = 800;
+            const limit_40g = 40;
+            let status = 'ok';
+            let statusMessage = `Total CD = ${total_cd.toFixed(0)} ps/nm — within 10G direct-detection tolerance (±${limit_10g} ps/nm). No dispersion compensation module (DCM) required.`;
+            if (total_cd > limit_40g && total_cd <= limit_10g) {
+              status = 'warn';
+              statusMessage = `Total CD = ${total_cd.toFixed(0)} ps/nm — within 10G limit but exceeds 40G limit (${limit_40g} ps/nm). A 40G upgrade needs dispersion compensation. Estimated DCM: ${total_cd.toFixed(0)} ps/nm compensation fiber.`;
+            } else if (total_cd > limit_10g) {
+              status = 'error';
+              statusMessage = `Total CD = ${total_cd.toFixed(0)} ps/nm — exceeds 10G direct-detection limit (${limit_10g} ps/nm). Requires dispersion compensation module (DCM) or coherent optics. Approximate DCM needed: ${total_cd.toFixed(0)} ps/nm.`;
+            }
+            return {
+              result: total_cd,
+              label: 'Total accumulated CD at 1550 nm',
+              unit: 'ps/nm',
+              status,
+              statusMessage,
+              decimals: 0,
+            };
+          }}
+          annotations={[
+            { value: 800, label: '10G limit (800 ps/nm)', color: '#fbbf24' },
+            { value: 40,  label: '40G limit (40 ps/nm)',  color: '#f87171' },
+          ]}
+        />
 
         <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>

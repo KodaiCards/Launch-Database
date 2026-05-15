@@ -191,7 +191,7 @@ All 9 primitives are **default exports**. Use `import PrimitiveName from '...'` 
 | Primitive | Import (default) | Required props |
 |---|---|---|
 | `<Quiz>` | `import Quiz from '../../components/primitives/Quiz.jsx'` | `title`, `mode` (`'multiple-choice'`/`'drag-match'`/`'fill-in-blank'`), `questions` array (see Quiz.example.jsx), `onComplete?` |
-| `<AnnotatedDiagram>` | `import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx'` | `imageUrl`, `alt`, `hotPoints` array `[{x, y, label, description, type}]` |
+| `<AnnotatedDiagram>` | `import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx'` | `src`, `alt`, `hotPoints` array `[{x, y, label, explanation}]` |
 | `<WorkedExample>` | `import WorkedExample from '../../components/primitives/WorkedExample.jsx'` | `title`, `formula`, `variables` array, `steps` fn, `sanityCheck` fn |
 | `<BranchingScenario>` | `import BranchingScenario from '../../components/primitives/BranchingScenario.jsx'` | `scenarioId`, `title`, `startNodeId`, `nodes` FSM object |
 | `<HotSpot>` | `import HotSpot from '../../components/primitives/HotSpot.jsx'` | `imageUrl`, `alt`, `regions` array, `mode` (`'challenge'`/`'explore'`) |

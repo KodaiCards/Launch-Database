@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -142,6 +143,69 @@ Step 5: ΔT = 170 ps`}
           17 ps/(nm·km) in the other direction (positive dispersion). The 1550 nm window has
           the lowest attenuation but highest dispersion in G.652 fiber.
         </p>
+
+        <SliderExploration
+          title="Chromatic Dispersion — Interactive Explorer"
+          description="Drag the sliders to see how fiber length, dispersion coefficient, and laser spectral width combine to determine total pulse spreading (ΔT = D × Δλ × L). The status indicator tells you whether this link can run at 10 Gb/s without dispersion compensation."
+          variables={[
+            {
+              key: 'length_km',
+              label: 'Fiber length',
+              units: 'km',
+              min: 1,
+              max: 200,
+              step: 1,
+              default: 100,
+            },
+            {
+              key: 'D',
+              label: 'Dispersion coefficient (D)',
+              units: 'ps/(nm·km)',
+              min: 0,
+              max: 20,
+              step: 0.5,
+              default: 17,
+              format: (v) => v.toFixed(1),
+            },
+            {
+              key: 'delta_lambda',
+              label: 'Laser spectral width (Δλ)',
+              units: 'nm',
+              min: 0.01,
+              max: 2.0,
+              step: 0.01,
+              default: 0.1,
+              format: (v) => v.toFixed(2),
+            },
+          ]}
+          compute={({ length_km, D, delta_lambda }) => {
+            const delta_t_ps = D * delta_lambda * length_km;
+            // 10 Gb/s bit period = 100 ps; limit is typically ~70% of bit period
+            const limit_10g = 70;   // ps — practical dispersion tolerance at 10 Gb/s
+            const limit_40g = 17.5; // ps — 40 Gb/s (bit period 25 ps, 70% ≈ 17.5)
+            let status = 'ok';
+            let statusMessage = `ΔT = ${delta_t_ps.toFixed(1)} ps — well within 10 Gb/s tolerance (< ${limit_10g} ps). No dispersion compensation needed.`;
+            if (delta_t_ps >= limit_10g && delta_t_ps < limit_10g * 4) {
+              status = 'warn';
+              statusMessage = `ΔT = ${delta_t_ps.toFixed(1)} ps — exceeds 10 Gb/s limit (${limit_10g} ps). Dispersion compensation or coherent optics required at 10G. 40G would have failed at ${limit_40g} ps.`;
+            } else if (delta_t_ps >= limit_10g * 4) {
+              status = 'error';
+              statusMessage = `ΔT = ${delta_t_ps.toFixed(1)} ps — far exceeds 10 Gb/s limit. This run requires coherent optics with electronic dispersion compensation (EDC) regardless of bit rate.`;
+            }
+            return {
+              result: delta_t_ps,
+              label: 'Total pulse spreading (ΔT)',
+              unit: 'ps',
+              status,
+              statusMessage,
+              decimals: 1,
+            };
+          }}
+          annotations={[
+            { value: 70,   label: '10G limit', color: '#fbbf24' },
+            { value: 17.5, label: '40G limit', color: '#f87171' },
+          ]}
+        />
 
         <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>

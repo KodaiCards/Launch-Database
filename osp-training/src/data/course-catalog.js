@@ -334,7 +334,21 @@ export const certTracks = [
 // EMPTY until OSP-RW.4 begins authoring. Placeholder entries go here as
 // lesson files are committed.
 export const lessonFileIndex = {
-  // T02 Fiber Physics (template topic — first authored in OSP-RW.4)
-  // 'T02.L01': '../lessons/T02/L01.why-light-travels-in-glass.jsx',
-  // ... (populated by authoring agents in OSP-RW.4/5)
+  // ── T02 Fiber Physics (template topic — locked in OSP-RW.3) ──────────────
+  'T02.L01': '../lessons/T02/L01.why-light-travels-in-glass.jsx',
+  'T02.L02': '../lessons/T02/L02.attenuation-three-numbers.jsx',
+  'T02.L03': '../lessons/T02/L03.dispersion-why-signals-blur.jsx',
+  'T02.L04': '../lessons/T02/L04.macrobend-and-microbend.jsx',
+  'T02.L05': '../lessons/T02/L05.decibels-without-algebra-fear.jsx',
+  'T02.L06': '../lessons/T02/L06.link-budget-worked-example.jsx',
+  'T02.L07': '../lessons/T02/L07.wavelength-windows.jsx',
+  'T02.L08': '../lessons/T02/L08.smf-vs-mmf-choosing.jsx',
+  'T02.L09': '../lessons/T02/L09.polarization-mode-dispersion.jsx',
+  'T02.L10': '../lessons/T02/L10.fiber-characterization-testing.jsx',
+  'T02.L11': '../lessons/T02/L11.fiber-physics-field-vs-book.jsx',
+  'T02.L12': '../lessons/T02/L12.t02-capstone-quiz.jsx',
+  // ── Additional topics populated by authoring agents in OSP-RW.4/5 ────────
+  // NOTE: Each authoring agent MUST add their lesson entries here as part of
+  //       each lesson commit. An uncommented entry is mandatory — lessons not
+  //       listed here will render LessonPlaceholder (unreachable) at runtime.
 };
