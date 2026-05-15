@@ -309,7 +309,7 @@ The following values are the single verified source of truth for T05, matching T
 | **Heavy** | 0.50 in | 4 psf (≈ 40 mph) | 0°F | IAEI Magazine 2002 NESC article; ikeGPS NESC Weather Loadings; NESC Rule 250B per RUS 1724E-150 |
 | **Medium** | 0.25 in | 4 psf (≈ 40 mph) | 15°F | IAEI Magazine 2002 NESC article; ikeGPS NESC Weather Loadings |
 | **Light** | 0 in (no ice) | 9 psf (≈ 60 mph) | 30°F | IAEI Magazine 2002 NESC article; ikeGPS NESC Weather Loadings; Module02 §2.5 |
-| **Extreme Wind (250C)** | 0 in | Map-defined (90–150 mph coastal) | per map | ikeGPS; NESC 2007 IAEI article; 250C applies where structures > 60 ft |
+| **Extreme Wind (250C)** | 0 in | Map-defined (90–150 mph coastal) | per map | ikeGPS; NESC 2007 IAEI article; 250C applies where structures ≥ 60 ft (60 ft or more above ground) |
 | **Extreme Ice w/ Wind (250D)** | Map-defined 50-yr storm | Concurrent | per map | IAEI 2007 NESC article; NESC 2007 Part 1 |
 
 > **Verification method:** Three independent secondary sources (IAEI Magazine, ikeGPS, and RUS 1724E-150 public PDF) all agree on the Heavy/Medium/Light values. The prior T03 brief hallucination (ice/wind values transposed) has been corrected in T03 brief `148e1e7`. These values are the final locked values for the curriculum.
@@ -343,7 +343,7 @@ w_ice = 0 (no ice). Wind load = 9 × (0.82/12) = **0.615 lb/ft** horizontal. Com
 #### Quiz question seeds
 1. (MC) In the Heavy loading district, the design combines ___ in of radial ice + ___ psf wind at 0°F. → 0.50 in; 4 psf
 2. (fill-in-blank) Macon, GA is in the ___ loading district. → Light
-3. (MC) The Extreme Wind loading overlay (Rule 250C) primarily applies to: A) All poles in hurricane states B) Structures taller than 60 ft in mapped wind zones C) All poles in the Heavy district D) Any pole near a body of water → **B**
+3. (MC) The Extreme Wind loading overlay (Rule 250C) primarily applies to: A) All poles in hurricane states B) Structures 60 ft or more (≥ 60 ft) above ground in mapped wind zones C) All poles in the Heavy district D) Any pole near a body of water → **B**
 
 #### Lesson confidence: **HIGH** (values verified from 3 independent secondaries; ice load formula independently derived to 4 decimal places matching prior T03 brief)
 
@@ -553,7 +553,7 @@ w_ice = 0 (no ice). Wind load = 9 × (0.82/12) = **0.615 lb/ft** horizontal. Com
 | "GPON standard: ITU-T G.984; downstream 2.488 Gbps, upstream 1.244 Gbps" | ITU-T G.984.1 (public ITU-T description); multiple vendor documentation — VERIFIED |
 | "XGS-PON: ITU-T G.9807.1; symmetric 10 Gbps" | ITU-T G.9807.1 (public description) — VERIFIED |
 | "1:32 split ratio is standard residential GPON design; 1:64 used in dense urban deployments" | FOA Reference Guide to Fiber Optics; vendor GPON design guides — VERIFIED as industry standard |
-| "1:32 passive splitter insertion loss ≈ 17 dB" | FOA Reference Guide; TIA-568.3-D OSP link budget context — VERIFIED (log₂(32) = 5 bit, × 3.4 dB/split ≈ 17 dB is the practical value) |
+| "1:32 passive splitter insertion loss typically 17–17.5 dB" | FOA Reference Guide; TIA-568.3-D OSP link budget context; fibermall.com, bativ.com PLC splitter datasheets — VERIFIED range. PLC splitter real-world range is 17–17.5 dB; worked example uses 17.0 dB (low end of range) with explicit range note for learners. |
 | "GPON link budget: up to 28 dB (Class B+) allowed between OLT and ONT" | ITU-T G.984.2 Table 1 (Class B+ budget: 13 dBm Tx − (−8 dBm) Rx sensitivity = 28 dB available margin) — VERIFIED via multiple secondary sources |
 
 #### Worked example (pre-derived — FTTH aerial link budget)
@@ -563,7 +563,7 @@ w_ice = 0 (no ice). Wind load = 9 × (0.82/12) = **0.615 lb/ft** horizontal. Com
 Losses:
 - Feeder fiber: 1.5 mi × 1.61 km/mi = 2.415 km × 0.40 dB/km (1310 nm max per G.652.D) = **0.97 dB**
 - Connectors (2 × patch): 2 × 0.75 dB = **1.50 dB**
-- 1:32 splitter: **17.0 dB**
+- 1:32 splitter: **17.0 dB** *(typical PLC range: 17–17.5 dB; this example uses 17.0 dB at the low end — author note: state the range in lesson prose)*
 - Drop fiber: 0.3 mi × 1.61 km/mi = 0.483 km × 0.40 dB/km = **0.19 dB**
 - Connector at ONT: **0.75 dB**
 - Total loss: 0.97 + 1.50 + 17.0 + 0.19 + 0.75 = **20.41 dB**
@@ -571,7 +571,7 @@ Losses:
 Available budget (Class B+): 28 dB
 Margin: 28 − 20.41 = **7.59 dB**
 
-Sanity check: "7.6 dB of margin left. GPON designers typically want ≥ 3 dB margin; 7.6 dB is healthy. If we extended the feeder to 3 miles, the margin would shrink to about 4.5 dB — still workable but worth a second look."
+Sanity check: "7.6 dB of margin left. GPON designers typically want ≥ 3 dB margin; 7.6 dB is healthy. If we extended the feeder to 3 miles (4.83 km at 0.40 dB/km = 1.93 dB feeder loss, an increase of 0.97 dB from the 1.5-mile base), the margin would shrink to about 6.6 dB — still healthy, but the extra feeder length is starting to eat into the budget."
 
 #### Interactive primitive recommendations
 - WorkedExample: FTTH link budget calculator with span inputs → loss calculation → pass/fail vs Class B+
@@ -661,7 +661,7 @@ Include at least 3 WorkedExample verify questions where the learner completes a 
 | H5 | ANSI O5.1 pole class fiber-strength values (Class 1 ≈ 4,500 lb) — these are species-dependent; southern yellow pine values differ from Douglas fir | Lesson should state "approximately X lb for typical species; confirm with ANSI O5.1-2022 Table 4 for your design." No species-specific numbers locked without paywall access. |
 | H6 | RTS and EDS values for ADSS — these are catalog values varying by manufacturer and design span | Source: Corning, Focabex, Bonelinks datasheets. Lesson should present EDS as a percentage of RTS (16–25%), not a fixed number. RT verifies percentage range from multiple sources. |
 | H7 | Ice-load formula coefficient (1.244 vs 1.2435) — rounding in training data may produce wrong value | Formula independently derived algebraically: coefficient = 57π/144 = **1.2435**. Rounded to 1.244 for field use. RT re-derive independently. |
-| H8 | NESC Rule 250C (Extreme Wind) threshold: structures taller than 60 ft | Verified from ikeGPS NESC 2007 Part 1 article. This is the 60-ft trigger for 250C/250D overlay. RT should check this specific threshold. |
+| H8 | NESC Rule 250C (Extreme Wind) threshold: structures ≥ 60 ft above ground | Threshold is 60 ft or more (≥ 60 ft) — a 60-ft pole IS in scope. Verified from ikeGPS NESC 2007 Part 1 article + IAEI NESC articles. RT-A confirmed this correction (prior "taller than 60 ft" language was imprecise). |
 
 ---
 
