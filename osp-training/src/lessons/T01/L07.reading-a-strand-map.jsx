@@ -188,9 +188,10 @@ export default function T01L07_ReadingAStrandMap() {
         <p className="mt-2 text-sm text-slate-300/90">
           A 1:32 splitter takes one input fiber and divides the optical signal to 32 outputs.
           Each output goes to a separate customer drop. The splitting introduces loss:
-          a 1:32 splitter adds approximately 15.5 dB of insertion loss (splitting loss =
-          10 × log₁₀(N), where N = split ratio; for 32: 10 × log₁₀(32) = 10 × 1.505 = 15.05 dB,
-          rounded to ~15.5 dB with connector loss). This split loss is a major input to the
+          a 1:32 splitter adds approximately 15–17 dB of insertion loss (theoretical minimum:
+          10 × log₁₀(32) = 10 × 1.505 = 15.05 dB; production tolerance and connector loss
+          typically add 0.5–1.5 dB, pushing typical field values to 15.5–16.5 dB with
+          worst-case at 17 dB per manufacturer datasheets). This split loss is a major input to the
           link budget — the OLT must launch enough power to reach every ONT through 15.5 dB
           of splitter loss plus all the fiber and connector losses along the route.
         </p>
@@ -230,7 +231,7 @@ export default function T01L07_ReadingAStrandMap() {
           { id: 'T01-L07-FC-drop', front: 'Drop', back: 'A 1–2 fiber cable running from the NAP to one customer\'s premises. Aerial (pole to house) or buried (pedestal to house). Terminates at the ONT — the demarcation point.' },
           { id: 'T01-L07-FC-feeder', front: 'Feeder cable', back: 'A large-count cable (72–288 fibers) running from the headend/OLT to the FDH. One fiber per OLT port. The backbone of an FTTH network. Trunk infrastructure — feeder cable failures affect many customers at once.' },
           { id: 'T01-L07-FC-distribution-cable', front: 'Distribution cable', back: 'A medium-count cable (12–48 fibers) running from the FDH to NAPs along streets. Each fiber corresponds to one customer post-splitter. Multiple distribution cables fan out from each FDH in different directions.' },
-          { id: 'T01-L07-FC-splitter', front: 'Splitter (passive optical)', back: 'A passive device at the FDH that takes one input feeder fiber and divides the signal to 32 or 64 output ports. No power required. Introduces ~15.5 dB of insertion loss on a 1:32 split. The dominant loss element in a GPON link budget.' },
+          { id: 'T01-L07-FC-splitter', front: 'Splitter (passive optical)', back: 'A passive device at the FDH that takes one input feeder fiber and divides the signal to 32 or 64 output ports. No power required. Introduces approximately 15–17 dB of insertion loss on a 1:32 split (theoretical min 15.05 dB; typical field 15.5–16.5 dB). The dominant loss element in a GPON link budget.' },
           { id: 'T01-L07-FC-pon', front: 'PON (Passive Optical Network)', back: 'The FTTH architecture where one OLT port serves many customers via passive splitters — no powered electronics in the distribution network. Common split ratios: 1:32 or 1:64. GPON is the dominant PON standard in North America.' },
           { id: 'T01-L07-FC-fiber-assignment', front: 'Fiber assignment', back: 'Which specific fiber in which cable connects to which customer or OLT port. Documented in the strand map. Wrong fiber assignment means a customer\'s traffic goes to the wrong place — the mismatch can take hours to trace without the map.' },
         ]}
