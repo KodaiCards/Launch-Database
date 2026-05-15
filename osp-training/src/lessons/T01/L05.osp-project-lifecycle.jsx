@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
@@ -249,6 +250,22 @@ export default function T01L05_OspProjectLifecycle() {
           TIA-606-D (administration standard for fiber infrastructure documentation).
         </p>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L05"
+        cards={[
+          { id: 'T01-L05-FC-survey', front: 'Survey (Route Survey)', back: 'Stage 1 of an OSP project: field walk of the proposed route to record existing poles, attachments, underground utilities, span lengths, crossing measurements, and GPS waypoints. Feeds the design package.' },
+          { id: 'T01-L05-FC-design', front: 'Design', back: 'Stage 2: engineers or designers use survey data to produce construction drawings — cable routes, splice locations, fiber counts, load calculations, make-ready analysis. The design package is what contractors build from.' },
+          { id: 'T01-L05-FC-permit', front: 'Permit', back: 'Stage 3: approvals from every authority with jurisdiction over the route — pole attachment agreement, state DOT ROW permit, environmental clearances, municipal encroachment permits. Construction cannot begin until permits for that segment are in hand.' },
+          { id: 'T01-L05-FC-make-ready', front: 'Make-ready', back: 'Stage 4: moving or modifying existing pole attachments to make room for the new fiber attachment and restore NESC clearances. Done by the pole owner\'s crew. Fiber company funds it but doesn\'t control the timeline. Often the longest pre-construction stage.' },
+          { id: 'T01-L05-FC-construction', front: 'Construction', back: 'Stage 5: installing the physical cable plant — aerial cable on poles, conduit underground, splice cases, handholes. Cables are typically installed first; splicing happens in a separate pass.' },
+          { id: 'T01-L05-FC-testing', front: 'Testing', back: 'Stage 6: every fiber in the cable plant is tested. Tier 1 (OLTS — end-to-end loss) and Tier 2 (OTDR — event location and trace). Results compared to the design loss budget. Failed fibers are repaired before acceptance.' },
+          { id: 'T01-L05-FC-as-built', front: 'As-built', back: 'Updated drawings that show what was actually built vs. what was designed. Part of the close-out package. Becomes the permanent O&M record — a technician in 2045 needs the as-built to trace a fault back to a specific splice case and fiber.' },
+          { id: 'T01-L05-FC-close-out', front: 'Close-out', back: 'Stage 7: the final documentation package handed to the client — as-built drawings, splice records, test records, permit copies. For RUS-program projects includes RUS Form 219. Required before RUS advances funds and before client acceptance.' },
+          { id: 'T01-L05-FC-rus-form-219', front: 'RUS Form 219', back: 'The USDA Rural Utilities Service project completion certification form. Required for RUS-funded OSP projects at close-out. Must be signed by the PE responsible for the project. Accompanies the as-built drawings, splice records, and OTDR test records.' },
+        ]}
+      />
 
       {/* ── BRANCHING SCENARIO ───────────────────────────────────────────── */}
       <BranchingScenario

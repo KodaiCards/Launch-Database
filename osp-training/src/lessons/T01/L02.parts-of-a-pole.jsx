@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
@@ -236,6 +237,23 @@ export default function T01L02_PartsOfAPole() {
           Source: NESC C2-2023 §§23, 235; RUS Bulletin 1751F-630 §6.
         </p>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L02"
+        cards={[
+          { id: 'T01-L02-FC-attachment', front: 'Attachment', back: 'Any cable, equipment, or hardware bolted or clamped to a utility pole. Each attachment occupies vertical space on the pole. Fiber companies must hold a pole attachment agreement to install a new attachment.' },
+          { id: 'T01-L02-FC-span', front: 'Span', back: 'The horizontal distance between two poles that a cable crosses through the air. Typically 150–300 ft in suburban areas, up to 600+ ft in rural areas.' },
+          { id: 'T01-L02-FC-midspan', front: 'Midspan', back: 'The middle of a span — the point farthest from the two attachment poles, where the cable sags the most and where minimum ground clearance is measured.' },
+          { id: 'T01-L02-FC-sag', front: 'Sag', back: 'How far a cable droops below the straight horizontal line between two attachment points. Tight cables have less sag but more tension; loose cables have more sag but lower tension. Ground clearance is measured at midspan (the sag point), not at the attachment.' },
+          { id: 'T01-L02-FC-grade', front: 'Grade of construction', back: 'NESC\'s classification of how strongly a line must be built. Grade B is standard for power lines; Grade C for many telecom attachments. Governs strength factors for pole, attachments, and guys.' },
+          { id: 'T01-L02-FC-climbing-space', front: 'Climbing space', back: 'The mandatory clearance zone between the supply space and communication space on a shared pole. Nothing is attached here — it\'s a required gap that allows linemen to safely climb without bridging the two zones.' },
+          { id: 'T01-L02-FC-comm-space', front: 'Communication space', back: 'The lowest zone on a shared utility pole where telecom cables attach: cable TV, fiber, telephone copper. Fiber is typically the bottom-most attachment. Governed by NESC minimum vertical separation requirements.' },
+          { id: 'T01-L02-FC-supply-space', front: 'Supply space', back: 'The top zone on a shared utility pole where high-voltage primary power lines (4–35 kV) attach. Only licensed utility electricians work in this zone. NESC requires minimum separation from the top of the communication space.' },
+          { id: 'T01-L02-FC-neutral', front: 'Neutral', back: 'The return conductor for the electric distribution system, typically the lowest supply-space conductor. In RUS areas this is often the MGN (Multi-Grounded Neutral). Fiber messenger wires must maintain NESC clearance from the neutral.' },
+          { id: 'T01-L02-FC-pole-class', front: 'Pole class', back: 'NESC / ANSI O5.1 classification of pole strength based on circumference 6 ft from the butt. Class 1 is strongest; Class 10 is weakest. Classes H1–H6 are for extra-heavy loads.' },
+        ]}
+      />
 
       {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
       <AnnotatedDiagram

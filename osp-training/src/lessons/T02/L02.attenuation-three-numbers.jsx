@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L02',
@@ -14,6 +15,13 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L01'],
   vocabulary_introduced: ['attenuation', 'dB/km', 'spec maximum', 'typical datasheet value', 'designer planning value'],
+  key_terms: [
+    { term: 'attenuation', definition: 'Signal loss as light travels through fiber — absorbed or scattered by the glass molecules. It\'s the "loss rate" of the fiber. The higher the number, the more signal you lose per kilometer of cable.' },
+    { term: 'dB/km', definition: 'Decibels per kilometer — the unit of fiber attenuation, measuring how much signal is lost per kilometer of cable. Think of it as a "loss rate": a higher number means more signal lost per km.' },
+    { term: 'spec maximum', definition: 'The highest allowed loss for a fiber to qualify as meeting a standard (e.g., ITU-T G.652.D). No manufacturer ships fiber this bad intentionally — it\'s the rejection threshold, not a typical value.' },
+    { term: 'typical datasheet value', definition: 'What a specific manufacturer\'s fiber actually measures in a production run. Significantly better than the spec maximum — this is what you get when you pull a reel out of the box.' },
+    { term: 'designer planning value', definition: 'A round number, slightly above the typical datasheet value, that OSP designers use as their working assumption. It leaves a small margin for aging, temperature variation, and procurement uncertainty.' },
+  ],
   vocabulary_assumed: [
     { term: 'total internal reflection', source_lesson_id: 'T02.L01' },
     { term: 'core', source_lesson_id: 'T02.L01' },
@@ -93,6 +101,18 @@ export default function T02L02_AttenuationThreeNumbers() {
             you'll get on a job.
           </li>
         </ul>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L02"
+          cards={[
+            { id: 'T02-L02-fc-attenuation', front: 'What is attenuation in fiber optics?', back: 'Signal loss as light travels through fiber — absorbed or scattered by the glass molecules. It\'s the "loss rate" of the fiber. The higher the number, the more signal you lose per kilometer of cable.' },
+            { id: 'T02-L02-fc-dbkm', front: 'What does dB/km measure?', back: 'Decibels per kilometer — the unit of fiber attenuation, measuring how much signal is lost per kilometer of cable. Think of it as a "loss rate": a higher number means more signal lost per km.' },
+            { id: 'T02-L02-fc-specmax', front: 'What is the "spec maximum" for fiber attenuation?', back: 'The highest allowed loss for a fiber to qualify as meeting a standard (e.g., ITU-T G.652.D ≤ 0.30 dB/km @ 1550 nm). It\'s the rejection threshold, not a typical value — no manufacturer ships fiber this bad on purpose.' },
+            { id: 'T02-L02-fc-datasheet', front: 'What is the "typical datasheet value" for fiber attenuation?', back: 'What a specific manufacturer\'s fiber actually measures in a production run. Significantly better than the spec maximum — this is what you get when you pull a reel out of the box (e.g., 0.18–0.22 dB/km @ 1550 nm for G.652.D).' },
+            { id: 'T02-L02-fc-planvalue', front: 'What is a "designer planning value" for fiber attenuation?', back: 'A round number, slightly above the typical datasheet value, that OSP designers use as their working assumption (e.g., 0.22–0.25 dB/km @ 1550 nm). It leaves a small margin for aging, temperature variation, and procurement uncertainty.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

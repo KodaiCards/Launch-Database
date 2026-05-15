@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
@@ -254,6 +255,23 @@ export default function T01L04_InsideASpliceCase() {
           non-re-enterable is a design decision documented in the construction specs.
         </p>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L04"
+        cards={[
+          { id: 'T01-L04-FC-splice-case', front: 'Splice case / closure', back: 'A weatherproof enclosure that holds and protects fiber fusion splices where cables are joined. Protects splices from moisture, physical damage, and contamination for the 25–40 year life of the cable plant.' },
+          { id: 'T01-L04-FC-splice-closure', front: 'Splice closure', back: 'Same as splice case — a weatherproof enclosure for fiber splices. Comes in two main shapes: dome (cables enter one end) and inline (cables enter both ends).' },
+          { id: 'T01-L04-FC-splice-tray', front: 'Splice tray', back: 'A rigid plastic tray holding 12–24 individual fiber splices in numbered slots. Maintains minimum bend radius to prevent macrobend loss. Trays stack in a cassette inside the splice case.' },
+          { id: 'T01-L04-FC-gel-seal', front: 'Gel seal', back: 'Petroleum or silicone gel injected around cable entry points in a splice case. Primary moisture barrier at port entries. Re-enterable — the case can be reopened without cutting the seal.' },
+          { id: 'T01-L04-FC-fan-out', front: 'Fan-out', back: 'The area inside a splice case where the cable jacket is stripped back and individual buffer tubes are separated and routed to their designated splice trays. Organizes tubes by color-coded labels.' },
+          { id: 'T01-L04-FC-dome-closure', front: 'Dome closure', back: 'A dome-shaped splice case where cables enter at the base and the dome lifts off for access. Common for pole-mounted, aerial, and pedestal applications. Good for stub locations where cables end inside.' },
+          { id: 'T01-L04-FC-inline-closure', front: 'Inline closure', back: 'A splice case where cables enter from both ends and pass through — used at mid-route splice points where the cable continues beyond the splice. Common underground in manholes or at buried mid-span slack loops.' },
+          { id: 'T01-L04-FC-port', front: 'Port', back: 'The sealed opening where each cable enters a splice case. Must seal tightly around the cable jacket to keep moisture out — sealed with gel, mastic tape, heat-shrink, or mechanical compression.' },
+          { id: 'T01-L04-FC-cable-entry', front: 'Cable entry', back: 'Same as port — the sealed opening in a splice case where a cable enters. The cable jacket is clamped to a retention bracket so the cable cannot pull back out, and the central member is anchored here.' },
+          { id: 'T01-L04-FC-slack-storage', front: 'Slack storage', back: 'Extra fiber length stored as gentle loops in the splice tray or tray organizer. Minimum bend radius must be maintained (typically 30 mm). Insufficient slack storage causes macrobend loss after the case is closed — the most common post-splice OTDR surprise.' },
+        ]}
+      />
 
       {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
       <AnnotatedDiagram

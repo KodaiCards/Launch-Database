@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L01',
@@ -15,6 +16,14 @@ export const meta = {
   lesson_type: 'foundation',
   prerequisites: ['T01.L01'],
   vocabulary_introduced: ['total internal reflection', 'core', 'cladding', 'NA', 'critical angle', 'index of refraction'],
+  key_terms: [
+    { term: 'total internal reflection', definition: 'The mirror effect that keeps light inside the fiber. When a light ray hits the core-cladding boundary at an angle shallower than the critical angle, 100% of the light reflects back into the core — nothing escapes.' },
+    { term: 'core', definition: 'The inner glass cylinder where light signals actually travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection.' },
+    { term: 'cladding', definition: 'The outer glass layer surrounding the core. Its index of refraction is slightly lower than the core, which creates the total internal reflection effect at the core-cladding boundary. The cladding is 125 µm in diameter for all standard fibers.' },
+    { term: 'NA', definition: 'Numerical Aperture — the half-angle of the cone of light that the fiber will accept and propagate via total internal reflection, measured from outside the fiber at the launch end. NA = √(n₁² − n₂²). For standard G.652 SMF: NA ≈ 0.12–0.14.' },
+    { term: 'critical angle', definition: 'The specific angle at which a light ray hitting the core-cladding boundary runs exactly along the boundary. Any ray shallower than this angle undergoes total internal reflection. For G.652.D fiber: sin(θ_c) = n₂ / n₁ ≈ 0.9966, so θ_c ≈ 85°.' },
+    { term: 'index of refraction', definition: 'A number that tells you how much a transparent material bends light. Vacuum = 1.000. Air ≈ 1.000. Glass ≈ 1.46–1.50. In a fiber, the core glass has a slightly higher index than the cladding, which is what causes total internal reflection at the boundary.' },
+  ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'SMF', source_lesson_id: 'T01.L08' },
@@ -112,6 +121,19 @@ export default function T02L01_WhyLightTravelsInGlass() {
           tubes and the outer sheath. Those are mechanical protection — the signal lives in
           the core.
         </p>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L01"
+          cards={[
+            { id: 'T02-L01-fc-tir', front: 'What is total internal reflection (TIR)?', back: 'The mirror effect that keeps light inside the fiber. When a light ray hits the core-cladding boundary at an angle shallower than the critical angle, 100% of the light reflects back into the core — nothing escapes.' },
+            { id: 'T02-L01-fc-core', front: 'What is the core of a fiber optic strand?', back: 'The inner glass cylinder where light signals actually travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection.' },
+            { id: 'T02-L01-fc-cladding', front: 'What is the cladding of a fiber optic strand?', back: 'The outer glass layer surrounding the core. Its index of refraction is slightly lower than the core, which creates the total internal reflection effect at the core-cladding boundary. The cladding is 125 µm in diameter for all standard fibers.' },
+            { id: 'T02-L01-fc-na', front: 'What does Numerical Aperture (NA) describe in a fiber?', back: 'The half-angle of the cone of light that the fiber will accept and propagate via total internal reflection, measured from outside the fiber at the launch end. NA = √(n₁² − n₂²). For standard G.652 SMF: NA ≈ 0.12–0.14.' },
+            { id: 'T02-L01-fc-critical-angle', front: 'What is the critical angle in fiber optics?', back: 'The specific angle at which a light ray hitting the core-cladding boundary runs exactly along the boundary. Any ray shallower than this angle undergoes total internal reflection. For G.652.D fiber: sin(θ_c) = n₂ / n₁ ≈ 0.9966, so θ_c ≈ 85°.' },
+            { id: 'T02-L01-fc-index', front: 'What is the index of refraction?', back: 'A number that tells you how much a transparent material bends light. Vacuum = 1.000. Air ≈ 1.000. Glass ≈ 1.46–1.50. In a fiber, the core glass has a slightly higher index than the cladding, which is what causes total internal reflection at the boundary.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

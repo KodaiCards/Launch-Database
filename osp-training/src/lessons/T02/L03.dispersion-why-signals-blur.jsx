@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L03',
@@ -14,6 +15,15 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L02'],
   vocabulary_introduced: ['dispersion', 'chromatic dispersion', 'CD', 'zero-dispersion wavelength', 'ps/(nm·km)', 'modal dispersion', 'PMD'],
+  key_terms: [
+    { term: 'dispersion', definition: 'A pulse of light arriving smeared out in time at the far end of a fiber. Even if enough light arrives, it may arrive blurred — what was a crisp "1" looks like a fuzzy blob that bleeds into the neighboring "0." Above a certain bit rate or distance, the receiver can\'t tell them apart.' },
+    { term: 'chromatic dispersion', definition: 'The dominant dispersion mechanism in single-mode fiber (SMF). Every real light source emits a range of wavelengths; different wavelengths travel at different speeds in glass. The result: a sharp input pulse arrives at the receiver stretched in time.' },
+    { term: 'CD', definition: 'Abbreviation for Chromatic Dispersion — the wavelength-dependent speed difference in single-mode fiber that causes pulses to spread over distance.' },
+    { term: 'zero-dispersion wavelength', definition: 'The wavelength where chromatic dispersion passes through zero in G.652 SMF. G.652 specifies this between 1300 nm and 1324 nm. At 1310 nm (close to this point), dispersion is very low — that\'s why short 1310 nm links are so forgiving.' },
+    { term: 'ps/(nm·km)', definition: 'Picoseconds per nanometer per kilometer — the unit of the chromatic dispersion coefficient D. It tells you how many picoseconds of pulse spreading you get per nanometer of laser spectral width per kilometer of fiber.' },
+    { term: 'modal dispersion', definition: 'The dispersion mechanism in multimode fiber (MMF). Different light paths (modes) travel different distances inside the fiber. The fundamental mode (straight through) arrives first; higher-order modes (bouncing at wider angles) arrive later, blurring the pulse. This is why MMF has a bandwidth rating (MHz·km).' },
+    { term: 'PMD', definition: 'Polarization Mode Dispersion — a third dispersion mechanism where the two polarization orientations of the same light wave travel at slightly different speeds through the fiber. Only significant at 10 Gb/s and above on older or imperfect fiber.' },
+  ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'dB/km', source_lesson_id: 'T02.L02' },
@@ -81,6 +91,19 @@ export default function T02L03_DispersionWhySignalsBlur() {
             </tr>
           </tbody>
         </table>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L03"
+          cards={[
+            { id: 'T02-L03-fc-dispersion', front: 'What is dispersion in fiber optics?', back: 'A pulse of light arriving smeared out in time at the far end of a fiber. Even if enough light arrives, it may be blurred — what was a crisp "1" looks like a fuzzy blob that bleeds into the neighboring "0." Above a certain bit rate or distance, the receiver can\'t tell them apart.' },
+            { id: 'T02-L03-fc-cd', front: 'What is chromatic dispersion (CD)?', back: 'The dominant dispersion mechanism in single-mode fiber (SMF). Every real light source emits a range of wavelengths; different wavelengths travel at different speeds in glass. The result: a sharp input pulse arrives at the receiver stretched in time. Measured in ps/(nm·km).' },
+            { id: 'T02-L03-fc-zdw', front: 'What is the zero-dispersion wavelength in G.652 fiber?', back: 'The wavelength where chromatic dispersion passes through zero in G.652 SMF — specified between 1300 nm and 1324 nm. At 1310 nm (close to this point), dispersion is very low, which is why short 1310 nm links are so forgiving.' },
+            { id: 'T02-L03-fc-psnmkm', front: 'What does ps/(nm·km) measure?', back: 'Picoseconds per nanometer per kilometer — the unit of the chromatic dispersion coefficient D. It tells you how many picoseconds of pulse spreading you get per nanometer of laser spectral width per kilometer of fiber. G.652 at 1550 nm: ~17 ps/(nm·km).' },
+            { id: 'T02-L03-fc-modal', front: 'What is modal dispersion?', back: 'The dispersion mechanism in multimode fiber (MMF). Different light paths (modes) travel different distances inside the fiber — the fundamental mode arrives first, higher-order modes arrive later. This blurs the pulse and is why MMF has a bandwidth rating (MHz·km) while SMF does not.' },
+            { id: 'T02-L03-fc-pmd', front: 'What is Polarization Mode Dispersion (PMD)?', back: 'A third dispersion mechanism where the two polarization orientations of the same light wave travel at slightly different speeds through the fiber due to geometric imperfections and stress. Only significant at 10 Gb/s and above, especially on older fiber. Measured in ps/√km.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

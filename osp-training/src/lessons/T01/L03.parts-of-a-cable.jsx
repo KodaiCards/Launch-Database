@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
@@ -248,6 +249,22 @@ export default function T01L03_PartsOfACable() {
           Source: TIA-598-D (color code for ribbon fiber); ICEA S-87-640 (construction standards).
         </p>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L03"
+        cards={[
+          { id: 'T01-L03-FC-sheath', front: 'Sheath / Jacket', back: 'The outer plastic skin of an OSP cable — black HDPE for direct-buried and aerial cable. First barrier against UV radiation and moisture. Color indicates cable type.' },
+          { id: 'T01-L03-FC-jacket', front: 'Jacket', back: 'Same as sheath — the outer HDPE skin of the cable. UV-resistant and moisture-resistant. For direct-buried cable this is the primary moisture barrier; for aerial cable it resists UV for 20+ years.' },
+          { id: 'T01-L03-FC-buffer-tube', front: 'Buffer tube', back: 'A plastic tube (color-coded) holding 2–12 individual fibers in water-blocking gel. Protects fibers from bending and mechanical stress. Tube color identifies which group of fibers is inside.' },
+          { id: 'T01-L03-FC-ripcord', front: 'Ripcord', back: 'A nylon string inside the cable jacket — grab it and pull lengthwise to slit the jacket open without cutting into buffer tubes. Every splicer\'s first move when opening a cable.' },
+          { id: 'T01-L03-FC-armor', front: 'Armor', back: 'A steel tape or corrugated steel layer inside the jacket that protects buried cable from rodent gnawing and dig-in damage. Cables without metal armor are called dielectric.' },
+          { id: 'T01-L03-FC-messenger', front: 'Messenger', back: 'A separate steel or fiberglass strand that supports an aerial cable\'s weight between poles. The messenger carries all the mechanical tension; the fiber cable carries zero tension. Lashed alongside the cable in figure-8 aerial installations.' },
+          { id: 'T01-L03-FC-fiber', front: 'Fiber', back: 'Each individual glass strand inside a buffer tube. 250 µm with colored coating — about 3× the width of a human hair. Core + cladding glass is 125 µm. Strip the coating for splicing; handle bare glass carefully — it can puncture skin.' },
+          { id: 'T01-L03-FC-central-member', front: 'Central member', back: 'A steel wire or glass-reinforced plastic rod running down the center of the cable. Buffer tubes are stranded around it. Must be anchored inside the splice case — failure to anchor allows cable tension to pull the tubes through and break all the splices.' },
+          { id: 'T01-L03-FC-water-blocking-gel', front: 'Water-blocking gel', back: 'Petroleum-based gel filling buffer tubes that prevents water from migrating along the cable length even if the jacket is damaged. Gets everywhere — use isopropyl alcohol and nitrile gloves to clean. Dry water-block (swelling tape) is a cleaner alternative.' },
+        ]}
+      />
 
       {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
       <AnnotatedDiagram

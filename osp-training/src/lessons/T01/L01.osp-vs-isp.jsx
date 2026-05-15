@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
@@ -250,6 +251,21 @@ export default function T01L01_OspVsIsp() {
           Source: 47 CFR Part 32 (FCC Uniform System of Accounts); RUS Bulletin 1751F-630 §1.
         </p>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L01"
+        cards={[
+          { id: 'T01-L01-FC-osp', front: 'OSP', back: 'Outside Plant — all fiber infrastructure between buildings: aerial on poles, buried in conduit, in manholes and vaults, from the headend to the customer demarcation point.' },
+          { id: 'T01-L01-FC-isp', front: 'ISP', back: 'Inside Plant — fiber inside a building: data centers, server rooms, horizontal runs to workstations. Governed by NEC Article 770 and TIA-568.' },
+          { id: 'T01-L01-FC-outside-plant', front: 'Outside plant', back: 'Everything that lives outdoors, between buildings, or underground in public right-of-way — aerial cable on poles, buried conduit, manholes, FDH cabinets, drop cables, and all their splice cases and connectors.' },
+          { id: 'T01-L01-FC-inside-plant', front: 'Inside plant', back: 'Fiber inside a building — data center fiber runs, horizontal cabling to desks, patch panels and distribution frames, MDF/IDF rooms. Different codes, different cable ratings, different testing standards from OSP.' },
+          { id: 'T01-L01-FC-demarc', front: 'Demarcation point', back: 'The exact boundary between OSP and ISP — where one team\'s responsibility ends and another\'s begins. In FTTH it\'s typically the ONT at the customer premises. As-built documentation must clearly identify the demarc location.' },
+          { id: 'T01-L01-FC-headend', front: 'Headend', back: 'The provider\'s facility — usually a central office or hub site — where the OLT and other active equipment live. The origin of the fiber signal. All OSP infrastructure runs from here outward to customers.' },
+          { id: 'T01-L01-FC-olt', front: 'OLT', back: 'Optical Line Terminal — the provider\'s active equipment at the headend that originates the downstream signal and receives the upstream signal from all ONTs on that PON. One OLT port serves one feeder fiber (up to 32 or 64 customers via splitters).' },
+          { id: 'T01-L01-FC-ont', front: 'ONT', back: 'Optical Network Terminal — the demarc device at the customer premises that converts the fiber signal to ethernet. Often called the "modem" by customers. Everything from the OLT to the ONT\'s fiber port is OSP.' },
+        ]}
+      />
 
       {/* ── SIDE BY SIDE ────────────────────────────────────────────────── */}
       <SideBySide
