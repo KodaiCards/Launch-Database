@@ -16,7 +16,8 @@ T03 sits at teaching position 4 in the topological sort: T01 → T18 → T02 →
 
 From T01: OSP, ISP, span, attachment, sag, midspan, sheath, buffer tube, drop, headend, OLT, ONT, FDH, SMF, MMF, G.652.D, G.657.A1 (basic mention), HDPE, ribbon, ripcord, armor, messenger, splice case, splice tray, gel seal, fan-out, RUS, NESC, TIA, NEC, FCC, BICSI
 
-From T02: wavelength, attenuation (dB/km), G.652.D (full physics), G.657.A1 (bend-insensitive concept), MFD, macrobend, microbend, dB/dBm, link budget, OSNR, SMF, MMF, OM3/OM4/OM5, OS2, dispersion (CD/PMD), total internal reflection, NA, critical angle
+From T02: wavelength, attenuation (dB/km), G.652.D (full physics), G.657.A1 (bend-insensitive concept), MFD, macrobend, microbend, dB/dBm, link budget, SMF, MMF, OM3/OM4/OM5, OS2, dispersion (CD/PMD), total internal reflection, NA, critical angle
+[NOTE: OSNR removed — RT-B confirmed OSNR does not appear in any T02 lesson. If OSNR is needed for T03 content, T03 must formally introduce it via a lesson's vocabulary_introduced array (candidate: T03.L11 datasheet reading or T03.L12 capstone context).]
 
 **T03 introduces** (first-use in curriculum): loose-tube (as distinct construction type), tight-buffered, ribbon (as distinct construction type), rollable ribbon, ADSS, RUS-listed, ICEA S-87-640, bend radius (installation vs. long-term), pulling tension, flooding compound, water-blocking tape, dry-block, CST (corrugated steel tape), interlocked armor, figure-8 cable, OFNR, OFNP, OSP rating, LSZH, EDS (everyday stress), RTS (rated tensile strength), fill ratio, dark fiber, growth margin
 

@@ -15,7 +15,7 @@ export const meta = {
   order: 1,
   lesson_type: 'foundation',
   prerequisites: ['T01.L01'],
-  vocabulary_introduced: ['total internal reflection', 'core', 'cladding', 'NA', 'critical angle', 'index of refraction'],
+  vocabulary_introduced: ['total internal reflection', 'core', 'cladding', 'NA', 'critical angle', 'index of refraction', 'G.652.D', 'MFD'],
   key_terms: [
     { term: 'total internal reflection', definition: 'The mirror effect that keeps light inside the fiber. When a light ray hits the core-cladding boundary at an angle shallower than the critical angle, 100% of the light reflects back into the core — nothing escapes.' },
     { term: 'core', definition: 'The inner glass cylinder where light signals actually travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection.' },
@@ -23,6 +23,8 @@ export const meta = {
     { term: 'NA', definition: 'Numerical Aperture — the half-angle of the cone of light that the fiber will accept and propagate via total internal reflection, measured from outside the fiber at the launch end. NA = √(n₁² − n₂²). For standard G.652 SMF: NA ≈ 0.12–0.14.' },
     { term: 'critical angle', definition: 'The specific angle at which a light ray hitting the core-cladding boundary runs exactly along the boundary. Any ray shallower than this angle undergoes total internal reflection. For G.652.D fiber: sin(θ_c) = n₂ / n₁ ≈ 0.9966, so θ_c ≈ 85°.' },
     { term: 'index of refraction', definition: 'A number that tells you how much a transparent material bends light. Vacuum = 1.000. Air ≈ 1.000. Glass ≈ 1.46–1.50. In a fiber, the core glass has a slightly higher index than the cladding, which is what causes total internal reflection at the boundary.' },
+    { term: 'G.652.D', definition: 'The ITU-T standard designation for the most common single-mode optical fiber used in OSP networks worldwide. Full name: "Characteristics of a single-mode optical fibre and cable." The ".D" suffix is the current sub-category specifying tight tolerances on chromatic dispersion, low water-peak attenuation (low-water-peak fiber), and MFD. When someone says "standard SMF," they almost always mean G.652.D. (Source: ITU-T G.652.D)' },
+    { term: 'MFD', definition: 'Mode Field Diameter — the effective diameter of the light beam traveling through a single-mode fiber, measured at the 1/e² intensity point. MFD is slightly larger than the physical core diameter because the evanescent field extends a short distance into the cladding. G.652.D specifies MFD at 1310 nm as 8.8–9.6 µm (9.2 ± 0.4 µm nominal). MFD mismatch between two fibers being spliced causes additional splice loss even when both are G.652.D — manufacturing tolerance matters. (Source: ITU-T G.652.D; 7 CFR 1755.902)' },
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
