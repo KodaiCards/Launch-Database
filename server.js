@@ -710,6 +710,12 @@ require('./routes/billing')(app, pool, { requireManagerOrAdmin, invoiceGenerator
 // PORTAL_MODE='splice' serves public/splice.html as its SPA.
 require('./routes/splice')(app, pool, { requireAuth });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// OSP TRAINING PROGRESS API — OSP-RW.2
+// Endpoints under /api/training/*. Schema: migration 0035_training_tables.sql.
+// ─────────────────────────────────────────────────────────────────────────────
+require('./routes/training')(app, pool, { requireAuth });
+
 // ─── Mapbox token endpoint (Splice 5.D.1) ────────────────────────────────────
 // Returns the MAPBOX_TOKEN env var to authenticated clients so it can be used
 // in the browser-side MapLibre transformRequest without hardcoding in HTML.
