@@ -266,6 +266,40 @@ export default function T07L04_MeasuringExistingAttachments() {
         </p>
       </section>
 
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field — OSHA 1910.268 and Climbing Safety</p>
+          <p className="text-slate-300/90">
+            <strong>Book (OSHA 1910.268(g)(1)):</strong> OSHA's telecommunications standard requires
+            100% fall protection for workers climbing utility poles. Any work above 4 feet off the
+            ground — including attachment height measurement by climbing — triggers the fall
+            protection requirement. Workers must use a fall-protection system (body harness + lanyard,
+            or climbing belt properly positioned) before ascending.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> Experienced RUS stakers default to ground-level laser measurement
+            for all routine attachment height measurements, eliminating the climb entirely. When
+            ground-level line-of-sight is available and ±0.1–0.5 ft accuracy is sufficient (as it
+            is for make-ready scoping and design comparison checks), the laser is both faster and
+            safer than climbing. Many field crews go days without climbing a single pole during a
+            staking run.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>When each applies:</strong> Climb (with full fall protection) when you need
+            ±0.1 ft accuracy for legal NESC compliance documentation or when you must physically
+            inspect attachment hardware condition up close. Use ground-level laser when ±0.5 ft
+            accuracy is sufficient — which covers the majority of make-ready scoping and
+            field-vs-design comparison work.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Risk of confusing them:</strong> Treating ground-level laser as "optional"
+            and climbing briefly without tie-off is the most common staking safety violation.
+            "Just a quick check" without a harness is still a fall from height and still an
+            OSHA citation — and a fall from a 30-foot pole is fatal. The laser exists precisely
+            to eliminate that risk.
+          </p>
+        </div>
+      </section>
+
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
       <section data-tier="advanced">
         <h2>Multi-Wire Poles and Crowded Attachment Scenarios</h2>
