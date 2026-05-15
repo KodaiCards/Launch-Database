@@ -38,7 +38,7 @@ export const meta = {
 export const vocabulary_introduced = {
   'attachment fee': 'A one-time charge paid to the pole owner to cover the pole owner\'s cost of administering the attachment application, processing the make-ready estimate, and coordinating access. The attachment fee is separate from the make-ready estimate (MRE) — the MRE is the cost of the physical work; the attachment fee is the administrative cost of the attachment process. Some pole owners bundle both into a single upfront payment; others invoice them separately. Typical attachment fees range from $25 to $200 per pole per application, though regulated utilities may charge more per their published tariff. [confirm year — rates vary by utility and are revised periodically]',
   'annual rental rate': 'The recurring per-pole fee the fiber applicant pays every year to the pole owner for the right to maintain their cable on the pole. The annual rental rate is set by the pole owner\'s tariff and reviewed by the FCC under 47 CFR Part 1. The FCC has established a rate formula based on the carrying cost of the pole — the total invested cost of the pole divided by its useful life, multiplied by a capitalization rate. Typical annual rental rates for telecom attachments range from $10 to $30 per pole per year for rural poles under FCC benchmarks [confirm year — FCC rate orders are revised]. Power utilities often own poles at lower capitalized cost than the open-market rate, so their carrying cost formula yields lower annual rents for internal use.',
-  'FCC rate methodology': 'The standardized formula developed by the FCC for calculating the maximum lawful annual rental rate a pole owner may charge for a cable television or telecommunications attachment. The FCC methodology is derived from recommendations by NECA (National Electrical Contractors Association) and NARUC (National Association of Regulatory Utility Commissioners) and calculates cost as: (pole carrying charge per annum × usable pole space occupied by the attachment) / total usable pole space. The carrying charge includes depreciation, return on investment, tax costs, and administrative costs. FCC 18-111 (2018) reaffirmed this methodology and established the OTMR framework. The actual formula is implemented in utility tariffs — each pole owner publishes their own tariff rates derived from this methodology.',
+  'FCC rate methodology': 'The standardized formula developed by the FCC for calculating the maximum lawful annual rental rate a pole owner may charge for a cable television or telecommunications attachment. The FCC methodology is derived from recommendations by NECA (National Exchange Carrier Association) and NARUC (National Association of Regulatory Utility Commissioners) and calculates cost as: (pole carrying charge per annum × usable pole space occupied by the attachment) / total usable pole space. The carrying charge includes depreciation, return on investment, tax costs, and administrative costs. FCC 18-111 (2018) reaffirmed this methodology and established the OTMR framework. The actual formula is implemented in utility tariffs — each pole owner publishes their own tariff rates derived from this methodology.',
   'tariff': 'A formal, publicly filed document from a utility or pole owner that lists all regulated rates, terms, and conditions for pole attachments and other services. Tariffs are filed with state public utility commissions (PUCs) or the FCC depending on jurisdiction. A tariff is legally binding — the pole owner must charge the tariff rate, no more and no less (absent a negotiated agreement). When you want to know what a pole owner charges for attachments, annual rents, or make-ready work, you request their tariff or look it up in the PUC\'s public filing database. Tariff language that references "NECA methodology" or "NARUC cost methodology" is citing the FCC rate framework.',
   'ILEC tariff book': 'The published tariff document from an Incumbent Local Exchange Carrier (ILEC) — the legacy telephone company that owns the majority of poles in most geographic areas (e.g., AT&T, Lumen/CenturyLink, Frontier, consolidated telcos). An ILEC tariff book contains attachment rates for all services the ILEC provides, including pole attachments. For fiber applicants, the relevant pages are the "pole attachment" or "joint-use" sections, which list: annual rental per pole, make-ready cost methodology, attachment application fees, and dispute resolution procedures. The ILEC tariff book is the primary reference document when estimating annual recurring costs for an aerial fiber project.',
 };
@@ -78,7 +78,7 @@ export default function T08L08_AttachmentFeesAndAnnualRents() {
         </p>
         <p className="mt-2">
           The FCC developed a standardized formula — informed by industry groups called NECA
-          (National Electrical Contractors Association) and NARUC (National Association of Regulatory
+          (National Exchange Carrier Association) and NARUC (National Association of Regulatory
           Utility Commissioners) — to calculate the maximum lawful annual rental. This lesson walks
           you through that formula so you can check whether a pole owner's rate is in the right
           ballpark, and calculate your project's annual pole rental cost.
@@ -101,7 +101,7 @@ export default function T08L08_AttachmentFeesAndAnnualRents() {
             {
               id: 'T08-L08-fc-fcc-method',
               front: 'What is the FCC rate methodology, and who informed it?',
-              back: 'The standardized FCC formula for calculating the maximum lawful annual rental rate for cable or telecom pole attachments. Developed with input from NECA (National Electrical Contractors Association) and NARUC (National Association of Regulatory Utility Commissioners). Implemented in each pole owner\'s tariff. FCC 18-111 (2018) reaffirmed this methodology alongside the OTMR framework.',
+              back: 'The standardized FCC formula for calculating the maximum lawful annual rental rate for cable or telecom pole attachments. Developed with input from NECA (National Exchange Carrier Association) and NARUC (National Association of Regulatory Utility Commissioners). Implemented in each pole owner\'s tariff. FCC 18-111 (2018) reaffirmed this methodology alongside the OTMR framework.',
             },
             {
               id: 'T08-L08-fc-tariff',
@@ -317,12 +317,12 @@ export default function T08L08_AttachmentFeesAndAnnualRents() {
             prompt: 'The FCC rate methodology for annual pole rental is based on which two industry groups\' cost studies?',
             choices: [
               'BICSI and FOA',
-              'NECA (National Electrical Contractors Association) and NARUC (National Association of Regulatory Utility Commissioners)',
+              'NECA (National Exchange Carrier Association) and NARUC (National Association of Regulatory Utility Commissioners)',
               'RUS and NESC',
               'FCC and state PUCs independently — no industry groups involved',
             ],
             answerIndex: 1,
-            explanation: 'The FCC rate methodology is derived from cost studies and recommendations by NECA (National Electrical Contractors Association) and NARUC (National Association of Regulatory Utility Commissioners). Both organizations published cost methodology data that informed the FCC\'s formula for maximum lawful annual attachment rates. FCC 18-111 reaffirmed this methodology. (T08.L08 — FCC rate methodology sources.)',
+            explanation: 'The FCC rate methodology is derived from cost studies and recommendations by NECA (National Exchange Carrier Association) and NARUC (National Association of Regulatory Utility Commissioners). Both organizations published cost methodology data that informed the FCC\'s formula for maximum lawful annual attachment rates. FCC 18-111 reaffirmed this methodology. (T08.L08 — FCC rate methodology sources.)',
           },
           {
             id: 'T08-L08-Q3',

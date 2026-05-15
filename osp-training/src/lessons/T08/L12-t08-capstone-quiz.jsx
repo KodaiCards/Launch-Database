@@ -236,12 +236,12 @@ export default function T08L12_CapstoneQuiz() {
             prompt: 'The FCC rate methodology for pole attachment annual rental was developed with input from which two industry organizations?',
             choices: [
               'BICSI and FOA',
-              'NECA (National Electrical Contractors Association) and NARUC (National Association of Regulatory Utility Commissioners)',
+              'NECA (National Exchange Carrier Association) and NARUC (National Association of Regulatory Utility Commissioners)',
               'RUS and NESC standards committee',
               'FCC alone — no industry groups contributed to the formula',
             ],
             answerIndex: 1,
-            explanation: 'NECA (National Electrical Contractors Association) and NARUC (National Association of Regulatory Utility Commissioners) published the cost methodology data that informed the FCC\'s formula for maximum lawful annual attachment rates. Their rate studies provide the carrying cost components (depreciation, return on investment, administrative costs, usable space fraction) that the FCC formula implements. T08.L08.',
+            explanation: 'NECA (National Exchange Carrier Association) and NARUC (National Association of Regulatory Utility Commissioners) published the cost methodology data that informed the FCC\'s formula for maximum lawful annual attachment rates. Their rate studies provide the carrying cost components (depreciation, return on investment, administrative costs, usable space fraction) that the FCC formula implements. T08.L08.',
           },
           // L09: application workflow
           {
