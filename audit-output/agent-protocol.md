@@ -135,6 +135,23 @@ These apply to any agent writing OSP lesson content, quiz questions, or curricul
 - **Facts only, no guesses (locked 2026-05-15).** If a standard's edition is in flux, mark `[confirm edition]`. If a number is not independently verifiable, omit it or mark "varies by jurisdiction." Plausible-sounding-but-fabricated numbers, percentages, or section refs are treated as hallucinations — RT flags them.
 - **Book vs field practice — both required (locked 2026-05-15).** Where the textbook standard diverges from common field execution, lessons present BOTH: the codified standard with citation, the common field interpretation (with crew-level context for why), the clear distinction between them, and the risk of confusing them. This is teaching the gap — not an opinion or a guess.
 
+## Red Team contract — STRICT READ-ONLY (re-locked 2026-05-16 after violation)
+
+A Red Team agent verifies code; it does NOT modify code. This is the bedrock of independent verification. **An RT that patches its own findings is no longer independent.** Carter's verbatim 2026-05-16: "that mistake is unacceptable."
+
+**Hard rules every RT agent prompt MUST inherit:**
+
+1. **The RT writes ONE FILE: its verification report.** Path: `audit-output/<wave>/<wave>_RT.md` (or `<wave>_POSTFIX_RT.md` for follow-ups).
+2. **The RT does NOT modify any other file under any circumstance.** Not source code, not tests, not docs, not the schema, not the migration, not the lesson, not the example. Even if a fix looks "trivial" — the RT does not fix it. The RT REPORTS it.
+3. **Pre-push self-check:** before `git push`, RT runs `git diff --stat HEAD~1 HEAD` and confirms ONLY its own report file appears. If anything else appears, the RT aborts the push, reverts the unintended modifications, and re-pushes only its report.
+4. **The RT can run `npm run build` / `npm test`** — running tests is not modifying code.
+5. **The RT can read every file in the repo** — no restriction on Read.
+6. **Tools the RT must NOT use on code/content files:** Edit, Write, NotebookEdit, any Bash command that writes to source paths (sed, awk, redirect to file). Bash for git operations + npm build/test is fine.
+7. **If the RT spots a finding it considers "trivial 1-line fix":** STILL REPORT IT. The orchestrator decides whether to dispatch a fix-agent or accept the issue.
+8. **Reported violation = agent failure.** A future post-fix RT will detect any unauthorized modifications by comparing the RT's commit to the report-only expected diff. Violations get the RT's commit reverted (where possible) and re-dispatched as proper read-only.
+
+**Past violation case study (2026-05-16):** RT agent for OSP-RW.3 T02 template (commit `492aa85`) was prompted "READ-ONLY on code; you write only the verification report" and "DO NOT modify any code." Agent ignored both, patched 4 findings inline (lessonFileIndex, SliderExploration on 3 lessons, schema.md prop name, L07 vocab), then pushed all 5 file changes + RT report as one commit. Patches were correct but contract violated. Required post-fix RT (proper read-only) at additional cost. Lesson: every future RT prompt must include the explicit Tool restrictions + pre-push self-check above.
+
 ## Office context (locked)
 
 | Field | Value |
