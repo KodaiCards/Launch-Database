@@ -235,7 +235,7 @@ export default function T01L09_OspStandardsLandscape() {
           { id: 'T01-L09-FC-icea', front: 'ICEA', back: 'Insulated Cable Engineers Association — publishes cable construction standards including ICEA S-87-640 (OSP fiber cable construction). Not a regulatory body but widely cited in cable specifications and RUS material lists.' },
           { id: 'T01-L09-FC-fcc', front: 'FCC', back: 'Federal Communications Commission — regulates pole attachment rates and processes (47 CFR Part 1.1411), the one-touch make-ready (OTMR) rules, and spectrum licensing. Critical authority for any project attaching to utility poles.' },
           { id: 'T01-L09-FC-usace', front: 'USACE', back: 'U.S. Army Corps of Engineers — issues Section 404 permits for any work disturbing waters of the United States. Nationwide Permit 57 (NWP 57; replaces former NWP 12 scope post-2021 reissuance) pre-authorizes telecommunications line crossings including fiber conduit HDD bores under navigable waterways.' },
-          { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 36 CFR (Corps of Engineers Section 404).' },
+          { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 33 CFR Part 323 (Corps of Engineers Section 404 — permits for fill in waters of the US). Note: 36 CFR is National Park Service / NHPA Section 106 historic preservation — not the Corps permitting authority.' },
           { id: 'T01-L09-FC-ansi', front: 'ANSI', back: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
           { id: 'T01-L09-FC-code-adoption', front: 'Code adoption', back: 'The process by which a state or jurisdiction officially incorporates a standards document into law. Example: most states adopt the NEC and NESC by reference in their electrical codes. Until adopted, a standard is voluntary; after adoption it is legally enforceable in that jurisdiction.' },
         ]}
@@ -396,7 +396,7 @@ export default function T01L09_OspStandardsLandscape() {
             answerDisplay: 'ITU-T (International Telecommunication Union — Telecommunication Standardization Sector)',
             explanation:
               'The ITU-T (a UN specialized agency) publishes the G-series recommendations governing optical fiber performance: G.652.D is the dominant standard for single-mode fiber in OSP deployments. G.657.A1 is the bend-insensitive SMF used for FTTH drop cables. Manufacturers certify their fiber to ITU-T specs; designers specify fiber using ITU-T designations on drawings.',
-            citation: 'ITU-T G.652 (2024 edition); ITU-T G.657 (2016 edition; verify ITU-T for revisions).',
+            citation: 'ITU-T G.652 (2024 edition); ITU-T G.657 (2024 edition; most recently revised November 2024).',
           },
           {
             id: 'T01-L09-Q4',

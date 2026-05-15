@@ -207,7 +207,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">BICSI</td>
               <td className="px-3 py-2">Building Industry Consulting Service International</td>
-              <td className="px-3 py-2">Professional association publishing OSP + ISP design standards; administers RCDD, CFOS, CFOT certifications. The OSPDRM (Outside Plant Design Reference Manual) is a primary design reference.</td>
+              <td className="px-3 py-2">Professional association publishing OSP + ISP design standards; administers RCDD, OSP Designer, ITS Installer, and ITS Technician certifications. The OSPDRM (Outside Plant Design Reference Manual) is a primary design reference. CFOS and CFOT are FOA credentials, not BICSI.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">FOA</td>
