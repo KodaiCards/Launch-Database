@@ -361,26 +361,27 @@ export default function T01L08_KeyAcronymsFieldReference() {
 
       {/* ── FLASHCARDS ───────────────────────────────────────────────────── */}
       <Flashcard
+        deckId="T01-L08"
         cards={[
-          { front: 'OTDR', back: 'Optical Time-Domain Reflectometer — sends a light pulse into fiber, measures reflections to locate and measure events (splices, bends, breaks). Tier 2 test per TIA-568.' },
-          { front: 'OLTS', back: 'Optical Loss Test Set — measures end-to-end insertion loss using a light source and power meter. Tier 1 test per TIA-568. Faster than OTDR but doesn\'t locate events.' },
-          { front: 'MGN', back: 'Multi-Grounded Neutral — neutral wire on rural electric distribution, grounded at every pole. Fiber messengers bonded to MGN for lightning protection in RUS areas.' },
-          { front: 'IBT', back: 'Insulated Bonding Transformer — bonds messenger to MGN while isolating from induced AC voltage. Used at intervals on aerial runs.' },
-          { front: 'GES', back: 'Grounding Electrode System — combination of ground rods, conductors, and connections providing a low-resistance path to earth. Governed by NEC Article 250.' },
-          { front: 'NESC', back: 'National Electrical Safety Code (IEEE C2) — governs aerial utility line clearances, loading, grades of construction. The code for aerial OSP.' },
-          { front: 'NEC', back: 'National Electrical Code (NFPA 70) — governs electrical installations including grounding, bonding, cable entries into buildings. Different from NESC.' },
-          { front: 'AHJ', back: 'Authority Having Jurisdiction — the regulatory body enforcing codes in a specific location. Could be fire marshal, state utility commission, building department, or Corps of Engineers.' },
-          { front: 'ROW', back: 'Right-of-Way — the legal corridor where infrastructure can be installed. Fiber must stay within permitted ROW boundaries.' },
-          { front: 'HDD', back: 'Horizontal Directional Drilling — boring conduit underground horizontally without open-cut trenching. Used under roads, rivers, and other obstructions.' },
-          { front: 'LOTO', back: 'Lockout/Tagout — OSHA 1910.147 procedure for de-energizing and locking out equipment before working near it. Required near energized conductors.' },
-          { front: 'ADSS', back: 'All-Dielectric Self-Supporting — aerial fiber cable with no metallic components; strength members built in; no separate messenger or grounding required.' },
-          { front: 'NEPA', back: 'National Environmental Policy Act — requires environmental review of federally funded projects. RUS-funded fiber projects require NEPA CE (Categorical Exclusion) compliance.' },
-          { front: 'SMF', back: 'Single-Mode Fiber — 9 µm core, one propagation mode, used in all OSP long-distance runs. ITU-T G.652.D is the dominant OSP SMF spec.' },
-          { front: 'FDH', back: 'Fiber Distribution Hub — where feeder fiber connects to distribution cables via passive optical splitters. The junction of an FTTH network.' },
-          { front: 'GPON', back: 'Gigabit Passive Optical Network — the most common FTTH standard in North America. One OLT port serves up to 32 or 64 customers via passive splitters. Up to 2.5 Gb/s downstream shared.' },
-          { front: 'MUTCD', back: 'Manual on Uniform Traffic Control Devices (FHWA) — governs work zone traffic control: signs, cones, flaggers, lane closures. Required when construction affects public roads.' },
-          { front: 'RCDD', back: 'Registered Communications Distribution Designer — BICSI credential for ISP/data-center designers. Covers TIA-568/569/606/607 content.' },
-          { front: 'CFOT', back: 'Certified Fiber Optic Technician — FOA entry-level fiber credential. Written + hands-on exam at FOA-approved school.' },
+          { id: 'T01-L08-FC-otdr', front: 'OTDR', back: 'Optical Time-Domain Reflectometer — sends a light pulse into fiber, measures reflections to locate and measure events (splices, bends, breaks). Tier 2 test per TIA-568.' },
+          { id: 'T01-L08-FC-olts', front: 'OLTS', back: 'Optical Loss Test Set — measures end-to-end insertion loss using a light source and power meter. Tier 1 test per TIA-568. Faster than OTDR but doesn\'t locate events.' },
+          { id: 'T01-L08-FC-mgn', front: 'MGN', back: 'Multi-Grounded Neutral — neutral wire on rural electric distribution, grounded at every pole. Fiber messengers bonded to MGN for lightning protection in RUS areas.' },
+          { id: 'T01-L08-FC-ibt', front: 'IBT', back: 'Insulated Bonding Transformer — bonds messenger to MGN while isolating from induced AC voltage. Used at intervals on aerial runs.' },
+          { id: 'T01-L08-FC-ges', front: 'GES', back: 'Grounding Electrode System — combination of ground rods, conductors, and connections providing a low-resistance path to earth. Governed by NEC Article 250.' },
+          { id: 'T01-L08-FC-nesc', front: 'NESC', back: 'National Electrical Safety Code (IEEE C2) — governs aerial utility line clearances, loading, grades of construction. The code for aerial OSP.' },
+          { id: 'T01-L08-FC-nec', front: 'NEC', back: 'National Electrical Code (NFPA 70) — governs electrical installations including grounding, bonding, cable entries into buildings. Different from NESC.' },
+          { id: 'T01-L08-FC-ahj', front: 'AHJ', back: 'Authority Having Jurisdiction — the regulatory body enforcing codes in a specific location. Could be fire marshal, state utility commission, building department, or Corps of Engineers.' },
+          { id: 'T01-L08-FC-row', front: 'ROW', back: 'Right-of-Way — the legal corridor where infrastructure can be installed. Fiber must stay within permitted ROW boundaries.' },
+          { id: 'T01-L08-FC-hdd', front: 'HDD', back: 'Horizontal Directional Drilling — boring conduit underground horizontally without open-cut trenching. Used under roads, rivers, and other obstructions.' },
+          { id: 'T01-L08-FC-loto', front: 'LOTO', back: 'Lockout/Tagout — OSHA 1910.147 procedure for de-energizing and locking out equipment before working near it. Required near energized conductors.' },
+          { id: 'T01-L08-FC-adss', front: 'ADSS', back: 'All-Dielectric Self-Supporting — aerial fiber cable with no metallic components; strength members built in; no separate messenger or grounding required.' },
+          { id: 'T01-L08-FC-nepa', front: 'NEPA', back: 'National Environmental Policy Act — requires environmental review of federally funded projects. RUS-funded fiber projects require NEPA CE (Categorical Exclusion) compliance.' },
+          { id: 'T01-L08-FC-smf', front: 'SMF', back: 'Single-Mode Fiber — 9 µm core, one propagation mode, used in all OSP long-distance runs. ITU-T G.652.D is the dominant OSP SMF spec.' },
+          { id: 'T01-L08-FC-fdh', front: 'FDH', back: 'Fiber Distribution Hub — where feeder fiber connects to distribution cables via passive optical splitters. The junction of an FTTH network.' },
+          { id: 'T01-L08-FC-gpon', front: 'GPON', back: 'Gigabit Passive Optical Network — the most common FTTH standard in North America. One OLT port serves up to 32 or 64 customers via passive splitters. Up to 2.5 Gb/s downstream shared.' },
+          { id: 'T01-L08-FC-mutcd', front: 'MUTCD', back: 'Manual on Uniform Traffic Control Devices (FHWA) — governs work zone traffic control: signs, cones, flaggers, lane closures. Required when construction affects public roads.' },
+          { id: 'T01-L08-FC-rcdd', front: 'RCDD', back: 'Registered Communications Distribution Designer — BICSI credential for ISP/data-center designers. Covers TIA-568/569/606/607 content.' },
+          { id: 'T01-L08-FC-cfot', front: 'CFOT', back: 'Certified Fiber Optic Technician — FOA entry-level fiber credential. Written + hands-on exam at FOA-approved school.' },
         ]}
       />
 
