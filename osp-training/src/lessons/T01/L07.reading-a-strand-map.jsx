@@ -192,7 +192,7 @@ export default function T01L07_ReadingAStrandMap() {
           10 × log₁₀(32) = 10 × 1.505 = 15.05 dB; production tolerance and connector loss
           typically add 0.5–1.5 dB, pushing typical field values to 15.5–16.5 dB with
           worst-case at 17 dB per manufacturer datasheets). This split loss is a major input to the
-          link budget — the OLT must launch enough power to reach every ONT through 15.5 dB
+          link budget — the OLT must launch enough power to reach every ONT through up to 17 dB
           of splitter loss plus all the fiber and connector losses along the route.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">

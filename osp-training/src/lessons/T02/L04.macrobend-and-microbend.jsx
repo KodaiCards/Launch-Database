@@ -142,12 +142,12 @@ export default function T02L04_MacrobendAndMicrobend() {
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2" rowSpan={2}>G.657.A1 (bend-insensitive)</td>
-                <td className="px-3 py-2">10 turns, 10 mm radius</td>
+                <td className="px-3 py-2">1 turn, 10 mm radius</td>
                 <td className="px-3 py-2">≤ 0.75 dB</td>
                 <td className="px-3 py-2">≤ 1.5 dB</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2">1 turn, 15 mm radius</td>
+                <td className="px-3 py-2">10 turns, 15 mm radius</td>
                 <td className="px-3 py-2">≤ 0.25 dB</td>
                 <td className="px-3 py-2">≤ 1.0 dB</td>
               </tr>
@@ -162,9 +162,11 @@ export default function T02L04_MacrobendAndMicrobend() {
         </div>
         <p className="text-xs text-slate-400 mt-2">
           Source: ITU-T G.652 (2024 edition — [confirm edition]) and ITU-T G.657 (2016 — [confirm
-          current edition]). Test conditions are per the respective standard. The G.657.A1 specification
-          includes two test conditions: the tighter 10-turn/10 mm test is commonly confused with the
-          1-turn/15 mm condition — they are separate tests at different bend severities.
+          current edition]). Test conditions are per the respective standard.
+          <strong> Common confusion:</strong> the "10 turns at 10 mm radius" combination is sometimes
+          cited, but it is not a published G.657.A1 test condition. The two real conditions are listed
+          above: 1 turn at 10 mm radius (tight bend, single wrap) and 10 turns at 15 mm radius
+          (repeated bending, wider radius).
         </p>
 
         <h3 className="mt-5 font-semibold">Bend radius in practice — cable vs. fiber</h3>
