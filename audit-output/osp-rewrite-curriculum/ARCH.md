@@ -52,7 +52,7 @@ Option C's only cost is migration complexity. This is manageable: JSX prose + in
 | 10 | T07 | Staking | Walking the design on the ground: stake placement, call-out conventions, photographing/coding pole tags, marking proposed attachment points, capturing field measurements for make-ready packets. | 10 | T01, T04, T05, T06, T18 | RUS Form 740; industry practice | general |
 | 11 | T08 | Make-Ready & Pole Attachment | OTMR vs. multi-party, the 15-day FCC clock, simple-vs-complex determinations, transfer/reframe/replacement, reading a make-ready estimate, paying attachment fees, the as-built loop back to the pole owner. | 12 | T01, T05, T07 | 47 CFR 1.1411 (OTMR); FCC 18-111; NESC §23 | general |
 | 12 | T10 | OSP Construction | Call-811, HDD/trench/plow execution, conduit fill and pull tension, slack loops, manhole/handhole installation, restoration of pavement and sod, daily field reporting, traffic control integration. | 12 | T01, T06, T07, T08, T18 | RUS 1751F-635, 1751F-643; CGA Best Practices v19 | general |
-| 13 | T11 | Splicing | Fusion vs. mechanical, core vs. cladding alignment, ribbon/mass splicing, splice-loss budgets, splice-case types, gel-sealing, prep tools, cleave quality, splicer maintenance, TIA-598 color codes and color-blind crew patterns. | 15 | T01, T02, T03, T04, T10 | TIA-455; ITU-T L.400; FOA CFOS-S KSAs; RUS 1753F-401; TIA-598-D | general |
+| 13 | T11 | Splicing | Fusion vs. mechanical, core vs. cladding alignment, ribbon/mass splicing, splice-loss budgets, splice-case types, gel-sealing, prep tools, cleave quality, splicer maintenance, TIA-598 color codes and color-blind crew patterns. | 15 | T01, T02, T03, T10 | TIA-455; ITU-T L.400; FOA CFOS-S KSAs; RUS 1753F-401; TIA-598-D | general |
 | 14 | T12 | Testing — OLTS, OTDR, Inspection | Tier-1 (OLTS) vs. Tier-2 (OTDR), pulse-width selection, dead zones, launch/receive cables, bidirectional averaging, end-face inspection (IEC 61300-3-35), event tables, acceptance criteria, dual-wavelength macrobend detection. | 15 | T01, T02, T11 | TIA-568.3-D Annex; IEC 61280-4-2; IEC 61300-3-35; FOA CFOS-T | general |
 | 15 | T13 | Inspection & Quality Assurance | Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow. | 10 | T01, T05, T10, T12, T18 | RUS Form 219; industry QA practice | general |
 | 16 | T15 | Restoration & Outage Response | Fault-locate with OTDR, splice-trailer emergency response, civil-crew coordination, temporary vs. permanent repair, Methods of Procedure (MOPs), customer communications during outages. | 10 | T01, T11, T12, T13 | FOA Restoration Guide; industry practice | general |
@@ -63,9 +63,9 @@ Option C's only cost is migration complexity. This is manageable: JSX prose + in
 | 21 | C03 | Data Center Standards | TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope, forthcoming standards landscape. | 8 | C01, C02 | TIA-942-C; Uptime Tier; BICSI 002-2024 | cert |
 | 22 | C04 | Certification Practice Exam Bank | OSP Designer + RCDD + CFOT + CFOS/O exam strategy, mock exams (100Q each), domain-level scoring, remediation links, ethics of exam prep. Expanded from existing M12's 5 sections. | 12 | C01–C03 for RCDD; T01–T17 for OSP Designer; T01–T02+T11+T12 for CFOT | BICSI OSP/RCDD blueprints; FOA CFOS exam structures | cert |
 
-**General-track total: 18 topics, ~182 lessons (10-15 per topic, per column above).**
+**General-track total: 18 topics, ~209 lessons (10-15 per topic, per column above).**
 **Cert-prep total: 4 topics, ~36 lessons.**
-**Grand total: ~218 lessons.** Within the 200-260 range R-A projected.
+**Grand total: ~245 lessons.** Within the 200-260 range R-A projected.
 
 ---
 
@@ -111,7 +111,7 @@ T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → T14 → T07 → 
 | T09 | NEPA, CE C-8, NHPA §106, SHPO, THPO, ESA, IPaC, NWP 12, ROW, easement, AHJ, encroachment permit | T01, T04 vocab |
 | T05 | NESC, Rule 232, Rule 250, loading district (Light/Medium/Heavy/Extreme), grade of construction, sag-tension, joint-use, pole loading, ice loading, ADSS sag | T01, T02, T03, T04 vocab |
 | T06 | HDD, open-cut, plowing, innerduct, microduct, manhole, handhole, vault, conduit fill (40% rule), pull tension | T01, T03, T04 vocab |
-| T14 | MGN, IBT, GES, bond, ground rod, ground resistance, NEC 250.52, surge arrester, primary protector, stray voltage | T01, T02, T05, T06 vocab |
+| T14 | MGN, IBT, GES, bond, ground rod, ground resistance, NEC 250.52, surge arrester, primary protector, stray voltage | T01, T02, T05, T06, T18 vocab |
 | T07 | stake, station, P.I. (point of intersection), centerline, offset, RUS Form 740, pole tag, call-out, plan-and-profile | T01, T04, T05, T06 vocab |
 | T08 | OTMR, simple attachment, complex attachment, transfer, reframe, replacement, FCC 15-day clock, attachment fee, make-ready estimate | T01, T05, T07 vocab |
 | T10 | Call-811, locate ticket, daylight, sleeve, slack loop, restoration, daily field report, HDD pilot bore, backfill, compaction | T01, T06, T07, T08, T18 vocab |
@@ -137,7 +137,7 @@ Resolution: T11 (Splicing) L01 opens with "Why we color-code fibers" (position c
 
 ## Section 4: Per-Topic Lesson List
 
-Full 218-lesson list by topic. Capstone quizzes shown at end of each topic.
+Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 
 ### T01 — Fundamentals & Vocabulary (10 lessons)
 | ID | Title | Type | Key vocab added | Time (min) | Interactivity | Source migration |
@@ -434,7 +434,7 @@ Full manifest lives in the per-lesson rows in Section 4. Summary by migration ef
 |---|---|---|
 | Verbatim / minor reformat | ~52 | JSX section migrates as-is into per-lesson file (M04 §4.1-4.8, M08 §8.1-8.8, M09 §9.1-9.8, M11 §11.1-11.8, M05 full, M06 full, M10 full, M12 §12.1-12.5) |
 | Prose surgery (pitch + markdown depth inject) | ~40 | JSX pitch-quality base + markdown content depth injection (M01 §1.2-1.6, M02 §2.1-2.9, M03 §3.1-3.7, M07 §7.1-7.8) |
-| Re-author from brief | ~126 | Net-new lessons for new topics (T01, T04, T07, T13, T14, T15, T18) + expansion lessons across T05, T06, T10, T11, T12, T16, T17 |
+| Re-author from brief | ~153 | Net-new lessons for new topics (T01, T04, T07, T13, T14, T15, T18) + expansion lessons across T05, T06, T10, T11, T12, T16, T17 |
 
 ---
 
@@ -533,13 +533,13 @@ Playwright spec covers splash → course → lesson → all 4 interactivity type
 
 ---
 
-## Section 9: Open Questions for Carter Sign-Off
+## Section 9: Locked Decisions (no open questions)
 
-1. **Topic count (22) — right level of depth?** R-A's 18 general + 4 cert is a larger curriculum than the existing 12 modules. This is the result of filling the identified gaps (Fundamentals, Staking, Make-Ready, Inspection, Restoration, Grounding, Route Survey, Safety — all genuinely missing). If Carter wants to compress, the most natural candidates to fold into existing topics are T07 (Staking → absorb into T05/T06) and T04 (Route Survey → absorb into T09/T05). Recommend keeping them separate — both are real job roles Carter named explicitly. Confirm?
+All scope decisions were locked by the orchestrator before architect dispatch and confirmed by RT verification. The architecture executes against these locks. No outstanding decisions for Carter on these items — see CLAUDE.md §2 for the full lock list.
 
-2. **RCDD prep scope — OSP-relevant chapters only?** CLAUDE.md §2 says "RCDD prep focuses on OSP-relevant chapters with explicit sign-posts to omitted areas." This ARCH proposes a 15-lesson RCDD track that covers all TDMM chapters (with varying depth), rather than OSP-relevant-only. R-B's blueprint shows RCDD is 63% "Design ICT Solutions" which requires the full TDMM scope. A narrower OSP-only RCDD track would get candidates halfway to certification. Recommend the full 15-lesson track with sign-posts to scope limits. Does Carter want the full scope or OSP-relevant-subset with disclosure?
-
-3. **CFOT as a separate cert track?** R-B recommends splitting CFOT (base) from CFOS/O (specialist) because they have different prereq gates and different audience levels. C04 as designed includes both plus OSP Designer and RCDD. If Carter wants CFOT as a standalone cert track (separate C05 topic), the lesson count grows by ~6. Current design folds CFOT lessons into C04 and gates CFOS/O on CFOT completion within the same topic. Confirm folded vs. separate?
+- **Topic count: 22 topics, locked.** T04 (Route Survey) and T07 (Staking) remain as separate topics. No compression.
+- **RCDD prep scope: OSP-relevant chapters + explicit sign-posts to omitted chapters, locked.** C01 + C02 implement this: existing M05 (Networking Blueprints) + M06 (RCDD Core), both OSP-relevant content, both A-grade per R-C. The full-TDMM-15-lesson framing is not the implemented design and is not on the table.
+- **CFOT folded into C04, locked.** CFOT lessons are included in C04 (Certification Practice Exam Bank) and CFOS/O is gated on CFOT completion within C04. No separate C05 topic.
 
 ---
 
