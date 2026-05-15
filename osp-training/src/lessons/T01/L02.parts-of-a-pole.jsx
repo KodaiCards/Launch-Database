@@ -315,7 +315,7 @@ export default function T01L02_PartsOfAPole() {
             label: 'Midspan / sag',
             type: 'click',
             explanation:
-              'At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC requires minimum clearances above roads (15.5 ft for telecom over traffic lanes), sidewalks, and other surfaces. A cable attached at 22 feet with 4 feet of sag gives 18 feet of ground clearance at midspan.',
+              'At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC Rule 232 / Table 232-1 requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify with the adopted edition before design lock). A cable attached at 22 feet with 4 feet of sag gives 18 feet of ground clearance at midspan.',
           },
         ]}
       />
@@ -345,7 +345,7 @@ export default function T01L02_PartsOfAPole() {
             id: 'T01-L02-Q2',
             type: 'mc',
             prompt:
-              'A cable is attached to a pole at 24 feet above the ground. At midspan, the cable sags to 20 feet above the ground. The midspan clearance above a public road at that location must be at least 15.5 feet for telecom under traffic. Does this installation pass?',
+              'A cable is attached to a pole at 24 feet above the ground. At midspan, the cable sags to 20 feet above the ground. The midspan clearance above a public road at that location must be at least approximately 15.5 feet for telecom under traffic lanes per NESC Rule 232 / Table 232-1 (values may update each 5-year NESC revision; verify with the current adopted edition before design lock). Does this installation pass?',
             choices: [
               'No — the attachment height of 24 feet is below the minimum 25-foot rule',
               'Yes — 20 feet of midspan clearance exceeds the 15.5-foot minimum',
@@ -354,8 +354,8 @@ export default function T01L02_PartsOfAPole() {
             ],
             answerIndex: 1,
             explanation:
-              'Ground clearance is measured at midspan — the lowest point — not at the attachment point. The 20-foot midspan clearance exceeds the NESC minimum of 15.5 feet for telecom cable over a traffic lane, so this installation passes on clearance. (Other factors like span length and loading district also affect the full design calculation.)',
-            citation: 'NESC C2-2023 Table 232-1 (clearances over roads).',
+              'Ground clearance is measured at midspan — the lowest point — not at the attachment point. The 20-foot midspan clearance exceeds the NESC minimum of approximately 15.5 feet for telecom cable over a traffic lane (NESC Rule 232 / Table 232-1; verify exact value against the current adopted NESC edition before design lock), so this installation passes on clearance. (Other factors like span length and loading district also affect the full design calculation.)',
+            citation: 'NESC C2-2023 Rule 232 / Table 232-1 (clearances over roads; values subject to revision each 5-year NESC cycle).',
             fieldNote:
               'Crews often say "cable is at 22 feet" meaning attachment height. Always ask: "Is that attachment height or midspan clearance?" They are different numbers. A 4-foot sag on a 22-foot attachment = 18 feet midspan — different answer for your compliance check.',
           },

@@ -396,7 +396,7 @@ export default function T01L09_OspStandardsLandscape() {
             answerDisplay: 'ITU-T (International Telecommunication Union — Telecommunication Standardization Sector)',
             explanation:
               'The ITU-T (a UN specialized agency) publishes the G-series recommendations governing optical fiber performance: G.652.D is the dominant standard for single-mode fiber in OSP deployments. G.657.A1 is the bend-insensitive SMF used for FTTH drop cables. Manufacturers certify their fiber to ITU-T specs; designers specify fiber using ITU-T designations on drawings.',
-            citation: 'ITU-T G.652 (2024 edition); ITU-T G.657 [confirm edition].',
+            citation: 'ITU-T G.652 (2024 edition); ITU-T G.657 (2016 edition; verify ITU-T for revisions).',
           },
           {
             id: 'T01-L09-Q4',

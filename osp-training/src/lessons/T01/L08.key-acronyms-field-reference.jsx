@@ -49,7 +49,6 @@ export const meta = {
     'HDPE',
     'LOTO',
     'PPE',
-    'PPG',
     'NEPA',
     'NHPA',
     'ESA',
@@ -280,11 +279,6 @@ export default function T01L08_KeyAcronymsFieldReference() {
               <td className="px-3 py-2 font-mono">PPE</td>
               <td className="px-3 py-2">Personal Protective Equipment</td>
               <td className="px-3 py-2">Hard hat, safety glasses, gloves, high-visibility vest, steel-toed boots — the baseline for any field work. Additional PPE (face shield, FR clothing, dielectric gloves) required for specific hazard exposures.</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">PPG</td>
-              <td className="px-3 py-2">Protective Positioning and Grounding (glove class)</td>
-              <td className="px-3 py-2">In OSP context, PPG most commonly refers to rubber insulating glove classes (Class 00 through Class 4). Class is rated by maximum use voltage. Required for any work within approach distance of energized conductors.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">MUTCD</td>
