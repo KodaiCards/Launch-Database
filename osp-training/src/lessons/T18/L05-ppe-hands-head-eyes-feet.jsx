@@ -301,7 +301,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm text-slate-300/90">
           <li><strong>Class 1:</strong> Minimum background material; off-road environments with low vehicle traffic risk. NOT sufficient for roadway work.</li>
           <li><strong>Class 2:</strong> Minimum for daytime roadway work; also meets MUTCD Part 6 requirements for workers in temporary traffic control zones. This is the floor for any OSP job on a public road.</li>
-          <li><strong>Class 3:</strong> Required for nighttime roadway work, high-speed roadways (posted speed > 50 mph), or poor-visibility conditions. Includes both vest and pants/sleeves in some configurations.</li>
+          <li><strong>Class 3:</strong> Required for nighttime roadway work, high-speed roadways (posted speed &gt; 50 mph), or poor-visibility conditions. Includes both vest and pants/sleeves in some configurations.</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: ANSI/ISEA 107 [confirm edition] — paywalled; confirmed via MUTCD 11th Edition
