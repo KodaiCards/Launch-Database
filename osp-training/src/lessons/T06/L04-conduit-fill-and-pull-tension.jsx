@@ -275,15 +275,14 @@ const quizQuestions = [
       '~51% — over the 40% limit, select larger innerduct',
       '~67% — far over the limit',
     ],
-    correct: 0,
-    rationale: `Fill% = (total cable area / conduit area) × 100%.
-Conduit area: π × (1.380/2)² = π × (0.690)² = π × 0.4761 = 1.496 in²
-Each cable area: π × (0.47/2)² = π × (0.235)² = π × 0.05522 = 0.1735 in²
-Three cables: 3 × 0.1735 = 0.5205 in²
-Fill% = (0.5205 / 1.496) × 100% = 34.8%... wait — let me recalculate:
-Three 0.47-in OD cables: area each = π × (0.235)² = 0.1735 in². Three = 0.5205 in². Conduit ID = 1.380 in, area = π × (0.690)² = 1.4957 in². Fill = 0.5205/1.4957 = 34.8%. That\'s answer B.
-
-Actually — re-check with the posted rationale: Cable area each = π×(0.235)² = 0.1735 in²; three cables = 0.5205 in². Conduit area = π×(0.690)² = 1.4957 in². Fill = 34.8% → closest to answer B (~34%). The correct answer is B.',
+    correct: 1,
+    rationale:
+      'Fill% = (total cable area / conduit area) x 100%. ' +
+      'Conduit area: pi x (0.690 in)^2 = 1.496 in^2. ' +
+      'Each cable area: pi x (0.235 in)^2 = 0.1735 in^2. ' +
+      'Three cables total: 3 x 0.1735 = 0.5205 in^2. ' +
+      'Fill% = 0.5205 / 1.496 x 100% = 34.8%. ' +
+      'Closest answer is B (~34% -- near the 40% limit but compliant). The installation meets the 40% fill rule.',
   },
   {
     id: 'q2',
@@ -333,18 +332,18 @@ Actually — re-check with the posted rationale: Cable area each = π×(0.235)²
 ];
 
 // Fix answer for q1 since the worked calculation in rationale is self-contradictory
-// The actual correct answer for ~34.8% fill with 3 × 0.47-in cables in 1.380-in ID conduit is B (34%)
+// The actual correct answer for ~34.8% fill with 3 x 0.47-in cables in 1.380-in ID conduit is B (34%)
 const fixedQuizQuestions = [
   {
     ...quizQuestions[0],
     correct: 1,
     rationale:
-      `Fill% = (total cable area / conduit area) × 100%.
-Conduit area: π × (1.380/2)² = π × 0.4761 = 1.496 in²
-Each cable area: π × (0.47/2)² = π × 0.0552 = 0.1735 in²
-Three cables: 3 × 0.1735 = 0.5205 in²
-Fill% = 0.5205 / 1.496 × 100% = 34.8%
-Closest answer is B (~34% — near the 40% limit but compliant). The installation is within the 40% rule.`,
+      'Fill% = (total cable area / conduit area) x 100%.' +
+      ' Conduit area: pi x (1.380/2)^2 = pi x 0.4761 = 1.496 in^2.' +
+      ' Each cable area: pi x (0.47/2)^2 = pi x 0.0552 = 0.1735 in^2.' +
+      ' Three cables: 3 x 0.1735 = 0.5205 in^2.' +
+      ' Fill% = 0.5205 / 1.496 x 100% = 34.8%.' +
+      ' Closest answer is B (~34% -- near the 40% limit but compliant). The installation is within the 40% rule.',
   },
   ...quizQuestions.slice(1),
 ];
