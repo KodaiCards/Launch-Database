@@ -253,6 +253,17 @@ export const courses = [
     description:
       'TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope.',
   },
+  // ── Certification exam preparation (C04) ─────────────────────────────────
+  {
+    id: 'C04',
+    title: 'Practice Exam Bank',
+    section: 'cert',
+    estimated_minutes: 300,   // 12 lessons × ~25 min avg
+    lesson_count: 12,
+    prerequisites: ['C01', 'C02', 'C03'],
+    description:
+      'Exam strategy, per-domain content reviews (OSP, RCDD, CFOT/CFOS), timed practice rounds, scoring analysis, and final mock exams. Full lesson set authored in OSP-RW.5.',
+  },
 ];
 
 // ── Cert tracks (practice-exam surfaces) ───────────────────────────────────

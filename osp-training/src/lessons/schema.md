@@ -74,12 +74,17 @@ Every lesson file must export a React component as the default export. The compo
 
 ```jsx
 import React from 'react';
-import { LessonLayout } from '../../components/LessonLayout.jsx';
-import { Quiz } from '../../components/primitives/Quiz.jsx';
-// Import other primitives as needed:
-// import { AnnotatedDiagram } from '../../components/primitives/AnnotatedDiagram.jsx';
-// import { WorkedExample } from '../../components/primitives/WorkedExample.jsx';
-// import { BranchingScenario } from '../../components/primitives/BranchingScenario.jsx';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+// Import other primitives as needed (all are default exports):
+// import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+// import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+// import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+// import HotSpot from '../../components/primitives/HotSpot.jsx';
+// import Sortable from '../../components/primitives/Sortable.jsx';
+// import SliderExploration from '../../components/primitives/SliderExploration.jsx';
+// import SideBySide from '../../components/primitives/SideBySide.jsx';
+// import TimelineSequence from '../../components/primitives/TimelineSequence.jsx';
 // import { Flashcard } from '../../components/Flashcard.jsx';
 
 export const meta = { /* ... as above ... */ };
@@ -131,20 +136,31 @@ export default function T02L01_WhyLightTravelsInGlass() {
 
       {/* ── PRACTICE SET ─────────────────────────────────────────────
           Quiz elements. One or more <Quiz> components.
-          Every [CORRECT] answer must be independently derivable.
+          Every correct answer must be independently derivable.
           Distractors must be plausible misderivations.
+          See src/components/primitives/__examples__/Quiz.example.jsx
+          for full usage examples of all three modes.
       ────────────────────────────────────────────────────────────── */}
       <Quiz
-        id="T02-L01-Q1"
-        type="mc"
-        question="What phenomenon keeps light inside a fiber optic cable?"
-        choices={[
-          { id: 'a', text: 'Absorption by the cladding' },
-          { id: 'b', text: 'Total internal reflection', correct: true },
-          { id: 'c', text: 'Electromagnetic shielding' },
-          { id: 'd', text: 'Pressure from the jacket' },
+        title="Fiber Physics Check"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T02-L01-Q1',
+            type: 'mc',
+            prompt: 'What phenomenon keeps light inside a fiber optic cable?',
+            choices: [
+              'Absorption by the cladding',
+              'Total internal reflection',
+              'Electromagnetic shielding',
+              'Pressure from the jacket',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Total internal reflection occurs when light hits the core-cladding boundary at an angle greater than the critical angle, causing it to reflect back into the core rather than escaping.',
+          },
         ]}
-        explanation="Total internal reflection occurs when light hits the core-cladding boundary at an angle greater than the critical angle, causing it to reflect back into the core rather than escaping."
+        onComplete={result => { /* handle { score, total, answers } */ }}
       />
 
     </LessonLayout>
@@ -170,13 +186,20 @@ Body content is divided into three tiers using `data-tier` on `<section>` elemen
 
 ## Interactive Element Contracts
 
-| Primitive | Import path | Required props |
+All 9 primitives are **default exports**. Use `import PrimitiveName from '...'` (not named import).
+
+| Primitive | Import (default) | Required props |
 |---|---|---|
-| `<Quiz>` | `../../components/primitives/Quiz.jsx` | `id`, `type` (`'mc'`/`'drag-match'`/`'fill-in-blank'`), `question`, `choices` (mc) or `pairs` (drag-match) or `prompt`+`answer` (fill-in-blank), `explanation` |
-| `<AnnotatedDiagram>` | `../../components/primitives/AnnotatedDiagram.jsx` | `imageUrl`, `labels` array `[{x, y, label, explanation}]`, `alt` |
-| `<WorkedExample>` | `../../components/primitives/WorkedExample.jsx` | `title`, `formula`, `variables` array, `steps` array, `sanityCheck` |
-| `<BranchingScenario>` | `../../components/primitives/BranchingScenario.jsx` | `scenarioId`, `title`, `initialState`, `states` FSM object |
-| `<Flashcard>` | `../../components/Flashcard.jsx` | `cards` array `[{front, back}]` |
+| `<Quiz>` | `import Quiz from '../../components/primitives/Quiz.jsx'` | `title`, `mode` (`'multiple-choice'`/`'drag-match'`/`'fill-in-blank'`), `questions` array (see Quiz.example.jsx), `onComplete?` |
+| `<AnnotatedDiagram>` | `import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx'` | `imageUrl`, `alt`, `hotPoints` array `[{x, y, label, description, type}]` |
+| `<WorkedExample>` | `import WorkedExample from '../../components/primitives/WorkedExample.jsx'` | `title`, `formula`, `variables` array, `steps` fn, `sanityCheck` fn |
+| `<BranchingScenario>` | `import BranchingScenario from '../../components/primitives/BranchingScenario.jsx'` | `scenarioId`, `title`, `startNodeId`, `nodes` FSM object |
+| `<HotSpot>` | `import HotSpot from '../../components/primitives/HotSpot.jsx'` | `imageUrl`, `alt`, `regions` array, `mode` (`'challenge'`/`'explore'`) |
+| `<Sortable>` | `import Sortable from '../../components/primitives/Sortable.jsx'` | `title`, `items` array `[{id, label}]`, `correctOrder` array of ids |
+| `<SliderExploration>` | `import SliderExploration from '../../components/primitives/SliderExploration.jsx'` | `title`, `variables` array, `compute` fn |
+| `<SideBySide>` | `import SideBySide from '../../components/primitives/SideBySide.jsx'` | `title`, `leftLabel`, `rightLabel`, `rows` array |
+| `<TimelineSequence>` | `import TimelineSequence from '../../components/primitives/TimelineSequence.jsx'` | `title`, `events` array `[{id, label, detail}]` |
+| `<Flashcard>` | `import { Flashcard } from '../../components/Flashcard.jsx'` | `cards` array `[{front, back}]` |
 
 ---
 
