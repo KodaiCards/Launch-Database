@@ -428,6 +428,27 @@ export default function T08L03_SimpleVsComplexAttachment() {
           },
           {
             id: 'T08-L03-Q5',
+            type: 'drag-match',
+            prompt: 'Match each scenario to who pays for the make-ready work under the FCC cost-causation rule.',
+            items: [
+              { id: 'item-a', label: 'Existing coax already below NESC minimum — must move' },
+              { id: 'item-b', label: 'Existing coax is compliant but blocks new fiber height' },
+              { id: 'item-c', label: 'Power conductor must be raised to clear fiber — pole owner built the pole undersize' },
+            ],
+            targets: [
+              { id: 'target-applicant', label: 'Fiber applicant pays' },
+              { id: 'target-existing', label: 'Existing cable owner / pole owner pays' },
+              { id: 'target-existing2', label: 'Existing cable owner / pole owner pays (pole deficiency)' },
+            ],
+            correctMap: {
+              'target-applicant': 'item-b',
+              'target-existing': 'item-a',
+              'target-existing2': 'item-c',
+            },
+            explanation: 'Cost causation: (A) the coax was already non-compliant before the fiber project — the existing cable owner or pole owner bears the compliance cost; (B) the compliant coax would never have moved without the fiber project — the fiber applicant caused the move and pays; (C) a pole built below standard is a pole-owner deficiency — not the applicant\'s cost. FCC 18-111 cost-causation framework; 47 CFR §1.1411.',
+          },
+          {
+            id: 'T08-L03-Q6',
             type: 'fill-in-blank',
             prompt:
               'An attachment that requires no existing cables to move is called a ____ attachment.',
