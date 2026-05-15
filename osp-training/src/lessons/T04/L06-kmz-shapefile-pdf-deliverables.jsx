@@ -38,45 +38,47 @@ export const meta = {
     { term: 'datum', source_lesson_id: 'T04.L03' },
   ],
   estimated_minutes: 20,
+  key_terms: [
+    {
+      term: 'KMZ',
+      definition:
+        'A compressed file format (a zipped KML) used to share geographic data — routes, points, polygons — in Google Earth and many GIS applications. KMZ files are easy to email, open on a phone or tablet, and overlay on satellite imagery. They are ideal for field-crew communication and client presentations, but they lose attribute data precision compared to a shapefile.',
+    },
+    {
+      term: '.SHP',
+      definition:
+        'A shapefile — actually a group of related files (.shp, .shx, .dbf, and optionally .prj) that together store one layer of GIS features (e.g., all poles, or all proposed duct runs) along with their attributes (pole number, height, owner, make-ready flag). The .shp file stores the geometry; the .dbf stores the attribute table; the .prj stores the coordinate-system definition. Missing any of these companion files makes the shapefile unusable.',
+    },
+    {
+      term: 'geotiff',
+      definition:
+        'A standard raster image format (like a high-resolution photograph) that embeds spatial reference information — coordinate system, datum, resolution — directly into the image file. LiDAR-derived orthophotos and digital elevation models are typically delivered as geotiffs. A GIS platform reads the embedded coordinates and places the image on the map in exactly the right location.',
+    },
+    {
+      term: 'PDF/A',
+      definition:
+        'An ISO-standardized archival version of PDF (International Organization for Standardization standard ISO/IEC 19005-1) designed for long-term storage. PDF/A embeds all fonts and color profiles so the document renders identically on any system, any time in the future. RUS borrowers and utility companies commonly require PDF/A for delivered engineering drawings because it is self-contained and verifiably unchanged.',
+    },
+    {
+      term: 'DWG',
+      definition:
+        'The native file format for AutoCAD and related CAD software. Design engineers use DWG files to draw the engineering design — pole locations, cable routes, splice points, construction notes — layered over the survey basemap. DWG is not a GIS format: it lacks the coordinate-reference-system metadata that makes a GIS file spatially aware. A design engineer typically converts the surveyor\'s GIS data into a DWG working environment.',
+    },
+    {
+      term: 'deliverable package',
+      definition:
+        'The complete, organized set of files handed from the survey team to the design engineer — including GIS layers, photos, field notes, and a cover document. A deliverable package is version-controlled (dated, labeled) so that if the designer asks "which field walk does this come from?" the answer is unambiguous.',
+    },
+    {
+      term: 'versioning',
+      definition:
+        'The practice of tracking changes to deliverable files over time by labeling each revision with a date and revision number (e.g., "RouteA_SurveyPackage_v1_2026-04-15" vs. "RouteA_SurveyPackage_v2_2026-05-01"). Versioning ensures the design engineer is always working from the most current survey data and prevents the common field mistake of working from a superseded file.',
+    },
+  ],
 };
 
-export const key_terms = [
-  {
-    term: 'KMZ',
-    definition:
-      'A compressed file format (a zipped KML) used to share geographic data — routes, points, polygons — in Google Earth and many GIS applications. KMZ files are easy to email, open on a phone or tablet, and overlay on satellite imagery. They are ideal for field-crew communication and client presentations, but they lose attribute data precision compared to a shapefile.',
-  },
-  {
-    term: '.SHP',
-    definition:
-      'A shapefile — actually a group of related files (.shp, .shx, .dbf, and optionally .prj) that together store one layer of GIS features (e.g., all poles, or all proposed duct runs) along with their attributes (pole number, height, owner, make-ready flag). The .shp file stores the geometry; the .dbf stores the attribute table; the .prj stores the coordinate-system definition. Missing any of these companion files makes the shapefile unusable.',
-  },
-  {
-    term: 'geotiff',
-    definition:
-      'A standard raster image format (like a high-resolution photograph) that embeds spatial reference information — coordinate system, datum, resolution — directly into the image file. LiDAR-derived orthophotos and digital elevation models are typically delivered as geotiffs. A GIS platform reads the embedded coordinates and places the image on the map in exactly the right location.',
-  },
-  {
-    term: 'PDF/A',
-    definition:
-      'An ISO-standardized archival version of PDF (International Organization for Standardization standard ISO/IEC 19005-1) designed for long-term storage. PDF/A embeds all fonts and color profiles so the document renders identically on any system, any time in the future. RUS borrowers and utility companies commonly require PDF/A for delivered engineering drawings because it is self-contained and verifiably unchanged.',
-  },
-  {
-    term: 'DWG',
-    definition:
-      'The native file format for AutoCAD and related CAD software. Design engineers use DWG files to draw the engineering design — pole locations, cable routes, splice points, construction notes — layered over the survey basemap. DWG is not a GIS format: it lacks the coordinate-reference-system metadata that makes a GIS file spatially aware. A design engineer typically converts the surveyor\'s GIS data into a DWG working environment.',
-  },
-  {
-    term: 'deliverable package',
-    definition:
-      'The complete, organized set of files handed from the survey team to the design engineer — including GIS layers, photos, field notes, and a cover document. A deliverable package is version-controlled (dated, labeled) so that if the designer asks "which field walk does this come from?" the answer is unambiguous.',
-  },
-  {
-    term: 'versioning',
-    definition:
-      'The practice of tracking changes to deliverable files over time by labeling each revision with a date and revision number (e.g., "RouteA_SurveyPackage_v1_2026-04-15" vs. "RouteA_SurveyPackage_v2_2026-05-01"). Versioning ensures the design engineer is always working from the most current survey data and prevents the common field mistake of working from a superseded file.',
-  },
-];
+// key_terms is inside meta (for curriculum engine / DAG); re-export so JSX can reference it directly
+export const key_terms = meta.key_terms;
 
 export default function T04L06_KmzShapefilePdfDeliverables() {
   return (

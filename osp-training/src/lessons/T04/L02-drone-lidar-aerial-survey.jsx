@@ -21,6 +21,7 @@ export const meta = {
     'point cloud',
     'planimetric',
     'GSD',
+    'RTK GNSS',
   ],
   key_terms: [
     {
@@ -47,6 +48,11 @@ export const meta = {
       term: 'GSD',
       definition:
         'Ground Sample Distance — the real-world size represented by one pixel in an aerial image. A GSD of 2 cm means each pixel covers a 2 cm × 2 cm patch of ground. Lower GSD = more detail. GSD depends on camera sensor pixel size, flight altitude, and focal length. The formula: GSD (mm) = (sensor pixel size µm × flight altitude m AGL) / focal length mm.',
+    },
+    {
+      term: 'RTK GNSS',
+      definition:
+        'Real-Time Kinematic Global Navigation Satellite System — a GPS technique that receives correction data from a fixed ground station (base station or a network correction service like NOAA NGS CORS) to achieve sub-decimeter positioning, typically 1–3 cm horizontal accuracy. Standard GPS is accurate to ±3–5 meters; RTK GNSS applies real-time carrier-phase corrections from the base station\'s known position to eliminate most of that error, making it accurate enough to locate poles and route-survey control points for design engineering.',
     },
   ],
   vocabulary_assumed: [
@@ -164,6 +170,11 @@ export default function T04L02_DroneLidarAerialSurvey() {
               id: 'T04-L02-fc-gsd',
               front: 'What is Ground Sample Distance (GSD)?',
               back: 'The real-world size represented by one pixel in an aerial image. A GSD of 2 cm means each pixel covers a 2 cm × 2 cm patch of ground. Lower GSD = more detail. Formula: GSD (mm) = (sensor pixel size µm × flight altitude m AGL) / focal length mm.',
+            },
+            {
+              id: 'T04-L02-fc-rtk-gnss',
+              front: 'What is RTK GNSS and why does it matter for OSP survey?',
+              back: 'Real-Time Kinematic Global Navigation Satellite System — a GPS technique that applies real-time corrections from a fixed ground station (base station or NOAA NGS CORS network) to achieve sub-decimeter positioning, typically 1–3 cm horizontal accuracy. Standard GPS is ±3–5 meters — not precise enough to locate poles for design engineering. RTK GNSS closes that gap.',
             },
           ]}
         />

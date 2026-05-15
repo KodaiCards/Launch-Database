@@ -48,9 +48,7 @@ export const meta = {
     { term: 'plant accounting', source_lesson_id: 'T04.L07' },
   ],
   estimated_minutes: 20,
-};
-
-export const key_terms = [
+  key_terms: [
   {
     term: 'handoff package',
     definition:
@@ -81,7 +79,11 @@ export const key_terms = [
     definition:
       'A structured list of every required item in the handoff package, used by the survey supervisor to verify completeness before releasing the package to the design engineer. Each item on the checklist is marked present/complete or flagged as missing with a note explaining the gap and the plan to resolve it.',
   },
-];
+  ],
+};
+
+// key_terms is inside meta (for curriculum engine / DAG); re-export so JSX can reference it directly
+export const key_terms = meta.key_terms;
 
 export default function T04L08_HandoffToDesign() {
   return (

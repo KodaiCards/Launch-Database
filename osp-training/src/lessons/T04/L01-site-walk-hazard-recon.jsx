@@ -362,7 +362,7 @@ export default function T04L01_SiteWalkHazardRecon() {
           environmental screening checklist: Is the route within 300 ft of a historic property?
           Does it cross a jurisdictional wetland? Are there endangered species habitat
           markers? These conditions get documented during the walk and passed to the
-          permitting team. Environmental permitting (T09) goes deeper on this — here the
+          permitting team. The Environmental Permitting topic goes deeper on this — here the
           takeaway is: photograph any wetland markers, historical markers, or sensitive-area
           signage you encounter.
         </p>
@@ -373,7 +373,7 @@ export default function T04L01_SiteWalkHazardRecon() {
           locates are required before excavation, not before a visual inspection. However,
           if the site walk involves any subsurface probing (e.g., using a push rod to check
           conduit depth), a ground-penetrating radar scan, or any test hole digging, then
-          811 locate rules apply. (T10.L01 covers Call 811 in detail.)
+          811 locate rules apply. (The OSP Construction topic covers Call 811 in detail.)
         </p>
         <p className="mt-2">
           It's good practice to pull the utility atlas or county GIS records before the walk

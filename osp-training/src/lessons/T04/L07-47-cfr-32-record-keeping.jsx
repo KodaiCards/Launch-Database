@@ -36,9 +36,7 @@ export const meta = {
     { term: 'make-ready flag', source_lesson_id: 'T04.L04' },
   ],
   estimated_minutes: 20,
-};
-
-export const key_terms = [
+  key_terms: [
   {
     term: '47 CFR 32',
     definition:
@@ -69,7 +67,11 @@ export const key_terms = [
     definition:
       'A running record of all costs (labor, materials, equipment, overhead, subcontractors) associated with a specific construction project or construction unit. The construction cost ledger is the source document that feeds the RUS Form 1755-A reconciliation and the plant-account journal entries under 47 CFR Part 32. Field supervisors contribute to the ledger by submitting daily timesheets and cost codes.',
   },
-];
+  ],
+};
+
+// key_terms is inside meta (for curriculum engine / DAG); re-export so JSX can reference it directly
+export const key_terms = meta.key_terms;
 
 export default function T04L07_47CFR32RecordKeeping() {
   return (

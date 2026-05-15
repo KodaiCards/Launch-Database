@@ -47,9 +47,7 @@ export const meta = {
     { term: 'gap analysis', source_lesson_id: 'T04.L08' },
   ],
   estimated_minutes: 20,
-};
-
-export const key_terms = [
+  key_terms: [
   {
     term: 'RUS pre-engineering',
     definition:
@@ -75,7 +73,11 @@ export const key_terms = [
     definition:
       'The complete set of documents required to authorize and execute a RUS-funded construction project: the engineering design plan set, construction specifications, material specifications, cost estimate, construction unit breakdown, environmental checklist, and required certifications. The construction package is reviewed by RUS before the loan is authorized and before construction begins. An incomplete or non-conforming construction package triggers a rejection and re-submission cycle.',
   },
-];
+  ],
+};
+
+// key_terms is inside meta (for curriculum engine / DAG); re-export so JSX can reference it directly
+export const key_terms = meta.key_terms;
 
 export default function T04L09_RusPreEngineering() {
   return (
