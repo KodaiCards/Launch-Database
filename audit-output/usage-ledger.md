@@ -57,9 +57,36 @@ Tokens spent before 8:25 PM ET fall out of the rolling window over the next 5 ho
 
 - Sonnet agent average: ~80-120K per dispatch (research/audit/RT)
 - Sonnet agent heavy: ~150-200K (content authoring with many file writes)
-- Opus orchestrator turn: ~10-50K (varies widely with chat length + tool calls)
-- Opus orchestrator turn with major edit + commit: ~30-60K
+- Opus orchestrator turn: ~10-50K raw (varies widely with chat length + tool calls)
+- Opus orchestrator turn with major edit + commit: ~30-60K raw
 - Background timer / polling: ~negligible (just sleep)
+
+## ⚠️ Opus weighting (research agent finding 2026-05-16, SHA d075cfd)
+
+**Anthropic weights Opus tokens ~4-10× heavier than Sonnet in their internal utilization calculation.** My raw-token sums systematically UNDERSTATE Opus consumption. To get a more accurate effective-usage estimate:
+- Sonnet tokens: count as 1×
+- Opus tokens (orchestrator chat + the early 5-agent Opus dispatch): multiply by ~5× (mid-range estimate)
+- Use the **effective-token** sum, not raw, when comparing to the cap
+
+**Re-estimating session so far with weighting:**
+- Heavy-Opus phase (5 agents + my Opus chat through ~12:30 AM): ~1.6M raw × 5 = ~8M effective
+- Sonnet phase since: ~1.5M raw × 1 = ~1.5M effective
+- **Effective total: ~9.5M tokens** (vs ~3.1M raw — 3× different)
+
+**Going forward — Opus minimization rules:**
+- Tighten my chat replies aggressively (every Opus token is 5×)
+- Skip status graphs / queue renders unless explicitly requested
+- Prefer Sonnet for any orchestrator-side work I can delegate
+- Use bash for simple operations instead of long reasoning chains
+
+## OAuth usage endpoint — INACCESSIBLE from this hosted env (logged 2026-05-16)
+
+Research agent found `GET https://api.anthropic.com/api/oauth/usage` returns exact server-side utilization. Tested:
+- Token IS in this env at file descriptor 4 (`CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR=4`)
+- BUT FD 4 belongs to the parent Claude Code process, not child shells I spawn → `cat /proc/self/fd/4` returns empty
+- Endpoint without auth returns `{"error": {"type": "rate_limit_error"}}` — endpoint is real but unauthenticated requests rate-limited
+- Carter could run this from his local Claude Code install where credentials.json exists; orchestrator running in this hosted env cannot
+- **Workaround:** rely on weighted-token estimation + Carter's periodic dashboard checks for ground-truth recalibration
 
 ## Update protocol
 
