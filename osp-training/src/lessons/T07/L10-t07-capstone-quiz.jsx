@@ -327,23 +327,23 @@ export default function T07L10_CapstoneQuiz() {
             ],
           },
           a1: {
-            text: 'Pole A1 (STA 0+50): You arrive at A1. It\'s a 40-foot wood pole. You photograph the pole tag (clear). Overview photo looks good. You measure: supply at 33.5 ft, telecom at 27.2 ft. Design fiber at 26.0 ft. Clearance checks: supply above (33.5 − 26.0 = 7.5 ft > 3.33 ft required — OK). Telecom below (26.0 − 27.2 = −1.2 ft — the telecom is ABOVE the design fiber height). What does this mean?',
+            text: 'Pole A1 (STA 0+50): You arrive at A1. It\'s a 40-foot wood pole. You photograph the pole tag (clear). Overview photo looks good. You measure: supply at 33.5 ft, telecom at 27.2 ft. Design fiber at 26.0 ft. Supply check: 33.5 − 26.0 = 7.5 ft above design fiber — required minimum is 3.33 ft (40 in), so supply is clear. Now check the telecom: the telecom wire at 27.2 ft is ABOVE the design fiber at 26.0 ft. The fiber will attach 1.2 ft below the telecom wire. Required minimum separation between communication cables (NESC Rule 235): 12 inches (1.0 ft). What is your call?',
             choices: [
-              { label: 'The telecom wire at 27.2 ft is above the design fiber at 26.0 ft. This means the design fiber must attach BELOW the telecom wire, which is a make-ready conflict. Flag: transfer required — telecom wire must move down or design height must increase.', next: 'a1_correct' },
-              { label: 'No conflict — the telecom is above the fiber, so clearance is fine', next: 'a1_wrong' },
-              { label: 'Flag for replacement — any wire above the design fiber height triggers a replacement', next: 'a1_replacement_wrong' },
+              { label: 'Clearance checks: 27.2 − 26.0 = 1.2 ft separation between telecom and design fiber. 1.2 ft > 1.0 ft required — clearance PASSES. No conflict at A1. Document: supply clear (7.5 ft), telecom 27.2 ft (1.2 ft above design fiber, OK). Proceed.', next: 'a1_clear' },
+              { label: 'Flag: transfer required — telecom wire at 27.2 ft is above the design fiber at 26.0 ft, so there must be a conflict.', next: 'a1_wrong' },
+              { label: 'Flag for replacement — any wire above the design fiber height triggers a replacement.', next: 'a1_replacement_wrong' },
             ],
           },
-          a1_correct: {
-            text: 'Correct. The telecom wire at 27.2 ft is 1.2 ft ABOVE where the design wants the fiber (26.0 ft). The fiber cannot attach BELOW the telecom wire if that puts it at the same height or lower — wires must maintain separation. The fiber at 26.0 ft would be 1.2 ft below the telecom at 27.2 ft, which is more than the required 12-inch separation (1.2 ft > 1.0 ft). Actually — re-check: 27.2 − 26.0 = 1.2 ft clearance above the design fiber. Required minimum between communication cables: 12 inches (1.0 ft). 1.2 ft > 1.0 ft — this is actually OK. No conflict at A1. Document: supply clear, telecom 27.2 ft (1.2 ft above design fiber, OK). Proceed to A2.',
+          a1_clear: {
+            text: 'Correct. The math confirms no conflict: telecom at 27.2 ft is 1.2 ft above the design fiber at 26.0 ft. Required separation between communication cables is 12 inches (1.0 ft). 1.2 ft > 1.0 ft — clearance passes. When an existing wire is ABOVE the design fiber, the fiber attaches below it and the separation to check is (existing wire height) − (design fiber height). The calculation shows you have 0.2 ft of margin. Document it as clear and proceed to A2.',
             choices: [
               { label: 'Proceed to A2', next: 'a2' },
             ],
           },
           a1_wrong: {
-            text: 'Almost right, but check the direction. The telecom at 27.2 ft is ABOVE the design fiber at 26.0 ft. That means the fiber would go below the telecom wire. Required separation between communication cables: 12 inches (1.0 ft). The clearance is 27.2 − 26.0 = 1.2 ft. Since 1.2 ft > 1.0 ft required — this IS fine. No conflict. But the logic matters: when an existing wire is above the design fiber, the fiber goes below it, and the clearance to check is "design height below existing wire." Always calculate the actual separation before deciding. Proceed to A2.',
+            text: 'Not quite — the direction of the check matters. The telecom at 27.2 ft is ABOVE the design fiber at 26.0 ft. That means the fiber attaches below the telecom wire, not above it. The separation is 27.2 − 26.0 = 1.2 ft. Required minimum between communication cables (NESC Rule 235): 12 inches (1.0 ft). 1.2 ft > 1.0 ft — this clearance PASSES. No transfer required at A1. A transfer flag is only warranted when the calculated separation is less than the required minimum. Always calculate before flagging.',
             choices: [
-              { label: 'Proceed to A2 — no conflict at A1', next: 'a2' },
+              { label: 'Understood — no conflict at A1. Proceed to A2.', next: 'a2' },
             ],
           },
           a1_replacement_wrong: {
