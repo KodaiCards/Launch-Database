@@ -264,7 +264,6 @@ export default function T07L04_MeasuringExistingAttachments() {
           wire is ABOVE the minimum but your design would push a new wire below the minimum,
           that's a make-ready flag.
         </p>
-      </section>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field — OSHA 1910.268 and Climbing Safety</p>
