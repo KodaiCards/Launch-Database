@@ -679,6 +679,22 @@ These have triggered user corrections multiple times. The orchestrator must self
 2. **Never ask questions whose answers are in the docs.** Fires three exclamation marks. Mechanical fix: grep §1/§2/§4 before AskUserQuestion.
 3. **Continue work without check-ins.** Permission to drive unsupervised is only valuable if the orchestrator actually drives. After every agent notification: dispatch the next step BEFORE end-turn.
 
+## Orchestrator self-improvement log (started 2026-05-16 per Carter)
+
+Carter's verbatim 2026-05-16: "You need to log lessons as you learn things, like how to improve your management style or communication. You need to improve yourself with everything possible." Append to this section continuously, autonomously, whenever a self-improvement insight surfaces. Date-stamped entries. Future Claudes inherit the meta-lessons.
+
+### 2026-05-16 — early-session lessons (this is a seed list; keep adding)
+
+- **Tighten chat replies.** Carter values direct + actionable over thorough explanations. Status reports that just narrate what happened ≠ value. Reports that name the next decision or surface a real blocker = value. When in doubt, cut.
+- **Stop asking sign-off questions for things already locked.** Carter's "no sign-off gates" rule was prompted by my repeated "should I proceed?" patterns. Scope is locked; orchestrator executes; Carter sees deliverables on main and pushes back as veto. Decisions don't need pre-approval.
+- **Under cost/time pressure, fight the instinct to do verification myself.** Skipping the OSP-RW.2 RT was rationalized as "the agent self-tested" — but the protocol exists because self-test isn't independent verification. Cost pressure is NOT a justification to skip RT.
+- **RT prompts need explicit Tool restrictions, not just "READ-ONLY" language.** Statistical drift toward "I see a fix, let me apply it" is real. Explicit "DO NOT use Edit/Write/NotebookEdit" + pre-push `git diff --stat` self-check + named consequences prevents drift.
+- **Time/token estimates are systematically padded.** Carter's actual burn data showed my "120 min author" was actually ~22 min; my "60 min" RT was ~12 min. Future estimates: cut my prediction in half before stating, then cut again if Sonnet.
+- **Carter's "drive-by message" rule means don't STOP to act on every message — fold into queue.** But ALSO don't drop messages on the floor. Capture in CLAUDE.md immediately + decide whether to act now or queue.
+- **For agents that need to wait for an artifact (poll for X to land):** structure as bounded polling loop OR sequence after the producer lands. Don't dispatch parallel "wait + verify" — that wastes the input-reading prep tokens when the agent bails before X lands.
+- **When Carter is asleep / paused, skip status updates that aren't about action items.** Stop hooks fire on uncommitted changes, but those don't need narration if they're agent-mid-work.
+- **Autonomous lesson capture > reactive capture.** Carter shouldn't have to prompt "log this." When something reveals a pattern, log it before the next dispatch. (This very list is an example — added autonomously after Carter pointed out reactive-only logging.)
+
 ## Operational notes from agent lessons
 
 - **`git pull --rebase` triggers the signing wrapper on replayed commits** (returns 400). Replace with `git fetch && git merge FETCH_HEAD --no-edit`. Pull-rebase was the pre-2026-05-14 standard for avoiding the parallel-deletion bug; the merge equivalent still puts your commit on top of remote state without triggering the wrapper. Update agent-protocol.md on the repo with this. Add to all future agent prompts.
@@ -1032,7 +1048,13 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 
 **OSP-RW.2 Postgres Scaffold + API + useProgress wiring** (✓ LANDED overnight — 4 commits bfe2184/1ffab84/c02f8ef/c3cd770. Migration 0035_training_tables.sql adds training_progress, training_cert_attempts, training_topic_capstone_attempts. routes/training.js with 6 endpoints (progress GET/POST, cert-attempt POST, cert-attempts GET, capstone-attempt POST, admin progress-overview GET). server.js wired. SPA useProgress hook upgraded to React Query v5 with optimistic updates + rollback. 17 test cases in tests/training.test.js. KNOWN RISK: schema.sql was manually edited (no DATABASE_URL in agent env); CI's schema-sync diff check is the first real test — if it fails, single-commit fix via Railway shell `npm run schema:sync`.)
 
-**OSP-RW.3 Template Topic (T02 Fiber Physics)** ✓ AUTHORED overnight 2026-05-15→16. All 12 lessons across 12 commits (`ff7291d` L01 → `6da409c` L12 capstone). Vite build passes clean. Each lesson uses 2-3 primitives woven in (AnnotatedDiagram, WorkedExample, BranchingScenario, SideBySide, Quiz). LinkBudgetCalculator embedded in L06. Capstone is 20Q quiz. Author agent honored anti-hallucination contract ([confirm edition] used for in-flux standards). RT verification pending.
+**OSP-RW.3 Template Topic (T02 Fiber Physics)** ✓ LOCKED overnight 2026-05-15→16. Author 12 lessons (`ff7291d` L01 → `6da409c` L12 capstone). RT YELLOW with 4 findings + same agent self-patched 4 fixes at `492aa85` (RT contract violation — patches correct but separate post-fix RT required). Post-fix RT GREEN at `a380db6` — all 4 fixes verified correct, build clean (131 modules), prior RT's self-patching scope was correct. T02 IS THE LOCKED TEMPLATE for OSP-RW.4 author waves to replicate.
+
+**OSP-RW.3 queued LOW findings (post-timer fix batch):**
+- L03 dispersion error threshold `70 ps × 4 = 280 ps` has no standard physical basis; replace with `200 ps` (2× bit period at 25 Gbps) which is defensible
+- L10 OTDR slider defaults to error-state (1360 ps/nm at 80 km); change default to ~45 km so it opens at warn-state for better exploratory UX
+
+These get applied at the post-timer fix-batch alongside any other queued items.
 
 **OSP-RW.2 RT verification** ✓ LANDED `4caad0a`. Verdict YELLOW — 4 patches: HTTP 201 vs 200 on first insert, 2 missing 401 tests, 1 domain_scores type guard. SQL safety + API security graded HIGH (no IDOR, no injection, no auth bypass). Backend structurally sound for government project tracking.
 
