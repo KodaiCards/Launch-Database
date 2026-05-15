@@ -374,8 +374,8 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
         </p>
         <p className="mt-2">
           At a 90-degree corner with equal tension on both sides, the resultant force
-          is √2 × T (where T is the cable tension). √2 = 1.414, so for a cable at 600 lb tension:
-          resultant = 1.414 × 600 = <strong>848 lb</strong> from just the tension change — plus wind load
+          is √2 × T (where T is the cable tension). √2 = 1.4142, so for a cable at 600 lb tension:
+          resultant = 1.4142 × 600 = 848.5, rounded to <strong>849 lb</strong> from just the tension change — plus wind load
           on top of that. Angle poles routinely require guys or a significantly larger
           pole class than the running poles on either side.
         </p>
