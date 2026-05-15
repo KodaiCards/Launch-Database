@@ -141,6 +141,24 @@ This is the operating contract. Concretely:
 
 ## OSP training product context (REWRITE locked 2026-05-15 — supersedes prior plan)
 
+### Scope expansion 2026-05-15 evening (Carter — supersedes Architecture v2 scope wherever they conflict)
+
+Carter's verbatim message:
+
+> "I dont feel the previous claude had the full scope. This training doc needs to cover all of the OSP engineering areas, design, staking, make ready, physics, splicing , inspection ETC. Those will be individual topics with extreme depth starting at an basic level and as the language and basics are taught it will get more advanced. Nothing can be taught that hasnt been explained or broken down or given context to before. Each topic will have extensive lessons with interactive things, at the end of a lesson theres a quiz, at the end of a topic theres a bigger quiz. There will be additional lessons that specifically cover the OSP and RCDD certs, they will have mock exams at the end."
+
+**Five locked principles from this scope expansion:**
+
+1. **Full OSP engineering coverage** — design, staking, make-ready, physics, splicing, inspection, ETC. The "etc" is real — the curriculum-scoping research wave proposes the complete topic list. The prior 12-module structure is treated as source material to migrate into the new structure, NOT as the topic boundary.
+2. **Strict prerequisite invariant (CROSS-CURRICULUM):** Nothing can be taught that hasn't been explained, broken down, or given context to before. Every term, every concept, every formula has a single first-introduction lesson, and that lesson MUST precede every other lesson that references it. Enforced via a curriculum-wide prerequisite DAG (Directed Acyclic Graph). Lesson authors verify against the DAG; verification red-team checks every cross-lesson reference for prerequisite coverage. **The DAG is THE design constraint that drives topic ordering, lesson ordering within topics, and cert-prep placement.**
+3. **Three quiz tiers:** (a) per-lesson quiz at end of every lesson, (b) per-topic capstone quiz at end of every topic (broader, integrative), (c) cert-track mock exam at end of each cert-prep track (full timed practice exam).
+4. **Cert prep tracks (locked 2026-05-15):** BICSI OSP Designer + BICSI RCDD + FOA CFOS/CFOT. NOT NCATT. Each cert track is a sequence of cert-specific advanced lessons culminating in a mock exam aligned to the cert blueprint. Cert prep lessons live AFTER the corresponding general topic in the DAG (i.e., a learner can only access RCDD prep after completing the general topics RCDD assumes).
+5. **Content reuse policy (locked 2026-05-15):** migrate the good stuff, scrap the rest. Existing modules with shipped content (M02 OSP Design even sections, M09 OSP Construction odd sections, M01 Physics, M04 Splicing, M07 Topology, M08 Testing) are SOURCE MATERIAL — authors weave usable prose into new per-lesson files that conform to the prerequisite DAG. Existing reusable components (`LinkBudgetCalculator`, `OTDRTraceViewer`, `TopologyCanvas`, `InteractiveQuiz`) get reused. Aged or invariant-violating content scrapped.
+
+**Carter's drive-by-message rule (2026-05-15):** "I will be messaging things to you often, that doesnt mean stop or do them now. Just do them at your discretion." Treat additive context as additive — fold into plan, surface in queue, don't drop current work.
+
+**Topic-list approach (locked 2026-05-15):** clean-sheet research, NOT extension of the existing 12. Three research agents in parallel scope the complete topic list from real OSP engineering practice (RUS bulletins, NESC, BICSI OSPDR, FOA CFOS, RCDD TDMM, real-world engineering firm curricula). Existing 12 modules audited as source material for migration.
+
 ### Architecture v2 — Carter's locks 2026-05-15
 
 - **DROP MOODLE entirely.** The Vite SPA (osp-design-training repo) becomes the LMS itself. Served as static behind launch-database `requireAuth()` (Strategy A — CONFIRMED wired at `/training/` via `server.js:433-441` after the OSP-Merge wave landed at `1a170de`). One product, one auth surface. Cert-tracking + progress lives in launch-database Postgres rows (new tables to be designed).
@@ -819,9 +837,23 @@ Every user message that adds, changes, removes, or re-prioritizes work updates t
 > Updated constantly. Recent decisions, current waves, branch state.
 > Compacted history — the deep audit trail lives in git log + repo files.
 
-## Branch state — `kodaicards/launch-database` `claude/debug-previous-issues-MoN9D`
+## Reality reconciliation 2026-05-15 evening (post-Discovery wave)
 
-Current HEAD: **`ca92036`** (merge of main into dev) + 1 Phase-1 fix-agent push in flight
+CLAUDE.md §4 was heavily fictional pre-2026-05-15 evening. Discovery agents A (`5442e2f`) and B (`a189bca`) verified actual repo state. Key corrections:
+
+- **Working branch is now `main`** (Carter's lock 2026-05-15 evening). PR #43 merged the dev branch into main; HEAD on main = `95b6bf6`. The `claude/debug-previous-issues-MoN9D` branch is historical.
+- **Fabricated SHAs purged from this doc:** `ca92036`, `a2de386`, `add030f`, `5e38762`. None exist.
+- **OSP-RW state is GREENFIELD, not "in flight."** No `src/lessons/`, no `training_progress`/`training_cert_attempts` migrations, no `/api/training/*` routes, no scaffold dirs, none of the 4 interactive primitives beyond pre-existing `InteractiveQuiz`. The doc's prior "OSP-RW.2 Scaffold IN FLIGHT" claim was hallucinated by a prior agent.
+- **`osp-design-training` source is mirrored IN-TREE at `/home/user/Launch-Database/osp-training/`** (12 modules + ToolsPage, 7,144 LOC actual). Not a separate repo for our purposes — work happens on the in-tree mirror. Standalone repo unreachable from this environment (local proxy 502, MCP access denied for that repo).
+- **Lurking unmerged branches with real work** (decide merge/scrap later):
+  - `claude/add-audit-log-hours-x0XCd` — 10 commits incl. shared overlay helper, tree-toggle factory, AI 503 handling, `userWantsAction` unit tests, `SESSION_HANDOFF.md`, schema-shape smoke test
+  - `claude/scale-pass-sse-cte` — 3 commits: SSE memory leak fix, recursive-CTE depth guard, poll heartbeat tune
+  - `claude/splice-matrix-railway-setup-IIG3Q` — uncharacterized
+- **Pre-existing artifacts the prior doc didn't mention:** `osp-training/docs/red-team-reports/modules-{01-04,05-08,09-12}-redteam.md`, top-level `HANDOFF.md`, `PORTAL_LAUNCHER_PLAN.md`, `PROJECT_NORTH_STAR.md`, `CLEANUP_CANDIDATES.md`, `SPLICE_BUILD_PLAN.md`, `SPLICE_MATRIX_SUGGESTIONS.md`.
+
+## Branch state — `kodaicards/launch-database` (working branch: `main`)
+
+Current HEAD on `main`: **`95b6bf6`** (Merge pull request #43 from KodaiCards/claude/debug-previous-issues-MoN9D)
 
 ### Pre-outage commits (mine, Friday 2026-05-09)
 
@@ -929,16 +961,44 @@ The temp Claude landed ~50% of Friday's canonical items, primarily on main (now 
 
 **🚨 OSP TRAINING REWRITE supersedes the prior pitch-revision wave (locked 2026-05-15).** Prior pitch revision goal was "bolt plain-English onto existing modules." New goal is full rebuild: per-lesson files, splash page, 4 interactivity types, drop Moodle. See §2 "Architecture v2" for the spec.
 
-### Phase OSP-RW (Training Rewrite) — current focus
+### Phase OSP-RW (Training Rewrite) — current focus, REPLANNED 2026-05-15 evening
 
-1. **OSP-RW.0 Discovery** (IN FLIGHT) — two read-only agents mapping (a) osp-design-training current state and (b) launch-database training integration. Outputs feed gap analysis.
-2. **OSP-RW.1 Architecture design** — orchestrator-side scope decomposition: lesson schema (per-lesson JSX/MDX file shape), splash-page UX, routing structure, per-lesson interactive-element JSON contract, Postgres tables for progress, API shape for save/load. ≥2 architecture-design agents in parallel, then orchestrator picks/merges. Decision artifact: `audit-output/osp-rewrite/ARCH.md`.
-3. **OSP-RW.2 Scaffold** — fix-agent builds the splash page + routing + lesson-file skeleton + Postgres migrations + API endpoints + per-user progress UI shell. Read-only RT verifies before content authoring kicks off.
-4. **OSP-RW.3 Interactive primitives** — fix-agent builds reusable React components for the 4 interactivity types: (a) quiz primitives (MC + drag/match + fill-in-blank), (b) labeled-diagram primitive (clickable + hover-explain), (c) worked-example calculator primitive (variable inputs + step-stepper + sanity check), (d) branching-scenario primitive (state-persistent decision tree). RT verifies before content authoring.
-5. **OSP-RW.4 Content pipeline — Topic 1 (Cable Selection) as template** — author ALL T1 lessons (8-15 of them) using the new lesson-file format. L1.1 keeps its locked sample content but restructured into the new format. ≥2 author agents (even/odd lesson split), ≥2 RT verifiers per the team-composition rule. Carter reviews T1 output as the template lock.
-6. **OSP-RW.5 Content pipeline — Topics 2-10** — parallel waves of 2 author agents + 2 RT per topic, gated on T1 template approval. Salvage real existing work: Module 2 even sections + Module 9 odd sections (Carter-reads-cold passed) migrate into the new per-lesson format. Everything else re-authored.
-7. **OSP-RW.6 Moodle teardown in launch-database** — remove Moodle SSO bridge, OAuth2 code, related routes/middleware. Fix-agent + RT.
-8. **OSP-RW.7 End-to-end QA** — clickthrough every lesson + interactive element + progress persistence + splash page navigation. Playwright spec + Carter manual walkthrough.
+Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New sequencing reflects (a) Carter's scope expansion (full OSP eng coverage, strict prerequisite invariant, 3 quiz tiers, 3 cert tracks), and (b) the discovery findings (clean-sheet topic list, in-tree osp-training/ source).
+
+1. **OSP-RW.0 Discovery** (✓ LANDED 2026-05-15 evening — `5442e2f` Agent A doc→repo, `a189bca` Agent B repo→doc)
+2. **OSP-RW.0a Curriculum Scoping Research** — 3 read-only research agents in parallel:
+   - **R-A Domain Coverage:** What does a comprehensive OSP engineering curriculum need to cover? Survey RUS bulletins (1751F-630/635/815, 1738), NESC (loading districts, clearance, grounding, joint-use), BICSI OSPDR + OSP Designer blueprint, FOA CFOS-O/CFOS-T blueprints, RCDD TDMM ToC, real engineering firm internal training programs, university OSP/communications-construction curricula.
+   - **R-B Cert Exam Blueprints:** OSP Designer (BICSI) + RCDD (BICSI) + CFOS/CFOT (FOA) — exam domains + percentages + sample-question structures + recommended prep materials.
+   - **R-C Existing Content Audit + Gap Map:** every existing module in `osp-training/src/modules/` — what content is good, what's stale, what maps to which proposed topic. Cross-ref with R-A's topic list.
+3. **OSP-RW.0b Curriculum Architecture (≥2 agents)** — take R-A/R-B/R-C as input, propose:
+   - Complete topic list (probably 15-25 topics covering full OSP eng + 3 cert tracks)
+   - Per-topic lesson list (8-20 lessons each, depending on depth needed)
+   - Cross-curriculum **prerequisite DAG** — every term/concept/formula's first-introduction lesson + every downstream reference
+   - Per-topic capstone quiz scope
+   - Per-cert mock-exam scope
+   - Lesson-to-source-content migration map (which existing modules feed which new lessons)
+4. **OSP-RW.0c Carter sign-off on topic list + DAG** — checkpoint. Carter reviews the proposed curriculum + prerequisite DAG. Locks before any authoring kicks off.
+5. **OSP-RW.1 Per-lesson schema + 4 interactive primitives** — fix-agent builds:
+   - Lesson schema (JSX file shape, `meta` export, tiered foundations/working/advanced markers, prereq metadata pointing into the DAG)
+   - Quiz extension (MC + drag-match + fill-in-blank, all 3 modes in one primitive)
+   - `AnnotatedDiagram` (NEW: SVG overlay, click-to-label + hover-explain)
+   - `WorkedExample` (NEW: generalized calculator — formula + variable spec + sanity check; reuse `LinkBudgetCalculator` pattern)
+   - `BranchingScenario` (NEW: FSM decision tree with Postgres state persistence)
+   - Per-topic capstone quiz primitive (broader, integrative; weighted scoring)
+   - Cert mock-exam primitive (timed, randomized, blueprint-weighted, full-pass scoring)
+   - RT verifies primitives before content authoring.
+6. **OSP-RW.2 Scaffold** — splash page (General Topics + 3 Cert Tracks) + routing + LessonLayout + Postgres tables (`training_progress` + `training_cert_attempts` + `training_topic_capstone_attempts`) + API endpoints + `/api/auth/me` extension + admin progress overview.
+7. **OSP-RW.3 Template topic (1 full topic end-to-end)** — pick one foundational topic (likely Fiber Physics, since it's the prerequisite root), author EVERY lesson using the new schema + DAG metadata + 3 interactive primitives + per-lesson quizzes + capstone. ≥2 author agents + ≥2 RT verifiers. Carter signs off as the locked template.
+8. **OSP-RW.4 Remaining topics (parallelized)** — ≥2 authors + ≥2 RT per topic. Different topics = different files = no push contention. Migration of existing source content (M02 even, M09 odd, M01 Physics, M04 Splicing, M07 Topology, M08 Testing) happens here.
+9. **OSP-RW.5 Cert-prep tracks + mock exams** — OSP Designer + RCDD + CFOS/CFOT. Each cert track is a sequence of advanced cert-specific lessons + a full timed mock exam. Cert tracks gated on the general topics they assume.
+10. **OSP-RW.6 Moodle teardown** — `routes/oauth2.js` + `moodle/` + 5 env vars + `tests/oauth2.test.js` + server.js wiring. Fix-agent + RT.
+11. **OSP-RW.7 E2E QA + production cut** — Playwright spec covers splash → topic → lesson → all interactive types → per-lesson quiz → capstone → cert mock exam → progress save → admin view. Carter walkthrough. THEN `npm run build` in `osp-training/` → commit fresh dist to `public/training/` in launch-database. THAT is the production cut. Until then, live `/training/` serves pre-rewrite dist.
+
+### Side-channel triage queue (parallel, low-priority while OSP-RW runs)
+
+- **Audit `claude/add-audit-log-hours-x0XCd`** — 10 commits ahead of main. Real work: shared overlay helper, tree-toggle factory, AI 503 handling, `userWantsAction` unit tests, `SESSION_HANDOFF.md`, schema-shape smoke test. Decide: merge (probably yes — sounds like solid fix-work) or scrap. Read-only audit agent reads `SESSION_HANDOFF.md` + diff vs main.
+- **Audit `claude/scale-pass-sse-cte`** — 3 commits: SSE memory leak fix, recursive-CTE depth guard, poll heartbeat tune. Read-only audit; if clean, merge.
+- **Audit `claude/splice-matrix-railway-setup-IIG3Q`** — uncharacterized. Read-only audit.
 
 ### Phase Launch-DB queue (deferred until OSP-RW lands)
 
