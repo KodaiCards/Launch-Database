@@ -272,7 +272,7 @@ export default function T02L04_MacrobendAndMicrobend() {
               {
                 label: 'Re-fuse all six bad splices — the splicer display must have been wrong',
                 consequence: 'Splice losses are confirmed good on both a re-read and a bidirectional OTDR sweep. You\'ve spent an hour re-doing work that didn\'t need doing. The 0.8 dB loss is still there.',
-                nextId: 'check-inside-case',
+                nextId: 'checkInsideCase',
                 isOptimal: false,
               },
               {
@@ -284,13 +284,13 @@ export default function T02L04_MacrobendAndMicrobend() {
               {
                 label: 'Assume the cable was damaged during pulling and request a cable replacement',
                 consequence: 'Cable damage would show up on all fibers, not just 13–18. And it would appear as a distributed loss or reflection — not a clean 2 m offset from the splice case. This is a premature conclusion.',
-                nextId: 'check-inside-case',
+                nextId: 'checkInsideCase',
                 isOptimal: false,
               },
             ],
           },
-          check-inside-case: {
-            id: 'check-inside-case',
+          checkInsideCase: {
+            id: 'checkInsideCase',
             prompt: 'After your first step didn\'t resolve it, you open the splice case to inspect the fiber routing inside. What do you see?',
             choices: [
               {
