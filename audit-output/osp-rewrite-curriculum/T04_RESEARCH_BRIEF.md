@@ -266,9 +266,9 @@ From T03: loose-tube, ribbon, ADSS, messenger (as steel strand), RUS-listed, ICE
 ### Worked-example calculations
 **GSD to accuracy relationship:**
 - Drone altitude = 50 m AGL, camera focal length = 20 mm, sensor width = 13.2 mm, image width = 4000 pixels
-- GSD = (sensor width × altitude) / (focal length × image width) = (13.2 mm × 50,000 mm) / (20 mm × 4,000) = 660,000 / 80,000 = **8.25 mm/pixel ≈ 0.82 cm/pixel**
-- Expected horizontal accuracy (with RTK) = 2 × GSD = 2 × 0.82 = **~1.6 cm** — adequate for pole position mapping (OSP requires ≤5 cm typical)
-- Sanity check: 1.6 cm accuracy on a 50 m flight is 1/3,125 of the altitude. "You can locate a pole within about 2 centimeters — roughly the width of your thumb — from a drone flying 50 meters over your head."
+- GSD = (sensor width × altitude) / (focal length × image width) = (13.2 mm × 50,000 mm) / (20 mm × 4,000) = 660,000 / 80,000 = **8.25 mm/pixel ≈ 0.83 cm/pixel** (8.25 mm ÷ 10 = 0.825 cm, rounds to 0.83 cm)
+- Expected horizontal accuracy (with RTK) = 2 × GSD = 2 × 0.83 = **~1.66 cm** — adequate for pole position mapping (OSP requires ≤5 cm typical)
+- Sanity check: ~1.7 cm accuracy on a 50 m flight is 1/2,941 of the altitude. "You can locate a pole within about 2 centimeters — roughly the width of your thumb — from a drone flying 50 meters over your head."
 
 ### Interactive primitive recommendations
 - **SideBySide** — LiDAR vs. photogrammetry: cost per route-mile, accuracy, requires supplemental camera (LiDAR: yes), produces imagery (photogrammetry: yes), typical OSP use case
@@ -294,7 +294,7 @@ From T03: loose-tube, ribbon, ADSS, messenger (as steel strand), RUS-listed, ICE
 - **landbase** — the foundational GIS dataset for a project, containing roads, parcel boundaries, structures, waterways, and existing utilities in their correct horizontal positions. The landbase is the canvas on which the fiber route design is drawn. (Source: VETRO FiberMap OSP engineering reference; 3-GIS telecom GIS platform reference; ospinsight.com GIS fiber network mapping guide)
 - **shapefile (.SHP)** — the Esri vector GIS file format used to store geographic features (points, lines, polygons) with associated attribute data. Consists of at least three files: .shp (geometry), .dbf (attribute table), and .shx (index). Industry standard for exchanging OSP GIS data with municipalities, pole owners, and engineering teams. (Source: Esri ArcNews GIS fiber management; ESRI standard format — verified via ospinsight.com and graphicalnetworks.com)
 - **geodatabase (.GDB)** — a native Esri file format that stores multiple feature classes, topological relationships, and domain-coded attributes in a single folder. More powerful than shapefile for managing a complete OSP network (poles, cables, conduits, splice cases, service areas) in one container. (Source: 3-GIS telecom GIS platform; Esri ArcNews — esri.com/about/newsroom/arcnews)
-- **coordinate system** — the mathematical framework that maps geographic features to a Cartesian grid. For North American OSP work: **NAD83** (North American Datum of 1983) is the standard horizontal datum. Using the wrong datum introduces systematic errors of ≥200 meters (NAD27 vs. NAD83 shift in most of the U.S.). (Source: GIS industry practice — law.cornell.edu CFR GIS references; USGS datum documentation — public)
+- **coordinate system** — the mathematical framework that maps geographic features to a Cartesian grid. For North American OSP work: **NAD83** (North American Datum of 1983) is the standard horizontal datum. Using the wrong datum introduces systematic errors of **10–100 m across the contiguous lower 48 U.S. states; 200+ m in Alaska and Hawaii** (different reference ellipsoids). (Source: USGS datum documentation — public; GIS industry practice — law.cornell.edu CFR GIS references)
 - **datum (NAD83)** — a reference model of the Earth's shape and orientation used to define horizontal coordinates. NAD83 is the current standard in the U.S. and is compatible with GPS/GNSS systems. NAD27 (predecessor) is still found in older survey records and must be transformed before use. (Source: USGS datum overview — public; GIS industry practice)
 - **KMZ** — a compressed version of a KML (Keyhole Markup Language) file, the native format for Google Earth. Standard lightweight deliverable for sharing fiber route geometry with clients, permit applicants, and ISP procurement processes. Not a substitute for engineering-grade GIS data (.SHP or .GDB) — KMZ is the client-facing visualization format. (Source: Lightyear AI KMZ guide — lightyear.ai; Arnet telecom KMZ reference; graphicalnetworks.com OSP mapping blog)
 - **47 CFR 32** — the FCC Uniform System of Accounts for Telecommunications Companies (public; eCFR). Requires regulated carriers to maintain basic property records for all plant in service, including OSP plant. Records must be auditable and preserve the identity, location, original cost, and vintage of each unit of property. Relevant to route survey because GPS-coordinated pole inventory and cable routes become the property-record backbone under Part 32. (Source: eCFR 47 CFR §32.2000 — verified via ecfr.gov and law.cornell.edu)
@@ -304,7 +304,7 @@ From T03: loose-tube, ribbon, ADSS, messenger (as steel strand), RUS-listed, ICE
 | Claim | Source | Status |
 |---|---|---|
 | "NAD83 is the standard horizontal datum for North American OSP GIS work" | USGS datum documentation; industry GIS standard across all public-sector and utility projects | VERIFIED via industry practice |
-| "NAD27 vs. NAD83 introduces ≥200 m systematic error across most of U.S." | USGS datum shift documentation; NGA geodesy references — shift is 10–300 m depending on location | VERIFIED — mark `[verify shift magnitude for specific project state — varies regionally]` |
+| "NAD27 vs. NAD83 introduces 10–100 m systematic error across contiguous lower 48; 200+ m in Alaska/Hawaii" | USGS datum shift documentation; NGA geodesy references — shift varies regionally by reference ellipsoid | VERIFIED — mark `[verify shift magnitude for specific project state — varies regionally]` |
 | "KMZ is compressed KML; Google Earth native; standard lightweight telecom deliverable" | Lightyear AI KMZ guide: "KML file contains map information you can read with a GIS tool such as Google Earth. The 'z' in .kmz stands for zipped" | VERIFIED |
 | "Carriers asked to provide .kmz file for fiber route in telecom procurement" | Lightyear AI: "Carriers are asked to provide a .kmz file for the fiber route they'd use to connect locations, and this fiber route becomes the primary route" | VERIFIED |
 | "47 CFR §32.2000: basic property records must preserve identity, location, original cost, and vintage of each unit of property" | eCFR 47 CFR §32.2000 (law.cornell.edu): "Basic property records must preserve the identity, vintage, location and original cost of units of property" | VERIFIED via eCFR public text |
@@ -390,7 +390,10 @@ From T03: loose-tube, ribbon, ADSS, messenger (as steel strand), RUS-listed, ICE
 | Permitting risk | 25% | 8/10 — public ROW, CE C-8 eligible | 5/10 — private easements, wetland crossing |
 | Estimated cost/mi | 25% | 8/10 — ~$6.49/ft aerial (industry average) | 4/10 — ~$16.25/ft underground (industry avg) |
 | Reliability | 20% | 6/10 — aerial exposure, ice/wind risk | 9/10 — underground, protected from weather |
-| **Weighted score** | | **7.65** | **5.80** |
+| **Weighted score** | | **7.90** | **5.85** |
+
+**Score derivation (Route A):** (0.30 × 9) + (0.25 × 8) + (0.25 × 8) + (0.20 × 6) = 2.70 + 2.00 + 2.00 + 1.20 = **7.90**
+**Score derivation (Route B):** (0.30 × 6) + (0.25 × 5) + (0.25 × 4) + (0.20 × 9) = 1.80 + 1.25 + 1.00 + 1.80 = **5.85**
 
 Sanity check: Route A wins on constructability, cost, and permitting; Route B wins on long-term reliability but at 2.5× the cost. For a rural RUS build on a constrained budget, Route A is the defensible recommendation.
 
@@ -450,7 +453,7 @@ Decision points:
 |---|---|---|---|
 | NESC Rule 235H1 messenger spacing = 12 inches | L05 | LOW | Confirmed via OJUA secondary source quoting NESC Rule 235H1. Mark `[paywalled — verify against NESC C2-2023 Rule 235H1 when accessible]` |
 | NESC Rule 235H2 comm conductor clearance = 4 inches | L05, L10 | LOW | Same source as above. OJUA document explicitly cites and quotes the rule. Mark `[paywalled — verify against NESC C2-2023 Rule 235H2 when accessible]` |
-| NAD27 → NAD83 datum shift = "≥200 m" for most of U.S. | L07 | LOW | USGS documentation confirms shift varies 10–300 m depending on region. Mark `[verify shift magnitude for specific project state]` — the "≥200 m" figure is a planning-level approximation; actual shift varies. |
+| NAD27 → NAD83 datum shift magnitude | L07 | LOW | USGS documentation confirms shift is 10–100 m for contiguous lower 48; 200+ m for Alaska/Hawaii. Brief now reflects this with geographic qualifier. Mark `[verify shift magnitude for specific project state]`. |
 | FCC pole attachment audit every 5 years | L05 | LOW | Cited from search result summary; traceable to FCC pole attachment rules but exact CFR subsection not confirmed. Mark `[confirm via 47 CFR 1.14xx — exact audit frequency provision]`. T08 (Make-Ready) is the primary lesson for OTMR/attachment rules and should carry the authoritative citation. |
 | GSD formula: GSD = (sensor width × altitude) / (focal length × image pixels) | L06 | LOW | Standard photogrammetry formula from DroneDeploy, Propeller Aero, DJI Enterprise — multiply-confirmed. LOW risk. Values in worked example are illustrative ("representative values — verify against your camera specs"). |
 | Form 740c as the surviving RUS pre-engineering cost form post-740g elimination | L09 | LOW | Confirmed via USDA telecom application guide (rd.usda.gov) and Federal Register 2022. Both public documents confirmed by WebSearch. LOW risk. |
