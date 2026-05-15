@@ -219,21 +219,6 @@ export default function T01L06_WhoDoesWhat() {
         </div>
       </section>
 
-      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
-      <Flashcard
-        deckId="T01-L06"
-        cards={[
-          { id: 'T01-L06-FC-designer', front: 'Designer (OSP Designer)', back: 'Takes survey data and produces construction drawings: cable routes, pole loading calculations, sag-tension, conduit sizing, splice locations, fiber counts. On RUS-program projects, designs require a PE stamp.' },
-          { id: 'T01-L06-FC-staker', front: 'Staker (Surveyor)', back: 'Walks the proposed route and collects field data: pole measurements, existing attachment heights, span lengths, crossing measurements, underground utility locations, GPS waypoints, and photographs. Delivers the field data package that makes design possible.' },
-          { id: 'T01-L06-FC-make-ready-crew', front: 'Make-ready crew', back: 'Works for the pole owner or their authorized contractor. Moves, raises, or rearranges existing attachments on shared poles to make room for new fiber. Does not install the new fiber — prepares the pole to accept it.' },
-          { id: 'T01-L06-FC-splicer', front: 'Splicer', back: 'Opens splice cases, strips cable, prepares and cleans fibers, performs fusion splicing, tests each splice with the OTDR, documents splice records, and re-closes and seals the case. Highest-skill field role in OSP.' },
-          { id: 'T01-L06-FC-inspector', front: 'Inspector / QA Technician', back: 'Walks completed construction to verify it matches the design drawings and meets code: attachment heights, cable sag, conduit depths, grounding, labeling. Creates a punch list of items that don\'t pass.' },
-          { id: 'T01-L06-FC-test-tech', front: 'Test technician', back: 'Performs the final acceptance test — bidirectional OTDR traces (Tier 2) and end-to-end insertion loss tests (Tier 1) on every fiber. Compares results to the design loss budget. Documents pass/fail. The splicer\'s in-process OTDR checks are not the acceptance test.' },
-          { id: 'T01-L06-FC-project-manager', front: 'Project manager (PM)', back: 'Coordinates all stages and roles. Tracks budget, schedule, permits, and contractor performance. Catches stage-sequencing problems before they become field problems. Runs permitting and make-ready in parallel to shorten the schedule.' },
-          { id: 'T01-L06-FC-pe', front: 'PE (Professional Engineer)', back: 'A state-licensed engineer whose stamp certifies that design documents meet applicable codes and are structurally sound. Required on RUS-program OSP drawings. Personally liable for stamped documents — PE stamps are not rubber stamps.' },
-        ]}
-      />
-
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Who Hands Off to Whom</h2>
@@ -322,6 +307,21 @@ export default function T01L06_WhoDoesWhat() {
           boards (jurisdiction-specific requirements).
         </p>
       </section>
+
+      {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T01-L06"
+        cards={[
+          { id: 'T01-L06-FC-designer', front: 'Designer (OSP Designer)', back: 'Takes survey data and produces construction drawings: cable routes, pole loading calculations, sag-tension, conduit sizing, splice locations, fiber counts. On RUS-program projects, designs require a PE stamp.' },
+          { id: 'T01-L06-FC-staker', front: 'Staker (Surveyor)', back: 'Walks the proposed route and collects field data: pole measurements, existing attachment heights, span lengths, crossing measurements, underground utility locations, GPS waypoints, and photographs. Delivers the field data package that makes design possible.' },
+          { id: 'T01-L06-FC-make-ready-crew', front: 'Make-ready crew', back: 'Works for the pole owner or their authorized contractor. Moves, raises, or rearranges existing attachments on shared poles to make room for new fiber. Does not install the new fiber — prepares the pole to accept it.' },
+          { id: 'T01-L06-FC-splicer', front: 'Splicer', back: 'Opens splice cases, strips cable, prepares and cleans fibers, performs fusion splicing, tests each splice with the OTDR, documents splice records, and re-closes and seals the case. Highest-skill field role in OSP.' },
+          { id: 'T01-L06-FC-inspector', front: 'Inspector / QA Technician', back: 'Walks completed construction to verify it matches the design drawings and meets code: attachment heights, cable sag, conduit depths, grounding, labeling. Creates a punch list of items that don\'t pass.' },
+          { id: 'T01-L06-FC-test-tech', front: 'Test technician', back: 'Performs the final acceptance test — bidirectional OTDR traces (Tier 2) and end-to-end insertion loss tests (Tier 1) on every fiber. Compares results to the design loss budget. Documents pass/fail. The splicer\'s in-process OTDR checks are not the acceptance test.' },
+          { id: 'T01-L06-FC-project-manager', front: 'Project manager (PM)', back: 'Coordinates all stages and roles. Tracks budget, schedule, permits, and contractor performance. Catches stage-sequencing problems before they become field problems. Runs permitting and make-ready in parallel to shorten the schedule.' },
+          { id: 'T01-L06-FC-pe', front: 'PE (Professional Engineer)', back: 'A state-licensed engineer whose stamp certifies that design documents meet applicable codes and are structurally sound. Required on RUS-program OSP drawings. Personally liable for stamped documents — PE stamps are not rubber stamps.' },
+        ]}
+      />
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
       <Quiz

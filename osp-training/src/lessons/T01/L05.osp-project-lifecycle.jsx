@@ -42,6 +42,34 @@ export default function T01L05_OspProjectLifecycle() {
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
+        <h3 className="font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2 mb-4">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90 text-sm">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">RUS Form 219</td>
+              <td className="px-3 py-2">Rural Utilities Service Form 219</td>
+              <td className="px-3 py-2">The USDA RUS project completion certification form required at close-out for RUS-funded OSP projects. Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">OTMR</td>
+              <td className="px-3 py-2">One-Touch Make-Ready</td>
+              <td className="px-3 py-2">FCC-mandated process (47 CFR 1.1411) that allows a qualified contractor hired by the new attacher to perform make-ready work in a single visit rather than waiting for each existing attachment owner to schedule separate work. Reduces make-ready timelines significantly.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Tier 1 / Tier 2</td>
+              <td className="px-3 py-2">Testing tiers (TIA-568)</td>
+              <td className="px-3 py-2">Tier 1 = OLTS (Optical Loss Test Set) — end-to-end insertion loss measurement. Tier 2 = OTDR — full trace that locates and characterizes every event in the link. Both tiers are typically required for OSP acceptance testing.</td>
+            </tr>
+          </tbody>
+        </table>
+
         <h2>In Plain English</h2>
         <p>
           An OSP fiber project doesn't start with a shovel or a cable reel. It starts with a
