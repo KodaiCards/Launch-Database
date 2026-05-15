@@ -1,0 +1,440 @@
+// Net-new — T18.L02 Lockout/Tagout (LOTO) — 1910.147
+// Working lesson: LOTO sequence, energy isolating device, authorized/affected employee roles
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T18.L02',
+  course_id: 'T18',
+  title: 'Lockout/Tagout (LOTO) — 1910.147',
+  order: 2,
+  lesson_type: 'working',
+  prerequisites: ['T18.L01'],
+  vocabulary_introduced: [
+    'LOTO',
+    'energy isolating device',
+    'authorized employee (LOTO)',
+    'affected employee (LOTO)',
+  ],
+  key_terms: [
+    {
+      term: 'LOTO',
+      definition:
+        'Lockout/Tagout — the procedure for de-energizing equipment before servicing or maintenance, governed by 29 CFR 1910.147. A physical padlock (lockout) or warning tag (tagout) is applied to the energy isolating device to prevent unexpected re-energization while a worker is in the danger zone.',
+    },
+    {
+      term: 'energy isolating device',
+      definition:
+        'A mechanical device that physically prevents the transmission or release of energy. Examples: a circuit breaker, a manual disconnect switch, a valve, a block. The LOTO device — the lock or tag — is applied to the energy isolating device, not to the equipment being serviced.',
+    },
+    {
+      term: 'authorized employee (LOTO)',
+      definition:
+        'The employee who applies the lockout or tagout device on the energy isolating device and performs the servicing work. Each authorized employee must apply their own personal padlock — nobody else applies or removes it for them.',
+    },
+    {
+      term: 'affected employee (LOTO)',
+      definition:
+        'An employee whose job requires them to operate equipment that is locked out or tagged out, or who works in an area where LOTO is being used. Affected employees must be notified before LOTO is applied and after it is released. They cannot operate locked-out equipment.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'hierarchy of controls', source_lesson_id: 'T18.L01' },
+    { term: 'hazard recognition', source_lesson_id: 'T18.L01' },
+    { term: '1910.268', source_lesson_id: 'T18.L01' },
+  ],
+  estimated_minutes: 25,
+};
+
+export default function T18L02_LockoutTagout() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Imagine you're working inside a piece of equipment — your hands are in the machine —
+          and someone walks up and flips the power switch back on. That's the hazard that
+          Lockout/Tagout (LOTO) prevents. LOTO is the rule that says: before you put any part
+          of your body into the danger zone of powered equipment, you physically prevent the
+          equipment from being energized until you're done and out. You do it with a padlock.
+          Your lock. Not a supervisor's lock. Not a shared lock. Your personal padlock, with
+          only your key.
+        </p>
+        <p className="mt-2">
+          On OSP jobs, true LOTO situations are less common than on industrial sites —
+          most cable and splice work doesn't touch powered equipment. But where they do arise —
+          battery backup systems in a fiber hut, powered EDFA (amplifier) shelves in a
+          remote headend, generator cutover during an outage response — LOTO is the correct
+          and required procedure. Getting it wrong costs lives.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym/Term</th>
+              <th className="px-3 py-2 text-left">Meaning</th>
+              <th className="px-3 py-2 text-left">When you'll see it on an OSP job</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">LOTO</td>
+              <td className="px-3 py-2">Lockout/Tagout</td>
+              <td className="px-3 py-2">Battery huts, generator rooms, powered splice shelves</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">1910.147</td>
+              <td className="px-3 py-2">OSHA Control of Hazardous Energy standard</td>
+              <td className="px-3 py-2">The federal rule governing all LOTO work; applies wherever equipment maintenance/servicing occurs</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">EID</td>
+              <td className="px-3 py-2">Energy Isolating Device</td>
+              <td className="px-3 py-2">The breaker, switch, or valve you apply the lock to (not the equipment itself)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-5 font-semibold">The 6-step LOTO sequence</h3>
+        <p className="mt-2">
+          29 CFR 1910.147(d)(1) through (d)(6) spells out the required sequence. In plain
+          language, the steps are:
+        </p>
+        <ol className="list-decimal pl-5 space-y-3 mt-3 text-slate-300/90">
+          <li>
+            <strong>Notify affected employees.</strong> Tell everyone whose work involves this
+            equipment that it's going to be locked out. They need to know not to try to
+            operate it.
+          </li>
+          <li>
+            <strong>Identify all energy sources.</strong> Before touching anything, find every
+            source of energy that can hurt you — electrical circuits, stored hydraulic pressure,
+            springs under tension, gravity, pneumatics. Missing even one can be fatal.
+          </li>
+          <li>
+            <strong>Shut down the equipment.</strong> Use normal stopping procedures
+            (power button, stop button) to bring the equipment to a stop.
+          </li>
+          <li>
+            <strong>Isolate the energy source.</strong> Open the breaker, close the valve,
+            or operate the disconnect switch — the energy isolating device (EID). The equipment
+            is now disconnected from its energy supply, but stored energy may still be present.
+          </li>
+          <li>
+            <strong>Apply lockout/tagout device.</strong> Put your personal padlock on the
+            EID's hasp or built-in locking hole. If using tagout only (equipment cannot
+            accept a lock), attach a durable warning tag. Your lock = your key = your life.
+          </li>
+          <li>
+            <strong>Release or restrain stored energy.</strong> Bleed hydraulic pressure,
+            discharge capacitors, block suspended components with a prop or pin, discharge
+            electrical capacitors to ground. Then verify: attempt to operate the equipment
+            using its normal controls to confirm zero energy state.
+          </li>
+        </ol>
+
+        {/* ── FLASHCARDS ──────────────────────────────────────────────────── */}
+        <Flashcard
+          deckId="T18-L02"
+          cards={[
+            {
+              id: 'T18-L02-fc-loto',
+              front: 'What is Lockout/Tagout (LOTO)?',
+              back: 'The procedure for de-energizing equipment before servicing or maintenance, governed by 29 CFR 1910.147. A physical padlock (lockout) or warning tag (tagout) is applied to the energy isolating device to prevent unexpected re-energization while a worker is in the danger zone.',
+            },
+            {
+              id: 'T18-L02-fc-eid',
+              front: 'What is an energy isolating device (EID)?',
+              back: 'A mechanical device that physically prevents the transmission or release of energy. Examples: a circuit breaker, a manual disconnect switch, a valve, a block. The lock or tag is applied to the EID, not to the equipment itself.',
+            },
+            {
+              id: 'T18-L02-fc-authorized',
+              front: 'Who is the authorized employee in a LOTO procedure?',
+              back: 'The employee who applies the lockout or tagout device on the energy isolating device and performs the servicing work. Each authorized employee must apply their own personal padlock — nobody else applies or removes it for them.',
+            },
+            {
+              id: 'T18-L02-fc-affected',
+              front: 'Who is the affected employee in a LOTO procedure?',
+              back: 'An employee whose job requires them to operate equipment that is locked out, or who works in an area where LOTO is in use. They must be notified before LOTO is applied and after it is released. They cannot operate locked-out equipment.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>How Re-energization and Group LOTO Work</h2>
+
+        <h3 className="mt-4 font-semibold">Re-energization sequence (29 CFR 1910.147(e))</h3>
+        <p className="mt-2">
+          Getting re-energization wrong is as dangerous as skipping the lockout. The steps,
+          in order:
+        </p>
+        <ol className="list-decimal pl-5 space-y-2 mt-2 text-sm text-slate-300/90">
+          <li>Remove all tools, restraints, and materials from the work area.</li>
+          <li>Ensure all employees are clear of the equipment and have been notified that power is being restored.</li>
+          <li>Each authorized employee removes their own lock — nobody removes anyone else's lock.</li>
+          <li>Notify affected employees that the equipment is being re-energized.</li>
+          <li>Restore the energy source (close the breaker, open the valve).</li>
+        </ol>
+
+        <h3 className="mt-5 font-semibold">Group LOTO — multiple workers on one lockout</h3>
+        <p className="mt-2">
+          When multiple authorized employees are all working on the same locked-out equipment,
+          each one applies their own personal padlock to a <em>group lockout hasp</em> — a device
+          that accepts multiple locks simultaneously. The equipment cannot be re-energized until
+          every worker has removed their own lock. This is required by 29 CFR 1910.147(f)(3).
+        </p>
+        <p className="mt-2">
+          The rule: one person ≠ one lock for the whole crew. Every authorized worker gets their
+          own lock. The last person to remove their lock is the last person who is safe.
+        </p>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
+          <p className="text-slate-300/90">
+            <strong>Book (29 CFR 1910.147):</strong> Each authorized employee applies their own
+            padlock to the energy isolating device's hasp. One authorized employee's lock = one
+            authorized employee's protection. This is the law.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field reality on OSP jobs:</strong> On OSP jobs, LOTO situations are rare —
+            most cable and splice work doesn't touch powered equipment. When they do arise
+            (fiber hut battery racks, powered amplifier shelves, generator cutover), crews
+            sometimes tape the breaker handle or zip-tie the switch instead of using a proper
+            lockout hasp. This is illegal and dangerous. Tape can be removed in five seconds
+            by anyone walking by; a padlock requires a key. A zip tie can be cut; a padlock
+            cannot. The tape/zip-tie habit gets crews killed when someone who wasn't notified
+            sees the tape, removes it, and re-energizes the circuit while a technician's hands
+            are still inside the rack. Use a real lockout hasp and a real padlock. Every time.
+          </p>
+        </div>
+      </section>
+
+      {/* ── ADVANCED ────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Tagout vs. Lockout — When Is a Tag Alone Acceptable?</h2>
+        <p>
+          A lockout (physical padlock) is always preferred over a tagout (warning tag alone).
+          A tagout is only permitted when the equipment physically cannot accept a lock — there is
+          literally no way to attach a padlock to the energy isolating device. Even then, the
+          tagout tag must be attached at the same point the lock would have gone, must be legible
+          and durable, and must clearly state the prohibition on re-energizing.
+        </p>
+        <p className="mt-2">
+          Per 29 CFR 1910.147(c)(3), when tagout is used because lockout is infeasible, the
+          employer must demonstrate and document why lockout cannot be used, and must implement
+          at least one additional safety measure beyond the tag — such as removing an isolating
+          circuit element, blocking a controlling switch, opening an extra disconnecting device,
+          or removing a valve handle.
+        </p>
+        <p className="mt-2">
+          On modern fiber huts and equipment racks, virtually all circuit breakers and disconnect
+          switches have a lockout hasp built in or available as an accessory. There is almost
+          never a legitimate reason for tagout-only on OSP electrical work.
+        </p>
+        <p className="mt-2 text-sm text-slate-300/70">
+          Source: 29 CFR 1910.147(d)(1)–(d)(6), (e)(1)–(e)(3), (f)(3), (c)(3) (ecfr.gov; osha.gov LOTO eTool).
+        </p>
+      </section>
+
+      {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
+      <BranchingScenario
+        scenarioId="T18-L02-scenario-1"
+        title="LOTO at the Fiber Hut"
+        description="You are a splice technician working inside a fiber hut. The hut contains a battery backup rack, a powered EDFA amplifier shelf, and a generator transfer switch. You need to service the amplifier shelf — the technician before you warned that one power supply card is loose and may arc. Walk through the correct LOTO procedure."
+        startNodeId="start"
+        nodes={{
+          start: {
+            id: 'start',
+            prompt:
+              'You enter the fiber hut and identify the amplifier shelf that needs service. The shelf is powered from a 48V DC circuit breaker on the battery rack. What is your first step?',
+            choices: [
+              {
+                label: 'Start working immediately — 48V DC isn\'t lethal',
+                consequence:
+                  '48V DC CAN be lethal under the right conditions (high current, wet skin, internal arcing near the face). More importantly, OSHA 1910.147 requires LOTO regardless of voltage level for any servicing work. Skipping LOTO here is an OSHA violation and a real hazard.',
+                nextId: 'wrong-start',
+                isOptimal: false,
+              },
+              {
+                label: 'Notify affected employees — anyone working in this hut who might operate the rack',
+                consequence:
+                  'Correct first step per 29 CFR 1910.147(d)(1). You\'ve told the other tech in the hut that the amplifier shelf is going to be locked out. He acknowledges and stays clear of the rack.',
+                nextId: 'step2',
+                isOptimal: true,
+              },
+            ],
+          },
+          'wrong-start': {
+            id: 'wrong-start',
+            prompt:
+              'You began working without LOTO. The other tech, who wasn\'t notified, cycles the rack power remotely via the NOC remote access system while you\'re inside the shelf. The result is an arc flash. This scenario ends here. Restart and apply LOTO correctly.',
+            isEnd: true,
+            endMessage: 'Always notify affected employees FIRST — before touching any energy source. LOTO protects you from hazards you don\'t even see coming.',
+          },
+          step2: {
+            id: 'step2',
+            prompt:
+              'You\'ve notified affected employees. Next, you identify the energy sources for the amplifier shelf. The shelf receives 48V DC from the battery rack via a dedicated circuit breaker. Are there any other energy sources to identify?',
+            choices: [
+              {
+                label: 'No — it\'s just one DC circuit. One breaker is the only isolation point.',
+                consequence:
+                  'Watch out: the brief says the shelf has powered amplifier components. Some EDFA shelves also carry fiber-side optical power — laser hazard. While optical power is a separate standard (laser safety), it\'s good practice to verify all hazards before diving in. For this scenario, the 48V DC breaker is the primary isolation point.',
+                nextId: 'step3',
+                isOptimal: false,
+              },
+              {
+                label: 'Check for stored energy too — capacitors in the power supply can hold charge after breaker is opened',
+                consequence:
+                  'Excellent. Capacitive stored energy is a real concern in 48V DC telecom power supplies. You\'ve identified both the energy source (the breaker) and the stored energy concern (capacitors). This shapes the "release stored energy" step later.',
+                nextId: 'step3',
+                isOptimal: true,
+              },
+            ],
+          },
+          step3: {
+            id: 'step3',
+            prompt:
+              'You\'ve identified the 48V circuit breaker as the energy isolating device. Now apply the lockout. Which of the following is the correct action?',
+            choices: [
+              {
+                label: 'Tape the breaker handle in the OFF position and attach a warning tag',
+                consequence:
+                  'Tape is not LOTO. Tape can be removed in seconds by anyone. Per 29 CFR 1910.147, a physical lock or hasp is required where the equipment accepts one. This hut\'s breaker panel has lockout hasps on each breaker — use them.',
+                nextId: 'wrong-tape',
+                isOptimal: false,
+              },
+              {
+                label: 'Open the breaker (OFF position), insert a lockout hasp into the breaker locking hole, and apply your personal padlock to the hasp',
+                consequence:
+                  'Correct per 29 CFR 1910.147(d)(4)-(d)(5). The breaker is now physically prevented from being closed (re-energized) by anyone who does not have your key. Only you can remove this lock.',
+                nextId: 'step4',
+                isOptimal: true,
+              },
+            ],
+          },
+          'wrong-tape': {
+            id: 'wrong-tape',
+            prompt:
+              'You\'ve taped the breaker. A NOC technician arrives to do unrelated work on the same rack and removes the tape — they didn\'t see the warning. They close the breaker. You\'re inside the shelf and take a 48V arc flash. This scenario ends here. Use a real padlock.',
+            isEnd: true,
+            endMessage: 'Tape is not LOTO. Use a physical padlock with a lockout hasp that accepts the lock.',
+          },
+          step4: {
+            id: 'step4',
+            prompt:
+              'Your lock is on the hasp. What must you do before starting work inside the shelf?',
+            choices: [
+              {
+                label: 'Start working — the lock is on, you\'re safe',
+                consequence:
+                  'Not quite. The breaker is open, but the shelf may still have stored energy in its capacitors. Step 6 of the LOTO sequence requires releasing or restraining stored energy AND verifying zero-energy state.',
+                nextId: 'step4-wrong',
+                isOptimal: false,
+              },
+              {
+                label: 'Release stored energy — wait for capacitors to discharge — then verify zero energy by attempting to power the shelf with its front-panel controls',
+                consequence:
+                  'Correct per 29 CFR 1910.147(d)(6). You wait the manufacturer\'s recommended discharge time, then attempt to actuate the shelf via its front controls. No response confirms zero-energy state. You\'re clear to work.',
+                nextId: 'step5-end',
+                isOptimal: true,
+              },
+            ],
+          },
+          'step4-wrong': {
+            id: 'step4-wrong',
+            prompt:
+              'You begin work and receive a shock from a capacitor discharge inside the power supply module. The breaker was open, but stored energy was still present. Applying the lock is not the final step — releasing stored energy is. Restart from step 4.',
+            isEnd: true,
+            endMessage: 'Open the energy source, lock it out, AND release/verify stored energy before working inside. Never skip verification.',
+          },
+          'step5-end': {
+            id: 'step5-end',
+            prompt:
+              'You have: notified affected employees → identified energy sources → shut down equipment → isolated energy → applied your personal lock → released and verified stored energy. You are now cleared to work on the amplifier shelf safely.',
+            isEnd: true,
+            endMessage: 'All six LOTO steps completed correctly. You can now service the equipment. When done, remember: remove tools, clear the area, notify affected employees, then EACH authorized worker removes their own lock before power is restored.',
+          },
+        }}
+      />
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <Quiz
+        title="T18.L02 Check — Lockout/Tagout"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T18-L02-Q1',
+            type: 'mc',
+            prompt:
+              'Two technicians — Alex and Jordan — are both working on a locked-out equipment rack. Alex applies a lock. Under 29 CFR 1910.147(f)(3), what should Jordan do?',
+            choices: [
+              'Jordan relies on Alex\'s lock; only one lock per equipment item is needed',
+              'Jordan applies their own separate padlock to a group lockout hasp on the same energy isolating device',
+              'Jordan applies a tagout tag because only one lock is allowed per hasp',
+              'Jordan notifies the supervisor and waits outside the work area',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Per 29 CFR 1910.147(f)(3), in a group lockout, each authorized employee must apply their own personal padlock to a group lockout hasp. The equipment cannot be re-energized until every worker has removed their own lock. One worker\'s lock protects only that worker — Jordan cannot rely on Alex\'s key.',
+            citation: '29 CFR 1910.147(f)(3) — Group lockout or tagout (ecfr.gov).',
+          },
+          {
+            id: 'T18-L02-Q2',
+            type: 'fill-in-blank',
+            prompt:
+              'The physical device (breaker, valve, disconnect switch) that the lock or tag is applied to during a LOTO procedure is called the ____.',
+            answer: 'energy isolating device',
+            answerDisplay: 'energy isolating device (EID)',
+            explanation:
+              'The energy isolating device is the mechanism that physically prevents energy from flowing to the equipment being serviced. The lock is applied to the EID — not to the equipment itself. This distinction matters because the EID is the control point where energy can be blocked.',
+          },
+          {
+            id: 'T18-L02-Q3',
+            type: 'mc',
+            prompt:
+              'On an OSP job, a technician is splicing fiber inside a remote fiber hut next to a battery backup rack. No powered equipment is being serviced — just fiber splicing in the same room. LOTO requirements under 1910.147:',
+            choices: [
+              'Apply to the fiber splicer because it uses 120V AC wall power',
+              'Do not apply because fiber splicing is not "servicing or maintenance of equipment" on the energized racks in the room',
+              'Apply because any work in the same room as energized equipment requires LOTO',
+              'Apply only if the battery rack is within 3 feet of the splice work area',
+            ],
+            answerIndex: 1,
+            explanation:
+              '29 CFR 1910.147 applies to "servicing and maintenance of machines and equipment" — work on the equipment itself where unexpected energization could injure the worker. Fiber splicing in a hut does not involve servicing the battery rack or powered shelves. The technician is working on fiber, not on the energized racks. No LOTO required for the racks (though safe work practices near live equipment still apply per 1910.268).',
+            citation: '29 CFR 1910.147(a)(1) — Scope and Application (ecfr.gov).',
+            fieldNote:
+              'The trigger for LOTO is "servicing or maintenance on equipment" — not simply working near powered equipment. However, if your splicing work requires you to reach into or behind a powered rack, that changes the analysis.',
+          },
+          {
+            id: 'T18-L02-Q4',
+            type: 'mc',
+            prompt:
+              'After completing maintenance work, in what order does re-energization occur under 29 CFR 1910.147(e)?',
+            choices: [
+              'Remove lock → restore energy → clear work area → notify affected employees',
+              'Remove lock → restore energy → notify affected employees',
+              'Clear work area → each worker removes own lock → notify affected employees → restore energy',
+              'Restore energy → clear work area → workers retrieve locks → notify affected employees',
+            ],
+            answerIndex: 2,
+            explanation:
+              '29 CFR 1910.147(e) requires: (1) remove tools/materials from work area, (2) ensure all employees are clear, (3) each authorized employee removes their own lock, (4) notify affected employees, (5) restore energy. Workers must be clear and notified BEFORE re-energization — not after.',
+            citation: '29 CFR 1910.147(e)(1)–(e)(3) (ecfr.gov).',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
