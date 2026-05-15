@@ -277,20 +277,17 @@ export default function T05L06_LoadingDistrictsRule250() {
             <p>A_ice = π × (outer radius)² − π × (inner radius)²</p>
             <p>A_ice = π × (D/2 + t)² − π × (D/2)²</p>
             <p>A_ice = π × [(D/2 + t)² − (D/2)²]</p>
-            <p>A_ice = π × [(D/2)² + 2(D/2)(t) + t² − (D/2)²]</p>
-            <p>A_ice = π × [Dt/2 + t²]</p>
-            <p>A_ice = π × t × (D/2 + t) in²  (with D and t in inches)</p>
+            <p>     ↳ difference of squares: a² − b² = (a+b)(a−b)</p>
+            <p>A_ice = π × [(D/2 + t + D/2) × (D/2 + t − D/2)]</p>
+            <p>A_ice = π × [(D + t) × t]</p>
+            <p>A_ice = π × t × (D + t) in²  (with D and t in inches)</p>
           </div>
           <p className="text-sm text-slate-300/80 mb-3">
             To convert to ft²/ft (volume per unit length): divide by 144 (12² = 144 in²/ft²)
-            since D and t are in inches. So the cross-sectional area in ft² is
-            π × t × (D/2 + t) / 144 = π × t × (D + 2t) / 288.
-            But note: writing it as π × t × (D + t) / 144 is an equivalent form that simplifies
-            slightly differently. Let's use the standard form that gives the common result:
+            since D and t are in inches:
           </p>
           <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1 mb-3">
             <p>A_ice (ft²/ft) = π × t × (D + t) / 144</p>
-            <p>   (where D and t are in inches, and we've expanded the annular area formula)</p>
           </div>
 
           <p className="font-semibold text-slate-200 mb-2">Step 2: Ice weight from density</p>
