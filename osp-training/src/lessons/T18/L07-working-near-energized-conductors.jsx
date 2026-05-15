@@ -1,0 +1,403 @@
+// Net-new — T18.L07 Working Near Energized Conductors — MAD/MAB
+// Working lesson: MAD, MAB, 1910.269, unqualified approach, joint-use awareness
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T18.L07',
+  course_id: 'T18',
+  title: 'Working Near Energized Conductors — MAD/MAB',
+  order: 7,
+  lesson_type: 'working',
+  prerequisites: ['T18.L01', 'T18.L05'],
+  vocabulary_introduced: [
+    'MAD',
+    'MAB',
+    'qualified electrical worker (1910.269)',
+  ],
+  key_terms: [
+    {
+      term: 'MAD',
+      definition:
+        'Minimum Approach Distance — the closest an unprotected qualified electrical worker (trained under 29 CFR 1910.269) may get to an energized conductor without additional insulation or barriers. Determined using the Appendix B formula in 29 CFR 1910.269(l)(2), not a simple lookup table. Use the OSHA MAD Calculator at osha.gov/power-generation/rulemaking/madcalculator for the specific system voltage.',
+    },
+    {
+      term: 'MAB',
+      definition:
+        'Minimum Approach Boundary — a physical or visual boundary established at or beyond the MAD to prevent unqualified workers from entering the approach zone around an energized conductor. Unqualified workers (most OSP telecom crew members) must stay outside the MAB — farther away than the MAD itself.',
+    },
+    {
+      term: 'qualified electrical worker (1910.269)',
+      definition:
+        'A person trained and authorized under 29 CFR 1910.269 to work within the Minimum Approach Distance of energized conductors. This requires formal electrical safety training, documented competency, and employer authorization. Most OSP/telecom crew members are NOT 1910.269-qualified — they are awareness-level workers who must stay outside the MAB.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'hazard recognition', source_lesson_id: 'T18.L01' },
+    { term: 'hierarchy of controls', source_lesson_id: 'T18.L01' },
+    { term: 'PPG glove class', source_lesson_id: 'T18.L05' },
+    { term: 'ANSI Z89.1 Class E', source_lesson_id: 'T18.L05' },
+    { term: 'pole', source_lesson_id: 'T01.L01' },
+  ],
+  estimated_minutes: 25,
+};
+
+export default function T18L07_WorkingNearEnergizedConductors() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          This lesson is about the single most common way OSP telecom workers die on joint-use
+          poles: getting too close to an energized distribution conductor. You don't have to
+          touch it. A flashover — an arc jumping from an energized conductor through the air
+          to a grounded object — can kill at distances that feel like they should be safe.
+        </p>
+        <p className="mt-2">
+          The <strong>Minimum Approach Distance (MAD)</strong> is the line OSHA draws for
+          qualified electrical workers — people who have had formal 1910.269 electrical safety
+          training. Most OSP telecom crew members are NOT 1910.269-qualified. That means the
+          standard that applies to your crew is even simpler: <strong>don't get within the
+          Minimum Approach Boundary (MAB)</strong>. If the work requires getting closer than
+          the MAB, stop, move the crew out of the zone, and call the utility.
+        </p>
+        <p className="mt-2">
+          This lesson teaches you what those distances mean, how to look up the MAD for a
+          specific voltage, and exactly what to do when your job puts you near energized
+          conductors on a joint-use pole.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">MAD</td>
+              <td className="px-3 py-2">Minimum Approach Distance</td>
+              <td className="px-3 py-2">The closest a qualified worker can get to a live conductor — per voltage-specific formula</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">MAB</td>
+              <td className="px-3 py-2">Minimum Approach Boundary</td>
+              <td className="px-3 py-2">A safety boundary at or beyond the MAD — unqualified workers must stay outside this line</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">1910.269</td>
+              <td className="px-3 py-2">29 CFR 1910.269</td>
+              <td className="px-3 py-2">OSHA standard for electric power generation, transmission, and distribution work — the standard that governs work near energized conductors</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">kV</td>
+              <td className="px-3 py-2">Kilovolts</td>
+              <td className="px-3 py-2">1 kV = 1,000 volts. Distribution systems run from 4 kV to 35 kV; transmission runs higher</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* ── FLASHCARDS ──────────────────────────────────────────────────── */}
+        <Flashcard
+          deckId="T18-L07"
+          cards={[
+            {
+              id: 'T18-L07-fc-mad',
+              front: 'What is the Minimum Approach Distance (MAD)?',
+              back: 'The closest distance a qualified electrical worker (1910.269-trained) may approach an energized conductor without additional insulation or barriers. Determined by the Appendix B formula in 29 CFR 1910.269(l)(2) for the specific system voltage — not a fixed number for a voltage range. Use the OSHA MAD Calculator (osha.gov) for the actual distance.',
+            },
+            {
+              id: 'T18-L07-fc-mab',
+              front: 'What is the Minimum Approach Boundary (MAB)?',
+              back: 'A visual or physical boundary at or beyond the MAD that marks where unqualified workers must stop. Telecom OSP crew members (typically not 1910.269-qualified) must stay outside the MAB — farther from the conductor than even the MAD. If work requires crossing the MAB, stop and notify the utility.',
+            },
+            {
+              id: 'T18-L07-fc-qualified',
+              front: 'Who is a "qualified electrical worker" under 29 CFR 1910.269?',
+              back: 'A person with formal electrical safety training, documented competency, and employer authorization under 29 CFR 1910.269. This is not a general construction awareness training — it requires comprehensive electrical hazard training. Most OSP/telecom crew members are NOT 1910.269-qualified.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The MAD — How It's Calculated (Not a Simple Lookup)</h2>
+
+        <p>
+          The most common mistake in safety training is teaching a fixed MAD number — "2 ft 2 in
+          for distribution voltage" — and calling it done. The 2014 OSHA revision to 29 CFR
+          1910.269 changed this. The MAD is now calculated using a per-voltage formula in
+          Appendix B of 1910.269(l)(2). That means the MAD at 7.2 kV is different from the
+          MAD at 14.4 kV, and both are different from 25 kV.
+        </p>
+        <p className="mt-2">
+          The correct way to determine the MAD for a specific job is to use the{' '}
+          <strong>OSHA MAD Calculator</strong> at{' '}
+          <span className="font-mono text-sky-300">osha.gov/power-generation/rulemaking/madcalculator</span>.
+          Enter the phase-to-ground voltage for the line you're working near, and the calculator
+          returns the MAD using the Appendix B formula from 29 CFR 1910.269(l)(2).
+        </p>
+
+        <div className="mt-4 p-4 bg-sky-400/10 border border-sky-400/30 rounded-lg text-sm">
+          <p className="font-semibold text-sky-300 mb-1">How to use the OSHA MAD Calculator</p>
+          <ol className="list-decimal pl-5 space-y-1 text-slate-300/90">
+            <li>Go to <span className="font-mono">osha.gov/power-generation/rulemaking/madcalculator</span></li>
+            <li>Enter the nominal system voltage (phase-to-phase or phase-to-ground — read the calculator's prompt carefully)</li>
+            <li>Enter whether the system is grounded or ungrounded (most U.S. distribution is effectively grounded)</li>
+            <li>The calculator returns the MAD in feet and inches for a qualified worker at that specific voltage</li>
+            <li>Add the MAB margin for unqualified workers (your crew) — the MAB is at or beyond the MAD</li>
+          </ol>
+        </div>
+
+        <h3 className="mt-5 font-semibold">What the Numbers Mean on a Real Joint-Use Pole</h3>
+        <p className="mt-2">
+          Distribution voltages on rural RUS joint-use poles commonly run at 7.2 kV or 14.4 kV
+          phase-to-ground (the voltage from a single conductor to earth). For reference, the
+          OSHA MAD Calculator returns approximately:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 mt-2 text-sm text-slate-300/90">
+          <li><strong>7.2 kV phase-to-ground:</strong> approximately 2 feet (use the calculator for the exact value at your system)</li>
+          <li><strong>14.4 kV phase-to-ground:</strong> approximately 2 ft 1–2 in (use the calculator)</li>
+          <li><strong>46–72 kV (sub-transmission):</strong> approximately 3 ft or more — substantially farther</li>
+        </ul>
+        <p className="mt-2 text-sm text-slate-300/70">
+          Source: OSHA MAD Calculator (osha.gov — free public tool); 29 CFR 1910.269(l)(2) and
+          Appendix B (ecfr.gov; osha.gov). Note: always use the calculator for the specific
+          voltage at your job site — do not rely on range-based approximations.
+        </p>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field — Working in the Communication Space</p>
+          <p className="text-slate-300/90">
+            <strong>Book (1910.269):</strong> The MAD applies to qualified workers approaching
+            energized conductors. Unqualified workers must stay outside the MAB. If work requires
+            proximity to energized conductors, a 1910.269-qualified observer or supervisor must
+            be present, or the conductors must be de-energized.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field reality:</strong> On joint-use poles, OSP/telecom crews routinely
+            work within 5–6 feet of distribution conductors. Most crew members are not
+            1910.269-qualified. The informal field rule is: "I'm in the communication space,
+            below the neutral — I don't touch anything above me." This works in most situations
+            because the NESC communication space IS physically separated from the supply space,
+            and properly insulated supply conductors require direct contact to arc. However, the
+            informal rule fails when: (a) supply conductor insulation is deteriorated or absent;
+            (b) induced voltage builds up on the messenger at long parallel-run spans; (c) a
+            supply conductor is down and energized at ground level. Know the standard AND know
+            where the field norm breaks.
+          </p>
+        </div>
+
+        <h3 className="mt-5 font-semibold">What to Do When Your Work Puts You Near Energized Conductors</h3>
+        <p className="mt-2">
+          The decision tree for OSP crews (non-1910.269-qualified) is short:
+        </p>
+        <ol className="list-decimal pl-5 space-y-2 mt-2 text-slate-300/90">
+          <li>
+            <strong>Determine the voltage</strong> — look at the pole tag or the utility's
+            mapping for the distribution circuit voltage. If you don't know the voltage, treat
+            it as if it's energized at the highest possible distribution level until confirmed
+            otherwise.
+          </li>
+          <li>
+            <strong>Use the OSHA MAD Calculator</strong> to find the MAD for that voltage.
+            The MAB for your crew is at the MAD or farther.
+          </li>
+          <li>
+            <strong>Can you complete the work while staying outside the MAB?</strong> If yes,
+            proceed with the appropriate Class E hard hat, Class 2 hi-vis, and awareness. If no:
+          </li>
+          <li>
+            <strong>STOP.</strong> Do not attempt to work inside the MAB without:
+            (a) a 1910.269-qualified observer or supervisor present, OR
+            (b) the utility de-energizing and grounding the supply conductors before you start.
+          </li>
+          <li>
+            <strong>Contact the utility.</strong> The pole owner has protocols for de-energization
+            and grounding for joint-use contractors. This is not a delay — it's the correct
+            process. Document the request.
+          </li>
+        </ol>
+      </section>
+
+      {/* ── ADVANCED ────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Induced Voltage — The Invisible Hazard</h2>
+        <p>
+          When a telecom messenger cable runs parallel to a high-voltage power line for an
+          extended distance, the power line's electromagnetic field induces a voltage onto the
+          messenger. This induced voltage is not the same as touching a live conductor — but at
+          high-current parallel runs, it can reach hundreds of volts on an ungrounded messenger
+          and can cause a serious shock or arc if a worker is the first ground path when the
+          messenger is cut.
+        </p>
+        <p className="mt-2">
+          The practical protection:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 mt-2 text-sm text-slate-300/90">
+          <li>The messenger must be bonded and grounded at splice points per NESC Rule 230 and RUS Bulletin 1751F-810 (Electrical Protection of Communication Facilities) before cutting or working on it in parallel-exposure spans.</li>
+          <li>A ground rod tester can detect induced voltage — clip one probe to the messenger and one to a confirmed ground before cutting.</li>
+          <li>Never assume a cut messenger is at zero voltage just because it's de-stranded from the pole. The parallel induction from a live power line continues until the messenger is grounded.</li>
+        </ul>
+        <p className="mt-2 text-sm text-slate-300/70">
+          Source: RUS Bulletin 1751F-810 (Electrical Protection of Communication Facilities);
+          NESC Rule 230 (bonding and grounding of communication conductors); 29 CFR 1910.269(a)(1)
+          scope (applies to telecom work on joint-use poles with energized supply conductors).
+        </p>
+      </section>
+
+      {/* ── WORKED EXAMPLE ───────────────────────────────────────────────── */}
+      <WorkedExample
+        title="Reading the OSHA MAD Calculator — 14.4 kV Distribution Line"
+        description="A distribution conductor on a joint-use pole is rated 14.4 kV phase-to-ground. Walk through how to determine the MAD for a qualified worker, and then what that means for your (non-qualified) OSP crew."
+        variables={[
+          {
+            key: 'voltageKV',
+            label: 'Phase-to-ground voltage',
+            units: 'kV',
+            default: 14.4,
+            min: 1,
+            max: 72,
+            step: 0.1,
+          },
+        ]}
+        formula={({ voltageKV }) => {
+          // OSHA Appendix B formula simplified for phase-to-ground:
+          // MAD (ft) = 0.359 × (kV + 0.085 × kV) for grounded systems, approximately.
+          // Actual OSHA calculator returns ~2.1 ft at 14.4 kV.
+          // We use a simplified linear interpolation anchored to known calculator outputs:
+          // 7.2 kV → ~2.0 ft; 14.4 kV → ~2.1 ft; 46 kV → ~3.0 ft; 72 kV → ~3.5 ft
+          // Linear fit: MAD = 1.9 + 0.022 × kV (approximate, for teaching purposes)
+          return Math.max(1.9, 1.9 + 0.022 * voltageKV);
+        }}
+        steps={({ voltageKV }, result) => [
+          {
+            expression: 'Step 1 — Open the OSHA MAD Calculator',
+            value: undefined,
+            unit: '',
+          },
+          {
+            expression: 'URL: osha.gov/power-generation/rulemaking/madcalculator',
+            value: undefined,
+            unit: '',
+          },
+          {
+            expression: `Step 2 — Enter system voltage: ${voltageKV} kV phase-to-ground`,
+            value: undefined,
+            unit: '',
+          },
+          {
+            expression: 'Step 3 — Confirm grounded system (typical U.S. distribution)',
+            value: undefined,
+            unit: '',
+          },
+          {
+            expression: `Step 4 — Calculator returns MAD for qualified worker ≈`,
+            value: result,
+            unit: 'ft',
+          },
+          {
+            expression: 'Step 5 — For non-qualified workers (your crew): stay at or beyond the MAD',
+            value: undefined,
+            unit: '',
+          },
+          {
+            expression: `Practical rule: maintain at least ${result.toFixed(1)} ft from the conductor; if work requires closer, STOP and call the utility`,
+            value: undefined,
+            unit: '',
+          },
+        ]}
+        sanityCheck={(result, { voltageKV }) =>
+          `At ${voltageKV} kV phase-to-ground, the OSHA MAD Calculator returns approximately ${result.toFixed(1)} ft for a qualified worker. Your non-qualified OSP crew must stay at this distance or farther — that's roughly arm's length plus your tool at ${voltageKV} kV. This calculator approximates the Appendix B formula from 29 CFR 1910.269(l)(2); always verify using the actual OSHA calculator for your job site voltage.`
+        }
+        resultLabel="Approximate MAD (qualified worker)"
+        resultUnit="ft"
+        resultDecimals={2}
+      />
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <Quiz
+        title="T18.L07 Check — Working Near Energized Conductors"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T18-L07-Q1',
+            type: 'mc',
+            prompt:
+              'As an OSP telecom worker who is not trained under 29 CFR 1910.269, you need to do splice work 18 inches from an energized 14.4 kV distribution conductor. You should:',
+            choices: [
+              'Proceed quickly — 18 inches is close but manageable with a Class E hard hat',
+              'Put on Class 2 rubber insulating gloves and proceed',
+              'Stop work, notify your supervisor, and request the utility de-energize the conductor or provide a qualified 1910.269 observer',
+              'Ask the closest crew member to watch from below in case you get shocked',
+            ],
+            answerIndex: 2,
+            explanation:
+              'Non-1910.269-qualified workers must stay outside the Minimum Approach Boundary. At 14.4 kV, the MAD (from the OSHA MAD Calculator using Appendix B of 1910.269) is approximately 2 feet — 18 inches is inside that boundary. The correct action is to STOP and contact the utility for de-energization or to request a 1910.269-qualified observer. Proceeding inside the MAB without qualification or de-energization is illegal and potentially fatal. Class E hard hats and rubber gloves do not make you 1910.269-qualified.',
+            citation:
+              '29 CFR 1910.269(l)(1)–(l)(2) and Appendix B (osha.gov MAD Calculator); OSHA eTool — Electric Power.',
+            fieldNote:
+              'The decision rule for non-qualified OSP workers is simple: if completing the work requires crossing the MAB, stop and call the utility. Document the request and the delay.',
+          },
+          {
+            id: 'T18-L07-Q2',
+            type: 'mc',
+            prompt:
+              'The OSHA Minimum Approach Distance (MAD) for a specific energized conductor is determined by:',
+            choices: [
+              'A fixed table based on voltage ranges (e.g., "1–15 kV = 2 ft 2 in")',
+              'The Appendix B formula in 29 CFR 1910.269(l)(2), applied using the OSHA MAD Calculator for the specific system voltage',
+              'The NESC clearance rules for the applicable loading district',
+              'The utility\'s internal safety policy, which supersedes OSHA rules',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Since the 2014 revision to 29 CFR 1910.269, the MAD is calculated using the Appendix B formula for the specific phase-to-ground voltage — not a fixed range table. The OSHA MAD Calculator at osha.gov applies this formula and returns a MAD in feet and inches for the voltage you enter. Fixed "1–15 kV = 2 ft 2 in" values appear in older training materials but do not reflect the current 2014 rule.',
+            citation:
+              '29 CFR 1910.269(l)(2) and Appendix B (osha.gov); OSHA MAD Calculator (osha.gov/power-generation/rulemaking/madcalculator).',
+          },
+          {
+            id: 'T18-L07-Q3',
+            type: 'mc',
+            prompt:
+              'A telecom crew member is working in the communication space on a joint-use pole. The supply conductors above are energized at 7.2 kV. Which of the following best describes the crew member\'s obligation under 29 CFR 1910.269?',
+            choices: [
+              'The crew member is 1910.269-exempt because they are in the communication space, not the supply space',
+              '1910.269 does not apply to telecom workers on joint-use poles',
+              '1910.269 applies; the non-qualified crew member must stay outside the MAB for 7.2 kV, and work within the MAB requires de-energization or a qualified 1910.269 observer',
+              'The crew member must obtain 1910.269 qualification before any work on a joint-use pole',
+            ],
+            answerIndex: 2,
+            explanation:
+              '29 CFR 1910.269(a)(1) extends to telecom work on joint-use structures where supply conductors are energized. Being in the communication space does not exempt the worker — it means the work is normally outside the MAB, which is why routine communication-space work on properly maintained poles is acceptable. If work requires proximity to the energized supply conductors (e.g., a lashing bracket near the neutral), de-energization or a qualified 1910.269 observer is required.',
+            citation:
+              '29 CFR 1910.269(a)(1) — Scope (osha.gov); OSHA eTool Electric Power.',
+          },
+          {
+            id: 'T18-L07-Q4',
+            type: 'fill-in-blank',
+            prompt:
+              'The free public tool at osha.gov that calculates the Minimum Approach Distance for a specific phase-to-ground voltage is called the OSHA ____ Calculator.',
+            answer: 'MAD',
+            answerDisplay: 'MAD (Minimum Approach Distance) Calculator',
+            explanation:
+              'The OSHA MAD Calculator at osha.gov/power-generation/rulemaking/madcalculator applies the Appendix B formula from 29 CFR 1910.269(l)(2). Enter the system voltage and grounding configuration; the calculator returns the MAD in feet and inches. This is the correct tool to use before any work near energized conductors of unknown or specific voltage.',
+            citation:
+              '29 CFR 1910.269(l)(2) Appendix B; OSHA MAD Calculator (osha.gov — free public tool).',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
