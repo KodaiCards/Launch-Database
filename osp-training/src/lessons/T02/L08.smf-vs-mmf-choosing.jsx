@@ -18,7 +18,7 @@ export const meta = {
   key_terms: [
     { term: 'OM1', definition: 'Multimode fiber grade: 62.5 µm core, 200 MHz-km bandwidth @ 850 nm, max 33 m at 10GbE. Orange jacket. Legacy grade -- do not specify for new 10G+ installations.' },
     { term: 'OM2', definition: 'Multimode fiber grade: 50 µm core, 500 MHz-km bandwidth @ 850 nm, max 82 m at 10GbE. Orange jacket. Legacy grade -- use OM3 or OM4 for modern 10G+ data center work.' },
-    { term: 'OM3', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 2000 MHz-km bandwidth @ 850 nm, max 300 m at 10GbE. Aqua jacket. The common modern data center MMF for 10GbE at typical inter-row distances.' },
+    { term: 'OM3', definition: 'Multimode fiber grade: 50 µm laser-optimized core. EMB (Effective Modal Bandwidth) = 2000 MHz·km @ 850 nm — the value that governs 10G/40G/100G reach. OFL (Overfilled Launch) = 1500 MHz·km — legacy LED test, not used for modern laser applications. Max reach: 300 m at 10GbE. Aqua jacket.' },
     { term: 'OM4', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket (sometimes magenta in some regions). Use when run distance exceeds OM3\'s 300 m limit.' },
     { term: 'OM5', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 28000 MHz-km @ 953 nm, max 400 m (supports SWDM4). Lime green jacket. Designed for short-wavelength WDM to achieve 100G over a single MMF pair at data center distances.' },
     { term: 'OS2', definition: 'Single-mode fiber grade corresponding to ITU-T G.652.D -- the current standard OSP SMF. Maximum attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D. Yellow jacket.' },
@@ -116,7 +116,7 @@ export default function T02L08_SMFvsMMFChoosing() {
           deckId="T02-L08"
           cards={[
             { id: 'T02-L08-fc-os2', front: 'What is OS2 fiber?', back: 'Single-mode fiber grade per ITU-T G.652.D -- the current standard for OSP work. Max attenuation 0.4 dB/km @ 1310 nm and 0.3 dB/km @ 1550 nm. Reduced water peak. Yellow patch cord jacket. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D.' },
-            { id: 'T02-L08-fc-om3', front: 'What is OM3 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 2000 MHz-km bandwidth @ 850 nm, max 300 m at 10GbE. Aqua jacket. The common modern data center MMF for inter-row 10GbE runs. Not usable for OSP runs over a few hundred meters.' },
+            { id: 'T02-L08-fc-om3', front: 'What is OM3 fiber, and what do EMB vs. OFL mean?', back: 'Multimode fiber grade: 50 µm laser-optimized core, max 300 m at 10GbE. Aqua jacket. EMB (Effective Modal Bandwidth) = 2000 MHz·km — measured with a laser/VCSEL launch; the spec that governs 10G/40G/100G applications. OFL (Overfilled Launch) = 1500 MHz·km — measured with a legacy LED launch; lower number, not relevant for modern transceivers. Not usable for OSP runs over a few hundred meters.' },
             { id: 'T02-L08-fc-om4', front: 'What is OM4 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket. Use when OM3\'s 300 m limit is insufficient. Still only for data center/campus -- not OSP.' },
             { id: 'T02-L08-fc-om5', front: 'What is OM5 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 28000 MHz-km @ 953 nm, lime green jacket. Designed for short-wavelength WDM (SWDM4) to achieve 100G over a single MMF pair at data center distances (max ~400 m). Not for OSP.' },
             { id: 'T02-L08-fc-laseropt', front: 'What does "laser-optimized" mean for MMF?', back: 'OM3/OM4/OM5 fiber has a graded-index core profile specifically optimized for 850 nm VCSEL laser launch conditions. This restricts which modes are excited, reducing modal dispersion and dramatically increasing bandwidth compared to older LED-compatible OM1/OM2 fiber.' },
@@ -161,7 +161,13 @@ export default function T02L08_SMFvsMMFChoosing() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-semibold">OM3</td>
                 <td className="px-3 py-2">50 µm (laser-opt.)</td>
-                <td className="px-3 py-2">2000 MHz·km</td>
+                <td className="px-3 py-2">
+                  2000 MHz·km (EMB)&thinsp;/&thinsp;1500 MHz·km (OFL)
+                  <span className="block text-xs text-slate-400 mt-1">
+                    EMB = Effective Modal Bandwidth (laser/VCSEL launch — the value that matters for 10G/40G/100G).
+                    OFL = Overfilled Launch (legacy LED test — lower number, not relevant for modern transceivers).
+                  </span>
+                </td>
                 <td className="px-3 py-2">300 m</td>
                 <td className="px-3 py-2">Aqua</td>
               </tr>
@@ -220,11 +226,13 @@ export default function T02L08_SMFvsMMFChoosing() {
           </p>
           <ol className="list-decimal pl-4 space-y-1 mt-1 text-slate-300/90">
             <li>
-              <strong>SMF patch cord connected to MMF jack (or vice versa):</strong> The 9 µm
-              SMF core doesn't fill the 50 µm MMF core — massive loss (can be 20+ dB).
-              In the other direction (MMF into SMF), almost no light couples into the tiny
-              SMF core. Either way: complete link failure that looks like a bad splice or
-              dead transceiver.
+              <strong>SMF patch cord connected to MMF jack (or vice versa):</strong> Think of it
+              like cramming a fire hose into a drinking straw. The single-mode core is only 9 µm
+              wide; multimode is 50 or 62.5 µm. Connect a 50 µm MMF output into a 9 µm SMF input
+              and you're throwing away roughly 97% of the light — that's where the 20+ dB loss
+              comes from. In the other direction (SMF into MMF), almost no light couples usefully
+              into the MMF modes at high bit rates. Either way: complete link failure that looks
+              like a bad splice or dead transceiver.
             </li>
             <li>
               <strong>OM3 labeled as OM4 or OM5:</strong> The jacket color is the same (aqua).

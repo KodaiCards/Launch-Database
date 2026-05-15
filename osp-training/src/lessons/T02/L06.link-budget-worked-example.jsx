@@ -239,6 +239,17 @@ Total loss:                               9.60 dB`}
           transceiver specs. The calculator uses the same methodology as the worked example above.
           Change the fiber length or connector count and watch how headroom changes.
         </p>
+        <div className="mb-4 p-4 border border-sky-400/30 bg-sky-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-sky-300 mb-1">Splice loss: worked example vs. calculator default</p>
+          <p className="text-slate-300/90">
+            The worked example above uses <strong>0.15 dB per splice</strong> — the FOA conservative
+            planning value recommended for project budgeting and design submissions. The calculator
+            below defaults to <strong>0.10 dB per splice</strong>, which represents a single
+            high-quality fusion splice at installation. The difference adds up: on a link with 6 splices,
+            the two values differ by 0.30 dB of headroom. Either is defensible — use 0.15 dB for
+            engineering design margins and 0.10 dB when verifying measured field results.
+          </p>
+        </div>
         <LinkBudgetCalculator />
       </div>
 
