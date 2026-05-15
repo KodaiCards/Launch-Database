@@ -195,6 +195,34 @@ export default function T08L11_MakeReadyAsPMProblem() {
             sections when make-ready catches up. Requires a customer communication plan.
           </li>
         </ol>
+
+        <h3 className="mt-6 font-semibold">Book vs. Field: CPM Float in Practice</h3>
+        <p>
+          <strong>Book (CPM theory):</strong> Critical Path Method (CPM) network diagrams define
+          float precisely — float equals the difference between the Latest Start Time (LST) and
+          the Earliest Start Time (EST) for each activity. A positive float means the activity
+          can slip by that many days without delaying the project end date. Textbook project
+          management calls for recalculating float after every status update.
+        </p>
+        <p className="mt-2">
+          <strong>Field practice:</strong> Make-ready contractors and power company crews operate
+          on their own schedules — schedules that are independent of any CPM model you build.
+          "Float" in theory means you have buffer; "float" in practice means you have time before
+          the crew shows up and you're blocked. Experienced OSP project managers don't re-derive
+          float daily. They maintain a simple milestone chart (make-ready target completion date,
+          power company booking date, cable installation start date, go-live date) and track
+          variance at the milestone level. They also know that when the power company books a
+          job, that date is effectively fixed — your CPM float is only as real as the power
+          company's crew calendar, not your spreadsheet.
+        </p>
+        <p className="mt-2">
+          <strong>Risk of confusing them:</strong> Building a CPM schedule with precise
+          float calculations and presenting it to a customer as a firm commitment — when in
+          reality the power company's crew availability is unknown — creates false precision.
+          Better practice: present milestone dates with explicit "subject to power company
+          crew availability" language, and build 2–3 weeks of schedule contingency for any
+          project with poles requiring power company work.
+        </p>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}

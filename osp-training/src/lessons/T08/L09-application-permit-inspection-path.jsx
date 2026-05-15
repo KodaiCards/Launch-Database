@@ -206,6 +206,28 @@ export default function T08L09_ApplicationPermitInspectionPath() {
           <li><strong>Power company make-ready crew scheduling</strong> — power crews book 3–8 weeks out. If your route has any poles requiring power company transfers, add this to your critical-path timeline immediately.</li>
           <li><strong>Pre-inspection hold</strong> — some AHJs require a pre-installation inspection before you can pull cable. If you miss the inspection appointment, you wait for the next available slot.</li>
         </ol>
+        <h3 className="mt-6 font-semibold">Book vs. Field: Application Review Timelines</h3>
+        <p>
+          <strong>Book (FCC 18-111):</strong> The pole owner has 15 days from receipt of a
+          complete application to grant access or schedule make-ready. The FCC designed the
+          clock to ensure pole owners respond promptly and don't use slow review as a barrier
+          to competitive fiber deployment.
+        </p>
+        <p className="mt-2">
+          <strong>Field practice:</strong> The 15-day FCC clock technically starts the clock, but
+          in practice many utilities routinely slip to 25–45 days from complete application to
+          MRE delivery — especially in rural service territories with smaller engineering
+          staffs. Experienced project managers build a standard 30-day buffer into their project
+          schedules for the utility review phase rather than planning to the 15-day regulatory
+          minimum. Treating the 15-day clock as a hard planning date is a common source of
+          schedule overruns on first-time fiber projects.
+        </p>
+        <p className="mt-2">
+          <strong>Risk of confusing them:</strong> If your project schedule is built to the FCC's
+          15-day minimum and the pole owner delivers on Day 32, you're 17 days behind before
+          make-ready work even begins. Planning buffers aren't padding — they're accurate
+          modeling of how the process actually runs in the field.
+        </p>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
