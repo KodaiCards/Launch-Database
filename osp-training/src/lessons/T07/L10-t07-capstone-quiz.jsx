@@ -349,7 +349,7 @@ export default function T07L10_CapstoneQuiz() {
           a1_replacement_wrong: {
             text: 'Incorrect. Replacement is triggered by pole condition problems (rot, lean, burn), not by wire height conflicts. Height conflicts → transfer. Pole structural problems → replacement or force pole. Classify this as a potential transfer situation (or confirm no conflict after the calculation). Re-check the math before flagging.',
             choices: [
-              { label: 'Re-check the calculation and proceed correctly', next: 'a1_correct' },
+              { label: 'Re-check the calculation and proceed correctly', next: 'a1_clear' },
             ],
           },
           a2: {
