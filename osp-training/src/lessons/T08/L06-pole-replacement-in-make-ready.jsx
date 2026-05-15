@@ -351,7 +351,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             answerIndex: 2,
             explanation:
               'Cost causation: the fiber applicant contributed 6 load percentage points out of 94 total. 6 / 94 = 0.0638, or approximately 6.4%. The existing attachers contributed 88 out of 94, or approximately 93.6%. The fiber applicant does not pay 100% (they only caused 6.4% of the problem), nor do they pay 0% (they did contribute to exceeding the threshold). The proportional split is the correct FCC-framework approach.',
-            citation: 'FCC 18-111 (2018); 47 CFR §1.1413.',
+            citation: 'FCC 18-111 (2018); 47 CFR §1.1413 [confirm section].',
           },
           {
             id: 'T08-L06-Q3',
@@ -393,7 +393,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             answer: 'load',
             answerDisplay: 'load',
             explanation:
-              'The cost-causation framework divides pole replacement costs based on each party\'s proportional load contribution — the percentage of the pole\'s total rated capacity that each attacher\'s cables, hardware, and spans consume. A party whose attachments use 80% of the capacity pays 80% of the replacement cost; a new attacher whose cable contributes 12% pays 12%. This is the FCC\'s framework for equitable cost allocation under 47 CFR §1.1413.',
+              'The cost-causation framework divides pole replacement costs based on each party\'s proportional load contribution — the percentage of the pole\'s total rated capacity that each attacher\'s cables, hardware, and spans consume. A party whose attachments use 80% of the capacity pays 80% of the replacement cost; a new attacher whose cable contributes 12% pays 12%. This is the FCC\'s framework for equitable cost allocation under 47 CFR §1.1413 [confirm section].',
           },
         ]}
       />

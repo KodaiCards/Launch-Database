@@ -207,7 +207,7 @@ export default function T08L12_CapstoneQuiz() {
             type: 'mc',
             prompt: 'An MRE shows: telecom labor $800, power company sub $0, materials $450, contingency 20% = $250, total $1,500. Which aspect of this MRE is most likely to be questioned during a review?',
             choices: [
-              'The 20% contingency — industry norm is 10–15%, and 20% on a $1,250 subtotal adds $250, which seems high',
+              'The 20% contingency — at the high end of the normal range (10–20%), and worth asking why the estimator needed the full 20%',
               'The zero power company sub-contractor charge — all MREs should include power company work',
               'The $800 telecom labor — too high for a simple transfer',
               'The $450 materials — typical brackets cost much more than this implies',

@@ -265,10 +265,11 @@ export default function T08L07_ReadingAMakeReadyEstimate() {
             pole owner for the power company's current lead time when you receive the MRE.
           </li>
           <li>
-            <strong>High contingency (over 15%).</strong> High contingency signals that the
-            estimator doesn't have confidence in the scope — the pole audit is old, the existing
-            attachments are complicated, or there are known equipment conflicts. Budget extra
-            schedule time for scope changes that will surface during execution.
+            <strong>High contingency (above 15%, reaching 20%).</strong> Contingency at or near
+            the top of the normal range (10–20%) signals that the estimator doesn't have full
+            confidence in the scope — the pole audit is old, the existing attachments are
+            complicated, or there are known equipment conflicts. Budget extra schedule time for
+            scope changes that will surface during execution.
           </li>
           <li>
             <strong>Multiple transfer actions on adjacent poles.</strong> Transfer work on

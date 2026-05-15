@@ -424,7 +424,7 @@ export default function T08L03_SimpleVsComplexAttachment() {
             answerIndex: 2,
             explanation:
               'The cost-causation rule: the cable TV coax is already NESC-compliant and would not need to move at all without the fiber applicant\'s project. The fiber applicant is the sole cause of the need for the 4-inch raise. Therefore the fiber applicant pays for the transfer of the coax.',
-            citation: 'FCC 18-111 (2018); 47 CFR §1.1413.',
+            citation: 'FCC 18-111 (2018); 47 CFR §1.1413 [confirm section].',
           },
           {
             id: 'T08-L03-Q5',
