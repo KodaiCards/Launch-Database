@@ -129,6 +129,7 @@ export default function T02L04_MacrobendAndMicrobend() {
               <tr>
                 <th className="px-3 py-2 text-left">Fiber type</th>
                 <th className="px-3 py-2 text-left">Test condition</th>
+                <th className="px-3 py-2 text-left">Max added loss @ 1550 nm</th>
                 <th className="px-3 py-2 text-left">Max added loss @ 1625 nm</th>
               </tr>
             </thead>
@@ -137,23 +138,33 @@ export default function T02L04_MacrobendAndMicrobend() {
                 <td className="px-3 py-2">G.652.D (standard SMF)</td>
                 <td className="px-3 py-2">100 turns, 30 mm radius</td>
                 <td className="px-3 py-2">≤ 0.5 dB</td>
+                <td className="px-3 py-2">≤ 1.0 dB</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2">G.657.A1 (bend-insensitive)</td>
+                <td className="px-3 py-2" rowSpan={2}>G.657.A1 (bend-insensitive)</td>
                 <td className="px-3 py-2">10 turns, 10 mm radius</td>
                 <td className="px-3 py-2">≤ 0.75 dB</td>
+                <td className="px-3 py-2">≤ 1.5 dB</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">1 turn, 15 mm radius</td>
+                <td className="px-3 py-2">≤ 0.25 dB</td>
+                <td className="px-3 py-2">≤ 1.0 dB</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">G.657.A2 (more bend-insensitive)</td>
                 <td className="px-3 py-2">1 turn, 7.5 mm radius</td>
-                <td className="px-3 py-2">≤ 0.5 dB</td>
+                <td className="px-3 py-2">≤ 0.03 dB</td>
+                <td className="px-3 py-2">≤ 0.08 dB</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="text-xs text-slate-400 mt-2">
           Source: ITU-T G.652 (2024 edition — [confirm edition]) and ITU-T G.657 (2016 — [confirm
-          current edition]). Test conditions are per the respective standard.
+          current edition]). Test conditions are per the respective standard. The G.657.A1 specification
+          includes two test conditions: the tighter 10-turn/10 mm test is commonly confused with the
+          1-turn/15 mm condition — they are separate tests at different bend severities.
         </p>
 
         <h3 className="mt-5 font-semibold">Bend radius in practice — cable vs. fiber</h3>

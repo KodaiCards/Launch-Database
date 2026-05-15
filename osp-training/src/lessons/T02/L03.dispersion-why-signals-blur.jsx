@@ -206,7 +206,13 @@ Step 5: ΔT = 170 ps`}
             // 10 Gb/s bit period = 100 ps; conventional 10G dispersion budget ≈ 100 ps total
             // (ITU-T G.952/G.652 engineering practice: ΔT must stay below ~1 bit period for direct detection)
             const limit_10g = 100;  // ps — ~1 bit period at 10 Gb/s; matches worked-example conclusion above
-            const limit_40g = 17.5; // ps — 40 Gb/s (bit period 25 ps, 70% ≈ 17.5)
+            // limit_40g: conventional 40G direct-detection CD budget (~17.5 ps).
+            // At 40 Gbps, bit period = 25 ps; CD-induced ΔT must stay well below ~bit period
+            // for receiver sensitivity (typical engineering limit ≈ 0.7 × bit period).
+            // NOTE: the 10%-of-bit-period rule is a PMD tolerance — that is a separate PMD
+            // budget and does NOT apply here. This slider tracks CD only; PMD has its own
+            // dedicated measurement (see T02.L09/L10).
+            const limit_40g = 17.5; // ps — 40 Gb/s CD limit (bit period 25 ps × ~0.7 ≈ 17.5 ps)
             let status = 'ok';
             let statusMessage = `ΔT = ${delta_t_ps.toFixed(1)} ps — well within 10 Gb/s tolerance (< ${limit_10g} ps). No dispersion compensation needed.`;
             if (delta_t_ps >= limit_10g && delta_t_ps < limit_10g * 4) {
