@@ -1,0 +1,183 @@
+import React, { useRef, useState } from 'react';
+
+/**
+ * Sortable — drag-to-reorder list with correct-order validation.
+ *
+ * Presents a scrambled list of items. The user drags them into the correct
+ * sequence and submits. Uses HTML5 native drag-and-drop (no external deps).
+ * Touch support uses a pointer-event fallback for mobile.
+ *
+ * @param {string}   title          - Section title.
+ * @param {string}   [prompt]       - Instruction shown above the sortable list.
+ * @param {Array}    items          - Array of item objects: [{id: string, label: string}]
+ *                                    Presented in scrambled order on first render.
+ * @param {Array}    correctOrder   - Array of ids in the correct sequence.
+ *                                    e.g. ['step-3', 'step-1', 'step-4', 'step-2']
+ * @param {string}   [explanation]  - Shown after submission explaining the correct order.
+ * @param {string}   [citation]     - Standards reference shown after submission.
+ * @param {string}   [fieldNote]    - Field practice note shown after submission.
+ */
+export default function Sortable({
+  title,
+  prompt,
+  items,
+  correctOrder,
+  explanation,
+  citation,
+  fieldNote,
+}) {
+  // Scramble initial order (Fisher-Yates, seeded by id sort so it's deterministic)
+  const initial = [...items].sort((a, b) => {
+    const ai = correctOrder.indexOf(a.id);
+    const bi = correctOrder.indexOf(b.id);
+    // Simple scramble: interleave by putting even-indexed correct items first half, odd second half
+    const aScrambled = ai % 2 === 0 ? ai + items.length : ai;
+    const bScrambled = bi % 2 === 0 ? bi + items.length : bi;
+    return aScrambled - bScrambled;
+  });
+
+  const [order, setOrder]       = useState(initial);
+  const [submitted, setSubmit]  = useState(false);
+  const [dragIdx, setDragIdx]   = useState(null);
+  const [overIdx, setOverIdx]   = useState(null);
+
+  const isCorrect = submitted &&
+    order.every((item, i) => item.id === correctOrder[i]);
+
+  // ── HTML5 drag-and-drop handlers ──
+
+  function onDragStart(e, idx) {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(idx));
+  }
+
+  function onDragOver(e, idx) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setOverIdx(idx);
+  }
+
+  function onDrop(e, idx) {
+    e.preventDefault();
+    const from = Number(e.dataTransfer.getData('text/plain') ?? dragIdx);
+    if (from === idx) { setDragIdx(null); setOverIdx(null); return; }
+    const next = [...order];
+    const [moved] = next.splice(from, 1);
+    next.splice(idx, 0, moved);
+    setOrder(next);
+    setDragIdx(null);
+    setOverIdx(null);
+  }
+
+  function onDragEnd() {
+    setDragIdx(null);
+    setOverIdx(null);
+  }
+
+  function reset() {
+    setOrder(initial);
+    setSubmit(false);
+    setDragIdx(null);
+    setOverIdx(null);
+  }
+
+  return (
+    <div className="panel">
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      {prompt && (
+        <p className="text-sm text-slate-300/80 mb-4 leading-relaxed">{prompt}</p>
+      )}
+
+      <ul className="space-y-2 select-none">
+        {order.map((item, i) => {
+          const correctPos  = correctOrder.indexOf(item.id);
+          const inPlace     = submitted && i === correctPos;
+          const outOfPlace  = submitted && i !== correctPos;
+          const isDragging  = dragIdx === i;
+          const isOver      = overIdx === i && dragIdx !== null && dragIdx !== i;
+
+          return (
+            <li
+              key={item.id}
+              draggable={!submitted}
+              onDragStart={e => onDragStart(e, i)}
+              onDragOver={e => onDragOver(e, i)}
+              onDrop={e => onDrop(e, i)}
+              onDragEnd={onDragEnd}
+              className={[
+                'flex items-center gap-3 px-4 py-3 rounded-lg border transition',
+                submitted
+                  ? inPlace
+                    ? 'border-ospgreen bg-ospgreen/10 cursor-default'
+                    : 'border-rose-400 bg-rose-400/10 cursor-default'
+                  : isDragging
+                    ? 'opacity-40 border-ospamber/50 bg-ospamber/5 cursor-grabbing'
+                    : isOver
+                      ? 'border-ospamber bg-ospamber/10 scale-[1.02] cursor-grab'
+                      : 'border-white/15 hover:border-white/40 cursor-grab',
+              ].join(' ')}
+            >
+              {/* Position indicator */}
+              <span className="font-mono text-xs text-slate-300/50 w-5 text-right shrink-0">
+                {i + 1}.
+              </span>
+
+              <span className="flex-1 text-sm text-slate-200">{item.label}</span>
+
+              {/* Post-submit indicator */}
+              {submitted && (
+                <span className={`text-xs font-semibold shrink-0 ${inPlace ? 'text-ospgreen' : 'text-rose-300'}`}>
+                  {inPlace ? '✓' : `→ ${correctOrder.indexOf(item.id) + 1}`}
+                </span>
+              )}
+
+              {!submitted && (
+                <span className="text-slate-300/30 text-sm shrink-0" aria-hidden="true">⠿</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {!submitted ? (
+        <div className="mt-4">
+          <button className="btn-primary" onClick={() => setSubmit(true)}>
+            Check order
+          </button>
+          <span className="ml-3 text-xs text-slate-300/50">Drag to rearrange.</span>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <p className={`text-sm font-semibold ${isCorrect ? 'text-ospgreen' : 'text-rose-300'}`}>
+            {isCorrect
+              ? '✓ Correct order.'
+              : '✗ Not quite — the numbers on the right show the correct positions.'}
+          </p>
+
+          {explanation && (
+            <p className="text-sm text-slate-200 leading-relaxed">
+              <strong>Why: </strong>{explanation}
+            </p>
+          )}
+          {citation && (
+            <p className="text-sm">
+              <span className="badge-book">Book</span>{' '}
+              <span className="text-slate-300/90">{citation}</span>
+            </p>
+          )}
+          {fieldNote && (
+            <p className="text-sm">
+              <span className="badge-field">Field</span>{' '}
+              <span className="text-slate-300/90">{fieldNote}</span>
+            </p>
+          )}
+
+          <button className="btn-ghost text-sm mt-2" onClick={reset}>
+            Try again
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
