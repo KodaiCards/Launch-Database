@@ -1,0 +1,454 @@
+// T03.L04 — Messenger Cable — Lashed vs. ADSS
+// Working lesson: aerial cable types, EDS, sag calculation
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import SideBySide from '../../components/primitives/SideBySide.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T03.L04',
+  course_id: 'T03',
+  title: 'Messenger Cable — Lashed vs. ADSS',
+  order: 4,
+  lesson_type: 'working',
+  prerequisites: ['T03.L01', 'T03.L03'],
+  vocabulary_introduced: [
+    'ADSS',
+    'messenger',
+    'lashing wire',
+    'EDS (everyday stress)',
+    'RTS (rated tensile strength)',
+    'figure-8 cable',
+  ],
+  vocabulary_assumed: [
+    { term: 'span',       source_lesson_id: 'T01.L01' },
+    { term: 'sag',        source_lesson_id: 'T01.L01' },
+    { term: 'attachment', source_lesson_id: 'T01.L01' },
+    { term: 'ADSS',       source_lesson_id: 'T01.L01' },
+    { term: 'macrobend',  source_lesson_id: 'T02.L04' },
+    { term: 'loose-tube', source_lesson_id: 'T03.L01' },
+    { term: 'armor',      source_lesson_id: 'T03.L03' },
+  ],
+  key_terms: [
+    {
+      term: 'ADSS',
+      definition:
+        'All-Dielectric Self-Supporting. A cable construction with no metallic components — strength members are aramid yarn or fiberglass rods inside the cable. Supports its own weight between poles without a separate steel messenger. No bonding or grounding required at any pole.',
+    },
+    {
+      term: 'messenger',
+      definition:
+        'A galvanized steel wire or strand pre-attached to pole hardware that provides the mechanical support for lashed fiber cable. The fiber cable bears no structural load — the messenger carries all sag and tension forces.',
+    },
+    {
+      term: 'lashing wire',
+      definition:
+        'A small-diameter metallic wire (typically galvanized steel) applied in a helix around both the fiber cable and the messenger strand using a lashing machine, binding them together.',
+    },
+    {
+      term: 'EDS (everyday stress)',
+      definition:
+        'The long-term average tension an ADSS cable experiences under zero wind, zero ice, at the annual average temperature. Design target: 16–25% of RTS. Below 16% RTS: vibration damping generally not required. 16–25% RTS: vibration damping recommended.',
+    },
+    {
+      term: 'RTS (rated tensile strength)',
+      definition:
+        'The cable manufacturer\'s rated breaking strength in Newtons or lbf, used as the denominator for EDS calculations. The ADSS cable must never exceed its maximum allowable tension at any design load case.',
+    },
+    {
+      term: 'figure-8 cable',
+      definition:
+        'An integrated aerial cable where the steel messenger is molded into the same jacket as the fiber-bearing element, forming a figure-8 cross-section. Eliminates the need to pre-install a separate messenger strand, reducing installation time by up to 50%.',
+    },
+  ],
+  estimated_minutes: 28,
+};
+
+export default function T03L04_MessengerLashedVsADSS() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ──────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          You've seen telephone wire hanging between poles your whole life. Two things keep
+          that wire up: either the wire is strong enough to hold itself (self-supporting),
+          or it's tied to a stronger steel strand that does the holding for it.
+        </p>
+        <p className="mt-2">
+          Fiber optic cable follows the same two approaches. A <strong>lashed cable</strong>
+          is attached to a steel messenger strand already on the pole — the fiber cable hangs
+          from the strand like laundry on a clothesline. An <strong>ADSS cable</strong> is
+          built strong enough to hold itself between poles with no separate strand at all.
+        </p>
+        <p className="mt-2">
+          Both get fiber in the air. The choice between them drives cost, installation time,
+          bonding requirements, and how many fibers you can get in the cable.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">Practical meaning</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">ADSS</td>
+              <td className="px-3 py-2">All-Dielectric Self-Supporting</td>
+              <td className="px-3 py-2">No metal in cable; supports itself; no bonding required</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">EDS</td>
+              <td className="px-3 py-2">Everyday Stress</td>
+              <td className="px-3 py-2">Long-term tension as % of breaking strength; drives vibration-damper decisions</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">RTS</td>
+              <td className="px-3 py-2">Rated Tensile Strength</td>
+              <td className="px-3 py-2">Cable's rated breaking force in Newtons or lbf</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">NESC</td>
+              <td className="px-3 py-2">National Electrical Safety Code</td>
+              <td className="px-3 py-2">Sets clearance, loading, and construction requirements for aerial utility lines</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Lashed Cable vs. ADSS — The Design Decision</h2>
+
+        <h3 className="mt-4 font-semibold">Lashed cable — the traditional approach</h3>
+        <p>
+          In a lashed aerial build, a steel messenger strand (galvanized steel wire, typically
+          ¼" to 7/16" diameter depending on span length and load) is pre-installed on the
+          pole hardware. The fiber cable is then run alongside the messenger and attached to it
+          using a <strong>lashing machine</strong> that wraps a small-diameter galvanized
+          steel lashing wire in a continuous helix around both the fiber cable and the
+          messenger, binding them together.
+        </p>
+        <p className="mt-2">
+          The messenger carries all the structural load. The fiber cable hangs from the
+          messenger and experiences no significant tensile stress from the span. This
+          separation of structural and optical functions is why lashed cable can achieve very
+          high fiber counts — you can lash a 432F or 864F ribbon cable to a heavy messenger
+          because the fiber cable doesn't need to be stiff or strong.
+        </p>
+        <p className="mt-2">
+          <strong>The bonding requirement:</strong> The steel messenger must be bonded to
+          ground at every dead-end pole and at intervals along the span per NESC requirements.
+          This adds labor and material cost — every pole needs a ground rod, bonding clamp,
+          and ground wire. On a 100-pole aerial section, that's 100 bonding assemblies.
+          (Source: RUS Bulletin 1751F-630 construction methods; NESC)
+        </p>
+
+        <h3 className="mt-5 font-semibold">ADSS cable — no metal, no bonding</h3>
+        <p>
+          ADSS cable integrates the strength members directly into the cable jacket:
+          typically aramid yarn (Kevlar) or fiberglass rods arranged around the cable's
+          periphery. The result is a cable that is structurally self-sufficient — it can
+          span between poles and carry its own weight under design loading without any
+          separate messenger.
+        </p>
+        <p className="mt-2">
+          <strong>No metal = no bonding required.</strong> There is literally no metal
+          in an ADSS cable — no steel, no aluminum, no copper. "No metal in the cable,
+          therefore no bonding and grounding is required." (Source: CommScope ADSS vs.
+          Lashed Fiber blog, commscope.com — verified)
+        </p>
+        <p className="mt-2">
+          This is a major cost advantage on joint-use aerial plant where utility poles
+          already have ground rods but bonding the new attachment is still extra labor.
+          On new pole lines built specifically for the fiber project, eliminating 100 ground
+          assemblies can save several thousand dollars in a single aerial section.
+        </p>
+        <p className="mt-2">
+          <strong>ADSS fiber count limit:</strong> ADSS is "usually a loose tube design
+          that have fiber counts up to 432F." (Source: CommScope ADSS blog — verified)
+          For higher fiber counts, lashed ribbon cable wins because the ribbon packing
+          density exceeds what ADSS strength-member geometry can accommodate at reasonable
+          cable OD.
+        </p>
+
+        <h3 className="mt-5 font-semibold">EDS — Everyday Stress and vibration</h3>
+        <p>
+          For ADSS cables, the most important long-term design parameter is
+          <strong> EDS (Everyday Stress)</strong> — the tension the cable lives at
+          on a normal day with no wind, no ice, at the average annual temperature.
+        </p>
+        <p className="mt-2">
+          EDS is expressed as a percentage of the cable's
+          <strong> RTS (Rated Tensile Strength)</strong> — the manufacturer's rated
+          breaking force. The design target: <strong>16–25% of RTS</strong>.
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
+          <li>
+            <strong>Below 16% RTS EDS:</strong> The cable is loose enough that aeolian
+            vibration (wind-induced oscillation, like a guitar string) is self-damped.
+            Vibration dampers typically not required. (Source: gl-fibercable.com ADSS
+            technical parameters — verified)
+          </li>
+          <li>
+            <strong>16–25% RTS EDS:</strong> Vibration amplitude is higher. Vibration
+            dampers (Stockbridge-type) should be installed near the clamp points to
+            absorb the oscillation energy and prevent fatigue cracking at the clamp.
+            (Source: gl-fibercable.com; gl-fiber.com — verified via ≥2 independent sources)
+          </li>
+          <li>
+            <strong>Above 25% RTS EDS:</strong> Not a recommended design zone. The cable
+            is too tightly strung — vibration amplitudes are severe and the cable is
+            approaching its design stress limits.
+          </li>
+        </ul>
+
+        <p className="mt-3 text-sm text-slate-300/80">
+          Think of a clothesline. String it very tight (high EDS) and it vibrates wildly in
+          wind — like a violin string. String it loose (low EDS) and it barely moves in
+          the same breeze. EDS tuning is about finding the sweet spot where the cable has
+          enough tension to control sag without vibrating itself apart over 30 years.
+        </p>
+      </section>
+
+      {/* ── WORKED EXAMPLE: ADSS SAG CALCULATION ────────────────────────── */}
+      <WorkedExample
+        title="ADSS Sag Calculation — Parabolic Approximation"
+        description="Calculate midspan sag for an ADSS cable. The parabolic approximation is valid for sags under ~10% of span length (typical OSP design conditions). For larger sags, use the catenary formula. All values are representative — verify against your specific cable datasheet."
+        variables={[
+          { key: 'span',   label: 'Span length',          units: 'm',    default: 300,  min: 50,   max: 800,  step: 10 },
+          { key: 'weight', label: 'Cable weight',          units: 'kg/m', default: 0.15, min: 0.05, max: 0.50, step: 0.01 },
+          { key: 'rts',    label: 'RTS (rated tensile strength)', units: 'N', default: 8900, min: 1000, max: 30000, step: 100 },
+          { key: 'eds_pct',label: 'EDS as % of RTS',      units: '%',    default: 20,   min: 10,   max: 30,   step: 1 },
+        ]}
+        formula={({ span, weight, rts, eds_pct }) => {
+          const g = 9.81; // m/s²
+          const T = (eds_pct / 100) * rts; // EDS tension in N
+          const w = weight * g; // cable weight in N/m
+          const sag = (w * span * span) / (8 * T);
+          return sag;
+        }}
+        steps={({ span, weight, rts, eds_pct }, sag) => {
+          const g = 9.81;
+          const T = (eds_pct / 100) * rts;
+          const w = weight * g;
+          const sagPct = (sag / span) * 100;
+          return [
+            { expression: `Step 1 — EDS tension: T = (${eds_pct}% / 100) × ${rts} N = ${T.toFixed(0)} N` },
+            { expression: `Step 2 — Cable weight per unit length: w = ${weight} kg/m × 9.81 m/s² = ${w.toFixed(3)} N/m` },
+            { expression: `Step 3 — Sag formula (parabolic): Sag = (w × L²) / (8 × T)` },
+            { expression: `Sag = (${w.toFixed(3)} × ${span}²) / (8 × ${T.toFixed(0)})` },
+            { expression: `Sag = (${w.toFixed(3)} × ${(span * span).toFixed(0)}) / ${(8 * T).toFixed(0)}`, value: sag, unit: 'm' },
+            { expression: `Sag as % of span = ${sag.toFixed(2)} m / ${span} m × 100 = ${sagPct.toFixed(1)}%` },
+          ];
+        }}
+        sanityCheck={(sag) => {
+          if (!isFinite(sag) || sag <= 0) return 'Invalid inputs — check that RTS and span are greater than zero.';
+          const note = sag > 0 ? `${sag.toFixed(2)} m midspan sag. ` : '';
+          if (sag > 10) return `${note}⚠ Sag is large — verify clearance requirements per NESC Rule 232 for the applicable loading district and crossing type. Consider reducing span or increasing EDS tension.`;
+          return `${note}Typical OSP design targets sag at ≤ 2–3% of span at EDS (everyday, no wind). Check clearance with NESC Rule 232 for your district. Note: parabolic approximation is valid; actual catenary sag is slightly higher at large sag-to-span ratios.`;
+        }}
+        resultLabel="Midspan sag"
+        resultUnit="m"
+        resultDecimals={2}
+      />
+
+      {/* ── SIDE-BY-SIDE COMPARISON ──────────────────────────────────────── */}
+      <SideBySide
+        title="Lashed + Messenger vs. ADSS — Key Differences"
+        leftLabel="Lashed Cable (messenger required)"
+        rightLabel="ADSS (all-dielectric self-supporting)"
+        rows={[
+          {
+            attribute: 'Bonding/grounding at poles',
+            left: 'Required at every dead-end and at NESC-specified intervals — labor + material cost',
+            right: 'None required — no metal in cable (CommScope ADSS documentation)',
+          },
+          {
+            attribute: 'Maximum fiber count',
+            left: 'Essentially unlimited with ribbon cable — 1,728F+ possible',
+            right: 'Typically up to 432F; limited by strength-member geometry at higher counts (CommScope)',
+          },
+          {
+            attribute: 'Installation approach',
+            left: 'Messenger pre-installed; then fiber cable lashed to messenger with lashing machine',
+            right: 'Single cable strung directly between dead-ends; no pre-installation of messenger',
+          },
+          {
+            attribute: 'Vibration management',
+            left: 'Messenger bears tension; fiber cable tension is minimal — vibration less critical',
+            right: 'EDS must be in the 16–25% RTS range; vibration dampers may be needed',
+          },
+          {
+            attribute: 'Figure-8 variant',
+            left: 'Figure-8 integrates messenger + fiber in one jacket, saving a separate stringing step',
+            right: 'N/A — ADSS IS self-supporting; no messenger component',
+          },
+          {
+            attribute: 'Typical OSP use case',
+            left: 'High-count feeders, FTTH distribution where bonding is already planned',
+            right: 'Low-to-mid count (≤432F), joint-use spans where bonding cost is a concern',
+          },
+        ]}
+      />
+
+      {/* ── ADVANCED ─────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Going Deeper</h2>
+
+        <h3 className="mt-4 font-semibold">ADSS span capability — up to 700 m</h3>
+        <p>
+          ADSS cables can span up to approximately 700 m between support structures for
+          some designs (e.g., crossing wide rivers, transmission line corridors). (Source:
+          ADSS design literature — incabamerica.com ACES CATS paper: "lengths of up to
+          700 metres" — verified) This is far beyond typical distribution pole spans of
+          150–300 m. Long-span ADSS designs use fiberglass rods as strength members
+          (instead of aramid yarn) for higher tensile stiffness.
+        </p>
+        <p className="mt-2">
+          For standard joint-use distribution spans of 100–300 m, aramid yarn ADSS is
+          the most common choice. Fiberglass-rod ADSS is reserved for spans where the
+          higher modulus is needed to keep sag within NESC clearance requirements.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Figure-8 cable — the installation shortcut</h3>
+        <p>
+          A figure-8 cable (also called "self-supporting figure-8" or "figure-8 messenger
+          cable") integrates a steel messenger strand into the cable's outer jacket,
+          forming a figure-8 cross-section: one lobe contains the fiber, the other contains
+          the steel messenger. The two lobes are connected by a thin web of jacket material
+          that can be split during installation.
+        </p>
+        <p className="mt-2">
+          The advantage: no separate messenger pre-installation step. You string one cable
+          and you're done. "Reduces time and costs to install, by as much as fifty percent."
+          (Source: outsideplantcabling.com + fibereast.com aerial installation guides —
+          verified via ≥2 independent sources)
+        </p>
+        <p className="mt-2">
+          The tradeoff: figure-8 cables have an integrated steel messenger, so they still
+          require bonding at dead-ends — unlike ADSS. They're best suited for lower-count
+          drops and short aerial spans where the installation speed benefit outweighs the
+          bonding requirement.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Aeolian vibration — why EDS matters long-term</h3>
+        <p>
+          Aeolian vibration is wind-induced resonance in a taut aerial cable, similar to a
+          plucked guitar string. The frequency depends on wind speed and cable diameter.
+          At moderate EDS levels (16–25% RTS), the cable has enough tension that
+          standing-wave amplitudes at the attachment clamps can be high enough to cause
+          fatigue cracking of the outer jacket and eventually the aramid strength yarns —
+          over 10–20 years of continuous cycling.
+        </p>
+        <p className="mt-2">
+          Stockbridge-type vibration dampers (small mass-spring devices clamped to the
+          cable near the attachment point) absorb the vibration energy and shift the
+          resonance frequency off the wind-excited range. They're standard practice on
+          higher-EDS ADSS installations. Skipping them to save cost often results in
+          premature jacket cracking and fiber degradation.
+        </p>
+      </section>
+
+      {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T03-L04"
+        cards={[
+          {
+            id: 'T03-L04-fc-adss',
+            front: 'What is an ADSS cable and what is its key advantage over lashed cable?',
+            back: 'All-Dielectric Self-Supporting. No metallic components — aramid yarn or fiberglass rod strength members support the cable between poles. No bonding or grounding required at any pole. Max fiber count typically up to 432F. (CommScope; 7 CFR 1755.902)',
+          },
+          {
+            id: 'T03-L04-fc-messenger',
+            front: 'What is a messenger strand in an aerial cable installation?',
+            back: 'A galvanized steel wire pre-installed on pole hardware that provides the mechanical support for lashed fiber cable. The fiber cable bears no structural load — the messenger carries all sag and tension forces. Requires bonding to ground at dead-ends per NESC. (RUS 1751F-630)',
+          },
+          {
+            id: 'T03-L04-fc-eds',
+            front: 'What is EDS (Everyday Stress) for an ADSS cable?',
+            back: 'The long-term tension at zero wind, zero ice, at the annual average temperature, expressed as a % of RTS. Design target: 16–25% of RTS. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended. (gl-fibercable.com — verified)',
+          },
+          {
+            id: 'T03-L04-fc-fig8',
+            front: 'What is a figure-8 cable and when is it used?',
+            back: 'An integrated aerial cable where the steel messenger is molded into the same jacket as the fiber-bearing element, forming a figure-8 cross-section. Eliminates pre-installation of a separate messenger, reducing install time by up to 50%. Still requires bonding. (outsideplantcabling.com; fibereast.com)',
+          },
+        ]}
+      />
+
+      {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
+      <Quiz
+        title="T03.L04 Check — Messenger Cable, Lashed vs. ADSS"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T03-L04-Q1',
+            type: 'mc',
+            prompt:
+              'Which aerial cable type requires no bonding or grounding at any pole?',
+            choices: [
+              'Figure-8 cable with integrated steel messenger',
+              'Lashed OSP cable on galvanized strand',
+              'ADSS all-dielectric cable',
+              'Armored aerial cable with CST steel layer',
+            ],
+            answerIndex: 2,
+            explanation:
+              'ADSS has no metallic components. "No metal in the cable, therefore no bonding and grounding is required." (Source: CommScope ADSS vs. Lashed Fiber blog — verified). Figure-8 and lashed cables both include steel, requiring bonding.',
+            citation: 'CommScope ADSS vs. Lashed Fiber blog; 7 CFR 1755.902.',
+          },
+          {
+            id: 'T03-L04-Q2',
+            type: 'mc',
+            prompt:
+              'The EDS of an ADSS cable is typically targeted at what percentage of RTS?',
+            choices: [
+              '5–10% of RTS',
+              '16–25% of RTS',
+              '30–40% of RTS',
+              '50–60% of RTS',
+            ],
+            answerIndex: 1,
+            explanation:
+              '16–25% of RTS is the recommended EDS design target range. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended to prevent aeolian vibration fatigue. Above 25%: not recommended design territory. (Source: gl-fibercable.com ADSS technical parameters — verified via ≥2 independent sources)',
+          },
+          {
+            id: 'T03-L04-Q3',
+            type: 'fill-in-blank',
+            prompt:
+              'The lashing wire is applied in a ________ pattern around the fiber cable and messenger strand using a lashing machine.',
+            answer: 'helix',
+            answerDisplay: 'helix (helical)',
+            explanation:
+              'The lashing machine wraps the lashing wire in a continuous helix around both the fiber cable and the messenger, binding them together. The helical pattern distributes the attachment force evenly and allows the lashed cable to flex with the messenger without concentrating stress at any single point. (RUS 1751F-630)',
+          },
+          {
+            id: 'T03-L04-Q4',
+            type: 'mc',
+            prompt:
+              'A new 288F feeder route uses all-ribbon cable and needs to cross a wide river corridor (310 m span). The project has joint-use poles already bonded for electric distribution. Which aerial cable choice is most appropriate?',
+            choices: [
+              'ADSS at 288F — within the 432F limit and no new bonding needed',
+              'Lashed ribbon cable on a galvanized messenger strand — handles the high fiber count and the bonding already exists',
+              'Figure-8 self-supporting cable — reduces install time by 50%',
+              'Direct-burial in conduit under the river — avoids aerial span entirely',
+            ],
+            answerIndex: 1,
+            explanation:
+              '288F is achievable with ADSS, but this is a long span (310 m) with an existing bonded messenger infrastructure. Lashed ribbon cable on a galvanized messenger is the strong choice: it handles very high fiber counts (ribbon goes to 1,728F+), the bonding infrastructure already exists so the "no bonding" advantage of ADSS is reduced, and a messenger can handle the longer span with appropriate strand sizing. (CommScope ADSS vs. Lashed; RUS 1751F-630)',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
