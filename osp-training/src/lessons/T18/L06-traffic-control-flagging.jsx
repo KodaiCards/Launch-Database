@@ -37,7 +37,7 @@ export const meta = {
     {
       term: 'flagger certification',
       definition:
-        'State-required training for personnel directing traffic with a STOP/SLOW paddle. Many states issue a certification card through ATSSA, ACCES, or other ANSI/ISEA training providers. Georgia DOT (Carter\'s AHJ) references ATSSA or ACCES certification. Check your state DOT before flagging.',
+        'State-required training for personnel directing traffic with a STOP/SLOW paddle. Many states issue a certification card through ATSSA, ACCES, or other ANSI/ISEA training providers. Georgia DOT, for example, references ATSSA or ACCES certification. Check your state DOT before flagging.',
     },
     {
       term: 'taper',

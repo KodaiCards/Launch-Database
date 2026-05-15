@@ -281,7 +281,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
 
         <h3 className="mt-5 font-semibold">FEET — Dielectric (EH) Boots</h3>
         <p className="mt-2">
-          Electrical-hazard rated footwear (EH mark per ASTM F2413-18) provides an insulating
+          Electrical-hazard rated footwear (EH mark per ASTM F2413 [confirm edition]) provides an insulating
           sole that resists completing a circuit through the foot to the ground. This protects
           against step-potential (voltage difference between two points on the ground) and
           incidental contact with energized surfaces. EH-rated boots are required on OSP

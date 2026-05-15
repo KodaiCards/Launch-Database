@@ -421,7 +421,7 @@ export default function T18L03_ConfinedSpaceEntry() {
               {
                 label: 'The O₂ is in range and the LEL is under 25%. It\'s probably fine — enter carefully',
                 consequence:
-                  '12% LEL is above the action threshold of 10% LEL. 29 CFR 1910.268(o)(2)(ii)(B) requires continuous forced ventilation when combustibles are present. Entering without ventilation running is an OSHA violation and a real hazard.',
+                  '12% LEL is above the 10% LEL action threshold (per 1910.146 practice and ANSI/ASSE Z117.1 industry standard). 29 CFR 1910.268(o)(2)(ii)(B) requires continuous forced ventilation whenever combustibles are detected at any level — meaning ventilation is required even below 10% LEL if combustibles are present. Entering without ventilation running is an OSHA violation and a real hazard.',
                 nextId: 'wrong-enter',
                 isOptimal: false,
               },
@@ -541,8 +541,8 @@ export default function T18L03_ConfinedSpaceEntry() {
             ],
             answerIndex: 1,
             explanation:
-              '18% LEL means combustible gas is present at 18% of its explosive concentration. 29 CFR 1910.268(o)(2) requires continuous forced ventilation when combustibles are present before and during entry. The LEL action threshold is 10% LEL — above that, ventilation is required before entry. O₂ being in range does not override the combustible gas requirement.',
-            citation: '29 CFR 1910.268(o)(2)(ii)(B) — Continuous ventilation required for combustible gas (osha.gov).',
+              '18% LEL means combustible gas is present at 18% of its explosive concentration. 29 CFR 1910.268(o)(2)(ii)(B) requires continuous forced ventilation whenever combustibles are detected — the standard requires ventilation when combustibles are "present" at any level. The 10% LEL figure is the industry action threshold from 29 CFR 1910.146 practice and ANSI/ASSE Z117.1: at or above 10% LEL, take immediate action (ventilate and re-test before entry). O₂ being in range does not override the combustible gas requirement.',
+            citation: '29 CFR 1910.268(o)(2)(ii)(B) — Ventilation required when combustibles present (ecfr.gov); 29 CFR 1910.146 / ANSI/ASSE Z117.1 — 10% LEL action threshold (industry standard practice).',
           },
           {
             id: 'T18-L03-Q3',

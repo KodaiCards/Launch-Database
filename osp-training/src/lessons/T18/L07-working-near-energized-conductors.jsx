@@ -259,7 +259,7 @@ export default function T18L07_WorkingNearEnergizedConductors() {
       {/* ── WORKED EXAMPLE ───────────────────────────────────────────────── */}
       <WorkedExample
         title="Reading the OSHA MAD Calculator — 14.4 kV Distribution Line"
-        description="A distribution conductor on a joint-use pole is rated 14.4 kV phase-to-ground. Walk through how to determine the MAD for a qualified worker, and then what that means for your (non-qualified) OSP crew."
+        description="⚠ IMPORTANT: The formula below is a simplified linear approximation for teaching purposes only. For all real field decisions, use the official OSHA MAD Calculator at osha.gov/power-generation/rulemaking/madcalculator — it applies the full Appendix B formula from 29 CFR 1910.269(l)(2). The approximation below is for building intuition; never substitute it for the actual calculator on a live job. | A distribution conductor on a joint-use pole is rated 14.4 kV phase-to-ground. Walk through how to determine the MAD for a qualified worker, and then what that means for your (non-qualified) OSP crew."
         variables={[
           {
             key: 'voltageKV',

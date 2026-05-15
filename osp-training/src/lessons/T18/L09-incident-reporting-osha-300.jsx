@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Sortable from '../../components/primitives/Sortable.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -320,6 +321,23 @@ export default function T18L09_IncidentReportingOSHA300() {
           (severe incident reporting — all employers); ecfr.gov — VERIFIED primary sources.
         </p>
       </section>
+
+      {/* ── SORTABLE — Classify the Incident ────────────────────────────── */}
+      <Sortable
+        title="Sort It: Recordable, First-Aid Only, or Severe-Reportable?"
+        prompt="Drag the five incident descriptions into the correct OSHA classification order — from least severe (First Aid Only) through Recordable to Severe-Reportable (1904.39). Place them so the mildest is at the top and the most serious reporting obligation is at the bottom."
+        items={[
+          { id: 'fatality',    label: 'A crew member is fatally injured when a bucket lift strikes a power line.' },
+          { id: 'hospitalize', label: 'A technician falls from a ladder and is admitted to the hospital for treatment.' },
+          { id: 'restricted',  label: 'A tech sprains their wrist and is placed on restricted duty (light work only) for three days.' },
+          { id: 'rx',          label: 'A worker cuts their hand; the doctor prescribes a course of antibiotics.' },
+          { id: 'bandage',     label: 'A technician gets a minor cut; the foreman applies a bandage and the worker continues without restriction.' },
+        ]}
+        correctOrder={['bandage', 'rx', 'restricted', 'hospitalize', 'fatality']}
+        explanation="First Aid Only (bandage — 1904.7(a)) → Recordable/prescription Rx (any prescription medication is recordable) → Recordable/DART (restricted duty = DART outcome) → Recordable + 24-hr 1904.39 report (in-patient hospitalization) → Recordable + 8-hr 1904.39 report (fatality). Knowing where each event lands tells you both your 300 log obligation and your OSHA notification obligation."
+        citation="29 CFR 1904.7(a) — First aid definition; 29 CFR 1904.39 — Severe incident reporting timelines (ecfr.gov)."
+        fieldNote="The prescription-medication trigger catches a lot of crews off-guard. One Rx antibiotic for an infected cut = recordable, even if the worker never missed a day. The treatment determines recordability, not the injury's appearance."
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
