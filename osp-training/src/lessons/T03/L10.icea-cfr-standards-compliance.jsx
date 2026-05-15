@@ -7,24 +7,6 @@ import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 
-export const key_terms = [
-  {
-    term: 'Qualification Testing',
-    definition:
-      'Factory tests performed on a new cable design to prove it meets the applicable standard before any production batches ship. Done once per design, not per lot. (Source: 7 CFR 1755.902; ICEA S-87-640)',
-  },
-  {
-    term: 'Acceptance Testing',
-    definition:
-      'Testing performed on each production lot (or a statistical sample) of cable before delivery to verify ongoing conformance to the specification. Done per shipment, not per design. (Source: 7 CFR 1755.902; RUS 1753F-201)',
-  },
-  {
-    term: 'MFD Tolerance (RUS)',
-    definition:
-      'Under 7 CFR 1755.902, all single-mode fiber on a RUS-financed project must be manufactured to a mode field diameter of 9.2 µm ± 0.5 µm at 1310 nm unless the buyer specifies otherwise. This prevents splice-loss spikes when reels from different production runs are joined. (Source: 7 CFR 1755.902 via eCFR)',
-  },
-];
-
 export const meta = {
   id: 'T03.L10',
   course_id: 'T03',
@@ -36,9 +18,26 @@ export const meta = {
     'T03.L05', 'T03.L06', 'T03.L07', 'T03.L08', 'T03.L09',
   ],
   vocabulary_introduced: [
-    { term: 'qualification testing' },
-    { term: 'acceptance testing' },
-    { term: 'MFD tolerance (RUS)' },
+    'qualification testing',
+    'acceptance testing',
+    'MFD tolerance (RUS)',
+  ],
+  key_terms: [
+    {
+      term: 'qualification testing',
+      definition:
+        'Factory tests performed on a new cable design to prove it meets the applicable standard before any production batches ship. Done once per design, not per lot. (Source: 7 CFR 1755.902; ICEA S-87-640)',
+    },
+    {
+      term: 'acceptance testing',
+      definition:
+        'Testing performed on each production lot (or a statistical sample) of cable before delivery to verify ongoing conformance to the specification. Done per shipment, not per design. (Source: 7 CFR 1755.902; RUS 1753F-201)',
+    },
+    {
+      term: 'MFD tolerance (RUS)',
+      definition:
+        'Under 7 CFR 1755.902, all single-mode fiber on a RUS-financed project must be manufactured to a mode field diameter of 9.2 µm ± 0.5 µm at 1310 nm unless the buyer specifies otherwise. This prevents splice-loss spikes when reels from different production runs are joined. (Source: 7 CFR 1755.902 via eCFR)',
+    },
   ],
   vocabulary_assumed: [
     { term: 'loose-tube', source_lesson_id: 'T03.L01' },
@@ -306,7 +305,23 @@ export default function T03L10_StandardsCompliance() {
       {/* FLASHCARDS */}
       <Flashcard
         deckId="T03-L10"
-        cards={key_terms.map((kt) => ({ front: kt.term, back: kt.definition }))}
+        cards={[
+          {
+            id: 'T03-L10-fc-qual',
+            front: 'What is qualification testing for OSP cable?',
+            back: 'Factory tests performed on a new cable design to prove it meets the applicable standard before any production batches ship. Done once per design, not per lot. (Source: 7 CFR 1755.902; ICEA S-87-640)',
+          },
+          {
+            id: 'T03-L10-fc-accept',
+            front: 'What is acceptance testing for OSP cable?',
+            back: 'Testing performed on each production lot (or a statistical sample) of cable before delivery to verify ongoing conformance to the specification. Done per shipment, not per design. (Source: 7 CFR 1755.902; RUS 1753F-201)',
+          },
+          {
+            id: 'T03-L10-fc-mfd',
+            front: 'What MFD tolerance does 7 CFR 1755.902 require on RUS-financed projects?',
+            back: 'All single-mode fiber must be manufactured to 9.2 µm ± 0.5 µm at 1310 nm unless the buyer specifies otherwise. This keeps all reels within 8.7–9.7 µm and prevents splice-loss spikes when reels from different production runs are joined. (Source: 7 CFR 1755.902 via eCFR)',
+          },
+        ]}
       />
 
       {/* QUIZ */}

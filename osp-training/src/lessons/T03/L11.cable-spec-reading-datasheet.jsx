@@ -8,19 +8,6 @@ import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import HotSpot from '../../components/primitives/HotSpot.jsx';
 
-export const key_terms = [
-  {
-    term: 'Tolerance Band',
-    definition:
-      'The range around a nominal specification value within which a measurement is still conforming. Example: MFD = 9.2 µm ± 0.5 µm means any value between 8.7 µm and 9.7 µm passes the spec. (Source: 7 CFR 1755.902; standard datasheet reading practice)',
-  },
-  {
-    term: 'Aging Factor',
-    definition:
-      'A design margin added to attenuation (or other mechanical properties) to account for performance degradation over the 20–40 year cable lifetime. Planning attenuation = typical datasheet value + 0.02–0.05 dB/km aging factor. (Source: FOA Reference Guide; Corning cable aging data)',
-  },
-];
-
 export const meta = {
   id: 'T03.L11',
   course_id: 'T03',
@@ -33,8 +20,20 @@ export const meta = {
     'T03.L09', 'T03.L10',
   ],
   vocabulary_introduced: [
-    { term: 'tolerance band' },
-    { term: 'aging factor' },
+    'tolerance band',
+    'aging factor',
+  ],
+  key_terms: [
+    {
+      term: 'tolerance band',
+      definition:
+        'The range around a nominal specification value within which a measurement is still conforming. Example: MFD = 9.2 µm ± 0.5 µm means any value between 8.7 µm and 9.7 µm passes the spec. (Source: 7 CFR 1755.902; standard datasheet reading practice)',
+    },
+    {
+      term: 'aging factor',
+      definition:
+        'A design margin added to attenuation (or other mechanical properties) to account for performance degradation over the 20–40 year cable lifetime. Planning attenuation = spec-max datasheet value + 0.02–0.05 dB/km aging factor. (Source: FOA Reference Guide; Corning cable aging data)',
+    },
   ],
   vocabulary_assumed: [
     { term: 'MFD', source_lesson_id: 'T02.L01' },
@@ -343,7 +342,18 @@ export default function T03L11_DatasheetReading() {
       {/* FLASHCARDS */}
       <Flashcard
         deckId="T03-L11"
-        cards={key_terms.map((kt) => ({ front: kt.term, back: kt.definition }))}
+        cards={[
+          {
+            id: 'T03-L11-fc-tol',
+            front: 'What is a tolerance band on a cable datasheet?',
+            back: 'The range around a nominal specification value within which a measurement is still conforming. Example: MFD = 9.2 µm ± 0.5 µm means any value between 8.7 µm and 9.7 µm passes the spec. (Source: 7 CFR 1755.902; standard datasheet reading practice)',
+          },
+          {
+            id: 'T03-L11-fc-aging',
+            front: 'What is an aging factor and how do you apply it in a link budget?',
+            back: 'A design margin added to attenuation to account for performance degradation over the 20–40 year cable lifetime. Add 0.02–0.05 dB/km to the spec-max datasheet value: planning attenuation = spec max + aging factor. Higher end (0.05) for aerial and direct-burial; lower end (0.02) for protected conduit. (Source: FOA Reference Guide; Corning cable aging data)',
+          },
+        ]}
       />
 
       {/* QUIZ */}
