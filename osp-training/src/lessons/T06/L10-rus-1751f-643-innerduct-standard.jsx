@@ -30,13 +30,23 @@ export const meta = {
     'innerduct traceability',
     'RUS acceptance testing',
   ],
+  key_terms: [
+    {
+      term: 'RUS 1751F-643 innerduct qualification',
+      definition: 'RUS Bulletin 1751F-643 is the RUS standard that specifies the material and performance requirements for innerduct (smaller duct installed inside a larger conduit) used on RUS-funded telecommunications projects. For innerduct to be used on a RUS-funded job, it must be listed on the RUS Accepted Materials List (AML) — meaning the manufacturer has submitted test data demonstrating that the innerduct meets RUS 1751F-643 requirements for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance. Using non-listed innerduct on a RUS job is a contract non-compliance issue. (Source: RUS 1751F-635, cross-reference to RUS 1751F-643; [confirm current innerduct acceptance test requirements per RUS 1751F-643].)',
+    },
+    {
+      term: 'innerduct traceability',
+      definition: 'The documentation chain that allows an inspector to verify that a specific length of innerduct installed in the field was manufactured to RUS 1751F-643 specifications. Traceability includes: (1) the innerduct type designation (often printed on the duct at regular intervals — e.g., "1.25-inch SDR-11 HDPE INNERDUCT RUS LISTED"), (2) the manufacturer\'s date code printed on the duct indicating year/month of manufacture, (3) the reel or lot number allowing the inspector to trace back to the factory test report, and (4) the manufacturer\'s test certificate or compliance letter confirming the innerduct meets 1751F-643 requirements. Traceability is required in the project\'s closeout documentation package.',
+    },
+    {
+      term: 'RUS acceptance testing',
+      definition: 'The testing program required by RUS standards to demonstrate that a material meets RUS specifications before it is used on a RUS-funded project. For innerduct, acceptance testing under RUS 1751F-643 includes mechanical tests (tensile pull, crush resistance, impact resistance) and material tests (UV resistance, chemical compatibility with bentonite slurry and conduit lubricants, long-term creep or deformation resistance). RUS does not typically require the field crew to re-run these tests — the manufacturer performs them as part of obtaining RUS Accepted Materials List (AML) status. The field crew\'s job is to verify that the product installed is AML-listed and has the traceability documents.',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'RUS 1751F-643 innerduct qualification': 'RUS Bulletin 1751F-643 is the RUS standard that specifies the material and performance requirements for innerduct (smaller duct installed inside a larger conduit) used on RUS-funded telecommunications projects. For innerduct to be used on a RUS-funded job, it must be listed on the RUS Accepted Materials List (AML) — meaning the manufacturer has submitted test data demonstrating that the innerduct meets RUS 1751F-643 requirements for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance. Using non-listed innerduct on a RUS job is a contract non-compliance issue. (Source: RUS 1751F-635, cross-reference to RUS 1751F-643; [confirm current innerduct acceptance test requirements per RUS 1751F-643].)',
-  'innerduct traceability': 'The documentation chain that allows an inspector to verify that a specific length of innerduct installed in the field was manufactured to RUS 1751F-643 specifications. Traceability includes: (1) the innerduct type designation (often printed on the duct at regular intervals — e.g., "1.25-inch SDR-11 HDPE INNERDUCT RUS LISTED"), (2) the manufacturer\'s date code printed on the duct indicating year/month of manufacture, (3) the reel or lot number allowing the inspector to trace back to the factory test report, and (4) the manufacturer\'s test certificate or compliance letter confirming the innerduct meets 1751F-643 requirements. Traceability is required in the project\'s closeout documentation package.',
-  'RUS acceptance testing': 'The testing program required by RUS standards to demonstrate that a material meets RUS specifications before it is used on a RUS-funded project. For innerduct, acceptance testing under RUS 1751F-643 includes mechanical tests (tensile pull, crush resistance, impact resistance) and material tests (UV resistance, chemical compatibility with bentonite slurry and conduit lubricants, long-term creep or deformation resistance). RUS does not typically require the field crew to re-run these tests — the manufacturer performs them as part of obtaining RUS Accepted Materials List (AML) status. The field crew\'s job is to verify that the product installed is AML-listed and has the traceability documents.',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'innerduct', source_lesson_id: 'T06.L03' },
@@ -47,10 +57,7 @@ export const vocabulary_assumed = [
   { term: 'pull tension', source_lesson_id: 'T06.L04' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T06L10_RUS1751F643InnterductStandard() {
   return (

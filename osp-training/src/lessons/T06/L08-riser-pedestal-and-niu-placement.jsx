@@ -31,16 +31,35 @@ export const meta = {
     'pedestal spacing',
     'slack-loop storage',
   ],
+  key_terms: [
+    {
+      term: 'riser',
+      definition: 'A vertical conduit assembly that transitions the underground conduit route from below grade up to a surface-mounted pedestal or above-grade terminal. The riser protects the cable where it exits the ground and passes through the pedestal base. Risers are typically Schedule 80 PVC or HDPE to withstand the mechanical stress of the grade transition. A damaged or missing riser leaves the cable exposed to lawn equipment, water intrusion, and physical damage at the ground entry point.',
+    },
+    {
+      term: 'terminal pedestal',
+      definition: 'A surface-mounted enclosure that provides a splice point, slack-loop storage, and splitter/terminal mounting for fiber distribution along an underground route. Terminal pedestals are used at service branch points, splice locations, and route midpoints where technicians need access to the cable plant. In RUS-funded systems, terminal pedestals are typically placed every 250–330 feet along the route and at every branch to a service address. Contrast with a pass-through (no splice) vs. terminal (has splice access).',
+    },
+    {
+      term: 'NIU',
+      definition: 'Network Interface Unit — the demarcation device installed at the customer\'s premises where the provider\'s network meets the customer\'s equipment. In fiber-to-the-home designs, the NIU is typically a weatherproof outdoor unit mounted on the side of the building or on a pedestal near the property line. The NIU holds the fiber termination (SC/APC connectors), an optical power test port, and sometimes the ONT (optical network terminal) if the provider includes it in the NIU enclosure.',
+    },
+    {
+      term: 'vaulted NIU',
+      definition: 'A below-grade NIU installation where the NIU enclosure is placed in a small underground vault or traffic-rated box instead of a surface-mounted pedestal. Vaulted NIUs are used where surface conditions make a pedestal impractical: high-traffic commercial areas, manicured landscapes where the property owner rejects visible pedestals, or flood-prone areas where a surface pedestal would be submerged regularly. The vault must be H-20 load-rated if it can be driven over.',
+    },
+    {
+      term: 'pedestal spacing',
+      definition: 'The maximum distance between successive terminal pedestals along an underground fiber route, measured along the cable route (not in a straight line). RUS 1751F-635 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground plant. Spacing beyond 330 feet creates access problems: technicians cannot efficiently pull slack or locate a splice point by routing the route between accessible points that are too far apart.',
+    },
+    {
+      term: 'slack-loop storage',
+      definition: 'Extra cable length coiled and stored inside a pedestal or splice enclosure beyond what is needed for the active splices. Standard practice is to store at minimum 20–30 feet of slack on each cable end entering a pedestal. This slack serves two purposes: (1) allows a damaged splice to be re-made without having to pull a new cable, and (2) allows the pedestal to be relocated 15–20 feet if a service requirement or property issue demands it. Slack is coiled in a figure-8 pattern on the pedestal tray to prevent kinks.',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'riser': 'A vertical conduit assembly that transitions the underground conduit route from below grade up to a surface-mounted pedestal or above-grade terminal. The riser protects the cable where it exits the ground and passes through the pedestal base. Risers are typically Schedule 80 PVC or HDPE to withstand the mechanical stress of the grade transition. A damaged or missing riser leaves the cable exposed to lawn equipment, water intrusion, and physical damage at the ground entry point.',
-  'terminal pedestal': 'A surface-mounted enclosure that provides a splice point, slack-loop storage, and splitter/terminal mounting for fiber distribution along an underground route. Terminal pedestals are used at service branch points, splice locations, and route midpoints where technicians need access to the cable plant. In RUS-funded systems, terminal pedestals are typically placed every 250–330 feet along the route and at every branch to a service address. Contrast with a pass-through (no splice) vs. terminal (has splice access).',
-  'NIU': 'Network Interface Unit — the demarcation device installed at the customer\'s premises where the provider\'s network meets the customer\'s equipment. In fiber-to-the-home designs, the NIU is typically a weatherproof outdoor unit mounted on the side of the building or on a pedestal near the property line. The NIU holds the fiber termination (SC/APC connectors), an optical power test port, and sometimes the ONT (optical network terminal) if the provider includes it in the NIU enclosure.',
-  'vaulted NIU': 'A below-grade NIU installation where the NIU enclosure is placed in a small underground vault or traffic-rated box instead of a surface-mounted pedestal. Vaulted NIUs are used where surface conditions make a pedestal impractical: high-traffic commercial areas, manicured landscapes where the property owner rejects visible pedestals, or flood-prone areas where a surface pedestal would be submerged regularly. The vault must be H-20 load-rated if it can be driven over.',
-  'pedestal spacing': 'The maximum distance between successive terminal pedestals along an underground fiber route, measured along the cable route (not in a straight line). RUS 1751F-635 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground plant. Spacing beyond 330 feet creates access problems: technicians cannot efficiently pull slack or locate a splice point by routing the route between accessible points that are too far apart.',
-  'slack-loop storage': 'Extra cable length coiled and stored inside a pedestal or splice enclosure beyond what is needed for the active splices. Standard practice is to store at minimum 20–30 feet of slack on each cable end entering a pedestal. This slack serves two purposes: (1) allows a damaged splice to be re-made without having to pull a new cable, and (2) allows the pedestal to be relocated 15–20 feet if a service requirement or property issue demands it. Slack is coiled in a figure-8 pattern on the pedestal tray to prevent kinks.',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'conduit', source_lesson_id: 'T06.L03' },
@@ -52,10 +71,7 @@ export const vocabulary_assumed = [
   { term: 'ONT', source_lesson_id: 'T01.L01' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T06L08_RiserPedestalAndNIUPlacement() {
   return (

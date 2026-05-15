@@ -32,14 +32,27 @@ export const meta = {
     'supply-communication separation',
     'communication-to-ground clearance',
   ],
+  key_terms: [
+    {
+      term: 'NESC §32',
+      definition: 'The section of the National Electrical Safety Code (NESC C2 [confirm edition]) that governs direct-buried communication cable — cable installed in the ground without a conduit. §32 sets minimum cover depths for direct-buried cable, required mechanical protection at road crossings and grade changes, and minimum separation distances from electric supply cables that are also direct-buried. Direct-buried communication cable is inherently more vulnerable to damage than cable in conduit, so §32 imposes stricter rules than §35.',
+    },
+    {
+      term: 'NESC §35',
+      definition: 'The section of the NESC (C2 [confirm edition]) that governs communication cables installed in conduit. Because the conduit provides a physical barrier between the communication cable and the surrounding environment (including electric supply cables), §35 is more permissive than §32 in several areas: shallower separation from direct-buried supply cables is permitted at crossings, because the conduit reduces the contact risk. §35 also specifies rules for conduit markers and bore-path documentation.',
+    },
+    {
+      term: 'supply-communication separation',
+      definition: 'The minimum horizontal or vertical distance required between an electric supply cable and a communication cable when they are installed underground in the same corridor. NESC defines two situations: (1) crossing — supply and communication cross each other at approximately 90°; (2) parallel run — supply and communication run alongside each other in the same trench or corridor. Separation requirements differ for each situation and depend on whether the communication cable is direct-buried (§32) or in conduit (§35).',
+    },
+    {
+      term: 'communication-to-ground clearance',
+      definition: 'The minimum depth at which a communication cable or conduit must be installed below finished grade to provide protection from surface disturbance (lawn aeration, agricultural tilling, frost heave, construction activity). NESC and RUS 1751F-635 both specify cover requirements; the AHJ (authority having jurisdiction) may require greater depth for local conditions. [confirm current NESC C2 edition clause with AHJ at time of design]',
+    },
+  ],
 };
 
-export const vocabulary_introduced = {
-  'NESC §32': 'The section of the National Electrical Safety Code (NESC C2 [confirm edition]) that governs direct-buried communication cable — cable installed in the ground without a conduit. §32 sets minimum cover depths for direct-buried cable, required mechanical protection at road crossings and grade changes, and minimum separation distances from electric supply cables that are also direct-buried. Direct-buried communication cable is inherently more vulnerable to damage than cable in conduit, so §32 imposes stricter rules than §35.',
-  'NESC §35': 'The section of the NESC (C2 [confirm edition]) that governs communication cables installed in conduit. Because the conduit provides a physical barrier between the communication cable and the surrounding environment (including electric supply cables), §35 is more permissive than §32 in several areas: shallower separation from direct-buried supply cables is permitted at crossings, because the conduit reduces the contact risk. §35 also specifies rules for conduit markers and bore-path documentation.',
-  'supply-communication separation': 'The minimum horizontal or vertical distance required between an electric supply cable and a communication cable when they are installed underground in the same corridor. NESC defines two situations: (1) crossing — supply and communication cross each other at approximately 90°; (2) parallel run — supply and communication run alongside each other in the same trench or corridor. Separation requirements differ for each situation and depend on whether the communication cable is direct-buried (§32) or in conduit (§35).',
-  'communication-to-ground clearance': 'The minimum depth at which a communication cable or conduit must be installed below finished grade to provide protection from surface disturbance (lawn aeration, agricultural tilling, frost heave, construction activity). NESC and RUS 1751F-635 both specify cover requirements; the AHJ (authority having jurisdiction) may require greater depth for local conditions. [confirm current NESC C2 edition clause with AHJ at time of design]',
-};
+export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'NESC', source_lesson_id: 'T05.L01' },
@@ -49,10 +62,7 @@ export const vocabulary_assumed = [
   { term: 'foreign utility', source_lesson_id: 'T06.L06' },
 ];
 
-export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({
-  term,
-  definition,
-}));
+export const key_terms = meta.key_terms;
 
 export default function T06L09_NESCUndergroundRules() {
   return (
