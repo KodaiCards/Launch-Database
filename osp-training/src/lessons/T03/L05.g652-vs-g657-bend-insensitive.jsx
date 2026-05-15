@@ -45,7 +45,7 @@ export const meta = {
     {
       term: 'trench-assisted profile',
       definition:
-        'A refractive index design in G.657.B2/B3 fibers where a low-index "trench" around the core increases confinement of optical modes, reducing bend-induced loss. The trench profile achieves better bend performance at the cost of potentially different splicing behavior with G.652.D.',
+        'A refractive index design in G.657.B3 fibers (and formerly G.657.B2, which was merged into A2 in the 2024 ITU-T G.657 edition) where a low-index "trench" around the core increases confinement of optical modes, reducing bend-induced loss. The trench profile achieves better bend performance at the cost of potentially different splicing behavior with G.652.D. [verify 2024 edition consolidation]',
     },
   ],
   estimated_minutes: 25,
