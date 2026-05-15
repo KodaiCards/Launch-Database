@@ -358,6 +358,20 @@ export const lessonFileIndex = {
   'T01.L08': '../lessons/T01/L08.key-acronyms-field-reference.jsx',
   'T01.L09': '../lessons/T01/L09.osp-standards-landscape.jsx',
   'T01.L10': '../lessons/T01/L10.t01-capstone-quiz.jsx',
+
+  // ── T03 Cable Selection & Materials ──────────────────────────────────────
+  'T03.L01': '../lessons/T03/L01.loose-tube-tight-buffer-ribbon.jsx',
+  'T03.L02': '../lessons/T03/L02.osp-riser-indoor-outdoor.jsx',
+  'T03.L03': '../lessons/T03/L03.armor-jacket-selection.jsx',
+  'T03.L04': '../lessons/T03/L04.messenger-lashed-vs-adss.jsx',
+  'T03.L05': '../lessons/T03/L05.g652-vs-g657-bend-insensitive.jsx',
+  'T03.L06': '../lessons/T03/L06.cable-sheath-jacket-material.jsx',
+  'T03.L07': '../lessons/T03/L07.armor-deep-dive.jsx',
+  'T03.L08': '../lessons/T03/L08.drop-cable-selection.jsx',
+  'T03.L09': '../lessons/T03/L09.adss-span-wind-ice-loading.jsx',
+  'T03.L10': '../lessons/T03/L10.icea-cfr-standards-compliance.jsx',
+  'T03.L11': '../lessons/T03/L11.cable-spec-reading-datasheet.jsx',
+  'T03.L12': '../lessons/T03/L12.t03-capstone.jsx',
   // ── Additional topics populated by authoring agents in OSP-RW.4/5 ────────
   // NOTE: Each authoring agent MUST add their lesson entries here as part of
   //       each lesson commit. An uncommented entry is mandatory — lessons not
