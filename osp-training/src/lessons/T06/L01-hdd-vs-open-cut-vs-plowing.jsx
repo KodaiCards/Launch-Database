@@ -140,73 +140,83 @@ const quizQuestions = [
   {
     id: 'q1',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A fiber route must cross a Class I railroad (active, freight traffic). The railroad requires no surface disturbance to the trackbed. Which construction method is required?',
-    options: [
+    choices: [
       'Open-cut trench — it gives the most control over conduit placement depth',
       'HDD — it crosses under the trackbed without surface disruption',
       'Plowing — it is the fastest method and causes the least delay to train traffic',
       'Either open-cut or plowing — both are permitted under railroad ROW by default',
     ],
-    correct: 1,
-    rationale:
+    answerIndex: 1,
+    explanation:
       'Railroads almost universally require HDD (or casing bore) for utility crossings because open-cut and plowing both require trackbed excavation, which disrupts rail operations and creates ballast-settlement risk. HDD crosses under the trackbed at depth without surface contact.',
   },
   {
     id: 'q2',
     type: 'multiple-choice',
-    question:
+    prompt:
       'A 6-mile rural route runs through Iowa black-dirt farmland with no major crossings. Soil is deep clay/loam, water table is 8 feet down. Which construction method typically wins on cost in this scenario?',
-    options: [
+    choices: [
       'HDD — most accurate depth control',
       'Open-cut trench — most flexible for conduit count',
       'Plowing — fast, low restoration cost in cooperative soil',
       'All three methods cost the same per foot in flat farmland',
     ],
-    correct: 2,
-    rationale:
+    answerIndex: 2,
+    explanation:
       'Deep clay/loam farmland with a low water table is exactly the condition where vibratory plowing excels. The blade tracks straight in cooperative soil, the furrow closes behind the blade (minimal restoration), and production rates in open farmland can exceed 1 mile per day. Open-cut and HDD both carry higher per-foot costs in this scenario.',
   },
   {
     id: 'q3',
     type: 'multiple-choice',
-    question:
+    prompt:
       'During a soil investigation before bidding, the drill log shows bedrock at 3 feet below grade along 40% of the proposed plow route. What is the most likely consequence for the plow option?',
-    options: [
+    choices: [
       'The plow proceeds normally — vibratory plows are designed for rock',
       'The plow blade deflects sharply in rock — the method fails for those segments and an alternative is required',
       'Bedrock at 3 feet is fine as long as conduit burial depth is only 24 inches',
       'The plow can be replaced with a trencher blade at no additional mobilization cost',
     ],
-    correct: 1,
-    rationale:
+    answerIndex: 1,
+    explanation:
       'Vibratory plows are designed for soil, not rock. When the blade encounters bedrock or heavy ledge, it deflects — the conduit ends up at an unpredictable depth or the plow stalls entirely. Segments with bedrock shallower than target burial depth require open-cut trenching with a rock-saw attachment or HDD, both of which are higher cost.',
   },
   {
     id: 'q4',
     type: 'multiple-choice',
-    question:
+    prompt:
       'The 811 utility locate ticket is cleared and the crew is ready to plow. A crew member notices orange utility flags in the residential yard that do not match any marked-up utility on the locate sheet. What is the correct next step?',
-    options: [
+    choices: [
       'Proceed — the 811 ticket was cleared and those flags may be old',
       'Stop and pothole-expose the flagged location before proceeding',
       'Move the plow blade 12 inches to the side of the flags and continue',
       'Call 811 again and wait for a new ticket before proceeding',
     ],
-    correct: 1,
-    rationale:
+    answerIndex: 1,
+    explanation:
       'Unidentified utility flags are a red flag (literally). Private laterals — irrigation systems, propane services, electric drops to outbuildings — are not in the 811 system and will not appear on the locate ticket. The correct response is to stop and manually expose (pothole) the utility at the flagged location to identify it before mechanical excavation resumes. Moving the plow blade 12 inches sideways does not protect against a strike on an unidentified utility.',
   },
   {
     id: 'q5',
     type: 'drag-match',
-    question: 'Match each construction method to its primary best-fit condition.',
-    pairs: [
-      { left: 'HDD (horizontal directional drilling)', right: 'Road, river, or railroad crossing where surface disturbance is prohibited' },
-      { left: 'Open-cut trench', right: 'Short urban run with multiple conduits and complex crossing geometry' },
-      { left: 'Vibratory plowing', right: 'Long rural run in cooperative clay/loam soil with no major crossings' },
+    prompt: 'Match each construction method to its primary best-fit condition.',
+    items: [
+      { id: 'hdd', label: 'HDD (horizontal directional drilling)' },
+      { id: 'opencut', label: 'Open-cut trench' },
+      { id: 'plow', label: 'Vibratory plowing' },
     ],
-    rationale:
+    targets: [
+      { id: 'target-obstacle', label: 'Road, river, or railroad crossing where surface disturbance is prohibited' },
+      { id: 'target-urban', label: 'Short urban run with multiple conduits and complex crossing geometry' },
+      { id: 'target-rural', label: 'Long rural run in cooperative clay/loam soil with no major crossings' },
+    ],
+    correctMap: {
+      'target-obstacle': 'hdd',
+      'target-urban': 'opencut',
+      'target-rural': 'plow',
+    },
+    explanation:
       'Each method has a primary fit: HDD for obstacle crossings with no surface disturbance; open-cut for complex urban routes where conduit count or crossing geometry prevents plowing; vibratory plowing for long cooperative-soil rural runs where speed and minimal restoration are the priority.',
   },
 ];
