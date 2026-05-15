@@ -8,6 +8,19 @@
 
 ---
 
+## DAG dependency status (added 2026-05-16 per RT-A/B findings)
+
+T04 depends on T03 vocabulary. T03 authoring may be in flight when T04 authoring begins. Authors MUST verify T03 lesson completion before dispatching T04 lessons that depend on T03.L05+ terms.
+
+| T03 Dependency | Status | Terms provided |
+|---|---|---|
+| T03.L04 (Messenger Cable — Lashed vs ADSS) | ✓ CONFIRMED-AVAILABLE | ADSS, messenger (as steel strand), EDS, RTS |
+| T03.L05+ (Cable Selection — ICEA specs, pulling tension, bend radius) | ⏳ PENDING-T03-COMPLETION | ICEA S-87-640, bend radius, pulling tension |
+
+**If T04 author needs ICEA S-87-640, bend radius, or pulling tension and T03.L05+ are not yet landed:** T04 MUST either (a) wait for T03.L05+ to land before authoring the affected T04 lesson, OR (b) formally introduce those terms in that T04 lesson's own `vocabulary_introduced` with a note that T03 will also introduce them — duplicate intros are acceptable per the lesson schema when sequencing requires it.
+
+---
+
 ## DAG Position & Vocabulary Boundary
 
 T04 sits at teaching position 5 in the topological sort: T01 → T18 → T02 → T03 → **T04** → T09 → T05 → T06 → ...
@@ -128,7 +141,7 @@ From T03: loose-tube, ribbon, ADSS, messenger (as steel strand), RUS-listed, ICE
 - **One-Call system** — the state-administered damage prevention program through which excavators notify underground utility operators before digging. 71 regional one-call centers operated before the 811 national number was adopted. By the end of the 1990s every U.S. state had some form of dig law and one-call system. (Source: Colorado 811 history; Alliance for Innovation and Infrastructure — aii.org "Celebrating 15 Years of 811")
 - **locate ticket** — the notification record generated when 811 is called. Assigned a ticket number, project address/GPS coordinates, planned excavation description, planned start date, and the name of the excavator. The ticket is the legal record that the required pre-notification was completed. (Source: CGA Best Practices; industry practice)
 - **ticket validity period** — the number of calendar days a set of utility marks remains valid after notification. In most states: 30 calendar days (varies — some states 28 days, some 25 days). If excavation extends beyond the validity window, the excavator must call again. (Source: CGA FAQ confirmation via nrcga.org: "Locating marks are good for 30 calendar days"; state 811 programs)
-- **business day notice** — the minimum advance notice required before excavation can begin after calling 811. Most states: at minimum 2 full business days. Some states (e.g., Utah): 3 business days. Note: this is the notification lead time, not the start delay — the marks must be placed within the window. (Source: nrcga.org FAQ; bluestakes.org Utah program; CGA Best Practices document)
+- **business day notice** — the minimum advance notice required before excavation can begin after calling 811. Most states: at minimum 2 full business days. Some states (e.g., Utah): 3 business days. **The notification day (Day 0) does NOT count as a business day.** Correct count: call Wednesday (Day 0) → Day 1 = Thursday → Day 2 = Friday → legal start = Monday. Common crew error: counting the call day as Day 1 and starting a day too early. Weekends and holidays do not count. (Source: CGA Best Practices per nrcga.org FAQ; bluestakes.org Utah program)
 
 ### Claims requiring citation
 
@@ -146,7 +159,7 @@ From T03: loose-tube, ribbon, ADSS, messenger (as steel strand), RUS-listed, ICE
 - CGA Best Practices document (full edition) — available as free download from commongroundalliance.com but requires account registration. Core 811 mechanics confirmed via multiple freely accessible state 811 programs, CGA FAQ, and Colorado 811 history.
 
 ### Interactive primitive recommendations
-- **BranchingScenario** — "You're starting a buried duct pull on Monday. When do you call 811? Walk through the decision: call on Thursday = marks by end of Friday = legal to start Monday. Call Friday at noon = does NOT count as 2 full business days in most states." Multi-step decision tree with consequence paths (hit a gas line = $200,000 fine + utility repair liability)
+- **BranchingScenario** — "You're starting a buried duct pull. When do you call 811?" Walk through the correct count: **notification day does NOT count as a business day.** Example: call Wednesday (Day 0) → Day 1 = Thursday → Day 2 = Friday → **legal to start Monday**. Wrong-path consequence: crew calls Thursday, incorrectly starts Monday (only 1 full business day elapsed) → hit a gas line → $200,000 fine + utility repair liability. Teaching note in the scenario: "Saturday, Sunday, and holidays don't count. The notification day itself doesn't count. Most crews get this wrong — they count the call day as Day 1 and start a day too early." Multi-step tree with second branch: call Thursday at noon → still Day 0 → Day 1 = Friday → Day 2 = Monday → legal start = **Tuesday**.
 - **WorkedExample** — ticket timing calculator: excavation start date input → back-calculate the latest acceptable 811 call date given 2 full business days + any state-specific extension. Make the math visible step by step.
 
 ### Quiz question seeds
