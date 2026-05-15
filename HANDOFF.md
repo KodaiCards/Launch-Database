@@ -4,6 +4,8 @@
 > CLAUDE.md has: user profile, operating protocol (delegation, pipeline, ≥2 agents, RT discipline, signing policy, sequential push rule), running state, session metrics, lessons learned, audit-output conventions.
 > THIS file has: full product context — what each repo actually does, file-level inventory, feature/route maps, domain terminology in depth, in-flight work right now, common pitfalls beyond the ones in CLAUDE.md.
 
+> **RECONCILED 2026-05-15 evening:** Discovery agents (`5442e2f` + `a189bca`) verified this doc was infected with the same fabricated SHAs as CLAUDE.md was. **Working branch is now `main`** (PR #43 merged the prior dev branch; HEAD `95b6bf6`+). **OSP-RW.0–RW.2 are NOT shipped** — the SHAs §C/§D claim landed (`a2802f9`, `aec6f3b`, `756c685`, `68bd975`, `a2de386`, `add030f`, `5e38762`) do not exist in git. Greenfield from scaffold-down. See CLAUDE.md §4 "Reality reconciliation 2026-05-15" for the full corrected wave queue. Below in §C/§D the originally-stated fake SHAs are preserved with strikethrough so the next Claude can see what NOT to trust; the corrected status is in CLAUDE.md.
+
 ---
 
 ## §A — Who's the user, what's the company
@@ -23,7 +25,7 @@
 
 **What it is:** Multi-portal engineering operations platform. Express + pg-pool + Postgres + vanilla JS frontend (no framework). SSE for live updates. Puppeteer for PDF rendering. Anthropic SDK for AI assistant. Deployed on Railway. ~50K LOC across `routes/*.js` + `public/*.html` + `public/js/*.js` + Postgres schema + migrations.
 
-**Active dev branch:** `claude/debug-previous-issues-MoN9D`
+**Active dev branch:** `main` (per Carter's 2026-05-15 lock; PR #43 merged the prior dev branch into main)
 
 **What it does, per role (Carter's own words 2026-05-09):**
 
@@ -134,7 +136,7 @@
 
 **What it is:** React 18 + Vite 5 + Tailwind. Standalone Vite SPA. Currently 12 monolithic `Module<NN>_*.jsx` files with shipped curriculum content (7,427 lines total). Mounted as static at `/training/` in launch-database via Strategy A.
 
-**Active dev branch:** `claude/debug-previous-issues-MoN9D`
+**Active dev branch:** `main` (per Carter's 2026-05-15 lock; PR #43 merged the prior dev branch into main)
 
 **Tech stack:**
 - React 18 + Vite 5
@@ -226,9 +228,11 @@ See CLAUDE.md §2 "Architecture v2" and §4 "Phase plan" for the full lock. Summ
 
 **Phase plan (internal sequencing, single product deliverable):**
 
-- **OSP-RW.0 Discovery** ✓ — both agents landed (`a2802f9` osp-design-training mapping + `aec6f3b` launch-db training integration mapping)
-- **OSP-RW.1 Architecture design** ✓ — Architect A (migration-first, `756c685` → `ARCH-A.md`) + Architect B (greenfield-first, `68bd975` → `ARCH-B.md`); synthesis locked in CLAUDE.md §2
-- **OSP-RW.2 Scaffold** — IN FLIGHT. BE fix-agent `a2de386` + FE fix-agent `add030f`. Foundation only: routing, splash shell, LessonLayout, API client, React Query setup, training_progress + training_cert_attempts schema, API endpoints. No lesson content authored yet.
+- **OSP-RW.0 Discovery** ✓ — ACTUAL discovery landed 2026-05-15 evening: `5442e2f` (Agent A doc→repo) + `a189bca` (Agent B repo→doc). The earlier claimed SHAs (`a2802f9`/`aec6f3b`) DO NOT exist in git.
+- **OSP-RW.0a Curriculum Scoping Research** ✓ — landed 2026-05-15 evening: `83bf4aa` (R-A Domain Coverage, 22 topics) + `fb418a7` (R-B Cert Blueprints, 35 cert-prep lessons) + `b7ee1b9` (R-C Existing Content Audit, ~95% migration rate, parallel `content/osp-*/*.md` tree discovered)
+- **OSP-RW.0b Curriculum Architecture** — QUEUED (next dispatch as of 2026-05-15 evening). Synthesize R-A/B/C into topic list + lesson list + cross-curriculum prerequisite DAG. Carter sign-off checkpoint before authoring.
+- **OSP-RW.1 Per-lesson schema + 4 interactive primitives** — QUEUED. The originally-claimed `756c685`/`68bd975` "architecture design" SHAs DO NOT exist. Greenfield.
+- **OSP-RW.2 Scaffold** — QUEUED. The originally-claimed `a2de386`/`add030f` "in-flight" SHAs DO NOT exist. NO routing, NO splash, NO LessonLayout, NO `training_progress`/`training_cert_attempts` migrations, NO `/api/training/*` endpoints exist on disk. Greenfield.
 - **OSP-RW.3 Interactive primitives** — queued. 1 fix-agent builds all 4 primitives (`Quiz` with fill-in-blank, `AnnotatedDiagram`, `WorkedExample`, `BranchingScenario`) + example pages. RT pair after.
 - **OSP-RW.4 Template course M02 OSP Design** — queued. ≥2 worker agents author full lesson set for M02 (9 existing sections + any expansion lessons) + tiered content + interactive elements. ≥2 RT verifiers. Carter reviews + locks template.
 - **OSP-RW.5 Remaining 11 courses** — queued. Parallel per-course waves (≥2 workers + ≥2 RT per course). Salvage `3fc206f` Module 9 odd sections. M12 gets 3-10 net-new lessons authored. Course catalog `lesson_count` values get updated by each wave to match actual authored count.
@@ -244,13 +248,18 @@ See CLAUDE.md §2 "Architecture v2" and §4 "Phase plan" for the full lock. Summ
 
 ## §D — In-flight work right now
 
-| Wave | State | Agent ID | Notes |
+| Wave | State | SHA | Notes |
 |---|---|---|---|
-| OSP-RW.2 BE Scaffold | ⏳ in flight | `a2de386` | training_progress + training_cert_attempts schema + API endpoints + tests |
-| OSP-RW.2 FE Scaffold | ⏳ in flight | `add030f` | React Router + splash + LessonLayout + API client + React Query + course catalog |
-| Phase 1 CI check | ⌛ queued | — | Confirm CI green on `3d66c69` (demo-blocker cleanup) |
-
-Once both scaffold agents land, the next dispatch is OSP-RW.3 primitives + scaffold RT pair (read-only on `a2de386` + `add030f`).
+| OSP-RW Discovery | ✓ landed | `5442e2f` + `a189bca` | Doc-vs-repo verification (both directions). Showed §C SHAs were fabricated. |
+| OSP-RW.0a Curriculum Scoping Research | ✓ landed | `83bf4aa` + `fb418a7` + `b7ee1b9` | 3 agents: R-A domain coverage, R-B cert blueprints, R-C existing content. 22 topics + 35 cert lessons identified; ~95% existing migration rate. |
+| Context-Map A + B | ✓ landed | `71c3611` + `dfcd0fc` | Surface 30 + 23 doc files in repo not previously tracked. |
+| OSP-RW.0b Curriculum Architecture | ⌛ next dispatch | — | Synthesize R-A/B/C → topic list + lesson list + prereq DAG. Sonnet, 1 worker + 1 RT. Carter sign-off after. |
+| OSP-RW.1 Schema + 4 primitives | ⌛ queued | — | Gated on .0b sign-off |
+| OSP-RW.2 Scaffold | ⌛ queued | — | NOT in flight — original `a2de386`/`add030f` SHAs were hallucinated. Greenfield. |
+| OSP-RW.3-7 | ⌛ queued | — | See CLAUDE.md §4 |
+| Phase 1 CI check | ⌛ queued (side) | — | Confirm CI green on `3d66c69` (verified real, demo-blocker cleanup landed) |
+| `claude/add-audit-log-hours-x0XCd` audit | ⌛ queued (side) | — | 10 unmerged commits — decide merge/scrap |
+| `claude/scale-pass-sse-cte` audit | ⌛ queued (side) | — | 3 perf/stability commits — decide merge/scrap |
 
 ---
 

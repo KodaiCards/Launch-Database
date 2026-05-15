@@ -159,6 +159,22 @@ Carter's verbatim message:
 
 **Topic-list approach (locked 2026-05-15):** clean-sheet research, NOT extension of the existing 12. Three research agents in parallel scope the complete topic list from real OSP engineering practice (RUS bulletins, NESC, BICSI OSPDR, FOA CFOS, RCDD TDMM, real-world engineering firm curricula). Existing 12 modules audited as source material for migration.
 
+**Training voice + content rules (locked 2026-05-15 evening, Carter):**
+
+> "In the training document we will make no references to AI or guesses, we just present facts but also explain interpretations between the 'Book' way and common field practices."
+
+Three locked principles for ALL training content authoring:
+
+1. **No AI references, no AI signals.** Training content NEVER mentions "AI", "Claude", "language model", "generated", "auto-generated", or any meta-signal that this content was produced by an AI. The lessons read as if a senior OSP engineer wrote them. No "this lesson was created with AI assistance" footers. Authors and red teams enforce this.
+2. **Facts only, no guesses.** If a standard's edition is in flux, mark it `[confirm edition]` (matches existing agent-protocol.md rule). If a number isn't independently verifiable, omit it or explicitly mark "varies by jurisdiction" or "verify with [authority] at publication time." Never plausible-sounding-but-fabricated numbers, percentages, or section references. Better to say "I don't know" via an omission than to guess.
+3. **Book vs field practice — both required.** Every lesson where the textbook standard diverges from common field practice must present BOTH sides:
+   - The textbook standard ("NEC §250.52(A)(3) requires the Ufer concrete-encased electrode to be ≥20 ft of bare copper ≥4 AWG OR ½-inch reinforcing rod...")
+   - The common field interpretation ("In practice, RUS aerial crews bond the messenger to a 5/8-inch x 8-ft driven rod at every dead-end pole — the Ufer applies inside the equipment building, not at every pole.")
+   - The clear distinction between them (which one applies to which scenario)
+   - The risk of confusing them (what happens if you do the field practice when the book applies, or vice versa)
+
+   This isn't an "AI's opinion" — it's the gap between the published standard and how seasoned crews actually execute. That gap is real and is precisely what field-experienced learners (Carter's audience) need to be taught explicitly.
+
 ### Architecture v2 — Carter's locks 2026-05-15
 
 - **DROP MOODLE entirely.** The Vite SPA (osp-design-training repo) becomes the LMS itself. Served as static behind launch-database `requireAuth()` (Strategy A — CONFIRMED wired at `/training/` via `server.js:433-441` after the OSP-Merge wave landed at `1a170de`). One product, one auth surface. Cert-tracking + progress lives in launch-database Postgres rows (new tables to be designed).

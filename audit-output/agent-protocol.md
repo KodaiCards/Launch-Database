@@ -131,6 +131,9 @@ These apply to any agent writing OSP lesson content, quiz questions, or curricul
 - **Math discipline:** every quiz answer must be independently derivable; every [CORRECT] option's rationale must match the worked derivation; distractors must be plausible misderivations, not arithmetically broken.
 - **Citation discipline:** cited standard section must plausibly cover the claimed topic; do not hardcode edition suffixes for cite-and-superseded standards — reference as `[confirm edition]` until the user resolves.
 - **Content red-team is non-optional before a content wave is closed.** Run math consistency, citation plausibility, internal consistency, cross-lesson consistency, and brief-framing fidelity checks. A content wave without a red-team is not done.
+- **No AI references in training content (locked 2026-05-15).** Lessons NEVER mention "AI", "Claude", "language model", "generated", or any AI-meta signal. Content reads as a senior OSP engineer wrote it. Red teams flag any AI-signal as a blocker.
+- **Facts only, no guesses (locked 2026-05-15).** If a standard's edition is in flux, mark `[confirm edition]`. If a number is not independently verifiable, omit it or mark "varies by jurisdiction." Plausible-sounding-but-fabricated numbers, percentages, or section refs are treated as hallucinations — RT flags them.
+- **Book vs field practice — both required (locked 2026-05-15).** Where the textbook standard diverges from common field execution, lessons present BOTH: the codified standard with citation, the common field interpretation (with crew-level context for why), the clear distinction between them, and the risk of confusing them. This is teaching the gap — not an opinion or a guess.
 
 ## Office context (locked)
 
@@ -141,6 +144,8 @@ These apply to any agent writing OSP lesson content, quiz questions, or curricul
 | Location | Macon, GA |
 | NESC loading district | Light (inland Macon). Extreme Wind overlay for projects within ~60 mi of Atlantic/Gulf coast. |
 | Primary client | PSC (RUS-program engineering contracts) |
-| OSP training delivery | Moodle (Railway-hosted) with OAuth2 SSO from launch-database |
+| OSP training delivery | Vite SPA served as static behind `requireAuth()` at `/training/` in launch-database. **Moodle dropped 2026-05-15** (OSP-RW.6 teardown still pending — `routes/oauth2.js` + `moodle/` dir still on disk until that wave lands). Active rewrite in progress (OSP-RW phases). |
+| Working branch | `main` (per Carter's 2026-05-15 lock; PR #43 merged the prior dev branch). HEAD: `95b6bf6`+. |
+| Model defaults for agents | `model: "sonnet"` for code/audit/verify/fix; `model: "haiku"` for enumerative research; orchestrator's discretion to upgrade research to Sonnet when domain judgement is required. |
 
 === AGENT PROTOCOL END ===
