@@ -711,6 +711,13 @@ Carter's verbatim 2026-05-16: "You need to log lessons as you learn things, like
 - **Usage tracking is orchestrator work, not agent work** (autonomous lesson 2026-05-16). Carter: "can't you keep track yourself? Why would an agent have to do it." Right — summing token totals from task notifications + updating the ledger file is mine, not a delegation target. Research (finding the cap, OAuth endpoint) was correctly delegated. Tracking the running total is not.
 - **Mandatory features missing from spec = patch waves later.** Carter spotted flashcards missing from T02 because T02 was the "locked template" and didn't have them. Lesson: when defining a "locked template" or schema, EXHAUSTIVELY list all required components in the spec. T02 had foundations/working/advanced + 9 primitives + per-lesson quiz + capstone — but flashcards were in the schema's optional `key_terms` field, not hard-required. Result: 24+ lessons need retroactive patching. Next time: hard-require explicit checklist in lesson schema, not "see optional fields in schema.md".
 
+### 2026-05-16 — lessons (continuing)
+
+- **Discovery agents can hallucinate topic status; cross-verify before treating as ground truth.** Dispatched a Haiku discovery agent for OSP curriculum status. It reported T18 as "AUTHORED" with commit `bd3b32e`. A follow-up read-only verifier caught it — `bd3b32e` is actually a T01 patch, T18 has zero authored lessons. Rule: when a single discovery agent's claim drives downstream dispatches (e.g., "we can author T04 because T18 is done"), pay the small cost of a second verifier before committing the orchestrator's plan. Rhymes with the multi-RT-per-content-wave rule — single-agent verification is insufficient for high-leverage claims.
+- **Topic IDs ≠ teaching order.** I had been treating T01..T22 as both topic-ID and teaching-order interchangeably. ARCH.md's teaching DAG actually places T18 (Safety & OSHA) at teaching position #2 (after T01 Fundamentals, before T02 Fiber Physics). T18 gates downstream field-touching topics (T04, T07, T08, T10, T13, T14) because they reference safety primitives (PPE, LOTO, confined space, MAD/MAB, fall protection) that T18 introduces. Authoring "in T-number order" violates the prerequisite invariant — the orchestrator must dispatch in teaching-order. Look up the DAG before queuing each topic; specify teaching-order context in every author dispatch.
+- **CLAUDE.md status drifts faster than I update it.** Several status claims in §4 were stale by the time I read them on cap-reset: T01/T02 post-fix RT state, T18 wholesale, and T03 RW.3 carryovers (C-1/C-2) which were already applied in commit `3915b6a` long before I queued them as "deferred." Lesson: when in doubt about state, the source of truth is `git log` + `ls audit-output/<wave>/` — not §4 narrative. Update §4 immediately when a wave commits to keep it usable.
+- **Sequential 1-RT-per-framing dispatches catch real findings the orchestrator wouldn't.** T05 brief RT-A (citations, Sonnet) verified citations clean. T05 brief RT-B (process+math, Sonnet) caught a MED error: brief claimed 4.5 dB margin at 3 miles, but the same loss components actually give 6.62 dB. That's the kind of <1% error margin Carter wants. Codifies that the rule "≥2 RT per content wave with DIFFERENT framings" (directive #18z) is paying for itself.
+
 ## Operational notes from agent lessons
 
 - **`git pull --rebase` triggers the signing wrapper on replayed commits** (returns 400). Replace with `git fetch && git merge FETCH_HEAD --no-edit`. Pull-rebase was the pre-2026-05-14 standard for avoiding the parallel-deletion bug; the merge equivalent still puts your commit on top of remote state without triggering the wrapper. Update agent-protocol.md on the repo with this. Add to all future agent prompts.
@@ -1066,11 +1073,23 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 
 **OSP-RW.3 Template Topic (T02 Fiber Physics)** ✓ LOCKED overnight 2026-05-15→16. Author 12 lessons (`ff7291d` L01 → `6da409c` L12 capstone). RT YELLOW with 4 findings + same agent self-patched 4 fixes at `492aa85` (RT contract violation — patches correct but separate post-fix RT required). Post-fix RT GREEN at `a380db6` — all 4 fixes verified correct, build clean (131 modules), prior RT's self-patching scope was correct. T02 IS THE LOCKED TEMPLATE for OSP-RW.4 author waves to replicate.
 
-**OSP-RW.3 queued LOW findings (post-timer fix batch):**
-- L03 dispersion error threshold `70 ps × 4 = 280 ps` has no standard physical basis; replace with `200 ps` (2× bit period at 25 Gbps) which is defensible
-- L10 OTDR slider defaults to error-state (1360 ps/nm at 80 km); change default to ~45 km so it opens at warn-state for better exploratory UX
+**OSP-RW.3 queued LOW findings (RESOLVED — both C-1 and C-2 already applied in earlier commit `3915b6a` before the T03 patch wave ran; verified by T03 patch agent on cap-reset).**
 
-These get applied at the post-timer fix-batch alongside any other queued items.
+**OSP-RW.4 Topic authoring (IN FLIGHT, parallelized by topic). State as of 2026-05-16 ~10:50 ET:**
+
+| Topic | Title | Section | Status | Last commit |
+|---|---|---|---|---|
+| T01 | Fundamentals & Vocabulary | General | ✓ AUTHORED + PATCHED | `669114b` |
+| T02 | Fiber Physics | General | ✓ LOCKED TEMPLATE + POST-FIX RT GREEN | `31e080e` post-fix; `3915b6a` C-1/C-2 patches |
+| T03 | Cable Selection | General | ✓ COMPLETE — 3 RT verdicts GREEN | author `642ef0c`; pedagogy RT `7ed9d35`; technical RT `44ff356`; 5-patch batch `492b8b9..9c57439`; post-patch RT `035b829` |
+| T04 | Site Survey & Pre-Engineering | General | ⏳ Research+RT (verify status before authoring) | — |
+| T05 | NESC & Pole Loading | General | ⏳ Brief authored; RT-A clean (`cd3ac98`); RT-B YELLOW (`8d25b9a`) → brief fix in flight | — |
+| T18 | Safety & OSHA | General | ⏳ Brief authoring in flight (teaching-order #2; gates T04/T07/T08/T10/T13/T14) | — |
+| T06-T17, T19-T22 | (general) + (cert prep) | mixed | ⌛ NOT-STARTED | — |
+
+**T03 pre-existing LOW for future polish:** L11 bend-radius body says 10–20× installation / 10–15× long-term; quiz simplifies to 20× / 10×. Not introduced by patches; surface in a future T03 touch-up wave if a learner reports the inconsistency.
+
+**Carry-forward: each topic dispatch must verify the prerequisite DAG ordering before launch.** T18 at teaching-position #2 blocks 6 downstream field-touching topics. Don't kick off T04 authors until T18 lessons land + RT clean, or the prerequisite invariant will be violated.
 
 **OSP-RW.2 RT verification** ✓ LANDED `4caad0a`. Verdict YELLOW — 4 patches: HTTP 201 vs 200 on first insert, 2 missing 401 tests, 1 domain_scores type guard. SQL safety + API security graded HIGH (no IDOR, no injection, no auth bypass). Backend structurally sound for government project tracking.
 
