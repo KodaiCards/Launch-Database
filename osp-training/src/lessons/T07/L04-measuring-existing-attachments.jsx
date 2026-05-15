@@ -409,7 +409,7 @@ export default function T07L04_MeasuringExistingAttachments() {
           { symbol: 'H_meas', label: 'Measured attachment height', value: 27.0, unit: 'ft', description: 'Laser measurement of the existing communication wire at the attachment clamp on the pole' },
           { symbol: 'H_design', label: 'Design assumed attachment height', value: 30.0, unit: 'ft', description: 'The design assumed the existing communication wire was at 30 feet before staking began' },
           { symbol: 'H_new', label: 'Proposed new fiber attachment height', value: 25.5, unit: 'ft', description: 'The design places your new fiber 4.5 feet below the existing communication wire' },
-          { symbol: 'Sep_min', label: 'Minimum separation (NESC Rule 235, comm-to-comm)', value: 0.5, unit: 'ft', description: 'NESC Rule 235 requires at least 6 inches (0.5 ft) between communication wires on the same pole [confirm edition]' },
+          { symbol: 'Sep_min', label: 'Minimum separation (NESC Rule 235, comm-to-comm)', value: 1.0, unit: 'ft', description: 'NESC Rule 235 requires at least 12 inches (1.0 ft) between communication wires on the same pole [confirm current NESC C2 edition Rule 235]' },
           { symbol: 'Clr_min', label: 'Minimum clearance above road (NESC Rule 232)', value: 18.0, unit: 'ft', description: 'This span crosses a public road — minimum height is 18 feet [NESC C2-2023 Rule 232, confirm edition]' },
         ]}
         steps={[
@@ -432,7 +432,7 @@ export default function T07L04_MeasuringExistingAttachments() {
             formula: 'actual separation = H_meas − H_new_actual',
             substitution: 'actual separation = 27.0 − 22.5',
             result: 'actual separation = 4.5 ft',
-            explanation: '4.5 ft separation between the existing wire and the new fiber. Minimum required is 0.5 ft (6 inches). 4.5 ft >> 0.5 ft. Separation is NOT a problem.',
+            explanation: '4.5 ft separation between the existing wire and the new fiber. Minimum required is 1.0 ft (12 inches) per NESC Rule 235 [confirm current edition]. 4.5 ft >> 1.0 ft. Separation is NOT a problem.',
           },
           {
             label: 'Step 4 — Check clearance above road',
