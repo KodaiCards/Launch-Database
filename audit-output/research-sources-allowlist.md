@@ -7,6 +7,7 @@
 - **RUS Bulletin 1751F-630** — Aerial Plant Engineering Design + Construction
 - **RUS Bulletin 1751F-635** — Buried Plant Engineering Design + Construction
 - **RUS Bulletin 1751F-810** — Electrical Protection of Communication Facilities
+- **RUS Bulletin 1724E-150** — Design Guide for Rural Electric Distribution Lines (aerial plant design, pole loading, construction standards; public USDA PDF at rural.eda.gov / energy.nih.gov). Primary use: pole loading design commentary, NESC loading district values, aerial span engineering. URL: https://www.rd.usda.gov/files/1724e-150.pdf
 - **RUS Bulletin 1751F-815** — Bonding & Grounding (verify current state — may be incorporated into 810 or separate)
 - **RUS Bulletin 1738** — Electric Borrowers Program (NOT the distance-learning bulletin — that's 7 CFR Part 1703)
 - **7 CFR Part 1755** — RUS Telecommunications Standards
