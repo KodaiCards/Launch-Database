@@ -3080,6 +3080,13 @@ ALTER TABLE ONLY public.time_entries
 ALTER TABLE ONLY public.time_entry_audit
     ADD CONSTRAINT time_entry_audit_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
+-- NOTE (OSP-RW.2 RT finding A1-LOW): migration 0035 defines these FK constraints
+-- using inline REFERENCES syntax inside CREATE TABLE. pg_dump (used to generate
+-- this file) normalises all FK constraints to the ALTER TABLE ... ADD CONSTRAINT
+-- form below. The two representations are semantically identical. The schema:sync
+-- CI diff checks structural equivalence, not text identity, so this is not a
+-- real drift — documented here to prevent future confusion.
+
 --
 -- Name: training_cert_attempts training_cert_attempts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --

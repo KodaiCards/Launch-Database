@@ -99,6 +99,7 @@ test('POST /api/training/progress returns 400 on invalid status', async () => {
 test('POST /api/training/progress creates a row in training_progress', async () => {
   const r = await requestJson('POST', '/api/training/progress', {
     token: nonAdminToken,
+    expectStatus: 201,
     body: { course_id: 'T99', lesson_id: 'T99.L01', status: 'in_progress', completion_pct: 25 },
   });
   assert.ok(r.progress, 'response should include progress row');
@@ -189,6 +190,11 @@ test('POST /api/training/cert-attempt records attempt and returns 201', async ()
   assert.equal(r.attempt.passed, true);
 });
 
+test('GET /api/training/cert-attempts returns 401 without auth', async () => {
+  const r = await requestJson('GET', '/api/training/cert-attempts', { expectStatus: 401 });
+  assert.ok(r.error, 'should return an error message');
+});
+
 // ─── GET /api/training/cert-attempts ────────────────────────────────────────
 
 test('GET /api/training/cert-attempts returns attempt history for user', async () => {
@@ -200,6 +206,14 @@ test('GET /api/training/cert-attempts returns attempt history for user', async (
 });
 
 // ─── POST /api/training/capstone-attempt ────────────────────────────────────
+
+test('POST /api/training/capstone-attempt returns 401 without auth', async () => {
+  const r = await requestJson('POST', '/api/training/capstone-attempt', {
+    expectStatus: 401,
+    body: { course_id: 'T99', score: 90, passed: true, total_items: 20, correct_items: 18 },
+  });
+  assert.ok(r.error, 'should return an error message');
+});
 
 test('POST /api/training/capstone-attempt returns 201', async () => {
   const r = await requestJson('POST', '/api/training/capstone-attempt', {

@@ -124,7 +124,9 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
         [req.user.id, course_id, lesson_id, status, Math.round(pct),
           score !== undefined && score !== null ? Math.round(Number(score)) : null]
       );
-      res.json({ progress: rows[0] });
+      // Return 201 on first insert (attempts === 1), 200 on subsequent upserts.
+      const isInsert = rows[0].attempts === 1;
+      res.status(isInsert ? 201 : 200).json({ progress: rows[0] });
     } catch (err) {
       console.error('[training] POST /progress error:', err.message);
       res.status(500).json({ error: 'Failed to save training progress' });
@@ -162,6 +164,12 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       ? Number(time_taken_seconds) : null;
     if (timeTaken !== null && (!Number.isFinite(timeTaken) || timeTaken < 0)) {
       return res.status(400).json({ error: 'time_taken_seconds must be a non-negative number' });
+    }
+
+    if (domain_scores !== undefined && domain_scores !== null) {
+      if (typeof domain_scores !== 'object' || Array.isArray(domain_scores)) {
+        return res.status(400).json({ error: 'domain_scores must be a plain object when provided' });
+      }
     }
 
     try {
