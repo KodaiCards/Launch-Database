@@ -52,7 +52,7 @@ export const meta = {
     {
       term: 'NEC 830.47',
       definition:
-        'National Electrical Code Section 830.47 — network-powered broadband communications systems. Specifies an 18-inch minimum burial depth for direct-buried network-powered broadband cable as the national floor. The NEC is a model code adopted by jurisdictions; the AHJ may require more depth than NEC specifies.',
+        'National Electrical Code Section 830.47 — network-powered broadband communications systems (NPBC). Specifies an 18-inch minimum burial depth specifically for direct-buried network-powered broadband cable (a special use case). For general communications cable (telephone, fiber), NEC Article 800 and common practice use 24 inches as the national floor. The NEC is a model code adopted by jurisdictions; the AHJ may require more depth than NEC specifies. On RUS-funded projects, RUS 1751F-635 governs and typically requires more than the NEC minimum.',
     },
     {
       term: 'AHJ override',
@@ -90,21 +90,21 @@ const workedExampleData = {
   steps: [
     {
       label: 'Step 1 — Identify the federal/RUS floor',
-      content: `RUS 1751F-635 specifies 36 inches (91 cm) minimum cover for direct-buried conduit in general situations on RUS-financed projects. This is your starting point for every segment — the floor you can't go below on an RUS job unless the AHJ explicitly permits shallower depth with compensating protection (concrete encasement, warning tape + cap).`,
-      formula: 'Floor depth (RUS) = 36 inches',
-      result: '36 inches',
+      content: `RUS 1751F-635 specifies burial depth based on surface type, not a single flat number. The two primary tiers: (1) non-traffic residential areas and utility easements — 24 inches minimum cover; (2) under roads, driveways, and traffic areas — 36 inches minimum cover. This tiered floor is your starting point for each segment on an RUS job — you cannot go below it unless the AHJ explicitly permits shallower depth with compensating protection (concrete encasement, warning tape + cap). Do not apply the 36-inch road floor to residential yards where the 24-inch non-traffic floor applies — that adds unnecessary excavation cost. (Source: RUS 1751F-635 §6.)`,
+      formula: 'RUS floor: non-traffic residential = 24 inches | under roads/traffic = 36 inches',
+      result: 'RUS floor: 24″ (non-traffic residential) or 36″ (roads/traffic) — surface-type dependent',
     },
     {
-      label: 'Step 2 — Check the NEC 830.47 floor',
-      content: `NEC 830.47 specifies 18 inches as the minimum for direct-buried network-powered broadband cable [NEC paywalled; widely reproduced in vendor literature — VERIFIED-via-secondary-source]. This is lower than the RUS requirement, so on an RUS job, the RUS 36-inch floor governs. The NEC floor only becomes relevant if this were a non-RUS project — in that case, 18 inches is the national minimum before AHJ applies.`,
-      formula: 'NEC floor = 18 inches (lower than RUS, therefore RUS governs on RUS-funded jobs)',
-      result: 'RUS 36 inches governs',
+      label: 'Step 2 — Check the NEC floor',
+      content: `NEC §830.47 specifies 18 inches as the minimum for direct-buried network-powered broadband cable (NPBC) — a specific cable type [NEC paywalled; widely reproduced in vendor literature — VERIFIED-via-secondary-source]. For general fiber and telecom conduit on non-RUS private projects, 24 inches is the practical industry floor. On an RUS job, the RUS 1751F-635 tiered floor always governs over NEC because it is the higher standard. The NEC floor becomes relevant only on non-RUS projects where no AHJ override applies.`,
+      formula: 'NEC 830.47 (NPBC) = 18 inches | General non-RUS = 24 inches practical floor | RUS governs on RUS-funded jobs',
+      result: 'RUS tiered floor governs on this RUS job',
     },
     {
       label: 'Step 3 — Segment A: Residential yard (utility easement)',
-      content: `Residential utility easement. No AHJ depth override documented in the permit. RUS floor applies. Frost line for Macon, GA (Light loading district, central Georgia) is typically 0–6 inches [confirm with local DOT if frost protection is specified in contract]. The RUS 36-inch requirement already far exceeds the frost concern in this climate.`,
-      formula: 'Required depth (residential) = max(RUS floor, AHJ override, frost line + 6 in)\n= max(36 in, none, 6 + 6 in)\n= 36 inches',
-      result: '36 inches minimum cover in residential yard',
+      content: `Residential utility easement — non-traffic surface. No AHJ depth override documented in the permit. The RUS 1751F-635 non-traffic residential floor applies: 24 inches. Frost line for Macon, GA (Light loading district, central Georgia) is typically 0–6 inches [confirm with local DOT if frost protection is specified in contract]. The 24-inch floor comfortably exceeds the frost concern in this climate. Note: do NOT use the 36-inch road floor here — that depth is for traffic-bearing surfaces and would add unnecessary excavation cost in a residential yard.`,
+      formula: 'Required depth (non-traffic residential) = max(RUS non-traffic floor, AHJ override, frost line + 6 in)\n= max(24 in, none, 6 + 6 in)\n= 24 inches',
+      result: '24 inches minimum cover in residential yard (non-traffic — RUS 1751F-635 §6)',
     },
     {
       label: 'Step 4 — Segment B: County road crossing',
@@ -120,13 +120,13 @@ const workedExampleData = {
     },
     {
       label: 'Step 6 — Sanity check',
-      content: `Final depth schedule for the drawings: Residential yard: 36 inches. County road crossing: 42 inches. Parking lot: 24 inches + concrete cap. The route depth changes at each segment — this is normal and should be annotated clearly on the plan-and-profile drawings with depth callouts at every grade change and surface-type transition.`,
-      formula: 'The design depth is the MAXIMUM of (RUS floor, NEC floor, AHJ override, frost line + 6 inches) at each segment.',
-      result: 'Route depth schedule: 36″ residential → 42″ county road → 24″ + cap parking lot. Annotate every transition on drawings.',
+      content: `Final depth schedule for the drawings: Residential yard (non-traffic): 24 inches. County road crossing: 42 inches (AHJ override). Parking lot: 24 inches + concrete cap. The route depth changes at each segment — this is normal and must be annotated clearly on the plan-and-profile drawings with depth callouts at every grade change and surface-type transition. A key design mistake is assuming the 36-inch road floor applies universally — applying that to the residential yard adds excavation cost with no code benefit.`,
+      formula: 'The design depth is the MAXIMUM of (RUS surface-type floor, NEC floor, AHJ override, frost line + 6 inches) at each segment.',
+      result: 'Route depth schedule: 24″ residential (non-traffic) → 42″ county road (AHJ) → 24″ + cap parking lot. Annotate every transition on drawings.',
     },
   ],
   sanityCheck:
-    '36 inches is about 3 feet — roughly knee-deep. 42 inches is waist-high on most adults. A conduit at 42-inch depth under a county road is deep enough that an excavator cleaning a roadside drainage ditch won\'t clip it on a standard scoop. That\'s exactly what the AHJ is protecting against.',
+    '24 inches is about 2 feet — roughly mid-shin. 36 inches is about 3 feet — roughly knee-deep. 42 inches is waist-high on most adults. The tiered requirement makes sense: a residential yard rarely sees more than foot traffic and the occasional lawn mower, so 24 inches is ample protection. A county road carries loaded dump trucks and utility excavators — 42 inches puts the conduit well below accidental scraping depth. Different surfaces, different risks, different depths.',
 };
 
 // ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ const quizQuestions = [
     id: 'q3',
     type: 'multiple-choice',
     prompt:
-      'Why does the frost line matter for burial depth in northern states, even when the RUS 36-inch standard is met?',
+      'Why does the frost line matter for burial depth in northern states, even when the RUS tiered depth standard is met?',
     choices: [
       'Frost makes the soil harder and more difficult to excavate, requiring deeper burial for access',
       'Conduit buried above the frost line can heave vertically as soil freezes and thaws, potentially damaging cables and disrupting grade',
@@ -191,22 +191,22 @@ const quizQuestions = [
     ],
     answerIndex: 2,
     rationale:
-      'NEC 830.47 specifies 18 inches as the national floor for direct-buried network-powered broadband communications cable. This is the minimum if no AHJ override applies and this is not an RUS-funded project (RUS would require 36 inches). Note: 18 inches is genuinely shallow for buried fiber — most prudent designs exceed this floor even when not required.',
+      'NEC 830.47 specifies 18 inches as the national floor for direct-buried network-powered broadband communications cable (NPBC). This is the minimum if no AHJ override applies and this is not an RUS-funded project (RUS 1751F-635 §6 would require 24 inches for non-traffic residential or 36 inches under roads). Note: 18 inches is genuinely shallow for buried fiber — most prudent designs exceed this floor even when not required.',
   },
   {
     id: 'q5',
     type: 'multiple-choice',
     prompt:
-      'On a plan-and-profile drawing, you annotate a 42-inch burial depth for the county road crossing but fail to show the transition back to 36 inches on the residential segment on the other side. Why is this a problem?',
+      'On a plan-and-profile drawing, you annotate a 42-inch burial depth for the county road crossing but fail to show the transition back to 24 inches on the non-traffic residential segment on the other side. Why is this a problem?',
     choices: [
       'It is not a problem — the deeper depth on one segment automatically applies to adjacent segments',
-      'The construction crew may install the full route at 42 inches, wasting excavation cost on the residential segment',
+      'The construction crew may install the full route at 42 inches, wasting excavation cost on the non-traffic residential segment',
       'The construction crew may install the residential segment at 42 inches also, which violates NEC',
       'The annotation error will cause the permit to be denied',
     ],
     answerIndex: 1,
     rationale:
-      'Without a clear transition annotation, the crew defaults to what they see on the drawing — which at the road crossing shows 42 inches. They may simply keep the blade or trencher at 42 inches through the residential segment, adding unnecessary excavation cost (deeper trench, more backfill, more compaction) with no benefit. Plan-and-profile drawings must annotate depth changes at every surface-type transition to prevent this. The risk of going too shallow (hitting 30 inches where 36 is required) is the other side of the same annotation failure.',
+      'Without a clear transition annotation, the crew defaults to what they see on the drawing — which at the road crossing shows 42 inches. They may simply keep the blade or trencher at 42 inches through the residential segment, adding unnecessary excavation cost (deeper trench, more backfill, more compaction) with no benefit. RUS 1751F-635 §6 requires only 24 inches for non-traffic residential — running at 42 inches is safe but wastes excavation cost. Plan-and-profile drawings must annotate depth changes at every surface-type transition to prevent this. The risk of going too shallow (hitting 20 inches where 24 is required) is the other side of the same annotation failure.',
   },
 ];
 
@@ -307,16 +307,22 @@ export default function T06L02_BurialDepthRules() {
             </thead>
             <tbody className="text-slate-300/90 text-xs">
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2 font-medium">1 — Federal floor (RUS)</td>
-                <td className="px-3 py-2">RUS 1751F-635</td>
+                <td className="px-3 py-2 font-medium">1 — Federal floor (RUS) — non-traffic</td>
+                <td className="px-3 py-2">RUS 1751F-635 §6</td>
+                <td className="px-3 py-2">24 inches (61 cm)</td>
+                <td className="px-3 py-2">RUS-financed buried conduit in non-traffic areas: residential yards, utility easements, unpaved shoulders</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-medium">1 — Federal floor (RUS) — under roads/traffic</td>
+                <td className="px-3 py-2">RUS 1751F-635 §6</td>
                 <td className="px-3 py-2">36 inches (91 cm)</td>
-                <td className="px-3 py-2">All RUS-financed buried plant; general direct-buried conduit</td>
+                <td className="px-3 py-2">RUS-financed buried conduit under roads, driveways, and traffic-bearing surfaces</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-medium">2 — National code floor (NEC)</td>
-                <td className="px-3 py-2">NEC 830.47</td>
-                <td className="px-3 py-2">18 inches (absolute minimum)</td>
-                <td className="px-3 py-2">Non-RUS projects where NEC is adopted by AHJ; lowest floor in the hierarchy</td>
+                <td className="px-3 py-2">NEC 830.47 (NPBC) / NEC Art. 800</td>
+                <td className="px-3 py-2">18 inches (NPBC specific) / 24 inches (general comms practical floor)</td>
+                <td className="px-3 py-2">Non-RUS projects where NEC is adopted by AHJ; NEC 830.47's 18-inch value applies to network-powered broadband cable (NPBC) only, not general fiber conduit</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-medium">3 — AHJ override (permit)</td>
@@ -347,12 +353,17 @@ export default function T06L02_BurialDepthRules() {
             </thead>
             <tbody className="text-slate-300/90 text-xs">
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2">Direct-buried conduit, general (RUS floor)</td>
-                <td className="px-3 py-2">36 inches</td>
-                <td className="px-3 py-2">RUS 1751F-635; OCC 206-4 [VERIFIED-public-source]</td>
+                <td className="px-3 py-2">Direct-buried conduit, non-traffic residential (RUS floor)</td>
+                <td className="px-3 py-2">24 inches</td>
+                <td className="px-3 py-2">RUS 1751F-635 §6 [VERIFIED-public-source]</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2">NEC floor (network-powered broadband)</td>
+                <td className="px-3 py-2">Direct-buried conduit, under roads/traffic (RUS floor)</td>
+                <td className="px-3 py-2">36 inches</td>
+                <td className="px-3 py-2">RUS 1751F-635 §6; OCC 206-4 [VERIFIED-public-source]</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">NEC 830.47 floor (network-powered broadband cable — NPBC only)</td>
                 <td className="px-3 py-2">18 inches</td>
                 <td className="px-3 py-2">NEC 830.47 [VERIFIED-via-secondary-source — NEC paywalled]</td>
               </tr>
@@ -383,23 +394,28 @@ export default function T06L02_BurialDepthRules() {
         <div className="mt-5 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
           <p className="font-semibold text-blue-300">Book practice (NEC and RUS as the design basis):</p>
           <p className="mt-1 text-slate-300/90">
-            The textbook design workflow starts with the RUS 36-inch floor (for RUS jobs) or
-            NEC 18-inch floor (for private jobs), then applies AHJ overrides at specific
-            segments. This is correct engineering practice and is the method taught in RUS
-            1751F-635 §5 and BICSI OSPDR.
+            The textbook design workflow applies the RUS 1751F-635 §6 tiered floor by surface type
+            (24 inches non-traffic residential, 36 inches under roads/traffic) and then applies AHJ
+            overrides at specific segments. For non-RUS private projects, NEC Article 800 and
+            industry practice use 24 inches as the general comms floor; NEC §830.47's 18-inch
+            value applies only to network-powered broadband cable (NPBC), a specific use case.
+            This is correct engineering practice and is the method taught in RUS 1751F-635 §6 and
+            BICSI OSPDR.
           </p>
         </div>
         <div className="mt-3 bg-green-900/20 border border-green-500/30 rounded-lg p-4 text-sm">
           <p className="font-semibold text-green-300">Field practice (what the crew actually uses):</p>
           <p className="mt-1 text-slate-300/90">
             In the field, the crew follows the blade depth set by the foreman, which is
-            based on the permit and the job specs — not the NEC. Most experienced crews in
-            RUS states set 36 inches as their default and increase for DOT crossings. The
-            risk is in the transitions: a crew that sets 42 inches for the road crossing but
-            forgets to adjust back to 36 inches on the other side just wastes excavation cost.
-            A crew that doesn't increase for the DOT crossing risks a permit violation and
-            required re-dig. The design drawings must annotate every transition to prevent
-            both errors.
+            based on the permit and the job specs — not the NEC. Many experienced crews in
+            RUS states run 36 inches everywhere as a conservative default rather than tracking
+            the 24-inch non-traffic / 36-inch road transition — it's simpler for the operator.
+            This is safe (deeper than the 24-inch RUS non-traffic floor) but adds unnecessary
+            excavation cost on the residential segments. The design drawings should annotate
+            every transition clearly so crews who do track depth can do so accurately. The
+            critical transitions are the increases at DOT and road crossings — a crew that
+            forgets to go deeper risks a permit violation and required re-dig. A crew that
+            stays deep everywhere just wastes money on the easy segments.
           </p>
         </div>
 
