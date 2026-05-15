@@ -102,7 +102,7 @@ export default function T01L09_OspStandardsLandscape() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">USACE</td>
               <td className="px-3 py-2">US Army Corps of Engineers</td>
-              <td className="px-3 py-2">Federal agency regulating navigable waters and wetlands. Nationwide Permit 12 (NWP 12) authorizes utility line crossings of waters of the US, including most fiber conduit HDD crossings of rivers and streams.</td>
+              <td className="px-3 py-2">Federal agency regulating navigable waters and wetlands. Nationwide Permit 57 (NWP 57; replaces former NWP 12 scope post-2021 USACE reissuance) authorizes telecommunications line crossings of waters of the US, including most fiber conduit HDD crossings of rivers and streams.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">CFR</td>
@@ -192,9 +192,11 @@ export default function T01L09_OspStandardsLandscape() {
               funded projects.
             </p>
             <p className="text-slate-300/90 mt-1">
-              <strong>USACE NWP 12</strong> — Nationwide Permit 12 authorizes most utility
-              line crossings of waters of the US by pre-authorization (subject to conditions).
-              2026 NWP 12 reissuance introduced new reporting and mitigation requirements.
+              <strong>USACE NWP 57</strong> — Nationwide Permit 57 ("Electric Utility Line
+              and Telecommunications Activities"; NWP 57; replaces former NWP 12 scope
+              post-2021 USACE reissuance) authorizes telecommunications line crossings of
+              waters of the US by pre-authorization (subject to conditions). NWP 12 now covers
+              only oil/gas pipelines. Most fiber conduit HDD crossings qualify under NWP 57.
             </p>
             <p className="text-slate-300/90 mt-1">
               <strong>State DOT encroachment permits</strong> — each state DOT has its own
@@ -232,7 +234,7 @@ export default function T01L09_OspStandardsLandscape() {
           { id: 'T01-L09-FC-itu-t', front: 'ITU-T', back: 'International Telecommunication Union – Telecommunication Standardization Sector — publishes the G-series fiber standards used globally (G.652.D for SMF, G.984 for GPON). International body; TIA aligns with ITU-T specs for North American use.' },
           { id: 'T01-L09-FC-icea', front: 'ICEA', back: 'Insulated Cable Engineers Association — publishes cable construction standards including ICEA S-87-640 (OSP fiber cable construction). Not a regulatory body but widely cited in cable specifications and RUS material lists.' },
           { id: 'T01-L09-FC-fcc', front: 'FCC', back: 'Federal Communications Commission — regulates pole attachment rates and processes (47 CFR Part 1.1411), the one-touch make-ready (OTMR) rules, and spectrum licensing. Critical authority for any project attaching to utility poles.' },
-          { id: 'T01-L09-FC-usace', front: 'USACE', back: 'U.S. Army Corps of Engineers — issues Section 404 permits for any work disturbing waters of the United States (river crossings, wetland crossings). Required permit for HDD or bore under navigable waterways on fiber routes.' },
+          { id: 'T01-L09-FC-usace', front: 'USACE', back: 'U.S. Army Corps of Engineers — issues Section 404 permits for any work disturbing waters of the United States. Nationwide Permit 57 (NWP 57; replaces former NWP 12 scope post-2021 reissuance) pre-authorizes telecommunications line crossings including fiber conduit HDD bores under navigable waterways.' },
           { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 36 CFR (Corps of Engineers Section 404).' },
           { id: 'T01-L09-FC-ansi', front: 'ANSI', back: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
           { id: 'T01-L09-FC-code-adoption', front: 'Code adoption', back: 'The process by which a state or jurisdiction officially incorporates a standards document into law. Example: most states adopt the NEC and NESC by reference in their electrical codes. Until adopted, a standard is voluntary; after adoption it is legally enforceable in that jurisdiction.' },
@@ -309,7 +311,7 @@ export default function T01L09_OspStandardsLandscape() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Water-crossing permits</td>
-              <td className="px-3 py-2">USACE NWP 12 (2026 edition)</td>
+              <td className="px-3 py-2">USACE NWP 57 (post-2021 reissuance; replaces NWP 12 for telecom)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Pole attachment fees/timeline</td>
@@ -360,14 +362,14 @@ export default function T01L09_OspStandardsLandscape() {
               'A fiber project requires crossing a navigable river with an HDD bore. Which federal agency\'s permit (and specific permit type) authorizes this work?',
             choices: [
               'FCC Part 1.1411 — pole attachment authorization',
-              'USACE Nationwide Permit 12 (NWP 12) — authorizes utility line crossings of waters of the US',
+              'USACE Nationwide Permit 57 (NWP 57) — authorizes telecommunications line crossings of waters of the US, including fiber conduit HDD bores',
               'NESC §32 — underground crossing clearances',
               'RUS Form 219 — close-out authorization',
             ],
             answerIndex: 1,
             explanation:
-              'The US Army Corps of Engineers (USACE) regulates navigable waters and wetlands under Section 404 of the Clean Water Act and Section 10 of the Rivers and Harbors Act. Nationwide Permit 12 (NWP 12) pre-authorizes utility line crossings (including fiber conduit HDD bores) subject to conditions. Most water crossings qualify under NWP 12 without a full individual permit. The 2026 NWP 12 reissuance added new reporting and mitigation conditions.',
-            citation: 'USACE NWP 12 (2026 reissuance); 33 CFR Part 330.',
+              'The US Army Corps of Engineers (USACE) regulates navigable waters and wetlands under Section 404 of the Clean Water Act and Section 10 of the Rivers and Harbors Act. Nationwide Permit 57 (NWP 57 — "Electric Utility Line and Telecommunications Activities"; replaces the former NWP 12 scope post-2021 USACE reissuance) pre-authorizes telecommunications line crossings including fiber conduit HDD bores, subject to conditions. NWP 12 now covers only oil and gas pipelines. Most fiber water crossings qualify under NWP 57 without a full individual permit.',
+            citation: 'USACE NWP 57 (2021 reissuance); 33 CFR Part 330.',
           },
           {
             id: 'T01-L09-Q2',

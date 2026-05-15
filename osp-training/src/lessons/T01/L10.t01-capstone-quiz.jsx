@@ -297,13 +297,13 @@ export default function T01L10_CapstoneQuiz() {
             choices: [
               'FCC — under 47 CFR Part 1 pole attachment rules',
               'State DOT — under the highway encroachment permit process',
-              'USACE — Nationwide Permit 12 (NWP 12) authorizes utility line crossings of waters of the US',
+              'USACE — Nationwide Permit 57 (NWP 57) authorizes telecommunications line crossings of waters of the US, including fiber conduit HDD bores',
               'BICSI — the OSP Designer certification authorizes waterway crossings',
             ],
             answerIndex: 2,
             explanation:
-              'The US Army Corps of Engineers (USACE) regulates navigable waters under the Clean Water Act §404 and Rivers and Harbors Act §10. Nationwide Permit 12 (NWP 12) pre-authorizes utility line crossings including fiber conduit HDD bores, subject to conditions. Most river and stream crossings qualify under NWP 12 without a full individual permit application. T01.L09.',
-            citation: 'USACE NWP 12 (2026 reissuance); 33 CFR Part 330.',
+              'The US Army Corps of Engineers (USACE) regulates navigable waters under the Clean Water Act §404 and Rivers and Harbors Act §10. Nationwide Permit 57 (NWP 57 — "Electric Utility Line and Telecommunications Activities"; replaces the former NWP 12 scope post-2021 USACE reissuance) pre-authorizes telecommunications line crossings including fiber conduit HDD bores, subject to conditions. NWP 12 now covers only oil and gas pipelines. Most river and stream crossings qualify under NWP 57 without a full individual permit application. T01.L09.',
+            citation: 'USACE NWP 57 (2021 reissuance); 33 CFR Part 330.',
           },
           // Integrated: all T01 lessons
           {
