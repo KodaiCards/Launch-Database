@@ -1,0 +1,357 @@
+// Migrated from M01 §1.1 (wavelength content moved here per ARCH.md; CWDM/DWDM windows are net-new)
+// T02.L07 — Wavelength Windows: 850/1310/1490/1550/1625 nm
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+
+export const meta = {
+  id: 'T02.L07',
+  course_id: 'T02',
+  title: 'Wavelength Windows — 850 / 1310 / 1490 / 1550 / 1625 nm',
+  order: 7,
+  lesson_type: 'working',
+  prerequisites: ['T02.L03'],
+  vocabulary_introduced: ['wavelength window', 'O-band', 'C-band', 'L-band', 'CWDM', 'DWDM', 'WDM', 'PON'],
+  vocabulary_assumed: [
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'dispersion', source_lesson_id: 'T02.L03' },
+    { term: 'chromatic dispersion', source_lesson_id: 'T02.L03' },
+    { term: 'zero-dispersion wavelength', source_lesson_id: 'T02.L03' },
+    { term: 'macrobend', source_lesson_id: 'T02.L04' },
+    { term: 'dB', source_lesson_id: 'T02.L05' },
+    { term: 'SMF', source_lesson_id: 'T01.L08' },
+    { term: 'MMF', source_lesson_id: 'T01.L08' },
+    { term: 'OLT', source_lesson_id: 'T01.L01' },
+    { term: 'ONT', source_lesson_id: 'T01.L01' },
+  ],
+  estimated_minutes: 25,
+};
+
+export default function T02L07_WavelengthWindows() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Not all light behaves the same in fiber. Glass lets some wavelengths pass with very
+          little loss, and absorbs or scatters others heavily. The wavelengths where loss is
+          low are called <strong>wavelength windows</strong> — these are the "lanes" that
+          fiber optic systems actually use.
+        </p>
+        <p className="mt-2">
+          A wavelength is simply the "size" of a light wave, measured in nanometers (nm —
+          one billionth of a meter). Visible light is roughly 400–700 nm. Fiber optics works
+          in the near-infrared range (850–1625 nm), which is invisible to the naked eye.
+        </p>
+        <p className="mt-2">
+          Think of wavelength windows like radio stations: each station broadcasts at a specific
+          frequency. Fiber systems choose wavelengths in the same way — pick the "station" that
+          gives the lowest noise (attenuation) and best range for the job.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">Used for</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">WDM</td>
+              <td className="px-3 py-2">Wavelength Division Multiplexing</td>
+              <td className="px-3 py-2">Sending multiple data streams on one fiber by using different wavelengths simultaneously</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">CWDM</td>
+              <td className="px-3 py-2">Coarse WDM</td>
+              <td className="px-3 py-2">Wide wavelength spacing (20 nm apart); fewer channels; lower cost; metro/access</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">DWDM</td>
+              <td className="px-3 py-2">Dense WDM</td>
+              <td className="px-3 py-2">Narrow spacing (0.8 nm apart); dozens of channels; long-haul and high-capacity</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">PON</td>
+              <td className="px-3 py-2">Passive Optical Network</td>
+              <td className="px-3 py-2">FTTH distribution architecture — uses 1310/1490/1550 nm on the same fiber to/from homes</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">OTDR</td>
+              <td className="px-3 py-2">Optical Time-Domain Reflectometer</td>
+              <td className="px-3 py-2">Test instrument that shoots a laser pulse and measures reflections to locate faults — covered in T12</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The Five Key Wavelengths</h2>
+
+        <h3 className="mt-4 font-semibold">850 nm — Multimode short-reach</h3>
+        <p>
+          850 nm is the primary wavelength for <strong>multimode fiber (MMF)</strong> in
+          data center and campus applications (OM1–OM5). It has higher attenuation than the
+          longer wavelengths (~3.5 dB/km for OM3/OM4 MMF), but the VCSELs (vertical-cavity
+          surface-emitting lasers) that generate 850 nm are cheap and fast to modulate —
+          ideal for 10/25/40/100/400 GbE inside a building or between buildings within a few
+          hundred meters.
+        </p>
+        <p className="mt-2 text-sm text-slate-300/80">
+          <strong>OSP relevance:</strong> You won't use 850 nm in a long OSP run. But if you're
+          connecting to a data center or a campus that uses MMF, 850 nm is the wavelength
+          those transceivers are using. Never connect SMF transceivers (1310/1550 nm) directly
+          to MMF cable — the core size mismatch causes massive loss.
+        </p>
+
+        <h3 className="mt-5 font-semibold">1310 nm — The O-band (Original band)</h3>
+        <p>
+          The <strong>O-band</strong> (1260–1360 nm) sits near the zero-dispersion wavelength
+          of G.652.D SMF (~1310 nm). Chromatic dispersion is very low here — a 10 km 1310 nm
+          link with a typical DFB laser has negligible dispersion penalty. Attenuation is
+          higher than 1550 nm (≤ 0.40 dB/km spec max; typical ≈ 0.32–0.35 dB/km), but for
+          runs under 30–40 km, that's fine.
+        </p>
+        <p className="mt-2">
+          Common 1310 nm uses in OSP:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 mt-1 text-sm">
+          <li>PON upstream signal (ONT to OLT): GPON uses 1310 nm upstream</li>
+          <li>Standard short-reach SMF transceivers (10GBASE-LR, 1000BASE-LX)</li>
+          <li>OTDR baseline testing at 1310 nm (lower attenuation than 850 nm; reveals splices and connectors)</li>
+        </ul>
+
+        <h3 className="mt-5 font-semibold">1490 nm — The PON downstream companion</h3>
+        <p>
+          You might not see 1490 nm much in textbooks, but it's everywhere in FTTH/GPON networks.
+          <strong> GPON downstream</strong> uses 1490 nm (OLT to ONT). Combined with the 1310 nm
+          upstream, a single fiber carries bidirectional data on two wavelengths simultaneously —
+          no separate fiber needed for each direction.
+        </p>
+        <p className="mt-2">
+          Some GPON/XGS-PON deployments also carry a 1550 nm overlay for CATV (analog or digital
+          video) on the same fiber — three wavelengths, one fiber, one drop to the house.
+        </p>
+
+        <h3 className="mt-5 font-semibold">1550 nm — The C-band (Conventional band)</h3>
+        <p>
+          The <strong>C-band</strong> (1530–1565 nm) is the workhorse of long-haul, metro, and
+          DWDM systems. G.652.D attenuation at 1550 nm is at its minimum (≤ 0.30 dB/km; typical
+          0.18–0.22 dB/km), making it the best choice for maximizing reach before amplification
+          is needed.
+        </p>
+        <p className="mt-2">
+          The tradeoff: chromatic dispersion at 1550 nm in G.652 is approximately 17 ps/(nm·km)
+          — much higher than at 1310 nm. High-speed 10G+ links at 1550 nm need dispersion
+          management. Coherent optical systems (100G, 400G) handle dispersion electronically.
+        </p>
+        <p className="mt-2">
+          Common 1550 nm uses:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 mt-1 text-sm">
+          <li>Long-haul transport (DWDM in the C-band carries dozens of 100G channels)</li>
+          <li>CATV video overlay on PON drops (1550 nm RF video over SMF)</li>
+          <li>OTDR testing at 1550 nm (lower loss baseline for long links)</li>
+          <li>EDFA amplifier window (erbium-doped fiber amplifiers work natively in C-band)</li>
+        </ul>
+
+        <h3 className="mt-5 font-semibold">1625 nm — The L-band diagnostic wavelength</h3>
+        <p>
+          The <strong>L-band</strong> (1565–1625 nm) is where in-service OTDR testing lives.
+          Because macrobend loss grows with wavelength, a bend that's barely visible at 1550 nm
+          stands out clearly at 1625 nm. This lets the test crew locate kinks and tight bends
+          on a live fiber without interrupting service on the 1310/1490/1550 nm channels.
+        </p>
+        <p className="mt-2">
+          A field crew can shoot a 1625 nm OTDR trace on an in-service GPON fiber (which is
+          carrying 1310 and 1490 nm signals) without interfering with those signals, because
+          the 1625 nm laser is outside the pass-band of the WDM filters at each end.
+        </p>
+
+        <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
+          <p className="text-slate-300/90">
+            <strong>Book:</strong> "1310 nm = low dispersion, 1550 nm = low attenuation, 1625 nm =
+            OTDR test." Three clean categories.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> The actual wavelength used is determined by (a) whatever optics
+            are in the customer's equipment, and (b) what the OTDR module on the truck supports.
+            You don't get to choose 1550 nm on a GPON job — the OLT already dictates 1490 nm
+            downstream. Most field crews do 1310 + 1550 for SMF acceptance testing, and only
+            add 1625 nm if the contract requires it or if a fault is suspected. The 1625 nm module
+            is an extra cost — not every OTDR has it standard.
+          </p>
+        </div>
+      </section>
+
+      {/* ── ADVANCED ────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Going Deeper — WDM, CWDM, and DWDM</h2>
+        <p>
+          Wavelength Division Multiplexing (WDM) puts multiple wavelengths on the same fiber
+          simultaneously, increasing capacity without adding fiber. There are two flavors:
+        </p>
+        <ul className="list-disc pl-5 space-y-3 mt-2 text-sm">
+          <li>
+            <strong>CWDM (Coarse WDM):</strong> Wavelengths spaced 20 nm apart, from 1270 nm to
+            1610 nm — 18 possible channels. Because the channels are far apart, the lasers and
+            filters are less precise (and less expensive). Typical use: metro access rings, suburban
+            loop distribution where you need 4–8 channels of capacity on existing fiber without
+            deploying new cable. Does not use EDFA amplification (the C-band EDFA gain bandwidth
+            is too narrow for CWDM's wide channel spacing).
+          </li>
+          <li>
+            <strong>DWDM (Dense WDM):</strong> Channels spaced 0.8 nm (100 GHz) or 0.4 nm
+            (50 GHz) apart in the C-band, with up to 80–96 channels on one fiber pair. Each
+            channel can carry 100G or 400G. Requires extremely precise DFB/ECL lasers and
+            temperature-controlled filters. Backbone of long-haul networks, central office
+            interconnects, and high-capacity regional rings. EDFA amplification is native to
+            the C-band — DWDM systems boost all channels simultaneously with one amplifier.
+          </li>
+        </ul>
+        <p className="mt-3">
+          <strong>OSP crew note:</strong> When you install or splice a DWDM route, fiber
+          cleanliness and end-face quality are even more critical than on standard SMF links —
+          even tiny back-reflections can desensitize the narrow-linewidth lasers used in DWDM.
+          All connectors on a DWDM route should be APC (angled physical contact, green connectors)
+          to minimize reflections.
+        </p>
+      </section>
+
+      {/* ── ANNOTATED DIAGRAM ──────────────────────────────────────────── */}
+      <AnnotatedDiagram
+        title="Fiber Wavelength Windows — The Attenuation Curve"
+        description="The loss of a fiber varies by wavelength. Click each point to learn what each window is used for and why."
+        src="/training/diagrams/wavelength-windows.svg"
+        alt="Graph showing fiber attenuation vs wavelength, with the O, E, S, C, L band windows labeled and the 850/1310/1490/1550/1625 nm points highlighted"
+        aspectRatio={2.0}
+        hotPoints={[
+          {
+            id: 'nm850',
+            x: 12,
+            y: 20,
+            label: '850 nm',
+            type: 'click',
+            explanation:
+              '850 nm — Used for multimode fiber (MMF) in data centers and campus networks. VCSELs are cheap at this wavelength. High attenuation in SMF (~3 dB/km). Not used in OSP long-haul — only relevant when connecting to MMF patch panels at a data center or campus building.',
+          },
+          {
+            id: 'nm1310',
+            x: 38,
+            y: 55,
+            label: '1310 nm',
+            type: 'click',
+            explanation:
+              '1310 nm — The O-band (Original band). Near the zero-dispersion wavelength of G.652.D SMF. Low chromatic dispersion makes it forgiving for short-to-medium runs. GPON uses 1310 nm for upstream (ONT to OLT). Standard short-reach SMF transceivers (LR, LX). Attenuation spec max ≤ 0.40 dB/km.',
+          },
+          {
+            id: 'nm1490',
+            x: 52,
+            y: 50,
+            label: '1490 nm',
+            type: 'click',
+            explanation:
+              '1490 nm — The GPON downstream wavelength (OLT to ONT). Combined with 1310 nm upstream on the same fiber, enables bidirectional FTTH over a single fiber. Less commonly discussed in textbooks but universal in deployed FTTH networks. Part of the E/S/C-band transition area.',
+          },
+          {
+            id: 'nm1550',
+            x: 65,
+            y: 42,
+            label: '1550 nm',
+            type: 'click',
+            explanation:
+              '1550 nm — The C-band (Conventional band). Lowest attenuation window for G.652.D SMF (≤ 0.30 dB/km spec; typical 0.18–0.22 dB/km). The DWDM and long-haul wavelength. Erbium-doped fiber amplifiers (EDFAs) work natively here. Higher chromatic dispersion (~17 ps/nm·km) requires dispersion management on 10G+ links.',
+          },
+          {
+            id: 'nm1625',
+            x: 80,
+            y: 48,
+            label: '1625 nm',
+            type: 'click',
+            explanation:
+              '1625 nm — The L-band diagnostic wavelength. Macrobend loss is exaggerated here compared to 1550 nm, making it ideal for in-service OTDR macrobend hunting. Can be injected on a live fiber without disturbing 1310/1490/1550 nm traffic if the system uses appropriate WDM filters. Not used as a primary signal wavelength in OSP — it\'s a test tool.',
+          },
+        ]}
+      />
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <Quiz
+        title="T02.L07 Check — Wavelength Windows"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T02-L07-Q1',
+            type: 'dragdrop',
+            prompt:
+              'Match each wavelength to its primary use in OSP or fiber networks.',
+            items: [
+              { id: 'w850', label: '850 nm' },
+              { id: 'w1310', label: '1310 nm' },
+              { id: 'w1550', label: '1550 nm' },
+              { id: 'w1625', label: '1625 nm' },
+            ],
+            targets: [
+              { id: 'mmf', label: 'Multimode short-reach (data center / campus)' },
+              { id: 'gpon-up', label: 'GPON upstream + standard short-reach SMF transceivers' },
+              { id: 'longhaul', label: 'Long-haul, DWDM, minimum attenuation' },
+              { id: 'diagnosis', label: 'In-service OTDR macrobend hunting / diagnostic' },
+            ],
+            correctMap: {
+              mmf: 'w850',
+              'gpon-up': 'w1310',
+              longhaul: 'w1550',
+              diagnosis: 'w1625',
+            },
+            explanation:
+              '850 nm: multimode short-reach. 1310 nm: O-band, GPON upstream, LR/LX SMF transceivers. 1550 nm: C-band, lowest loss, long-haul/DWDM. 1625 nm: L-band diagnostic, macrobend hunting on in-service fibers.',
+            citation: 'ITU-T G.652; ITU-T G.984 (GPON); OTDR best practice (FOA Reference Guide).',
+          },
+          {
+            id: 'T02-L07-Q2',
+            type: 'mc',
+            prompt:
+              'A technician is doing an OTDR trace on a live GPON fiber to locate a suspected macrobend. Which wavelength should they use, and why?',
+            choices: [
+              '1310 nm, because it matches the GPON upstream wavelength and will show the bend clearly',
+              '1490 nm, to match the GPON downstream signal',
+              '1625 nm, because it exaggerates macrobend loss and is outside the GPON signal wavelengths — it can be injected without interrupting service',
+              '850 nm, because it has the highest sensitivity in the O-band',
+            ],
+            answerIndex: 2,
+            explanation:
+              '1625 nm is outside the 1310/1490 nm GPON signal bands. With appropriate WDM filters at each end of the fiber, a 1625 nm OTDR pulse can be injected without interfering with live traffic. And because macrobend loss grows with wavelength, 1625 nm will show the bend more clearly than 1310 or 1550 nm.',
+            fieldNote:
+              'Check that the fiber\'s WDM filter system actually supports 1625 nm pass-through before injecting. Some older PON filter designs block all wavelengths above 1610 nm.',
+          },
+          {
+            id: 'T02-L07-Q3',
+            type: 'mc',
+            prompt:
+              'CWDM uses 20 nm channel spacing; DWDM uses 0.8 nm channel spacing. What is the key consequence of this difference for field crews?',
+            choices: [
+              'CWDM requires armored cable; DWDM can use standard OSP cable',
+              'DWDM requires much more precise laser wavelength stability and end-face cleanliness — including APC connectors — because the channels are so close together that small reflections can desensitize the narrow-linewidth lasers',
+              'CWDM can use multimode fiber; DWDM requires single-mode',
+              'There is no field implication — the spacing only matters to the system designer',
+            ],
+            answerIndex: 1,
+            explanation:
+              'DWDM channels are 0.4–0.8 nm apart. A back-reflection that\'s negligible on a standard SMF link can be within the laser\'s frequency response on a DWDM system, causing noise and sensitivity degradation. APC connectors (≥ 60 dB ORL) are standard practice on DWDM routes for this reason.',
+            fieldNote:
+              'On a DWDM installation, end-face inspection with an IEC 61300-3-35 [confirm edition] compliant scope is not optional — it\'s the standard. A single dirty APC connector can take down multiple 100G channels simultaneously.',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
