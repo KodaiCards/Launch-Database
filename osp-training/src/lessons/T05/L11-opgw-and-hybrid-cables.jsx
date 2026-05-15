@@ -252,6 +252,34 @@ export default function T05L11_OPGWAndHybridCables() {
           a transmission engineering calculation, not an OSP/telecom calculation —
           your electrical colleagues handle that side.
         </p>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field — OPGW Identification Risk</p>
+          <p className="text-slate-300/90">
+            <strong>Book:</strong> OPGW is structurally engineered for transmission spans and
+            is electrically live — it carries ground fault current and is bonded to the tower
+            at every structure. It must be treated as an energized conductor for clearance and
+            grounding purposes, following OSHA 1910.269 and NESC Section 43 rules for supply
+            facilities.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field reality:</strong> From the ground, OPGW looks nearly identical to
+            a conventional steel overhead ground wire (OGW) or, depending on the stranding,
+            can be mistaken for a messenger cable. Both run near the top of structures. An OSP
+            crew approaching a transmission corridor to splice to a leased IRU segment can
+            mistake the OPGW for a messenger and attempt to work it using comm-space procedures —
+            a serious safety hazard.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>The risk:</strong> Any unannounced contact with an energized OPGW by an
+            OSP crew working in comm-space mode could result in electrocution. Before any work
+            near a transmission structure, identify which cable is OPGW (typically top-mounted,
+            labeled on the structure or in utility drawings), verify it is de-energized and
+            grounded by the facility owner's qualified electrical crew, and do not touch it
+            otherwise. When in doubt, treat every metallic cable at or above the supply space
+            as energized until confirmed otherwise by the responsible utility.
+          </p>
+        </div>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}

@@ -381,6 +381,33 @@ export default function T05L12_PONFTTHAerialTopology() {
             typically calls for 20–50% dark fiber growth margin in the feeder cable.
           </li>
         </ul>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field — Split Ratio: Designed vs. Activated</p>
+          <p className="text-slate-300/90">
+            <strong>Book (PON architecture):</strong> A PON design specifies its split ratio —
+            typically 1:32 or 1:64 — from day one. The splitter with that ratio is installed
+            in the FDH, the feeder fiber is sized to carry the downstream signal to all
+            output ports, and the link budget is calculated to the full split ratio. The
+            design assumes all ports are eventually active.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field practice (phased activation):</strong> Many real FTTH deployments
+            install a 1:8 or 1:16 splitter at the FDH on day one, activating only the
+            subscribers who have signed up. As take-rate grows, the splitter is swapped for
+            a 1:32 or 1:64 unit — or a second splitter stage is added. This phased approach
+            reduces the initial equipment cost (fewer OLT ports, smaller splitter) while
+            keeping the feeder cable and FDH enclosure sized for the eventual full split ratio.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>The design implication:</strong> If you're designing an FTTH network
+            where the operator plans phased activation, size the feeder cable and conduit
+            for the final split ratio, not the day-one ratio. A feeder designed for 1:8
+            that later needs to run 1:32 may not have enough link margin without a costly
+            feeder rebuild. Ask explicitly about the operator's long-term split ratio plan
+            before you lock in the feeder design.
+          </p>
+        </div>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
