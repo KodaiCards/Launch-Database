@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L11',
@@ -14,6 +15,12 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L02', 'T02.L04', 'T02.L06'],
   vocabulary_introduced: ['temperature coefficient', 'aging loss', 'bend-insensitive SMF', 'field gotcha'],
+  key_terms: [
+    { term: 'temperature coefficient', definition: 'The rate at which fiber attenuation changes with temperature. In extreme cold (-40 degrees C), G.652.D attenuation can increase by 0.01-0.05 dB/km. In direct sun exposure on aerial runs, temperature cycling causes the cable to expand and contract, which can shift splices in their trays and induce stress.' },
+    { term: 'aging loss', definition: 'The gradual increase in link loss over time as the fiber plant ages. Causes: connector surfaces degrade, splice cases can be stressed by water intrusion or frost heave, lashing wire can corrode and tighten on the cable. Real-world links tend to get slightly lossier over 20-30 years -- which is why the safety margin must survive the link\'s full design life.' },
+    { term: 'bend-insensitive SMF', definition: 'G.657.A1/A2 fiber becoming more common in OSP drop cables and indoor/outdoor dual-rated cable. G.657.A1 is designed backward-compatible with G.652.D for splicing (expect <= 0.05 dB additional splice loss at transition). G.657.B2/B3 has larger MFD mismatch -- check spec before mixing with G.652.D.' },
+    { term: 'field gotcha', definition: 'A real-world variation from textbook expectations that can cause unexpected problems on the job. Examples: connector contamination, tight bends inside splice cases, batch-to-batch fiber variation on OTDR, and G.657.B3/G.652.D MFD mismatch splice loss. The high-attenuation troubleshooting checklist in this lesson gives the ordered approach.' },
+  ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'dB/km', source_lesson_id: 'T02.L02' },
@@ -47,6 +54,17 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
           a mental checklist of likely causes — ordered by probability — so you're not just
           guessing.
         </p>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L11"
+          cards={[
+            { id: 'T02-L11-fc-tempcoeff', front: 'How does temperature affect fiber attenuation?', back: 'Fiber attenuation increases at lower temperatures. G.652.D has a small temperature coefficient of attenuation (typically <= 0.05 dB/km increase from +20C to -40C for standard fiber). Additionally, loose-tube cable shortens in cold weather, potentially causing slight fiber buckle in the buffer tube and adding microbend loss.' },
+            { id: 'T02-L11-fc-agingloss', front: 'What causes aging loss in fiber links?', back: 'Real-world links tend to get slightly lossier over 20-30 years. Causes: connector surfaces degrade and accumulate contamination, splice cases experience freeze-thaw stress, lashing wire can corrode and tighten on the cable. The 3 dB safety margin in a link budget exists to absorb this lifetime variation.' },
+            { id: 'T02-L11-fc-bismf', front: 'What field gotchas apply to G.657 bend-insensitive SMF?', back: 'G.657.A1 is backward-compatible with G.652.D for splicing (expect <= 0.05 dB extra loss at the transition). G.657.B2/B3 has larger MFD mismatch -- unexpected splice loss if mixed with G.652.D backbone. "Bend-insensitive" also does NOT mean abuse-proof: mechanical bend limits still apply.' },
+            { id: 'T02-L11-fc-fieldgotcha', front: 'What is #1 on the field troubleshooting checklist for unexpected OTDR loss?', back: 'Clean and inspect all connector end-faces first. 70%+ of "fiber problems" are actually contaminated connectors or connector mismatches. A fingerprint or dust on an APC/UPC face can add 1-5 dB. A proper dry + wet cleaning procedure and end-face inspection scope resolves most issues before you start pulling cable or re-doing splices.' },
+          ]}
+        />
 
         <h3 className="mt-5 font-semibold">Why real-world attenuation varies from the datasheet</h3>
         <p className="mt-2">

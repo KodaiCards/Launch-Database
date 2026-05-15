@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L10',
@@ -14,6 +15,14 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L02', 'T02.L03', 'T02.L09'],
   vocabulary_introduced: ['fiber characterization', 'CD measurement', 'PMD measurement', 'cut-back method', 'OTDR characterization', 'dispersion slope'],
+  key_terms: [
+    { term: 'fiber characterization', definition: 'A set of specialized tests -- distinct from standard OTDR acceptance testing -- that measure the fundamental optical properties of the fiber itself: how much it disperses a signal, how much PMD it has. Done on long routes when upgrading to high-speed wavelengths, or when required by contract spec.' },
+    { term: 'CD measurement', definition: 'Chromatic Dispersion measurement -- done by field instruments using the phase shift method (most common) or time-of-flight method. Needed when activating 40G or higher on non-dispersion-shifted fiber, or deploying DWDM to calculate dispersion compensation module (DCM) requirements.' },
+    { term: 'PMD measurement', definition: 'Measurement of the fiber\'s Polarization Mode Dispersion coefficient using specialized instruments (Jones Matrix Eigenanalysis, GINTY interferometric, or Stokes parameter methods). Must be done on the complete installed link -- not just the factory reel -- because installation stresses can significantly increase PMD.' },
+    { term: 'cut-back method', definition: 'The gold-standard method for measuring fiber attenuation. Measure insertion loss on the full fiber length, then cut the fiber back to a short reference length (~2 m) and measure the reference power. The difference divided by the length gives exact dB/km. Destructive -- done in the lab on cable reels, not in the field.' },
+    { term: 'OTDR characterization', definition: 'Running an OTDR at multiple wavelengths (1310, 1550, 1625 nm) to get a wavelength-dependent attenuation profile. Reveals water-peak absorption, macrobend locations, stress-induced loss sections, and gainer events (apparent negative-loss splices that are actually backscatter artifacts).' },
+    { term: 'dispersion slope', definition: 'How fast chromatic dispersion changes with wavelength, measured in ps/nm-squared/km. Determines how much CD varies across a DWDM channel group -- also measured in CD characterization. Important when calculating dispersion compensation for DWDM systems.' },
+  ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'chromatic dispersion', source_lesson_id: 'T02.L03' },
@@ -77,6 +86,18 @@ export default function T02L10_FiberCharacterizationTesting() {
             </tr>
           </tbody>
         </table>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L10"
+          cards={[
+            { id: 'T02-L10-fc-chartest', front: 'What is fiber characterization testing?', back: 'Specialized tests -- distinct from standard OTDR acceptance testing -- that measure fundamental optical properties: attenuation coefficient, chromatic dispersion (CD), and PMD. Done on long routes when upgrading to high-speed wavelengths, or when required by contract spec.' },
+            { id: 'T02-L10-fc-cdmeas', front: 'When is CD measurement required?', back: 'When activating 40G or higher on non-dispersion-shifted fiber without electronic dispersion compensation, deploying DWDM on existing fiber to calculate dispersion compensation module (DCM) requirements, or characterizing a fiber route for a new high-speed network design.' },
+            { id: 'T02-L10-fc-pmdmeas', front: 'Why must PMD measurement be done on the installed link, not just the factory reel?', back: 'Installation stresses from over-tensioned lashing, conduit overfill, or tight bends add birefringence that raises the installed PMD coefficient above the factory reel spec. A fiber that measures 0.1 ps/sqrt(km) on the reel can test significantly higher after installation.' },
+            { id: 'T02-L10-fc-cutback', front: 'What is the cut-back method for attenuation measurement?', back: 'The gold-standard lab method: measure insertion loss on the full fiber length, then cut the fiber back to ~2 m and measure the reference power. The difference divided by the length gives exact dB/km. Destructive -- done on cable reels before installation, not in the field.' },
+            { id: 'T02-L10-fc-slope', front: 'What is dispersion slope?', back: 'How fast chromatic dispersion changes with wavelength, measured in ps/nm-squared/km. Determines how much CD varies across a DWDM channel group. Important when calculating dispersion compensation for DWDM systems -- a fiber with high dispersion slope requires channel-by-channel compensation.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
