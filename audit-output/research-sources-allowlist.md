@@ -117,8 +117,11 @@
 ## ANSI / ICEA
 
 - **ANSI O5.1** — Wood Poles — Specifications and Dimensions
-- **ANSI/ISEA Z89.1-2014 (R2019)** — American National Standard for Industrial Head Protection. Authority: ANSI/ISEA. URL: https://safetyequipment.org (paywalled). [paywalled — secondary citation required]. Secondary paths: OSHA Safety and Health Information Bulletin (SHIB) on safety helmets (osha.gov) + OSHA 29 CFR 1910.268(b) PPE table both confirm Class E = 20,000V / Class G = 2,200V / Class C = no electrical protection. Scope: T18.L05 hard hat electrical-class selection for joint-use pole work; T07 (Staking) and T14 (Grounding) electrical-proximity PPE callouts.
 - **ANSI/ISEA 107** [confirm edition] — High-Visibility Safety Apparel and Headwear. Authority: ANSI/ISEA. URL: https://safetyequipment.org (paywalled). [paywalled — secondary citation required]. Secondary paths: MUTCD Part 6 Chapter 6E (free FHWA PDF) references Class 2 minimum for daytime roadway work; OSHA outreach materials confirm Class 3 for nighttime/high-speed zones. Scope: T18.L05 and T18.L06 hi-vis vest class requirements; T10 (Construction) traffic-zone PPE; T07 (Staking) roadway-shoulder work.
+- **ANSI/ISEA Z89.1-2014 (R2019)** — American National Standard for Industrial Head Protection. Authority: ANSI/ISEA. URL: https://safetyequipment.org (paywalled). [paywalled — secondary citation required]. Secondary paths: OSHA Safety and Health Information Bulletin (SHIB) on safety helmets (osha.gov) + OSHA 29 CFR 1910.268(b) PPE table both confirm Class E = 20,000V / Class G = 2,200V / Class C = no electrical protection. Scope: T18.L05 hard hat electrical-class selection for joint-use pole work; T07 (Staking) and T14 (Grounding) electrical-proximity PPE callouts.
+- **ANSI Z87.1** [confirm edition] — Occupational and Educational Personal Eye and Face Protection Devices. Authority: ANSI/ISEA. URL: https://safetyequipment.org (paywalled). [paywalled — secondary citation required]. Secondary path: 29 CFR 1910.133 (public eCFR) references ANSI Z87.1 as the required standard for eye and face protection; OSHA 1910.268(b) PPE table confirms safety glasses required for climbing and overhead work. Scope: T18.L05 safety eyewear requirement for OSP field work; T07 (Staking), T08 (Make-Ready), T10 (Construction) overhead-hazard callouts.
+- **ANSI Z359.11** [confirm edition] — Safety Requirements for Full Body Harnesses. Authority: ANSI/ASSE. URL: https://webstore.ansi.org (paywalled). [paywalled — secondary citation required]. Secondary paths: OSHA 29 CFR 1910.140(c)(1) (public eCFR) requires full-body harnesses for PFAS; OSHA fall protection eTool (osha.gov) describes harness specification requirements consistent with Z359.11. Scope: T18.L04 full-body harness vs. body-belt distinction for pole-top fall arrest; T07 (Staking) and T13 (Inspection) fall arrest system selection.
+- **ANSI Z359.14** [confirm edition] — Safety Requirements for Self-Retracting Devices (SRDs). Authority: ANSI/ASSE. URL: https://webstore.ansi.org (paywalled). [paywalled — secondary citation required]. Secondary paths: OSHA 29 CFR 1910.140(c)(3) (public eCFR) addresses SRL/SRD performance requirements; OSHA fall protection eTool describes SRL function and deployment criteria. Scope: T18.L04 SRL selection and deployment for pole-top and aerial-lift work; T07 (Staking) 100%-tie-off policy implementation.
 - **ICEA S-87-640** — Standard for Optical Fiber Outside Plant Communications Cable
 - **ANSI/ATIS-0600336** — Network Equipment-Building System (NEBS) Generic Physical Design Requirements
 
@@ -132,6 +135,10 @@
 - **IEEE 81** — Measuring Earth Resistance, Earth Surface Potentials, and Earth Surface Conductivity
 - **IEEE Std 142** — Grounding of Industrial and Commercial Power Systems
 - **IEEE 802.3** — Ethernet (relevant for premise interface)
+
+## NIOSH / CDC
+
+- **NIOSH Hierarchy of Controls** — NIOSH (National Institute for Occupational Safety and Health), CDC. URL: https://www.cdc.gov/niosh/topics/hierarchy/ [public]. Authority: NIOSH/CDC. Scope: T18.L01 hierarchy of controls foundational model (Elimination → Substitution → Engineering → Administrative → PPE); referenced as the authoritative framework underlying OSHA's PPE-last approach; T07, T08, T10 hazard-control planning.
 
 ## Standards Bodies / Other
 
