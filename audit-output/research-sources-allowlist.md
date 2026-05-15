@@ -97,6 +97,15 @@
 - **47 CFR Part 1.1401-1.1424** — Pole attachment rules
 - **FCC 18-111** (One-Touch Make-Ready / OTMR Order)
 
+## Federal Regulations / Telecom & RUS
+
+- **47 CFR Part 32 — Uniform System of Accounts (USOA) for telecommunications companies.** Authority: FCC. URL: https://www.ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32 [public eCFR — primary anchor, publicly available]. Citation rule: cite specific subsections (e.g., § 32.2210 for plant accounts — cable and wire; § 32.2420 for poles; § 32.2220 for land and land rights; § 32.27 for records retention). Scope: T04.L07 (plant-account coding + record retention for RUS borrowers); T09 (permitting cost allocation); any lesson covering survey cost recording, materials accounting, or RUS loan audit exposure.
+
+## Geospatial / Standards Secondary
+
+- **USGS National Geodetic Survey (NGS) — Coordinate Reference System documentation.** Authority: USGS / NOAA NGS. URL: https://www.ngs.noaa.gov [public domain, USGS/NOAA]. Primary on geodetic datums (NAD83, NAD27, NAVD88); horizontal and vertical datum definitions; state-plane coordinate system grids. Citation rule: cite by datum name and version (e.g., NAD83(2011) epoch 2010.0; NAVD88). Scope: T04.L03 (GIS landbase creation, coordinate-system choice, datum-mismatch detection); any lesson referencing survey control, benchmarks, or CRS declarations.
+- **NOAA NGS CORS — Continuously Operating Reference Stations.** Authority: NOAA National Geodetic Survey. URL: https://www.ngs.noaa.gov/CORS/ [public domain, NOAA]. RTK accuracy specifications: sub-decimeter horizontal (typically 1–3 cm + 1 ppm baseline) when using a network-corrected CORS solution. Citation rule: cite as "NOAA NGS CORS technical documentation" + reference the RTK accuracy specification from the NGS CORS user guide (publicly available at the URL above). Scope: T04.L02 (RTK GNSS positional accuracy for pole and route-survey measurements); any lesson covering GPS/GNSS survey accuracy standards.
+
 ## USACE / Permitting
 
 - **Nationwide Permit (NWP) 57** — Electric Utility Line + Telecommunications Activities (post-2021 reissuance; replaces former NWP 12 scope for telecom)
