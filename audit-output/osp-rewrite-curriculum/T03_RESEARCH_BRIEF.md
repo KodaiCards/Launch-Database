@@ -340,7 +340,7 @@ Sanity check: 9.3 m sag on a 300 m span = 3.1% of span. Typical design target is
 - Internal T03 (L04): ADSS, EDS, RTS, sag formula
 
 ### Vocabulary introduced
-- **NESC loading district** — a geographic classification in NESC C2 Section 25 (Rule 250B Table 250-1) defining the simultaneous ice, wind, and temperature design loading a pole line and its attached cables must withstand. Three districts: Heavy (0.50 in. radial ice + 9 lb/ft² wind + 15°F), Medium (0.25 in. radial ice + 4 lb/ft² wind + 15°F), Light (0 in. ice + 9 lb/ft² wind + 30°F). Temperature for all three is modified by temperature constant. (Source: NESC C2-2023 Table 250-1; RUS Bulletin 1724E-150 which reproduces the table; IAEI Magazine 2002 NESC article confirming values) [PAYWALLED for exact NESC text — values confirmed via RUS 1724E-150 and IAEI article per ≥2 independent public sources]
+- **NESC loading district** — a geographic classification in NESC C2 Section 25 (Rule 250B Table 250-1) defining the simultaneous ice, wind, and temperature design loading a pole line and its attached cables must withstand. Three districts: Heavy (0.50 in. radial ice + 4 lb/ft² wind + 0°F), Medium (0.25 in. radial ice + 4 lb/ft² wind + 15°F), Light (0 in. ice + 9 lb/ft² wind + 30°F). Temperature for all three is modified by temperature constant. (Source: NESC C2-2023 Table 250-1; RUS Bulletin 1724E-150 which reproduces the table; IAEI Magazine 2002 NESC article confirming values) [PAYWALLED for exact NESC text — values confirmed via RUS 1724E-150 and IAEI article per ≥2 independent public sources]
 - **Extreme Wind loading** — an additional NESC C2 loading case (Rule 250C) applied when structures or conductors exceed 60 ft above ground. Uses regional wind speed maps rather than the three-district table. (Source: NESC C2-2023; IAEI 2007 NESC article; RUS 1724E-150)
 - **radial ice thickness** — the radial buildup of ice on cables, measured in inches. Heavy district: 0.50 in. radial. Adds significant weight to the cable and increases effective projected area for wind loading. (Source: NESC C2-2023 Table 250-1 via RUS 1724E-150)
 - **wind pressure** — horizontal pressure on cable projected area from wind, in lb/ft². Used with cable OD to calculate horizontal load per unit length. (Source: NESC C2-2023 §25)
@@ -350,7 +350,7 @@ Sanity check: 9.3 m sag on a 300 m span = 3.1% of span. Typical design target is
 
 | Claim | Source | Status |
 |---|---|---|
-| "Heavy loading district: 0.50 in. radial ice + 9 lb/ft² wind + 15°F" | IAEI Magazine 2002 NESC article (iaeimagazine.org): "Heavy loading district where aerial facilities must be designed to withstand a 0.5 inch radial thickness of ice in combination with a 40-mile-per-hour wind" [Note: 9 lb/ft² corresponds to ≈40 mph wind per NESC formulation]; RUS Bulletin 1724E-150 reproduces NESC Table 250-1 | VERIFIED via ≥2 public secondary sources |
+| "Heavy loading district: 0.50 in. radial ice + 4 lb/ft² wind + 0°F" | IAEI Magazine 2002 NESC article (iaeimagazine.org): Heavy district = 0.50 in. radial ice + wind load, temperature 0°F. Note: 4 lb/ft² is the Heavy/Medium wind component; the 9 lb/ft² wind is Light-district-only (no ice offset for larger wind). RUS Bulletin 1724E-150 Table 250-1 reproduces these values. [Prior brief version incorrectly assigned 9 lb/ft² wind and 15°F to Heavy — corrected per NESC Table 250-1 via RUS 1724E-150] | VERIFIED via ≥2 public secondary sources |
 | "Medium: 0.25 in. radial ice + 4 lb/ft² wind + 15°F" | IAEI Magazine + ikeGPS NESC Weather Loadings article confirming Medium district values | VERIFIED via ≥2 sources |
 | "Light: 0 in. ice + 9 lb/ft² wind + 30°F" | ikeGPS NESC article: "Light 0 in. [ice]"; wind pressure 9 lb/ft² confirmed in IAEI article for Light district | VERIFIED via ≥2 sources |
 | "Extreme Wind applies to structures/conductors ≥ 60 ft above ground" | IAEI 2007 NESC article: "If any part of a pole or the conductors attached to it is 60 feet or more above the ground, then extreme wind loading has to be considered" | VERIFIED |
@@ -380,9 +380,21 @@ Sag = (w × L²) / (8 × T) = (0.54 × 200²) / (8 × 400) = 21,600 / 3,200 = **
 
 Step 5 — Sanity check: 6.75 ft sag on a 200 ft span = 3.4% of span. Design target typically 1–2% at EDS unloaded; under wind load, sag increases. This confirms the need to check clearance with NESC Rule 232.
 
-**Author note:** for Heavy district (ice + wind), the ice adds radial weight per:
-Ice load per ft = π × (D_ice² - D_cable²) / 4 × 57 lb/ft³ × (1/12)
-where D_ice = cable OD + 2 × ice radial thickness (in inches), D_cable = cable OD (in inches). Author should build this as a WorkedExample calculator.
+**Author note:** for Heavy district (ice + wind), the ice adds radial weight per the NESC shorthand formula:
+
+w_ice = 1.244 × t × (D + t)   lb/ft
+
+where:
+- t = radial ice thickness in inches (Heavy = 0.50 in.; Medium = 0.25 in.)
+- D = cable outer diameter in inches
+- Result is in lb/ft (linear weight added to the cable)
+
+**Derivation (so the author understands the constant):**
+The ice shell is a thin annular ring. Exact cross-sectional area = π × ((D + 2t)² − D²) / 4 = π × t × (D + t) [in²].
+Ice density = 57 lb/ft³. Converting in² → ft² requires dividing by 144 (= 12²), not 12.
+w_ice = π × t × (D + t) / 144 × 57 = (π × 57 / 144) × t × (D + t) ≈ 1.244 × t × (D + t) lb/ft.
+
+**Prior brief error:** the formula `π × (D_ice² - D_cable²) / 4 × 57 × (1/12)` divided by 12 instead of 144 to convert in² to ft², overcalculating ice load by 12×. The shorthand formula above is the correct NESC-standard expression. No worked example in this brief used the wrong formula numerically (the worked example above is Light district = no ice), so no numeric values require re-derivation. Author should build the WorkedExample calculator using w_ice = 1.244 × t × (D + t).
 
 ### Interactive primitive recommendations
 - **WorkedExample** — ADSS loading calculator: inputs = loading district (dropdown: Light/Medium/Heavy), span (ft), cable OD (mm), EDS % of RTS, RTS (lbf); computed outputs = ice load (lb/ft), wind load (lb/ft), total transverse load (lb/ft), parabolic sag at midspan (ft), sag as % of span
