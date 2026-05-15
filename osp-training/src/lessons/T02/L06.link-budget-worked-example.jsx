@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import LinkBudgetCalculator from '../../components/LinkBudgetCalculator.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L06',
@@ -15,6 +16,13 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L05'],
   vocabulary_introduced: ['link budget', 'Tx power', 'Rx sensitivity', 'optical headroom', 'safety margin'],
+  key_terms: [
+    { term: 'link budget', definition: 'The central calculation that answers: "Will this fiber connection actually work?" It\'s a simple accounting exercise: how much optical power do I have to spend (budget = Tx - Rx), and how much does the path cost (fiber + connectors + splices + margin).' },
+    { term: 'Tx power', definition: 'Transmitter output power -- how much light the laser or LED puts into the fiber, measured in dBm. Typical OSP transmitters: -5 to +5 dBm.' },
+    { term: 'Rx sensitivity', definition: 'Receiver minimum detectable power -- the dimmest signal the receiver can still decode reliably, measured in dBm (a negative number). Typical receiver sensitivity: -20 to -35 dBm. The link must deliver at least this much power after all losses.' },
+    { term: 'optical headroom', definition: 'Budget minus total loss -- how much margin you have left over after accounting for all losses and the safety margin. Positive headroom = link passes. Negative headroom = link fails and needs redesign. Above 6-8 dB is considered comfortable.' },
+    { term: 'safety margin', definition: 'A flat reserve (typically 3 dB) in a link budget that is never allocated to components. It covers fiber aging, splice case thermal cycling, connector wear over time, and future re-splices. Never skip this -- it\'s why links still work 20+ years later.' },
+  ],
   vocabulary_assumed: [
     { term: 'dB', source_lesson_id: 'T02.L05' },
     { term: 'dBm', source_lesson_id: 'T02.L05' },
@@ -94,6 +102,18 @@ export default function T02L06_LinkBudgetWorkedExample() {
             Never skip this — it's why links still work five years later.
           </li>
         </ul>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L06"
+          cards={[
+            { id: 'T02-L06-fc-linkbudget', front: 'What is a link budget?', back: 'The calculation that answers: "Will this fiber connection actually work?" Budget = Tx power - Rx sensitivity (in dB). The link passes if total losses (fiber + connectors + splices + safety margin) are less than the budget.' },
+            { id: 'T02-L06-fc-txpower', front: 'What is Tx power?', back: 'Transmitter output power -- how much light the laser or LED puts into the fiber, measured in dBm. Typical OSP transmitters: -5 to +5 dBm. This is the "starting" power in a link budget calculation.' },
+            { id: 'T02-L06-fc-rxsensitivity', front: 'What is Rx sensitivity?', back: 'Receiver minimum detectable power -- the dimmest signal the receiver can still decode reliably, measured in dBm (a negative number). Typical: -20 to -35 dBm. The link must deliver at least this much power after all cable plant losses.' },
+            { id: 'T02-L06-fc-headroom', front: 'What is optical headroom?', back: 'Budget minus total loss -- how much margin remains after accounting for all fiber, connector, splice, and safety margin losses. Positive headroom = link passes. Negative = fails and needs redesign. Above 6-8 dB is considered comfortable; above 15 dB is typically over-designed.' },
+            { id: 'T02-L06-fc-safetymargin', front: 'Why does a link budget include a safety margin?', back: 'A flat reserve (typically 3 dB) that is never allocated to components. It covers fiber aging, connector wear, splice case thermal cycling, and future re-splices over the link\'s 20-30 year design life. On RUS-financed projects, removing it to squeeze in more distance is a deferred failure.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

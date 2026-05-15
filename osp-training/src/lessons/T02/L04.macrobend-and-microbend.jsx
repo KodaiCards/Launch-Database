@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L04',
@@ -15,6 +16,14 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T02.L01'],
   vocabulary_introduced: ['macrobend', 'microbend', 'bend radius', 'mandrel test', 'G.657', 'bend-insensitive fiber'],
+  key_terms: [
+    { term: 'macrobend', definition: 'Loss from a bend you can see with your eyes — a loop or kink in the fiber. A fiber coiled too tightly around a post, a kink behind a patch panel, a loop sitting on a sharp corner in a handhole. The bend radius is measurable in centimeters. Detectable as a discrete loss event on an OTDR trace.' },
+    { term: 'microbend', definition: 'Loss from microscopic deformations you cannot see — usually sub-millimeter irregularities from improper installation, excessive cable tension, or poor buffer tube support. Shows up as elevated background attenuation on an OTDR trace rather than a discrete event.' },
+    { term: 'bend radius', definition: 'The minimum radius of curvature a fiber cable can follow before the geometry breaks down enough to cause meaningful signal loss. Determined by the cable manufacturer\'s installation guide. Common rules of thumb: 20× cable OD while pulling (dynamic), 10× cable OD after installation (static).' },
+    { term: 'mandrel test', definition: 'The standard qualification test for macrobend performance — wrapping fiber around a cylinder (mandrel) of specified diameter for a specified number of turns, then measuring added loss. Used to compare G.652.D and G.657 fiber bend tolerance.' },
+    { term: 'G.657', definition: 'ITU-T standard defining bend-insensitive single-mode fiber. Uses a trench or ring in the cladding index profile to better confine the mode field and resist macrobend loss. G.657.A1 is compatible with G.652.D for splicing; G.657.B2/B3 may have MFD mismatch issues.' },
+    { term: 'bend-insensitive fiber', definition: 'Fiber designed to resist macrobend loss at tighter bend radii than standard G.652.D SMF. Defined by ITU-T G.657. Common in FTTH drop cables that go around corners, through staples, and into tight entry conduits.' },
+  ],
   vocabulary_assumed: [
     { term: 'total internal reflection', source_lesson_id: 'T02.L01' },
     { term: 'critical angle', source_lesson_id: 'T02.L01' },
@@ -63,6 +72,7 @@ export default function T02L04_MacrobendAndMicrobend() {
         </p>
 
         <h3 className="mt-5 font-semibold">The clothesline analogy for bend radius</h3>
+
         <p className="mt-2">
           Think about a garden hose: you can bend it gently in a wide arc and water flows
           fine. But kink it sharply and the hose collapses — water flow stops. Fiber is
@@ -71,6 +81,19 @@ export default function T02L04_MacrobendAndMicrobend() {
           Below that radius, loss climbs rapidly. Unlike the hose, there's no audible
           "snap" to warn you — the fiber looks intact but the signal is being lost.
         </p>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L04"
+          cards={[
+            { id: 'T02-L04-fc-macrobend', front: 'What is macrobend loss?', back: 'Loss from a bend you can see with your eyes — a loop or kink in the fiber. Common causes: tight coils in a handhole, fiber pinched behind a patch panel, loops on sharp corners. The bend radius is measurable in centimeters. Shows as a discrete loss event on an OTDR trace.' },
+            { id: 'T02-L04-fc-microbend', front: 'What is microbend loss?', back: 'Loss from microscopic deformations you cannot see — usually sub-millimeter irregularities from improper installation, excessive cable tension, or poor buffer tube support. Shows up as elevated background attenuation across a section of OTDR trace, not a discrete event.' },
+            { id: 'T02-L04-fc-bendradius', front: 'What is the minimum bend radius for fiber cable?', back: 'The tightest arc the cable can follow before causing meaningful signal loss. Common rules of thumb: 20x cable outer diameter while pulling (dynamic), 10x cable OD after installation (static). Always verify against the specific cable manufacturer\'s installation guide.' },
+            { id: 'T02-L04-fc-mandrel', front: 'What is the mandrel test for fiber?', back: 'The standard qualification test for macrobend performance -- wrapping fiber around a cylinder (mandrel) of specified diameter for a specified number of turns, then measuring added loss. G.652.D: 100 turns at 30 mm radius, max <= 0.5 dB added loss @ 1625 nm.' },
+            { id: 'T02-L04-fc-g657', front: 'What is ITU-T G.657?', back: 'The standard for bend-insensitive single-mode fiber. Uses a trench or ring in the cladding index profile to better confine the mode field and resist macrobend loss. G.657.A1 is backward-compatible with G.652.D for splicing. Common in FTTH drop cables.' },
+            { id: 'T02-L04-fc-bif', front: 'What is bend-insensitive fiber?', back: 'Fiber designed to resist macrobend loss at tighter bend radii than standard G.652.D SMF (per ITU-T G.657). Common in FTTH drop cables that go around corners, through staples, and into tight entry conduits. Does NOT mean abuse-proof -- mechanical bend limits still apply.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

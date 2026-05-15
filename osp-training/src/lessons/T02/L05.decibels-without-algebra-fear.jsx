@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T02.L05',
@@ -14,6 +15,13 @@ export const meta = {
   lesson_type: 'foundation',
   prerequisites: ['T02.L02'],
   vocabulary_introduced: ['dB', 'dBm', 'logarithm', 'loss budget', 'optical power'],
+  key_terms: [
+    { term: 'dB', definition: 'Decibel — the unit used to measure optical power loss in fiber optics. Losses add in dB instead of multiplying as fractions. Key facts: 3 dB = half the power, 10 dB = one-tenth the power, 20 dB = one-hundredth the power.' },
+    { term: 'dBm', definition: 'Decibels referenced to 1 milliwatt — an absolute power level. 0 dBm = 1 mW exactly. Positive dBm = more than 1 mW (typical transmitter range). Negative dBm = less than 1 mW (typical receiver sensitivity: -20 to -35 dBm). Formula: dBm = 10 x log10(P_mW / 1 mW).' },
+    { term: 'logarithm', definition: 'A mathematical function that converts multiplication into addition. The log base 10 of a number answers: "10 to what power equals this number?" In fiber optics, logarithms are the reason dB losses can simply be added together rather than multiplied as power fractions.' },
+    { term: 'loss budget', definition: 'The total dB of loss a fiber link can absorb while still delivering enough signal to the receiver. Calculated as: Tx power (dBm) minus Rx sensitivity (dBm). The link passes if total losses (fiber + splices + connectors + margin) are less than the loss budget.' },
+    { term: 'optical power', definition: 'The amount of light energy in a fiber optic signal, measured in milliwatts (mW) or decibels-milliwatt (dBm). Transmitters output power in the range of -5 to +10 dBm; receivers need a minimum power level (sensitivity) typically in the -20 to -35 dBm range to decode the signal.' },
+  ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'dB/km', source_lesson_id: 'T02.L02' },
@@ -93,6 +101,18 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
           minimum dBm level to work (the "sensitivity"). The difference is the optical budget
           you have to "spend" on fiber, splice, and connector losses.
         </p>
+
+        {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        <Flashcard
+          deckId="T02-L05"
+          cards={[
+            { id: 'T02-L05-fc-db', front: 'What is a decibel (dB) in fiber optics?', back: 'The unit used to measure optical power loss. Key facts: 3 dB = half the power lost, 10 dB = one-tenth the power remains, 20 dB = one-hundredth remains. dB losses add together instead of multiplying fractions -- that\'s why they exist.' },
+            { id: 'T02-L05-fc-dbm', front: 'What is dBm?', back: 'Decibels referenced to 1 milliwatt -- an absolute power level. 0 dBm = 1 mW exactly. Positive dBm = more than 1 mW (typical transmitter range). Negative dBm = less than 1 mW (typical receiver sensitivity: -20 to -35 dBm). Formula: dBm = 10 x log10(P_mW / 1 mW).' },
+            { id: 'T02-L05-fc-log', front: 'Why are logarithms used in fiber optics?', back: 'Logarithms convert multiplication into addition. Without dB, you would have to multiply all the fractional power losses together (0.95 x 0.97 x 0.89 x ...). With dB, you just add the losses: 0.22 + 0.13 + 0.50 + ... That\'s why engineers created the dB scale for cascaded network analysis.' },
+            { id: 'T02-L05-fc-lossbudget', front: 'What is a loss budget (optical budget)?', back: 'The total dB of loss a fiber link can absorb while still delivering enough signal to the receiver. Calculated as: Tx power (dBm) minus Rx sensitivity (dBm). The link passes if total losses are less than this budget.' },
+            { id: 'T02-L05-fc-optpower', front: 'What is optical power in a fiber link?', back: 'The amount of light energy in a fiber optic signal, measured in milliwatts (mW) or dBm. Transmitters output power typically in the -5 to +10 dBm range; receivers need a minimum power level (sensitivity) typically in the -20 to -35 dBm range.' },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
