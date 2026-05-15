@@ -1095,7 +1095,7 @@ Small carryovers that aren't worth a dedicated wave but MUST NOT be forgotten. C
 
 | # | Item | Source | Status | Notes |
 |---|---|---|---|---|
-| P1 | T03 L11 bend-radius wording mismatch (body 10–20× / 10–15× vs quiz 20× / 10×) | T03 post-patch RT `035b829` | ⌛ queued | Pick a single set of numbers + harmonize body + quiz. Likely use 20× install / 10× long-term to match quiz simplicity; update body. |
+| P1 | T03 L11 bend-radius wording mismatch (body 10–20× / 10–15× vs quiz 20× / 10×) | T03 post-patch RT `035b829` | ✓ done `318356d` | Body harmonized to 20×/10× with single aside re ranges in other references. |
 | P2 | T05 brief GPON splitter author note | T05 brief fix `674322d` | ⌛ flagged | Brief tells author "state the range 17–17.5 dB in lesson prose"; ensure T05 lesson author honors when authoring. |
 | P3 | T02 L11 TIA-526 edition hardcoded | Old T4 RT-B finding (pre-rewrite) | 🔒 needs user input | Carter must lock TIA-526 edition before fix; `[confirm edition]` marker on the existing reference. |
 
@@ -1136,7 +1136,7 @@ Small carryovers that aren't worth a dedicated wave but MUST NOT be forgotten. C
 
 ### Side-channel triage queue (parallel, low-priority while OSP-RW runs)
 
-- **Audit `claude/add-audit-log-hours-x0XCd`** — 10 commits ahead of main. Real work: shared overlay helper, tree-toggle factory, AI 503 handling, `userWantsAction` unit tests, `SESSION_HANDOFF.md`, schema-shape smoke test. Decide: merge (probably yes — sounds like solid fix-work) or scrap. Read-only audit agent reads `SESSION_HANDOFF.md` + diff vs main.
+- **`claude/add-audit-log-hours-x0XCd` audited → SCRAP** (`a61584a`). Main is a strict functional superset; every feature claimed (overlay helper, tree-toggle factory, AI 503 handling, userWantsAction tests, schema-shape test) is already on main. Branches share no common ancestor (main replaced index.html with admin.html, schema.sql format diverged). Safe to delete remote branch when convenient.
 - **Audit `claude/scale-pass-sse-cte`** — 3 commits: SSE memory leak fix, recursive-CTE depth guard, poll heartbeat tune. Read-only audit; if clean, merge.
 - **Audit `claude/splice-matrix-railway-setup-IIG3Q`** — uncharacterized. Read-only audit.
 
