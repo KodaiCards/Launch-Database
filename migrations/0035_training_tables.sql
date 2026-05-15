@@ -12,6 +12,10 @@
 --     need function calls use separate CREATE UNIQUE INDEX (Migration 0032 lesson).
 --   * No %% in RAISE NOTICE strings — use single % (Migration 0023 lesson).
 --   * Multi-statement migration wrapped in BEGIN / COMMIT.
+--   * FK constraints here use inline REFERENCES syntax inside CREATE TABLE.
+--     pg_dump normalises these to ALTER TABLE ... ADD CONSTRAINT form in
+--     schema.sql. The two representations are semantically identical; the
+--     schema:sync CI diff checks structural equivalence, not text identity.
 
 BEGIN;
 
