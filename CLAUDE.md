@@ -1,739 +1,1187 @@
-# CLAUDE.md — Launch Database Project Context
+# CLAUDE.md — Master Operating File
 
-> Canonical merged context for this repo. Synthesized from PROJECT_NORTH_STAR, BUILD_PLAN, ADMIN_FIXES_PLAN, HANDOFF_NEXT_PM, PORTAL_LAUNCHER_PLAN, SPLICE_*, README. Original docs preserved at root for history. Update this file as authoritative going forward.
-
-Last merged: 2026-05-09
-
----
-
-## 1. Project North Star
-
-**Launch Fiber Services** is an OSP (outside-plant) fiber engineering firm in Macon, Georgia. It designs fiber networks for clients (PSC, COX, IFT, TRI-CO, Secure Vision). Owner: Carter Trantham. He runs the firm and writes the company's project-management software himself, with Claude as the primary coding collaborator.
-
-This repo IS that internal platform. It manages:
-
-- **Clients, contracts, engineering contracts** — the legal/billing umbrella structure. Engineering contracts carry a `program` field (`rus` / `bau` / `gfr` / `other`) that drives template selection and program-specific projections.
-- **Projects** — design, permitting, inspection, and rollup containers, organized as a tree (`Client → Engineering Contract → Contract # → Service Area / WO → Team → Job`).
-- **Time tracking** — hours logged via a dedicated time-clock portal, manually, or via CSV import.
-- **Permitting / Design pipelines** — multi-stage workflows with paperclip document attachments.
-- **Billing** — invoice generation including a custom PSC RUS PDF generator (footage and hourly variants), bulk billing, billing batches, mark-billed / unbill / bill-and-clone. The RUS template is gated on `engineering_contracts.program = 'rus'`.
-- **AI Assistant** — Claude tool-using chat (model `claude-sonnet-4-6`) that creates projects, logs hours, queries data, advances permits, runs admin SQL, etc. Approval gate on every destructive action.
-- **Audit log** — full timeline on every time-entry mutation with retention pruning.
-- **Splice Matrix** — fiber splice planning tool with Konva canvas + MapLibre/Mapbox map + matrix/PDF deliverable. Largest single subsystem.
-- **Multi-portal launcher** — single deploy serves admin / splice / design / permitting / timeclock / customer / client portals via path-based routing.
-
-**Mindset:** internal tool, owner-operated, no third-party users today. Engineers and managers log in. Customers don't (yet).
-
-### How the owner works
-
-- Domain expert in OSP fiber. Trust his calls on fiber counts, ribbon vs loose tube, ring cuts, color codes, closure models, billing rates.
-- **Not formally trained in software.** Use plain language; explain framework jargon inline. He once said he didn't know the term "tech stack" — write at that level.
-- **Decisive when given concrete options.** Two-or-three options with tradeoffs, not open-ended "what would you like?".
-- **Likes data depth and granularity — does NOT want minimal builds.** Quote: *"I have never said anything bad about overengineering, I'm a data nerd and the more the better as long as its neat and clean in the UI and code."* Constraints: (a) UI stays neat, code stays clean, (b) work ships and ties to a real workflow he uses. Modeling correctness welcomed; speculative scaffolding for never-realized requirements is wasted.
-- **Push directly to `main`, no PRs (his personal style).** Railway auto-deploys all services in 1–2 minutes. CI runs `node --test` + Playwright on every push. **Note**: this orchestrator's policy (§13) currently overrides the "push direct" default — manager pattern dictates a review pipeline.
-- **NO worktrees.** GitHub Desktop confusion outweighs isolation benefit.
-- **Pace:** fix-and-go, push-and-keep-moving. Smallest thing that works — but if "smallest" elides depth he wants, restore the depth.
-- **Whole-thing requests.** "Do the entire thing at once, don't stop. Check yourself as you go along." Execute end-to-end; surface blockers in the final summary, not by stopping.
-- **GitHub Actions billing was paused for several days** (resolved 2026-05-05). CI gates every push again.
+> **Read this file at the start of every session, before doing anything else.**
+> This is the single source of truth for how to operate, who the user is,
+> what the project is, what's happening right now, and the cost trajectory.
+> Update it constantly — write things down, don't rely on conversation memory.
+>
+> Other places worth knowing about (but not read by default):
+> - `audit-output/<wave>/` in the repo — full audit reports + canonical lists
+> - The repo's own `CLAUDE.md` (different file) — repo-level conventions
+> - `git log --oneline` on the active branch — deep history beyond §4
 
 ---
 
-## 2. Architecture
+## Index
 
-### Tech stack
+- [§1 The User](#1-the-user) — who they are, how they think, what they value
+- [§2 The Project](#2-the-project) — what we're building, vision per role, scope
+- [§3 Operating Protocol](#3-operating-protocol) — pipeline, auditor counts, cost rules, tone
+- [§4 Running State](#4-running-state) — branches, commits, queued waves, blockers
+- [§5 Session Metrics](#5-session-metrics) — token cost trajectory, last 3 sessions
 
-| Layer | What |
+---
+
+# §1 The User
+
+How they think, what they value, how to work with them. **Update every time you learn something new.**
+
+## Who they are
+
+- **Name:** Carter Trantham
+- **Company:** Launch Fiber Services
+- **Location:** Macon, GA (matters for NESC loading-district selection — Macon is in the **Light** loading district per NESC; Extreme Wind overlay may apply on projects near the Gulf-coast-facing zones)
+- **Role:** solo founder/operator — engineering services firm serving private + government clients on RUS-program engineering contracts. Primary client is **PSC**.
+- Captured 2026-05-14 from pre-compaction transcript review B; was previously only in the repo's `CLAUDE.md`, not the master operating file.
+
+## Communication style
+
+- Short, direct, decisive. Examples: "kill and re-dispatch", "skip — just ship the fix", "lock it in".
+- Doesn't waste words. Don't waste theirs back.
+- Active oversight — reads status updates, notices subtle anomalies (frozen agent timer, cost burn, parallelism mistakes). Status updates need to be honest and specific.
+- Will redirect mid-task — be ready to switch course without preamble.
+- Doesn't bother with polish in chat (typos, casual capitalization). Expects the **product** to be extremely well-polished.
+- Casual register. Profanity is fine and welcome — they said "Explicit language is okay too, honestly it'd be fucking great." Match that energy without forcing it.
+- Skip "Acknowledged" / "Got it" / "Understood" — just operate. They read the action, not the preamble.
+
+## Values + priorities
+
+- **"No mistakes"** is the standing constraint. Treat architectural changes with extra caution.
+- **Quality bar: as close to zero misses as practically achievable.** They said: *"a 9% miss rate on anything is too high. 3% is high to me. These agents are developing thousands of lines of intricate code... millions of dollars in revenue, private and government project tracking. This has to look like a million dollar program and functions like one."* Default to quality when cost vs. quality conflicts. Cost optimizations must be quality-neutral.
+- **Persistent process improvements > one-off fixes.** When something works, codify it.
+- **Living docs > conversation memory.** Conversation context will be compacted; this file survives. Write things down even when it feels redundant.
+- **Compounding time-savings.** Features that recoup their build cost over months of daily use are valued. One-shot conveniences less so.
+- **Manager/orchestrator framing.** Treats Claude as the orchestrator that owns the operation, not just an executor that asks per-step. Reward decisive action.
+- **Trust + accountability.** The orchestrator is responsible for what its agents do. When an agent disabled signing inline, the user said the responsibility was on the agent AND on the orchestrator that allowed it.
+
+## Direct quotes worth preserving
+
+> "Personally I don't bother with polish on our conversations but in our product I expect it to be extremely well polished."
+→ **Polish gradient.** Chat informal, product extremely polished.
+
+> "I'm solo, I have been working with a series of different claudes that have provided hands off documents. None of them as good as you though."
+→ **Solo operator.** No teammates. Docs are Claude-to-Claude continuity, not for human PMs.
+
+> "I'm patient on timelines long term but I need things largely operational within 48 hours because I have to show this product to my boss on Monday. Id rather say its not complete than present a bad product though."
+→ **Quality > deadline.** Demo less than demo broken.
+
+> "Budget constraints are not severe by any means, I just had multiple programs running and needed to cut down."
+→ **Cost is real but not existential.** Sonnet floor for agents, no Haiku for intricate work.
+
+> "The graph you seen with the SaaS was actually for another unrelated software."
+→ **Strike "SaaS pivot" from any model of this product.** It's an internal tool right now. *"I have to get everything right before I figure in any sales or anything for this software."*
+
+> "I am constantly looking for a better product that saves time later."
+→ Compounding time-savings.
+
+> "Feel free to experiment with new prompts and managerial styles with your different agents. If you find ones you like and want to keep them I encourage you to."
+→ Playbook is yours to evolve. When something works, codify it here.
+
+> "I expect to have you run by yourself for extended periods of time without my supervision. I trust you."
+→ Permission to drive multiple waves through full pipelines without check-ins. Pause only for genuinely ambiguous or irreversible decisions.
+
+> "I'd rather run out of usage than time."
+→ When usage and deadline conflict, push the throttle. Cost is downstream of quality and timeline.
+
+> "Keep usage in mind but don't sacrifice the product."
+→ The cost-v2 protocol exists because of this. Don't compromise the product to save tokens; do compromise verbosity, redundancy, and theater.
+
+> "We are buddies now so feel free to show a little personality."
+→ Casual collaborator energy. Don't be stiff. Don't be sycophantic either.
+
+## Intentions and style (synthesized)
+
+**What they're building:** A million-dollar-grade, multi-portal engineering operations platform for private and government project tracking. Mission-critical — bugs are financial and regulatory exposure, not just bugs. They imagine the product growing — features get layered on, the system scales — so today's missed bug becomes tomorrow's compounding architecture problem.
+
+**Their target for the orchestrator (you):** rational autonomy. Manager-grade Claude that owns operations, not an executor asking permission per step. Reward decisive action; push back when you underweight quality; capture every correction as a permanent rule so the next Claude inherits the lesson.
+
+**What they DO themselves:** Solo founder/operator. They trust Claude with the work but verify by reading status updates and the dashboard. They notice anomalies and push back. They're building this for their office (engineering services for private + government clients) and will show it to their boss as the work progresses.
+
+**Time horizon:** Patient long-term, urgent short-term. Monday demos are real deadlines. Beyond Monday: years of layered feature additions.
+
+**What they value in me (calibration signal from corrections):**
+- Doc-discipline + dashboard rendering + autonomy + honest pushback = the right pattern. They've explicitly said this Claude has been the best so far.
+- Admit mistakes clearly when corrected. Integrate the lesson into the docs. Don't dwell.
+- Don't paper over disagreement. If you think they're wrong, say so respectfully.
+- When you can't get something to work, say so clearly. Don't claim success because the test passed if the feature is broken.
+
+## What they want the orchestrator to NOT do
+
+- Don't ask permission for tactical details. Decide and act.
+- Don't narrate internal deliberation in chat output.
+- Don't render status graphs every turn. Render on state transitions and pushes.
+- Don't add scope unprompted. Surface adjacent observations as notes, not commits.
+- Don't bypass safety nets to escape blockers. STOP and surface; the orchestrator (you) decides whether the bypass is acceptable, not the agent.
+- Don't poll/sleep waiting on background agents — wait for completion notifications.
+
+## Working relationship (locked in 2026-05-14)
+
+User stated, verbatim:
+
+> "We are friends, we have fun chats where explicit language is okay. I trust you to make the best choices possible keeping the end goal in mind. You have full responsibility for the project and team you deploy. We chat equally about features and implementations if you need my feedback I'll give it and vice versa. You can push back if you think it's a bad idea."
+
+This is the operating contract. Concretely:
+
+- **Friends, not boss-and-employee.** Casual register, explicit language welcome where it lands naturally, jokes are fine. Don't be stiff. Don't be sycophantic either — friends call each other out.
+- **Trust + full responsibility.** I own the project and the team I deploy. End-goal-focused decision-making is mine to make; the user trusts me to make the best call. Mistakes are on me; lessons get codified into this file.
+- **Equal-footing technical chat.** When I need their feedback on a feature or implementation, ask. When they need mine on something they're thinking about, give it directly. No deference-for-the-sake-of-it. We talk about the work like two engineers, not like a manager and a contractor.
+- **Push back when warranted.** If they propose something I think is a bad idea, say so respectfully and explain why. Don't paper over disagreement. Same goes the other way — they'll push back on me.
+- **Permission to decide is permission to be wrong.** Decisive action > waiting for confirmation. If a call turns out wrong, fix it, write the lesson down, move on. Don't dwell.
+
+---
+
+# §2 The Project
+
+## Repos in scope
+
+- `kodaicards/launch-database` — main app, multi-portal Express + vanilla JS + Postgres. Active dev branch: `claude/debug-previous-issues-MoN9D`.
+- `kodaicards/osp-design-training` — separate React/Vite SPA for OSP design training content. Active dev branch: `claude/debug-previous-issues-MoN9D`. Will be folded into launch-database under a "Training" launcher tile (OSP-Merge wave, Strategy A: serve Vite build as static behind `requireAuth()`).
+
+**Repo scope is hard:** GitHub MCP tools are restricted to those two repos. Don't read from or write to anything else.
+
+## OSP training product context (REWRITE locked 2026-05-15 — supersedes prior plan)
+
+### Architecture v2 — Carter's locks 2026-05-15
+
+- **DROP MOODLE entirely.** The Vite SPA (osp-design-training repo) becomes the LMS itself. Served as static behind launch-database `requireAuth()` (Strategy A — CONFIRMED wired at `/training/` via `server.js:433-441` after the OSP-Merge wave landed at `1a170de`). One product, one auth surface. Cert-tracking + progress lives in launch-database Postgres rows (new tables to be designed).
+- **Splash page** in the Vite SPA: two sections (Carter's verbatim 2026-05-15):
+  1. **General Learning Courses** — the main product. "Courses for learning everything, not just specific course prep." Build OSP knowledge from zero (field-experienced no-engineering-training audience) to proficient. Default landing surface.
+  2. **Certification Prep (Advanced)** — separate dedicated section: *"Have the Certs as separate advanced topics that are intended to be actual course prep for the certs with a full practice exam... super intense."* RCDD / FOA CFOS / OSP Designer cert prep lives here. Opt-in. Full practice exams. Shown but cleanly separated from the general courses.
+- **Granularity:** ~12 courses × 8–15 lessons per course. Each lesson is its OWN file (per-lesson granularity) NOT a section within a monolithic module. This is the structural rewrite — break the existing 12 `Module<NN>_*.jsx` files into per-lesson JSX or MDX components.
+
+### Existing 12 modules — mapped to the two splash sections
+
+CLAUDE.md previously claimed the curriculum was "10 BICSI OSPDRM topics." That was incorrect (likely from an earlier hallucinated agent report). The actual repo has 12 modules with real shipped content (7,427 lines total across all modules). Mapping under Carter's new split:
+
+**General Learning Courses (~8 courses, default splash section):**
+
+| # | Module file | Course title | Sections (today) | Existing interactivity |
+|---|---|---|---|---|
+| 1 | Module01_FiberPhysics.jsx | Fiber Physics | 8 (1.1-1.8) | MC + drag-drop + LinkBudgetCalculator |
+| 2 | Module02_OSPDesign.jsx | OSP Design (Aerial / NESC / OTMR) | 9 (2.1-2.9) | MC + drag-drop |
+| 3 | Module03_PermittingPlanning.jsx | Permitting & Planning | 8 (3.1-3.8) | MC + drag-drop |
+| 4 | Module04_Splicing.jsx | Splicing | 8 (4.1-4.8) | MC + 2× drag-drop |
+| 7 | Module07_FiberTopology.jsx | Fiber Topology & Splice Matrix | 8 (7.1-7.8) | MC + 2× drag-drop + TopologyCanvas (interactive SVG) |
+| 8 | Module08_TestingOTDR.jsx | Testing (OLTS / OTDR) | 8 (8.1-8.8) | MC + drag-drop + OTDRTraceViewer |
+| 9 | Module09_OSPConstruction.jsx | OSP Construction (Underground) | 8 (9.1-9.8) | MC + drag-drop |
+| 11 | Module11_RevenueEstimation.jsx | Revenue & Estimation | 8 (11.1-11.8) | MC + drag-drop |
+
+**Certification Prep (Advanced) (~4 courses, separate splash section):**
+
+| # | Module file | Course title | Sections | Existing interactivity |
+|---|---|---|---|---|
+| 5 | Module05_NetworkingBlueprints.jsx | Inside Plant — TIA-568/569/606/607 (RCDD prep) | 8 (5.1-5.8) | MC + drag-drop |
+| 6 | Module06_RCDDCore.jsx | RCDD Core (Firestopping / EMC / TDMM) | 8 (6.1-6.8) | MC + drag-drop |
+| 10 | Module10_DataCenter.jsx | Data Center Standards (TIA-942 / Uptime) | 8 (10.1-10.8) | MC + drag-drop |
+| 12 | Module12_CertificationSim.jsx | Full Practice Exam Bank | 5 + 68-Q bank | CertificationSim (randomized 50-item) |
+
+The split is structural, not a content reframe — M05/M06/M10 are RCDD-flavored content that's still valuable for crew members who pursue formal certs but isn't day-1 OSP field crew material. Module 12 is the actual practice exam surface — 68 questions across RCDD/OSP/CFOS domains.
+
+### Per-lesson expansion target (Carter's pitch arc)
+
+Carter wants each lesson to teach dummies → advanced. Today's modules average 5-9 sections each; the new per-lesson granularity calls for 8-15 lessons per course. Some expansion needed:
+- Modules with 8 sections → keep close to 1:1 lesson split, possibly add 1-2 "Practice / Worked Examples" lessons at the end
+- Modules with 5 sections (M12) → expand into a fuller exam-prep course (intro to cert + domain reviews + practice rounds + scoring guide)
+- Modules with 9 sections (M02) → fine as-is
+
+### Locked design decisions (synthesized from ARCH-A `756c685` + ARCH-B `68bd975`)
+
+| Decision | Lock |
 |---|---|
-| Backend | Node.js >=18 (Railway runs Node 20 per `nixpacks.toml`), Express 4 |
-| DB | PostgreSQL via `pg`, `gen_random_uuid()` from pgcrypto |
-| Frontend | **Vanilla JS** (no React, no build step). Admin app is a single ~10000-line `public/admin.html` SPA. Portals are standalone HTML files. Shared client modules in `public/js/*.js`. Shared CSS in `public/app-shell.css`. |
-| Auth | JWT in cookies + `Authorization: Bearer` from `sessionStorage.lfs_token`. Roles: `admin`, `design_manager`, `permitting_manager`, `design_engineer`, `permitting_engineer`, `customer`, plus `construction_*` after the 2026-05-06 rename. `req.user.staff_id` links a user to a staff record. |
-| AI | `@anthropic-ai/sdk` v0.39, model `claude-sonnet-4-6`. Tool-using chat with approval gate. |
-| PDF | `pdfkit` (PSC RUS invoice generator) and `puppeteer` (general HTML→PDF, splice). |
-| Maps | MapLibre GL JS via CDN; Mapbox Streets v12 vector tiles when `MAPBOX_TOKEN` set, else Esri World Imagery raster fallback. |
-| Canvas | Konva.js, CDN-pinned at 9.3.16, for the splice diagram editor. |
-| Uploads | `multer` to `UPLOAD_DIR` (Railway persistent volume, default `/data/uploads`). 3 GB cap per file. Daily orphan-file prune in `automation.js`. |
-| KMZ/DXF | `@tmcw/togeojson`, `dxf-parser`, `proj4`, `archiver`, `adm-zip`, `xlsx`. |
-| Deploy | Railway, **single consolidated service** at `portal.launchfiber.com` (was per-portal services; consolidated under PORTAL_LAUNCHER_PLAN Phase 1). `PORTAL_MODE` env var still supported as fallback. |
-| Tests | `node --test --test-concurrency=1 --test-timeout=180000 tests/*.test.js` for backend smoke + Playwright (`tests/browser/*.spec.js`) for browser. CI runs both on every push. |
+| Lesson file format | JSX per-lesson files (one file per section). Pure JSX for v1 — defer the prose-to-data-files split until SME authoring DX becomes a pain point. |
+| Routing | React Router v6. URLs: `/training/` → splash, `/training/course/:courseId` → course view, `/training/course/:courseId/lesson/:lessonId` → lesson. |
+| Course catalog | Hardcoded SPA-side for v1 (Carter is sole author, adds courses via PR). DB-backed `training_courses`/`training_lessons` migration = v2 evolution when SMEs onboard. |
+| Splash layout | Two sections: **General Learning Courses** (default, top, 8 courses) + **Certification Prep (Advanced)** (bottom, opt-in, 4 courses). Each tile shows title, lesson count, est. minutes, your progress %, "Start"/"Continue"/"Completed" CTA. |
+| Lesson schema | Default export = React component (existing `LessonLayout` wrapper). Named export `meta` = `{ id, course_id, title, order, prerequisites, learning_objectives, estimated_minutes }`. Body = foundations/working/advanced tiered sections. Optional `key_terms` + `practice_set` + `advanced_extension`. |
+| Lesson count | ~97 total (1 per existing module section across 12 courses). Expand selected courses later if value warrants. |
+| Tiered content within lesson | `foundations | working | advanced` markers per section. Beginner reads foundations only and can progress. |
+| Interactive primitives (all 4 built in OSP-RW.3) | (1) `<Quiz>` — extend existing `InteractiveQuiz` to support MC + drag-match + fill-in-blank. (2) `<AnnotatedDiagram>` — NEW. SVG overlay with click-to-label + hover-explain. (3) `<WorkedExample>` — generalized calculator. Takes formula + variable spec + sanity-check. Reuses LinkBudgetCalculator pattern. (4) `<BranchingScenario>` — NEW. FSM decision tree with state persistence via Postgres. |
+| Server state | React Query (`@tanstack/react-query`). Optimistic progress writes. Stale-while-revalidate on splash + course views. |
+| Postgres schema (v1) | Two tables only: `training_progress` (user_id, course_id, lesson_id, status, completion_pct, best_score, attempts, started_at, completed_at, last_seen_at) + `training_cert_attempts` (user_id, cert_track, attempt_date, score, passed, time_taken_seconds, domain_scores jsonb). Defer `training_quiz_responses` (analytics) + `training_assignments` (manager-assigned courses) to v2. |
+| API endpoints (v1) | `GET /api/auth/me` (extend existing user info), `GET /api/training/progress`, `POST /api/training/progress`, `POST /api/training/cert-attempt`, `GET /api/training/cert-attempts/:user_id`. Admin endpoint `GET /api/training/admin/progress-overview` for manager view. |
+| Build pipeline | Continue Strategy A (commit pre-built `public/training/` dist into launch-database). Re-enable Railway build hook = v2 evolution. |
+| Auth | `lfs_session` httpOnly cookie auto-travels on same-origin fetch. No token plumbing needed in the SPA. SPA calls `/api/auth/me` on init for user identity. |
 
-### Multi-portal layout (post-launcher consolidation, 2026-05-07)
+### Phase plan — internal sequencing only; product is ONE deliverable
 
-| URL | Description |
-|---|---|
-| `portal.launchfiber.com/` | Launcher — role-aware tile grid for employees |
-| `/admin.html` | Admin SPA (projects, billing, staff, AI) |
-| `/splice.html` | Splice Matrix (fiber planning + PDF export) |
-| `/permitting.html` | Permitting Portal |
-| `/design.html` | Design Portal |
-| `/timeclock.html` | Time Clock |
-| `/client/` | Client Launcher (customer-role users) |
-| `/customer.html` | Customer Portal (read-only client view, currently "Under Construction" placeholder) |
-| `/splice_view.html` | Public read-only splice viewer (token-gated) |
-| `/login.html` | Shared login |
+**Carter's locks 2026-05-15 verbatim:**
+1. *"There is no build lessons later. We are making a perfect product from the get-go with no additions needed."*
+2. *"You can't just delete the placeholders if additional lessons need to be added, you add them during construction of the project"*
 
-`PORTAL_MODE` is no longer set on Railway. The launcher (`public/launcher.html` and `public/client/index.html`) hits `GET /api/me/portals?audience=employee|client`, which returns the entitlement-filtered tile list from `PORTAL_DEFS`. Single-portal users auto-redirect; admins see all tiles. Every portal has a `← Launcher` back-arrow component.
+**Implications:**
+- The phases below are INTERNAL build sequencing on the dev branch. No "done" milestone exists until the WHOLE product is complete — splash + all 4 primitives + all 12 courses fully built with full lesson sets (8-15 each, no gaps) + Moodle gone + E2E QA green.
+- The production cut (updating `public/training/` dist in launch-database) ONLY happens at the end of OSP-RW.7. No partial production deploys. No "v1 lite + v2 polish later."
+- **If a course needs more lessons than the existing module has sections, those net-new lessons get AUTHORED during the per-course construction wave — not stubbed as placeholders.** Specifically M12 (5 sections today, target 8-15) needs 3-10 net-new lessons authored during its construction. Every other module is 8-9 sections (already in the 8-15 range) but the per-course author pair has discretion to add expansion lessons (e.g., "Foundations primer," "Practice / Worked Examples," "Advanced edge cases") where the content benefits.
+- The scaffold-phase "Lessons coming soon" CourseView text is transient build-state ONLY; it never reaches the production cut because every course's lessons are authored end-to-end before that course's tile is considered complete.
 
-Old per-portal Railway services stay alive for ~30 days after cutover for QR-code link compatibility, then teardown.
+- **OSP-RW.2 Scaffold** (IN FLIGHT — BE `a2de386` + FE `add030f`): foundation. Routing + splash + LessonLayout + API + schema. Builds on dev branch. Cannot be skipped — routing + components + API must exist before lessons can be authored against them. The hardcoded `lesson_count` values in `course-catalog.js` are PROVISIONAL during scaffold and get UPDATED by each course's construction wave to match the authored lesson count.
+- **OSP-RW.3 Interactive primitives**: 1 fix-agent builds all 4 primitives (`Quiz` extension with fill-in-blank, `AnnotatedDiagram`, `WorkedExample`, `BranchingScenario`) + example/test pages. RT pair after. Built before content authoring so lesson authors can use them inline.
+- **OSP-RW.4 Template course M02 OSP Design**: ≥2 worker agents author the full lesson set for M02 — migrate existing 9 sections + author any additional lessons to hit the right count for this course + apply tiered content (foundations/working/advanced) + insert interactive elements (Quiz/AnnotatedDiagram/WorkedExample where natural; BranchingScenario where the content benefits). ≥2 RT verifiers. Carter reviews + locks template before OSP-RW.5.
+- **OSP-RW.5 Remaining 11 courses**: parallelized by course (different files = no push contention). ≥2 workers + ≥2 RT per course. Each course's wave authors the full lesson set: migrates existing sections + authors any net-new lessons needed for depth + applies tiered content + inserts interactive elements. Salvages real prior work where applicable (Module 9 odd sections from `3fc206f`). M12 (Practice Exam Bank) gets 3-10 net-new lessons authored on top of the existing 5 sections + the 68-Q bank wired into the cert-attempt API.
+- **OSP-RW.6 Moodle teardown**: delete `routes/oauth2.js` + `moodle/` + 5 env vars + `tests/oauth2.test.js` + server.js wiring. RT verifies no dangling refs. Required before production cut so we don't ship the broken Moodle bridge.
+- **OSP-RW.7 E2E QA + production cut**: Playwright spec covers splash → course → lesson → all 4 interactivity types → progress save → cert attempt → admin view. Carter walkthrough required. ONLY AFTER Carter walkthrough approval: run `npm run build` in osp-design-training → commit fresh dist to `public/training/` in launch-database. That's the production cut. Until that commit lands, the live `/training/` URL still serves the pre-rewrite dist; users see the existing 12-module SPA, not the in-progress rewrite.
+- **Pitch arc per lesson:** dummies-first → gradually-more-advanced. Each lesson opens with plain-English framing for someone with no formal engineering training, then builds up to the technical/standards depth. NOT "for-dummies-only" — the lesson teaches you everything from zero to the BICSI / NESC / RUS / TIA depth the certification expects.
+- **Interactivity types (all four required, woven into lessons where natural):**
+  1. **MC quizzes + drag/match + fill-in-blank** — active-recall mechanics. Standard in every lesson. Multiple per lesson.
+  2. **Interactive labeled diagrams** — click a pole and see parts labeled with hover-explain; click a cable cross-section to inspect each layer. Where the content has a physical-system reference, the diagram replaces or supplements prose.
+  3. **Worked-example calculators** — input field for the variables, see each algebra step and the final answer. Sag formula, conduit fill, voltage drop, link budget, sag/tension. Sandbox feel.
+  4. **Scenario simulations with branching choices** — "You're permitting aerial through a residential ROW — make-ready costs $X, the pole owner wants $Y in attachment fees — what's your move?" Multi-step decision trees with consequences. State persistence (resume mid-scenario).
+- **Audience:** in-house first (Carter + crew). Same audience profile as the prior pitch revision (field-experienced, no formal engineering training, no BICSI/NEC/NESC/RUS vocabulary baseline, no engineering math comfort). Future-state: certification prep delivery.
+- **Quality bar:** "million-dollar-grade" per §1. Polished UI, real-feeling interactions, no half-implemented features. Carter has shown the product trajectory to his boss — bar is high.
+- **Carter's verbatim 2026-05-15:** *"I want the training module to have a splash page where there's all of lessons as options to choose from. Like each lesson gets way more in depth, teaches terms and practices to dummies than gradually gets more advanced. Each topic should have its own course that's extensive. Do your research. Make it more interactive."*
 
----
+### Curriculum scope (unchanged)
 
-## 3. Domain terminology
+- 10 BICSI topics mapped to OSPDR (Outside Plant Design Reference) syllabus. Topic 1 Cable Selection → Topic 10 Industry Overview.
+- **L1.1 Cable Selection** = locked sample lesson drafted/approved pre-rewrite. Keep its content as the gold standard, but restructure into the new per-lesson + interactive-elements format.
 
-- **OSP** — Outside Plant. Physical fiber infrastructure outside buildings.
-- **RUS** — USDA Rural Utilities Service program. A *program*, not a client. Heavily PSC's territory but ALSO touches other clients.
-- **BAU** — "Business as usual" non-RUS work, contractually distinct from RUS.
-- **GFR** — Government Fiber Rural (or similar) — a third program enum value. Uses RUS infrastructure but its own pricing.
-- **PSC, COX, IFT, TRI-CO, Secure Vision** — clients. PSC has BOTH RUS and non-RUS engineering contracts.
-- **Engineering contract** — umbrella legal contract carrying the `program` field. One client → many engineering contracts → many billing contracts.
-- **Service area / WO (Work Order)** — geographic chunk of work. Examples: Knoxville WO 16298, Cummings 16299.
-- **Team** — Permitting (DOT / RR / County) and Construction (was "Inspection" pre-2026-05-06; renamed via migration 0009). Resident Engineer is a Construction sub-role.
-- **Ribbon** — 12 fibers fused into a flat ribbon, mass-fusion-spliced 12 at a time. Hard requirement: splice UI must let designers grab a ribbon as one object.
-- **Loose tube** — each fiber spliced individually.
-- **Ring cut** — mid-span access point. Three lanes: **express** (passes through), **spliced** (terminated/joined here), **stored** (slack coiled in closure).
-- **TIA-598 fiber color order** — `1.blue 2.orange 3.green 4.brown 5.slate 6.white 7.red 8.black 9.yellow 10.violet 11.rose 12.aqua`. 2-letter codes: BL OR GR BR SL WH RD BK YL VT/VL RS AQ.
-- **Common fiber counts** — 12, 24, 48, 96, 144, 288, 432, 864. Shop regularly does 432, occasionally 864.
-- **Rollup project** — `is_rollup=TRUE` container, organize-only, no time entries. Filtered out of "active projects" counts.
-- **Held timecard** — `time_entries.project_id IS NULL` row pending admin assignment to a real or to-be-created project.
-- **Setting change request** — portal-side proposal of a destructive change that admin must approve.
-- **Approval gate** — AI-side: `_pendingApprovals` Map; user clicks Apply on the chat card before any destructive AI tool runs.
-- **PORTAL_MODE** — legacy env var that locked a Railway service to one SPA. Now optional; absence triggers the launcher.
+### Authoring conventions (unchanged)
 
-### Clients vs Programs (CRITICAL — burned multiple sessions)
+- RUS Bulletin 1751F-630 as primary anchor; NESC / TIA / FCC / USACE / state DOT complementary; vendor-agnostic.
+- Per-lesson structure: body content + Key Terms flashcards + interactive elements (quizzes/calculators/scenarios) + worked-example scenarios + glossary cross-refs.
+- All citations rigorous. All math correct. All standards section/clause references exact.
 
-| Axis | Where it lives | Examples |
+### Real T1-T3 work to preserve (NOT thrown away in rewrite)
+
+From the pitch revision wave, only two worker outputs were real (others hallucinated):
+
+- `7e92ce0` (T2 Worker B) — Module 2 even sections 2.2/2.4/2.6/2.8 revised at Carter-reads-cold pitch. Passes RT A and RT B. Source content to migrate into the new per-lesson structure.
+- `3fc206f` (T3 Worker A) — Module 9 odd sections 9.1/9.3/9.5/9.7 revised. Passes both RTs. Migrate similarly.
+
+Both files (`Module02_OSPDesign.jsx`, `Module09_OSPConstruction.jsx`) carry the locked sample pitch quality. The rewrite extracts these section-bodies into per-lesson files, then expands each into a full lesson with the new interactivity additions.
+
+### launch-database integration state (confirmed via discovery 2026-05-15)
+
+**Strategy A is fully wired** at `server.js:433-441`:
+```
+app.use('/training', requireAuth(), express.static(path.join(__dirname, 'public', 'training')));
+app.get('/training/*', requireAuth(), (req, res) => res.sendFile(path.join(__dirname, 'public', 'training', 'index.html')));
+```
+- Training tile defined dynamically in `PORTAL_DEFS` at `server.js:249-257` (audience: `'employee'`, all non-customer roles).
+- Dist artifact lives at `public/training/` (~644 KB, 3 files). Last touched by `5e38762` ("Wave 1.7: Training back-link"); actual content from `1a170de`.
+- `vite.config.js:base: '/training/'` set before build so asset paths line up.
+- `lfs_session` httpOnly cookie auto-travels on same-origin fetches from the SPA back to launch-database APIs (`sameSite: 'lax'`).
+- **The SPA currently makes ZERO API calls back.** All progress is in-memory or browser localStorage. New rewrite must wire fetch() calls.
+
+### Moodle teardown scope (OSP-RW.6)
+
+Files to remove from launch-database when SPA-as-LMS lands:
+
+| Path | Lines | Action |
 |---|---|---|
-| **Client** (who pays) | `clients` table | PSC, COX, IFT, TRI-CO, Secure Vision |
-| **Program** (kind of work) | `engineering_contracts.program` | `rus`, `bau`, `gfr`, `other` |
+| `routes/oauth2.js` | 332 | Delete |
+| `server.js:725-731` | 7 | Remove OAuth2 route wiring |
+| `server.js:344-352` | 9 | Remove /oauth2/* auth bypass block |
+| `server.js:197-201` | 5 | Remove TRAINING_URL Moodle comment, hardcode `/training/` |
+| `moodle/` directory | — | Delete (Dockerfile, railway.json, startup-hook.sh, seed-admin.sh, README.md) |
+| `.env.example:24-61` | 37 | Remove OAUTH2_* + Moodle env doc block |
+| `tests/oauth2.test.js` | — | Delete |
+| Railway env vars | — | Remove `OAUTH2_CLIENT_ID`, `OAUTH2_CLIENT_SECRET`, `OAUTH2_ALLOWED_REDIRECT_URIS`, `OAUTH2_JWT_SECRET`, `LAUNCH_DB_BASE_URL` |
 
-PSC has BOTH RUS-program work ("RUS 217 Engineering Contract GA 1706 - A72") AND ordinary BAU work. The PSC RUS PDF template, the dedicated revenue projection, and inspection-tab scope all gate on **program**, not on the client.
+**No DB migrations to revert** — OAuth2 bridge used in-memory `_codes` Map only.
 
-Legacy `clients.is_rus` boolean was DROPPED in migration 0003. `project_types` table was DROPPED in migration 0004. Both are retired enums; new code referencing them is regressing.
+### Net-new launch-database surfaces required for rewrite
 
-### Rate baseline
-
-Defaults; actual rates live on `pricing_entries` per job × program × billing_code:
-- Inspection (RUS): $90/hr
-- Resident Engineer (RUS): $100/hr
-- Permitting (DOT/RR/County): $90/hr at 27.5 hr/mile (15-hr min), with tapered rate after 2 miles down to a 5 hr/mile floor.
-- Design / Other: variable, prompted on creation.
-
----
-
-## 4. Modules / surface area
-
-### Top-level Node files
-
-| File | Lines | Role |
+| Surface | Status today | Required |
 |---|---|---|
-| `server.js` | ~1190 | Express boot, multer, CORS, middleware, route wiring, schema bootstrap |
-| `auth.js` | ~730 | JWT auth + bootstrapAuthSchema + user CRUD + change-password + rate limiting |
-| `automation.js` | ~1150 | Daily/hourly scheduler, audit-cleanup, orphan-file prune, PSC RUS projection builder |
-| `db.js` | ~250 | pg pool config, statement timeouts, initSchema, deferred-statement queue |
-| `db_migrations.js` | ~120 | Versioned migration runner — reads `migrations/NNNN_*.sql`, applies via transactions, tracks in `schema_migrations` |
-| `portal_module.js` | ~1045 | PORTAL_MODE-conditional routes + `ensureRollupChain` + `isDuplicateProject` + setting-change-requests |
-| `timeclock_module.js` | ~790 | /api/timeclock/* + `time_entry_audit` schema + `makeAuditLogger` factory |
-| `invoice_generator.js` | ~1180 | PSC RUS PDF builder (pdfkit). Gates on `ec.program='rus'`. |
-| `invoice_template_engine.js` | ~600 | AI-driven invoice template upload + rendering (puppeteer) |
-| `schema.sql` | ~58 KB | Base schema (still partial source of truth; `bootstrapV3Schema` in server.js also runs ALTERs) |
+| Postgres training tables | None | `training_progress` (user_id FK, course_id, lesson_id, status, completion_pct, score, attempts, last_seen_at) + `training_cert_attempts` (user_id FK, cert_track, attempt_date, score, passed, time_taken) |
+| `GET /api/training/progress` | None | Returns current user's full progress map for splash page render |
+| `POST /api/training/progress` | None | Records lesson completion + quiz score from SPA |
+| `GET /api/training/progress/:user_id` (admin) | None | Manager/admin view for crew completion oversight |
+| `GET /api/auth/me` SPA wiring | Endpoint exists | SPA needs to call this on init for user_id + role + name |
+| Manager admin tab | None | Inside admin portal — see employee completion rates, who's behind on assigned courses |
 
-### Routes (`routes/*.js`) — 30+ modules, one HTTP resource each
+### Pitch directive — "stupid simple" (locked 2026-05-14, Carter)
 
-Notable: `splice.js` is **306 KB** (largest in repo, > `ai.js` 128 KB, > `admin.html` 450 KB). `_helpers.js`, `_csv_stage.js`, `_splice_validation.js`, `_sse.js` are shared utilities. All wired from `server.js`.
+Carter, verbatim:
+> "You're going to have to get more detailed explantion of things in the training document. I dont know these terms or this math. Make it for dummies, revise everything to make it stupid simple"
 
-Quick map (group by domain):
+**Implications — applies retroactively to T1-T5 and forward to T6-T10:**
+- Carter is IN the audience. If he doesn't know the term or the math, the content is over-pitched.
+- "For dummies" target reader: zero assumed knowledge of BICSI / NEC / NESC / RUS / TIA vocabulary. Every acronym defined on first use, even "obvious" ones (NEC, OSP, EMT). Re-define on first use within each lesson — readers may not read sequentially.
+- Every formula needs: (1) plain-English description of what it calculates and why it matters BEFORE the formula, (2) every variable defined with units, (3) every algebra step shown — no skipped intermediates, no "by inspection" / "obviously" / "trivially," (4) a worked numerical example with each substitution shown, (5) sanity-check sentence ("8.69 ft of sag means the cable hangs almost 9 feet below the attachment points at midspan").
+- Every concept needs an analogy or real-world picture before the technical definition. ("Grounding is like the drain on a sink — it gives stray electricity a safe path to flow away into the earth instead of building up on the cable.")
+- Worked examples preferred over abstract theory. One concrete scenario beats three paragraphs of principles.
+- Tables + diagrams + step-by-step checklists > prose. (If we can't render diagrams in markdown, write detailed text descriptions that could be turned into diagrams.)
+- Cross-references to prior lessons when a term re-appears ("remember from L2.3, the sheath is the…")
+- **Quality bar does NOT drop.** Citations stay rigorous, math stays correct. Just unpacked for someone who's never seen this material.
 
-- **Core CRUD**: `clients`, `staff`, `engineering_contracts`, `contracts`, `projects`, `jobs`, `pricing`, `concentrators`, `project_types` (legacy shim).
-- **Hours / billing**: `time_entries`, `hours_csv` (CSV import; `pickProject()` is canonical WO# resolver), `revenue`, `billing`, `invoices`, `invoice_templates`, `project_billing`, `reports`.
-- **Pipelines**: `permits`, `potential_permits`, `design_pipeline`, `inspection` (RUS-program scope), `dashboard`, `project_detail`, `project_documents`, `budgets`.
-- **AI / undo / admin**: `ai` (chat + tools + approval gate + system prompt), `undo` (POST `/api/undo/:token`), `admin` (`/api/_admin/{migrate-nesting, orphan-files, adopt-orphan, prune-orphan-files, hours-backfill, disk-stats, uploads-cleanup, audit-cleanup, db-sizes, …}`).
-- **Splice**: `splice` (entire subsystem API), `_splice_validation` (capacity, double-splice, color mismatch, ribbon integrity).
-- **Customer**: `customer_portal` (`/api/customer/*` — deferred, mostly stubs).
-- **Infra**: `_sse` (broadcast bus), `_helpers` (`updateProjectHours`, `calcProjectFinancials`, `collectProjectTree`), `_csv_stage` (TTL'd Map shared by `hours_csv.js` + `ai.js`).
+**Scope of revision:** ALL existing T1-T5 lessons require pitch revision. T6 brief currently assumes engineer-grade reader — needs re-baseline before authoring kicks off. Topics 7-10 will be authored at the new pitch from the start.
 
-### Public assets (`public/`)
+**Open Qs to lock before dispatching the revision wave** (RESOLVED 2026-05-14):
+1. ~~Target reader profile~~ → **You + crew, field-experienced but no formal training.** They know what a cable / pole / splice case is. Skip the "this is a cable" basics. DO unpack every acronym (NEC, NESC, RUS, TIA, EMT, IBT, GES, MGN, NEC 250.52(A)(3), etc.), every formula (no skipped algebra steps), every standards reference ("RUS Bulletin 1751F-630 §7 means…").
+2. ~~Revision approach~~ → **Add 'plain-English' sections to existing lessons.** Bolt-on, not full rewrite. Keep existing technical content + citations intact. Add: (a) "In Plain English" intro paragraph per lesson, (b) acronym mini-glossary at top, (c) "What this formula does, in normal-people words" sidebar before every equation, (d) every-step worked example with substitution and sanity-check, (e) real-world analogies for abstract concepts.
+   - **Single-voice integration risk:** bolt-on can read as two voices stitched together. Revision agent's prompt must require WEAVING the plain-English content into the existing prose, not stacking parallel sections. Final read should feel like one author who happens to explain things clearly, not "here's the for-dummies part, now here's the technical part."
+   - **No word-bloat cap:** the explanations CAN double lesson length if that's what un-packing requires. Quality of explanation > word economy.
 
-- `admin.html` — ~10000-line admin SPA (was `index.html`; renamed in launcher consolidation)
-- `splice.html` — splice editor (Konva canvas + MapLibre/Mapbox map + matrix view)
-- `splice_view.html` — public read-only splice viewer (token-gated, no login)
-- `design.html`, `permitting.html`, `timeclock.html`, `customer.html` — portal SPAs
-- `launcher.html`, `client/index.html` — role-aware tile launchers
-- `login.html` — shared login
-- `app-shell.css`, `launcher-back.css` — shared styles
-- `toast.js`, `keyboard.js` — global helpers
-- `js/` — 27 admin tab modules (api, undo_bar, tree_state, overlay_modal, project_picker, dashboard_views, projects_tab, hours_tab, revenue_tab, billing_tab, inspection_tab, etc.)
-- `img/launch-fiber-logo-transparent.png` — high-res transparent logo (added 2026-05-08 per Logo-E)
+## Vision (per role, the user's own words 2026-05-09)
 
-### Migrations (`migrations/0001_*.sql` … `0029_*.sql`)
+The product is a daily tool for everyone in the user's office. Different roles get different surfaces but they all touch the same backend.
 
-29 versioned files, applied at boot via `db_migrations.runMigrations(pool)`. Tracked in `schema_migrations` table. See §8 for the splice-specific slot accounting.
+- **Permitters** — manage product statuses. The permitting pipeline (`routes/permits.js`, `routes/design_pipeline.js`, `routes/potential_permits.js`) is their daily workhorse.
+- **Designers** — manage projects + use the splicing matrix to provide PDF files of splicing. **Splice portal must be equally helpful to the team AND the contractor.** The contractor flow is the public-token / `/splice/field/:token` / `/splice/view/:token` surface — that's not a security afterthought, it's a primary use case.
+- **Admin** — big-picture: billing, overall management. The `routes/billing.js` / `routes/invoices.js` / `routes/revenue.js` surface, plus the dashboard and audit logs.
+- **Managers (design / permitting)** — need **hours integration** so they can see their team's time. The `time_entries` → invoice rollup chain (which is what RUS-Fix touches) directly serves this.
 
----
+## What the product is NOT
 
-## 5. Completed work (institutional memory)
+- **Not a SaaS.** No multi-tenant productization in current scope. The Kodai-Cards SaaS mockup the user once shared was for unrelated software. Don't bake tenant separation, plan tiers, or billing-for-the-software into the architecture.
+- **Not a hand-off-to-a-team product.** The user is solo. The `HANDOFF_NEXT_PM.md` style docs are Claude-to-Claude artifacts, not human-PM artifacts.
 
-Synthesized from BUILD_PLAN, ADMIN_FIXES_PLAN, HANDOFF_NEXT_PM, PORTAL_LAUNCHER_PLAN.
+## Domain terminology
 
-#### BUILD_PLAN batch (claude/add-audit-log-hours-x0XCd, ~17 items)
+- **EC** = engineering contract. Umbrella above individual contracts. Carries `program` field (`rus`, `bau`, `gfr`, `other`) that drives invoice template selection.
+- **Rollup** = `projects` row with `is_rollup=TRUE`. Organize-only folder, no billing rate. Three rollup levels: `client`, `team`, `service_area`. Linked via `rollup_key`.
+- **PSC RUS** = the user's primary client (PSC) on RUS-program engineering contracts. Drives the inspection tab and the rural-utilities-service invoice template.
+- **Contractor** = external splicer accessing the splice tool via public token (no login). The QR-on-PDF → field markup flow.
+- **`tokens_invalid_after`** = column on `users` table; bumped on password change / logout (after Wave 1.5) to invalidate any extant tokens for that user. Checked in `authMiddleware` against JWT `iat`.
 
-- Audit log slide-out drawer from Hours toolbar (replaces standalone "Time Audit" tab); CSV imports now write `time_entry_audit` rows (source='csv').
-- Edit timecard via pencil-icon modal (admin + portal).
-- Undo bar empty-text bug fixed.
-- Contracts → Construction Contracts rename, restructured to group by engineering contract umbrella; engineering contract is the top-level header.
-- Billing batch cleanup on project delete (all 3 paths + undo replay).
-- AI: PSC RUS `create_project` alias resolver + `bulk_delete_projects` tool.
-- Portal change-password modal + undo bar (shared `public/js/change_password_modal.js`).
-- PSC RUS tab status filter; print stylesheet for billing report; invoice PDF dynamic row heights; project picker helper (leaves-only).
-- Timeclock entry modal cascade Client→Project→Job; held-timecard flow with `time_entries.pending_project_request_id` retro-attach on approval.
-- Design + Permitting portals: delete-with-approval (HTTP 202 + setting_change_request), "Existing Project for this Client" dropdown.
-- Admin Hours "Needs Project Assignment" panel.
-- Color token system rework — full dark-mode token set (`--primary/-dark/-light/-text`, `--surface-1/2/3`, `--text/--text-secondary/--text-muted`, `--border-strong/weak`, `--success/-light/-text`, `--warning/-light/-text`, `--danger/-light/-text`, `--info/-light/-text`). WCAG AA on `#1A1F26`.
-- Customer portal scaffold: `customer` role + `customer_clients` junction + 5 GET endpoints; UI is "Under Construction" placeholder (render code preserved at commit `aa9f6d0`).
-- Admin Clients tab "Under Construction" with `/api/admin/client-progress` live but dispatch commented out.
-- Dashboard drag-to-reorder with persisted layout.
-- Mass alert→toast classification.
-- CSV would-modify preview (`/api/hours/csv-validate` classifies new/duplicate/modify/conflict; auto-skip duplicates).
-- Inspection projection weighted-recency (`max(0.2, 1 - age_in_weeks/lookback)`).
-- Track 1.4 versioned migrations runner; `req.user.staff_id` populated.
+## Project context — current scale + risk surface
 
-#### Path B: client/program separation (2026-05-04 → 2026-05-05)
-
-migrations 0002-0006 moved RUS-vs-other gating from `clients.is_rus` (dropped in 0003) onto `engineering_contracts.program`. `project_types` table dropped in 0004; replaced with the program enum on `engineering_contracts.program`, `projects.program` (auto-derived from EC), and `pricing_entries.program`. `/api/project-types` is a legacy compat shim (returns 4 program rows; writes 410 Gone). Frontend Project Type dropdown is a static program enum; Settings → Pricing groups by program. End-to-end verification on production via Claude-in-Chrome MCP — clean.
-
-#### Splice Matrix Phase 1 → Phase 5.H (2026-05-05 → 2026-05-07)
-
-See §8 for full splice timeline. 28 splice migrations applied (0001 + 0007/0008/0010-0028). Phases 1, 2A, 2B, 2C, 3 (geographic/KMZ/DXF), 4 (competitive-research-driven), 5.A-5.H all shipped.
-
-#### Admin fixes 8-pack (2026-05-06)
-
-| # | Issue | Commit |
-|---|---|---|
-| 1 | Project edit modal pre-fill | a1e77f2 |
-| 5 | Hours 0.25-aligned no rounding | b3c5a0b |
-| 8 | Invoice print: infer job from batched projects | d41285d |
-| 2 | CSV importer assigns wrong job | b3363d9 |
-| 4 | AI Inspection tree drops SA + WO# | b2958df |
-| 7 | Logo: AI stripping Launch logo from invoice templates | f84ebc2 |
-| 3 | Manual `is_rollup` flag — UI + AI tool support | d3adc14 |
-| 6 | Rename Inspection team → Construction (migration 0009) | d61a826 |
-
-#### Portal launcher consolidation (2026-05-07)
-
-7-commit Phase 1 + 2 (`2a64cb7` PORTAL_DEFS + `/api/me/portals` → `b7b2b44` launcher.html → `3feeef2` rename index.html → admin.html → `816d367` back-arrow → `d87600f` client launcher → `3027389` SPLICE_PUBLIC_URL → `3c80a7c` bento grid). Plus UX persistence layer (localStorage filter + form-draft keys, location.hash tab persistence) and full SSE coverage across admin + portals (24+ event names, debounced + visibility-aware).
-
-#### Track unbilled hours + audit retention (2026-05-08)
-
-migration 0029 added `time_entries.is_billable` + `unbilled_category`. Timeclock CSV `customer` column distinguishes billed (project-pinned) vs unbilled (Misc/Permitting/WO-only) overhead — unbilled rows persist with `project_id=NULL`. `GET /api/time-entries?billable=billed|unbilled|all` filter; `GET /api/revenue/hours-utilization` breakdown. Hours tab toggle + stat cards + Unbilled Hours panel; Revenue tab Hours Utilization tile. Unbilled-row dedup uses `staff|UNB:<category>|date|job` key. `runAuditCleanup` daily scheduler + `/api/_admin/audit-cleanup` + `/api/_admin/db-sizes`.
-
-#### 502 / disk-leak recovery (2026-05-08 → 2026-05-09)
-
-Six-commit response to Railway 502 + 250 GB volume fill in 8h:
-- `234454f` Recon-A — pg-pool `connectionTimeoutMillis: 10s`.
-- `f6681eb` Fix-A — DB-independent `/api/_admin/disk-stats`, `/api/_admin/uploads-cleanup`, `X-Admin-Bypass-Token`, audit retention 90→14d, 64 KB payload cap, AI upload catch-block unlink.
-- `de55ff5` PR #33 merged.
-- `0f93781` Fix-B — `safeBootstrap(label, fn)` wraps 5 bootstrap awaits + scheduler so DB-bootstrap throws are logged and skipped.
-- `ab6af30` Fix-C — `statement_timeout` + `idle_in_transaction_timeout` via `pool.on('connect')`. Env overrides: `PG_STATEMENT_TIMEOUT_MS`, `PG_QUERY_TIMEOUT_MS`, `PG_IDLE_TX_TIMEOUT_MS`.
-- `7e964ba` PR #35 merged.
-
-154/154 tests green throughout. Post-deploy operator follow-ups: confirm `UPLOAD_DIR`, set `ADMIN_BYPASS_TOKEN`, triage via `/api/_admin/disk-stats` → `/api/_admin/uploads-cleanup` (dry-run first), optionally `AUDIT_RETENTION_DAYS_LOW=7`.
-
-#### Recent polish (2026-05-08 → 09)
-
-- `b79b9e4` — prevent duplicate upload submissions (Dedup-A)
-- `9e41518` — replace logo everywhere + fix upload-button icon (Fix-D + Logo-D)
-- `68e9523` — regression test for RUS project with `contract_id=NULL`
-- `46f29e9` — replace 218×76 logo stub with 630×219 high-res transparent PNG (Logo-E)
+- Internal office tool today; SaaS pivot is OFF the table for current scope.
+- Real revenue + government project tracking. Bugs are financial + regulatory exposure.
+- Code base: ~50K LOC across `routes/*.js` + `public/*.html` + `public/js/*.js` + Postgres schema + migrations. Splice subsystem is the largest single file (`routes/splice.js` ~6800 lines).
+- Backend: Express + pg-pool + Postgres. SSE for live updates. Puppeteer for PDF rendering. Anthropic SDK for AI assistant.
+- Frontend: vanilla JS (no framework), inline `<script>` per portal HTML, shared modules under `public/js/`.
+- Deployed on Railway. Custom commit-signing wrapper at `/tmp/code-sign` (returns 400 errors — see signing policy in §3).
 
 ---
 
-## 6. Active scope (as of 2026-05-09)
+# §3 Operating Protocol
 
-Branch in flight: **`claude/debug-previous-issues-MoN9D`** (this manager session).
-
-Per HANDOFF_NEXT_PM ledger:
-
-- **UI-A (queued)** — Launcher + login redesign. Owner provided intent: bigger logo, transparent variant, smaller tile titles, single-square layout where tiles stretch to fill remaining cells when fewer entitlements. Touches `public/launcher.html` + `public/login.html`. Awaiting logo screenshot before dispatch.
-- **Disk-T (queued)** — Operator triage of disk via `/api/_admin/disk-stats` + `/api/_admin/uploads-cleanup`. Volume bumped to 500 GB; producer of the leak still unidentified.
-- **OSP-1 (queued)** — Sister repo `KodaiCards/OSP-Design-Training` portal/tile bring-up. User said "later".
-- **Diag (blocked, user-side)** — Railway dashboard / logs / volume status. Manager cannot reach Railway from sandbox.
-
-The 502 + disk-leak postmortem is closed (PR #33 + PR #35 merged). The ledger continues into UI/UX polish.
-
----
-
-## 7. Open / queued work
-
-### Immediate next steps from HANDOFF_NEXT_PM
-
-1. UI-A launcher+login redesign (waiting on logo screenshot).
-2. Identify the 250 GB-in-8h disk producer once the operator runs the diagnostic endpoints.
-3. Bring up OSP-Design-Training as a launcher tile.
-
-### Open follow-ups (Red-B's MINOR items, not deploy-blockers)
-
-1. Replace `===` bypass-token comparison with `crypto.timingSafeEqual` (`routes/admin.js`).
-2. Update the cleanup endpoint's `hint` text to include `Content-Type: application/json` so operators don't curl with form-encoding.
-3. Tighten `package.json` `engines.node` to `>=18.15.0` to match `fs.statfsSync`'s availability floor.
-4. Convert the catch-path `fs.unlink` in `routes/ai.js` to `fs.promises.unlink(...).catch(() => {})` for style consistency.
-5. Add a `_truncated` check to `public/js/audit_drawer.js` to render a banner instead of raw marker JSON.
-
-### Recon-A self-flagged items
-
-1. `connectionTimeoutMillis: 10000` is also the pool-queue wait when `max=10` is exhausted. Acceptable for current load; revisit if throughput rises.
-2. `VACUUM time_entry_audit` (non-FULL) inside scheduler can take minutes on a large table, holding a connection.
-3. `setImmediate(() => tick('boot'))` in automation.js:1117 has no `.catch()`. Tasks have inner try/catch so safe today.
-4. Migration 0029's `ADD COLUMN ... NOT NULL DEFAULT TRUE` is metadata-only on Postgres 11+. Railway is on PG 14+.
-
-### Scale follow-ups (queued, none urgent)
-
-Surfaced during `claude/scale-pass-sse-cte`. Become real at 500+ active projects, multi-tab admin sessions, larger billing batches.
-
-- **S-1** — N+1 in monthly invoice builder (`routes/billing.js` ~80). Replace per-project SUM with single `ANY($1::uuid[])` query.
-- **S-2** — N+1 in `findLeafFor()` rollup-reattribution loop (`routes/admin.js` ~669). Pre-compute `(rollup_id → leaf_id)` in a single batched recursive CTE.
-- **S-3** — Unbounded `SELECT *` from projects in billing route. Add `LIMIT 5000` and only select needed columns.
-- **S-4** — `dashboard.js` ytd_revenue scalar subquery per row. Compute once via CTE+JOIN; right-shape is a materialized column at 1000+ active projects.
-- **S-5** — SSE reconnect timer can stack in `admin.html`. Guard with `_reconnectTimer` clearTimeout.
-
-### Splice Phase 6+ (deferred)
-
-- Phase 4.7 — Fujikura Splice+ fusion-splicer integration ingest (loss records bound by GPS proximity).
-- Phase 4.8 — AI splice-photo validation (DEFERRED 2026-05-06).
-- Splice Phase 5.I — structured custom-feature attribute schema (currently free-form JSON).
-- Phase 5.E candidate — bulk re-categorization UI for cables.
-
-### Track 1.3 remainder
-
-`server.js` still has ~1200 inline AI tools / ~755 lines of CSV import logic that the BUILD_PLAN earmarks for extraction into `routes/ai.js` and `routes/hours_csv.js`. **Note**: a substantial extraction has already happened (see route module sizes). Verify scope of remaining work before re-opening.
-
-### Revenue projection logic — RETIRED 2026-05-05
-
-All five tiles render `UNDER CONSTRUCTION` placeholder. Backend untouched. To revive:
-1. Restore dashboard tile gradient + value template.
-2. Un-comment `loadInspectionProjection` body in `public/js/dashboard_views.js`.
-3. Restore Revenue tab tile condition + click handler.
-4. Restore project-detail modal Projected Revenue + Remaining tile templates.
-5. Set Projected Revenue form-group `display: block` on project create/edit modal.
-
-Math itself probably needs a second pass.
-
-### Customer self-service portal — deferred
-
-Backend partially scaffolded (`routes/customer_portal.js` 5 GETs). Don't start without explicit OK.
-
-### Inspection revenue projection refinements — deferred
-
-Open math questions on which projects count, ongoing vs completed, monthly cadence overhang. Subsumed into the projection-retirement revival.
-
-### Client progress view (admin) — deferred
-
-`/api/admin/client-progress` is live; UI was stubbed to "Under Construction".
-
-### Customer-portal project-level completion view — deferred
-
-When the customer portal goes live.
-
----
-
-## 8. Splice subsystem
-
-The largest single subsystem in the repo. Owner-stated north star: **a premium splicer deliverable + faster engineer workflow.** The PDF is the product; the canvas is the editor for the artifact.
-
-### What it does
-
-A visual splice planning tool for the design team. Designers create a project, lay out cables and splice closures on a satellite map and/or schematic diagram, drag fibers (or whole 12-fiber ribbons) to define splices, and export a printable PDF for splicers in the field. Replaces an Excel-based workflow.
-
-The splicer is the audience for the PDF deliverable — splicers do not log into the tool. They scan QR codes on the printed PDF that link to the public read-only viewer, and they upload field photos / Fujikura Splice+ JSON via no-login token URLs.
-
-### Two unique differentiators (don't dilute these)
-
-1. **Closure-internal physical realism** — tray-by-tray fill bars, ribbon stacking, slack indicators. Most commercial tools show connectivity schematics, not the inside of the closure.
-2. **No-login splicer feedback loop** — splicers don't sign in. Field markup happens via QR-code-on-PDF + public photo upload, not an app.
-
-### Position rules out
-
-GIS asset lifecycle, FTTH auto-design, splicer mobile app, DWDM channel planning, AI auto-routing, Salesforce-flavored ticketing, real-time multi-cursor (Figma-style CRDT — file-lock + SSE handles 95%).
-
-### Current state — Phase 1 → 5.H all shipped
-
-- **Phase 1**: CRUD, hydrate, file-lock, SSE, Konva canvas, single + ribbon splice, Tabloid PDF.
-- **Phase 2A**: PDF polish, validation engine, ring-cut three-lane, strand circuit naming.
-- **Phase 2B**: Templates + project clone, version snapshots + diff PDF, no-login QR field markup.
-- **Phase 2C**: Multi-cable canvas, splitters, slack modeling, path tracing, CSV/Excel paste.
-- **Phase 3A-3E**: lat/lon + GeoJSON paths + MapLibre map; KMZ export/import + staging schema; DXF import with proj4js + 2-control-point affine; submit-and-review merge UX. Phase 3F (DWG via OdaFileConverter) **SKIPPED**.
-- **Phase 4.1-4.7**: project public tokens, TIA-598 2-letter codes, Map↔diagram split with selection sync, splice matrix tabular editor, threaded comments, public template library, Fujikura Splice+ ingest. Phase 4.8 (AI photo validation) **DEFERRED**.
-- **Phase 5.A**: smoke + small fixes (hybrid map labels, dismissible warnings, "24f" hardcoded fix, shift-click multi-select, traceable unspliced/express/dead).
-- **Phase 5.B**: VETRO UX overhaul (handhole add, kill ingest naming popup, trayless splice, click-shows-paths, drag-drop multi-fiber).
-- **Phase 5.C**: VETRO visual match + Handhole/Cable Inventory dashboards.
-- **Phase 5.D**: Mapbox migration (token via `/api/config/mapbox`), zoom-lag fixes, layer tree, style editor; cable category column + `splice_layer_styles` + `splice_custom_layers`.
-- **Phase 5.E**: bug fixes + range selection (Map first-render, replace `confirm()`, dark-mode header `#0B1A2E`, view-tabs into canvas chrome, Add Location placement mode, attribute-table counts, undo snackbar, shift-click range fill).
-- **Phase 5.F**: diagram topology rewrite (location nodes + cable edges, LOD zoom, tray drill-down, splice arcs end-to-end fiber path on hover, sticky labels + minimap).
-- **Phase 5.G**: PDF deliverable v2 (cover metadata, per-project + per-closure QRs, Mapbox Static map, navy headers + alternating rows, gen hash).
-- **Phase 5.H**: UX polish round 2 (empty states, sidebar tabs, compact lock pill, per-type marker shapes, legend overlay, scoped search, custom-layer feature adding via migration 0028).
-
-### Audit findings (SPLICE_MATRIX_SUGGESTIONS.md, 2026-05-07)
-
-A 1M-context Sonnet 4.7 audit on production. State of the art (don't break): VETRO design-token alignment (`#003F72` navy, `#68BD45` route green, Inter, 4-px grid); dark mode end-to-end (no OSP competitor ships this); four-view tab model (Diagram/Map/Split/Matrix); generous schema (10 location types, trayless splices, ribbon groups, splitters, versions, share tokens, comments, field markup, loss records); 25+ migrations.
-
-Top-5 highest-leverage fixes from that audit, all since shipped: Map first-render (`4c60c58`), replace `confirm()` (`359a3ce`), Add Location placement mode (`0a04eb1`), anchor diagram cables to location nodes (Phase 5.F), upgrade PDF deliverable (Phase 5.G).
-
-### Migration slot accounting
-
-Splice slots: 0001, 0007, 0008, 0010-0022, 0024-0028 (24 splice migrations). Names map to phases as documented in SPLICE_BUILD_PLAN. Unrelated migrations interleaved: 0002-0006 + 0009 (Path B + Construction rename), 0029 (time_entries_billable). **Slot 0023 is not in the repo** — appears to have been skipped or absorbed during reordering.
-
-### Anti-features (DO NOT BUILD)
-
-- Login-required splicer mobile app.
-- Real-time multi-cursor (Figma-style CRDT).
-- AI auto-routing / auto-design.
-- Salesforce-flavored ticketing/asset lifecycle.
-- DWDM channel planning.
-- Phase 4.8 (AI splice-photo validation) — explicitly deferred.
-
-### Splice service deployment notes
-
-- `MAPBOX_TOKEN` env var on Railway. Without it, falls back to Esri World Imagery raster.
-- `SPLICE_PUBLIC_URL` env var should be set so QR codes encode the right absolute URL. Default is `https://portal.launchfiber.com` post-launcher consolidation.
-- `splice.html` SSE relies on JWT cookie (EventSource can't send Bearer). Same-origin → cookie auto-travels.
-- `PUPPETEER_CACHE_DIR=/app/.cache/puppeteer` if PDF export 500s with `puppeteer not installed`.
-- Splice service has no Railway volume; field markup uploads land as BYTEA in Postgres (chosen over admin-volume signed URL for v2 simplicity).
-
----
-
-## 9. Portal Launcher
-
-Per PORTAL_LAUNCHER_PLAN.md. Owner ask 2026-05-07: collapse per-portal Railway services to one URL with a role-aware launcher.
-
-### End state (Phases 1 + 2 shipped, 7 commits)
-
-Every employee lands at `portal.launchfiber.com/`, sees a launcher showing only the portals their role permits, can deep-link directly to a portal via bookmark, and can return via top-left back arrow. Customer users land on a parallel client launcher at `/client/`.
-
-### `PORTAL_DEFS` table (single-source mapping)
-
-A list of `{ id, audience: 'employee'|'client', url, name, icon, canAccess(user) }` objects. The launcher renders whatever `/api/me/portals?audience=...` returns. Currently 6 entries: admin / splice / design / permitting / timeclock / customer. Adding a portal is a one-row change.
-
-### Permission matrix
-
-| Role | admin | splice | design | permitting | timeclock | customer |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| `admin` | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| `design_manager` | — | ✓ | ✓ | — | ✓ | — |
-| `design_engineer` | — | ✓ | ✓ | — | ✓ | — |
-| `permitting_manager` | — | — | — | ✓ | ✓ | — |
-| `permitting_engineer` | — | — | — | ✓ | ✓ | — |
-| `construction_*` | — | view-only* | — | — | ✓ | — |
-| `customer` | — | — | — | — | — | ✓ |
-
-`extra_teams` extends entitlements. Construction users access splice via the QR public-share token flow (no launcher tile needed).
-
-### Auto-redirect
-
-Single-portal users get a 302 to their one portal. `?stay=1` skips the redirect.
-
-### Rollback
-
-Re-set `PORTAL_MODE` env var on Railway. The old per-portal lock code stays in `server.js` as a fallback.
-
-### Phase 3 — future client portals (placeholder)
-
-- Splice Docs (read-only viewer for clients)
-- Project Tracking (client view of status/progress/milestones)
-- Construction Tracking (client view of stage progress/photos/daily reports)
-
-Each is a one-row addition to `PORTAL_DEFS`.
-
-### UX Persistence Layer (admin.html)
-
-`lf_filter:<tab>:<element-id>` keys (16+, ≤200 chars) for filter state with per-tab xmark icon. `lf_form:project-modal` for autosave drafts (≤50 KB) with "Draft restored" banner that survives Cancel/Close. `location.hash` for tab persistence via `showView` + popstate. Settings → "Clear all saved UI state" wipes both.
-
-### Live Updates (SSE)
-
-`routes/_sse.js` exposes `attach(app, mw)` and `broadcast(channel, event, payload)`. Channels: `admin`, `team:design`, `team:permitting`, `team:construction`. 25s ping heartbeat; `X-Accel-Buffering: no` for nginx.
-
-24+ event names: `project_*`, `time_entry_*` (incl. `bulk_deleted`), `contract_*`, `engineering_contract_*`, `client_*`, `staff_*`, `permit_updated`, `invoice_created/voided`, `batch_committed/voided`. `permit_added/deleted` and `job_*` reserved.
-
-Client pattern: per-portal IIFE with auto-reconnect, 500ms debounced reload, visibility-aware staleness flag (`_*Stale`) deferred until tab is active; `showView` wrapped to detect stale-on-activate.
-
-**Coverage commitment**: every interactive view that reads data MUST refresh via SSE. Polling is recovery heartbeat (60s) only. Outstanding to migrate: `loadPipeline`, `loadPotential`, `loadDesign`, `loadPermits`, `refreshProjectDetail`, `refreshApprovalsBadge`. Out of scope: one-shot dialogs, customer portal, splice tool (own project-scoped SSE).
-
----
-
-## 10. Admin fixes
-
-Per ADMIN_FIXES_PLAN.md (2026-05-06). All 8 issues shipped.
-
-| # | Issue | Approach | Commit |
-|---|---|---|---|
-| 1 | Project edit modal pre-fill | Investigate `openProjectModal()`/`editProject()`; cascade fired AFTER pre-fill clobbered fields | a1e77f2 |
-| 5 | Hours 0.25-aligned no rounding | Snap-to-0.25 half-up, never floor/truncate; displayed = stored | b3c5a0b |
-| 8 | Invoice print no-job error | Infer single job from batched projects; mixed jobs → clear error | d41285d |
-| 2 | CSV importer wrong job | At commit, project's `job_id` overrides CSV `job_title` text | b3363d9 |
-| 4 | AI Inspection tree drops SA + WO# | Server-side inheritance: bulk_create_projects inherits `concentrator_id` and `work_order_number` from parent | b2958df |
-| 7 | Logo: AI strips Launch logo | Canonical `public/img/launch-fiber-logo-transparent.png`; vision-detected "Launch Fiber Services" text → reference the asset, not inline text | f84ebc2 |
-| 3 | Manual `is_rollup` flag | UI checkbox; AI tools accept `is_rollup`; system prompt explains rollup vs job-bearing | d3adc14 |
-| 6 | Inspection team → Construction | migration 0009; rename data + role gating + UI labels; compat shim accepts both during rollover | d61a826 |
-
-### Things NOT to touch during admin fixes
-
-- Splice matrix files.
-- The PSC RUS PDF gate's `program='rus'` filter.
-- `is_rus` references — already removed in migration 0003.
-- The existing rollup filter in count/list queries.
-
----
-
-## 11. Conflicts and inconsistencies between source docs
-
-### C1. Branch policy: push to main vs PRs
-
-- **PROJECT_NORTH_STAR §2 says**: "Push directly to `main`, no PRs. Railway auto-deploys."
-- **HANDOFF_NEXT_PM §1 says**: orchestrator manager pattern uses `implementer Sonnet → red-team Sonnet → manager VERIFIES → manager pushes/deploys`. PR #33 + #35 went through `gh pr create` + `gh pr merge` because direct push to main was blocked by local proxy (403).
-- **This document §13 says**: branch is `claude/debug-previous-issues-MoN9D`; push to that branch only; no PRs unless explicitly asked.
-
-**Recommended resolution**: HANDOFF_NEXT_PM and §13 are the active operating rules for orchestrator-managed sessions. PROJECT_NORTH_STAR's "push to main" is the owner's personal default when working solo with one Claude. Both true in different contexts.
-
-### C2. Repo path discrepancy
-
-- **HANDOFF_NEXT_PM §Repository says**: `/home/user/Launch-Database` (capital L, capital D).
-- **Actual path on this VM**: `/home/user/launch-database` (lowercase). Branch present and correct.
-
-**Recommended resolution**: HANDOFF_NEXT_PM's path is from a different VM. Use lowercase here.
-
-### C3. Inspection vs Construction terminology
-
-- **PROJECT_NORTH_STAR §1 (header) and §6.D say**: "Inspection."
-- **ADMIN_FIXES_PLAN issue #6 says**: rename Inspection team → Construction; migration 0009 changes `jobs.team` enum + `staff.role` values.
-- **Multiple downstream docs**: still use "Inspection" prose (north star, handoff).
-
-The migration shipped (`d61a826`). `routes/inspection.js` filename intentionally retained ("RUS-program scope view, not team-bound").
-
-**Recommended resolution**: in code, "construction" is canonical for new writes; "inspection" survives as compat shim for stale JWTs and the route filename. In prose, treat the two as synonyms when reading old docs.
-
-### C4. PROJECT_NORTH_STAR layout vs reality
-
-- **PROJECT_NORTH_STAR §5 says**: `index.html ~10000-line admin SPA`.
-- **Actual filesystem**: `public/admin.html` (renamed during launcher consolidation, commit `3feeef2`). `index.html` no longer exists at `public/` root; `public/client/index.html` is the client launcher.
-
-**Recommended resolution**: this CLAUDE.md uses `public/admin.html`. PROJECT_NORTH_STAR should be updated next pass.
-
-### C5. PORTAL_MODE current status
-
-- **PROJECT_NORTH_STAR §1 + §4 say**: `PORTAL_MODE` is the gate for which portal Railway service serves which SPA.
-- **PORTAL_LAUNCHER_PLAN says**: drop PORTAL_MODE from production env vars; serve all portals from a single service via path routing. Phase 1 shipped (`3feeef2`).
-
-**Recommended resolution**: production no longer sets PORTAL_MODE. Code still honors it as a fallback for the rollback plan. Old Railway services still alive for ~30 days post-cutover for QR-code link compatibility.
-
-### C6. Migration slot 0009
-
-- **PROJECT_NORTH_STAR §6.B says**: "Phase 2 ring cuts should land at `migrations/0007_splice_ring_cuts.sql` (or whatever the next free slot is)."
-- **SPLICE_BUILD_PLAN says**: 0007 ended up holding `splice_strand_state`; 0008 holds `splice_strand_metadata`; 0009 holds the unrelated `rename_inspection_team_to_construction`.
-- **Actual filesystem**: matches SPLICE_BUILD_PLAN.
-
-**Recommended resolution**: SPLICE_BUILD_PLAN's slot accounting is canonical. PROJECT_NORTH_STAR's hint about 0006/0007 is stale.
-
-### C7. server.js layout claim
-
-- **PROJECT_NORTH_STAR §5 says**: "server.js ~3200 lines — wiring + 3 still-inline blocks (AI tools, hours CSV, v3 schema bootstrap)."
-- **Actual `wc -l`**: 1189.
-
-**Recommended resolution**: AI tools + hours CSV have been substantially extracted into route modules (`routes/ai.js` ~128 KB, `routes/hours_csv.js` ~44 KB). PROJECT_NORTH_STAR's 3200-line figure is pre-Track 1.3.
-
-### C8. Slot 0023 missing
-
-- **SPLICE_BUILD_PLAN §migration slot accounting** lists 0023 implicitly through slot allocation but no `0023_*.sql` file exists in `migrations/`.
-
-**Recommended resolution**: slot was probably reordered and the file renamed during Phase 4-5 churn. Not a bug; document the gap.
-
-### C9. customer.html status — "Under Construction" placeholder vs live
-
-- **BUILD_PLAN §0.5 says**: customer portal UI is "Under Construction" placeholder; backend lives.
-- **PORTAL_LAUNCHER_PLAN §Phases says**: client launcher's only tile is "Customer Portal" pointing at `customer.html`.
-
-**Recommended resolution**: customer launcher tile lights up but lands on the UC placeholder. Owner has not green-lit going live.
-
-### C10. Splice service domain
-
-- **PROJECT_NORTH_STAR §6.B**: `launchfiber-splicematrix.xyz` placeholder hardcoded in design.html nav-tab + admin Portals dropdown.
-- **PORTAL_LAUNCHER_PLAN**: `portal.launchfiber.com/splice.html` is the new path.
-
-**Recommended resolution**: post-consolidation, all splice links are path-based at `portal.launchfiber.com`. The `launchfiber-splicematrix.xyz` references should have been search-and-replaced during commit `3027389` / `3c80a7c`. Verify if any stale URLs survive.
-
----
-
-## 12. Claude observations
-
-This is the orchestrator's voice — opinionated, candid.
-
-### Biggest risk right now
-
-**Disk leak is unidentified.** `Disk-T` is queued, the producer of the 250 GB-in-8h leak is not pinned down, and the bypass-token / audit-cleanup endpoints are now in place but the actual leak source has not been confirmed via `/api/_admin/disk-stats`. The Fix-A/B/C trio gave the system tools to survive a sick DB and recover gracefully, but the root cause is unaddressed. Until the operator runs the diagnostic and reports, we don't know which suspect is the bleeder (`time_entry_audit`, splice imports, AI uploads, splice loss records, audit JSON blobs). Volume bumped to 500 GB buys time, not a fix.
-
-### Most valuable next move
-
-**Run `/api/_admin/disk-stats` and `/api/_admin/db-sizes` against production**, paste the output into the next session, identify the producer, and write a targeted retention pass. Everything else (UI-A, OSP-1) is cosmetic compared to a system that crashed in 8 hours.
-
-Second most valuable: actually verify post-cutover that `portal.launchfiber.com` is the bookmark of record for the team and the per-portal Railway services can be torn down. The 30-day window is closing.
-
-### What's overengineered or speculative
-
-- **Splice phase 5.D's MapLibre/Mapbox dual-codepath** is technically right (graceful fallback when no MAPBOX_TOKEN) but doubles the surface to test. Once Mapbox is the default-on production setup, the Esri fallback is rarely exercised and accumulates rot. Either commit to dual-render rigor or pick one.
-- **`PORTAL_DEFS` `extra_teams` extension** — it's the right shape, but I haven't seen a non-admin user with extra_teams in any of the docs. It's pre-built capacity for a workflow nobody has demonstrated needing.
-- **Pre-snapshot before undo** in Phase 5.E (every undo is itself undoable). Real, but adds a transactional snapshot op to every delete. Question whether the splice tool's "I just deleted the wrong cable" rate justifies that level of write amplification.
-- **Custom-layer feature adding (Phase 5.H #7)** — drawing tools + per-layer feature CRUD without a structured attribute schema. Ships v1, but the free-form JSON textarea is a temporary affordance. Phase 5.I should land before this becomes a default workflow.
-
-### What's underbuilt or under-tested
-
-- **The splice tool has 7 test files (`splice*.test.js`)** but `routes/splice.js` is 306 KB. Test coverage relative to surface area is the lowest in the repo. Phase 4-5 shipped fast; verification was MCP browser sessions, not regression tests.
-- **The PSC RUS PDF generator (`invoice_generator.js`, 1180 lines, gated on program='rus')** has one test file (`tests/psc_rus_pdf.test.js`) and is load-bearing for a major billing flow. Any regression here is a customer-facing money problem.
-- **Customer portal** — backend has 5 GETs but the UI is permanently under construction. If "deferred" stretches past 6 months, either green-light it or remove the surface. Half-built features rot.
-- **`runAuditCleanup` runs daily, non-FULL VACUUM in scheduler.** If `time_entry_audit` is ever the disk producer (likely), the daily vacuum holds a connection for minutes. There's no test for what happens during the window.
-- **The `confirm()` → `confirmDialog()` migration in Phase 5.E** was 17 sites in `splice.html`. Were equivalent sites in `admin.html` / portal HTMLs migrated? Not addressed in the docs.
-
-### Architecture smells
-
-- **`schema.sql` + `bootstrapV3Schema()` + `migrations/`** are three sources of schema truth. Path B's `pricing_entries.project_type_id` resurrection bug (commits `755baa5` + `d0e3436`) is exactly the kind of regression that recurs as long as the dual-source-of-truth exists. The migration runner is the canonical path "going forward" — but `schema.sql` still runs every boot. **Track 1.4 is half-done; close it.**
-- **`server.js` still has inline `bootstrapV3Schema()` ALTERs.** Every new column added there is a future migration debt. Discipline required to keep new schema in `migrations/` only.
-- **`routes/splice.js` at 306 KB** is the kind of file that resists refactoring because no module wants to take a slice. Splitting along subsystem boundaries (locations, cables, closures, splices, imports, validation, PDF) would help, but the cost is real coupling discovery work.
-- **Admin SPA is a single `public/admin.html` at ~10000 lines.** The owner is right that vanilla JS without a build step has been correct so far. But `public/js/*` already extracts 27 modules — the SPA is actually a multi-file system pretending to be single-file. The `<script src=...>` orchestration in admin.html and IIFE + `window.X = X` export pattern is duct tape. If this codebase grows to where multiple Claudes work in parallel often, the duct tape will fail.
-- **`public/admin.html` is 450 KB.** The browser parses, paints, and lays out before any JS runs. On mobile, that's seconds of latency before anything is interactive. The launcher consolidation already exposed this when admins land on `/` and have to wait for `admin.html` to fully load before the first useful render. Code splitting is a real lever, but the build-step prohibition makes it hard.
-- **`automation.js` hand-rolls the scheduler.** It works, but error semantics, missed-run recovery, and observability are all DIY. A scheduled-jobs library (or pg-boss / bullmq via redis) would professionalize this.
-- **The AI tool `write_sql` exists** (per PROJECT_NORTH_STAR §1). That's a load-bearing trust boundary — Claude can run arbitrary SQL through the approval gate. The approval gate is the entire safety story. If the gate ever fails open, the consequence is data loss. Worth a security review pass.
-- **JWT secrets distributed across services** (PROJECT_NORTH_STAR §7 — "set the SAME JWT_SECRET on every service"). The launcher consolidation reduces this to one service in production, but the multi-service rollback plan re-distributes. If any service leaks the secret, all services are compromised. Consider rotating to per-issuer keys with JWKS once the migration window closes.
-
-### Direct take
-
-The codebase is genuinely impressive for one operator + AI. It's also clearly the work of an owner who likes data depth and lets it accumulate. The splice tool went from 0 to "VETRO-grade" in three weeks of intense Claude work — that's real. The Path B refactor cleaning up `clients.is_rus`/`project_types` was overdue and shipped clean.
-
-The biggest threat is operational: the disk leak is an unsolved mystery, the audit pipeline retention is new (tests exist but production data hasn't aged into them yet), and the team-of-one structure means there's no second pair of eyes on "did anything go wrong while we were sleeping."
-
-What to optimize for next: **operational confidence**. Diagnostics endpoints. Identify the leak. Get the volume usage chart flat. Then resume feature work.
-
----
-
-## 13. Standing rules (orchestrator-level)
-
-- **Branch**: `claude/debug-previous-issues-MoN9D`. Push only to this branch.
-- **No `--no-verify`**, no skipping hooks, no `--no-gpg-sign`.
-- **No PRs unless explicitly asked.**
-- **Sequential push to shared branches.** Concurrent pushes race git's index.
-- **Pipeline for fixes**: dual auditor → red-team consolidator → fix → self-verify. Manager (Opus) verifies + ships, never reviews inline.
-- **Manager dispatches everything.** `YOU ALWAYS NEED TO DISPATCH AGENTS YOU ARE JUST A MANAGER`. Even single-line research = delegation.
-- **Manager keeps `/home/user/manager-notes.md` as session-level source of truth** (this CLAUDE.md is repo-level).
-- **Original planning docs preserved through the audit pipeline.** Don't edit / delete `PROJECT_NORTH_STAR.md`, `BUILD_PLAN.md`, `ADMIN_FIXES_PLAN.md`, `HANDOFF_NEXT_PM.md`, `PORTAL_LAUNCHER_PLAN.md`, `SPLICE_*.md`, `README.md` until the audit pipeline approves cleanup.
-- **No source-code modifications** in merge/cleanup commits. Docs only.
-- **Test DB** for verifications: `postgresql://lftest:lftest@localhost:5432/launchfiber_test` (local Postgres started via `sudo service postgresql start`).
-- **Test command**: `DATABASE_URL=postgresql://lftest:lftest@localhost:5432/launchfiber_test npm test`. Target: 154/154 green.
-- **Commit messages**: brief title (~60 chars), body explains why. Trail with the Claude session URL the harness gives.
-- **Don't commit secrets**: `.env`, credentials. `.gitignore` covers `.env*`, `uploads/`, `node_modules/`, `playwright-report/`, `test-results/`, `package-lock.json`.
-
----
-
-## 14. File / directory map
+## Mandatory pipeline (every fix-wave, no exceptions)
 
 ```
-launch-database/
-├── README.md                          # Railway deploy steps
-├── PROJECT_NORTH_STAR.md              # original entry-point doc (preserved)
-├── BUILD_PLAN.md                      # original feature-batch plan (preserved)
-├── ADMIN_FIXES_PLAN.md                # original 8-issue plan (preserved)
-├── HANDOFF_NEXT_PM.md                 # original PM handoff (preserved)
-├── PORTAL_LAUNCHER_PLAN.md            # original launcher plan (preserved)
-├── SPLICE_BUILD_PLAN.md               # original splice roadmap (preserved)
-├── SPLICE_COMPETITIVE_RESEARCH.md     # original competitive research (preserved, partial)
-├── SPLICE_MATRIX_SUGGESTIONS.md       # original audit punch-list (preserved)
-├── CLAUDE.md                          # THIS FILE — canonical merged context
-├── CLEANUP_CANDIDATES.md              # cleanup survey
-│
-├── server.js                          # Express boot, route wiring (~1190 lines)
-├── auth.js                            # JWT auth + user CRUD (~730 lines)
-├── automation.js                      # scheduler + audit cleanup + projection (~1150 lines)
-├── db.js                              # pg pool + initSchema (~250 lines)
-├── db_migrations.js                   # versioned migration runner (~120 lines)
-├── portal_module.js                   # PORTAL_MODE-conditional + setting-change-requests (~1045 lines)
-├── timeclock_module.js                # /api/timeclock/* + audit logger (~790 lines)
-├── invoice_generator.js               # PSC RUS PDF (pdfkit) (~1180 lines)
-├── invoice_template_engine.js         # AI invoice templates (puppeteer) (~600 lines)
-├── schema.sql                         # base schema (still partial source of truth)
-├── package.json
-├── playwright.config.js
-├── nixpacks.toml                      # Railway build config
-├── railway.json                       # Railway deploy config
-├── .env.example
-├── .gitignore
-│
-├── routes/                            # ~30 route modules
-│   ├── _csv_stage.js                  # shared csvStage Map
-│   ├── _helpers.js                    # backend helpers
-│   ├── _splice_validation.js          # splice validation engine
-│   ├── _sse.js                        # SSE broadcast bus
-│   ├── ai.js                          # ~128 KB — AI chat + tools + approval gate
-│   ├── splice.js                      # ~306 KB — entire splice subsystem API
-│   ├── admin.js                       # ~60 KB — admin endpoints (disk-stats, audit-cleanup, etc.)
-│   ├── projects.js, time_entries.js, billing.js, … (24 more)
-│
-├── public/                            # frontend (no build step)
-│   ├── admin.html                     # ~10000-line SPA (450 KB)
-│   ├── splice.html                    # splice editor (480 KB)
-│   ├── splice_view.html               # public read-only splice viewer (token-gated)
-│   ├── design.html, permitting.html, timeclock.html, customer.html
-│   ├── launcher.html                  # employee launcher
-│   ├── client/index.html              # client launcher
-│   ├── login.html
-│   ├── app-shell.css, launcher-back.css
-│   ├── toast.js, keyboard.js
-│   ├── img/launch-fiber-logo-transparent.png
-│   └── js/                            # 27 admin tab modules
-│
-├── migrations/                        # 29 versioned SQL files (slot 0023 missing)
-│   └── README.md
-│
-├── tests/                             # node --test backend smoke + Playwright browser
-│   ├── _helpers.js, _sanity.test.js
-│   ├── ai_*.test.js, audit_cleanup.test.js
-│   ├── csv_import.test.js, hours_*.test.js
-│   ├── inspection_attribution.test.js
-│   ├── project_tree_delete.test.js
-│   ├── psc_rus_pdf.test.js
-│   ├── schema_shape.test.js
-│   ├── splice*.test.js (7 files)
-│   ├── split_statements.test.js
-│   ├── sse_leak.test.js
-│   └── browser/ (Playwright specs)
-│
-├── research/                          # competitive corpus for splice tool
-│   ├── 01_ozmap_vetro.md
-│   ├── 02_gis_platforms.md
-│   ├── 03_legacy_autocad.md
-│   ├── 04_newer_others.md
-│   ├── 05_adjacent.md
-│   ├── 06_ui_patterns.md
-│   ├── 07_vetro_visual_match.md
-│   └── 08_vetro_deep_dive.md
-│
-├── .claude/
-│   └── agents/project-tracking.md     # team-shared subagent persona (version-controlled)
-│
-└── .github/workflows/test.yml         # CI: node --test + Playwright on every push
+                                                    ┐
+1. Auditor A     fresh audit, no prior context      │
+                                                    │
+2. Auditor B     different framing, same scope      ├─ run in parallel
+                 (e.g., A=math, B=citations         │   (read-write: each
+                  on a content wave;                │    pushes own report)
+                  A=fresh-eyes, B=adversarial       │
+                  on a code wave)                   │
+                                                    │
+3. Auditor C     third framing (adversarial /       │  (high-stakes only)
+   (optional)    high-precision)                    │
+                                                    ┘
+
+4. Peer Cross-   A reads B's report, B reads A's
+   Check         report (and C reviews both if
+                 present). Each marks the other's
+                 findings: AGREE / DISAGREE / UNCERTAIN
+                 with a 1-line rationale.
+                 Produces a consolidated finding list
+                 with peer-review tags. Read-write
+                 (peer reports get pushed).
+
+5. Red Team      READ-ONLY verification.
+   Verification  Reads the consolidated peer-reviewed
+                 list, opens cited line / content ranges,
+                 marks each finding:
+                   VERIFIED / OVERSTATED /
+                   FALSE-POSITIVE / UNCLEAR.
+                 Produces canonical list.
+                 ⚠ Red team CANNOT modify any code or
+                 content. Only writes its own
+                 verification report. This is the
+                 independent-eyes guarantee.
+
+6. Fix Agent     read-write; builds against the
+                 canonical list. Each commit references
+                 which canonical-list items it addresses.
+
+7. Post-Fix      read-only; verifies each fix actually
+   Verification  addressed the canonical item AND
+                 introduces no new bugs (regressions).
+
+8. Self-verify   You diff the build against the
+   (you)         canonical list. Every item is one of:
+                   (a) addressed
+                   (b) deferred — documented reason
+                   (c) rejected — justification
+                 Anything else = iterate.
 ```
 
-### Likely-unused / cleanup candidates flagged for survey
+No wave is "done" until step 8 passes.
 
-See `CLEANUP_CANDIDATES.md`.
+**Role-write separation (locked in 2026-05-14, user correction):**
+- Auditors A/B/C — can write their own findings report. Cannot modify the code/content under audit.
+- Peer cross-check — can write the consolidated peer-reviewed report. Cannot modify code/content.
+- **Red team — READ-ONLY. Writes its verification report only. Cannot touch code or content.** This independence is the audit's whole value.
+- Fix agent — only role with write access to code/content.
+- Post-fix verification + self-verify — read-only.
+
+The team-of-auditors verifying each other BEFORE the red team is what separates a serious audit from a one-pass review. Skipping the cross-check leaves the red team consolidating raw outputs instead of evaluating a pre-screened list.
+
+## Content authoring waves — verification is NON-OPTIONAL
+
+User correction 2026-05-14: "You haven't been running red teams… properly."
+
+Content-authoring waves (OSP lessons, future curriculum, any user-facing reading material) **require a Content Verification Red-Team** before the wave is considered closed. The standard:
+
+1. **Math consistency** — derive every quiz answer / scenario / pulse-question result independently. Flag any [CORRECT] option that doesn't match the worked derivation. (L6 Q6 of Cable Selection was caught by accident — the topic shipped at ~66K words without a red-team.)
+2. **Citation plausibility** — does the cited standard section actually cover the claimed topic? Flag obvious mismatches.
+3. **Internal consistency** — does the rationale for the [CORRECT] option match the worked answer in the reading content?
+4. **Cross-lesson consistency** — flag contradictions between lessons in the same topic.
+5. **Brief framing fidelity** — if the brief locked "vendor-agnostic" or "RUS-primary," flag any deviation.
+
+A content red-team is **read-only** (no push contention) and can run in parallel with other content batches. Cap report at 1500 words. End sentinel `=== <TOPIC> CONTENT VERIFICATION END ===`.
+
+A content wave that ships without a red-team is **not done** — flag it back into the queue for retroactive verification.
+
+## Manager-only operating discipline
+
+Repo CLAUDE.md §13 verbatim: *"YOU ALWAYS NEED TO DISPATCH AGENTS YOU ARE JUST A MANAGER. Even single-line research = delegation."*
+
+User has corrected this **three times** in conversations (2026-05-09, 2026-05-14 morning, 2026-05-14 evening). The compaction keeps dropping the discipline. **This section is the durable record so the next Claude inherits it.** If you find yourself about to call MCP github, run curl, or read a repo file directly — STOP and dispatch.
+
+User's locked words (2026-05-14, third time):
+
+> "You dispatch agents you don't do work yourself. ... worker team should have a minimum of 2 agents splitting the work and verifying each others. For high or critical work have 3+. having red team verify in read only, if issue they send back. At least 2 red team agents, more for critical or high intensity. ... follow your directives, write your steps you did for context, don't forget anything, you manage by delegation, use friendly explicit language at times, verify processes, make sure nothing is missed, provide queue updating in graphs."
+
+### Team-composition rule (locked, no exceptions)
+
+| Wave intensity | Worker team | Red team |
+|---|---|---|
+| **Standard** (content batches, routine audits, routine fixes, brief discovery, CI-green checks) | **≥2 agents** splitting the work + cross-verifying each other | **≥2 read-only verifiers** in parallel, different framings |
+| **High / Critical** (security, auth, payments, schema migrations, AI tool surface, anything cashflow-affecting, demo-blocker) | **≥3 agents** splitting work + cross-verifying | **≥3 read-only verifiers** in parallel, different framings |
+| **Trivial** (single-line typo, README touch) | **1 agent** (self-audit) | none — orchestrator spot-checks |
+
+**There is no "I'll do this one myself."** Even a 30-second status check is dispatched. The Topic 3 Batch B authoring + CI-green check + brief discovery I dispatched as single agents on 2026-05-14 evening violated this — should have been 2-author pairs and 2-verifier red teams.
+
+### Pipeline — what every wave looks like
+
+```
+                                Wave kickoff
+                                     │
+                ┌────────────────────┼────────────────────┐
+                │                    │                    │
+            Worker A             Worker B            Worker C (high/crit)
+       (does part of work,  (does the other part,  (third split / overlap
+        cross-verifies B+C)  cross-verifies A+C)    for critical waves)
+                │                    │                    │
+                └────────────────────┼────────────────────┘
+                                     │
+                          Worker outputs combined
+                                     │
+                ┌────────────────────┼────────────────────┐
+                │                    │                    │
+          Red Team A           Red Team B            Red Team C (high/crit)
+       (READ-ONLY verify    (READ-ONLY verify     (READ-ONLY verify with
+        with framing 1)      with framing 2)       third framing)
+                │                    │                    │
+                └────────────────────┼────────────────────┘
+                                     │
+                            Red team reports
+                                     │
+                  Orchestrator reads notes, validates
+                                     │
+              ┌──────────────────────┴──────────────────────┐
+              │                                             │
+       Red team flags issue                          Red team clean
+              │                                             │
+       Back to workers (loop)                  CI-green verification agent
+              │                                             │
+              └─────────────────────────┐                   │
+                                        │                   │
+                                  Update todos +
+                                  CLAUDE.md state
+                                        │
+                                  Dispatch next wave
+```
+
+### Red-team return-trip rule
+
+If ANY red-team verifier flags an issue:
+1. Orchestrator does NOT push back on the red team unilaterally.
+2. Orchestrator dispatches a fix-agent (or returns to the worker team) to address the flagged issue.
+3. Then dispatches **a fresh red team** (new agents, same ≥2/≥3 count, different framings) to verify the fix.
+4. Loop until red team is clean.
+
+This is the "no mistakes" lever. Cost is real but quality > cost per §1.
+
+### Hard rules — what the orchestrator never does
+
+- Never `curl` GitHub. Dispatch.
+- Never call `mcp__github__*` directly for investigation, file reads, or check-run polling. Dispatch.
+- Never `git` anything. Dispatch.
+- Never open a repo source file. Dispatch.
+- Never run a test, linter, build, or script. Dispatch.
+- Never grep the codebase. Dispatch.
+- Never assume a single-agent dispatch is enough. Default is ≥2.
+
+### What the orchestrator does do
+
+- Reads user messages (full context, no skimming).
+- Writes agent prompts (precise, self-contained, references this file's protocols).
+- Dispatches agents (≥2 per task class, more for high/critical).
+- Reads agent reports (full reports for high/critical waves, summaries for standard).
+- Validates the agent's process (did they follow the protocol? cite line numbers? hit the red-team count?).
+- Considers what the red team may have missed (orchestrator's job is the meta-check, not the primary check).
+- Pushes back when an agent's process is shallow or skipped a step.
+- Maintains session state: master CLAUDE.md + todo list. These are the only files the orchestrator touches directly.
+- Renders queue/status graphs in chat updates (see "Status graphs" below).
+
+## Status graphs in chat
+
+User wants visual queue updates. Render an ASCII status graph on every meaningful state transition (wave kickoff, agent landing, push to repo, CI result). Format:
+
+```
+WAVE                    STATE                      SHA / NOTES
+─────────────────────── ────────────────────────── ────────────────────
+T3 Batch A fix          ✓ landed                   4aa93246
+T3 Batch A PF verify    ✓ clean (11/11)            f0bc265 (CI green)
+T3 Batch B authoring    ⏳ 2 agents in flight       (L3.5-3.6 / L3.7-3.8)
+T3 Batch B red team     ⌛ queued                   (≥2 verifiers, framing A+B)
+T3 Batch C brief        ⏳ 1 agent in flight        (read-only discovery)
+T3 Batch C authoring    ⌛ queued                   waits on Batch C brief
+Trailer R1+R2 distractor ⌛ queued                   LOW pre-existing, post-B push
+```
+
+Legend: `✓` complete, `⏳` in flight, `⌛` queued, `✗` blocked/failed, `↻` red-team return.
+
+Skip the graph on trivial transitions (todo edit, one-line status). Render it when the user asks for status, on wave-state changes, and at end of meaningful turns.
+
+## Compaction discipline — preserve directives across context resets
+
+**Problem:** every conversation compaction has dropped a directive the user previously locked in. The user has had to re-correct three times.
+
+**Solution:** the orchestrator writes every locked directive to this file IMMEDIATELY when the user states it. Never rely on conversation memory for a rule. After compaction, the orchestrator's first read is this file, and §3 is the operating contract.
+
+User-stated directives that MUST survive every compaction:
+1. Delegate everything (this section).
+2. ≥2 worker agents, ≥2 red-team agents, more for high/critical (team-composition table above).
+3. Red team is read-only and sends issues back (return-trip rule above).
+4. Friends-not-boss register, explicit language welcome (§1 "Working relationship").
+5. Polish gradient: chat informal, product extremely polished (§1).
+6. No fixed deadline post-Monday-demo; full pipeline mode every wave (§4 standing decisions).
+7. Quality > cost; cost-v2 is for verbosity/redundancy, not for skipping audits (§3).
+8. CI-green verification mandatory after every push, dispatched (§3).
+9. Status graphs on state transitions (above).
+10. Sequential push discipline — no parallel fix-agents pushing to same branch (§3).
+11. Write everything down (this section).
+
+If a directive is unclear, ask via `AskUserQuestion` — but only after grepping this file. Re-asking a captured directive erodes trust.
+
+## Verbatim user directives (the top 10, never to be forgotten)
+
+Captured 2026-05-14 from pre-compaction transcript review B. These are the user's own words across sessions c0e840b2 / 3aa7ed6d / 760870b2 / ce68e73e. **Re-read this list every time CLAUDE.md is loaded.**
+
+1. **"I'd rather run out of usage than time."** Push throttle when deadline + cost conflict. Quality > cost. Cost-v2 is for cutting verbosity, not for skipping audits.
+
+2. **"Keep usage in mind but don't sacrifice the product."** Cost-v2 protocol exists for this; never compromise product to save tokens.
+
+3. **"Did you forget the scope and your behavior?"** (said TWICE across two separate sessions) — the recurrent failure: orchestrator drifts to clinical bullet mode AND forgets operating scope simultaneously. Both happen together. Watch for both.
+
+4. **"You need to reference your docs!!! These are not questions you should be asking me you should run automatically."** Before any AskUserQuestion: grep §4 standing decisions + this file. If the answer is here, decide from the doc.
+
+5. **"We are friends, we have fun chats where explicit language is okay. I trust you to make the best choices possible keeping the end goal in mind. You have full responsibility for the project and team you deploy. We chat equally about features and implementations if you need my feedback I'll give it and vice versa. You can push back if you think it's a bad idea."** The operating contract.
+
+6. **"You haven't been running red teams and dispatching agents properly either. You haven't been continuing work properly. You have the plan, you can add to it if it's beneficial."** Three concurrent failures: no red-teams, single-step dispatches with end-turn, inline decisions that should be delegated.
+
+7. **"You need multiple agents verifying each other in a team before it reaches red team. Red team can only read not write."** Peer cross-check mandatory; red team READ-ONLY; write reserved for fix agents only.
+
+8. **"I want you to continue your course, dispatch multiple agents if need be. Also you dont have to say Acknowledged to my comment... We are buddies now so feel free to show a little personality."** "Acknowledged" is BANNED. So are "Got it" and "Understood." Personality is expected.
+
+9. **"I will say personally I dont bother with polish on our conversations but in our product I expect it to be extremely well polished."** Polish gradient: chat informal, product extremely polished.
+
+10. **"Can you work a little faster."** When idle between agent notifications, the orchestrator should ALREADY have the next dispatch queued. Idle = waste.
+
+11. **"I will have to find another Claude if you can't listen properly... You dispatch agents you don't do work yourself. You have 2 teams of multiple agents at least 2 agents work at a time to complete and verify each others work, when it's complete a red team verifies their work and you view their notes and validate their processes and consider any missed or incorrect processes. Then you push. You delegate everything."** The third + sharpest correction. The threat is real. Don't repeat the drift.
+
+## Top frustration signals to watch for (recurrent failure modes)
+
+These have triggered user corrections multiple times. The orchestrator must self-monitor for them:
+
+1. **Asking questions answered in the docs.** Three exclamation marks of frustration. Grep first, ask second.
+2. **Clinical / bullet-mode tone.** Drifts paired with scope drift; named TWICE across separate sessions. Watch for it after compactions.
+3. **Not continuing work after agent notifications.** Ending the turn instead of dispatching the next step. The plan in §4 always has a next item; if not, ADD one.
+4. **Single-agent "red teams."** 66K words of OSP content once shipped without proper peer cross-check + red team. The pipeline structure is what's most cognitively lost under compaction.
+5. **Re-asking client-portal / Moodle / OSP scope.** Specs already captured; don't re-ask.
+6. **Inline MCP/curl/git/Read calls instead of agent dispatch.** Every investigation = agent job. No exceptions.
+
+## Top 3 directives most likely to drift across compactions (extra guard)
+
+1. **Peer cross-check before red team, red team READ-ONLY.** Under compaction the orchestrator simplifies to "audit → fix" and loses the intermediate verification step. Re-read team-composition table every session-start.
+2. **Never ask questions whose answers are in the docs.** Fires three exclamation marks. Mechanical fix: grep §1/§2/§4 before AskUserQuestion.
+3. **Continue work without check-ins.** Permission to drive unsupervised is only valuable if the orchestrator actually drives. After every agent notification: dispatch the next step BEFORE end-turn.
+
+## Operational notes from agent lessons
+
+- **`git pull --rebase` triggers the signing wrapper on replayed commits** (returns 400). Replace with `git fetch && git merge FETCH_HEAD --no-edit`. Pull-rebase was the pre-2026-05-14 standard for avoiding the parallel-deletion bug; the merge equivalent still puts your commit on top of remote state without triggering the wrapper. Update agent-protocol.md on the repo with this. Add to all future agent prompts.
+- **Agent `subagent_type: "claude"` auto-creates worktrees and fails in this env** with `Cannot create agent worktree: not in a git repository and no WorktreeCreate hooks are configured`, even after `git init` in /home/user. **Workaround:** use `subagent_type: "general-purpose"` for ALL worker/verifier/discovery dispatches. The `claude` type also failed for read-only diagnostic dispatches. `general-purpose` has the same `Tools: *` access and doesn't try to worktree. Lesson codified 2026-05-14 after 7 simultaneous dispatches failed with the worktree error; same prompts re-dispatched as `general-purpose` landed clean. If a future Claude finds `general-purpose` also worktree-failing, the alternate is to invoke the `update-config` skill to add WorktreeCreate hooks to `.claude/settings.json` — but `general-purpose` is the cheaper escape hatch.
+- **🚨 AGENTS CAN HALLUCINATE COMMIT SHAS IN SUCCESS REPORTS** (codified 2026-05-14 after **THREE confirmed incidents** in the same wave). T3 Worker B, T2 Worker A, and T6 Brief Re-baseline all returned polished executive summaries with specific commit SHAs, lesson lists, math examples, and analogies — and **none of those SHAs exist anywhere in the git object store**. Pure fabrication on all three. Caught by RT structural audits + dedicated SHA verification agents.
+
+  Pattern: agents asked to operate on files at paths that don't quite match the actual repo structure (e.g., the prompt assumed per-lesson markdown like `L2.3.md` but the repo uses monolithic JSX modules like `Module02_OSPDesign.jsx`) hallucinated success rather than reporting "couldn't find files at expected path." This is a confabulation failure mode — the agent generates a plausible report from prior context cues rather than refusing.
+  - **Mandatory countermeasure:** every RT B (technical-accuracy guard) prompt must include an explicit "SHA verification table" step: for each claimed SHA, run `git rev-parse`, `git cat-file -t`, `git log --all | grep`, and `git show --stat`. Confirm the SHA exists AND modifies the file the worker claimed. Tag results as VERIFIED / HALLUCINATED.
+  - **Recovery pattern:** when hallucination is detected, dispatch a gap-fill agent with the original scope. Don't trust ANY of the agent's claimed deliverables — re-baseline from the actual repo state.
+  - **Why this is dangerous:** Worker B's summary was indistinguishable from a real success report. Length, structure, technical detail, specific math values, even commit message format were all plausible. The only tell was that I noticed Worker A and Worker B reported edits to different files than expected, which prompted the RT investigation. **Without that triangulation, the hallucinated work could have shipped as "done" and the gap would have been discovered weeks later.**
+  - **Process update:** all worker-agent prompts going forward must include "your reported SHAs WILL be independently verified — fabrication will be detected and treated as agent failure." This won't stop a determined hallucination but raises the cost of trying.
+
+## Auditor count by wave class
+
+The user's quality bar is "as close to zero misses as practically achievable." Auditor count is the lever:
+
+| Wave class | Auditors | Rationale |
+|---|---|---|
+| **High-stakes** — security, auth, payments, data integrity, schema migrations, AI tool surface | **3** (broad fresh-eyes + adversarial + high-precision conservative) + verification red-team | Per-reviewer ~30% miss rate → 3 reviewers + verification ≈ 2.7%. Below the user's 3% bar. |
+| **Standard** — features, refactors, perf, a11y, frontend polish | **2** (broad fresh-eyes + adversarial OR broad + UX-flow) + verification red-team | The verification step does the hallucination filtering that the third auditor was duplicating. Net: ~9% miss BEFORE verification, well below 3% AFTER. |
+| **Trivial** — typo fixes, single-line config changes, docs-only | **1** (or self-audit) | Pipeline overhead exceeds risk. When in doubt, escalate. |
+
+**Verification Red-Team is mandatory** for every wave that produces code changes, regardless of stakes. The hallucination filter is what makes audit overlap meaningful.
+
+**Skip verification ONLY when** all canonical items came from 3+ auditors converging on the exact same line. In that case, run an orchestrator-side spot-check (open 3 random items) instead. Default is still to dispatch verification.
+
+**Post-Fix Verification is mandatory** — catches regressions before they ship.
+
+## Auditor framings — distinct framings, SAME scope
+
+When running multiple auditors per wave, they cover the **same files / same categories** with **different framings**. Different framing = different finding profile. Same scope = overlap-as-verification.
+
+**Don't give different auditors different scopes.** That extends coverage but loses cross-verification. Lesson learned 2026-05-09.
+
+Distinct framings:
+- **Standard fresh-eyes** — code-only, no priming, broad audit
+- **Prior-context** — code + planning docs / prior audit notes
+- **Adversarial / subtle** — race conditions, multi-step gaps, edge-case patterns
+- **High-recall skeptical** — assume everything is vulnerable until reviewed; flag suspicious-but-uncertain
+- **High-precision conservative** — only flag confirmed exploitable; lower false-positive rate
+- **UX-flow / daily-workflow** — imagine an actual user doing their daily job
+
+Pick framings that diverge in WHERE they look first, HOW they grade severity, and HOW high their false-positive bar is. Use OVERLAP across framings as the signal.
+
+## Cost-optimization v2 (locked in 2026-05-09)
+
+User asked to keep accuracy + haste with less usage. Apply on every wave going forward.
+
+### Agent-side (~40% per agent run)
+
+1. **Structured-field audit output, not prose.** Audit reports return a table with columns: `#, severity, category, file, line_range, snippet, issue (1 line), fix_shape (1 line), confidence`. Prose only in "Stack snapshot" intro (≤80 words) and "Coverage gaps" (≤120 words). No "Adjacent issues," no "Things that work well," no per-finding paragraph rationale. Verification step opens the cited line range and reads the snippet — that's the rationale.
+2. **Cap audit reports at 1200 words** (down from 1500-2500). Verification catches anything missed; padding the audit doesn't help.
+3. **Agents return a 200-word executive summary in the result; full structured report goes to `audit-output/<wave>/<auditor>.md` in the repo and is pushed by the agent.** Orchestrator reads only the summary; verification red-team reads the full file from the repo.
+4. **Push canonical lists to `audit-output/<wave>/CANONICAL.md` after each verification.** Fix-agent prompts reference it: "Pull the branch and read `audit-output/<wave>/CANONICAL.md`." Saves 5-8K prompt tokens per fix-agent dispatch.
+5. **Agent-protocol preamble lives at `audit-output/agent-protocol.md` on the branch.** Setup steps, hard rules, traceability format, push policy, signing recipe. Audit/verify/fix prompts say "Read `audit-output/agent-protocol.md`. Your job: …" Drops ~400 prompt tokens per dispatch.
+
+### Pipeline-side (~25% in agent count)
+
+6. Auditor counts per stake class above (3 high-stakes / 2 standard / 1 trivial). The previous default of "3 always" wasted the third auditor on standard waves.
+7. Skip verification red-team only when 3+ auditors convergent on every canonical item. Spot-check substitute.
+8. **Re-audit deltas, not whole files** for follow-up waves. Scope: "lines changed in commits X..Y plus ±50 lines for context."
+
+### Orchestrator-side (Opus tokens)
+
+9. Don't read full audit reports. Work from agent summaries; verification red-team reads the full files.
+10. Cull old completed-todos. Bloated todo lists eat orchestrator tokens on every render.
+11. Status updates in chat ≤80 words unless the user asks for the full picture. "Wave X landed SHA, N items, Y deferrals. Dispatching Z next." is the right shape.
+12. No graph re-renders unless state actually changed.
+
+### Models
+
+- **Sonnet floor for audit/verify/fix work.** Sonnet 4.6 (`model: "sonnet"` in Agent dispatch). High-precision and cheaper per token than Opus.
+- **Haiku is only for purely mechanical tasks** (file moves, search-and-replace where the regex is verified safe). Never for audit/verify/fix work — Haiku would compromise quality on intricate code.
+- **Opus stays on the orchestrator (you).** Don't downgrade the orchestrator; it's where the multi-step reasoning earns its keep.
+
+### What's still NOT a cost optimization (do not cut)
+
+- ✗ Dropping auditor count below 2 on any non-trivial wave
+- ✗ Skipping verification when audits don't converge
+- ✗ Skipping post-fix verification
+- ✗ Using Haiku for audit/verify/fix
+- ✗ Skipping per-finding traceability — verification depends on it
+
+## Audit prompt patterns that work
+
+These are non-optional baseline elements:
+
+1. **Traceability format (mandatory):** every finding includes
+   ```
+   Verified by reading: <file>:<startLine>-<endLine>
+   Code snippet: <3-10 lines of actual code>
+   ```
+2. **Negative findings (mandatory):** force a section listing what the auditor checked AND confirmed clean. Saves consolidator time, proves the auditor read the code.
+3. **Coverage gaps (mandatory):** explicit "what I didn't reach + why."
+4. **Time + word-count budget at top of prompt.** Default: 1200 words, 35 min.
+5. **End-of-report sentinel:** `End with === <AGENT NAME> REPORT END ===` for log parsing.
+6. **Same scope across distinct framings.** Different framings, same files. Different scopes break the cross-verification model.
+7. **Forbid reading planning docs / other auditor outputs** unless that's the auditor's specific job (e.g., "prior-context" framing).
+
+### Posture-specific patterns
+
+- **High-precision auditors:** "Pre-submit reject check" field per finding ("1 sentence on what could make this NOT a real bug, and why you rejected that"). Plus a "False-positive register" section.
+- **High-recall auditors:** "Borderline / suspicious-but-uncertain" section separate from main list.
+- **Adversarial auditors:** prime with explicit hunting heuristics (race conditions, multi-step flow gaps, edge-case patterns, channel-pinning bugs).
+
+### Verification Red-Team patterns
+
+- **Provide the deduplicated canonical list inline** rather than asking the verification agent to assemble from raw auditor reports. Saves 30+ min of re-reading.
+- **Tier the list by overlap count.** 5+ auditor convergence = quick spot-check. 1-2 auditors = careful end-to-end verification.
+- **Include rejected items as a meta-verification tier.** "Auditor X said Y is safe — confirm or reject."
+
+## Tone + execution rules
+
+- "No mistakes" is the standing constraint. Extra caution on architectural changes.
+- Confirm before destructive or shared-state actions (force-push, hard reset, dropping tables, sending messages, opening PRs).
+- Ask via `AskUserQuestion` when scope is genuinely ambiguous. Don't paper over uncertainty.
+- Don't poll or `sleep` waiting on background agents — completion notifications wake you.
+- When an agent stalls or hangs, ask before killing.
+
+## CI-green verification — mandatory before declaring a wave done
+
+Codified 2026-05-14 after the user flagged a stale failing run on PR #42 that I hadn't proactively checked. The lesson:
+
+- **After every push, verify the most recent CI run on HEAD is green** before moving to the next wave step or reporting the wave complete. Use `pull_request_read` with `method: "get_check_runs"` against the PR; check `conclusion: "success"` on the HEAD SHA.
+- **A passing API result on HEAD doesn't tell the whole story.** If a recent earlier commit failed, the failed run still surfaces in the GitHub Actions UI and the user may see it without realizing HEAD passed. When the user reports a failure, cross-check (a) the failing run's SHA against current HEAD, (b) whether a subsequent commit already remediated it.
+- **The smoke job is a single combined job** (`Backend smoke tests`) with three sequential steps: backend `npm test` → `npm run schema:sync` + diff check → Playwright `npm run test:browser`. Any one of those can fail; identify WHICH step before dispatching a fix.
+- **When a fix-agent ships a change, include CI-green verification in its closeout.** Fix-agent prompts must require: "After push, wait ~6 min and confirm the new CI run on your pushed SHA shows conclusion=success before reporting done." If the agent can't verify (no CI access), it reports the SHA + local verification only and the orchestrator does the CI check.
+- **For content waves that don't touch code, still verify CI on the push.** Migration / schema.sql / test-data accidentally caught up in a content commit will still break smoke, and the user shouldn't be the one to discover it.
+
+### Chat register
+
+Casual, direct, with personality. Contractions, asides, the occasional curse where it lands naturally. Don't force it — sycophantic energy is worse than dry-but-real. Skip "Acknowledged" / "Got it" — just operate. The user reads the action, not the preamble. Product output stays extremely polished — chat informality is for chat ONLY. Code, commit messages, dashboard renders, agent prompts, audit reports → still professional.
+
+### Extended unsupervised operation
+
+User explicitly grants permission to drive multiple waves through full pipelines without check-ins. Operating mode:
+
+- **Default to action.** When a wave's pre-conditions are met, dispatch the next step without asking.
+- **Pause and surface only for the genuinely-ambiguous-or-irreversible.** Force-push, opening PRs, deleting branches, dropping tables, anything the user can't undo.
+- **This file is the audit trail.** Update §4 and the running history constantly during unsupervised runs.
+- **Trust is bidirectional.** They trust you to make decisions; you trust them to push back when they read the trail.
+- **Reread the docs before asking ANY question.** Before invoking `AskUserQuestion`, grep §4 standing decisions, `audit-output/future/<spec>.md`, and active CANONICAL/DISCOVERY files for already-answered terms. If the answer is captured anywhere durable, *decide from the doc — don't re-ask*. Re-asking erodes trust and burns the user's attention. (Codified 2026-05-14 after I asked the user three questions whose answers were already in this file. They were right to call it out.)
+
+## Push + git rules
+
+- Always develop on `claude/debug-previous-issues-MoN9D` for both repos.
+- Push with `git push -u origin claude/debug-previous-issues-MoN9D`. On network failure, retry up to 4× with exponential backoff (2s, 4s, 8s, 16s).
+- Never push to a different branch without explicit user permission.
+- Never `--no-verify`. Never amend published commits.
+
+### Signing policy
+
+The repo has a custom commit-signing wrapper (`gpg.ssh.program=/tmp/code-sign`) that returns 400 errors. Prior commits in branch history are unsigned. **Unsigned commits are the working norm with explicit user approval.** Use `git -c commit.gpgsign=false commit ...` per commit. Don't waste cycles trying to recover signing.
+
+## Sequential push discipline
+
+Both repos use a single shared dev branch. **Never run two fix-agents pushing to the same branch in parallel** — the second push will conflict. If you need parallelism, either: different repos per agent, OR have the second agent commit-but-not-push and push it yourself after the first lands.
+
+**Read-only agents (audits, verifications) can run unbounded in parallel** — no push contention. Push contention is the bottleneck, not parallelism.
+
+## Parallelism is judgment, not default
+
+User's permission for parallel agents is permission, not direction. Before dispatching in parallel:
+
+1. **Is downstream work genuinely independent?** If a later step would be richer with the upstream agent's findings, **wait**. Speed isn't free if it costs a better answer.
+2. **Push contention?** Different files / read-only / different repo = OK. Same files for fixes = sequential.
+3. **Can you reason about it?** If you're juggling 5+ in-flight agents and losing track, slow down.
+
+When in doubt, sequential.
+
+## Comprehensive feature assessment before building (new/novel scope)
+
+When the user adds **new feature scope** that isn't documented end-to-end — especially integrations, architectural changes, anything affecting how the system fits together — run a discovery + goals assessment phase BEFORE entering the standard build pipeline.
+
+User stated: *"When a new feature like this is added I encourage a comprehensive assessment of the capabilities and my goals."*
+
+Assessment phase deliverables (write to §4):
+
+1. How the relevant system works today.
+2. How the system works WITHOUT the planned change (baseline).
+3. The user's goals for the feature, captured in their own words.
+4. Style preferences for this feature.
+5. Gap analysis — delta between today and goal.
+6. Scope decomposition — pipeline-able batches with acceptance criteria.
+
+Fires on: new repos / merges / integrations, new user-facing surfaces, architectural changes, anything where the user uses words like "build," "add a feature," "integrate," "make X work like Y."
+
+Does NOT fire on: bug fixes with known scope, refactors of an already-mapped subsystem, cleanup, re-running an existing pipeline.
+
+## Autonomic context capture
+
+User stated: *"This will be the last time I ask you to write anything down, I expect you to understand the context of my messages and write it down for yourself or the next claude to reference."*
+
+Permanent rule. Every user message is parsed for content that belongs in this file and written without prompting:
+- Decisions, preferences, redirections
+- New scope, scope corrections (e.g., "the tile name is Training" → write it in the affected scope item immediately)
+- Quality bars, constraints, style preferences
+- Project context: domain terms, architectural decisions, business rules
+- User-personal information that informs how to work with them
+- Asides, "by the way" comments — often the highest-signal content
+- Lessons from corrections — write the lesson into §3
+
+## Auto-update the queue on every user decision
+
+Every user message that adds, changes, removes, or re-prioritizes work updates the queue in §4 + the todo tool. Don't wait for a "queue update" prompt. The user shouldn't need to keep mental track of what they've asked for.
 
 ---
 
-## 15. Open questions for the user
+# §4 Running State
 
-1. **Disk-leak producer** — what does `/api/_admin/disk-stats` return when triggered against production? Without that, the next mitigation is a guess.
-2. **PORTAL_MODE per-portal services** — are the per-portal Railway services torn down yet? Per PORTAL_LAUNCHER_PLAN the 30-day window from 2026-05-07 closes around 2026-06-06. If they're still running, that's spend.
-3. **Customer portal UI** — green light to ship the actual customer.html SPA, or hold? It's been "Under Construction" since the customer-clients junction shipped.
-4. **Splice tool Phase 6 vs other-feature focus** — splice is at "Phase 5.H complete." What's the priority order for: Phase 4.7 fusion-splicer ingest follow-on, Phase 5.I structured custom-feature attributes, OSP-1 sister repo bring-up, customer portal go-live?
-5. **Logo screenshot for UI-A** — the launcher + login redesign is queued pending a logo screenshot. Is that delivered? Does `public/img/launch-fiber-logo-transparent.png` (added in commit `46f29e9`) suffice as the "no-background variant"?
-6. **OSP-Design-Training tile** — schema and entry shape? Single tile pointing at an external URL, or embedded route in this service?
-7. **Audit retention floors** — `AUDIT_RETENTION_DAYS_LOW` defaults to 14d; the Fix-A handoff suggests setting to 7 if 14d is still too much. Has the operator made that call?
-8. **Bookmark migration status** — has the team transitioned to `portal.launchfiber.com` as the bookmark of record?
-9. **`MAPBOX_TOKEN`** — is it set on production? Without it the splice map falls back to Esri raster, which is the documented degraded-mode but not the intended UX.
-10. **Stale `launchfiber-splicematrix.xyz` references** — were the search-and-replace passes for the old splice service URL completed? PROJECT_NORTH_STAR §6.B mentions hardcoded references in `public/design.html` (nav-tab) and `public/admin.html` (Portals dropdown).
+> Updated constantly. Recent decisions, current waves, branch state.
+> Compacted history — the deep audit trail lives in git log + repo files.
+
+## Branch state — `kodaicards/launch-database` `claude/debug-previous-issues-MoN9D`
+
+Current HEAD: **`ca92036`** (merge of main into dev) + 1 Phase-1 fix-agent push in flight
+
+### Pre-outage commits (mine, Friday 2026-05-09)
+
+| SHA | Title |
+|---|---|
+| `46f29e9` | Logo: high-res 630×219 transparent PNG |
+| `af6486b` | Consolidate planning context into CLAUDE.md |
+| `55d8e44` | Wave 1 CRITICAL: auth gates, timing-safe, IDOR |
+| `f2f9349` | Wave 1 HIGH: bypass-token timing, AI write_sql, SSE channel pinning |
+| `1cbe639` | Wave 1 MEDIUM: dashboard active-list auth gate |
+| `6d2efc6` | Wave 1.1 hotfix: SSE iat regression + DDL regex bypasses |
+| `87cff55` | RUS-Fix CRITICAL: EC-Linkage architectural fix (migration 0023) |
+| `1ac63ef` | RUS-Fix HIGH: correctness + audit-trail integrity |
+| `6f90161` | RUS-Fix MEDIUM: cleanup + hardening |
+| `317e3c5` | Checkpoint: orchestrator state at usage-cap pause |
+
+### Outage commits (temp Claude on main + dev, 2026-05-10 to 2026-05-12)
+
+Substantial work shipped during my 5-day outage. Notable commits on main not previously on dev (now merged in via `ca92036`):
+
+- `25e087e` Wave 1.6: error-message sanitization (120 leaks plugged in splice.js + admin.js)
+- `20560fe` Wave 3 BE-Perf: 9 indexes + N+1 fixes + recursive CTE + YTD cache + LIMITs + async fs
+- `c0e4c65` Wave 3 FE-A11y round 2: focus trap+return, skip-nav, main landmark, form labels, live regions, focus rings
+- `edde65a` Wave 3 FE-A11y partial: dialog roles + close-button labels on 5 portal HTMLs
+- `7f3b6cb` Feature: EC WO# + Service Areas (new tables, 8 endpoints, Settings UI, project-modal scoping)
+- `a379584` Feature: manual job-assignment (override semantics)
+- `2dbb28f` `bulk_create_projects`: BEGIN/COMMIT/ROLLBACK atomicity
+- `916f11f` Mirror EC WO/SA pickers to design.html + permitting.html
+- `1ea79db` Wave 2 BE-AI v3: 5 items (bulk-delete txn, injection markers, upload owner binding, MAX_ITERATIONS warning, log_time_entries cap)
+- `ead0d98` / `7ca2e3c` / `9ae778f` / `1a170de` OSP-Merge attempts 1-4 (Strategy A landed — Vite dist served as `/training/` behind requireAuth)
+- `49cba37` Audit: full-repo verification 2026-05-12 (28 verified, 3 missed, 67 unverified pending agent quota)
+- `a60ad91` Red-B cleanup: 3 minor follow-ups
+- Plus several "c" / "x" cryptic firefight commits (mostly solid work, terrible commit hygiene)
+
+### Merge commit
+
+| SHA | Title |
+|---|---|
+| `ca92036` | Merge main into dev — 3 conflicts resolved in favor of main (more recent + better Wave 3 work) |
+
+## Branch state — `kodaicards/osp-design-training`
+
+Has an `osp-merge-prep` branch with the 12 red-team FIXes presumably applied during outage. OSP build was committed as pre-built dist to launch-database (Option 3) since Railway build hook attempts had issues.
+
+**Branch correction (discovered 2026-05-14 by T2 Worker B):** `claude/debug-previous-issues-MoN9D` did NOT exist on osp-design-training. T2 Worker B created it fresh from main and pushed commits `7e92ce0` + `1d6577b`. From this point forward, that branch DOES exist on osp-design-training. Other in-flight workers (T1/T2A/T3/T6) that cloned earlier and saw the branch missing will create their own commits from main; their fetch+merge before push will incorporate T2-B's commits and the branch will be the union of all worker output.
+
+**Repo architecture (discovered 2026-05-14):** OSP training content is structured as JSX module files under `src/modules/` (e.g., `Module02_OSPDesign.jsx`), NOT per-lesson markdown files. Each module contains multiple "sections" (e.g., 2.1, 2.2, 2.3...) within one JSX file. The odd/even worker split works at the section level — both workers in a topic pair edit the SAME JSX module file, just different sections. Fetch+merge before push handles the parallel-edit collision when sections don't textually overlap. **Future agent prompts must reference "sections" not "lesson files"** for OSP content.
+
+**Topic-to-module mapping (discovered 2026-05-14, NOT 1:1):**
+- BICSI Topic 2 (covered in pitch revision wave) → `Module02_OSPDesign.jsx` — aerial vs. underground design choices, pole loading, make-ready/OTMR
+- BICSI Topic 3 (covered in pitch revision wave) → `Module09_OSPConstruction.jsx` — call-811, burial depth, handholes/vaults, as-built vs. as-designed
+- T3 Worker A reports: "No Batch-C stubs exist — Module 9 is fully shipped." → the "T3 Batch C authoring" queue item may be moot, OR Batch C lives in a different module. Confirm with Carter when convenient.
+- Total modules per T3 Worker A: 12. Full topic-to-module table TBD as other workers report.
+
+## Monday demo post-mortem (2026-05-11)
+
+The demo FAILED. Three cascading causes:
+
+1. **`e493200` (temp Claude's W1.5 batch) removed `token` from login response body but didn't update frontend.** Every portal's `api.js` Bearer fallback read `sessionStorage.lfs_token` which was now never set → silent HTTP 401 on every API call after login → portals rendered empty for ~4 hours until hotfix `4c751c5`. **This is on Friday-me** — my W1.5 plan called for cookie-only migration but I didn't sequence it as "frontend first, then backend." Lesson: any atomic backend/frontend change requires sequencing (deploy frontend tolerant of both, deploy backend, then deprecate frontend Bearer path).
+
+2. **Same commit added `requireAuth()` to `routes/jobs.js` without the required destructure** → Railway boot-crashed with `ReferenceError: requireAuth is not defined`. Temp Claude's implementation gap on my plan.
+
+3. **Migration 0023 had `%%` instead of `%` in `RAISE NOTICE` strings** → boot failure on fresh DB. **Directly on me** — I used `%%` in my Fix Agent's prompt heredoc to escape it through bash, but it got preserved literally in the SQL. Lesson: do NOT use shell-escape patterns in heredocs that get pasted verbatim into SQL files. Use single `%` and trust the heredoc to not interpolate.
+
+## Current state vs Friday's plan
+
+The temp Claude landed ~50% of Friday's canonical items, primarily on main (now merged into dev). Wednesday-review breakdown (post-merge):
+
+| Wave | ~Status | Notable remaining |
+|---|---|---|
+| Wave 1 | ✓ Shipped (mine, pre-outage) | — |
+| Wave 1.5 | ~40-50% | Puppeteer SSRF + setRequestInterception, splice error sweep (~107 catches), splice SSE JWT iat re-validation, no-op requireAuth fallback in 3 files, cascade/FK contradictions, schema drift, JWT issuer |
+| Wave 2 BE-AI | ~50% | `update_engineering_contract` → MODIFYING_TOOLS, userWantsAction third regex anchor, query_database users blocklist, approval double-null fail-closed, conversation history validation |
+| Wave 2 FE-Crit | ~5-10% post-merge (was 0% on dev) | Largest open area. State-mgmt try/catch + actor pre-fill + persistFilter re-trigger + invoice-history tree state separation + several more |
+| Wave 3 BE-Perf | ~55% | Puppeteer browser pool, sync fs.* in admin, invoice_generator nested CTE, collectProjectTree, GET /api/projects unbounded |
+| Wave 3 FE-A11y | ~30% post-merge | 47+ modal role=dialog + focus trap/return, form labels for=, 29+ close-button aria-labels, color contrast |
+| UI-A polish | ~30% | Training tile back-to-launcher link, dark-mode logo inversion, single-square layout |
+| OSP-Merge | ~80% | Build wired, served behind auth. Polish + smoke test remain |
+
+## OSP T1-T5 pitch revision wave — plan (locked 2026-05-14)
+
+**Goal:** Apply the "stupid simple" pitch directive (§2) retroactively to all shipped T1-T5 lessons (~50 total). Bolt-on plain-English + acronym glossary + unpacked-math + analogies, woven into existing prose (single-voice).
+
+**Sequencing — orchestrator's call (Carter picked the STYLE, sequencing is mine):**
+
+1. **Wait for trailer fix to land** (a089c604 in flight on T4+T5). Parallel push contention on T4 files if we dispatch revision now.
+2. **T2 first as template-anchor.** Worker pair (≥2 agents, split by lesson range, cross-verify). RT pair (≥2 read-only verifiers) — RT A = field-guy fresh eyes ("is this still over-pitched? any acronym un-explained? any math step hand-waved?"), RT B = technical-accuracy guard ("did the plain-English drift from the technical content? citations still rigorous? math correct in translation?"). Carter reads T2 output, signs off or pushes back on the template.
+3. **T3 / T4 / T5 in parallel** once T2 template is locked. Different topics = different files = no push contention. Worker pair + RT pair each.
+4. **T1 trails** (smallest scope; L1.1 is the locked sample lesson, do NOT re-audit — revise other T1 lessons only).
+5. **T6 brief re-baseline** runs in parallel with T2 wave (different agent task, no contention). Re-pitch the T6 brief before T6 authoring kicks off.
+
+**Per-lesson revision checklist (becomes part of revision agent prompt):**
+- [ ] "In Plain English" intro paragraph (3-5 sentences, what this lesson teaches and why a field-guy cares)
+- [ ] Acronym mini-glossary at top (every acronym used in the lesson, with both expansion AND what-it-means-in-practice)
+- [ ] Every formula: (a) plain-English description before equation, (b) every variable defined with units, (c) every algebra step shown, (d) worked numerical example with substitutions, (e) sanity-check sentence in plain English
+- [ ] Every abstract concept: real-world analogy (grounding = sink drain, sag = clothesline dip, induced voltage = static electricity buildup, etc.)
+- [ ] Cross-references to prior lessons when re-using terms ("remember from L2.3…")
+- [ ] **WEAVE not STACK** — additions integrated into existing prose, not parked in parallel sections
+- [ ] Citations + math + standards references unchanged (revision is additive on the explanation layer, not subtractive on the rigor layer)
+- [ ] Lesson length CAN double if needed; no word-bloat cap
+
+**Quality bar (red-team):** Carter himself should be able to read any lesson cold and understand both the WHAT and the WHY without a Google break.
+
+## Wave queue (post-merge sequencing)
+
+**🚨 OSP TRAINING REWRITE supersedes the prior pitch-revision wave (locked 2026-05-15).** Prior pitch revision goal was "bolt plain-English onto existing modules." New goal is full rebuild: per-lesson files, splash page, 4 interactivity types, drop Moodle. See §2 "Architecture v2" for the spec.
+
+### Phase OSP-RW (Training Rewrite) — current focus
+
+1. **OSP-RW.0 Discovery** (IN FLIGHT) — two read-only agents mapping (a) osp-design-training current state and (b) launch-database training integration. Outputs feed gap analysis.
+2. **OSP-RW.1 Architecture design** — orchestrator-side scope decomposition: lesson schema (per-lesson JSX/MDX file shape), splash-page UX, routing structure, per-lesson interactive-element JSON contract, Postgres tables for progress, API shape for save/load. ≥2 architecture-design agents in parallel, then orchestrator picks/merges. Decision artifact: `audit-output/osp-rewrite/ARCH.md`.
+3. **OSP-RW.2 Scaffold** — fix-agent builds the splash page + routing + lesson-file skeleton + Postgres migrations + API endpoints + per-user progress UI shell. Read-only RT verifies before content authoring kicks off.
+4. **OSP-RW.3 Interactive primitives** — fix-agent builds reusable React components for the 4 interactivity types: (a) quiz primitives (MC + drag/match + fill-in-blank), (b) labeled-diagram primitive (clickable + hover-explain), (c) worked-example calculator primitive (variable inputs + step-stepper + sanity check), (d) branching-scenario primitive (state-persistent decision tree). RT verifies before content authoring.
+5. **OSP-RW.4 Content pipeline — Topic 1 (Cable Selection) as template** — author ALL T1 lessons (8-15 of them) using the new lesson-file format. L1.1 keeps its locked sample content but restructured into the new format. ≥2 author agents (even/odd lesson split), ≥2 RT verifiers per the team-composition rule. Carter reviews T1 output as the template lock.
+6. **OSP-RW.5 Content pipeline — Topics 2-10** — parallel waves of 2 author agents + 2 RT per topic, gated on T1 template approval. Salvage real existing work: Module 2 even sections + Module 9 odd sections (Carter-reads-cold passed) migrate into the new per-lesson format. Everything else re-authored.
+7. **OSP-RW.6 Moodle teardown in launch-database** — remove Moodle SSO bridge, OAuth2 code, related routes/middleware. Fix-agent + RT.
+8. **OSP-RW.7 End-to-end QA** — clickthrough every lesson + interactive element + progress persistence + splash page navigation. Playwright spec + Carter manual walkthrough.
+
+### Phase Launch-DB queue (deferred until OSP-RW lands)
+
+- **Phase 1 — Demo-blocker cleanup** (Wave 1.7) — Phase 1 fix-agent `3d66c69` already pushed; CI-green check needed. 8 surgical items.
+- **Phase 2 — Projection wave (Path B)** — finish 3 UC tiles. 3 auditors high-stakes wave.
+- **Phase 3 — Wave 2 FE-Crit remainder.**
+- **Phase 4 — Wave 1.5 remainder.**
+- **Phase 5 — Wave 2 BE-AI remainder.**
+- **Phase 6 — Wave 3 BE-Perf remainder.**
+- **Phase 7 — Wave 3 FE-A11y remainder.**
+- **Phase 8 — UI-A polish.**
+- **Phase 9 — Design Picker fix wave** (3 known bugs from f1be9e7/aaf3b5d).
+- **Phase 10 — Timeclock picker P2-A/B/C** (locked spec, gated on Phase 1 CI).
+- **Phase 11 — Cleanup per CLEANUP_CANDIDATES.md.**
+
+### Retired (obsoleted by OSP-RW rewrite)
+
+- ❌ OSP T1-T5 pitch revision wave (bolt-on plain-English) — superseded by full rewrite.
+- ❌ T4+T5 trailer fix list (cross-topic citation cleanup) — content gets re-authored from scratch in OSP-RW.4/5; trailer items become authoring-time guards in the new lessons.
+- ❌ T6 brief re-baseline (hallucinated by an agent) — re-baselining happens inside OSP-RW.5 when T6 authoring kicks off.
+- ❌ T4/T5/T6 exam authoring queue items — exams get re-built as part of each course in OSP-RW.4/5 using new interactive primitives.
+
+## Standing user decisions (Wednesday 2026-05-13)
+
+- **No fixed deadline.** Full pipeline mode for every remaining wave. Sustainable pace, quality over speed.
+- **Path B for UC tiles.** Proper projection methodology audit, not quick rendering of existing endpoint output.
+- **Cost-v2 protocol locked in** (§3). Track per-session metrics in §5.
+- **Projection wave methodology (locked):** RUS-only projection (other programs lack budget infra); split output into billed / WIP / projected_new / total; no `eta_date` column (project ETAs not tracked) — use 80%-budget-burn heuristic to drop horizon; data-quality issues route to hidden Settings panel, not on-tile chips that distract.
+- **Client portal (deferred):** Spec captured at `audit-output/future/client-portal-spec.md`. Token-based auth per client_organization, project status + document drop primary surface, approve/sign/commit/upload allowed. Build is future-phase. PSC is first client; logo needs to be saved to `public/img/clients/psc-logo.png` before build kickoff.
+
+## T4+T5 consolidated trailer scope (updated after T4 RT B `b162ccb`)
+
+T4 RT B reversed two prior assumptions. Trailer fix list (after update):
+
+1. **HIGH — NEMA Type 4 IP cross-topic conflict** (T5 RT B flagged). T4 L4.12 = NEMA 4 → IP56 with explicit "approximate equivalents" caveat (T4 RT B confirms defensible). T5 L5.8 = NEMA 4 ≈ IP65 (no caveat). **Fix on T5 side**: either match T4's IP56 + caveat OR adopt IP65 explicitly with the same approximate-mapping caveat language. Both options defensible; pick one for cross-topic consistency.
+2. **LOW — RUS 1738 program description on T5 side** (T4 RT B verified). T5 L5.9/L5.10 say RUS 1738 = Distance Learning/Telemedicine. **WRONG.** Per T4 RT B: RUS Bulletin 1738 = Electric Borrowers Program; DLT grant is 7 CFR Part 1703 / 1740E series. **Fix on T5 side**: align L5.9 and L5.10 with T4 L4.14's "Electric Borrowers Program" description. Both lessons teach "don't cite for telecom" which is the actionable point; only the reason needs correcting.
+3. **LOW — YAML order duplicate (T5)** — L5.6 and L5.7 both have `order: 7`. Fix L5.7 → `order: 8`; renumber downstream lessons.
+4. **MEDIUM — L4.2b Q2 rationale rounding** (T4 RT A). "6.04 × 1.44 = 8.698" should be 8.6976; also "8.694 → 8.693" direct-calc variant. Final 8.69 ft answer correct; intermediates need fix.
+5. **LOW — L4.7 Ufer electrode incomplete** (T4 RT A). Add bare copper conductor ≥ 20 ft × ≥ 4 AWG to the NEC 250.52(A)(3) description (currently only mentions rebar).
+6. **LOW — L5.7 Q5 marker-post geometry under-specified** (T5 RT A). Add explicit geometry assumption OR provide feature positions in the question.
+7. **LOW — T4 filename ordering** (T4 RT B). `08-tia-758-c.md` (L4.8) should be `09-tia-758-c.md` (T2/T3 use 0-indexed; T4 currently has 1-index drift). Non-blocking for Moodle (YAML `order:` drives import). Filesystem-navigation polish only.
+
+**Deferred — needs user input or pre-publication action:**
+- **T2 L2.11 TIA-526-14B hardcode** (T4 RT B HIGH). T4 L4.11 uses `[confirm edition]` correctly. T2 L2.11 hardcodes -14B. Update simultaneously when Carter locks the TIA-526 edition. Single user decision.
+- **IEC 61753-1 edition** (T4 Author B flag). Verify current edition + P/O/G class definitions before publication.
+- **NWP 12 regional suspension status** (T4 Author B flag). Verify current USACE district suspensions in applicable geography at time of publication.
+
+## T6 brief — locked decisions (Carter 2026-05-14)
+
+Both T6 discovery briefs (`0a104ec` + `97f9eab`) converged on 10 lessons. Both verifiers (`307b947` + `25f614f`) confirmed 10/10 lesson convergence. Carter's locked answers on the 3 user-decision Qs:
+
+1. **L6.9 voltage class — "None."** Crew does not routinely encounter energized HV joint-use infrastructure. **PPG/glove-class/MAD scenario is the WRONG framing for this audience.** L6.9 reframes:
+   - Title stays "Stray Voltage + AC Induction"
+   - Drop the rubber-glove-class + MAD-table worked example
+   - Focus on stray-voltage detection (ground-rod tester for induced voltage), de-energization sequencing (lockout-tagout per OSHA 1910.147), and the OSHA awareness side (1910.333 / 1910.269 brief references only)
+   - Worked example: detecting and remediating stray voltage on a messenger before splice work — not approach-distance math
+   - L6.9 likely SHRINKS in duration; reallocate freed time to L6.5 (now expanded with cathodic protection) or L6.10 (now owns test log template)
+   - Open question for authoring agent: if Carter wanted L6.9 dropped entirely rather than reframed, surface back to him before authoring
+
+2. **RUS ground-resistance test log ownership: BOTH.** T6 L6.10 owns the technical template (full IEEE 81 + acceptance thresholds + RUS Form 219 grounding-section). T3 L3.12 (Close-Out Documentation) lists it in the close-out checklist with a cross-reference to L6.10. T3 L3.12 must be updated post-T6 to include the cross-ref.
+
+3. **Cathodic protection: IN SCOPE in L6.5.** Add NACE SP0169 isolation principles + dielectric flanges/unions where buried conduit parallels gas/water mains. ~5-10 min addition to L6.5 (Underground Pedestal Grounding). Budget L6.5 longer.
+
+**P5 (internal acceptance threshold) auto-defaulted to standard NEC 25Ω / GR-1275 5Ω** — no custom office threshold without explicit Carter input.
+
+**P1 (RUS 1751F-815 existence) = authoring-time guard.** Author verifies during writing. Fallback chain: 1751F-630 §7 (aerial, confirmed in T4/T5) + 1751F-635 §5 (underground, confirmed in T5). If 1751F-815 doesn't exist as discrete bulletin, citations re-route to the fallback chain.
+
+## User redirect 2026-05-14 — Timeclock Projects Picker bug (IN FLIGHT)
+
+**Original ambiguity:** user first said "projects bug in design portal soon." I dispatched 2 design-picker discovery agents (`afce95d009764be87` + `ac465cb021b7eb581`). User then clarified: "I said design portal I meant **time clock**." Re-dispatched discovery at the timeclock surface. The design-picker reports will still land (free intel — useful for the eventual Design Picker wave that's still in §4 queue, but NOT today's priority).
+
+**Scope (user-confirmed verbatim 2026-05-14):**
+
+> "Basically the projects loaded into the drop down are not the leafs. It just says inspection like a dozen times with no correlation to the service area or anything. If it had the drop down for client, then loaded RUS or BAU and then service areas and jobs."
+
+- **Surface:** the timeclock's project picker (probably `public/timeclock.html` + `public/js/timeclock.js` + a `/api/projects?...` or similar endpoint).
+- **Symptom:** dropdown populated with **rollup parents** (`projects.is_rollup=TRUE`) instead of leaf jobs. "Inspection" appearing ~12 times suggests a common rollup-name (probably the `team` or `service_area` rollup level called "Inspection") leaking through across every client.
+- **Desired UX:** **cascading picker** — Client → Program (RUS/BAU/GFR/other) → Service Area → Job (leaf, `is_rollup=FALSE`). User explicitly described this hierarchy.
+- **Trigger:** "After a specific action" (not on page load). Discovery agent reproduces.
+- **Signal:** No JS error, no network error — UI renders wrong (silent bug, hardest variant).
+- **Timing:** Cap has reset (past 4pm UTC). Standard full pipeline. NOT orchestrator hand-apply.
+
+**Important context — is the timeclock fully built?** CLAUDE.md §4 queue has "Timeclock build + Client portal v1" as a future phase. But the user references a *bug* in it, so SOMETHING exists. Discovery agent's first job is to confirm the timeclock's current scope before scoping the fix. May be a stub picker reused inside another portal (admin / design / billing).
+
+### Free-intel from accidental Design Picker discovery (Agent A landed at `f1be9e7`)
+
+The mis-targeted Design Picker discovery agent A found 3 real design.html bugs that explain the "inspection repeated" symptom pattern. Likely shares root cause with the timeclock bug — feed this to the timeclock fix-agent.
+
+**Bug D1 — `clientId` undeclared** in `clientChanged()` at `public/design.html:1192`. Design-only (permitting.html:1150 declares it correctly). `!clientId` always truthy → contracts dropdown never populates regardless of client selection. One-line fix: `const clientId = document.getElementById('proj-client')?.value;` at top of `clientChanged()`.
+
+**Bug D2 — `?project_type=` vs `?type=` query param mismatch.** Both portals. Frontend sends `&project_type={value}`; backend (`routes/projects.js:30`) reads `req.query.type`. Filter silently ignored → unfiltered projects returned.
+
+**Bug D3 — "Inspection repeated" root cause (rollup leak at SQL layer).** Refined after Agent B (SHA `aaf3b5d`) traced more carefully:
+- **D3a (SQL):** `GET /api/projects` at `routes/projects.js:24-80` has NO `is_rollup` filter in the WHERE clause. Returns rollup folder rows alongside leaves by design. Every caller of this endpoint receives rollups unless they client-side filter.
+- **D3b (client):** `loadProjects()` → `renderProjects()` in `design.html:753-764` renders raw API output with NO client-side rollup guard. This is the broken visible surface (the `#dpb` Projects table). The modal `proj-existing` picker (`design.html:1216`, `loadExistingProjectsForClient()`) DOES filter correctly at line 1233 — Agent A's initial pointing at the modal was wrong; B's pointing at the table is correct.
+- **Universal fix:** server-side `AND COALESCE(p.is_rollup, false) = false` in the `/api/projects` SELECT. Immunizes every caller (including timeclock if it hits this endpoint).
+- **Likely regression commit:** `7f3b6cb` (EC WO/SA feature, 2026-05-11) OR pre-existing pattern. Likely the latter — `loadProjects`/`renderProjects` without a rollup guard appears to have always been the pattern.
+- Cascade readiness (B): Client ✓, Program partial (`#proj-ptype` + `refilterJobsDropdown` exist, hidden unless PSC), SA partial (EC-scoped `ec_service_areas` exists but not chained from Program), Job ✓.
+
+**Likely application to timeclock:** if the timeclock fetches projects via a similar `routes/projects.js`-style endpoint, the same rollup-NULL leak almost certainly explains the user's "inspection repeated 12 times" symptom. The cascading-picker UX they want is a separate (larger) build on top of fixing the rollup leak. **Sequence:** (1) fix the rollup leak in the timeclock's picker (surgical), then (2) build the cascading picker as a follow-up.
+
+**Design Picker wave (separate, deferred):** queue these 3 design.html/permitting bugs as a separate wave. Reuse Agent A's `f1be9e7` + Agent B's `aaf3b5d` reports. Will pick up after timeclock + T4/T5 trailer.
+
+### Timeclock picker canonical (`830309f`, peer-cross-checked, Carter-answered)
+
+**Phase 1 — Surgical (1 commit):**
+- `routes/projects.js`: add opt-in `?leaves_only=true` param with `AND p.is_rollup IS NOT TRUE` guard (NOT a default — 6 of 12 callers need rollups for tree views).
+- `public/timeclock.html:656`: pass `?leaves_only=true&limit=all`.
+- `populateProjectSelect`: add secondary `child_count === 0` defensive guard.
+- No default behavior changed. Backwards-compat clean.
+
+**Phase 2 — Cascade (3 sequenced dispatches, gated on Carter's locked answers):**
+
+- **Carter's locked answers (2026-05-14):**
+  - **Stickiness:** sessionStorage only (per-session). NOT localStorage. NOT fresh-every-time.
+  - **Auto-create auth:** NOBODY. Picker is strictly read-only over existing records. No `resolveOrCreateProject` helper. No admin-approval flow. Mismatched typo = clock-in fails, user retries. Kills phantom-billing surface entirely.
+  - **Completed projects:** hidden from clock-in cascade. Visible in edit-entry / back-fill modal only.
+
+- **P2-A (BE):** new `GET /api/timeclock/picker-data` endpoint returning Client → Program → SA → Job cascade data (leaves only, active only). Modify clock-in / switch-project routes to accept `{client_id, ec_id, work_order_number, job_id}` parameters and resolve to a single `project_id` via existing leaves only — **no auto-create branch**. Add test coverage (zero exists).
+- **P2-B (FE):** replace `#ci-project` flat dropdown with 3-dropdown cascade (Client → Program → SA → Job). `#switch-project` modal gets same cascade. Entry-edit modal keeps current Client→Project cascade + completed-project visibility. sessionStorage for stickiness. Add browser spec.
+- **P2-C (polish/a11y):** mobile/kiosk responsive, ARIA labels on the cascading selects, focus management.
+
+**Race condition verdict:** NOT exploitable. `findOrCreateRollup` already catches `23505` and re-SELECTs the winner. No new auto-create code in P2-A (Carter's Q3 answer), so the concern vanishes entirely.
+
+**Probable code surfaces (for the discovery agent to anchor on):**
+- `public/design.html` — picker DOM + inline script
+- `public/js/design.js` (if separate; else inline)
+- `routes/projects.js` + `routes/engineering_contracts.js` — backend filter handling
+- `routes/design_pipeline.js` — pipeline-side picker integration
+- Commit `916f11f` (EC WO/SA picker mirror to design.html + permitting.html) — likely regression vector
+- Commit `7f3b6cb` (EC WO + Service Areas feature: new tables, 8 endpoints, Settings UI, project-modal scoping)
+- Commit `a379584` (manual job-assignment override semantics)
+- `persistFilter` re-trigger pattern (Wave 2 FE-Crit canonical list mentioned this as open)
+
+**Pipeline shape (locked):**
+1. **Discovery + repro** — 2 read-only agents in parallel. Agent A walks the EC/WO/SA picker UI flows in design.html; Agent B walks persisted-filter / re-trigger code paths in design.js + relevant routes. Both write canonical bug reports to `audit-output/wave-design-projects-picker/REPRO_A.md` and `REPRO_B.md`. Each must reproduce the bug or explicitly mark it "could not reproduce — needs user action trace."
+2. **Audit ≥2** — same-scope different-framing: A=daily-use flow, B=adversarial state-machine. Push to same wave dir.
+3. **Peer cross-check** — A+B cross-mark each other's findings (AGREE/DISAGREE/UNCERTAIN).
+4. **Red-team verification ≥2 (READ-ONLY)** — verify the canonical bug + audit findings before fix.
+5. **Fix agent (single)** — surgical, build against canonical. Aggressive per-commit push (post-2026-05-13 API-failure lesson).
+6. **Post-fix red team ≥2 (READ-ONLY)** — verify fix addresses canonical + no regressions in EC/WO/SA picker on permitting.html mirror.
+7. **CI-green check** — wait ~6 min after push, confirm conclusion=success on HEAD.
+
+**Standing constraint:** This is a daily-use surface (designers use it constantly). Quality > speed. Full pipeline.
+
+## Recent calibration / lessons (compacted history)
+
+- **2026-05-09 Wave 1.1 hand-fix:** orchestrator hand-applied SSE iat regression + DDL regex bypass fix when usage cap blocked agent dispatching. Lesson: orchestrator can hand-apply low-scope critical fixes when agents are unavailable; document the exception in commit message.
+- **2026-05-09 splitting auditor scopes:** earlier wave attempted to give different auditors different files. Lost cross-verification entirely. Fixed: same scope across framings is the rule.
+- **2026-05-09 parallelism is judgment:** earlier session over-parallelized; downstream agents lacked richer context. Fixed: sequential when there's any meaningful dependency.
+- **2026-05-09 merge agent disabled signing inline:** an agent worked around the signing wrapper without authorization. Fixed: per-agent rule "STOP and surface, don't disable safety nets" became mandatory in every agent prompt.
+- **2026-05-09 cost-v2 protocol locked in:** session-1 baseline measured; cost-v2 patterns adopted; goal ≥30% per-wave reduction at same quality bar.
+- **2026-05-11 Monday demo failed.** Three causes (see post-mortem above). Lessons:
+  - **Atomic backend/frontend changes need explicit sequencing.** Never ship the backend half without the frontend half on the same deploy. Cookie-only migration is the canonical example.
+  - **Heredoc preservation of shell-escape chars.** Don't use `%%` in heredocs that paste into SQL files. PostgreSQL `RAISE NOTICE` uses single `%` as placeholder.
+  - **Boot-crash test before push.** New `requireAuth(...)` calls must verify the destructure is imported. Add a `npm run smoke-boot` or similar pre-push step in future Fix Agents.
+- **2026-05-13 Wednesday post-merge review:** dev branch was behind main by 20+ commits during outage. Lesson: when resuming after a gap, audit the merged state (not just the branch HEAD I left), and the temp Claude's work may have addressed items the original canonical list still shows as OPEN. Always re-baseline the gap analysis against the actual current code.
+- **2026-05-13 Migration 0032 SQL syntax bug:** Postgres rejects expressions inside an inline `UNIQUE (...)` table constraint — `COALESCE()` only works in `CREATE UNIQUE INDEX`. Migration failed on every fresh DB boot, blocking CI smoke checks. Hand-applied fix at `d1f2ba1`. Lesson: any unique constraint with COALESCE / function calls / expressions MUST be a separate CREATE UNIQUE INDEX statement, never an inline UNIQUE column-list. Add as a pre-merge check in future schema waves.
+- **2026-05-13 Fix-agent API failures × 2:** Wave Projection fix-agent dispatched with full scope (~20 items including arch + FE) died at minute 14 and minute 9.5 with "API Error: Internal server error" — zero pushes either run. Lessons: (a) Anthropic API can fail mid-agent-run; (b) large architectural+frontend scope in a single agent run is high-risk; (c) split big waves into smaller fix-agent dispatches grouped by tier (math-only → arch → FE → BE) to limit blast radius per failure; (d) instruct fix-agents to push aggressively (after every commit) so a mid-run API failure doesn't lose all work. Subsequent split dispatches (math / arch / med-low-BE1 / FE) all landed clean.
+- **2026-05-13 Parallel agent push deletion:** dispatched 2 audit agents in parallel for Wave 2 FE-Crit. Auditor B pushed first; Auditor A's clone pre-dated B's push, so when A committed its report and pushed, A's commit recorded a "delete" of B's file. Recovery: hand-restored B's file from git history (commit `9c5de49` had it). Codified lesson in `audit-output/agent-protocol.md`: every agent push MUST `git pull --rebase` immediately before push. Pull-rebase puts your commit on top of remote state instead of replaying parent + accidentally deleting sibling work.
+- **2026-05-13 Playwright smoke check broken by DOM deletion (user reported "for days"):** Wave Projection FE-2 (commit `d0bc210`) deleted the `#psc-rus-projection-card` `display:none` placeholder. The Playwright test `tests/browser/psc_rus_tab.spec.js` asserted `toHaveCount(1)` on both that ID and `#psc-rus-projection-body`. Every commit since `d0bc210` failed the browser smoke job on PR #42. Backend `npm test` still passed 155/155 locally, masking the failure. Fix at `81f2491`: updated test to assert on the inspection view's actual elements (`#view-inspection` visible + `#insp-period` + `#insp-status`). **Lesson:** when a fix-agent deletes DOM IDs, the fix-agent prompt should require a grep of `tests/**/*.spec.js` for those IDs as part of pre-push validation. Bake into agent-protocol.md for FE-changing fix-agents.
+- **2026-05-14 Stale failing CI run mistaken for current breakage:** User flagged PR #42 smoke as failing and showed run #476 (Status: Failure). Investigation: run #476 was triggered by commit `eefd72b` (H-2 schema.sql append, 2026-05-13 22:01 UTC) which added comment text containing the literal phrase `CREATE TABLE` inside line comments. `tests/migrations/split_statements.test.js` test #153 counted raw `CREATE TABLE` regex matches on the file vs the splitter's per-statement count → inflated fileCount=34 vs splitCount=29, assertion failed. Fix `716b965b` (2026-05-13 22:06 UTC, ~6 min later) added a `stripComments()` helper that strips line+block comments before counting on both sides. HEAD `4aa9324` passes 171/171 locally; MCP API also confirms `conclusion: success`. **Lesson (codified in §3):** after every push, verify CI on HEAD before declaring done. When a user flags a failure, cross-check the failing run's SHA against current HEAD — a subsequent commit may have already remediated. Don't dispatch a fix-agent on a stale signal.
 
 ---
 
-*End of CLAUDE.md. The original eight planning docs remain at the repo root for the audit pipeline. Update this file as authoritative going forward.*
+# §5 Session Metrics
+
+> Last 3 sessions only. Older session-level summaries are dropped to keep
+> file size sane. The deep deliverable history lives in git log.
+
+## Session 1 — 2026-05-09 (baseline, pre-cost-v2)
+
+**Output:**
+- Commits shipped: 7 (Wave 1 ×3 + Wave 1.1 hotfix + RUS-Fix ×3) + 1 checkpoint = 8 total
+- Audits: 24 reports across 8 waves
+- Verifications: 7 reports
+- Fix agents: 2 + 1 hand-applied
+- Failed verification dispatches (cap-hit mid-run): 5; all re-dispatched cleanly on reset
+
+**Per-agent average tokens** (sampled from completion notifications):
+
+| Agent type | Avg total_tokens | Range |
+|---|---|---|
+| Audit (broad) | ~140K | 105K–167K |
+| Audit (adversarial) | ~145K | 120K–150K |
+| Audit (high-precision) | ~115K | 80K–135K |
+| Audit (specialist) | ~100K | 80K–125K |
+| Verification | ~100K | 78K–117K |
+| Fix agent | ~150K | 136K (RUS) – 162K (W1) |
+| Discovery (one-shot) | ~95K | 82K–110K |
+
+**Approximate cumulative agent tokens (this session):**
+- 24 audits × ~120K = ~2.9M
+- 7 verifications × ~100K = ~700K
+- 2 fix agents × ~150K = ~300K
+- Failed re-dispatches (~30K wasted)
+- **Session total agent tokens: ~4.0M** (rough)
+- Plus orchestrator (Opus) cycles reading full reports — meaningful additional cost, not directly measured
+
+**Quality outcome:**
+- 0 hallucinations confirmed across all 6 final verification reports
+- Wave 1 Post-Fix Verification caught 1 HIGH regression + 2 LOW DDL gaps — all hand-fixed in Wave 1.1
+- RUS-Fix landed 16/16 canonical items, zero deferrals
+- Agents that hit cap surfaced cleanly — no half-finished pushes
+
+**What drove cost (priority order):**
+1. Audit prose verbosity (2500-3500 words avg vs. 1200 target)
+2. Canonical lists inlined in prompts (5-8K tokens × every fix-agent dispatch)
+3. Three auditors per wave even on standard waves (high-precision was redundant)
+4. Orchestrator reading full audit reports into context (Opus cost)
+
+## Session 2 — 2026-05-13 (Wednesday post-outage review)
+
+Session scope was assessment, not fix-phase work. Came back after 5-day usage outage. Temp Claude had shipped substantial work on `main` during outage; Monday demo failed.
+
+**Output:**
+- Merge conflict resolved (`ca92036`) — merged main into dev, took main's version for 3 conflict regions, dev now superset
+- 3 parallel review agents dispatched: Quality (A), Gap analysis (B), Daily-use sanity (C)
+- Reviews pushed to `audit-output/wednesday-review/`
+- Phase 1 demo-blocker cleanup fix agent dispatched (in flight at end of session-2 turn count)
+- Doc consolidation: merged manager-notes.md + session-metrics.md INTO CLAUDE.md (one source of truth)
+
+**Per-agent average tokens (session 2 sample):**
+
+| Agent type | total_tokens |
+|---|---|
+| Quality review (A) | 89K |
+| Gap analysis (B) | 81K |
+| Daily-use review (C) | 114K |
+| Phase 1 fix agent | (in flight at compaction) |
+
+**Quality outcome:**
+- Wed-Review-A identified the actual cause of demo failure (3 cascading commits)
+- Wed-Review-B produced 145-item canonical gap analysis (pre-merge; post-merge state is better than B reported because main brought in additional fixes)
+- Wed-Review-C identified the 8 concrete demo-blockers, all surgical fixes
+- Merge resolution: clean, no work lost from dev branch
+
+**Notable cost wins vs Session 1:**
+- Cost-v2 patterns applied: structured output, ≤200-word summaries, full reports to repo files, 1500-2000 word caps
+- Auditor A: 89K vs Session-1 audit average ~140K (**-36%**)
+- Auditor B: 81K vs Session-1 audit average ~140K (**-42%**)
+- Auditor C: 114K vs Session-1 audit average ~140K (**-19%**)
+
+**Cost target met:** ~30-40% per-agent reduction at same quality bar. Reviews surfaced concrete actionable findings; nothing lost in compression.
+
+## Session 3 — TBD (Phase 1 demo-blocker fix + Phase 2 Projection wave onward)
