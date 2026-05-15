@@ -66,11 +66,31 @@
 
 ## OSHA
 
-- **29 CFR 1910.269** — Electric power generation, transmission, and distribution (covers utility/contractor work near energized)
+- **29 CFR 1904** — Recording and Reporting Occupational Injuries and Illnesses (full subpart; contains 1904.7 recordable-incident definition, 1904.29–1904.32 OSHA 300/300A/301 forms, 1904.39 fatality/severe-injury reporting). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1904 [public eCFR]. Scope: T18 incident-reporting lesson (T18.L09); downstream topics covering construction QA documentation.
+- **29 CFR 1910.28** — Duty to have fall protection — Walking-working surfaces (general industry). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-D/section-1910.28 [public eCFR]. Scope: T18.L04 fall-protection trigger height comparison (4-ft general industry vs. 6-ft construction); T07 (Staking) and T08 (Make-Ready) aerial-lift and pole-climbing lessons.
+- **29 CFR 1910.67** — Vehicle-mounted elevating and rotating work platforms (aerial lifts / bucket trucks). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-F/section-1910.67 [public eCFR]. Scope: T18.L04 aerial-lift fall-protection requirement (body harness + lanyard attached to boom/basket per 1910.67(c)(2)(v)); T07 and T08 bucket-truck work lessons.
+- **29 CFR 1910.132–1910.138** — PPE — General requirements through eye and face protection (Subpart I). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-I [public eCFR]. Scope: T18.L05 PPE hazard-assessment requirement (1910.132(d)(1)); employer responsibility to provide PPE at no cost; all downstream topics referencing PPE selection.
+- **29 CFR 1910.136** — Foot protection. Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-I/section-1910.136 [public eCFR]. Scope: T18.L05 EH-rated boot requirement; references ASTM F2412/F2413 as the test/performance standard; T10 (Construction) foot-hazard callouts.
+- **29 CFR 1910.137** — Electrical protective equipment (rubber insulating gloves and other insulating tools). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-I/section-1910.137 [public eCFR]. Scope: T18.L05 rubber insulating glove Class 00–4 voltage ratings; T18.L07 MAD/PPE discussion; T14 (Grounding) energized-work protective equipment.
+- **29 CFR 1910.140** — Personal fall protection systems. Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-I/section-1910.140 [public eCFR]. Scope: T18.L04 harness, lanyard, and SRL system requirements for general industry; T07 (Staking) and T13 (Inspection) pole-top and aerial-lift fall protection.
+- **29 CFR 1910.146** — Permit-required confined spaces. Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-J/section-1910.146 [public eCFR]. Scope: T18.L03 confined-space entry; 1910.146(b) definition of acceptable O₂ range (19.5%–23.5%); provides the backup standard when hazards cannot be controlled under 1910.268(o) for extreme-contamination manholes.
 - **29 CFR 1910.147** — Lockout/tagout (LOTO)
+- **29 CFR 1910.268** — Telecommunications (Subpart R). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-R/section-1910.268 [public eCFR]. Scope: Primary OSHA standard for all OSP field work; 1910.268(a) scope, (g)(1) fall protection at poles, (h)(8) ladder requirement, (o) manhole atmospheric testing and ventilation. Foundation of T18; referenced by T04, T07, T08, T10, T13, T14.
+- **29 CFR 1910.269** — Electric power generation, transmission, and distribution (covers utility/contractor work near energized)
 - **29 CFR 1910.333** — Selection and use of work practices
+- **29 CFR 1910.1000** — Air contaminants — Table Z-1 permissible exposure limits (PELs). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-Z/section-1910.1000 [public eCFR]. Scope: T18.L08 hazardous materials; battery acid (sulfuric acid) PEL = 1 mg/m³ TWA per Table Z-1; general PEL reference for T10 (Construction) chemical-handling callouts.
+- **29 CFR 1910.1053** — Respirable crystalline silica. Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-Z/section-1910.1053 [public eCFR]. Scope: T18.L08 silica dust from concrete/asphalt cutting; current PEL = 50 µg/m³ TWA (2016 rule — supersedes the former 100 µg/m³ pre-2016 PEL); T10 (Construction) road-cut and bore operations.
+- **29 CFR 1910.1200** — Hazard Communication (HazCom 2012). Authority: OSHA. URL: https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-Z/section-1910.1200 [public eCFR]. Scope: T18.L01 and T18.L08 SDS requirements; GHS-aligned 16-section SDS format; employer obligation to maintain SDS files accessible to all workers; T10 (Construction) chemical-handling training.
 - **29 CFR 1926.1404-1442** — Cranes/derricks in construction
 - **29 CFR 1926 Subpart V** — Power transmission and distribution
+
+## Federal Statutes
+
+- **OSH Act § 5(a)(1)** — Occupational Safety and Health Act of 1970, Section 5(a)(1): General Duty Clause. Authority: U.S. Congress / OSHA. URL: https://www.osha.gov/laws-regs/oshact/section5 (public OSHA.gov) or https://www.law.cornell.edu/uscode/text/29/654 (public Cornell LII). [public]. Scope: T18.L01 foundational employer obligation to provide a workplace free from recognized hazards; cited whenever a specific OSHA standard does not directly cover a known hazard (e.g., novel situations not enumerated in 1910.268).
+
+## FHWA / Traffic Control
+
+- **MUTCD 11th Edition (2023), Part 6** — Manual on Uniform Traffic Control Devices, Part 6: Temporary Traffic Control. Authority: FHWA (Federal Highway Administration). URL: https://mutcd.fhwa.dot.gov (public, free PDF) [public FHWA]. Scope: T18.L06 temporary traffic control zone requirements; Chapter 6A general TTC principles; Chapter 6E flagger control (STOP/SLOW paddle, flagger positioning); Table 6C-1 advance warning sign spacing; Class 2/3 hi-vis apparel references. T07 (Staking) and T10 (Construction) roadway-shoulder work zones.
 
 ## FCC / Pole Attachment
 
@@ -97,8 +117,15 @@
 ## ANSI / ICEA
 
 - **ANSI O5.1** — Wood Poles — Specifications and Dimensions
+- **ANSI/ISEA Z89.1-2014 (R2019)** — American National Standard for Industrial Head Protection. Authority: ANSI/ISEA. URL: https://safetyequipment.org (paywalled). [paywalled — secondary citation required]. Secondary paths: OSHA Safety and Health Information Bulletin (SHIB) on safety helmets (osha.gov) + OSHA 29 CFR 1910.268(b) PPE table both confirm Class E = 20,000V / Class G = 2,200V / Class C = no electrical protection. Scope: T18.L05 hard hat electrical-class selection for joint-use pole work; T07 (Staking) and T14 (Grounding) electrical-proximity PPE callouts.
+- **ANSI/ISEA 107** [confirm edition] — High-Visibility Safety Apparel and Headwear. Authority: ANSI/ISEA. URL: https://safetyequipment.org (paywalled). [paywalled — secondary citation required]. Secondary paths: MUTCD Part 6 Chapter 6E (free FHWA PDF) references Class 2 minimum for daytime roadway work; OSHA outreach materials confirm Class 3 for nighttime/high-speed zones. Scope: T18.L05 and T18.L06 hi-vis vest class requirements; T10 (Construction) traffic-zone PPE; T07 (Staking) roadway-shoulder work.
 - **ICEA S-87-640** — Standard for Optical Fiber Outside Plant Communications Cable
 - **ANSI/ATIS-0600336** — Network Equipment-Building System (NEBS) Generic Physical Design Requirements
+
+## ASTM
+
+- **ASTM D120** — Standard Specification for Rubber Insulating Gloves. Authority: ASTM International. URL: https://www.astm.org/d0120-14ae01.html (paywalled). [paywalled — secondary citation required]. Secondary paths: 29 CFR 1910.137 (ecfr.gov, primary OSHA reg) and OSHA eTool on Electric Power (osha.gov/etools/electric-power) both confirm Class 00–4 voltage ratings. Scope: T18.L05 PPG glove class–voltage mapping; T18.L07 MAD discussion; T14 (Grounding) energized-work hand protection.
+- **ASTM F2412 / ASTM F2413** — Standard Test Methods and Standard Specification for Performance Requirements for Protective (Safety) Toe Cap Footwear (EH-rated boots). Authority: ASTM International. URL: https://www.astm.org (paywalled). [paywalled — secondary citation required]. Secondary path: 29 CFR 1910.136 (public eCFR) explicitly references ASTM F2412/F2413 as the required test/performance standard for foot protection. Scope: T18.L05 dielectric/EH-rated boot requirements; T10 (Construction) footing-hazard PPE callouts.
 
 ## IEEE
 
