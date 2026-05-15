@@ -36,7 +36,7 @@ export const meta = {
 };
 
 export const vocabulary_introduced = {
-  'survey stake': 'A wooden or plastic stake driven into the ground at a specific design stationing to mark the planned centerline of an underground utility route. Survey stakes are placed at intervals — typically every 50 to 100 feet on straight runs, at every PI (point of intersection) where the route turns, and at every design stationing that corresponds to a bore pit, pull pit, or conduit change. Survey stakes align the construction crew to the design intent on the ground.',
+  'survey stake': 'A wooden or plastic stake driven into the ground at a specific design stationing to mark the planned centerline of an underground utility route (also called a centerline stake when marking an underground route centerline). Survey stakes are placed at intervals — typically every 50 to 100 feet on straight runs, at every PI (point of intersection) where the route turns, and at every design stationing that corresponds to a bore pit, pull pit, or conduit change. Survey stakes align the construction crew to the design intent on the ground.',
   'offset stake': 'A stake placed perpendicular to the design centerline — typically 5 to 10 feet to the side of the centerline stake — to protect the design alignment reference from being knocked over by equipment during construction. Because construction crews drive heavy machinery along the route, centerline stakes are frequently damaged. Offset stakes survive because they are out of the machinery path; a crew member can re-establish the centerline by measuring back from the offset stake.',
   'flagging': 'Brightly colored plastic ribbon tied to stakes, trees, fence posts, or other fixed objects to make the underground route visible at a distance and in all weather. APWA (American Public Works Association) Uniform Color Code defines standard colors: orange = telecommunications/fiber, yellow = gas, red = electric power, blue = water, white = proposed excavation. Flagging must match the utility type so that other crews doing locate work can correctly identify the route.',
   'bore pit location': 'The surface location — marked with a stake and flagging — where an HDD (horizontal directional drill) machine will set up to begin a directional bore. The bore pit must be sized to accommodate the drill rig, rod racks, mud recycling system, and operator. Minimum clearances from traffic lanes and from overhead utilities are required. The staker verifies the bore pit location against the design plan and marks it clearly with a stake plus directional arrow showing the bore heading.',
@@ -129,8 +129,8 @@ export default function T07L07_UndergroundStakingMarkingTheRoute() {
           cards={[
             {
               id: 'T07-L07-fc-survey',
-              front: 'What is a survey stake in underground staking?',
-              back: 'A wooden or plastic stake driven into the ground at a specific design stationing to mark the planned centerline of an underground utility route. Survey stakes are placed at intervals — typically every 50 to 100 feet on straight runs, at every PI (point of intersection) where the route turns, and at every design stationing that corresponds to a bore pit, pull pit, or conduit change.',
+              front: 'What is a survey stake (also called a centerline stake) in underground staking?',
+              back: 'A wooden or plastic stake driven into the ground at a specific design stationing to mark the planned centerline of an underground utility route. Also called a centerline stake. Survey stakes are placed at intervals — typically every 50 to 100 feet on straight runs, at every PI (point of intersection) where the route turns, and at every design stationing that corresponds to a bore pit, pull pit, or conduit change.',
             },
             {
               id: 'T07-L07-fc-offset',
@@ -297,7 +297,7 @@ export default function T07L07_UndergroundStakingMarkingTheRoute() {
 
             CROSSING THE ROAD:
             - Dashed line showing the HDD bore path underground, with depth annotation
-              "36 in. min. below pavement surface per RUS 1751F-635 §6"
+              "36 in. min. below pavement surface per RUS 1751F-635 §6 [confirm edition]"
             - Two vertical lines showing the existing road edge / ROW boundary
             - Warning: "Existing electric (red paint) — locate within 24 hr before bore"
 
