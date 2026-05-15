@@ -1089,14 +1089,14 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 | T02 | Fiber Physics | General | ✓ LOCKED TEMPLATE + POST-FIX RT GREEN | `31e080e` post-fix; `3915b6a` C-1/C-2 patches |
 | T03 | Cable Selection | General | ✓ COMPLETE — 3 RT verdicts GREEN | author `642ef0c`; 5-patch batch `492b8b9..9c57439`; post-patch RT `035b829` |
 | T04 | Site Survey & Pre-Engineering | General | ✓ AUTHORED + RT + PATCHED | authors `aef6df5..7602966`; RT-A `d8c8f43`; RT-B `2813e1d`; patch `d881484` |
-| T05 | NESC & Pole Loading | General | ✓ 14 LESSONS AUTHORED (L01–L14) — READY FOR RT | Author A `31a81d9..6105c3e`; Author B `e5fa80f..ee27415` |
+| T05 | NESC & Pole Loading | General | ✓ COMPLETE — 3 RT verdicts (RT-A YELLOW, RT-B YELLOW, post-fix GREEN) | Author A `31a81d9..6105c3e`; Author B `e5fa80f..ee27415`; RT-A `70c8542`; RT-B `38ba195` (CRITICAL √2 math); fixes `eaae6ab..30470c6` (5 commits); post-fix RT `c5ba1ec` |
 | T18 | Safety & OSHA | General | ✓ AUTHORED + RT-A + RT-B + FIX | lessons `b51644f..e642a55`; RT-A `ec4c881`; RT-B `44736c3`; fix `96bfd9f` |
 | T06 | OSP Design — Underground | General | ⏳ BRIEF READY | `audit-output/osp-rewrite-curriculum/T06_BRIEF.md` |
 | T07 | Staking | General | ⏳ BRIEF READY | `audit-output/osp-rewrite-curriculum/T07_BRIEF.md` |
 | T08 | Make-Ready & Pole Attachment | General | ⏳ BRIEF READY | `audit-output/osp-rewrite-curriculum/T08_BRIEF.md` |
 | T09–T17, T19–T22 | (general remaining + cert prep) | mixed | ⌛ NOT-STARTED — research brief required | — |
 
-**Next dispatchable work (no contention):** (a) T05 lessons RT pair (pedagogy + technical), (b) T06/T07/T08 author pairs (briefs are ready; different topics → parallel-safe), (c) T09 research brief dispatch (read-only, parallel-safe with anything).
+**Next dispatchable work (no contention):** (a) T06 author pair IN FLIGHT (L01-L06 + L07-L12); (b) T07/T08 author pairs (briefs ready, queued after T06 lands to keep concurrency under throttle); (c) T09 research brief (read-only, parallel-safe with anything; deferred to avoid 3+ concurrent agents).
 
 **T03 pre-existing LOW for future polish:** L11 bend-radius body says 10–20× installation / 10–15× long-term; quiz simplifies to 20× / 10×. Not introduced by patches; tracked in Polish Queue below.
 
@@ -1108,6 +1108,7 @@ Small carryovers that aren't worth a dedicated wave but MUST NOT be forgotten. C
 |---|---|---|---|---|
 | P1 | T03 L11 bend-radius wording mismatch (body 10–20× / 10–15× vs quiz 20× / 10×) | T03 post-patch RT `035b829` | ✓ done `318356d` | Body harmonized to 20×/10× with single aside re ranges in other references. |
 | P2 | T05 brief GPON splitter author note | T05 brief fix `674322d` | ⌛ flagged | Brief tells author "state the range 17–17.5 dB in lesson prose"; ensure T05 lesson author honors when authoring. |
+| P4 | T05 L10 EDS flashcard remains after vocab_introduced→vocab_assumed move | T05 post-fix RT `c5ba1ec` | ⌛ flagged | RT noted EDS Flashcard card lingers in L10 after EDS+RTS moved to vocab_assumed; not a blocker but inconsistent with "definitions live where vocab is introduced" pattern. Polish on next pass. |
 | P3 | T02 L11 TIA-526 edition hardcoded | Old T4 RT-B finding (pre-rewrite) | 🔒 needs user input | Carter must lock TIA-526 edition before fix; `[confirm edition]` marker on the existing reference. |
 
 **Policy going forward:** when discovering a polish item DURING a wave, prefer to fix it in that wave's fix-agent rather than deferring. Only defer when the fix needs separate user input or is genuinely out of scope. Anything deferred → row in this table same turn it's discovered.
