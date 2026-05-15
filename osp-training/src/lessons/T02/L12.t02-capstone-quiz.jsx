@@ -1,0 +1,395 @@
+// Net-new — T02 Capstone Quiz integrating all T02 lessons
+// T02.L12 — T02 Capstone Quiz
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+
+export const meta = {
+  id: 'T02.L12',
+  course_id: 'T02',
+  title: 'T02 Capstone Quiz — Fiber Physics',
+  order: 12,
+  lesson_type: 'capstone-quiz',
+  prerequisites: [
+    'T02.L01', 'T02.L02', 'T02.L03', 'T02.L04',
+    'T02.L05', 'T02.L06', 'T02.L07', 'T02.L08',
+    'T02.L09', 'T02.L10', 'T02.L11',
+  ],
+  vocabulary_introduced: [],
+  vocabulary_assumed: [
+    { term: 'total internal reflection', source_lesson_id: 'T02.L01' },
+    { term: 'core', source_lesson_id: 'T02.L01' },
+    { term: 'cladding', source_lesson_id: 'T02.L01' },
+    { term: 'NA', source_lesson_id: 'T02.L01' },
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'dB/km', source_lesson_id: 'T02.L02' },
+    { term: 'chromatic dispersion', source_lesson_id: 'T02.L03' },
+    { term: 'PMD', source_lesson_id: 'T02.L03' },
+    { term: 'macrobend', source_lesson_id: 'T02.L04' },
+    { term: 'microbend', source_lesson_id: 'T02.L04' },
+    { term: 'dB', source_lesson_id: 'T02.L05' },
+    { term: 'dBm', source_lesson_id: 'T02.L05' },
+    { term: 'link budget', source_lesson_id: 'T02.L06' },
+    { term: 'optical headroom', source_lesson_id: 'T02.L06' },
+    { term: 'wavelength window', source_lesson_id: 'T02.L07' },
+    { term: 'OS2', source_lesson_id: 'T02.L08' },
+    { term: 'OM4', source_lesson_id: 'T02.L08' },
+    { term: 'DGD', source_lesson_id: 'T02.L09' },
+  ],
+  estimated_minutes: 30,
+};
+
+export default function T02L12_CapstoneQuiz() {
+  return (
+    <LessonLayout meta={meta}>
+
+      <section data-tier="foundations">
+        <h2>T02 Capstone — Fiber Physics</h2>
+        <p>
+          This quiz covers all of T02. You should be able to answer every question from
+          the content in T02.L01–L11. If you get stuck, the lesson reference is shown
+          in each explanation so you know where to review.
+        </p>
+        <p className="mt-2">
+          20 questions. Mix of multiple-choice, drag-match, and fill-in-blank. Score ≥ 80%
+          to consider yourself ready to move on to T03 (Cable Selection).
+        </p>
+      </section>
+
+      {/* WORKED EXAMPLE: capstone link budget verification */}
+      <WorkedExample
+        title="Capstone Budget Verification — Before You Start the Quiz"
+        description="Work through this budget first. The quiz will include questions about it. A 22 km OS2 SMF link at 1550 nm: Tx = +4 dBm, Rx sensitivity = −26 dBm, 7 splices, 6 connectors, 3 dB safety margin."
+        variables={[
+          { key: 'tx', label: 'Tx power', units: 'dBm', default: 4, min: -5, max: 10, step: 0.5 },
+          { key: 'rx', label: 'Rx sensitivity', units: 'dBm', default: -26, min: -40, max: -5, step: 0.5 },
+          { key: 'km', label: 'Fiber length', units: 'km', default: 22, min: 1, max: 100, step: 0.5 },
+          { key: 'atten', label: 'Attenuation (planning value)', units: 'dB/km', default: 0.25, min: 0.18, max: 0.40, step: 0.01 },
+          { key: 'splices', label: 'Number of fusion splices', units: '', default: 7, min: 0, max: 50, step: 1 },
+          { key: 'splLoss', label: 'Loss per splice', units: 'dB', default: 0.15, min: 0.05, max: 0.50, step: 0.01 },
+          { key: 'conns', label: 'Number of connector pairs', units: '', default: 6, min: 0, max: 30, step: 1 },
+          { key: 'connLoss', label: 'Loss per connector pair', units: 'dB', default: 0.30, min: 0.10, max: 0.75, step: 0.01 },
+          { key: 'margin', label: 'Safety margin', units: 'dB', default: 3, min: 0, max: 6, step: 0.5 },
+        ]}
+        formula={({ tx, rx, km, atten, splices, splLoss, conns, connLoss, margin }) => {
+          const budget = tx - rx;
+          const totalLoss = km * atten + splices * splLoss + conns * connLoss + margin;
+          return budget - totalLoss;
+        }}
+        steps={({ tx, rx, km, atten, splices, splLoss, conns, connLoss, margin }, headroom) => {
+          const budget = tx - rx;
+          const fiberLoss = km * atten;
+          const spliceLoss = splices * splLoss;
+          const connTotal = conns * connLoss;
+          const totalLoss = fiberLoss + spliceLoss + connTotal + margin;
+          return [
+            { expression: `Budget = Tx − Rx = ${tx} − (${rx}) = ${budget.toFixed(1)} dB` },
+            { expression: `Fiber loss = ${km} km × ${atten} dB/km`, value: fiberLoss, unit: 'dB' },
+            { expression: `Splice loss = ${splices} × ${splLoss} dB`, value: spliceLoss, unit: 'dB' },
+            { expression: `Connector loss = ${conns} × ${connLoss} dB`, value: connTotal, unit: 'dB' },
+            { expression: `Safety margin = ${margin} dB` },
+            { expression: `Total loss = ${fiberLoss.toFixed(2)} + ${spliceLoss.toFixed(2)} + ${connTotal.toFixed(2)} + ${margin} = ${totalLoss.toFixed(2)} dB` },
+            { expression: `Headroom = ${budget} − ${totalLoss.toFixed(2)}`, value: headroom, unit: 'dB' },
+          ];
+        }}
+        sanityCheck={(headroom) =>
+          headroom >= 0
+            ? `Headroom = ${headroom.toFixed(2)} dB — link passes. You have ${headroom.toFixed(2)} dB of reserve above the safety margin.`
+            : `Headroom = ${headroom.toFixed(2)} dB — link FAILS. Total loss exceeds available budget by ${Math.abs(headroom).toFixed(2)} dB. Redesign required.`
+        }
+        resultLabel="Headroom"
+        resultUnit="dB"
+        resultDecimals={2}
+      />
+
+      {/* CAPSTONE QUIZ — 20 questions covering all T02 lessons */}
+      <Quiz
+        title="T02 Capstone Quiz — 20 Questions"
+        mode="multiple-choice"
+        questions={[
+          // L01: TIR, core, cladding, NA
+          {
+            id: 'T02-CAP-Q01',
+            type: 'mc',
+            prompt: 'What physical phenomenon keeps light inside a fiber optic strand and prevents it from leaking through the sides?',
+            choices: [
+              'Electromagnetic shielding from the outer buffer coating',
+              'Total internal reflection at the core-cladding boundary',
+              'Absorption of stray light by the cladding material',
+              'Magnetic alignment of photons along the fiber axis',
+            ],
+            answerIndex: 1,
+            explanation: 'Total internal reflection (TIR) occurs when light hits the core-cladding boundary at an angle shallower than the critical angle. Because the core has a higher index of refraction than the cladding, 100% of the light reflects back into the core. T02.L01.',
+          },
+          // L01: core sizes
+          {
+            id: 'T02-CAP-Q02',
+            type: 'fill-in-blank',
+            prompt: 'The nominal core diameter of standard single-mode fiber (OS2/G.652.D) is approximately ____ micrometers.',
+            answer: '9',
+            answerDisplay: '9 µm (micrometers)',
+            explanation: 'G.652.D SMF has a nominal core diameter of approximately 9 µm — far thinner than a human hair (~70 µm). The cladding diameter is 125 µm for both SMF and standard MMF. T02.L01.',
+          },
+          // L02: attenuation three numbers
+          {
+            id: 'T02-CAP-Q03',
+            type: 'dragdrop',
+            prompt: 'Match each attenuation value to its correct category for G.652.D SMF at 1550 nm.',
+            items: [
+              { id: 'spec', label: '≤ 0.30 dB/km' },
+              { id: 'plan', label: '0.22–0.25 dB/km' },
+              { id: 'typ', label: '≈ 0.18–0.22 dB/km' },
+            ],
+            targets: [
+              { id: 'tspec', label: 'ITU-T G.652.D specification maximum' },
+              { id: 'tplan', label: 'Designer planning value' },
+              { id: 'ttypical', label: 'Typical vendor datasheet value' },
+            ],
+            correctMap: { tspec: 'spec', tplan: 'plan', ttypical: 'typ' },
+            explanation: 'Spec max: ≤ 0.30 dB/km (the boundary for qualifying fiber). Typical datasheet: 0.18–0.22 dB/km (actual production fiber). Planning value: 0.22–0.25 dB/km (slightly above typical, below spec-max). T02.L02.',
+          },
+          // L03: dispersion types
+          {
+            id: 'T02-CAP-Q04',
+            type: 'mc',
+            prompt: 'Chromatic dispersion in G.652.D fiber at 1550 nm is approximately 17 ps/(nm·km). For a 50 km link with a laser spectral width of 0.1 nm, what is the total pulse spreading?',
+            choices: [
+              '17 ps',
+              '85 ps',
+              '170 ps',
+              '850 ps',
+            ],
+            answerIndex: 1,
+            explanation: 'ΔT = D × Δλ × L = 17 × 0.1 × 50 = 85 ps. Chromatic dispersion is linear in both spectral width and length. T02.L03.',
+          },
+          // L03: zero-dispersion wavelength
+          {
+            id: 'T02-CAP-Q05',
+            type: 'mc',
+            prompt: 'Why is 1310 nm considered a "dispersion-friendly" wavelength on G.652.D fiber?',
+            choices: [
+              'Because 1310 nm has the lowest attenuation in G.652.D',
+              'Because 1310 nm is near the zero-dispersion wavelength of G.652.D (~1300–1324 nm), so chromatic dispersion is very low at this wavelength',
+              'Because 1310 nm transceivers are cheaper, which reduces system complexity',
+              'Because 1310 nm is the OTDR standard diagnostic wavelength',
+            ],
+            answerIndex: 1,
+            explanation: 'G.652.D\'s zero-dispersion wavelength (λ₀) falls in the 1300–1324 nm range. At 1310 nm, chromatic dispersion is near zero — almost no pulse spreading occurs, even on long links. This makes 1310 nm forgiving for lower-cost, uncooled DFB transceivers. T02.L03.',
+          },
+          // L04: macrobend
+          {
+            id: 'T02-CAP-Q06',
+            type: 'mc',
+            prompt: 'An OTDR trace shows a discrete 0.6 dB loss event 2 m past a splice case, on fibers 9–12 only. The most likely cause is:',
+            choices: [
+              'A bad fusion splice — the splicer display was wrong',
+              'A macrobend inside the splice case — excess pigtail coiled too tightly around a retaining post on those fibers',
+              'Water intrusion into the splice case through the cable entry port',
+              'A connector fault at the patch panel on the far end of the link',
+            ],
+            answerIndex: 1,
+            explanation: 'A discrete loss event starting exactly 2 m from the splice case, affecting only a subset of fibers, is a classic macrobend inside the splice case. The 2 m offset corresponds to the pigtail length inside the case. Open the case, find the tight coil, and re-route at proper bend radius. T02.L04.',
+          },
+          // L04: 1625 nm macrobend diagnostic
+          {
+            id: 'T02-CAP-Q07',
+            type: 'mc',
+            prompt: 'Why is 1625 nm the preferred wavelength for detecting macrobend loss on an OTDR?',
+            choices: [
+              'Because 1625 nm has the lowest background attenuation in G.652.D fiber',
+              'Because macrobend loss grows with wavelength — bends are exaggerated at 1625 nm vs 1550 nm, making them easier to detect',
+              'Because 1625 nm is the only wavelength that doesn\'t penetrate the cladding',
+              'Because OTDR instruments default to 1625 nm for all single-mode fiber testing',
+            ],
+            answerIndex: 1,
+            explanation: 'Macrobend loss scales with wavelength (it gets worse at longer wavelengths). A bend that adds 0.1 dB at 1550 nm may add 0.3+ dB at 1625 nm, making it clearly visible on the trace. This is why 1625 nm is the diagnostic wavelength for macrobend hunting. T02.L04.',
+          },
+          // L05: dB math
+          {
+            id: 'T02-CAP-Q08',
+            type: 'mc',
+            prompt: 'A fiber link has 9 dB of total loss. What fraction of the original optical power reaches the receiver?',
+            choices: [
+              'One-half (50%)',
+              'One-quarter (25%)',
+              'About one-eighth (12.5%)',
+              'One-tenth (10%)',
+            ],
+            answerIndex: 2,
+            explanation: '9 dB = 3 + 3 + 3 dB = ½ × ½ × ½ = ⅛ of original power. More precisely: 10^(−9/10) = 10^(−0.9) ≈ 0.126 ≈ 12.6%. The "3 dB = half" shortcut applied three times gives the same answer. T02.L05.',
+          },
+          // L05: dBm conversion
+          {
+            id: 'T02-CAP-Q09',
+            type: 'fill-in-blank',
+            prompt: '0 dBm is exactly equal to ____ milliwatt(s).',
+            answer: '1',
+            answerDisplay: '1 mW',
+            explanation: 'dBm is decibels relative to 1 mW. 0 dBm = 10 × log₁₀(1 mW / 1 mW) = 10 × log₁₀(1) = 10 × 0 = 0 dBm. By definition, 0 dBm = 1 mW exactly. T02.L05.',
+          },
+          // L06: link budget
+          {
+            id: 'T02-CAP-Q10',
+            type: 'mc',
+            prompt: 'For the capstone budget scenario (22 km, Tx = +4 dBm, Rx = −26 dBm, 7 splices × 0.15 dB, 6 connectors × 0.30 dB, 0.25 dB/km, 3 dB margin): what is the available budget?',
+            choices: [
+              '22 dB',
+              '30 dB',
+              '26 dB',
+              '4 dB',
+            ],
+            answerIndex: 1,
+            explanation: 'Budget = Tx − Rx = +4 − (−26) = 4 + 26 = 30 dB. The available budget is always Tx power minus Rx sensitivity — converting a negative Rx sensitivity to a positive budget by flipping the sign. T02.L06.',
+          },
+          // L06: headroom calculation
+          {
+            id: 'T02-CAP-Q11',
+            type: 'mc',
+            prompt: 'For the capstone budget scenario: total expected loss = fiber (22 × 0.25 = 5.5 dB) + splices (7 × 0.15 = 1.05 dB) + connectors (6 × 0.30 = 1.80 dB) + margin (3 dB) = 11.35 dB. Headroom = 30 − 11.35 = ?',
+            choices: [
+              '18.65 dB — link passes with excellent headroom',
+              '8.65 dB — link barely passes',
+              '0.65 dB — link passes but barely',
+              '−1.35 dB — link fails',
+            ],
+            answerIndex: 0,
+            explanation: '30 dB budget − 11.35 dB total loss = 18.65 dB headroom. This link passes with very comfortable margin. Over 15 dB headroom means the design is generous — you could use a shorter Tx/Rx power class or longer link. T02.L06.',
+          },
+          // L07: wavelengths
+          {
+            id: 'T02-CAP-Q12',
+            type: 'dragdrop',
+            prompt: 'Match each wavelength to its primary use.',
+            items: [
+              { id: 'w850', label: '850 nm' },
+              { id: 'w1310', label: '1310 nm' },
+              { id: 'w1550', label: '1550 nm' },
+              { id: 'w1625', label: '1625 nm' },
+            ],
+            targets: [
+              { id: 'tmmf', label: 'Multimode short-reach (data center)' },
+              { id: 'tgpon', label: 'GPON upstream / short-reach SMF transceivers' },
+              { id: 'tdwdm', label: 'Long-haul DWDM / minimum attenuation' },
+              { id: 'totdr', label: 'In-service macrobend hunting (OTDR diagnostic)' },
+            ],
+            correctMap: { tmmf: 'w850', tgpon: 'w1310', tdwdm: 'w1550', totdr: 'w1625' },
+            explanation: '850 nm = MMF VCSEL (data center). 1310 nm = O-band, GPON upstream, SMF LR/LX. 1550 nm = C-band, DWDM, minimum loss. 1625 nm = in-service diagnostic wavelength. T02.L07.',
+          },
+          // L07: 1490 nm
+          {
+            id: 'T02-CAP-Q13',
+            type: 'mc',
+            prompt: 'GPON systems carry both upstream and downstream on a single fiber using two wavelengths simultaneously. Upstream (ONT → OLT) uses 1310 nm. What wavelength does GPON use for downstream (OLT → ONT)?',
+            choices: [
+              '1550 nm', '1625 nm', '1490 nm', '850 nm',
+            ],
+            answerIndex: 2,
+            explanation: 'GPON uses 1310 nm upstream and 1490 nm downstream on the same fiber, with WDM filters at each end to separate the signals. A third wavelength (1550 nm) can optionally carry CATV video overlay. T02.L07.',
+          },
+          // L08: SMF vs MMF
+          {
+            id: 'T02-CAP-Q14',
+            type: 'mc',
+            prompt: 'A technician connects an aqua OM4 patch cord to a yellow OS2 SMF port. What is the most likely result?',
+            choices: [
+              'The link works but at reduced speed due to mode conversion',
+              'Massive signal loss (20+ dB) because the 50 µm MMF core does not align efficiently with the 9 µm SMF core',
+              'The link works normally — both have 125 µm cladding diameter',
+              'The OM4 fiber converts to single-mode propagation automatically',
+            ],
+            answerIndex: 1,
+            explanation: 'Connecting MMF to SMF (or vice versa) results in catastrophic loss at the interface. The 9 µm SMF core is far smaller than the 50 µm MMF core — most of the light from the MMF misses the SMF core entirely. Result: typically 20–30 dB of interface loss. T02.L08.',
+          },
+          // L08: OM ratings
+          {
+            id: 'T02-CAP-Q15',
+            type: 'mc',
+            prompt: 'You need to cable a 350 m 10GbE link between two data center buildings. Which fiber is the minimum specification that supports this without active electronics in the middle?',
+            choices: [
+              'OM2 (supports 82 m at 10GbE)',
+              'OM3 (supports 300 m at 10GbE — falls short at 350 m)',
+              'OM4 (supports 400 m at 10GbE)',
+              'OS2 SMF (supports unlimited distance for this application)',
+            ],
+            answerIndex: 2,
+            explanation: 'OM3 at 10GbE is rated to 300 m — 50 m short of the 350 m requirement. OM4 extends to 400 m. OS2 SMF would also work but is overkill for a 350 m link and requires higher-cost SMF transceivers. OM4 is the minimum spec that meets the distance requirement. T02.L08.',
+          },
+          // L09: PMD
+          {
+            id: 'T02-CAP-Q16',
+            type: 'mc',
+            prompt: 'A 250 km G.652.D link has a PMD coefficient of 0.15 ps/√km. What is the rms DGD?',
+            choices: [
+              '0.15 ps', '2.37 ps', '37.5 ps', '0.0095 ps',
+            ],
+            answerIndex: 1,
+            explanation: 'DGD_rms = PMD_coeff × √L = 0.15 × √250 = 0.15 × 15.81 = 2.37 ps. PMD scales with √L (random walk), not L. At 40 Gb/s, a 2.5 ps DGD limit applies — 2.37 ps is close but within spec for well-controlled G.652.D fiber. T02.L09.',
+          },
+          // L10: characterization
+          {
+            id: 'T02-CAP-Q17',
+            type: 'mc',
+            prompt: 'A carrier plans to upgrade an existing 120 km fiber route from 2.5 Gb/s to 40 Gb/s. Which additional test is most important before approving the upgrade?',
+            choices: [
+              'Standard OTDR acceptance test at 1310 nm',
+              'End-face connector inspection with IEC 61300-3-35 scope',
+              'PMD measurement on the installed route — at 40 Gb/s, the PMD limit is ~2.5 ps, and installed pre-G.652.D fiber may exceed this',
+              'Attenuation cut-back test on all cable reels',
+            ],
+            answerIndex: 2,
+            explanation: 'At 2.5 Gb/s, PMD is essentially never limiting. At 40 Gb/s, the DGD limit is ~2.5 ps. Older fiber (pre-G.652.D) may have PMD coefficients of 0.5–2 ps/√km — at 120 km, that could be 5–22 ps DGD, well above the limit. PMD characterization is the critical test for this upgrade decision. T02.L10.',
+          },
+          // L11: troubleshooting
+          {
+            id: 'T02-CAP-Q18',
+            type: 'mc',
+            prompt: 'An OTDR shows an unexpected 0.4 dB event at a connector pair in a new installation. What should the technician do FIRST?',
+            choices: [
+              'Replace the connector immediately',
+              'Clean and re-inspect the connector end-face, then re-run the OTDR',
+              'Request a factory-tested replacement cable',
+              'Accept the result — 0.4 dB is within TIA-568 spec max of 0.75 dB',
+            ],
+            answerIndex: 1,
+            explanation: 'Contaminated connector end-faces are the most common cause of unexpected connector loss. Before any physical repair, clean the end-face with a proper dry + wet method and inspect with a compliant scope. Most 0.4 dB "connector events" disappear after cleaning. Replacing connectors without cleaning first is wasted time and money. T02.L11.',
+          },
+          // L02: field practice
+          {
+            id: 'T02-CAP-Q19',
+            type: 'mc',
+            prompt: 'A spec sheet says "TIA-568 compliant" for patch cords without specifying a revision letter or connector grade. Why is this insufficient for link budget planning?',
+            choices: [
+              'Because TIA-568 only covers copper cabling, not fiber',
+              'Because TIA-568 connector loss values have changed across revisions and now distinguish between connector grades — "TIA-568 compliant" without revision and grade is too ambiguous to use as a planning value',
+              'Because TIA-568 prohibits use of patch cords in OSP applications',
+              'Because all TIA-568 connectors have exactly 0.75 dB loss regardless of grade',
+            ],
+            answerIndex: 1,
+            explanation: 'TIA-568.3-D [confirm edition] introduced reference-grade connector categories with significantly tighter loss specs than the legacy 0.75 dB max. "TIA-568 compliant" without specifying revision and grade could mean anywhere from 0.30 dB to 0.75 dB per mated pair — a factor of 2.5 difference that materially affects link budgets. T02.L02.',
+          },
+          // Integrated: choose correct answer from multiple lessons
+          {
+            id: 'T02-CAP-Q20',
+            type: 'mc',
+            prompt: 'Which set of statements about single-mode fiber (OS2/G.652.D) is entirely correct?',
+            choices: [
+              'Core = 50 µm, cladding = 125 µm, used for data center runs, attenuation ≤ 0.30 dB/km @ 1550 nm',
+              'Core ≈ 9 µm, cladding = 125 µm, zero modal dispersion, attenuation ≤ 0.30 dB/km @ 1550 nm, used for OSP long-haul',
+              'Core ≈ 9 µm, cladding = 50 µm, used for FTTH only, attenuation = 0.18 dB/km @ 1550 nm always',
+              'Core = 62.5 µm, cladding = 125 µm, used for any distance over 100 m, laser-optimized',
+            ],
+            answerIndex: 1,
+            explanation: 'G.652.D OS2 SMF: core ≈ 9 µm, cladding = 125 µm. Single-mode = zero modal dispersion. Attenuation spec max ≤ 0.30 dB/km @ 1550 nm (typical is 0.18–0.22 dB/km). Used for all OSP long-distance applications. 50 µm core is OM3/OM4 multimode. 62.5 µm is OM1/OM2. Cladding is always 125 µm for standard fiber regardless of type. T02.L01, T02.L02, T02.L08.',
+          },
+        ]}
+        onComplete={(result) => {
+          // Progress saved via useProgress hook in LessonLayout
+          console.info('T02 Capstone complete:', result);
+        }}
+      />
+
+    </LessonLayout>
+  );
+}
