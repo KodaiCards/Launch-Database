@@ -1092,12 +1092,16 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 | T04 | Site Survey & Pre-Engineering | General | ✓ AUTHORED + RT + PATCHED | authors `aef6df5..7602966`; RT-A `d8c8f43`; RT-B `2813e1d`; patch `d881484` |
 | T05 | NESC & Pole Loading | General | ✓ COMPLETE — 3 RT verdicts (RT-A YELLOW, RT-B YELLOW, post-fix GREEN) | Author A `31a81d9..6105c3e`; Author B `e5fa80f..ee27415`; RT-A `70c8542`; RT-B `38ba195` (CRITICAL √2 math); fixes `eaae6ab..30470c6` (5 commits); post-fix RT `c5ba1ec` |
 | T18 | Safety & OSHA | General | ✓ AUTHORED + RT-A + RT-B + FIX | lessons `b51644f..e642a55`; RT-A `ec4c881`; RT-B `44736c3`; fix `96bfd9f` |
-| T06 | OSP Design — Underground | General | ✓ 12 LESSONS AUTHORED — READY FOR RT | Author A `8fd5171..3feb7aa` (L01-L06); Author B `6471a5f..ffe5a2a` (L07-L12); build clean (✓ 4.12s, 163+ modules) |
-| T07 | Staking | General | ⏳ BRIEF READY | `audit-output/osp-rewrite-curriculum/T07_BRIEF.md` |
-| T08 | Make-Ready & Pole Attachment | General | ⏳ BRIEF READY | `audit-output/osp-rewrite-curriculum/T08_BRIEF.md` |
-| T09–T17, T19–T22 | (general remaining + cert prep) | mixed | ⌛ NOT-STARTED — research brief required | — |
+| T06 | OSP Design — Underground | General | ⏳ AUTHORED + RT-A YELLOW + RT-B YELLOW + FIX APPLIED — post-fix RT pending | Authors `8fd5171..ffe5a2a`; RT-A `28baf04` (HIGH-1 quiz fields + HIGH-2 burial); RT-B `a66ef8c` (HIGH burial + MED citation); fix `26d0633..be5bb9a` + L01 completion `aea74ec` |
+| T07 | Staking | General | ✓ 10 LESSONS AUTHORED — READY FOR RT PAIR | Author A `caef4b0..d7cacee` (L01-L05); Author B `95a42e9..c642991` (L06-L10); build clean |
+| T08 | Make-Ready & Pole Attachment | General | ✓ 12 LESSONS AUTHORED — READY FOR RT PAIR | Author A `ec9c314..fe20f6e` (L01-L06); Author B `8c95394..9398a33` (L07-L11) + L12 salvage `70a8a33`; build clean |
+| T09 | Permitting & Environmental | General | ✓ BRIEF LANDED — ready for author dispatch | `audit-output/osp-rewrite-curriculum/T09_BRIEF.md` — brief `6950a94` |
+| T14 | Bonding, Grounding & Electrical Protection | General | ✓ BRIEF LANDED (re-baseline after rogue agent) — ready for author dispatch | `audit-output/osp-rewrite-curriculum/T14_BRIEF.md` — brief `4e087d6` |
+| T10–T13, T15–T17, T19–T22 | (general remaining + cert prep) | mixed | ⌛ NOT-STARTED — research brief required | — |
 
-**Next dispatchable work:** (a) T06 lessons RT pair (pedagogy + technical) — IN FLIGHT; (b) T07/T08 author pairs queued after T06 RT lands; (c) T09 research brief still queued.
+**Sprint summary (2026-05-15 evening, post-cap-reset reconciliation):** Pushed hard with 7+ concurrent agents; T07 and T08 author pairs both landed cleanly (22 new lessons); T06 had 2 RT verdicts (both YELLOW) + fix-agent applied 7 canonical findings cleanly; T09 + T14 research briefs landed (T14 = clean re-baseline after the earlier rogue-agent revert). Usage cap hit mid-sprint — 4 dead-agent artifacts (T06 L01 fix completion, T08 L12 capstone, T09 brief, T14 brief) salvaged from working tree and committed at `aea74ec..4e087d6`. Going back to default single-agent throttle.
+
+**Next dispatchable work:** (a) T06 post-fix RT — IN FLIGHT (sprint-closer); (b) T07 RT pair (default-mode); (c) T08 RT pair (default-mode); (d) T09 author dispatch (default-mode, after T07/T08 RT clean); (e) T14 author dispatch (gated on prerequisites — T14 prereqs likely include T06 which needs post-fix RT GREEN first).
 
 **T03 pre-existing LOW for future polish:** L11 bend-radius body says 10–20× installation / 10–15× long-term; quiz simplifies to 20× / 10×. Not introduced by patches; tracked in Polish Queue below.
 
