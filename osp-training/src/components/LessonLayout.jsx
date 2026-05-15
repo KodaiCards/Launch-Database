@@ -124,7 +124,7 @@ function PrereqStrip({ prerequisites, courseId }) {
           <React.Fragment key={prereqId}>
             {idx > 0 && <span className="text-slate-500 mx-1">·</span>}
             <Link
-              to={`/training/course/${topicId}/lesson/${String(Number(lessonId)).padStart(2, '0')}`}
+              to={`/course/${topicId}/lesson/${String(Number(lessonId)).padStart(2, '0')}`}
               className="font-mono text-amber-300/90 hover:text-amber-200 underline decoration-dotted"
             >
               {prereqId}
@@ -213,7 +213,7 @@ export function LessonLayout({ meta, children }) {
 
   // "Next lesson" link: same topic, order + 1
   const nextOrder = (meta.order || 1) + 1;
-  const nextLessonPath = `/training/course/${backCourseId}/lesson/${String(nextOrder).padStart(2, '0')}`;
+  const nextLessonPath = `/course/${backCourseId}/lesson/${String(nextOrder).padStart(2, '0')}`;
 
   return (
     <article className="space-y-0">
@@ -249,7 +249,7 @@ export function LessonLayout({ meta, children }) {
       {/* ── Footer nav ─────────────────────────────────────────────── */}
       <footer className="panel mt-4 flex items-center justify-between gap-4">
         <Link
-          to={`/training/course/${backCourseId}`}
+          to={`/course/${backCourseId}`}
           className="text-sm text-slate-300 hover:text-amber-200 transition"
         >
           ← Back to course

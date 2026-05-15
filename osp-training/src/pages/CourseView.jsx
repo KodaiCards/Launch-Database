@@ -35,7 +35,7 @@ export default function CourseView() {
     return (
       <div className="panel text-rose-300">
         Course <span className="font-mono">{courseId}</span> not found in catalog.{' '}
-        <Link to="/training/" className="underline text-amber-300">Back to courses</Link>
+        <Link to="/" className="underline text-amber-300">Back to courses</Link>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function CourseView() {
       lessonId,
       status: entry?.status || 'not_started',
       bestScore: entry?.best_score ?? null,
-      path: `/training/course/${courseId}/lesson/${String(order).padStart(2, '0')}`,
+      path: `/course/${courseId}/lesson/${String(order).padStart(2, '0')}`,
     };
   });
 
@@ -64,7 +64,7 @@ export default function CourseView() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-              <Link to="/training/" className="hover:text-amber-300 transition">All courses</Link>
+              <Link to="/" className="hover:text-amber-300 transition">All courses</Link>
               {' → '}
               <span className="font-mono">{courseId}</span>
             </div>
@@ -148,7 +148,7 @@ export default function CourseView() {
 
       {/* ── Back link ─────────────────────────────────────────────── */}
       <div className="text-sm">
-        <Link to="/training/" className="text-slate-400 hover:text-amber-300 transition">
+        <Link to="/" className="text-slate-400 hover:text-amber-300 transition">
           ← All courses
         </Link>
       </div>

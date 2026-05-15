@@ -10,9 +10,13 @@
  * "Lesson not yet authored" placeholder.
  */
 
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { lessonFileIndex } from '../data/course-catalog.js';
+
+// Vite processes this glob at build time, producing code-split chunks for every
+// lesson file. Browser never resolves a runtime-relative path — Vite handles it.
+const lessonModules = import.meta.glob('../lessons/**/*.jsx');
 
 // ── Loading skeleton ────────────────────────────────────────────────────────
 function LessonSkeleton() {
@@ -42,9 +46,9 @@ function LessonPlaceholder({ courseId, lessonOrder }) {
     <div className="space-y-4">
       <div className="panel">
         <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-          <Link to="/training/" className="hover:text-amber-300 transition">All courses</Link>
+          <Link to="/" className="hover:text-amber-300 transition">All courses</Link>
           {' → '}
-          <Link to={`/training/course/${courseId}`} className="hover:text-amber-300 transition font-mono">{courseId}</Link>
+          <Link to={`/course/${courseId}`} className="hover:text-amber-300 transition font-mono">{courseId}</Link>
           {' → '}
           <span className="font-mono">Lesson {lessonOrder}</span>
         </div>
@@ -61,13 +65,13 @@ function LessonPlaceholder({ courseId, lessonOrder }) {
         </p>
         <div className="mt-6 flex justify-center gap-4">
           <Link
-            to={`/training/course/${courseId}`}
+            to={`/course/${courseId}`}
             className="text-sm text-amber-300 hover:text-amber-100 transition"
           >
             ← Back to course
           </Link>
           <Link
-            to="/training/"
+            to="/"
             className="text-sm text-slate-400 hover:text-amber-300 transition"
           >
             All courses
@@ -90,7 +94,9 @@ export default function LessonRouter() {
     setNotFound(false);
     setLessonComponent(null);
 
-    // Look up the lesson file path from the catalog index
+    // Look up the lesson file path from the catalog index.
+    // Keys are relative to src/data/ (e.g. "../lessons/T02/L01.fiber-vocabulary.jsx")
+    // which also matches the glob keys produced by import.meta.glob above.
     const key = `${courseId}.L${String(lessonOrder).padStart(2, '0')}`;
     const filePath = lessonFileIndex[key];
 
@@ -100,9 +106,16 @@ export default function LessonRouter() {
       return;
     }
 
-    // Dynamic import — Vite resolves this at build time using the glob import
-    // All lesson files must live under src/lessons/ for this to work.
-    import(/* @vite-ignore */ filePath)
+    // Resolve using the build-time glob map. Vite produces a loader function per
+    // matched file — calling it returns a Promise<module> with proper code splitting.
+    const loader = lessonModules[filePath];
+    if (!loader) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    loader()
       .then(mod => {
         if (mod.default) {
           setLessonComponent(() => mod.default);

@@ -26,7 +26,7 @@ export default function CertTrack() {
     return (
       <div className="panel text-rose-300">
         Cert track <span className="font-mono">{certId}</span> not found.{' '}
-        <Link to="/training/" className="underline text-amber-300">Back to courses</Link>
+        <Link to="/" className="underline text-amber-300">Back to courses</Link>
       </div>
     );
   }
@@ -42,7 +42,7 @@ export default function CertTrack() {
       order,
       lessonId,
       status: entry?.status || 'not_started',
-      path: `/training/course/${certId}/lesson/${String(order).padStart(2, '0')}`,
+      path: `/course/${certId}/lesson/${String(order).padStart(2, '0')}`,
     };
   });
 
@@ -82,7 +82,7 @@ export default function CertTrack() {
             {track.required_topics.map((tid, i) => (
               <React.Fragment key={tid}>
                 {i > 0 && <span className="text-slate-600 mx-1">·</span>}
-                <Link to={`/training/course/${tid}`} className="font-mono text-amber-300/80 hover:text-amber-200">
+                <Link to={`/course/${tid}`} className="font-mono text-amber-300/80 hover:text-amber-200">
                   {tid}
                 </Link>
               </React.Fragment>
@@ -148,7 +148,7 @@ export default function CertTrack() {
       </div>
 
       <div className="text-sm">
-        <Link to="/training/" className="text-slate-400 hover:text-amber-300 transition">
+        <Link to="/" className="text-slate-400 hover:text-amber-300 transition">
           ← All courses
         </Link>
       </div>

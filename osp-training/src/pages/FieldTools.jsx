@@ -80,7 +80,7 @@ export default function FieldTools() {
       {/* ── Page header ───────────────────────────────────────────── */}
       <header className="panel">
         <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-          <Link to="/training/" className="hover:text-amber-300 transition">All courses</Link>
+          <Link to="/" className="hover:text-amber-300 transition">All courses</Link>
           {' → '}
           Field Tools
         </div>

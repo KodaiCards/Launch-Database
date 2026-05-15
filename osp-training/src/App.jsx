@@ -88,8 +88,8 @@ function NewAppLayout() {
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const navLinks = [
-    { to: '/training/', exact: true, label: 'All Courses' },
-    { to: '/training/tools', label: 'Field Tools' },
+    { to: '/', exact: true, label: 'All Courses' },
+    { to: '/tools', label: 'Field Tools' },
   ];
 
   return (
@@ -101,7 +101,7 @@ function NewAppLayout() {
             <div className="text-xs uppercase tracking-widest text-amber-300/80">
               Launch Fiber Services · OSP Training
             </div>
-            <Link to="/training/" className="text-lg font-semibold hover:text-amber-200 transition">
+            <Link to="/" className="text-lg font-semibold hover:text-amber-200 transition">
               BICSI OSP · RCDD · FOA CFOS
             </Link>
           </div>
@@ -111,7 +111,7 @@ function NewAppLayout() {
               <NavLink
                 key={to}
                 to={to}
-                end={to === '/training/'}
+                end={to === '/'}
                 className={({ isActive: active }) =>
                   [
                     'text-sm transition px-3 py-1 rounded-md',
@@ -132,19 +132,19 @@ function NewAppLayout() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
         <Routes>
           {/* Splash — course catalog */}
-          <Route path="/training/" element={<Splash />} />
+          <Route path="/" element={<Splash />} />
 
           {/* Field Tools sandbox */}
-          <Route path="/training/tools" element={<FieldTools />} />
+          <Route path="/tools" element={<FieldTools />} />
 
           {/* Cert track */}
-          <Route path="/training/cert/:certId" element={<CertTrack />} />
+          <Route path="/cert/:certId" element={<CertTrack />} />
 
           {/* Course view */}
-          <Route path="/training/course/:courseId" element={<CourseView />} />
+          <Route path="/course/:courseId" element={<CourseView />} />
 
           {/* Lesson */}
-          <Route path="/training/course/:courseId/lesson/:lessonOrder" element={<LessonRouter />} />
+          <Route path="/course/:courseId/lesson/:lessonOrder" element={<LessonRouter />} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

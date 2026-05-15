@@ -51,7 +51,7 @@ function CourseTile({ course, progressPct }) {
 
   return (
     <Link
-      to={`/training/course/${course.id}`}
+      to={`/course/${course.id}`}
       className={[
         'block panel hover:ring-1 hover:ring-amber-400/40 transition group',
         completed ? 'border-green-500/30' : '',
@@ -103,7 +103,7 @@ function CertTile({ track, progressPct }) {
 
   return (
     <Link
-      to={`/training/cert/${track.id}`}
+      to={`/cert/${track.id}`}
       className={[
         'block panel hover:ring-1 hover:ring-purple-400/40 transition group',
         completed ? 'border-green-500/30' : 'border-purple-500/20',
