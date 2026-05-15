@@ -19,11 +19,10 @@ T05 sits at teaching position 7 in the topological sort:
 
 **From T02 (AVAILABLE — all 12 lessons authored):** wavelength, attenuation (dB/km), MFD, macrobend, microbend, dB/dBm, link budget, G.652.D (full physics), G.657.A1 (bend-insensitive), SMF, MMF, OM3/OM4/OM5, OS2, dispersion (CD/PMD), total internal reflection, NA, critical angle
 
-**From T03 (PARTIALLY AVAILABLE — 9 of 12 lessons authored at time of writing; L10–L12 pending):**
-- AVAILABLE: loose-tube, ribbon, ADSS (introduced T03.L04 + T03.L09), messenger (as steel strand), RUS-listed, bend radius, EDS (everyday stress), RTS (rated tensile strength), ICEA S-87-640, flooding compound, water-blocking tape, dry-block, CST, interlocked armor, figure-8 cable, OFNR, OFNP
-- PENDING (T03.L10–L12): ICEA S-87-640 at standards-detail level, TIA-598-D color codes, fill ratio, dark fiber, growth margin, pulling tension (detailed calculation)
+**From T03 (FULLY AVAILABLE — all 12 lessons authored and in HEAD as of RT-A verification):**
+- loose-tube, ribbon, ADSS (introduced T03.L04 + T03.L09), messenger (as steel strand), RUS-listed, bend radius, EDS (everyday stress), RTS (rated tensile strength), ICEA S-87-640, flooding compound, water-blocking tape, dry-block, CST, interlocked armor, figure-8 cable, OFNR, OFNP, TIA-598-D color codes, fill ratio, dark fiber, growth margin, pulling tension (detailed calculation)
 
-> **DAG annotation for T05 authors:** T05.L10 (ADSS Aerial Design) requires ADSS sag + tension concepts first introduced in T03.L09 (ADSS Span Wind Ice Loading). Confirm T03.L09 is merged to HEAD before dispatching T05.L10 authoring. If T03.L10–L12 are not yet landed, T05 lessons that need pulling tension or fill ratio must formally introduce those terms or wait. Check `git log` on T03/ directory before starting T05 authoring wave.
+> **DAG annotation for T05 authors:** T05.L10 (ADSS Aerial Design) requires ADSS sag + tension concepts first introduced in T03.L09 (ADSS Span Wind Ice Loading). T03.L09 is confirmed in HEAD — T05.L10 dispatch is unblocked. All T03 vocabulary (L01–L12) is available; no T05 lesson is blocked by T03.
 
 **From T04 (AVAILABLE — brief complete, authoring pending):** landbase, LiDAR, RTK GNSS, photogrammetry, planimetric, GSD, KMZ, shapefile, geodatabase, pole audit, attachment height, existing occupancy, make-ready flag, route alternatives, 811/One-Call, ROW, easement, encroachment, fee-simple, license, 47 CFR 32, as-surveyed, design constraints, RUS Form 740c
 
@@ -671,7 +670,7 @@ Include at least 3 WorkedExample verify questions where the learner completes a 
 |---|---|---|
 | T01 (all 10 lessons) | ✓ AVAILABLE | No action needed |
 | T02 (all 12 lessons) | ✓ AVAILABLE | No action needed |
-| T03 (L01–L09 authored, L10–L12 pending) | ⏳ PARTIAL | T05 lessons that need T03.L09 ADSS content: confirm T03.L09 in HEAD before T05.L10. T05 lessons that need T03.L10–L12: check before dispatch; see notes under each lesson. |
+| T03 (all 12 lessons authored — L01–L12 in HEAD) | ✓ FULLY AVAILABLE | No action needed. T03.L09 ADSS content confirmed in HEAD (per RT-A DAG check). No T05 lesson is blocked by T03. |
 | T04 (brief done, authoring NOT yet dispatched) | ⌛ PENDING | T05.L13, T05.L14 reference T04 vocabulary. Authors must: (a) wait for T04 to land before dispatching L13/L14, OR (b) re-introduce T04 terms in L13/L14 bodies. Flag this explicitly in author prompt. |
 | T09 (Permitting — brief not yet written) | ⌛ NOT STARTED | T05.L13 references permit tracking. T09 vocabulary is not available to T05 authors. L13 should cross-reference T09 as "coming in T09" rather than assuming knowledge. |
 | T18 (Safety — brief not yet written) | ⌛ NOT STARTED | T05 lessons near energized conductors (L03 Rule 235 context, L08 joint-use safety) should note MAD/MAB will be covered in T18. Do NOT introduce MAD/MAB values in T05 — those belong in T18. |
