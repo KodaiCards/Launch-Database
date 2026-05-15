@@ -41,7 +41,7 @@ Option C's only cost is migration complexity. This is manageable: JSX prose + in
 | Teaching # | Topic ID | Topic | Scope | Est. lessons | DAG prereqs (Topic IDs) | Anchor standards | Category |
 |---|---|---|---|---|---|---|---|
 | 1 | T01 | Fundamentals & Vocabulary | Defines the OSP universe: what OSP vs. ISP means, parts of a pole, parts of a cable, splice-case anatomy, project lifecycle from survey to as-built. Every downstream lesson assumes this vocabulary. | 10 | none | RUS 1751F-630 §1; FOA CFOT KSAs | general |
-| 2 | T18 | Safety & OSHA | OSHA 1910.268 (Telecom), 1910.269 (Power), 1910.146 (Confined Space/manholes), 1910.147 (LOTO), fall protection, PPE, PPG glove classes, traffic control, MAD/MAB awareness. Taught immediately after vocabulary so every field-touching lesson can reference it. | 10 | T01 | OSHA 1910.268, 1910.146, 1910.147; ANSI Z89.2; MUTCD | general |
+| 2 | T18 | Safety & OSHA | OSHA 1910.268 (Telecom), 1910.269 (Power), 1910.146 (Confined Space/manholes), 1910.147 (LOTO), fall protection, PPE, PPG glove classes, traffic control, MAD/MAB awareness. Taught immediately after vocabulary so every field-touching lesson can reference it. | 10 | T01 | OSHA 1910.268, 1910.146, 1910.147; ANSI Z89.1; MUTCD | general |
 | 3 | T02 | Fiber Physics | Why light travels in glass, attenuation, dispersion, macrobend/microbend, decibels, link budgets, wavelength windows used in OSP. | 12 | T01 | ITU-T G.652/G.657; TIA-568.3-D; FOA Reference | general |
 | 4 | T03 | Cable Selection & Materials | Loose-tube vs. ribbon vs. rollable-ribbon, OSP-rated jackets, armor types, messenger options, RUS-listed materials, fiber-count selection, pulling tension and bend-radius specs that drive product choice. | 12 | T01, T02 | RUS 1753F-201; ICEA S-87-640; TIA-598-D | general |
 | 5 | T04 | Route Survey & Pre-Engineering | Site walks, drone/LiDAR capture, GIS landbase creation, pole audits, existing-utility identification, route-alternatives analysis, the deliverables that hand off to design. | 10 | T01, T18 | Industry practice (Datafield, Katapult, Osmose); 47 CFR 32 | general |
@@ -104,7 +104,7 @@ T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → T14 → T07 → 
 | Topic | Terms introduced | Terms assumed (from prior topics) |
 |---|---|---|
 | T01 | OSP, ISP, span, attachment, sag, midspan, sheath, buffer tube, drop, headend, OLT, ONT, FDH | none |
-| T18 | LOTO, confined space, PPG glove class, MAD/MAB, Z89.2 hard hat, MUTCD, SDS, OSHA 1910.268, permit-required confined space, atmospheric testing | T01 vocab |
+| T18 | LOTO, confined space, PPG glove class, MAD/MAB, Z89.1 hard hat, MUTCD, SDS, OSHA 1910.268, permit-required confined space, atmospheric testing | T01 vocab |
 | T02 | wavelength, attenuation (dB/km), dispersion (CD/PMD), MFD, macrobend, microbend, dB/dBm, link budget, OSNR, G.652.D, G.657.A1 | T01 vocab |
 | T03 | loose-tube, ribbon, rollable ribbon, armor, dielectric, ADSS, RUS-listed, ICEA S-87-640, bend radius, pulling tension | T01, T02 vocab |
 | T04 | landbase, LiDAR, RTK GNSS, photogrammetry, planimetric, KMZ, pole audit, attachment height, midspan clearance, route alternatives | T01, T18 vocab |
@@ -160,7 +160,7 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T18.L02 | Lockout/Tagout (LOTO) — 1910.147 | working | LOTO, energy isolation, lock, tag, verify | 25 | BranchingScenario (LOTO sequence) | net-new |
 | T18.L03 | Confined Space Entry — Manholes | working | permit-required confined space, atmospheric testing, attendant, rescue plan | 30 | AnnotatedDiagram (manhole entry setup); Quiz | net-new |
 | T18.L04 | Fall Protection — Poles and Aerial Lifts | working | lanyard, self-retracting lifeline, bucket truck, 100% tie-off | 25 | Quiz (MC) | net-new |
-| T18.L05 | PPE Selection — Hands, Head, Eyes, Feet | foundation | PPG glove class (00/0/1/2), ANSI Z89.2, dielectric boots | 20 | AnnotatedDiagram (PPE chart) | net-new |
+| T18.L05 | PPE Selection — Hands, Head, Eyes, Feet | foundation | PPG glove class (00/0/1/2), ANSI Z89.1, dielectric boots | 20 | AnnotatedDiagram (PPE chart) | net-new |
 | T18.L06 | Traffic Control — MUTCD Basics | working | MUTCD, TCP, flagger certification, work zone setup | 25 | BranchingScenario (work zone setup) | net-new |
 | T18.L07 | Working Near Energized Conductors | working | MAD/MAB, approach distance table, NESC §9, 1910.269 | 25 | WorkedExample (MAD calc for voltage class); Quiz | net-new |
 | T18.L08 | Hazardous Materials on an OSP Job | working | SDS, fill-gel exposure, HDPE fumes, silica dust | 20 | Quiz (MC) | net-new |
