@@ -193,10 +193,12 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book:</strong> RUS 1751F-635 specifies minimum cover depths for buried
-            conduit — 18 inches minimum in non-traffic residential, 24 inches under
-            driveways, 36 inches under roads. The pilot bore profile must honor these depths
-            at every point.
+            <strong>Book:</strong> RUS 1751F-635 §6 specifies minimum cover depths for buried
+            conduit — 24 inches minimum in non-traffic residential areas, 36 inches under
+            roads and traffic-bearing surfaces. (NEC §830.47(A) specifies 18 inches as a
+            separate floor for network-powered broadband cable specifically — not for general
+            fiber conduit, and lower than the RUS standard which governs on RUS-funded projects.)
+            The pilot bore profile must honor the applicable RUS depths at every point.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> Experienced bore crews run pilot bores 6–12 inches deeper
