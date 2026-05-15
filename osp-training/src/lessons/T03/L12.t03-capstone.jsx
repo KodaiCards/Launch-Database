@@ -102,8 +102,9 @@ export default function T03L12_CapstoneQuiz() {
             `activity, and (3) a building entry and 100-ft riser run inside a hospital ` +
             `communications room. Make the right cable selection at each decision point.`
           }
-          states={[
-            {
+          startNodeId="start"
+          nodes={{
+            'start': {
               id: 'start',
               prompt:
                 'Segment 1 — Aerial span: 250 ft between poles, residential neighborhood. ' +
@@ -111,229 +112,156 @@ export default function T03L12_CapstoneQuiz() {
               choices: [
                 {
                   label: 'ADSS all-dielectric — no metal components, no bonding required at each pole',
-                  next: 'aerial-correct',
+                  consequence:
+                    'Correct. ADSS is ideal here — no metal components means no bonding at each pole, ' +
+                    'simplified permitting on joint-use poles, and no risk of induced voltage on the fiber strand. ' +
+                    'At 250 ft and 96F, ADSS is well within standard span length capability.',
+                  nextId: 'burial-question',
+                  isOptimal: true,
                 },
                 {
                   label: 'Lashed OSP cable + galvanized steel messenger — standard aerial method',
-                  next: 'aerial-lashed',
+                  consequence:
+                    'Lashed + messenger works, but on joint-use poles with electric utility infrastructure, ' +
+                    'you now have a galvanized steel messenger that must be bonded and grounded at every pole. ' +
+                    'This adds bonding hardware cost and permitting complexity. On a joint-use route, ADSS ' +
+                    'is the preferred choice precisely to avoid metallic infrastructure near energized conductors. ' +
+                    'Lashed OSP with separate messenger is a legitimate choice on routes without joint-use complications — ' +
+                    'but for this scenario, ADSS is preferred.',
+                  nextId: 'burial-question',
                 },
                 {
                   label: 'Armored OSP direct-burial cable lashed to the electric utility messenger',
-                  next: 'aerial-wrong',
+                  consequence:
+                    'Armored direct-burial cable is NOT the right choice for an aerial span. ' +
+                    'Direct-burial cable lacks the tensile strength members needed for aerial self-support, ' +
+                    'and lashing it to the utility messenger violates NESC clearance rules for fiber attached ' +
+                    'to a power utility strand.',
+                  nextId: 'start',
                 },
               ],
             },
-            {
-              id: 'aerial-correct',
+            'burial-question': {
+              id: 'burial-question',
               prompt:
-                'Correct. ADSS is ideal here — no metal components means no bonding at each pole, ' +
-                'simplified permitting on joint-use poles, and no risk of induced voltage on the fiber strand. ' +
-                'At 250 ft and 96F, ADSS is well within standard span length capability. ' +
-                '\n\nSegment 2 — Direct burial across a field with active woodchuck population. ' +
+                'Segment 2 — Direct burial across a field with active woodchuck population. ' +
                 'What armor type do you require for this segment?',
               choices: [
                 {
                   label: 'Corrugated steel tape (CST) armor — industry-standard rodent protection for direct-burial',
-                  next: 'burial-correct',
+                  consequence:
+                    'Correct. CST (corrugated steel tape) armor is the standard direct-burial armor for ' +
+                    'rodent protection. The corrugated steel sheath resists gnawing better than jacket ' +
+                    'material alone, and it is the armor type explicitly recommended in ICEA S-87-640 ' +
+                    'for direct-burial rodent-active environments.',
+                  nextId: 'riser-question',
+                  isOptimal: true,
                 },
                 {
                   label: 'No armor — dry-block construction provides sufficient protection underground',
-                  next: 'burial-no-armor',
+                  consequence:
+                    'Incorrect. Dry-block construction prevents longitudinal water migration — it has nothing ' +
+                    'to do with rodent protection. Woodchucks (groundhogs) can and will chew through HDPE ' +
+                    'jacket and even gel-filled buffer tubes if there is no armor layer. ' +
+                    'In a documented rodent-active environment, CST or equivalent armor is required ' +
+                    'for direct-burial cable.',
+                  nextId: 'burial-question',
                 },
                 {
                   label: 'Interlocked armor — provides the best rodent protection',
-                  next: 'burial-interlocked',
+                  consequence:
+                    'Interlocked armor is primarily designed for indoor-outdoor riser applications ' +
+                    '(see T03.L07) — it provides good mechanical protection but is heavier and more ' +
+                    'expensive than CST for a direct-burial field crossing. CST is the standard ' +
+                    'choice for direct-burial rodent protection. Interlocked armor in a direct-burial ' +
+                    'trench also raises ICEA compatibility questions for that application.',
+                  nextId: 'burial-question',
                 },
               ],
             },
-            {
-              id: 'aerial-lashed',
+            'riser-question': {
+              id: 'riser-question',
               prompt:
-                'Lashed + messenger works, but on joint-use poles with electric utility infrastructure, ' +
-                'you now have a galvanized steel messenger that must be bonded and grounded at every pole. ' +
-                'This adds bonding hardware cost and permitting complexity. On a joint-use route, ADSS ' +
-                'is the preferred choice precisely to avoid metallic infrastructure near energized conductors. ' +
-                '\n\nThat said, lashed OSP with separate messenger is a legitimate choice — common on ' +
-                'routes without joint-use complications. For this scenario with joint-use poles, reconsider. ' +
-                '\n\nSegment 2 — Direct burial across a field with active woodchuck population. ' +
-                'What armor type do you require?',
-              choices: [
-                {
-                  label: 'Corrugated steel tape (CST) armor — industry-standard rodent protection for direct-burial',
-                  next: 'burial-correct',
-                },
-                {
-                  label: 'No armor — dry-block construction provides sufficient protection underground',
-                  next: 'burial-no-armor',
-                },
-              ],
-            },
-            {
-              id: 'aerial-wrong',
-              prompt:
-                'Armored direct-burial cable is NOT the right choice for an aerial span. ' +
-                'Direct-burial cable lacks the tensile strength members needed for aerial self-support, ' +
-                'and lashing it to the utility messenger violates NESC clearance rules for fiber attached ' +
-                'to a power utility strand. ' +
-                '\n\nReturn to the aerial decision and pick a proper aerial cable type.',
-              choices: [
-                {
-                  label: 'Back to aerial selection',
-                  next: 'start',
-                },
-              ],
-            },
-            {
-              id: 'burial-correct',
-              prompt:
-                'Correct. CST (corrugated steel tape) armor is the standard direct-burial armor for ' +
-                'rodent protection. The corrugated steel sheath resists gnawing better than jacket ' +
-                'material alone, and it is the armor type explicitly recommended in ICEA S-87-640 ' +
-                'for direct-burial rodent-active environments. ' +
-                '\n\nSegment 3 — Building entry and riser: The cable enters the hospital and runs 100 ft ' +
+                'Segment 3 — Building entry and riser: The cable enters the hospital and runs 100 ft ' +
                 'vertically inside a riser shaft before terminating in a communications room. ' +
                 'The outer OSP jacket is unlisted (no NEC fire rating). ' +
                 'What is the correct fire rating for the 100 ft vertical riser run?',
               choices: [
                 {
                   label: 'OFNR (riser-rated) — required for the 100 ft vertical riser shaft; transition from outdoor cable at building entry',
-                  next: 'riser-correct',
+                  consequence:
+                    'Correct. A 100 ft vertical run inside a riser shaft exceeds the NEC §770.48(A) ' +
+                    '50 ft rule for unlisted OSP cable inside a building. A riser shaft is a vertical ' +
+                    'pathway — OFNR (Optical Fiber Non-conductive Riser, listed to UL 1666) is the ' +
+                    'minimum required rating. Transition the outdoor cable to OFNR indoor fiber at the ' +
+                    'building entry, inside a transition enclosure or splice case at the building penetration point.',
+                  nextId: 'mfd-question',
+                  isOptimal: true,
                 },
                 {
                   label: 'OFNP (plenum-rated) — always required inside any commercial building',
-                  next: 'riser-plenum',
+                  consequence:
+                    'OFNP (plenum-rated) is required for air-handling spaces — plenum ceilings and raised ' +
+                    'access floors where HVAC air circulates. A riser shaft is NOT a plenum space; it is ' +
+                    'a vertical fire-stopped pathway. OFNR is sufficient and less expensive. Specifying ' +
+                    'OFNP for a riser is over-specification — OFNP can substitute for OFNR per NEC §770.154, ' +
+                    'but it is unnecessary cost.',
+                  nextId: 'mfd-question',
                 },
                 {
                   label: 'No rating needed — the cable is fiber optic, which is not a fire hazard',
-                  next: 'riser-none',
+                  consequence:
+                    'Incorrect. NEC Article 770 requires listed fire-rated cable inside buildings regardless ' +
+                    'of fiber optic\'s non-conductive nature. The fire rating isn\'t about electrical hazard — ' +
+                    'it\'s about combustion and smoke toxicity of the cable jacket and buffer materials. ' +
+                    'An unlisted OSP cable in a 100 ft riser shaft is a code violation.',
+                  nextId: 'riser-question',
                 },
               ],
             },
-            {
-              id: 'burial-no-armor',
+            'mfd-question': {
+              id: 'mfd-question',
               prompt:
-                'Incorrect. Dry-block construction prevents longitudinal water migration — it has nothing ' +
-                'to do with rodent protection. Woodchucks (groundhogs) can and will chew through HDPE ' +
-                'jacket and even gel-filled buffer tubes if there is no armor layer. ' +
-                '\n\nIn a documented rodent-active environment, CST or equivalent armor is required ' +
-                'for direct-burial cable. Unarmored cable should be routed through conduit in rodent-active areas.',
-              choices: [
-                {
-                  label: 'Reconsider: specify CST armored cable for this segment',
-                  next: 'burial-correct',
-                },
-              ],
-            },
-            {
-              id: 'burial-interlocked',
-              prompt:
-                'Interlocked armor is primarily designed for indoor-outdoor riser applications ' +
-                '(see T03.L07) — it provides good mechanical protection but is heavier and more ' +
-                'expensive than CST for a direct-burial field crossing. CST is the standard ' +
-                'choice for direct-burial rodent protection. Interlocked armor in a direct-burial ' +
-                'trench also raises ICEA compatibility questions for that application. ' +
-                '\n\nCST is the right call for this segment.',
-              choices: [
-                {
-                  label: 'Understood — specify CST armored for direct burial',
-                  next: 'burial-correct',
-                },
-              ],
-            },
-            {
-              id: 'riser-correct',
-              prompt:
-                'Correct. A 100 ft vertical run inside a riser shaft exceeds the NEC §770.48(A) ' +
-                '50 ft rule for unlisted OSP cable inside a building. Beyond 50 ft, the cable must ' +
-                'carry a listed fire rating. A riser shaft is a vertical pathway — OFNR (Optical ' +
-                'Fiber Non-conductive Riser, listed to UL 1666) is the minimum required rating. ' +
-                '\n\nTransition point: transition the outdoor cable to OFNR indoor fiber at the building ' +
-                'entry, inside a transition enclosure or splice case at the building penetration point. ' +
-                '\n\nFinal check — RUS fiber specification: This is a RUS-financed project. Must all ' +
+                'Final check — RUS fiber specification: This is a RUS-financed project. Must all ' +
                 '96 fibers on every cable reel be manufactured to the same MFD specification?',
               choices: [
                 {
                   label: 'Yes — unless the buyer specifies otherwise, 7 CFR 1755.902 requires 9.2 µm ± 0.5 µm at 1310 nm for all SMF reels',
-                  next: 'mfd-correct',
+                  consequence:
+                    'Correct. 7 CFR 1755.902 requires all single-mode fiber on a RUS-financed project ' +
+                    'to be manufactured to 9.2 µm ± 0.5 µm at 1310 nm unless the buyer specifies otherwise. ' +
+                    'This applies to feeder, distribution, and drop cables equally — any RUS-funded fiber.',
+                  nextId: 'end',
+                  isOptimal: true,
                 },
                 {
                   label: 'No — MFD specification only applies to the feeder cable, not drop or distribution',
-                  next: 'mfd-wrong',
+                  consequence:
+                    'Incorrect. 7 CFR 1755.902 applies to any fiber optic cable purchased with RUS funds — ' +
+                    'there is no carve-out for drop or distribution cable. The MFD tolerance requirement ' +
+                    'ensures that all reels spliced together on the project have compatible fiber geometry, ' +
+                    'regardless of which tier of the network they serve.',
+                  nextId: 'mfd-question',
                 },
               ],
             },
-            {
-              id: 'riser-plenum',
-              prompt:
-                'OFNP (plenum-rated) is required for air-handling spaces — plenum ceilings and raised ' +
-                'access floors where HVAC air circulates. A riser shaft is NOT a plenum space; it is ' +
-                'a vertical fire-stopped pathway. OFNR is sufficient for a riser shaft and is less ' +
-                'expensive than OFNP. Specifying OFNP for a riser is not wrong (OFNP can substitute ' +
-                'for OFNR per NEC §770.154), but it is over-specification and unnecessary cost.',
-              choices: [
-                {
-                  label: 'Understood — OFNR is the correct minimum for a riser shaft',
-                  next: 'riser-correct',
-                },
-              ],
-            },
-            {
-              id: 'riser-none',
-              prompt:
-                'Incorrect. NEC Article 770 requires listed fire-rated cable inside buildings regardless ' +
-                'of fiber optic\'s non-conductive nature. The fire rating isn\'t about electrical hazard — ' +
-                'it\'s about combustion and smoke toxicity of the cable jacket and buffer materials. ' +
-                'An unlisted OSP cable in a 100 ft riser shaft is a code violation.',
-              choices: [
-                {
-                  label: 'Understood — specify OFNR for the riser segment',
-                  next: 'riser-correct',
-                },
-              ],
-            },
-            {
-              id: 'mfd-correct',
-              prompt:
-                'Correct. 7 CFR 1755.902 requires all single-mode fiber on a RUS-financed project ' +
-                'to be manufactured to 9.2 µm ± 0.5 µm at 1310 nm unless the buyer specifies otherwise. ' +
-                'This applies to feeder, distribution, and drop cables equally — any RUS-funded fiber. ' +
-                '\n\nSummary of your route specification:\n' +
-                '• Aerial: ADSS all-dielectric, 96F, sized for 250 ft spans\n' +
-                '• Direct burial: CST-armored loose-tube, 96F, dry-block or gel-filled\n' +
-                '• Building riser: Transition to OFNR-rated indoor fiber at building entry; 100 ft riser run\n' +
-                '• All SMF: 7 CFR 1755.902 conforming, 9.2 µm ± 0.5 µm MFD\n' +
-                '\nThis specification is complete and defensible for a RUS project in Georgia.',
-              choices: [
-                {
-                  label: 'Route specification complete — proceed to the quiz',
-                  next: 'end',
-                },
-              ],
-            },
-            {
-              id: 'mfd-wrong',
-              prompt:
-                'Incorrect. 7 CFR 1755.902 applies to any fiber optic cable purchased with RUS funds — ' +
-                'there is no carve-out for drop or distribution cable. The MFD tolerance requirement ' +
-                'ensures that all reels spliced together on the project have compatible fiber geometry, ' +
-                'regardless of which tier of the network they serve.',
-              choices: [
-                {
-                  label: 'Understood — 7 CFR 1755.902 applies to all RUS-funded fiber',
-                  next: 'mfd-correct',
-                },
-              ],
-            },
-            {
+            'end': {
               id: 'end',
-              prompt:
-                'Scenario complete. You correctly specified: ADSS aerial for joint-use poles, ' +
+              isEnd: true,
+              prompt: 'Scenario complete.',
+              endMessage:
+                'You correctly specified: ADSS aerial for joint-use poles, ' +
                 'CST-armored direct-burial for rodent protection, OFNR transition at building entry ' +
                 'for the 100 ft riser run, and 7 CFR 1755.902 MFD compliance for all reels. ' +
-                '\n\nNow take the 20-question quiz below to complete the T03 capstone.',
+                'Summary: Aerial — ADSS all-dielectric, 96F, sized for 250 ft spans. ' +
+                'Direct burial — CST-armored loose-tube, 96F, dry-block or gel-filled. ' +
+                'Building riser — transition to OFNR-rated indoor fiber at building entry; 100 ft riser run. ' +
+                'All SMF — 7 CFR 1755.902 conforming, 9.2 µm ± 0.5 µm MFD. ' +
+                'This specification is complete and defensible for a RUS project in Georgia. ' +
+                'Now take the 20-question quiz below to complete the T03 capstone.',
               choices: [],
             },
-          ]}
+          }}
         />
       </section>
 
