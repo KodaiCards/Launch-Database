@@ -203,8 +203,9 @@ Step 5: ΔT = 170 ps`}
           ]}
           compute={({ length_km, D, delta_lambda }) => {
             const delta_t_ps = D * delta_lambda * length_km;
-            // 10 Gb/s bit period = 100 ps; error threshold = 2× bit period at 25 Gbps = 200 ps
-            const limit_10g = 200;  // ps — 2× bit period at 25 Gbps; defensible dispersion error threshold
+            // 10 Gb/s bit period = 100 ps; conventional 10G dispersion budget ≈ 100 ps total
+            // (ITU-T G.952/G.652 engineering practice: ΔT must stay below ~1 bit period for direct detection)
+            const limit_10g = 100;  // ps — ~1 bit period at 10 Gb/s; matches worked-example conclusion above
             const limit_40g = 17.5; // ps — 40 Gb/s (bit period 25 ps, 70% ≈ 17.5)
             let status = 'ok';
             let statusMessage = `ΔT = ${delta_t_ps.toFixed(1)} ps — well within 10 Gb/s tolerance (< ${limit_10g} ps). No dispersion compensation needed.`;
@@ -225,7 +226,7 @@ Step 5: ΔT = 170 ps`}
             };
           }}
           annotations={[
-            { value: 200,  label: '10G limit', color: '#fbbf24' },
+            { value: 100,  label: '10G limit', color: '#fbbf24' },
             { value: 17.5, label: '40G limit', color: '#f87171' },
           ]}
         />
