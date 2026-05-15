@@ -32,6 +32,7 @@ export const meta = {
     'CATV',
     'CLEC',
     'ILEC',
+    'make-ready cost estimate',
   ],
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
@@ -89,6 +90,11 @@ export const meta = {
       term: 'ILEC',
       definition:
         'Incumbent Local Exchange Carrier — the original local telephone company in a given area (typically AT&T, CenturyLink/Lumen, Frontier, or a rural RLEC). ILECs often own poles in areas where the telephone company built before the electric utility. When the ILEC owns the pole, the electric utility becomes the attacher.',
+    },
+    {
+      term: 'make-ready cost estimate',
+      definition:
+        'The written estimate issued by the pole owner (or its engineering contractor) after reviewing an attachment application, specifying the work required on each pole to create room for the new attacher\'s cable and the associated cost. Make-ready work can include transferring existing attachers\' cables to different positions, re-framing hardware, raising or lowering cables to restore required clearances, or replacing poles that can no longer support the additional loading. The attacher typically has a defined window to accept or reject the estimate; rejection may mean redesigning the route.',
     },
   ],
 };
@@ -185,6 +191,11 @@ export default function T05L08_JointUseWhoOwnsWhatOnThePole() {
               id: 'T05-L08-fc-catv-clec',
               front: 'What is the practical difference between a CATV and a CLEC attacher for attachment fees?',
               back: 'CATV (cable TV) attachers pay under the FCC "cable formula," which allocates more pole cost to the cable attacher. CLEC (telephone/fiber) attachers pay under the FCC "telecom formula," which typically results in a lower annual per-pole fee. The distinction matters when negotiating attachment agreements — a fiber ISP organized as a CLEC may pay significantly less per pole than one organized as a CATV provider.',
+            },
+            {
+              id: 'T05-L08-fc-make-ready-estimate',
+              front: 'What is a make-ready cost estimate and who issues it?',
+              back: 'A make-ready cost estimate is a written document from the pole owner specifying the work each pole needs to accommodate a new attacher\'s cable and the estimated cost of that work. Make-ready can include transferring existing attachers to different heights, re-framing hardware, raising cables for clearance, or replacing poles that can\'t handle the additional load. The attacher has a defined window to accept or reject the estimate — rejection usually means redesigning the route.',
             },
           ]}
         />

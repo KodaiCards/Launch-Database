@@ -179,7 +179,7 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
             <strong>Vertical forces (downward)</strong> — Gravity pulls the cables down.
             Each cable has a weight per foot. The pole must support the cable weight from
             both adjacent spans (the weight that "hangs" from the pole). Ice adds to
-            this vertical load in Medium and Heavy loading districts.
+            this vertical load in Medium and Heavy loading districts (loading districts — geographic zones with defined ice and wind design values — are covered in detail in L06).
           </li>
         </ul>
         <p className="mt-2">
