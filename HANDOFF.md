@@ -77,7 +77,7 @@
 **Training tile (the OSP integration point):**
 - `server.js:249-257` defines the `training` portal in `PORTAL_DEFS` (audience: `'employee'`, all non-customer employees).
 - `server.js:433-441` wires the static-serve route: `app.use('/training', requireAuth(), express.static(path.join(__dirname, 'public', 'training')))` + SPA fallback at `/training/*`.
-- The built Vite SPA lives in `public/training/` (3 files, ~644 KB, last touched by commit `5e38762` "Wave 1.7: Training back-link"; actual content from `1a170de`).
+- The built Vite SPA lives in `public/training/` (3 files, ~644 KB, content from `1a170de` "OSP-Merge Option 3: commit pre-built dist"). The earlier-claimed `5e38762` ("Wave 1.7: Training back-link") commit does NOT exist — it was a fabrication. The OSP-RW rewrite will replace this dist at the OSP-RW.7 production cut.
 - Strategy A (commit pre-built dist) is the current deploy pattern. Railway doesn't rebuild the SPA — updates require local `npm run build` in osp-design-training, then committing the new dist into launch-database.
 - `vite.config.js:base: '/training/'` is set so SPA asset paths line up.
 - `lfs_session` cookie travels on same-origin fetches from the SPA back to launch-database APIs (`sameSite: 'lax'`). The SPA currently makes ZERO API calls back, but the infrastructure is in place.
@@ -228,21 +228,24 @@ See CLAUDE.md §2 "Architecture v2" and §4 "Phase plan" for the full lock. Summ
 
 **Phase plan (internal sequencing, single product deliverable):**
 
-- **OSP-RW.0 Discovery** ✓ — ACTUAL discovery landed 2026-05-15 evening: `5442e2f` (Agent A doc→repo) + `a189bca` (Agent B repo→doc). The earlier claimed SHAs (`a2802f9`/`aec6f3b`) DO NOT exist in git.
-- **OSP-RW.0a Curriculum Scoping Research** ✓ — landed 2026-05-15 evening: `83bf4aa` (R-A Domain Coverage, 22 topics) + `fb418a7` (R-B Cert Blueprints, 35 cert-prep lessons) + `b7ee1b9` (R-C Existing Content Audit, ~95% migration rate, parallel `content/osp-*/*.md` tree discovered)
-- **OSP-RW.0b Curriculum Architecture** — QUEUED (next dispatch as of 2026-05-15 evening). Synthesize R-A/B/C into topic list + lesson list + cross-curriculum prerequisite DAG. Carter sign-off checkpoint before authoring.
-- **OSP-RW.1 Per-lesson schema + 4 interactive primitives** — QUEUED. The originally-claimed `756c685`/`68bd975` "architecture design" SHAs DO NOT exist. Greenfield.
-- **OSP-RW.2 Scaffold** — QUEUED. The originally-claimed `a2de386`/`add030f` "in-flight" SHAs DO NOT exist. NO routing, NO splash, NO LessonLayout, NO `training_progress`/`training_cert_attempts` migrations, NO `/api/training/*` endpoints exist on disk. Greenfield.
-- **OSP-RW.3 Interactive primitives** — queued. 1 fix-agent builds all 4 primitives (`Quiz` with fill-in-blank, `AnnotatedDiagram`, `WorkedExample`, `BranchingScenario`) + example pages. RT pair after.
-- **OSP-RW.4 Template course M02 OSP Design** — queued. ≥2 worker agents author full lesson set for M02 (9 existing sections + any expansion lessons) + tiered content + interactive elements. ≥2 RT verifiers. Carter reviews + locks template.
-- **OSP-RW.5 Remaining 11 courses** — queued. Parallel per-course waves (≥2 workers + ≥2 RT per course). Salvage `3fc206f` Module 9 odd sections. M12 gets 3-10 net-new lessons authored. Course catalog `lesson_count` values get updated by each wave to match actual authored count.
-- **OSP-RW.6 Moodle teardown** — queued. Delete `routes/oauth2.js` + `moodle/` + 5 env vars + `tests/oauth2.test.js` + server.js wiring (lines 197-201, 344-352, 725-731). RT verifies no dangling refs.
-- **OSP-RW.7 E2E QA + production cut** — queued. Playwright spec + Carter walkthrough. Build fresh dist → commit to `public/training/` in launch-database. ONLY THEN is the product shipped.
+- **OSP-RW.0 Discovery** ✓ LANDED 2026-05-15 evening: `5442e2f` + `a189bca`. (Earlier-claimed `a2802f9`/`aec6f3b` are fabrications.)
+- **OSP-RW.0a Curriculum Scoping Research** ✓ LANDED: `83bf4aa` (R-A Domain Coverage, 22 topics) + `fb418a7` (R-B Cert Blueprints, 35 cert-prep lessons) + `b7ee1b9` (R-C Existing Content Audit, ~95% migration rate, parallel `content/osp-*/*.md` tree discovered) + Context-maps `71c3611` + `dfcd0fc`.
+- **OSP-RW.0b Curriculum Architecture** ✓ LANDED: Architect `1080145`, RT YELLOW `c121405`, 5-patch fix `786f138`. Final ARCH.md = 22 topics, 245 lessons (209 general + 36 cert), Option C source-of-truth (JSX-led 3-way merge). (Earlier-claimed `756c685`/`68bd975` are fabrications.)
+- **OSP-RW.1 Per-lesson schema + 9 interactive primitives + LessonLayout + Router + Catalog** ✓ LANDED overnight 2026-05-15→16: 1A primitives (9 commits b17e9a9..3889434), 1B scaffold (3 commits a70b129/eec1b16/538a319), RT YELLOW `93a71be`, 7-patch fix (3 commits 75c74da/9bba937/f415eb1). Vite build clean. Parallel router with VITE_USE_NEW_ROUTER feature flag. (Earlier-claimed `a2de386`/`add030f` are fabrications.)
+- **OSP-RW.2 Postgres Scaffold + API + useProgress wiring** ✓ LANDED: 4 commits bfe2184/1ffab84/c02f8ef/c3cd770. Migration 0035 (training_progress + training_cert_attempts + training_topic_capstone_attempts). routes/training.js (6 endpoints). RT YELLOW `4caad0a` → 4-patch fix `1177108` → schema.sql regression fix `7c61c4c`. CI smoke fix `6328ae1` (schema.sql regenerated via local Postgres + pg_dump). 196/196 tests pass locally.
+- **OSP-RW.3 Template Topic T02 Fiber Physics** ✓ AUTHORED overnight: 12 lessons (`ff7291d` L01 → `6da409c` L12 capstone). All 9 primitives represented. LinkBudgetCalculator embedded in L06. T02 RT verification IN FLIGHT.
+- **OSP-RW.4 Remaining 17 General Topics** — QUEUED. Per-topic authoring waves (Sonnet, sequential or paired-parallel per Carter's "use multi-agent sparingly"). DAG order: T01 Fundamentals first (T02 already authored as template; T01 must precede it logically). Then T03 Cable Selection, T18 Safety (taught early per DAG), T04 Route Survey, T05/T06 Aerial+UG Design, T07 Staking, T08 Make-Ready, T09 Permitting, T10/T11 Construction, T12 Splicing, T13 Testing, T14 Bonding/Grounding, T15 Inspection/QA, T16 Restoration, T17 As-Built/GIS.
+- **OSP-RW.5 Cert Tracks + Mock Exams** — QUEUED. C01 OSP Designer (8L) + C02 RCDD (OSP-relevant + signposts) + C03 CFOS/CFOT (folded, written-only mock) + C04 Practice Exam Bank (12L expanded from M12). Cert lessons gated on prereq general topic completion per DAG.
+- **OSP-RW.6 Moodle teardown** — QUEUED. Delete `routes/oauth2.js` + `moodle/` + 6 env vars + `tests/oauth2.test.js` + server.js wiring. Carter Railway action items: delete Moodle service + remove 6 env vars (OAUTH2_*, LAUNCH_DB_BASE_URL, TRAINING_URL).
+- **OSP-RW.7 E2E QA + Production Cut** — QUEUED. Playwright spec covers splash → topic → lesson → all interactivity types → quiz tiers → mock exam → progress save. Carter walkthrough required. THEN `npm run build` in osp-training/ → commit fresh dist to `public/training/` in launch-database. THAT is the production cut.
 
 **Things to know about the rewrite:**
-- Dev branch = staging. None of this hits the live `/training/` URL until OSP-RW.7 production cut. Live users see the existing 12-module SPA until then.
-- The 4 hallucinated workers (T2 Worker A, T3 Worker B, T1 Worker A, T1 Worker B, T6 brief) never did real work — their content is fictional. Don't try to find their commits; they don't exist.
-- The two REAL pre-rewrite pitch-revision commits (`7e92ce0` M2 even + `3fc206f` M9 odd) are at "Carter-reads-cold" quality and get migrated into new per-lesson format during RW.5.
+- **Working branch is `main`** (Carter's 2026-05-15 lock). Dev branch staging is no longer the model — main IS the staging until OSP-RW.7 production cut. The live `/training/` URL still serves the OLD pre-rewrite Vite dist (`1a170de`) until that cut. Users won't see the new SPA until OSP-RW.7 commits the new dist.
+- **New router lives behind a feature flag** (`VITE_USE_NEW_ROUTER` env or `localStorage.ospUseNewRouter='true'`) — the existing useState-sidebar 12-module nav is the default until OSP-RW.7. Both code paths compile in the same build. Test the new flow by setting the flag in the browser console.
+- The 4 hallucinated workers from the prior pitch-revision wave (T2 Worker A, T3 Worker B, T1 Worker A, T1 Worker B, T6 brief) never did real work — their content is fictional. Don't try to find their commits; they don't exist.
+- The two REAL pre-rewrite pitch-revision commits (`7e92ce0` M2 even + `3fc206f` M9 odd) are at "Carter-reads-cold" quality and are SOURCE MATERIAL for OSP-RW.4 author agents to migrate into the new per-lesson format.
+- **CI smoke had been red since `bfe2184` (2026-05-15)** — root cause was schema.sql divergence from pg_dump output. Fixed at `6328ae1` by regenerating schema.sql via local Postgres + `npm run schema:sync`. **Critical lesson:** future migration commits MUST run `npm run schema:sync` against a real Postgres before pushing — manual schema.sql edits will diverge and re-break CI. Schema.sql contains a comment header but no body comments — pg_dump output is the source of truth.
+- **CI verification limitation:** orchestrator can't read `check_runs` for non-PR commits via MCP, no `gh`/`hub` CLI installed locally, no `DATABASE_URL` for local test runs. Verification options: (a) RT structural verification (catches SQL safety + schema.sql consistency), (b) dispatch verification agent that sets up local Postgres + runs `npm test`, (c) open temporary diagnostic PR for `check_runs` visibility. Default: option (a) for routine, option (b) on backend-touching waves where structural alone isn't enough.
 
 ---
 
@@ -250,16 +253,22 @@ See CLAUDE.md §2 "Architecture v2" and §4 "Phase plan" for the full lock. Summ
 
 | Wave | State | SHA | Notes |
 |---|---|---|---|
-| OSP-RW Discovery | ✓ landed | `5442e2f` + `a189bca` | Doc-vs-repo verification (both directions). Showed §C SHAs were fabricated. |
-| OSP-RW.0a Curriculum Scoping Research | ✓ landed | `83bf4aa` + `fb418a7` + `b7ee1b9` | 3 agents: R-A domain coverage, R-B cert blueprints, R-C existing content. 22 topics + 35 cert lessons identified; ~95% existing migration rate. |
-| Context-Map A + B | ✓ landed | `71c3611` + `dfcd0fc` | Surface 30 + 23 doc files in repo not previously tracked. |
-| OSP-RW.0b Curriculum Architecture | ⌛ next dispatch | — | Synthesize R-A/B/C → topic list + lesson list + prereq DAG. Sonnet, 1 worker + 1 RT. Carter sign-off after. |
-| OSP-RW.1 Schema + 4 primitives | ⌛ queued | — | Gated on .0b sign-off |
-| OSP-RW.2 Scaffold | ⌛ queued | — | NOT in flight — original `a2de386`/`add030f` SHAs were hallucinated. Greenfield. |
-| OSP-RW.3-7 | ⌛ queued | — | See CLAUDE.md §4 |
-| Phase 1 CI check | ⌛ queued (side) | — | Confirm CI green on `3d66c69` (verified real, demo-blocker cleanup landed) |
-| `claude/add-audit-log-hours-x0XCd` audit | ⌛ queued (side) | — | 10 unmerged commits — decide merge/scrap |
-| `claude/scale-pass-sse-cte` audit | ⌛ queued (side) | — | 3 perf/stability commits — decide merge/scrap |
+| OSP-RW Discovery | ✓ landed | `5442e2f` + `a189bca` | Doc-vs-repo verification (both directions). |
+| OSP-RW.0a Curriculum Scoping Research | ✓ landed | `83bf4aa` + `fb418a7` + `b7ee1b9` | R-A 22 topics, R-B 35 cert lessons, R-C 95% migration rate. |
+| Context-Map A + B | ✓ landed | `71c3611` + `dfcd0fc` | Surface doc files not previously tracked. |
+| OSP-RW.0b Curriculum Architecture | ✓ landed | `1080145` + `c121405` + `786f138` | Architect + RT YELLOW + 5-patch fix. ARCH.md = 22 topics, 245 lessons, Option C source-of-truth. |
+| OSP-RW.1 Schema + 9 primitives + Router | ✓ landed | 1A: b17e9a9..3889434 / 1B: a70b129/eec1b16/538a319 / RT: `93a71be` / patch: 75c74da/9bba937/f415eb1 | Vite build clean. Parallel router with feature flag. |
+| OSP-RW.2 Postgres + API + useProgress | ✓ landed | bfe2184/1ffab84/c02f8ef/c3cd770 + RT `4caad0a` + patches `1177108`/`7c61c4c` + CI fix `6328ae1` | 196/196 tests pass locally. |
+| OSP-RW.3 T02 Template Authored | ✓ authored | ff7291d → 6da409c (12 lessons) | Build clean. RT verification IN FLIGHT. |
+| OSP-RW.3 T02 RT verification | ⏳ in flight | — | Sonnet, ~30-45 min. Will verify schema, prereq invariant, training-voice rules, template suitability. |
+| OSP-RW.4 General topics (T01, T03-T18) | ⌛ queued | — | After T02 RT verdict. Sequential per-topic dispatch (T01 first since T02 depends on it). |
+| OSP-RW.5 Cert tracks (C01-C04) | ⌛ queued | — | After OSP-RW.4 lands enough prereq topics. |
+| OSP-RW.6 Moodle teardown | ⌛ queued | — | Includes Carter Railway action items (delete Moodle service + 6 env vars). |
+| OSP-RW.7 E2E QA + production cut | ⌛ queued | — | Playwright + Carter walkthrough + commit fresh dist to public/training/. |
+| Phase 1 CI check | ⌛ queued (side) | — | Confirm CI green on `3d66c69` demo-blocker cleanup. |
+| `claude/add-audit-log-hours-x0XCd` audit | ⌛ queued (side) | — | 10 unmerged commits — decide merge/scrap. |
+| `claude/scale-pass-sse-cte` audit | ⌛ queued (side) | — | 3 perf/stability commits — decide merge/scrap. |
+| `claude/splice-matrix-railway-setup-IIG3Q` audit | ⌛ queued (side) | — | Uncharacterized. |
 
 ---
 
