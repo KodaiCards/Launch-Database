@@ -82,7 +82,7 @@ export default function T01L01_OspVsIsp() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">BICSI</td>
               <td className="px-3 py-2">Building Industry Consulting Service International</td>
-              <td className="px-3 py-2">The professional association that publishes OSP and ISP design standards and administers certifications like RCDD and CFOS</td>
+              <td className="px-3 py-2">The professional association that publishes OSP and ISP design standards and administers certifications like RCDD and OSP Designer (CFOS/CFOT are FOA credentials, not BICSI)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">RUS</td>
@@ -236,8 +236,10 @@ export default function T01L01_OspVsIsp() {
         <p>
           The OSP/ISP boundary has regulatory significance beyond just which standard applies.
           The <strong>FCC's Part 32</strong> accounting rules define "outside plant" as a
-          specific plant account category for regulated carriers (Account 2411 — Cable, aerial;
-          Account 2421 — Cable, underground; Account 2441 — Cable, buried). These accounts
+          specific plant account category for regulated carriers (Account 2421 — Cable, aerial;
+          Account 2422 — Cable, underground; Account 2423 — Cable, buried). Note: Account 2411
+          is “Poles” and Account 2441 is “Conduit” — different plant categories, not cable accounts.
+          These accounts
           determine depreciation schedules, rate-base inclusion for ratemaking, and how
           infrastructure is reported to regulators.
         </p>
