@@ -1,0 +1,362 @@
+// T03.L07 — Armor Selection Deep-Dive
+// Advanced lesson: CST vs interlocked vs CAT, dielectric cables, NEC §770.179(B)
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import HotSpot from '../../components/primitives/HotSpot.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T03.L07',
+  course_id: 'T03',
+  title: 'Armor Selection Deep-Dive',
+  order: 7,
+  lesson_type: 'advanced',
+  prerequisites: ['T03.L03', 'T03.L04'],
+  vocabulary_introduced: [
+    'corrugated aluminum tape (CAT)',
+    'dielectric cable',
+    'NEC §770.179(B)',
+  ],
+  vocabulary_assumed: [
+    { term: 'corrugated steel tape (CST)',  source_lesson_id: 'T03.L03' },
+    { term: 'interlocked armor',            source_lesson_id: 'T03.L03' },
+    { term: 'direct-burial',               source_lesson_id: 'T03.L03' },
+    { term: 'rodent-proof armor',          source_lesson_id: 'T03.L03' },
+    { term: 'ADSS',                         source_lesson_id: 'T03.L04' },
+  ],
+  key_terms: [
+    {
+      term: 'corrugated aluminum tape (CAT)',
+      definition:
+        'A variant of metallic cable armor using aluminum corrugations instead of steel. Lighter than CST, with better corrosion resistance in many environments. Used in aerial and conduit applications where the primary concern is crush resistance and weight, not rodent protection.',
+    },
+    {
+      term: 'dielectric cable',
+      definition:
+        'A cable with NO metallic components whatsoever — no armor, no messenger, no metallic strength members. All-dielectric cables require no bonding or grounding. ADSS is the aerial dielectric type; some underground cables are also fully dielectric when run in conduit.',
+    },
+    {
+      term: 'NEC §770.179(B)',
+      definition:
+        'The NEC provision listing permitted armor types for indoor fiber optic cable in vertical riser shafts. CST-armored cables UL-listed per this section can be used in building risers despite containing metal armor.',
+    },
+  ],
+  estimated_minutes: 22,
+};
+
+export default function T03L07_ArmorDeepDive() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ──────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          T03.L03 introduced the two main armor types — CST for direct-burial and
+          interlocked for indoor-outdoor riser. This lesson goes deeper: three armor
+          types total (adding corrugated aluminum tape), plus the important cases where
+          <em>no armor at all</em> is the right answer.
+        </p>
+        <p className="mt-2">
+          The core skill here is matching armor to environment without over-specifying.
+          Armor adds cost, weight, and installation complexity. Use it when the threat
+          justifies it; skip it when conduit or cable type handles the load.
+        </p>
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Three Armor Types + No Armor — The Full Matrix</h2>
+
+        <h3 className="mt-4 font-semibold">Quick review: CST and interlocked armor (T03.L03 recap)</h3>
+        <p className="text-sm text-slate-300/80">
+          From T03.L03: CST (corrugated steel tape) wraps around the cable longitudinally;
+          best for direct-burial and rodent protection. Interlocked armor uses helical metal
+          strips; best for indoor-outdoor riser with NEC §770.179(B) listing.
+          Both provide crush resistance and rodent protection.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Corrugated aluminum tape (CAT) — the lighter option</h3>
+        <p>
+          CAT replaces steel with aluminum in the corrugated armor design. Aluminum is:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
+          <li><strong>Lighter</strong> — about 1/3 the density of steel; meaningful for aerial and long cable reels</li>
+          <li><strong>Better corrosion resistance</strong> — aluminum forms a passive oxide layer; no rust in moist soil or coastal environments</li>
+          <li><strong>Softer</strong> — less rodent resistance than steel; a determined gnawing animal can penetrate aluminum more easily than steel</li>
+        </ul>
+        <p className="mt-2">
+          CAT is common in aerial applications (where weight matters) and conduit runs
+          (where the conduit already handles the mechanical threat, and aluminum's lighter
+          weight and corrosion resistance are advantages). For direct-burial in rodent-active
+          areas, steel CST remains the preferred choice over CAT.
+          (Source: ICEA S-87-640 armor options; vendor product lines)
+        </p>
+
+        <h3 className="mt-5 font-semibold">No armor — when dielectric wins</h3>
+        <p>
+          A <strong>dielectric cable</strong> has zero metallic content: no steel armor,
+          no aluminum, no copper ground wire, no steel strength members. Aramid yarn
+          (Kevlar) or fiberglass rods provide all the structural function.
+        </p>
+        <p className="mt-2">
+          <strong>Why this matters:</strong> "No metal in the cable, therefore no bonding
+          and grounding is required." (Source: CommScope ADSS documentation; 7 CFR 1755.902 —
+          verified) Bonding every dead-end pole is a real labor and material cost. On a new
+          FTTH aerial build with 150 poles, each bonding assembly (ground rod, clamp, bond
+          wire) might cost $50–$150 in materials and 30–60 minutes of labor. That's $7,500–
+          $22,500 in bonding alone — before counting the inspection and documentation for
+          each ground. Dielectric cable eliminates all of that.
+        </p>
+        <p className="mt-2">
+          Beyond ADSS aerial cables, dielectric duct cables (loose-tube, no armor,
+          aramid/fiberglass strength members only) are also used for underground conduit
+          runs where:
+        </p>
+        <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
+          <li>The conduit provides all mechanical protection (no crush or rodent threat)</li>
+          <li>Soil chemistry is aggressive (high chloride, low pH) — no steel means no corrosion risk</li>
+          <li>Bonding avoidance is a priority (joint-use telecom on electric-utility-owned conduit)</li>
+        </ul>
+
+        <h3 className="mt-5 font-semibold">NEC §770.179(B) — the indoor riser armor rule</h3>
+        <p>
+          When an armored cable enters a building riser shaft, a question arises: does
+          the metal armor disqualify the cable from the NEC Article 770 fire rating?
+        </p>
+        <p className="mt-2">
+          NEC §770.179(B) answers this directly: it lists the permitted armor configurations
+          for indoor fiber cable in riser applications. CST-armored cables that are UL-listed
+          per this section can be used in building risers despite containing metal.
+        </p>
+        <p className="mt-2 text-sm">
+          Example from real product documentation: OCC D-Series CST-armored cables are
+          "UL listed in accordance with NEC section 770.179(b)." (Source: OCC D-Series
+          product page — verified) This means the steel armor + HDPE jacket combination has
+          been tested and passes the riser flame-spread requirement alongside the armor.
+        </p>
+        <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
+          <strong>Note:</strong> NEC §770.179(B) is paywalled (NFPA 70-2023). The product
+          documentation citation above confirms the reference and the application. Confirm
+          exact section text against the current NEC edition for formal contract work.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Armor selection matrix — complete picture</h3>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm border border-white/10 rounded-lg">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Armor type</th>
+                <th className="px-3 py-2 text-left">Material</th>
+                <th className="px-3 py-2 text-left">Best for</th>
+                <th className="px-3 py-2 text-left">Avoid when</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">CST</td>
+                <td className="px-3 py-2">Corrugated steel tape</td>
+                <td className="px-3 py-2">Direct-burial, rodent areas, indoor-outdoor riser (NEC 770.179(B) listed)</td>
+                <td className="px-3 py-2">Aerial (adds weight); dielectric-required joint-use</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">Interlocked</td>
+                <td className="px-3 py-2">Helical aluminum or steel strips</td>
+                <td className="px-3 py-2">Indoor-outdoor riser with OFNR/OFCR listing; campus underground</td>
+                <td className="px-3 py-2">High-rodent areas (steel CST is stronger gnaw barrier)</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">CAT</td>
+                <td className="px-3 py-2">Corrugated aluminum tape</td>
+                <td className="px-3 py-2">Aerial/conduit where weight and corrosion matter more than rodent resistance</td>
+                <td className="px-3 py-2">Rodent-active direct-burial (steel CST required)</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">None (dielectric)</td>
+                <td className="px-3 py-2">No metal</td>
+                <td className="px-3 py-2">ADSS aerial; duct cable where conduit provides protection; joint-use no-bond scenarios; corrosive soils</td>
+                <td className="px-3 py-2">Direct-burial without conduit in rodent or crush environments</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
+          <p className="text-slate-300/90">
+            <strong>Book (ICEA S-87-640):</strong> Defines armor geometry, material grades,
+            corrosion protection requirements, and minimum coverage for each armor type.
+            The 2016/2023 editions are paywalled. [Confirm armor thickness and coverage
+            requirements against ICEA S-87-640 current edition for formal specs.]
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> The most common armor mistake isn't the wrong type —
+            it's armor on the wrong segment. A common scenario: a crew installs the same
+            CST-armored direct-burial cable for the entire route including the aerial section,
+            because that's what was on the truck. CST aerial cable works, but it's heavier
+            than necessary, which increases sag and may require a heavier messenger strand.
+            If the poles weren't engineered for that load, you've just exceeded the design
+            loading.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Risk of over-specifying armor on aerial:</strong> Every extra lb/ft of
+            cable weight increases sag for a given span. An over-heavy aerial cable can
+            push midspan sag below NESC clearance requirements — requiring either additional
+            poles (shortening span) or heavier messenger strand — both of which are expensive
+            field corrections.
+          </p>
+        </div>
+      </section>
+
+      {/* ── HOTSPOT: identify installation error ─────────────────────────── */}
+      <HotSpot
+        imageUrl="/training/diagrams/armor-installation-errors.svg"
+        alt="Diagram of an armored cable installation showing three potential problem areas for the learner to identify"
+        mode="challenge"
+        title="Find the Installation Errors"
+        instructions="Three potential issues are marked in this armored cable installation diagram. Click each marker to reveal whether it represents an error, and what should be done instead."
+        regions={[
+          {
+            id: 'nick',
+            x: 35,
+            y: 45,
+            radius: 8,
+            label: 'Cable entry nick',
+            isError: true,
+            explanation:
+              'This shows the outer jacket nicked at the cable entry point — a common result of cutting the armor without the ripcord. Nicked jackets allow water to wick into the cable and can stress-concentrate on the underlying fibers. Always use the internal ripcord to open CST armor; never cut across the armor with a blade that can reach the inner assembly.',
+          },
+          {
+            id: 'bend',
+            x: 60,
+            y: 60,
+            radius: 8,
+            label: 'Sharp bend at armor transition',
+            isError: true,
+            explanation:
+              'A sharp bend at the armor termination point concentrates mechanical stress on the cable. The armor\'s rigid section should transition to the flexible cable with a minimum bend radius appropriate to the cable type (at least 10× cable OD for installation). Kinking at the armor end can fracture the fibers inside even when the jacket appears undamaged.',
+          },
+          {
+            id: 'bond',
+            x: 80,
+            y: 30,
+            radius: 8,
+            label: 'Armor bonding clamp',
+            isError: false,
+            explanation:
+              'The bonding clamp on the CST armor at this building entry point is correct — it\'s required. Any metallic cable component (including CST armor) entering a building must be bonded to the building\'s grounding system. The clamp provides the low-impedance path to ground for lightning-induced surge currents. Dielectric ADSS would not require this — but CST armor does.',
+          },
+        ]}
+      />
+
+      {/* ── ADVANCED ─────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Going Deeper</h2>
+
+        <h3 className="mt-4 font-semibold">Galvanic corrosion — when steel armor meets dissimilar metals</h3>
+        <p>
+          In a buried environment, steel CST armor can corrode galvanically when it comes
+          into contact with a dissimilar metal through a common electrolyte (wet soil). The
+          practical concern: if a CST-armored cable share a conduit or handhole with copper
+          grounding wire and the two touch in wet soil, the steel armor becomes the
+          sacrificial anode and corrodes preferentially. This is rarely catastrophic (the
+          outer jacket is the first barrier), but on a 30-year plant it can become a factor.
+        </p>
+        <p className="mt-2">
+          Mitigation: keep the CST armor electrically isolated from dissimilar metals in
+          the conduit system, or specify aluminum (CAT) armor or dielectric cable in
+          high-corrosion environments where the long-term galvanic concern outweighs the
+          rodent-protection advantage of steel.
+        </p>
+      </section>
+
+      {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
+      <Flashcard
+        deckId="T03-L07"
+        cards={[
+          {
+            id: 'T03-L07-fc-cat',
+            front: 'What is CAT armor and how does it differ from CST?',
+            back: 'Corrugated Aluminum Tape. Uses aluminum instead of steel for the corrugated armor layer. Lighter and better corrosion resistance than steel CST, but softer — less effective against determined rodent gnawing. Best for aerial and conduit applications; not the first choice for rodent-active direct-burial. (ICEA S-87-640)',
+          },
+          {
+            id: 'T03-L07-fc-dielectric',
+            front: 'What is a dielectric cable and why is it used?',
+            back: 'A cable with NO metallic components — no armor, no messenger, no metallic strength members. Aramid yarn or fiberglass rods provide all structural function. Key advantage: no bonding or grounding required at any attachment point. Used for ADSS aerial cables, duct cables in corrosive soils, and joint-use scenarios where bonding adds cost. (7 CFR 1755.902; CommScope)',
+          },
+          {
+            id: 'T03-L07-fc-nec770',
+            front: 'What does NEC §770.179(B) govern?',
+            back: 'The NEC provision listing permitted armor configurations for indoor fiber optic cable in building riser shafts. CST-armored cables UL-listed per §770.179(B) can be installed in risers despite containing metal armor — the armor + jacket combination has passed the UL 1666 riser flame test. (OCC D-Series product documentation — verified)',
+          },
+        ]}
+      />
+
+      {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
+      <Quiz
+        title="T03.L07 Check — Armor Selection Deep-Dive"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T03-L07-Q1',
+            type: 'mc',
+            prompt:
+              'Which armor type is preferred for a direct-burial route in a coastal area where soil pH is low and corrosion is a concern, but no rodent activity has been documented?',
+            choices: [
+              'CST (corrugated steel tape) — highest rodent protection',
+              'Interlocked armor — best for all underground applications',
+              'CAT (corrugated aluminum tape) — lighter and better corrosion resistance than steel',
+              'No armor — conduit eliminates all mechanical risk',
+            ],
+            answerIndex: 2,
+            explanation:
+              'In a corrosive soil environment (low pH, coastal chlorides) with no documented rodent activity, aluminum armor (CAT) is preferred over steel CST. Aluminum forms a passive oxide layer that resists corrosion, whereas steel will rust if the outer jacket is breached. Without a rodent threat, the softer aluminum is acceptable. (ICEA S-87-640 armor options)',
+          },
+          {
+            id: 'T03-L07-Q2',
+            type: 'mc',
+            prompt:
+              'A CST-armored cable with NEC §770.179(B) UL listing is being installed in a building riser shaft. The contractor asks whether the metal armor requires bonding to the building ground. The correct answer is:',
+            choices: [
+              'No — the UL listing exempts the armor from NEC bonding requirements',
+              'No — riser shaft cables never require bonding regardless of armor type',
+              'Yes — any metallic component entering the building must be bonded to the building grounding system',
+              'Only if the cable is also carrying electrical power alongside fiber',
+            ],
+            answerIndex: 2,
+            explanation:
+              'Any metallic cable component — including CST armor — must be bonded to the building\'s grounding electrode system at the building entry. The UL listing confirms the cable is suitable for riser use, but it does not exempt the armor from the NEC bonding requirement. (NEC Art. 770 bonding requirements; confirmed via product documentation)',
+          },
+          {
+            id: 'T03-L07-Q3',
+            type: 'fill-in-blank',
+            prompt:
+              'A cable with no metallic components whatsoever — relying on aramid yarn or fiberglass for structural support — is called a ________ cable.',
+            answer: 'dielectric',
+            answerDisplay: 'dielectric',
+            explanation:
+              'A dielectric cable has zero metal content. No bonding or grounding is required at any attachment or entry point. ADSS aerial cables are dielectric. Dielectric duct cables are also available for underground runs in conduit where no bonding is desired and the conduit provides mechanical protection. (7 CFR 1755.902; CommScope ADSS documentation — verified)',
+          },
+          {
+            id: 'T03-L07-Q4',
+            type: 'mc',
+            prompt:
+              'A project engineer specifies CST-armored cable for an aerial lashed section. What is the practical risk of this over-specification?',
+            choices: [
+              'CST armor provides less UV protection than unarmored HDPE on aerial cable',
+              'The extra weight of CST armor increases sag, potentially violating NESC clearance requirements without heavier messenger strand',
+              'CST armor is not UL listed for outdoor use',
+              'There is no risk — CST armor is always acceptable regardless of installation environment',
+            ],
+            answerIndex: 1,
+            explanation:
+              'CST armor adds significant weight per unit length compared to unarmored cable. Increased cable weight means increased midspan sag for a given span and messenger tension. If the poles were engineered for unarmored cable weight, the CST version may push sag below NESC clearance requirements. The fix (shorter spans or heavier messenger) is expensive. Specify armor only where the threat justifies it.',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
