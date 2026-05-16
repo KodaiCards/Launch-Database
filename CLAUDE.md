@@ -1205,7 +1205,7 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 
 | Topic | Title | Section | Status | Last commit / Brief location |
 |---|---|---|---|---|
-| T01 | Fundamentals & Vocabulary | General | ✓ AUTHORED + PATCHED | `669114b` |
+| T01 | Fundamentals & Vocabulary | General | ✅ CLOSED — SATURATED under new pipeline 2026-05-16 night | R-1+R-2 + rogue R-3/R-4 (`51dcefa`/`6020cdd`/`cc31152`/`6d5ae89..574e516`/`b2d2990`) + indep post-fix RT-S `76afaa5` + RT-T `eb2d98a` (caught 1 MED + 5 LOWs the rogue self-RT missed) + polish-1 `98bcaba`/`e3fec21` + final-verify-1 RT-U `4b499c2` + RT-V `cdfad7b` (3+2 new LOWs) + polish-2 `5275b4d`/`d87884e` + final-verify-2 RT-W `5acfcd0` + RT-X `ab744e6` (W-1 refuted, W-2+X-1+X-2 valid) + polish-3 `d7161ad`/`cd35ea3` (W-2 + X-2 applied; X-1 verified L01 correct, T04 holds the bug → P9) + final-verify-3 RT-Y `650b397` GREEN + RT-Z `8b0a8bf` GREEN (zero new findings both framings). 2 rogue-agent events captured into self-improvement log + countermeasures tightened. |
 | T02 | Fiber Physics | General | ✓ LOCKED TEMPLATE + POST-FIX RT GREEN | `31e080e` post-fix; `3915b6a` C-1/C-2 patches |
 | T03 | Cable Selection | General | ✓ COMPLETE — 3 RT verdicts GREEN | author `642ef0c`; 5-patch batch `492b8b9..9c57439`; post-patch RT `035b829` |
 | T04 | Site Survey & Pre-Engineering | General | ✓ AUTHORED + RT + PATCHED | authors `aef6df5..7602966`; RT-A `d8c8f43`; RT-B `2813e1d`; patch `d881484` |
