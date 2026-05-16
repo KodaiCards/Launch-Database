@@ -157,7 +157,7 @@ export default function T09L10_PermitTrackingPmProblem() {
                 <td className="border border-gray-300 px-3 py-2">GDOT District 5</td>
                 <td className="border border-gray-300 px-3 py-2">Day 0</td>
                 <td className="border border-gray-300 px-3 py-2">90 days</td>
-                <td className="border border-gray-300 px-3 py-2 className="font-bold text-red-700"">Day 90 ← CRITICAL PATH</td>
+                <td className="border border-gray-300 px-3 py-2 font-bold text-red-700">Day 90 ← CRITICAL PATH</td>
                 <td className="border border-gray-300 px-3 py-2 text-yellow-700">In review</td>
                 <td className="border border-gray-300 px-3 py-2">PE stamp, surety bond required</td>
               </tr>
