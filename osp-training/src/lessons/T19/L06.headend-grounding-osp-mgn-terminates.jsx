@@ -1,0 +1,443 @@
+// Net-new — T19.L06
+// T19.L06 — Headend Grounding — Where OSP MGN Terminates
+// Working lesson: OSP/ISP grounding boundary, primary protector, IBT-entry, GES-tie-in
+// PATH Y: introduces 3 terms (primary protector, IBT-entry, GES-tie-in) with forward-ref to T14
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import { Flashcard } from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T19.L06',
+  course_id: 'T19',
+  title: 'Headend Grounding — Where OSP MGN Terminates',
+  order: 6,
+  lesson_type: 'working',
+  prerequisites: ['T19.L05'],
+  vocabulary_introduced: [
+    'primary protector',
+    'IBT-entry',
+    'GES-tie-in',
+    'TMGB',
+    'TGB',
+    'TBB',
+    'GPR',
+  ],
+  key_terms: [
+    {
+      term: 'primary protector',
+      definition: 'A surge protection device installed at the point where an outside plant cable enters a building. The primary protector clamps voltage transients (lightning-induced surges, ground potential rise events) to safe levels before they reach inside-plant equipment. For fiber cables with metallic components (armor, messenger, copper tracer), the primary protector is a surge arrester mounted at the building entry, bonded to the GES. Required by NEC NFPA 70-2023 Art. 770 for any building entry with metallic cable members. You\'ll learn the full sizing and placement methodology in T14.',
+    },
+    {
+      term: 'IBT-entry',
+      definition: 'Intersystem Bonding Termination at the building entry point — the single metallic bonding point where incoming OSP cable sheaths, armor, messenger, and associated primary protectors all converge and bond to the building grounding electrode system (GES). The IBT is a listed device (per NEC Art. 250.94) that provides accessible bonding points for multiple systems. At a CO, the IBT-entry may be a ground bar on the wall near the cable entry sleeves. You\'ll learn the full IBT sizing, testing, and RUS-program requirements in T14.',
+    },
+    {
+      term: 'GES-tie-in',
+      definition: 'The physical connection from the OSP feeder cable armor/messenger (via the primary protector and IBT) to the building\'s grounding electrode system (GES). The GES consists of the building\'s grounding electrodes (ground rods, concrete-encased electrodes, etc.) and the conductors connecting them. The GES-tie-in is the final step that dissipates transient energy into the earth rather than through the ISP equipment. You\'ll see the full electrode types, resistance targets, and bonding conductor sizing in T14.',
+    },
+    {
+      term: 'TMGB',
+      definition: 'Telecommunications Main Grounding Busbar — the primary grounding reference point for all telecom bonding inside a CO or headend, per TIA-607-D [confirm edition]. Located in the main equipment room (MER) or at the main entrance facility. All TGBs (in secondary equipment rooms) connect back to the TMGB via the TBB (Telecom Bonding Backbone). The TMGB itself bonds to the building GES, creating a single-point ground reference for the entire telecom infrastructure. The IBT-entry bonds to the TMGB or directly to the GES (both connections lead to the same electrode system).',
+    },
+    {
+      term: 'TGB',
+      definition: 'Telecommunications Grounding Busbar — a grounding reference point within a secondary equipment room or telecommunications room (TR), connected to the TMGB via the TBB. Each equipment rack in the TR bonds to the TGB. Per TIA-607-D [confirm edition], TGB size and TBB conductor sizing are specified based on backbone length and load. In small rural huts, the TGB and TMGB are the same physical bus bar — there is no secondary room.',
+    },
+    {
+      term: 'TBB',
+      definition: 'Telecommunications Bonding Backbone — the conductor connecting each TGB back to the TMGB, forming the backbone of the CO grounding hierarchy. Per TIA-607-D [confirm edition] Table 8-1, minimum TBB conductor size is #6 AWG copper, scaling up with backbone length. The TBB must be a single continuous conductor — not spliced. It bonds every floor\'s TGB to the single TMGB reference point, ensuring all equipment in the building shares the same ground reference voltage.',
+    },
+    {
+      term: 'GPR',
+      definition: 'Ground Potential Rise — the elevation of the local earth potential at a point relative to remote earth during a lightning strike or power fault. During a nearby lightning strike, GPR can reach tens of thousands of volts at the strike location and hundreds of volts at points 300+ meters away. A bonded messenger connected to the MGN at every pole is a GPR conduction path into the CO. If the feeder cable armor is not properly bonded and protected at building entry, a GPR event routes the surge transient through the OLT line cards rather than through the GES into earth. GPR is the primary reason primary protectors are mandatory at CO entry.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'CO', source_lesson_id: 'T19.L01' },
+    { term: 'hut', source_lesson_id: 'T19.L01' },
+    { term: 'main entrance facility', source_lesson_id: 'T19.L01' },
+    { term: 'OSP termination point', source_lesson_id: 'T19.L01' },
+    { term: 'MGN', source_lesson_id: 'T01.L08' },
+    { term: 'IBT', source_lesson_id: 'T01.L08' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
+    { term: 'messenger', source_lesson_id: 'T05.L01' },
+    { term: 'armor', source_lesson_id: 'T03.L01' },
+  ],
+  estimated_minutes: 30,
+};
+
+export default function T19L06_HeadendGroundingOspMgnTerminates() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          When the aerial feeder cable reaches the CO building, you don't just pull it
+          inside and call it a day. The metallic parts of that cable — the messenger wire
+          that held it up in the air, and the armor jacket around the fiber — are connected
+          to the MGN (Multi-Grounded Neutral) all the way back up the route at every pole.
+          That means lightning-induced voltage can travel that entire metal path right into
+          your headend building. Without a primary protector at the building entry to clamp
+          the surge, and without proper bonding of the armor to the building's ground
+          electrode system (GES), that surge hits the OLT and destroys line cards.
+        </p>
+        <p className="mt-2">
+          This lesson introduces the three physical elements of the building-entry grounding
+          system that the OSP engineer must specify: the <strong>primary protector</strong>,
+          the <strong>IBT-entry</strong>, and the <strong>GES-tie-in</strong>. We're going
+          to introduce these terms at the level you need to design the OSP entry correctly.
+          The full electrical depth — conductor sizing, resistance testing, RUS-program
+          requirements — lives in T14. We'll cross-reference exactly where to look.
+        </p>
+        <div className="mt-3 p-3 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300">Forward reference — T14</p>
+          <p className="text-slate-300/90 mt-1">
+            Everything in this lesson is the "what and where" of headend grounding.
+            T14 (Bonding, Grounding &amp; Electrical Protection) is the "why, how big,
+            and how to test" — covering grounding conductor sizing, ground resistance targets,
+            NEC Art. 250 electrode types, messenger bonding rules per NEC Art. 230/250,
+            and RUS 1751F-815 requirements. The terminology you learn here is assumed
+            vocabulary in T14.L05.
+          </p>
+        </div>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">MGN</td>
+              <td className="px-3 py-2">Multi-Grounded Neutral</td>
+              <td className="px-3 py-2">The utility grounding conductor bonded to earth at every pole — and to the messenger on aerial cable</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">GES</td>
+              <td className="px-3 py-2">Grounding Electrode System</td>
+              <td className="px-3 py-2">The electrodes (ground rods, etc.) and conductors connecting them at the building — where surges go to dissipate into earth</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">IBT</td>
+              <td className="px-3 py-2">Intersystem Bonding Termination</td>
+              <td className="px-3 py-2">The single bonding point at building entry where all incoming system grounds converge (NEC Art. 250.94)</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">GPR</td>
+              <td className="px-3 py-2">Ground Potential Rise</td>
+              <td className="px-3 py-2">Voltage elevation of local earth during a lightning strike — the surge that travels into the CO via the messenger/armor</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">TMGB</td>
+              <td className="px-3 py-2">Telecommunications Main Grounding Busbar</td>
+              <td className="px-3 py-2">The main inside-plant grounding reference point per TIA-607-D — the ISP side of the grounding handoff</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">TGB</td>
+              <td className="px-3 py-2">Telecommunications Grounding Busbar</td>
+              <td className="px-3 py-2">Secondary grounding busbar in each equipment room; connected back to TMGB via TBB</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">TBB</td>
+              <td className="px-3 py-2">Telecommunications Bonding Backbone</td>
+              <td className="px-3 py-2">The conductor connecting each TGB to the TMGB — minimum #6 AWG Cu per TIA-607-D</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* ── FLASHCARDS ───────────────────────────────────────────────── */}
+        <Flashcard
+          deckId="T19-L06"
+          cards={[
+            {
+              id: 'T19-L06-fc-primary-protector',
+              front: 'What is a primary protector at a CO building entry?',
+              back: 'A surge protection device at the point where an OSP cable enters a building. Clamps voltage transients (lightning-induced GPR, surges) to safe levels before they reach inside-plant equipment. Required by NEC NFPA 70-2023 Art. 770 for any building entry with metallic cable members. Bonded to the GES at the IBT-entry point.',
+            },
+            {
+              id: 'T19-L06-fc-ibt-entry',
+              front: 'What is the IBT-entry?',
+              back: 'Intersystem Bonding Termination at the building entry point — the single metallic bonding point where incoming OSP cable sheaths, armor, messenger, and primary protectors all converge and bond to the building GES. Listed device per NEC Art. 250.94. In rural huts, often a copper ground bar on the wall near the cable entry sleeves.',
+            },
+            {
+              id: 'T19-L06-fc-ges-tie-in',
+              front: 'What is the GES-tie-in?',
+              back: 'The physical connection from OSP feeder cable armor/messenger (via primary protector and IBT) to the building\'s grounding electrode system. The GES dissipates transient energy into the earth. Without this connection, surge transients route through the OLT line cards instead of to earth — causing equipment destruction.',
+            },
+            {
+              id: 'T19-L06-fc-tmgb',
+              front: 'What is the TMGB?',
+              back: 'Telecommunications Main Grounding Busbar — the primary ISP-side grounding reference in a CO per TIA-607-D [confirm edition]. Located in the MER. All TGBs connect back to the TMGB via TBB. TMGB bonds to the building GES. The IBT-entry bonds to the TMGB or directly to the GES — both lead to the same electrode system.',
+            },
+            {
+              id: 'T19-L06-fc-tgb',
+              front: 'What is a TGB?',
+              back: 'Telecommunications Grounding Busbar — ISP-side grounding reference in a secondary equipment room. Connected to TMGB via TBB. Each rack bonds to the TGB. In small rural huts, TGB and TMGB are the same physical bar.',
+            },
+            {
+              id: 'T19-L06-fc-tbb',
+              front: 'What is the TBB?',
+              back: 'Telecommunications Bonding Backbone — conductor connecting each TGB to the TMGB. Minimum #6 AWG Cu per TIA-607-D Table 8-1 [confirm edition], scaling up with length. Must be a single continuous conductor (no splices). Ensures all equipment shares the same ground reference.',
+            },
+            {
+              id: 'T19-L06-fc-gpr',
+              front: 'What is Ground Potential Rise (GPR) and why does it matter for CO entry?',
+              back: 'Elevation of local earth potential during a lightning strike or power fault — can reach tens of thousands of volts at the strike point. A bonded messenger on the MGN conducts GPR transients into the CO. Without a primary protector and proper GES-tie-in at building entry, the GPR surge routes through OLT line cards and destroys them.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The Building-Entry Grounding Path — Step by Step</h2>
+
+        <p>
+          Here's the complete grounding path from the OSP feeder cable to the building's
+          GES. Every element must be present, and the OSP engineer specifies all elements
+          from the building wall inward to the IBT-entry. The ISP/inside-plant engineer
+          takes over from the TMGB inward.
+        </p>
+
+        <ol className="list-decimal pl-5 space-y-3 mt-3 text-sm">
+          <li>
+            <strong>Aerial feeder cable messenger:</strong> Bonded to the MGN at every pole
+            along the aerial route. Lightning-induced voltage on the MGN during a storm
+            creates a conduction path from the strike location all the way to the CO building.
+            The messenger is a metallic conductor — it carries the transient.
+          </li>
+          <li>
+            <strong>Aerial-to-underground transition (riser pole or direct entry):</strong>
+            The feeder cable transitions from aerial to underground before entering the
+            building. At this point, the messenger is typically bonded to a driven ground rod
+            and downlead conductor — a "last-pole" bond before the cable enters the conduit.
+            This is OSP work (see T14 for downlead sizing rules).
+          </li>
+          <li>
+            <strong>Building entry — primary protector:</strong> Inside or immediately at
+            the MEF, a primary protector (surge arrester) mounts on the cable's metallic
+            components. It provides a low-impedance path to the IBT for any transient voltage
+            above its clamping level, preventing the transient from propagating further into
+            the building. NEC Art. 770 and RUS 1751F-810 §3 both require this for telecom
+            cable entering buildings. For dielectric ADSS feeder cable: no metallic armor
+            to bond — primary protector may not be required unless the cable has a metallic
+            tracer or inner strength member.
+          </li>
+          <li>
+            <strong>IBT-entry (NEC Art. 250.94):</strong> The primary protector's ground
+            lead connects to the IBT — the listed bonding termination device accessible at
+            or near the building entry. The IBT provides mounting points for multiple system
+            bonds (power GES bond, telecom armor bond, coax shield bond, cable TV messenger bond —
+            all converge here). The IBT ensures single-point bonding, preventing ground loops
+            between systems.
+          </li>
+          <li>
+            <strong>GES-tie-in:</strong> A bonding conductor (#6 AWG Cu minimum — T14 covers
+            sizing) runs from the IBT-entry to the building's GES (ground rod array, concrete-
+            encased electrode, etc.). Any surge energy that reached the IBT now dissipates
+            into earth via the GES. This is the final step — energy goes to earth, not to the OLT.
+          </li>
+          <li>
+            <strong>TMGB (ISP handoff):</strong> Inside the building, the IBT-entry is also
+            bonded to the TMGB per TIA-607-D. The TMGB is the inside-plant grounding reference.
+            All equipment racks bond to TGBs which bond to the TMGB via TBBs. The single-point
+            ground reference ensures all equipment shares the same earth potential, preventing
+            ground-loop-induced noise on signal circuits.
+          </li>
+        </ol>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-2">Book vs. Field — The Critical GPR Scenario</p>
+          <p className="text-slate-300/90">
+            <strong>Book (TIA-607-D §4.2 [confirm edition]; NEC Art. 250.94; RUS 1751F-810 §3):</strong>{' '}
+            Single-point bonding at the building entry IBT. All OSP cable armor and metallic
+            components bond to the IBT. Primary protectors required on aerial cable entry.
+            GES electrode system must meet NEC Art. 250 requirements. The TMGB bonds to the GES.
+            Result: GPR transients route to earth via the GES, not through equipment.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> On small rural CO huts, the "primary protector" is often
+            a #6 AWG copper wire running from the cable armor clamp to the nearest available
+            point — sometimes the electrical panel's ground bar, sometimes a hastily driven
+            ground rod with no resistance test. The TMGB/TGB/TBB hierarchy is almost never
+            implemented in buildings under 500 sq ft. The IBT is present only when an inspector
+            required it. The entire grounding system may be a clamp, a wire, and a rod.
+          </p>
+          <p className="text-slate-300/90 mt-2 font-semibold">
+            The risk of the field shortcut:
+          </p>
+          <p className="text-slate-300/90 mt-1">
+            If the feeder cable armor is not bonded at building entry, a lightning-induced GPR
+            event sends the transient through the armor into the OLT chassis. The OLT's internal
+            grounding may not handle the transient — line cards are destroyed, service is lost
+            for hours, and equipment replacement costs $5,000–20,000+ per OLT shelf. This is a
+            documented, real failure mode in rural FTTH deployments. A properly installed
+            primary protector + IBT + GES-tie-in costs $200–500 in materials and 2 hours of
+            installation time. The math is obvious.
+          </p>
+        </div>
+
+        <h3 className="mt-5 font-semibold">What the OSP engineer specifies on the drawing</h3>
+        <p className="mt-2">
+          Every CO/hut OSP design drawing should include a grounding detail sheet with:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
+          <li>Cable entry sleeve location with conduit seal detail</li>
+          <li>Primary protector type, mounting location, and bonding conductor to IBT</li>
+          <li>IBT device (listed per NEC Art. 250.94) mounting location and bonding conductor to GES</li>
+          <li>GES electrode type and location (ground rod, concrete-encased electrode, etc.)</li>
+          <li>Bonding conductor size (#6 AWG Cu minimum from IBT to GES — T14 specifies sizing methodology)</li>
+          <li>Note: "Metallic cable armor and messenger to be bonded to IBT per NEC Art. 770 and RUS 1751F-810 §3 at building entry"</li>
+          <li>For dielectric (ADSS) feeder: note "Dielectric cable — no metallic bonding required at building entry. Confirm no metallic tracer with cable spec."</li>
+        </ul>
+      </section>
+
+      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
+      <AnnotatedDiagram
+        title="OSP-to-CO Grounding Path — Building Entry Detail"
+        description="Click each element to see its role in the grounding chain from the pole to the building GES."
+        src="/training/diagrams/co-building-entry-grounding.svg"
+        alt="Diagram showing OSP feeder cable entering building with messenger bond, primary protector, IBT-entry, GES-tie-in, and TMGB connections"
+        aspectRatio={2.0}
+        hotPoints={[
+          {
+            id: 'messenger',
+            x: 8,
+            y: 30,
+            label: 'Messenger (MGN-bonded)',
+            type: 'click',
+            explanation:
+              'The aerial messenger wire is bonded to the MGN at every pole. Lightning-induced GPR transients on the MGN travel via the messenger toward the CO. This is the input side of the GPR conduction path.',
+          },
+          {
+            id: 'primary-protector',
+            x: 22,
+            y: 50,
+            label: 'Primary Protector',
+            type: 'click',
+            explanation:
+              'Surge arrester at building entry — clamps transient voltage to safe levels. The protector\'s ground lead connects to the IBT. Required by NEC Art. 770 for metallic cable entering buildings. For ADSS dielectric fiber with no metallic members: primary protector may not be required; confirm with cable spec.',
+          },
+          {
+            id: 'ibt',
+            x: 40,
+            y: 65,
+            label: 'IBT-entry (NEC 250.94)',
+            type: 'click',
+            explanation:
+              'Intersystem Bonding Termination — the single bonding point where all incoming OSP bonds converge. Listed device per NEC Art. 250.94. Provides accessible bonding lugs for multiple systems (power, telecom, cable TV, etc.). Ensures single-point bonding that prevents ground loops.',
+          },
+          {
+            id: 'ges',
+            x: 60,
+            y: 85,
+            label: 'GES (Ground Rods)',
+            type: 'click',
+            explanation:
+              'Grounding Electrode System — ground rods, concrete-encased electrodes, and their bonding conductors. Connected to IBT via #6 AWG Cu (minimum) bonding conductor. GPR transient energy dissipates into earth here rather than routing through OLT equipment. Full electrode types and resistance targets covered in T14.',
+          },
+          {
+            id: 'tmgb',
+            x: 75,
+            y: 40,
+            label: 'TMGB (ISP side)',
+            type: 'click',
+            explanation:
+              'Telecommunications Main Grounding Busbar — the ISP-side grounding reference per TIA-607-D. Located in the MER. Also bonded to the IBT-entry and the building GES. All equipment racks bond to TGBs which bond to the TMGB via TBBs. The OSP engineer\'s work ends at the IBT-entry; the ISP team installs the TMGB/TGB/TBB hierarchy.',
+          },
+        ]}
+      />
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <Quiz
+        title="T19.L06 Check — Headend Grounding"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T19-L06-Q1',
+            type: 'mc',
+            prompt:
+              'A lightning strike hits a distribution pole 400 meters from a rural FTTH hut. The feeder cable messenger is bonded to the MGN at every pole. The hut has no primary protector at building entry — the cable armor runs directly to the ODF. What is the most likely outcome?',
+            choices: [
+              'No damage — the fiber core is non-conductive glass, so lightning cannot travel through the cable',
+              'Minor signal degradation — lightning events create temporary interference on the fiber but no permanent damage',
+              'OLT line card damage from GPR transient: the lightning-induced ground potential rise travels via the bonded messenger and armor to the OLT chassis, destroying unprotected line cards',
+              'The cable jacket ruptures from thermal expansion — fiber must be replaced',
+            ],
+            answerIndex: 2,
+            explanation:
+              'The fiber core is dielectric — but the metallic messenger and armor are not. A bonded messenger on the MGN is a GPR conduction path. Without a primary protector at building entry to clamp the transient and bond it to the GES, the surge travels through the armor to the first metallic contact inside the building — the OLT chassis. The OLT\'s internal protection may not handle the full GPR transient, resulting in line card destruction. This is a documented, real failure mode.',
+            citation: 'IEEE Std 487 [confirm edition — GPR context]; NEC NFPA 70-2023 Art. 770; RUS 1751F-810 §3.',
+          },
+          {
+            id: 'T19-L06-Q2',
+            type: 'mc',
+            prompt:
+              'What does the IBT-entry (Intersystem Bonding Termination) accomplish at a CO building entry?',
+            choices: [
+              'It converts the OSP cable\'s metallic members to fiber-only, eliminating all conductive paths at the building entry',
+              'It provides a single metallic bonding point where all incoming OSP cable armor, messenger, and primary protectors converge and bond to the building GES — preventing multiple separate ground points that would create ground loops',
+              'It measures ground resistance continuously and triggers an alarm if resistance exceeds 25 ohms',
+              'It serves as the connection point between the CO\'s –48VDC power plant and the OSP cable\'s power feed',
+            ],
+            answerIndex: 1,
+            explanation:
+              'The IBT (Intersystem Bonding Termination) is defined by NEC Art. 250.94 as a means for single-point bonding of all incoming systems at or near the building service entrance. It provides a common bonding point so that power, telecom, coax, and cable TV grounds all reference the same earth potential. Multiple separate ground points connected to different electrodes would create different potential levels between systems — ground loops — that cause noise and equipment damage.',
+            citation: 'NEC NFPA 70-2023 Art. 250.94.',
+          },
+          {
+            id: 'T19-L06-Q3',
+            type: 'fill-in-blank',
+            prompt:
+              'The TBB (Telecommunications Bonding Backbone) connects each TGB back to the TMGB. Per TIA-607-D, the minimum TBB conductor size is #____ AWG copper.',
+            answer: '6',
+            answerDisplay: '#6 AWG copper',
+            explanation:
+              'TIA-607-D [confirm edition] Table 8-1 specifies minimum #6 AWG copper for the TBB conductor. Conductor size increases with backbone length to maintain sufficiently low impedance. The minimum applies to short backbone runs. For longer buildings, larger conductors are required. The TBB must be a single continuous conductor — no splices allowed.',
+          },
+          {
+            id: 'T19-L06-Q4',
+            type: 'mc',
+            prompt:
+              'An OSP engineer is designing a new rural FTTH hut with a dielectric ADSS feeder cable (all-dielectric self-supporting — no metallic armor, no metallic messenger, no copper tracer). Does this cable require a primary protector at building entry?',
+            choices: [
+              'Yes — all fiber cables entering buildings require a primary protector regardless of cable construction',
+              'No — a dielectric ADSS cable has no metallic members to bond. There is no conduction path for GPR transients. Verify with the cable datasheet that there is no metallic inner member (some ADSS cables have a metallic tracer for continuity testing). If truly all-dielectric, no primary protector is required.',
+              'Yes — dielectric cables can still conduct lightning through the fiber via electrooptic effects',
+              'No — dielectric cables should use a "floating protector" instead of a primary protector',
+            ],
+            answerIndex: 1,
+            explanation:
+              'NEC Art. 770 and the primary protector requirement applies to cables with metallic members — armor, messenger, or conductive inner strength member. A truly dielectric ADSS cable (no metal at all) has no conduction path for GPR transients and therefore does not require a primary protector. The caution: verify with the cable datasheet that there is no metallic tracer or metallic central strength member — some cables marketed as "dielectric" contain a metallic element for OTDR access or continuity testing.',
+            citation: 'NEC NFPA 70-2023 Art. 770; RUS 1751F-810 §3.',
+          },
+          {
+            id: 'T19-L06-Q5',
+            type: 'mc',
+            prompt:
+              'In a rural FTTH hut, the OSP engineer tells the ISP team: "Everything from the IBT-entry inward is your responsibility." The ISP team installs the TMGB but does not run a TBB to the OLT rack\'s equipment bond point. Why is this a problem?',
+            choices: [
+              'No problem — the IBT-entry and TMGB are the same device; the OLT rack does not need its own bond',
+              'The OLT rack chassis is not bonded to the building ground reference. Any ground fault in the OLT could elevate the chassis voltage above the battery return reference, creating a personnel safety hazard and signal-integrity problems on any bonded metallic paths',
+              'The ISP team must bond the TBB before the OSP engineer can complete the fiber splicing',
+              'TMGB installation without TBB voids the NEBS rating of the OLT equipment',
+            ],
+            answerIndex: 1,
+            explanation:
+              'The TBB (Telecom Bonding Backbone) carries the bonding path from the TMGB to each TGB in the rack space, and from TGB to each rack\'s equipment chassis bond. Without this path, the OLT rack chassis is not referenced to the building ground. A fault current path through the chassis, or ground-loop noise from two equipment chassis at slightly different potentials, can cause interference and safety hazards. The TMGB is the anchor — the TBB and TGB system extend that ground reference to every rack.',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
