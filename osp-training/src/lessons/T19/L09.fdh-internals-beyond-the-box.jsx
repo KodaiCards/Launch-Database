@@ -165,101 +165,61 @@ const fdhDiagramSvg = (
 const fdhScenarioStates = {
   start: {
     id: 'start',
-    description:
-      "You're at the FDH adding a new subscriber — house at 123 Maple St. The customer signed up for GPON 1 Gbps service. You open the FDH cabinet and assess the situation.",
-    prompt: 'What do you do first?',
+    text: "You're at the FDH adding a new subscriber — house at 123 Maple St. The customer signed up for GPON 1 Gbps service. You open the FDH cabinet and assess the situation. What do you do first?",
     choices: [
-      { label: 'Check whether a splitter cassette with a free port already exists in the connector field', nextState: 'check-cassette' },
-      { label: 'Start pulling the drop fiber from the house and worry about the FDH end later', nextState: 'drop-first-wrong' },
-      { label: 'Call the NOC and ask them to assign you a feeder strand', nextState: 'call-noc-wrong' },
+      { label: 'Check whether a splitter cassette with a free port already exists in the connector field', nextNodeId: 'check-cassette' },
+      { label: 'Start pulling the drop fiber from the house and worry about the FDH end later', nextNodeId: 'drop-first-wrong' },
+      { label: 'Call the NOC and ask them to assign you a feeder strand', nextNodeId: 'call-noc-wrong' },
     ],
   },
   'check-cassette': {
     id: 'check-cassette',
-    description:
-      'Smart — you inventory the FDH first. You find: Cassette 1 has 32 ports; 31 are capped with drop fibers, 1 port (port 32) has a green dust cap and no drop fiber plugged in. Cassette 2 position is an empty modular bay slot (blank panel installed).',
-    prompt: 'Port 32 on Cassette 1 is free. What do you do?',
+    text: 'Smart — you inventory the FDH first. You find: Cassette 1 has 32 ports; 31 are capped with drop fibers, 1 port (port 32) has a green dust cap and no drop fiber plugged in. Cassette 2 position is an empty modular bay slot (blank panel installed). Port 32 on Cassette 1 appears free. What do you do?',
     choices: [
-      { label: 'Verify with OSS/provisioning that port 32 is actually unassigned before connecting anything', nextState: 'verify-oss' },
-      { label: 'The dust cap means it\'s free — just connect the drop fiber and call the job done', nextState: 'skip-verify-wrong' },
+      { label: 'Verify with OSS/provisioning that port 32 is actually unassigned before connecting anything', nextNodeId: 'verify-oss' },
+      { label: 'The dust cap means it\'s free — just connect the drop fiber and call the job done', nextNodeId: 'skip-verify-wrong' },
     ],
   },
   'drop-first-wrong': {
     id: 'drop-first-wrong',
-    description:
-      'You pull 300 ft of drop fiber from the house to the FDH and then discover the FDH has zero free ports — every cassette is full and there are no more modular bay slots with cassettes. You now have to order a new cassette, wait for delivery, and come back. The drop cable is just sitting coiled on the ground for days.',
-    prompt: 'Lesson learned?',
-    choices: [{ label: 'Always inventory the FDH before pulling the drop', nextState: 'lesson-drop-first' }],
+    text: 'You pull 300 ft of drop fiber from the house to the FDH and then discover the FDH has zero free ports — every cassette is full and there are no more modular bay slots with cassettes. You now have to order a new cassette, wait for delivery, and come back. The drop cable is just sitting coiled on the ground for days.',
+    isTerminal: true,
+    outcome: 'SUBOPTIMAL',
+    feedback: 'Always inventory the FDH — count available ports, check for free modular bay slots, verify cassette inventory — BEFORE pulling the drop. FDH capacity determines whether a new subscriber can be added at all.',
   },
   'call-noc-wrong': {
     id: 'call-noc-wrong',
-    description:
-      'The NOC doesn\'t manage individual feeder strands at the FDH level — that\'s physical plant, your responsibility. The NOC provisions OLT ports and ONT serial numbers, not FDH splitter ports. They ask you to check the FDH directly.',
-    prompt: 'What now?',
-    choices: [{ label: 'Go inspect the FDH connector field', nextState: 'check-cassette' }],
+    text: 'The NOC doesn\'t manage individual feeder strands at the FDH level — that\'s physical plant, your responsibility. The NOC provisions OLT ports and ONT serial numbers, not FDH splitter ports. They ask you to check the FDH directly.',
+    choices: [{ label: 'Go inspect the FDH connector field', nextNodeId: 'check-cassette' }],
   },
   'verify-oss': {
     id: 'verify-oss',
-    description:
-      'Good habit. You check the OSS (Operations Support System) and confirm port 32 on Cassette 1 is unassigned — no subscriber record, no active service. The provisioning team confirms it\'s available. You connect 123 Maple St\'s drop fiber to port 32, label the drop fiber with the address, update the OSS with the assignment, and cap any unused pigtails.',
-    prompt: 'Job complete. What\'s the final step before leaving?',
+    text: 'Good habit. You check the OSS (Operations Support System) and confirm port 32 on Cassette 1 is unassigned — no subscriber record, no active service. The provisioning team confirms it\'s available. You connect 123 Maple St\'s drop fiber to port 32, label the drop fiber with the address, update the OSS with the assignment, and cap any unused pigtails. Job complete. What\'s the final step before leaving?',
     choices: [
-      { label: 'Test optical power level at the ONT to confirm the link budget is within spec before leaving site', nextState: 'test-power' },
-      { label: 'Leave — provisioning will test from their end', nextState: 'leave-early-wrong' },
+      { label: 'Test optical power level at the ONT to confirm the link budget is within spec before leaving site', nextNodeId: 'test-power' },
+      { label: 'Leave — provisioning will test from their end', nextNodeId: 'leave-early-wrong' },
     ],
   },
   'skip-verify-wrong': {
     id: 'skip-verify-wrong',
-    description:
-      'Three days later you get a trouble ticket: subscriber at 456 Oak Ave lost service. The OSS shows their service is on Cassette 1 port 32 — the port you used. Turns out port 32 had a legitimate subscriber assigned in the OSS; the physical drop was just unplugged temporarily during earlier maintenance and never re-tagged correctly in the field. Your new customer is working, but 456 Oak Ave is dark. You have to roll a truck to fix it.',
-    prompt: 'Lesson?',
-    choices: [{ label: 'Always verify OSS assignment before using any port that appears physically free', nextState: 'lesson-skip-verify' }],
+    text: 'Three days later you get a trouble ticket: subscriber at 456 Oak Ave lost service. The OSS shows their service is on Cassette 1 port 32 — the port you used. Turns out port 32 had a legitimate subscriber assigned in the OSS; the physical drop was just unplugged temporarily during earlier maintenance. Your new customer is working, but 456 Oak Ave is dark. You have to roll a truck to fix it.',
+    isTerminal: true,
+    outcome: 'INCORRECT',
+    feedback: 'A physical dust cap does not mean the port is OSS-unassigned. Always verify in the operations support system before using any port that appears physically free.',
   },
   'test-power': {
     id: 'test-power',
-    description:
-      'You use an optical power meter at the ONT to read –25 dBm received downstream. The OLT is outputting at Class B+ (+1.5 to +5 dBm per ITU-T G.984.2). A –25 dBm receive level against a typical +3 dBm OLT output means 28 dB total path loss. GPON Class B+ link budget is 28 dB max. You\'re right at the limit. You note this in your work order and flag the drop length as a long-reach drop — provisioning should monitor the signal margin.',
-    prompt: 'Result?',
-    choices: [{ label: 'Done — job complete with documented link margin', nextState: 'success' }],
+    text: 'You use an optical power meter at the ONT to read –25 dBm received downstream. The OLT is outputting at Class B+ (+1.5 to +5 dBm per ITU-T G.984.2). A –25 dBm receive level against a typical +3 dBm OLT output means 28 dB total path loss. GPON Class B+ link budget is 28 dB max. You\'re right at the limit. You note this in your work order and flag the drop length as a long-reach drop.',
+    isTerminal: true,
+    outcome: 'COMPLETE',
+    feedback: 'Correct completion protocol: inventory FDH → verify OSS → connect drop → document assignment → confirm optical power at ONT. The power meter check in 2 minutes confirms correct routing, polarity, seating, and adequate signal margin.',
   },
   'leave-early-wrong': {
     id: 'leave-early-wrong',
-    description:
-      'Provisioning runs activation tests and finds the ONT is showing red (no optical signal). The drop is connected wrong at the ONT end — an SC/APC polarity swap. You have to roll back to site. Field verification would have caught this in 2 minutes.',
-    prompt: 'Lesson?',
-    choices: [{ label: 'Always verify optical power at the ONT before leaving site', nextState: 'lesson-leave-early' }],
-  },
-  'lesson-drop-first': {
-    id: 'lesson-drop-first',
-    description:
-      'Correct: always audit the FDH — count available ports, check for free modular bay slots, verify cassette inventory — BEFORE pulling the drop. FDH capacity determines whether a new subscriber can be added at all, and whether a new cassette or splitter needs to be ordered.',
-    prompt: 'Scenario complete.',
-    choices: [],
+    text: 'Provisioning runs activation tests and finds the ONT is showing red (no optical signal). The drop is connected wrong at the ONT end — an SC/APC polarity swap. You have to roll back to site. Field verification would have caught this in 2 minutes.',
     isTerminal: true,
-  },
-  'lesson-skip-verify': {
-    id: 'lesson-skip-verify',
-    description:
-      'Correct: physical appearance (dust cap present, no fiber plugged in) does not equal OSS-assigned-free. Always check the system of record. In a production network, a port with a cap might belong to a temporarily-disconnected subscriber, a spare reserved for a pending install, or a test port. Physical plant and OSS records must agree before you touch anything.',
-    prompt: 'Scenario complete.',
-    choices: [],
-    isTerminal: true,
-  },
-  'lesson-leave-early': {
-    id: 'lesson-leave-early',
-    description:
-      'Correct: take 2 minutes to read optical power at the ONT with a meter before leaving. A live link-budget measurement confirms: correct fiber routing, correct SC/APC polarity, correct connector seating, and adequate signal margin. It is the single most efficient quality check you can do at drop completion.',
-    prompt: 'Scenario complete.',
-    choices: [],
-    isTerminal: true,
-  },
-  success: {
-    id: 'success',
-    description:
-      'Job well done. You inventoried the FDH, verified OSS records, connected the drop, documented the assignment, and confirmed optical power at the ONT. This is the standard completion protocol for a GPON subscriber add at an FDH. Repeat it on every install.',
-    prompt: 'Scenario complete.',
-    choices: [],
-    isTerminal: true,
+    outcome: 'SUBOPTIMAL',
+    feedback: 'Always verify optical power at the ONT before leaving site. A 2-minute power meter check confirms correct fiber routing, SC/APC polarity, connector seating, and adequate signal margin. It is the single most efficient quality check at drop completion.',
   },
 };
 
@@ -268,71 +228,71 @@ const fdhScenarioStates = {
 const lessonQuiz = [
   {
     id: 'T19L09-Q1',
-    question:
+    type: 'mc',
+    prompt:
       'Inside an FDH, the modular bay slots accept _____ that house the passive optical splitters.',
-    type: 'multiple-choice',
-    options: [
+    choices: [
       'splice organizer trays',
       'splitter cassettes',
       'FOSC modules',
       'distribution frames',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'Modular bay slots accept splitter cassettes. Each cassette is a self-contained module housing one or more passive splitters. Splice trays sit in the feeder entry section; FOSCs are separate closures; distribution frames are headend-side hardware.',
   },
   {
     id: 'T19L09-Q2',
-    question:
+    type: 'mc',
+    prompt:
       "A 1×32 splitter cassette takes _____ input fiber(s) and presents _____ subscriber output port(s).",
-    type: 'multiple-choice',
-    options: ['32 / 1', '2 / 32', '1 / 32', '4 / 8'],
-    correctIndex: 2,
+    choices: ['32 / 1', '2 / 32', '1 / 32', '4 / 8'],
+    answerIndex: 2,
     explanation:
       'A 1×32 splitter takes ONE feeder input and splits it to 32 subscriber outputs. This is the defining topology of PON: one feeder strand serves up to 32 subscribers on GPON (up to 128 on XGS-PON).',
   },
   {
     id: 'T19L09-Q3',
-    question:
+    type: 'mc',
+    prompt:
       'The demarc for a residential GPON subscriber is typically located at:',
-    type: 'multiple-choice',
-    options: [
+    choices: [
       'The FDH connector field port',
       'The OLT port card in the headend',
       'The ONT mounted at the customer premises',
       'The splice organizer tray inside the FDH',
     ],
-    correctIndex: 2,
+    answerIndex: 2,
     explanation:
       "The demarc is the ONT at the subscriber's premises. The carrier owns and maintains everything from OLT through feeder, FDH splitter, and drop fiber to the ONT input port. The customer owns the ONT output ports and beyond.",
   },
   {
     id: 'T19L09-Q4',
-    question:
+    type: 'mc',
+    prompt:
       "Before connecting a subscriber's drop fiber to an FDH port that appears physically free (dust cap on, no fiber installed), you should:",
-    type: 'multiple-choice',
-    options: [
+    choices: [
       'Connect immediately — a dust cap means the port is available',
       'Verify OSS records to confirm the port is unassigned',
       'Call the NOC to have them release the port',
       'Remove the cassette and inspect the splitter internally',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'A physical dust cap does not mean the port is OSS-unassigned. Always verify in the operations support system. A capped port may belong to a temporarily-disconnected subscriber or pending install. Physical plant and OSS must agree.',
   },
   {
     id: 'T19L09-Q5',
-    question:
+    type: 'mc',
+    prompt:
       'Drop fiber typically connects the FDH connector field to the:',
-    type: 'multiple-choice',
-    options: [
+    choices: [
       'OLT in the headend rack',
       'Feeder splice point in the FOSC',
       'ONT at the subscriber demarc',
       'TMGB in the headend equipment room',
     ],
-    correctIndex: 2,
+    answerIndex: 2,
     explanation:
       'Drop fiber is the last segment — from the FDH connector field to the subscriber ONT (the demarc). It is distinct from feeder fiber (OLT to FDH) and from express fiber (passing through an FOSC without being accessed).',
   },
@@ -433,9 +393,37 @@ export default function T19L09_FDHInternals() {
         <p>
           A <strong>1×32 splitter</strong> takes one feeder input (carrying a GPON downstream signal at roughly
           2.5 Gbps) and divides it to 32 output fibers. Each output carries 1/32 of the original signal power. In
-          decibel terms, the splitter itself adds approximately 17–17.5 dB of passive insertion loss (plus connector and
-          splice losses) to every subscriber's path. This is why the link budget math matters — each dB of margin you
-          give back to the splitter is a dB you can't spend on drop length or connector count.
+          decibel terms, the splitter itself adds passive insertion loss to every subscriber's path.
+        </p>
+        <div style={{
+          background: '#e8f0fe', border: '2px solid #4a7eb5', borderRadius: '6px',
+          padding: '14px 18px', margin: '0.75rem 0'
+        }}>
+          <strong>Book vs. Field — 1×32 Splitter Insertion Loss</strong>
+          <p style={{ marginTop: '8px' }}>
+            <em>The book says (ITU-T G.671 [confirm edition]):</em> The maximum allowable insertion loss
+            for a 1×32 PLC (Planar Lightwave Circuit) passive optical splitter is <strong>18.1 dB</strong> — this
+            is the standards ceiling that a compliant device must not exceed. When performing a link budget for
+            a GPON system, use 18.1 dB as your conservative (worst-case) splitter loss to ensure the design
+            passes at the compliance limit.
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            <em>Field practice says:</em> Modern PLC splitter cassettes from major manufacturers
+            (Corning, AFL, Huawei OFS) typically measure <strong>17–17.5 dB</strong> insertion loss under
+            calibrated laboratory conditions. Field installations — with real connector mating losses, temperature
+            variation, and aging — typically perform at 17.0–17.8 dB in practice.
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            <em>Which to use in a link budget:</em> Always use <strong>18.1 dB</strong> (the G.671 standard
+            ceiling) when designing. If the link passes at 18.1 dB, it will pass with a real compliant splitter.
+            Using the 17–17.5 dB field-typical value in the design might look like it passes, but if the installed
+            splitter hits its maximum allowed loss at 18.1 dB, the link fails. Design to the standard; celebrate
+            when the installed device beats it.
+          </p>
+        </div>
+        <p>
+          This is why the link budget math matters — each dB of margin you give back to the splitter is a dB you
+          can't spend on drop length or connector count.
         </p>
         <div style={{
           background: '#fff8e1', border: '2px solid #f0a500', borderRadius: '6px',
@@ -493,19 +481,30 @@ export default function T19L09_FDHInternals() {
           background: '#fff8e1', border: '2px solid #f0a500', borderRadius: '6px',
           padding: '14px 18px', margin: '1rem 0'
         }}>
-          <strong>Book vs. Field — Drop Length Limits</strong>
+          <strong>Book vs. Field — Drop Length Limits (Two Different "20 km" and "12–15 km" Values)</strong>
           <p style={{ marginTop: '8px' }}>
-            <em>The book says:</em> GPON Class B+ (ITU-T G.984.2) allows a differential reach of 20 km and a maximum
-            reach of 20 km from OLT to ONT.
+            <em>The book says (ITU-T G.984.2):</em> GPON Class B+ allows a maximum logical reach of
+            20 km from OLT to ONT. This is the <strong>fiber geometric reach</strong> — the maximum
+            one-way fiber distance the GPON protocol can support (determined by timing constraints and
+            differential delay, not by loss alone).
           </p>
           <p style={{ marginTop: '6px' }}>
-            <em>Field practice says:</em> the link budget, not the raw reach specification, is the binding constraint.
-            A 1×32 split adds 17–17.5 dB. Add feeder splice losses, FOSC connector losses, and FDH connector losses and
-            you may have only 8–10 dB of budget remaining for the drop. At 0.4 dB/km for G.652.D fiber at 1490 nm, that
-            limits the drop to roughly 20–25 km in ideal conditions — but OLT transmit power, ONT receive sensitivity,
-            and number of connectors in the path are the real variables. Calculate the full link budget per design
-            before specifying drop length limits. A long rural drop approaching 2 km should always trigger a
-            link-budget recalculation.
+            <em>The link budget says:</em> In practice, with a 1×32 splitter (18.1 dB conservative loss per
+            G.671), feeder splice losses (~0.05 dB per splice), FDH and ODF connector losses (~0.30 dB per
+            pair), and 0.35–0.40 dB/km fiber attenuation at 1490 nm, the available budget remaining for
+            the drop portion of the link is typically only 8–10 dB. At 0.40 dB/km, that translates to
+            roughly <strong>20–25 km of drop</strong> in ideal conditions — but this only works if the
+            feeder is very short. When feeder, splitter, and connector losses are accounted for on a real
+            rural build, the practical total path (feeder + drop) that fits inside the GPON Class B+ 28 dB
+            budget is typically <strong>12–15 km</strong>.
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            <em>Reconciliation — these are not contradictory:</em> 20 km = G.984.2 fiber geometric reach
+            (protocol timing limit). 12–15 km = the typical link-budget-derived practical limit when all
+            real-world losses are counted. Both are real; they measure different things. Use 20 km as the
+            absolute upper bound; use a link budget calculation to find the actual system limit on your
+            specific design. A long rural drop approaching 2 km should always trigger a full link-budget
+            recalculation using the actual feeder length and component count.
           </p>
         </div>
       </section>
@@ -519,8 +518,8 @@ export default function T19L09_FDHInternals() {
         </p>
         <BranchingScenario
           scenarioId="T19-L09-scenario-1"
-          initialState="start"
-          states={fdhScenarioStates}
+          startNodeId="start"
+          nodes={fdhScenarioStates}
           title="FDH Subscriber Add — Decision Tree"
         />
       </section>
@@ -599,7 +598,11 @@ export default function T19L09_FDHInternals() {
       {/* ── QUIZ ─────────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>Check Your Understanding</h2>
-        <Quiz questions={lessonQuiz} lessonId={meta.id} />
+        <Quiz
+          title="T19.L09 Check — FDH Internals"
+          mode="multiple-choice"
+          questions={lessonQuiz}
+        />
       </section>
 
     </LessonLayout>
