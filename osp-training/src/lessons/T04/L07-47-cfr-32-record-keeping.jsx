@@ -25,9 +25,9 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'RUS', source_lesson_id: 'T01.L01' },
-    { term: 'pole', source_lesson_id: 'T01.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
-    { term: 'conduit', source_lesson_id: 'T01.L01' },
+    { term: 'pole', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'existing utility', source_lesson_id: 'T04.L01' },
     { term: 'photo log', source_lesson_id: 'T04.L01' },
@@ -173,24 +173,34 @@ export default function T04L07_47CFR32RecordKeeping() {
             </thead>
             <tbody className="text-slate-300/90">
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2210</td>
-                <td className="px-3 py-2">Cable and Wire Facilities</td>
-                <td className="px-3 py-2">Underground conduit, buried cable, aerial cable — the physical fiber plant. Materials cost for OSP construction.</td>
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2111</td>
+                <td className="px-3 py-2">Land</td>
+                <td className="px-3 py-2">Easement purchases, ROW acquisition costs — any cost of acquiring the right to place telecom plant. This is a <em>plant account</em> (balance sheet asset). Note: §32.2210 is a different account entirely — Central office—switching.</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2420</td>
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2210</td>
+                <td className="px-3 py-2">Central office—switching</td>
+                <td className="px-3 py-2">Costs of central office switching equipment. Not a field-plant account for OSP construction — included here specifically because it is commonly confused with cable and wire accounts. OSP cable costs go to §32.2410, not here.</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2220</td>
+                <td className="px-3 py-2">Operator systems</td>
+                <td className="px-3 py-2">Costs of operator-services equipment and systems. Not an OSP field-plant account — included here to prevent misuse; this is not the "Land and Land Rights" account (which is §32.2111).</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2410</td>
+                <td className="px-3 py-2">Cable and wire facilities</td>
+                <td className="px-3 py-2">Underground conduit, buried cable, aerial cable — the physical fiber and copper plant. Materials cost for OSP construction goes here, not to §32.2210.</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2411</td>
                 <td className="px-3 py-2">Poles</td>
                 <td className="px-3 py-2">New poles purchased and installed. Pole cost (including anchors and guys) for aerial construction.</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2220</td>
-                <td className="px-3 py-2">Land and Land Rights</td>
-                <td className="px-3 py-2">Easement purchases, ROW acquisition costs, permit fees — any cost of obtaining the right to place plant.</td>
-              </tr>
-              <tr className="border-t border-white/10">
-                <td className="px-3 py-2 font-mono text-slate-300">§ 32.6512</td>
-                <td className="px-3 py-2">Motor Vehicles</td>
-                <td className="px-3 py-2">Company vehicle operating costs — mileage, fuel, maintenance allocated to a project. Field survey truck days go here.</td>
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.6112</td>
+                <td className="px-3 py-2">Motor vehicle expense</td>
+                <td className="px-3 py-2">Company vehicle operating costs — mileage, fuel, maintenance allocated to a project. Field survey truck days go here. This is an <em>operating expense account</em> (income statement), not a plant account (balance sheet) — the distinction matters for RUS cost-pool reporting.</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-mono text-slate-300">§ 32.2230</td>
@@ -229,8 +239,8 @@ export default function T04L07_47CFR32RecordKeeping() {
           <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm">
             <h4 className="font-semibold text-slate-200 mb-2">Vehicle</h4>
             <p className="text-slate-300/90">
-              Company truck use on a survey day goes to <strong>Motor Vehicles</strong>
-              (§ 32.6512) — mileage logged for that specific project on that date. If
+              Company truck use on a survey day goes to <strong>Motor vehicle expense</strong>
+              (§ 32.6112) — mileage logged for that specific project on that date. If
               you're using a personal vehicle with a mileage reimbursement, the same
               account applies on the reimbursement side. Record actual miles driven
               on the project that day, not a round-number estimate.
@@ -263,12 +273,17 @@ export default function T04L07_47CFR32RecordKeeping() {
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field — Exact USOA Codes vs. Cost-Pool Lumping</p>
           <p className="text-slate-300/90">
             <strong>Book (47 CFR Part 32 USOA; RUS Form 1755-A reconciliation requirements):</strong>
-            Every cost must be coded to a specific plant account (§ 32.2210, § 32.2420, etc.)
+            Every cost must be coded to a specific plant account (§ 32.2410, § 32.2411, etc.)
             with labor, materials, vehicle, equipment, and overhead allocated separately per
             account class. The auditor reconciles the cost records to these codes during the
             RUS loan audit. Proper coding means the auditor can verify that pole costs went to
-            the Poles account (§ 32.2420) and cable costs went to Cable and Wire (§ 32.2210),
-            not the other way around.
+            the Poles account (§ 32.2411) and cable costs went to Cable and Wire Facilities
+            (§ 32.2410), not to Central office—switching (§ 32.2210) — a common misclassification
+            when account numbers are referenced from memory rather than verified against the CFR.
+            Plant accounts (§ 32.2xxx) appear on the balance sheet as assets; operating expense
+            accounts (§ 32.6xxx, such as § 32.6112 Motor vehicle expense) appear on the income
+            statement as costs — this distinction drives how RUS evaluates your loan-eligible
+            capital investment versus your ongoing operating costs.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field reality:</strong> Most field supervisors lump all survey costs —
@@ -379,8 +394,8 @@ export default function T04L07_47CFR32RecordKeeping() {
           because the plant isn't yet generating service or revenue. When the network is
           complete and placed in service — the fiber is lit, test passes, customers connect —
           the accounting team closes the Plant Under Construction account and transfers the
-          accumulated costs to the permanent plant accounts (§ 32.2210 for cable, § 32.2420
-          for poles, § 32.2220 for land and land rights, etc.).
+          accumulated costs to the permanent plant accounts (§ 32.2410 for cable and wire
+          facilities, § 32.2411 for poles, § 32.2111 for land, etc.).
         </p>
         <p className="mt-2">
           The date of placement in service matters because that's when depreciation begins on
@@ -464,7 +479,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             outcome: 'partial',
             outcomeLabel: 'Estimated split is better than nothing but creates audit exposure',
             explanation:
-              'Vehicle mileage should be logged from actual odometer readings by project day. An evenly split estimate introduces systematic error — if one route is farther from the office, the actual miles per day will differ. The Motor Vehicles account (§ 32.6512) requires actual cost allocation, which means actual miles driven per project.',
+              'Vehicle mileage should be logged from actual odometer readings by project day. An evenly split estimate introduces systematic error — if one route is farther from the office, the actual miles per day will differ. The Motor vehicle expense account (§ 32.6112) requires actual cost allocation, which means actual miles driven per project.',
           },
           'prop-labor-miles': {
             id: 'prop-labor-miles',
@@ -482,8 +497,8 @@ export default function T04L07_47CFR32RecordKeeping() {
               'Correct. Actual odometer readings by project-day give you a defensible vehicle cost allocation. Now: the drone rental invoice ($1,200) came in as "LiDAR Survey Services — Route A." Which plant account does it go to?',
             choices: [
               { label: 'Plant Under Construction (§ 32.2230) — project-specific engineering cost; supported by the dated invoice', nextId: 'drone-poc' },
-              { label: 'Cable and Wire Facilities (§ 32.2210) — the drone captured data about the cable route', nextId: 'drone-cable' },
-              { label: 'Motor Vehicles (§ 32.6512) — drone is a type of aerial vehicle used for survey work', nextId: 'drone-vehicle' },
+              { label: 'Cable and Wire Facilities (§ 32.2410) — the drone captured data about the cable route', nextId: 'drone-cable' },
+              { label: 'Motor vehicle expense (§ 32.6112) — drone is a type of aerial vehicle used for survey work', nextId: 'drone-vehicle' },
             ],
           },
           'drone-poc': {
@@ -494,27 +509,27 @@ export default function T04L07_47CFR32RecordKeeping() {
             outcome: 'success',
             outcomeLabel: 'All four cost types correctly allocated',
             explanation:
-              'Survey costs — labor, vehicle, equipment, subcontract — accumulate in Plant Under Construction (§ 32.2230) during the survey/engineering phase, supported by original source documents. When the project is placed in service, the accounting team transfers these costs to permanent plant accounts (§ 32.2210, § 32.2420, etc.) based on what was actually installed.',
+              'Survey costs — labor, vehicle, equipment, subcontract — accumulate in Plant Under Construction (§ 32.2230) during the survey/engineering phase, supported by original source documents. When the project is placed in service, the accounting team transfers these costs to permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.) based on what was actually installed.',
           },
           'drone-cable': {
             id: 'drone-cable',
             prompt:
-              'The drone captured data ABOUT the cable route, but it isn\'t cable plant — it\'s a survey cost. Cable and Wire Facilities (§ 32.2210) is the account for physical cable and conduit materials, not for engineering and survey work. Try again.',
+              'The drone captured data ABOUT the cable route, but it isn\'t cable plant — it\'s a survey cost. Cable and Wire Facilities (§ 32.2410) is the account for physical cable and conduit materials, not for engineering and survey work. Also note: §32.2210 is Central office—switching, not Cable and Wire — a common number confusion. Try again.',
             isEnd: true,
             outcome: 'failure',
             outcomeLabel: 'Incorrect account — survey costs are not cable materials',
             explanation:
-              'Cable and Wire Facilities (§ 32.2210) is an asset account for physical cable and conduit. Survey and engineering costs go to Plant Under Construction (§ 32.2230) until the project is placed in service.',
+              'Cable and Wire Facilities (§ 32.2410) is the asset account for physical cable and conduit. Survey and engineering costs go to Plant Under Construction (§ 32.2230) until the project is placed in service. Note the distinction: §32.2210 = Central office—switching (not cable); §32.2410 = Cable and wire facilities (the OSP plant account).',
           },
           'drone-vehicle': {
             id: 'drone-vehicle',
             prompt:
-              'A drone doesn\'t belong in Motor Vehicles (§ 32.6512), which covers conventional vehicle operating costs. A drone rental is a contracted engineering service cost — goes to Plant Under Construction (§ 32.2230) like any other survey subcontract.',
+              'A drone doesn\'t belong in Motor vehicle expense (§ 32.6112), which covers conventional vehicle operating costs. A drone rental is a contracted engineering service cost — goes to Plant Under Construction (§ 32.2230) like any other survey subcontract.',
             isEnd: true,
             outcome: 'failure',
-            outcomeLabel: 'Motor Vehicles is for truck/vehicle operating costs, not drone rental',
+            outcomeLabel: 'Motor vehicle expense is for truck/vehicle operating costs, not drone rental',
             explanation:
-              'Motor Vehicles (§ 32.6512) covers conventional vehicle costs. A drone rental is a contracted service — engineering or survey labor via a specialized tool. It goes to Plant Under Construction (§ 32.2230) as a project engineering cost.',
+              'Motor vehicle expense (§ 32.6112) covers conventional vehicle costs. A drone rental is a contracted service — engineering or survey labor via a specialized tool. It goes to Plant Under Construction (§ 32.2230) as a project engineering cost.',
           },
         }}
       />
@@ -530,14 +545,14 @@ export default function T04L07_47CFR32RecordKeeping() {
             prompt:
               'Under 47 CFR Part 32, where do route-survey costs (labor, drone rental, subcontract GIS firm) accumulate during the pre-construction engineering phase?',
             choices: [
-              'Cable and Wire Facilities (§ 32.2210) — because the survey work is for a cable project',
-              'Motor Vehicles (§ 32.6512) — because field survey requires trucks and equipment',
+              'Cable and Wire Facilities (§ 32.2410) — because the survey work is for a cable project',
+              'Motor vehicle expense (§ 32.6112) — because field survey requires trucks and equipment',
               'Telecommunications Plant Under Construction (§ 32.2230) — a temporary staging account for all in-progress project costs before the plant is placed in service',
-              'Poles (§ 32.2420) — because the survey documents existing poles',
+              'Poles (§ 32.2411) — because the survey documents existing poles',
             ],
             answerIndex: 2,
             explanation:
-              'Plant Under Construction (§ 32.2230) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2210 for cable, § 32.2420 for poles, etc.). Cable and Wire (§ 32.2210) and Poles (§ 32.2420) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs.',
+              'Plant Under Construction (§ 32.2230) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 does not exist in Part 32.',
             citation: '47 CFR 32 § 32.2230 (Telecommunications Plant Under Construction); FCC USOA (ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32).',
           },
           {
@@ -564,7 +579,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             answer: 'Uniform System of Accounts',
             answerDisplay: 'Uniform System of Accounts (USOA)',
             explanation:
-              'The Uniform System of Accounts (USOA) is the core of 47 CFR Part 32. It defines every account number — § 32.2210 (Cable and Wire), § 32.2420 (Poles), § 32.2220 (Land), § 32.6512 (Motor Vehicles), § 32.2230 (Plant Under Construction) — that RUS borrowers and FCC-regulated carriers use to classify and record plant investment and operating costs.',
+              'The Uniform System of Accounts (USOA) is the core of 47 CFR Part 32. It defines every account number — § 32.2410 (Cable and Wire Facilities), § 32.2411 (Poles), § 32.2111 (Land), § 32.6112 (Motor vehicle expense), § 32.2230 (Plant Under Construction), § 32.2210 (Central office—switching) — that RUS borrowers and FCC-regulated carriers use to classify and record plant investment and operating costs. Note: §32.2210 is frequently misidentified as "Cable and Wire" — the actual cable plant account is §32.2410.',
             citation: '47 CFR Part 32 — Uniform System of Accounts (USOA) for Telecommunications Companies.',
           },
           {

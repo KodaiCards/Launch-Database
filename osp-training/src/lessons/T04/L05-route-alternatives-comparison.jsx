@@ -52,9 +52,9 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'ROW', source_lesson_id: 'T01.L01' },
-    { term: 'pole', source_lesson_id: 'T01.L01' },
-    { term: 'conduit', source_lesson_id: 'T01.L01' },
-    { term: 'joint-use', source_lesson_id: 'T01.L01' },
+    { term: 'pole', source_lesson_id: 'T01.L02' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
+    { term: 'joint-use', source_lesson_id: 'T01.L02' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'hazard identification', source_lesson_id: 'T04.L01' },
     { term: 'existing utility', source_lesson_id: 'T04.L01' },
@@ -235,7 +235,7 @@ export default function T04L05_RouteAlternativesComparison() {
               <li>Railroad crossing → railroad company permit and possible third-party crossing contractor</li>
               <li>Navigable waterway crossing → USACE NWP 57 or individual permit (90 days to 18 months)</li>
               <li>Wetland delineation markers → Section 404 USACE review</li>
-              <li>Historic district signage or recorded historic property in corridor → Section 106 review</li>
+              <li>Historic district signage or recorded historic property in corridor → Section 106 NHPA review (coordinated with State Historic Preservation Office / SHPO). Note: SHPO concurrence does NOT substitute for tribal consultation — if the project has a federal nexus, Executive Order 13175 and 36 CFR Part 800 require separate nation-to-nation tribal consultation with any federally recognized tribe with interest in the project area. Flag both triggers when you observe the indicator; they are handled through separate processes.</li>
             </ul>
           </div>
 
