@@ -122,3 +122,15 @@ Tree clean after push. All three F-RT findings resolved in single commit.
 - T05/L03: Prose in the "three zones" section (foundations) still uses "supply space", "communication space", "climbing space" and provides inline definitions. These align with T01.L02 assumed terms and are pedagogically appropriate as recalled context — no action needed; the vocab schema contradiction is now resolved.
 
 ## T05 Wave Status: COMPLETE through POLISH-4 stage. Final-verify-3 RT pair required before T05 is declared fully closed.
+
+---
+
+## POLISH-5 Stage (neighborhood scan finding from polish-4)
+
+| ID | Severity | Tag | Lesson(s) | Finding | Status | Commit SHA |
+|----|----------|-----|-----------|---------|--------|-----------|
+| POLISH-5-A | LOW | neighborhood-scan | T05/L02 | `Rule 232` appeared in BOTH `vocabulary_introduced` (line 26) AND `vocabulary_assumed → T05.L01` (line 36). T05/L01 confirmed first-introduction (its `vocabulary_introduced` array lists `Rule 232` at line 30). Fix: removed `Rule 232` from T05/L02 `vocabulary_introduced`; kept `vocabulary_assumed → T05.L01` entry. | FIXED | `e2bbb53` |
+
+**Neighborhood scan from polish-5:** No additional dual-vocab contradictions found in T05/L02. All 6 `vocabulary_introduced` terms (Table 232-1, traffic lane clearance, pedestrian clearance, sag formula, design clearance margin, Grade B crossing) appear only in `vocabulary_introduced`. All 7 `vocabulary_assumed` terms (NESC, Rule 232, AHJ, pole, span, attachment, sag) appear only in `vocabulary_assumed`.
+
+## T05 Wave Status: COMPLETE through POLISH-5 stage. Final-verify-3 RT pair required before T05 is declared fully closed.
