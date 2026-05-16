@@ -295,10 +295,12 @@ export default function T18L03_ConfinedSpaceEntry() {
           Hydrogen sulfide (H₂S) smells like rotten eggs at low concentrations — but that
           sense of smell is not a reliable warning. The NIOSH IDLH for H₂S is <strong>100 ppm</strong>:
           at or above 100 ppm you must exit immediately — no re-entry without supplied-air SCBA.
-          At the IDLH (100 ppm), H₂S can induce olfactory paralysis within minutes — workers
-          lose the smell-warning signal precisely AT the immediate-danger threshold. Your nose
-          goes numb exactly when the danger is worst. You can be at 100+ ppm with no warning
-          smell and no sensation of distress. At 300 ppm it causes pulmonary edema (fluid in the
+          At the IDLH (100 ppm), H₂S induces olfactory fatigue within minutes — workers
+          lose the smell-warning signal precisely AT the immediate-danger threshold. Full olfactory
+          nerve paralysis can occur at 150 ppm and above. Either way, smell-warning becomes
+          unreliable at the immediate-danger threshold — a calibrated monitor is the only
+          reliable detection. Your nose goes numb exactly when the danger is worst. You can be
+          at 100+ ppm with no warning smell and no sensation of distress. At 300 ppm it causes pulmonary edema (fluid in the
           lungs) within minutes. At 500–1,000 ppm it causes rapid loss of consciousness —
           sometimes in one or two breaths. Workers who descend into an H₂S environment above
           IDLH don't feel dizzy and climb out. They fall. Rely on your monitor, not your nose.
@@ -332,12 +334,26 @@ export default function T18L03_ConfinedSpaceEntry() {
           LEL readings for re-entry. Consult your monitor manufacturer's guidance on H₂S
           exposure limits for the sensor type in use.
         </div>
+        <div className="mt-3 p-3 bg-slate-700/30 border border-slate-400/20 rounded-lg text-sm">
+          <strong>OSHA PEL vs. NIOSH IDLH — know the difference:</strong>
+          <p className="mt-1 text-slate-300/90">
+            OSHA Construction (29 CFR 1926.55) sets an H₂S PEL of <strong>10 ppm TWA</strong>.
+            OSHA General Industry (29 CFR 1910.1000 Table Z-2) sets a <strong>20 ppm ceiling</strong>{' '}
+            with a <strong>50 ppm 10-minute peak</strong> maximum. The NIOSH IDLH of 100 ppm used
+            throughout this lesson is a separate threshold — the concentration at which an exposure
+            becomes immediately dangerous to life or health, requiring immediate exit.
+            The 1 ppm exit threshold on your H₂S sensor alarm is more conservative than all of
+            the above: that alarm is set by your employer's safety program and is designed to
+            keep you out of the space before you approach any regulatory limit.
+          </p>
+        </div>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 29 CFR 1910.146(b) — Acceptable O₂ range definition; 29 CFR 1910.268(o)(2) —
           Atmospheric testing requirement; 29 CFR 1910.5(c)(1) — specific standard supersedes
           general standard; NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 100 ppm IDLH
           (cdc.gov/niosh/idlh/7783064.html); NIOSH Pocket Guide to Chemical Hazards, H₂S entry
-          (cdc.gov/niosh/npg/npgd0337.html).
+          (cdc.gov/niosh/npg/npgd0337.html); 29 CFR 1926.55 — Construction H₂S PEL (10 ppm TWA);
+          29 CFR 1910.1000 Table Z-2 — General Industry H₂S limits (20 ppm ceiling / 50 ppm peak).
         </p>
       </section>
 
