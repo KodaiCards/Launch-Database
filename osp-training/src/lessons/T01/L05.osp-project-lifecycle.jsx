@@ -55,7 +55,7 @@ export default function T01L05_OspProjectLifecycle() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">RUS Form 219</td>
               <td className="px-3 py-2">Rural Utilities Service Form 219</td>
-              <td className="px-3 py-2">The USDA RUS project completion certification form required at close-out for RUS-funded OSP projects. Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records.</td>
+              <td className="px-3 py-2">The USDA RUS project completion certification form required at close-out for RUS-funded OSP telecom projects. Governed by 7 CFR Part 1753 (RUS Telecommunications Program) [confirm specific section]. Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records. Note: 7 CFR Part 1726 governs the Electric Borrowers program — a separate RUS program; do not cite 1726 for telecom close-out.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTMR</td>
