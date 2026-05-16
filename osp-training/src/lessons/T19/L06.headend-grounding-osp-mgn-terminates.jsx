@@ -16,15 +16,6 @@ export const meta = {
   order: 6,
   lesson_type: 'working',
   prerequisites: ['T19.L05'],
-  vocabulary_introduced: [
-    'primary protector',
-    'IBT-entry',
-    'GES-tie-in',
-    'TMGB',
-    'TGB',
-    'TBB',
-    'GPR',
-  ],
   key_terms: [
     {
       term: 'primary protector',
@@ -54,15 +45,38 @@ export const meta = {
       term: 'GPR',
       definition: 'Ground Potential Rise — the elevation of the local earth potential at a point relative to remote earth during a lightning strike or power fault. During a nearby lightning strike, GPR can reach tens of thousands of volts at the strike location and hundreds of volts at points 300+ meters away. A bonded messenger connected to the MGN at every pole is a GPR conduction path into the CO. If the feeder cable armor is not properly bonded and protected at building entry, a GPR event routes the surge transient through the OLT line cards rather than through the GES into earth. GPR is the primary reason primary protectors are mandatory at CO entry.',
     },
+    {
+      term: 'MGN',
+      definition: 'Multi-Grounded Neutral — the utility grounding conductor that runs along the pole line, bonded to earth at every pole (or every third to fifth pole, depending on utility practice). The OSP aerial cable messenger is bonded to the MGN at each pole. This means lightning energy that strikes anywhere on the pole line can conduct via the MGN → messenger → feeder armor path all the way to the CO building. The MGN bond is a required grounding practice for aerial construction; its implication for CO entry is the reason primary protectors are mandatory. Re-introduced here at field-awareness level; full grounding context is in T14.',
+    },
+    {
+      term: 'IBT',
+      definition: 'Intersystem Bonding Termination — a listed device (per NEC Art. 250.94) installed at or near the building service entrance that provides accessible bonding points for all incoming systems (power, telecom, cable TV, etc.) to converge on a common earth-ground connection. In T19.L06, the IBT at the building entry is called "IBT-entry" to distinguish it from IBTs that may be installed at secondary bonding points. Re-introduced here at field-awareness level; full sizing and RUS-program requirements are in T14.',
+    },
+    {
+      term: 'GES',
+      definition: 'Grounding Electrode System — the network of grounding electrodes (ground rods, concrete-encased electrodes, metal water pipes, and structural steel) and the bonding conductors connecting them together and to the building service entrance. The GES is what dissipates transient electrical energy into the earth rather than through equipment. Per NEC Art. 250.50, a building\'s GES must use all available electrodes. The OSP engineer\'s GES-tie-in connects the IBT-entry to the building GES. Re-introduced here at field-awareness level; full electrode types and resistance targets are in T14.',
+    },
+  ],
+  vocabulary_introduced: [
+    // PATH Y building-entry grounding terms — introduced in this lesson
+    'primary protector',
+    'IBT-entry',
+    'GES-tie-in',
+    'TMGB',
+    'TGB',
+    'TBB',
+    'GPR',
+    // Re-introduced here at field-awareness level — not confirmed in T01 vocabulary list
+    'MGN',
+    'IBT',
+    'GES',
   ],
   vocabulary_assumed: [
     { term: 'CO', source_lesson_id: 'T19.L01' },
     { term: 'hut', source_lesson_id: 'T19.L01' },
     { term: 'main entrance facility', source_lesson_id: 'T19.L01' },
     { term: 'OSP termination point', source_lesson_id: 'T19.L01' },
-    { term: 'MGN', source_lesson_id: 'T01.L08' },
-    { term: 'IBT', source_lesson_id: 'T01.L08' },
-    { term: 'GES', source_lesson_id: 'T01.L08' },
     { term: 'messenger', source_lesson_id: 'T05.L01' },
     { term: 'armor', source_lesson_id: 'T03.L01' },
   ],
@@ -192,6 +206,21 @@ export default function T19L06_HeadendGroundingOspMgnTerminates() {
               id: 'T19-L06-fc-gpr',
               front: 'What is Ground Potential Rise (GPR) and why does it matter for CO entry?',
               back: 'Elevation of local earth potential during a lightning strike or power fault — can reach tens of thousands of volts at the strike point. A bonded messenger on the MGN conducts GPR transients into the CO. Without a primary protector and proper GES-tie-in at building entry, the GPR surge routes through OLT line cards and destroys them.',
+            },
+            {
+              id: 'T19-L06-fc-mgn',
+              front: 'What is the MGN and why does it matter for CO entry design?',
+              back: 'Multi-Grounded Neutral — the utility grounding conductor on the pole line, bonded to earth at each pole. The OSP aerial messenger bonds to the MGN at every pole. This means lightning energy can travel the MGN → messenger → cable armor path directly into the CO. This is why primary protectors and GES-tie-ins are mandatory at CO building entry.',
+            },
+            {
+              id: 'T19-L06-fc-ibt',
+              front: 'What is the IBT?',
+              back: 'Intersystem Bonding Termination — a listed device (NEC Art. 250.94) at the building entry providing accessible bonding points for all incoming systems (power, telecom, cable TV) to converge on a common ground. Ensures single-point bonding, preventing ground loops between systems. In T19 context, the IBT at building entry is called "IBT-entry."',
+            },
+            {
+              id: 'T19-L06-fc-ges',
+              front: 'What is the GES?',
+              back: 'Grounding Electrode System — the network of grounding electrodes (ground rods, concrete-encased electrodes, metal water pipes, structural steel) and bonding conductors that dissipate transient energy into earth. Per NEC Art. 250.50, all available electrodes must be bonded together as the GES. The OSP GES-tie-in connects the IBT-entry to the building GES.',
             },
           ]}
         />
