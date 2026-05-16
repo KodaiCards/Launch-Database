@@ -5,7 +5,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -121,52 +120,52 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         </table>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM: loading district map ──────────────────────── */}
-      <AnnotatedDiagram
-        title="NESC Loading Districts — Continental United States"
-        description="Click each district region to see the ice, wind, and temperature design loads. Macon, GA is in the Light district. Most of the northeast and Great Lakes region is Heavy."
-        src="/training/diagrams/nesc-loading-districts.svg"
-        alt="Map of the continental United States showing NESC Heavy, Medium, and Light loading districts with approximate boundary lines"
-        aspectRatio={1.8}
-        hotPoints={[
-          {
-            id: 'heavy',
-            x: 72,
-            y: 25,
-            label: 'Heavy district',
-            type: 'click',
-            explanation:
-              'Heavy loading district: 0.50 in. radial ice + 4 lb/ft² wind + 0°F design temperature. Northeast states, Great Lakes region, mountainous areas. Cables and poles must be designed to survive these simultaneous conditions. [Confirm against NESC C2-2023 Table 250-1 and loading district map]',
-          },
-          {
-            id: 'medium',
-            x: 55,
-            y: 35,
-            label: 'Medium district',
-            type: 'click',
-            explanation:
-              'Medium loading district: 0.25 in. radial ice + 4 lb/ft² wind + 15°F design temperature. Mid-Atlantic, Midwest transition zones. Intermediate ice loading — cables still require ice-load analysis. [Confirm against NESC C2-2023 Table 250-1]',
-          },
-          {
-            id: 'light',
-            x: 35,
-            y: 65,
-            label: 'Light district (Macon, GA)',
-            type: 'click',
-            explanation:
-              'Light loading district: 0 in. ice + 9 lb/ft² wind + 30°F design temperature. Southeastern U.S., Pacific coast, southwest. No ice load — but higher wind pressure (9 lb/ft² vs. 4 lb/ft²). Macon, GA is in the Light district (consistent with central Georgia geography — confirm via NESC map or local AHJ). [Confirm via NESC C2-2023 loading district map or RUS engineering support]',
-          },
-          {
-            id: 'extreme',
-            x: 20,
-            y: 80,
-            label: 'Extreme Wind overlay',
-            type: 'click',
-            explanation:
-              'Extreme Wind loading (NESC Rule 250C) applies to structures or conductors 60 ft or more above ground, anywhere in the country. Uses regional wind speed maps for specific design wind pressure. "If any part of a pole or conductors attached to it is 60 feet or more above the ground, then extreme wind loading has to be considered." (Source: IAEI 2007 NESC article — verified)',
-          },
-        ]}
-      />
+      {/* ── NESC LOADING DISTRICTS TABLE ─────────────────────────────────── */}
+      <table className="lesson-table">
+        <caption>NESC Loading Districts — Design Load Values and Regions (NESC C2-2023 Table 250-1 / Rule 250B)</caption>
+        <thead>
+          <tr>
+            <th>District</th>
+            <th>Radial Ice (in.)</th>
+            <th>Wind Pressure (lb/ft²)</th>
+            <th>Temperature (°F)</th>
+            <th>Typical Geography</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Heavy</td>
+            <td>0.50 in.</td>
+            <td>4 lb/ft²</td>
+            <td>0°F</td>
+            <td>Northeast states, Great Lakes region, mountainous areas. All three loads act simultaneously — design for the combined effect.</td>
+          </tr>
+          <tr>
+            <td>Medium</td>
+            <td>0.25 in.</td>
+            <td>4 lb/ft²</td>
+            <td>15°F</td>
+            <td>Mid-Atlantic, Midwest transition zones. Intermediate ice loading — cables still require ice-load analysis.</td>
+          </tr>
+          <tr>
+            <td>Light</td>
+            <td>0 in.</td>
+            <td>9 lb/ft²</td>
+            <td>30°F</td>
+            <td>Southeastern U.S. (including Macon, GA — central Georgia), Pacific coast, southwest. No ice load, but higher wind pressure than Heavy/Medium (9 vs. 4 lb/ft²). [Confirm via NESC C2-2023 loading district map or local AHJ]</td>
+          </tr>
+          <tr>
+            <td>Extreme Wind overlay (Rule 250C)</td>
+            <td>0 in.</td>
+            <td>Regional wind speed map (varies)</td>
+            <td>60°F</td>
+            <td>Applies to any structure where any part of the pole or attached conductors is 60 ft or more above ground — anywhere in the country. Uses wind pressure calculated from regional wind speed maps per NESC Rule 250C. Checked in addition to the base district values.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3 mt-2">
+        Values confirmed via RUS Bulletin 1724E-150 (which reproduces NESC Table 250-1 data) and IAEI 2002/2007 NESC articles. Confirm against NESC C2-2023 Table 250-1 before use in formal engineering deliverables.
+      </p>
 
       {/* ── WORKING ──────────────────────────────────────────────────────── */}
       <section data-tier="working">

@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -139,52 +138,26 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ─────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Cable Construction Cross-Sections"
-        description="Click each labeled zone to learn what that layer does. The three columns represent loose-tube (left), tight-buffer (center), and ribbon (right) constructions."
-        src="/training/diagrams/cable-construction-types.svg"
-        alt="Cross-section diagrams showing loose-tube, tight-buffer, and ribbon cable constructions with labeled layers"
-        aspectRatio={2.8}
-        hotPoints={[
-          {
-            id: 'lt-tube',
-            x: 18,
-            y: 40,
-            label: 'Loose-tube (buffer tube)',
-            type: 'click',
-            explanation:
-              'The polymer buffer tube is intentionally larger in diameter than the fiber bundle inside it. That extra space — plus gel or dry-block water-blocking compound — lets fibers move freely as the cable expands, contracts, or bends. Standard for OSP trunk cables. (ICEA S-87-640)',
-          },
-          {
-            id: 'lt-fibers',
-            x: 18,
-            y: 60,
-            label: 'Fibers in gel/dry-block',
-            type: 'click',
-            explanation:
-              'Typically 2–12 fibers per loose tube, each with its 250 µm primary coating. In gel-filled designs, flooding compound fills the remaining space to block water migration. Dry-block cables substitute SAP (superabsorbent polymer) tape and yarns — faster to splice because there\'s no gel to clean. (Source: 7 CFR 1755.902; ICEA S-87-640)',
-          },
-          {
-            id: 'tb-coating',
-            x: 50,
-            y: 40,
-            label: 'Tight-buffer 900 µm coating',
-            type: 'click',
-            explanation:
-              'A secondary plastic jacket is extruded directly onto the 250 µm primary coating, building the fiber up to 900 µm OD. Tough and easy to terminate individually. No slack — suited for indoor or short-run applications where temperature variation is controlled. (Source: FOA Reference Guide; NEC Article 770)',
-          },
-          {
-            id: 'rib-matrix',
-            x: 80,
-            y: 40,
-            label: 'Ribbon matrix',
-            type: 'click',
-            explanation:
-              'Fibers are bonded side-by-side into a flat matrix (typically 12 fibers per ribbon). A mass-fusion splicer clamps the entire ribbon and splices all 12 fibers simultaneously in one cycle, compared to 12 separate cycles for loose fibers. Efficiency gain is significant on high-count splices. (Source: ICEA S-87-640; TIA-598-D)',
-          },
-        ]}
-      />
+      {/* ── CONSTRUCTION TYPE BREAKDOWN ─────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Cable Construction Types — What It Is and Why It Matters</h4>
+
+        <h5 className="mt-3 font-semibold">1. Loose-Tube</h5>
+        <ul>
+          <li><strong>Buffer tube:</strong> The polymer buffer tube is intentionally larger in diameter than the fiber bundle inside it. That extra space — plus gel or dry-block water-blocking compound — lets fibers move freely as the cable expands, contracts, or bends. Standard for OSP trunk cables. (ICEA S-87-640)</li>
+          <li><strong>Fibers in gel/dry-block:</strong> Typically 2–12 fibers per loose tube, each with its 250 µm primary coating. In gel-filled designs, flooding compound fills the remaining space to block water migration. Dry-block cables substitute SAP (superabsorbent polymer) tape and yarns — faster to splice because there's no gel to clean. (7 CFR 1755.902; ICEA S-87-640)</li>
+        </ul>
+
+        <h5 className="mt-3 font-semibold">2. Tight-Buffer</h5>
+        <ul>
+          <li><strong>900 µm coating:</strong> A secondary plastic jacket is extruded directly onto the 250 µm primary coating, building the fiber up to 900 µm OD. Tough and easy to terminate individually. No slack — suited for indoor or short-run applications where temperature variation is controlled. (FOA Reference Guide; NEC Article 770)</li>
+        </ul>
+
+        <h5 className="mt-3 font-semibold">3. Ribbon</h5>
+        <ul>
+          <li><strong>Ribbon matrix:</strong> Fibers are bonded side-by-side into a flat matrix (typically 12 fibers per ribbon). A mass-fusion splicer clamps the entire ribbon and splices all 12 fibers simultaneously in one cycle, compared to 12 separate cycles for loose fibers. Efficiency gain is significant on high-count splices. (ICEA S-87-640; TIA-598-D)</li>
+        </ul>
+      </div>
 
       {/* ── WORKING ──────────────────────────────────────────────────────── */}
       <section data-tier="working">

@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import HotSpot from '../../components/primitives/HotSpot.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -210,43 +209,52 @@ export default function T03L07_ArmorDeepDive() {
         </div>
       </section>
 
-      {/* ── HOTSPOT: identify installation error ─────────────────────────── */}
-      <HotSpot
-        imageUrl="/training/diagrams/armor-installation-errors.svg"
-        alt="Diagram of an armored cable installation showing three potential problem areas for the learner to identify"
-        mode="challenge"
-        title="Find the Installation Errors"
-        instructions="Three potential issues are marked in this armored cable installation diagram. Click each marker to reveal whether it represents an error, and what should be done instead."
-        regions={[
+      {/* ── INSTALLATION ERROR QUIZ ──────────────────────────────────────── */}
+      <Quiz
+        title="Spot the Armor Installation Error"
+        mode="multiple-choice"
+        questions={[
           {
-            id: 'nick',
-            x: 35,
-            y: 45,
-            radius: 8,
-            label: 'Cable entry nick',
-            isError: true,
-            explanation:
-              'This shows the outer jacket nicked at the cable entry point — a common result of cutting the armor without the ripcord. Nicked jackets allow water to wick into the cable and can stress-concentrate on the underlying fibers. Always use the internal ripcord to open CST armor; never cut across the armor with a blade that can reach the inner assembly.',
+            id: 'T03-L07-HS-Q1',
+            type: 'mc',
+            prompt:
+              'A splicer needs to open a CST-armored cable at the building entry point. Rather than using the internal ripcord, they cut across the armor with a utility blade. The outer jacket shows a small nick at the entry. Which best describes the consequence?',
+            choices: [
+              { text: 'No consequence — the armor is the last layer, so a nick on the jacket does not affect the fibers.', correct: false },
+              { text: 'The nick allows water to wick into the cable and creates a stress concentration point over the inner assembly, risking fiber damage over time.', correct: true },
+              { text: 'The nick only matters if the cable is buried — on aerial cable, the jacket nick is acceptable.', correct: false },
+              { text: 'The utility blade technique is the field-standard method; the ripcord is only for factory use.', correct: false },
+            ],
+            rationale:
+              'Nicked jackets allow water ingress and stress-concentrate on the underlying fibers. Always use the internal ripcord to open CST armor. Never cut across the armor with a blade that can reach the inner assembly.',
           },
           {
-            id: 'bend',
-            x: 60,
-            y: 60,
-            radius: 8,
-            label: 'Sharp bend at armor transition',
-            isError: true,
-            explanation:
-              'A sharp bend at the armor termination point concentrates mechanical stress on the cable. The armor\'s rigid section should transition to the flexible cable with a minimum bend radius appropriate to the cable type (at least 10× cable OD for installation). Kinking at the armor end can fracture the fibers inside even when the jacket appears undamaged.',
+            id: 'T03-L07-HS-Q2',
+            type: 'mc',
+            prompt:
+              'A CST-armored direct-burial cable transitions from the buried section to a building entry. At the transition point, the installer bent the cable sharply (well under the 10× OD minimum bend radius) to route it through the wall conduit. The jacket looks undamaged. What is the likely outcome?',
+            choices: [
+              { text: 'No issue — only the jacket needs to be intact; the fibers inside are protected by the armor.', correct: false },
+              { text: 'The sharp bend can fracture fibers inside the inner assembly even when the jacket appears undamaged; OTDR testing is required.', correct: true },
+              { text: 'The bend is only a problem if ice loading is present; in a building entry environment it is acceptable.', correct: false },
+              { text: 'CST armor prevents any bend-induced stress from reaching the fibers; a visual jacket check is sufficient.', correct: false },
+            ],
+            rationale:
+              'A sharp bend at the armor termination concentrates mechanical stress on the cable. Kinking at the armor end can fracture fibers even when the jacket appears undamaged. Always maintain the minimum bend radius (at least 10× cable OD for installation).',
           },
           {
-            id: 'bond',
-            x: 80,
-            y: 30,
-            radius: 8,
-            label: 'Armor bonding clamp',
-            isError: false,
-            explanation:
-              'The bonding clamp on the CST armor at this building entry point is correct — it\'s required. Any metallic cable component (including CST armor) entering a building must be bonded to the building\'s grounding system. The clamp provides the low-impedance path to ground for lightning-induced surge currents. Dielectric ADSS would not require this — but CST armor does.',
+            id: 'T03-L07-HS-Q3',
+            type: 'mc',
+            prompt:
+              'A CST-armored cable enters a building. The installer attached a bonding clamp to the CST armor and connected it to the building\'s grounding system. A coworker says this is unnecessary and should be removed. Who is correct?',
+            choices: [
+              { text: 'The coworker is correct — bonding is only required for power cables, not fiber cables.', correct: false },
+              { text: 'The installer is correct — any metallic cable component entering a building must be bonded to the building grounding system per NEC Article 770.', correct: true },
+              { text: 'Both are correct — bonding is optional for CST armor in low-lightning areas.', correct: false },
+              { text: 'The coworker is correct — bonding creates a ground loop that can interfere with fiber signals.', correct: false },
+            ],
+            rationale:
+              'The bonding clamp is required. Any metallic cable component (including CST armor) entering a building must be bonded to the building grounding system. The clamp provides a low-impedance path to ground for lightning-induced surge currents. Dielectric ADSS cable would not require this — but CST armor does.',
           },
         ]}
       />

@@ -6,7 +6,6 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import HotSpot from '../../components/primitives/HotSpot.jsx';
 
 export const meta = {
   id: 'T03.L11',
@@ -260,47 +259,25 @@ export default function T03L11_DatasheetReading() {
         </p>
       </section>
 
-      {/* HOTSPOT — datasheet regions */}
+      {/* DATASHEET NAVIGATION GUIDE */}
       <section data-tier="working" className="mt-6">
-        <HotSpot
-          imageUrl="/training/diagrams/cable-datasheet-annotated.svg"
-          title="Datasheet Navigation — Click Each Region to Learn What It Means"
-          mode="explore"
-          hotPoints={[
-            {
-              id: 'hs-optical',
-              x: 22,
-              y: 28,
-              label: 'Optical Specs',
-              description:
-                'This section lists attenuation (dB/km) at each wavelength and MFD. Use the spec-max attenuation for link budget analysis. The "typical" attenuation in the marketing copy is NOT what you design to — use the maximum.',
-            },
-            {
-              id: 'hs-mechanical',
-              x: 68,
-              y: 28,
-              label: 'Mechanical Specs',
-              description:
-                'Find two tensile numbers (installation and long-term) and two bend radius numbers (installation and loaded). Never use the installation bend radius as the long-term limit — they are different numbers for a reason.',
-            },
-            {
-              id: 'hs-environmental',
-              x: 22,
-              y: 68,
-              label: 'Environmental Specs',
-              description:
-                'Operating temperature range (−40°C to +70°C is the standard ICEA minimum). Storage and shipping temperature may differ. Burial depth affects soil temperature in cold climates — if the cable will see soil temps below −40°C, you need a cold-rated product.',
-            },
-            {
-              id: 'hs-compliance',
-              x: 68,
-              y: 68,
-              label: 'Compliance Declarations',
-              description:
-                'Look for explicit call-outs: "Meets ICEA S-87-640," "Meets 7 CFR 1755.902," NEC fire rating (OFNR or OFNP if applicable), RoHS status. A datasheet that omits compliance declarations is a red flag — ask the manufacturer for a conformance letter.',
-            },
-          ]}
-        />
+        <div className="lesson-callout">
+          <h4>Datasheet Navigation Guide — Four Sections to Locate on Every Cable Spec Sheet</h4>
+          <ol>
+            <li>
+              <strong>Optical Specs</strong> — Lists attenuation (dB/km) at each wavelength and MFD (Mode Field Diameter). Use the spec-max attenuation for link budget analysis. The "typical" attenuation in the marketing copy is NOT what you design to — use the maximum.
+            </li>
+            <li>
+              <strong>Mechanical Specs</strong> — Find two tensile numbers (installation load and long-term/residual load) and two bend radius numbers (installation bend radius and long-term/loaded bend radius). Never use the installation bend radius as the long-term limit — they are different numbers for a reason. The installation number is higher (less restrictive) because it assumes a temporary condition.
+            </li>
+            <li>
+              <strong>Environmental Specs</strong> — Operating temperature range (−40°C to +70°C is the standard ICEA minimum). Storage and shipping temperature may differ. Burial depth affects soil temperature in cold climates — if the cable will see soil temps below −40°C, you need a cold-rated product.
+            </li>
+            <li>
+              <strong>Compliance Declarations</strong> — Look for explicit call-outs: "Meets ICEA S-87-640," "Meets 7 CFR 1755.902," NEC fire rating (OFNR or OFNP if applicable), RoHS status. A datasheet that omits compliance declarations is a red flag — ask the manufacturer for a conformance letter before ordering for a RUS project.
+            </li>
+          </ol>
+        </div>
       </section>
 
       <section data-tier="advanced" className="mt-6">

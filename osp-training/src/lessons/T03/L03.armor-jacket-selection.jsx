@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -114,52 +113,24 @@ export default function T03L03_ArmorJacketSelection() {
         </table>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ─────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Armored Cable Cross-Section"
-        description="Click each labeled layer to understand its role. This shows a direct-burial CST-armored OSP cable."
-        src="/training/diagrams/cst-armored-cable.svg"
-        alt="Cross-section of a CST-armored direct-burial OSP cable showing inner cable assembly, CST armor layer, outer jacket, and ripcord"
-        aspectRatio={2.0}
-        hotPoints={[
-          {
-            id: 'inner-assembly',
-            x: 25,
-            y: 50,
-            label: 'Inner cable assembly',
-            type: 'click',
-            explanation:
-              'The loose-tube cable core: central strength member, buffer tubes with fibers in gel or dry-block, water-blocking tape or flooding compound, and inner jacket. This is the functional part of the cable — everything else is mechanical protection for it.',
-          },
-          {
-            id: 'cst-layer',
-            x: 55,
-            y: 50,
-            label: 'CST armor layer',
-            type: 'click',
-            explanation:
-              'Corrugated steel tape (CST) is wrapped around the inner assembly in a longitudinal fold. The corrugations give it flexibility to bend while maintaining crush resistance. Steel provides rodent protection — gnawing teeth cannot penetrate the steel before the animal gives up. (Source: OCC D-Series product page; ICEA S-87-640)',
-          },
-          {
-            id: 'ripcord',
-            x: 55,
-            y: 30,
-            label: 'Ripcord',
-            type: 'click',
-            explanation:
-              'An internal ripcord (typically a strong yarn or cord under the steel armor) lets the installer score and split the armor layer without needing metal cutters that could nick the fibers. "The steel-armor is easily removed with an internal ripcord." (Source: OCC D-Series product page — verified)',
-          },
-          {
-            id: 'outer-jacket',
-            x: 80,
-            y: 50,
-            label: 'Outer HDPE jacket',
-            type: 'click',
-            explanation:
-              'The final outer jacket — HDPE with 2–3% carbon black for UV stabilization. Provides waterproofing, UV resistance, and mechanical abrasion resistance. In a direct-burial application, this is the first line of defense against soil abrasion as the cable shifts. (ICEA S-87-640)',
-          },
-        ]}
-      />
+      {/* ── ARMORED CABLE LAYER BREAKDOWN ───────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>CST-Armored Direct-Burial Cable — Layer Breakdown (Inside to Outside)</h4>
+        <ol>
+          <li>
+            <strong>Inner cable assembly</strong> — The loose-tube cable core: central strength member, buffer tubes with fibers in gel or dry-block, water-blocking tape or flooding compound, and inner jacket. This is the functional part of the cable — everything else is mechanical protection for it.
+          </li>
+          <li>
+            <strong>CST armor layer</strong> — Corrugated steel tape (CST) is wrapped around the inner assembly in a longitudinal fold. The corrugations give it flexibility to bend while maintaining crush resistance. Steel provides rodent protection — gnawing teeth cannot penetrate the steel before the animal gives up. (OCC D-Series product documentation; ICEA S-87-640)
+          </li>
+          <li>
+            <strong>Ripcord</strong> — An internal ripcord (typically a strong yarn or cord under the steel armor) lets the installer score and split the armor layer without needing metal cutters that could nick the fibers. "The steel-armor is easily removed with an internal ripcord." (OCC D-Series product documentation — verified)
+          </li>
+          <li>
+            <strong>Outer HDPE jacket</strong> — The final outer jacket — HDPE with 2–3% carbon black for UV stabilization. Provides waterproofing, UV resistance, and mechanical abrasion resistance. In a direct-burial application, this is the first line of defense against soil abrasion as the cable shifts. (ICEA S-87-640)
+          </li>
+        </ol>
+      </div>
 
       {/* ── WORKING ──────────────────────────────────────────────────────── */}
       <section data-tier="working">
