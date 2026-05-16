@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -347,52 +346,45 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Pole Worker Fall Protection Setup"
-        description="A utility pole climber at a work position showing both positioning system components and PFAS. Click each labeled element to understand its function and requirements."
-        src="/training/diagrams/pole-fall-protection.svg"
-        alt="Diagram of a worker on a utility pole showing body harness, positioning strap (pole strap), secondary fall arrest lanyard, gaff spurs, and anchor points"
-        aspectRatio={1.4}
-        hotPoints={[
-          {
-            id: 'harness',
-            x: 50,
-            y: 28,
-            label: 'Full-body harness',
-            type: 'click',
-            explanation:
-              'Distributes fall arrest forces across the chest, shoulders, and thighs. Required for fall arrest applications (body belts are not acceptable for arrest — only for positioning). The harness connects to both the positioning strap and the PFAS lanyard via separate D-rings.',
-          },
-          {
-            id: 'pole-strap',
-            x: 35,
-            y: 45,
-            label: 'Positioning strap (pole strap)',
-            type: 'click',
-            explanation:
-              'A leather or synthetic strap that wraps around the pole and attaches to the harness D-rings. Holds the worker against the pole for hands-free work at the work position. This is a POSITIONING device — it supports you while you\'re at the work station. It is NOT a fall arrest device by itself.',
-          },
-          {
-            id: 'pfas-lanyard',
-            x: 65,
-            y: 48,
-            label: 'PFAS lanyard (secondary)',
-            type: 'click',
-            explanation:
-              'A secondary connection above the positioning strap anchor, connected to the harness\'s dorsal D-ring. This is the fall ARREST connection. If the positioning strap slips or a gaff pull-out occurs, the PFAS lanyard limits the free-fall distance and absorbs the arrest force.',
-          },
-          {
-            id: 'gaffs',
-            x: 50,
-            y: 82,
-            label: 'Gaff spurs',
-            type: 'click',
-            explanation:
-              'Metal spurs strapped to the lower leg and boot that bite into the pole wood to support the worker\'s weight during climbing and at the work position. Gaff pull-out (the gaff losing its bite in the wood) is a common cause of falls. Inspect for sharpness before each climb; blunt gaffs are a primary fall hazard.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — fall protection components ─────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Pole Worker Fall Protection Setup — Component Roles</h4>
+        <ol>
+          <li>
+            <strong>Full-body harness</strong> — Distributes fall arrest forces across the chest,
+            shoulders, and thighs. Required for fall arrest applications — body belts are NOT
+            acceptable for arrest, only for positioning (ANSI Z359.1 [confirm current edition]).
+            The harness connects to both the positioning strap and the PFAS lanyard via separate
+            D-rings.
+          </li>
+          <li>
+            <strong>Positioning strap (pole strap)</strong> — A leather or synthetic strap that
+            wraps around the pole and attaches to the harness D-rings. Holds the worker against
+            the pole for hands-free work at the work position. This is a POSITIONING device — it
+            supports you while working. It is NOT a fall arrest device by itself.
+          </li>
+          <li>
+            <strong>PFAS lanyard (secondary / fall arrest)</strong> — A secondary connection
+            above the positioning strap anchor, attached to the harness dorsal D-ring. This is
+            the fall ARREST connection. If the positioning strap slips or a gaff pull-out occurs,
+            the PFAS lanyard limits free-fall distance and absorbs the arrest force.
+          </li>
+          <li>
+            <strong>Gaff spurs</strong> — Metal spurs strapped to the lower leg and boot that
+            bite into the pole wood to support the worker's weight during climbing and at the
+            work position. Gaff pull-out (the gaff losing its bite in soft or treated wood) is a
+            common cause of falls. Inspect for sharpness before each climb — blunt gaffs are a
+            primary fall hazard.
+          </li>
+          <li>
+            <strong>Anchor point above work position</strong> — The PFAS lanyard must connect to
+            an anchor rated at ≥5,000 lb per person (OSHA 1910.140(c)(13)). On a pole, the
+            anchor is typically the crossarm bolt, the harness D-ring positioned as high as the
+            worker can comfortably reach, or a purpose-built pole anchor strap above the work
+            position.
+          </li>
+        </ol>
+      </div>
 
       {/* ── SIDE-BY-SIDE COMPARISON ──────────────────────────────────────── */}
       <SideBySide

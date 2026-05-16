@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -360,61 +359,44 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Standard OSP Worker PPE — All Zones"
-        description="A fully equipped OSP field worker showing correct PPE layers. Click each labeled element to learn what it protects against and when it's required."
-        src="/training/diagrams/osp-worker-ppe.svg"
-        alt="Full-body diagram of an OSP field worker showing Class E hard hat, ANSI Z87.1 safety glasses, Class 3 hi-vis vest, leather work gloves with rubber insulating glove inset, and ASTM F2413 EH-rated boots"
-        aspectRatio={0.7}
-        hotPoints={[
-          {
-            id: 'hardhat',
-            x: 50,
-            y: 8,
-            label: 'Class E hard hat',
-            type: 'click',
-            explanation:
-              'ANSI Z89.1 Class E — rated for 20,000V electrical protection plus impact. Required on joint-use poles where energized distribution conductors are present. Class G (2,200V) is acceptable for general work away from energized conductors.',
-          },
-          {
-            id: 'glasses',
-            x: 50,
-            y: 15,
-            label: 'Safety glasses',
-            type: 'click',
-            explanation:
-              'ANSI Z87.1 rated impact-resistant lenses. Required for wire cutting, conduit cutting, strand installation, fiber cleaving, and drilling. Standard prescription glasses do NOT meet Z87.1 unless they bear the marking. Face shield added for grinding or heavy cutting.',
-          },
-          {
-            id: 'hivis',
-            x: 50,
-            y: 35,
-            label: 'Class 3 hi-vis vest',
-            type: 'click',
-            explanation:
-              'ANSI/ISEA 107 Class 3 shown here — required for nighttime roadway work or high-speed road zones. Class 2 minimum for daytime roadway work. Class 1 is only for off-road low-traffic environments. Shown with retroreflective strips for nighttime visibility.',
-          },
-          {
-            id: 'gloves',
-            x: 20,
-            y: 55,
-            label: 'Leather work gloves',
-            type: 'click',
-            explanation:
-              'Leather work gloves protect against cuts, abrasions, and grip loss during mechanical work (pulling cable, handling hardware). These provide ZERO electrical protection. When working near energized conductors, rubber insulating gloves (Class 1 or higher) must be worn instead, with leather over-gloves for mechanical protection on top.',
-          },
-          {
-            id: 'boots',
-            x: 50,
-            y: 92,
-            label: 'EH-rated boots',
-            type: 'click',
-            explanation:
-              'ASTM F2413 Electrical Hazard (EH) rated footwear. Insulating sole resists completing a circuit through the foot. Required on aerial line work and near energized equipment. The EH rating is specific — verify the "EH" marking on the boot tongue or label. Standard safety-toed boots without the EH mark do not provide electrical protection.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — PPE by body zone ──────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Standard OSP Worker PPE — All Body Zones</h4>
+        <ol>
+          <li>
+            <strong>Head — Class E hard hat (ANSI Z89.1)</strong> — Rated for 20,000V electrical
+            protection plus impact. Required on joint-use poles where energized distribution
+            conductors are present. Class G (2,200V) is acceptable for general work away from
+            energized conductors. Replace after any impact, regardless of visible damage.
+          </li>
+          <li>
+            <strong>Eyes — Safety glasses (ANSI Z87.1)</strong> — Impact-resistant lenses rated
+            per ANSI Z87.1. Required for wire cutting, conduit cutting, strand installation, fiber
+            cleaving, and drilling. Standard prescription glasses do NOT meet Z87.1 unless they
+            bear the marking. Add a face shield for grinding or heavy cutting.
+          </li>
+          <li>
+            <strong>Body / visibility — Class 3 hi-vis vest (ANSI/ISEA 107)</strong> — Class 3
+            required for nighttime roadway work or high-speed road zones. Class 2 minimum for
+            daytime roadway work. Class 1 only for off-road, low-traffic environments.
+            Retroreflective strips are the critical feature for nighttime visibility.
+          </li>
+          <li>
+            <strong>Hands — Work gloves (leather or rubber insulating)</strong> — Leather work
+            gloves protect against cuts, abrasions, and grip loss during mechanical work.
+            They provide ZERO electrical protection. Near energized conductors, rubber insulating
+            gloves (Class 1 or higher, ASTM D120) must be worn instead, with leather over-gloves
+            on top for mechanical protection.
+          </li>
+          <li>
+            <strong>Feet — EH-rated boots (ASTM F2413)</strong> — Electrical Hazard (EH) rated
+            footwear with an insulating sole that resists completing a circuit through the foot.
+            Required on aerial line work and near energized equipment. Verify the "EH" marking on
+            the boot tongue or label — standard safety-toed boots without the EH mark provide
+            no electrical protection.
+          </li>
+        </ol>
+      </div>
 
       {/* ── SORTABLE: Match PPE to Hazard ────────────────────────────────── */}
       <Sortable

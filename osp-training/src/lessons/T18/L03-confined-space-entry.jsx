@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -371,61 +370,42 @@ export default function T18L03_ConfinedSpaceEntry() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Telecom Manhole Entry Setup"
-        description="A correctly set-up telecom manhole entry per 29 CFR 1910.268(o). Click each labeled element to learn what it does and why it's required."
-        src="/training/diagrams/manhole-entry-setup.svg"
-        alt="Overhead and side-view diagram of a telecom manhole entry showing attendant position, gas monitor, forced-air blower, cone barrier, and ladder"
-        aspectRatio={1.6}
-        hotPoints={[
-          {
-            id: 'attendant',
-            x: 15,
-            y: 20,
-            label: 'Attendant',
-            type: 'click',
-            explanation:
-              'The topside person stationed outside the manhole during entry. Maintains line of sight or voice contact with the entrant, monitors the gas detector readout, and initiates rescue procedures if conditions change or communication is lost. The attendant does NOT enter the space.',
-          },
-          {
-            id: 'monitor',
-            x: 42,
-            y: 38,
-            label: 'Multi-gas monitor',
-            type: 'click',
-            explanation:
-              'A 4-gas monitor measuring O₂ (%), LEL (%), CO (ppm), and H₂S (ppm). Lowered into the space before any worker enters. Left running inside the space during the entire work period. Required by 29 CFR 1910.268(o)(2). Must be calibrated per manufacturer schedule.',
-          },
-          {
-            id: 'blower',
-            x: 68,
-            y: 20,
-            label: 'Forced-air blower',
-            type: 'click',
-            explanation:
-              'Continuous mechanical ventilation to maintain safe atmospheric conditions. Required whenever combustible gas is detected at any level per 1910.268(o)(2)(ii)(B). Placed to push fresh air in and move contaminated air out — not simply recirculate manhole air.',
-          },
-          {
-            id: 'cones',
-            x: 85,
-            y: 50,
-            label: 'Traffic barrier / cones',
-            type: 'click',
-            explanation:
-              'A railing, cover-in-place alternate route, or cone/barrier setup around the manhole perimeter. Required by 29 CFR 1910.268(o)(1) to prevent pedestrians, vehicles, and other workers from falling into the open space.',
-          },
-          {
-            id: 'ladder',
-            x: 50,
-            y: 72,
-            label: 'Ladder',
-            type: 'click',
-            explanation:
-              'Required for entry into manholes exceeding 4 feet in depth per 29 CFR 1910.268(h)(8). Must extend from the bottom of the space to at least 3 feet above the manhole rim to allow secure hand-over-hand exit.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — manhole entry setup components ────────────────── */}
+      <div className="lesson-callout">
+        <h4>Telecom Manhole Entry Setup — Required Components (29 CFR 1910.268(o))</h4>
+        <ol>
+          <li>
+            <strong>Attendant (topside)</strong> — The person stationed outside the manhole for
+            the entire duration of entry. Maintains line of sight or voice contact with the
+            entrant, monitors the gas detector readout, and initiates rescue procedures if
+            conditions change or communication is lost. The attendant does NOT enter the space
+            (29 CFR 1910.268(o)(1)).
+          </li>
+          <li>
+            <strong>Multi-gas monitor</strong> — A 4-gas detector measuring O₂ (%), LEL (%),
+            CO (ppm), and H₂S (ppm). Lowered into the space before any worker enters and left
+            running continuously during the entire work period. Required by 29 CFR
+            1910.268(o)(2). Must be calibrated per manufacturer schedule.
+          </li>
+          <li>
+            <strong>Forced-air blower</strong> — Continuous mechanical ventilation to maintain
+            safe atmospheric conditions. Required whenever combustible gas is detected at any
+            level per 29 CFR 1910.268(o)(2)(ii)(B). Placed to push fresh air in and move
+            contaminated air out — not simply recirculate manhole air.
+          </li>
+          <li>
+            <strong>Traffic barrier / cones</strong> — A railing, cover-in-place alternate
+            route, or cone-and-barrier setup around the manhole perimeter. Required by 29 CFR
+            1910.268(o)(1) to prevent pedestrians, vehicles, and other workers from falling into
+            the open space.
+          </li>
+          <li>
+            <strong>Ladder</strong> — Required for entry into manholes exceeding 4 feet in
+            depth per 29 CFR 1910.268(h)(8). Must extend from the bottom of the space to at
+            least 3 feet above the manhole rim to allow secure hand-over-hand exit.
+          </li>
+        </ol>
+      </div>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
       <BranchingScenario

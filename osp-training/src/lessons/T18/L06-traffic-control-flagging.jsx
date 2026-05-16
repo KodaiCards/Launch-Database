@@ -4,7 +4,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -319,70 +318,50 @@ export default function T18L06_TrafficControlFlagging() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Standard Two-Lane Work Zone — Lane Closure Layout"
-        description="A typical short-duration lane closure on a two-lane road showing MUTCD Part 6 zones and device placement. Click each labeled element to understand its purpose and the MUTCD requirement behind it."
-        src="/training/diagrams/t18-l06-work-zone.svg"
-        alt="Top-view diagram of a two-lane road with a one-lane closure, showing advance warning signs, taper cones, buffer space, activity area with workers, and termination cones"
-        aspectRatio={0.55}
-        hotPoints={[
-          {
-            id: 'advance-sign',
-            x: 10,
-            y: 20,
-            label: 'Advance warning sign',
-            type: 'click',
-            explanation:
-              'Orange "Road Work Ahead" sign — the first device a driver sees entering the work zone. Spacing from the next sign and from the taper is prescribed by MUTCD Table 6C-1 (100–350 ft urban, ~500 ft rural). The advance warning area is where drivers decide to slow down and merge — if they don\'t see these signs, they arrive at the work zone at full speed.',
-          },
-          {
-            id: 'taper',
-            x: 35,
-            y: 45,
-            label: 'Taper (cone line)',
-            type: 'click',
-            explanation:
-              'A diagonal line of cones that guides traffic from the closed lane into the open lane. MUTCD prescribes minimum taper length: L = (width of lane in feet × speed in mph) / 60 for approach speed > 45 mph. At 55 mph on an 11-ft lane, minimum taper is approximately 121 ft. Too short = vehicles can\'t merge safely.',
-          },
-          {
-            id: 'buffer',
-            x: 52,
-            y: 35,
-            label: 'Longitudinal buffer',
-            type: 'click',
-            explanation:
-              'The empty space between the end of the taper and the closest worker or equipment. This is the crash-recovery zone — if a vehicle leaves the lane at the end of the taper, the buffer is what stands between that vehicle and your crew. MUTCD recommends buffer length based on speed and work type. Never position workers at the edge of the taper.',
-          },
-          {
-            id: 'flagger',
-            x: 62,
-            y: 70,
-            label: 'Flagger position',
-            type: 'click',
-            explanation:
-              'The certified flagger stands at the merge point controlling one-way alternating traffic. The flagger uses a STOP/SLOW paddle (not a hand flag alone), wears Class 2 hi-vis minimum (Class 3 at night), and maintains constant communication with the flagger at the opposite end of the closure. Per MUTCD Chapter 6E.',
-          },
-          {
-            id: 'activity',
-            x: 55,
-            y: 50,
-            label: 'Activity area (work space)',
-            type: 'click',
-            explanation:
-              'Where splicing, trenching, or pulling work actually happens. Protected by the buffer from the transition taper. All workers in the activity area must wear Class 2 hi-vis minimum, hard hat, and safety glasses. No one stands outside the protected activity area without an assigned function.',
-          },
-          {
-            id: 'termination',
-            x: 80,
-            y: 65,
-            label: 'Termination area',
-            type: 'click',
-            explanation:
-              'Where the work zone ends and normal traffic lanes resume. A final taper of cones leads traffic back into the closed lane, followed by an "End Road Work" sign. Don\'t remove termination devices until the activity area is fully clear of workers and equipment.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — work zone elements with MUTCD requirements ────── */}
+      <div className="lesson-callout">
+        <h4>Standard Two-Lane Work Zone — Lane Closure Layout (MUTCD Part 6)</h4>
+        <ol>
+          <li>
+            <strong>Advance warning signs</strong> — Orange "Road Work Ahead" signs are the first
+            devices a driver sees entering the work zone. Spacing from the next sign and from the
+            taper is prescribed by MUTCD Table 6C-1 (100–350 ft urban; ~500 ft rural). If drivers
+            miss these signs, they arrive at the work zone at full approach speed.
+          </li>
+          <li>
+            <strong>Taper (cone line)</strong> — A diagonal line of cones guiding traffic from the
+            closed lane into the open lane. Minimum taper length per MUTCD: L = (lane width in feet
+            × approach speed in mph) / 60 for speeds &gt; 45 mph. At 55 mph on an 11-ft lane,
+            minimum taper ≈ 121 ft. Too short a taper means drivers cannot merge safely.
+          </li>
+          <li>
+            <strong>Longitudinal buffer space</strong> — The empty space between the end of the
+            taper and the nearest worker or equipment. This is the crash-recovery zone — if a
+            vehicle veers off at the end of the taper, the buffer is what separates that vehicle
+            from your crew. Buffer length is speed- and work-type-dependent per MUTCD. Never
+            position workers at the edge of the taper.
+          </li>
+          <li>
+            <strong>Flagger position</strong> — The certified flagger stands at the merge point
+            controlling one-way alternating traffic. Uses a STOP/SLOW paddle (not a hand flag
+            alone), wears Class 2 hi-vis minimum (Class 3 at night), and maintains constant
+            radio contact with the flagger at the opposite end of the closure (MUTCD Chapter 6E).
+          </li>
+          <li>
+            <strong>Activity area (work space)</strong> — Where splicing, trenching, or pulling
+            work actually happens, protected by the longitudinal buffer from the taper. All
+            workers in the activity area must wear Class 2 hi-vis minimum, hard hat, and safety
+            glasses. No one stands outside the protected activity area without an assigned
+            function.
+          </li>
+          <li>
+            <strong>Termination area</strong> — Where the work zone ends and normal traffic lanes
+            resume. A final taper of cones leads traffic back into the previously closed lane,
+            followed by an "End Road Work" sign. Do not remove termination devices until the
+            activity area is fully clear of workers and equipment.
+          </li>
+        </ol>
+      </div>
 
       {/* ── BRANCHING SCENARIO ───────────────────────────────────────────── */}
       <BranchingScenario

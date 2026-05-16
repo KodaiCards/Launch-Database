@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import HotSpot from '../../components/primitives/HotSpot.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -340,80 +339,94 @@ export default function T18L08_HazardousMaterialsOSP() {
         </p>
       </section>
 
-      {/* ── HOT SPOT ─────────────────────────────────────────────────────── */}
-      <HotSpot
-        title="Identify the Hazmat Items — Job Site Scan"
-        description="A field crew's truck tailgate and job site layout. Click every item that requires an SDS on file. Some items do; some don't. Find them all."
-        src="/training/diagrams/t18-l08-hotspot-jobsite.svg"
-        alt="Job site scene showing fiber cable spool, gel cleaning rags, HDPE conduit cement container, battery backup unit, concrete saw with blade, standard hardware bag, and fiber cable reel"
-        aspectRatio={1.4}
-        mode="explore"
-        regions={[
+      {/* ── MCQ — SDS required or not? ────────────────────────────────────── */}
+      <Quiz
+        title="Does This Require an SDS on Your Job Site?"
+        mode="multiple-choice"
+        questions={[
           {
-            id: 'gel-cleaner',
-            x: 10,
-            y: 55,
-            w: 18,
-            h: 20,
-            isCorrect: true,
-            label: 'Gel cleaning solvent',
-            feedback:
-              'YES — requires an SDS. Gel cleaning solvents contain alcohols or petroleum-based solvents with defined exposure limits and first-aid requirements. Check Section 8 for glove type and Section 4 for skin/eye first aid.',
+            id: 'T18-L08-SDS-Q1',
+            type: 'mc',
+            prompt:
+              'Your crew is using gel cleaning solvent to clean fiber ends and splice enclosures. Does this product require an SDS on file at the job site?',
+            choices: [
+              { text: 'No — it\'s a cleaning product, not a chemical', correct: false },
+              { text: 'Yes — gel cleaning solvents contain alcohols or petroleum-based solvents with defined OSHA exposure limits and first-aid requirements', correct: true },
+              { text: 'Only if the crew uses more than one liter per shift', correct: false },
+              { text: 'Only if OSHA is doing a site inspection', correct: false },
+            ],
+            rationale:
+              'Gel cleaning solvents are classified hazardous chemicals under OSHA HazCom (29 CFR 1910.1200). The SDS must be accessible at the job site for any hazardous chemical in use. Section 8 specifies required glove type; Section 4 covers skin/eye first aid.',
           },
           {
-            id: 'conduit-cement',
-            x: 32,
-            y: 60,
-            w: 15,
-            h: 22,
-            isCorrect: true,
-            label: 'HDPE conduit cement / primer',
-            feedback:
-              'YES — requires an SDS. Conduit primer and cement contain solvents (MEK, MEKP, or similar) with inhalation and skin exposure limits. SDS Section 8 specifies ventilation requirements and glove selection.',
+            id: 'T18-L08-SDS-Q2',
+            type: 'mc',
+            prompt:
+              'The crew is priming and cementing HDPE conduit joints using PVC conduit primer and cement. Is an SDS required?',
+            choices: [
+              { text: 'No — conduit cement is a construction adhesive, not a listed chemical', correct: false },
+              { text: 'Yes — conduit primer and cement contain solvents (MEK or similar) with inhalation and skin exposure limits', correct: true },
+              { text: 'Only for the primer, not the cement', correct: false },
+              { text: 'Only if used in a confined space', correct: false },
+            ],
+            rationale:
+              'Conduit primer and cement contain methyl ethyl ketone (MEK) or similar solvents classified as hazardous. SDS Section 8 specifies ventilation requirements and glove selection. Both primer and cement are separately classified and require individual SDS.',
           },
           {
-            id: 'battery',
-            x: 55,
-            y: 40,
-            w: 20,
-            h: 30,
-            isCorrect: true,
-            label: 'Battery backup unit',
-            feedback:
-              'YES — requires an SDS. Lead-acid batteries contain sulfuric acid electrolyte. SDS covers acid spill response, PPE (chemical splash goggles, acid-resistant gloves), and fire hazard from hydrogen gas during charging.',
+            id: 'T18-L08-SDS-Q3',
+            type: 'mc',
+            prompt:
+              'A 12V lead-acid battery backup unit is stored in the job site van. Does it require an SDS?',
+            choices: [
+              { text: 'No — sealed lead-acid batteries are safe to handle without special documentation', correct: false },
+              { text: 'Yes — lead-acid batteries contain sulfuric acid electrolyte; the SDS covers acid spill response, PPE, and the hydrogen gas fire hazard during charging', correct: true },
+              { text: 'Only if the battery is charging on site', correct: false },
+              { text: 'Only for batteries over 100 Ah capacity', correct: false },
+            ],
+            rationale:
+              'Lead-acid batteries contain sulfuric acid electrolyte — a corrosive hazardous chemical under 29 CFR 1910.1200. The SDS is required regardless of charge state. Key hazards covered: acid spill (chemical splash goggles + acid-resistant gloves), and hydrogen gas evolution during charging (fire/explosion).',
           },
           {
-            id: 'concrete-saw',
-            x: 75,
-            y: 55,
-            w: 18,
-            h: 30,
-            isCorrect: true,
-            label: 'Concrete saw (silica dust source)',
-            feedback:
-              'YES — the consumable (concrete saw blade cutting concrete) generates crystalline silica dust, which has a product SDS and an OSHA substance-specific standard (29 CFR 1910.1053, PEL = 50 µg/m³ TWA). Wet-cutting and/or dust collection is the required engineering control.',
+            id: 'T18-L08-SDS-Q4',
+            type: 'mc',
+            prompt:
+              'The crew is cutting pavement using a concrete saw to trench conduit. Does this require an SDS?',
+            choices: [
+              { text: 'No — the saw is a tool, not a chemical', correct: false },
+              { text: 'Yes — cutting concrete generates crystalline silica dust, which has an OSHA substance-specific standard (29 CFR 1910.1053, PEL = 50 µg/m³ TWA)', correct: true },
+              { text: 'Only if the cut is longer than 10 feet', correct: false },
+              { text: 'Only when cutting indoors', correct: false },
+            ],
+            rationale:
+              'Crystalline silica dust from concrete cutting is an OSHA regulated substance (29 CFR 1910.1053). The silica-containing product (concrete) has an SDS. Wet-cutting and/or local exhaust ventilation are the required engineering controls. The SDS must be accessible on site.',
           },
           {
-            id: 'fiber-cable',
-            x: 5,
-            y: 10,
-            w: 20,
-            h: 35,
-            isCorrect: false,
-            label: 'Fiber optic cable reel',
-            feedback:
-              'NO SDS required — the fiber cable itself (glass fiber + plastic sheath) is not classified as a hazardous chemical. The filling gel inside loose-tube cable DOES require an SDS (see the gel cleaner item). The cable assembly itself does not.',
+            id: 'T18-L08-SDS-Q5',
+            type: 'mc',
+            prompt:
+              'A fiber optic cable reel (loose-tube, gel-filled) is staged at the job site. Does the fiber cable itself require an SDS?',
+            choices: [
+              { text: 'Yes — all fiber optic cables contain hazardous glass fibers', correct: false },
+              { text: 'No — the cable assembly (glass fiber + plastic sheath) is not classified as a hazardous chemical; the filling gel inside requires an SDS separately', correct: true },
+              { text: 'Yes — gel-filled cables always require an SDS for the entire assembly', correct: false },
+              { text: 'Only if the cable contains more than 144 fibers', correct: false },
+            ],
+            rationale:
+              'The fiber cable assembly itself is not classified as a hazardous chemical under OSHA HazCom. However, the thixotropic filling gel inside loose-tube cables IS a petroleum-based compound that requires its own SDS. Keep the cable manufacturer\'s SDS packet for the gel — not the cable assembly SDS.',
           },
           {
-            id: 'hardware-bag',
-            x: 80,
-            y: 15,
-            w: 15,
-            h: 25,
-            isCorrect: false,
-            label: 'Hardware bag (bolts, nuts, brackets)',
-            feedback:
-              'NO SDS required under routine handling. Standard zinc-plated or galvanized hardware is not classified as a hazardous chemical for normal use. Note: cutting, grinding, or welding galvanized metal can release zinc fumes (requires SDS for fume exposure assessment), but routine handling of assembled hardware does not.',
+            id: 'T18-L08-SDS-Q6',
+            type: 'mc',
+            prompt:
+              'A bag of galvanized hardware (bolts, nuts, pole-line brackets) is used for routine aerial attachment work. Is an SDS required?',
+            choices: [
+              { text: 'Yes — all galvanized metal requires an SDS', correct: false },
+              { text: 'No — standard galvanized hardware is not classified as a hazardous chemical for routine handling; an SDS is needed only if the hardware is cut, ground, or welded (generating zinc fumes)', correct: true },
+              { text: 'Yes — zinc coating is a heavy metal and requires documentation', correct: false },
+              { text: 'Only if the hardware weighs more than 50 lbs', correct: false },
+            ],
+            rationale:
+              'Routine handling of assembled galvanized hardware does not require an SDS under OSHA HazCom. The hazard arises when the galvanized coating is disturbed by cutting, grinding, or welding — which generates zinc fumes (a NIOSH-listed respiratory hazard). Those operations require an SDS for the zinc-containing product and respiratory protection assessment.',
           },
         ]}
       />
