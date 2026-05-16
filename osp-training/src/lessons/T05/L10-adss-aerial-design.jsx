@@ -139,23 +139,30 @@ export default function T05L10_ADSSAerialDesign() {
         </table>
 
         {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
+        {/* ADSS is vocabulary_assumed (introduced at T03.L04) — no ADSS card here.
+            Cards render only for vocabulary_introduced in this lesson. */}
         <Flashcard
           deckId="T05-L10"
           cards={[
-            {
-              id: 'T05-L10-fc-adss',
-              front: 'What makes ADSS cable self-supporting, and why is the "all dielectric" property important?',
-              back: 'ADSS is self-supporting because its integrated strength members (aramid yarns or fiberglass rods) carry the structural tension directly — no separate steel messenger strand is needed. "All dielectric" means the entire cable, including strength members, contains no conductive metal. This eliminates induced voltage hazards near high-voltage lines and removes the need for grounding hardware at every pole.',
-            },
             {
               id: 'T05-L10-fc-aeolian',
               front: 'What is aeolian vibration and where does it cause damage?',
               back: 'Aeolian vibration is a resonant high-frequency oscillation caused by steady low-speed wind (3–15 mph) creating alternating vortices on the downwind side of the cable. The vibration\'s highest stress concentrations occur at the attachment hardware — deadend and suspension clamps — because the cable is gripped there and can\'t flex. Without self-damping or added vibration dampers, fatigue failure at clamp locations can occur within months to years.',
             },
             {
+              id: 'T05-L10-fc-self-damping',
+              front: 'What is self-damping in an ADSS cable and why does it matter?',
+              back: 'Self-damping is the ability of an ADSS cable to dissipate vibrational energy internally, reducing the amplitude of aeolian vibration without external dampers. ADSS cables have higher self-damping than steel strand because the dielectric core materials absorb more energy per cycle. Cables with higher self-damping can be strung at longer spans or higher EDS before vibration dampers become necessary.',
+            },
+            {
               id: 'T05-L10-fc-span-rating',
               front: 'What is a span rating and who publishes it?',
               back: 'A span rating is the maximum safe span length for an ADSS cable at a given EDS, in a specified loading district, without violating aeolian vibration limits or fiber strain limits under design loads. Span ratings are published by the cable manufacturer in the cable\'s datasheet. The design engineer must verify the planned span length is within the manufacturer\'s published span rating for the installation conditions.',
+            },
+            {
+              id: 'T05-L10-fc-deadend-clamp',
+              front: 'What is a deadend clamp and why must it be cable-specific?',
+              back: 'A deadend clamp is an ADSS attachment hardware assembly used at terminal poles, where the full cable tension must be transferred to the structure. It grips the cable over a specific length to distribute the load without damaging the fiber or strength members. Deadend clamps are cable-specific because the grip length, geometry, and clamping force are engineered for the exact cable design — the wrong clamp can slip or cause localized stress that damages fiber.',
             },
           ]}
         />

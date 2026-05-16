@@ -196,23 +196,36 @@ export default function T05L02_VerticalClearanceRule232() {
             might think the cable only needs 14 ft of clearance above the road.
           </p>
           <p className="text-slate-300/90 mt-2">
+            <strong>Two separate FHWA numbers (important context):</strong> The 14 ft figure is the
+            maintained-clearance minimum — the floor for existing overhead structures on roads already
+            in service (23 CFR 625.2 / FHWA Highway Functional Classification guidance). New-construction
+            highway designs must clear <strong>16 ft</strong> per AASHTO Green Book (A Policy on Geometric
+            Design of Highways and Streets, current edition) because tractor-trailers plus load plus
+            design margin require the larger envelope. If your project involves a new-construction roadway
+            or a highway with posted design standards, the 16 ft new-construction figure may be what the
+            DOT permit review cites — but this is still separate from and less than the NESC 15.5 ft comm-cable
+            requirement. Summary: maintained roads = 14 ft FHWA floor; new-construction roads = 16 ft AASHTO
+            target; NESC comm cables over any road = ≈ 15.5 ft, regardless.
+          </p>
+          <p className="text-slate-300/90 mt-2">
             <strong>Book (NESC):</strong> NESC Rule 232 governs the clearance for communication cable
             attachments — and the NESC minimum is <strong>approximately 15.5 ft</strong> over motor-vehicle
             roadways. NESC is the controlling standard for the cable, not the DOT permit.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field reality:</strong> DOT permit reviewers check whether your structure meets
-            the highway clearance envelope (14 ft for vehicles). That is a different and separate
-            question from whether the cable meets NESC Rule 232 (15.5 ft for comm cables). Getting
-            DOT permit approval does NOT mean your design is NESC-compliant. You need 15.5 ft from
-            NESC, not 14 ft from the DOT permit.
+            the highway clearance envelope (14 ft maintained / 16 ft new-construction, depending on
+            road classification). That is a different and separate question from whether the cable meets
+            NESC Rule 232 (≈ 15.5 ft for comm cables). Getting DOT permit approval does NOT mean your
+            design is NESC-compliant. You need ≈ 15.5 ft from NESC, not the DOT permit clearance
+            standard — and you still need both.
           </p>
           <p className="text-slate-300/90 mt-2">
-            <strong>Risk:</strong> A cable hung at 14.5 ft clears the FHWA truck envelope and gets
-            the DOT permit — but it violates NESC Rule 232. The ILA with the pole owner will require
-            NESC compliance, and an independent inspector can cite you even after the DOT permit was
-            issued. The cable is too low. Add 1.5 ft + your design margin (1–2 ft) above 14 ft and
-            you're in the right neighborhood for NESC.
+            <strong>Risk:</strong> A cable hung at 14.5 ft clears the FHWA maintained-clearance floor
+            and may get the DOT permit — but it violates NESC Rule 232. The ILA with the pole owner
+            will require NESC compliance, and an independent inspector can cite you even after the DOT
+            permit was issued. The cable is too low. Start from the NESC ≈ 15.5 ft minimum, add your
+            1–2 ft design margin, and then verify the DOT permit requirement is also met.
           </p>
         </div>
 
@@ -343,7 +356,19 @@ export default function T05L02_VerticalClearanceRule232() {
           <p className="font-semibold text-slate-200 mt-5 mb-2">Step 4: Re-check under wind load (Light district, 9 psf)</p>
           <p className="text-sm text-slate-300 mb-2">
             Wind pushes the cable sideways AND increases the effective weight pulling it
-            downward. The combined load method:
+            downward. The combined load method uses a vector sum (w_combined) to produce
+            a single equivalent downward load:
+          </p>
+          <p className="text-sm text-slate-300/80 mb-2">
+            <strong>Note on the combined-load method:</strong> Feeding w_combined into the
+            parabolic sag formula (s = w_combined × L² / 8H) is a standard engineering
+            training approximation. Technically, w_combined produces a <em>resultant</em> sag
+            that points diagonally (the cable tilts slightly to leeward under wind). For
+            vertical clearance checks, using w_combined as a vertical load is a conservative
+            approximation — the computed sag is slightly larger than the true vertical sag
+            component, which means your clearance check stays on the safe side. This is the
+            method used in NESC loading calculations at the training level; full sag-tension
+            software resolves the tilt separately, but the difference is small for OSP spans.
           </p>
           <div className="bg-black/40 rounded p-3 font-mono text-sm text-green-200 space-y-1">
             <p>Strand projected area = 0.5 in OD = 0.5/12 = 0.042 ft²/ft</p>
