@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -253,61 +252,56 @@ export default function T02L07_WavelengthWindows() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ──────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Fiber Wavelength Windows — The Attenuation Curve"
-        description="The loss of a fiber varies by wavelength. Click each point to learn what each window is used for and why."
-        src="/training/diagrams/wavelength-windows.svg"
-        alt="Graph showing fiber attenuation vs wavelength, with the O, E, S, C, L band windows labeled and the 850/1310/1490/1550/1625 nm points highlighted"
-        aspectRatio={2.0}
-        hotPoints={[
-          {
-            id: 'nm850',
-            x: 12,
-            y: 20,
-            label: '850 nm',
-            type: 'click',
-            explanation:
-              '850 nm — Used for multimode fiber (MMF) in data centers and campus networks. VCSELs are cheap at this wavelength. High attenuation in SMF (~3 dB/km). Not used in OSP long-haul — only relevant when connecting to MMF patch panels at a data center or campus building.',
-          },
-          {
-            id: 'nm1310',
-            x: 38,
-            y: 55,
-            label: '1310 nm',
-            type: 'click',
-            explanation:
-              '1310 nm — The O-band (Original band). Near the zero-dispersion wavelength of G.652.D SMF. Low chromatic dispersion makes it forgiving for short-to-medium runs. GPON uses 1310 nm for upstream (ONT to OLT). Standard short-reach SMF transceivers (LR, LX). Attenuation spec max ≤ 0.40 dB/km.',
-          },
-          {
-            id: 'nm1490',
-            x: 52,
-            y: 50,
-            label: '1490 nm',
-            type: 'click',
-            explanation:
-              '1490 nm — The GPON downstream wavelength (OLT to ONT). Combined with 1310 nm upstream on the same fiber, enables bidirectional FTTH over a single fiber. Less commonly discussed in textbooks but universal in deployed FTTH networks. Part of the E/S/C-band transition area.',
-          },
-          {
-            id: 'nm1550',
-            x: 65,
-            y: 42,
-            label: '1550 nm',
-            type: 'click',
-            explanation:
-              '1550 nm — The C-band (Conventional band). Lowest attenuation window for G.652.D SMF (≤ 0.30 dB/km spec; typical 0.18–0.22 dB/km). The DWDM and long-haul wavelength. Erbium-doped fiber amplifiers (EDFAs) work natively here. Higher chromatic dispersion (~17 ps/nm·km) requires dispersion management on 10G+ links.',
-          },
-          {
-            id: 'nm1625',
-            x: 80,
-            y: 48,
-            label: '1625 nm',
-            type: 'click',
-            explanation:
-              '1625 nm — The L-band diagnostic wavelength. Macrobend loss is exaggerated here compared to 1550 nm, making it ideal for in-service OTDR macrobend hunting. Can be injected on a live fiber without disturbing 1310/1490/1550 nm traffic if the system uses appropriate WDM filters. Not used as a primary signal wavelength in OSP — it\'s a test tool.',
-          },
-        ]}
-      />
+      {/* ── WAVELENGTH WINDOWS TABLE ─────────────────────────────────────── */}
+      <table className="lesson-table">
+        <caption>Fiber Wavelength Windows — Loss, Band, and OSP Application</caption>
+        <thead>
+          <tr>
+            <th>Wavelength</th>
+            <th>Band</th>
+            <th>Approx. Attenuation (G.652.D SMF)</th>
+            <th>Primary Application</th>
+            <th>OSP Relevance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>850 nm</td>
+            <td>—</td>
+            <td>~3 dB/km (SMF); low on MMF</td>
+            <td>Multimode short-reach (data center / campus). VCSELs are cheap at this wavelength.</td>
+            <td>Low — only when connecting to MMF patch panels at a building or campus handoff.</td>
+          </tr>
+          <tr>
+            <td>1310 nm</td>
+            <td>O-band (Original)</td>
+            <td>≤ 0.40 dB/km spec</td>
+            <td>GPON upstream (ONT → OLT). Standard LR/LX transceivers. Near zero-dispersion for G.652.D.</td>
+            <td>High — the upstream wavelength for every FTTH deployment using GPON or XGS-PON.</td>
+          </tr>
+          <tr>
+            <td>1490 nm</td>
+            <td>E/S-band transition</td>
+            <td>≤ 0.35 dB/km typical</td>
+            <td>GPON downstream (OLT → ONT). Enables bidirectional FTTH on a single fiber with 1310 nm upstream.</td>
+            <td>High — universally deployed in FTTH; often under-discussed in textbooks but present in every ONT.</td>
+          </tr>
+          <tr>
+            <td>1550 nm</td>
+            <td>C-band (Conventional)</td>
+            <td>≤ 0.30 dB/km spec; typical 0.18–0.22 dB/km</td>
+            <td>Long-haul, DWDM, EDFA amplification. Lowest attenuation window. Higher chromatic dispersion (~17 ps/nm·km).</td>
+            <td>Medium — used in long-haul feeder runs, CWDM/DWDM overlays, and some CATV RF-overlay systems.</td>
+          </tr>
+          <tr>
+            <td>1625 nm</td>
+            <td>L-band (Long)</td>
+            <td>Slightly higher than 1550 nm</td>
+            <td>In-service OTDR macrobend hunting. Macrobend loss is exaggerated here vs. 1550 nm — makes bends easier to find.</td>
+            <td>Diagnostic only — injected on a live fiber via WDM filter without disturbing traffic. Not a signal wavelength.</td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

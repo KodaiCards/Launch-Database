@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -283,61 +282,28 @@ export default function T01L04_InsideASpliceCase() {
         ]}
       />
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Inside a Dome Splice Closure"
-        description="Click each labeled component to understand its function. This shows a pole-mounted dome closure with two cable entries open for splicing."
-        src="/training/diagrams/splice-case-internals.svg"
-        alt="Cutaway diagram of a dome-style fiber splice closure showing cable ports, central member anchor, fan-out area, splice trays, and gel sealing"
-        aspectRatio={1.0}
-        hotPoints={[
-          {
-            id: 'port',
-            x: 50,
-            y: 90,
-            label: 'Cable entry port',
-            type: 'click',
-            explanation:
-              'The sealed opening where each cable enters the case. The cable jacket is clamped to a retention bracket, the central member is anchored, and the port is sealed with gel or mechanical compression to keep moisture out. Armored cable has the armor bonded at this point.',
-          },
-          {
-            id: 'anchor',
-            x: 50,
-            y: 75,
-            label: 'Central member anchor',
-            type: 'click',
-            explanation:
-              'The cable\'s central member (steel or fiberglass rod) is bolted or clamped to the splice case frame here. Critical step — without anchoring, cable tension during aerial sag changes or underground settlement will pull the buffer tubes and break every splice inside.',
-          },
-          {
-            id: 'fanout',
-            x: 30,
-            y: 60,
-            label: 'Fan-out / organizer',
-            type: 'click',
-            explanation:
-              'Area where the jacket is stripped back and individual buffer tubes are routed to their designated splice trays. Color-coded labels identify each tube. Extra tube length is looped in gentle coils with bend radius maintained.',
-          },
-          {
-            id: 'tray',
-            x: 50,
-            y: 40,
-            label: 'Splice tray',
-            type: 'click',
-            explanation:
-              'A rigid plastic tray holding 12–24 individual fiber splices. Splices sit in numbered slots, each protected by a heat-shrink splice protector sleeve. Trays stack in a cassette inside the dome. The tray maintains minimum bend radius so stored slack fiber doesn\'t macrobend.',
-          },
-          {
-            id: 'protector',
-            x: 70,
-            y: 35,
-            label: 'Splice protector sleeve',
-            type: 'click',
-            explanation:
-              'A heat-shrink tube (with internal rod and solder ring in many designs) placed over the fusion splice before splicing, then heated to shrink around the splice point. Protects the fragile bare glass of the fusion splice from mechanical stress. Each splice gets one.',
-          },
-        ]}
-      />
+      {/* ── SPLICE CASE COMPONENT GUIDE ─────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Inside a Dome Splice Closure — Component Guide</h4>
+        <p>A dome splice closure has five key components, each with a distinct job. When any one of these is done wrong, fibers break or moisture gets in — usually discovered days later by an OTDR surprise.</p>
+        <ol>
+          <li>
+            <strong>Cable entry port</strong> — The sealed opening where each cable enters the case. The cable jacket is clamped to a retention bracket, the central member is anchored, and the port is sealed with gel or mechanical compression to keep moisture out. Armored cable has the armor bonded at this point.
+          </li>
+          <li>
+            <strong>Central member anchor</strong> — The cable's central member (steel or fiberglass rod) is bolted or clamped to the splice case frame here. Critical step — without anchoring, cable tension during aerial sag changes or underground settlement will pull the buffer tubes and break every splice inside.
+          </li>
+          <li>
+            <strong>Fan-out / organizer</strong> — Area where the jacket is stripped back and individual buffer tubes are routed to their designated splice trays. Color-coded labels identify each tube. Extra tube length is looped in gentle coils with bend radius maintained.
+          </li>
+          <li>
+            <strong>Splice tray</strong> — A rigid plastic tray holding 12–24 individual fiber splices. Splices sit in numbered slots, each protected by a heat-shrink splice protector sleeve. Trays stack in a cassette inside the dome. The tray maintains minimum bend radius so stored slack fiber doesn't macrobend.
+          </li>
+          <li>
+            <strong>Splice protector sleeve</strong> — A heat-shrink tube (with internal rod and solder ring in many designs) placed over the fusion splice before splicing, then heated to shrink around the splice point. Protects the fragile bare glass of the fusion splice from mechanical stress. Each splice gets one.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
       <Quiz

@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -282,70 +281,31 @@ export default function T01L03_PartsOfACable() {
         ]}
       />
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="OSP Loose-Tube Cable — Cross Section"
-        description="Click any labeled layer to learn what it does. This is a typical 72-fiber armored OSP cable cut open to show all layers."
-        src="/training/diagrams/osp-cable-cross-section.svg"
-        alt="Cross-section of a 72-fiber OSP loose-tube armored cable showing outer jacket, armor, buffer tubes, central member, and fiber strands"
-        aspectRatio={1.2}
-        hotPoints={[
-          {
-            id: 'jacket',
-            x: 50,
-            y: 5,
-            label: 'Outer jacket',
-            type: 'click',
-            explanation:
-              'Black HDPE (High-Density Polyethylene) outer jacket. UV-resistant and moisture-resistant. For direct-buried cable, this is the primary moisture barrier. For aerial cable, it must also resist UV exposure for 20+ years.',
-          },
-          {
-            id: 'armor',
-            x: 80,
-            y: 20,
-            label: 'Armor',
-            type: 'click',
-            explanation:
-              'Corrugated steel or aluminum tape bonded to the inside of the jacket. Protects against rodent damage and direct dig-in. Cables without this layer are dielectric (no metal). Armored cables require bonding and grounding at each splice case.',
-          },
-          {
-            id: 'ripcord',
-            x: 20,
-            y: 15,
-            label: 'Ripcord',
-            type: 'click',
-            explanation:
-              'A nylon string embedded inside the jacket. Grab it and pull lengthwise to slit the jacket open without cutting into buffer tubes. Every splicer\'s first move when opening a cable.',
-          },
-          {
-            id: 'buffer-tube',
-            x: 65,
-            y: 50,
-            label: 'Buffer tube',
-            type: 'click',
-            explanation:
-              'Plastic tube (color-coded by position) holding 6–12 individual fibers in water-blocking gel. The tube protects fibers from bending and mechanical stress. Buffer tube colors follow the 12-color sequence: blue, orange, green, brown, slate, white, red, black, yellow, violet, rose, aqua.',
-          },
-          {
-            id: 'central',
-            x: 50,
-            y: 50,
-            label: 'Central member',
-            type: 'click',
-            explanation:
-              'A steel wire or glass-reinforced plastic rod down the center. Buffer tubes are stranded around it. Must be anchored inside the splice case — failure to anchor it allows the cable to pull back through the case entry, destroying the splice.',
-          },
-          {
-            id: 'fiber',
-            x: 75,
-            y: 65,
-            label: 'Individual fiber',
-            type: 'click',
-            explanation:
-              'Each colored glass strand inside a buffer tube. 250 µm with coating — about 3x the thickness of a human hair. Core + cladding glass is 125 µm. Strip the 250 µm coating for splicing, leaving the bare glass. Handle with care — bare glass can puncture skin.',
-          },
-        ]}
-      />
+      {/* ── CABLE LAYER BREAKDOWN ───────────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>OSP Loose-Tube Cable — Layer Breakdown (Outside to Center)</h4>
+        <p>A standard 72-fiber armored OSP loose-tube cable has six distinct layers. Understanding each layer tells you what it protects, how to open the cable, and what can go wrong.</p>
+        <ol>
+          <li>
+            <strong>Outer jacket</strong> — Black HDPE (High-Density Polyethylene) outer skin. UV-resistant and moisture-resistant. For direct-buried cable, this is the primary moisture barrier. For aerial cable, it must also resist UV exposure for 20+ years.
+          </li>
+          <li>
+            <strong>Armor</strong> — Corrugated steel or aluminum tape bonded to the inside of the jacket. Protects against rodent damage and direct dig-in. Cables without this layer are dielectric (no metal). Armored cables require bonding and grounding at each splice case.
+          </li>
+          <li>
+            <strong>Ripcord</strong> — A nylon string embedded inside the jacket. Grab it and pull lengthwise to slit the jacket open without cutting into buffer tubes. Every splicer's first move when opening a cable.
+          </li>
+          <li>
+            <strong>Buffer tubes</strong> — Color-coded plastic tubes, each holding 6–12 individual fibers in water-blocking gel. The tube protects fibers from bending and mechanical stress. Buffer tube colors follow the 12-color sequence: blue, orange, green, brown, slate, white, red, black, yellow, violet, rose, aqua.
+          </li>
+          <li>
+            <strong>Central member</strong> — A steel wire or glass-reinforced plastic rod running down the center. Buffer tubes are stranded around it. Must be anchored inside the splice case — failure to anchor it allows the cable to pull back through the case entry, destroying the splice.
+          </li>
+          <li>
+            <strong>Individual fibers</strong> — Each colored glass strand inside a buffer tube. 250 µm with coating — about 3× the thickness of a human hair. Core + cladding glass is 125 µm. Strip the 250 µm coating for splicing, leaving the bare glass. Handle with care — bare glass can puncture skin.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
       <Quiz

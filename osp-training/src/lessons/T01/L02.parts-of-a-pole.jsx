@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -298,70 +297,31 @@ export default function T01L02_PartsOfAPole() {
         ]}
       />
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Anatomy of a Shared Utility Pole"
-        description="Click any labeled zone or component to learn what it is and why it matters. This diagram shows a typical joint-use pole with electric, cable TV, and fiber attachments."
-        src="/training/diagrams/pole-anatomy.svg"
-        alt="Diagram of a utility pole showing supply space at top, climbing space in middle, and communication space at bottom with labeled attachment zones"
-        aspectRatio={0.5}
-        hotPoints={[
-          {
-            id: 'supply',
-            x: 50,
-            y: 10,
-            label: 'Supply space',
-            type: 'click',
-            explanation:
-              'High-voltage primary distribution lines (typically 4–35 kV). Only electric utility linemen work in this zone. NESC requires a minimum separation from the top of the communication space. Never approach this zone without utility clearance and proper PPE.',
-          },
-          {
-            id: 'climbing',
-            x: 50,
-            y: 30,
-            label: 'Climbing space',
-            type: 'click',
-            explanation:
-              'Required clearance zone between supply and communication attachments. Nothing is attached here — it\'s a mandatory gap that allows linemen to safely climb and work without their body bridging the two zones. NESC specifies minimum climbing space dimensions.',
-          },
-          {
-            id: 'neutral',
-            x: 65,
-            y: 40,
-            label: 'Neutral wire',
-            type: 'click',
-            explanation:
-              'The return conductor for the electric distribution system. In RUS-program areas this is often the MGN (Multi-Grounded Neutral) — grounded at every pole. Fiber messenger wires must maintain clearance from the neutral. In some areas, messenger bonding connects to the neutral/MGN.',
-          },
-          {
-            id: 'comm',
-            x: 50,
-            y: 60,
-            label: 'Communication space',
-            type: 'click',
-            explanation:
-              'Where telecom cables live: cable TV, fiber, telephone copper. Fiber is typically the lowest attachment in this zone. The NESC specifies minimum vertical separation between each attachment type. This is where OSP fiber crews work.',
-          },
-          {
-            id: 'fiber',
-            x: 65,
-            y: 75,
-            label: 'Fiber cable',
-            type: 'click',
-            explanation:
-              'Aerial fiber is usually the bottom-most attachment in the communication space. The cable hangs between two poles via a steel or dielectric messenger wire. The messenger is lashed to the cable or integral (ADSS cable). Attachment height is measured here at the pole; sag pulls the midspan cable lower.',
-          },
-          {
-            id: 'sag',
-            x: 50,
-            y: 90,
-            label: 'Midspan / sag',
-            type: 'click',
-            explanation:
-              'At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC Rule 232 / Table 232-1 requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify with the adopted edition before design lock). A cable attached at 22 feet with 4 feet of sag gives 18 feet of ground clearance at midspan — this is one example scenario. Actual sag varies with span length, cable weight (type and fiber count), temperature, and ice/wind loading; always calculate sag for each specific span using the installed cable\'s sag-tension tables.',
-          },
-        ]}
-      />
+      {/* ── POLE ZONE BREAKDOWN ─────────────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Anatomy of a Shared Utility Pole — Zone Breakdown</h4>
+        <p>A joint-use utility pole is divided into vertical zones from top to bottom. Understanding these zones is foundational for every OSP job — where you can attach, where you can't, and who owns what.</p>
+        <ol>
+          <li>
+            <strong>Supply space</strong> — High-voltage primary distribution lines (typically 4–35 kV) attach at the top of the pole. Only electric utility linemen work in this zone. NESC requires a minimum separation from the top of the communication space. Never approach this zone without utility clearance and proper PPE.
+          </li>
+          <li>
+            <strong>Neutral wire</strong> — The return conductor for the electric distribution system, typically the lowest conductor in the supply space. In RUS-program areas this is often the MGN (Multi-Grounded Neutral) — grounded at every pole. Fiber messenger wires must maintain NESC clearance from the neutral. In some areas, messenger bonding connects to the neutral/MGN.
+          </li>
+          <li>
+            <strong>Climbing space</strong> — A mandatory clearance zone between supply and communication attachments. Nothing is attached here — it's a required gap that allows linemen to safely climb and work without their body bridging the two zones. NESC specifies minimum climbing space dimensions.
+          </li>
+          <li>
+            <strong>Communication space</strong> — Where telecom cables attach: cable TV, fiber, telephone copper. Fiber is typically the lowest attachment in this zone. The NESC specifies minimum vertical separation between each attachment type. This is where OSP fiber crews work.
+          </li>
+          <li>
+            <strong>Fiber cable / bottom attachment</strong> — Aerial fiber is usually the bottom-most attachment in the communication space. The cable hangs between two poles via a steel or dielectric messenger wire. Attachment height is measured at the pole; sag at midspan pulls the cable lower, setting the ground clearance.
+          </li>
+          <li>
+            <strong>Midspan / sag</strong> — At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC Rule 232 / Table 232-1 requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify the adopted edition before design lock). Actual sag varies with span length, cable weight, temperature, and ice/wind loading — always calculate sag for each specific span using the installed cable's sag-tension tables.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
       <Quiz

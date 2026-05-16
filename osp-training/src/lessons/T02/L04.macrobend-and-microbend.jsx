@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -256,43 +255,21 @@ export default function T02L04_MacrobendAndMicrobend() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ──────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Macrobend vs. Microbend — Where Loss Occurs"
-        description="Click each labeled point to understand where each bend type occurs and what causes it."
-        src="/training/diagrams/fiber-bend-types.svg"
-        alt="Diagram showing a fiber with a visible macrobend loop and a section with microscopic microbend deformations"
-        aspectRatio={2.5}
-        hotPoints={[
-          {
-            id: 'macro',
-            x: 30,
-            y: 40,
-            label: 'Macrobend',
-            type: 'click',
-            explanation:
-              'A visible bend — a loop or kink in the fiber. Loss increases rapidly as the bend radius decreases below the minimum spec. Common causes: tight coils in a handhole slack loop, fiber pinched behind a patch panel, or a kink from careless installation. Detectable as a discrete loss event on an OTDR trace.',
-          },
-          {
-            id: 'micro',
-            x: 70,
-            y: 60,
-            label: 'Microbend',
-            type: 'click',
-            explanation:
-              'Microscopic lateral deformations — not visible to the eye. Common causes: over-tensioned lashing wire, conduit overfill, temperature-induced buckling of fiber inside loose-tube cable. Shows up as elevated background attenuation on OTDR, not a discrete event. Requires careful installation practices to prevent.',
-          },
-          {
-            id: 'normal',
-            x: 50,
-            y: 20,
-            label: 'Normal fiber',
-            type: 'click',
-            explanation:
-              'A straight fiber run with no unusual bends. TIR is fully effective — essentially all light bouncing stays inside the core. This is the baseline: loss is purely from the glass\'s intrinsic attenuation (Rayleigh scattering + infrared absorption), with no bend contribution.',
-          },
-        ]}
-      />
+      {/* ── BEND TYPE REFERENCE ─────────────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Macrobend vs. Microbend vs. Normal — At a Glance</h4>
+        <ol>
+          <li>
+            <strong>Normal fiber</strong> — A straight fiber run with no unusual bends. Total internal reflection is fully effective — essentially all bouncing light stays inside the core. Loss is purely from the glass's intrinsic attenuation (Rayleigh scattering + infrared absorption), with no bend contribution. This is the baseline.
+          </li>
+          <li>
+            <strong>Macrobend</strong> — A visible bend: a loop, kink, or tight coil. Loss increases rapidly as the bend radius decreases below the minimum specification. Common causes: tight coils in a handhole slack loop, fiber pinched behind a patch panel, or a kink from careless installation. On an OTDR trace, macrobend shows up as a discrete loss event at a specific distance — it's locatable and fixable.
+          </li>
+          <li>
+            <strong>Microbend</strong> — Microscopic lateral deformations in the fiber — not visible to the eye. Common causes: over-tensioned lashing wire, conduit overfill (too many cables in too small a pipe), or temperature-induced buckling of fiber inside a loose-tube cable. On an OTDR trace, microbend shows up as elevated background attenuation spread across a span, not a discrete event. Harder to locate; requires careful installation practices to prevent.
+          </li>
+        </ol>
+      </div>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
       <BranchingScenario

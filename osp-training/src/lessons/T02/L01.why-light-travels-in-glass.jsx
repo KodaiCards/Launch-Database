@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -267,52 +266,25 @@ export default function T02L01_WhyLightTravelsInGlass() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Inside a Fiber Strand"
-        description="Click any labeled point to learn what that part does. The diagram shows a cross-section of a single fiber strand — not the full cable."
-        src="/training/diagrams/fiber-cross-section.svg"
-        alt="Cross-section diagram of a fiber optic strand showing core, cladding, buffer coating, and light ray path"
-        aspectRatio={2.2}
-        hotPoints={[
-          {
-            id: 'core',
-            x: 50,
-            y: 50,
-            label: 'Core',
-            type: 'click',
-            explanation:
-              'The inner glass cylinder where light signals travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection.',
-          },
-          {
-            id: 'cladding',
-            x: 72,
-            y: 50,
-            label: 'Cladding',
-            type: 'click',
-            explanation:
-              'The outer glass layer surrounding the core. Its index of refraction is slightly lower than the core, which creates the total internal reflection effect. The cladding is 125 µm in diameter for all standard fibers.',
-          },
-          {
-            id: 'buffer',
-            x: 88,
-            y: 50,
-            label: 'Buffer',
-            type: 'click',
-            explanation:
-              'A plastic coating applied immediately outside the cladding. It protects the glass from moisture and mechanical stress. The primary buffer is typically 250 µm in diameter. It is NOT part of the optical path — purely mechanical protection.',
-          },
-          {
-            id: 'ray',
-            x: 30,
-            y: 30,
-            label: 'Light ray',
-            type: 'click',
-            explanation:
-              'A light ray traveling through the core bounces off the core-cladding boundary via total internal reflection. As long as the bounce angle is shallower than the critical angle, 100% of the light reflects back — no energy escapes to the cladding.',
-          },
-        ]}
-      />
+      {/* ── FIBER STRAND ANATOMY ────────────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Inside a Fiber Strand — Layer Definitions</h4>
+        <p>A single fiber strand has four distinct parts from center out. The glass is the optical path; the plastic coating is purely mechanical protection.</p>
+        <ol>
+          <li>
+            <strong>Core</strong> — The inner glass cylinder where light signals travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection at the core-cladding boundary.
+          </li>
+          <li>
+            <strong>Cladding</strong> — The outer glass layer surrounding the core. Its index of refraction is slightly lower than the core's, which creates the total internal reflection effect. The cladding is 125 µm in diameter for all standard fibers (SMF and MMF alike).
+          </li>
+          <li>
+            <strong>Buffer coating</strong> — A plastic coating applied immediately outside the cladding. It protects the glass from moisture and mechanical stress. The primary buffer is typically 250 µm in diameter. It is NOT part of the optical path — purely mechanical protection.
+          </li>
+          <li>
+            <strong>Light ray path</strong> — A light ray traveling through the core bounces off the core-cladding boundary via total internal reflection. As long as the bounce angle is shallower than the critical angle, 100% of the light reflects back — no energy escapes to the cladding. This is what keeps the signal in the fiber.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

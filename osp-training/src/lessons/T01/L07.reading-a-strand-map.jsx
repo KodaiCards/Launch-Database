@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -243,70 +242,56 @@ export default function T01L07_ReadingAStrandMap() {
         ]}
       />
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="FTTH Network Architecture — Sample Strand Map"
-        description="Click each element to understand what it represents in the fiber network hierarchy. This shows a typical GPON FTTH deployment from headend to customer."
-        src="/training/diagrams/ftth-strand-map.svg"
-        alt="Diagram of FTTH network architecture showing headend with OLT, feeder cable, FDH with splitters, distribution cables, NAPs, and customer drops to homes"
-        aspectRatio={1.8}
-        hotPoints={[
-          {
-            id: 'headend',
-            x: 5,
-            y: 50,
-            label: 'Headend / OLT',
-            type: 'click',
-            explanation:
-              'The OLT (Optical Line Terminal) at the provider\'s headend or central office. Each OLT card has multiple ports; each port serves one PON (one feeder fiber, serving up to 32 or 64 customers via splitters). All signal originates here.',
-          },
-          {
-            id: 'feeder',
-            x: 25,
-            y: 50,
-            label: 'Feeder cable',
-            type: 'click',
-            explanation:
-              'Large-count cable (72–288 fibers) running from headend to FDH. One fiber per OLT port. Typically aerial on poles or buried in conduit in the main right-of-way. The backbone of the FTTH network.',
-          },
-          {
-            id: 'fdh',
-            x: 42,
-            y: 50,
-            label: 'FDH + Splitters',
-            type: 'click',
-            explanation:
-              'Fiber Distribution Hub. Contains passive optical splitters (1:32 or 1:64). One feeder fiber in → 32 or 64 distribution fibers out. No power required — splitters are passive optical components. May be a pole-mounted cabinet, ground cabinet, or underground vault.',
-          },
-          {
-            id: 'distrib',
-            x: 65,
-            y: 30,
-            label: 'Distribution cable',
-            type: 'click',
-            explanation:
-              'Medium-count cable (12–48 fibers) fanning out from FDH to serve streets and neighborhoods. Each fiber in the distribution cable corresponds to one customer (post-splitter). Multiple distribution cables leave each FDH in different directions.',
-          },
-          {
-            id: 'nap',
-            x: 80,
-            y: 20,
-            label: 'NAP',
-            type: 'click',
-            explanation:
-              'Network Access Point. A small closure on a pole or at a pedestal where 1–4 distribution fibers are accessed and connected to customer drop cables. The last OSP infrastructure before the customer premises.',
-          },
-          {
-            id: 'drop',
-            x: 92,
-            y: 10,
-            label: 'Drop + ONT',
-            type: 'click',
-            explanation:
-              'Drop cable (1–2 fibers) runs from NAP to the customer premises. Terminates at the ONT (Optical Network Terminal), which is the demarcation point. The ONT converts fiber to ethernet for the customer\'s equipment. Everything from OLT to ONT is OSP.',
-          },
-        ]}
-      />
+      {/* ── FTTH NETWORK HIERARCHY TABLE ────────────────────────────────── */}
+      <table className="lesson-table">
+        <caption>FTTH Network Architecture — Topology Levels (Headend to Customer)</caption>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Node / Device</th>
+            <th>Typical Fiber Count</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1 — Origin</td>
+            <td>Headend / OLT (Optical Line Terminal)</td>
+            <td>One port per feeder fiber</td>
+            <td>All optical signal originates here. Each OLT port serves one PON (up to 32 or 64 customers via downstream splitters).</td>
+          </tr>
+          <tr>
+            <td>2 — Backbone</td>
+            <td>Feeder cable</td>
+            <td>72–288 fibers</td>
+            <td>Runs from headend to FDH, aerial on poles or buried in conduit. One fiber per OLT port. The backbone — a feeder failure affects many customers at once.</td>
+          </tr>
+          <tr>
+            <td>3 — Split point</td>
+            <td>FDH (Fiber Distribution Hub) + passive splitters</td>
+            <td>1 feeder fiber in → 32 or 64 distribution fibers out</td>
+            <td>Contains 1:32 or 1:64 passive optical splitters. No power required. May be a pole-mounted cabinet, ground cabinet, or underground vault.</td>
+          </tr>
+          <tr>
+            <td>4 — Distribution</td>
+            <td>Distribution cable</td>
+            <td>12–48 fibers</td>
+            <td>Fans out from FDH along streets and neighborhoods. Each fiber corresponds to one customer (post-splitter). Multiple distribution cables leave each FDH in different directions.</td>
+          </tr>
+          <tr>
+            <td>5 — Access point</td>
+            <td>NAP (Network Access Point)</td>
+            <td>1–4 fibers accessed</td>
+            <td>Small closure on a pole or pedestal where distribution fibers connect to individual customer drop cables. The last OSP infrastructure before the customer premises.</td>
+          </tr>
+          <tr>
+            <td>6 — Customer</td>
+            <td>Drop cable + ONT (Optical Network Terminal)</td>
+            <td>1–2 fibers</td>
+            <td>Drop runs from NAP to premises. ONT is the demarcation point — converts fiber to ethernet. Everything from OLT to ONT is OSP.</td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
       <Quiz
