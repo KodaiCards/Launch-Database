@@ -273,7 +273,8 @@ export default function T19L04_BatteryBackupAndGeneratorTransfer() {
             "when a storm is coming" or never. Generators are often found with partial fuel tanks
             and no service history. When the first major outage hits (ice storm, extended grid
             failure), the generator either won't start or runs for 20 minutes before a clogged
-            injector kills it. The OSP engineer's spec must include: (a) automatic weekly test
+            injector kills it. Generator no-start is the most common cause of extended rural CO outages — the battery plant holds for 4–8 hours while the generator sits dead, and then service fails completely.
+            The OSP engineer's spec must include: (a) automatic weekly test
             run, (b) monthly load test, (c) fuel polishing or biocide treatment contract, and
             (d) generator service contract with a local provider — not just the equipment
             specification. The operations requirement is as important as the hardware spec.

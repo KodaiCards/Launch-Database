@@ -420,7 +420,7 @@ export default function T19L02_OltAndCmtsAsBlackBoxes() {
             answer: '8 to 16',
             answerDisplay: '8 to 16',
             explanation:
-              'OLT line cards typically provide 8–16 GPON ports. A fully loaded OLT with 8 line cards × 16 ports per card = 128 GPON ports, each capable of serving up to 64 subscribers = up to 8,192 subscribers from a single OLT chassis. Actual deployments vary by vendor and model.',
+              'OLT line cards typically provide 8–16 GPON ports. A fully loaded OLT with 8 line cards × 16 ports per card = 128 GPON ports, each capable of serving up to 64 subscribers = up to 8,192 subscribers from a single OLT chassis. Note: the 8×16=128 calculation is an illustrative example based on common mid-range OLT configurations. Actual port counts are vendor- and model-specific — always verify the OLT specification sheet for the equipment being deployed.',
           },
           {
             id: 'T19-L02-Q5',

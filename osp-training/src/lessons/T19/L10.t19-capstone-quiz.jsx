@@ -202,230 +202,230 @@ const capstoneQuestions = [
   // T19.L01 — Headend layout
   {
     id: 'T19CAP-Q01',
-    question:
+    prompt:
       'The MEF (Main Entrance Facility) in a headend building is primarily responsible for:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Hosting the OLT rack and active electronics',
       'Managing HVAC airflow for the equipment room',
       'Providing the physical OSP-to-ISP boundary: cable entry, bonding, and primary protection',
       'Housing the generator and ATS switchgear',
     ],
-    correctIndex: 2,
+    answerIndex: 2,
     explanation:
       'The MEF (also called MPOE — Minimum Point of Entry) is where outside plant cables enter the building. It hosts the primary protector, the bonding conductor to the TMGB, and all OSP cable terminations. Active electronics like OLTs live in the equipment room, not the MEF. (T19.L01)',
   },
   // T19.L02 — OLT / CMTS
   {
     id: 'T19CAP-Q02',
-    question:
+    prompt:
       'In a GPON network, the OLT transmits the downstream signal at _____ nm and receives upstream at _____ nm on the same single fiber strand.',
     type: 'multiple-choice',
-    options: [
+    choices: [
       '1310 downstream / 1490 upstream',
       '1490 downstream / 1310 upstream',
       '1550 downstream / 1310 upstream',
       '1310 downstream / 1550 upstream',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'GPON uses wavelength-division multiplexing (WDM) on a single fiber: 1490 nm downstream (OLT→ONT) and 1310 nm upstream (ONT→OLT). A third wavelength, 1550 nm, is reserved for RF video overlay in some deployments. (T19.L02; ITU-T G.984.2)',
   },
   // T19.L03 — –48 VDC
   {
     id: 'T19CAP-Q03',
-    question:
+    prompt:
       "In the standard –48 VDC telecom power plant, which terminal is connected to ground (0 V)?",
     type: 'multiple-choice',
-    options: [
+    choices: [
       'The negative terminal (–48 V)',
       'The positive terminal (battery return, 0 V)',
       'Both terminals are floating — neither is grounded',
       'The midpoint of the battery string',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'In telecom –48 VDC, the positive terminal is bonded to the TMGB at 0 V (battery return / BDFB positive bus). The negative terminal is at –48 V and drives the equipment. This negative-ground convention means the current-carrying conductors run at negative potential, minimizing electrochemical corrosion on exposed conductors. (T19.L03; ANSI/ATIS-0600336)',
   },
   // T19.L03 — Battery sizing (uses the WorkedExample above)
   {
     id: 'T19CAP-Q04',
-    question:
+    prompt:
       'Using the battery sizing formula above: a hut with a 22 A load, 8-hour reserve requirement, and 0.80 de-rating factor requires a battery string of at least _____ Ah.',
     type: 'multiple-choice',
-    options: ['176 Ah', '200 Ah', '220 Ah', '256 Ah'],
-    correctIndex: 2,
+    choices: ['176 Ah', '200 Ah', '220 Ah', '256 Ah'],
+    answerIndex: 2,
     explanation:
       'Sized Ah = (22 A × 8 h) ÷ 0.80 = 176 ÷ 0.80 = 220 Ah. The 176 Ah figure is the raw energy without de-rating. The de-rating factor accounts for battery aging and temperature — without it, the string would fall short of the 8-hour target before the end of its service life. (T19.L03)',
   },
   // T19.L04 — Generator / ATS
   {
     id: 'T19CAP-Q05',
-    question:
+    prompt:
       'The maximum allowed transfer time from utility failure to generator energizing the headend load under NEBS GR-63-CORE is:',
     type: 'multiple-choice',
-    options: ['5 seconds', '30 seconds', '2 minutes', '10 minutes'],
-    correctIndex: 1,
+    choices: ['5 seconds', '30 seconds', '2 minutes', '10 minutes'],
+    answerIndex: 1,
     explanation:
-      'GR-63-CORE requires automatic transfer within 30 seconds of a commercial power failure. During that 30-second window, the battery string must carry the full DC load. This is why battery Ah capacity is calculated against the reserve requirement, not just "until the generator starts." (T19.L04; GR-63-CORE)',
+      'Telcordia GR-63-CORE [paywalled — confirm edition] requires automatic transfer within 30 seconds of a commercial power failure for NEBS-rated facilities. This is the standards maximum ceiling — the battery plant must sustain the full DC load for this entire window. Note: modern diesel generators and ATS systems typically complete transfer in 10–15 seconds in field conditions. Both values are correct: 10–15 s = typical field performance; 30 s = GR-63-CORE standards ceiling the battery spec must guarantee. Battery Ah capacity is calculated against the reserve requirement, not just "until the generator starts." (T19.L04; GR-63-CORE)',
   },
   // T19.L04 — Fuel polishing
   {
     id: 'T19CAP-Q06',
-    question:
+    prompt:
       'Fuel polishing of diesel generator fuel tanks is performed primarily to:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Increase fuel octane rating for better generator performance',
       'Remove water, microbial growth, and particulate contamination that accumulate in stored diesel',
       'Test fuel flow rate under simulated load conditions',
       'Comply with NFPA 110 monthly exercise requirements',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       "Stored diesel degrades: water condenses in the tank, microbial colonies grow at the water-fuel interface, and particulates fall out of suspension. Fuel polishing circulates the fuel through filtration, water separation, and biocide treatment to restore fuel quality. ASTM D975 diesel specifications don't account for months-long tank storage — polishing keeps the fuel within spec for emergency use. (T19.L04)",
   },
   // T19.L05 — HVAC / fire suppression
   {
     id: 'T19CAP-Q07',
-    question:
+    prompt:
       'The ASHRAE thermal envelope for telecom equipment rooms specifies an allowable supply air temperature range of approximately:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       '32°F – 55°F (0°C – 13°C)',
       '59°F – 77°F (15°C – 25°C)',
       '64°F – 80°F (18°C – 27°C)',
       '77°F – 95°F (25°C – 35°C)',
     ],
-    correctIndex: 2,
+    answerIndex: 2,
     explanation:
       "ASHRAE TC 9.9 specifies a recommended (A1/A2 class) allowable supply air temperature range of 64.4°F–80.6°F (18°C–27°C) for most network equipment. Some equipment is rated for expanded NEBS Class A conditions beyond this. The key point: supply air into the rack face must stay within the equipment's rated inlet temperature — not just the room ambient. (T19.L05; ASHRAE TC 9.9)",
   },
   // T19.L05 — Fire suppression
   {
     id: 'T19CAP-Q08',
-    question:
+    prompt:
       'A pre-action sprinkler system is preferred over a wet-pipe sprinkler in a headend equipment room because:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Pre-action systems suppress fires faster than wet-pipe systems',
       'Pre-action systems require two independent triggers before water flows, preventing accidental discharge',
       'Pre-action systems are lower cost to install than wet-pipe systems',
       'NFPA 76 mandates pre-action systems in all telecommunications spaces',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'A pre-action system has charged pipes (pressurized with air or nitrogen) but water is held back by a solenoid valve. Water only flows when BOTH the fire alarm panel detects smoke/heat AND individual sprinkler heads fuse from heat. This two-stage interlock protects against accidental discharge from a mechanical sprinkler head failure — which would destroy active equipment without any actual fire. (T19.L05; NFPA 76)',
   },
   // T19.L06 — PATH Y grounding
   {
     id: 'T19CAP-Q09',
-    question:
+    prompt:
       'In the PATH Y grounding approach at the headend building entry, the three terms introduced in T19 that describe the bonding and protection elements are:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'TMGB, TGB, and TBB',
       'Primary protector, IBT-entry, and GES-tie-in',
       'MGN, IBT, and GES',
       'FOSC, LIU, and ODF',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'T19.L06 introduces primary protector (surge/overvoltage protection at the cable entry point), IBT-entry (Intersystem Bonding Termination per NEC Art. 250.94, the bonding point for all conductors entering the building), and GES-tie-in (the connection from the IBT to the building grounding electrode system). TMGB/TGB/TBB are also introduced in T19.L06 as part of the headend grounding topology, but the three PATH Y building-entry terms are the first three. (T19.L06)',
   },
   // T19.L06 — GPR scenario
   {
     id: 'T19CAP-Q10',
-    question:
+    prompt:
       'Ground Potential Rise (GPR) is a hazard at the building entry when OSP cable armor is not bonded to the building GES because:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Unbonded armor accumulates static charge from the fiber signal and can arc to adjacent equipment',
       'A GPR event (fault current seeking ground) creates a voltage difference between the unbonded armor and the building ground, which can arc through the OLT line card to equalize',
       'Unbonded armor blocks lightning arrestor functionality at the building primary protector',
       'NEC Art. 770 requires all fiber cable to be bonded regardless of GPR risk',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       "GPR: when a high fault current flows in the earth (lightning strike, utility fault), the local earth potential rises relative to remote earth. The building's GES follows local earth; unbonded OSP cable armor is referenced to remote earth at the far end of the cable. The resulting voltage difference appears across the OLT's line card protection circuits — which aren't designed for this transient. Bonding the armor to the building GES at the primary protector equalizes the potentials before they can arc. (T19.L06; RUS 1751F-810 §3; NEC Art. 250.94)",
   },
   // T19.L07 — Patch panels / LIU
   {
     id: 'T19CAP-Q11',
-    question:
+    prompt:
       'In an interconnect architecture (vs. cross-connect), the OLT trunk fiber connects directly to the:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Splice organizer tray in the FOSC',
       'Jumper field on the ODF and the feeder side is accessed via a cross-connect jumper',
       'OLT-side adapter on the LIU, with the feeder pigtail plugged into the same adapter row',
       'TMGB bonding bar',
     ],
-    correctIndex: 2,
+    answerIndex: 2,
     explanation:
       'Interconnect: the OLT trunk fiber plugs into one side of the LIU adapter row; the feeder pigtail plugs directly into the same adapter row. One adapter = one mated pair = one connection point. Cross-connect: two separate adapter rows with a jumper cable between them — allows individual circuit rerouting without touching trunk or feeder fibers. Interconnect is simpler but less flexible; cross-connect adds management flexibility at the cost of one additional connector loss. (T19.L07; TIA-568.3-D)',
   },
   // T19.L07 — Trunk cable
   {
     id: 'T19CAP-Q12',
-    question:
+    prompt:
       'A trunk cable in the ODF rack typically runs between:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'The OLT line card and the subscriber ONT',
       'Two ODF patch panels within the headend equipment room',
       'The FOSC and the FDH in the field',
       'The TMGB and the primary protector',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'Trunk cables are multi-fiber cables (12F, 24F, 48F) that run between two structured ODF panels within the headend — for example, from the OLT-side panel to the feeder-side panel. They are not single jumpers (which would be pigtails or patch cords) and they don\'t run to the field (that\'s feeder cable). (T19.L07)',
   },
   // T19.L08 — FOSC / express vs. split fiber
   {
     id: 'T19CAP-Q13',
-    question:
+    prompt:
       'An express fiber inside an FOSC along the feeder route is:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'A fiber that is fusion-spliced and broken out for local service distribution',
       'A fiber that passes through the FOSC without being accessed, continuing toward the next node',
       'A backup fiber that bypasses the FOSC when the primary path fails',
       'A fiber reserved for OTDR test access',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'Express fibers pass through an FOSC without being broken out — they are spliced straight-through to continue down the route to the next FDH, CO, or service area. Split fibers are the ones that are broken out at this FOSC location to serve local subscribers or equipment. The distinction matters for link budget (express adds two splice points; split adds splice + routing losses) and for future capacity planning. (T19.L08)',
   },
   // T19.L08 — Gel-free
   {
     id: 'T19CAP-Q14',
-    question:
+    prompt:
       'Gel-filled FOSCs are acceptable for OSP aerial and buried applications but are generally avoided inside headend buildings because:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Gel-filled closures are not UL listed for indoor use',
       'Gel contaminates SC/APC ferrule faces during maintenance and is incompatible with indoor cleanliness and NFPA 75 compliance',
       'Building codes require all indoor fiber to use mechanical splices, not fusion splices',
       'Gel-filled enclosures exceed the temperature rating of indoor HVAC zones',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       'Gel contamination on SC/APC ferrule faces causes connector loss > 0.75 dB and can propagate through mated pairs to OLT ports. Inside a climate-controlled headend, the moisture ingress that gel protects against outdoors is absent, so there is no benefit to the gel. Gel-free closures are used indoors to maintain cleanliness and simplify maintenance. (T19.L08)',
   },
   // T19.L09 — FDH internals
   {
     id: 'T19CAP-Q15',
-    question:
+    prompt:
       'Before plugging a subscriber drop fiber into an FDH connector field port that appears physically available (dust cap installed, no fiber connected), the correct first step is:',
     type: 'multiple-choice',
-    options: [
+    choices: [
       'Remove the dust cap and verify the SC/APC ferrule is clean',
       'Verify in the OSS that the port is not assigned to another subscriber',
       'Call the OLT NOC to confirm the port is de-provisioned',
       'Measure optical power at the port to confirm it is not active',
     ],
-    correctIndex: 1,
+    answerIndex: 1,
     explanation:
       "A physical dust cap means the port has no fiber currently connected — it does NOT mean the OSS record is clear. A port can be physically capped and OSS-assigned (e.g., temporarily disconnected subscriber, pending install, test port). Plugging into an OSS-assigned port will disrupt the existing subscriber. Always verify the OSS record first. Optical power measurement (option D) is a useful secondary check but doesn't replace the authoritative OSS record. (T19.L09)",
   },
@@ -491,7 +491,7 @@ export default function T19L10_CapstoneQuiz() {
       {/* ── The quiz ─────────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>Capstone Quiz — 15 Questions</h2>
-        <Quiz questions={capstoneQuestions} lessonId={meta.id} />
+        <Quiz title="T19 Capstone Quiz — Headend / CO + Rack-Side Hardware" mode="multiple-choice" questions={capstoneQuestions} />
       </section>
 
     </LessonLayout>

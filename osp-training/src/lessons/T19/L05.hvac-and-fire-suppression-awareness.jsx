@@ -255,6 +255,15 @@ export default function T19L05_HvacAndFireSuppressionAwareness() {
             redundant unit at original installation time costs $2,500. This is one of the clearest
             examples of false economy in rural hut design. Specify N+1 at build time.
           </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Arid climate note:</strong> In arid or high-altitude climates (Colorado, New Mexico,
+            West Texas) where relative humidity can drop below 20% RH, the ASHRAE lower humidity limit
+            becomes the active constraint — at &lt;20% RH, static electricity buildup on electronic
+            equipment creates electrostatic discharge (ESD) risk. Purpose-built CRAC units include
+            humidification capability; standard mini-split units do not. Where arid conditions are expected,
+            specify either a CRAC unit with humidification or a separate in-room humidifier with a
+            humidity controller — and include the humidity spec in the hut commissioning checklist.
+          </p>
         </div>
       </section>
 

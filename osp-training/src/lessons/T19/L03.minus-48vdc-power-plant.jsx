@@ -354,6 +354,17 @@ export default function T19L03_Minus48VDCPowerPlant() {
           carrier-grade CO equipment, not to commercial-grade OLT equipment commonly used
           in rural FTTH huts.
         </p>
+        <p className="mt-3 text-sm text-slate-300/70">
+          <strong>Equalization charging (brief note):</strong> In addition to float charging,
+          VRLA battery strings periodically require equalization charging — a controlled
+          elevated voltage applied for a set duration to balance cell voltages and reverse
+          mild sulfation. Equalization is less common on modern sealed VRLA than on older
+          flooded lead-acid cells, and some VRLA manufacturers recommend against it; always
+          follow the battery manufacturer's specification [see IEEE 1188 [confirm edition]
+          for VRLA maintenance methodology]. Full treatment of equalization, battery
+          testing, and replacement thresholds is in T14 Bonding, Grounding &amp; Electrical
+          Protection.
+        </p>
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
