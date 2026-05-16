@@ -228,9 +228,9 @@ export default function T19L07_RackSideHardwarePatchPanelsLiu() {
               right: '2 pairs (OLT-to-ODF-A + ODF-A-to-ODF-B)',
             },
             {
-              label: 'Total connector loss (planning)',
-              left: '0.30 dB typical (1 pair × 0.30 dB)',
-              right: '0.60 dB typical (2 pairs × 0.30 dB) — notable at end-of-link budget',
+              label: 'Connector loss per pair (planning values)',
+              left: '0.30 dB factory pre-terminated pigtail (typical). Use 0.50 dB conservative planning value per TIA-568.3-D maximum for field-polished connectors.',
+              right: '0.30 dB per pair × 2 pairs = 0.60 dB typical (factory). 0.50 dB × 2 = 1.00 dB conservative (field-polished) — notable at end-of-link budget.',
             },
             {
               label: 'Circuit rearrangement',
@@ -369,7 +369,7 @@ export default function T19L07_RackSideHardwarePatchPanelsLiu() {
             ],
             answerIndex: 1,
             explanation:
-              'Every connector pair in the signal path subtracts from the 28 dB GPON optical budget. Cross-connect adds one pair at the ODF cross-connect field (OLT side → feeder side) that interconnect does not have. 0.30 dB is the planning value per connector pair (TIA-568.3-D [confirm edition]). On a 24 km feeder with 1:32 split, the budget may already be tight — 0.30 dB can be the difference between a passing and failing link budget. Always account for architecture-dependent connector count when calculating the OSP plant budget.',
+              'Every connector pair in the signal path subtracts from the 28 dB GPON optical budget. Cross-connect adds one pair at the ODF cross-connect field (OLT side → feeder side) that interconnect does not have. Planning values per connector pair: 0.30 dB typical for factory pre-terminated pigtails; 0.50–0.75 dB maximum per TIA-568.3-D [confirm edition] for field-polished connectors. Use 0.50 dB as the conservative planning value for any field-terminated connector in a link budget. On a 24 km feeder with 1:32 split, the budget may already be tight — 0.30–0.50 dB can be the difference between a passing and failing link budget. Always account for architecture-dependent connector count and termination method when calculating the OSP plant budget.',
             citation: 'TIA-568.3-D [confirm edition] §5.',
           },
           {
