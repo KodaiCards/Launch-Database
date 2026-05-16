@@ -5,7 +5,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -270,52 +269,37 @@ export default function T08L04_TransferMovingWire() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Transfer Action: Existing Cable Moves Up"
-        description="This diagram shows a pole cross-section before and after a transfer. Click each labeled point to understand what changed and why."
-        src="/training/diagrams/pole-transfer-before-after.svg"
-        alt="Pole cross-section showing cable TV coax position before transfer (18 ft 2 in) and after transfer (19 ft 6 in), with new fiber attachment at 18 ft and labeled bracket positions"
-        aspectRatio={1.6}
-        hotPoints={[
-          {
-            id: 'old-bracket',
-            x: 48,
-            y: 35,
-            label: 'Old bracket (removed)',
-            type: 'click',
-            explanation:
-              'The cable TV coax was attached here at 18 ft 2 in. After the transfer, this bracket is removed. Abandoned brackets create future attachment obstacles and are removed as part of the transfer work.',
-          },
-          {
-            id: 'new-bracket',
-            x: 48,
-            y: 22,
-            label: 'New bracket (18 ft → 19 ft 6 in)',
-            type: 'click',
-            explanation:
-              'The new bracket is installed 16 inches higher than the old position. The cable TV coax is now secured here at 19 ft 6 in — well above the 18 ft fiber attachment height. The 6-inch of extra margin above the required 1 ft clearance is field best practice to reduce the chance of another transfer in the future.',
-          },
-          {
-            id: 'fiber-attachment',
-            x: 48,
-            y: 48,
-            label: 'New fiber attachment at 18 ft',
-            type: 'click',
-            explanation:
-              'This is where the new fiber cable bracket will be installed after the transfer is complete. The transfer created the 1 ft 6 in clearance needed above the fiber. The fiber attacher\'s contractor installs the fiber bracket in this space after the transfer crew completes and documents their work.',
-          },
-          {
-            id: 'ground-measure',
-            x: 10,
-            y: 90,
-            label: 'Ground-level measurement',
-            type: 'click',
-            explanation:
-              'All pole heights are measured from the ground surface at the base of the pole. The measurement must be taken from the same reference point before and after transfer to verify compliance. On a sloped site, the measurement is typically from the lowest adjacent ground surface.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — transfer action before/after ───────────────────── */}
+      <div className="lesson-callout">
+        <h4>Transfer Action: Existing Cable Moves Up — What Changes at the Pole</h4>
+        <ol>
+          <li>
+            <strong>Old bracket (removed)</strong> — The cable TV coax was attached at 18 ft 2 in.
+            After the transfer, this bracket is removed. Abandoned brackets create future
+            attachment obstacles and must be removed as part of the transfer work order.
+          </li>
+          <li>
+            <strong>New bracket (18 ft → 19 ft 6 in)</strong> — The new bracket is installed 16
+            inches higher than the old position. The cable TV coax is now secured at 19 ft 6 in —
+            well above the 18 ft fiber attachment height. The 6 inches of extra margin above the
+            required 1 ft clearance is field best practice to reduce the chance of another
+            transfer in the future.
+          </li>
+          <li>
+            <strong>New fiber attachment space at 18 ft</strong> — This is where the fiber cable
+            bracket will be installed after the transfer is complete. The transfer created the
+            1 ft 6 in clearance needed above the fiber. The fiber attacher's contractor installs
+            the fiber bracket in this space only after the transfer crew completes and documents
+            their work.
+          </li>
+          <li>
+            <strong>Ground-level measurement reference</strong> — All pole heights are measured
+            from the ground surface at the base of the pole. The same reference point must be used
+            before and after the transfer to verify compliance. On a sloped site, the measurement
+            is typically from the lowest adjacent ground surface.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
