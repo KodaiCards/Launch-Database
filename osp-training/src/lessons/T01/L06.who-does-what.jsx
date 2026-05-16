@@ -85,7 +85,7 @@ export default function T01L06_WhoDoesWhat() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTDR</td>
               <td className="px-3 py-2">Optical Time-Domain Reflectometer</td>
-              <td className="px-3 py-2">The primary fiber test instrument. Used by splicers (after each splice) and test technicians (for final acceptance). Sends a light pulse into the fiber and measures what bounces back to locate events (splices, bends, breaks).</td>
+              <td className="px-3 py-2">The primary fiber test instrument. Used by splicers (after each splice) and test technicians (for final acceptance). Sends a light pulse into the fiber and measures what bounces back to locate events (splices, bends, breaks). (Preview — formally covered with flashcards and full detail in L08.)</td>
             </tr>
           </tbody>
         </table>
