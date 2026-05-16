@@ -36,7 +36,7 @@ export const meta = {
   estimated_minutes: 25,
   learning_objectives: [
     'Name the seven stages of an OSP project in order and describe the primary output of each stage',
-    'Explain why OTMR allows a fiber attacher to hire its own make-ready contractor and identify the 15-business-day response timeline under 47 CFR 1.1411(h)(2)(ii)',
+    'Explain why OTMR allows a fiber attacher to hire its own make-ready contractor and identify the 15-business-day completion deadline for simple make-ready under 47 CFR 1.1411(h)(2)(ii)',
     'Distinguish between an as-designed drawing and an as-built record and explain why both are required at project close-out',
     'Identify which project stage produces the permit package and which agency types must approve it before construction begins',
   ],

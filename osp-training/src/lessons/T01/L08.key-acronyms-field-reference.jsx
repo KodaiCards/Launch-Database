@@ -26,7 +26,7 @@ export const meta = {
     'TIA',
     'FOA',
     'CFOT',
-    'CFOS',
+    'CFOS/O',
     'RCDD',
     'USDA',
     'HDPE',
@@ -63,7 +63,7 @@ export const meta = {
   ],
   estimated_minutes: 15,
   learning_objectives: [
-    'Recall and define 31 OSP acronyms spanning fiber types, test instruments, electrical/grounding terms, standards bodies, construction/survey, safety, and environmental/permitting categories',
+    'Recall and define 32 OSP acronyms spanning fiber types, test instruments, electrical/grounding terms, standards bodies, construction/survey, safety, and environmental/permitting categories',
     'Distinguish between acronyms from different bodies that are commonly confused (NEC vs. NESC, BICSI vs. FOA, CFOT vs. CFOS/O)',
     'Match each OSP certification (RCDD, CFOT, CFOS/O, OSP Designer) to its administering body and the role it prepares the holder for',
     'Use this lesson as a reference sheet when an acronym appears in later T01 lessons or subsequent topics',
@@ -113,7 +113,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OS2</td>
               <td className="px-3 py-2">Optical Single-mode, class 2</td>
-              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.D SMF — the tightest ITU-T single-mode spec, standard for modern OSP and backbone deployments. OS1 maps to G.652.A/B/C (earlier, slightly looser SMF specs, rare in new installations). When a project calls out OS2, it requires G.652.D-compliant fiber.</td>
+              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.D SMF — the standard low-water-peak single-mode fiber for long-distance OSP and backbone deployments. OS1 maps to G.652.A/B/C (earlier SMF specs with higher water-peak attenuation, rare in new installations). Note: G.657.A2 bend-insensitive fiber has tighter macrobend specs than G.652.D and is used for tight-bend drop applications — OS2 is the standard for mainstream OSP trunk and feeder runs. When a project calls out OS2, it requires G.652.D-compliant fiber.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">ADSS</td>
@@ -212,7 +212,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">FOA</td>
               <td className="px-3 py-2">Fiber Optic Association</td>
-              <td className="px-3 py-2">Non-profit that administers CFOT (Certified Fiber Optic Technician) and CFOS (Certified Fiber Optic Specialist) certifications. FOA Reference Guide is a widely used training resource.</td>
+              <td className="px-3 py-2">Non-profit that administers CFOT (Certified Fiber Optic Technician) and CFOS/O (Certified Fiber Optic Specialist / Outside Plant) certifications, among other CFOS specialties. FOA Reference Guide is a widely used training resource.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">AHJ</td>
@@ -384,9 +384,9 @@ export default function T01L08_KeyAcronymsFieldReference() {
           { id: 'T01-L08-FC-rcdd', front: 'RCDD', back: 'Registered Communications Distribution Designer — BICSI credential for ISP/data-center designers. Covers TIA-568/569/606/607 content.' },
           { id: 'T01-L08-FC-cfot', front: 'CFOT', back: 'Certified Fiber Optic Technician — FOA entry-level fiber credential. Written + hands-on exam at FOA-approved school.' },
           { id: 'T01-L08-FC-mmf', front: 'MMF', back: 'Multi-Mode Fiber — 50 or 62.5 µm core; multiple propagation modes; used for short runs inside buildings (data centers, ISP). OM3/OM4/OM5 grades. Not standard for FTTH OSP.' },
-          { id: 'T01-L08-FC-os2', front: 'OS2', back: 'Optical Single-mode, class 2 — ISO/IEC 11801 designation for G.652.D SMF, the tightest ITU-T single-mode spec, standard for modern OSP and backbone deployments. When a project calls out OS2, it requires G.652.D-compliant fiber.' },
+          { id: 'T01-L08-FC-os2', front: 'OS2', back: 'Optical Single-mode, class 2 — ISO/IEC 11801 designation for G.652.D SMF, the standard low-water-peak single-mode fiber for long-distance OSP and backbone deployments. When a project calls out OS2, it requires G.652.D-compliant fiber. (G.657.A2 has tighter macrobend specs but is used for drop applications, not mainstream trunk runs.)' },
           { id: 'T01-L08-FC-tia', front: 'TIA', back: 'Telecommunications Industry Association — publishes TIA-568 (cabling standards), TIA-598 (fiber color codes), TIA-606 (administration/labeling), TIA-942 (data centers). Primary technical reference for fiber cabling in North America.' },
-          { id: 'T01-L08-FC-foa', front: 'FOA', back: 'Fiber Optic Association — non-profit that administers CFOT (Certified Fiber Optic Technician) and CFOS (Certified Fiber Optic Specialist) certifications. FOA Reference Guide is a widely used training resource.' },
+          { id: 'T01-L08-FC-foa', front: 'FOA', back: 'Fiber Optic Association — non-profit that administers CFOT (Certified Fiber Optic Technician) and CFOS/O (Certified Fiber Optic Specialist / Outside Plant) certifications, among other CFOS specialties. FOA Reference Guide is a widely used training resource.' },
           { id: 'T01-L08-FC-cfos', front: 'CFOS/O', back: 'Certified Fiber Optic Specialist / OSP — FOA specialist credential for OSP splicers and technicians. Requires CFOT plus 2 years field experience. Covers aerial and underground OSP, splice cases, OTDR interpretation, OSP-specific safety.' },
           { id: 'T01-L08-FC-usda', front: 'USDA', back: 'U.S. Department of Agriculture — the cabinet department that administers the Rural Utilities Service (RUS). RUS is the USDA agency that funds rural broadband and electric infrastructure and publishes the 1751F-series engineering bulletins.' },
           { id: 'T01-L08-FC-gis', front: 'GIS', back: 'Geographic Information System — software and databases that store geographic data with associated attribute information. Modern OSP design and as-built documentation is GIS-based. Common platforms: Esri ArcGIS, QGIS, Katapult.' },
