@@ -43,7 +43,7 @@ export const meta = {
     { term: 'pole', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'span', source_lesson_id: 'T01.L02' },
-    { term: 'sag', source_lesson_id: 'T05.L02' },
+    { term: 'sag', source_lesson_id: 'T01.L02' },
     { term: 'messenger', source_lesson_id: 'T03.L04' },
     { term: 'tension', source_lesson_id: 'T03.L04' },
   ],

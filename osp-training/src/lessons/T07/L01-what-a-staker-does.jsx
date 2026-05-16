@@ -23,9 +23,9 @@ export const meta = {
   estimated_minutes: 20,
   vocabulary_introduced: ['staker', 'stake', 'call-out', 'field verification', 'measurement tolerance'],
   vocabulary_assumed: [
-    { term: 'span', source_lesson_id: 'T05.L02' },
-    { term: 'attachment point', source_lesson_id: 'T05.L02' },
-    { term: 'clearance', source_lesson_id: 'T05.L02' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
+    { term: 'attachment point', source_lesson_id: 'T01.L02' },
+    { term: 'clearance', source_lesson_id: 'T01.L02' },
     { term: 'safety zone', source_lesson_id: 'T18.L01' },
     { term: 'sag', source_lesson_id: 'T01.L02' },
   ],
