@@ -60,9 +60,13 @@ Tree clean after push. All three F-RT findings resolved in single commit.
 | PW2-D | LOW | RT-A + RT-B CONCUR | T05/L07 Flashcard block | `vocabulary_introduced` has 10 terms; Flashcard block only rendered 5; missing: `parabolic approximation`, `initial sag`, `creep`, `sag-to-span ratio`, `ruling span` — all have key_terms entries, just no card renders | FIXED | `24db4c5` |
 | PW2-Q12 | MED (escalated from LOW) | RT-B severity upgrade | T05/L15 Q12 | Choice A labeled "+4.57 ft" — 9.9% error vs correct +5.05 ft; student who correctly computes +5.05 ft finds no matching option. Question design error. | FIXED | `01bba5b` |
 
-## Patch Wave 2 Deferred to Polish Queue
+## Polish Stage (from `bef7e8c`)
 
-| ID | Item | Queue Ref |
-|----|------|-----------|
-| PW2-NB1 | T05.L02 FHWA 14ft clearance could distinguish maintained-clearance vs new-construction 16ft per AASHTO/23 CFR 625.2 | P8 (new) |
-| PW2-NB2 | T05.L07 combined-load sag using w_combined in parabolic formula is a conservative approximation, not labeled as such | Accepted at training level per RT-B — no action needed |
+| ID | Severity | Finding | Status | Commit SHA |
+|----|----------|---------|--------|-----------|
+| PW2-NB1 (P8) | LOW | T05.L02 FHWA 14ft clearance: distinguish maintained-clearance (14ft, 23 CFR 625.2) vs new-construction (16ft, AASHTO Green Book). Added paragraph in Book-vs-Field callout clarifying both are separate from NESC ≈15.5ft. | FIXED | `bef7e8c` |
+| PW2-NB2 (NB-2) | LOW | T05 combined-load w_combined in parabolic sag formula: yields resultant tilted-sag, not purely vertical. Added conservative-approximation label in L02 step-4 prose and L15 capstone WorkedExample sanityCheck. | FIXED | `bef7e8c` |
+| P4 / F11 residual | LOW | T05.L10 ADSS Flashcard rendered despite ADSS being vocabulary_assumed (T03.L04). F11 fixed EDS card at 8a38d7a but left ADSS card. Removed ADSS card; added self-damping + deadend-clamp cards (both vocabulary_introduced in L10). | FIXED | `bef7e8c` |
+| P2 | LOW | T05.L12 GPON splitter 17–17.5 dB: verified present in body prose (key_terms definition, AnnotatedDiagram explanation, worked-example step 4). No change needed. | VERIFIED-NO-CHANGE | `bef7e8c` |
+
+## T05 Wave Status: COMPLETE — all findings resolved through polish stage.
