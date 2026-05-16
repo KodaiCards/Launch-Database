@@ -27,7 +27,7 @@ export const meta = {
   key_terms: [
     {
       term: 'ATS',
-      definition: 'Automatic Transfer Switch — the device that monitors the utility AC feed and switches the building\'s electrical load from utility power to generator power automatically when utility fails, and back to utility when it is restored. The ATS transfer time is typically 10–15 seconds. During this 10–15 second gap, the CO battery plant supplies DC to the equipment with no interruption — the batteries absorb the transfer delay.',
+      definition: 'Automatic Transfer Switch — the device that monitors the utility AC feed and switches the building\'s electrical load from utility power to generator power automatically when utility fails, and back to utility when it is restored. Modern ATSs with diesel generators typically complete transfer in 10–15 seconds (engine start to stable output). Telcordia GR-63-CORE [paywalled — confirm edition] sets the maximum allowed transfer time at 30 seconds for NEBS-rated facilities — meaning the battery plant must sustain the full DC load for up to 30 seconds. In practice, most modern generators transfer in 10–15 s; the 30 s ceiling is the standards-compliant worst-case the battery spec must cover.',
     },
     {
       term: 'generator',
@@ -39,7 +39,7 @@ export const meta = {
     },
     {
       term: 'transfer time',
-      definition: 'The time elapsed between utility power failure and generator reaching stable output voltage. A diesel generator typically takes 10–15 seconds to crank, reach operating speed, and stabilize output frequency and voltage. The ATS does not transfer until the generator output is within spec. During transfer time, the battery plant is the sole power source.',
+      definition: 'The time elapsed between utility power failure and generator reaching stable output voltage, after which the ATS transfers the building load to generator AC. A diesel generator typically takes 10–15 seconds to crank, reach operating speed, and stabilize output frequency and voltage (modern, well-maintained units). Telcordia GR-63-CORE [paywalled — confirm edition] requires NEBS-rated facilities to transfer within 30 seconds maximum — the battery plant must sustain the full DC load for this entire window. The battery reserve specification must be sized to cover the 30-second GR-63-CORE ceiling, not just the typical 10–15 second observed transfer. These two values are complementary: 10–15 seconds = what you typically see in the field; 30 seconds = the standards ceiling your battery spec must guarantee.',
     },
     {
       term: 'load test',
@@ -128,7 +128,7 @@ export default function T19L04_BatteryBackupAndGeneratorTransfer() {
             {
               id: 'T19-L04-fc-ats',
               front: 'What is an ATS and what does it do?',
-              back: 'Automatic Transfer Switch — monitors the utility AC feed and automatically switches the building load from utility to generator when utility fails, and back when utility restores. Transfer time: typically 10–15 seconds. During transfer, the battery plant is sole DC power source.',
+              back: 'Automatic Transfer Switch — monitors the utility AC feed and automatically switches the building load from utility to generator when utility fails, and back when utility restores. Typical transfer time: 10–15 seconds (modern diesel). GR-63-CORE maximum: 30 seconds. During the entire transfer window, the battery plant is the sole DC power source.',
             },
             {
               id: 'T19-L04-fc-generator',
@@ -143,7 +143,7 @@ export default function T19L04_BatteryBackupAndGeneratorTransfer() {
             {
               id: 'T19-L04-fc-transfer-time',
               front: 'What is generator transfer time?',
-              back: 'Time from utility failure to generator delivering stable AC output — typically 10–15 seconds for diesel gensets. During transfer, batteries are the sole power source. ATS does not close until generator output is within frequency and voltage spec.',
+              back: 'Time from utility failure to generator delivering stable AC output. Typical diesel: 10–15 seconds (modern, maintained unit). GR-63-CORE maximum: 30 seconds. These are complementary — 10–15 s is typical field; 30 s is the standards ceiling the battery spec must cover. During transfer, batteries are the sole DC source. ATS does not close until generator output is within frequency and voltage spec.',
             },
             {
               id: 'T19-L04-fc-load-test',
@@ -196,11 +196,16 @@ export default function T19L04_BatteryBackupAndGeneratorTransfer() {
             takes longer.
           </li>
           <li>
-            <strong>t = 12–15 s — ATS transfers load to generator.</strong>
+            <strong>t = 12–15 s — ATS transfers load to generator (typical); up to 30 s per GR-63-CORE.</strong>
             Once generator output is stable (within ±5 Hz of 60 Hz and ±10% of nominal voltage
             per NFPA 110 [confirm edition]), the ATS closes the generator breaker and opens the
             utility breaker. The building load transfers to generator AC. Rectifiers resume DC
-            output from generator-sourced AC.
+            output from generator-sourced AC.{' '}
+            <strong>Telcordia GR-63-CORE [paywalled — confirm edition]</strong> specifies 30 seconds
+            as the maximum allowed transfer time in NEBS-compliant facilities. Battery capacity must
+            be sized to sustain the full load for the 30-second ceiling, even though modern diesel
+            generators typically transfer in 10–15 seconds. The 10–15 s and 30 s values are
+            complementary — typical field performance vs. standard-compliant worst-case.
           </li>
           <li>
             <strong>t = 15+ s — Generator runs, rectifiers charge batteries.</strong>
