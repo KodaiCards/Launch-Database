@@ -202,7 +202,7 @@ export default function T01L05_OspProjectLifecycle() {
         <p className="text-sm text-slate-300/90 mt-1">
           <strong>Who does it:</strong> Make-ready crews employed by the pole owner or their
           authorized contractors. The fiber company funds it but doesn't control the timeline
-          (within FCC-regulated limits: OTMR rules give the fiber company 15 days to complete
+          (within FCC-regulated limits: OTMR rules give the fiber company 15 business days to complete
           simple attachments from approval to start; complex attachments follow a multi-party
           timeline). (Detail in T08.)
         </p>
