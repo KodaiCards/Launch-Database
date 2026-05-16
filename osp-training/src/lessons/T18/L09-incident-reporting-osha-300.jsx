@@ -230,7 +230,7 @@ export default function T18L09_IncidentReportingOSHA300() {
                 <td className="px-3 py-2">OSHA hotline (1-800-321-OSHA) or nearest OSHA area office</td>
               </tr>
               <tr className="border-t border-white/10 bg-amber-400/5">
-                <td className="px-3 py-2">In-patient hospitalization (for treatment, not observation)</td>
+                <td className="px-3 py-2">Any in-patient hospitalization (whether for treatment or observation) per 29 CFR 1904.39(a)(3)</td>
                 <td className="px-3 py-2 font-semibold">24 hours</td>
                 <td className="px-3 py-2">OSHA hotline or area office</td>
               </tr>
