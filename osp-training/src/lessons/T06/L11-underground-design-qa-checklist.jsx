@@ -6,7 +6,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -286,49 +285,66 @@ export default function T06L11_UndergroundDesignQAChecklist() {
         </ol>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Sample Underground Design Plan — QA Walkthrough"
-        description="Click each flagged point on this design drawing excerpt to see the QA error it illustrates. This is a composite example showing multiple common design deficiencies in one plan view."
-        src="/training/diagrams/underground-design-qa-plan.svg"
-        alt="Underground fiber design plan view showing four flagged QA error locations: missing depth callout at road crossing, fill overrun segment, pedestal spacing gap, and separation deficiency"
-        aspectRatio={1.6}
-        hotPoints={[
+      {/* ── MCQ — design QA error identification ────────────────────────── */}
+      <Quiz
+        title="Spot the Design Error — Underground QA Scenarios"
+        mode="multiple-choice"
+        questions={[
           {
-            id: 'depth-miss',
-            x: 30,
-            y: 25,
-            label: 'Error 1: Missing depth callout',
-            type: 'click',
-            explanation:
-              'This road crossing has no burial depth specified. The bore crew will not know the required depth, and the inspector cannot verify compliance with RUS 1751F-635 §6. Fix: add "36\\" cover" annotation at this crossing with an arrow to the conduit line. This is the most common single error in underground designs.',
+            id: 'T06-L11-QA-Q1',
+            type: 'mc',
+            prompt:
+              'A road crossing on the plan has no burial depth annotated. The bore crew asks what depth to target. What is the correct QA action BEFORE issuing for bid?',
+            choices: [
+              { text: 'Issue for bid — experienced bore crews know the standard depth without a callout', correct: false },
+              { text: 'Return the drawing for revision — add the required depth annotation (e.g., "36\\" cover") with an arrow to the conduit line at that crossing', correct: true },
+              { text: 'Phone the bore crew and verbally tell them the depth; no drawing revision needed', correct: false },
+              { text: 'Add a general note on the title block saying "36-inch cover unless otherwise shown"', correct: false },
+            ],
+            rationale:
+              'Missing depth callouts at road crossings are the most common single QA error in underground designs (RUS 1751F-635 §6). The bore crew cannot be held to a depth that is not on the drawing, and the inspector cannot verify compliance. The drawing must be revised before issue.',
           },
           {
-            id: 'fill-error',
-            x: 55,
-            y: 45,
-            label: 'Error 2: Fill overrun',
-            type: 'click',
-            explanation:
-              'This 2-inch conduit segment specifies three 1-inch innerducts. Fill check: ID of 2-inch Sch 40 PVC = 2.067 in. Area of THREE 1-inch innerducts = 3 × π × 0.5² = 2.36 in². Conduit area = π × 1.034² = 3.36 in². Fill = 2.36 / 3.36 = 70.2% — far over the 40% limit. Fix: upgrade to 3-inch conduit (ID = 3.230 in; fill = 2.36 / 8.19 = 28.8%) or reduce to two 1-inch innerducts.',
+            id: 'T06-L11-QA-Q2',
+            type: 'mc',
+            prompt:
+              'A 2-inch Schedule 40 PVC conduit (ID = 2.067 in) specifies three 1-inch innerducts (OD ≈ 1.0 in). What is the approximate fill percentage, and does it comply with the 40% limit?',
+            choices: [
+              { text: '~56% — does NOT comply; reduce to two innerducts or upgrade to 3-inch conduit', correct: false },
+              { text: '~70% — does NOT comply; the conduit is significantly overfilled', correct: true },
+              { text: '~30% — complies; fill is within the 40% limit', correct: false },
+              { text: '~40% — barely complies; acceptable at the limit', correct: false },
+            ],
+            rationale:
+              'Three 1-inch innerducts: area = 3 × π × 0.5² ≈ 2.36 in². 2-inch Sch 40 PVC area = π × 1.034² ≈ 3.36 in². Fill = 2.36 / 3.36 ≈ 70% — far over the 40% NEC/RUS limit. Fix: upgrade to 3-inch conduit (fill drops to ~29%) or reduce to two 1-inch innerducts.',
           },
           {
-            id: 'spacing-error',
-            x: 70,
-            y: 65,
-            label: 'Error 3: Pedestal spacing over limit',
-            type: 'click',
-            explanation:
-              'The cable route distance between these two pedestals is 380 feet (measured along the cable path, accounting for the bend at the property corner). RUS 1751F-635 §7 maximum is 330 feet. Fix: add an intermediate pedestal at approximately 190 feet from each end of the segment. This brings both sub-segments to 190 feet — well under the 330-foot maximum.',
+            id: 'T06-L11-QA-Q3',
+            type: 'mc',
+            prompt:
+              'Two pedestals on a residential underground route are 380 feet apart (measured along the cable path). RUS 1751F-635 §7 sets a 330-foot maximum. What is the correct fix?',
+            choices: [
+              { text: 'Accept it — 380 feet is only 15% over and within rounding tolerance', correct: false },
+              { text: 'Add an intermediate pedestal at approximately 190 feet from each end, bringing both sub-segments to 190 feet', correct: true },
+              { text: 'Move one of the existing pedestals to exactly 330 feet and eliminate the gap', correct: false },
+              { text: 'Document the deviation with an engineering justification and issue as-is', correct: false },
+            ],
+            rationale:
+              'The 330-foot maximum exists to ensure sufficient access points for future splicing and maintenance. Adding an intermediate pedestal at the midpoint creates two 190-foot segments — both well under the limit. Moving an existing pedestal is often impractical in a developed subdivision.',
           },
           {
-            id: 'separation-error',
-            x: 20,
-            y: 75,
-            label: 'Error 4: Separation deficiency',
-            type: 'click',
-            explanation:
-              'This crossing shows a communication conduit crossing an existing direct-buried electric supply at only 4 inches of vertical separation. NESC §35 may technically permit less than 12 inches at a conduit crossing, but field best practice is 12 inches minimum to account for ±18-inch locate tolerance. Fix: adjust the bore depth profile at this crossing to achieve 12 inches of vertical separation.',
+            id: 'T06-L11-QA-Q4',
+            type: 'mc',
+            prompt:
+              'A communication conduit crossing plan shows the comm conduit crossing a direct-buried electric supply line at 4 inches of vertical separation. What is the field best-practice QA flag?',
+            choices: [
+              { text: 'Accept it — NESC §35 permits less than 12 inches at conduit crossings', correct: false },
+              { text: 'Flag it and adjust the bore depth profile to achieve 12 inches minimum — the ±18-inch locate tolerance means 4 inches of designed separation could become physical contact in the field', correct: true },
+              { text: 'Add a note to the drawing: "contractor to verify separation in field"', correct: false },
+              { text: 'Flag it only if the electric line is over 50 kV', correct: false },
+            ],
+            rationale:
+              'While NESC §35 may technically permit reduced separation at a conduit crossing, field best practice is 12 inches minimum to account for the ±18-inch locate tolerance of buried utilities. A 4-inch designed separation is one locate error away from physical contact — which the design must prevent.',
           },
         ]}
       />

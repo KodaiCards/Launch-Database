@@ -5,7 +5,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -366,61 +365,43 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Inside a Terminal Pedestal — Fiber Underground Access Point"
-        description="Click any labeled point to learn what that component does. This diagram shows the interior of a standard fiber terminal pedestal installed on a residential underground route."
-        src="/training/diagrams/fiber-pedestal-interior.svg"
-        alt="Cross-section diagram of a fiber terminal pedestal showing cable tray, splice enclosure, slack coil, riser, and cover latch"
-        aspectRatio={1.4}
-        hotPoints={[
-          {
-            id: 'cover',
-            x: 50,
-            y: 5,
-            label: 'Locking cover',
-            type: 'click',
-            explanation:
-              'The hinged or removable cover keeps weather and unauthorized access out of the pedestal. Most field-install pedestals use a standard security bit (not a padlock) so any technician with the right bit can access the terminal without carrying keys for every pedestal on the route.',
-          },
-          {
-            id: 'splice',
-            x: 50,
-            y: 32,
-            label: 'Splice enclosure / terminal tray',
-            type: 'click',
-            explanation:
-              'The splice enclosure or terminal tray is where the fiber splices are made and the individual fiber strands are secured. Fibers are routed from the cable into the splice tray, spliced or terminated, and protected by foam or gel-filled trays. The splice enclosure re-entry seal must be watertight after every opening.',
-          },
-          {
-            id: 'slack',
-            x: 25,
-            y: 55,
-            label: 'Slack-loop coil (figure-8)',
-            type: 'click',
-            explanation:
-              'At least 20–30 feet of slack is coiled in a figure-8 pattern on each cable end before it enters the splice enclosure. Figure-8 coiling prevents the cable from kinking at the top of the coil — circular coiling under tension will kink eventually. The slack provides margin for re-splicing (10–15 future repairs) and for relocating the pedestal up to 15–20 feet.',
-          },
-          {
-            id: 'riser',
-            x: 50,
-            y: 85,
-            label: 'Conduit riser with seal',
-            type: 'click',
-            explanation:
-              'The riser is the vertical conduit section that brings the cable up from burial depth to the pedestal interior. At the pedestal base, a mastic or heat-shrink conduit seal prevents water from wicking up the conduit and into the pedestal interior. The riser should be Schedule 80 PVC or HDPE to withstand mechanical stress at the grade transition.',
-          },
-          {
-            id: 'base',
-            x: 75,
-            y: 92,
-            label: 'Pedestal base / anchor',
-            type: 'click',
-            explanation:
-              'The pedestal base anchors the enclosure to the ground and connects to the riser conduit. Most residential pedestals use a screw-in anchor that drives into the soil around the conduit; some utility-grade pedestals use a concrete pad for permanence. The base must be level so the pedestal stands plumb — a leaning pedestal puts lateral stress on the riser conduit.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — pedestal component breakdown ──────────────────── */}
+      <div className="lesson-callout">
+        <h4>Inside a Terminal Pedestal — Fiber Underground Access Point</h4>
+        <ol>
+          <li>
+            <strong>Locking cover</strong> — The hinged or removable cover keeps weather and
+            unauthorized access out of the pedestal. Most field-install pedestals use a standard
+            security bit (not a padlock) so any technician with the right bit can access the
+            terminal without carrying keys for every pedestal on the route.
+          </li>
+          <li>
+            <strong>Splice enclosure / terminal tray</strong> — Where the fiber splices are made
+            and individual strands are secured. Fibers route from the cable into the splice tray,
+            are spliced or terminated, and protected by foam or gel-filled trays. The re-entry
+            seal must be watertight after every opening.
+          </li>
+          <li>
+            <strong>Slack-loop coil (figure-8)</strong> — At least 20–30 feet of slack is coiled
+            in a figure-8 pattern on each cable end before entering the splice enclosure. Figure-8
+            coiling prevents kinking; circular coiling under tension will kink eventually. The
+            slack provides margin for re-splicing (10–15 future repairs) and pedestal relocation
+            of up to 15–20 feet.
+          </li>
+          <li>
+            <strong>Conduit riser with seal</strong> — The vertical conduit section bringing cable
+            up from burial depth to the pedestal interior. A mastic or heat-shrink seal at the
+            pedestal base prevents water wicking into the pedestal. The riser should be Schedule
+            80 PVC or HDPE to withstand mechanical stress at the grade transition.
+          </li>
+          <li>
+            <strong>Pedestal base / anchor</strong> — Anchors the enclosure to the ground and
+            connects to the riser conduit. Most residential pedestals use a screw-in anchor around
+            the conduit; utility-grade pedestals may use a concrete pad. The base must be level so
+            the pedestal stands plumb — a leaning pedestal puts lateral stress on the riser.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
