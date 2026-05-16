@@ -16,6 +16,7 @@ export const meta = {
   lesson_type: 'foundation',
   prerequisites: ['T01.L01'],
   vocabulary_introduced: [
+    'NESC',
     'attachment',
     'span',
     'midspan',
@@ -280,6 +281,7 @@ export default function T01L02_PartsOfAPole() {
       <Flashcard
         deckId="T01-L02"
         cards={[
+          { id: 'T01-L02-FC-nesc', front: 'NESC', back: 'National Electrical Safety Code — IEEE-published code (adopted by most states) that sets vertical clearance, loading, and attachment rules for overhead utility lines including fiber.' },
           { id: 'T01-L02-FC-attachment', front: 'Attachment', back: 'Any cable, equipment, or hardware bolted or clamped to a utility pole. Each attachment occupies vertical space on the pole. Fiber companies must hold a pole attachment agreement to install a new attachment.' },
           { id: 'T01-L02-FC-span', front: 'Span', back: 'The horizontal distance between two poles that a cable crosses through the air. Typically 150–300 ft in suburban areas, up to 600+ ft in rural areas.' },
           { id: 'T01-L02-FC-midspan', front: 'Midspan', back: 'The middle of a span — the point farthest from the two attachment poles, where the cable sags the most and where minimum ground clearance is measured.' },
@@ -409,7 +411,7 @@ export default function T01L02_PartsOfAPole() {
             answerDisplay: 'climbing',
             explanation:
               'The climbing space is a mandatory clearance zone — nothing is attached in it. NESC specifies its minimum dimensions. Violating climbing space requirements is a serious compliance failure that endangers every person who climbs that pole.',
-            citation: 'NESC C2-2023 §§23, 238.',
+            citation: 'NESC C2-2023 §§23, 236.',
           },
           {
             id: 'T01-L02-Q4',

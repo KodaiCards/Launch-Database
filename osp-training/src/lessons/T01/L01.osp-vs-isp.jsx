@@ -24,6 +24,8 @@ export const meta = {
     'headend',
     'OLT',
     'ONT',
+    'RUS',
+    'BICSI',
   ],
   vocabulary_assumed: [],
   estimated_minutes: 20,
@@ -272,6 +274,8 @@ export default function T01L01_OspVsIsp() {
           { id: 'T01-L01-FC-headend', front: 'Headend', back: 'The provider\'s facility — usually a central office or hub site — where the OLT and other active equipment live. The origin of the fiber signal. All OSP infrastructure runs from here outward to customers.' },
           { id: 'T01-L01-FC-olt', front: 'OLT', back: 'Optical Line Terminal — the provider\'s active equipment at the headend that originates the downstream signal and receives the upstream signal from all ONTs on that PON. One OLT port serves one feeder fiber (up to 32 or 64 customers via splitters).' },
           { id: 'T01-L01-FC-ont', front: 'ONT', back: 'Optical Network Terminal — the demarc device at the customer premises that converts the fiber signal to ethernet. Often called the "modem" by customers. Everything from the OLT to the ONT\'s fiber port is OSP.' },
+          { id: 'T01-L01-FC-rus', front: 'RUS', back: 'Rural Utilities Service — a USDA agency that funds rural telecom infrastructure and publishes the engineering bulletins (1751F-series) that govern how RUS-funded OSP is designed and built.' },
+          { id: 'T01-L01-FC-bicsi', front: 'BICSI', back: 'Building Industry Consulting Service International — the professional association that publishes OSP and ISP design standards and administers certifications like RCDD and OSP Designer (CFOS/CFOT are FOA credentials, not BICSI).' },
         ]}
       />
 
