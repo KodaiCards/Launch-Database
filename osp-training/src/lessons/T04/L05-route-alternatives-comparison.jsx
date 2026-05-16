@@ -51,7 +51,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'joint-use', source_lesson_id: 'T01.L02' },

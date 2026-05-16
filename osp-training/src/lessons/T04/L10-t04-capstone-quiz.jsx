@@ -345,7 +345,7 @@ export default function T04L10_CapstoneQuiz() {
               'A field supervisor submits a weekly timesheet as "survey work, 5 days, Project XYZ" without specifying which days were on Route A (aerial) vs. Route B (underground). An RUS auditor reviews the Form 1755-A six months later. What is the risk?',
             choices: [
               'No risk — the auditor only reviews total project cost, not cost allocation between sub-routes',
-              'The auditor may find that the plant-account allocation between Cable and Wire (§ 32.2210) and Poles (§ 32.2420) cannot be verified from the lump timesheet, creating an audit exposure that may require the accounting team to reconstruct the allocation from memory',
+              'The auditor may find that the plant-account allocation between Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) cannot be verified from the lump timesheet, creating an audit exposure that may require the accounting team to reconstruct the allocation from memory',
               'The timesheet is acceptable as long as the total hours are correct',
               'The risk is only applicable to projects over $1M — smaller projects are exempt from detailed allocation requirements',
             ],
@@ -360,14 +360,14 @@ export default function T04L10_CapstoneQuiz() {
             prompt:
               'Under 47 CFR Part 32, survey labor and drone rental costs during the pre-construction engineering phase are recorded in which plant account?',
             choices: [
-              'Cable and Wire Facilities (§ 32.2210)',
-              'Poles (§ 32.2420)',
+              'Cable and Wire Facilities (§ 32.2410)',
+              'Poles (§ 32.2411)',
               'Telecommunications Plant Under Construction (§ 32.2230)',
-              'Motor Vehicles (§ 32.6512)',
+              'Motor Vehicle Expense (§ 32.6112)',
             ],
             answerIndex: 2,
             explanation:
-              'Plant Under Construction (§ 32.2230) is the temporary staging account for all costs incurred before the plant is placed in service — including survey labor, drone rental, engineering, and subcontractor survey costs. When the project is placed in service (fiber lit, tests passed, customers connected), the accounting team transfers accumulated costs from § 32.2230 to the permanent plant accounts: § 32.2210 (cable), § 32.2420 (poles), § 32.2220 (land), etc. Review T04.L07.',
+              'Plant Under Construction (§ 32.2230) is the temporary staging account for all costs incurred before the plant is placed in service — including survey labor, drone rental, engineering, and subcontractor survey costs. When the project is placed in service (fiber lit, tests passed, customers connected), the accounting team transfers accumulated costs from § 32.2230 to the permanent plant accounts: § 32.2410 (cable and wire facilities), § 32.2411 (poles), § 32.2111 (land), etc. Review T04.L07.',
             citation: '47 CFR Part 32 § 32.2230; FCC USOA (ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32).',
           },
 

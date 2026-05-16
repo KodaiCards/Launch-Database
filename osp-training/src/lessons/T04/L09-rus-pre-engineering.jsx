@@ -396,7 +396,7 @@ export default function T04L09_RusPreEngineering() {
             <li><strong>Tribal consultation</strong> (EO 13175 + 36 CFR Part 800) — separate from SHPO; federal nexus triggers nation-to-nation consultation obligations</li>
             <li><strong>ASCE 38 SUE Quality Levels</strong> for subsurface utility engineering on underground segments</li>
             <li><strong>FEMA FIRM floodplain</strong> considerations for underground routes in flood zones</li>
-            <li><strong>FCC §224 pole attachment rate formula</strong> for make-ready cost attribution</li>
+            <li><strong>47 U.S.C. §224 / 47 CFR Part 1, Subpart J §§1.1401–1.1416 (pole attachment rate formula)</strong> for make-ready cost attribution</li>
             <li><strong>DBE / Section 3 requirements</strong> (49 CFR Part 26 / 24 CFR Part 75) if federal-nexus funding triggers disadvantaged-business or labor-hiring obligations</li>
           </ul>
           <p className="text-slate-300/80 mt-2">
@@ -471,16 +471,15 @@ export default function T04L09_RusPreEngineering() {
         description="Drag these documents into the correct submission order for an RUS pre-engineering construction package, from the first document the reviewer sees (top) to the last supporting document (bottom)."
         items={[
           { id: 'cover-sheet', label: 'Cover sheet with borrower ID, case number, submittal date, and PE certification block' },
-          { id: 'form-307', label: 'RUS Form 307 (Bid Bond) — surety instrument required from each bidding contractor; included in the solicitation package' },
           { id: 'plan-set', label: 'Engineering plan set — route map, pole placement plan, detail sheets (PE-stamped, each sheet)' },
           { id: 'feds', label: 'Field Engineering Data Sheet (FEDS) — pole inventory, span inventory, crossing inventory, design constraints' },
           { id: 'unit-breakdown', label: 'Construction unit code breakdown with quantities and unit costs' },
           { id: 'cost-estimate', label: 'Preliminary cost estimate — materials, labor, engineering, contingency (PE-certified)' },
           { id: 'environmental-checklist', label: 'Environmental checklist (NEPA Categorical Exclusion checklist or EA as applicable)' },
         ]}
-        correctOrder={['cover-sheet', 'form-307', 'plan-set', 'feds', 'unit-breakdown', 'cost-estimate', 'environmental-checklist']}
-        feedbackCorrect="Correct RUS submission order. The cover sheet is always first — it identifies the project and the reviewer routes the package. Form 307 (Bid Bond) is part of the solicitation package distributed to bidders, confirming the bonding requirement. The PE-stamped plan set is the core engineering document. The FEDS supports the plan set with field detail. The unit breakdown and cost estimate follow — the reviewer traces cost to units to the plan set to verify reasonableness. The environmental checklist closes the package."
-        feedbackIncorrect="Reconsider the order. The cover sheet must be first — it identifies the project. The Bid Bond (Form 307) follows in the solicitation package — it is a contractor-submitted surety instrument, not an internal completeness check. The plan set is the core technical document. Supporting data (FEDS, unit codes, cost) follows the plan set. The environmental compliance documentation closes the package. Think: what does the reviewer need to see first to begin their review?"
+        correctOrder={['cover-sheet', 'plan-set', 'feds', 'unit-breakdown', 'cost-estimate', 'environmental-checklist']}
+        feedbackCorrect="Correct RUS submission order. The cover sheet is always first — it identifies the project and the reviewer routes the package. The PE-stamped plan set is the core engineering document. The FEDS supports the plan set with field detail. The unit breakdown and cost estimate follow — the reviewer traces cost to units to the plan set to verify reasonableness. The environmental checklist closes the package. Note: RUS Form 307 (Bid Bond) is a contractor-submitted surety instrument distributed to bidders during solicitation — it is not part of the RUS pre-engineering submission to the district office."
+        feedbackIncorrect="Reconsider the order. The cover sheet must be first — it identifies the project. The plan set is the core technical document. Supporting data (FEDS, unit codes, cost) follows the plan set. The environmental compliance documentation closes the package. Note: RUS Form 307 (Bid Bond) is a contractor surety instrument distributed to bidders during solicitation — it does not belong in the RUS pre-engineering submission package itself. Think: what does the reviewer need to see first to begin their review?"
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
