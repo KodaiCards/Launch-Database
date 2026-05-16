@@ -15,7 +15,7 @@ export const meta = {
   title: 'OTMR vs. Multi-Party — The FCC Rule',
   order: 1,
   lesson_type: 'foundation',
-  prerequisites: ['T01.L01', 'T05.L01', 'T07.L01'],
+  prerequisites: ['T01.L01', 'T05.L01', 'T07.L01', 'T18.L01'],
   learning_objectives: [
     'Identify when One-Touch Make-Ready (OTMR) applies versus when multi-party coordination is required',
     'Explain the legal basis for OTMR under 47 CFR §1.1411 and FCC 18-111',
