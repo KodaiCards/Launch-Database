@@ -20,6 +20,8 @@ export const meta = {
     'hazard recognition',
     'hierarchy of controls',
     'SDS',
+    'safety zone',
+    'competent person',
   ],
   key_terms: [
     {
@@ -46,6 +48,16 @@ export const meta = {
       term: 'SDS',
       definition:
         'Safety Data Sheet — a document supplied with hazardous chemicals that lists composition, exposure limits, PPE requirements, first-aid procedures, and environmental hazards. Replaced the old MSDS format under OSHA HazCom 2012 (29 CFR 1910.1200).',
+    },
+    {
+      term: 'safety zone',
+      definition:
+        'The protected area around a work site — typically defined by traffic control devices (cones, signs, barriers) or physical distance from hazards — inside which workers perform tasks and outside which the public or uninvolved workers are excluded. In OSP work, the safety zone concept applies to roadway work zones (per MUTCD and 29 CFR 1910.268(m)), manhole work areas, and excavation sites. The safety zone is established BEFORE workers enter, not after.',
+    },
+    {
+      term: 'competent person',
+      definition:
+        'Defined in 29 CFR 1926.32(f) as "one who is capable of identifying existing and predictable hazards in the surroundings or working conditions which are unsanitary, hazardous, or dangerous to employees, and who has authorization to take prompt corrective measures to eliminate them." In OSP work, a competent person is designated for excavation and trenching (29 CFR 1926 Subpart P) and confined space entry. The competent person is not just a title — they must have both the training to identify hazards AND the authority to stop work.',
     },
   ],
   vocabulary_assumed: [
@@ -173,6 +185,16 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
               id: 'T18-L01-fc-sds',
               front: 'What is a Safety Data Sheet (SDS)?',
               back: 'A document supplied with hazardous chemicals listing composition, exposure limits, PPE requirements, first-aid procedures, and environmental hazards. Replaced the old MSDS format under OSHA HazCom 2012 (29 CFR 1910.1200).',
+            },
+            {
+              id: 'T18-L01-fc-safety-zone',
+              front: 'What is a safety zone in OSP work?',
+              back: 'The protected area around a work site inside which workers perform tasks — established by traffic control devices (cones, signs, barriers) or physical distance from hazards — and outside which the public and uninvolved workers are excluded. Must be established BEFORE workers enter the work area. Applies to roadway work zones (per MUTCD and 29 CFR 1910.268(m)), manhole work areas, and excavation sites.',
+            },
+            {
+              id: 'T18-L01-fc-competent-person',
+              front: 'What is a "competent person" under OSHA?',
+              back: 'Defined in 29 CFR 1926.32(f): a person capable of identifying existing and predictable hazards in working conditions that are unsanitary, hazardous, or dangerous, AND who has authorization to take prompt corrective measures to eliminate them. In OSP work, a competent person is required for excavation/trenching (29 CFR 1926 Subpart P) and confined space entry. The role requires both hazard-identification training AND authority to stop work.',
             },
           ]}
         />
