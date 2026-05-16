@@ -1,0 +1,409 @@
+// Net-new — T19.L04
+// T19.L04 — Battery Backup and Generator Transfer
+// Working lesson: ATS, generator operation, power failure sequence, spec obligations
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import { Flashcard } from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T19.L04',
+  course_id: 'T19',
+  title: 'Battery Backup and Generator Transfer',
+  order: 4,
+  lesson_type: 'working',
+  prerequisites: ['T19.L03'],
+  vocabulary_introduced: [
+    'ATS',
+    'generator',
+    'runtime',
+    'transfer time',
+    'load test',
+    'fuel polishing',
+    'alarm threshold',
+  ],
+  key_terms: [
+    {
+      term: 'ATS',
+      definition: 'Automatic Transfer Switch — the device that monitors the utility AC feed and switches the building\'s electrical load from utility power to generator power automatically when utility fails, and back to utility when it is restored. The ATS transfer time is typically 10–15 seconds. During this 10–15 second gap, the CO battery plant supplies DC to the equipment with no interruption — the batteries absorb the transfer delay.',
+    },
+    {
+      term: 'generator',
+      definition: 'An engine-driven alternator that produces AC power (typically 120/240 VAC or 480 VAC for larger facilities) as a standby source when utility power fails. CO generators are rated in kilowatts (kW). On a rural FTTH hut, a 15–30 kW generator is typical. On a full CO, 100–500 kW or more. Generators run on diesel fuel (most common for stationary backup), natural gas, or propane.',
+    },
+    {
+      term: 'runtime',
+      definition: 'The length of time a battery plant can supply the DC equipment load before discharging below the minimum discharge voltage. Runtime = battery capacity (Ah) × de-rating ÷ load (A). For a rural hut: typically 4–8 hours minimum. For carrier COs: 8–24 hours. Runtime determines whether a generator is needed — if a utility outage exceeds the battery runtime, the CO goes dark without a generator.',
+    },
+    {
+      term: 'transfer time',
+      definition: 'The time elapsed between utility power failure and generator reaching stable output voltage. A diesel generator typically takes 10–15 seconds to crank, reach operating speed, and stabilize output frequency and voltage. The ATS does not transfer until the generator output is within spec. During transfer time, the battery plant is the sole power source.',
+    },
+    {
+      term: 'load test',
+      definition: 'A periodic test of the generator at or near full rated load to verify it can actually carry the building load in an outage. A generator that sits unloaded for months can develop cylinder glaze, dirty injectors, and weak batteries. Per NFPA 110 [confirm edition], standby generators should be exercised under load monthly (minimum 30% of rated load) with an annual full-load test.',
+    },
+    {
+      term: 'fuel polishing',
+      definition: 'A maintenance process that filters and conditions stored diesel fuel to remove water, microbial growth, and sediment. Diesel fuel degrades over time — stored for more than 12 months (per ASTM D975 fuel stability testing) without treatment, it forms gum, sludge, and microbial contamination that can clog injectors and cause generator failure. Fuel polishing or fuel stabilizer addition is required in any long-term storage tank (including rural CO generators).',
+    },
+    {
+      term: 'alarm threshold',
+      definition: 'A voltage, temperature, or status level that triggers a monitoring alert to the NOC (Network Operations Center). Battery plants and generators should have minimum alarm points: low battery voltage (approaching end of discharge), high battery temperature, generator running (alarm if utility is restored but generator doesn\'t transfer back), and low fuel level. A CO with no alarm monitoring is a CO that fails silently.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'CO', source_lesson_id: 'T19.L01' },
+    { term: 'hut', source_lesson_id: 'T19.L01' },
+    { term: 'power plant', source_lesson_id: 'T19.L03' },
+    { term: 'rectifier', source_lesson_id: 'T19.L03' },
+    { term: 'battery string', source_lesson_id: 'T19.L03' },
+    { term: 'VRLA', source_lesson_id: 'T19.L03' },
+  ],
+  estimated_minutes: 20,
+};
+
+export default function T19L04_BatteryBackupAndGeneratorTransfer() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          A CO power system is a layered defense against outages. Layer 1: batteries kick
+          in the instant utility power fails — no delay, no equipment restart. Layer 2: the
+          generator starts automatically and transfers the building's AC load within 10–15
+          seconds. Layer 3: the rectifiers, now fed by the generator, resume charging the
+          batteries. If the utility stays out for hours, the generator keeps everything running.
+          When utility returns, the ATS transfers back and the generator shuts down.
+        </p>
+        <p className="mt-2">
+          The OSP engineer's role in this system: on rural hut builds, YOU specify the generator
+          size, the ATS type, the fuel tank capacity, and the monitoring alarms. If those specs
+          aren't in the engineering package, they don't get built. A missed generator spec on a
+          RUS-funded hut is a real consequence — when the first all-day power outage hits and
+          the OLT goes dark at hour 4, the customer service calls start.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">ATS</td>
+              <td className="px-3 py-2">Automatic Transfer Switch</td>
+              <td className="px-3 py-2">The box that switches from utility to generator when utility fails</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">NOC</td>
+              <td className="px-3 py-2">Network Operations Center</td>
+              <td className="px-3 py-2">The remote team that monitors the CO for alarms 24/7</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">kW</td>
+              <td className="px-3 py-2">Kilowatts</td>
+              <td className="px-3 py-2">Generator output rating — the total AC power it can supply</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">NFPA 110</td>
+              <td className="px-3 py-2">National Fire Protection Association Standard 110</td>
+              <td className="px-3 py-2">Standard for Emergency and Standby Power Systems — governs generator testing requirements</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* ── FLASHCARDS ───────────────────────────────────────────────── */}
+        <Flashcard
+          deckId="T19-L04"
+          cards={[
+            {
+              id: 'T19-L04-fc-ats',
+              front: 'What is an ATS and what does it do?',
+              back: 'Automatic Transfer Switch — monitors the utility AC feed and automatically switches the building load from utility to generator when utility fails, and back when utility restores. Transfer time: typically 10–15 seconds. During transfer, the battery plant is sole DC power source.',
+            },
+            {
+              id: 'T19-L04-fc-generator',
+              front: 'What is a standby generator in a CO context?',
+              back: 'An engine-driven alternator producing AC power as a backup when utility fails. Rated in kW. Rural FTTH huts: 15–30 kW typical. Full COs: 100–500 kW+. Most common fuel: diesel. Requires regular load testing and fuel maintenance.',
+            },
+            {
+              id: 'T19-L04-fc-runtime',
+              front: 'What is battery runtime?',
+              back: 'How long the battery plant can supply DC load before discharging below minimum voltage. Runtime = Battery capacity (Ah) × de-rating ÷ load (A). Rural hut minimum: 4 hours. Carrier CO: 8–24 hours. Determines whether a generator is needed.',
+            },
+            {
+              id: 'T19-L04-fc-transfer-time',
+              front: 'What is generator transfer time?',
+              back: 'Time from utility failure to generator delivering stable AC output — typically 10–15 seconds for diesel gensets. During transfer, batteries are the sole power source. ATS does not close until generator output is within frequency and voltage spec.',
+            },
+            {
+              id: 'T19-L04-fc-load-test',
+              front: 'What is a generator load test and how often is it required?',
+              back: 'A test under actual load to verify the generator can carry the building. Per NFPA 110 [confirm edition]: monthly exercise at minimum 30% rated load; annual full-load test. Generators that run unloaded develop cylinder glaze and dirty injectors — load testing prevents silent failure.',
+            },
+            {
+              id: 'T19-L04-fc-fuel-polishing',
+              front: 'What is fuel polishing and why is it required?',
+              back: 'A maintenance process filtering and conditioning stored diesel fuel to remove water, microbial growth, and sediment. Diesel degrades after ~12 months without treatment (per ASTM D975). Fuel polishing or stabilizer addition is required for long-term storage tanks — degraded fuel causes injector fouling and generator failure on demand.',
+            },
+            {
+              id: 'T19-L04-fc-alarm-threshold',
+              front: 'What alarm thresholds must a CO battery/generator system have?',
+              back: 'Minimum: low battery voltage (approaching end of discharge), high battery temperature, generator running status, and low fuel level. A CO with no alarm monitoring fails silently — the NOC won\'t know about the outage until subscribers call.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Power Failure Sequence — What Happens When Utility Fails</h2>
+
+        <p>
+          Here's the exact sequence of events when utility power fails at a properly
+          specified CO or hut. Every step matters; every step where the spec is wrong
+          is a place the system can fail silently.
+        </p>
+
+        <ol className="list-decimal pl-5 space-y-3 mt-3 text-sm">
+          <li>
+            <strong>t = 0 s — Utility power fails.</strong> Utility voltage drops below ATS
+            threshold (typically 80% of nominal). Rectifiers immediately stop producing DC output
+            (no utility to convert). The battery strings instantly become the sole DC power source.
+            The DC bus voltage drops slightly as the batteries begin discharging — equipment
+            continues running without any interruption or reset.
+          </li>
+          <li>
+            <strong>t = 0–2 s — ATS detects utility loss, signals generator to start.</strong>
+            The ATS controller senses the voltage drop and initiates the generator start command.
+            The generator engine cranks.
+          </li>
+          <li>
+            <strong>t = 2–12 s — Generator cranks, reaches operating speed.</strong>
+            Diesel generators typically reach stable 60 Hz output within 10–12 seconds of start
+            command. The batteries continue supplying DC during this window. This is why CO equipment
+            must be rated to operate on battery alone for at least 30 seconds minimum — even if the
+            generator is fast, there are scenarios (cold start, engine hesitation) where transfer
+            takes longer.
+          </li>
+          <li>
+            <strong>t = 12–15 s — ATS transfers load to generator.</strong>
+            Once generator output is stable (within ±5 Hz of 60 Hz and ±10% of nominal voltage
+            per NFPA 110 [confirm edition]), the ATS closes the generator breaker and opens the
+            utility breaker. The building load transfers to generator AC. Rectifiers resume DC
+            output from generator-sourced AC.
+          </li>
+          <li>
+            <strong>t = 15+ s — Generator runs, rectifiers charge batteries.</strong>
+            The rectifiers now convert generator AC to DC, supplying equipment and recharging the
+            partially discharged batteries. Depending on load, the battery recharge time is 4–8×
+            the discharge duration.
+          </li>
+          <li>
+            <strong>Utility restoration — ATS transfers back.</strong>
+            When utility voltage restores and is stable for the ATS's programmed confirmation
+            period (typically 30–60 seconds, to avoid chasing transient restoral events), the ATS
+            transfers back to utility and signals the generator to stop. Generator runs for a 5–10
+            minute cool-down period, then shuts down.
+          </li>
+        </ol>
+
+        <h3 className="mt-5 font-semibold">Generator sizing — OSP spec inputs</h3>
+        <p className="mt-2">
+          Generator capacity must exceed the total AC load in the building. For a rural hut:
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm border border-white/10 rounded-lg">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Load component</th>
+                <th className="px-3 py-2 text-left">Typical AC draw</th>
+                <th className="px-3 py-2 text-left">Notes</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">Rectifiers (charging batteries + supplying OLT)</td>
+                <td className="px-3 py-2">3–5 kW</td>
+                <td className="px-3 py-2">Size for full DC load + battery recharge simultaneously</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">HVAC (split system, 2 ton)</td>
+                <td className="px-3 py-2">2–3 kW running; 6–8 kW starting surge</td>
+                <td className="px-3 py-2">Generator must handle starting surge — most critical sizing input</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">Lighting, outlets, monitoring</td>
+                <td className="px-3 py-2">0.5–1 kW</td>
+                <td className="px-3 py-2">Small but should be included</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">Total with 25% headroom</td>
+                <td className="px-3 py-2 font-semibold">~15–20 kW</td>
+                <td className="px-3 py-2">Specify 20 kW generator minimum for this scenario</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field — Generator Testing</p>
+          <p className="text-slate-300/90">
+            <strong>Book (NFPA 110-2022 [confirm edition]):</strong> §8.4.1 requires standby
+            generators to be exercised monthly under load at minimum 30% of rated nameplate kW
+            for not less than 30 minutes. §8.4.2 requires an annual full-load test. Fuel tanks
+            must meet diesel fuel quality standards.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> At small rural COs and huts, the test schedule slips to
+            "when a storm is coming" or never. Generators are often found with partial fuel tanks
+            and no service history. When the first major outage hits (ice storm, extended grid
+            failure), the generator either won't start or runs for 20 minutes before a clogged
+            injector kills it. The OSP engineer's spec must include: (a) automatic weekly test
+            run, (b) monthly load test, (c) fuel polishing or biocide treatment contract, and
+            (d) generator service contract with a local provider — not just the equipment
+            specification. The operations requirement is as important as the hardware spec.
+          </p>
+        </div>
+      </section>
+
+      {/* ── BRANCHING SCENARIO ─────────────────────────────────────────── */}
+      <BranchingScenario
+        scenarioId="T19-L04-scenario-1"
+        title="Power Failure at the Remote Hut — What Should Have Been Specified?"
+        description="It's 2 AM. A subscriber reports their internet is down. You pull up the NOC dashboard and see the remote hut is offline. Walk through the investigation."
+        startNodeId="start"
+        nodes={{
+          start: {
+            id: 'start',
+            text: 'The hut NOC dashboard shows: OLT offline, no alarm pre-notification received. Utility power in the area has been out for 6 hours (confirmed by utility company). What do you check first?',
+            choices: [
+              { label: 'Check if the hut has a generator — was it specified in the design?', nextNodeId: 'check-generator' },
+              { label: 'Dispatch a technician immediately without further analysis', nextNodeId: 'dispatch-blind' },
+              { label: 'Check battery runtime spec vs. 6-hour outage duration', nextNodeId: 'check-battery' },
+            ],
+          },
+          'check-generator': {
+            id: 'check-generator',
+            text: 'You pull up the original OSP design spec. The battery plant was specified for 4-hour reserve. No generator was specified — the design doc says "future generator provision only." The hut went dark at hour 4. Was this a design failure?',
+            choices: [
+              { label: 'Yes — a 4-hour reserve without a generator is insufficient for a production CO in an area with frequent outages', nextNodeId: 'generator-failure-yes' },
+              { label: 'No — 4-hour reserve meets minimum spec. The ISP team should have added a generator after commissioning.', nextNodeId: 'generator-failure-no' },
+            ],
+          },
+          'dispatch-blind': {
+            id: 'dispatch-blind',
+            text: 'A technician drives 45 minutes to the hut at 2 AM and finds: utility power still out, battery fully discharged, no generator. The hut is cold and dark. There is nothing the technician can do without a generator or portable power plant. Costly and avoidable.',
+            isTerminal: true,
+            outcome: 'SUBOPTIMAL',
+            feedback: 'Dispatching without analyzing the power situation first wastes time and money. Understanding the power architecture would have told you the issue before sending a technician. The real fix is a design spec correction — not a 2 AM truck roll.',
+          },
+          'check-battery': {
+            id: 'check-battery',
+            text: 'The battery was specified for 4-hour reserve. The outage is 6 hours. So batteries ran out at hour 4. No generator means no power from hour 4 onward. Now what?',
+            choices: [
+              { label: 'Recognize this as a spec gap — no generator was provided for a hut in an outage-prone area', nextNodeId: 'generator-failure-yes' },
+              { label: 'Blame the battery vendor for failing before the spec time', nextNodeId: 'blame-battery' },
+            ],
+          },
+          'generator-failure-yes': {
+            id: 'generator-failure-yes',
+            text: 'Correct. The OSP design spec should have included a generator for any production CO in an area where utility outages exceed 4 hours. The "future provision" note means the conduit and pad space were reserved but the generator was never procured. This is an engineering omission — not an O&M failure. The fix for this hut now requires retrofitting a generator, adding an ATS, and wiring a generator branch circuit. Cost: $10,000–25,000 installed. Much higher than the original cost if spec\'d at build time.',
+            isTerminal: true,
+            outcome: 'COMPLETE',
+            feedback: 'Correct analysis. For RUS-program huts in rural areas with extended outage risk, the generator is not optional — it should be in the original engineering package as a required item. Specifying "future provision" trades upfront cost for a guaranteed future retrofit cost at 2–3× the original install price.',
+          },
+          'generator-failure-no': {
+            id: 'generator-failure-no',
+            text: 'Incorrect framing. On a RUS-funded rural FTTH build, the OSP engineering package includes the headend building specification. If the OSP engineer does not specify the generator, nobody else will default to including it. "4-hour reserve meets minimum spec" is true for some standards, but the spec must match the operational reality: if utility outages in this area routinely exceed 4 hours, 4-hour reserve is insufficient regardless of what the standard minimum says.',
+            isTerminal: true,
+            outcome: 'PARTIAL',
+            feedback: 'The standard minimum is a floor, not a design target. The OSP engineer must match the spec to the operational environment. A rural area with an unreliable utility grid needs more than minimum reserve.',
+          },
+          'blame-battery': {
+            id: 'blame-battery',
+            text: 'The battery performed exactly to its spec — 4 hours at the design load. Blaming the battery vendor is incorrect. The real issue is that the design spec was insufficient for the operational environment. The hut needed either (a) a generator to sustain through multi-hour outages, or (b) extended battery reserve (8+ hours) to cover longer utility outages. Neither was specified.',
+            isTerminal: true,
+            outcome: 'INCORRECT',
+            feedback: 'When a component meets its spec, it\'s not the component\'s failure. Always trace problems back to the design spec before blaming equipment.',
+          },
+        }}
+      />
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <Quiz
+        title="T19.L04 Check — Battery Backup and Generator Transfer"
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T19-L04-Q1',
+            type: 'mc',
+            prompt:
+              'What happens to the CO equipment during the 10–15 second window between utility failure and generator transfer to the building load?',
+            choices: [
+              'Equipment shuts down and restarts when generator power is available',
+              'The battery plant supplies DC continuously — equipment runs without any power interruption or reset',
+              'The ATS buffers the transition — equipment sees no voltage dip',
+              'A UPS temporarily supplies AC power from stored energy during the generator start period',
+            ],
+            answerIndex: 1,
+            explanation:
+              'The CO battery plant is a continuous, uninterrupted DC source. When utility fails, the rectifiers stop converting AC to DC, and the batteries immediately take over supplying the DC bus — no switching, no delay, no interruption. The equipment is completely unaware that the utility has failed. The 10–15 second generator transfer time is absorbed entirely by the battery reserve. This is the fundamental advantage of a DC battery plant over an AC UPS system.',
+            citation: 'Telcordia GR-63-CORE [paywalled]; ANSI/ATIS-0600336 [confirm edition].',
+          },
+          {
+            id: 'T19-L04-Q2',
+            type: 'fill-in-blank',
+            prompt:
+              'Per NFPA 110 [confirm edition], standby generators should be exercised under load at a minimum of ____% of rated nameplate kilowatts for not less than 30 minutes each month.',
+            answer: '30',
+            answerDisplay: '30%',
+            explanation:
+              'NFPA 110-2022 §8.4.1 requires monthly exercise under at least 30% of rated load. Running a generator unloaded ("no-load run") is insufficient — it does not verify load-carrying capability and can promote cylinder glaze and carbon buildup. An annual full-load test is also required.',
+          },
+          {
+            id: 'T19-L04-Q3',
+            type: 'mc',
+            prompt:
+              'What is the primary risk of storing diesel fuel in a generator tank for more than 12 months without treatment?',
+            choices: [
+              'Diesel evaporates significantly, reducing tank level by 20–30% per year',
+              'Diesel becomes electrically conductive, creating a shock hazard when topping off the tank',
+              'Diesel degrades — water absorption, microbial growth, and oxidation form gum, sludge, and sediment that can clog fuel injectors and cause generator failure on demand',
+              'Diesel fuel exceeding 12 months is considered a hazardous material under EPA regulations and must be disposed of',
+            ],
+            answerIndex: 2,
+            explanation:
+              'Diesel fuel stored for more than approximately 12 months (per ASTM D975 stability testing) without treatment undergoes oxidation, water absorption (condensation), and microbial growth (especially in humid climates). These processes form gum, sludge, and particulate contamination that can clog fuel injectors. Fuel polishing (filtration + water removal) or stabilizer treatment extends fuel life. This is a documented real-world cause of generator failure during extended outages.',
+            citation: 'ASTM D975 — Standard Specification for Diesel Fuel Oils [confirm current edition].',
+          },
+          {
+            id: 'T19-L04-Q4',
+            type: 'mc',
+            prompt:
+              'An OSP engineer is sizing a generator for a rural FTTH hut. The rectifiers draw 4 kW (AC input). The HVAC unit is a 2-ton split system with 2.5 kW running draw and a 7 kW starting surge. Lighting and monitoring draw 0.5 kW. What generator rating should be specified, including 25% headroom?',
+            choices: [
+              '7 kW — sum of running loads is 7 kW; the generator handles steady state',
+              '10 kW — running loads plus 25% headroom',
+              '20 kW — must handle HVAC starting surge (7 kW) + other running loads (4.5 kW) plus 25% headroom',
+              '5 kW — rectifiers are the only critical load; HVAC can be shut off during outages',
+            ],
+            answerIndex: 2,
+            explanation:
+              'Generator sizing must handle the worst-case starting surge, not just steady-state running load. HVAC starting surge: 7 kW. Other running loads while HVAC is starting: rectifiers (4 kW) + lighting (0.5 kW) = 4.5 kW. Peak coincident demand: 7 + 4.5 = 11.5 kW. With 25% headroom: 11.5 × 1.25 = 14.4 kW. Round up to the next standard size: 15 or 20 kW. Specifying 20 kW leaves additional capacity for future load growth.',
+          },
+        ]}
+      />
+
+    </LessonLayout>
+  );
+}
