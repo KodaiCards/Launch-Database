@@ -47,3 +47,22 @@
 
 Post-fix RT commit: `140cec8`
 Tree clean after push. All three F-RT findings resolved in single commit.
+
+---
+
+## Patch Wave 2 Findings (from RT-A `fd7375b` + RT-B `4fb8db8`)
+
+| ID | Severity | Tag | Lesson(s) | Finding | Status | Commit SHA |
+|----|----------|-----|-----------|---------|--------|-----------|
+| PW2-A | MED | RT-A + RT-B CONCUR | T05/L05:46 | `vocabulary_assumed` entry for `sag` → `source_lesson_id: 'T05.L02'` wrong; sag introduced at T01.L02 (poles-and-spans), not T05.L02 (sag formula lesson) | FIXED | `922582f` |
+| PW2-B | MED | RT-A + RT-B CONCUR | T05/L07:48-49 | `vocabulary_assumed` entries for `EDS` and `RTS` → `source_lesson_id: 'T03.L09'` wrong; correct is `T03.L04` (L10+L15 already use T03.L04 correctly; L07 was the outlier) | FIXED | `922582f` |
+| PW2-C | MED | RT-A + RT-B CONCUR | T07/L01:26-28 | `vocabulary_assumed` entries for `span`, `attachment point`, `clearance` all → `source_lesson_id: 'T05.L02'` wrong; correct is `T01.L02` (F-RT-1 fix corrected `sag` in same file but left these 3 adjacent wrong pointers) | FIXED | `922582f` |
+| PW2-D | LOW | RT-A + RT-B CONCUR | T05/L07 Flashcard block | `vocabulary_introduced` has 10 terms; Flashcard block only rendered 5; missing: `parabolic approximation`, `initial sag`, `creep`, `sag-to-span ratio`, `ruling span` — all have key_terms entries, just no card renders | FIXED | `24db4c5` |
+| PW2-Q12 | MED (escalated from LOW) | RT-B severity upgrade | T05/L15 Q12 | Choice A labeled "+4.57 ft" — 9.9% error vs correct +5.05 ft; student who correctly computes +5.05 ft finds no matching option. Question design error. | FIXED | `01bba5b` |
+
+## Patch Wave 2 Deferred to Polish Queue
+
+| ID | Item | Queue Ref |
+|----|------|-----------|
+| PW2-NB1 | T05.L02 FHWA 14ft clearance could distinguish maintained-clearance vs new-construction 16ft per AASHTO/23 CFR 625.2 | P8 (new) |
+| PW2-NB2 | T05.L07 combined-load sag using w_combined in parabolic formula is a conservative approximation, not labeled as such | Accepted at training level per RT-B — no action needed |
