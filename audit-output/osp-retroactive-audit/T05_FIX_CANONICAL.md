@@ -105,3 +105,20 @@ Tree clean after push. All three F-RT findings resolved in single commit.
 - T07/L02 line 35: `contour` → `T04.L03` — T04.L03 introduces `datum`, `UTM`, `NAD83`, `shapefile` etc. `contour` not found in T04.L03 vocabulary_introduced. LOW gap — not fixed here (out of scope for polish-3).
 
 ## T05 Wave Status: COMPLETE through POLISH-3 stage.
+
+---
+
+## POLISH-4 Stage (from final-verify-2 RT pair RT-A `aa8b8a7` + RT-B `7b771fd`)
+
+| ID | Severity | Tag | Lesson(s) | Finding | Status | Commit SHA |
+|----|----------|-----|-----------|---------|--------|-----------|
+| GAP-NEW-A | MED | RT-A+B | T05/L03 | `supply space`, `communication space`, `climbing space` in BOTH `vocabulary_introduced` AND `vocabulary_assumed` (contradiction). T01.L02 is confirmed first-introduction. Fix: removed 3 terms from `vocabulary_introduced` + removed 3 duplicate `key_terms` definitions from L03. | FIXED | `84a3d57` |
+| GAP-NEW-B | LOW | RT-A | T05/L01 | 10 terms in `vocabulary_introduced` but only 6 Flashcard cards rendered. Missing: `IEEE C2`, `Rule`, `Section`, `Part`. Fix: added 4 Flashcard cards drawing definitions verbatim from `key_terms`. | FIXED | `84a3d57` |
+| GAP-NEW-C | LOW | RT-B | T07/L02 | `route survey` → `T04.L01` wrong pointer. T04.L01 introduces `site walk` (confirmed); `route survey` is prose-synonym only, not in `vocabulary_introduced`. Fix (option b): changed pointer to `site walk → T04.L01`. | FIXED | `84a3d57` |
+| GAP-TECH-1 | LOW | RT-B | T05/L02 | "slightly larger" wording for w_combined conservatism. **Already resolved** — file already reads "conservatively larger" at line 368 from prior polish wave. No change needed. | PRE-RESOLVED | — |
+
+**Neighborhood scan from polish-4 (NOT fixed — report only):**
+- T05/L02: `Rule 232` appears in BOTH `vocabulary_introduced` AND `vocabulary_assumed` — same pattern as L03 GAP-NEW-A bug. Out of scope for this wave; flag for future pass.
+- T05/L03: Prose in the "three zones" section (foundations) still uses "supply space", "communication space", "climbing space" and provides inline definitions. These align with T01.L02 assumed terms and are pedagogically appropriate as recalled context — no action needed; the vocab schema contradiction is now resolved.
+
+## T05 Wave Status: COMPLETE through POLISH-4 stage. Final-verify-3 RT pair required before T05 is declared fully closed.
