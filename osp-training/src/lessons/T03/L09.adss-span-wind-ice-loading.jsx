@@ -24,12 +24,12 @@ export const meta = {
     'MAT (Maximum Allowable Tension)',
   ],
   vocabulary_assumed: [
-    { term: 'span',       source_lesson_id: 'T01.L01' },
-    { term: 'sag',        source_lesson_id: 'T01.L01' },
+    { term: 'span',       source_lesson_id: 'T01.L02' },
+    { term: 'sag',        source_lesson_id: 'T01.L02' },
     { term: 'ADSS',       source_lesson_id: 'T03.L04' },
     { term: 'EDS',        source_lesson_id: 'T03.L04' },
     { term: 'RTS',        source_lesson_id: 'T03.L04' },
-    { term: 'NESC',       source_lesson_id: 'T01.L09' },
+    { term: 'NESC',       source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

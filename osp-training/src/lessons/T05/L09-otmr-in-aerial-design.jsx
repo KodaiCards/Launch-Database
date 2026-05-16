@@ -38,7 +38,7 @@ export const meta = {
     { term: 'attacher', source_lesson_id: 'T05.L08' },
     { term: 'make-ready cost estimate', source_lesson_id: 'T05.L08' },
     { term: 'NESC', source_lesson_id: 'T05.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

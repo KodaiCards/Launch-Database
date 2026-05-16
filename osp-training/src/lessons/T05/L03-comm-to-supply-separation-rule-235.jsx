@@ -42,8 +42,8 @@ export const meta = {
     { term: 'communication space', source_lesson_id: 'T01.L02' },
     { term: 'climbing space', source_lesson_id: 'T01.L02' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'messenger', source_lesson_id: 'T03.L04' },
   ],
   key_terms: [

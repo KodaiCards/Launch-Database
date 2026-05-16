@@ -43,7 +43,7 @@ export const meta = {
     { term: 'pole loading', source_lesson_id: 'T05.L05' },
     { term: 'wind span', source_lesson_id: 'T05.L05' },
     { term: 'w_wind', source_lesson_id: 'T05.L05' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'messenger', source_lesson_id: 'T03.L04' },
     { term: 'EDS', source_lesson_id: 'T03.L09' },
   ],

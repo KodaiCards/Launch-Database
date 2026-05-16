@@ -34,9 +34,9 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'pole', source_lesson_id: 'T01.L01' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
+    { term: 'pole', source_lesson_id: 'T01.L02' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'supply space', source_lesson_id: 'T01.L02' },
     { term: 'communication space', source_lesson_id: 'T01.L02' },
     { term: 'RUS', source_lesson_id: 'T01.L09' },

@@ -36,9 +36,9 @@ export const meta = {
     { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'AHJ', source_lesson_id: 'T05.L01' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
-    { term: 'sag', source_lesson_id: 'T01.L01' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'sag', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

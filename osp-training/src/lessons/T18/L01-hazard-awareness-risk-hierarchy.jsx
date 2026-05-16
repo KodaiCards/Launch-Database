@@ -51,7 +51,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'RUS', source_lesson_id: 'T01.L01' },
-    { term: 'NESC', source_lesson_id: 'T01.L01' },
+    { term: 'NESC', source_lesson_id: 'T01.L02' },
   ],
   estimated_minutes: 20,
 };
