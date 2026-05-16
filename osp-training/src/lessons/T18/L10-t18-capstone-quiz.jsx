@@ -75,7 +75,7 @@ export default function T18L10_CapstoneQuiz() {
           review if you get one wrong.
         </p>
         <p className="mt-2">
-          22 multiple-choice questions + 2 branching scenario items. Score ≥ 80% before moving
+          22 multiple-choice questions + 3 branching scenario items. Score ≥ 80% before moving
           to T02 (Fiber Physics). T18 is a prerequisite gate for every field-touching topic in
           this curriculum — if the safety standard is unclear, go back and re-read the lesson
           before working the field.
@@ -596,6 +596,99 @@ export default function T18L10_CapstoneQuiz() {
             id: 'end-classification',
             isEnd: true,
             endMessage: 'Summary: Event 1 = not recordable (first aid only). Event 2 = recordable + DART (prescription Rx + restricted duty). Event 3 = near-miss, voluntary reporting only. Event 4 = recordable + OSHA 1904.39 24-hour report required. The key distinctions: first aid vs. medical treatment beyond first aid (1904.7); near-miss vs. recordable (1904.7); severe incident notification timelines (1904.39). Review T18.L09 for the full recordkeeping framework.',
+          },
+        }}
+      />
+
+      {/* ── BRANCHING SCENARIO 3 — OLT Card Swap / Fiber Hut LOTO ────────── */}
+      <BranchingScenario
+        scenarioId="T18-L10-scenario-3"
+        title="Capstone Scenario 3 — Fiber Hut OLT Card Swap (LOTO)"
+        description="Integrates T18.L02 (LOTO 6-step procedure) with T18.L01 (hierarchy of controls). A technician needs to swap a failed OLT line card in a fiber hut. Walk through the correct LOTO sequence and identify the critical verify-zero-energy gate."
+        startNodeId="start"
+        nodes={{
+          start: {
+            id: 'start',
+            prompt: 'A failed OLT line card needs to be swapped in the fiber hut. The OLT chassis is powered from a –48VDC bus bar. Before any work on the chassis, what is step 1 of the LOTO procedure per 29 CFR 1910.147(d)?',
+            choices: [
+              {
+                label: 'Apply your personal padlock to the breaker feeding the OLT chassis, then begin work',
+                consequence: 'Applying the lock before shutting down and isolating the energy source leaves the equipment energized at the moment the lock goes on — the lock does not de-energize anything, it only prevents re-energization. The correct first step is to notify affected employees, then shut down the equipment through its normal controls. Review T18.L02 step 1.',
+                nextId: 'step2-notify',
+              },
+              {
+                label: 'Notify the affected employees (anyone who operates this OLT) that a lockout is being performed',
+                consequence: 'Correct. 29 CFR 1910.147(d)(1) requires notifying all affected employees before beginning the shutdown. They need to know the equipment is being locked out so they do not attempt to operate it.',
+                nextId: 'step2-notify',
+                isOptimal: true,
+              },
+              {
+                label: 'Verify that the OLT has no active services before doing anything else',
+                consequence: 'Verifying service impact is a good practice for business continuity — but it is NOT the first step of the LOTO safety procedure. The LOTO sequence per 1910.147(d) begins with notifying affected employees, then shutdown, then isolation, then lock application, then stored energy release, then verify-zero-energy. Start with notification.',
+                nextId: 'step2-notify',
+              },
+            ],
+          },
+          'step2-notify': {
+            id: 'step2-notify',
+            prompt: 'Affected employees are notified. The OLT chassis has one primary energy source: a –48VDC breaker labeled "OLT-7" on the DC distribution panel. There is also a backup battery bypass path from a battery string. What must you isolate before applying lockout devices?',
+            choices: [
+              {
+                label: 'Only the OLT-7 breaker — that\'s the labeled feed',
+                consequence: 'Incorrect and dangerous. 29 CFR 1910.147(d)(4) requires isolating ALL energy sources — including stored energy and ALL supply paths. The backup battery bypass is a second energy source. If only the primary breaker is locked, the battery bypass can still energize the chassis when you open it. Review T18.L02 — identify all energy sources before any lockout device is applied.',
+                nextId: 'step3-isolation',
+              },
+              {
+                label: 'Both the OLT-7 breaker AND the battery bypass path — all energy sources must be isolated',
+                consequence: 'Correct. 29 CFR 1910.147(d)(4) is explicit: ALL energy-isolating devices must be locked or tagged. The battery bypass is a second energy source that can still deliver lethal current to the chassis if not isolated. Open the breaker AND open or tag the battery bypass before applying locks.',
+                nextId: 'step3-isolation',
+                isOptimal: true,
+              },
+            ],
+          },
+          'step3-isolation': {
+            id: 'step3-isolation',
+            prompt: 'Both the primary breaker and battery bypass are identified. You apply your personal padlock to each isolation point. What is the NEXT required step before touching any internal component of the OLT chassis?',
+            choices: [
+              {
+                label: 'Open the chassis and begin the card swap — the locks are in place',
+                consequence: 'The locks prevent RE-ENERGIZATION, but they do not prove zero energy is present RIGHT NOW. There may be stored energy (filter capacitors in the power supply modules) that is still at lethal voltage. Entering the chassis without verifying zero energy is a violation of 29 CFR 1910.147(d)(6) — the verify-zero-energy gate. Capacitors in OLT power supplies can hold significant charge after isolation. Review T18.L02 step 6.',
+                nextId: 'verify-zero',
+              },
+              {
+                label: 'Release or restrain any stored energy — then verify zero energy by attempting to operate the equipment via normal controls',
+                consequence: 'Correct — and this is the most critical step. 29 CFR 1910.147(d)(6) requires verifying zero energy by ATTEMPTING TO OPERATE the equipment using its normal controls. For the OLT chassis, this means pressing the power/on button or equivalent — if the equipment does not energize, the lockout is confirmed effective. Before this step, any stored energy (capacitor charge, gravity-loaded components) must be released or restrained. This is the ENTRY GATE: no part of your body enters the danger zone until this step is complete and the equipment does not respond.',
+                nextId: 'verify-zero',
+                isOptimal: true,
+              },
+            ],
+          },
+          'verify-zero': {
+            id: 'verify-zero',
+            prompt: 'You attempt to operate the OLT chassis via its normal power-on controls. The equipment does not respond — the lockout is confirmed effective. You complete the card swap. What is the CORRECT re-energization sequence per 29 CFR 1910.147(e)(3)?',
+            choices: [
+              {
+                label: 'Remove your locks → notify affected employees → restore energy',
+                consequence: 'Close but the notification step is in the wrong position. Per 29 CFR 1910.147(e)(3), the correct sequence is: (1) remove tools and restore guards; (2) ensure all workers are clear; (3) each authorized employee removes their own lock; (4) notify affected employees; (5) restore energy. Notification comes AFTER lock removal — not before. Review T18.L02 re-energization sequence.',
+                nextId: 'end-loto',
+              },
+              {
+                label: 'Remove tools and restore guards → ensure all workers are clear → each authorized employee removes own lock → notify affected employees → restore energy',
+                consequence: 'Correct per 29 CFR 1910.147(e)(3). Notification comes AFTER each authorized employee has removed their own lock — this is counterintuitive but the standard is explicit. The affected employees need to know the equipment is about to be energized; that notification happens as the final step before restoring energy. Each worker removes their own lock — one person removing another person\'s lock is a serious violation.',
+                nextId: 'end-loto',
+                isOptimal: true,
+              },
+              {
+                label: 'Call the supervisor to authorize re-energization → remove locks → restore energy',
+                consequence: 'Supervisory authorization is not a step in the 1910.147(e)(3) re-energization sequence. Each authorized employee manages their own lock. The sequence requires: remove tools + guards; all clear; each authorized employee removes own lock; notify affected employees; restore energy. No supervisor sign-off step exists in the standard (though company policy may add one — but that is not an OSHA requirement).',
+                nextId: 'end-loto',
+              },
+            ],
+          },
+          'end-loto': {
+            id: 'end-loto',
+            isEnd: true,
+            endMessage: 'LOTO summary for OLT card swap: (1) Notify affected employees; (2) Shut down via normal controls; (3) Isolate ALL energy sources (primary feed + battery bypass); (4) Apply personal lock to each isolation point; (5) Release or restrain stored energy (capacitors); (6) VERIFY ZERO ENERGY by attempting to operate via normal controls — this is the ENTRY GATE, no work proceeds until complete. Re-energization: remove tools + guards → all clear → each worker removes own lock → notify affected employees → restore energy. Source: 29 CFR 1910.147(d)(1)–(d)(6) and (e)(3). Review T18.L02 for the full 6-step LOTO procedure.',
           },
         }}
       />
