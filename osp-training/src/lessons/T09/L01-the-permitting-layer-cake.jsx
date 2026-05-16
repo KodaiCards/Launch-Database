@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -374,52 +373,49 @@ export default function T09L01_ThePermittingLayerCake() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="The Permitting Layer Cake"
-        description="Click each layer to see who issues it, what triggers it, the typical timeline, and what happens if it's skipped."
-        src="/training/diagrams/permitting-layer-cake.svg"
-        alt="Four-layer permitting stack diagram showing Federal, State, County/Municipal, and Private Property layers with increasing flexibility from top to bottom"
-        aspectRatio={1.6}
-        hotPoints={[
-          {
-            id: 'federal-layer',
-            x: 50,
-            y: 15,
-            label: 'Federal Layer',
-            type: 'click',
-            explanation:
-              'Triggered by: federal funding (BEAD, RUS) or a federal permit (USACE wetlands). Requirements: NEPA review, Section 106 historic preservation, ESA species consultation. Timeline: 30 days (CE) to 18+ months (full EIS). Consequence of skipping: grant clawback, mandatory removal of infrastructure, regulatory enforcement.',
-          },
-          {
-            id: 'state-layer',
-            x: 50,
-            y: 38,
-            label: 'State Layer',
-            type: 'click',
-            explanation:
-              'Triggered by: work in state highway ROW, crossing state-regulated waterways, utility commission approvals. Requirements: DOT encroachment permit (PE-stamped plans, traffic control plan, surety bond), state environmental permits. Timeline: 60–180 days for DOT encroachment. Consequence of skipping: stop-work order, forced removal, fines.',
-          },
-          {
-            id: 'municipal-layer',
-            x: 50,
-            y: 60,
-            label: 'County / Municipal Layer',
-            type: 'click',
-            explanation:
-              'Triggered by: work in city or county road ROW, nighttime construction, pavement cuts. Requirements: ROW permit or franchise agreement, traffic control plan, restoration bond. Timeline: 30 days to 12+ months. Consequence of skipping: stop-work order, daily fines, court injunction, franchise-access demands.',
-          },
-          {
-            id: 'private-layer',
-            x: 50,
-            y: 82,
-            label: 'Private Property Layer',
-            type: 'click',
-            explanation:
-              'Triggered by: route crossing private land (farmland, residential lots, commercial parcels). Requirements: recorded easement, license, or fee-simple acquisition. Timeline: weeks to years (a single holdout landowner can force a route change). Consequence of skipping: trespass lawsuit, court-ordered removal, title insurance issues.',
-          },
-        ]}
-      />
+      {/* ── TABLE — four permitting layers ───────────────────────────────── */}
+      <table className="lesson-table">
+        <caption>The Permitting Layer Cake — Trigger, Requirements, Timeline, and Consequences</caption>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Triggered By</th>
+            <th>Key Requirements</th>
+            <th>Typical Timeline</th>
+            <th>Consequence of Skipping</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Federal</strong></td>
+            <td>Federal funding (BEAD, RUS) or a federal permit (USACE wetlands)</td>
+            <td>NEPA review; Section 106 historic preservation; ESA species consultation</td>
+            <td>30 days (CE) to 18+ months (full EIS)</td>
+            <td>Grant clawback, mandatory infrastructure removal, regulatory enforcement</td>
+          </tr>
+          <tr>
+            <td><strong>State</strong></td>
+            <td>Work in state highway ROW; crossing state-regulated waterways; utility commission approvals</td>
+            <td>DOT encroachment permit (PE-stamped plans, traffic control plan, surety bond); state environmental permits</td>
+            <td>60–180 days for DOT encroachment</td>
+            <td>Stop-work order, forced removal, fines</td>
+          </tr>
+          <tr>
+            <td><strong>County / Municipal</strong></td>
+            <td>Work in city or county road ROW; nighttime construction; pavement cuts</td>
+            <td>ROW permit or franchise agreement; traffic control plan; restoration bond</td>
+            <td>30 days to 12+ months</td>
+            <td>Stop-work order, daily fines, court injunction, franchise-access demands</td>
+          </tr>
+          <tr>
+            <td><strong>Private Property</strong></td>
+            <td>Route crossing private land (farmland, residential lots, commercial parcels)</td>
+            <td>Recorded easement, license, or fee-simple acquisition</td>
+            <td>Weeks to years (one holdout landowner can force a route change)</td>
+            <td>Trespass lawsuit, court-ordered removal, title insurance issues</td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

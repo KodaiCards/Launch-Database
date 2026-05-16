@@ -5,7 +5,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -372,61 +371,50 @@ export default function T09L04_ESABatsIPaC() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Reading an IPaC Output — What Each Field Means"
-        description="Click any labeled field to learn what it means and what action it requires for a fiber project."
-        src="/training/diagrams/ipac-output-annotated.svg"
-        alt="Annotated screenshot of a USFWS IPaC DKey output showing species list, critical habitat designation, and activity-specific guidance fields"
-        aspectRatio={1.8}
-        hotPoints={[
-          {
-            id: 'species-list',
-            x: 20,
-            y: 25,
-            label: 'Species Found',
-            type: 'click',
-            explanation:
-              'The list of federally listed T&E species potentially present in your project footprint. Each species has its federal status (Endangered / Threatened / Proposed / Candidate). For fiber projects: flag every bat species and any bird species with nesting-season restrictions. This list is based on range maps and habitat models — presence on the list does not confirm the species is actually in your corridor, but it triggers the need for further analysis.',
-          },
-          {
-            id: 'critical-habitat',
-            x: 60,
-            y: 25,
-            label: 'Critical Habitat',
-            type: 'click',
-            explanation:
-              '"Critical habitat" means areas designated by USFWS as essential to the conservation of a listed species. Crossing designated critical habitat with a BEAD-funded project triggers a higher level of ESA scrutiny than simply having species present. If your route crosses designated critical habitat, informal consultation almost certainly becomes formal consultation. Check the IPaC map layers against your route alignment.',
-          },
-          {
-            id: 'activity-guidance',
-            x: 40,
-            y: 60,
-            label: 'Activity-Specific Guidance',
-            type: 'click',
-            explanation:
-              'For each listed species in your footprint, IPaC provides guidance organized by project activity — tree clearing, ground disturbance, aerial construction, etc. This is the most actionable output. For bat species: look for the tree-clearing guidance. It will state the avoidance window (typically April 1–October 31), the buffer distance from roost trees (if applicable), and whether informal or formal consultation is recommended for your scope.',
-          },
-          {
-            id: 'consultation-flag',
-            x: 75,
-            y: 60,
-            label: 'Consultation Recommended',
-            type: 'click',
-            explanation:
-              'IPaC flags certain species-activity combinations where standard avoidance is insufficient and consultation with the USFWS field office is recommended. This flag does not mean you automatically go to formal Section 7 consultation — it means you should contact the USFWS field office to discuss the project and confirm whether informal consultation (NLA concurrence letter) is achievable, or whether formal consultation is required.',
-          },
-          {
-            id: 'not-likely',
-            x: 20,
-            y: 75,
-            label: '"Not Likely to Adversely Affect"',
-            type: 'click',
-            explanation:
-              'The IPaC DKey may return a "not likely to adversely affect" determination for a species based on your project description and the avoidance measures you commit to. This is not a formal USFWS concurrence — it is a screening determination. A formal NLA concurrence requires the USFWS field office to issue a written concurrence letter. For BEAD compliance documentation, you generally need the written letter, not just the IPaC screen result.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — IPaC output sections ──────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Reading an IPaC Output — What Each Section Means for a Fiber Project</h4>
+        <ol>
+          <li>
+            <strong>Species Found</strong> — The list of federally listed T&amp;E species
+            potentially present in your project footprint, each with its federal status
+            (Endangered / Threatened / Proposed / Candidate). For fiber projects: flag every bat
+            species and any bird species with nesting-season restrictions. Presence on the list
+            is based on range maps and habitat models — it does not confirm the species is in
+            your corridor, but it triggers the need for further analysis.
+          </li>
+          <li>
+            <strong>Critical Habitat</strong> — Areas designated by USFWS as essential to the
+            conservation of a listed species. Crossing designated critical habitat with a
+            BEAD-funded project triggers a higher level of ESA scrutiny than simply having
+            species present — informal consultation almost certainly becomes formal consultation.
+            Check the IPaC map layers against your route alignment.
+          </li>
+          <li>
+            <strong>Activity-Specific Guidance</strong> — For each listed species in your
+            footprint, IPaC provides guidance organized by project activity (tree clearing,
+            ground disturbance, aerial construction, etc.). This is the most actionable output.
+            For bat species: look for the tree-clearing guidance — it states the avoidance
+            window (typically April 1–October 31), the buffer distance from roost trees if
+            applicable, and whether informal or formal consultation is recommended.
+          </li>
+          <li>
+            <strong>Consultation Recommended flag</strong> — IPaC flags species-activity
+            combinations where standard avoidance is insufficient and contact with the USFWS
+            field office is recommended. This does not mean automatic formal Section 7
+            consultation — it means you should call the field office to confirm whether
+            informal consultation (NLA concurrence letter) is achievable, or whether formal
+            consultation is required.
+          </li>
+          <li>
+            <strong>"Not Likely to Adversely Affect" screen result</strong> — The IPaC DKey
+            may return an NLA determination based on your project description and committed
+            avoidance measures. This is a screening determination, NOT a formal USFWS
+            concurrence. For BEAD compliance documentation, you generally need a written NLA
+            concurrence letter from the USFWS field office — not just the IPaC screen result.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
