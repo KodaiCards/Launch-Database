@@ -22,7 +22,6 @@ export const meta = {
     'MGN',
     'IBT',
     'GES',
-    'NESC',
     'NEC',
     'TIA',
     'FOA',
@@ -39,14 +38,8 @@ export const meta = {
     'FTTH',
     'GPON',
     'XGS-PON',
-    'OLT',
-    'ONT',
-    'FDH',
-    'NAP',
-    'PE',
     'HDD',
     'PVC',
-    'HDPE',
     'LOTO',
     'PPE',
     'NEPA',
@@ -113,7 +106,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OS2</td>
               <td className="px-3 py-2">Optical Single-mode, class 2</td>
-              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.D SMF. OS2 = the single-mode fiber spec used in OSP and backbone. OS1 = older, looser-spec SMF (rare in modern deployments).</td>
+              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.D SMF — the tightest ITU-T single-mode spec, standard for modern OSP and backbone deployments. OS1 maps to G.652.A/B/C (earlier, slightly looser SMF specs, rare in new installations). When a project calls out OS2, it requires G.652.D-compliant fiber.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">ADSS</td>
@@ -255,7 +248,12 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">HDPE</td>
               <td className="px-3 py-2">High-Density Polyethylene</td>
-              <td className="px-3 py-2">The plastic used for OSP cable outer jackets and conduit. HDPE resists UV radiation, moisture, and chemical exposure. OSP fiber conduit is typically Schedule 40 PVC or HDPE; innerduct is often corrugated HDPE.</td>
+              <td className="px-3 py-2">A rigid thermoplastic used for OSP conduit and cable outer jackets. Resists UV radiation, moisture, and chemical exposure. OSP fiber conduit is typically Schedule 40 PVC or HDPE; innerduct inside conduit is often corrugated HDPE.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">PVC</td>
+              <td className="px-3 py-2">Polyvinyl Chloride</td>
+              <td className="px-3 py-2">A rigid thermoplastic used for OSP conduit (Schedule 40 or Schedule 80 PVC). Less expensive than HDPE for straight runs; more common in urban underground installations. Not UV-rated for above-ground exposure — use HDPE for pole-mounted or exposed risers.</td>
             </tr>
           </tbody>
         </table>
@@ -369,6 +367,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
           { id: 'T01-L08-FC-hdd', front: 'HDD', back: 'Horizontal Directional Drilling — boring conduit underground horizontally without open-cut trenching. Used under roads, rivers, and other obstructions.' },
           { id: 'T01-L08-FC-loto', front: 'LOTO', back: 'Lockout/Tagout — OSHA 1910.147 procedure for de-energizing and locking out equipment before working near it. Required near energized conductors.' },
           { id: 'T01-L08-FC-adss', front: 'ADSS', back: 'All-Dielectric Self-Supporting — aerial fiber cable with no metallic components; strength members built in; no separate messenger or grounding required.' },
+          { id: 'T01-L08-FC-pvc', front: 'PVC', back: 'Polyvinyl Chloride — rigid thermoplastic used for underground OSP conduit (Schedule 40 or 80). Economical for buried straight runs. Not UV-rated for above-ground or pole-mounted exposure; use HDPE for exposed risers.' },
           { id: 'T01-L08-FC-nepa', front: 'NEPA', back: 'National Environmental Policy Act — requires environmental review of federally funded projects. RUS-funded fiber projects require NEPA CE (Categorical Exclusion) compliance.' },
           { id: 'T01-L08-FC-smf', front: 'SMF', back: 'Single-Mode Fiber — 9 µm core, one propagation mode, used in all OSP long-distance runs. ITU-T G.652.D is the dominant OSP SMF spec.' },
           { id: 'T01-L08-FC-fdh', front: 'FDH', back: 'Fiber Distribution Hub — where feeder fiber connects to distribution cables via passive optical splitters. The junction of an FTTH network.' },
