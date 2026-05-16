@@ -23,6 +23,7 @@ export const meta = {
     'split fiber',
     'gel-free splice enclosure',
     'organizer tray',
+    'NEC §770.26',
   ],
   key_terms: [
     {
@@ -48,6 +49,10 @@ export const meta = {
     {
       term: 'organizer tray',
       definition: 'A removable tray inside an FOSC or splice organizer that holds individual fusion splices, coils excess fiber, and protects heat-shrink splice protectors. Standard tray capacities: 12 or 24 splices. Each tray typically holds 12 splice protectors in a comb, with storage wheels on each side for excess fiber coiling. When a splice organizer is full, additional capacity is added by adding trays or adding a second organizer.',
+    },
+    {
+      term: 'NEC §770.26',
+      definition: 'The section of the National Electrical Code (NFPA 70-2023) that governs the transition from outside-plant (OSP) optical fiber cable to inside-plant (plenum or riser) cable at building entry. NEC §770.26 requires that OSP cable entering a building must transition to listed inside-plant cable within 50 feet of the point of entry. The 50-foot distance is measured from the point where the cable crosses the building boundary (wall, floor sleeve, or conduit entry into the building structure). Beyond 50 feet inside the building, OSP-grade gel-filled loose-tube cable is not permitted without additional protection. This is the code basis for the MEF-to-ODF cable transition that every CO or hut building-entry design must specify.',
     },
   ],
   vocabulary_assumed: [
@@ -144,6 +149,11 @@ export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {
               front: 'What is an organizer tray?',
               back: 'A removable tray inside an FOSC or splice organizer holding individual fusion splices, coiled excess fiber, and heat-shrink splice protectors. Standard: 12 or 24 splices per tray. Added as capacity grows.',
             },
+            {
+              id: 'T19-L08-fc-nec-770-26',
+              front: 'What does NEC §770.26 require at a building entry?',
+              back: 'OSP (outside-plant) optical fiber cable entering a building must transition to listed inside-plant cable (plenum or riser rated) within 50 feet of the point of building entry. Beyond 50 feet inside the building, OSP-grade gel-filled loose-tube cable is not permitted without additional protection. This is the code basis for the MEF-to-ODF cable transition the OSP engineer must specify on every building-entry drawing. (NEC NFPA 70-2023 Art. 770.26)',
+            },
           ]}
         />
       </section>
@@ -213,6 +223,33 @@ export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {
             event. The splice matrix and the FOSC design must be in precise agreement.
           </li>
         </ul>
+
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-1">NEC §770.26 — The 50-Foot Building-Entry Rule</p>
+          <p className="text-slate-300/90">
+            <strong>Book (NEC NFPA 70-2023 Art. 770.26):</strong> Outside-plant optical fiber cable
+            entering a building must transition to listed inside-plant cable (listed for plenum or riser
+            use, as appropriate) within 50 feet of the point where the cable enters the building.
+            The 50-foot measurement starts at the building boundary — where the conduit passes through
+            the foundation wall or floor slab. Beyond 50 feet, OSP-grade gel-filled loose-tube cable
+            is not permitted inside the building without additional protective raceway or specific
+            listed protection.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Why it matters for the OSP engineer:</strong> If the MEF (building entry) is 60 feet
+            from the ODF rack, you cannot run OSP gel-filled cable that entire distance. The OSP cable
+            must transition to listed inside-plant cable within the first 50 feet — typically using a
+            rack-mount FOSC or splice organizer in or immediately adjacent to the MEF, where the OSP
+            cable is broken out and pigtail-spliced to listed inside-plant fiber. This transition point
+            location must be specified on the building-entry design drawing.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field:</strong> In rural huts where the conduit entry is 3 feet from the ODF, the
+            50-foot rule is met automatically. In larger COs where the MEF is at one end of the building
+            and the ODF room is at the other, the 50-foot rule is a real design constraint. Always measure
+            the conduit-entry-to-ODF distance on the floor plan before specifying cable routing.
+          </p>
+        </div>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field — Gel-Free FOSCs in OSP</p>
@@ -332,6 +369,22 @@ export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {
             answerDisplay: '12 or 24',
             explanation:
               'Standard splice tray capacities are 12 or 24 splices. 12-splice trays are smaller and fit in compact enclosures; 24-splice trays increase density in larger rack-mount organizers. Tray type and quantity determine the total splice capacity of the enclosure. For a 144-fiber cable, you need either 12 × 12-splice trays = 144 positions, or 6 × 24-splice trays = 144 positions.',
+          },
+          {
+            id: 'T19-L08-Q5',
+            type: 'mc',
+            prompt:
+              'A CO building has its conduit entry (MEF) on the south wall and the ODF rack on the north side of the equipment room — 65 feet away. An OSP engineer specifies running the gel-filled OSP feeder cable the full 65 feet from the MEF to the ODF rack before terminating. What NEC code requirement does this violate?',
+            choices: [
+              'NEC Art. 250.94 — requires the IBT to be within 50 feet of the building entry',
+              'NEC §770.26 — OSP cable must transition to listed inside-plant cable within 50 feet of the building entry point. At 65 feet, the OSP cable exceeds the 50-foot limit without transitioning.',
+              'NEC Art. 230.70 — service entrance equipment must be located within 50 feet of the utility meter',
+              'NEC §770.26 does not apply to fiber optic cables — it applies only to coaxial cable and copper communications cable',
+            ],
+            answerIndex: 1,
+            explanation:
+              'NEC NFPA 70-2023 §770.26 requires OSP optical fiber cable to transition to listed inside-plant cable within 50 feet of the point of building entry. The transition is typically made at a rack-mount FOSC or splice organizer placed near the MEF — the OSP cable is broken out and pigtail-spliced to listed inside-plant fiber here. For a 65-foot MEF-to-ODF run, the transition point must be within the first 50 feet. Place the splice organizer at or before the 50-foot mark, then run listed plenum or riser cable the remaining distance to the ODF rack.',
+            citation: 'NEC NFPA 70-2023 Art. 770.26.',
           },
         ]}
       />
