@@ -104,9 +104,10 @@ export default function T01L03_PartsOfACable() {
         </p>
         <ol className="list-decimal pl-5 space-y-3 mt-2 text-slate-300/90">
           <li>
-            <strong>Outer jacket (sheath):</strong> Black HDPE (High-Density Polyethylene) for
+            <strong>Outer jacket (sheath):</strong> Black HDPE (High-Density Polyethylene) is the standard for
             direct-buried and aerial cable. HDPE resists UV radiation and moisture for 20–30
-            years without degrading. This is the only layer most people ever see on a cable reel.
+            years without degrading. Jacket color varies by application: black is standard for aerial and direct-buried OSP; orange or yellow jackets indicate conduit-application or LSZH (Low-Smoke Zero-Halogen) variants used in conduit systems where fire-smoke toxicity is a concern. If you encounter a non-black OSP cable, check the jacket print for the cable designation and rating.
+            This is the only layer most people ever see on a cable reel.
           </li>
           <li>
             <strong>Ripcord:</strong> A nylon string inside the jacket, typically orange or white.
