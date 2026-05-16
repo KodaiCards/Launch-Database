@@ -23,7 +23,6 @@ export const meta = {
   ],
   estimated_minutes: 30,
   vocabulary_introduced: [
-    'Rule 232',
     'Table 232-1',
     'traffic lane clearance',
     'pedestrian clearance',
