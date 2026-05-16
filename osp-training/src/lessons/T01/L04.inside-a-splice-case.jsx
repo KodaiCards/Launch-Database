@@ -55,7 +55,11 @@ export default function T01L04_InsideASpliceCase() {
           The cables enter through sealed openings (ports), the wires (fibers) are organized
           inside on trays, and the whole thing is locked up tight so moisture and contamination
           can't get to the connections. Except instead of wire nuts, fiber uses fusion splices —
-          glass-to-glass welds done with a precision machine.
+          glass-to-glass welds done with a precision fusion splicer machine. A <strong>fusion splice</strong>{' '}
+          is where two bare fiber ends are precisely aligned and permanently joined by an electric arc
+          that melts and fuses the glass together. The result is a near-invisible joint with very low
+          signal loss (typically under 0.1 dB). <em>(The fusion splicer machine, splicing technique,
+          and quality verification are covered in depth in T11.)</em>
         </p>
 
         <h3 className="mt-5 font-semibold">Acronyms and terms in this lesson</h3>
