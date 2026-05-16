@@ -7,7 +7,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
-import { Flashcard } from '../../components/Flashcard.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T19.L08',
