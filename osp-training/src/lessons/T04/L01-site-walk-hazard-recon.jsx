@@ -49,7 +49,7 @@ export const meta = {
     { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'make-ready', source_lesson_id: 'T01.L05' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'joint-use', source_lesson_id: 'T01.L02' },
     { term: 'clearance', source_lesson_id: 'T01.L02' },
     { term: 'RUS', source_lesson_id: 'T01.L01' },

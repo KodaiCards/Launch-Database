@@ -26,7 +26,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'drone', source_lesson_id: 'T04.L02' },
     { term: 'LiDAR', source_lesson_id: 'T04.L02' },
     { term: 'point cloud', source_lesson_id: 'T04.L02' },

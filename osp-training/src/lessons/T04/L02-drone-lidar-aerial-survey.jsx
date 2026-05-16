@@ -63,7 +63,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'photo log', source_lesson_id: 'T04.L01' },
     { term: 'hazard identification', source_lesson_id: 'T04.L01' },

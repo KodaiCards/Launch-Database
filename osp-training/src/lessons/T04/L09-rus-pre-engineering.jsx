@@ -28,7 +28,7 @@ export const meta = {
     { term: 'pole', source_lesson_id: 'T01.L02' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
-    { term: 'make-ready', source_lesson_id: 'T01.L02' },
+    { term: 'make-ready', source_lesson_id: 'T01.L05' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'photo log', source_lesson_id: 'T04.L01' },
     { term: 'existing utility', source_lesson_id: 'T04.L01' },
