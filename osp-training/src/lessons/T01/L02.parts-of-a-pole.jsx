@@ -350,7 +350,7 @@ export default function T01L02_PartsOfAPole() {
             label: 'Midspan / sag',
             type: 'click',
             explanation:
-              'At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC Rule 232 / Table 232-1 requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify with the adopted edition before design lock). A cable attached at 22 feet with 4 feet of sag gives 18 feet of ground clearance at midspan.',
+              'At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC Rule 232 / Table 232-1 requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify with the adopted edition before design lock). A cable attached at 22 feet with 4 feet of sag gives 18 feet of ground clearance at midspan — this is one example scenario. Actual sag varies with span length, cable weight (type and fiber count), temperature, and ice/wind loading; always calculate sag for each specific span using the installed cable\'s sag-tension tables.',
           },
         ]}
       />
