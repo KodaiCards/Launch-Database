@@ -35,9 +35,15 @@
 
 ---
 
+## Post-Fix RT Findings (from `2eb2961`)
+
+| ID | Severity | Finding | Status | Commit SHA |
+|----|----------|---------|--------|-----------|
+| F-RT-1 | MED | T07.L01 `vocabulary_assumed` entry for `sag` has `source_lesson_id: 'T05.L05'` — wrong; sag is introduced at T01.L02 (poles-and-spans), not T05.L05 | FIXED | `140cec8` |
+| F-RT-2 | HIGH | T05.L15 WorkedExample `sanityCheck` string values incorrect for configured inputs (RTS=3200, EDS=20%, w=0.280, OD=0.68, wind=9psf, L=200, attach=24): prior claimed 1.75ft/2.36ft/+6.14ft; correct is 2.19ft/4.55ft/+3.95ft | FIXED | `140cec8` |
+| F-RT-3 | HIGH | T05.L15 Q18 choice C answer mismatch: marked correct at ≈1.240 lb/ft but given inputs w=0.145, w_ice=0.821, w_wind=0.607 yield √(0.966²+0.607²)=√1.3016≈1.141 lb/ft (~8.7% error) | FIXED | `140cec8` |
+
 ## Verification Note
 
-Fix agent must:
-1. Paste `git log -N --format='%H %s'` after completing all commits
-2. Paste `git status` showing clean tree
-3. Update Status column above with actual SHAs before final push
+Post-fix RT commit: `140cec8`
+Tree clean after push. All three F-RT findings resolved in single commit.
