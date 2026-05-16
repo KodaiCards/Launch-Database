@@ -186,6 +186,36 @@ export default function T05L02_VerticalClearanceRule232() {
           for pedestrian-only areas. Confirm from NESC C2-2023 Table 232-1 for your design.
         </div>
 
+        <div className="mt-4 p-4 border border-red-400/30 bg-red-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-red-300 mb-1">Book vs. Field — FHWA 14 ft vs. NESC 15.5 ft: A Critical Distinction</p>
+          <p className="text-slate-300/90">
+            <strong>The confusion:</strong> When you pull a DOT or county road-crossing permit, the permit
+            review often references FHWA (Federal Highway Administration) clearance standards — and the
+            FHWA standard truck clearance for overhead signs, bridges, and structures is typically
+            <strong> 14 ft</strong>. A designer who sees "14 ft FHWA standard" on a permit review letter
+            might think the cable only needs 14 ft of clearance above the road.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Book (NESC):</strong> NESC Rule 232 governs the clearance for communication cable
+            attachments — and the NESC minimum is <strong>approximately 15.5 ft</strong> over motor-vehicle
+            roadways. NESC is the controlling standard for the cable, not the DOT permit.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field reality:</strong> DOT permit reviewers check whether your structure meets
+            the highway clearance envelope (14 ft for vehicles). That is a different and separate
+            question from whether the cable meets NESC Rule 232 (15.5 ft for comm cables). Getting
+            DOT permit approval does NOT mean your design is NESC-compliant. You need 15.5 ft from
+            NESC, not 14 ft from the DOT permit.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Risk:</strong> A cable hung at 14.5 ft clears the FHWA truck envelope and gets
+            the DOT permit — but it violates NESC Rule 232. The ILA with the pole owner will require
+            NESC compliance, and an independent inspector can cite you even after the DOT permit was
+            issued. The cable is too low. Add 1.5 ft + your design margin (1–2 ft) above 14 ft and
+            you're in the right neighborhood for NESC.
+          </p>
+        </div>
+
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field — The 1–2 ft design margin</p>
           <p className="text-slate-300/90">

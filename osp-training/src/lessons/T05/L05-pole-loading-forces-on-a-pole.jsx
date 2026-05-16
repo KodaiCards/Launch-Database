@@ -219,7 +219,7 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
             { id: 'T05-L05-fc-windspan', front: 'What is wind span and how is it calculated for a running pole?', back: 'Wind span is the horizontal distance used to calculate wind-induced force on the cables at a given pole. For a running pole: wind span = (half the left-side span) + (half the right-side span) = average of the two adjacent spans.' },
             { id: 'T05-L05-fc-deadend', front: 'Why do dead-end poles carry much more horizontal load than running poles?', back: 'At a dead-end pole, cable tension only pulls from one direction — there\'s no equal pull from the opposite side to cancel it. The full unbalanced cable tension becomes a horizontal load on the pole. Running poles have equal tension from both sides, so the tensions cancel and wind becomes the dominant horizontal force.' },
             { id: 'T05-L05-fc-guying', front: 'What is guying and why is it used?', back: 'Guying is a steel wire (and anchor) used to counteract the horizontal pull at a dead-end or corner pole. The guy wire runs from the pole to a buried anchor, providing lateral support so a lighter pole class can be used than would be required without guying.' },
-            { id: 'T05-L05-fc-tipload', front: 'What is pole tip load and how is it used in design?', back: 'Pole tip load is the calculated equivalent lateral force at the pole tip representing the total horizontal loading. It\'s compared to the pole\'s rated fiber strength (from ANSI O5.1-2022) to confirm the pole class is adequate. Pole class selection is basically: calculated tip load < rated fiber strength × strength factor.' },
+            { id: 'T05-L05-fc-tipload', front: 'What is pole tip load and how is it used in design?', back: 'Pole tip load is the calculated equivalent lateral force at the pole tip representing the total horizontal loading. It\'s compared to the pole\'s rated fiber strength (from ANSI O5.1 [confirm edition]) to confirm the pole class is adequate. Pole class selection is basically: calculated tip load < rated fiber strength × strength factor.' },
           ]}
         />
       </section>
@@ -335,9 +335,9 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
             The pole must resist the resultant of all cable wind forces × their heights above
             ground (the bending moment at the groundline). For a pole with 10 cables at
             varying heights, you sum each cable's contribution. The total bending moment is
-            compared to the pole's rated fiber strength at the groundline (from ANSI O5.1-2022,
+            compared to the pole's rated fiber strength at the groundline (from ANSI O5.1 [confirm edition];
             approximately 4,500 lb for a Class 1 southern yellow pine pole at 2 ft from top;
-            approximately 3,000 lb for Class 3 — confirm from ANSI O5.1-2022 for your design).
+            approximately 3,000 lb for Class 3 — confirm from ANSI O5.1 [confirm edition] for your design).
             Pole-loading software does this calculation automatically — but you need to know
             which loading district you're in and which grade applies before you enter the inputs.
           </p>

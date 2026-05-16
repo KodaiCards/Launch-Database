@@ -392,6 +392,30 @@ export default function T05L01_WhatNESCIsAndHowToReadIt() {
           for each state where you regularly work.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Georgia-Specific: GA PSC Rule 515-2-9-.05</p>
+          <p className="text-slate-300/90">
+            For projects in Georgia — including Macon, GA and surrounding jurisdictions — the
+            controlling state rule is <strong>Georgia PSC (Public Service Commission) Rule 515-2-9-.05</strong>,
+            which adopts the NESC by reference as the safety standard for utility construction in
+            the state. This means NESC compliance is not merely a professional standard in Georgia;
+            it has the force of state regulation under PSC Rule 515-2-9-.05.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            The GA PSC website (psc.ga.gov) publishes the current adopted rules. Before any aerial
+            design job in Georgia, confirm: (1) which NESC edition GA PSC has adopted by reference,
+            and (2) whether the pole owner's attachment standards add any stricter requirements on
+            top of the NESC baseline. The PSC rule is the floor; the pole owner may set a higher bar.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Practical note:</strong> On RUS-program jobs in Georgia (PSC's primary project
+            type), the RUS engineering requirements layer on top of the NESC and GA PSC Rule —
+            RUS 1751F-630 governs the engineering standards for RUS-funded construction, and those
+            must also be met. When NESC, GA PSC Rule, and RUS all apply, the most stringent requirement
+            on any given element governs.
+          </p>
+        </div>
+
         <h3 className="mt-5 font-semibold">When the NESC and the NEC conflict</h3>
         <p>
           The <strong>NEC</strong> (National Electrical Code — NFPA 70) governs
