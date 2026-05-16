@@ -23,12 +23,22 @@
  */
 
 // ── General learning topics (18 topics) ────────────────────────────────────
+//
+// available: true  → tile is clickable on Splash; lessons are authored and wired
+// available: false → tile shows "Coming Soon" on Splash; not yet authored
+//
+// Topics authored and available as of production cut 2026-05-16:
+//   T01, T02, T03, T04, T05, T06, T07, T08, T09, T18, T19
+// Topics not yet authored (coming soon):
+//   T14, T10, T11, T12, T13, T15, T16, T17
+//
 export const courses = [
   // ── Teaching position 1 ──────────────────────────────────────────────────
   {
     id: 'T01',
     title: 'Fundamentals & Vocabulary',
     section: 'general',
+    available: true,
     estimated_minutes: 195,   // 10 lessons × ~20 min avg
     lesson_count: 10,
     prerequisites: [],        // root — no prereqs
@@ -40,6 +50,7 @@ export const courses = [
     id: 'T18',
     title: 'Safety & OSHA',
     section: 'general',
+    available: true,
     estimated_minutes: 240,   // 10 lessons × ~24 min avg (safety = longer)
     lesson_count: 10,
     prerequisites: ['T01'],
@@ -51,6 +62,7 @@ export const courses = [
     id: 'T02',
     title: 'Fiber Physics',
     section: 'general',
+    available: true,
     estimated_minutes: 350,   // 13 lessons × ~27 min avg (T02.L07b long-haul awareness added 2026-05-16)
     lesson_count: 13,
     prerequisites: ['T01'],
@@ -62,6 +74,7 @@ export const courses = [
     id: 'T03',
     title: 'Cable Selection & Materials',
     section: 'general',
+    available: true,
     estimated_minutes: 340,   // 13 lessons × ~26 min avg (T03.L05b OM-grade cable products added 2026-05-16)
     lesson_count: 13,
     prerequisites: ['T01', 'T02'],
@@ -73,6 +86,7 @@ export const courses = [
     id: 'T04',
     title: 'Route Survey & Pre-Engineering',
     section: 'general',
+    available: true,
     estimated_minutes: 240,   // 10 lessons × ~24 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T18'],
@@ -84,6 +98,7 @@ export const courses = [
     id: 'T09',
     title: 'Permitting & Environmental',
     section: 'general',
+    available: true,
     estimated_minutes: 315,   // 12 lessons × ~26 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T04'],
@@ -95,6 +110,7 @@ export const courses = [
     id: 'T05',
     title: 'OSP Design — Aerial',
     section: 'general',
+    available: true,
     estimated_minutes: 425,   // 15 lessons × ~28 min avg
     lesson_count: 15,
     prerequisites: ['T01', 'T02', 'T03', 'T04'],
@@ -106,6 +122,7 @@ export const courses = [
     id: 'T06',
     title: 'OSP Design — Underground',
     section: 'general',
+    available: true,
     estimated_minutes: 320,   // 12 lessons × ~27 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T03', 'T04'],
@@ -118,6 +135,7 @@ export const courses = [
     id: 'T19',
     title: 'Headend / CO + Rack-Side Hardware Basics',
     section: 'general',
+    available: true,
     estimated_minutes: 230,   // 10 lessons × ~23 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T05', 'T06', 'T18'],
@@ -129,6 +147,7 @@ export const courses = [
     id: 'T14',
     title: 'Bonding, Grounding & Electrical Protection',
     section: 'general',
+    available: false,
     estimated_minutes: 310,   // 12 lessons × ~26 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T02', 'T05', 'T06', 'T18', 'T19'],  // T19 added: T14.L05 assumes primary protector/IBT-entry/GES-tie-in from T19.L06
@@ -140,6 +159,7 @@ export const courses = [
     id: 'T07',
     title: 'Staking',
     section: 'general',
+    available: true,
     estimated_minutes: 245,   // 10 lessons × ~24 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T04', 'T05', 'T06', 'T18'],
@@ -151,6 +171,7 @@ export const courses = [
     id: 'T08',
     title: 'Make-Ready & Pole Attachment',
     section: 'general',
+    available: true,
     estimated_minutes: 310,   // 12 lessons × ~26 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T05', 'T07'],
@@ -162,6 +183,7 @@ export const courses = [
     id: 'T10',
     title: 'OSP Construction',
     section: 'general',
+    available: false,
     estimated_minutes: 315,   // 12 lessons × ~26 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T06', 'T07', 'T08', 'T18'],
@@ -173,6 +195,7 @@ export const courses = [
     id: 'T11',
     title: 'Splicing',
     section: 'general',
+    available: false,
     estimated_minutes: 400,   // 15 lessons × ~27 min avg
     lesson_count: 15,
     prerequisites: ['T01', 'T02', 'T03', 'T10'],
@@ -184,6 +207,7 @@ export const courses = [
     id: 'T12',
     title: 'Testing — OLTS, OTDR, Inspection',
     section: 'general',
+    available: false,
     estimated_minutes: 415,   // 15 lessons × ~28 min avg
     lesson_count: 15,
     prerequisites: ['T01', 'T02', 'T11'],
@@ -195,6 +219,7 @@ export const courses = [
     id: 'T13',
     title: 'Inspection & Quality Assurance',
     section: 'general',
+    available: false,
     estimated_minutes: 250,   // 10 lessons × ~25 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T05', 'T10', 'T12', 'T18'],
@@ -206,6 +231,7 @@ export const courses = [
     id: 'T15',
     title: 'Restoration & Outage Response',
     section: 'general',
+    available: false,
     estimated_minutes: 250,   // 10 lessons × ~25 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T11', 'T12', 'T13'],
@@ -217,6 +243,7 @@ export const courses = [
     id: 'T16',
     title: 'As-Built Documentation & GIS',
     section: 'general',
+    available: false,
     estimated_minutes: 255,   // 10 lessons × ~25 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T10', 'T11', 'T13', 'T15'],
@@ -228,6 +255,7 @@ export const courses = [
     id: 'T17',
     title: 'Project Estimation & Revenue',
     section: 'general',
+    available: false,
     estimated_minutes: 265,   // 10 lessons × ~26 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T05', 'T06', 'T08', 'T10', 'T16'],
@@ -244,6 +272,7 @@ export const courses = [
     id: 'C01',
     title: 'Networking Blueprints (RCDD prep)',
     section: 'cert',
+    available: false,
     estimated_minutes: 200,
     lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
     migrated: true,            // splash page renders "Coming in ISP Course" tile
@@ -255,6 +284,7 @@ export const courses = [
     id: 'C02',
     title: 'RCDD Core',
     section: 'cert',
+    available: false,
     estimated_minutes: 200,
     lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
     migrated: true,
@@ -266,6 +296,7 @@ export const courses = [
     id: 'C03',
     title: 'Data Center Standards',
     section: 'cert',
+    available: false,
     estimated_minutes: 200,
     lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
     migrated: true,
@@ -279,6 +310,7 @@ export const courses = [
     id: 'C04',
     title: 'Practice Exam Bank',
     section: 'cert',
+    available: false,
     estimated_minutes: 300,   // 12 lessons × ~25 min avg
     lesson_count: 12,
     prerequisites: [],         // access controlled per certTracks[].required_topics, not course-level prereqs
@@ -393,18 +425,112 @@ export const lessonFileIndex = {
   // On-disk filenames T03.L06–L12 are unchanged.
   // 'T03.L05b': '../lessons/T03/L05b.multimode-om-cable-products.jsx',  // ← populated when authored
 
+  // ── T04 Route Survey & Pre-Engineering ────────────────────────────────────
+  'T04.L01': '../lessons/T04/L01-site-walk-hazard-recon.jsx',
+  'T04.L02': '../lessons/T04/L02-drone-lidar-aerial-survey.jsx',
+  'T04.L03': '../lessons/T04/L03-gis-landbase-coordinate-systems.jsx',
+  'T04.L04': '../lessons/T04/L04-pole-audit-attachment-measurement.jsx',
+  'T04.L05': '../lessons/T04/L05-route-alternatives-comparison.jsx',
+  'T04.L06': '../lessons/T04/L06-kmz-shapefile-pdf-deliverables.jsx',
+  'T04.L07': '../lessons/T04/L07-47-cfr-32-record-keeping.jsx',
+  'T04.L08': '../lessons/T04/L08-handoff-to-design.jsx',
+  'T04.L09': '../lessons/T04/L09-rus-pre-engineering.jsx',
+  'T04.L10': '../lessons/T04/L10-t04-capstone-quiz.jsx',
+
+  // ── T05 OSP Design — Aerial ───────────────────────────────────────────────
+  'T05.L01': '../lessons/T05/L01-what-nesc-is-and-how-to-read-it.jsx',
+  'T05.L02': '../lessons/T05/L02-vertical-clearance-rule-232.jsx',
+  'T05.L03': '../lessons/T05/L03-comm-to-supply-separation-rule-235.jsx',
+  'T05.L04': '../lessons/T05/L04-grades-of-construction.jsx',
+  'T05.L05': '../lessons/T05/L05-pole-loading-forces-on-a-pole.jsx',
+  'T05.L06': '../lessons/T05/L06-loading-districts-rule-250.jsx',
+  'T05.L07': '../lessons/T05/L07-sag-tension-how-cable-hangs.jsx',
+  'T05.L08': '../lessons/T05/L08-joint-use-who-owns-what-on-the-pole.jsx',
+  'T05.L09': '../lessons/T05/L09-otmr-in-aerial-design.jsx',
+  'T05.L10': '../lessons/T05/L10-adss-aerial-design.jsx',
+  'T05.L11': '../lessons/T05/L11-opgw-and-hybrid-cables.jsx',
+  'T05.L12': '../lessons/T05/L12-pon-ftth-aerial-topology.jsx',
+  'T05.L13': '../lessons/T05/L13-make-ready-in-the-design.jsx',
+  'T05.L14': '../lessons/T05/L14-aerial-design-qa-checklist.jsx',
+  'T05.L15': '../lessons/T05/L15.t05-capstone-quiz.jsx',
+
+  // ── T06 OSP Design — Underground ─────────────────────────────────────────
+  'T06.L01': '../lessons/T06/L01-hdd-vs-open-cut-vs-plowing.jsx',
+  'T06.L02': '../lessons/T06/L02-burial-depth-rules.jsx',
+  'T06.L03': '../lessons/T06/L03-conduit-and-innerduct-selection.jsx',
+  'T06.L04': '../lessons/T06/L04-conduit-fill-and-pull-tension.jsx',
+  'T06.L05': '../lessons/T06/L05-manhole-handhole-vault-sizing.jsx',
+  'T06.L06': '../lessons/T06/L06-separation-from-foreign-utilities.jsx',
+  'T06.L07': '../lessons/T06/L07-directional-boring-pilot-and-ream.jsx',
+  'T06.L08': '../lessons/T06/L08-riser-pedestal-and-niu-placement.jsx',
+  'T06.L09': '../lessons/T06/L09-nesc-underground-rules-sections-32-35.jsx',
+  'T06.L10': '../lessons/T06/L10-rus-1751f-643-innerduct-standard.jsx',
+  'T06.L11': '../lessons/T06/L11-underground-design-qa-checklist.jsx',
+  'T06.L12': '../lessons/T06/L12-t06-capstone-quiz.jsx',
+
+  // ── T07 Staking ───────────────────────────────────────────────────────────
+  'T07.L01': '../lessons/T07/L01-what-a-staker-does.jsx',
+  'T07.L02': '../lessons/T07/L02-reading-plans-in-the-field.jsx',
+  'T07.L03': '../lessons/T07/L03-photographing-and-coding-pole-tags.jsx',
+  'T07.L04': '../lessons/T07/L04-measuring-existing-attachments.jsx',
+  'T07.L05': '../lessons/T07/L05-staking-notes-rus-form-740.jsx',
+  'T07.L06': '../lessons/T07/L06-make-ready-data-collection.jsx',
+  'T07.L07': '../lessons/T07/L07-underground-staking-marking-the-route.jsx',
+  'T07.L08': '../lessons/T07/L08-katapult-and-gis-staking-tools.jsx',
+  'T07.L09': '../lessons/T07/L09-staking-qa-what-the-engineer-reviews.jsx',
+  'T07.L10': '../lessons/T07/L10-t07-capstone-quiz.jsx',
+
+  // ── T08 Make-Ready & Pole Attachment ──────────────────────────────────────
+  'T08.L01': '../lessons/T08/L01-otmr-vs-multi-party.jsx',
+  'T08.L02': '../lessons/T08/L02-the-15-day-clock.jsx',
+  'T08.L03': '../lessons/T08/L03-simple-vs-complex-attachment.jsx',
+  'T08.L04': '../lessons/T08/L04-transfer-moving-someone-elses-wire.jsx',
+  'T08.L05': '../lessons/T08/L05-reframe-adjusting-without-moving.jsx',
+  'T08.L06': '../lessons/T08/L06-pole-replacement-in-make-ready.jsx',
+  'T08.L07': '../lessons/T08/L07-reading-a-make-ready-estimate.jsx',
+  'T08.L08': '../lessons/T08/L08-attachment-fees-and-annual-rents.jsx',
+  'T08.L09': '../lessons/T08/L09-application-permit-inspection-path.jsx',
+  'T08.L10': '../lessons/T08/L10-as-built-notification-pole-owner.jsx',
+  'T08.L11': '../lessons/T08/L11-make-ready-as-pm-problem.jsx',
+  'T08.L12': '../lessons/T08/L12-t08-capstone-quiz.jsx',
+
+  // ── T09 Permitting & Environmental ────────────────────────────────────────
+  'T09.L01': '../lessons/T09/L01-the-permitting-layer-cake.jsx',
+  'T09.L02': '../lessons/T09/L02-nepa-ce-ea-eis.jsx',
+  'T09.L03': '../lessons/T09/L03-section-106-historic-properties.jsx',
+  'T09.L04': '../lessons/T09/L04-esa-bats-ipac.jsx',
+  'T09.L05': '../lessons/T09/L05-usace-wetlands-nwp57.jsx',
+  'T09.L06': '../lessons/T09/L06-state-dot-encroachment-permits.jsx',
+  'T09.L07': '../lessons/T09/L07-row-easements-private-property.jsx',
+  'T09.L08': '../lessons/T09/L08-municipal-row-timelines-reality.jsx',
+  'T09.L09': '../lessons/T09/L09-tribal-coordination-thpo-nho.jsx',
+  'T09.L10': '../lessons/T09/L10-permit-tracking-pm-problem.jsx',
+  'T09.L11': '../lessons/T09/L11-rus-environmental-review.jsx',
+  'T09.L12': '../lessons/T09/L12-t09-capstone-quiz.jsx',
+
+  // ── T18 Safety & OSHA ─────────────────────────────────────────────────────
+  'T18.L01': '../lessons/T18/L01-hazard-awareness-risk-hierarchy.jsx',
+  'T18.L02': '../lessons/T18/L02-lockout-tagout-loto.jsx',
+  'T18.L03': '../lessons/T18/L03-confined-space-entry.jsx',
+  'T18.L04': '../lessons/T18/L04-fall-protection-poles-aerial-lifts.jsx',
+  'T18.L05': '../lessons/T18/L05-ppe-hands-head-eyes-feet.jsx',
+  'T18.L06': '../lessons/T18/L06-traffic-control-flagging.jsx',
+  'T18.L07': '../lessons/T18/L07-working-near-energized-conductors.jsx',
+  'T18.L08': '../lessons/T18/L08-hazardous-materials-osp.jsx',
+  'T18.L09': '../lessons/T18/L09-incident-reporting-osha-300.jsx',
+  'T18.L10': '../lessons/T18/L10-t18-capstone-quiz.jsx',
+
   // ── T19 Headend / CO + Rack-Side Hardware Basics ─────────────────────────
-  // Populated by T19 authoring agent in OSP-RW.4/5.
-  // 'T19.L01': '../lessons/T19/L01.co-hut-headend-layout.jsx',
-  // 'T19.L02': '../lessons/T19/L02.olt-cmts-as-black-boxes.jsx',
-  // 'T19.L03': '../lessons/T19/L03.48vdc-power-plant.jsx',
-  // 'T19.L04': '../lessons/T19/L04.battery-backup-generator.jsx',
-  // 'T19.L05': '../lessons/T19/L05.hvac-fire-suppression.jsx',
-  // 'T19.L06': '../lessons/T19/L06.headend-grounding-boundary.jsx',
-  // 'T19.L07': '../lessons/T19/L07.rack-side-patch-panels-liu.jsx',
-  // 'T19.L08': '../lessons/T19/L08.fosc-splice-enclosures.jsx',
-  // 'T19.L09': '../lessons/T19/L09.fdh-internals.jsx',
-  // 'T19.L10': '../lessons/T19/L10.t19-capstone-quiz.jsx',
+  'T19.L01': '../lessons/T19/L01.co-hut-headend-layout.jsx',
+  'T19.L02': '../lessons/T19/L02.olt-and-cmts-as-black-boxes.jsx',
+  'T19.L03': '../lessons/T19/L03.minus-48vdc-power-plant.jsx',
+  'T19.L04': '../lessons/T19/L04.battery-backup-and-generator-transfer.jsx',
+  'T19.L05': '../lessons/T19/L05.hvac-and-fire-suppression-awareness.jsx',
+  'T19.L06': '../lessons/T19/L06.headend-grounding-osp-mgn-terminates.jsx',
+  'T19.L07': '../lessons/T19/L07.rack-side-hardware-patch-panels-liu.jsx',
+  'T19.L08': '../lessons/T19/L08.fosc-and-splice-enclosures-in-headend.jsx',
+  'T19.L09': '../lessons/T19/L09.fdh-internals-beyond-the-box.jsx',
+  'T19.L10': '../lessons/T19/L10.t19-capstone-quiz.jsx',
 
   // ── Additional topics populated by authoring agents in OSP-RW.4/5 ────────
   // NOTE: Each authoring agent MUST add their lesson entries here as part of

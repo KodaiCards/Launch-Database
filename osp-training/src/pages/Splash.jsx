@@ -44,10 +44,54 @@ function ctaLabel(pct) {
   return 'Continue';
 }
 
+// ── Locked tile (coming soon) ───────────────────────────────────────────────
+function LockedCourseTile({ course }) {
+  const isMigrated = course.migrated === true;
+  const badge = isMigrated ? 'Coming in ISP Course' : 'Coming Soon';
+
+  return (
+    <div
+      className="block panel opacity-50 cursor-not-allowed select-none"
+      aria-disabled="true"
+      role="article"
+    >
+      <div className="flex items-start gap-4">
+        <svg width="40" height="40" className="shrink-0" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="white" strokeOpacity="0.08" strokeWidth="3" />
+          <text x="20" y="24" textAnchor="middle" fontSize="14" fill="white" fillOpacity="0.25">🔒</text>
+        </svg>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-mono text-xs text-slate-500">{course.id}</span>
+            <h3 className="text-base font-semibold text-slate-400 truncate">
+              {course.title}
+            </h3>
+          </div>
+          <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{course.description}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+            <span>{course.lesson_count} lessons</span>
+            <span>&middot;</span>
+            <span>{Math.round(course.estimated_minutes / 60 * 10) / 10} hr</span>
+          </div>
+        </div>
+
+        <span className="shrink-0 text-xs font-semibold px-3 py-1 rounded-full border self-center border-slate-600/40 text-slate-500 bg-slate-800/20">
+          {badge}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Course tile ─────────────────────────────────────────────────────────────
 function CourseTile({ course, progressPct }) {
   const cta = ctaLabel(progressPct);
   const completed = progressPct === 100;
+
+  if (course.available === false) {
+    return <LockedCourseTile course={course} />;
+  }
 
   return (
     <Link
