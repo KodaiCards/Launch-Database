@@ -753,14 +753,23 @@ Carter's verbatim 2026-05-16: "You need to log lessons as you learn things, like
   - **Cost model:** Sonnet audit/RT ~75-160K per round; saturation across 3-5 rounds ~500-800K per high-stakes topic. For million-dollar-grade curriculum compressing 10 years of OSP knowledge, correct trade.
   - **Empirical validation:** T05 audit (R-1/R-2/R-3 each found largely non-overlapping items) + T05 post-fix 1-RT-vs-2-RT (2-RT caught 4 NEW bugs single missed) + T18 R-1→R-2 each caught DIFFERENT HIGH safety bugs.
   - **Carter verbatim:** *"keep digging until we don't find more"* + *"don't let this rule override the initial 3 researchers and 2 RT we need at start."* + *"When there's errors of any kind on this project we fix them immediately, we don't defer or polish later. We build verify polish then move up."*
-- **WAVE COMPLETION DISCIPLINE — build, verify, polish, THEN move up (locked 2026-05-16, Carter).** Polish Queue is NOT a defer-across-waves parking lot. Polish is a STAGE INSIDE each topic's wave. Sequence per topic:
-  1. **Build** — author/fix per canonical
-  2. **Verify** — 2-RT pair (saturate per rule above)
-  3. **Polish** — fix every remaining LOW item the verify stage surfaced — IN THE SAME WAVE
-  4. **Final verify** — RT pair on the polished state confirms clean
-  5. **Move up** — only NOW does the orchestrator move to next topic
-  - **Existing Polish Queue items (§4 P2-P7):** these are deferred-across-waves items from the old (wrong) model. Each MUST be picked up in the NEXT wave that touches its topic. P2 + P4 are T05 → fold into current T05 wave's polish stage. P5 → T08 wave's polish. P6 + P7 → T02/T03 next polish opportunity.
-  - **No "next pass" / "future polish" framing.** A topic is not closed until every error found is fixed. Period.
+- **WAVE COMPLETION DISCIPLINE — build, verify, polish, final-verify, THEN move up (locked 2026-05-16, Carter).** Polish Queue is NOT a defer-across-waves parking lot. Polish is a STAGE INSIDE each topic's wave with its own DEDICATED agent role.
+  1. **Build** — fresh fix-agent, broad scope, author or fix per canonical (~100-160K Sonnet)
+  2. **Verify** — 2-RT pair, saturate per rule above
+  3. **Polish** — **fresh agent (NEW formal roster role, NOT the build fix-agent)**, narrow scope, polish-specific framing. Picks up remaining LOWs + cosmetic items + Polish Queue back-fill + neighborhood pattern scan. Fresh eyes = no "I wrote this, it's fine" blindness. ~60-100K Sonnet. Carter's lock 2026-05-16: *"Would it be beneficial to have a separate agent polish? Should be cheap and won't have any blindness."* Same logic as RT being separate from fix-agent.
+  4. **Final verify** — 2-RT pair on polished state, saturate per rule
+  5. **Move up** — only NOW does orchestrator move to next topic
+  - **Polish agent prompt template** must differ from build fix-agent: focus on "remaining LOWs + cosmetic + neighborhood pattern scan + Polish Queue back-fill items in this topic" — NOT "fix the big stuff" mental model. Forces different cognitive lens.
+  - **Existing Polish Queue items (§4 P2-P8 currently):** deferred-across-waves under old (wrong) model. Each MUST be picked up in the NEXT polish stage of a wave touching its topic. P2 + P4 + P8 are T05 → folded into current T05 polish stage. P5 → T08. P6 + P7 → T02/T03 retroactive audits.
+  - **No "next pass" / "future polish" framing.** A topic is not closed until every error found is fixed.
+- **Roster formalization (locked 2026-05-16):** five distinct agent roles, distinct framings:
+  1. Research/audit — saturate per rule
+  2. Build fix-agent — initial canonical application
+  3. Verify RT pair — saturate per rule
+  4. Polish agent — narrow scope, fresh eyes, dedicated framing
+  5. Final-verify RT pair — saturate per rule
+
+  All Sonnet by default. Orchestrator can upgrade individual roles to Opus for genuinely intricate trade-off reasoning waves; downgrade to Haiku only for structured-extraction-class subtasks per directive 22.
 - **2-RT pair default for ALL post-fix waves (locked 2026-05-16, supersedes RT-class-differentiation cut).** No pure-patch carveout. Single combined-framing RT was a false economy — Carter: *"If your 1 RT caught stuff, wouldn't that make it likely there's more it didn't catch."* Pattern: finding bugs in RT = system had bugs = more may lurk with framings the single RT didn't apply. Empirical proof same session: T05 single-RT caught 3 bugs; subsequent 2-RT pair caught 4 MORE. Every post-fix wave gets ≥2 RT with DIFFERENT framings (pedagogy + technical). Cost ~+90-120K Sonnet per topic; cheap insurance.
 - **Fix-agents leave adjacent same-pattern bugs untouched when scope = exactly the canonical finding (2026-05-16 from T05 RT-A BUG-C).** F-RT-1 fix-agent fixed T07.L01 `sag→T01.L02` per canonical; same file had 3 OTHER wrong pointers (`span`, `attachment point`, `clearance` all pointing T05.L02 vs correct T01.L02). Standing rule: every fix-agent prompt includes *"after applying each fix, scan ±20 lines OR same vocabulary_assumed array for same-pattern bugs and surface in your closeout (do not fix unless instructed)."* Cheap insurance against shrapnel-pattern misses.
 - **Cross-topic DAG pointer errors are SYSTEMIC (codified 2026-05-16 after T01/T04/T05/T18 all surfacing same pattern).** T01→4 wrong, T04→5, T05→6 internal + 7 cross-topic into T07+T08, T18→4 cross-topic into T07+T04. Original-wave RTs all missed it because they audited topics in isolation. Standing rule for every retroactive audit: explicit cross-topic DAG sweep in scope (read downstream lessons' `vocabulary_assumed` for back-refs to this topic + verify each pointer's target lesson actually introduces the term).
