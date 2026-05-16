@@ -19,6 +19,7 @@ export const meta = {
     'recordable incident',
     'near-miss',
     'DART',
+    'severe incident',
   ],
   key_terms: [
     {
@@ -40,6 +41,11 @@ export const meta = {
       term: 'DART',
       definition:
         'Days Away, Restricted, or Transferred — the OSHA metric that counts incidents resulting in days away from work, restricted work activity, or job transfer. The DART rate is a key benchmark for comparing injury rates across employers and industry sectors. Used in OSHA 300 recordkeeping and benchmarking.',
+    },
+    {
+      term: 'severe incident',
+      definition:
+        'A work-related fatality, in-patient hospitalization, amputation, or loss of an eye — each requiring direct notification to OSHA within strict timeframes under 29 CFR 1904.39. Fatality: 8 hours. Hospitalization, amputation, or eye loss: 24 hours. These reporting requirements apply to ALL employers regardless of size, even those exempt from routine 300 log recordkeeping.',
     },
   ],
   vocabulary_assumed: [

@@ -99,7 +99,7 @@ export default function T18L03_ConfinedSpaceEntry() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">LEL</td>
               <td className="px-3 py-2">Lower Explosive Limit</td>
-              <td className="px-3 py-2">The minimum concentration of combustible gas in air that will ignite; measured as a percentage of that limit (0–100% LEL). Above 25% LEL = immediate action required.</td>
+              <td className="px-3 py-2">The minimum concentration of combustible gas in air that will ignite; measured as a percentage of that limit (0–100% LEL). Above 25% LEL = immediate action required. (LEL is also called LFL — Lower Flammable Limit — in NFPA documents and some standards literature; the values are identical.)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">IDLH</td>
@@ -269,6 +269,16 @@ export default function T18L03_ConfinedSpaceEntry() {
           <li>Guard the open manhole opening per 1910.268(o)(1) — cone/barrier setup around the perimeter.</li>
         </ol>
 
+        <div className="mt-3 p-3 bg-slate-700/30 border border-slate-400/20 rounded-lg text-sm">
+          <strong>Multi-employer worksites (29 CFR 1910.146(c)(8)):</strong> When crews from
+          different employers (for example, a telecom contractor and a municipality's sewer crew)
+          will be working in or near the same confined space, the host employer and the contractor
+          MUST coordinate before entry begins — sharing hazard information, reviewing procedures,
+          and agreeing on rescue responsibilities. One employer's atmospheric testing or rescue
+          plan does not automatically cover another employer's workers. If your crew is the
+          contractor on a host-employer site, confirm coordination is in place before anyone goes in.
+        </div>
+
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
@@ -325,14 +335,18 @@ export default function T18L03_ConfinedSpaceEntry() {
           O₂ is in the acceptable range AND LEL reads clean on a subsequent test.
         </div>
         <div className="mt-3 p-3 bg-amber-900/20 border border-amber-400/30 rounded-lg text-sm">
-          <strong>H₂S and pellistor sensor poisoning:</strong> H₂S concentrations above 10 ppm
-          can irreversibly poison catalytic bead (pellistor) LEL sensors, causing the sensor to
-          produce a persistent false-zero LEL reading even after the H₂S source is removed and
-          you re-enter. If a space had any H₂S event — even briefly above 10 ppm — your LEL
-          sensor may be compromised. After an H₂S event, perform a bump test (expose the sensor
-          to known-concentration calibration gas) or replace the sensor head before relying on
-          LEL readings for re-entry. Consult your monitor manufacturer's guidance on H₂S
-          exposure limits for the sensor type in use.
+          <strong>H₂S and pellistor sensor inhibition:</strong> H₂S concentrations above 10 ppm
+          can inhibit catalytic bead (pellistor) LEL sensors — typically reversibly at
+          field-relevant concentrations. The H₂S is absorbed onto the catalyst surface, blocking
+          reaction sites and producing an artificially low or false-zero LEL reading. At low-to-moderate
+          H₂S concentrations, sensitivity typically recovers after the sensor is removed from the
+          contaminated atmosphere and exposed to fresh air; at higher concentrations or prolonged
+          exposure, recovery may be incomplete. Regardless of concentration: if a space had any
+          H₂S event above 10 ppm, treat the LEL sensor as suspect. After any H₂S event, perform
+          a bump test (expose the sensor to known-concentration calibration gas) or replace the
+          sensor head before relying on LEL readings for re-entry. Consult your monitor
+          manufacturer's guidance — inhibition behavior varies by sensor design and catalyst
+          composition.
         </div>
         <div className="mt-3 p-3 bg-slate-700/30 border border-slate-400/20 rounded-lg text-sm">
           <strong>OSHA PEL vs. NIOSH IDLH — know the difference:</strong>
