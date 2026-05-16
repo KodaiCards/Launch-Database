@@ -282,7 +282,7 @@ export default function T01L01_OspVsIsp() {
           },
           {
             label: 'Primary code',
-            left: 'NESC (aerial), RUS bulletins (construction), NEC Art. 250/800 at entries',
+            left: 'NESC (aerial), RUS bulletins (construction), NEC Art. 250/770 at entries',
             right: 'NEC Article 770 (optical fiber), TIA-568/569 (commercial)',
           },
           {
