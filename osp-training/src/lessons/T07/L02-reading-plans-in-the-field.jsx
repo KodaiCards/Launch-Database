@@ -33,7 +33,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'route survey', source_lesson_id: 'T04.L01' },
     { term: 'contour', source_lesson_id: 'T04.L03' },
-    { term: 'existing utilities', source_lesson_id: 'T04.L02' },
+    { term: 'existing utilities', source_lesson_id: 'T04.L01' },
     { term: 'pole locations from design', source_lesson_id: 'T04.L02' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
     { term: 'stake', source_lesson_id: 'T07.L01' },
