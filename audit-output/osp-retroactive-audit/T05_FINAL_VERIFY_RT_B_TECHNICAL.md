@@ -1,4 +1,153 @@
-# T05 Final-Verify RT-B — Technical Accuracy + Math Re-Derivation + Independent Gap Research
+# T05 Final-Verify-2 RT-B — Technical + Math + Primary-Source Verification (CURRENT SESSION)
+**Agent role:** Read-only technical/math/citation verifier — FINAL-VERIFY-2 pass  
+**Framing:** Senior OSP engineer + NESC standards expert + structural physics  
+**State verified:** HEAD `aa8b8a7` (polish-3 commit `5d9e1e9` included)  
+**Date:** 2026-05-16  
+**Constraints acknowledged:** STRICT READ-ONLY. No lesson files modified. Write-path = this file only.
+
+---
+
+## SUPERSESSION NOTE
+This file now contains the FINAL-VERIFY-2 RT-B report (current session, post polish-3).
+The prior content below the separator is from the FIRST FINAL-VERIFY RT-B pass and is retained for audit trail. The current session report is above.
+
+---
+
+# T05 Final-Verify-2 RT-B — Technical Pass (Current Session)
+
+## 1. Numeric Re-Derivation Log
+
+All computations independently derived. Results compared to lesson content.
+
+| Claim | My Result | Lesson | Match |
+|---|---|---|---|
+| L07 Ex1: s = (0.145×150²)/(8×600) | **0.6797 ft** | 0.680 ft | ✓ |
+| L07 Ex1: w_wind = 9×(0.5/12) | **0.375 lb/ft** | 0.375 lb/ft | ✓ |
+| L07 Ex1: w_combined = √(0.145²+0.375²) | **0.4021 lb/ft** | 0.402 lb/ft | ✓ |
+| L07 Ex1: s_wind, clearance margins | **1.885 ft / +5.82 / +4.62 ft** | 1.885 / 5.82 / 4.62 | ✓ |
+| L07 Ex2 Heavy: w_ice=1.244×0.50×1.00 | **0.622 lb/ft** | 0.622 lb/ft | ✓ |
+| L07 Ex2 Heavy: w_wind=4×(1.50/12) | **0.500 lb/ft** | 0.500 lb/ft | ✓ |
+| L07 Ex2 Heavy: w_combined, sag, margin | **0.916 / 4.292 ft / +2.21 ft** | 0.916 / 4.294 / +2.21 | ✓ |
+| L15 WorkedEx: H=3200×0.20 | **640 lb** | 640 lb | ✓ |
+| L15 WorkedEx: s_nowind=(0.280×40000)/5120 | **2.19 ft** | ~2.19 ft | ✓ |
+| L15 WorkedEx: w_wind=9×(0.68/12) | **0.510 lb/ft** | ~0.510 lb/ft | ✓ |
+| L15 WorkedEx: w_comb=√(0.280²+0.510²) | **0.582 lb/ft** | ~0.582 lb/ft | ✓ |
+| L15 WorkedEx: s_wind, margin | **4.55 ft / +3.95 ft** | ~4.55 / ~3.95 | ✓ |
+| L15 Q12: s=(0.200×14400)/6400; margin | **0.450 ft / +5.05 ft** | 0.450 / +5.05 | ✓ |
+| L15 Q13: 1.244×0.50×1.32 | **0.821 lb/ft** | 0.821 lb/ft | ✓ |
+| L15 Q15: √(500²+500²) corner pole | **707.1 lb** | 707 lb | ✓ ← CRITICAL √2 VERIFIED |
+| L15 Q18: √(0.966²+0.607²) | **1.141 lb/ft** | ~1.141 lb/ft | ✓ |
+| L15 Q20: 57×π/144 | **1.2435** | 1.244 | ✓ |
+| L07 Q1: (0.200×14400)/5600 | **0.514 ft** | 0.514 ft | ✓ |
+| 1:32 PLC splitter: 10×log₁₀(32)+2–2.5 | **17.05–17.55 dB** | 17–17.5 dB | ✓ |
+| 57 × π / 144 ice coefficient | **1.2435** | 1.244 | ✓ |
+
+**All 20 numeric claims VERIFIED. Zero errors in math or physics.**
+
+### Parabolic approximation precision note
+Lesson states: accurate within 1% when s/L < 10%. Independent derivation:
+- At s/L = 10%: actual error = **1.32%** (parabola SLIGHTLY overstates catenary)
+- At s/L = 9%: error = 1.07%; at s/L = 8%: error = 0.85%
+- True threshold for <1% error: s/L < ~8–9%, not 10%
+
+**Assessment:** LOW precision note only. For OSP design spans (s/L typically 1–3%), error is <0.04% — engineering irrelevant. The 10% threshold is the standard industry rule-of-thumb (ASCE wire mechanics references). Not actionable for an OSP curriculum.
+
+---
+
+## 2. Primary-Source NESC Citation Verification
+
+| Citation | Claim | Independent Check | Result |
+|---|---|---|---|
+| Rule 232 ≈15.5 ft | Hi-Line App Guide + ikeGPS cited | Consistent with multiple NESC application guides and utility attachment standards | ✓ VERIFIED |
+| Rule 235 ≈40 in at-pole / ≈30 in midspan | ikeGPS + We-Energies cited | 40 in = confirmed; 30/40 = 75% confirmed | ✓ VERIFIED |
+| Rule 250 Light: 0 ice, 9 psf, +30°F | Secondary NESC summaries | Consistent across 4+ independent sources | ✓ VERIFIED |
+| Rule 250 Heavy: 0.50 in, 4 psf, 0°F | Secondary NESC summaries | Consistent | ✓ VERIFIED |
+| Rule 250C 60-ft threshold | Multiple secondary sources | Confirmed in Hi-Line, utility guides, PUC rules | ✓ VERIFIED |
+| Macon, GA = Light district | NESC Fig 250-1 (secondary) | Macon = Bibb County, inland ~200 mi from coast, no 250C overlay | ✓ VERIFIED |
+| 1.244 = 57×π/144 | Independently derived | 57 lb/ft³ NESC glazed ice, annular ring geometry, 144 in²/ft² | ✓ VERIFIED |
+| Grade B triggers: railroad, navwater, limited-access hwy | Rule 261 secondary sources | Consistent | ✓ VERIFIED |
+| GPON 1:32 = 17–17.5 dB | ITU-T G.671 + datasheets | Theoretical 15.05 + 2–2.5 excess = 17.05–17.55; 17–17.5 is accepted shorthand | ✓ VERIFIED |
+| OTMR 47 CFR 1.1411, FCC 18-111 | FCC OTMR Order | Simple vs complex distinction confirmed | ✓ VERIFIED |
+
+---
+
+## 3. Polish-3 + Polish-1/2 Verification
+
+### Polish-3 fix: T07/L02 `existing utilities` pointer T04.L02 → T04.L01
+- Commit `5d9e1e9` verified via git: 1 file changed, 1 insertion/1 deletion
+- T07/L02 line 36: `{ term: 'existing utilities', source_lesson_id: 'T04.L01' }` ✓
+- T04.L01 `vocabulary_introduced` contains `'existing utility'` (singular) ✓
+- **Fix VERIFIED CORRECT.** Singular vs plural is the same concept — acceptable DAG pointer.
+
+### Polish-2 items
+- **P2 (GPON 17–17.5 dB):** L12 prose contains "approximately 17–17.5 dB." Independently computed as 17.05–17.55 dB. Lesson is within 0.05 dB of true upper bound. VERIFIED acceptable.
+- **P4 (ADSS Flashcard removed):** ADSS is vocabulary_assumed from T03.L04 in L10 — correctly NOT in Flashcard deck. VERIFIED.
+- **P8 (23 CFR 625.2 / AASHTO 14 ft vs 16 ft):** L02 correctly distinguishes FHWA maintained minimum (14 ft), AASHTO new-construction (16 ft), and NESC Rule 232 (~15.5 ft) as three independent standards. VERIFIED technically precise.
+- **NB-2 (w_combined conservative label):** L07 and L15 both label using w_combined in the sag formula as a conservative approximation because the cable tilts leeward and the true vertical sag component is governed by gravity weight alone. Physics confirmed correct — conservative direction verified. VERIFIED.
+
+---
+
+## 4. RT-A 3-Finding Reconciliation (Post-Independent Pass)
+
+### GAP-NEW-A (MED): T05.L03 supply space / communication space / climbing space in BOTH vocabulary_introduced AND vocabulary_assumed
+**CONCUR.** Directly confirmed:
+- T05.L03 `vocabulary_introduced` (lines 26–36): includes `'supply space'`, `'communication space'`, `'climbing space'`
+- T05.L03 `vocabulary_assumed` (lines 41–43): includes all three pointing to `T01.L02`
+- T01.L02 `vocabulary_introduced` (lines 18–32): **CONFIRMED** — all three terms ARE listed there
+
+DAG violation is real: a lesson cannot both introduce a term (claiming first-introduction in vocabulary_introduced) AND assume it (acknowledging prior introduction in vocabulary_assumed). T01.L02 is the correct and actual first introduction. T05.L03 should remove `supply space`, `communication space`, and `climbing space` from its `vocabulary_introduced`. **CONCUR MED.**
+
+### GAP-NEW-B (LOW): T05.L01 has 10 vocabulary_introduced terms but only 6 Flashcards
+**CONCUR.** vocabulary_introduced (lines 23–34): NESC, IEEE C2, Rule, Section, Part, AHJ, Rule 232, Rule 235, Rule 250, Rule 261 = 10 terms. Flashcard deck (lines 324–333): NESC, AHJ, Rule 232, Rule 235, Rule 250, Rule 261 = 6 cards. Missing: IEEE C2, Rule, Section, Part — all of which have full key_terms definitions (lines 51–95). **CONCUR LOW.**
+
+### GAP-NEW-C (LOW): T07.L02 `route survey → T04.L01` — term not in T04.L01's vocabulary_introduced
+**CONCUR.** T07.L02 line 34: `{ term: 'route survey', source_lesson_id: 'T04.L01' }`. T04.L01 `vocabulary_introduced`: `['site walk', 'existing utility', 'hazard identification', 'photo log']`. `route survey` is ABSENT from T04.L01's formal vocabulary_introduced array. The body prose uses "route survey" as a synonym for "site walk" but never adds it to the array. RT-A's option (a) — add `'route survey'` to T04.L01's vocabulary_introduced — is the cleanest fix. **CONCUR LOW.**
+
+---
+
+## 5. Independent Gap Research (Technical Lens)
+
+### GAP-TECH-1 (LOW): "slightly larger" word choice on w_combined conservatism is imprecise
+**Location:** L07 sanityCheck note, L15 sanityCheck line.
+**Finding:** The lesson labels using w_combined in the vertical sag formula as producing sag that is "slightly larger" than true vertical sag. In Light district (no ice, wind-dominant): combined sag = 1.885 ft vs bare-weight vertical sag = 0.680 ft — a 177% overstatement. "Slightly" is quantitatively wrong for this case. In Heavy district (ice-dominant): w_combined/w_vert ≈ 0.916/0.767 = 1.19 — there "slightly" would be appropriate.
+**Physics direction:** CORRECT (conservative, safe).
+**Fix:** Replace "slightly larger" with "conservatively larger" — preserves the meaning without false precision.
+**Severity:** LOW — does not affect any safety guidance or design decision.
+
+### GAP-TECH-2 (NONE — verified clean): Cross-standard conflicts
+NESC Rule 232 vs DOT, NESC Rule 235 vs TIA-758, NESC Rule 250 vs ASCE 7, GPON vs EPON — no contradictions. All correctly scoped in lessons. VERIFIED CLEAN.
+
+### GAP-TECH-3 (NONE — verified clean): Ice density 57 lb/ft³
+ASCE 7-22 uses 56.2 lb/ft³. NESC specifies 57 lb/ft³ for its district loading tables. Lesson correctly uses 57 lb/ft³ for NESC district calculations — 1.4% more conservative than ASCE 7. CORRECT.
+
+### GAP-TECH-4 (LOW — observation only): GPON 1:32 splitter upper bound 17.5 dB
+True upper bound with 2.5 dB excess loss ≈ 17.55 dB. Lesson caps at 17.5 dB. Difference = 0.05 dB. In practice, Viavi/OFS PLC splitter datasheets spec max insertion loss at 17.4–17.5 dB (within measurement uncertainty of 17.55). Not actionable.
+
+---
+
+## 6. Final Verdict
+
+**Verdict: YELLOW**
+
+**T05 ready to close: NO — one MEDIUM blocking finding confirmed by both RT-A and RT-B.**
+
+| Finding | Severity | Agreement | Action Required |
+|---|---|---|---|
+| GAP-NEW-A: T05.L03 three zone terms in both vocab_introduced AND vocab_assumed | MED | RT-A + RT-B CONCUR | Fix-agent required — remove 3 terms from vocab_introduced |
+| GAP-NEW-B: T05.L01 missing 4 Flashcard cards | LOW | RT-A + RT-B CONCUR | Fix-agent (same pass) |
+| GAP-NEW-C: T07.L02 `route survey → T04.L01` not in vocab_introduced | LOW | RT-A + RT-B CONCUR | Fix-agent: add 'route survey' to T04.L01 vocab_introduced |
+| GAP-TECH-1: "slightly larger" → should be "conservatively larger" | LOW | New — RT-B only | Fix-agent (same pass) |
+| GAP-TECH-4: GPON upper bound 17.55 vs 17.5 dB | LOW | New — RT-B only | Not actionable |
+| Parabolic 1.32% vs <1% at 10% threshold | LOW | New — tech note | Not actionable (curriculum-appropriate) |
+
+**Saturation:** RT-A (pedagogy framing) and RT-B (technical framing) independently found the same MEDIUM (GAP-NEW-A) — convergence confirms the finding. Both RT-A and RT-B agree 3 of the LOWs should be fixed. No NEW MEDs or HIGHs from the technical lens — the content is technically sound. After a surgical fix of the 1 MED + 3 LOWs, a lightweight spot-check is sufficient; full RT pair not required unless fix-agent touches additional files.
+
+=== T05 FINAL-VERIFY-2 RT B TECHNICAL END ===
+
+---
+
+# PRIOR PASS CONTENT (Final-Verify-1 RT-B) — Retained for Audit Trail
+
 **Framing:** Senior OSP engineer / NESC SME / structural physics skeptic
 **Scope:** T05 L01–L15 (full); cross-touched T07 (L02, L04) and T08 per RT-A referrals
 **Independent pass completed BEFORE reading RT-A report; RT-A read for reconciliation only**
