@@ -211,11 +211,12 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
             cause serious internal injuries during a long fall arrest — the body folds over the
             belt, concentrating force on the abdomen. Body belts are still allowed for positioning
             (holding the worker at the work position) but not for fall arrest. The relevant sub-standards
-            in the ANSI Z359 family are <strong>ANSI Z359.4</strong> (Safety Requirements for Use,
-            Inspection, and Maintenance of Fall Protection Equipment) and <strong>ANSI Z359.11</strong>
-            (Safety Requirements for Full Body Harnesses). ANSI Z359.1 is the umbrella standard
-            that defines the Z359 series; citation to a specific requirement (harness vs. body belt,
-            arrest force limits) should reference Z359.4 or Z359.11 as applicable.
+            in the ANSI Z359 family are <strong>ANSI Z359.1</strong> ("The Fall Protection Code" —
+            overarching PFAS system requirements including the prohibition on body belts for fall arrest)
+            and <strong>ANSI Z359.11</strong> (Safety Requirements for Full Body Harnesses — performance,
+            design, inspection, use, and maintenance of full-body harnesses). Citation to a specific
+            requirement (harness vs. body belt, arrest force limits) should reference Z359.1 or Z359.11
+            as applicable.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field reality:</strong> Most OSP telecom crews use the body belt + pole strap
@@ -419,7 +420,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           },
           {
             label: 'OSHA acceptability (1910.268)',
-            leftValue: 'Still allowed for positioning work under 1910.268(g). Body belt acceptable for positioning only — NOT for fall arrest. ANSI Z359.4 and Z359.11 (within the ANSI Z359 series) prohibit use of body belts as the sole fall arrest attachment due to risk of serious abdominal injury during arrest.',
+            leftValue: 'Still allowed for positioning work under 1910.268(g). Body belt acceptable for positioning only — NOT for fall arrest. ANSI Z359.1 ("The Fall Protection Code") and Z359.11 (Full Body Harnesses) together prohibit use of body belts as the sole fall arrest attachment due to risk of serious abdominal injury during arrest.',
             rightValue: 'Required if free-fall arrest is needed. Body belt NOT acceptable for fall arrest. Full-body harness required per ANSI Z359.11 and increasingly enforced by OSHA compliance directives.',
           },
           {
@@ -465,7 +466,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
             answerIndex: 2,
             explanation:
               'A positioning system (body belt + pole strap) is designed to hold the worker at the work position — not to arrest a fall. If the gaff pulls out and the body shifts suddenly, the positioning strap may slip rather than catch the fall. Only a PFAS — full-body harness connected to an energy-absorbing lanyard or SRL anchored above the worker — is designed to arrest a fall and limit the arrest force to ≤1,800 lbf.',
-            citation: '29 CFR 1910.268(g)(1); ANSI Z359.4 + Z359.11 (body belt restrictions within the ANSI Z359 series).',
+            citation: '29 CFR 1910.268(g)(1); ANSI Z359.1 ("The Fall Protection Code") + Z359.11 (Full Body Harnesses) — body belt restrictions within the ANSI Z359 series.',
           },
           {
             id: 'T18-L04-Q3',

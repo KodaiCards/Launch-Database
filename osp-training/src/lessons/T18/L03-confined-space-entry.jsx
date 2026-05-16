@@ -161,7 +161,7 @@ export default function T18L03_ConfinedSpaceEntry() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Carbon monoxide (CO)</td>
                 <td className="px-3 py-2 font-mono">&lt; 25 ppm (ACGIH TLV-TWA)</td>
-                <td className="px-3 py-2">Ventilate; identify source before entry. NIOSH IDLH = 1,200 ppm — at IDLH, immediate threat to life; exit immediately with no delay.</td>
+                <td className="px-3 py-2">Ventilate; identify source before entry. (For scale: NIOSH IDLH = 1,200 ppm = immediate threat to life — the 25 ppm exit threshold in column 4 is your actual trigger, far before IDLH.)</td>
                 <td className="px-3 py-2 font-mono text-red-400">&gt; 25 ppm: exit immediately</td>
               </tr>
               <tr className="border-t border-white/10">
