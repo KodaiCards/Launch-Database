@@ -352,4 +352,59 @@
 - L03 atmospheric table ±20 lines: O₂, LEL, H₂S rows have explicit basis attribution where applicable; CO was the only gap. H₂S row cites "NIOSH IDLH" in the action column (consistent with Gap-D1 fix).
 - L03 Q1 quiz ±20 lines: Q2–Q4 citations checked; all reference primary sources (ecfr.gov, osha.gov) with no unverifiable letter references.
 
+---
+
+## Polish Stage 2 — Applied 2026-05-16 (final-verify RT-E pedagogy + RT-F technical, 5 LOWs)
+
+**SHA:** `fed393c`  
+**Files modified:** L03, L04, L08, L09 (4 files, 37 insertions, 9 deletions)
+
+### NEW-E1 | LOW | L04 ANSI Z359.1 citation imprecision
+
+- File: `L04-fall-protection-poles-aerial-lifts.jsx`
+- Locations: Book/vs.Field callout (Working section), SideBySide OSHA-acceptability row, Quiz Q2 citation field
+- BEFORE: Referenced "ANSI Z359.1" as the operative fall arrest standard / body-belt restriction source.
+- AFTER: Z359.1 identified as the umbrella standard; specific sub-standards now cited as Z359.4 (Safety Requirements for Use, Inspection, and Maintenance) and Z359.11 (Safety Requirements for Full Body Harnesses) as applicable to body-belt vs. harness arrest requirements.
+- Status: APPLIED ✓
+
+### NEW-E2 | LOW | L09 near-miss protection overstated as absolute immunity
+
+- File: `L09-incident-reporting-osha-300.jsx`
+- Locations: `key_terms` definition, Flashcard `T18-L09-fc-nearmiss`, Quiz Q3 explanation
+- BEFORE (key_terms): "OSHA cannot use voluntary near-miss reports against an employer in enforcement."
+- AFTER (key_terms): "OSHA has stated it will not use voluntary near-miss reports as a basis for citations under 29 CFR 1904.35(b)(1)(i) and OSH Act §11(c) whistleblower protections — but this is an enforcement policy, not an absolute statutory immunity."
+- Flashcard and Q3 explanation harmonized to same framing.
+- Status: APPLIED ✓
+
+### NEW-E5 | LOW | L08 missing L03 cross-reference for atmospheric/confined-space hazards
+
+- File: `L08-hazardous-materials-osp.jsx`
+- Location: HDPE conduit / vault heat fusion protection paragraph
+- BEFORE: "If working in a confined vault with heat fusion, the ventilation requirement from T18.L03 applies simultaneously."
+- AFTER: Expanded to explicit navigational cross-reference: "See T18.L03 (Confined Space Entry) for full atmospheric monitoring procedures and IDLH thresholds — the forced-air blower requirement from 29 CFR 1910.268(o)(2) and the atmospheric testing protocol apply simultaneously with any heat fusion or cutting work in an enclosed vault."
+- Status: APPLIED ✓
+
+### NEW-F1 | LOW | L03 CO IDLH not stated alongside CO TLV-TWA
+
+- File: `L03-confined-space-entry.jsx`
+- Location: Atmospheric table CO row, Action column
+- BEFORE: CO Action column read "Ventilate; identify source before entry." — no IDLH value.
+- AFTER: Added "NIOSH IDLH = 1,200 ppm — at IDLH, immediate threat to life; exit immediately with no delay." to the CO action column, matching the framing of the H₂S row which already cited "50 ppm = NIOSH IDLH."
+- Status: APPLIED ✓
+
+### NEW-F3 | LOW | L04 PFAS anchor point 5,000 lbf minimum missing
+
+- File: `L04-fall-protection-poles-aerial-lifts.jsx`
+- Location: New callout box added at end of Working section, before source citation line
+- BEFORE: No PFAS anchor point strength requirement taught.
+- AFTER: Added sky-blue callout: "PFAS anchor points must support ≥5,000 lbf per worker attached OR be designed by a qualified person with a 2× safety factor (29 CFR 1910.140(c)(13))." Field note covers messenger strand and crossarm verification.
+- Status: APPLIED ✓
+
+### Neighborhood scan findings (not fixed — report only)
+
+- L04 ±20 lines from PFAS callout: Aerial lift bullet list references "PFAS or travel restraint system" per 1910.67(c)(2)(v) — this is accurate. No anchor-strength qualifier for aerial lift basket attachment points (boom/basket structure, not improvised anchors) — intentional, basket attachment is a rated structural element, the 5,000 lbf instruction applies to improvised OSP field anchors.
+- L03 ±20 lines from CO IDLH addition: O₂ row lists "Below 16% = IDLH" — technically the NIOSH IDLH for O₂ deficiency is atmosphere <16% O₂; this is correct. H₂S row correctly shows 50 ppm IDLH. No inconsistency detected.
+- L09 ±20 lines from near-miss fixes: The "fieldNote" on Q3 ("Even though it's not legally required, report it internally...") is good practical guidance and not affected by the statutory-vs-policy framing fix. No changes needed.
+- L08 ±20 lines from cross-reference addition: Gel cleaning rags item + silica dust item both correctly direct to SDS sections; no atmospheric-hazard cross-references warranted (those chemicals don't create confined-space atmospheric hazards). No additional cross-refs needed.
+
 === T18 FIX CANONICAL END ===
