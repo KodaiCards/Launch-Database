@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -344,61 +343,42 @@ export default function T07L04_MeasuringExistingAttachments() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Laser vs. Tape — Measurement Techniques at a Pole"
-        description="Click any labeled point to understand the measurement method shown and when to use it. The diagram shows a staker measuring attachment heights on an existing joint-use pole."
-        src="/training/diagrams/t07-laser-vs-tape-technique.svg"
-        alt="Diagram showing a utility pole with a staker at ground level using a laser measurer aimed at a wire attachment, with tape measure reference shown alongside"
-        aspectRatio={1.5}
-        hotPoints={[
-          {
-            id: 'laser-aim',
-            x: 30,
-            y: 55,
-            label: 'Laser aim point',
-            type: 'click',
-            explanation:
-              'The laser is aimed at the lowest point of the wire attachment hardware on the pole — the bolt or clamp where the wire connects. This is the critical measurement point. Aim at the conductor itself if the hardware is obscured by leaves or equipment. Record to ±0.1 feet.',
-          },
-          {
-            id: 'laser-device',
-            x: 20,
-            y: 75,
-            label: 'Laser measurer position',
-            type: 'click',
-            explanation:
-              'Stand 15–20 feet from the pole, at a clear angle to the target wire. In "height mode," the device measures the angle and distance simultaneously to compute vertical height. In "distance mode," record the slant distance and angle, then calculate: height = distance × sin(angle). Most modern measurers (Leica Disto, Bosch GLM series) do the trigonometry automatically.',
-          },
-          {
-            id: 'tape-reference',
-            x: 65,
-            y: 70,
-            label: 'Tape measure use case',
-            type: 'click',
-            explanation:
-              'A tape measure extended vertically from the ground can reach low attachments (under 15 feet) more quickly than a laser in some conditions — especially if the laser line-of-sight is blocked by dense foliage. A fiberglass (non-conductive) tape is required near energized equipment. Tape accuracy is ±0.5 feet when pulled taut; less accurate if the tape bends.',
-          },
-          {
-            id: 'wire-label',
-            x: 60,
-            y: 35,
-            label: 'Wire identification',
-            type: 'click',
-            explanation:
-              'Identify each wire type before measuring. Power wires are typically at the top of the pole, thicker, and may have insulators. Communication wires are below the separation zone — typically thinner, in a bundle or on a strand. Each wire gets its own measurement and entry in the photo measurement log.',
-          },
-          {
-            id: 'ground-reference',
-            x: 50,
-            y: 92,
-            label: 'Ground reference point',
-            type: 'click',
-            explanation:
-              'The measurement reference is the ground directly at the base of the pole — not sloped terrain 10 feet away. If the ground slopes significantly, record the height from the lowest point of the ground in the span (usually the midpoint between poles for a wire crossing), since NESC clearance is measured at the lowest sag point, not at the pole.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — measurement technique notes ───────────────────── */}
+      <div className="lesson-callout">
+        <h4>Laser vs. Tape — Measurement Techniques at a Pole</h4>
+        <ol>
+          <li>
+            <strong>Laser aim point</strong> — Aim at the lowest point of the wire attachment
+            hardware on the pole — the bolt or clamp where the wire connects. This is the critical
+            measurement point. Aim at the conductor itself if the hardware is obscured by leaves or
+            equipment. Record to ±0.1 feet.
+          </li>
+          <li>
+            <strong>Laser measurer position</strong> — Stand 15–20 feet from the pole, at a clear
+            angle to the target wire. In "height mode," the device measures the angle and distance
+            simultaneously to compute vertical height. Most modern measurers (Leica Disto, Bosch
+            GLM series) do the trigonometry automatically.
+          </li>
+          <li>
+            <strong>Tape measure use case</strong> — A tape extended vertically can reach low
+            attachments (under 15 feet) more quickly than a laser when foliage blocks the
+            line-of-sight. A fiberglass (non-conductive) tape is required near energized equipment.
+            Tape accuracy is ±0.5 feet when pulled taut.
+          </li>
+          <li>
+            <strong>Wire identification</strong> — Identify each wire type before measuring. Power
+            wires are typically at the top of the pole, thicker, and may have insulators.
+            Communication wires are below the separation zone — typically thinner, in a bundle or
+            on a strand. Each wire gets its own measurement and log entry.
+          </li>
+          <li>
+            <strong>Ground reference point</strong> — Measure from the ground directly at the
+            base of the pole — not sloped terrain 10 feet away. If the ground slopes significantly,
+            also record from the lowest point of the ground in the span (usually midspan), since
+            NESC clearance is measured at the lowest sag point, not at the pole.
+          </li>
+        </ol>
+      </div>
 
       {/* ── WORKED EXAMPLE ──────────────────────────────────────────────── */}
       <WorkedExample

@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -214,87 +213,42 @@ export default function T07L08_KatapultAndGISStakingTools() {
           </li>
         </ol>
 
-        {/* Annotated Diagram */}
-        <AnnotatedDiagram
-          title="Katapult Digital Staking Workflow"
-          description="End-to-end view of a Katapult staking job: from design import in the office through field data collection to real-time sync and office QA. Click each stage to see what happens."
-          src="/img/diagrams/t07-katapult-workflow.svg"
-          fallbackDescription={`
-            Diagram description (use when image is unavailable):
-
-            A horizontal flow diagram with five stages, left to right:
-
-            STAGE 1 — OFFICE: "Design Import"
-            Box showing a laptop with the Katapult web interface. Icons: route line imported
-            from design software, pole symbols placed along route, attachment heights loaded.
-            Arrow pointing right labeled "Downloaded to tablet."
-
-            STAGE 2 — FIELD: "Navigate to Pole"
-            Tablet screen showing a satellite map with a blue dot (staker GPS position)
-            and a pole icon (design pole location). Distance shown: "23 ft." Arrow pointing
-            to pole icon. Label: "GPS accuracy: ±5 m smartphone, ±3 m handheld device."
-
-            STAGE 3 — FIELD: "Photograph and Record"
-            Tablet screen split view: camera app (live photo of pole tag being photographed)
-            and data entry form (attachment height field showing "27.2 ft", condition dropdown
-            showing "Burn scar — flag for replacement", make-ready flag checkbox checked).
-            Label: "All data linked to this pole's record."
-
-            STAGE 4 — FIELD/CLOUD: "Sync"
-            Tablet with a sync arrow pointing to a cloud icon. Three sub-labels:
-            "Cellular route: syncs every 2–3 min automatically."
-            "No-signal route: syncs when reconnected. Verify sync before leaving area."
-            "Local storage backup: photos stored locally even without sync."
-
-            STAGE 5 — OFFICE: "QA and Review"
-            Laptop showing the engineer's dashboard. Pole list with green checkmarks (complete)
-            and yellow flags (make-ready). One pole has a red "! Incomplete photo" flag.
-            Arrow from office back to field labeled "QA comment → staker phone: re-photograph
-            pole 47 (blurry image)."
-
-            Below the flow, a comparison table:
-            Paper (Form 740) vs. Digital (Katapult):
-            Connectivity: Paper = none needed | Digital = cellular preferred
-            Sync: Paper = end of day (bring to office) | Digital = real-time
-            Photo attach: Paper = separate envelope | Digital = automatic link to pole record
-            Transcription error risk: Paper = high (handwriting → data entry) | Digital = low (typed at pole)
-            Battery dependency: Paper = none | Digital = critical (10-hour field day needs external battery)
-          `}
-          annotations={[
-            {
-              id: 'ann-import',
-              label: 'Design Import',
-              x: 5,
-              y: 40,
-              description: 'Office engineer uploads the design to Katapult: pole locations, route geometry, design attachment heights. Staker downloads to tablet before leaving office or via cellular in the field.',
-            },
-            {
-              id: 'ann-navigate',
-              label: 'Navigate to Pole',
-              x: 25,
-              y: 40,
-              description: 'App shows staker GPS position vs. design pole location. Phone GNSS places staker ±5–10 m from design pole; handheld GPS ±3–5 m. Walk to the physical pole and tap it on the map to open the record.',
-            },
-            {
-              id: 'ann-record',
-              label: 'Photo + Record',
-              x: 50,
-              y: 40,
-              description: 'For each pole: photograph tag (for SCID), photograph each attachment (laser measurement visible in frame), photograph overall condition. Enter measurements and make-ready flags directly in the app. All data links to this pole record.',
-            },
-            {
-              id: 'ann-sync',
-              label: 'Sync to Cloud',
-              x: 75,
-              y: 40,
-              description: 'Cellular: syncs automatically every few minutes. No signal: data stored locally; syncs when reconnected. Always verify sync completed before closing project — local-only data is at risk.',
-            },
-            {
-              id: 'ann-qa',
-              label: 'Office QA',
-              x: 93,
-              y: 40,
-              description: 'Engineer reviews poles in real time on cellular routes. Flags incomplete photos or missing measurements. Comment goes back to staker\'s device. On a cellular route, the staker may still be close enough to re-photograph the same day.',
+        {/* ── LABELED LIST — Katapult workflow stages ──────────────────────── */}
+        <div className="lesson-callout">
+          <h4>Katapult Digital Staking Workflow — Five Stages</h4>
+          <ol>
+            <li>
+              <strong>Stage 1 — Design Import (office)</strong> — The engineer uploads the design
+              to Katapult: pole locations, route geometry, and design attachment heights. The staker
+              downloads the project to their tablet before leaving the office, or pulls it via
+              cellular in the field.
+            </li>
+            <li>
+              <strong>Stage 2 — Navigate to Pole (field)</strong> — The app shows the staker's GPS
+              position versus the design pole location. Phone GNSS places the staker ±5–10 m from
+              the design pole; a handheld GPS unit gets to ±3–5 m. Walk to the physical pole and
+              tap it on the map to open the pole record.
+            </li>
+            <li>
+              <strong>Stage 3 — Photograph and Record (field)</strong> — For each pole: photograph
+              the tag (for SCID), photograph each attachment with the laser measurement visible in
+              frame, and photograph the overall condition. Enter attachment heights and make-ready
+              flags directly in the app. All data links automatically to that pole's record.
+            </li>
+            <li>
+              <strong>Stage 4 — Sync to Cloud (field/cellular)</strong> — On a cellular route,
+              the app syncs automatically every 2–3 minutes. On a no-signal route, data is stored
+              locally and syncs when reconnected. Always verify sync completed before leaving an
+              area — local-only data is at risk if the device is lost or damaged.
+            </li>
+            <li>
+              <strong>Stage 5 — Office QA and Review</strong> — The engineer reviews poles in real
+              time (cellular route) or after the staker returns (offline route). Incomplete photos
+              or missing measurements generate QA flags that go back to the staker's device. On a
+              cellular route, the staker may still be close enough to re-photograph the same day.
+            </li>
+          </ol>
+        </div>
             },
           ]}
         />

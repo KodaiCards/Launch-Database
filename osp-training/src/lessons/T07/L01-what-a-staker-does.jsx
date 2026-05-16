@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -325,61 +324,41 @@ export default function T07L01_WhatAStakerDoes() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="A Pole in the Field — What the Staker Records"
-        description="Click any labeled point to see what the staker measures, photographs, or records at that point. This is one pole's worth of staking data — a typical route may have 50 to 500 poles."
-        src="/training/diagrams/t07-staking-pole-overview.svg"
-        alt="Utility pole diagram showing staking measurement points: ground stake, attachment heights, existing wires, GPS tag, and photo angle"
-        aspectRatio={1.6}
-        hotPoints={[
-          {
-            id: 'ground-stake',
-            x: 50,
-            y: 92,
-            label: 'Ground stake',
-            type: 'click',
-            explanation:
-              'A physical stake or paint mark on the ground at the proposed pole location. Placed by the staker to match design stationing within ±3 feet. Construction crews follow these marks to set new poles.',
-          },
-          {
-            id: 'attachment-height',
-            x: 55,
-            y: 45,
-            label: 'Existing attachment',
-            type: 'click',
-            explanation:
-              'The staker measures the height of every existing wire attachment on the pole using a laser measurer from the ground. Target accuracy: ±0.1 feet (laser) or ±0.5 feet (tape). This height is compared against the design\'s assumption.',
-          },
-          {
-            id: 'top-of-pole',
-            x: 50,
-            y: 10,
-            label: 'Top of pole',
-            type: 'click',
-            explanation:
-              'The staker records the approximate top-of-pole height. For a standard 40-foot distribution pole, about 6 feet is buried, leaving 34 feet of usable above-ground height. The staker notes the pole class and condition.',
-          },
-          {
-            id: 'photo-angle',
-            x: 20,
-            y: 50,
-            label: 'Photo angle',
-            type: 'click',
-            explanation:
-              'The staker photographs the pole from a consistent downline angle (looking along the route direction) to show all attachments and their spacing. A second photo from the crossline direction confirms the attachment layout. GPS coordinates are recorded at this position.',
-          },
-          {
-            id: 'callout-flag',
-            x: 75,
-            y: 60,
-            label: 'Call-out flag',
-            type: 'click',
-            explanation:
-              'A bright flag tied to the stake or pole indicates a call-out — a field condition that differs from design. The staker writes the specific issue in the staking notes: "existing wire 25.2 ft, design assumed 28 ft — make-ready likely."',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — what the staker records at each pole ─────────── */}
+      <div className="lesson-callout">
+        <h4>A Pole in the Field — What the Staker Records</h4>
+        <ol>
+          <li>
+            <strong>Ground stake</strong> — A physical stake or paint mark on the ground at the
+            proposed pole location. Placed by the staker to match design stationing within ±3 feet.
+            Construction crews follow these marks to set new poles.
+          </li>
+          <li>
+            <strong>Existing attachment heights</strong> — The staker measures the height of every
+            existing wire attachment on the pole using a laser measurer from the ground. Target
+            accuracy: ±0.1 feet (laser) or ±0.5 feet (tape). Each height is compared against the
+            design's assumed value.
+          </li>
+          <li>
+            <strong>Top of pole / pole class and condition</strong> — The staker records the
+            approximate top-of-pole height and notes the pole class. For a standard 40-foot
+            distribution pole, about 6 feet is buried, leaving 34 feet of usable above-ground
+            height. Condition notes flag rot, cracks, or lean.
+          </li>
+          <li>
+            <strong>Photo documentation</strong> — The staker photographs the pole from a
+            consistent downline angle (looking along the route direction) to show all attachments
+            and their spacing. A second photo from the crossline direction confirms the layout.
+            GPS coordinates are recorded at the photo position.
+          </li>
+          <li>
+            <strong>Call-out flags</strong> — A bright flag tied to the stake or pole marks a
+            field condition that differs from design. The staker records the specific issue in
+            staking notes: for example, "existing wire 25.2 ft, design assumed 28 ft — make-ready
+            likely."
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ─────────────────────────────────────────────── */}
       <Quiz

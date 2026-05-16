@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -351,61 +350,42 @@ export default function T07L03_PhotographingAndCodingPoleTags() {
         </ul>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Pole Tag Anatomy — What You're Reading and Photographing"
-        description="Click any labeled element to understand what that part of a pole tag means and how it's used in the staking record."
-        src="/training/diagrams/t07-pole-tag-anatomy.svg"
-        alt="Diagram of a utility pole tag showing QR code, manual pole number, GPS coordinates display, pole owner code, and recommended photo angle"
-        aspectRatio={1.4}
-        hotPoints={[
-          {
-            id: 'qr-code',
-            x: 20,
-            y: 30,
-            label: 'QR code',
-            type: 'click',
-            explanation:
-              'A QR code links to the pole\'s digital record in the pole owner\'s database when scanned with a smartphone. It typically retrieves: pole class, height, installation year, inspection history, and any existing joint-use attachments on file. Scan it if your staking tool supports QR import; photograph it as part of the downline photo.',
-          },
-          {
-            id: 'pole-number',
-            x: 55,
-            y: 20,
-            label: 'Manual pole number',
-            type: 'click',
-            explanation:
-              'A stamped or engraved number (or sometimes a stencil) that the pole owner uses to identify this specific pole in their records. This is NOT the same as your project\'s SCID — it\'s the owner\'s ID. Record both: "Owner tag: [number], Project SCID: [SCID]" in your staking notes. They must match the design record.',
-          },
-          {
-            id: 'gps-display',
-            x: 80,
-            y: 35,
-            label: 'GPS on tag',
-            type: 'click',
-            explanation:
-              'Some modern pole tags (especially on digital-staking projects using Katapult or FieldCom) are pre-printed with a GPS coordinate from the survey. Cross-reference this coordinate with your handheld or phone reading. If they\'re within 10 meters of each other, you\'re at the right pole. If they differ by more than 30 meters, you may be at the wrong pole.',
-          },
-          {
-            id: 'owner-code',
-            x: 50,
-            y: 65,
-            label: 'Pole owner code',
-            type: 'click',
-            explanation:
-              'A two- or three-letter code identifying the pole owner — typically the electric utility (e.g., "GPC" for Georgia Power, "DTE" for DTE Energy, "SECO" for South Electric Cooperative). The pole owner code matters for make-ready permitting — you need different attachment applications depending on who owns the pole.',
-          },
-          {
-            id: 'photo-angle',
-            x: 15,
-            y: 75,
-            label: 'Recommended photo angle',
-            type: 'click',
-            explanation:
-              'Stand 20–30 feet downline (looking toward the next pole in the route direction). Frame the shot so the full pole height is visible from ground to top. The pole tag should be readable. All wire attachments should be visible and distinct. Avoid shooting into direct sun — position yourself so the sun is behind you or to your side.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — pole tag elements ─────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Pole Tag Anatomy — What You're Reading and Photographing</h4>
+        <ol>
+          <li>
+            <strong>QR code</strong> — Links to the pole's digital record when scanned with a
+            smartphone. Typically retrieves: pole class, height, installation year, inspection
+            history, and any existing joint-use attachments on file. Scan it if your staking tool
+            supports QR import; photograph it as part of the downline photo.
+          </li>
+          <li>
+            <strong>Manual pole number</strong> — A stamped or engraved number that the pole owner
+            uses to identify this specific pole in their records. This is NOT the same as your
+            project's SCID — it's the owner's ID. Record both: "Owner tag: [number], Project SCID:
+            [SCID]" in your staking notes. They must match the design record.
+          </li>
+          <li>
+            <strong>GPS on tag</strong> — Some modern pole tags (especially on digital-staking
+            projects using Katapult or FieldCom) are pre-printed with a GPS coordinate from the
+            survey. Cross-reference with your handheld or phone reading. Within 10 meters = right
+            pole. Difference over 30 meters = you may be at the wrong pole.
+          </li>
+          <li>
+            <strong>Pole owner code</strong> — A two- or three-letter code identifying the pole
+            owner (e.g., "GPC" for Georgia Power, "SECO" for South Electric Cooperative). The
+            owner code matters for make-ready permitting — you need different attachment
+            applications depending on who owns the pole.
+          </li>
+          <li>
+            <strong>Recommended photo angle</strong> — Stand 20–30 feet downline (looking toward
+            the next pole in the route direction). Frame the shot so the full pole height is
+            visible from ground to top. The pole tag should be readable. All wire attachments
+            should be visible and distinct. Avoid shooting into direct sun.
+          </li>
+        </ol>
+      </div>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
       <BranchingScenario

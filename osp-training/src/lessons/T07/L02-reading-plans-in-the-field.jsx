@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -351,70 +350,48 @@ export default function T07L02_ReadingPlansInTheField() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Reading a Staking Plan — Key Elements"
-        description="Click any labeled element to understand what it tells you in the field. This is a simplified plan-and-profile sheet for a short aerial route segment."
-        src="/training/diagrams/t07-plan-and-profile.svg"
-        alt="Plan-and-profile drawing showing plan view (top, bird's eye) and profile view (bottom, side elevation) with stationing, poles, and terrain"
-        aspectRatio={2.0}
-        hotPoints={[
-          {
-            id: 'stationing-ruler',
-            x: 50,
-            y: 10,
-            label: 'Stationing ruler',
-            type: 'click',
-            explanation:
-              'The horizontal scale at the top of the plan view. Stations are marked every 100 feet. Find your current station on this ruler, then look down to the plan view to see what the route is doing at that point. Match this to your field measurement from the last known stake.',
-          },
-          {
-            id: 'pole-symbol',
-            x: 30,
-            y: 30,
-            label: 'Pole symbol',
-            type: 'click',
-            explanation:
-              'A small circle or "X" on the plan view marking a proposed pole location. Each symbol has a label: pole number, station, and offset (if any). Find this symbol on the ground by measuring the station from a reference point and applying the offset.',
-          },
-          {
-            id: 'pi-point',
-            x: 70,
-            y: 28,
-            label: 'PI (Point of Intersection)',
-            type: 'click',
-            explanation:
-              'Where two route tangents meet. The plan shows a "kink" in the route line here. In the field, find the PI by measuring from both tangent directions — it\'s where the route bends. A stake or reference mark here helps the construction crew follow the route change.',
-          },
-          {
-            id: 'profile-ground',
-            x: 30,
-            y: 72,
-            label: 'Ground line (profile)',
-            type: 'click',
-            explanation:
-              'The solid irregular line on the profile view — this is the terrain as surveyed. Compare it to the ground you\'re actually standing on. If the terrain you see is significantly higher or lower than this line, issue a call-out.',
-          },
-          {
-            id: 'profile-cable',
-            x: 50,
-            y: 60,
-            label: 'Cable line (profile)',
-            type: 'click',
-            explanation:
-              'The straight or slightly curved line above the ground line — this is the cable\'s planned path. The vertical gap between the cable line and the ground line is the clearance. If terrain is higher than shown, clearance shrinks. Clearance below NESC Rule 232 minimums is a serious call-out.',
-          },
-          {
-            id: 'cross-section-mark',
-            x: 80,
-            y: 10,
-            label: 'Cross-section station',
-            type: 'click',
-            explanation:
-              'A tick mark on the plan indicating where a cross-section drawing was taken. At this station in the field, the cross-section shows you the exact ROW width, road edge, pole placement, and existing utility separations. Check whether field conditions match.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — plan-and-profile drawing elements ─────────────── */}
+      <div className="lesson-callout">
+        <h4>Reading a Staking Plan — Key Elements to Find in the Field</h4>
+        <ol>
+          <li>
+            <strong>Stationing ruler</strong> — The horizontal scale at the top of the plan view.
+            Stations are marked every 100 feet. Find your current station on this ruler, then look
+            down to the plan view to see what the route is doing at that point. Match to your field
+            measurement from the last known stake.
+          </li>
+          <li>
+            <strong>Pole symbol</strong> — A small circle or "X" on the plan view marking a
+            proposed pole location. Each symbol has a label: pole number, station, and offset (if
+            any). Find it on the ground by measuring the station from a reference point and
+            applying the offset.
+          </li>
+          <li>
+            <strong>PI (Point of Intersection)</strong> — Where two route tangents meet; the plan
+            shows a "kink" in the route line here. In the field, find the PI by measuring from
+            both tangent directions. A stake or reference mark here helps the construction crew
+            follow the route change.
+          </li>
+          <li>
+            <strong>Ground line (profile view)</strong> — The solid irregular line on the profile
+            view — this is the terrain as surveyed. Compare it to the ground you're actually
+            standing on. If the terrain you see is significantly higher or lower than this line,
+            issue a call-out.
+          </li>
+          <li>
+            <strong>Cable line (profile view)</strong> — The straight or slightly curved line
+            above the ground line — this is the cable's planned path. The vertical gap between the
+            cable line and the ground line is the clearance. If terrain is higher than shown,
+            clearance shrinks. Clearance below NESC Rule 232 minimums is a serious call-out.
+          </li>
+          <li>
+            <strong>Cross-section station</strong> — A tick mark on the plan indicating where a
+            cross-section drawing was taken. At this station in the field, the cross-section shows
+            you the exact ROW width, road edge, pole placement, and existing utility separations.
+            Check whether field conditions match.
+          </li>
+        </ol>
+      </div>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
       <BranchingScenario

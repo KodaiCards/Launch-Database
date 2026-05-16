@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -291,88 +290,48 @@ export default function T07L07_UndergroundStakingMarkingTheRoute() {
           </li>
         </ul>
 
-        {/* Annotated Diagram */}
-        <AnnotatedDiagram
-          title="Underground Route Staking Pattern"
-          description="A typical underground route segment showing centerline stakes, offset stakes, bore pit, and pull pit. Click each labeled element to learn what it represents in the field."
-          src="/img/diagrams/t07-underground-staking-pattern.svg"
-          fallbackDescription={`
-            Diagram description (use when image is unavailable):
-
-            The diagram shows a top-down view of an underground fiber route crossing a road.
-            From left to right:
-
-            LEFT SIDE (entry):
-            - Row of orange-flagged stakes along the route centerline, spaced 100 ft apart
-            - A parallel row of offset stakes, 5 ft to the north (top) of the centerline,
-              also orange-flagged
-            - At the route PI (bend), a centerline + offset stake pair at the bend point
-            - A BORE PIT location marked with a larger stake + directional arrow pointing
-              toward the road. Label: "Bore pit — HDD setup zone. Arrow shows bore bearing
-              (perpendicular to road in this case)."
-
-            CROSSING THE ROAD:
-            - Dashed line showing the HDD bore path underground, with depth annotation
-              "36 in. min. below pavement surface per RUS 1751F-635 §6 [confirm edition]"
-            - Two vertical lines showing the existing road edge / ROW boundary
-            - Warning: "Existing electric (red paint) — locate within 24 hr before bore"
-
-            RIGHT SIDE (exit):
-            - PULL PIT location marked with a larger stake + note: "Pull pit — minimum
-              50 ft from road edge per traffic control plan"
-            - Continuation of orange-flagged centerline + offset stakes on the far side
-            - A conduit-route arrow showing direction of conduit pull after bore exits
-
-            Callout labels:
-            1. Centerline stake: "Placed at design stationing. First to be knocked over by
-               equipment — protected by offset stake."
-            2. Offset stake: "5 ft perpendicular from centerline, away from traffic.
-               Survives construction — crews re-establish centerline by measuring back."
-            3. Bore pit: "HDD rig setup here. Verify: traffic clearance, overhead clearance,
-               mud management area."
-            4. HDD pilot bore mark: "Arrow painted on bore pit stake shows design bore bearing.
-               Drill operator aligns to this mark for pilot bore heading."
-            5. Pull pit: "Exit point for bore. Trench continues from here. Minimum 50 ft
-               from road edge for safety and conduit-pull access."
-          `}
-          annotations={[
-            {
-              id: 'ann-centerline',
-              label: 'Centerline stake',
-              x: 15,
-              y: 50,
-              description: 'Placed at design stationing. First to be knocked over by equipment. Protected by the offset stake placed 5–10 ft to the side.',
-            },
-            {
-              id: 'ann-offset',
-              label: 'Offset stake',
-              x: 15,
-              y: 30,
-              description: 'Placed 5–10 ft perpendicular from the centerline, away from the equipment path. Survives when centerline stakes are damaged. Crews re-establish centerline by measuring back.',
-            },
-            {
-              id: 'ann-bore',
-              label: 'Bore pit',
-              x: 38,
-              y: 55,
-              description: 'HDD rig setup location. Staker marks it with a stake + directional arrow showing bore bearing. Verify: traffic clearance, overhead clearance, mud management area before flagging.',
-            },
-            {
-              id: 'ann-pilot',
-              label: 'Pilot bore mark',
-              x: 42,
-              y: 45,
-              description: 'Arrow painted on or next to the bore pit stake. Shows the design bore bearing for the HDD pilot pass. Everything downstream depends on this heading being correct.',
-            },
-            {
-              id: 'ann-pull',
-              label: 'Pull pit',
-              x: 70,
-              y: 50,
-              description: 'Exit point of the HDD bore. Staker marks location with a stake + pull-pit setup diagram showing exit angle, trench dimensions, and clearance from road edge. Minimum 50 ft from traffic lane edge per typical traffic control plan.',
-            },
-          ]}
-        />
+        {/* ── LABELED LIST — underground route staking pattern ────────────── */}
+        <div className="lesson-callout">
+          <h4>Underground Route Staking Pattern — Top-Down View</h4>
+          <p className="text-sm text-slate-300/80 mb-3">
+            A typical underground route crossing a road runs: entry-side stakes → bore pit →
+            HDD crossing → pull pit → exit-side stakes. Each element below is what the staker
+            places or marks in the field.
+          </p>
+          <ol>
+            <li>
+              <strong>Centerline stakes</strong> — Orange-flagged stakes along the route
+              centerline, spaced 100 ft apart. Placed at design stationing. These are the first
+              stakes knocked over by construction equipment — protected by the offset stake
+              beside them.
+            </li>
+            <li>
+              <strong>Offset stakes</strong> — Placed 5–10 ft perpendicular from the centerline,
+              away from the equipment path (and away from traffic). Survives when centerline stakes
+              are damaged. Construction crews re-establish the centerline by measuring back from
+              the surviving offset stake.
+            </li>
+            <li>
+              <strong>Bore pit</strong> — Marked with a larger stake plus a directional arrow
+              showing the design bore bearing. The staker verifies before flagging: traffic
+              clearance, overhead wire clearance above the HDD rig, and availability of a mud
+              management area for bentonite returns. Bore path depth: 36 in. min. below pavement
+              per RUS 1751F-635 §6 [confirm edition].
+            </li>
+            <li>
+              <strong>HDD pilot bore heading mark</strong> — Arrow painted on or next to the bore
+              pit stake. Shows the design bore bearing for the HDD pilot pass. Everything
+              downstream — angle, depth profile, exit point — depends on this heading being
+              correct. Double-check against the design plan before the drill rig aligns.
+            </li>
+            <li>
+              <strong>Pull pit</strong> — Exit point of the HDD bore, marked with a stake plus a
+              pull-pit setup sketch showing exit angle, trench dimensions, and clearance from the
+              road edge. Minimum 50 ft from the traffic lane edge per typical traffic control
+              plan. The trench continues from the pull pit to the next pedestal or splice point.
+            </li>
+          </ol>
+        </div>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field — Bore Pit Location Accuracy</p>
