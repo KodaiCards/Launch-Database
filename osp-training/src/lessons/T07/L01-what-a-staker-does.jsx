@@ -27,7 +27,7 @@ export const meta = {
     { term: 'attachment point', source_lesson_id: 'T05.L02' },
     { term: 'clearance', source_lesson_id: 'T05.L02' },
     { term: 'safety zone', source_lesson_id: 'T18.L01' },
-    { term: 'sag', source_lesson_id: 'T05.L05' },
+    { term: 'sag', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

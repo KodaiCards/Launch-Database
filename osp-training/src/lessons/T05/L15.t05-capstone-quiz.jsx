@@ -108,7 +108,7 @@ export default function T05L15_CapstoneQuiz() {
           { label: 'Midspan height under wind (ft)', expression: 'attach - Math.sqrt(w * w + (wind_psf * OD_in / 12) * (wind_psf * OD_in / 12)) * L * L / (8 * RTS * eds_pct)', varIds: ['attach', 'w', 'wind_psf', 'OD_in', 'L', 'RTS', 'eds_pct'] },
           { label: 'Clearance margin (ft)', expression: '(attach - Math.sqrt(w * w + (wind_psf * OD_in / 12) * (wind_psf * OD_in / 12)) * L * L / (8 * RTS * eds_pct)) - reqd', varIds: ['attach', 'w', 'wind_psf', 'OD_in', 'L', 'RTS', 'eds_pct', 'reqd'] },
         ]}
-        sanityCheck="Positive clearance margin = design passes. Target ≥ 2 ft margin above NESC minimum as field practice. H = 640 lb; no-wind sag ≈ 1.75 ft; wind-loaded sag ≈ 2.36 ft; clearance margin ≈ +6.14 ft under wind — a comfortable Light-district span at 24 ft attachment height."
+        sanityCheck="Positive clearance margin = design passes. Target ≥ 2 ft margin above NESC minimum as field practice. H = 640 lb (3,200 × 20%); no-wind sag = 0.280 × 200² / (8 × 640) = 11,200 / 5,120 ≈ 2.19 ft; w_wind = 9 × (0.68/12) ≈ 0.510 lb/ft; w_combined = √(0.280² + 0.510²) ≈ 0.582 lb/ft; wind-loaded sag = 0.582 × 40,000 / 5,120 ≈ 4.55 ft; midspan height under wind = 24 − 4.55 = 19.45 ft; clearance margin = 19.45 − 15.5 ≈ +3.95 ft — this Light-district span passes NESC Rule 232 with nearly 4 ft of margin."
       />
 
       {/* ── CAPSTONE QUIZ — 25 QUESTIONS ─────────────────────────────────── */}
@@ -392,12 +392,12 @@ export default function T05L15_CapstoneQuiz() {
             choices: [
               '1.573 lb/ft (simple sum of all three)',
               '0.966 lb/ft (sum of w + w_ice only)',
-              '≈ 1.240 lb/ft (vector sum: √((w + w_ice)² + w_wind²))',
+              '≈ 1.141 lb/ft (vector sum: √((w + w_ice)² + w_wind²))',
               '≈ 0.627 lb/ft (wind component only under ice)',
             ],
             answerIndex: 2,
             explanation:
-              'w_combined = √((w + w_ice)² + w_wind²) = √((0.145 + 0.821)² + 0.607²) = √(0.966² + 0.607²) = √(0.933 + 0.368) = √1.301 ≈ 1.140 lb/ft. (Note: the exact value is ≈1.140 lb/ft; the lesson worked example uses slightly different inputs producing 1.240 lb/ft. The formula is the vector sum method.) (T05.L06)',
+              'w_combined = √((w + w_ice)² + w_wind²) = √((0.145 + 0.821)² + 0.607²) = √(0.966² + 0.607²) = √(0.9332 + 0.3684) = √1.3016 ≈ 1.141 lb/ft. The formula takes the vector sum of the vertical combined load (gravity weight + ice weight, acting downward) and the horizontal wind load, because they act at right angles. (T05.L06)',
           },
           {
             id: 'T05-CAP-Q19',
