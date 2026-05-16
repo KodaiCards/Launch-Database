@@ -249,9 +249,6 @@ export default function T07L08_KatapultAndGISStakingTools() {
             </li>
           </ol>
         </div>
-            },
-          ]}
-        />
 
         <h3 className="mt-6 font-semibold">Paper staking vs. digital staking — when to use each</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
