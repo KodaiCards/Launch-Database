@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -289,52 +288,37 @@ export default function T19L07_RackSideHardwarePatchPanelsLiu() {
         </ul>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ─────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="ODF Rack Layout — From Feeder to OLT"
-        description="Click each labeled section to understand its function and OSP vs. ISP ownership."
-        src="/training/diagrams/odf-rack-layout.svg"
-        alt="Diagram of an ODF rack showing splice organizer, patch panel, fiber management panels, and connection path to OLT rack"
-        aspectRatio={1.6}
-        hotPoints={[
-          {
-            id: 'splice-organizer',
-            x: 15,
-            y: 30,
-            label: 'Splice Organizer',
-            type: 'click',
-            explanation:
-              'Holds the fusion-splice trays where OSP feeder fiber meets inside-plant pigtails. OSP engineer specifies this space. The splice organizer is the last OSP deliverable — fibers are spliced and managed here.',
-          },
-          {
-            id: 'patch-panel',
-            x: 15,
-            y: 60,
-            label: 'Patch Panel (ODF Front Face)',
-            type: 'click',
-            explanation:
-              'The connector field presenting pigtail ends as connectorized ports. Labeled with OSP fiber IDs from the splicing matrix. ISP team patches from here to OLT ports. Each port = one OSP fiber.',
-          },
-          {
-            id: 'fiber-mgmt',
-            x: 50,
-            y: 45,
-            label: 'Fiber Management',
-            type: 'click',
-            explanation:
-              'Radius-controlled panels that guide patch cords between panels without tight bends. Prevents micro-bend loss on patch cords. 1U manager for every 2–3U of patch panels is a good planning ratio.',
-          },
-          {
-            id: 'patch-cord',
-            x: 70,
-            y: 40,
-            label: 'Patch Cord (to OLT)',
-            type: 'click',
-            explanation:
-              'A short factory-terminated cord (typically 1–3 m, LC/UPC or SC/APC) connecting an ODF front-face port to the corresponding OLT GPON port. ISP team installs and manages patch cords. OSP engineer\'s job: make sure the ODF front face is clearly labeled so the ISP team can patch correctly.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — ODF rack sections ──────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>ODF Rack Layout — From Feeder to OLT (OSP to ISP Handoff)</h4>
+        <ol>
+          <li>
+            <strong>Splice Organizer</strong> — Holds the fusion-splice trays where OSP feeder
+            fiber meets inside-plant pigtails. The OSP engineer specifies this space and performs
+            the splicing. The splice organizer is the OSP engineer's final deliverable inside the
+            building — fibers are spliced, managed, and protected here.
+          </li>
+          <li>
+            <strong>Patch Panel — ODF Front Face</strong> — The connector field presenting pigtail
+            ends as connectorized ports. Each port is labeled with OSP fiber IDs from the splicing
+            matrix. The ISP team patches from here to OLT ports. Each port corresponds to one
+            OSP fiber in the feeder cable. <em>OSP/ISP boundary.</em>
+          </li>
+          <li>
+            <strong>Fiber Management Panels</strong> — Radius-controlled panels that guide patch
+            cords between the ODF front face and the OLT rack without tight bends. Prevents
+            micro-bend loss on patch cords. Plan 1U of fiber management for every 2–3U of patch
+            panel space when specifying ODF height.
+          </li>
+          <li>
+            <strong>Patch Cord (to OLT)</strong> — A short factory-terminated cord (typically
+            1–3 m, LC/UPC or SC/APC) connecting an ODF front-face port to the corresponding OLT
+            GPON port. The ISP team installs and manages patch cords. The OSP engineer's job is
+            to ensure the ODF front face is clearly labeled per the splicing matrix so the ISP
+            team can patch correctly without ambiguity. <em>ISP territory.</em>
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

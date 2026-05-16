@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -272,43 +271,12 @@ export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {
         </div>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ─────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Rack-Mount FOSC vs. OSP FOSC"
-        description="Click each diagram element to compare the two environments."
-        src="/training/diagrams/fosc-comparison.svg"
-        alt="Side-by-side diagram of an OSP dome FOSC and a rack-mount headend FOSC, showing physical differences"
-        aspectRatio={2.5}
-        hotPoints={[
-          {
-            id: 'osp-dome',
-            x: 15,
-            y: 40,
-            label: 'OSP Dome FOSC',
-            type: 'click',
-            explanation:
-              'Weatherproof dome closure for aerial or pedestal use. Cable entry ports are sealed with heat-shrink boots or gel. Re-entry requires opening the dome and disturbing the seal. Splice trays inside are identical to headend trays — the mechanics are the same.',
-          },
-          {
-            id: 'headend-rack',
-            x: 65,
-            y: 40,
-            label: 'Rack-Mount FOSC',
-            type: 'click',
-            explanation:
-              'Indoor rack-mount enclosure (2U shown). Front-access hinged door. Holds 6–12 splice trays (72–144 splices in 2U). Cable enters through an open management port. No seal, no gel. Fits in a standard ODF rack alongside patch panels.',
-          },
-          {
-            id: 'express-path',
-            x: 40,
-            y: 75,
-            label: 'Express fiber path',
-            type: 'click',
-            explanation:
-              'Express fibers pass through the FOSC in a straight-through express splice tray. They are not broken out to any local connection. In the headend rack-mount FOSC, express fibers at an intermediate FDH appear as through-splices — entering on one cable, continuing on another cable. Their CO ODF port connects to the next downstream FDH.',
-          },
-        ]}
-      />
+      {/* OSP dome vs. rack-mount FOSC comparison is covered in the SideBySide above. */}
+      {/* Express fiber path note: express fibers pass through an FDH FOSC in a
+          straight-through express splice tray — not broken out to any local splitter.
+          In the CO headend rack-mount FOSC, these appear as through-splices (one cable
+          in, another cable out). Their CO ODF port assignment points to the next
+          downstream FDH in the bus route, not the local FDH service area. */}
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

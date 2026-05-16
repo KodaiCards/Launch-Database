@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -393,70 +392,48 @@ export default function T19L01_CoHutHeadendLayout() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Headend / CO Building Layout — Floor Plan"
-        description="Click any labeled zone to see what's in it and whether it's OSP or ISP territory."
-        src="/training/diagrams/headend-floor-plan.svg"
-        alt="Floor plan diagram of a CO/headend showing MEF, MDF/ODF room, equipment room, battery room, HVAC area, and generator pad"
-        aspectRatio={1.8}
-        hotPoints={[
-          {
-            id: 'mef',
-            x: 8,
-            y: 50,
-            label: 'MEF',
-            type: 'click',
-            explanation:
-              'Main Entrance Facility — where OSP conduit enters the building. OSP engineer specifies the conduit sleeves, duct seal, service loops, and bonding hardware here. Primary protectors mount here or immediately adjacent.',
-          },
-          {
-            id: 'mdf',
-            x: 25,
-            y: 50,
-            label: 'MDF / ODF',
-            type: 'click',
-            explanation:
-              'Main Distribution Frame (fiber version: ODF). OSP feeder cables are routed from the MEF to here, broken out into individual fibers, and fusion-spliced to factory-terminated pigtails. The OSP termination point is at the ODF splice organizer. Everything right of this point is ISP territory.',
-          },
-          {
-            id: 'mer',
-            x: 50,
-            y: 35,
-            label: 'Equipment Room',
-            type: 'click',
-            explanation:
-              'The MER (Main Equipment Room) — where OLT shelves, CMTS, routers, and switches live. ISP territory. OSP engineers typically access this area only to trace a cable from the ODF to the OLT, or to hand off as-built documentation.',
-          },
-          {
-            id: 'battery',
-            x: 75,
-            y: 35,
-            label: 'Battery Plant',
-            type: 'click',
-            explanation:
-              'The DC power plant — battery strings, rectifiers, and distribution bus. Typically –48 VDC system (covered in T19.L03). ISP territory, but the OSP engineer needs to know it exists, what it powers, and that it is the reason the CO stays alive during a power outage.',
-          },
-          {
-            id: 'hvac',
-            x: 75,
-            y: 70,
-            label: 'HVAC',
-            type: 'click',
-            explanation:
-              'Precision cooling equipment (CRAC units or split systems). ISP/facilities territory. On rural hut builds, the OSP engineer specifies HVAC as part of the headend building spec. (Covered in T19.L05.)',
-          },
-          {
-            id: 'generator',
-            x: 92,
-            y: 50,
-            label: 'Generator',
-            type: 'click',
-            explanation:
-              'Emergency generator and ATS (automatic transfer switch). Outdoor pad or adjacent room. ISP/facilities territory, but the OSP engineer specifies generator size and ATS type on RUS-program hut builds. (Covered in T19.L04.)',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — CO building zones ─────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>Headend / CO Building Layout — Zones and OSP vs. ISP Boundaries</h4>
+        <ol>
+          <li>
+            <strong>MEF — Main Entrance Facility</strong> — Where OSP conduit enters the
+            building. The OSP engineer specifies the conduit sleeves, duct seal, service loops,
+            and bonding hardware here. Primary protectors mount at or immediately adjacent to
+            the MEF. <em>OSP territory.</em>
+          </li>
+          <li>
+            <strong>MDF / ODF — Main Distribution Frame / Optical Distribution Frame</strong> —
+            OSP feeder cables are routed from the MEF to the ODF, broken out into individual
+            fibers, and fusion-spliced to factory-terminated pigtails. The OSP termination point
+            is at the ODF splice organizer. Everything past this point is ISP territory.
+            <em> OSP/ISP boundary.</em>
+          </li>
+          <li>
+            <strong>MER — Main Equipment Room</strong> — Where OLT shelves, CMTS, routers, and
+            switches live. OSP engineers typically access this area only to trace a cable from
+            the ODF to the OLT, or to hand off as-built documentation. <em>ISP territory.</em>
+          </li>
+          <li>
+            <strong>Battery Plant (DC Power Plant)</strong> — Battery strings, rectifiers, and
+            distribution bus. Typically a –48 VDC system (see T19.L03). The OSP engineer needs
+            to know it exists, what it powers, and that it is the reason the CO stays operational
+            during a power outage. <em>ISP territory — awareness only for OSP.</em>
+          </li>
+          <li>
+            <strong>HVAC (Precision Cooling)</strong> — CRAC units or split systems maintaining
+            the thermal envelope for electronic equipment. ISP/facilities territory. On rural hut
+            builds, the OSP engineer specifies HVAC type as part of the headend building spec
+            (see T19.L05). <em>ISP/facilities territory.</em>
+          </li>
+          <li>
+            <strong>Generator / ATS (Automatic Transfer Switch)</strong> — Emergency generator on
+            an outdoor pad or adjacent room. ISP/facilities territory, but the OSP engineer
+            specifies generator size and ATS type on RUS-program hut builds (see T19.L04).
+            <em> Shared specification responsibility on RUS builds.</em>
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

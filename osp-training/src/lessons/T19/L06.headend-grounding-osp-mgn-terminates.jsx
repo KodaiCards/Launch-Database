@@ -5,7 +5,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -330,61 +329,52 @@ export default function T19L06_HeadendGroundingOspMgnTerminates() {
         </ul>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="OSP-to-CO Grounding Path — Building Entry Detail"
-        description="Click each element to see its role in the grounding chain from the pole to the building GES."
-        src="/training/diagrams/co-building-entry-grounding.svg"
-        alt="Diagram showing OSP feeder cable entering building with messenger bond, primary protector, IBT-entry, GES-tie-in, and TMGB connections"
-        aspectRatio={2.0}
-        hotPoints={[
-          {
-            id: 'messenger',
-            x: 8,
-            y: 30,
-            label: 'Messenger (MGN-bonded)',
-            type: 'click',
-            explanation:
-              'The aerial messenger wire is bonded to the MGN at every pole. Lightning-induced GPR transients on the MGN travel via the messenger toward the CO. This is the input side of the GPR conduction path.',
-          },
-          {
-            id: 'primary-protector',
-            x: 22,
-            y: 50,
-            label: 'Primary Protector',
-            type: 'click',
-            explanation:
-              'Surge arrester at building entry — clamps transient voltage to safe levels. The protector\'s ground lead connects to the IBT. Required by NEC Art. 770 for metallic cable entering buildings. For ADSS dielectric fiber with no metallic members: primary protector may not be required; confirm with cable spec.',
-          },
-          {
-            id: 'ibt',
-            x: 40,
-            y: 65,
-            label: 'IBT-entry (NEC 250.94)',
-            type: 'click',
-            explanation:
-              'Intersystem Bonding Termination — the single bonding point where all incoming OSP bonds converge. Listed device per NEC Art. 250.94. Provides accessible bonding lugs for multiple systems (power, telecom, cable TV, etc.). Ensures single-point bonding that prevents ground loops.',
-          },
-          {
-            id: 'ges',
-            x: 60,
-            y: 85,
-            label: 'GES (Ground Rods)',
-            type: 'click',
-            explanation:
-              'Grounding Electrode System — ground rods, concrete-encased electrodes, and their bonding conductors. Connected to IBT via #6 AWG Cu (minimum) bonding conductor. GPR transient energy dissipates into earth here rather than routing through OLT equipment. Full electrode types and resistance targets covered in T14.',
-          },
-          {
-            id: 'tmgb',
-            x: 75,
-            y: 40,
-            label: 'TMGB (ISP side)',
-            type: 'click',
-            explanation:
-              'Telecommunications Main Grounding Busbar — the ISP-side grounding reference per TIA-607-D. Located in the MER. Also bonded to the IBT-entry and the building GES. All equipment racks bond to TGBs which bond to the TMGB via TBBs. The OSP engineer\'s work ends at the IBT-entry; the ISP team installs the TMGB/TGB/TBB hierarchy.',
-          },
-        ]}
-      />
+      {/* ── LABELED LIST — grounding chain sequence ───────────────────────── */}
+      <div className="lesson-callout">
+        <h4>OSP-to-CO Grounding Path — Building Entry Chain (Pole to GES)</h4>
+        <ol>
+          <li>
+            <strong>Messenger (MGN-bonded)</strong> — The aerial messenger wire is bonded to the
+            MGN at every pole. Lightning-induced ground potential rise (GPR) transients on the
+            MGN travel via the messenger toward the CO. This is the input side of the GPR
+            conduction path — what the grounding system must safely redirect to earth.
+          </li>
+          <li>
+            <strong>Primary Protector</strong> — Surge arrester at building entry; clamps
+            transient voltage to safe levels. The protector's ground lead connects to the IBT.
+            Required by NEC Art. 770 for metallic cable entering buildings. For ADSS dielectric
+            fiber with no metallic members, a primary protector may not be required — confirm
+            with the cable spec.
+          </li>
+          <li>
+            <strong>IBT-entry — Intersystem Bonding Termination (NEC 250.94)</strong> — The
+            single bonding point where all incoming OSP bonds converge. A listed device per NEC
+            Art. 250.94 with accessible bonding lugs for multiple systems (power, telecom, cable
+            TV, etc.). Single-point bonding here prevents ground loops between systems.
+          </li>
+          <li>
+            <strong>GES — Grounding Electrode System</strong> — Ground rods, concrete-encased
+            electrodes, and their bonding conductors. Connected to the IBT via #6 AWG Cu
+            (minimum) bonding conductor. GPR transient energy dissipates into earth here rather
+            than routing through OLT equipment. Electrode types and resistance targets are
+            covered in T14.
+          </li>
+          <li>
+            <strong>TMGB — Telecommunications Main Grounding Busbar (ISP side)</strong> — The
+            ISP-side grounding reference per TIA-607-D [confirm edition], located in the MER.
+            Also bonded to the IBT-entry and the building GES. Equipment racks bond to TGBs
+            which bond to the TMGB via TBBs (Telecommunications Bonding Backbone). The OSP
+            engineer's work ends at the IBT-entry; the ISP team installs the TMGB/TGB/TBB
+            hierarchy.
+          </li>
+          <li>
+            <strong>TMGB-to-IBT bond</strong> — A bonding conductor ties the ISP-side TMGB back
+            to the IBT-entry, ensuring the entire building's telecom bonding hierarchy references
+            the same GES. This closes the loop between the OSP-side termination and the ISP-side
+            rack infrastructure — one earth reference for the whole facility.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
