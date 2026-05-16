@@ -365,7 +365,7 @@ export default function T05L02_VerticalClearanceRule232() {
             training approximation. Technically, w_combined produces a <em>resultant</em> sag
             that points diagonally (the cable tilts slightly to leeward under wind). For
             vertical clearance checks, using w_combined as a vertical load is a conservative
-            approximation — the computed sag is slightly larger than the true vertical sag
+            approximation — the computed sag is conservatively larger than the true vertical sag
             component, which means your clearance check stays on the safe side. This is the
             method used in NESC loading calculations at the training level; full sag-tension
             software resolves the tilt separately, but the difference is small for OSP spans.

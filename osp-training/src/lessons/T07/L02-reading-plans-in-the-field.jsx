@@ -34,7 +34,7 @@ export const meta = {
     { term: 'route survey', source_lesson_id: 'T04.L01' },
     { term: 'contour', source_lesson_id: 'T04.L03' },
     { term: 'existing utilities', source_lesson_id: 'T04.L02' },
-    { term: 'pole locations from design', source_lesson_id: 'T05.L02' },
+    { term: 'pole locations from design', source_lesson_id: 'T04.L02' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
     { term: 'stake', source_lesson_id: 'T07.L01' },
     { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },

@@ -164,6 +164,11 @@ export default function T05L10_ADSSAerialDesign() {
               front: 'What is a deadend clamp and why must it be cable-specific?',
               back: 'A deadend clamp is an ADSS attachment hardware assembly used at terminal poles, where the full cable tension must be transferred to the structure. It grips the cable over a specific length to distribute the load without damaging the fiber or strength members. Deadend clamps are cable-specific because the grip length, geometry, and clamping force are engineered for the exact cable design — the wrong clamp can slip or cause localized stress that damages fiber.',
             },
+            {
+              id: 'T05-L10-fc-suspension-clamp',
+              front: 'What is a suspension clamp and why is it the most common aeolian vibration failure point?',
+              back: 'A suspension clamp is an ADSS attachment hardware assembly used at intermediate (non-terminal) poles, where the cable passes through the clamp rather than terminating. Suspension clamps are the most common failure point for aeolian vibration damage because they are the highest-stress location along the span — the cable is gripped at the clamp edge, concentrating bending stress exactly where the vibration-induced flex is greatest. Like deadend clamps, suspension clamps are cable-specific and must match the exact cable design.',
+            },
           ]}
         />
       </section>
