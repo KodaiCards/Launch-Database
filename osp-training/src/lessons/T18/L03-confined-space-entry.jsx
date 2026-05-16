@@ -167,7 +167,7 @@ export default function T18L03_ConfinedSpaceEntry() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Hydrogen sulfide (H₂S)</td>
                 <td className="px-3 py-2 font-mono">&lt; 1 ppm</td>
-                <td className="px-3 py-2">Evacuate and ventilate immediately; at 50 ppm = NIOSH IDLH — exit immediately.</td>
+                <td className="px-3 py-2">Evacuate and ventilate immediately; at 100 ppm = NIOSH IDLH — exit immediately, no re-entry without SCBA.</td>
                 <td className="px-3 py-2 font-mono text-red-400">&gt; 1 ppm: exit immediately</td>
               </tr>
             </tbody>
@@ -293,15 +293,15 @@ export default function T18L03_ConfinedSpaceEntry() {
         <h2>Why Oxygen Displacement Is the Silent Killer</h2>
         <p>
           Hydrogen sulfide (H₂S) smells like rotten eggs at low concentrations — but that
-          sense of smell is not a reliable warning. The NIOSH IDLH for H₂S is <strong>50 ppm</strong>:
-          at 50 ppm you must exit immediately. At around 100 ppm (twice the IDLH), H₂S
-          completely paralyzes your sense of smell — meaning a worker who has been breathing
-          50–100 ppm H₂S has already been above IDLH and loses the ability to detect further
-          buildup. You can be at 100+ ppm with no warning smell. At 300 ppm it causes pulmonary
-          edema (fluid in the lungs) within minutes. At 500–1,000 ppm it causes rapid loss of
-          consciousness — sometimes in one or two breaths. Workers who descend into an H₂S
-          environment above IDLH don't feel dizzy and climb out. They fall. Rely on your monitor,
-          not your nose.
+          sense of smell is not a reliable warning. The NIOSH IDLH for H₂S is <strong>100 ppm</strong>:
+          at or above 100 ppm you must exit immediately — no re-entry without supplied-air SCBA.
+          At the IDLH (100 ppm), H₂S can induce olfactory paralysis within minutes — workers
+          lose the smell-warning signal precisely AT the immediate-danger threshold. Your nose
+          goes numb exactly when the danger is worst. You can be at 100+ ppm with no warning
+          smell and no sensation of distress. At 300 ppm it causes pulmonary edema (fluid in the
+          lungs) within minutes. At 500–1,000 ppm it causes rapid loss of consciousness —
+          sometimes in one or two breaths. Workers who descend into an H₂S environment above
+          IDLH don't feel dizzy and climb out. They fall. Rely on your monitor, not your nose.
         </p>
         <p className="mt-2">
           The same dynamic applies to oxygen displacement: carbon dioxide (CO₂) is heavier than
@@ -335,7 +335,9 @@ export default function T18L03_ConfinedSpaceEntry() {
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 29 CFR 1910.146(b) — Acceptable O₂ range definition; 29 CFR 1910.268(o)(2) —
           Atmospheric testing requirement; 29 CFR 1910.5(c)(1) — specific standard supersedes
-          general standard; NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 50 ppm IDLH.
+          general standard; NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 100 ppm IDLH
+          (cdc.gov/niosh/idlh/7783064.html); NIOSH Pocket Guide to Chemical Hazards, H₂S entry
+          (cdc.gov/niosh/npg/npgd0337.html).
         </p>
       </section>
 

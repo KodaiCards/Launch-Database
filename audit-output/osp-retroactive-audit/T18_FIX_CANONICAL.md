@@ -432,4 +432,48 @@
 - L04 ±20 lines from Z359.1+Z359.11 fixes: Z359.1 described as "overarching PFAS system requirements" — accurate for teaching purposes; GAP-H4 noted "umbrella" framing slightly imprecise but non-misleading. Z359.11 references unchanged and verified correct. No additional Z359 errors found.
 - L03 ±20 lines from CO table fix: H₂S row retained "at 50 ppm = NIOSH IDLH — exit immediately" in Action column — correct and not competing (H₂S exit threshold in column 4 is > 1 ppm, so the IDLH context provides useful scale without creating a competing trigger). O₂ row "Below 16% = IDLH" correct. No additional table issues.
 
+---
+
+## Polish-4 Fixes (from final-verify-3 RT-J findings) — APPLIED 2026-05-16
+
+### NEW-J1 | HIGH | L03 — H₂S IDLH corrected from 50 ppm → 100 ppm at 3 distinct locations
+
+**Primary-source verification:**
+- NIOSH IDLH documentation, CAS 7783-06-4, revised 1994: "The revised IDLH for hydrogen sulfide is 100 ppm based on acute inhalation toxicity data in humans." (cdc.gov/niosh/idlh/7783064.html — confirmed via WebSearch returning NIOSH primary source result text)
+- NIOSH Pocket Guide to Chemical Hazards, H₂S entry (npgd0337): IDLH listed as 100 ppm; olfactory fatigue documented at 100 ppm per Poda 1966. (cdc.gov/niosh/npg/npgd0337.html)
+- Both sources independently confirm 100 ppm. The 50 ppm figure appearing in earlier audit rounds reflected confusion with OSHA STEL (15 ppm 10-min ceiling) or older pre-1994 literature.
+
+**Note on C-02/C-03 in this canonical:** Those entries were written BEFORE the RT-J reversal. C-02 claimed "correct value = 50 ppm" and C-03 proposed resequencing around 50 ppm. Both are now superseded by NEW-J1 (100 ppm confirmed from NIOSH primary sources). The Polish-3 neighborhood scan note ("H₂S row retained 'at 50 ppm = NIOSH IDLH' — correct") is also superseded.
+
+**Fixes applied to `L03-confined-space-entry.jsx`:**
+
+1. **Location 1 — Atmospheric table Action column (line ~170):**
+   - BEFORE: `Evacuate and ventilate immediately; at 50 ppm = NIOSH IDLH — exit immediately.`
+   - AFTER: `Evacuate and ventilate immediately; at 100 ppm = NIOSH IDLH — exit immediately, no re-entry without SCBA.`
+
+2. **Location 2+3+J2 — Advanced section prose (lines ~296–304, 3 changes in one block):**
+   - BEFORE: `The NIOSH IDLH for H₂S is **50 ppm**: at 50 ppm you must exit immediately. At around 100 ppm (twice the IDLH), H₂S completely paralyzes your sense of smell — meaning a worker who has been breathing 50–100 ppm H₂S has already been above IDLH and loses the ability to detect further buildup.`
+   - AFTER: `The NIOSH IDLH for H₂S is **100 ppm**: at or above 100 ppm you must exit immediately — no re-entry without supplied-air SCBA. At the IDLH (100 ppm), H₂S can induce olfactory paralysis within minutes — workers lose the smell-warning signal precisely AT the immediate-danger threshold. Your nose goes numb exactly when the danger is worst.`
+   - J2 resolution: "twice the IDLH" phrase eliminated; olfactory paralysis now correctly placed AT the IDLH (100 ppm), consistent with NIOSH NPG Poda 1966 citation.
+
+3. **Location 3 — Footer citation (lines ~338–340):**
+   - BEFORE: `NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 50 ppm IDLH.`
+   - AFTER: `NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 100 ppm IDLH (cdc.gov/niosh/idlh/7783064.html); NIOSH Pocket Guide to Chemical Hazards, H₂S entry (cdc.gov/niosh/npg/npgd0337.html).`
+
+- Status: APPLIED ✓
+
+### NEW-J2 | LOW (consequential) | L03 — "twice the IDLH" phrase resolved
+
+- Resolved inline with NEW-J1 Location 2+3 block above.
+- Status: APPLIED ✓ (no separate commit needed)
+
+---
+
+## Neighborhood scan from Polish-4 (surface only, no fixes applied)
+
+- **L03 line ~285 — "H₂S at 50 ppm today" (field reality paragraph):** This uses 50 ppm as an EXAMPLE CONCENTRATION in a scenario ("a sewer main cracked two blocks away and now there's H₂S at 50 ppm"), NOT as an IDLH claim. 50 ppm is a plausible field reading (below IDLH of 100 ppm) that illustrates why skipping atmospheric testing is dangerous. This usage is CORRECT and should NOT be changed — it demonstrates a hazardous-but-sub-IDLH reading that would be detected by a monitor, reinforcing the "test every time" message.
+- **L03 atmospheric table O₂ row — "Below 16% = IDLH":** The NIOSH IDLH for O₂ deficiency references oxygen concentrations below which immediate danger exists; 16% is the commonly-cited threshold associated with loss of consciousness. This is defensible teaching language. Not an IDLH value for a specific chemical compound — no change needed.
+- **L03 BranchingScenario "step2" node — gas concentrations:** The scenario uses LEL = 12%, CO = 3 ppm, H₂S = 0 ppm as a scenario reading. No IDLH references in scenario text. Unaffected by this patch.
+- **No additional 50-ppm IDLH references found** in ±20 lines around each fix location or in flashcard/key_terms arrays.
+
 === T18 FIX CANONICAL END ===
