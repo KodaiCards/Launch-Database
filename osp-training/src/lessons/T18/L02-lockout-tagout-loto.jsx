@@ -16,15 +16,27 @@ export const meta = {
   prerequisites: ['T18.L01'],
   vocabulary_introduced: [
     'LOTO',
+    'lockout-tagout',
     'energy isolating device',
     'authorized employee (LOTO)',
     'affected employee (LOTO)',
+  ],
+  learning_objectives: [
+    'Apply the 29 CFR 1910.147(d) LOTO 6-step procedure to OSP fiber hut and generator-class equipment.',
+    'Distinguish authorized employees (who apply locks) from affected employees (who are notified).',
+    'Identify stored energy sources that must be released before verification.',
+    'For equipment types not covered in this lesson, consult the qualified electrical authority before proceeding.',
   ],
   key_terms: [
     {
       term: 'LOTO',
       definition:
         'Lockout/Tagout — the procedure for de-energizing equipment before servicing or maintenance, governed by 29 CFR 1910.147. A physical padlock (lockout) or warning tag (tagout) is applied to the energy isolating device to prevent unexpected re-energization while a worker is in the danger zone.',
+    },
+    {
+      term: 'lockout-tagout',
+      definition:
+        'The formal name for the LOTO energy control procedure defined in 29 CFR 1910.147. The "lockout" is the physical padlock applied to the energy isolating device; the "tagout" is the warning tag used when a lock cannot be physically attached. Both prevent re-energization while a worker is in the danger zone. Also abbreviated LOTO.',
     },
     {
       term: 'energy isolating device',
@@ -133,12 +145,20 @@ export default function T18L02_LockoutTagout() {
             accept a lock), attach a durable warning tag. Your lock = your key = your life.
           </li>
           <li>
-            <strong>Release or restrain stored energy.</strong> Bleed hydraulic pressure,
-            discharge capacitors, block suspended components with a prop or pin, discharge
-            electrical capacitors to ground. Then verify: attempt to operate the equipment
-            using its normal controls to confirm zero energy state.
+            <strong>Release or restrain stored energy, then verify zero energy.</strong> Bleed
+            hydraulic pressure, discharge capacitors, block suspended components with a prop or pin,
+            discharge electrical capacitors to ground. Then verify: attempt to operate the equipment
+            using its normal controls (power button, stop button) to confirm it does not start.
+            No response = zero-energy state confirmed.
           </li>
         </ol>
+        <div className="mt-4 p-3 bg-red-900/25 border border-red-500/40 rounded-lg text-sm">
+          <strong className="text-red-300">Critical sequence note:</strong> DO NOT enter the
+          equipment after applying your lock (Step 5). Step 6 — verify zero energy by attempting
+          to operate via normal controls — is the ENTRY GATE. No part of your body enters the
+          danger zone until Step 6 is complete and the equipment does not respond. Lock application
+          is not the all-clear. Verification is.
+        </div>
 
         {/* ── FLASHCARDS ──────────────────────────────────────────────────── */}
         <Flashcard
@@ -164,6 +184,11 @@ export default function T18L02_LockoutTagout() {
               front: 'Who is the affected employee in a LOTO procedure?',
               back: 'An employee whose job requires them to operate equipment that is locked out, or who works in an area where LOTO is in use. They must be notified before LOTO is applied and after it is released. They cannot operate locked-out equipment.',
             },
+            {
+              id: 'T18-L02-fc-loto-alt',
+              front: 'What is lockout/tagout (LOTO)?',
+              back: 'The formal name for the energy control procedure defined in 29 CFR 1910.147. The lockout is a physical padlock applied to the energy isolating device; the tagout is a warning tag used when a lock cannot be physically attached. Both prevent unexpected re-energization while a worker is in the danger zone. Always prefer lockout over tagout — a tag can be removed in seconds.',
+            },
           ]}
         />
       </section>
@@ -178,10 +203,10 @@ export default function T18L02_LockoutTagout() {
           in order:
         </p>
         <ol className="list-decimal pl-5 space-y-2 mt-2 text-sm text-slate-300/90">
-          <li>Remove all tools, restraints, and materials from the work area.</li>
-          <li>Ensure all employees are clear of the equipment and have been notified that power is being restored.</li>
-          <li>Each authorized employee removes their own lock — nobody removes anyone else's lock.</li>
-          <li>Notify affected employees that the equipment is being re-energized.</li>
+          <li>Remove all tools, restraints, and materials from the work area. Restore machine guards.</li>
+          <li>Ensure all workers are clear of the equipment — confirm visually before proceeding.</li>
+          <li>Each authorized employee removes their own personal lock from the energy isolating device. Nobody removes anyone else's lock.</li>
+          <li>Notify affected employees that the equipment is being re-energized. (Notification comes AFTER locks are removed — per 29 CFR 1910.147(e)(3).)</li>
           <li>Restore the energy source (close the breaker, open the valve).</li>
         </ol>
 
@@ -280,6 +305,12 @@ export default function T18L02_LockoutTagout() {
             isEnd: true,
             endMessage: 'Always notify affected employees FIRST — before touching any energy source. LOTO protects you from hazards you don\'t even see coming.',
           },
+          'step2-correction': {
+            id: 'step2-correction',
+            isEnd: true,
+            endMessage:
+              '29 CFR 1910.147(d)(2) requires identifying ALL energy sources — including stored energy (capacitors, hydraulic pressure, spring tension, gravity) — before applying any lockout device. You cannot safely apply the lock until you know every energy source that could harm you. Return to Step 2 and complete a full energy-source survey before applying the lock.',
+          },
           step2: {
             id: 'step2',
             prompt:
@@ -288,8 +319,8 @@ export default function T18L02_LockoutTagout() {
               {
                 label: 'No — it\'s just one DC circuit. One breaker is the only isolation point.',
                 consequence:
-                  'Watch out: the brief says the shelf has powered amplifier components. Some EDFA shelves also carry fiber-side optical power — laser hazard. While optical power is a separate standard (laser safety), it\'s good practice to verify all hazards before diving in. For this scenario, the 48V DC breaker is the primary isolation point.',
-                nextId: 'step3',
+                  '29 CFR 1910.147(d)(2) requires identifying ALL energy sources before applying any lockout device — including stored energy such as capacitors, hydraulic pressure, and spring tension. You identified only the primary circuit breaker. EDFA shelves contain capacitive stored energy in their power supply modules that remains present even after the breaker is opened. Return to Step 2 with a complete energy-source survey before proceeding.',
+                nextId: 'step2-correction',
                 isOptimal: false,
               },
               {
@@ -362,7 +393,7 @@ export default function T18L02_LockoutTagout() {
             prompt:
               'You have: notified affected employees → identified energy sources → shut down equipment → isolated energy → applied your personal lock → released and verified stored energy. You are now cleared to work on the amplifier shelf safely.',
             isEnd: true,
-            endMessage: 'All six LOTO steps completed correctly. You can now service the equipment. When done, remember: remove tools, clear the area, notify affected employees, then EACH authorized worker removes their own lock before power is restored.',
+            endMessage: 'All six LOTO steps completed correctly. You can now service the equipment. When done, re-energization sequence (29 CFR 1910.147(e)(3)): (1) Remove tools and restore machine guards. (2) Ensure all workers are clear of the equipment. (3) EACH authorized worker removes their own personal lock. (4) Notify affected employees that equipment is being re-energized. (5) Restore energy. Note: notification comes AFTER locks are removed — not before.',
           },
         }}
       />
