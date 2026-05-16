@@ -98,6 +98,11 @@ export const meta = {
       definition:
         'A method of providing additional lateral support to a pole using a steel guy wire and anchor. A guy wire runs from the pole at an angle down to an anchor in the ground, counteracting the horizontal pull of the cable tension (at a dead-end or corner). Guying allows a lighter pole class to be used where the unbalanced load would otherwise require a much larger pole.',
     },
+    {
+      term: 'w_wind',
+      definition:
+        'Wind load on the cable per foot of length (lb/ft), calculated as: w_wind = wind pressure (psf) × cable OD in feet. Represents the lateral force per foot that wind exerts on a cable, used to calculate the total wind-induced horizontal force on a pole: F_wind = w_wind × wind span.',
+    },
   ],
 };
 
@@ -220,6 +225,12 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
             { id: 'T05-L05-fc-deadend', front: 'Why do dead-end poles carry much more horizontal load than running poles?', back: 'At a dead-end pole, cable tension only pulls from one direction — there\'s no equal pull from the opposite side to cancel it. The full unbalanced cable tension becomes a horizontal load on the pole. Running poles have equal tension from both sides, so the tensions cancel and wind becomes the dominant horizontal force.' },
             { id: 'T05-L05-fc-guying', front: 'What is guying and why is it used?', back: 'Guying is a steel wire (and anchor) used to counteract the horizontal pull at a dead-end or corner pole. The guy wire runs from the pole to a buried anchor, providing lateral support so a lighter pole class can be used than would be required without guying.' },
             { id: 'T05-L05-fc-tipload', front: 'What is pole tip load and how is it used in design?', back: 'Pole tip load is the calculated equivalent lateral force at the pole tip representing the total horizontal loading. It\'s compared to the pole\'s rated fiber strength (from ANSI O5.1 [confirm edition]) to confirm the pole class is adequate. Pole class selection is basically: calculated tip load < rated fiber strength × strength factor.' },
+            { id: 'T05-L05-fc-hforce', front: 'What is the horizontal force component on a pole?', back: 'The portion of pole loading that acts laterally (sideways) on the pole. Primary sources: (1) wind pressure on the cables and the pole itself, and (2) unbalanced wire tension at dead-end poles and corners. Horizontal forces cause the pole to lean and are the primary determinant of required pole class strength.' },
+            { id: 'T05-L05-fc-vforce', front: 'What is the vertical force component on a pole?', back: 'The portion of pole loading that acts downward along the pole axis. Sources: cable self-weight, hardware weight, ice load. Vertical forces add compression along the pole but are rarely the governing design factor for communication cables (which are light compared to supply conductors).' },
+            { id: 'T05-L05-fc-weightspan', front: 'What is weight span and how does it differ from wind span?', back: 'The horizontal distance used to calculate how much cable self-weight (gravity load) acts on a pole. Weight span is measured from the low point of the cable sag on each side of the pole, not the physical mid-point. On equal flat spans, weight span equals wind span. On unequal or hillside spans, they can differ significantly.' },
+            { id: 'T05-L05-fc-resultant', front: 'What is the resultant force on a pole?', back: 'The combined total force on the pole from all horizontal and vertical components acting simultaneously. For a running pole with wind load and cable weight, the resultant is the vector sum — pointing in the direction the pole would lean if it weren\'t restrained. Pole design software computes the resultant and checks it against the pole\'s rated tip load.' },
+            { id: 'T05-L05-fc-running', front: 'What is a running pole and why does it carry less horizontal load than a dead-end?', back: 'A straight-line pole in the middle of a run, where equal cable tensions pull from both sides. The horizontal tension forces from the left and right spans cancel each other (they point in opposite directions). The primary remaining horizontal load is from wind. Running poles are typically the lightest-loaded poles and can use a smaller class than dead-ends.' },
+            { id: 'T05-L05-fc-wwind', front: 'What is w_wind and how is it calculated?', back: 'Wind load on the cable per foot of length (lb/ft), calculated as: w_wind = wind pressure (psf) × cable OD in feet. Represents the lateral force per foot that wind exerts on a cable, used to calculate the total wind-induced horizontal force on a pole: F_wind = w_wind × wind span.' },
           ]}
         />
       </section>

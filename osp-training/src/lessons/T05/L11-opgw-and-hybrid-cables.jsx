@@ -138,6 +138,8 @@ export default function T05L11_OPGWAndHybridCables() {
               front: 'What is a hybrid cable and where is it typically used in OSP?',
               back: 'A hybrid cable combines fiber optic elements with copper conductors (and/or metallic strength members) in a single sheath. It\'s used where the same physical run must deliver both fiber communications and copper-based power or signal. Examples: powering remote sensors on a fiber route, combined service drops where both internet (fiber) and phone (copper) must be delivered on one cable. Less common in pure distribution fiber than in specialty applications.',
             },
+            { id: 'T05-L11-fc-shield', front: 'What is a shield wire and what is its purpose on a transmission line?', back: 'Also called an overhead ground wire (OGW or OHGW) — a conductor that runs along the top of a transmission structure, above the phase conductors, and is bonded to the tower structure and grounded at every tower. Its purpose is to intercept lightning strikes before they hit the phase conductors. Shield wires run the full length of a transmission line and are shunted to ground at each structure. OPGW replaces this wire while adding fiber.' },
+            { id: 'T05-L11-fc-ogw', front: 'What is an overhead ground wire (OGW) and how does it differ from OPGW?', back: 'The traditional steel or ACSR (Aluminum Conductor Steel Reinforced) shield wire on a transmission line. OGW is a purely structural and electrical device — it carries ground fault current and lightning energy to the tower ground. When utilities decide to add fiber to an existing transmission corridor, replacing OGW with OPGW is the standard approach.' },
           ]}
         />
       </section>
