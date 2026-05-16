@@ -902,8 +902,9 @@ User explicitly grants permission to drive multiple waves through full pipelines
 
 ## Push + git rules
 
-- Always develop on `claude/debug-previous-issues-MoN9D` for both repos.
-- Push with `git push -u origin claude/debug-previous-issues-MoN9D`. On network failure, retry up to 4× with exponential backoff (2s, 4s, 8s, 16s).
+- **🚨 NO PUSH TO ORIGIN UNTIL CARTER GREENLIGHTS (locked 2026-05-16 afternoon, Carter):** Every push to `origin/main` triggers (a) a Railway auto-deploy, (b) a GitHub CI smoke run. For internal build-state (OSP rewrite work-in-progress, in-flight content authoring, audit-output artifacts, CLAUDE.md updates), neither needs to happen until production cut. Carter's verbatim: *"Can you stop committing to GitHub until you complete everything or I say so… it doesn't need to be sent to the actual railway or smoke checked by GitHub until then."* **Commit LOCALLY every wave** (preserves history, gives agents shared SHAs to coordinate on, satisfies the stop hook). **Do NOT `git push`** — neither orchestrator nor agents — until: (a) Carter explicitly says push, OR (b) we hit the OSP-RW.7 production-cut milestone where the dist needs to ship. **Update agent prompts going forward:** remove all "git push" instructions; replace with "commit locally and report the SHA in your result message — push happens at orchestrator's discretion later." When the green light comes, a single combined push delivers the accumulated work to remote in one go.
+- Working branch: `main` (locked 2026-05-15 evening; was previously `claude/debug-previous-issues-MoN9D`).
+- When push IS authorized: `git push origin main`. On network failure, retry up to 4× with exponential backoff (2s, 4s, 8s, 16s).
 - Never push to a different branch without explicit user permission.
 - Never `--no-verify`. Never amend published commits.
 
