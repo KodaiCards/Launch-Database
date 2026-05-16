@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -214,42 +213,26 @@ export default function T05L08_JointUseWhoOwnsWhatOnThePole() {
           Here's how those zones translate to joint-use ownership:
         </p>
 
-        <AnnotatedDiagram
-          src="/training/diagrams/joint-use-pole-zones.svg"
-          alt="Cross-section of a joint-use pole showing supply space, neutral, climbing space (safety zone), and communication space with example attachers"
-          hotPoints={[
-            {
-              x: 50,
-              y: 8,
-              label: 'Supply space',
-              explanation: 'Electric utility\'s distribution conductors (typically 4–35 kV). Owned and maintained by the pole owner (electric company). No other attacher goes here. Workers must de-energize or maintain minimum approach distance (MAD) — covered in T18.',
-            },
-            {
-              x: 50,
-              y: 25,
-              label: 'Neutral conductor',
-              explanation: 'The grounded return wire of the distribution circuit. Marks the boundary between supply space (above) and the communication worker safety zone (below). Many NESC separation requirements measure from this neutral.',
-            },
-            {
-              x: 50,
-              y: 38,
-              label: 'Communication worker safety zone (40 in. at pole)',
-              explanation: 'The 40-inch clear zone below the neutral (for < 8.7 kV supply per NESC Table 235-5). No attacher can place hardware here — this is the buffer zone that protects communication workers from contact with energized supply conductors. Verified by secondary sources (ikeGPS, We-Energies). Confirm from NESC C2-2023 [confirm edition] for your design.',
-            },
-            {
-              x: 50,
-              y: 55,
-              label: 'Communication space',
-              explanation: 'The zone where telephone, cable TV, and fiber attachers place their cables. Governed by the ILA and by NESC Rule 235. Multiple attachers share this space — their relative positions are negotiated and approved by the pole owner\'s make-ready engineer.',
-            },
-            {
-              x: 50,
-              y: 72,
-              label: 'Lowest attacher (fiber ISP, example)',
-              explanation: 'A new fiber ISP attaching to poles already carrying telephone and cable TV cables may be placed below the existing attachers. The specific position requires pole owner approval and make-ready engineering. The lowest practical attachment height is constrained by NESC Rule 232 clearance requirements — the cable must still clear the ground, road, or crossing below.',
-            },
-          ]}
-        />
+        <div className="lesson-callout">
+          <h4>Joint-Use Pole Zones — Ownership and Access (Top to Bottom)</h4>
+          <ol>
+            <li>
+              <strong>Supply space</strong> — Electric utility's distribution conductors (typically 4–35 kV). Owned and maintained by the pole owner (electric company). No other attacher goes here. Workers must de-energize or maintain minimum approach distance (MAD) — covered in T18.
+            </li>
+            <li>
+              <strong>Neutral conductor</strong> — The grounded return wire of the distribution circuit. Marks the boundary between supply space (above) and the communication worker safety zone (below). Many NESC separation requirements measure from this neutral.
+            </li>
+            <li>
+              <strong>Communication worker safety zone (≈ 40 in. at pole)</strong> — The approximately 40-inch clear zone below the neutral for supply under 8.7 kV per NESC Table 235-5. No attacher can place hardware here — this is the buffer zone that protects communication workers from contact with energized supply conductors. [Confirm from NESC C2-2023 for your design.]
+            </li>
+            <li>
+              <strong>Communication space</strong> — The zone where telephone, cable TV, and fiber attachers place their cables. Governed by the ILA and NESC Rule 235. Multiple attachers share this space — their relative positions are negotiated and approved by the pole owner's make-ready engineer.
+            </li>
+            <li>
+              <strong>Lowest attacher (fiber ISP, example)</strong> — A new fiber ISP attaching to poles already carrying telephone and cable TV cables is typically placed below the existing attachers. The specific position requires pole owner approval and make-ready engineering. The lowest practical attachment height is constrained by NESC Rule 232 clearance requirements — the cable must still clear the ground, road, or crossing below.
+            </li>
+          </ol>
+        </div>
 
         <h3 className="mt-6 font-semibold">The sequence for attaching to a pole you don't own</h3>
         <p className="mt-2">

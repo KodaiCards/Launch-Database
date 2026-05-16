@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
@@ -397,52 +396,49 @@ export default function T05L06_LoadingDistrictsRule250() {
           </p>
         </div>
 
-        {/* AnnotatedDiagram — NESC district map */}
-        <AnnotatedDiagram
-          title="NESC Loading District Map — United States"
-          description="Click a region to see which loading district applies and what ice and wind loads it requires. Macon, GA is in the Light district."
-          src="/training/diagrams/nesc-loading-districts-map.svg"
-          alt="Map of the continental United States showing NESC loading district boundaries: Light district in the south and southeast, Medium in the mid-belt, Heavy in the northern states, and Extreme Wind coastal overlay"
-          aspectRatio={1.6}
-          hotPoints={[
-            {
-              id: 'light-district',
-              x: 62,
-              y: 75,
-              label: 'Light district (SE US)',
-              type: 'click',
-              explanation:
-                'Light district: Georgia, Florida, Alabama, Mississippi, Louisiana, Texas (most), South Carolina, southern Virginia. 0 in ice, 9 psf wind, +30°F. Macon, GA is here.',
-            },
-            {
-              id: 'medium-district',
-              x: 55,
-              y: 52,
-              label: 'Medium district (mid-belt)',
-              type: 'click',
-              explanation:
-                'Medium district: Virginia, Maryland, Delaware, most of the Mid-Atlantic and Ohio Valley states, Kansas, Oklahoma. 0.25 in ice, 4 psf wind, +15°F.',
-            },
-            {
-              id: 'heavy-district',
-              x: 45,
-              y: 25,
-              label: 'Heavy district (north)',
-              type: 'click',
-              explanation:
-                'Heavy district: Minnesota, Wisconsin, Michigan, New York, northern New England, and most of the northern tier. 0.50 in ice, 4 psf wind, 0°F. Ice can triple effective cable weight.',
-            },
-            {
-              id: 'extreme-wind',
-              x: 85,
-              y: 85,
-              label: 'Extreme Wind overlay (coastal)',
-              type: 'click',
-              explanation:
-                'Rule 250C Extreme Wind overlay: applies to structures 60 ft or more above ground on the Atlantic coast, Gulf coast, and Pacific coast. Wind pressure is map-defined, ranging from roughly 90–150 mph depending on the specific location.',
-            },
-          ]}
-        />
+        {/* NESC LOADING DISTRICTS TABLE for pole loading context */}
+        <table className="lesson-table">
+          <caption>NESC Loading Districts — Pole Loading Design Values (Rule 250B / Table 250-1) [Confirm against NESC C2-2023 before design]</caption>
+          <thead>
+            <tr>
+              <th>District</th>
+              <th>Radial Ice (in.)</th>
+              <th>Wind Pressure (lb/ft²)</th>
+              <th>Temperature (°F)</th>
+              <th>Typical States</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Light</td>
+              <td>0 in.</td>
+              <td>9 lb/ft²</td>
+              <td>+30°F</td>
+              <td>Georgia (including Macon), Florida, Alabama, Mississippi, Louisiana, most of Texas, South Carolina, southern Virginia. No ice — but higher wind pressure than Heavy/Medium.</td>
+            </tr>
+            <tr>
+              <td>Medium</td>
+              <td>0.25 in.</td>
+              <td>4 lb/ft²</td>
+              <td>+15°F</td>
+              <td>Virginia, Maryland, Delaware, Mid-Atlantic, Ohio Valley states, Kansas, Oklahoma. Moderate ice — cables require ice-load analysis.</td>
+            </tr>
+            <tr>
+              <td>Heavy</td>
+              <td>0.50 in.</td>
+              <td>4 lb/ft²</td>
+              <td>0°F</td>
+              <td>Minnesota, Wisconsin, Michigan, New York, northern New England, northern tier states. Heavy ice — can triple effective cable weight. Shorter spans and larger pole classes required.</td>
+            </tr>
+            <tr>
+              <td>Extreme Wind overlay (Rule 250C)</td>
+              <td>0 in.</td>
+              <td>Map-defined (≈ 90–150 mph equivalent)</td>
+              <td>+60°F</td>
+              <td>Applies to structures 60 ft or more above ground on Atlantic coast, Gulf coast, and Pacific coast. Wind pressure from NESC maps; checked in addition to base district loads.</td>
+            </tr>
+          </tbody>
+        </table>
 
         {/* WorkedExample — ice load calculator */}
         <WorkedExample

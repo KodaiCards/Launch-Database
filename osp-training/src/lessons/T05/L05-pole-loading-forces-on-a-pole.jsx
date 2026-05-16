@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -239,52 +238,24 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
       <section data-tier="working">
         <h2>Calculating Wind and Gravity Forces — A Simplified Example</h2>
 
-        {/* AnnotatedDiagram of pole force vectors */}
-        <AnnotatedDiagram
-          title="Forces Acting on a Running Pole"
-          description="Click each labeled arrow to understand what force it represents and where it comes from. This is a simplified diagram showing a pole with two cables on two equal spans."
-          src="/training/diagrams/pole-force-diagram.svg"
-          alt="Diagram of a running pole with force vector arrows: wind force pointing horizontally from the side (w_wind × wind span), gravity force pointing downward (cable weight × weight span), and the resultant lean direction"
-          aspectRatio={0.75}
-          hotPoints={[
-            {
-              id: 'wind-force',
-              x: 85,
-              y: 35,
-              label: 'Wind force (horizontal)',
-              type: 'click',
-              explanation:
-                'Wind pushes perpendicular to the cable. The force = wind pressure (psf) × cable OD (ft) × wind span (ft). For a Light district (9 psf), a 0.5-inch strand on a 150-ft wind span: F_wind = 9 × (0.5/12) × 150 = 56 lb just from one cable. A pole with 10 cables has 10 of these contributions.',
-            },
-            {
-              id: 'gravity-force',
-              x: 50,
-              y: 85,
-              label: 'Gravity force (vertical)',
-              type: 'click',
-              explanation:
-                'Cable weight pulls straight down. The force = cable weight per foot (lb/ft) × weight span (ft). For a 0.145-lb/ft cable on a 150-ft weight span: F_grav = 0.145 × 150 = 21.75 lb. Light compared to wind load for communication cables.',
-            },
-            {
-              id: 'resultant',
-              x: 70,
-              y: 55,
-              label: 'Resultant (combined lean direction)',
-              type: 'click',
-              explanation:
-                'The resultant is the vector sum of all horizontal and vertical forces. It points in the direction the pole would lean if it weren\'t in the ground. For a running pole in a strong wind, the resultant tilts mostly horizontal (wind direction). For a dead-end pole, the resultant points toward the cable run.',
-            },
-            {
-              id: 'groundline',
-              x: 50,
-              y: 97,
-              label: 'Groundline bending stress',
-              type: 'click',
-              explanation:
-                'The critical failure point for a pole is at the groundline — where the pole enters the soil. The horizontal forces at the top of the pole create a bending moment at the groundline equal to the horizontal force × the effective moment arm (roughly the above-ground height). Pole class is selected so the groundline strength exceeds this moment.',
-            },
-          ]}
-        />
+        {/* POLE FORCE REFERENCE */}
+        <div className="lesson-callout">
+          <h4>Three Forces Acting on a Running Pole — At a Glance</h4>
+          <ol>
+            <li>
+              <strong>Wind force (horizontal)</strong> — Wind pushes perpendicular to the cable. Force = wind pressure (psf) × cable OD (ft) × wind span (ft). For a Light district (9 psf), a 0.5-inch strand on a 150-ft wind span: F_wind = 9 × (0.5/12) × 150 = 56 lb from one cable alone. A pole with 10 cables has 10 of these contributions stacking up.
+            </li>
+            <li>
+              <strong>Gravity force (vertical)</strong> — Cable weight pulls straight down. Force = cable weight per foot (lb/ft) × weight span (ft). For a 0.145-lb/ft cable on a 150-ft weight span: F_grav = 0.145 × 150 = 21.75 lb. For communication cables, this is typically lighter than the wind load.
+            </li>
+            <li>
+              <strong>Resultant (combined lean direction)</strong> — The vector sum of all horizontal and vertical forces. It points in the direction the pole would lean if it weren't anchored in the ground. For a running pole in strong wind, the resultant tilts mostly horizontal (wind direction). For a dead-end pole, the resultant points toward the cable run.
+            </li>
+          </ol>
+          <p className="mt-2 text-sm text-slate-300/80">
+            <strong>Critical failure point — groundline bending stress:</strong> The pole's most vulnerable point is at the groundline where it enters the soil. Horizontal forces at the top create a bending moment at the groundline equal to the horizontal force × the effective moment arm (approximately the above-ground height). Pole class is selected so groundline strength exceeds this moment.
+          </p>
+        </div>
 
         <h3 className="mt-5 font-semibold">Step-by-step force calculation for one cable</h3>
         <p>

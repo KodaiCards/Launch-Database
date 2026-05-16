@@ -3,8 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
-import HotSpot from '../../components/primitives/HotSpot.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -261,61 +259,27 @@ export default function T05L03_CommToSupplySeparationRule235() {
       <section data-tier="working">
         <h2>Reading a Joint-Use Pole Diagram</h2>
 
-        {/* AnnotatedDiagram of pole zones */}
-        <AnnotatedDiagram
-          title="Joint-Use Distribution Pole — Zones and Clearances"
-          description="Click any labeled point to see what zone it represents and what Rule 235 requires. This pole shows a typical 3-phase overhead distribution configuration with a neutral and two communication attachments."
-          src="/training/diagrams/joint-use-pole-zones.svg"
-          alt="Diagram of a joint-use distribution pole showing supply space at top, climbing space in the middle with 40-inch safety zone annotation, and communication space at the bottom"
-          aspectRatio={0.45}
-          hotPoints={[
-            {
-              id: 'phase-wires',
-              x: 50,
-              y: 8,
-              label: 'Phase conductors (supply space)',
-              type: 'click',
-              explanation:
-                'The three high-voltage phase conductors at the top of the pole. These carry 7.2 kV (phase-to-ground) on a typical 12.5 kV three-phase distribution system. Supply space only — communication crews must not work near these without electrical worker qualification.',
-            },
-            {
-              id: 'neutral',
-              x: 50,
-              y: 25,
-              label: 'Neutral conductor (lower boundary of supply space)',
-              type: 'click',
-              explanation:
-                'The grounded neutral conductor runs below the phase wires. It is the lower boundary of the supply space and the reference point for the Rule 235 safety zone measurement. Everything below the neutral must be at least 40 inches clear of any communication attachment at the pole.',
-            },
-            {
-              id: 'safety-zone',
-              x: 75,
-              y: 42,
-              label: '≈ 40 in. safety zone (climbing space)',
-              type: 'click',
-              explanation:
-                'The approximately 40-inch clear zone required between the neutral and the top communication attachment at the pole, per NESC Rule 235 Table 235-5 for voltages under 8.7 kV. This is the communication worker safety zone — a crew member can safely work below this zone without approaching energized conductors.',
-            },
-            {
-              id: 'top-comm',
-              x: 50,
-              y: 62,
-              label: 'Top comm attachment (cable TV / CATV)',
-              type: 'click',
-              explanation:
-                'The topmost communication attachment — often cable TV or telephone strand. This attachment determines the upper boundary of the communication space. It must be at least 40 inches below the neutral at the pole.',
-            },
-            {
-              id: 'fiber',
-              x: 50,
-              y: 78,
-              label: 'Lower comm attachment (fiber / lashed plant)',
-              type: 'click',
-              explanation:
-                'A lower communication attachment, such as a fiber strand or lashed cable. Additional comm cables stack below the top comm attachment, limited by the minimum attachment height above grade (also governed by NESC) and the clearance requirements from T05.L02.',
-            },
-          ]}
-        />
+        {/* POLE ZONE BREAKDOWN */}
+        <div className="lesson-callout">
+          <h4>Joint-Use Distribution Pole — Zone Breakdown (Top to Bottom)</h4>
+          <ol>
+            <li>
+              <strong>Phase conductors (supply space)</strong> — The high-voltage phase conductors at the top of the pole. On a typical 12.5 kV three-phase distribution system, each carries 7.2 kV phase-to-ground. Supply space only — communication crews must not work near these without electrical worker qualification.
+            </li>
+            <li>
+              <strong>Neutral conductor (lower supply space boundary)</strong> — The grounded neutral runs below the phase wires. It is the lower boundary of the supply space and the reference point for the Rule 235 safety zone measurement. Everything below the neutral must be at least ≈ 40 inches clear of any communication attachment at the pole.
+            </li>
+            <li>
+              <strong>≈ 40-inch safety zone (climbing space)</strong> — The approximately 40-inch clear zone required between the neutral and the top communication attachment at the pole, per NESC Rule 235 Table 235-5 for voltages under 8.7 kV. This is the communication worker safety zone — a crew member can safely work below this zone without approaching energized conductors.
+            </li>
+            <li>
+              <strong>Top comm attachment (cable TV / CATV strand)</strong> — The topmost communication attachment — often cable TV or telephone strand. This attachment determines the upper boundary of the communication space. It must be at least ≈ 40 inches below the neutral at the pole.
+            </li>
+            <li>
+              <strong>Lower comm attachment (fiber / lashed plant)</strong> — Additional communication cables stack below the top comm attachment, limited by the minimum attachment height above grade (governed by NESC) and the ground clearance requirements from T05.L02.
+            </li>
+          </ol>
+        </div>
 
         <h3 className="mt-5 font-semibold">At-pole vs. midspan — the measurement that sometimes trips designers</h3>
         <p>
@@ -390,42 +354,38 @@ export default function T05L03_CommToSupplySeparationRule235() {
         </p>
       </section>
 
-      {/* ── HOTSPOT QUIZ ─────────────────────────────────────────────────── */}
-      <HotSpot
-        title="Find the Rule 235 Violation"
-        instructions="The pole diagram below shows a joint-use pole with several attachments. One attachment creates a Rule 235 safety-zone violation. Click on it to identify it."
-        src="/training/diagrams/rule235-violation-hotspot.svg"
-        alt="Joint-use pole diagram with labeled attachments including phase wires at top, neutral, a new comm attachment placed too close to the neutral (violation), and standard lower comm cables"
-        targets={[
+      {/* ── RULE 235 VIOLATION QUIZ ──────────────────────────────────────── */}
+      <Quiz
+        title="Identify the Rule 235 Safety-Zone Violation"
+        mode="multiple-choice"
+        questions={[
           {
-            id: 'violation-attachment',
-            x: 52,
-            y: 34,
-            radius: 8,
-            label: 'New comm attachment — TOO CLOSE to neutral',
-            correct: true,
-            explanation:
-              'This attachment is only 22 inches below the neutral — well below the required ≈ 40-inch safety zone. Whoever installed this cable pushed it into the climbing space. The fix: lower this attachment at least 18 more inches below the neutral, or rearrange the existing comm cables to create enough vertical space.',
+            id: 'T05-L03-HS-Q1',
+            type: 'mc',
+            prompt:
+              'A pole inspector measures the following heights on a joint-use distribution pole (12.5 kV, under 8.7 kV phase-to-ground):\n\n- Neutral: 28 ft\n- New comm attachment (just installed): 25 ft 2 in.\n- Existing comm cable: 21 ft\n\nWhich attachment is creating a Rule 235 violation and why?',
+            choices: [
+              { text: 'The existing comm cable at 21 ft — it is too close to the neutral.', correct: false },
+              { text: 'The new comm attachment at 25 ft 2 in. — it is only 22 inches below the neutral, violating the ≈ 40-inch safety zone requirement.', correct: true },
+              { text: 'The neutral at 28 ft — it should be higher on the pole to create adequate separation.', correct: false },
+              { text: 'No violation — the new attachment and existing cable are both below the neutral.', correct: false },
+            ],
+            rationale:
+              'The safety zone is measured from the neutral DOWN to the top comm attachment. Neutral at 28 ft, new attachment at 25 ft 2 in. = 2 ft 10 in. = 34 inches of separation. The required safety zone is approximately 40 inches. 34 inches < 40 inches — the new attachment is in the climbing space. The fix: lower the new attachment at least 6 more inches below the neutral, or rearrange existing cables to create adequate vertical space.',
           },
           {
-            id: 'phase-distractor',
-            x: 30,
-            y: 10,
-            radius: 8,
-            label: 'Phase conductor',
-            correct: false,
-            explanation:
-              'This is a phase conductor in the supply space. It\'s where it belongs. The issue isn\'t with the phase wires — it\'s with a communication cable that encroached into the climbing space below.',
-          },
-          {
-            id: 'bottom-comm',
-            x: 50,
-            y: 78,
-            radius: 8,
-            label: 'Bottom comm cable',
-            correct: false,
-            explanation:
-              'This cable is in the normal communication space, well below the safety zone. No violation here. The violation is the attachment that\'s too close to the neutral above.',
+            id: 'T05-L03-HS-Q2',
+            type: 'mc',
+            prompt:
+              'An inspection finds 42 inches of safety zone at the pole. At midspan, the neutral sags 8 inches more than the comm cable. What is the actual safety zone at midspan, and is it compliant?',
+            choices: [
+              { text: '42 inches — midspan sag does not affect the safety zone measurement.', correct: false },
+              { text: '34 inches — NESC requires a 30-inch midspan minimum, so this is compliant.', correct: true },
+              { text: '50 inches — at midspan the cables are farther apart, so the safety zone increases.', correct: false },
+              { text: '34 inches — NESC requires a 40-inch midspan minimum, so this is a violation.', correct: false },
+            ],
+            rationale:
+              'Midspan gap = at-pole gap (42 in.) minus the differential sag (neutral sagged 8 in. more than comm cable = 8 in. of gap reduction). 42 − 8 = 34 inches at midspan. NESC requires approximately 30 inches at midspan (vs. ≈ 40 at the pole), so 34 inches is compliant — but only barely. This is why designers target more than the minimum at-pole to leave buffer for differential sag.',
           },
         ]}
       />

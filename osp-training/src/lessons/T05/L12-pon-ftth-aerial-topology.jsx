@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -229,42 +228,49 @@ export default function T05L12_PONFTTHAerialTopology() {
       <section data-tier="working">
         <h2>The PON Tree: From OLT to ONT</h2>
 
-        <AnnotatedDiagram
-          src="/training/diagrams/pon-ftth-topology.svg"
-          alt="PON FTTH topology diagram showing OLT at headend, feeder fiber to FDH with 1:32 splitter, distribution fibers to NAPs, and drop fibers to individual ONTs"
-          hotPoints={[
-            {
-              x: 5,
-              y: 50,
-              label: 'OLT (Optical Line Terminal)',
-              explanation: 'Active equipment at the headend or central office. The OLT sources the optical signal (1490 nm downstream, 1310 nm upstream for GPON). Each OLT port feeds one PON — one feeder fiber strand serving up to 32 (or 64) subscribers through a passive splitter. The OLT is the only active powered equipment in the PON.',
-            },
-            {
-              x: 30,
-              y: 50,
-              label: 'Feeder fiber (high fiber count)',
-              explanation: 'The trunk cable from the OLT to the FDH. Typically a 72-, 144-, or 288-fiber count cable — one fiber per PON port. Each strand is a separate GPON carrier. Feeder runs 0.5–5 miles depending on the network design. Feeder is typically a high-count ADSS or lashed plant cable on aerial runs.',
-            },
-            {
-              x: 50,
-              y: 50,
-              label: 'FDH with 1:32 passive splitter',
-              explanation: 'The Fiber Distribution Hub is a hardened outdoor enclosure (aerial or pedestal-mounted) that houses passive optical splitters and the splice/connector panel. One feeder fiber enters and 32 distribution fibers exit — no power, no electronics. The splitter insertion loss at this point is approximately 17–17.5 dB for a 1:32 PLC splitter.',
-            },
-            {
-              x: 72,
-              y: 30,
-              label: 'Distribution fiber to NAP',
-              explanation: 'Lower-fiber-count cables (12–24 fiber) that run from the FDH through the neighborhood to Network Access Points. Each distribution strand carries the shared signal for one splitter output port — so each strand ultimately feeds one ONT (or, in a two-stage split design, a cluster of ONTs at the NAP). Distribution cables are typically lashed plant or ADSS on aerial runs.',
-            },
-            {
-              x: 88,
-              y: 50,
-              label: 'NAP → Drop → ONT',
-              explanation: 'The NAP (Network Access Point) is a field enclosure where distribution fiber terminates and individual drop cables connect to each subscriber. Drops are typically 2-fiber (one active, one spare), 50–300 ft long. The ONT at the subscriber premise terminates the drop and provides the Ethernet/voice/video interface inside the home.',
-            },
-          ]}
-        />
+        <table className="lesson-table">
+          <caption>PON FTTH Topology — Network Nodes (Headend to Customer)</caption>
+          <thead>
+            <tr>
+              <th>Node</th>
+              <th>Location</th>
+              <th>Fiber Count</th>
+              <th>Function</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OLT (Optical Line Terminal)</td>
+              <td>Headend or central office</td>
+              <td>One port per feeder strand</td>
+              <td>The only active powered equipment in the PON. Sources the optical signal (1490 nm downstream, 1310 nm upstream for GPON). Each OLT port feeds one PON — one feeder fiber serving up to 32 or 64 subscribers through a passive splitter.</td>
+            </tr>
+            <tr>
+              <td>Feeder cable</td>
+              <td>OLT to FDH, aerial or buried</td>
+              <td>72–288 fibers (one per PON port)</td>
+              <td>The trunk cable from OLT to FDH. Each strand is a separate GPON carrier. Feeder runs 0.5–5 miles depending on network design. Typically high-count ADSS or lashed plant cable on aerial runs.</td>
+            </tr>
+            <tr>
+              <td>FDH (Fiber Distribution Hub) + 1:32 passive splitter</td>
+              <td>Pole-mounted or pedestal, neighborhood</td>
+              <td>1 feeder fiber in → 32 distribution fibers out</td>
+              <td>Hardened outdoor enclosure housing passive PLC splitters and the splice/connector panel. No power, no electronics. Splitter insertion loss ≈ 17–17.5 dB for a 1:32 PLC splitter — the dominant loss element in the GPON link budget.</td>
+            </tr>
+            <tr>
+              <td>Distribution cable</td>
+              <td>FDH to NAPs, along streets</td>
+              <td>12–24 fibers</td>
+              <td>One fiber per splitter output port. Each strand ultimately feeds one ONT (or a cluster in two-stage split designs). Typically lashed plant or ADSS on aerial runs. Multiple distribution cables fan out from each FDH.</td>
+            </tr>
+            <tr>
+              <td>NAP (Network Access Point) → Drop → ONT</td>
+              <td>Pole or pedestal to subscriber premises</td>
+              <td>2-fiber drop (1 active, 1 spare)</td>
+              <td>NAP is a field enclosure where distribution fiber terminates and drop cables connect to each subscriber. Drop typically 50–300 ft. ONT at subscriber's premises terminates the drop and provides Ethernet/voice/video interface. ONT is the demarcation point — end of OSP.</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h3 className="mt-6 font-semibold">FTTH aerial link budget — full worked example</h3>
         <p className="mt-2">
