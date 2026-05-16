@@ -31,6 +31,7 @@ export const meta = {
     { term: 'geodatabase', source_lesson_id: 'T04.L03' },
     { term: 'coordinate system', source_lesson_id: 'T04.L03' },
     { term: 'datum', source_lesson_id: 'T04.L03' },
+    { term: 'OTMR', source_lesson_id: 'T01.L05' },
     { term: 'pole audit', source_lesson_id: 'T04.L04' },
     { term: 'attachment-height measurement', source_lesson_id: 'T04.L04' },
     { term: 'existing occupancy', source_lesson_id: 'T04.L04' },

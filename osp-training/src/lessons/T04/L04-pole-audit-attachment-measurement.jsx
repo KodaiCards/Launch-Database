@@ -122,7 +122,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTMR</td>
               <td className="px-3 py-2">One-Touch Make-Ready</td>
-              <td className="px-3 py-2">An FCC-established process allowing a new attacher to coordinate and pay for all pole rearrangements in a single trip (FCC 18-111); relevant context for why make-ready flags are important to capture accurately</td>
+              <td className="px-3 py-2">An FCC-established process allowing a new attacher to coordinate and pay for all pole rearrangements in a single trip (FCC Order 18-111, now codified at 47 CFR 1.1411); relevant context for why make-ready flags are important to capture accurately</td>
             </tr>
           </tbody>
         </table>
