@@ -307,4 +307,49 @@
 
 **After all commits:** run `git diff HEAD~10 --stat` to verify only allowlisted files modified. Report SHA of each commit.
 
+---
+
+## Polish Stage — Applied 2026-05-16 (post-verify RT pair + Haiku ground-truth resolution)
+
+**Conflict resolution outcomes (orchestrator-decided before this stage):**
+- Gap-2 (PPE Flashcard): FALSE POSITIVE — `T18-L05-fc-ppe` exists at L05 lines 134-138. NO FIX.
+- Gap-3 (L02 lesson_type "working"): RT-D DISPUTE accepted — correct as-is for application-level LOTO content. NO FIX.
+- Gap-4 (Group LOTO Q5 missing): RT-D verified Q1 covers 1910.147(f)(3) Group LOTO. NO FIX.
+
+### Polish commit 1 — L09 Gap-1 (SHA: `c34cb77`)
+
+**Gap-1 | LOW | L09 Sortable label residual**
+- File: `L09-incident-reporting-osha-300.jsx`
+- BEFORE: `label: 'A technician falls from a ladder and is admitted to the hospital for treatment.'`
+- AFTER: `label: 'A technician falls from a ladder and is admitted to the hospital.'`
+- Rationale: C-07 fix corrected prose/table per 29 CFR 1904.39(a)(3) (any in-patient hospitalization, treatment or observation). Sortable label retained "for treatment" residual. Removed to match corrected regulatory framing.
+- Status: APPLIED ✓
+
+### Polish commit 2 — L03 Gap-D1 + Gap-D2 + C-19 partial (SHA: `f4d351b`)
+
+**Gap-D1 | LOW | L03 CO threshold basis attribution**
+- File: `L03-confined-space-entry.jsx` atmospheric table CO row
+- BEFORE: `<td className="px-3 py-2 font-mono">&lt; 25 ppm</td>`
+- AFTER: `<td className="px-3 py-2 font-mono">&lt; 25 ppm (ACGIH TLV-TWA)</td>`
+- Rationale: Matches H₂S entry's explicit "NIOSH IDLH" attribution for framing symmetry.
+- Status: APPLIED ✓
+
+**Gap-D2 | LOW | L03 Pellistor sensor H₂S poisoning**
+- File: `L03-confined-space-entry.jsx` Advanced section after existing LEL-O₂ note
+- BEFORE: No H₂S pellistor poisoning callout.
+- AFTER: Added amber callout block: H₂S >10 ppm causes irreversible pellistor sensor poisoning → persistent false-zero LEL after event → bump-test or sensor replacement required. Cross-references manufacturer bump-test guidance.
+- Status: APPLIED ✓
+
+**C-19 partial | LOW | L03 quiz Q1 citation residual**
+- File: `L03-confined-space-entry.jsx` Quiz Q1 explanation + citation field
+- BEFORE (explanation): `...OSHA confirmed in a 1993 interpretation letter that 1910.268(o) — not 1910.146 — governs routine telecom manhole entry...`; citation: `...OSHA interpretation letter 1993-05-19.`
+- AFTER (explanation): `...Per 29 CFR 1910.5(c)(1), specific standards supersede general ones — when a specific standard (1910.268) covers a condition, it supersedes the more general standard (1910.146) for that condition...`; citation: `...29 CFR 1910.5(c)(1) — specific standard supersedes general standard (ecfr.gov).`
+- Rationale: Prior C-19 fix corrected prose body; quiz citation field retained unverifiable 1993 letter reference. Both explanation text and citation field now cite 1910.5(c)(1) directly.
+- Status: APPLIED ✓
+
+### Neighborhood scan — no additional same-pattern bugs found
+- L09 Sortable ±20 lines: no other "for treatment" or "observation" qualifier residuals.
+- L03 atmospheric table ±20 lines: O₂, LEL, H₂S rows have explicit basis attribution where applicable; CO was the only gap. H₂S row cites "NIOSH IDLH" in the action column (consistent with Gap-D1 fix).
+- L03 Q1 quiz ±20 lines: Q2–Q4 citations checked; all reference primary sources (ecfr.gov, osha.gov) with no unverifiable letter references.
+
 === T18 FIX CANONICAL END ===
