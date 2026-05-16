@@ -476,4 +476,39 @@
 - **L03 BranchingScenario "step2" node — gas concentrations:** The scenario uses LEL = 12%, CO = 3 ppm, H₂S = 0 ppm as a scenario reading. No IDLH references in scenario text. Unaffected by this patch.
 - **No additional 50-ppm IDLH references found** in ±20 lines around each fix location or in flashcard/key_terms arrays.
 
+---
+
+## Polish-5 Fixes (from final-verify-4 RT-K + RT-L findings) — PARTIALLY APPLIED 2026-05-16
+
+### RT-K Gap-K1 | LOW | L03 — "olfactory paralysis within minutes" at 100 ppm overstated
+
+- Per NIOSH NPG (Poda 1966 citation, cdc.gov/niosh/npg/npgd0337.html): 100 ppm causes olfactory FATIGUE; full nerve PARALYSIS occurs at 150 ppm+. Lesson was conservatively protective but technically imprecise.
+- BEFORE: `At the IDLH (100 ppm), H₂S can induce olfactory paralysis within minutes — workers lose the smell-warning signal precisely AT the immediate-danger threshold.`
+- AFTER: `At the IDLH (100 ppm), H₂S induces olfactory fatigue within minutes — workers lose the smell-warning signal precisely AT the immediate-danger threshold. Full olfactory nerve paralysis can occur at 150 ppm and above. Either way, smell-warning becomes unreliable at the immediate-danger threshold — a calibrated monitor is the only reliable detection.`
+- Status: APPLIED ✓ (`d97f3d3`)
+
+### RT-K Gap-K2 | LOW | L03 — OSHA PEL distinction absent
+
+- Lesson used NIOSH IDLH throughout but never referenced OSHA PEL (Construction 29 CFR 1926.55 = 10 ppm TWA; General Industry 29 CFR 1910.1000 Table Z-2 = 20 ppm ceiling / 50 ppm 10-min peak). Crews working construction sites need to know which PEL governs their work.
+- Added new callout box "OSHA PEL vs. NIOSH IDLH — know the difference" in the advanced section, immediately before the footer citation.
+- Also added 1926.55 and 1910.1000 Table Z-2 to footer citation line.
+- Status: APPLIED ✓ (`d97f3d3`)
+
+### RT-L-1 | LOW-MED | L03 — "irreversibly poison" pellistor sensor classification held pending primary-source verification
+
+- RT-L finding: H₂S at field-encountered concentrations is a REVERSIBLE inhibitor of catalytic bead sensors (sensitivity recovers when H₂S is removed; bump-test verifies recovery). "Irreversibly poison" language is technically incorrect per sensor manufacturer literature.
+- **HOLD REASON:** All sensor manufacturer web sources (Blackline Safety, Industrial Scientific, MSA, Honeywell Analytics, Draeger, RKI, Crowcon, ISA, etc.) returned HTTP 403 during polish-5 execution. Could not obtain primary-source verbatim quote to confirm the reversibility classification per orchestrator's mandatory verification requirement.
+- **Existing text retained:** "H₂S concentrations above 10 ppm can irreversibly poison catalytic bead (pellistor) LEL sensors..." plus "Consult your monitor manufacturer's guidance on H₂S exposure limits for the sensor type in use."
+- **Technical note for orchestrator:** The existing text's "irreversibly poison" language is widely used in the confined space safety community and some manufacturers DO describe H₂S poisoning as irreversible at higher concentrations — the precise classification depends on concentration, exposure duration, and sensor design. The bump-test guidance that follows is correct regardless. The manufacturer consultation note mitigates the risk of workers relying on a degraded sensor.
+- **Action needed:** Orchestrator to adjudicate: (a) accept existing "irreversibly poison" + manufacturer consultation note as conservative/protective field language, OR (b) dispatch a fresh agent with a different WebFetch approach to obtain primary-source confirmation of reversibility classification before applying the rewrite.
+- Status: HELD — primary-source verification failed, orchestrator adjudication required
+
+---
+
+## Neighborhood scan from Polish-5 (surface only, no fixes applied)
+
+- **L03 lines 319-323 (LEL sensor O₂ note):** Content correct and unaffected. No issues in ±20-line window around K1 fix location.
+- **L03 lines 326-334 (pellistor sensor poisoning callout):** RT-L-1 fix held as above. Existing text + manufacturer guidance note is a defensible conservative position pending adjudication.
+- **L03 source citation block (lines 335-341):** Updated in K2 fix. Citation block now includes 1926.55 and 1910.1000 Table Z-2. No additional missing citations found in ±20-line scan.
+
 === T18 FIX CANONICAL END ===
