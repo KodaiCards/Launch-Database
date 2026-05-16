@@ -60,6 +60,7 @@ export const meta = {
     { term: 'pole', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'make-ready', source_lesson_id: 'T01.L05' },
+    { term: 'OTMR', source_lesson_id: 'T01.L05' },
     { term: 'joint-use', source_lesson_id: 'T01.L02' },
     { term: 'clearance', source_lesson_id: 'T01.L02' },
     { term: 'span', source_lesson_id: 'T01.L02' },
@@ -484,7 +485,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
 
         <h3 className="mt-5 font-semibold">OTMR and the importance of accurate existing-occupancy records</h3>
         <p>
-          Under the FCC's One-Touch Make-Ready (OTMR) process (FCC Order 18-111), a new
+          Under the FCC's One-Touch Make-Ready (OTMR) process (FCC Order 18-111, now codified at 47 CFR 1.1411), a new
           attacher can hire a single contractor to perform all pole rearrangements in a single
           visit rather than coordinating each existing carrier separately. The process requires
           the new attacher to have an accurate inventory of existing attachments — which is exactly

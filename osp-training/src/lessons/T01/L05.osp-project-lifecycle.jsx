@@ -20,6 +20,7 @@ export const meta = {
     'design',
     'permit',
     'make-ready',
+    'OTMR',
     'construction',
     'testing',
     'as-built',
@@ -298,6 +299,7 @@ export default function T01L05_OspProjectLifecycle() {
           { id: 'T01-L05-FC-as-built', front: 'As-built', back: 'Updated drawings that show what was actually built vs. what was designed. Part of the close-out package. Becomes the permanent O&M record — a technician in 2045 needs the as-built to trace a fault back to a specific splice case and fiber.' },
           { id: 'T01-L05-FC-close-out', front: 'Close-out', back: 'Stage 7: the final documentation package handed to the client — as-built drawings, splice records, test records, permit copies. For RUS-program projects includes RUS Form 219. Required before RUS advances funds and before client acceptance.' },
           { id: 'T01-L05-FC-rus-form-219', front: 'RUS Form 219', back: 'The USDA Rural Utilities Service project completion certification form. Required for RUS-funded OSP projects at close-out. Must be signed by the PE responsible for the project. Accompanies the as-built drawings, splice records, and OTDR test records.' },
+          { id: 'T01-L05-FC-otmr', front: 'OTMR (One-Touch Make-Ready)', back: 'FCC-mandated process (47 CFR 1.1411) that allows a qualified contractor hired by the new attacher to perform make-ready work in a single visit rather than waiting for each existing attachment owner to schedule separate work. Reduces make-ready timelines significantly.' },
         ]}
       />
 
