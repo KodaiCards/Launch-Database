@@ -90,3 +90,18 @@ Tree clean after push. All three F-RT findings resolved in single commit.
 - T05/L15: no other "slightly" or "marginally" language found in the sanityCheck strings beyond GAP-A scope.
 
 ## T05 Wave Status: COMPLETE through POLISH-2 stage. All RT findings resolved.
+
+---
+
+## POLISH-3 Stage (neighborhood scan carry-forward from POLISH-2)
+
+| ID | Severity | Tag | Lesson(s) | Finding | Status | Commit SHA |
+|----|----------|-----|-----------|---------|--------|-----------|
+| P3-NB1 | LOW | Neighborhood scan | T07/L02 line 36 | `existing utilities` → `source_lesson_id: 'T04.L02'` was wrong. T04.L02 introduces drone/LiDAR terms, NOT `existing utilities`. T04.L01 introduces `existing utility` in `vocabulary_introduced`. Corrected pointer to `T04.L01`. | FIXED | `5d9e1e9` |
+
+**Neighborhood scan from polish-3 (NOT fixed — report only):**
+- T07/L02 line 37: `pole locations from design` → `T04.L02` — term not found in any `vocabulary_introduced` array across T01–T09 lessons; it is a compound phrase used in T04 aerial-survey context. Closest valid lesson remains `T04.L02` (LiDAR/planimetric survey, where design pole locations derived from aerial data are discussed). Marking as LOW / needs SME review on whether this warrants a dedicated first-introduction.
+- T07/L02 line 34: `route survey` → `T04.L01` — correct (T04.L01 introduces site walk/route survey concepts). No change needed.
+- T07/L02 line 35: `contour` → `T04.L03` — T04.L03 introduces `datum`, `UTM`, `NAD83`, `shapefile` etc. `contour` not found in T04.L03 vocabulary_introduced. LOW gap — not fixed here (out of scope for polish-3).
+
+## T05 Wave Status: COMPLETE through POLISH-3 stage.
