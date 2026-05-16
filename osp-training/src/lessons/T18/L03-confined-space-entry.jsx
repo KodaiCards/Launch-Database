@@ -140,8 +140,9 @@ export default function T18L03_ConfinedSpaceEntry() {
             <thead className="bg-white/5 text-slate-200">
               <tr>
                 <th className="px-3 py-2 text-left">Gas / Parameter</th>
-                <th className="px-3 py-2 text-left">Safe Range</th>
+                <th className="px-3 py-2 text-left">Safe Range (entry)</th>
                 <th className="px-3 py-2 text-left">Action if Outside Range</th>
+                <th className="px-3 py-2 text-left">Exit threshold (if already inside)</th>
               </tr>
             </thead>
             <tbody className="text-slate-300/90">
@@ -149,21 +150,25 @@ export default function T18L03_ConfinedSpaceEntry() {
                 <td className="px-3 py-2">Oxygen (O₂)</td>
                 <td className="px-3 py-2 font-mono">19.5% – 23.5%</td>
                 <td className="px-3 py-2">Ventilate; do not enter until in range. Below 16% = IDLH.</td>
+                <td className="px-3 py-2 font-mono text-red-400">&lt; 19.5% or &gt; 23.5%: exit immediately</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Combustible gas (% LEL)</td>
                 <td className="px-3 py-2 font-mono">&lt; 10% LEL</td>
                 <td className="px-3 py-2">10–25% LEL: ventilate, re-test; continue ventilation during work. &gt;25% LEL: do not enter; call supervisor; wait for gas utility response.</td>
+                <td className="px-3 py-2 font-mono text-red-400">&gt; 10% LEL: exit immediately</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Carbon monoxide (CO)</td>
                 <td className="px-3 py-2 font-mono">&lt; 25 ppm</td>
                 <td className="px-3 py-2">Ventilate; identify source before entry.</td>
+                <td className="px-3 py-2 font-mono text-red-400">&gt; 25 ppm: exit immediately</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Hydrogen sulfide (H₂S)</td>
                 <td className="px-3 py-2 font-mono">&lt; 1 ppm</td>
-                <td className="px-3 py-2">Evacuate and ventilate immediately; at 100 ppm = IDLH.</td>
+                <td className="px-3 py-2">Evacuate and ventilate immediately; at 50 ppm = NIOSH IDLH — exit immediately.</td>
+                <td className="px-3 py-2 font-mono text-red-400">&gt; 1 ppm: exit immediately</td>
               </tr>
             </tbody>
           </table>
@@ -287,24 +292,40 @@ export default function T18L03_ConfinedSpaceEntry() {
       <section data-tier="advanced">
         <h2>Why Oxygen Displacement Is the Silent Killer</h2>
         <p>
-          Hydrogen sulfide (H₂S) smells like rotten eggs — but only at low concentrations.
-          At around 100 ppm it paralyzes your sense of smell. At 300 ppm it causes pulmonary
+          Hydrogen sulfide (H₂S) smells like rotten eggs at low concentrations — but that
+          sense of smell is not a reliable warning. The NIOSH IDLH for H₂S is <strong>50 ppm</strong>:
+          at 50 ppm you must exit immediately. At around 100 ppm (twice the IDLH), H₂S
+          completely paralyzes your sense of smell — meaning a worker who has been breathing
+          50–100 ppm H₂S has already been above IDLH and loses the ability to detect further
+          buildup. You can be at 100+ ppm with no warning smell. At 300 ppm it causes pulmonary
           edema (fluid in the lungs) within minutes. At 500–1,000 ppm it causes rapid loss of
           consciousness — sometimes in one or two breaths. Workers who descend into an H₂S
-          environment above IDLH don't feel dizzy and climb out. They fall.
+          environment above IDLH don't feel dizzy and climb out. They fall. Rely on your monitor,
+          not your nose.
         </p>
         <p className="mt-2">
-          The same dynamic applies to oxygen displacement: methane, carbon dioxide, and nitrogen
-          are all heavier-than-air gases that can accumulate at the bottom of a manhole and
-          push oxygen out. At 19.5% O₂ the brain starts working less well; at 16% loss of
-          consciousness can occur without warning; at 6% death follows within minutes. Unlike
-          H₂S, low O₂ has no smell, no color, no taste. A multi-gas monitor is the only way
-          to know it's there.
+          The same dynamic applies to oxygen displacement: carbon dioxide (CO₂) is heavier than
+          air and accumulates at the BOTTOM of a manhole, while methane (natural gas, CH₄) is
+          LIGHTER than air and accumulates at the TOP — near the ceiling. Nitrogen is near-neutral
+          but can displace oxygen throughout the space. This is why testing at multiple heights
+          matters: test low for CO₂ and H₂S, and test near the top of the entry for methane
+          when a gas main is nearby. At 19.5% O₂, OSHA requires you to treat the atmosphere as
+          oxygen-deficient — this is a regulatory safety buffer, not the point where you lose
+          cognitive function. At 16% your body begins to struggle; below 10% loss of consciousness
+          can occur within minutes. Unlike H₂S, low O₂ has no smell, no color, no taste. A
+          multi-gas monitor is the only way to know it's there.
         </p>
+        <div className="mt-3 p-3 bg-blue-900/20 border border-blue-400/30 rounded-lg text-sm">
+          <strong>LEL sensor reliability note:</strong> Always check O₂ first. If O₂ reads below
+          19.5%, your combustible gas (LEL) sensor may output a false-low or zero reading —
+          catalytic bead sensors require oxygen to oxidize the target gas on the sensor bead.
+          In an O₂-deficient space, a zero LEL reading is NOT a safe signal. Do not enter until
+          O₂ is in the acceptable range AND LEL reads clean on a subsequent test.
+        </div>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 29 CFR 1910.146(b) — Acceptable O₂ range definition; 29 CFR 1910.268(o)(2) —
-          Atmospheric testing requirement; OSHA interpretation letter 1993-05-19 (osha.gov) —
-          1910.268 supersedes 1910.146 for routine telecom manhole work.
+          Atmospheric testing requirement; 29 CFR 1910.5(c)(1) — specific standard supersedes
+          general standard; NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 50 ppm IDLH.
         </p>
       </section>
 
@@ -386,7 +407,7 @@ export default function T18L03_ConfinedSpaceEntry() {
               {
                 label: 'Wait 2–5 minutes for passive venting, then lower the monitor into the space',
                 consequence:
-                  'Correct. Passive venting lets the heaviest gases (which accumulate at the bottom) start to dissipate and gives you a more representative reading of conditions in the work zone, not just the gas near the opening.',
+                  'Correct. Passive venting lets gases denser than air (CO₂ and H₂S, which settle to the bottom) and gases lighter than air (methane, which rises toward the top) begin to disperse. A 2–5 minute wait gives you a more representative reading of steady-state conditions throughout the work zone, not just the gases near the opening.',
                 nextId: 'step2',
                 isOptimal: true,
               },
@@ -400,9 +421,9 @@ export default function T18L03_ConfinedSpaceEntry() {
               {
                 label: 'Yes — all readings are in acceptable range',
                 consequence:
-                  'Technically acceptable under 1910.268(o)(2) — but note that you\'re adjacent to a gas main. Monitor must stay running inside the space, and forced ventilation is recommended as a precaution even when initial readings are zero in this proximity.',
+                  'The surface readings look clean, but testing immediately after opening the cover gives you the zone near the opening — not necessarily the gas concentrations at worker height inside the space. An immediate reading adjacent to a gas main may not represent actual conditions where you will be working. Best practice: even with clean immediate readings, wait 2–5 minutes and re-test, or run the blower before entering.',
                 nextId: 'step3-enter',
-                isOptimal: true,
+                isOptimal: false,
               },
               {
                 label: 'No — you should still ventilate first near a gas main',
