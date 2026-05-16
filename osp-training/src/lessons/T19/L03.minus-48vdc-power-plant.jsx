@@ -40,7 +40,7 @@ export const meta = {
     },
     {
       term: 'float voltage',
-      definition: 'The constant DC voltage maintained by rectifiers to keep the battery string at full charge without overcharging. For VRLA cells, the float voltage is typically 2.25–2.27 V per cell (verify with battery manufacturer). At 24 cells × 2.25 V = 54 V float, which is why the CO "–48 V" system actually measures around –52 to –56 V at the bus when fully charged. Equipment must tolerate this range.',
+      definition: 'The constant DC voltage maintained by rectifiers to keep the battery string at full charge without overcharging. For VRLA cells, the float voltage is typically 2.25–2.27 V per cell [verify with battery manufacturer; see IEEE 1188 [confirm edition] for VRLA maintenance and float voltage test methodology]. At 24 cells × 2.25 V = 54 V float, which is why the CO "–48 V" system actually measures around –52 to –56 V at the bus when fully charged. Equipment must tolerate this range.',
     },
     {
       term: 'distribution bus',
@@ -180,7 +180,7 @@ export default function T19L03_Minus48VDCPowerPlant() {
             {
               id: 'T19-L03-fc-float-voltage',
               front: 'What is float voltage?',
-              back: 'The constant voltage maintained by rectifiers to keep battery strings fully charged without overcharging. For VRLA: typically 2.25–2.27 V per cell. At 24 cells: 54 V float. This is why a "–48 V" bus actually measures –52 to –56 V when fully charged.',
+              back: 'The constant voltage maintained by rectifiers to keep battery strings fully charged without overcharging. For VRLA: typically 2.25–2.27 V per cell [verify with battery manufacturer; IEEE 1188 covers VRLA float voltage test methodology]. At 24 cells: 54 V float. This is why a "–48 V" bus actually measures –52 to –56 V when fully charged.',
             },
             {
               id: 'T19-L03-fc-battery-return',
