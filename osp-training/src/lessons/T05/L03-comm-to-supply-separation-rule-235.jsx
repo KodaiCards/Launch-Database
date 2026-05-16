@@ -27,9 +27,6 @@ export const meta = {
     'Table 235-5',
     'communication worker safety zone',
     'neutral conductor',
-    'supply space',
-    'communication space',
-    'climbing space',
     'at-pole separation',
     'midspan separation',
     'bonded messenger',
@@ -66,21 +63,6 @@ export const meta = {
       term: 'neutral conductor',
       definition:
         'The grounded conductor on a power distribution system that runs below the phase (hot) conductors. The neutral is the reference point for the safety zone measurement — communication lines must maintain their separation from the neutral, not from the phase conductors above it.',
-    },
-    {
-      term: 'supply space',
-      definition:
-        'The zone at the top of a distribution pole occupied by high-voltage supply (power) conductors — the phase wires and, in some configurations, the neutral. Supply space is reserved for the electric utility only. No communication equipment belongs in the supply space.',
-    },
-    {
-      term: 'communication space',
-      definition:
-        'The zone below the climbing space on a distribution pole, reserved for telephone, fiber, cable TV, and other communication cables. Communication companies attach their cables in the communication space. The NESC minimum attachment height for communication cables is set to keep them out of the supply space and climbing space.',
-    },
-    {
-      term: 'climbing space',
-      definition:
-        'The zone between the supply space and the communication space on a joint-use pole — the vertical corridor a utility crew member climbs through to reach either the supply or communication equipment. The climbing space must remain clear of crossarms, hardware, or cables that would obstruct a person climbing the pole.',
     },
     {
       term: 'at-pole separation',

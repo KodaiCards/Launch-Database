@@ -31,7 +31,7 @@ export const meta = {
     'design intent mark',
   ],
   vocabulary_assumed: [
-    { term: 'route survey', source_lesson_id: 'T04.L01' },
+    { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'contour', source_lesson_id: 'T04.L03' },
     { term: 'existing utilities', source_lesson_id: 'T04.L01' },
     { term: 'pole locations from design', source_lesson_id: 'T04.L02' },
