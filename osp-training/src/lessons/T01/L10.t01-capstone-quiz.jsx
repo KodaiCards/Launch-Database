@@ -52,7 +52,7 @@ export const meta = {
     { term: 'MGN', source_lesson_id: 'T01.L08' },
     { term: 'IBT', source_lesson_id: 'T01.L08' },
     { term: 'GES', source_lesson_id: 'T01.L08' },
-    { term: 'NESC', source_lesson_id: 'T01.L08' },
+    { term: 'NESC', source_lesson_id: 'T01.L02' },
     { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'LOTO', source_lesson_id: 'T01.L08' },
     { term: 'ADSS', source_lesson_id: 'T01.L08' },
