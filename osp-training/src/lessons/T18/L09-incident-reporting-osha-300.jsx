@@ -328,7 +328,7 @@ export default function T18L09_IncidentReportingOSHA300() {
         prompt="Drag the five incident descriptions into the correct OSHA classification order — from least severe (First Aid Only) through Recordable to Severe-Reportable (1904.39). Place them so the mildest is at the top and the most serious reporting obligation is at the bottom."
         items={[
           { id: 'fatality',    label: 'A crew member is fatally injured when a bucket lift strikes a power line.' },
-          { id: 'hospitalize', label: 'A technician falls from a ladder and is admitted to the hospital for treatment.' },
+          { id: 'hospitalize', label: 'A technician falls from a ladder and is admitted to the hospital.' },
           { id: 'restricted',  label: 'A tech sprains their wrist and is placed on restricted duty (light work only) for three days.' },
           { id: 'rx',          label: 'A worker cuts their hand; the doctor prescribes a course of antibiotics.' },
           { id: 'bandage',     label: 'A technician gets a minor cut; the foreman applies a bandage and the worker continues without restriction.' },
