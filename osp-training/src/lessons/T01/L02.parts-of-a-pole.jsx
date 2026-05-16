@@ -210,7 +210,7 @@ export default function T01L02_PartsOfAPole() {
       <section data-tier="working">
         <h2>Pole Classification — Class and Length</h2>
         <p>
-          Poles aren't all the same strength. The NESC (and ANSI O5.1 for wood poles) assigns
+          Poles aren't all the same strength. The NESC (and ANSI O5.1 [confirm edition] for wood poles) assigns
           each pole a <strong>class</strong> based on its circumference at a point 6 feet from
           the butt (bottom). Classes run from Class 1 (strongest) to Class 10 (weakest), with
           Class H1–H6 reserved for extra-heavy loads.
@@ -223,7 +223,7 @@ export default function T01L02_PartsOfAPole() {
         <p className="mt-2 text-sm text-slate-300/90">
           Poles are also rated by length. Common lengths: 30, 35, 40, 45, 50, 55, 60 feet.
           Setting depth is typically 10% of pole length plus 2 feet (a 40-foot pole is set
-          6 feet deep, leaving 34 feet above ground). Source: ANSI O5.1.
+          6 feet deep, leaving 34 feet above ground). Source: ANSI O5.1 [confirm edition].
         </p>
 
         <h3 className="mt-5 font-semibold">Who owns the pole?</h3>
