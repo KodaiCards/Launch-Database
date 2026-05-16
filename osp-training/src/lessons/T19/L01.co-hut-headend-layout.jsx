@@ -222,6 +222,11 @@ export default function T19L01_CoHutHeadendLayout() {
               front: 'What is the OSP termination point?',
               back: 'The physical location inside a CO, hut, or headend where an OSP cable ends its run and hands off to inside-plant cabling and equipment. For fiber, this is the ODF or splice organizer in the MDF bay. The OSP engineer\'s responsibility ends here.',
             },
+            {
+              id: 'T19-L01-fc-equipment-room',
+              front: 'What is an equipment room in a CO or headend?',
+              back: 'A dedicated room within a CO or headend that houses active network equipment — OLT shelves, CMTS chassis, routers, battery plant, HVAC equipment. Distinct from the entrance facility (where OSP cables enter) and administrative areas. Access is restricted to authorized personnel.',
+            },
           ]}
         />
       </section>
@@ -290,6 +295,16 @@ export default function T19L01_CoHutHeadendLayout() {
           the MDF. This inside-building run is usually 5–50 feet; it's interior to the
           building, so it uses plenum-rated or riser-rated cable jacket, NOT OSP gel-filled
           loose-tube. The OSP cable end is pulled through; excess is coiled as a service loop.
+        </p>
+        <p className="mt-2 text-sm text-blue-300/90">
+          <strong>NEC §770.26 — The 50-Foot Transition Rule (forward reference to T19.L08):</strong>{' '}
+          NEC NFPA 70-2023 Art. 770.26 requires that optical fiber cables with non-conductive
+          (dielectric) construction that enter a building and run more than 50 feet inside the
+          building must use listed indoor (plenum or riser) cable. An OSP gel-filled loose-tube
+          cable must transition to inside-plant cable within 50 feet of the building entry point.
+          This is the code basis for the MEF-to-MDF cable transition the OSP engineer must specify
+          on every building-entry drawing. Full treatment of NEC §770.26 placement, enforcement, and
+          exceptions is in T19.L08.
         </p>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
