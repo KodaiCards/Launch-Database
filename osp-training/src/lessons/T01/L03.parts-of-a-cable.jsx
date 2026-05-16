@@ -112,7 +112,16 @@ export default function T01L03_PartsOfACable() {
           <li>
             <strong>Outer jacket (sheath):</strong> Black HDPE (High-Density Polyethylene) is the standard for
             direct-buried and aerial cable. HDPE resists UV radiation and moisture for 20–30
-            years without degrading. Jacket color varies by application: black is standard for aerial and direct-buried OSP; orange or yellow jackets indicate conduit-application or LSZH (Low-Smoke Zero-Halogen) variants used in conduit systems where fire-smoke toxicity is a concern. If you encounter a non-black OSP cable, check the jacket print for the cable designation and rating.
+            years without degrading. Outdoor OSP cable jackets are standardly black — the
+            carbon black in HDPE is what provides UV protection; colored pigments can't
+            provide the same UV resistance, so TIA-598-D does not use jacket color to
+            distinguish outdoor cable types or ratings. LSZH (Low-Smoke Zero-Halogen) OSP
+            cable — used where fire-smoke toxicity is a concern (some conduit systems,
+            plenum, transit infrastructure) — is identified by the <em>printed legend</em>
+            on the jacket (look for "LSZH" or "OFNR"/"OFNP" in the jacket print), not by
+            jacket color. If you see a non-black jacket on an OSP cable, it is a
+            vendor-specific variant (e.g., high-visibility yellow for temporary aerial spans)
+            — not a TIA-598 standard color convention. Always read the jacket print.
             This is the only layer most people ever see on a cable reel.
           </li>
           <li>
