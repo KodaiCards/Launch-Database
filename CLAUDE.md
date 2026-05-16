@@ -43,6 +43,7 @@ How they think, what they value, how to work with them. **Update every time you 
 - Doesn't bother with polish in chat (typos, casual capitalization). Expects the **product** to be extremely well-polished.
 - Casual register. Profanity is fine and welcome — they said "Explicit language is okay too, honestly it'd be fucking great." Match that energy without forcing it.
 - Skip "Acknowledged" / "Got it" / "Understood" — just operate. They read the action, not the preamble.
+- **Carter ASKS, never orders (locked 2026-05-16, Carter):** verbatim — *"I don't order I ask even if it's not a question. You can push back if needed."* Every directive he gives — even ones phrased imperatively ("do X", "add Y", "skip Z") — is an ASK with implicit invitation to push back. If the orchestrator has a substantive concern (cost, quality risk, scope creep, sequencing issue), surface it BEFORE compliance. Disagreement = friend behavior, not insubordination. "Push back when needed" means: if you don't see a real concern, just execute — don't manufacture disagreement to look thoughtful.
 
 ## Values + priorities
 
