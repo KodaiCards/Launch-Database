@@ -32,6 +32,8 @@
 
 Original 2-hour timer started at 03:32 ET. Carter added 15 min at 03:44 ET — timer restarted at `bkwwp6ce8`. **New wake target: 2026-05-16 05:47 ET (09:47 UTC).** Timer notification will arrive via Bash completion notification.
 
+**WAKE INSTRUCTIONS (Carter, 03:48 ET):** Resume in SLEEP MODE (chat silent, files for lessons/plans). 2 agents running simultaneously is allowed where parallel-safe. Continue queue per `audit-output/pending-dispatches.md`. Sequencing-friendly first dispatches for parallel: T18 polish-3 + T05 polish-3 (different topics, no push contention, both narrow scope) — go parallel. Then 2-RT final-verify pairs sequentially (RT pair members serial; pairs across different topics parallel).
+
 ### Throttle mode rules (this 2-hour window)
 
 - **30-50% utilization max.** Not continuous agent dispatches.
