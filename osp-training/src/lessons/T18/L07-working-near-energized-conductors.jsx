@@ -12,7 +12,7 @@ export const meta = {
   course_id: 'T18',
   title: 'Working Near Energized Conductors — MAD/MAB',
   order: 7,
-  lesson_type: 'working',
+  lesson_type: 'foundation',
   prerequisites: ['T18.L01', 'T18.L05'],
   vocabulary_introduced: [
     'MAD',
@@ -35,6 +35,13 @@ export const meta = {
       definition:
         'A person trained and authorized under 29 CFR 1910.269 to work within the Minimum Approach Distance of energized conductors. This requires formal electrical safety training, documented competency, and employer authorization. Most OSP/telecom crew members are NOT 1910.269-qualified — they are awareness-level workers who must stay outside the MAB.',
     },
+  ],
+  learning_objectives: [
+    'Recognize when an OSP work task requires stopping due to proximity to energized conductors (MAB awareness-level response — NOT qualified worker approach).',
+    'Look up the OSHA Minimum Approach Distance using the OSHA MAD Calculator for a given phase-to-ground voltage.',
+    'Apply the non-qualified worker decision tree: stay outside MAB, stop and call the utility when work requires closer approach.',
+    'Identify the three field conditions where the communication-space informal rule breaks down (deteriorated insulation, induced voltage, downed conductor).',
+    'NOTE: This lesson teaches awareness-level response only — it does NOT certify workers to work within the MAD. Work inside the MAD requires 29 CFR 1910.269 formal qualification through a qualified employer training program.',
   ],
   vocabulary_assumed: [
     { term: 'hazard recognition', source_lesson_id: 'T18.L01' },
@@ -198,6 +205,47 @@ export default function T18L07_WorkingNearEnergizedConductors() {
           </p>
         </div>
 
+        <div className="mt-4 p-4 border border-red-400/30 bg-red-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-red-300 mb-2">Detection checklist — three field conditions where the communication-space rule breaks down</p>
+          <p className="text-slate-300/90 mb-2">
+            The field norm ("I'm in the communication space, below the neutral — I don't touch
+            anything above me") provides reasonable safety margin on properly maintained poles.
+            Before starting work on any joint-use pole, visually check all three of the following:
+          </p>
+          <ol className="list-decimal pl-5 space-y-2 text-slate-300/90">
+            <li>
+              <strong>Deteriorated or absent supply conductor insulation:</strong> Look up at the
+              distribution conductors above you. Do the supply conductors have intact weatherproof
+              insulation covering? Bare (uninsulated) primary conductors have no safe informal
+              approach distance — any contact is a contact with the conductor itself. If you see
+              bare conductors or insulation that is frayed, melted, or splitting, treat the
+              conductor as if it has no insulation and stay outside the calculated MAB.
+            </li>
+            <li>
+              <strong>Induced voltage on the messenger:</strong> On spans where the telecom
+              messenger runs parallel to the power line for extended distances (typically more
+              than a few hundred feet), an electromagnetic field can induce voltage onto an
+              ungrounded messenger. Before cutting the messenger at these locations, clip a
+              ground-rod tester between the messenger and a confirmed earth ground. If you read
+              any voltage, bond and ground the messenger before cutting. Never assume a messenger
+              is at zero voltage based on visual inspection alone.
+            </li>
+            <li>
+              <strong>Downed conductor on or near the ground:</strong> A supply conductor that
+              has fallen and is touching the pole, a guy wire, or the ground can energize
+              everything it touches at the full supply voltage. Treat any downed conductor as
+              energized until the utility has confirmed de-energization and grounding. Do not
+              approach the pole if you see a downed conductor in the work area — contact the
+              utility immediately and secure the area.
+            </li>
+          </ol>
+          <p className="text-slate-300/70 mt-2 text-xs">
+            If ANY of these conditions is present, stop work and contact the utility before
+            proceeding. These are the three documented failure scenarios for the informal
+            communication-space awareness rule.
+          </p>
+        </div>
+
         <h3 className="mt-5 font-semibold">What to Do When Your Work Puts You Near Energized Conductors</h3>
         <p className="mt-2">
           The decision tree for OSP crews (non-1910.269-qualified) is short:
@@ -318,7 +366,7 @@ export default function T18L07_WorkingNearEnergizedConductors() {
           },
         ]}
         sanityCheck={(result, { voltageKV }) =>
-          `At ${voltageKV} kV phase-to-ground, the OSHA MAD Calculator returns approximately ${result.toFixed(1)} ft for a qualified worker. Your non-qualified OSP crew must stay at this distance or farther — that's roughly arm's length plus your tool at ${voltageKV} kV. This calculator approximates the Appendix B formula from 29 CFR 1910.269(l)(2); always verify using the actual OSHA calculator for your job site voltage.`
+          `At ${voltageKV} kV phase-to-ground, the OSHA MAD Calculator returns approximately ${result.toFixed(1)} ft for a qualified worker on a grounded system. Your non-qualified OSP crew must stay at this distance or farther — that's roughly arm's length plus your tool at ${voltageKV} kV. IMPORTANT: this approximation assumes a grounded (effectively grounded) distribution system, which covers most U.S. rural distribution. For ungrounded or impedance-grounded systems, the MAD is substantially larger — the Appendix B formula uses a different coefficient for ungrounded systems, and the OSHA MAD Calculator has a separate field for system grounding configuration. If you are not certain whether the distribution system is grounded or ungrounded, contact the utility before applying any MAD value. When in doubt, use the ungrounded-system value (conservative). Always verify using the actual OSHA calculator for your job site voltage and system grounding configuration.`
         }
         resultLabel="Approximate MAD (qualified worker)"
         resultUnit="ft"
