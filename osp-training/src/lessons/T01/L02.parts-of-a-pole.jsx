@@ -34,6 +34,12 @@ export const meta = {
     { term: 'OSP', source_lesson_id: 'T01.L01' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Identify the three vertical zones of a shared utility pole (supply, climbing, communication) and explain the safety purpose of each',
+    'Explain how sag affects ground clearance and why clearance is measured at midspan rather than at the attachment point',
+    'Read a pole tag to determine pole class, height, and ownership',
+    'Describe joint-use pole attachment rights and the role of FCC Part 1.1411 in governing attachment fees',
+  ],
 };
 
 export default function T01L02_PartsOfAPole() {

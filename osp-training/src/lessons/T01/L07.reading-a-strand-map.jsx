@@ -38,6 +38,12 @@ export const meta = {
     { term: 'splicer', source_lesson_id: 'T01.L06' },
   ],
   estimated_minutes: 25,
+  learning_objectives: [
+    'Read a strand map to trace the fiber path from feeder cable at the OLT through FDH splitters to customer NAP drop locations',
+    'Explain what a fiber assignment record shows and why every crew member (splicer, test tech, designer) depends on it',
+    'Interpret a splitter ratio notation (e.g., 1:32) and calculate how many customer drops a given splitter supports',
+    'Describe how GIS integration with strand maps enables real-time field updates and as-built documentation',
+  ],
 };
 
 export default function T01L07_ReadingAStrandMap() {

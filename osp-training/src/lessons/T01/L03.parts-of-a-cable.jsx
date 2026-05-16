@@ -32,6 +32,12 @@ export const meta = {
     { term: 'span', source_lesson_id: 'T01.L02' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Identify the layers of a standard loose-tube OSP cable from the optical fiber core outward to the outer jacket',
+    'Distinguish between lashed aerial, ADSS, and direct-buried cable configurations and explain when each is used',
+    'Decode a cable jacket print to determine fiber count, cable type, and material specifications',
+    'Explain why LSZH and colored jacket variants exist and where each is applied in OSP installations',
+  ],
 };
 
 export default function T01L03_PartsOfACable() {

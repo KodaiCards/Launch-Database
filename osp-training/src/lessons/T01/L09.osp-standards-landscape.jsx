@@ -40,6 +40,12 @@ export const meta = {
     { term: 'ESA', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Map the OSP standards stack by work activity: identify which code governs aerial lines (NESC), underground conduit (NEC), RUS-funded design (1751F-series), fiber cabling (TIA), and environmental review (NEPA/NHPA/ESA)',
+    'Explain how a standard becomes legally enforceable through state or local code adoption by reference',
+    'Identify the USACE Section 404 / NWP 57 permit process and explain when a fiber project requires Corps authorization',
+    'Describe what to do when two applicable standards conflict and explain which authority (AHJ) determines which code prevails',
+  ],
 };
 
 export default function T01L09_OspStandardsLandscape() {

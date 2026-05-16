@@ -27,6 +27,12 @@ export const meta = {
   ],
   vocabulary_assumed: [],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Define OSP and ISP and explain the difference using the demarcation point as the dividing line',
+    'Trace the signal path from OLT at the headend through OSP fiber to the ONT at the customer premises',
+    'Explain why OSP and ISP require different codes, crews, materials, and permits',
+    'Identify RUS and BICSI as the primary standards and credentialing bodies relevant to OSP work',
+  ],
 };
 
 export default function T01L01_OspVsIsp() {

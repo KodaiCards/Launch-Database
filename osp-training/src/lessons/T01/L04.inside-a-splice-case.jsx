@@ -35,6 +35,12 @@ export const meta = {
     { term: 'central member', source_lesson_id: 'T01.L03' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Compare dome and inline splice case shapes and explain the typical use case for each configuration',
+    'Trace the path of a fiber from cable entry through a splice case to the splice tray and fusion splice point',
+    'Explain how splice case capacity and port count drive splice case selection for a given cable splice point',
+    'Describe what information must be recorded in splice records and why splice documentation persists for the life of the network',
+  ],
 };
 
 export default function T01L04_InsideASpliceCase() {

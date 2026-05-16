@@ -61,6 +61,12 @@ export const meta = {
     { term: 'PE', source_lesson_id: 'T01.L06' },
   ],
   estimated_minutes: 15,
+  learning_objectives: [
+    'Recall and define 31 OSP acronyms spanning fiber types, test instruments, electrical/grounding terms, standards bodies, construction/survey, safety, and environmental/permitting categories',
+    'Distinguish between acronyms from different bodies that are commonly confused (NEC vs. NESC, BICSI vs. FOA, CFOT vs. CFOS/O)',
+    'Match each OSP certification (RCDD, CFOT, CFOS/O, OSP Designer) to its administering body and the role it prepares the holder for',
+    'Use this lesson as a reference sheet when an acronym appears in later T01 lessons or subsequent topics',
+  ],
 };
 
 export default function T01L08_KeyAcronymsFieldReference() {

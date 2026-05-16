@@ -35,6 +35,12 @@ export const meta = {
     { term: 'as-built', source_lesson_id: 'T01.L05' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Identify the six primary roles on an OSP project (PE, designer, permitter, staking tech, splicer, test tech) and describe the responsibility of each',
+    'Explain the handoff sequence from designer to permitter to field crew and identify what document or deliverable each handoff transfers',
+    'Distinguish between who may stamp a design (PE) and who typically executes the staking survey (staking tech or designer)',
+    'Recognize that OTDR is a field test instrument formally introduced in L08, and understand its role at a preview level',
+  ],
 };
 
 export default function T01L06_WhoDoesWhat() {
