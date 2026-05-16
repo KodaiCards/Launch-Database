@@ -272,11 +272,14 @@ export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {
       </section>
 
       {/* OSP dome vs. rack-mount FOSC comparison is covered in the SideBySide above. */}
-      {/* Express fiber path note: express fibers pass through an FDH FOSC in a
-          straight-through express splice tray — not broken out to any local splitter.
-          In the CO headend rack-mount FOSC, these appear as through-splices (one cable
-          in, another cable out). Their CO ODF port assignment points to the next
-          downstream FDH in the bus route, not the local FDH service area. */}
+      <div className="lesson-callout mt-4 p-4 border border-slate-400/20 bg-slate-400/5 rounded-lg text-sm">
+        <p>
+          Express fibers pass through an FDH FOSC in a straight-through express splice tray — not broken out
+          to any local splitter. In the CO headend rack-mount FOSC, these appear as through-splices (one cable
+          in, another cable out). Their CO ODF port assignment points to the next downstream FDH in the bus
+          route, not the local FDH service area.
+        </p>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
