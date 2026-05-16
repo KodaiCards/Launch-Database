@@ -134,3 +134,31 @@ Tree clean after push. All three F-RT findings resolved in single commit.
 **Neighborhood scan from polish-5:** No additional dual-vocab contradictions found in T05/L02. All 6 `vocabulary_introduced` terms (Table 232-1, traffic lane clearance, pedestrian clearance, sag formula, design clearance margin, Grade B crossing) appear only in `vocabulary_introduced`. All 7 `vocabulary_assumed` terms (NESC, Rule 232, AHJ, pole, span, attachment, sag) appear only in `vocabulary_assumed`.
 
 ## T05 Wave Status: COMPLETE through POLISH-5 stage. Final-verify-3 RT pair required before T05 is declared fully closed.
+
+## POLISH-6 Stage (systemic Flashcard render gap — RT-C `1314173` + RT-D `77a0126` findings)
+
+Dispatched per RT-C and RT-D independently confirming ~41 Flashcard cards missing across 10 of 15 T05 lessons. Directive 18z: every `vocabulary_introduced` term MUST have a rendered `<Flashcard>` card.
+
+| Lesson | vocab_introduced | Cards before | Cards after | Delta | Special action |
+|--------|-----------------|-------------|-------------|-------|----------------|
+| L02 | 6 | 4 | 7 | +3 | Table 232-1, pedestrian clearance, Grade B crossing |
+| L03 | 7 | 5 | 7 | +2 | Table 235-5, bonded messenger |
+| L04 | 9 | 4 | 9 | +5 | Grade N, Rule 261, load factor, strength factor, OCF |
+| L05 | 11 | 5 | 11 | +6 | Added `w_wind` to meta.key_terms first; then h/v force, weight span, resultant, running pole, w_wind |
+| L06 | 11 | 5 | 11 | +6 | loading district, Medium, Extreme Wind, Rule 250, radial ice, 250D |
+| L08 | 10 | 5 | 10 | +5 | pole owner, attacher, attachment fee, ILEC, CLEC |
+| L09 | 8 | 4 | 8 | +4 | FCC 18-111, 47 CFR §1.1411, new attacher, complex make-ready |
+| L11 | 6 | 4 | 6 | +2 | shield wire, overhead ground wire (OGW) |
+| L12 | 10 | 4 | 10 | +6 | EPON, XGS-PON, ODN, splitter insertion loss, distribution fiber, drop fiber |
+| L13 | 7 | 4 | 8 | +4 | transfer conflict, midspan conflict, attachment height conflict, riding attachment |
+
+**L05 w_wind key_terms addition (special case):**
+Definition added: "Wind load on the cable per foot of length (lb/ft), calculated as: w_wind = wind pressure (psf) × cable OD in feet. Represents the lateral force per foot that wind exerts on a cable, used to calculate the total wind-induced horizontal force on a pole: F_wind = w_wind × wind span."
+Source: L05 notation table (line 152-153) and Step 1 of worked example (lines 296-300).
+
+**Neighborhood scan findings (surfaced only, not fixed per scope):**
+None surfaced beyond the L05 w_wind case (which was within scope and fixed).
+
+**Commit SHA:** `2676698`
+
+## T05 Wave Status: COMPLETE through POLISH-6 stage. Final-verify-3 RT pair required before T05 is declared fully closed.
