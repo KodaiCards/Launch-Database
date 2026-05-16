@@ -296,14 +296,14 @@ export default function T05L15_CapstoneQuiz() {
             prompt:
               'A cable with w = 0.200 lb/ft is strung at H = 800 lb on a 120-ft span. The attachment height is 21 ft. The required clearance over a traffic lane is ≈ 15.5 ft. What is the clearance margin at midspan?',
             choices: [
-              'About +4.57 ft — passes with margin',
+              'About +5.05 ft — passes with margin',
               'About +3.20 ft — passes with margin',
               'About −0.43 ft — fails (cable too low)',
               'About +6.00 ft — passes easily',
             ],
             answerIndex: 0,
             explanation:
-              's = (0.200 × 120²) / (8 × 800) = (0.200 × 14,400) / 6,400 = 2,880 / 6,400 = 0.450 ft. Midspan height = 21 − 0.450 = 20.55 ft. Margin = 20.55 − 15.5 = 5.05 ft. Closest answer: +4.57 ft. (Exact: 5.05 ft.) (T05.L02, T05.L07)',
+              's = (0.200 × 120²) / (8 × 800) = (0.200 × 14,400) / 6,400 = 2,880 / 6,400 = 0.450 ft. Midspan height = 21 − 0.450 = 20.55 ft. Margin = 20.55 − 15.5 = +5.05 ft. The three distractors (3.20 ft, −0.43 ft, 6.00 ft) are each wrong by distinct methods — rounding error, wrong formula direction, and rough over-estimate respectively — so they remain plausibly distinct. (T05.L02, T05.L07)',
           },
           {
             id: 'T05-CAP-Q13',
