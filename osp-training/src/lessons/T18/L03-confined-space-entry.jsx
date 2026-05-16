@@ -160,7 +160,7 @@ export default function T18L03_ConfinedSpaceEntry() {
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Carbon monoxide (CO)</td>
-                <td className="px-3 py-2 font-mono">&lt; 25 ppm</td>
+                <td className="px-3 py-2 font-mono">&lt; 25 ppm (ACGIH TLV-TWA)</td>
                 <td className="px-3 py-2">Ventilate; identify source before entry.</td>
                 <td className="px-3 py-2 font-mono text-red-400">&gt; 25 ppm: exit immediately</td>
               </tr>
@@ -321,6 +321,16 @@ export default function T18L03_ConfinedSpaceEntry() {
           catalytic bead sensors require oxygen to oxidize the target gas on the sensor bead.
           In an O₂-deficient space, a zero LEL reading is NOT a safe signal. Do not enter until
           O₂ is in the acceptable range AND LEL reads clean on a subsequent test.
+        </div>
+        <div className="mt-3 p-3 bg-amber-900/20 border border-amber-400/30 rounded-lg text-sm">
+          <strong>H₂S and pellistor sensor poisoning:</strong> H₂S concentrations above 10 ppm
+          can irreversibly poison catalytic bead (pellistor) LEL sensors, causing the sensor to
+          produce a persistent false-zero LEL reading even after the H₂S source is removed and
+          you re-enter. If a space had any H₂S event — even briefly above 10 ppm — your LEL
+          sensor may be compromised. After an H₂S event, perform a bump test (expose the sensor
+          to known-concentration calibration gas) or replace the sensor head before relying on
+          LEL readings for re-entry. Consult your monitor manufacturer's guidance on H₂S
+          exposure limits for the sensor type in use.
         </div>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 29 CFR 1910.146(b) — Acceptable O₂ range definition; 29 CFR 1910.268(o)(2) —
@@ -546,8 +556,8 @@ export default function T18L03_ConfinedSpaceEntry() {
             ],
             answerIndex: 1,
             explanation:
-              '29 CFR 1910.268(o) is the specific standard for telecom manhole work. Per 29 CFR 1910.5(c)(1), specific standards supersede general ones. OSHA confirmed in a 1993 interpretation letter that 1910.268(o) — not 1910.146 — governs routine telecom manhole entry. The 1910.146 full PRCS procedure applies only when conditions cannot be made safe under 1910.268(o) — e.g., chemical contamination that cannot be cleared by ventilation.',
-            citation: '29 CFR 1910.268(o) (ecfr.gov; osha.gov); OSHA interpretation letter 1993-05-19.',
+              '29 CFR 1910.268(o) is the specific standard for telecom manhole work. Per 29 CFR 1910.5(c)(1), specific standards supersede general ones — when a specific standard (1910.268) covers a condition, it supersedes the more general standard (1910.146) for that condition. The 1910.146 full PRCS procedure applies only when conditions cannot be made safe under 1910.268(o) — e.g., chemical contamination that cannot be cleared by ventilation.',
+            citation: '29 CFR 1910.268(o) (ecfr.gov; osha.gov); 29 CFR 1910.5(c)(1) — specific standard supersedes general standard (ecfr.gov).',
           },
           {
             id: 'T18-L03-Q2',
