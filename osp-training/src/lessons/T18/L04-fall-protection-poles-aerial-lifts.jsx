@@ -210,7 +210,12 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
             recommends full-body harnesses over body belts for fall arrest because body belts can
             cause serious internal injuries during a long fall arrest — the body folds over the
             belt, concentrating force on the abdomen. Body belts are still allowed for positioning
-            (holding the worker at the work position) but not for fall arrest.
+            (holding the worker at the work position) but not for fall arrest. The relevant sub-standards
+            in the ANSI Z359 family are <strong>ANSI Z359.4</strong> (Safety Requirements for Use,
+            Inspection, and Maintenance of Fall Protection Equipment) and <strong>ANSI Z359.11</strong>
+            (Safety Requirements for Full Body Harnesses). ANSI Z359.1 is the umbrella standard
+            that defines the Z359 series; citation to a specific requirement (harness vs. body belt,
+            arrest force limits) should reference Z359.4 or Z359.11 as applicable.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field reality:</strong> Most OSP telecom crews use the body belt + pole strap
@@ -261,9 +266,27 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
             and is sized to prevent a fall from occurring rather than arrest one after it starts.
           </li>
         </ul>
+        <div className="mt-4 p-4 border border-sky-400/30 bg-sky-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-sky-300 mb-1">PFAS Anchor Point Strength Requirement — 29 CFR 1910.140(c)(13)</p>
+          <p className="text-slate-300/90">
+            When attaching a PFAS to any structure on an OSP job — messenger strand, crossarm,
+            pole-top hardware, or any improvised anchor — the anchor point must support
+            <strong> at least 5,000 lbf per worker attached</strong>, OR be designed by a
+            qualified person with a safety factor of at least 2:1, per 29 CFR 1910.140(c)(13).
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field implication:</strong> Messenger strand (the galvanized steel wire your
+            fiber cable hangs from) is a common improvised PFAS attachment point. Its rated
+            breaking strength depends on gauge and construction — confirm it exceeds 5,000 lbf
+            at the attachment point before clipping a PFAS to it. Crossarms vary widely by
+            species and grade; do not assume any pole hardware meets the 5,000 lbf threshold
+            without documentation. Use rated, dedicated fall-arrest anchors whenever practical.
+          </p>
+        </div>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 29 CFR 1910.67(c)(2)(v) — Aerial lifts (ecfr.gov); 29 CFR 1910.268(g)(1) —
-          Pole climbing fall protection (osha.gov + OSHA interpretation letter 2012-08-27).
+          Pole climbing fall protection (osha.gov + OSHA interpretation letter 2012-08-27);
+          29 CFR 1910.140(c)(13) — PFAS anchor point strength requirement (ecfr.gov).
         </p>
       </section>
 
@@ -396,7 +419,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           },
           {
             label: 'OSHA acceptability (1910.268)',
-            leftValue: 'Still allowed for positioning work under 1910.268(g). Body belt acceptable for positioning only — NOT for fall arrest. ANSI Z359.1 prohibits use of body belts as the sole fall arrest attachment due to risk of serious abdominal injury during arrest.',
+            leftValue: 'Still allowed for positioning work under 1910.268(g). Body belt acceptable for positioning only — NOT for fall arrest. ANSI Z359.4 and Z359.11 (within the ANSI Z359 series) prohibit use of body belts as the sole fall arrest attachment due to risk of serious abdominal injury during arrest.',
             rightValue: 'Required if free-fall arrest is needed. Body belt NOT acceptable for fall arrest. Full-body harness required per ANSI Z359.11 and increasingly enforced by OSHA compliance directives.',
           },
           {
@@ -442,7 +465,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
             answerIndex: 2,
             explanation:
               'A positioning system (body belt + pole strap) is designed to hold the worker at the work position — not to arrest a fall. If the gaff pulls out and the body shifts suddenly, the positioning strap may slip rather than catch the fall. Only a PFAS — full-body harness connected to an energy-absorbing lanyard or SRL anchored above the worker — is designed to arrest a fall and limit the arrest force to ≤1,800 lbf.',
-            citation: '29 CFR 1910.268(g)(1); ANSI Z359.11 body belt restrictions.',
+            citation: '29 CFR 1910.268(g)(1); ANSI Z359.4 + Z359.11 (body belt restrictions within the ANSI Z359 series).',
           },
           {
             id: 'T18-L04-Q3',

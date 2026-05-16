@@ -224,7 +224,12 @@ export default function T18L08_HazardousMaterialsOSP() {
               <strong>Protection (SDS Section 8):</strong> Adequate ventilation — outdoors or
               forced-air ventilation for enclosed fusion operations. Safety glasses (hot plastic
               spatter). Heat-resistant gloves during fusion work. If working in a confined vault
-              with heat fusion, the ventilation requirement from T18.L03 applies simultaneously.
+              with heat fusion, the confined space atmospheric monitoring requirements also apply:
+              CO buildup from HDPE fumes in a poorly ventilated vault can approach hazardous
+              concentrations. <em>See T18.L03 (Confined Space Entry) for full atmospheric
+              monitoring procedures and IDLH thresholds — the forced-air blower requirement
+              from 29 CFR 1910.268(o)(2) and the atmospheric testing protocol apply
+              simultaneously with any heat fusion or cutting work in an enclosed vault.</em>
             </p>
             <p className="text-xs text-slate-400 mt-1">
               Source: OSHA eTool on plastic fumes; manufacturer safety bulletins for HDPE conduit

@@ -34,7 +34,7 @@ export const meta = {
     {
       term: 'near-miss',
       definition:
-        'An unplanned event that did not result in injury, illness, or damage but had the potential to do so. Near-miss reporting is voluntary (OSHA does not require a near-miss log), but reporting is strongly encouraged as a leading indicator of hazards before they cause recordable incidents. OSHA cannot use voluntary near-miss reports against an employer in enforcement.',
+        'An unplanned event that did not result in injury, illness, or damage but had the potential to do so. Near-miss reporting is voluntary (OSHA does not require a near-miss log), but reporting is strongly encouraged as a leading indicator of hazards before they cause recordable incidents. OSHA has stated it will not use voluntary near-miss reports as a basis for citations under 29 CFR 1904.35(b)(1)(i) and OSH Act §11(c) whistleblower protections — but this is an enforcement policy, not an absolute statutory immunity.',
     },
     {
       term: 'DART',
@@ -159,7 +159,7 @@ export default function T18L09_IncidentReportingOSHA300() {
             {
               id: 'T18-L09-fc-nearmiss',
               front: 'Is near-miss reporting required by OSHA?',
-              back: 'No — near-miss reporting is voluntary under federal OSHA rules. However, OSHA strongly encourages it and has stated that voluntary near-miss reports cannot be used against an employer in enforcement. Many employers maintain internal near-miss programs as a leading-indicator safety tool.',
+              back: 'No — near-miss reporting is voluntary under federal OSHA rules. OSHA strongly encourages it and has stated it will not use voluntary near-miss reports as a basis for citations (per 29 CFR 1904.35(b)(1)(i) and OSH Act §11(c) whistleblower protections) — but this is an enforcement policy, not an absolute statutory immunity. Many employers maintain internal near-miss programs as a leading-indicator safety tool.',
             },
             {
               id: 'T18-L09-fc-severe',
@@ -389,7 +389,7 @@ export default function T18L09_IncidentReportingOSHA300() {
             ],
             answerIndex: 1,
             explanation:
-              'Near-miss reporting is voluntary under federal OSHA rules. An event with no injury, illness, or death does not meet the 29 CFR 1904.7 recordable threshold, and it does not trigger 1904.39 severe incident reporting. However, most safety-conscious employers maintain voluntary near-miss programs as a leading-indicator tool. OSHA has explicitly stated that voluntary near-miss reports cannot be used against an employer in enforcement proceedings.',
+              'Near-miss reporting is voluntary under federal OSHA rules. An event with no injury, illness, or death does not meet the 29 CFR 1904.7 recordable threshold, and it does not trigger 1904.39 severe incident reporting. However, most safety-conscious employers maintain voluntary near-miss programs as a leading-indicator tool. OSHA has stated it will not use voluntary near-miss reports as a basis for citations under 29 CFR 1904.35(b)(1)(i) and OSH Act §11(c) whistleblower protections — this is an enforcement policy encouraging voluntary reporting, not an absolute statutory immunity.',
             citation:
               'OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting); 29 CFR 1904.7(a) (recordable definition).',
             fieldNote:
