@@ -525,4 +525,32 @@
 - **L03 lines 326-334 (pellistor sensor poisoning callout):** RT-L-1 fix held as above. Existing text + manufacturer guidance note is a defensible conservative position pending adjudication.
 - **L03 source citation block (lines 335-341):** Updated in K2 fix. Citation block now includes 1926.55 and 1910.1000 Table Z-2. No additional missing citations found in ±20-line scan.
 
+---
+
+## Polish-7 fixes — APPLIED ✓ (`c46b319`) — 2026-05-16
+
+### LOW-P1 | L10 capstone quiz line 267 — Z359.11 parenthetical wrong
+- **BEFORE:** `ANSI Z359.11 (body belt standard, referenced via OSHA eTool)`
+- **AFTER:** `ANSI/ASSP Z359.11 (Safety Requirements for Full Body Harnesses, referenced via OSHA eTool)`
+- **Primary source:** ANSI/ASSP Z359.11-2021 official title "Safety Requirements for Full Body Harnesses" — confirmed via ANSI webstore (webstore.ansi.org/standards/asse/ansiasspz359112021) + ASSP publication page. Z359.3 is the body belts standard; Z359.11 is full body harnesses.
+- Status: APPLIED ✓
+
+### LOW-P2 | L03 line 273 — 1910.146(c)(8) wrong subsection for multi-employer coordination
+- **BEFORE:** `29 CFR 1910.146(c)(8)` (covers permit-required confined space reclassification — wrong)
+- **AFTER:** `29 CFR 1910.146(d)(11) + Appendix E` (covers host employer/contractor coordination — correct)
+- **Primary source:** 29 CFR 1910.146(d)(11) confirmed via eCFR.gov (ecfr.gov/current/title-29/subtitle-B/chapter-XVII/part-1910/subpart-J/section-1910.146) — paragraph (d)(11) requires host employer to coordinate entry operations with contractors when both will be working in or near permit spaces. Appendix E specifically addresses host employer/contractor coordination procedures.
+- Status: APPLIED ✓
+
+### Neighborhood scan from Polish-7 (surface only, no fixes applied)
+
+**L10 capstone (±20 lines from Q11 fix at line 267):**
+- Lines 247–251 (Q10 citation): `29 CFR 1910.268(g)(1); OSHA interpretation letter 2012-08-27` — format is fine, citation matches the subject matter (fall protection at height on poles).
+- Lines 270–286 (Q12 PPE): `29 CFR 1910.137; OSHA eTool Electric Power` — correct citation for rubber insulating gloves voltage ratings.
+- No additional citation-precision issues found in neighborhood.
+
+**L03 (±20 lines from multi-employer callout fix at line 273):**
+- Lines 261–270 (7-step practical crew process): References `1910.268(o)(1)` for manhole perimeter barriers — correct subsection.
+- Lines 282–293 (Book vs. Field callout): References `1910.268 and 1910.146` generically — appropriate for a book-vs-field narrative, no specific subsection needed.
+- No additional citation-precision issues found in neighborhood.
+
 === T18 FIX CANONICAL END ===
