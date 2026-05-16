@@ -30,7 +30,7 @@
 
 ### Timer status
 
-2-hour Bash background timer started at 03:32 ET (07:32 UTC). Wake target: 2026-05-16 05:32 ET (09:32 UTC). Timer notification will arrive via Bash completion notification.
+Original 2-hour timer started at 03:32 ET. Carter added 15 min at 03:44 ET — timer restarted at `bkwwp6ce8`. **New wake target: 2026-05-16 05:47 ET (09:47 UTC).** Timer notification will arrive via Bash completion notification.
 
 ### Throttle mode rules (this 2-hour window)
 
