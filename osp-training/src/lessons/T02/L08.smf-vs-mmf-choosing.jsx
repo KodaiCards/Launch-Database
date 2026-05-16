@@ -14,7 +14,7 @@ export const meta = {
   order: 8,
   lesson_type: 'working',
   prerequisites: ['T02.L01', 'T02.L07'],
-  vocabulary_introduced: ['OM1', 'OM2', 'OM3', 'OM4', 'OM5', 'OS2', 'reach table', 'laser-optimized MMF'],
+  vocabulary_introduced: ['OM1', 'OM2', 'OM3', 'OM4', 'OM5', 'OS2', 'reach table', 'laser-optimized MMF', 'G.655 (NZ-DSF)'],
   key_terms: [
     { term: 'OM1', definition: 'Multimode fiber grade: 62.5 µm core, 200 MHz-km bandwidth @ 850 nm, max 33 m at 10GbE. Orange jacket. Legacy grade -- do not specify for new 10G+ installations.' },
     { term: 'OM2', definition: 'Multimode fiber grade: 50 µm core, 500 MHz-km bandwidth @ 850 nm, max 82 m at 10GbE. Orange jacket. Legacy grade -- use OM3 or OM4 for modern 10G+ data center work.' },
@@ -24,6 +24,7 @@ export const meta = {
     { term: 'OS2', definition: 'Single-mode fiber grade corresponding to ITU-T G.652.D -- the current standard OSP SMF. Maximum attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D. Yellow jacket.' },
     { term: 'reach table', definition: 'A table showing the maximum distance a given fiber type (OM1-OM5, OS2) can support for a specific Ethernet speed (1GbE, 10GbE, 40GbE, 100GbE) per IEEE 802.3. Used to quickly determine if MMF or SMF is required for a given application and distance.' },
     { term: 'laser-optimized MMF', definition: 'OM3/OM4/OM5 multimode fiber with a graded-index core profile specifically optimized for 850 nm VCSEL (vertical-cavity surface-emitting laser) launch conditions. This reduces modal dispersion by restricting which modes are excited, dramatically increasing effective bandwidth vs. older LED-compatible OM1/OM2.' },
+    { term: 'G.655 (NZ-DSF)', definition: 'ITU-T G.655 Non-Zero Dispersion-Shifted SMF — a single-mode fiber used in carrier DWDM backbones where the zero-dispersion wavelength is intentionally shifted away from 1550 nm to suppress four-wave mixing at high channel counts. OSP engineers specify G.652.D (OS2); G.655 is a carrier-side fiber they coordinate with at the OSP↔carrier handoff point.' },
   ],
   vocabulary_assumed: [
     { term: 'SMF', source_lesson_id: 'T01.L08' },
@@ -115,6 +116,8 @@ export default function T02L08_SMFvsMMFChoosing() {
         <Flashcard
           deckId="T02-L08"
           cards={[
+            { id: 'T02-L08-fc-om1', front: 'What is OM1 fiber?', back: 'Multimode fiber grade: 62.5 µm core, 200 MHz-km bandwidth @ 850 nm, max 33 m at 10GbE. Orange jacket. Legacy grade -- do not specify for new 10G+ installations.' },
+            { id: 'T02-L08-fc-om2', front: 'What is OM2 fiber?', back: 'Multimode fiber grade: 50 µm core, 500 MHz-km bandwidth @ 850 nm, max 82 m at 10GbE. Orange jacket. Legacy grade -- use OM3 or OM4 for modern 10G+ data center work.' },
             { id: 'T02-L08-fc-os2', front: 'What is OS2 fiber?', back: 'Single-mode fiber grade per ITU-T G.652.D -- the current standard for OSP work. Max attenuation 0.4 dB/km @ 1310 nm and 0.3 dB/km @ 1550 nm. Reduced water peak. Yellow patch cord jacket. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D.' },
             { id: 'T02-L08-fc-om3', front: 'What is OM3 fiber, and what do EMB vs. OFL mean?', back: 'Multimode fiber grade: 50 µm laser-optimized core, max 300 m at 10GbE. Aqua jacket. EMB (Effective Modal Bandwidth) = 2000 MHz·km — measured with a laser/VCSEL launch; the spec that governs 10G/40G/100G applications. OFL (Overfilled Launch) = 1500 MHz·km — measured with a legacy LED launch; lower number, not relevant for modern transceivers. Not usable for OSP runs over a few hundred meters.' },
             { id: 'T02-L08-fc-om4', front: 'What is OM4 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket. Use when OM3\'s 300 m limit is insufficient. Still only for data center/campus -- not OSP.' },
@@ -214,6 +217,28 @@ export default function T02L08_SMFvsMMFChoosing() {
           The jacket color for OS2 patch cords is yellow (in North America and most of
           the world). OS1 is also typically yellow. Don't rely on color alone to distinguish
           OS1 from OS2 — read the label.
+        </p>
+
+        <h3 className="mt-5 font-semibold">A note on G.655 — Non-Zero Dispersion-Shifted SMF</h3>
+        <p className="text-sm mt-2">
+          You will occasionally see <strong>ITU-T G.655 (NZ-DSF)</strong> referenced in carrier network
+          specs. This is a single-mode fiber type used in long-haul DWDM carrier backbones. G.655
+          shifts the zero-dispersion wavelength slightly away from 1550 nm (to approximately
+          1500–1600 nm) so that chromatic dispersion never reaches zero at the operating wavelength
+          — this intentional residual dispersion suppresses four-wave mixing, a nonlinear effect
+          that degrades DWDM systems at high channel counts. (Source: ITU-T G.655 [confirm edition].)
+        </p>
+        <p className="text-sm mt-2">
+          <strong>Why you need to know this:</strong> If your feeder connects to a carrier's
+          long-haul backbone, the carrier may be running G.655 fiber on their end. Your OSP
+          feeder is still G.652.D (OS2) — the distinction matters if you're performing link-budget
+          coordination across the OSP↔carrier handoff. G.655 behaves differently from G.652.D
+          at high bit rates. See T02.L07b (Long-Haul Awareness) for the full context.
+        </p>
+        <p className="text-sm mt-2 text-slate-400">
+          <strong>OSP default:</strong> Specify G.652.D (OS2) for every OSP run you design.
+          G.655 is a carrier-side fiber type. You do not select it; you coordinate with it
+          at the handoff point.
         </p>
 
         <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
