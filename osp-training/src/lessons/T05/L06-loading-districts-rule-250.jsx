@@ -240,6 +240,38 @@ export default function T05L06_LoadingDistrictsRule250() {
           </p>
         </div>
 
+        <div className="mt-4 p-4 border border-orange-400/30 bg-orange-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-orange-300 mb-1">Georgia-Specific: Coastal Counties Are in the NESC 250C Mapped Zone</p>
+          <p className="text-slate-300/90">
+            Macon, GA is inland and is clearly in the NESC <strong>Light loading district</strong> —
+            no ice, 9 psf wind, no Rule 250C concern on standard distribution poles. However,
+            if you or PSC ever have a project near the Georgia coast, the picture changes.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            The following Georgia counties fall within the NESC C2-2023 Rule 250C extreme wind
+            map boundary: <strong>Glynn County (Brunswick/Jekyll Island area), Camden County
+            (Kingsland area), Brantley County, Charlton County, and the broader Georgia Coastal
+            Management zone.</strong> These are still in the NESC <em>Light</em> base district
+            (no ice loads), but for any structure 60 feet or more above ground in those counties,
+            <strong> Rule 250C Extreme Wind applies in addition to the base Light district loads.</strong>
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>What this means in practice:</strong> A 65-ft monopole for a microwave relay
+            site near Brunswick must be designed for both the Light base loads AND the Rule 250C
+            extreme wind pressure (which will be significantly higher than 9 psf for that coastal
+            location). A standard 40-ft distribution pole in the same county does NOT trigger 250C.
+            The 60-ft threshold is the key: check every tall structure individually when working
+            in coastal GA counties.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Verify the map boundary:</strong> Use NESC C2-2023 Figure 250-2 (the Extreme
+            Wind map) to confirm whether a specific project location is in the mapped zone. The
+            county line is not the boundary — the NESC map contours are. A rural site 10 miles
+            inland from the Glynn County coast may or may not be in the mapped zone depending on
+            the exact contour. When in doubt, pull the map.
+          </p>
+        </div>
+
         {/* ── KEY TERMS FLASHCARDS ─────────────────────────────────────── */}
         <Flashcard
           deckId="T05-L06"
@@ -299,7 +331,7 @@ export default function T05L06_LoadingDistrictsRule250() {
             <p>w_ice = density × A_ice</p>
             <p>w_ice = 57 lb/ft³ × [π × t × (D + t) / 144] ft²/ft</p>
             <p>w_ice = (57 × π / 144) × t × (D + t)</p>
-            <p>w_ice = (178.97 / 144) × t × (D + t)</p>
+            <p>w_ice = (179.07 / 144) × t × (D + t)</p>
             <p>w_ice = 1.2435 × t × (D + t)</p>
             <p>w_ice ≈ <strong>1.244 × t × (D + t)</strong> lb/ft  ✓</p>
           </div>

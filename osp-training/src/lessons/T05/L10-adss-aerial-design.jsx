@@ -47,16 +47,6 @@ export const meta = {
   ],
   key_terms: [
     {
-      term: 'EDS (Everyday Stress)',
-      definition:
-        'Everyday Stress — the normal, sustained long-term installation tension of an ADSS cable, expressed as a percentage of its Rated Tensile Strength (RTS). EDS is typically 16–25% of RTS for ADSS cables. The EDS level is set by the cable manufacturer to ensure that at normal daily conditions, the fiber inside the cable experiences no mechanical strain. Exceeding EDS on a regular basis (not just under storm loading) causes fiber microbending and increased attenuation over time.',
-    },
-    {
-      term: 'RTS (Rated Tensile Strength)',
-      definition:
-        'Rated Tensile Strength — the maximum published tensile load a cable can sustain without permanent damage to the strength member. For ADSS cables, the RTS is carried by the integrated dielectric strength members (typically aramid yarns or fiberglass rods). EDS is set as a fraction of RTS: if RTS = 2,800 lb and EDS = 20%, then the everyday stringing tension H = 0.20 × 2,800 = 560 lb.',
-    },
-    {
       term: 'aeolian vibration',
       definition:
         'A resonant, high-frequency oscillation of an aerial cable caused by steady, low-speed wind (typically 3–15 mph) flowing across the cable and creating alternating vortices on the downwind side. Named after Aeolus, the Greek god of wind. The cable vibrates vertically at a frequency determined by wind speed and cable diameter. Without damping, aeolian vibration causes fatigue failure at the attachment clamps — the highest-stress points — within months to years.',
@@ -156,11 +146,6 @@ export default function T05L10_ADSSAerialDesign() {
               id: 'T05-L10-fc-adss',
               front: 'What makes ADSS cable self-supporting, and why is the "all dielectric" property important?',
               back: 'ADSS is self-supporting because its integrated strength members (aramid yarns or fiberglass rods) carry the structural tension directly — no separate steel messenger strand is needed. "All dielectric" means the entire cable, including strength members, contains no conductive metal. This eliminates induced voltage hazards near high-voltage lines and removes the need for grounding hardware at every pole.',
-            },
-            {
-              id: 'T05-L10-fc-eds',
-              front: 'What is EDS and what happens if it\'s routinely exceeded?',
-              back: 'EDS (Everyday Stress) is the normal long-term stringing tension, expressed as 16–25% of RTS. At EDS, the fiber inside experiences no mechanical strain. If cable tension regularly exceeds EDS — for example, by stringing too tight in cold weather — the fiber experiences microbending stress that increases attenuation over time. EDS is the tension H you use in the sag formula for clearance calculations.',
             },
             {
               id: 'T05-L10-fc-aeolian',

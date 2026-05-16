@@ -38,6 +38,7 @@ export const meta = {
     { term: 'AHJ', source_lesson_id: 'T05.L01' },
     { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
+    { term: 'Grade B crossing', source_lesson_id: 'T05.L02' },
   ],
   key_terms: [
     {
