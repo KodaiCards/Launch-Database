@@ -1192,23 +1192,38 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 
 **T03 pre-existing LOW for future polish:** L11 bend-radius body says 10–20× installation / 10–15× long-term; quiz simplifies to 20× / 10×. Not introduced by patches; tracked in Polish Queue below.
 
-### Polish Queue (durable — visit on every status pass)
+### Polish Tracker (HISTORICAL + Cross-wave items requiring user input)
 
-Small carryovers that aren't worth a dedicated wave but MUST NOT be forgotten. Carter's rule 2026-05-16: either fix on discovery or track here; "things get forgotten otherwise."
+**MODEL CHANGE 2026-05-16 evening (Carter):** Polish Queue as a "defer-across-waves parking lot" is KILLED. Polish is now a STAGE INSIDE each topic's wave (per wave-completion discipline locked in §3). The entries below are split into:
+- **Historical** (✓ done) — kept for audit trail / SHA reference
+- **Cross-wave open** (⏳) — these items belong to TOPICS that haven't reached their polish stage yet under the new pipeline. Each gets picked up automatically when that topic's wave runs. NOT defer-and-forget; they're "scheduled by topic."
+- **Needs user input** (🔒) — genuinely blocked on a Carter decision.
 
-| # | Item | Source | Status | Notes |
+#### Historical (✓ done — audit trail)
+
+| # | Item | Source | Resolved | Notes |
 |---|---|---|---|---|
-| P1 | T03 L11 bend-radius wording mismatch (body 10–20× / 10–15× vs quiz 20× / 10×) | T03 post-patch RT `035b829` | ✓ done `318356d` | Body harmonized to 20×/10× with single aside re ranges in other references. |
-| P2 | T05 brief GPON splitter author note | T05 brief fix `674322d` | ✓ verified `bef7e8c` | L12 body prose explicitly states 17–17.5 dB in key_terms definition, AnnotatedDiagram hotpoint, and worked-example step 4 (line 308). No change needed. |
-| P4 | T05 L10 ADSS Flashcard remains (vocab_assumed, not vocab_introduced) | T05 post-fix RT `c5ba1ec` | ✓ done `bef7e8c` | Removed ADSS Flashcard card (ADSS assumed from T03.L04). Replaced with self-damping + deadend-clamp cards which ARE vocabulary_introduced in L10. |
-| P8 | T05 L02 FHWA 14ft maintained-clearance vs new-construction 16ft AASHTO | T05 Patch Wave 2 PW2-NB1 | ✓ done `bef7e8c` | Added paragraph distinguishing 14ft (23 CFR 625.2, existing roads) from 16ft (AASHTO Green Book, new-construction). Both separate from NESC ≈15.5ft. |
-| NB-2 | T05 combined-load w_combined in parabolic formula — tilted-sag not labeled | T05 Patch Wave 2 PW2-NB2 | ✓ done `bef7e8c` | Added conservative-approximation note in L02 step 4 prose + L15 capstone sanityCheck. Labels that w_combined errs conservatively for vertical clearance checks. |
-| P5 | T08 L07 contingency range partial harmonization | T08 post-fix RT `14ece22` | ⌛ flagged | WorkedExample at L07 line 178 still reads "10-15% for straightforward MRE; up to 20%" while key_terms/flashcard/"High contingency" bullet correctly say 10-20%. Single-line prose fix. |
-| P6 | T02.L08 OM1/OM2 Flashcard render missing | Haiku verifier 2026-05-16 | ⌛ flagged | `key_terms` includes OM1/OM2/OM3/OM4/OM5 but `<Flashcard>` render at lines 115-124 only emits cards for OS2/OM3/OM4/OM5. Add OM1 + OM2 cards for consistency with directive 18z (flashcards required for every term in vocabulary_introduced). |
-| P7 | T02 / T03 ITU-T G.655 missing | Haiku verifier 2026-05-16 | ⌛ flagged | G.655 (NZ-DSF, long-haul) not mentioned in T02.L08. Small addition — either dedicated G.655 paragraph in T02.L08 or G.655 brief in T03 cable-selection context. |
-| P3 | T02 L11 TIA-526 edition hardcoded | Old T4 RT-B finding (pre-rewrite) | 🔒 needs user input | Carter must lock TIA-526 edition before fix; `[confirm edition]` marker on the existing reference. |
+| P1 | T03 L11 bend-radius wording mismatch | T03 post-patch RT `035b829` | `318356d` | Body harmonized to 20×/10×. |
+| P2 | T05 GPON splitter author note (17–17.5 dB) | T05 brief fix `674322d` | `bef7e8c` | Verified already in L12 prose + key_terms + AnnotatedDiagram + worked-example step 4. No change needed. |
+| P4 | T05 L10 ADSS Flashcard (vocab_assumed, not vocab_introduced) | T05 post-fix RT `c5ba1ec` | `bef7e8c` | Removed ADSS card; replaced with self-damping + deadend-clamp. |
+| P8 | T05 L02 FHWA 14ft vs 16ft AASHTO new-construction | T05 Patch Wave 2 | `bef7e8c` | 23 CFR 625.2 vs AASHTO Green Book paragraph added. |
+| NB-2 | T05 combined-load w_combined in parabolic formula tilted-sag labeling | T05 Patch Wave 2 | `bef7e8c` | Conservative-approximation note added in L02 + L15. |
 
-**Policy going forward:** when discovering a polish item DURING a wave, prefer to fix it in that wave's fix-agent rather than deferring. Only defer when the fix needs separate user input or is genuinely out of scope. Anything deferred → row in this table same turn it's discovered.
+#### Cross-wave open (will fix automatically at next topic-wave polish stage)
+
+| # | Item | Source | Owning topic | Trigger |
+|---|---|---|---|---|
+| P5 | T08 L07 contingency range partial harmonization | T08 post-fix RT `14ece22` | T08 | Fold into T08 retroactive re-audit (queued under new pipeline) polish stage |
+| P6 | T02.L08 OM1/OM2 Flashcard render missing | Haiku verifier | T02 | Fold into T02 retroactive audit polish stage |
+| P7 | T02 / T03 ITU-T G.655 missing | Haiku verifier | T02 + T03 | Fold into T02 retroactive audit + T03 audit re-touch |
+
+#### Needs user input (🔒 blocked)
+
+| # | Item | Source | Blocking question |
+|---|---|---|---|
+| P3 | T02 L11 TIA-526 edition hardcoded | Old T4 RT-B (pre-rewrite) | Carter must lock TIA-526 edition. Until then `[confirm edition]` marker holds. |
+
+**Policy:** errors found DURING a wave get fixed IN that wave's polish stage. The Cross-wave-open section above tracks items found in earlier (already-closed) waves that belong to topics not yet re-audited under the new pipeline — they propagate to the next time that topic's wave runs.
 
 **Carry-forward: each topic dispatch must verify the prerequisite DAG ordering before launch.** T18 at teaching-position #2 blocks 6 downstream field-touching topics. Don't kick off T04 authors until T18 lessons land + RT clean, or the prerequisite invariant will be violated.
 
