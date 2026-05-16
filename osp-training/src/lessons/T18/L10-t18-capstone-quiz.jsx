@@ -264,7 +264,7 @@ export default function T18L10_CapstoneQuiz() {
             answerIndex: 1,
             explanation:
               'A positioning strap (pole strap) is a positioning system — it supports the worker at the work position and keeps their hands free. It is NOT a fall arrest device. If the gaff slips or the strap fails, the worker needs a separate Personal Fall Arrest System (PFAS) — harness, lanyard, and anchor — to stop the fall before 6 feet of free fall. Review T18.L04.',
-            citation: '29 CFR 1910.268(g)(1); ANSI Z359.11 (body belt standard, referenced via OSHA eTool).',
+            citation: '29 CFR 1910.268(g)(1); ANSI/ASSP Z359.11 (Safety Requirements for Full Body Harnesses, referenced via OSHA eTool).',
           },
 
           /* ── PPE (3Q) ── L05 */

@@ -270,7 +270,7 @@ export default function T18L03_ConfinedSpaceEntry() {
         </ol>
 
         <div className="mt-3 p-3 bg-slate-700/30 border border-slate-400/20 rounded-lg text-sm">
-          <strong>Multi-employer worksites (29 CFR 1910.146(c)(8)):</strong> When crews from
+          <strong>Multi-employer worksites (29 CFR 1910.146(d)(11) + Appendix E):</strong> When crews from
           different employers (for example, a telecom contractor and a municipality's sewer crew)
           will be working in or near the same confined space, the host employer and the contractor
           MUST coordinate before entry begins — sharing hazard information, reviewing procedures,
