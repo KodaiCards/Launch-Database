@@ -14,9 +14,9 @@
  *             (C04 appears in certTracks too — it's the exam bank)
  *
  * Teaching order is the topological sort from ARCH.md Section 3:
- *   T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → T14 → T07 →
- *   T08 → T10 → T11 → T12 → T13 → T15 → T16 → T17 →
- *   C01 → C02 → C03 → C04
+ *   T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → T19 → T14 → T07 →
+ *   T08 → T10 → T11 → T12 → T13 → T15 → T16 → T17 → C04
+ *   (C01/C02/C03 migrated to future ISP course per Carter 2026-05-16)
  *
  * prerequisites: list the *topic IDs* that must be completed before this
  * topic unlocks (matches ARCH.md Section 2 "DAG prereqs" column).
@@ -51,22 +51,22 @@ export const courses = [
     id: 'T02',
     title: 'Fiber Physics',
     section: 'general',
-    estimated_minutes: 325,   // 12 lessons × ~27 min avg
-    lesson_count: 12,
+    estimated_minutes: 350,   // 13 lessons × ~27 min avg (T02.L07b long-haul awareness added 2026-05-16)
+    lesson_count: 13,
     prerequisites: ['T01'],
     description:
-      'Why light travels in glass, attenuation, dispersion, macrobend/microbend, decibels, link budgets, wavelength windows used in OSP.',
+      'Why light travels in glass, attenuation, dispersion, macrobend/microbend, decibels, link budgets, wavelength windows used in OSP, and long-haul awareness (coherent optics, DWDM, transponders).',
   },
   // ── Teaching position 4 ──────────────────────────────────────────────────
   {
     id: 'T03',
     title: 'Cable Selection & Materials',
     section: 'general',
-    estimated_minutes: 310,   // 12 lessons × ~26 min avg
-    lesson_count: 12,
+    estimated_minutes: 340,   // 13 lessons × ~26 min avg (T03.L05b OM-grade cable products added 2026-05-16)
+    lesson_count: 13,
     prerequisites: ['T01', 'T02'],
     description:
-      'Loose-tube vs. ribbon vs. rollable-ribbon, OSP-rated jackets, armor types, messenger options, RUS-listed materials, fiber-count selection, pulling tension and bend-radius specs.',
+      'Loose-tube vs. ribbon vs. rollable-ribbon, OSP-rated jackets, armor types, messenger options, RUS-listed materials, fiber-count selection, pulling tension and bend-radius specs, and multimode OM cable products at the OSP↔ISP handoff.',
   },
   // ── Teaching position 5 ──────────────────────────────────────────────────
   {
@@ -113,17 +113,29 @@ export const courses = [
       'Conduit/duct selection, burial-depth rules, manhole/handhole/vault sizing, HDD vs. trenching vs. plowing decision matrix, route alignment, separation from foreign utilities.',
   },
   // ── Teaching position 9 ──────────────────────────────────────────────────
+  // T19 added 2026-05-16 per Carter (teaching position 9, after T06, before T14)
+  {
+    id: 'T19',
+    title: 'Headend / CO + Rack-Side Hardware Basics',
+    section: 'general',
+    estimated_minutes: 230,   // 10 lessons × ~23 min avg
+    lesson_count: 10,
+    prerequisites: ['T01', 'T05', 'T06', 'T18'],
+    description:
+      'CO/hut/headend layout, OLT/CMTS as black boxes, –48VDC power plant, battery backup, HVAC/fire-suppression awareness, headend grounding boundary (OSP MGN to HGER/TGB — introduces primary protector, IBT-entry, GES-tie-in with forward-references to T14), rack-side hardware (patch panels, LIU, FOSC, interconnect vs. cross-connect), and FDH internals. Depth ceiling: enough for an OSP engineer to design the OSP↔ISP handoff and communicate with ISP technicians. ISP-side depth defers to future ISP course.',
+  },
+  // ── Teaching position 10 ─────────────────────────────────────────────────
   {
     id: 'T14',
     title: 'Bonding, Grounding & Electrical Protection',
     section: 'general',
     estimated_minutes: 310,   // 12 lessons × ~26 min avg
     lesson_count: 12,
-    prerequisites: ['T01', 'T02', 'T05', 'T06', 'T18'],
+    prerequisites: ['T01', 'T02', 'T05', 'T06', 'T18', 'T19'],  // T19 added: T14.L05 assumes primary protector/IBT-entry/GES-tie-in from T19.L06
     description:
-      'Why we ground, ground-resistance targets, MGN bonding, messenger bonding, NEC 250.52 electrodes, IBT/GES, surge protection, stray voltage detection and LOTO sequencing.',
+      'Why we ground, ground-resistance targets, MGN bonding, messenger bonding, NEC 250.52 electrodes, IBT/GES (full electrical depth — T19 introduces these terms at CO context level first), TBB/TMGB chain, surge protection, stray voltage detection and LOTO sequencing.',
   },
-  // ── Teaching position 10 ─────────────────────────────────────────────────
+  // ── Teaching position 11 ─────────────────────────────────────────────────
   {
     id: 'T07',
     title: 'Staking',
@@ -134,7 +146,7 @@ export const courses = [
     description:
       'Walking the design on the ground: stake placement, call-out conventions, photographing/coding pole tags, marking proposed attachment points, capturing field measurements for make-ready packets.',
   },
-  // ── Teaching position 11 ─────────────────────────────────────────────────
+  // ── Teaching position 12 ─────────────────────────────────────────────────
   {
     id: 'T08',
     title: 'Make-Ready & Pole Attachment',
@@ -145,7 +157,7 @@ export const courses = [
     description:
       'OTMR vs. multi-party, the 15-day FCC clock, simple-vs-complex determinations, transfer/reframe/replacement, reading a make-ready estimate, attachment fees, as-built loop back to the pole owner.',
   },
-  // ── Teaching position 12 ─────────────────────────────────────────────────
+  // ── Teaching position 13 ─────────────────────────────────────────────────
   {
     id: 'T10',
     title: 'OSP Construction',
@@ -156,7 +168,7 @@ export const courses = [
     description:
       'Call-811, HDD/trench/plow execution, conduit fill and pull tension, slack loops, manhole/handhole installation, restoration of pavement and sod, daily field reporting, traffic control integration.',
   },
-  // ── Teaching position 13 ─────────────────────────────────────────────────
+  // ── Teaching position 14 ─────────────────────────────────────────────────
   {
     id: 'T11',
     title: 'Splicing',
@@ -167,7 +179,7 @@ export const courses = [
     description:
       'Fusion vs. mechanical, core vs. cladding alignment, ribbon/mass splicing, splice-loss budgets, splice-case types, gel-sealing, prep tools, cleave quality, splicer maintenance, TIA-598 color codes.',
   },
-  // ── Teaching position 14 ─────────────────────────────────────────────────
+  // ── Teaching position 15 ─────────────────────────────────────────────────
   {
     id: 'T12',
     title: 'Testing — OLTS, OTDR, Inspection',
@@ -178,7 +190,7 @@ export const courses = [
     description:
       'Tier-1 (OLTS) vs. Tier-2 (OTDR), pulse-width selection, dead zones, launch/receive cables, bidirectional averaging, end-face inspection (IEC 61300-3-35), acceptance criteria, dual-wavelength macrobend detection.',
   },
-  // ── Teaching position 15 ─────────────────────────────────────────────────
+  // ── Teaching position 16 ─────────────────────────────────────────────────
   {
     id: 'T13',
     title: 'Inspection & Quality Assurance',
@@ -189,7 +201,7 @@ export const courses = [
     description:
       'Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow.',
   },
-  // ── Teaching position 16 ─────────────────────────────────────────────────
+  // ── Teaching position 17 ─────────────────────────────────────────────────
   {
     id: 'T15',
     title: 'Restoration & Outage Response',
@@ -200,7 +212,7 @@ export const courses = [
     description:
       'Fault-locate with OTDR, splice-trailer emergency response, civil-crew coordination, temporary vs. permanent repair, Methods of Procedure (MOPs), customer communications during outages.',
   },
-  // ── Teaching position 17 ─────────────────────────────────────────────────
+  // ── Teaching position 18 ─────────────────────────────────────────────────
   {
     id: 'T16',
     title: 'As-Built Documentation & GIS',
@@ -211,7 +223,7 @@ export const courses = [
     description:
       'What an as-built is, splice matrix schemas, GIS export formats (SHP/GDB/KML), TIA-606-D administration classes, reconciling as-built to as-designed, fiber topology canvas, RUS Form 219 documentation package.',
   },
-  // ── Teaching position 18 ─────────────────────────────────────────────────
+  // ── Teaching position 19 ─────────────────────────────────────────────────
   {
     id: 'T17',
     title: 'Project Estimation & Revenue',
@@ -222,47 +234,56 @@ export const courses = [
     description:
       'Cost data realities, aerial-vs-underground ratios, productivity modeling, contract types (lump-sum/T&M/GMP), change orders, contingency, CPHP/CPHC/FTTH KPIs, RFP/RFQ/BOM basics.',
   },
-  // ── Cert-prep topics with lesson content (C01–C03) ───────────────────────
+  // ── Cert-prep topics C01–C03 — MIGRATED TO FUTURE ISP COURSE ────────────
+  // Per Carter 2026-05-16: C01/C02/C03 are NOT authored in OSP-RW.
+  // They will be authored when the ISP course is scoped and initiated.
+  // Retained as catalog entries (section: 'cert') so routing doesn't break,
+  // but lesson_count = 0 and a 'migrated' flag is set for the splash page
+  // to render a "Coming in ISP Course" CTA instead of "Start" / "Continue".
   {
     id: 'C01',
     title: 'Networking Blueprints (RCDD prep)',
     section: 'cert',
-    estimated_minutes: 200,   // 8 lessons × ~25 min avg
-    lesson_count: 8,
-    prerequisites: ['T01', 'T02'],  // minimum per ARCH.md; full general track recommended
+    estimated_minutes: 200,
+    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
+    migrated: true,            // splash page renders "Coming in ISP Course" tile
+    prerequisites: ['T01', 'T02', 'T19'],  // T19 added — seeds ISP vocabulary
     description:
-      'ISP/TIA-568/569/606/607: four telecom spaces, backbone vs. horizontal, TIA-606-D administration, TIA-607 PBB/SBB bonding and grounding for inside plant.',
+      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. ISP/TIA-568/569/606/607: four telecom spaces, backbone vs. horizontal, TIA-606-D administration, TIA-607 PBB/SBB bonding and grounding for inside plant.',
   },
   {
     id: 'C02',
     title: 'RCDD Core',
     section: 'cert',
-    estimated_minutes: 200,   // 8 lessons × ~25 min avg
-    lesson_count: 8,
+    estimated_minutes: 200,
+    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
+    migrated: true,
     prerequisites: ['C01'],
     description:
-      'Firestopping (UL 1479), EMC/FCC Part 15, power/telecom separation, ICT distribution, RCDD design checklist. Requires C01 as foundation.',
+      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. Firestopping (UL 1479), EMC/FCC Part 15, power/telecom separation, ICT distribution, RCDD design checklist.',
   },
   {
     id: 'C03',
     title: 'Data Center Standards',
     section: 'cert',
-    estimated_minutes: 200,   // 8 lessons × ~25 min avg
-    lesson_count: 8,
+    estimated_minutes: 200,
+    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
+    migrated: true,
     prerequisites: ['C01', 'C02'],
     description:
-      'TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope.',
+      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope.',
   },
   // ── Certification exam preparation (C04) ─────────────────────────────────
+  // C04-RCDD certTrack REMOVED per Carter 2026-05-16. Retained: OSP Designer + CFOT + CFOS/O.
   {
     id: 'C04',
     title: 'Practice Exam Bank',
     section: 'cert',
     estimated_minutes: 300,   // 12 lessons × ~25 min avg
     lesson_count: 12,
-    prerequisites: ['C01', 'C02', 'C03'],
+    prerequisites: [],         // access controlled per certTracks[].required_topics, not course-level prereqs
     description:
-      'Exam strategy, per-domain content reviews (OSP, RCDD, CFOT/CFOS), timed practice rounds, scoring analysis, and final mock exams. Full lesson set authored in OSP-RW.5.',
+      'Exam strategy, per-domain content reviews (OSP Designer, CFOT, CFOS/O), timed practice rounds, scoring analysis, and final mock exams. RCDD mock exam removed — moved to future ISP course. Full lesson set authored in OSP-RW.5.',
   },
 ];
 
@@ -284,19 +305,8 @@ export const certTracks = [
       pass_threshold: 0.70,  // 70% proxy — BICSI publishes pass/fail only. Disclosed as proxy.
     },
   },
-  {
-    id: 'C04-RCDD',
-    title: 'BICSI RCDD (v15) Certification',
-    lesson_count: 0,  // exam surface; lessons in C01 + C02
-    required_topics: ['C01', 'C02'],
-    mock_exam_spec: {
-      items: 100,
-      time_minutes: 150,
-      // BICSI RCDD v15 published domain weights
-      domains_weighting: 'Define Scope 10% / Design ICT Solutions 63% / Bid/Tender 11% / Installation Support 16%',
-      pass_threshold: 0.70,  // 70% proxy; disclosed as proxy
-    },
-  },
+  // C04-RCDD REMOVED per Carter 2026-05-16 — migrated to future ISP course.
+  // Archived spec: 100 items / 150 min / domains: Define Scope 10% / Design ICT 63% / Bid 11% / Installation 16%.
   {
     id: 'C04-CFOT',
     title: 'FOA CFOT Certification',
@@ -372,6 +382,30 @@ export const lessonFileIndex = {
   'T03.L10': '../lessons/T03/L10.icea-cfr-standards-compliance.jsx',
   'T03.L11': '../lessons/T03/L11.cable-spec-reading-datasheet.jsx',
   'T03.L12': '../lessons/T03/L12.t03-capstone.jsx',
+  // ── T02 expansion — long-haul awareness (added 2026-05-16) ───────────────
+  // NOTE: T02.L07b inserts between existing L07 and L08 in teaching order.
+  // On-disk filenames L08–L12 are unchanged; only the lesson sequence position
+  // changes (L07b → L08 → L09 → L10 → L11 → capstone).
+  // 'T02.L07b': '../lessons/T02/L07b.long-haul-awareness.jsx',  // ← populated when lesson authored
+
+  // ── T03 expansion — OM cable products at OSP↔ISP handoff (2026-05-16) ───
+  // T03.L05b inserts between L05 and L06 in teaching order.
+  // On-disk filenames T03.L06–L12 are unchanged.
+  // 'T03.L05b': '../lessons/T03/L05b.multimode-om-cable-products.jsx',  // ← populated when authored
+
+  // ── T19 Headend / CO + Rack-Side Hardware Basics ─────────────────────────
+  // Populated by T19 authoring agent in OSP-RW.4/5.
+  // 'T19.L01': '../lessons/T19/L01.co-hut-headend-layout.jsx',
+  // 'T19.L02': '../lessons/T19/L02.olt-cmts-as-black-boxes.jsx',
+  // 'T19.L03': '../lessons/T19/L03.48vdc-power-plant.jsx',
+  // 'T19.L04': '../lessons/T19/L04.battery-backup-generator.jsx',
+  // 'T19.L05': '../lessons/T19/L05.hvac-fire-suppression.jsx',
+  // 'T19.L06': '../lessons/T19/L06.headend-grounding-boundary.jsx',
+  // 'T19.L07': '../lessons/T19/L07.rack-side-patch-panels-liu.jsx',
+  // 'T19.L08': '../lessons/T19/L08.fosc-splice-enclosures.jsx',
+  // 'T19.L09': '../lessons/T19/L09.fdh-internals.jsx',
+  // 'T19.L10': '../lessons/T19/L10.t19-capstone-quiz.jsx',
+
   // ── Additional topics populated by authoring agents in OSP-RW.4/5 ────────
   // NOTE: Each authoring agent MUST add their lesson entries here as part of
   //       each lesson commit. An uncommented entry is mandatory — lessons not

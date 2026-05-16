@@ -31,11 +31,14 @@ Option C's only cost is migration complexity. This is manageable: JSX prose + in
 
 ## Section 2: Complete Topic List (Locked Proposal)
 
-**22 topics total: 18 general + 4 cert-prep.** Teaching order is the topological sort of the prerequisite DAG (Section 3). All 18 R-A topics retained; 4 cert-prep topics from CLAUDE.md §2 are unchanged.
+**23 topics total: 19 general + 4 cert-prep.** Teaching order is the topological sort of the prerequisite DAG (Section 3). All 18 R-A topics retained; T19 added at teaching position 7–8 (after T06, before T14) per Carter 2026-05-16. C01–C03 cert-prep topics migrated to future ISP course per Carter 2026-05-16 — removed from OSP cert track scope; C04 retains OSP Designer + CFOS/CFOT only.
 
 **Modifications from R-A's original numbering:**
 - Safety/OSHA moved from position 18 → position 2 in teaching order. Life-safety must precede every field-touching topic. The stable topic ID remains T18 for cross-referencing; the teaching sequence position is 2.
-- No topics added beyond R-A's 22. R-B confirms ADSS aerial design and PON/FTTH belong inside general Topic 5 (Aerial Design) as lessons, not as separate topics — the per-lesson granularity handles this without expanding the topic list.
+- T19 (Headend / CO + Rack-Side Hardware Basics) added at teaching position 7–8 — inserted between T06 (Underground Design, position 8) and T14 (Bonding/Grounding, position 9) in the DAG. Carter locked this position 2026-05-16. Topic ID T19 was next available general ID.
+- T02 expanded: T02.L07b (Long-Haul Awareness) inserted after T02.L07; lesson count 12 → 13. G.655 coverage added to T02.L08.
+- T03 expanded: T03.L05b (Multimode OM Cable Products — cable-product context for OM1–OM5 at OSP↔ISP handoff) inserted after T03.L05; lesson count 12 → 13.
+- C01–C03 cert-prep topics: REMOVED from OSP course authoring scope. All three migrate to the future ISP course per Carter 2026-05-16. They are retained as entries in the topic table below (for navigation/awareness) but are NOT authored as part of OSP-RW. RCDD mock exam also removed — see Section 7.
 - M07 (Fiber Topology) content distributed across Topics 16 (As-Built/GIS) and T13 (Identification/Color Codes embedded in Splicing and Testing). M07 as a standalone topic is absorbed, per R-A Section 6 recommendation.
 
 | Teaching # | Topic ID | Topic | Scope | Est. lessons | DAG prereqs (Topic IDs) | Anchor standards | Category |
@@ -48,24 +51,26 @@ Option C's only cost is migration complexity. This is manageable: JSX prose + in
 | 6 | T09 | Permitting & Environmental | Permitting layer cake (federal/state/county/municipal), NEPA CE C-8, Section 106 NHPA/SHPO/THPO, ESA & IPaC, USACE NWP 12 (2026 reissue), state DOT encroachment, ROW/easement basics. | 12 | T01, T04 | NEPA; 36 CFR 800; USACE NWP 12; state DOT manuals | general |
 | 7 | T05 | OSP Design — Aerial | NESC clearances, pole loading, grades of construction, sag/tension, loading districts, joint-use rules, attachment-height calculations, ice/wind loading, ADSS design, PON/FTTH topology at the distribution level. | 15 | T01, T02, T03, T04 | NESC C2-2023 §§23, 25, 26; RUS 1751F-630 | general |
 | 8 | T06 | OSP Design — Underground | Conduit/duct selection, burial-depth rules, manhole/handhole/vault sizing, HDD vs. trenching vs. plowing decision matrix, route alignment, separation from foreign utilities. | 12 | T01, T03, T04 | RUS 1751F-635, 1751F-643; NESC §32, §35 | general |
-| 9 | T14 | Bonding, Grounding & Electrical Protection | Why we ground, ground-resistance targets, MGN bonding, messenger bonding, NEC 250.52 electrodes, IBT/GES, surge protection, lightning protection, stray voltage detection and LOTO sequencing for OSP. | 12 | T01, T02, T05, T06, T18 | RUS 1751F-815; NESC §9 + §215; NEC Art. 250; IEEE 1100 | general |
-| 10 | T07 | Staking | Walking the design on the ground: stake placement, call-out conventions, photographing/coding pole tags, marking proposed attachment points, capturing field measurements for make-ready packets. | 10 | T01, T04, T05, T06, T18 | RUS Form 740; industry practice | general |
-| 11 | T08 | Make-Ready & Pole Attachment | OTMR vs. multi-party, the 15-day FCC clock, simple-vs-complex determinations, transfer/reframe/replacement, reading a make-ready estimate, paying attachment fees, the as-built loop back to the pole owner. | 12 | T01, T05, T07 | 47 CFR 1.1411 (OTMR); FCC 18-111; NESC §23 | general |
-| 12 | T10 | OSP Construction | Call-811, HDD/trench/plow execution, conduit fill and pull tension, slack loops, manhole/handhole installation, restoration of pavement and sod, daily field reporting, traffic control integration. | 12 | T01, T06, T07, T08, T18 | RUS 1751F-635, 1751F-643; CGA Best Practices v19 | general |
-| 13 | T11 | Splicing | Fusion vs. mechanical, core vs. cladding alignment, ribbon/mass splicing, splice-loss budgets, splice-case types, gel-sealing, prep tools, cleave quality, splicer maintenance, TIA-598 color codes and color-blind crew patterns. | 15 | T01, T02, T03, T10 | TIA-455; ITU-T L.400; FOA CFOS-S KSAs; RUS 1753F-401; TIA-598-D | general |
-| 14 | T12 | Testing — OLTS, OTDR, Inspection | Tier-1 (OLTS) vs. Tier-2 (OTDR), pulse-width selection, dead zones, launch/receive cables, bidirectional averaging, end-face inspection (IEC 61300-3-35), event tables, acceptance criteria, dual-wavelength macrobend detection. | 15 | T01, T02, T11 | TIA-568.3-D Annex; IEC 61280-4-2; IEC 61300-3-35; FOA CFOS-T | general |
-| 15 | T13 | Inspection & Quality Assurance | Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow. | 10 | T01, T05, T10, T12, T18 | RUS Form 219; industry QA practice | general |
-| 16 | T15 | Restoration & Outage Response | Fault-locate with OTDR, splice-trailer emergency response, civil-crew coordination, temporary vs. permanent repair, Methods of Procedure (MOPs), customer communications during outages. | 10 | T01, T11, T12, T13 | FOA Restoration Guide; industry practice | general |
-| 17 | T16 | As-Built Documentation & GIS | What an as-built is, splice matrix schemas, GIS export formats (SHP/GDB/KML), TIA-606-D administration classes, reconciling as-built to as-designed, fiber topology canvas, RUS Form 219 documentation package. | 10 | T01, T10, T11, T13, T15 | TIA-606-D; RUS Form 219; 47 CFR 32 | general |
-| 18 | T17 | Project Estimation & Revenue | Cost data realities, aerial-vs-underground ratios, productivity modeling, contract types (lump-sum/T&M/GMP), change orders, contingency, CPHP/CPHC/FTTH KPIs, RFP/RFQ/BOM basics. | 10 | T01, T05, T06, T08, T10, T16 | FBA/Cartesian cost reports; FCC 18-111; CPHP/CPHC industry KPIs | general |
-| 19 | C01 | Networking Blueprints (RCDD prep) | ISP/TIA-568/569/606/607 content: four telecom spaces, backbone vs. horizontal, work-area outlets, TIA-606-D administration, TIA-607 PBB/SBB bonding and grounding for inside plant. | 8 | All 18 general topics recommended; minimum: T01, T02 | TIA-568/569/606/607; BICSI TDMM | cert |
-| 20 | C02 | RCDD Core | Firestopping (UL 1479), EMC/FCC Part 15, power/telecom separation, ICT distribution, RCDD design checklist. Requires C01 as foundation. | 8 | C01 | UL 1479/ASTM E814; FCC Part 15; BICSI TDMM 15 | cert |
-| 21 | C03 | Data Center Standards | TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope, forthcoming standards landscape. | 8 | C01, C02 | TIA-942-C; Uptime Tier; BICSI 002-2024 | cert |
-| 22 | C04 | Certification Practice Exam Bank | OSP Designer + RCDD + CFOT + CFOS/O exam strategy, mock exams (100Q each), domain-level scoring, remediation links, ethics of exam prep. Expanded from existing M12's 5 sections. | 12 | C01–C03 for RCDD; T01–T17 for OSP Designer; T01–T02+T11+T12 for CFOT | BICSI OSP/RCDD blueprints; FOA CFOS exam structures | cert |
+| **9** | **T19** | **Headend / CO + Rack-Side Hardware Basics** | CO/hut/headend layout, OLT/CMTS as black boxes, –48VDC power plant, battery backup, HVAC/fire-suppression awareness, headend grounding boundary (OSP MGN to HGER/TGB), rack-side hardware (patch panels, LIU, FOSC, interconnect vs. cross-connect), and FDH internals beyond the box. Introduces 3 grounding terms (primary protector, IBT-entry, GES-tie-in) with explicit forward-references to T14. Depth ceiling: enough for an OSP engineer to design the OSP↔ISP handoff and converse with ISP technicians. ISP-side depth defers to future ISP course. | **10** | **T01, T05, T06, T18** | **TIA-607-D [confirm ed.]; TIA-568.3-D; NFPA 76; RUS 1751F-810 §3; ANSI/ATIS-0600336 (NEBS); Telcordia GR-63-CORE; BICSI 002-2024** | general |
+| 10 | T14 | Bonding, Grounding & Electrical Protection | Why we ground, ground-resistance targets, MGN bonding, messenger bonding, NEC 250.52 electrodes, IBT/GES, surge protection, lightning protection, stray voltage detection and LOTO sequencing for OSP. T14.L05 assumes primary protector / IBT-entry / GES-tie-in vocab from T19. | 12 | T01, T02, T05, T06, T18, **T19** | RUS 1751F-815; NESC §9 + §215; NEC Art. 250; IEEE 1100; IEEE Std 487 | general |
+| 11 | T07 | Staking | Walking the design on the ground: stake placement, call-out conventions, photographing/coding pole tags, marking proposed attachment points, capturing field measurements for make-ready packets. | 10 | T01, T04, T05, T06, T18 | RUS Form 740; industry practice | general |
+| 12 | T08 | Make-Ready & Pole Attachment | OTMR vs. multi-party, the 15-day FCC clock, simple-vs-complex determinations, transfer/reframe/replacement, reading a make-ready estimate, paying attachment fees, the as-built loop back to the pole owner. | 12 | T01, T05, T07 | 47 CFR 1.1411 (OTMR); FCC 18-111; NESC §23 | general |
+| 13 | T10 | OSP Construction | Call-811, HDD/trench/plow execution, conduit fill and pull tension, slack loops, manhole/handhole installation, restoration of pavement and sod, daily field reporting, traffic control integration. | 12 | T01, T06, T07, T08, T18 | RUS 1751F-635, 1751F-643; CGA Best Practices v19 | general |
+| 14 | T11 | Splicing | Fusion vs. mechanical, core vs. cladding alignment, ribbon/mass splicing, splice-loss budgets, splice-case types, gel-sealing, prep tools, cleave quality, splicer maintenance, TIA-598 color codes and color-blind crew patterns. | 15 | T01, T02, T03, T10 | TIA-455; ITU-T L.400; FOA CFOS-S KSAs; RUS 1753F-401; TIA-598-D | general |
+| 15 | T12 | Testing — OLTS, OTDR, Inspection | Tier-1 (OLTS) vs. Tier-2 (OTDR), pulse-width selection, dead zones, launch/receive cables, bidirectional averaging, end-face inspection (IEC 61300-3-35), event tables, acceptance criteria, dual-wavelength macrobend detection. | 15 | T01, T02, T11 | TIA-568.3-D Annex; IEC 61280-4-2; IEC 61300-3-35; FOA CFOS-T | general |
+| 16 | T13 | Inspection & Quality Assurance | Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow. | 10 | T01, T05, T10, T12, T18 | RUS Form 219; industry QA practice | general |
+| 17 | T15 | Restoration & Outage Response | Fault-locate with OTDR, splice-trailer emergency response, civil-crew coordination, temporary vs. permanent repair, Methods of Procedure (MOPs), customer communications during outages. | 10 | T01, T11, T12, T13 | FOA Restoration Guide; industry practice | general |
+| 18 | T16 | As-Built Documentation & GIS | What an as-built is, splice matrix schemas, GIS export formats (SHP/GDB/KML), TIA-606-D administration classes, reconciling as-built to as-designed, fiber topology canvas, RUS Form 219 documentation package. | 10 | T01, T10, T11, T13, T15 | TIA-606-D; RUS Form 219; 47 CFR 32 | general |
+| 19 | T17 | Project Estimation & Revenue | Cost data realities, aerial-vs-underground ratios, productivity modeling, contract types (lump-sum/T&M/GMP), change orders, contingency, CPHP/CPHC/FTTH KPIs, RFP/RFQ/BOM basics. | 10 | T01, T05, T06, T08, T10, T16 | FBA/Cartesian cost reports; FCC 18-111; CPHP/CPHC industry KPIs | general |
+| 20 | C01 | Networking Blueprints (RCDD prep) | **MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16.** Retained as table entry for awareness only. NOT authored in OSP-RW. ISP/TIA-568/569/606/607 content: four telecom spaces, backbone vs. horizontal, work-area outlets, TIA-606-D administration, TIA-607 PBB/SBB bonding and grounding for inside plant. | 8 | T01, T02, **T19** | TIA-568/569/606/607; BICSI TDMM | cert |
+| 21 | C02 | RCDD Core | **MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16.** Retained as table entry for awareness only. NOT authored in OSP-RW. Firestopping (UL 1479), EMC/FCC Part 15, power/telecom separation, ICT distribution, RCDD design checklist. | 8 | C01 | UL 1479/ASTM E814; FCC Part 15; BICSI TDMM 15 | cert |
+| 22 | C03 | Data Center Standards | **MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16.** Retained as table entry for awareness only. NOT authored in OSP-RW. TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope. | 8 | C01, C02 | TIA-942-C; Uptime Tier; BICSI 002-2024 | cert |
+| 23 | C04 | Certification Practice Exam Bank | **OSP Designer + CFOS/CFOT only** (RCDD mock removed — see Section 7). Exam strategy, per-domain content reviews, timed practice rounds, scoring analysis, and final mock exams. Expanded from existing M12's 5 sections. | 12 | T01–T19 for OSP Designer; T01–T02+T11+T12 for CFOT | BICSI OSP Designer blueprint; FOA CFOS exam structures | cert |
 
-**General-track total: 18 topics, ~209 lessons (10-15 per topic, per column above).**
-**Cert-prep total: 4 topics, ~36 lessons.**
-**Grand total: ~245 lessons.** Within the 200-260 range R-A projected.
+**General-track total: 19 topics, ~222 lessons.**
+_(T01–T18: 209 lessons; +T19: 10 lessons; +T02.L07b: 1 lesson; +T03.L05b: 1 lesson = 222.)_
+**Cert-prep total: 4 topics, ~36 lessons (C01–C03 not authored in OSP-RW; C04 = 12 lessons).**
+**Grand total: ~234 lessons authored in OSP-RW** (222 general + 12 C04). C01–C03 (24 lessons) move to future ISP course.
 
 ---
 
@@ -75,13 +80,13 @@ Option C's only cost is migration complexity. This is manageable: JSX prose + in
 
 ```
 T01 (Fundamentals)    → T02, T03, T04, T05, T06, T07, T08, T09, T10, T11, T12,
-                         T13, T14, T15, T16, T17, T18 (universal root)
-T18 (Safety/OSHA)     → T04, T07, T08, T10, T13, T14 (every field-touching topic)
+                         T13, T14, T15, T16, T17, T18, T19 (universal root)
+T18 (Safety/OSHA)     → T04, T07, T08, T10, T13, T14, T19 (every field-touching topic)
 T02 (Fiber Physics)   → T03, T05, T11, T12, T14
 T03 (Cable Selection) → T05, T06, T10, T11
 T04 (Route Survey)    → T05, T06, T07, T09
-T05 (Aerial Design)   → T07, T08, T13, T14, T17
-T06 (Underground Design) → T07, T10, T13, T14, T17
+T05 (Aerial Design)   → T07, T08, T13, T14, T17, T19
+T06 (Underground Design) → T07, T10, T13, T14, T17, T19
 T07 (Staking)         → T08, T10
 T08 (Make-Ready)      → T10, T17
 T09 (Permitting)      → T10, T17
@@ -93,11 +98,12 @@ T14 (Grounding)       → T13 (grounding inspection is part of QA)
 T15 (Restoration)     → T16
 T16 (As-Built/GIS)    → T17
 T17 (Estimation)      → [terminal, general-track root to cert unlock]
+T19 (Headend/CO)      → C01 [future ISP course] (T19 seeds ISP vocab)
 ```
 
 ### Topological sort (sequential learner path)
 
-T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → T14 → T07 → T08 → T10 → T11 → T12 → T13 → T15 → T16 → T17 → C01 → C02 → C03 → C04
+T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → **T19** → T14 → T07 → T08 → T10 → T11 → T12 → T13 → T15 → T16 → T17 → C04 [C01/C02/C03 migrated to future ISP course]
 
 ### Vocabulary sets introduced per topic (10 terms each)
 
@@ -111,7 +117,8 @@ T01 → T18 → T02 → T03 → T04 → T09 → T05 → T06 → T14 → T07 → 
 | T09 | NEPA, CE C-8, NHPA §106, SHPO, THPO, ESA, IPaC, NWP 12, ROW, easement, AHJ, encroachment permit | T01, T04 vocab |
 | T05 | NESC, Rule 232, Rule 250, loading district (Light/Medium/Heavy/Extreme), grade of construction, sag-tension, joint-use, pole loading, ice loading, ADSS sag | T01, T02, T03, T04 vocab |
 | T06 | HDD, open-cut, plowing, innerduct, microduct, manhole, handhole, vault, conduit fill (40% rule), pull tension | T01, T03, T04 vocab |
-| T14 | MGN, IBT, GES, bond, ground rod, ground resistance, NEC 250.52, surge arrester, primary protector, stray voltage | T01, T02, T05, T06, T18 vocab |
+| T19 | CO, hut, headend (internals), OLT (as black box), CMTS, MDF, IDF, –48VDC, rectifier, battery string, ATS (automatic transfer switch), CRAC, HGER, TGB (Telecom Grounding Busbar), LIU, FOSC (rack-mount), patch panel, interconnect, cross-connect, FDH internals (modular bay, splitter cassette), primary protector (building-entry), IBT-entry, GES-tie-in | T01, T05, T06, T18 vocab |
+| T14 | MGN, IBT (full electrical depth), GES (full design), bond, ground rod, ground resistance, NEC 250.52, surge arrester, stray voltage, TBB (Telecom Bonding Backbone), TMGB | T01, T02, T05, T06, T18, T19 vocab (primary protector / IBT-entry / GES-tie-in assumed from T19) |
 | T07 | stake, station, P.I. (point of intersection), centerline, offset, RUS Form 740, pole tag, call-out, plan-and-profile | T01, T04, T05, T06 vocab |
 | T08 | OTMR, simple attachment, complex attachment, transfer, reframe, replacement, FCC 15-day clock, attachment fee, make-ready estimate | T01, T05, T07 vocab |
 | T10 | Call-811, locate ticket, daylight, sleeve, slack loop, restoration, daily field report, HDD pilot bore, backfill, compaction | T01, T06, T07, T08, T18 vocab |
@@ -167,7 +174,7 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T18.L09 | Incident Reporting and OSHA 300 Log | foundation | OSHA 300, recordable incident, near-miss, first report | 20 | Quiz (MC) | net-new |
 | T18.L10 | T18 Capstone Quiz | capstone-quiz | — | 30 | Quiz (20Q MC + scenario) | net-new |
 
-### T02 — Fiber Physics (12 lessons)
+### T02 — Fiber Physics (13 lessons — T02.L07b added 2026-05-16; G.655 added to T02.L08)
 | ID | Title | Type | Key vocab added | Time (min) | Interactivity | Source migration |
 |---|---|---|---|---|---|---|
 | T02.L01 | Why Light Travels in Glass | foundation | total internal reflection, core, cladding, NA | 20 | AnnotatedDiagram (ray diagram) | M01 §1.1 (rewrite opening) |
@@ -177,13 +184,16 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T02.L05 | Decibels Without the Algebra Fear | foundation | dB, dBm, log ratio, µW to dB | 30 | WorkedExample (step-by-step log conversion); Quiz | M01 §1.5 (B-grade → full rewrite) |
 | T02.L06 | Link Budget — Worked Example | working | Tx power, Rx sensitivity, safety margin, budget | 35 | WorkedExample (LinkBudgetCalculator); Quiz | M01 §1.6 + component |
 | T02.L07 | Wavelength Windows — 850/1310/1550/1625 | working | wavelength, CWDM, DWDM window, O/E/S/C/L band | 25 | AnnotatedDiagram (wavelength spectrum) | M01 §1.1 (moved here) |
-| T02.L08 | Single-Mode vs. Multimode — Choosing | working | SMF, MMF, OM3/OM4/OM5, OS2, reach table | 25 | Quiz (MC + drag-match) | M01 §1.1 + M03 §3.6 partial |
+| T02.L07b | Long-Haul Awareness — When Feeder Meets a Carrier | working | coherent optics, DWDM channel, transponder, mux/demux (ROADM concept), ILA (in-line amplifier), handoff demarc | 25 | AnnotatedDiagram (feeder-to-long-haul handoff point); Quiz (MC) | net-new; standards: ITU-T G.694.1 [paywalled — confirm edition], ITU-T G.671 [paywalled], ITU-T G.698.2 [paywalled]; secondary: FOA Reference Guide, G.652.D/G.654.E PMD spec context |
+| T02.L08 | Single-Mode vs. Multimode — Choosing | working | SMF, MMF, OM1, OM2, OM3, OM4, OM5, OS2, reach table, laser-optimized MMF, G.655 (NZ-DSF) | 25 | Quiz (MC + drag-match) | M01 §1.1 + M03 §3.6 partial; **G.655 paragraph added** (ITU-T G.655 — Non-Zero Dispersion-Shifted SMF; used in carrier DWDM backbones where chromatic dispersion must be balanced); OM1/OM2 Flashcard cards added |
 | T02.L09 | Polarization Mode Dispersion (Advanced) | advanced | PMD, DGD, SOPMD, PMD-limited span | 20 | Quiz (MC) | net-new (R-A gap) |
 | T02.L10 | Fiber Characterization Testing | working | OTDR characterization, CD measurement, PMD measurement | 20 | Quiz (MC) | net-new (R-A gap) |
 | T02.L11 | Fiber Physics in the Field vs. the Book | working | real-world attenuation variation, bend-insensitive smf, field gotchas | 20 | BranchingScenario (troubleshoot high attenuation) | net-new |
-| T02.L12 | T02 Capstone Quiz | capstone-quiz | — | 30 | Quiz (20Q MC + WorkedExample verify) | net-new |
+| T02.L12 | T02 Capstone Quiz | capstone-quiz | — | 30 | Quiz (20Q MC + WorkedExample verify) | net-new — **NOTE: formerly L12; now re-labeled L13 in teaching order; file stays L12.t02-capstone-quiz.jsx on disk** |
 
-### T03 — Cable Selection & Materials (12 lessons)
+**Note for authoring agent:** The capstone quiz file (`L12.t02-capstone-quiz.jsx`) stays at its current filename. The new `L07b` lesson inserts between `L07` and `L08` in the lesson sequence. The `lessonFileIndex` key `'T02.L07b'` must be added pointing to `'../lessons/T02/L07b.long-haul-awareness.jsx'`.
+
+### T03 — Cable Selection & Materials (13 lessons — T03.L05b added 2026-05-16)
 | ID | Title | Type | Key vocab added | Time (min) | Interactivity | Source migration |
 |---|---|---|---|---|---|---|
 | T03.L01 | Loose-Tube vs. Tight-Buffer vs. Ribbon | foundation | loose-tube, tight-buffered, ribbon, rollable-ribbon | 25 | AnnotatedDiagram (cable constructions); Quiz | net-new |
@@ -191,6 +201,7 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T03.L03 | Armor and Jacket Selection | working | rodent-proof armor, interlocked armor, direct-burial, plenum | 25 | BranchingScenario (select cable for environment) | net-new |
 | T03.L04 | Messenger Cable — Lashed vs. ADSS | working | ADSS, messenger, lashing wire, sag-tension for dielectric | 25 | WorkedExample (ADSS sag calc) | M01 §1.4 + net-new |
 | T03.L05 | G.652 vs. G.657 — When to Use Bend-Insensitive | working | G.652.D, G.657.A1, G.657.A2, ITU-T bend spec | 20 | Quiz (MC + drag) | M01 §1.4 |
+| T03.L05b | Multimode Fiber Cable Products — OM Grades at the OSP↔ISP Handoff | working | OM cable product context, jacket color convention (book vs. field), VCSEL vs. DFB transceiver cost implication, OSP-always-SMF rule, OM3/OM4/OM5 cable form factors at CO/FDH entry | 30 | WorkedExample (why OM4 can't reach 4 km OSP run — 10× over limit vs. OS2 with 26.6 dB margin remaining); Quiz (MC + drag-match OM grade to jacket color and max reach) | T02.L08 assumed for OM1–OM5 physics; net-new cable-product context; standards: IEC 60793-2-10 [paywalled — confirm ed.]; TIA-492AAAB (OM2) [paywalled]; TIA-492AAAD (OM4) [paywalled]; TIA-492AAAE (OM5) [paywalled]; TIA-568.3-D (jacket colors); IEEE 802.3 (reach values) |
 | T03.L06 | RUS Acceptance Listing — What It Means | working | RUS-listed, 1753F-201, acceptance testing, buy-American | 25 | Quiz (MC); BranchingScenario (spec a RUS job) | net-new |
 | T03.L07 | Fiber Count Selection | working | fiber count, fill ratio, dark fiber, growth margin | 25 | WorkedExample (count calc for routes with splits) | net-new |
 | T03.L08 | Cable Pulling Tension and Bend Radius | working | max pull tension, minimum bend radius, kellems grip, mid-assist | 30 | WorkedExample (tension calc); AnnotatedDiagram | content/osp-cable-selection/ (SHA-verified) |
@@ -198,6 +209,8 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T03.L10 | ICEA S-87-640 and TIA-598-D Standards | advanced | ICEA S-87-640, TIA-598-D, color code standard, qualification test | 20 | Quiz (MC) | net-new |
 | T03.L11 | Cable Specification Reading — Real Datasheet | working | spec interpretation, tolerance bands, aging factors | 25 | WorkedExample (walk a vendor datasheet) | net-new |
 | T03.L12 | T03 Capstone Quiz | capstone-quiz | — | 30 | Quiz (20Q MC + BranchingScenario) | net-new |
+
+**Note for authoring agent:** T03.L05b is a new file `L05b.multimode-om-cable-products.jsx`. It does NOT re-teach the physics of OM1–OM5 (T02.L08 owns that). It teaches CABLE PRODUCT selection: which OM grade appears in which cable form factor, where an OSP engineer encounters multimode at the OSP↔ISP handoff, and the OSP-always-SMF rule with the worked math showing why (OM4 max 400 m vs. any OSP run). The `vocabulary_assumed` block cites T02.L08 for all OM1–OM5 terms. Do NOT rename on-disk files T03.L06–L12. Add `'T03.L05b'` to `lessonFileIndex`.
 
 ### T04 — Route Survey & Pre-Engineering (10 lessons)
 | ID | Title | Type | Key vocab added | Time (min) | Interactivity | Source migration |
@@ -264,6 +277,44 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T06.L11 | Underground Design QA Checklist | hands-on-walkthrough | design check, depth verification on plan, fill calc | 20 | BranchingScenario (find the depth error) | net-new |
 | T06.L12 | T06 Capstone Quiz | capstone-quiz | — | 30 | Quiz (20Q MC + WorkedExample) | net-new |
 
+### T19 — Headend / CO + Rack-Side Hardware Basics (10 lessons) — ADDED 2026-05-16
+
+**Teaching position:** 9 (after T06 Underground Design, before T14 Bonding/Grounding). Carter locked position 2026-05-16.
+
+**DAG prereqs:** T01, T05, T06, T18.
+
+**Audience depth ceiling:** OSP engineer needs enough knowledge to: (a) design the OSP↔ISP handoff correctly on a drawing, (b) communicate with CO/ISP technicians using their vocabulary, (c) specify the building-entry grounding point on the engineering package. NOT required: full CO design, HVAC sizing, NEBS certification, TIA-607 interior design. That depth is ISP-course scope.
+
+**Field-practice gap this topic closes:** Most OSP engineers stop at the building entry on their drawing. In field practice this means the CO-entry primary protector, duct seal, and armor bond are often omitted from the OSP spec package because "that's the CO team's problem." It is NOT — on RUS-program builds, the OSP engineer owns the building envelope, power spec, and building-entry grounding through the IBT. Lessons are explicitly designed to show this.
+
+**Critical book-vs-field gap (R-B research, Scenario 3):** Feeder cable armor bonded to nearest available ground (field shortcut) vs. TIA-607 single-point IBT at building entry (book). Shortcut destroys OLT line cards in GPR events. T19.L06 must teach both sides with the consequences.
+
+| ID | Title | Type | Key vocab introduced | Time (min) | Interactivity | Source migration |
+|---|---|---|---|---|---|---|
+| T19.L01 | CO / Hut / Headend — What the Building Is | foundation | CO (Central Office), hut, headend, MDF, IDF, equipment room, MER (Main Equipment Room), TR (Telecommunications Room) | 20 | AnnotatedDiagram (headend floor-plan — rack bays, battery plant, HVAC zone, entry conduit penetration) | net-new; M05 §5.1 partial migration (MDF/IDF); TIA-942-C §5 awareness |
+| T19.L02 | OLT and CMTS as Black Boxes | foundation | OLT (Optical Line Terminal), CMTS (Cable Modem Termination System), GPON port, DOCSIS, upstream/downstream signal path | 20 | Quiz (MC + drag-match signal path from feeder fiber to subscriber) | net-new; ANSI/ATIS-0600336 awareness |
+| T19.L03 | –48VDC Power Plant — Why DC, Not AC | working | –48VDC, rectifier, distribution bus, battery string, float voltage, negative-ground convention | 25 | WorkedExample (battery backup runtime calc: OLT draw × Ah rating = hours; sanity-check against RUS headend spec minimum); Quiz | net-new; Telcordia GR-63-CORE [paywalled — confirm]; ANSI/ATIS-0600336; book-vs-field: full –48VDC battery plant (book/large CO) vs. UPS-on-AC (field/rural hut) |
+| T19.L04 | Battery Backup and Generator Transfer | working | UPS, generator, ATS (automatic transfer switch), runtime, VRLA battery, N+1 string redundancy | 20 | BranchingScenario (power failure sequence: utility loss → battery → generator start → transfer → battery float restore) | net-new; NFPA 110-2022 §8.4 (generator test schedule) [paywalled — confirm]; BICSI 002-2024 (N+1 recommendation) [paywalled]; book-vs-field: N+1 HVAC + weekly generator test (book) vs. single mini-split + test-only-before-storm (field/rural) |
+| T19.L05 | HVAC and Fire Suppression — Awareness | foundation | CRAC (Computer Room Air Conditioning), sensible heat load, clean-agent suppression (FM-200/Novec 1230), pre-action sprinkler, ASHRAE A2 envelope | 15 | Quiz (MC — select the right suppression type for CO vs. server room) | net-new; NFPA 76-2022 (telecom fire protection) [paywalled]; NFPA 75 (IT equipment fire protection) [paywalled]; TIA-942-C §6.1 |
+| T19.L06 | Headend Grounding — Where OSP MGN Terminates | working | HGER (Headend Ground Electrode Ring/Rail), TGB (Telecommunications Grounding Busbar), TBB (Telecommunications Bonding Backbone) [forward-ref: T14 owns full design], primary protector (building entry, introduces here), IBT-entry (building-entry bond point, introduces here), GES-tie-in (introduces here) | 30 | AnnotatedDiagram (OSP feeder → armor bond → building-entry IBT → TMGB → TGB rack chain); WorkedExample (trace the GPR fault-current path without primary protector vs. with) | net-new; RUS 1751F-810 §3 (OSP-side building-entry bonding); NEC Art. 250.94 (IBT requirement); TIA-607-D §7 and §9 [paywalled — confirm edition]; IEEE Std 487 (GPR context); **book-vs-field CRITICAL:** single-point IBT at entry (book/TIA-607) vs. nearest available ground bus (field shortcut) → OLT line-card destruction in GPR event. This is the single most consequential OSP-to-CO handoff mistake. |
+| T19.L07 | Rack-Side Hardware — Patch Panels and LIU | working | patch panel, LIU (Light Interface Unit), interconnect, cross-connect, port density, SC/LC/MPO connector field | 25 | AnnotatedDiagram (rack layout: ODF top, battery plant bottom, OLT shelf mid); Quiz (MC + drag-match: which port type → which application) | net-new; M05 §5.2 partial; TIA-568.3-D §6 (interconnect vs. cross-connect definition); book-vs-field: TIA-568 cross-connect vocabulary vs. field shorthand ("the patch point", "the panel") |
+| T19.L08 | FOSC and Splice Enclosures in the Headend | working | rack-mount FOSC, splice tray, express vs. split fiber, pigtail termination | 20 | AnnotatedDiagram (FOSC inside headend vs. outside plant FOSC — same product, different mounting); Quiz | net-new; NEC Art. 770 (building-entry cable requirements) |
+| T19.L09 | FDH Internals — Beyond the Box | working | FDH (Fiber Distribution Hub) internals, modular bay, splitter cassette, connector field, demarc, drop fiber routing at FDH | 25 | AnnotatedDiagram (FDH modular bay + splitter cassette + connector field labeled); BranchingScenario (fiber routing decision: express through FDH vs. split at FDH vs. split at pedestal) | net-new; RUS FTTH design guides; field practice: connector-field labeling at FDH is often the first place the TIA-606-D administration standard is ignored (marker-on-tape vs. machine-readable) |
+| T19.L10 | T19 Capstone Quiz | capstone-quiz | — | 30 | Quiz (15Q MC + AnnotatedDiagram identify — label the headend floor-plan zones) | net-new |
+
+**Build sequencing note:** T19 depends on T06 (Underground) being authored + RT-verified first, since T19.L01 references conduit-entry routing as an assumed concept. T19 may be dispatched in Batch C (parallel with T05 and T14, per Section 8) — T19 does not depend on T14 (it precedes T14 in teaching order). T19 is independent of T07/T08/T10/T11/T12.
+
+**T14 update — vocabulary_assumed:** When T14.L05 is authored, its `vocabulary_assumed` block MUST include:
+```jsx
+vocabulary_assumed: [
+  { term: 'primary protector', definition: 'Building-entry surge protection device', source_lesson_id: 'T19.L06' },
+  { term: 'IBT-entry', definition: 'Intersystem bonding termination at building entry', source_lesson_id: 'T19.L06' },
+  { term: 'GES-tie-in', definition: 'Connection of OSP feeder armor/messenger to the building grounding electrode system', source_lesson_id: 'T19.L06' },
+]
+```
+
+---
+
 ### T14 — Bonding, Grounding & Electrical Protection (12 lessons)
 | ID | Title | Type | Key vocab added | Time (min) | Interactivity | Source migration |
 |---|---|---|---|---|---|---|
@@ -271,7 +322,7 @@ Full 245-lesson list by topic. Capstone quizzes shown at end of each topic.
 | T14.L02 | MGN — Multi-Grounded Neutral | working | MGN, neutral wire, grounds per mile, NESC §9 | 25 | AnnotatedDiagram (MGN system diagram); Quiz | net-new |
 | T14.L03 | Messenger Bonding Rules | working | messenger bond, NESC §215C/D, bonded-messenger separation | 25 | WorkedExample (separation calc with bonded messenger) | net-new |
 | T14.L04 | NEC 250.52 Electrodes | working | ground rod, concrete-encased electrode (Ufer), water pipe, 4 AWG | 25 | Quiz (MC + drag-match electrodes) | net-new |
-| T14.L05 | IBT and GES — What They Are | working | IBT (inter-building telecommunications ground), GES (grounding electrode system) | 20 | AnnotatedDiagram (IBT/GES placement) | net-new |
+| T14.L05 | IBT and GES — Full Electrical Depth | working | IBT (full mechanics), GES (design, sizing, IEEE 81 testing), TBB (Telecom Bonding Backbone), TMGB (Telecom Main Grounding Busbar) | 25 | AnnotatedDiagram (IBT/GES placement + TBB/TMGB chain) | net-new; **vocabulary_assumed from T19:** `primary protector` (T19.L06), `IBT-entry` (T19.L06), `GES-tie-in` (T19.L06). T14.L05 MUST open with: "In T19.L06 you saw the OSP cable bond into the building-entry IBT point. Now here's the full electrical depth: why that bond matters, how the GES is designed and tested, and how TIA-607's TBB/TMGB chain carries the ground connection through the building." |
 | T14.L06 | Ground Resistance Testing — IEEE 81 | working | IEEE 81, fall-of-potential, 25 Ω target, 5 Ω target | 30 | WorkedExample (3-point measurement calc) | net-new |
 | T14.L07 | Surge Arresters and Lightning Protection | working | surge arrester, primary protector, MOV, gap arrester | 25 | Quiz (MC + drag-match components) | M06 §6.6 (field side only) |
 | T14.L08 | Stray Voltage Detection and Remediation | working | stray voltage, induced AC voltage, ground rod tester, LOTO sequence | 25 | BranchingScenario (stray voltage on messenger pre-splice) | net-new |
@@ -460,6 +511,7 @@ Full manifest lives in the per-lesson rows in Section 4. Summary by migration ef
 | T15 | 15 | 35% fault locate; 30% repair sequence; 35% MOP/comm | MC, BranchingScenario | 70% |
 | T16 | 20 | 30% splice matrix; 25% GIS formats; 25% TIA-606-D; 20% Form 219 | MC, TopologyCanvas exercise | 70% |
 | T17 | 20 | 30% CPHP/CPHC; 25% contract types; 25% cost ratios; 20% change orders | MC, WorkedExample verify | 70% |
+| T19 | 15 | 30% headend layout/power; 25% grounding boundary (primary protector/IBT/TGB); 25% rack hardware; 20% FDH internals | MC, AnnotatedDiagram identify | 70% |
 
 ---
 
@@ -473,13 +525,11 @@ Full manifest lives in the per-lesson rows in Section 4. Summary by migration ef
 - **Item pool:** ≥250 items, stratified random draw of 100.
 - **Result detail:** competency-level + domain-level scoring + remediation links to T01-T17 + C04 lessons.
 
-### BICSI RCDD (v15)
-- **100 items, 150 minutes** (2.5 hours; mirrors real exam per R-B).
-- **Item mix:** 70 MC / 20 multi-response / 10 enhanced matching.
-- **Domain weighting (v15, published):** 10% Define Scope / 63% Design ICT Solutions / 11% Bid/Tender / 16% Installation Support.
-- **Pass threshold:** 70% proxy; disclosed as proxy.
-- **Item pool:** ≥300 items, stratified random draw of 100.
-- **Result detail:** chapter-level + domain-level + remediation links to C01-C02 + T01-T02 lessons.
+### BICSI RCDD — REMOVED FROM OSP COURSE
+**Migrated to future ISP course per Carter 2026-05-16.** The RCDD mock exam specification block is preserved here for reference only — it will be re-created in the ISP course ARCH document when that course is scoped.
+
+_Archived spec (do not author in OSP-RW):_
+- 100 items, 150 minutes. Domain weighting (v15): 10% Define Scope / 63% Design ICT Solutions / 11% Bid/Tender / 16% Installation Support. Pass threshold: 70% proxy. Item pool: ≥300 items. Prereqs: C01 + C02 (ISP course). This mock will live in the ISP course alongside C01/C02/C03 content.
 
 ### FOA CFOT
 - **100 items, 90 minutes** (FOA does not publish exam time; 90 min is industry-typical; disclosed as estimated).
@@ -517,11 +567,13 @@ Carter reviews T02 output, locks template before OSP-RW.5.
 Wave priority order (DAG-respecting, most foundational first):
 - Batch A (parallel): T01, T18, T03
 - Batch B (parallel): T04, T09
-- Batch C (parallel): T05, T06, T14
+- Batch C (parallel): T05, T06 — then **T19** (after T06 RT-clean; T19 depends on T06), **T14** (after T19 RT-clean; T14.L05 vocab_assumed from T19)
 - Batch D (parallel): T07, T08, T10
 - Batch E (parallel): T11, T12
 - Batch F (parallel): T13, T15, T16, T17
-- Cert prep: C01 → C02 → C03 → C04 (sequential; each requires prior)
+- Cert prep: C04 only (C01/C02/C03 migrated to future ISP course per Carter 2026-05-16)
+
+**Sequencing note for T19:** T19 cannot start until T06 is RT-clean (T19 assumes conduit-entry routing as background context). T14 cannot start until T19 is RT-clean (T14.L05 requires T19.L06's primary protector / IBT-entry / GES-tie-in terms). This means Batch C runs as: T05+T06 in parallel → T19 → T14, rather than T05+T06+T14 fully parallel.
 
 Each topic wave: ≥2 author workers + ≥2 RT verifiers (READ-ONLY). Carter reviews first topic in each batch before the next batch starts if he wants a check-in; otherwise OSP-RW.5 runs through.
 
@@ -537,9 +589,14 @@ Playwright spec covers splash → course → lesson → all 4 interactivity type
 
 All scope decisions were locked by the orchestrator before architect dispatch and confirmed by RT verification. The architecture executes against these locks. No outstanding decisions for Carter on these items — see CLAUDE.md §2 for the full lock list.
 
-- **Topic count: 22 topics, locked.** T04 (Route Survey) and T07 (Staking) remain as separate topics. No compression.
-- **RCDD prep scope: OSP-relevant chapters + explicit sign-posts to omitted chapters, locked.** C01 + C02 implement this: existing M05 (Networking Blueprints) + M06 (RCDD Core), both OSP-relevant content, both A-grade per R-C. The full-TDMM-15-lesson framing is not the implemented design and is not on the table.
+- **Topic count: 23 topics (19 general + 4 cert-prep), locked.** T04 (Route Survey) and T07 (Staking) remain as separate topics. No compression. T19 added at general teaching position 9.
+- **T19 teaching position: 9 (after T06, before T14), locked per Carter 2026-05-16.** DAG Path Y: T19 introduces primary protector / IBT-entry / GES-tie-in at CO-context level; T14.L05 reclaims for full electrical depth. T14 is NOT split.
+- **C01 / C02 / C03 — migrated to future ISP course, locked per Carter 2026-05-16.** These three cert-prep topics (Networking Blueprints / RCDD Core / Data Center Standards) are NOT authored in OSP-RW. They appear in the topic table as placeholders only. Their lesson content will be authored when the ISP course is scoped and initiated. C01's prereqs will include T19 (T19 seeds ISP vocabulary).
+- **RCDD mock exam: REMOVED from OSP course, locked per Carter 2026-05-16.** The RCDD mock exam specification belongs to the future ISP course. C04 (OSP Practice Exam Bank) retains: OSP Designer + CFOT + CFOS/O mock exams only.
+- **C04 cert tracks retained in OSP course: BICSI OSP Designer + FOA CFOT + FOA CFOS/O only.** The C04-RCDD certTrack entry is removed from course-catalog.js.
 - **CFOT folded into C04, locked.** CFOT lessons are included in C04 (Certification Practice Exam Bank) and CFOS/O is gated on CFOT completion within C04. No separate C05 topic.
+- **G.655 added to T02.L08 (not a new lesson), locked.** G.655 (Non-Zero Dispersion-Shifted SMF) is used in carrier DWDM backbones. Small addition to the authored T02.L08 file only; no new lesson required.
+- **T03.L05b scope: cable-product context only.** T03.L05b does NOT re-teach OM physics (T02.L08 owns that). It teaches which OM cable product an OSP engineer encounters and why OSP always means SMF.
 
 ---
 
