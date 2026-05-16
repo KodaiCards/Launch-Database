@@ -16,6 +16,7 @@ export const meta = {
   lesson_type: 'foundation',
   prerequisites: ['T18.L01'],
   vocabulary_introduced: [
+    'PPE',
     'PPG glove class',
     'ANSI Z89.1 Class E',
     'ANSI Z89.1 Class G',
@@ -23,6 +24,11 @@ export const meta = {
     'hi-vis vest',
   ],
   key_terms: [
+    {
+      term: 'PPE',
+      definition:
+        'Personal Protective Equipment — items worn by workers to minimize exposure to hazards that cause serious workplace injuries and illnesses. In OSP field work: rubber insulating gloves, Class E hard hat, safety glasses/face shield, dielectric boots, and high-visibility vest. Governed by 29 CFR 1910.132 (selection, training, and fit) and 1910.137 (electrical protective equipment).',
+    },
     {
       term: 'PPG glove class',
       definition:
@@ -125,6 +131,11 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
         <Flashcard
           deckId="T18-L05"
           cards={[
+            {
+              id: 'T18-L05-fc-ppe',
+              front: 'What is PPE?',
+              back: 'Personal Protective Equipment — items worn by workers to minimize exposure to hazards that cause serious injuries. In OSP field work: rubber insulating gloves, Class E hard hat, eye protection, dielectric boots, and high-visibility vest. Governed by 29 CFR 1910.132 (selection and training) and 1910.137 (electrical PPE).',
+            },
             {
               id: 'T18-L05-fc-ppg',
               front: 'What does rubber insulating glove Class 1 protect against?',
@@ -320,10 +331,12 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
           <li>
             <strong>Rubber insulating gloves:</strong> Must be air-tested (inflated and checked
             for leaks) before each use. Any ozone cracking, cuts, punctures, or embedded foreign
-            material = take out of service immediately. Gloves have a service life of 6 months
-            from the date they're put into service; re-test and re-certification is required
-            after 6 months per ASTM D120. Gloves left in a hot truck toolbox degrade faster
-            than rated.
+            material = take out of service immediately. Gloves must be re-tested by a qualified
+            laboratory at intervals not exceeding <strong>6 months from the date of the LAST TEST</strong> —
+            not from the date first put into service. Gloves that pass re-testing per ASTM D120 §10.3
+            remain serviceable. The 6-month clock restarts at each test date. Gloves purchased
+            12 months ago but never put into service still need re-testing. Gloves left in a hot
+            truck toolbox degrade faster than rated — inspect and air-test before every use.
           </li>
           <li>
             <strong>Hard hats:</strong> Inspect the shell for cracks, deep gouges, or
@@ -484,6 +497,22 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
             explanation:
               'Leather work gloves provide ZERO electrical insulation. They are rated for mechanical protection only — cuts, abrasions, grip. Being 2 feet from an energized 4,160V conductor puts the worker within the minimum approach distance requirement. Rubber insulating gloves (Class 1 — rated to 7,500V — or higher) are required. "Being careful not to touch" is not a hazard control — it\'s wishful thinking.',
             citation: '29 CFR 1910.137; OSHA eTool — Electric Power.',
+          },
+          {
+            id: 'T18-L05-Q5',
+            type: 'mc',
+            prompt:
+              'You arrive on site with Class 2 rubber insulating gloves (rated 17,000V). The last re-test date stamped on the cuff is 8 months ago. What should you do?',
+            choices: [
+              'Use them — they are rated for the voltage you are working near',
+              'Remove them from service and tag them for laboratory re-testing',
+              'Do a visual inspection only; if no cracks are visible, they are acceptable',
+              'Use them for today only, then send them for re-testing tomorrow',
+            ],
+            answerIndex: 1,
+            explanation:
+              'ASTM D120 §10.3 requires rubber insulating gloves to be re-tested by a qualified laboratory at intervals not exceeding 6 months from the date of the last test. At 8 months, these gloves are overdue regardless of apparent condition. Remove from service and tag for laboratory re-testing. Visual inspection alone is not sufficient — micro-cracks and degradation that compromise insulation are invisible to the naked eye.',
+            citation: 'ASTM D120-14a §10.3; 29 CFR 1910.137(b)(2)(ii) — in-service testing intervals.',
           },
         ]}
       />
