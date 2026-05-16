@@ -40,29 +40,37 @@
 
 ## TIA / ANSI
 
-- **TIA-568.3-D** — Optical Fiber Cabling Components Standard (OM1-OM5, OS1-OS2)
+- **TIA-568.3-D** — Optical Fiber Cabling Components Standard (OM1-OM5, OS1-OS2; includes §6 interconnect vs. cross-connect, jacket color table). Scope: T19 (interconnect/cross-connect distinction at CO patch panel); T03.L05b (OM1–OM5 jacket color convention — book vs. field OM3/OM4 aqua/magenta divergence)
 - **TIA-598-C** — Optical Fiber Cable Color Coding
 - **TIA-606-D** — Administration Standard for Telecommunications Infrastructure
-- **TIA-607-D** — Generic Telecommunications Bonding and Grounding for Customer Premises
+- **TIA-607-D** — Generic Telecommunications Bonding and Grounding for Customer Premises (§4 definitions: TBB/TGB/TMGB/PBB/SBB; §7 GES tie-in; §8 TBB conductor sizing; §9 TMGB placement; §10 TGB). Scope: T19.L06 (headend grounding vocabulary — TGB, TBB, TMGB, IBT-entry); T14.L05 (full TIA-607 grounding-chain design). Paywalled — TIA. [allowlist-pending-confirmation — paywalled; confirm edition is TIA-607-D current as of 2026] `[verify — TIA updates on ~5-year cycle]`
 - **TIA-758-C** — Customer-Owned Outside Plant Telecommunications Infrastructure
-- **TIA-942-C** — Telecommunications Infrastructure Standard for Data Centers (for C02 RCDD prep)
+- **TIA-942-C** — Telecommunications Infrastructure Standard for Data Centers (§5 architecture — MER/TR/EDA spaces; §6 infrastructure/cabling; Rated 1–4 redundancy tiers). Scope: T19 (CO/headend = MER-equivalent; redundancy tier awareness for feeder diversity design decisions). Paywalled. [allowlist-pending-confirmation — paywalled; confirm current edition]
 - **TIA-526-14B** — Optical Power Loss Measurements of Installed Multimode Fiber Cable Plant
 - **TIA-526-7A** — Optical Power Loss Measurements of Installed Single-Mode Fiber Cable Plant
 - **TIA-492AAAC** — Detail Specification for 50µm OM3 multimode fiber
+- **TIA-492AAAA** — Detail Specification for 62.5µm OM1 multimode fiber. Scope: T03.L05b (OM1 cable product context — max 33 m at 10GbE, legacy grade, do not specify for new 10G+ work). Paywalled — TIA. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as TIA standard, paywalled — 2026-05-16]`
+- **TIA-492AAAB** — Detail Specification for 50µm OM2 multimode fiber. Scope: T02.L08 (OM1/OM2 Flashcard patch); T03.L05b (OM2 cable product context — max 82 m at 10GbE, legacy grade, same orange jacket as OM1 = field hazard). Paywalled — TIA. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as TIA standard, paywalled — 2026-05-16]`
+- **TIA-492AAAD** — Detail Specification for 50µm OM4 multimode fiber (EMB = 4700 MHz·km, max 400 m at 10GbE). Scope: T02.L08 (already informally cited; formally added here); T03.L05b (OM4 cable product context). Paywalled — TIA. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as TIA standard, paywalled — 2026-05-16]`
+- **TIA-492AAAE** — Detail Specification for 50µm OM5 (wideband multimode) fiber (EMB = 28000 MHz·km @ 953 nm; SWDM4 design; lime green jacket). Scope: T02.L08 (already informally cited; formally added here); T03.L05b (OM5 cable product context). Paywalled — TIA. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as TIA standard, paywalled — 2026-05-16]`
 
 ## ITU-T
 
 - **G.652D** — Standard SMF (most common for OSP)
-- **G.655** — Non-Zero Dispersion-Shifted SMF
+- **G.655** — Non-Zero Dispersion-Shifted SMF (NZ-DSF). Scope: carrier DWDM backbone fiber where chromatic dispersion is partially canceled by the shifted zero-dispersion wavelength; relevant to T02.L08 (G.655 paragraph — context for why carrier networks use this vs. G.652.D) and T02.L07b (long-haul awareness). [allowlist-pending-confirmation — paywalled ITU-T; confirm current edition]
 - **G.657** — Bend-Insensitive SMF (2016 edition)
 - **G.984.x** — GPON family
 - **G.987.x** — XG-PON
 - **G.989.x** — NG-PON2
+- **ITU-T G.694.1** — Spectral grids for WDM applications: DWDM frequency grid. Defines DWDM channel center frequencies (anchored at 193.1 THz / 1552.52 nm) and channel spacing (100 GHz / 50 GHz / 12.5 GHz flexible). C-band: ~1530–1565 nm; L-band: ~1565–1625 nm. Scope: T02.L07b (long-haul awareness — DWDM channel grid concept; why feeder design must consider DWDM if CO terminates on carrier long-haul). Paywalled — ITU-T; secondary via Cisco WDM Design Guide, Corning DWDM white papers. [allowlist-pending-confirmation — paywalled; confirm current edition; use secondary public sources for OSP-awareness teaching] `[verified as ITU-T standard, paywalled — 2026-05-16]`
+- **ITU-T G.671** — Transmission characteristics of optical components and subsystems (WDM multiplexers, demultiplexers, OADMs, optical amplifiers). Defines insertion loss, passband, and isolation specs for WDM passive components. Scope: T02.L07b (mux/demux concept — what a DWDM mux does to channels, insertion loss per channel). Paywalled — ITU-T. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as ITU-T standard, paywalled — 2026-05-16]`
+- **ITU-T G.698.2** — Amplified multichannel dense WDM applications with optical amplifiers at network nodes (defines optical interface specs for 10G/40G/100G coherent DWDM systems). Scope: T02.L07b (coherent optics awareness — 100G+ per channel on G.652.D fiber). Paywalled — ITU-T. For OSP-awareness teaching, primary cite should be FOA Reference Guide (public) with G.698.2 cited by name as the standard with `[paywalled — confirm edition]`. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as ITU-T standard, paywalled — 2026-05-16]`
 
 ## IEC
 
 - **IEC 61300-3-35** — Fibre optic interconnecting devices and passive components — End-face quality assessment
 - **IEC 61753-1** — Performance standard for fibre optic interconnecting devices + passive components (mark `[confirm edition]`)
+- **IEC 60793-2-10** — Optical fibres — Part 2-10: Product specifications — Sectional specification for category A1 (OM1–OM5 multimode fibres). Defines the IEC classification scheme for OM-grade multimode fiber (core/cladding geometry, bandwidth, attenuation). TIA-492 series adopts this classification. Scope: T03.L05b (OM-grade cable-product context at OSP↔ISP handoff — the IEC classification anchor for OM1–OM5). Paywalled — IEC. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as IEC standard, paywalled — 2026-05-16]`
 
 ## OSHA
 
@@ -132,6 +140,9 @@
 
 - **NEC NFPA 70-2023** — National Electrical Code; cite article + section (e.g., NEC 250.52(A)(3) for Ufer electrode)
 - **NFPA 70E** — Standard for Electrical Safety in the Workplace
+- **NFPA 75** — Standard for the Fire Protection of Information Technology Equipment. Defines fire suppression system requirements and prevention measures for IT equipment rooms. Scope: T19.L05 (CO/hut fire suppression awareness — clean-agent vs. pre-action sprinkler selection for equipment rooms). Paywalled — NFPA. [allowlist-pending-confirmation — paywalled; confirm current edition (NFPA publishes editions on ~4-year cycle)] `[verified as NFPA standard — publicly indexed, paywalled — 2026-05-16]`
+- **NFPA 76** — Standard for the Fire Protection of Telecommunications Facilities. Specifically governs CO/hut/headend fire suppression systems — clean-agent suppression types (FM-200/Novec 1230), pre-action sprinkler systems, suppression system zoning, and detection requirements for telecom equipment spaces. Scope: T19.L05 (CO fire suppression awareness — NFPA 76 is the primary standard for telecom facilities, directly applicable to headend/CO design). Paywalled — NFPA. [allowlist-pending-confirmation — paywalled; confirm current edition] `[verified as NFPA standard — publicly indexed, paywalled — 2026-05-16]`
+- **NFPA 110** — Standard for Emergency and Standby Power Systems (2022 edition). §8.4: generator test schedule requirements — §8.4.1 weekly load test under load (30% rated minimum), §8.4.2 monthly transfer exercise, §8.4.3 annual full-load test. Scope: T19.L04 (battery backup and generator transfer — NFPA 110 generator test schedule as the book standard; book-vs-field divergence: real rural hut test schedules slip to "before storms"). [allowlist-pending-confirmation — paywalled; publicly indexed via NFPA.org] `[verified as NFPA standard, 2022 edition publicly confirmed — 2026-05-16]`
 
 ## ANSI / ICEA
 
@@ -154,10 +165,20 @@
 - **IEEE 81** — Measuring Earth Resistance, Earth Surface Potentials, and Earth Surface Conductivity
 - **IEEE Std 142** — Grounding of Industrial and Commercial Power Systems
 - **IEEE 802.3** — Ethernet (relevant for premise interface)
+- **IEEE Std 487** — IEEE Recommended Practice for the Protection of Wire-Line Communication Facilities Serving Electric Supply Locations. Scope: Ground potential rise (GPR) at CO/headend entry — relevant to T19.L06 (primary protector design at building entry) and T14 (GPR protection coordination). Paywalled; secondary citations via IEEE Xplore abstracts + FOA GPR protection field guides. [allowlist-pending-confirmation — paywalled; confirm current edition at IEEE Xplore] `[verify via secondary: industry GPR protection guides]`
 
 ## NIOSH / CDC
 
 - **NIOSH Hierarchy of Controls** — NIOSH (National Institute for Occupational Safety and Health), CDC. URL: https://www.cdc.gov/niosh/topics/hierarchy/ [public]. Authority: NIOSH/CDC. Scope: T18.L01 hierarchy of controls foundational model (Elimination → Substitution → Engineering → Administrative → PPE); referenced as the authoritative framework underlying OSHA's PPE-last approach; T07, T08, T10 hazard-control planning.
+
+## Telcordia / ATIS (CO Equipment Standards)
+
+- **Telcordia GR-63-CORE** — NEBS (Network Equipment-Building System) Physical Protection Requirements (equipment environmental specs: seismic, temperature, humidity, airborne contaminants; also covers battery plant and power distribution requirements for CO-grade equipment). Scope: T19.L03 (–48VDC power plant — NEBS as the standards framework requiring CO equipment to run on –48VDC; battery reserve minimum per GR-63-CORE §4.1.4); T19.L02 (OLT/CMTS as NEBS-rated black boxes). Paywalled — Telcordia/ATIS. Secondary: ANSI/ATIS-0600336 (public) references NEBS requirements; BICSI TDMM §10.4 discusses battery backup duration. [allowlist-pending-confirmation — paywalled; verify via secondary ANSI/ATIS-0600336 for public-accessible NEBS framing] `[verified as Telcordia/ATIS standard — 2026-05-16]`
+- **Telcordia GR-1089-CORE** — NEBS Electromagnetic Compatibility and Electrical Safety Requirements for Telecommunications Network Equipment (EMC, ESD protection, grounding/bonding requirements for CO-grade equipment). Scope: T19 (EMC context for CO headend equipment — why equipment is grounded/bonded in a CO; complement to GR-63-CORE physical protection). Paywalled — Telcordia/ATIS. [allowlist-pending-confirmation — paywalled; verify via secondary ANSI/ATIS-0600336] `[verified as Telcordia/ATIS standard — 2026-05-16]`
+
+## BICSI (Data Center / Facilities Design)
+
+- **BICSI 002-2024** — Data Center Design and Implementation Best Practices (includes N+1 string redundancy recommendation for battery plants; HVAC redundancy guidance for critical telecom facilities; rack layout best practices). Scope: T19.L04 (battery backup — BICSI 002 N+1 string recommendation as the book standard; book-vs-field: N+1 is routinely waived for small rural FTTH headends on cost grounds); T19 generally (CO design best practices awareness). Paywalled — BICSI. [allowlist-pending-confirmation — paywalled; confirm current edition is 2024] `[verified as BICSI standard — 2026-05-16]`
 
 ## Standards Bodies / Other
 
