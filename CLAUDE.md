@@ -1249,7 +1249,7 @@ Greenfield. The prior plan's "scaffolding in flight" was hallucinated. New seque
 | P5 | T08 L07 contingency range partial harmonization | T08 post-fix RT `14ece22` | T08 | Fold into T08 retroactive re-audit (queued under new pipeline) polish stage |
 | P6 | T02.L08 OM1/OM2 Flashcard render missing | Haiku verifier | T02 | Fold into T02 retroactive audit polish stage |
 | P7 | T02 / T03 ITU-T G.655 missing | Haiku verifier | T02 + T03 | Fold into T02 retroactive audit + T03 audit re-touch |
-| P9 | T04 L07 §32.2210 vs §32.2410 citation correction | T04 R-1/R-2 dispute + Haiku ground-truth `a42e9f8` 2026-05-16 | T04 | Both R-1 (claimed §32.2210=Land) and R-2 (claimed §32.2210=Cable&Wire) were WRONG. Primary source: §32.2210 = "Central office—switching", §32.2410 = "Cable and wire facilities". T04 L07 currently teaches §32.2210 = Cable & Wire — needs change to §32.2410. Fold into T04 back-fill sweep polish stage. |
+| P9 | T04 L07 §32.2210 vs §32.2410 + §32.2420 vs §32.2411 citation corrections | T04 R-1/R-2 dispute + Haiku ground-truth `a42e9f8` + T01 polish-3 cross-topic `d7161ad` 2026-05-16 | T04 | Both R-1 (claimed §32.2210=Land) and R-2 (claimed §32.2210=Cable&Wire) were WRONG. Primary source: §32.2210 = "Central office—switching", §32.2410 = "Cable and wire facilities", §32.2411 = "Poles" (per T01 polish-3 47 CFR verify; matches L01 Advanced tier), §32.2420 = parent "Cable and wire facilities" category (T04 incorrectly claims this = Poles). T04 L07 currently teaches §32.2210 = Cable & Wire AND §32.2420 = Poles — both wrong. Fold both corrections into T04 back-fill sweep polish stage. |
 
 #### Needs user input (🔒 blocked)
 
