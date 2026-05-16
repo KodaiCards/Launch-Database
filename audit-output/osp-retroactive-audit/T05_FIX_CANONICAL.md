@@ -70,3 +70,23 @@ Tree clean after push. All three F-RT findings resolved in single commit.
 | P2 | LOW | T05.L12 GPON splitter 17–17.5 dB: verified present in body prose (key_terms definition, AnnotatedDiagram explanation, worked-example step 4). No change needed. | VERIFIED-NO-CHANGE | `bef7e8c` |
 
 ## T05 Wave Status: COMPLETE — all findings resolved through polish stage.
+
+---
+
+## POLISH-2 Stage (RT-A `634e6f8` + RT-B `3722497` final-verify pair)
+
+| ID | Severity | Tag | Lesson(s) | Finding | Status | Commit SHA |
+|----|----------|-----|-----------|---------|--------|-----------|
+| NEW-A | LOW | RT-A | T05/L10 | `suspension clamp` in `vocabulary_introduced` + `key_terms` but missing rendered `<Flashcard>` card — directive 18z violation | FIXED | `ffb9631` |
+| NEW-B-1 | LOW | RT-A | T07/L04:33 | `clearance` → `source_lesson_id: 'T05.L02'` wrong; T05.L02 doesn't introduce bare `clearance`; corrected to `T01.L02` | FIXED | `ffb9631` |
+| NEW-B-2 | LOW | RT-A | T07/L04:36 | `attachment point` → `source_lesson_id: 'T05.L02'` wrong; corrected to `T01.L02` | FIXED | `ffb9631` |
+| NEW-B-3 | LOW | RT-A | T07/L02:37 | `pole locations from design` → `source_lesson_id: 'T05.L02'` wrong; term used in L02 body; corrected to `T04.L02` (planimetric/aerial survey context, closest introducing lesson) | FIXED | `ffb9631` |
+| GAP-A | LOW | RT-B | T05/L02:368, T05/L15:111 | Conservative-approximation label: "slightly larger" / "marginally less" understates the ratio (2.77× in Light district wind-only scenario); changed to "conservatively larger" / "conservatively smaller" with explanatory note in L15 | FIXED | `ffb9631` |
+
+**Neighborhood scan findings (NOT fixed — report only):**
+- T07/L02: `existing utilities` → `T04.L02` (line 33) — T04.L02 (Drone/LiDAR) does not introduce "existing utilities" as a formal term; T04.L01 or T01 more likely. Out of scope for this wave.
+- T07/L04: `NESC Rule 232` → `T05.L01` (line 34) — correct (T05.L01 introduces NESC and Rule 232 at top level). No change needed.
+- T07/L04: `make-ready` → `T05.L08` (line 35) — correct per F6 fix. No change.
+- T05/L15: no other "slightly" or "marginally" language found in the sanityCheck strings beyond GAP-A scope.
+
+## T05 Wave Status: COMPLETE through POLISH-2 stage. All RT findings resolved.
