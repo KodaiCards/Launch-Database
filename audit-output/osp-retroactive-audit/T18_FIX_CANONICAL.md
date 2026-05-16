@@ -407,4 +407,29 @@
 - L09 ±20 lines from near-miss fixes: The "fieldNote" on Q3 ("Even though it's not legally required, report it internally...") is good practical guidance and not affected by the statutory-vs-policy framing fix. No changes needed.
 - L08 ±20 lines from cross-reference addition: Gel cleaning rags item + silica dust item both correctly direct to SDS sections; no atmospheric-hazard cross-references warranted (those chemicals don't create confined-space atmospheric hazards). No additional cross-refs needed.
 
+---
+
+## Polish-3 Fixes (from final-verify-2 RT-G + RT-H findings) — APPLIED `a7e8bc8`
+
+### NEW-G1 | MED | L04 — ANSI Z359.4 wrong title at 3 locations
+
+- RT-G finding: Z359.4 title incorrectly described as "Safety Requirements for Use, Inspection, and Maintenance of Fall Protection Equipment." Actual ANSI/ASSP Z359.4-2013 (R2022) title: "Safety Requirements for Assisted-Rescue and Self-Rescue Systems, Subsystems and Components."
+- RT-H independently confirmed from ASSP.org store page. Preferred fix: replace all 3 Z359.4 instances with Z359.1 + Z359.11 (unambiguous PFAS/harness standards).
+- Locations fixed: (1) L04:213-218 Book/Field prose — "ANSI Z359.4 (Safety Requirements for Use, Inspection, and Maintenance)" → "ANSI Z359.1 ('The Fall Protection Code' — overarching PFAS system requirements) and Z359.11 (Safety Requirements for Full Body Harnesses)"; (2) L04 SideBySide leftValue "ANSI Z359.4 and Z359.11" → "ANSI Z359.1 ('The Fall Protection Code') and Z359.11"; (3) L04 Q2 citation "ANSI Z359.4 + Z359.11" → "ANSI Z359.1 ('The Fall Protection Code') + Z359.11."
+- Primary-source authority: ASSP.org confirmed by RT-H agent (cited in T18_FINAL_VERIFY_RT_H_TECHNICAL.md). Z359.1 = "The Fall Protection Code"; Z359.11 = "Safety Requirements for Full Body Harnesses"; Z359.4 = "Assisted-Rescue and Self-Rescue Systems."
+- Status: APPLIED ✓ (`a7e8bc8`)
+
+### NEW-G2 | LOW | L03 — CO IDLH wording creates competing exit signal
+
+- RT-G finding: L03 atmospheric table Action column for CO read "NIOSH IDLH = 1,200 ppm — at IDLH, immediate threat to life; exit immediately with no delay." The "exit immediately" language in the Action column competes with column 4's "exit immediately at > 25 ppm" threshold.
+- Fix: Softened Action-column text to informational context: "(For scale: NIOSH IDLH = 1,200 ppm = immediate threat to life — the 25 ppm exit threshold in column 4 is your actual trigger, far before IDLH.)" Column 4 remains the unambiguous exit trigger.
+- Status: APPLIED ✓ (`a7e8bc8`)
+
+---
+
+## Neighborhood scan from Polish-3 (surface only, no fixes)
+
+- L04 ±20 lines from Z359.1+Z359.11 fixes: Z359.1 described as "overarching PFAS system requirements" — accurate for teaching purposes; GAP-H4 noted "umbrella" framing slightly imprecise but non-misleading. Z359.11 references unchanged and verified correct. No additional Z359 errors found.
+- L03 ±20 lines from CO table fix: H₂S row retained "at 50 ppm = NIOSH IDLH — exit immediately" in Action column — correct and not competing (H₂S exit threshold in column 4 is > 1 ppm, so the IDLH context provides useful scale without creating a competing trigger). O₂ row "Below 16% = IDLH" correct. No additional table issues.
+
 === T18 FIX CANONICAL END ===
