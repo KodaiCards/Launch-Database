@@ -26,6 +26,9 @@ export const meta = {
     'supply space',
     'neutral',
     'pole class',
+    'joint-use',
+    'clearance',
+    'conduit',
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
@@ -154,6 +157,35 @@ export default function T01L02_PartsOfAPole() {
             attachments. Grade governs strength factors for the pole, attachments, and guys.
             (Detail covered in T05.)</dd>
           </div>
+          <div>
+            <dt className="font-semibold text-slate-200">Joint-use</dt>
+            <dd>A pole (or conduit system) that is shared by two or more companies — typically
+            the electric utility and one or more telecom attachers. Most utility poles in the
+            US are joint-use poles. The electric utility owns the pole; telecom companies are
+            attachers who pay for the right to use it. Joint-use is the normal situation for
+            aerial OSP fiber; a "single-use" pole owned outright by the fiber company is the
+            exception, not the rule.</dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-slate-200">Clearance</dt>
+            <dd>The vertical distance between two things on or below a pole — for example,
+            the clearance between a fiber cable and the road below it (ground clearance), or
+            the clearance between the fiber attachment and the neutral wire above it (vertical
+            separation). NESC specifies minimum clearances for every combination of attachment
+            type and crossing type. Clearances are always measured at midspan (the sag point),
+            not at the attachment point on the pole.</dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-slate-200">Conduit</dt>
+            <dd>A rigid or semi-rigid pipe or tube that protects cables installed underground.
+            Fiber cable is often pulled through conduit rather than buried directly. Common
+            types: Schedule 40 PVC (economical, standard for buried runs), HDPE (UV-resistant,
+            used for exposed risers on poles and HDD bores under roads), and innerduct (smaller
+            diameter sub-conduit inside a larger conduit that allows multiple cables to share
+            the same bore). Conduit protects cable from physical damage, moisture intrusion,
+            and makes future cable replacement easier — you can pull a new cable without
+            re-boring or re-trenching.</dd>
+          </div>
         </dl>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -252,6 +284,9 @@ export default function T01L02_PartsOfAPole() {
           { id: 'T01-L02-FC-supply-space', front: 'Supply space', back: 'The top zone on a shared utility pole where high-voltage primary power lines (4–35 kV) attach. Only licensed utility electricians work in this zone. NESC requires minimum separation from the top of the communication space.' },
           { id: 'T01-L02-FC-neutral', front: 'Neutral', back: 'The return conductor for the electric distribution system, typically the lowest supply-space conductor. In RUS areas this is often the MGN (Multi-Grounded Neutral). Fiber messenger wires must maintain NESC clearance from the neutral.' },
           { id: 'T01-L02-FC-pole-class', front: 'Pole class', back: 'NESC / ANSI O5.1 classification of pole strength based on circumference 6 ft from the butt. Class 1 is strongest; Class 10 is weakest. Classes H1–H6 are for extra-heavy loads.' },
+          { id: 'T01-L02-FC-joint-use', front: 'Joint-use', back: 'A pole or conduit system shared by two or more companies — typically the electric utility (owner) and one or more telecom attachers. Most US utility poles are joint-use. Fiber companies pay annual attachment fees under FCC Part 1.1411 to attach to joint-use poles.' },
+          { id: 'T01-L02-FC-clearance', front: 'Clearance', back: 'The vertical distance between two things on or below a pole — between a cable and the road beneath it (ground clearance), or between a fiber attachment and the neutral above it (vertical separation). NESC specifies minimum clearances for every combination. Always measured at midspan (the sag point), not at the attachment point.' },
+          { id: 'T01-L02-FC-conduit', front: 'Conduit', back: 'A rigid or semi-rigid pipe that protects underground cables. Common types: Schedule 40 PVC (buried runs), HDPE (exposed risers, HDD bores), innerduct (sub-conduit inside a larger bore). Allows cable replacement without re-boring or re-trenching.' },
         ]}
       />
 
