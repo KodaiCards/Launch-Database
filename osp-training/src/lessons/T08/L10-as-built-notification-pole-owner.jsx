@@ -43,8 +43,8 @@ export const vocabulary_introduced = {
 export const vocabulary_assumed = [
   { term: 'as-built', source_lesson_id: 'T07.L01' },
   { term: 'NESC', source_lesson_id: 'T05.L01' },
-  { term: 'pole-loading', source_lesson_id: 'T05.L02' },
-  { term: 'loading district', source_lesson_id: 'T05.L03' },
+  { term: 'pole-loading', source_lesson_id: 'T05.L05' },
+  { term: 'loading district', source_lesson_id: 'T05.L06' },
   { term: 'tie-in notice', source_lesson_id: 'T08.L09' },
   { term: 'attachment application', source_lesson_id: 'T08.L09' },
   { term: 'make-ready', source_lesson_id: 'T08.L01' },

@@ -47,8 +47,8 @@ export const meta = {
     { term: 'messenger', source_lesson_id: 'T03.L04' },
     { term: 'EDS', source_lesson_id: 'T03.L09' },
     { term: 'RTS', source_lesson_id: 'T03.L09' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

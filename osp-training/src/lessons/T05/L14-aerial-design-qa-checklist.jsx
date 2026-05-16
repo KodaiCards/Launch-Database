@@ -42,8 +42,8 @@ export const meta = {
     { term: 'make-ready cost estimate', source_lesson_id: 'T05.L13' },
     { term: 'design hold', source_lesson_id: 'T05.L13' },
     { term: 'transfer conflict', source_lesson_id: 'T05.L13' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [],
 };

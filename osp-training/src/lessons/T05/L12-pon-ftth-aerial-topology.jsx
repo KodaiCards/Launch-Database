@@ -46,7 +46,7 @@ export const meta = {
     { term: 'messenger', source_lesson_id: 'T03.L04' },
     { term: 'sag (s)', source_lesson_id: 'T05.L07' },
     { term: 'joint use', source_lesson_id: 'T05.L08' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

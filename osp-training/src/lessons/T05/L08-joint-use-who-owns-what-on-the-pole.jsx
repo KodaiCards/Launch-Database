@@ -42,8 +42,8 @@ export const meta = {
     { term: 'Rule 235', source_lesson_id: 'T05.L03' },
     { term: 'communication worker safety zone', source_lesson_id: 'T05.L03' },
     { term: 'messenger', source_lesson_id: 'T03.L04' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

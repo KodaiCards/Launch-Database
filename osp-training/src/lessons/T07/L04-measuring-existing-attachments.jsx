@@ -30,9 +30,9 @@ export const meta = {
     'height delta',
   ],
   vocabulary_assumed: [
-    { term: 'clearance', source_lesson_id: 'T05.L04' },
-    { term: 'NESC Rule 232', source_lesson_id: 'T05.L04' },
-    { term: 'make-ready', source_lesson_id: 'T05.L03' },
+    { term: 'clearance', source_lesson_id: 'T05.L02' },
+    { term: 'NESC Rule 232', source_lesson_id: 'T05.L01' },
+    { term: 'make-ready', source_lesson_id: 'T05.L08' },
     { term: 'attachment point', source_lesson_id: 'T05.L02' },
     { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },

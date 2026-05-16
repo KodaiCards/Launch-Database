@@ -42,8 +42,8 @@ export const meta = {
     { term: 'Rule 232', source_lesson_id: 'T05.L02' },
     { term: 'joint use', source_lesson_id: 'T05.L08' },
     { term: 'messenger', source_lesson_id: 'T03.L04' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

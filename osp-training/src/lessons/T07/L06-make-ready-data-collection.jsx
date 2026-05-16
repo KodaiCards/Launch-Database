@@ -62,8 +62,8 @@ export const vocabulary_assumed = [
   { term: 'staking sheet', source_lesson_id: 'T07.L05' },
   { term: 'RUS Form 740', source_lesson_id: 'T07.L05' },
   { term: 'attachment height measurement', source_lesson_id: 'T07.L04' },
-  { term: 'make-ready', source_lesson_id: 'T05.L01' },
-  { term: 'OTMR', source_lesson_id: 'T05.L01' },
+  { term: 'make-ready', source_lesson_id: 'T05.L08' },
+  { term: 'OTMR', source_lesson_id: 'T05.L09' },
   { term: 'pole audit', source_lesson_id: 'T04.L01' },
 ];
 
