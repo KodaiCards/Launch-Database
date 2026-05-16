@@ -16,6 +16,7 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T18.L01'],
   vocabulary_introduced: [
+    'fall protection',
     'lanyard',
     'self-retracting lifeline (SRL)',
     '100% tie-off',
@@ -23,6 +24,11 @@ export const meta = {
     'aerial lift',
   ],
   key_terms: [
+    {
+      term: 'fall protection',
+      definition:
+        'A system of equipment and procedures that prevents workers from falling from elevations or arrests a fall before the worker reaches a lower level. Includes Positioning Systems (body belt or harness + pole strap, holds worker at work position) and Personal Fall Arrest Systems (PFAS: harness + lanyard/SRL + anchor, catches a fall in progress). Required whenever a telecom worker is more than 4 feet above the ground on a pole or structure per 29 CFR 1910.268(g).',
+    },
     {
       term: 'lanyard',
       definition:
@@ -133,6 +139,11 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           deckId="T18-L04"
           cards={[
             {
+              id: 'T18-L04-fc-fall-protection',
+              front: 'What is fall protection?',
+              back: 'A system of equipment and procedures that prevents workers from falling from elevations or arrests a fall before reaching a lower level. Includes Positioning Systems (body belt or harness + pole strap — holds worker at work position) and Personal Fall Arrest Systems (PFAS: harness + lanyard/SRL + anchor — catches a fall in progress). Required whenever a telecom worker is more than 4 feet above ground on a pole or structure per 29 CFR 1910.268(g).',
+            },
+            {
               id: 'T18-L04-fc-lanyard',
               front: 'What is a lanyard in fall protection?',
               back: 'The energy-absorbing connector between a worker\'s harness and an anchor point. Limits fall arrest forces to no more than 1,800 lbf. Twin-leg lanyards allow 100% tie-off during transitions between anchor points.',
@@ -233,8 +244,16 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           </li>
           <li>
             <strong>Never belt off to the pole:</strong> Attaching a lanyard from the basket to the
-            pole you're working on is a common but illegal shortcut. If the truck shifts or the boom
-            retracts while you're attached to the pole, you can be pulled out of the basket or crushed.
+            pole you're working on is a common but illegal shortcut. There are two distinct failure
+            modes: (a) <strong>Active movement</strong> — if the truck operator repositions the boom
+            while the worker is attached to the pole, the worker is pulled out of the basket or the
+            lanyard applies sudden lateral force at height; (b) <strong>Hydraulic drift</strong> —
+            aerial lift booms can drift downward gradually under their own hydraulic pressure, even
+            with the operator not touching the controls. If a worker is attached to the pole and the
+            boom drifts down even 6–12 inches, the lanyard goes taut and begins lifting the worker
+            out of the basket from below. This is not a rare edge case — hydraulic drift is a
+            documented failure mode in aging equipment and warm weather conditions where hydraulic
+            fluid thins. The only safe attachment is to the boom or basket structure.
           </li>
           <li>
             <strong>Travel restraint alternative:</strong> A travel restraint system prevents the
@@ -269,7 +288,36 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           position more than 4 feet above ground without fall protection, that is an OSHA violation —
           even if the task is only expected to take 30 seconds.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
+
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Book vs. Field — Interrupted tasks and free-climb scope</p>
+          <p className="text-slate-300/90">
+            <strong>Book (29 CFR 1910.268(g)(1) + 2012 OSHA interpretation letter):</strong> The
+            free-climb allowance covers "climbing to a work position." Once the worker stops climbing
+            and begins performing any task at elevation, fall protection is required. If the worker
+            moves from one work position to another on the same pole (e.g., moves up 5 feet to
+            access a different attachment point), they may free-climb that transition — but must apply
+            fall protection at the new position before beginning the next task.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Field reality:</strong> Interruptions happen on poles — a worker is mid-task with
+            fall protection in place, then needs to move a short distance to reach a component just
+            out of reach. Common shortcuts: (a) walking the strap up without releasing it (positioning
+            strap hitches up the pole while the worker climbs — the strap provides some protection
+            during movement but is not designed for this use and may release unexpectedly); (b) briefly
+            de-strapping to reposition, then re-applying at the new position (compliant with the
+            free-climb interpretation but requires deliberate action). The non-compliant shortcut is
+            working hands-on at the new position before re-applying the strap — even for 10 seconds.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>The risk of the shortcut:</strong> OSHA citations for "task performed at elevation
+            without fall protection applied" are issued on the moment of the violation, not on the
+            duration. A 10-second de-strap to reposition, during which any work occurs, is a
+            willful violation if observed. Plan the strap re-application into the task sequence.
+          </p>
+        </div>
+
+        <p className="mt-3 text-sm text-slate-300/70">
           Source: 29 CFR 1910.268(g)(1) (osha.gov); OSHA interpretation letter 2012-08-27
           (osha.gov/laws-regs/standardinterpretations/2012-08-27).
         </p>
@@ -348,8 +396,8 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           },
           {
             label: 'OSHA acceptability (1910.268)',
-            leftValue: 'Still allowed for positioning work under 1910.268(g). Body belt acceptable for positioning.',
-            rightValue: 'Required if free-fall arrest is needed. Body belt NOT acceptable for fall arrest.',
+            leftValue: 'Still allowed for positioning work under 1910.268(g). Body belt acceptable for positioning only — NOT for fall arrest. ANSI Z359.1 prohibits use of body belts as the sole fall arrest attachment due to risk of serious abdominal injury during arrest.',
+            rightValue: 'Required if free-fall arrest is needed. Body belt NOT acceptable for fall arrest. Full-body harness required per ANSI Z359.11 and increasingly enforced by OSHA compliance directives.',
           },
           {
             label: 'Field practice',
