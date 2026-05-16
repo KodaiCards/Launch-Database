@@ -22,6 +22,7 @@ export const meta = {
     'planimetric',
     'GSD',
     'RTK GNSS',
+    'photogrammetry',
   ],
   key_terms: [
     {
@@ -53,6 +54,11 @@ export const meta = {
       term: 'RTK GNSS',
       definition:
         'Real-Time Kinematic Global Navigation Satellite System — a GPS technique that receives correction data from a fixed ground station (base station or a network correction service like NOAA NGS CORS) to achieve sub-decimeter positioning, typically 1–3 cm horizontal accuracy. Standard GPS is accurate to ±3–5 meters; RTK GNSS applies real-time carrier-phase corrections from the base station\'s known position to eliminate most of that error, making it accurate enough to locate poles and route-survey control points for design engineering.',
+    },
+    {
+      term: 'photogrammetry',
+      definition:
+        'The science of extracting precise measurements and 3D geometry from photographs. In OSP route survey, photogrammetry software processes hundreds of overlapping drone images — taken at slightly different angles — to reconstruct a 3D model of the terrain and existing structures (poles, buildings, wires). The software identifies the same physical point in multiple photos and uses triangulation to compute each point\'s real-world X, Y, Z coordinate. The result is a dense point cloud and an orthomosaic map similar to LiDAR output, but derived entirely from camera images rather than laser pulses. Photogrammetry works best in open terrain with good lighting; LiDAR is preferred in forested corridors where the camera can\'t see through canopy.',
     },
   ],
   vocabulary_assumed: [
@@ -175,6 +181,11 @@ export default function T04L02_DroneLidarAerialSurvey() {
               id: 'T04-L02-fc-rtk-gnss',
               front: 'What is RTK GNSS and why does it matter for OSP survey?',
               back: 'Real-Time Kinematic Global Navigation Satellite System — a GPS technique that applies real-time corrections from a fixed ground station (base station or NOAA NGS CORS network) to achieve sub-decimeter positioning, typically 1–3 cm horizontal accuracy. Standard GPS is ±3–5 meters — not precise enough to locate poles for design engineering. RTK GNSS closes that gap.',
+            },
+            {
+              id: 'T04-L02-fc-photogrammetry',
+              front: 'What is photogrammetry and how does it differ from LiDAR?',
+              back: 'The science of extracting precise measurements and 3D geometry from overlapping photographs. Drone photogrammetry software triangulates the same point across many images to compute X, Y, Z coordinates — producing a dense point cloud and orthomosaic map from camera data alone. Unlike LiDAR (which uses laser pulses), photogrammetry cannot see through dense tree canopy, making LiDAR preferred for forested OSP corridors while photogrammetry works well in open terrain.',
             },
           ]}
         />
@@ -327,7 +338,7 @@ export default function T04L02_DroneLidarAerialSurvey() {
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
           <li><strong>Remote pilot certificate.</strong> The pilot-in-command must hold a FAA Part 107 remote pilot certificate (requires passing a knowledge test at an FAA-approved testing center).</li>
-          <li><strong>400 ft AGL maximum altitude.</strong> FAA Part 107.51 sets 400 ft AGL as the default ceiling for UAS operations. OSP corridor surveys typically fly 60–150 m AGL (200–500 ft) — the upper end may require a Part 107 waiver unless the route is near a structure, which allows flight up to 400 ft above the structure top.</li>
+          <li><strong>400 ft AGL maximum altitude.</strong> FAA 14 CFR 107.51 sets 400 ft AGL as the default ceiling for UAS operations in uncontrolled airspace. OSP corridor surveys typically fly <strong>60–120 m AGL (200–400 ft)</strong> to stay within this limit. Flying above 120 m AGL (above 400 ft) requires either a Part 107 altitude waiver or the narrow structure exception: per 14 CFR 107.51(b), a drone may fly up to 400 ft <em>above the topmost point of a structure</em>, but ONLY while within a 400-foot horizontal radius of that structure. For a corridor survey with poles spaced 200–400 ft apart, the structure exception applies briefly near each pole — the drone must otherwise remain at or below 400 ft AGL between poles. Flights planned at 150 m AGL (492 ft) require a Part 107 altitude waiver regardless of pole proximity along the route.</li>
           <li><strong>Visual line-of-sight (VLOS).</strong> Part 107.31 requires the pilot to maintain unaided visual contact with the drone at all times during flight, unless a BVLOS (Beyond Visual Line of Sight) waiver has been granted. Long corridor surveys may need a visual observer positioned along the route.</li>
           <li><strong>Controlled airspace authorization (LAANC or waiver).</strong> Any flight in Class B, C, D, or E airspace surface area requires prior authorization. The LAANC (Low Altitude Authorization and Notification Capability) system provides near-instant digital authorization via FAA DroneZone or LAANC-enabled apps (such as Aloft). Most rural OSP routes are in Class G airspace, which requires no prior authorization.</li>
         </ul>

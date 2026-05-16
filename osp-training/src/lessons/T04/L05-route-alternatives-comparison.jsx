@@ -20,6 +20,7 @@ export const meta = {
     'constructability',
     'permitting risk',
     'route scoring',
+    'route alternatives',
   ],
   key_terms: [
     {
@@ -41,6 +42,11 @@ export const meta = {
       term: 'route scoring',
       definition:
         'A structured comparison method that assigns weights and scores to each route alternative across multiple criteria — construction cost, permitting risk, constructability, environmental impact, maintenance burden, and community impact — to produce a defensible, documented recommendation. Route scoring is used in formal RUS submittals and project documentation; the scoring matrix provides the written justification for the route selected.',
+    },
+    {
+      term: 'route alternatives',
+      definition:
+        'The set of distinct path options evaluated during pre-engineering for an OSP project — including different road alignments, aerial vs. underground plant approaches, and crossing methods for obstacles. Documenting route alternatives is required for RUS loan packages and is best practice for any project where the selected route may later be questioned by a client, regulator, or project auditor. Each alternative is evaluated on cost, constructability, permitting risk, and long-term maintenance before a recommended route is selected.',
     },
   ],
   vocabulary_assumed: [
@@ -149,6 +155,11 @@ export default function T04L05_RouteAlternativesComparison() {
               front: 'What is route scoring?',
               back: 'A structured comparison that assigns weights and scores to each route alternative across multiple criteria — construction cost, permitting risk, constructability, environmental impact, maintenance burden, community impact — to produce a defensible, documented recommendation for RUS submittals and project documentation.',
             },
+            {
+              id: 'T04-L05-fc-route-alternatives',
+              front: 'What are route alternatives in OSP pre-engineering?',
+              back: 'The distinct path options evaluated during pre-engineering — different road alignments, aerial vs. underground plant, crossing methods for obstacles. Documenting route alternatives is required for RUS loan packages. Each alternative is evaluated on cost, constructability, permitting risk, and long-term maintenance before a recommended route is selected.',
+            },
           ]}
         />
       </section>
@@ -179,9 +190,11 @@ export default function T04L05_RouteAlternativesComparison() {
               urban conduit systems can exceed $50,000/mile.
             </p>
             <p className="text-xs text-slate-300/50 mt-1">
-              Note: cost ranges are highly variable by region, material prices, and local labor.
-              These are order-of-magnitude field-triage estimates only — actual costs come
-              from the engineer's quantity take-off.
+              Note: cost ranges are highly variable by region, material prices, and local labor,
+              and shift with material-cost inflation over time. These are order-of-magnitude
+              field-triage estimates only — verify current construction cost benchmarks against
+              recent RUS Form 395 bid data or regional cost studies before using in a project
+              estimate. Actual project costs come from the engineer's quantity take-off.
             </p>
           </div>
 
@@ -360,8 +373,8 @@ export default function T04L05_RouteAlternativesComparison() {
           { id: 'navigable-waterway', label: 'Route must cross a navigable river — requires USACE NWP 57 review and potentially an individual Section 10/404 permit' },
         ]}
         correctOrder={['county-road', 'state-highway', 'railroad', 'wetland', 'navigable-waterway']}
-        feedbackCorrect="Correct. County road shoulder in public ROW has the lowest permitting complexity. State DOT encroachment permits are routine but add 3–6 months. Railroad crossings add coordination with a private company and safety flagging requirements. Wetland crossings trigger USACE Section 404 review and may require mitigation. Navigable waterway crossings require USACE Section 10/404 review and can take 90 days to 18 months depending on the project classification."
-        feedbackIncorrect="Not quite. Consider who needs to approve each situation: county road = county (relatively fast); state highway = state DOT (slower); railroad = private company + safety requirements; wetland = USACE Section 404 (federal review); navigable waterway = USACE Section 10 + 404 (federal, most complex). The more regulatory agencies involved, the higher the permitting risk."
+        feedbackCorrect="Correct. County road shoulder in public ROW has the lowest permitting complexity. State DOT encroachment permits are routine but add 3–6 months. Railroad crossings add coordination with a private company and safety flagging requirements. Wetland crossings trigger USACE Section 404 review and may require mitigation. Navigable waterway crossings carry the highest permitting risk: USACE Nationwide Permit 57 (NWP 57) bundles both Section 10 RHA and Section 404 authorization for qualifying telecom crossings in a single permit — but if the project doesn't qualify for NWP 57, individual permits under Section 404 and potentially a separate Section 10 RHA permit may be required, adding 90 days to 18 months to the schedule."
+        feedbackIncorrect="Not quite. Consider who needs to approve each situation: county road = county (relatively fast); state highway = state DOT (slower); railroad = private company + safety requirements; wetland = USACE Section 404 (federal review); navigable waterway = USACE NWP 57 covers both Section 10 RHA and Section 404 for qualifying crossings — if NWP 57 doesn't apply, individual permits add 90 days to 18 months (most complex). The more regulatory steps involved, the higher the permitting risk."
       />
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
@@ -488,8 +501,8 @@ Which route do you recommend documenting as the preferred option in the handoff 
             ],
             answerIndex: 2,
             explanation:
-              'Crossing a federally designated navigable waterway triggers USACE Section 10 of the Rivers and Harbors Act (in addition to Section 404 if wetlands are present). Depending on the crossing method and project scale, this may qualify for a Nationwide Permit 57 (Utility Lines, post-2021 reissuance — the applicable NWP for telecom crossings) or require an individual USACE permit, which can take 90 days to 18 months. State DOT crossings are routine (typically 3–6 months). County road shoulder work in public ROW is the lowest-risk scenario. A recorded private easement means ROW access is already resolved.',
-            citation: 'USACE NWP 57 — Electric Utility Line and Telecommunications Activities (post-2021 reissuance); 33 CFR Part 320-332.',
+              'Crossing a federally designated navigable waterway is the highest-permitting-risk scenario listed. USACE Nationwide Permit 57 (Electric Utility Line and Telecommunications Activities, post-2021 reissuance) authorizes BOTH Section 10 of the Rivers and Harbors Act AND Section 404 of the Clean Water Act for qualifying telecom crossings in a single permit — the two authorities are bundled together under NWP 57, not separate hurdles. If the crossing does not qualify for NWP 57 (too large, listed species, or other thresholds), then an individual permit under Section 404 and potentially a separate Section 10 RHA individual permit may be required, which can take 90 days to 18 months. State DOT crossings are routine (typically 3–6 months). County road shoulder work in public ROW is the lowest-risk scenario. A recorded private easement means ROW access is already resolved.',
+            citation: 'USACE NWP 57 — Electric Utility Line and Telecommunications Activities (post-2021 reissuance); 33 CFR Part 330.1(b) (NWP covers Section 10 and 404 jointly); 33 CFR Part 320-332.',
           },
         ]}
       />

@@ -14,12 +14,14 @@ export const meta = {
   title: 'Pole Audit — Field vs. Records',
   order: 4,
   lesson_type: 'working',
-  prerequisites: ['T01.L01', 'T02.L01', 'T04.L01', 'T04.L03'],
+  prerequisites: ['T01.L01', 'T04.L01', 'T04.L03'],
   vocabulary_introduced: [
     'pole audit',
     'attachment-height measurement',
     'existing occupancy',
     'make-ready flag',
+    'midspan clearance',
+    'pole class',
   ],
   key_terms: [
     {
@@ -42,15 +44,25 @@ export const meta = {
       definition:
         'A notation in the pole audit record indicating that a pole\'s current attachment configuration is likely to require rearrangement before a new attachment can be added at the proposed height. A make-ready flag is not a final determination — it is a signal to the design engineer to perform a formal make-ready analysis. The field walker measures and flags; the design engineer applies the standards and orders the work.',
     },
+    {
+      term: 'midspan clearance',
+      definition:
+        'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (the midpoint between poles, where the cable sags deepest). Midspan clearance is the governing safety measurement for aerial plant: it determines whether a cable is high enough for vehicles, watercraft, or pedestrians to pass safely underneath. The field auditor records pole heights and attachment heights; the design engineer calculates midspan clearance using sag tables and loading conditions (T05 scope). Field crews flag any span where the cable appears to hang unusually low.',
+    },
+    {
+      term: 'pole class',
+      definition:
+        'A load-capacity rating assigned to utility poles under the ANSI O5.1 standard. Class 1 is the highest-rated (strongest) and Class 6 is the lowest-rated; H-classes (H1, H2, etc.) are extra-heavy-duty poles used for transmission lines and unusually long spans. The class is stamped or stenciled on the pole butt. A lower-class pole (Class 4 or 5) may not be able to accept additional attachment load without replacement or guying — field crews record the class so the design engineer can include it in the formal pole-loading analysis.',
+    },
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'pole', source_lesson_id: 'T01.L01' },
-    { term: 'attachment', source_lesson_id: 'T01.L01' },
-    { term: 'make-ready', source_lesson_id: 'T01.L01' },
-    { term: 'joint-use', source_lesson_id: 'T01.L01' },
-    { term: 'clearance', source_lesson_id: 'T01.L01' },
-    { term: 'span', source_lesson_id: 'T01.L01' },
+    { term: 'pole', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'make-ready', source_lesson_id: 'T01.L05' },
+    { term: 'joint-use', source_lesson_id: 'T01.L02' },
+    { term: 'clearance', source_lesson_id: 'T01.L02' },
+    { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'hazard identification', source_lesson_id: 'T04.L01' },
     { term: 'photo log', source_lesson_id: 'T04.L01' },
@@ -170,6 +182,16 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
               front: 'What is a make-ready flag in a pole audit?',
               back: 'A notation indicating that a pole\'s current attachment configuration is likely to require rearrangement before a new attachment can be added at the proposed height. It is not a final determination — it signals the design engineer to perform a formal make-ready analysis. The field walker measures and flags; the design engineer applies the standards.',
             },
+            {
+              id: 'T04-L04-fc-midspan-clearance',
+              front: 'What is midspan clearance?',
+              back: 'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (midpoint between poles, where the cable sags deepest). Midspan clearance governs whether a cable is high enough for vehicles, watercraft, or pedestrians to pass underneath safely. Field crews record pole heights; design engineers calculate clearance using sag tables (T05 scope).',
+            },
+            {
+              id: 'T04-L04-fc-pole-class',
+              front: 'What is pole class under ANSI O5.1?',
+              back: 'A load-capacity rating assigned to utility poles. Class 1 = highest-rated (strongest); Class 6 = lowest-rated; H-classes (H1, H2, etc.) = extra-heavy-duty for transmission and long spans. Stamped or stenciled on the pole butt. A lower-class pole (Class 4 or 5) may not support additional attachment load without replacement or guying — always record the class for the design engineer\'s pole-loading analysis.',
+            },
           ]}
         />
       </section>
@@ -202,12 +224,19 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             coordinate. This anchors the pole in the GIS layer from L03.
           </li>
           <li>
-            <strong>Pole class and height.</strong> The pole class (e.g., Class 3, Class 4) tells you
-            the rated load capacity; the height tells you the usable attachment zone.
-            If the pole has a stencil, read it. If not, measure from the ground line to the top.
-            Record both the measured height AND the stenciled height if visible — discrepancies
-            (e.g., stencil says 40 ft, you measure 45 ft) need to be flagged because the pole
-            may have been re-set in the ground at a different depth.
+            <strong>Pole class and height.</strong> The pole class (e.g., Class 1, Class 3) is a
+            load-capacity rating under the <strong>ANSI O5.1</strong> standard — Class 1 is the
+            highest-rated (strongest) pole; Class 6 is the lowest-rated; H-classes (H1, H2, etc.)
+            are extra-heavy-duty poles used for transmission and very long spans. Lower-class poles
+            (Class 4 or 5) may not be able to carry the horizontal tension load of a new fiber
+            attachment without replacement or additional guying — record the class so the design
+            engineer can include it in the formal pole-loading analysis (T05 scope).
+            <br />
+            Record the stenciled height from the pole butt. If no stencil is visible, measure from
+            the ground line to the top. Record BOTH the stenciled value AND your field measurement
+            if both are available — discrepancies (e.g., stencil says 40 ft, field measures 45 ft)
+            mean the pole may have been re-set at a different burial depth and must be flagged for
+            design engineer review.
           </li>
           <li>
             <strong>Attachment heights, bottom to top.</strong> Starting from the lowest attachment
@@ -223,6 +252,33 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             strand with a lashing wire? A self-supporting ADSS cable? A service drop? Is the
             strand rusted, sagging, or twisted? Note physical condition issues — a sagging
             strand may indicate a broken deadend or damaged guy wire on an adjacent pole.
+          </li>
+          <li>
+            <strong>Anchor and guy wire inventory.</strong> Record the presence and condition of
+            every guy wire on the pole: lead angle (direction the guy runs from the pole),
+            anchor type (log anchor, screw anchor, plate anchor — each has different holding
+            strength), visible rod condition (rust, heaving out of the ground, bent rod), and
+            approximate lead length to the anchor. Guy wires provide resistance to the horizontal
+            tension loads from aerial cable — if an existing guy is corroded or an anchor is
+            heaving, the design engineer needs to know before adding new attachment load. A pole
+            with no guys in a multi-span application may need new guying as part of make-ready.
+            Reference: RUS Bulletin 1751F-630 § 7 implicitly requires this data for pole-loading
+            calculations.
+          </li>
+          <li>
+            <strong>Pole ownership identification.</strong> Identify who owns the pole before
+            leaving the site. Only the pole owner can authorize make-ready work and accept the
+            14/30/14-day OTMR application sequence (FCC Order 18-111). Misidentifying ownership
+            delays the project by weeks. Identification methods:
+            <ul className="list-disc pl-4 mt-1 space-y-1">
+              <li><strong>Visible ownership tag</strong> — many utilities stamp or tag their poles with a company identifier on the butt or crossarm.</li>
+              <li><strong>NECA database lookup</strong> — the National Exchange Carrier Association database maps exchange territory to pole owners in many jurisdictions.</li>
+              <li><strong>County GIS or tax records</strong> — parcel records sometimes identify the utility company with a linear easement in the corridor.</li>
+              <li><strong>Local knowledge</strong> — field crews often recognize the construction style and hardware of the local electric cooperative or telephone company.</li>
+            </ul>
+            Record the identified owner in the audit and note the identification method used.
+            If ownership is uncertain, flag as "owner unknown — confirm before OTMR application."
+            Cross-reference: T08 (Make-Ready &amp; Pole Attachment) covers the full OTMR process.
           </li>
           <li>
             <strong>Calculate the gap to proposed attachment zone.</strong> If the design team
