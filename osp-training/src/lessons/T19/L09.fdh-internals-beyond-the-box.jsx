@@ -1,0 +1,607 @@
+// T19.L09 — FDH Internals: Beyond the Box
+// Lesson type: working
+// Teaching position: T19, lesson 9 of 10
+
+import React, { useState } from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import { Flashcard } from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T19.L09',
+  course_id: 'T19',
+  title: 'FDH Internals — Beyond the Box',
+  order: 9,
+  lesson_type: 'working',
+  prerequisites: ['T19.L08'],
+  vocabulary_introduced: [
+    'FDH',
+    'modular bay',
+    'splitter cassette',
+    'connector field',
+    'demarc',
+    'drop fiber',
+  ],
+  key_terms: [
+    {
+      term: 'FDH',
+      definition:
+        'Fiber Distribution Hub — the outdoor enclosure (typically a ground-mounted cabinet or aerial terminal) where feeder fiber from the headend transitions to drop fibers serving individual subscribers. Inside an FDH you find: the feeder termination block, the splitter cassettes, and the subscriber connector field. The FDH is the last active fiber management point before the drop.',
+    },
+    {
+      term: 'modular bay',
+      definition:
+        "A standardized slot inside an FDH cabinet that accepts a removable cassette tray. Modular bays let the operator install only as many splitter cassettes as current subscriber count demands, then add bays as the neighborhood grows. A typical GPON FDH has 8–12 modular bay positions. Each bay accepts one or two cassettes, depending on manufacturer's design.",
+    },
+    {
+      term: 'splitter cassette',
+      definition:
+        "A self-contained plastic module that houses one or more passive optical splitters — devices that take one input fiber and split its signal to multiple output fibers. A 1×32 splitter takes a single feeder fiber carrying 2.5 Gbps GPON downstream and presents 32 individual outputs, each carrying 1/32 of that signal. The cassette protects the delicate splitter pigtails and clips into a modular bay.",
+    },
+    {
+      term: 'connector field',
+      definition:
+        "The panel of SC/APC or LC/APC ports on the subscriber-facing (output) side of the FDH's splitter cassettes. Each port in the connector field corresponds to one subscriber drop. The field technician plugs the subscriber's drop fiber into this port. Because each port is individually labeled and addressable, a craft tech can trace any subscriber's optical path from OLT port through feeder, splitter cassette, connector field port, and drop to the ONT — without disturbing neighboring services.",
+    },
+    {
+      term: 'demarc',
+      definition:
+        'Demarcation point — the physical boundary between the carrier\'s network and the subscriber\'s premises. For a residential GPON customer, the demarc is typically the ONT (optical network terminal) mounted on the inside or outside wall of the home. Everything from the OLT to the ONT input port is carrier-owned and carrier-maintained. Everything downstream of the ONT output ports (router, internal wiring, devices) is customer-owned. Understanding demarc is critical for field troubleshooting — whose problem is it?',
+    },
+    {
+      term: 'drop fiber',
+      definition:
+        'The last segment of fiber from the FDH connector field to the subscriber demarc (ONT). Drop fiber is typically 2-fiber or 1-fiber micro-cable (2mm–3mm OD), armored or unarmored depending on burial/aerial method. Drop lengths range from tens of feet (aerial span to MDU) to a half-mile or more (rural buried drops). Drop fiber is terminated factory-SC/APC on the FDH end and fusion-spliced to a pigtail or field-terminated at the ONT end.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'FOSC', source_lesson_id: 'T19.L08' },
+    { term: 'express fiber', source_lesson_id: 'T19.L08' },
+    { term: 'split fiber', source_lesson_id: 'T19.L08' },
+    { term: 'pigtail', source_lesson_id: 'T19.L07' },
+    { term: 'OLT', source_lesson_id: 'T19.L02' },
+    { term: 'GPON', source_lesson_id: 'T01.L08' },
+    { term: 'splice organizer', source_lesson_id: 'T19.L07' },
+    { term: 'feeder cable', source_lesson_id: 'T06.L01' },
+  ],
+  estimated_minutes: 25,
+};
+
+// ── Annotated Diagram data ─────────────────────────────────────────────────
+
+const fdhDiagramHotpoints = [
+  {
+    id: 'hp-feeder-entry',
+    x: 12,
+    y: 50,
+    label: 'Feeder Entry & Splice Tray',
+    explanation:
+      'The feeder cable enters the FDH from below (buried conduit) or from the side (aerial). The outer sheath is stripped, and individual buffer tubes are routed to a splice tray inside the cabinet. Express fibers are spliced through to exit the FDH toward the next node; split fibers are spliced to splitter cassette input pigtails. All splices sit in a gel-free fusion-splice organizer tray.',
+  },
+  {
+    id: 'hp-modular-bay',
+    x: 40,
+    y: 35,
+    label: 'Modular Bay Slots',
+    explanation:
+      "The center section of the FDH cabinet holds the modular bay rack. Each bay position has a locking slot that accepts a standard-width splitter cassette. An empty slot has a blank cover panel — the cover keeps dust out and the design intent visible. Most FDH platforms support 8–12 bay slots. Fill only what you need now; add cassettes as subscribers sign up.",
+  },
+  {
+    id: 'hp-splitter-cassette',
+    x: 40,
+    y: 60,
+    label: 'Splitter Cassette (1×32)',
+    explanation:
+      "Each installed cassette contains one or more passive optical splitters. A 1×32 cassette: one input pigtail (SC/APC, feeder side) connects to the single input port of the splitter; 32 output pigtails exit through the cassette's face to the connector field. The split ratio determines subscriber capacity per feeder strand. GPON commonly uses 1×32 or two-stage 1×4 then 1×8 cascaded splits.",
+  },
+  {
+    id: 'hp-connector-field',
+    x: 72,
+    y: 45,
+    label: 'Subscriber Connector Field',
+    explanation:
+      'The output face of each splitter cassette presents SC/APC ports, one per subscriber. These ports are labeled by splitter output number (typically 01–32). The field tech connects the subscriber\'s drop fiber here. A color-coded dust cap (green = SC/APC, beige = SC/UPC) protects unused ports. Never leave a port uncapped outdoors — contaminants on the ferrule face cause the #1 source of FDH connector loss: dirty connules.',
+  },
+  {
+    id: 'hp-drop-exit',
+    x: 88,
+    y: 55,
+    label: 'Drop Exit & Cable Management',
+    explanation:
+      'Drop fibers exit the FDH through strain-relief grommets or a drip-loop management tray. Each drop is individually labeled with the subscriber\'s address or pole number. Proper cable management prevents sharp bends (remember: SMF minimum bend radius ≥ 30mm during installation per IEC 61300-3-34), and protects the SC/APC ferrule inside the cabinet from mechanical vibration. Aerial drops are supported by a separate messenger strand — never let the fiber carry its own weight over long spans.',
+  },
+];
+
+const fdhDiagramSvg = (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={{ background: '#f0f4f8', width: '100%', height: 'auto' }}>
+    {/* Cabinet outline */}
+    <rect x="5" y="10" width="90" height="80" rx="3" ry="3" fill="#dce8f5" stroke="#4a7eb5" strokeWidth="1.5" />
+    {/* Section labels */}
+    <text x="8" y="22" fontSize="4" fill="#333">Feeder</text>
+    <text x="8" y="27" fontSize="4" fill="#333">Entry</text>
+    <text x="32" y="22" fontSize="4" fill="#333">Modular Bays</text>
+    <text x="65" y="22" fontSize="4" fill="#333">Connector</text>
+    <text x="65" y="27" fontSize="4" fill="#333">Field</text>
+    {/* Feeder entry section */}
+    <rect x="6" y="30" width="22" height="50" fill="#b8d4ee" stroke="#4a7eb5" strokeWidth="0.8" />
+    <line x1="10" y1="50" x2="24" y2="50" stroke="#2255aa" strokeWidth="1" strokeDasharray="3,1" />
+    <text x="9" y="55" fontSize="3" fill="#444">splice tray</text>
+    {/* Modular bay section */}
+    <rect x="30" y="30" width="32" height="50" fill="#cde8cd" stroke="#4a9b4a" strokeWidth="0.8" />
+    {/* Bay slots */}
+    {[0, 1, 2, 3].map(i => (
+      <rect key={i} x="32" y={32 + i * 12} width="28" height="10" rx="1" fill={i < 3 ? '#7ec87e' : '#ddd'} stroke="#4a9b4a" strokeWidth="0.6" />
+    ))}
+    <text x="33" y="38" fontSize="3" fill="#fff">Cassette 1×32</text>
+    <text x="33" y="50" fontSize="3" fill="#fff">Cassette 1×32</text>
+    <text x="33" y="62" fontSize="3" fill="#fff">Cassette 1×32</text>
+    <text x="33" y="74" fontSize="3.5" fill="#888">[ empty ]</text>
+    {/* Connector field section */}
+    <rect x="64" y="30" width="28" height="50" fill="#f5e8c8" stroke="#b07a20" strokeWidth="0.8" />
+    {/* Port rows */}
+    {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+      <rect key={i} x="66" y={32 + i * 6} width="22" height="4" rx="0.5" fill="#f0c060" stroke="#b07a20" strokeWidth="0.4" />
+    ))}
+    {/* Drop fiber exits */}
+    <line x1="94" y1="40" x2="100" y2="38" stroke="#c06000" strokeWidth="0.8" />
+    <line x1="94" y1="50" x2="100" y2="50" stroke="#c06000" strokeWidth="0.8" />
+    <line x1="94" y1="60" x2="100" y2="62" stroke="#c06000" strokeWidth="0.8" />
+    {/* Feeder entry arrow */}
+    <line x1="0" y1="50" x2="6" y2="50" stroke="#2255aa" strokeWidth="1.2" markerEnd="url(#arrow)" />
+    <defs>
+      <marker id="arrow" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto">
+        <path d="M0,0 L4,2 L0,4 Z" fill="#2255aa" />
+      </marker>
+    </defs>
+    <text x="1" y="48" fontSize="3" fill="#2255aa">feeder</text>
+    <text x="1" y="53" fontSize="3" fill="#2255aa">in</text>
+  </svg>
+);
+
+// ── Branching Scenario data ────────────────────────────────────────────────
+
+const fdhScenarioStates = {
+  start: {
+    id: 'start',
+    description:
+      "You're at the FDH adding a new subscriber — house at 123 Maple St. The customer signed up for GPON 1 Gbps service. You open the FDH cabinet and assess the situation.",
+    prompt: 'What do you do first?',
+    choices: [
+      { label: 'Check whether a splitter cassette with a free port already exists in the connector field', nextState: 'check-cassette' },
+      { label: 'Start pulling the drop fiber from the house and worry about the FDH end later', nextState: 'drop-first-wrong' },
+      { label: 'Call the NOC and ask them to assign you a feeder strand', nextState: 'call-noc-wrong' },
+    ],
+  },
+  'check-cassette': {
+    id: 'check-cassette',
+    description:
+      'Smart — you inventory the FDH first. You find: Cassette 1 has 32 ports; 31 are capped with drop fibers, 1 port (port 32) has a green dust cap and no drop fiber plugged in. Cassette 2 position is an empty modular bay slot (blank panel installed).',
+    prompt: 'Port 32 on Cassette 1 is free. What do you do?',
+    choices: [
+      { label: 'Verify with OSS/provisioning that port 32 is actually unassigned before connecting anything', nextState: 'verify-oss' },
+      { label: 'The dust cap means it\'s free — just connect the drop fiber and call the job done', nextState: 'skip-verify-wrong' },
+    ],
+  },
+  'drop-first-wrong': {
+    id: 'drop-first-wrong',
+    description:
+      'You pull 300 ft of drop fiber from the house to the FDH and then discover the FDH has zero free ports — every cassette is full and there are no more modular bay slots with cassettes. You now have to order a new cassette, wait for delivery, and come back. The drop cable is just sitting coiled on the ground for days.',
+    prompt: 'Lesson learned?',
+    choices: [{ label: 'Always inventory the FDH before pulling the drop', nextState: 'lesson-drop-first' }],
+  },
+  'call-noc-wrong': {
+    id: 'call-noc-wrong',
+    description:
+      'The NOC doesn\'t manage individual feeder strands at the FDH level — that\'s physical plant, your responsibility. The NOC provisions OLT ports and ONT serial numbers, not FDH splitter ports. They ask you to check the FDH directly.',
+    prompt: 'What now?',
+    choices: [{ label: 'Go inspect the FDH connector field', nextState: 'check-cassette' }],
+  },
+  'verify-oss': {
+    id: 'verify-oss',
+    description:
+      'Good habit. You check the OSS (Operations Support System) and confirm port 32 on Cassette 1 is unassigned — no subscriber record, no active service. The provisioning team confirms it\'s available. You connect 123 Maple St\'s drop fiber to port 32, label the drop fiber with the address, update the OSS with the assignment, and cap any unused pigtails.',
+    prompt: 'Job complete. What\'s the final step before leaving?',
+    choices: [
+      { label: 'Test optical power level at the ONT to confirm the link budget is within spec before leaving site', nextState: 'test-power' },
+      { label: 'Leave — provisioning will test from their end', nextState: 'leave-early-wrong' },
+    ],
+  },
+  'skip-verify-wrong': {
+    id: 'skip-verify-wrong',
+    description:
+      'Three days later you get a trouble ticket: subscriber at 456 Oak Ave lost service. The OSS shows their service is on Cassette 1 port 32 — the port you used. Turns out port 32 had a legitimate subscriber assigned in the OSS; the physical drop was just unplugged temporarily during earlier maintenance and never re-tagged correctly in the field. Your new customer is working, but 456 Oak Ave is dark. You have to roll a truck to fix it.',
+    prompt: 'Lesson?',
+    choices: [{ label: 'Always verify OSS assignment before using any port that appears physically free', nextState: 'lesson-skip-verify' }],
+  },
+  'test-power': {
+    id: 'test-power',
+    description:
+      'You use an optical power meter at the ONT to read –25 dBm received downstream. The OLT is outputting at Class B+ (+1.5 to +5 dBm per ITU-T G.984.2). A –25 dBm receive level against a typical +3 dBm OLT output means 28 dB total path loss. GPON Class B+ link budget is 28 dB max. You\'re right at the limit. You note this in your work order and flag the drop length as a long-reach drop — provisioning should monitor the signal margin.',
+    prompt: 'Result?',
+    choices: [{ label: 'Done — job complete with documented link margin', nextState: 'success' }],
+  },
+  'leave-early-wrong': {
+    id: 'leave-early-wrong',
+    description:
+      'Provisioning runs activation tests and finds the ONT is showing red (no optical signal). The drop is connected wrong at the ONT end — an SC/APC polarity swap. You have to roll back to site. Field verification would have caught this in 2 minutes.',
+    prompt: 'Lesson?',
+    choices: [{ label: 'Always verify optical power at the ONT before leaving site', nextState: 'lesson-leave-early' }],
+  },
+  'lesson-drop-first': {
+    id: 'lesson-drop-first',
+    description:
+      'Correct: always audit the FDH — count available ports, check for free modular bay slots, verify cassette inventory — BEFORE pulling the drop. FDH capacity determines whether a new subscriber can be added at all, and whether a new cassette or splitter needs to be ordered.',
+    prompt: 'Scenario complete.',
+    choices: [],
+    isTerminal: true,
+  },
+  'lesson-skip-verify': {
+    id: 'lesson-skip-verify',
+    description:
+      'Correct: physical appearance (dust cap present, no fiber plugged in) does not equal OSS-assigned-free. Always check the system of record. In a production network, a port with a cap might belong to a temporarily-disconnected subscriber, a spare reserved for a pending install, or a test port. Physical plant and OSS records must agree before you touch anything.',
+    prompt: 'Scenario complete.',
+    choices: [],
+    isTerminal: true,
+  },
+  'lesson-leave-early': {
+    id: 'lesson-leave-early',
+    description:
+      'Correct: take 2 minutes to read optical power at the ONT with a meter before leaving. A live link-budget measurement confirms: correct fiber routing, correct SC/APC polarity, correct connector seating, and adequate signal margin. It is the single most efficient quality check you can do at drop completion.',
+    prompt: 'Scenario complete.',
+    choices: [],
+    isTerminal: true,
+  },
+  success: {
+    id: 'success',
+    description:
+      'Job well done. You inventoried the FDH, verified OSS records, connected the drop, documented the assignment, and confirmed optical power at the ONT. This is the standard completion protocol for a GPON subscriber add at an FDH. Repeat it on every install.',
+    prompt: 'Scenario complete.',
+    choices: [],
+    isTerminal: true,
+  },
+};
+
+// ── Quiz data ──────────────────────────────────────────────────────────────
+
+const lessonQuiz = [
+  {
+    id: 'T19L09-Q1',
+    question:
+      'Inside an FDH, the modular bay slots accept _____ that house the passive optical splitters.',
+    type: 'multiple-choice',
+    options: [
+      'splice organizer trays',
+      'splitter cassettes',
+      'FOSC modules',
+      'distribution frames',
+    ],
+    correctIndex: 1,
+    explanation:
+      'Modular bay slots accept splitter cassettes. Each cassette is a self-contained module housing one or more passive splitters. Splice trays sit in the feeder entry section; FOSCs are separate closures; distribution frames are headend-side hardware.',
+  },
+  {
+    id: 'T19L09-Q2',
+    question:
+      "A 1×32 splitter cassette takes _____ input fiber(s) and presents _____ subscriber output port(s).",
+    type: 'multiple-choice',
+    options: ['32 / 1', '2 / 32', '1 / 32', '4 / 8'],
+    correctIndex: 2,
+    explanation:
+      'A 1×32 splitter takes ONE feeder input and splits it to 32 subscriber outputs. This is the defining topology of PON: one feeder strand serves up to 32 subscribers on GPON (up to 128 on XGS-PON).',
+  },
+  {
+    id: 'T19L09-Q3',
+    question:
+      'The demarc for a residential GPON subscriber is typically located at:',
+    type: 'multiple-choice',
+    options: [
+      'The FDH connector field port',
+      'The OLT port card in the headend',
+      'The ONT mounted at the customer premises',
+      'The splice organizer tray inside the FDH',
+    ],
+    correctIndex: 2,
+    explanation:
+      "The demarc is the ONT at the subscriber's premises. The carrier owns and maintains everything from OLT through feeder, FDH splitter, and drop fiber to the ONT input port. The customer owns the ONT output ports and beyond.",
+  },
+  {
+    id: 'T19L09-Q4',
+    question:
+      "Before connecting a subscriber's drop fiber to an FDH port that appears physically free (dust cap on, no fiber installed), you should:",
+    type: 'multiple-choice',
+    options: [
+      'Connect immediately — a dust cap means the port is available',
+      'Verify OSS records to confirm the port is unassigned',
+      'Call the NOC to have them release the port',
+      'Remove the cassette and inspect the splitter internally',
+    ],
+    correctIndex: 1,
+    explanation:
+      'A physical dust cap does not mean the port is OSS-unassigned. Always verify in the operations support system. A capped port may belong to a temporarily-disconnected subscriber or pending install. Physical plant and OSS must agree.',
+  },
+  {
+    id: 'T19L09-Q5',
+    question:
+      'Drop fiber typically connects the FDH connector field to the:',
+    type: 'multiple-choice',
+    options: [
+      'OLT in the headend rack',
+      'Feeder splice point in the FOSC',
+      'ONT at the subscriber demarc',
+      'TMGB in the headend equipment room',
+    ],
+    correctIndex: 2,
+    explanation:
+      'Drop fiber is the last segment — from the FDH connector field to the subscriber ONT (the demarc). It is distinct from feeder fiber (OLT to FDH) and from express fiber (passing through an FOSC without being accessed).',
+  },
+];
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+export default function T19L09_FDHInternals() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          You already know what an FDH is from the outside — a green or gray metal cabinet sitting on a concrete pad or
+          strapped to a pole, somewhere between the headend and the neighborhood. But when you crack the door, there's a
+          lot going on inside. This lesson opens the box and explains every compartment: where the feeder cable lands,
+          where the splitter cassettes sit, and where individual subscriber drop fibers plug in.
+        </p>
+        <p>
+          Understanding FDH internals matters for two reasons. First, when you're adding a subscriber, you need to know
+          whether a free port exists, where it is, and how to record the assignment properly. Second, when a subscriber
+          loses service, the FDH is one of the three places a field tech checks (the others are the ONT at the house and
+          the OLT in the headend) — and you can only troubleshoot it efficiently if you know what you're looking at.
+        </p>
+
+        <h3>Acronyms Used in This Lesson</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+          <thead>
+            <tr style={{ background: '#4a7eb5', color: '#fff' }}>
+              <th style={{ padding: '6px 10px', textAlign: 'left' }}>Acronym</th>
+              <th style={{ padding: '6px 10px', textAlign: 'left' }}>Stands For</th>
+              <th style={{ padding: '6px 10px', textAlign: 'left' }}>What It Means in Practice</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['FDH', 'Fiber Distribution Hub', 'The outdoor cabinet where feeder fiber meets subscriber drop fibers'],
+              ['ONT', 'Optical Network Terminal', "The device at the subscriber's home that converts optical signal to Ethernet"],
+              ['OSS', 'Operations Support System', 'The software database tracking which port is assigned to which subscriber'],
+              ['GPON', 'Gigabit Passive Optical Network', 'The common PON standard using 1×32 or 1×64 splits at the FDH'],
+              ['SC/APC', 'Subscriber Connector / Angled Physical Contact', 'The green-keyed connector type used on GPON subscriber ports in the FDH'],
+              ['OLT', 'Optical Line Terminal', 'The headend rack unit that drives the optical signal out to the FDH'],
+            ].map(([acro, expansion, practice]) => (
+              <tr key={acro} style={{ borderBottom: '1px solid #ddd' }}>
+                <td style={{ padding: '5px 10px', fontWeight: 'bold' }}>{acro}</td>
+                <td style={{ padding: '5px 10px' }}>{expansion}</td>
+                <td style={{ padding: '5px 10px', color: '#444' }}>{practice}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3>The Three Zones Inside an FDH</h3>
+        <p>Think of the FDH interior as three zones from left to right (or bottom to top, depending on the cabinet orientation):</p>
+        <ol>
+          <li>
+            <strong>Zone 1 — Feeder Entry:</strong> The feeder cable arrives here. The jacket is stripped, buffer tubes are
+            fanned out, and individual fibers are routed to a gel-free splice organizer tray. Express fibers pass through
+            without being accessed (they're heading to the next FDH downstream). Split fibers get fusion-spliced to the
+            input pigtails of the splitter cassettes.
+          </li>
+          <li>
+            <strong>Zone 2 — Modular Bay Slots:</strong> The middle section of the cabinet. This is where the splitter
+            cassettes live. Each modular bay slot accepts one removable cassette. Unused slots have blank cover panels
+            installed to keep dust out.
+          </li>
+          <li>
+            <strong>Zone 3 — Subscriber Connector Field:</strong> The output face of the splitter cassettes. Rows of
+            SC/APC ports, each port corresponding to one subscriber. This is where the field tech plugs in the drop fiber.
+          </li>
+        </ol>
+      </section>
+
+      {/* ── ANNOTATED DIAGRAM ─────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h3>FDH Cabinet Interior — Click Each Zone</h3>
+        <AnnotatedDiagram
+          diagramContent={fdhDiagramSvg}
+          hotpoints={fdhDiagramHotpoints}
+          title="FDH Interior Layout (Simplified Schematic)"
+        />
+        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          Click each labeled point to read a description of that FDH zone. Left to right: feeder entry → modular bays →
+          connector field → drop exits.
+        </p>
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>How a 1×32 Splitter Cassette Works</h2>
+        <p>
+          The star player inside the FDH is the <strong>splitter cassette</strong>. This is a plastic module about the
+          size of a thick paperback book. It holds a passive optical splitter — a device made of fused fiber that splits
+          one optical signal into many without any electronics, without any power supply, and without any moving parts.
+        </p>
+        <p>
+          A <strong>1×32 splitter</strong> takes one feeder input (carrying a GPON downstream signal at roughly
+          2.5 Gbps) and divides it to 32 output fibers. Each output carries 1/32 of the original signal power. In
+          decibel terms, the splitter itself adds approximately 17–17.5 dB of passive insertion loss (plus connector and
+          splice losses) to every subscriber's path. This is why the link budget math matters — each dB of margin you
+          give back to the splitter is a dB you can't spend on drop length or connector count.
+        </p>
+        <div style={{
+          background: '#fff8e1', border: '2px solid #f0a500', borderRadius: '6px',
+          padding: '14px 18px', margin: '1rem 0'
+        }}>
+          <strong>Book vs. Field — Cassette Fill Rate</strong>
+          <p style={{ marginTop: '8px' }}>
+            <em>The book says:</em> fully populate modular bays per the design — if you're engineering for 32 subscribers
+            per FDH, install all the cassettes on day one to ensure uniformity.
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            <em>Field practice says:</em> RUS-program build discipline is to install cassettes incrementally as
+            subscribers are actually added (overbuild mitigation). An FDH with 8 modular bay slots and 3 subscribers
+            should have 1 cassette installed (covering 32 potential subscribers) with 7 blank bays. This avoids spending
+            capital on cassettes that sit idle for years in low-take-rate areas. The risk is forgetting to order the
+            cassette before the subscriber connection date — creating a truck-roll gap.
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            <em>Which applies:</em> follow the design-of-record and the program's construction standard. RUS 7 CFR 1755
+            programs generally allow phased cassette installation. Private or large ISP builds often specify full
+            population at time of construction for operational simplicity.
+          </p>
+        </div>
+
+        <h3>The Connector Field — Port-Level Discipline</h3>
+        <p>
+          Every port on the connector field corresponds to one subscriber. Each port has a label — typically a number
+          (01–32) that matches the splitter output number, plus an address or account number applied by the field crew.
+          Port labels are the only way to trace a subscriber's physical path without an OTDR — guard them carefully.
+        </p>
+        <p>
+          <strong>SC/APC vs. SC/UPC:</strong> GPON subscriber ports in the connector field are always <strong>SC/APC</strong>
+          (angled, green-keyed connectors). Never substitute SC/UPC (beige keyed) in an FDH GPON application. The 8-degree
+          angle of the APC ferrule face reduces back-reflection by roughly 60 dB compared to a flat UPC connector. In a
+          GPON system, back-reflection at subscriber ports propagates upstream and degrades signal quality for all
+          32 subscribers sharing that splitter — not just the one with the wrong connector. One wrong connector type can
+          degrade an entire PON branch.
+        </p>
+
+        <h3>Drop Fiber — The Last Mile (or Quarter-Mile)</h3>
+        <p>
+          The <strong>drop fiber</strong> is the segment from the FDH connector field port to the subscriber's ONT
+          (the <strong>demarc</strong>). Typical drop fiber specifications:
+        </p>
+        <ul>
+          <li>2mm or 3mm micro-cable (lightweight, easy to handle)</li>
+          <li>1-fiber (simplex) — GPON is single-fiber bidirectional (1490 nm downstream, 1310 nm upstream on the same strand)</li>
+          <li>Armored for buried drops in high-rodent-activity areas; unarmored for most aerial drops</li>
+          <li>Factory-terminated SC/APC on the FDH end (installed before pulling) OR field-terminated after pull</li>
+          <li>Fusion-spliced to a pigtail at the ONT end, or field-terminated if a field-mount connector is specified</li>
+          <li>Maximum drop length per GPON Class B+ link budget: typically 12–15 km total path, but practical drops rarely exceed 2 km</li>
+        </ul>
+
+        <div style={{
+          background: '#fff8e1', border: '2px solid #f0a500', borderRadius: '6px',
+          padding: '14px 18px', margin: '1rem 0'
+        }}>
+          <strong>Book vs. Field — Drop Length Limits</strong>
+          <p style={{ marginTop: '8px' }}>
+            <em>The book says:</em> GPON Class B+ (ITU-T G.984.2) allows a differential reach of 20 km and a maximum
+            reach of 20 km from OLT to ONT.
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            <em>Field practice says:</em> the link budget, not the raw reach specification, is the binding constraint.
+            A 1×32 split adds 17–17.5 dB. Add feeder splice losses, FOSC connector losses, and FDH connector losses and
+            you may have only 8–10 dB of budget remaining for the drop. At 0.4 dB/km for G.652.D fiber at 1490 nm, that
+            limits the drop to roughly 20–25 km in ideal conditions — but OLT transmit power, ONT receive sensitivity,
+            and number of connectors in the path are the real variables. Calculate the full link budget per design
+            before specifying drop length limits. A long rural drop approaching 2 km should always trigger a
+            link-budget recalculation.
+          </p>
+        </div>
+      </section>
+
+      {/* ── BRANCHING SCENARIO ───────────────────────────────────────── */}
+      <section data-tier="working">
+        <h3>Scenario: Adding a Subscriber at the FDH</h3>
+        <p>
+          This scenario walks through the decision sequence for a field tech adding a new GPON subscriber at an FDH.
+          Make decisions as you would in the field — the scenario follows the consequences.
+        </p>
+        <BranchingScenario
+          scenarioId="T19-L09-scenario-1"
+          initialState="start"
+          states={fdhScenarioStates}
+          title="FDH Subscriber Add — Decision Tree"
+        />
+      </section>
+
+      {/* ── ADVANCED ─────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Cascaded Splitting and Two-Stage PON Architecture</h2>
+        <p>
+          A single 1×32 cassette at the FDH is the most common GPON architecture. But some designs use
+          <strong>cascaded (two-stage) splitting</strong>: a 1×4 split at the FDH, then a 1×8 split at a remote
+          secondary FDH or pedestal close to the subscriber cluster. The end result is still 1×32, but the loss is
+          distributed differently — and the field management is more complex (two FDHs to track, two connector fields
+          to maintain).
+        </p>
+        <p>
+          Two-stage architectures are used when feeder fiber count is scarce (e.g., a small-count feeder cable needs to
+          serve many subscribers over a wide area) or when traffic concentration points are geographically spread out.
+          The engineering tradeoff: two-stage designs reduce per-FDH cassette complexity but add a secondary enclosure
+          and additional connector/splice points in the path, increasing total insertion loss.
+        </p>
+
+        <h3>XGS-PON and Higher Split Ratios</h3>
+        <p>
+          GPON supports splits up to 1×64 (typically 1×32 in production deployments). XGS-PON (10G symmetrical,
+          ITU-T G.9807.1) supports 1×128 splits at higher OLT transmit power. XGS-PON uses the same physical plant
+          (SC/APC connectors, G.652.D fiber, same FDH enclosures) but requires XGS-capable OLT linecards and ONTs.
+          FDH cassettes for XGS-PON 1×64 splits are physically larger; modular bay systems designed for GPON
+          1×32 cassettes may not accept 1×64 cassettes without adapter kits — verify physical compatibility with
+          the manufacturer before specifying an upgrade path.
+        </p>
+
+        <h3>FDH as an OSP–ISP Boundary</h3>
+        <p>
+          The FDH is the clearest physical demarcation between Outside Plant (OSP) and Inside Plant (ISP) engineering
+          disciplines. The feeder entry side of the FDH is pure OSP: conduit, aerial span, cable specifications,
+          burial depth, bonding/grounding per TIA-607-D and NEC Art. 250.94, splice management.
+        </p>
+        <p>
+          The connector field and drop fiber side starts blending into subscriber-premises ISP territory: connector
+          type selection, drop cable routing, ONT mounting, demarc documentation, service activation. A complete
+          OSP engineer understands both sides of this boundary — because design decisions made on the OSP side (feeder
+          routing, FDH placement, splitter cassette selection) directly affect what the ISP side can deliver to the
+          subscriber.
+        </p>
+
+        <div style={{
+          background: '#e8f0fe', border: '2px solid #4a7eb5', borderRadius: '6px',
+          padding: '14px 18px', margin: '1rem 0'
+        }}>
+          <strong>Where FDH Fits in the Full Signal Chain</strong>
+          <p style={{ marginTop: '8px' }}>
+            OLT (headend rack) → feeder cable (OSP) → FOSC (OSP, aerial or buried) → FDH feeder entry zone →
+            splitter cassette → connector field → drop fiber → ONT (demarc) → subscriber router/switch (customer-owned).
+          </p>
+          <p style={{ marginTop: '6px' }}>
+            Every lesson in T19 covers one or more segments of this chain. T19.L09 (this lesson) covers the FDH node —
+            the key transition point. T19.L06 covered the headend entry grounding where the feeder originates.
+            T14 (Bonding, Grounding & Electrical Protection) will cover the full electrical safety framework for
+            every metal element in this chain, including the FDH cabinet ground lug and the bonding conductor from
+            the FDH to the nearest MGN bond point.
+          </p>
+        </div>
+      </section>
+
+      {/* ── FLASHCARDS ───────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>Key Terms — Flashcards</h2>
+        <p>Click each card to flip it and review the definition.</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '0.5rem' }}>
+          {meta.key_terms.map(({ term, definition }) => (
+            <Flashcard key={term} term={term} definition={definition} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── QUIZ ─────────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>Check Your Understanding</h2>
+        <Quiz questions={lessonQuiz} lessonId={meta.id} />
+      </section>
+
+    </LessonLayout>
+  );
+}
