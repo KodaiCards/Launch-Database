@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -380,49 +379,6 @@ export default function T04L06_KmzShapefilePdfDeliverables() {
           .laz natively.
         </p>
       </section>
-
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        src="/training/diagrams/t04-l06-format-comparison.svg"
-        alt="A comparison table showing OSP survey file formats across five characteristics: GIS-native, mobile-friendly, archival-compliant, CAD-compatible, and includes attribute data. Formats shown: KMZ, Shapefile, GeoTIFF, PDF/A, DWG."
-        hotPoints={[
-          {
-            x: 12,
-            y: 22,
-            label: 'KMZ — Mobile-Friendly',
-            explanation:
-              'KMZ opens in Google Earth on a phone or tablet with no special software. It\'s the go-to format for field crew review and client overviews. Limitation: attribute data is limited — a KMZ can carry point/line labels and popups, but not a full relational attribute table. Use it for communication, not as the GIS source-of-truth.',
-          },
-          {
-            x: 30,
-            y: 42,
-            label: 'Shapefile — GIS Source-of-Truth',
-            explanation:
-              'The shapefile is the primary GIS exchange format. It carries full attribute tables (pole number, height, owner, notes), geometry, and a coordinate-reference-system definition. It is the format the design engineer imports into their GIS platform. Always zip the four required companion files (.shp, .shx, .dbf, .prj) together — missing any one makes the shapefile unusable.',
-          },
-          {
-            x: 50,
-            y: 62,
-            label: 'GeoTIFF — Georeferenced Image',
-            explanation:
-              'A GeoTIFF is a raster image (like a high-resolution aerial photo) with embedded spatial coordinates. LiDAR-derived orthophotos and digital terrain models are delivered as GeoTIFFs. Unlike a shapefile (vector geometry), a GeoTIFF is a grid of pixels — it represents continuous imagery or elevation surfaces, not discrete features like poles or cable routes.',
-          },
-          {
-            x: 68,
-            y: 35,
-            label: 'PDF/A — Archival Required',
-            explanation:
-              'PDF/A (ISO/IEC 19005-1) is required for long-term archival submissions — permit agencies, RUS engineering packages, FCC-regulated recordkeeping. It differs from a standard PDF in that it embeds all fonts, disables external references, and produces a self-contained document that renders identically in any era. Check export settings before submitting to a permit agency — plain PDF is often silently rejected.',
-          },
-          {
-            x: 84,
-            y: 52,
-            label: 'DWG — Design Engineer\'s Format',
-            explanation:
-              'DWG is the native AutoCAD format. Design engineers work in DWG, drawing the engineering plan set (pole locations, cable routes, splice points, span annotations) layered over the survey basemap. DWG is NOT a GIS format — it lacks embedded coordinate-system metadata. The design engineer imports your GIS data, converts it to CAD geometry, then works in DWG. Delivering DWG back to the survey team or a permit agency requires the recipient to have AutoCAD or a compatible viewer.',
-          },
-        ]}
-      />
 
       {/* ── SIDE BY SIDE ────────────────────────────────────────────────── */}
       <SideBySide

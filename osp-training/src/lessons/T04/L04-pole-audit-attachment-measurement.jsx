@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -402,61 +401,28 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
         workedValueSummary="Example: Pole 14 field-measured at 45 ft (design record says 40 ft — 5 ft discrepancy, flagged). Existing attachments: Carrier A strand at 18 ft, Carrier B coax at 22 ft. Proposed fiber at 24 ft. Gap = 24 − 22 = 2 ft. Gap is adequate for initial field triage — no make-ready flag. But the 5 ft height discrepancy must be resolved by the design engineer before the pole is used in loading calculations. Note: this example is field triage only. The design engineer applies the formal clearance standards."
       />
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="Pole Vertical Zones — Existing and Proposed Attachments"
-        description="Click each labeled zone or attachment to see what it represents and what the field walker records. This diagram shows a joint-use pole with power in the supply zone and existing telecom plus proposed fiber in the communications zone."
-        src="/training/diagrams/t04-pole-attachment-zones.svg"
-        alt="Illustration of a utility pole showing the power supply zone at the top, the communications zone in the lower third, and labeled attachment points: power phase wires, neutral, existing telephone strand, existing coaxial cable, and proposed fiber attachment location"
-        aspectRatio={0.6}
-        hotPoints={[
-          {
-            id: 'power-phase',
-            x: 50,
-            y: 12,
-            label: 'Power Phase Wires',
-            type: 'click',
-            explanation:
-              'High-voltage supply conductors — owned and regulated by the electric utility. Telecom crews do not attach in this zone and do not measure clearance to phase wires directly. The electric utility\'s distribution engineer manages the supply zone. Record the approximate height of the lowest phase conductor in your audit notes as a reference point.',
-          },
-          {
-            id: 'neutral',
-            x: 50,
-            y: 28,
-            label: 'Neutral Wire',
-            type: 'click',
-            explanation:
-              'The power company\'s neutral (return) conductor. It defines the top boundary of the communications space — telecom attachments must maintain a required separation below the neutral. Measure the neutral height from the ground line and record it in the audit. A design engineer uses this measurement to verify the communications space is adequate. Do not calculate the required separation in the field — that is T05 design scope.',
-          },
-          {
-            id: 'existing-phone',
-            x: 35,
-            y: 55,
-            label: 'Existing Phone Strand (Carrier A)',
-            type: 'click',
-            explanation:
-              'An existing telephone company strand and lashed cable. Record the carrier (if labeled on the strand or by local knowledge), the attachment type (strand + lashed cable, self-supporting drop, etc.), and the measured height from ground line. This is part of the existing occupancy inventory.',
-          },
-          {
-            id: 'existing-coax',
-            x: 65,
-            y: 67,
-            label: 'Existing Coaxial Cable (Carrier B)',
-            type: 'click',
-            explanation:
-              'An existing cable TV or second telecom attachment. Record carrier, type, and height. This is typically the highest existing telecom attachment — the gap between this height and the proposed fiber height is the clearance gap you calculate and flag if tight.',
-          },
-          {
-            id: 'proposed-fiber',
-            x: 50,
-            y: 80,
-            label: 'Proposed Fiber Attachment Zone',
-            type: 'click',
-            explanation:
-              'The target height for the new fiber cable. Supplied by the design team before the pole audit. The field walker calculates the gap from the highest existing telecom attachment to this proposed height. If the gap is tight, a make-ready flag is added. If no proposed height is available, the field walker records the available space at the bottom of the communications zone and lets the engineer assign the height.',
-          },
-        ]}
-      />
+      {/* ── POLE ZONE FIELD RECORDING GUIDE ─────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>What to Record at Each Pole Zone — Field Audit Checklist</h4>
+        <p>During a pole audit, you record five zones on every joint-use pole from top to bottom:</p>
+        <ol>
+          <li>
+            <strong>Power Phase Wires (supply zone top)</strong> — High-voltage supply conductors owned and regulated by the electric utility. Telecom crews do not attach in this zone and do not measure clearance to phase wires directly. Record the approximate height of the lowest phase conductor in your audit notes as a reference point for the engineer.
+          </li>
+          <li>
+            <strong>Neutral Wire</strong> — The power company's neutral (return) conductor. It defines the top boundary of the communications space — telecom attachments must maintain a required separation below the neutral. Measure the neutral height from the ground line and record it. The design engineer uses this to verify the communications space is adequate. Do not calculate the required separation in the field — that is engineering scope.
+          </li>
+          <li>
+            <strong>Existing Phone Strand — Carrier A</strong> — An existing telephone company strand and lashed cable. Record the carrier (if labeled or by local knowledge), attachment type (strand + lashed cable, self-supporting drop, etc.), and measured height from ground line. This is part of the existing occupancy inventory.
+          </li>
+          <li>
+            <strong>Existing Coaxial Cable — Carrier B</strong> — An existing cable TV or second telecom attachment. Record carrier, type, and height. This is typically the highest existing telecom attachment — the gap between this height and the proposed fiber height is the clearance gap you flag if tight.
+          </li>
+          <li>
+            <strong>Proposed Fiber Attachment Zone</strong> — The target height for the new fiber cable, supplied by the design team before the audit. The field walker calculates the gap from the highest existing telecom attachment to this proposed height. If the gap is tight, add a make-ready flag. If no proposed height is available, record the available space at the bottom of the communications zone and let the engineer assign the height.
+          </li>
+        </ol>
+      </div>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
       <section data-tier="advanced">

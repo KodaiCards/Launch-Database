@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -416,61 +415,28 @@ export default function T04L02_DroneLidarAerialSurvey() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="LiDAR Point-Cloud Data Layers"
-        description="Click each layer to learn what it contains and how it's used in OSP route survey. The diagram shows a vertical slice through a LiDAR point cloud over a typical corridor with poles, trees, and ground."
-        src="/training/diagrams/t04-lidar-point-cloud-layers.svg"
-        alt="Cross-section diagram of a LiDAR point cloud over an OSP corridor showing classified layers: bare earth, low vegetation, medium vegetation, high canopy, structures and utilities"
-        aspectRatio={2.5}
-        hotPoints={[
-          {
-            id: 'bare-earth',
-            x: 50,
-            y: 88,
-            label: 'Bare Earth Layer',
-            type: 'click',
-            explanation:
-              'The lowest classified layer — points representing the actual ground surface after vegetation and structures are filtered out. Used to create the digital terrain model (DTM). The DTM feeds sag calculations (knowing the ground elevation helps determine ground clearance of a proposed aerial span). In forested corridors, LiDAR is often the only practical way to get bare-earth data because the tree canopy blocks satellite imagery.',
-          },
-          {
-            id: 'low-veg',
-            x: 20,
-            y: 70,
-            label: 'Low Vegetation',
-            type: 'click',
-            explanation:
-              'Points classified as ground cover, grass, shrubs, and brush up to about 2 m tall. In OSP work, dense low vegetation along a proposed route corridor is a construction access concern — it may need clearing before a bucket truck can navigate the shoulder. Low vegetation is also an indicator of potential wetland conditions (check for hydrophytic species markers).',
-          },
-          {
-            id: 'mid-canopy',
-            x: 30,
-            y: 50,
-            label: 'Mid Canopy / Understory',
-            type: 'click',
-            explanation:
-              'Points from shrubs, small trees, and understory up to approximately 8–10 m tall. In aerial OSP design, understory trees in a proposed span may create a vegetation encroachment concern for the cable catenary — if the span sags and the trees grow, there\'s a future conflict. The design engineer uses this layer to flag spans that need trimming or a higher attachment point.',
-          },
-          {
-            id: 'high-canopy',
-            x: 40,
-            y: 25,
-            label: 'High Canopy',
-            type: 'click',
-            explanation:
-              'Points from the tops of tall trees. High canopy is the most relevant vegetation layer for OSP aerial design because tall trees near a span affect both wind loading (trees can fall on a cable during a storm) and future vegetation management requirements. Canopy height subtracted from bare-earth elevation gives individual tree height — useful for identifying which trees need trimming to clear the future cable catenary.',
-          },
-          {
-            id: 'structures',
-            x: 75,
-            y: 40,
-            label: 'Structures & Utilities',
-            type: 'click',
-            explanation:
-              'Points classified as buildings, poles, power lines, and other man-made structures. For OSP work, this layer identifies existing utility poles (their height and approximate location) and aerial conductors (wires). The accuracy of this layer depends on point density — high-density scans (100+ pts/m²) can resolve individual conductors; lower-density scans may miss thin wires. The structure layer feeds the pole audit in T04.L04 by providing initial height estimates that field crews then verify with ground-truth measurements.',
-          },
-        ]}
-      />
+      {/* ── LIDAR LAYER BREAKDOWN ───────────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>LiDAR Point-Cloud Classification Layers — Bottom to Top</h4>
+        <p>A LiDAR point cloud is sorted into classified layers by processing software. Here are the five layers relevant to OSP route survey, from lowest to highest elevation:</p>
+        <ol>
+          <li>
+            <strong>Bare Earth Layer</strong> — Points representing the actual ground surface after vegetation and structures are filtered out. Used to create the DTM (Digital Terrain Model). The DTM feeds sag calculations — knowing the ground elevation determines ground clearance of a proposed aerial span. In forested corridors, LiDAR is often the only practical way to get bare-earth data because the tree canopy blocks satellite imagery.
+          </li>
+          <li>
+            <strong>Low Vegetation</strong> — Ground cover, grass, shrubs, and brush up to about 2 m tall. In OSP work, dense low vegetation along a proposed route corridor is a construction access concern — it may need clearing before a bucket truck can navigate the shoulder. Low vegetation is also an indicator of potential wetland conditions (check for hydrophytic species markers).
+          </li>
+          <li>
+            <strong>Mid Canopy / Understory</strong> — Shrubs, small trees, and understory up to approximately 8–10 m tall. In aerial OSP design, understory trees in a proposed span may create a vegetation encroachment concern for the cable catenary — if the span sags and trees grow, there's a future conflict. The design engineer uses this layer to flag spans that need trimming or a higher attachment point.
+          </li>
+          <li>
+            <strong>High Canopy</strong> — Points from the tops of tall trees. High canopy is the most relevant vegetation layer for OSP aerial design because tall trees near a span affect wind loading (trees can fall on a cable in a storm) and future vegetation management. Canopy height minus bare-earth elevation gives individual tree height — useful for identifying which trees need trimming to clear the future cable catenary.
+          </li>
+          <li>
+            <strong>Structures &amp; Utilities</strong> — Buildings, poles, power lines, and other man-made structures. For OSP work, this layer identifies existing utility poles (height and approximate location) and aerial conductors. Accuracy depends on point density — high-density scans (100+ pts/m²) can resolve individual conductors; lower-density scans may miss thin wires. This layer feeds the pole audit in T04.L04 by providing initial height estimates that field crews then verify with ground-truth measurements.
+          </li>
+        </ol>
+      </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz

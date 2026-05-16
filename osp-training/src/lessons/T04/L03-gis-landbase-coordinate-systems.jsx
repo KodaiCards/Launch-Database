@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -363,61 +362,28 @@ export default function T04L03_GISLandbaseCoordinateSystems() {
         </p>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ────────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        title="GIS Layer Stack — OSP Route Landbase"
-        description="Click each layer to learn what data it contains and where it fits in the trust hierarchy. Layers are shown from least accurate (bottom) to most accurate (top)."
-        src="/training/diagrams/t04-gis-layer-stack.svg"
-        alt="Stacked illustration of GIS data layers for an OSP route landbase: aerial imagery base at the bottom, then parcel boundaries, then utility locate layer, then LiDAR planimetric, then RTK field points at the top"
-        aspectRatio={1.8}
-        hotPoints={[
-          {
-            id: 'aerial-base',
-            x: 50,
-            y: 90,
-            label: 'Aerial Imagery Base',
-            type: 'click',
-            explanation:
-              'County GIS or satellite imagery. Useful for visual context but has 1–5 m geometric error. Never use as the sole basis for precise pole measurements. Primary use: background for visual checks and stakeholder presentation maps.',
-          },
-          {
-            id: 'parcel-layer',
-            x: 50,
-            y: 72,
-            label: 'County Parcel Boundaries',
-            type: 'click',
-            explanation:
-              'Property boundary polygons from the county tax assessor\'s GIS portal. Usually in NAD83 — always verify. Accuracy varies from 1–3 ft (well-surveyed urban) to 10–30 ft (rural). Critical for identifying ROW vs. private land and triggering easement requirements.',
-          },
-          {
-            id: 'utility-layer',
-            x: 50,
-            y: 54,
-            label: 'Utility Locate / Atlas Layer',
-            type: 'click',
-            explanation:
-              'Records of existing buried or aerial utilities. Accuracy is highly variable — treat as guidance, not design truth. Confirm with 811 locate before any excavation. Source: one-call center facility atlas or utility company GIS export.',
-          },
-          {
-            id: 'lidar-layer',
-            x: 50,
-            y: 36,
-            label: 'LiDAR Planimetric / Drone Imagery',
-            type: 'click',
-            explanation:
-              'RTK-corrected drone data or LiDAR-derived planimetrics. Horizontal accuracy 1–3 cm when properly processed (NOAA NGS CORS documentation). This is the most accurate layer — it forms the geometric foundation. When county parcel data and drone imagery disagree on road centerline location, trust the drone data.',
-          },
-          {
-            id: 'rtk-points',
-            x: 50,
-            y: 16,
-            label: 'RTK GNSS Field Points',
-            type: 'click',
-            explanation:
-              'Pole locations and route points collected with RTK GNSS by the field crew. Sub-decimeter accuracy. These are the anchor points for the design drawing. Every other layer should snap to these points — not the other way around.',
-          },
-        ]}
-      />
+      {/* ── GIS LAYER ACCURACY LADDER ───────────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>GIS Layer Trust Hierarchy — Accuracy Ladder (Least to Most Accurate)</h4>
+        <p>In an OSP route landbase, not all data sources are created equal. Here are the five common layers ranked from least to most geometrically trusted:</p>
+        <ol>
+          <li>
+            <strong>Aerial Imagery Base (least trusted)</strong> — County GIS or satellite imagery. Useful for visual context but has 1–5 m geometric error. Never use as the sole basis for precise pole measurements. Primary use: background for visual checks and stakeholder presentation maps.
+          </li>
+          <li>
+            <strong>County Parcel Boundaries</strong> — Property boundary polygons from the county tax assessor's GIS portal. Usually in NAD83 — always verify the coordinate system. Accuracy varies from 1–3 ft (well-surveyed urban) to 10–30 ft (rural). Critical for identifying ROW vs. private land and triggering easement requirements.
+          </li>
+          <li>
+            <strong>Utility Locate / Atlas Layer</strong> — Records of existing buried or aerial utilities. Accuracy is highly variable — treat as guidance, not design truth. Confirm with 811 locate before any excavation. Source: one-call center facility atlas or utility company GIS export.
+          </li>
+          <li>
+            <strong>LiDAR Planimetric / Drone Imagery (RTK-corrected)</strong> — RTK-corrected drone data or LiDAR-derived planimetrics. Horizontal accuracy 1–3 cm when properly processed (NOAA NGS CORS documentation). This is the geometric foundation. When county parcel data and drone imagery disagree on road centerline location, trust the drone data.
+          </li>
+          <li>
+            <strong>RTK GNSS Field Points (most trusted)</strong> — Pole locations and route points collected with RTK GNSS by the field crew. Sub-decimeter accuracy. These are the anchor points for the design drawing. Every other layer should snap to these points — not the other way around.
+          </li>
+        </ol>
+      </div>
 
       {/* ── SORTABLE ─────────────────────────────────────────────────────── */}
       <Sortable

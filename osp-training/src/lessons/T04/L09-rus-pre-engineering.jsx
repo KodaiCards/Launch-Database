@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -408,62 +407,28 @@ export default function T04L09_RusPreEngineering() {
         </div>
       </section>
 
-      {/* ── ANNOTATED DIAGRAM ───────────────────────────────────────────── */}
-      <AnnotatedDiagram
-        src="/training/diagrams/t04-l09-rus-package-cover.svg"
-        alt="An annotated RUS construction package cover sheet showing labeled sections: borrower name, project description, loan application number, RUS district office, submittal date, engineer certification block, PE stamp location, and document revision/version label."
-        hotPoints={[
-          {
-            x: 15,
-            y: 15,
-            label: 'Borrower Identification',
-            explanation:
-              'The legal name of the RUS borrower (the telephone company or cooperative receiving the loan). This must exactly match the name on the loan application and borrower agreement — a mismatch triggers a correction request from the RUS district office.',
-          },
-          {
-            x: 40,
-            y: 15,
-            label: 'Loan Application / Case Number',
-            explanation:
-              'The RUS case number assigned to this project. All submittals, correspondence, and design revisions reference this number. Using an incorrect case number routes the submittal to the wrong reviewer. Confirm the case number with the RUS district office at the start of the project.',
-          },
-          {
-            x: 70,
-            y: 15,
-            label: 'Submittal Date',
-            explanation:
-              'The date the construction package is submitted to RUS. The submittal date starts the RUS review clock. If the package is incomplete, the clock resets on the re-submittal date. Accurate dating is required for tracking review timelines and loan-condition deadlines.',
-          },
-          {
-            x: 25,
-            y: 55,
-            label: 'Project Description',
-            explanation:
-              'A brief narrative describing the project scope: "Construction of 8.2 miles of aerial fiber optic cable along County Road 14 in [County], [State], connecting the Exchange central office to [community name]." The project description must be consistent with the loan application scope — if the scope changed between application and pre-engineering, a scope-change request must accompany the submittal.',
-          },
-          {
-            x: 65,
-            y: 55,
-            label: 'Engineer Certification Block',
-            explanation:
-              'The space where the Professional Engineer certifies that the design was prepared in accordance with RUS standards (7 CFR 1755), the cost estimate is reasonable, and the package is complete. Without the PE certification signature and stamp, RUS will not process the submittal. Verify that the certifying PE\'s license is current and valid in the project state.',
-          },
-          {
-            x: 80,
-            y: 78,
-            label: 'PE Stamp Location',
-            explanation:
-              'The physical or digital PE stamp location. RUS requires the stamp on the cover sheet and on each sheet of the engineering plan set. State licensing requirements determine whether a wet stamp, a scanned stamp, or a digital seal is acceptable. Confirm with the RUS district office and the state engineering licensing board before submitting.',
-          },
-          {
-            x: 20,
-            y: 88,
-            label: 'Revision / Version Label',
-            explanation:
-              'The revision number and date of this submittal. If this is the initial submission, "Rev 0 — [date]". If this is a re-submittal after a deficiency response, "Rev 1 — [date]" with a change summary. RUS reviewers must be able to identify which revision they are reviewing. Using "FINAL" or "FINAL-REV" instead of a numbered revision is a common deficiency — use numeric revision numbers.',
-          },
-        ]}
-      />
+      {/* ── RUS COVER SHEET NAVIGATION GUIDE ────────────────────────────── */}
+      <div className="lesson-callout">
+        <h4>RUS Construction Package Cover Sheet — What Goes Where</h4>
+        <p>The cover sheet is the first thing the RUS district office reviewer sees. Every field must be correct — errors here trigger correction requests before review even begins. Five required sections:</p>
+        <ol>
+          <li>
+            <strong>Borrower Identification</strong> — The legal name of the RUS borrower (the telephone company or cooperative receiving the loan). This must exactly match the name on the loan application and borrower agreement — a mismatch triggers a correction request from the RUS district office.
+          </li>
+          <li>
+            <strong>Loan Application / Case Number</strong> — The RUS case number assigned to this project. All submittals, correspondence, and design revisions reference this number. Using an incorrect case number routes the submittal to the wrong reviewer. Confirm the case number with the RUS district office at the start of the project.
+          </li>
+          <li>
+            <strong>Submittal Date</strong> — The date the construction package is submitted to RUS. The submittal date starts the RUS review clock. If the package is incomplete, the clock resets on the re-submittal date. Accurate dating is required for tracking review timelines and loan-condition deadlines.
+          </li>
+          <li>
+            <strong>Project Description</strong> — A brief narrative describing the project scope (e.g., "Construction of 8.2 miles of aerial fiber optic cable along County Road 14 in [County], [State], connecting the Exchange central office to [community name]"). The description must be consistent with the loan application scope — if scope changed between application and pre-engineering, a scope-change request must accompany the submittal.
+          </li>
+          <li>
+            <strong>Engineer Certification Block + PE Stamp</strong> — Where the Professional Engineer certifies the design was prepared per RUS standards (7 CFR 1755), the cost estimate is reasonable, and the package is complete. Without the PE certification and stamp, RUS will not process the submittal. RUS requires the stamp on the cover sheet and on each sheet of the engineering plan set. Use a numbered revision label (Rev 0, Rev 1, etc.) — using "FINAL" instead of a revision number is a common deficiency.
+          </li>
+        </ol>
+      </div>
 
       {/* ── SORTABLE ─────────────────────────────────────────────────────── */}
       <Sortable
