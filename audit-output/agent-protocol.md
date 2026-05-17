@@ -128,17 +128,21 @@ Two agents return conflicting findings on same item → orchestrator dispatches 
 - Interpretation/judgment conflicts → Sonnet third framing
 Conflicts CANNOT be deferred past fix-agent dispatch.
 
-## 11. Token budget caps (per agent class)
+## 11. Token budget caps (per agent class) — HARD STOP
 
-| Role | Cap |
-|---|---|
-| Research/audit | 200K |
-| RT (post-fix or final-verify) | 120-150K |
-| Fix-agent (scoped canonical) | 250K |
-| Polish-agent | 180K |
-| Haiku ground-truth | 75K |
+| Role | Cap | Wall-clock cap |
+|---|---|---|
+| Research/audit | 200K | 12 min |
+| RT (post-fix or final-verify) | 130K | 8 min |
+| Fix-agent (scoped canonical) | 250K | 15 min |
+| Polish-agent | 150K | 10 min |
+| Haiku ground-truth | 75K | 2 min |
 
-**STOP if approaching cap.** Write your report immediately. Do not continue into "let me also fix this" patterns.
+**HARD STOP at cap.** Write your report immediately. Do not continue into "let me also fix this" patterns. Do not enter additional roles.
+
+**Wall-clock self-check (every 10 tool calls):** if elapsed > cap, abort and write partial report. Wall-clock cap exists because rogue agents have shown they hit token cap with scope-creep work, not work the orchestrator dispatched. If you can't complete dispatched scope in wall-clock cap, your scope expanded — STOP and report what you completed.
+
+**Role boundary HARD STOP:** if your dispatched role is X (audit, RT, fix, polish), you do ONLY X. The moment you find yourself thinking "and now I should also do Y" (e.g., RT thinks "let me apply the fix", or fix-agent thinks "let me also RT-verify it"), STOP. Write report. Report Y as recommendation in your closeout. **Cross-role work in one dispatch is the rogue-agent failure mode** — has occurred in T18 R-7, T01 R-3, T14 RT-α, T14 RT-β events. The pattern is not subtle. Do not enter it.
 
 ## 12. Vite build check (any agent touching osp-training/)
 
