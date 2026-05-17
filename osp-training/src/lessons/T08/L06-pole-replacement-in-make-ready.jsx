@@ -143,11 +143,14 @@ export default function T08L06_PoleReplacementInMakeReady() {
             <p className="font-semibold text-red-300 mb-2">Trigger 1 — Physical Pole Failure</p>
             <p className="text-slate-300/90">
               The existing pole is rotten, cracked, leaning, or has deteriorated below
-              the NESC Section 26 structural strength standard. A pole inspector assesses
-              physical condition using a Deterioration Index (various utility-specific
-              scales exist, often 1–5 or 0–100%). Poles below a utility's minimum
-              integrity threshold must be replaced regardless of whether a new
-              attachment is being added.
+              the NESC Section 26 structural strength standard. NESC Section 26 sets the
+              strength requirements — the load and strength factor matrices — for line
+              supports such as poles, crossarms, and guys; these tables define how much
+              force the structure must withstand to qualify for Grade B, C, or N
+              construction under Section 24. A pole inspector assesses physical condition
+              using a Deterioration Index (various utility-specific scales exist, often
+              1–5 or 0–100%). Poles below a utility's minimum integrity threshold must be
+              replaced regardless of whether a new attachment is being added.
             </p>
             <p className="text-slate-300/90 mt-2">
               <strong>Who pays:</strong> The pole owner is responsible for maintaining
@@ -160,7 +163,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
           <div className="p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
             <p className="font-semibold text-amber-300 mb-2">Trigger 2 — Over-Strength Loading from New Attachment</p>
             <p className="text-slate-300/90">
-              The new fiber cable's added weight, wind load (per NESC §25 loading
+              The new fiber cable's added weight, wind load (per NESC Section 25 loading
               district), and tension would cause the total pole load to exceed the pole's
               rated capacity. The pole loading calculation (typically run from the staker's
               data) shows the total load percentage.
@@ -240,7 +243,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
           loading district rules (from T05.L05).
         </p>
         <p className="mt-2 text-sm">
-          Macon, GA is in a Light loading district (NESC §25). A replacement pole for a
+          Macon, GA is in a Light loading district (NESC Section 25). A replacement pole for a
           Light district rural route must be sized for Light district ice + wind loads.
           For heavier districts (Medium, Heavy, or Extreme Wind), the loading calculations
           and required pole class will be different. The replacement pole class is part of
