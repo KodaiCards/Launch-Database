@@ -137,8 +137,8 @@ export default function T02L02_AttenuationThreeNumbers() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">1310 nm</td>
                 <td className="px-3 py-2">≤ 0.40 dB/km</td>
-                <td className="px-3 py-2">≈ 0.32–0.35 dB/km</td>
-                <td className="px-3 py-2">0.35 dB/km</td>
+                <td className="px-3 py-2">≈ 0.32–0.36 dB/km</td>
+                <td className="px-3 py-2">0.35–0.36 dB/km</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">1550 nm</td>
@@ -177,10 +177,16 @@ export default function T02L02_AttenuationThreeNumbers() {
             (beyond 1700 nm). This loss rises steeply past 1600 nm.
           </li>
           <li>
-            <strong>OH⁻ water peak</strong> — a sharp loss spike around 1383 nm caused by hydroxyl
-            ions (water molecules) in the glass. G.652.D fibers are "water-peak reduced" — the
-            peak is suppressed enough to be usable. Older G.652.B fibers have a much larger
-            water peak.
+            <strong>OH⁻ water peak</strong> — a sharp loss spike around 1383 nm caused by
+            hydroxyl ions (OH⁻, also called hydroxyl or water molecules bonded into the glass
+            during manufacturing) in the glass. These tiny chemical residues vibrate at a
+            frequency that absorbs 1383 nm light strongly. G.652.D fibers are "water-peak
+            reduced" — the manufacturing process keeps OH⁻ low enough that the peak is
+            suppressed to usable levels. Older G.652.B fibers have a much larger water peak.
+            <strong> CWDM hazard:</strong> G.652.B cannot reliably carry CWDM channels near
+            1383 nm because excess attenuation in that band can run 5–10 dB above G.652.D's
+            low-water-peak spec. If installing CWDM on legacy G.652.B plant, exclude the
+            1383 nm channel from the CWDM plan.
           </li>
         </ul>
         <p className="mt-2">

@@ -20,7 +20,7 @@ export const meta = {
     { term: 'core', definition: 'The inner glass cylinder where light signals actually travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection.' },
     { term: 'cladding', definition: 'The outer glass layer surrounding the core. Its index of refraction is slightly lower than the core, which creates the total internal reflection effect at the core-cladding boundary. The cladding is 125 µm in diameter for all standard fibers.' },
     { term: 'NA', definition: 'Numerical Aperture — the half-angle of the cone of light that the fiber will accept and propagate via total internal reflection, measured from outside the fiber at the launch end. NA = √(n₁² − n₂²). For standard G.652 SMF: NA ≈ 0.12–0.14.' },
-    { term: 'critical angle', definition: 'The specific angle at which a light ray hitting the core-cladding boundary runs exactly along the boundary. Any ray shallower than this angle undergoes total internal reflection. For G.652.D fiber: sin(θ_c) = n₂ / n₁ ≈ 0.9966, so θ_c ≈ 85°.' },
+    { term: 'critical angle', definition: 'The specific angle at which a light ray hitting the core-cladding boundary runs exactly along the boundary — measured from the normal (perpendicular) to the boundary surface. Any ray that hits the boundary at an angle GREATER than θ_c from the normal (i.e., within ~5° of grazing along the surface) undergoes total internal reflection. For G.652.D fiber: sin(θ_c) = n₂ / n₁ ≈ 0.9966, so θ_c = arcsin(0.9966) ≈ 85.3° from the normal.' },
     { term: 'index of refraction', definition: 'A number that tells you how much a transparent material bends light. Vacuum = 1.000. Air ≈ 1.000. Glass ≈ 1.46–1.50. In a fiber, the core glass has a slightly higher index than the cladding, which is what causes total internal reflection at the boundary.' },
     { term: 'G.652.D', definition: 'The ITU-T standard designation for the most common single-mode optical fiber used in OSP networks worldwide. Full name: "Characteristics of a single-mode optical fibre and cable." The ".D" suffix is the current sub-category specifying tight tolerances on chromatic dispersion, low water-peak attenuation (low-water-peak fiber), and MFD. When someone says "standard SMF," they almost always mean G.652.D. (Source: ITU-T G.652.D)' },
     { term: 'MFD', definition: 'Mode Field Diameter — the effective diameter of the light beam traveling through a single-mode fiber, measured at the 1/e² intensity point. MFD is slightly larger than the physical core diameter because the evanescent field extends a short distance into the cladding. G.652.D specifies MFD at 1310 nm as 8.8–9.6 µm (9.2 ± 0.4 µm nominal). MFD mismatch between two fibers being spliced causes additional splice loss even when both are G.652.D — manufacturing tolerance matters. (Source: ITU-T G.652.D; 7 CFR 1755.902)' },
@@ -131,8 +131,10 @@ export default function T02L01_WhyLightTravelsInGlass() {
             { id: 'T02-L01-fc-core', front: 'What is the core of a fiber optic strand?', back: 'The inner glass cylinder where light signals actually travel. In single-mode fiber (SMF), the core is about 9 µm in diameter — thinner than a human hair. Light stays in the core via total internal reflection.' },
             { id: 'T02-L01-fc-cladding', front: 'What is the cladding of a fiber optic strand?', back: 'The outer glass layer surrounding the core. Its index of refraction is slightly lower than the core, which creates the total internal reflection effect at the core-cladding boundary. The cladding is 125 µm in diameter for all standard fibers.' },
             { id: 'T02-L01-fc-na', front: 'What does Numerical Aperture (NA) describe in a fiber?', back: 'The half-angle of the cone of light that the fiber will accept and propagate via total internal reflection, measured from outside the fiber at the launch end. NA = √(n₁² − n₂²). For standard G.652 SMF: NA ≈ 0.12–0.14.' },
-            { id: 'T02-L01-fc-critical-angle', front: 'What is the critical angle in fiber optics?', back: 'The specific angle at which a light ray hitting the core-cladding boundary runs exactly along the boundary. Any ray shallower than this angle undergoes total internal reflection. For G.652.D fiber: sin(θ_c) = n₂ / n₁ ≈ 0.9966, so θ_c ≈ 85°.' },
+            { id: 'T02-L01-fc-critical-angle', front: 'What is the critical angle in fiber optics?', back: 'The angle measured from the normal (perpendicular to the boundary) at which TIR kicks in. Any ray hitting the boundary at an angle GREATER than θ_c from the normal (i.e., within ~5° of grazing along the surface) undergoes total internal reflection. For G.652.D: sin(θ_c) = n₂/n₁ ≈ 0.9966, so θ_c = arcsin(0.9966) ≈ 85.3° from the normal.' },
             { id: 'T02-L01-fc-index', front: 'What is the index of refraction?', back: 'A number that tells you how much a transparent material bends light. Vacuum = 1.000. Air ≈ 1.000. Glass ≈ 1.46–1.50. In a fiber, the core glass has a slightly higher index than the cladding, which is what causes total internal reflection at the boundary.' },
+            { id: 'T02-L01-fc-g652d', front: 'What is ITU-T G.652.D fiber?', back: 'The ITU-T standard designation for the most common single-mode optical fiber used in OSP networks worldwide. The ".D" suffix specifies tight tolerances on chromatic dispersion, low water-peak attenuation, and MFD. When someone says "standard SMF" in an OSP context, they almost always mean G.652.D. (Source: ITU-T G.652.D)' },
+            { id: 'T02-L01-fc-mfd', front: 'What is Mode Field Diameter (MFD)?', back: 'The effective diameter of the light beam traveling through a single-mode fiber, measured at the 1/e² intensity point. MFD is slightly larger than the physical core diameter because the evanescent field extends a short distance into the cladding. G.652.D specifies MFD at 1310 nm as 8.8–9.6 µm. MFD mismatch between spliced fibers causes additional splice loss even when both are G.652.D. (Source: ITU-T G.652.D)' },
           ]}
         />
       </section>
@@ -166,17 +168,26 @@ export default function T02L01_WhyLightTravelsInGlass() {
         <h3 className="mt-5 font-semibold">Critical angle — where TIR kicks in</h3>
         <p>
           When a light ray travels from the core (higher index) toward the cladding (lower
-          index), Snell's Law describes what happens:
+          index), <strong>Snell's Law</strong> describes what happens at the boundary. Think
+          of Snell's Law as the math that explains why a straw looks bent in a glass of water —
+          whenever light crosses from one material into another, it bends. The rule:
         </p>
         <div className="rounded-lg bg-black/30 border border-white/10 p-4 font-mono text-sm leading-7 text-slate-200 my-3">
           n₁ × sin(θ₁) = n₂ × sin(θ₂)
         </div>
         <p>
-          <strong>Plain English:</strong> The angle the ray bends to on the cladding side
-          depends on the ratio of the two indices. As the ray's angle to the core-cladding
-          boundary gets shallower (smaller θ₁), the refracted ray in the cladding bends
-          toward 90°. At a specific angle — the <strong>critical angle</strong> (θ_c) — the
-          refracted ray runs exactly along the boundary. Any shallower angle than θ_c and
+          Where n₁ and n₂ are the refractive indices of the two materials, and θ₁ and θ₂
+          are the angles the ray makes with the <em>normal</em> (a line perpendicular to the
+          surface). The formula says: when light crosses a boundary, the sines of the angles
+          on both sides scale inversely with the indices. Since n₁ (core) &gt; n₂ (cladding),
+          the refracted ray on the cladding side bends away from the normal.
+        </p>
+        <p className="mt-2">
+          <strong>Plain English:</strong> As the ray's angle to the surface gets shallower
+          (meaning the angle measured from the normal gets larger, toward 90°), the refracted
+          ray in the cladding bends even more — until at a specific angle, the refracted ray
+          would run exactly along the boundary. That angle is the <strong>critical angle</strong>
+          (θ_c). For any ray hitting the boundary at an angle GREATER than θ_c from the normal,
           there is no refracted ray at all: 100% of the light reflects back into the core.
           That's TIR.
         </p>
@@ -187,23 +198,28 @@ export default function T02L01_WhyLightTravelsInGlass() {
           sin(θ_c) = n₂ / n₁
         </div>
         <p className="text-sm text-slate-300/80">
-          For the G.652 values above: sin(θ_c) = 1.463 / 1.468 ≈ 0.9966, so θ_c ≈ 85°.
-          This means any light ray hitting the boundary at less than 85° from the boundary
-          (i.e., within about 5° of grazing) undergoes TIR and stays in the core.
+          For the G.652 values above: sin(θ_c) = 1.463 / 1.468 ≈ 0.9966. To find the
+          angle itself, take the arcsine (the "sin⁻¹" key on a calculator — it answers
+          "what angle has this sine?"): θ_c = arcsin(0.9966) ≈ 85.3° from the normal.
+          That's only about 4.7° away from grazing the surface. Any light ray hitting the
+          boundary within ~5° of grazing (i.e., at an angle greater than ~85° from the normal)
+          undergoes TIR and stays in the core.
         </p>
 
         <h3 className="mt-5 font-semibold">Numerical Aperture (NA)</h3>
         <p>
-          <strong>Numerical Aperture (NA)</strong> is the half-angle of the cone of light
-          that the fiber will accept and propagate via TIR. It's measured from outside the
-          fiber, at the launch end. The formula:
+          <strong>Numerical Aperture (NA)</strong> describes how "wide" the fiber's acceptance
+          cone is — like the opening angle of a funnel. Light rays coming in within this cone
+          get trapped inside the core via TIR; rays at steeper angles (outside the cone) leak
+          out into the cladding and are lost. NA is measured from outside the fiber, at the
+          launch end. The formula:
         </p>
         <div className="rounded-lg bg-black/30 border border-white/10 p-4 font-mono text-sm my-3">
           NA = √(n₁² − n₂²)
         </div>
         <p>
           For standard G.652 SMF: NA ≈ 0.12–0.14. For 50-µm multimode (OM3/OM4/OM5):
-          NA ≈ 0.20. For 62.5-µm multimode (OM1/OM2): NA ≈ 0.275.
+          NA ≈ 0.20. For 62.5-µm multimode (OM1): NA ≈ 0.275.
         </p>
         <p className="mt-2">
           <strong>What NA means in the field:</strong> A higher NA means the fiber accepts

@@ -102,6 +102,7 @@ export default function T02L03_DispersionWhySignalsBlur() {
             { id: 'T02-L03-fc-psnmkm', front: 'What does ps/(nm·km) measure?', back: 'Picoseconds per nanometer per kilometer — the unit of the chromatic dispersion coefficient D. It tells you how many picoseconds of pulse spreading you get per nanometer of laser spectral width per kilometer of fiber. G.652 at 1550 nm: ~17 ps/(nm·km).' },
             { id: 'T02-L03-fc-modal', front: 'What is modal dispersion?', back: 'The dispersion mechanism in multimode fiber (MMF). Different light paths (modes) travel different distances inside the fiber — the fundamental mode arrives first, higher-order modes arrive later. This blurs the pulse and is why MMF has a bandwidth rating (MHz·km) while SMF does not.' },
             { id: 'T02-L03-fc-pmd', front: 'What is Polarization Mode Dispersion (PMD)?', back: 'A third dispersion mechanism where the two polarization orientations of the same light wave travel at slightly different speeds through the fiber due to geometric imperfections and stress. Only significant at 10 Gb/s and above, especially on older fiber. Measured in ps/√km.' },
+            { id: 'T02-L03-fc-cd-abbr', front: 'What does CD stand for in fiber optics?', back: 'Chromatic Dispersion — the dominant dispersion mechanism in single-mode fiber (SMF). Every real light source emits a range of wavelengths; different wavelengths travel at different speeds in glass. The result: a sharp input pulse arrives at the receiver stretched in time. Measured in ps/(nm·km).' },
           ]}
         />
       </section>
@@ -135,6 +136,11 @@ export default function T02L03_DispersionWhySignalsBlur() {
           <li><strong>Δλ</strong> = source spectral width in nanometers (nm)</li>
           <li><strong>L</strong> = fiber length in kilometers (km)</li>
         </ul>
+        <p className="mt-2 text-sm text-slate-300/80">
+          <strong>Unit cancellation check:</strong> ps/(nm·km) × nm × km = ps.
+          The nm's cancel and the km's cancel, leaving picoseconds — which is exactly what
+          we want for a pulse-spreading answer.
+        </p>
 
         <h3 className="mt-5 font-semibold">Worked example</h3>
         <p>

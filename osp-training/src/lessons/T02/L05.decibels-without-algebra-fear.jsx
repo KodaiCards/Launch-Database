@@ -64,6 +64,14 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
 
         <h3 className="mt-5 font-semibold">The decibel formula</h3>
         <p className="mt-2">
+          Before the formula: what is a logarithm? A logarithm tells you what power of 10 a
+          number is. For example: log₁₀(100) = 2, because 10² = 100. log₁₀(1000) = 3, because
+          10³ = 1000. The "log" button on your calculator does this automatically — punch in any
+          number and it tells you the exponent of 10 that gives you that number. In fiber optics,
+          logarithms are the reason dB losses can simply be added together rather than multiplied
+          as power fractions.
+        </p>
+        <p className="mt-2">
           Loss in dB = 10 × log₁₀ (P_out / P_in)
         </p>
         <p className="mt-2">
@@ -202,11 +210,13 @@ Total:                               7.95 dB`}
             absolute power.
           </li>
           <li>
-            <strong>Return loss and insertion loss.</strong> Insertion loss is forward loss (how much
-            signal you lose passing through a component). Return loss is backward — how much of the
-            signal gets reflected back toward the source. Both are in dB; higher return loss is better
-            (less reflection). A "high return loss" spec (e.g., 50 dB) means very little light bounced
-            back.
+            <strong>Return loss (ORL) and insertion loss.</strong> Insertion loss is forward loss
+            (how much signal you lose passing through a component). Return loss — also called ORL
+            (Optical Return Loss) — is backward: how much of the signal gets reflected back toward
+            the source. Both are in dB; higher return loss is better (less reflection, more light
+            reaching the far end). A "high return loss" spec (e.g., 50 dB) means very little light
+            bounced back. APC connectors (angled physical contact, green) typically achieve
+            ≥ 60 dB ORL; UPC connectors (blue) typically achieve ≥ 50 dB ORL.
           </li>
           <li>
             <strong>dBd vs. dBi (antennas — just so you know).</strong> In wireless work, dBd is

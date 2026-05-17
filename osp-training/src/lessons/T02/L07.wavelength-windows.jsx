@@ -23,6 +23,7 @@ export const meta = {
     { term: 'CWDM', definition: 'Coarse WDM -- wavelengths spaced 20 nm apart (1270-1610 nm, 18 possible channels). Because channels are far apart, the lasers and filters are less precise and less expensive. Used for metro access rings and suburban loop distribution needing 4-8 channels on existing fiber.' },
     { term: 'DWDM', definition: 'Dense WDM -- channels spaced 0.8 nm (100 GHz) or 0.4 nm (50 GHz) apart in the C-band, up to 80-96 channels on one fiber pair. Each channel can carry 100G or 400G. Requires extremely precise lasers and temperature-controlled filters. Backbone of long-haul networks.' },
     { term: 'PON', definition: 'Passive Optical Network -- the FTTH distribution architecture that uses 1310/1490/1550 nm on the same fiber to/from homes. The "passive" means no powered equipment (amplifiers) between the OLT at the headend and the ONT at the customer premise -- only fiber splitters.' },
+    { term: 'EDFA', definition: 'Erbium-Doped Fiber Amplifier -- an optical amplifier that boosts all C-band wavelengths simultaneously without converting the signal back to electrical. A short length of fiber is doped with erbium ions; when pumped with a 980 nm or 1480 nm laser, it amplifies signals in the 1530-1565 nm (C-band) window. This is why DWDM systems can span hundreds of kilometers -- multiple EDFAs along the route compensate for fiber attenuation.' },
   ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
@@ -36,7 +37,9 @@ export const meta = {
     { term: 'OLT', source_lesson_id: 'T01.L01' },
     { term: 'ONT', source_lesson_id: 'T01.L01' },
     // OTDR is forward-referenced in the 1625 nm window discussion (introduced fully in T12)
-    { term: 'OTDR', source_lesson_id: null },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
+    // GPON is referenced in the working section; introduced in T01
+    { term: 'GPON', source_lesson_id: 'T01.L01' },
   ],
   estimated_minutes: 25,
 };
@@ -113,6 +116,9 @@ export default function T02L07_WavelengthWindows() {
             { id: 'T02-L07-fc-lband', front: 'What is the L-band used for in OSP?', back: 'In-service OTDR diagnostic wavelength (1565-1625 nm). Macrobend loss grows with wavelength, so bends barely visible at 1550 nm stand out clearly at 1625 nm. Lets the test crew locate kinks and tight bends on a live fiber without interrupting 1310/1490/1550 nm traffic.' },
             { id: 'T02-L07-fc-wdm', front: 'What is WDM?', back: 'Wavelength Division Multiplexing -- sending multiple data streams on one fiber using different wavelengths simultaneously. Like sending radio stations on different frequencies on the same cable. Two flavors: CWDM (coarse, 20 nm spacing, lower cost) and DWDM (dense, 0.8 nm spacing, high capacity long-haul).' },
             { id: 'T02-L07-fc-pon', front: 'What is a PON?', back: 'Passive Optical Network -- the FTTH distribution architecture using 1310 nm upstream and 1490 nm downstream on the same fiber to/from homes. "Passive" means no powered amplifiers between the OLT at the headend and the ONT at the customer. Fiber splitters are passive (no power required).' },
+            { id: 'T02-L07-fc-cwdm', front: 'What is CWDM?', back: 'Coarse WDM -- wavelengths spaced 20 nm apart (1270-1610 nm, 18 possible channels). Because channels are far apart, the lasers and filters are less precise and less expensive. Used for metro access rings and suburban loop distribution needing 4-8 channels on existing fiber. Does not support EDFA amplification.' },
+            { id: 'T02-L07-fc-dwdm', front: 'What is DWDM?', back: 'Dense WDM -- channels spaced 0.8 nm (100 GHz) or 0.4 nm (50 GHz) apart in the C-band, up to 80-96 channels on one fiber pair. Each channel can carry 100G or 400G. Requires extremely precise lasers and temperature-controlled filters. Backbone of long-haul networks. Supported by EDFA amplification natively in the C-band.' },
+            { id: 'T02-L07-fc-edfa', front: 'What is an EDFA?', back: 'Erbium-Doped Fiber Amplifier -- a tiny laser that boosts all C-band wavelengths simultaneously without converting back to electrical signals. A short fiber section doped with erbium ions amplifies signals in the 1530-1565 nm range when pumped with a 980 nm or 1480 nm laser. Multiple EDFAs along a long-haul route compensate for fiber attenuation, enabling transmission over hundreds of kilometers.' },
           ]}
         />
       </section>
@@ -154,11 +160,12 @@ export default function T02L07_WavelengthWindows() {
           <li>OTDR baseline testing at 1310 nm (lower attenuation than 850 nm; reveals splices and connectors)</li>
         </ul>
 
-        <h3 className="mt-5 font-semibold">1490 nm — The PON downstream companion</h3>
+        <h3 className="mt-5 font-semibold">1490 nm — The S-band PON downstream companion</h3>
         <p>
           You might not see 1490 nm much in textbooks, but it's everywhere in FTTH/GPON networks.
+          1490 nm falls in the <strong>S-band</strong> (Short band, 1460–1530 nm per ITU-T G.692).
           <strong> GPON downstream</strong> uses 1490 nm (OLT to ONT). Combined with the 1310 nm
-          upstream, a single fiber carries bidirectional data on two wavelengths simultaneously —
+          upstream (O-band), a single fiber carries bidirectional data on two wavelengths simultaneously —
           no separate fiber needed for each direction.
         </p>
         <p className="mt-2">
@@ -237,12 +244,42 @@ export default function T02L07_WavelengthWindows() {
           <li>
             <strong>DWDM (Dense WDM):</strong> Channels spaced 0.8 nm (100 GHz) or 0.4 nm
             (50 GHz) apart in the C-band, with up to 80–96 channels on one fiber pair. Each
-            channel can carry 100G or 400G. Requires extremely precise DFB/ECL lasers and
+            channel can carry 100G or 400G. Requires extremely precise lasers —
+            DFB (Distributed Feedback) lasers that stay locked to a precise wavelength, or
+            ECL (External Cavity Lasers) with an even narrower spectral line — and
             temperature-controlled filters. Backbone of long-haul networks, central office
-            interconnects, and high-capacity regional rings. EDFA amplification is native to
-            the C-band — DWDM systems boost all channels simultaneously with one amplifier.
+            interconnects, and high-capacity regional rings.
           </li>
         </ul>
+
+        <h3 className="mt-5 font-semibold">EDFA — the amplifier behind long-haul DWDM</h3>
+        <p>
+          <strong>EDFA (Erbium-Doped Fiber Amplifier)</strong> is a tiny laser that boosts all
+          C-band wavelengths simultaneously without converting the signal back to electrical.
+          It works by passing light through a short length of fiber doped with erbium ions,
+          pumped by a 980 nm or 1480 nm pump laser — the erbium ions absorb the pump and
+          re-emit at C-band wavelengths, boosting the passing signal. This is why DWDM systems
+          can span hundreds of kilometers: multiple EDFAs along the route compensate for fiber
+          attenuation, and each amplifier boosts all DWDM channels at once.
+        </p>
+        <p className="mt-2">
+          <strong>The tradeoff — ASE noise:</strong> Each EDFA in a chain also adds
+          Amplified Spontaneous Emission (ASE) noise — spontaneous photons emitted by
+          energized erbium ions that weren't triggered by the signal. After 8 or more
+          amplifiers, the optical signal-to-noise ratio (OSNR) becomes the link's limiting
+          factor, not just attenuation. Long-haul DWDM systems carefully budget OSNR across
+          the entire amplifier chain; modern coherent receivers with forward error correction
+          (FEC) typically require OSNR around 12–14 dB to decode the signal reliably.
+        </p>
+        <p className="mt-2">
+          <strong>850 nm and VCSELs</strong> — at the other end of the wavelength spectrum,
+          850 nm uses VCSELs (Vertical-Cavity Surface-Emitting Lasers). A VCSEL is a tiny
+          laser the size of a grain of rice, mounted on a circuit board with its light beam
+          shooting straight up out of the surface — used for short-reach data center
+          transceivers because they are cheap to make in volume and fast to modulate. VCSELs
+          cannot reach the narrow spectral purity required for DWDM, which is why 850 nm is
+          strictly short-reach multimode territory.
+        </p>
         <p className="mt-3">
           <strong>OSP crew note:</strong> When you install or splice a DWDM route, fiber
           cleanliness and end-face quality are even more critical than on standard SMF links —
@@ -281,7 +318,7 @@ export default function T02L07_WavelengthWindows() {
           </tr>
           <tr>
             <td>1490 nm</td>
-            <td>E/S-band transition</td>
+            <td>S-band (Short, 1460–1530 nm)</td>
             <td>≤ 0.35 dB/km typical</td>
             <td>GPON downstream (OLT → ONT). Enables bidirectional FTTH on a single fiber with 1310 nm upstream.</td>
             <td>High — universally deployed in FTTH; often under-discussed in textbooks but present in every ONT.</td>

@@ -20,10 +20,10 @@ export const meta = {
     { term: 'OM2', definition: 'Multimode fiber grade: 50 µm core, 500 MHz-km bandwidth @ 850 nm, max 82 m at 10GbE. Orange jacket. Legacy grade -- use OM3 or OM4 for modern 10G+ data center work.' },
     { term: 'OM3', definition: 'Multimode fiber grade: 50 µm laser-optimized core. EMB (Effective Modal Bandwidth) = 2000 MHz·km @ 850 nm — the value that governs 10G/40G/100G reach. OFL (Overfilled Launch) = 1500 MHz·km — legacy LED test, not used for modern laser applications. Max reach: 300 m at 10GbE. Aqua jacket.' },
     { term: 'OM4', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket (sometimes magenta in some regions). Use when run distance exceeds OM3\'s 300 m limit.' },
-    { term: 'OM5', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 28000 MHz-km @ 953 nm, max 400 m (supports SWDM4). Lime green jacket. Designed for short-wavelength WDM to achieve 100G over a single MMF pair at data center distances.' },
+    { term: 'OM5', definition: 'Multimode fiber grade: 50 µm laser-optimized core. EMB = 28000 MHz·km @ 850 nm (primary spec) and 2470 MHz·km @ 953 nm (SWDM4 value). Max reach ~400 m (supports SWDM4 for 100G over one MMF pair). Lime green jacket. Designed for short-wavelength WDM at data center distances. (Source: TIA-492AAAE)' },
     { term: 'OS2', definition: 'Single-mode fiber grade corresponding to ITU-T G.652.D -- the current standard OSP SMF. Maximum attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D. Yellow jacket.' },
     { term: 'reach table', definition: 'A table showing the maximum distance a given fiber type (OM1-OM5, OS2) can support for a specific Ethernet speed (1GbE, 10GbE, 40GbE, 100GbE) per IEEE 802.3. Used to quickly determine if MMF or SMF is required for a given application and distance.' },
-    { term: 'laser-optimized MMF', definition: 'OM3/OM4/OM5 multimode fiber with a graded-index core profile specifically optimized for 850 nm VCSEL (vertical-cavity surface-emitting laser) launch conditions. This reduces modal dispersion by restricting which modes are excited, dramatically increasing effective bandwidth vs. older LED-compatible OM1/OM2.' },
+    { term: 'laser-optimized MMF', definition: 'OM3/OM4/OM5 multimode fiber with a graded-index core profile specifically optimized for 850 nm VCSEL launch conditions. OM3/OM4 are optimized for 850 nm VCSEL; OM5 additionally supports 953 nm VCSEL for SWDM4 short-wavelength wavelength-division multiplexing. This reduces modal dispersion by restricting which modes are excited, dramatically increasing effective bandwidth vs. older LED-compatible OM1/OM2.' },
     { term: 'G.655 (NZ-DSF)', definition: 'ITU-T G.655 Non-Zero Dispersion-Shifted SMF — a single-mode fiber used in carrier DWDM backbones where the zero-dispersion wavelength is intentionally shifted away from 1550 nm to suppress four-wave mixing at high channel counts. OSP engineers specify G.652.D (OS2); G.655 is a carrier-side fiber they coordinate with at the OSP↔carrier handoff point.' },
   ],
   vocabulary_assumed: [
@@ -121,8 +121,8 @@ export default function T02L08_SMFvsMMFChoosing() {
             { id: 'T02-L08-fc-os2', front: 'What is OS2 fiber?', back: 'Single-mode fiber grade per ITU-T G.652.D -- the current standard for OSP work. Max attenuation 0.4 dB/km @ 1310 nm and 0.3 dB/km @ 1550 nm. Reduced water peak. Yellow patch cord jacket. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D.' },
             { id: 'T02-L08-fc-om3', front: 'What is OM3 fiber, and what do EMB vs. OFL mean?', back: 'Multimode fiber grade: 50 µm laser-optimized core, max 300 m at 10GbE. Aqua jacket. EMB (Effective Modal Bandwidth) = 2000 MHz·km — measured with a laser/VCSEL launch; the spec that governs 10G/40G/100G applications. OFL (Overfilled Launch) = 1500 MHz·km — measured with a legacy LED launch; lower number, not relevant for modern transceivers. Not usable for OSP runs over a few hundred meters.' },
             { id: 'T02-L08-fc-om4', front: 'What is OM4 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket. Use when OM3\'s 300 m limit is insufficient. Still only for data center/campus -- not OSP.' },
-            { id: 'T02-L08-fc-om5', front: 'What is OM5 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 28000 MHz-km @ 953 nm, lime green jacket. Designed for short-wavelength WDM (SWDM4) to achieve 100G over a single MMF pair at data center distances (max ~400 m). Not for OSP.' },
-            { id: 'T02-L08-fc-laseropt', front: 'What does "laser-optimized" mean for MMF?', back: 'OM3/OM4/OM5 fiber has a graded-index core profile specifically optimized for 850 nm VCSEL laser launch conditions. This restricts which modes are excited, reducing modal dispersion and dramatically increasing bandwidth compared to older LED-compatible OM1/OM2 fiber.' },
+            { id: 'T02-L08-fc-om5', front: 'What is OM5 fiber, and what are its EMB specs?', back: 'Multimode fiber grade: 50 µm laser-optimized core, lime green jacket. EMB = 28000 MHz·km @ 850 nm (primary spec per TIA-492AAAE); also rated 2470 MHz·km @ 953 nm for SWDM4 short-wavelength WDM. Achieves 100G over a single MMF pair at up to ~400 m. Not for OSP runs.' },
+            { id: 'T02-L08-fc-laseropt', front: 'What does "laser-optimized" mean for MMF?', back: 'OM3/OM4 fiber has a graded-index core profile optimized for 850 nm VCSEL launch conditions. OM5 additionally supports 953 nm VCSEL for SWDM4 short-wavelength wavelength-division multiplexing. All three grades restrict which modes are excited, reducing modal dispersion and dramatically increasing bandwidth vs. older LED-compatible OM1/OM2.' },
           ]}
         />
       </section>
@@ -184,7 +184,13 @@ export default function T02L08_SMFvsMMFChoosing() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-semibold">OM5</td>
                 <td className="px-3 py-2">50 µm (laser-opt.)</td>
-                <td className="px-3 py-2">28000 MHz·km @ 953 nm</td>
+                <td className="px-3 py-2">
+                  28000 MHz·km @ 850 nm; 2470 MHz·km @ 953 nm (SWDM4)
+                  <span className="block text-xs text-slate-400 mt-1">
+                    Per TIA-492AAAE: primary EMB spec is 28000 MHz·km at 850 nm.
+                    The 953 nm EMB (2470 MHz·km) enables SWDM4 short-wavelength WDM for 100G on one pair.
+                  </span>
+                </td>
                 <td className="px-3 py-2">400 m (supports SWDM4)</td>
                 <td className="px-3 py-2">Lime green</td>
               </tr>
@@ -233,7 +239,8 @@ export default function T02L08_SMFvsMMFChoosing() {
           long-haul backbone, the carrier may be running G.655 fiber on their end. Your OSP
           feeder is still G.652.D (OS2) — the distinction matters if you're performing link-budget
           coordination across the OSP↔carrier handoff. G.655 behaves differently from G.652.D
-          at high bit rates. See T02.L07b (Long-Haul Awareness) for the full context.
+          at high bit rates. The long-haul and DWDM context is covered in T02.L07 (Wavelength
+          Windows — Advanced section).
         </p>
         <p className="text-sm mt-2 text-slate-400">
           <strong>OSP default:</strong> Specify G.652.D (OS2) for every OSP run you design.
