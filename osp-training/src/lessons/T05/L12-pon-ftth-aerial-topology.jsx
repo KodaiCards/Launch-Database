@@ -40,7 +40,7 @@ export const meta = {
     { term: 'ONT', source_lesson_id: 'T01.L01' },
     { term: 'link budget', source_lesson_id: 'T02.L06' },
     { term: 'attenuation (dB/km)', source_lesson_id: 'T02.L02' },
-    { term: 'G.652.D', source_lesson_id: 'T02.L08' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
     { term: 'ADSS', source_lesson_id: 'T03.L04' },
     { term: 'messenger', source_lesson_id: 'T03.L04' },
     { term: 'sag (s)', source_lesson_id: 'T05.L07' },

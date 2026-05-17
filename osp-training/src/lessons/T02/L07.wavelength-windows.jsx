@@ -38,8 +38,8 @@ export const meta = {
     { term: 'ONT', source_lesson_id: 'T01.L01' },
     // OTDR is forward-referenced in the 1625 nm window discussion (introduced fully in T12)
     { term: 'OTDR', source_lesson_id: 'T01.L08' },
-    // GPON is referenced in the working section; introduced in T01
-    { term: 'GPON', source_lesson_id: 'T01.L01' },
+    // GPON is referenced in the working section; introduced in T01.L08
+    { term: 'GPON', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 25,
 };
