@@ -27,7 +27,7 @@ export const meta = {
     {
       term: 'ground test log',
       definition:
-        'The field record of ground resistance measurements for each electrode on the project. Minimum fields: electrode ID (pole number or location), electrode type (rod, ring, Ufer), measured resistance (Ω), acceptance threshold (25 Ω for aerial poles; 5 Ω for FDH/CO), pass/fail determination, test date, test method (fall-of-potential per IEEE 81), and retest due date for any failed electrodes. Required for RUS project close-out per the applicable RUS bulletin.',
+        'The field record of ground resistance measurements for each electrode on the project. Minimum fields: electrode ID (pole number or location), electrode type (rod, ring, Ufer), measured resistance (Ω), acceptance threshold (25 Ω for aerial poles; 5 Ω for FDH/CO), pass/fail determination, test date, test method (fall-of-potential per IEEE 81-2012), and retest due date for any failed electrodes. Required for RUS project close-out per the applicable RUS bulletin.',
     },
   ],
   vocabulary_assumed: [
@@ -140,7 +140,7 @@ export default function T14L10_RUSBondingGrounding() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">Measured resistance</td>
-              <td className="px-3 py-2">Fall-of-potential result in ohms (IEEE 81 §9.3 method)</td>
+              <td className="px-3 py-2">Fall-of-potential result in ohms (IEEE 81-2012 §9.3 method)</td>
               <td className="px-3 py-2">18 Ω</td>
             </tr>
             <tr className="border-t border-white/10">
@@ -246,7 +246,7 @@ export default function T14L10_RUSBondingGrounding() {
         </p>
         <ul className="list-disc ml-6 mt-2 space-y-1 text-slate-300/90">
           <li>That grounding was installed per the design drawings and the applicable RUS bulletin (1751F-630 §7 for aerial, 1751F-635 §5 for underground; or per 1751F-810 / 1751F-815 if applicable [confirm current RUS bulletin for bonding/grounding]).</li>
-          <li>That ground resistance was tested using the fall-of-potential method per IEEE 81.</li>
+          <li>That ground resistance was tested using the fall-of-potential method per IEEE 81-2012.</li>
           <li>That all electrodes achieved the applicable acceptance threshold, or that failed electrodes were remediated and re-tested to pass.</li>
           <li>The ground test log (all results, dates, methods, pass/fail) is attached.</li>
         </ul>

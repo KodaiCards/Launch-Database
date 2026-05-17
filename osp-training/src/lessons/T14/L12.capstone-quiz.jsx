@@ -26,7 +26,7 @@ export const meta = {
     { term: 'fault current', source_lesson_id: 'T14.L01' },
     { term: 'equipotential', source_lesson_id: 'T14.L01' },
     { term: 'ground potential rise', source_lesson_id: 'T14.L01' },
-    { term: 'MGN', source_lesson_id: 'T14.L02' },
+    { term: 'MGN', source_lesson_id: 'T01.L08' },
     { term: 'neutral wire', source_lesson_id: 'T14.L02' },
     { term: 'neutral-to-ground bond', source_lesson_id: 'T14.L02' },
     { term: 'messenger bond', source_lesson_id: 'T14.L03' },
@@ -38,15 +38,15 @@ export const meta = {
     { term: 'concrete-encased electrode (Ufer)', source_lesson_id: 'T14.L04' },
     { term: 'ring electrode', source_lesson_id: 'T14.L04' },
     { term: 'supplemental electrode', source_lesson_id: 'T14.L04' },
-    { term: 'IBT', source_lesson_id: 'T14.L05' },
-    { term: 'GES', source_lesson_id: 'T14.L05' },
+    { term: 'IBT', source_lesson_id: 'T01.L08' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
     { term: 'PBB', source_lesson_id: 'T14.L05' },
     { term: 'fall-of-potential', source_lesson_id: 'T14.L06' },
     { term: '62% rule', source_lesson_id: 'T14.L06' },
     { term: 'clamp-on method', source_lesson_id: 'T14.L06' },
     { term: 'soil resistivity', source_lesson_id: 'T14.L06' },
     { term: 'surge arrester', source_lesson_id: 'T14.L07' },
-    { term: 'primary protector', source_lesson_id: 'T14.L07' },
+    { term: 'primary protector', source_lesson_id: 'T19.L06' },
     { term: 'MOV', source_lesson_id: 'T14.L07' },
     { term: 'gas-tube arrester', source_lesson_id: 'T14.L07' },
     { term: 'ground ring', source_lesson_id: 'T14.L07' },
@@ -57,7 +57,7 @@ export const meta = {
     { term: 'dielectric flange', source_lesson_id: 'T14.L09' },
     { term: 'aerial plant bonding schedule', source_lesson_id: 'T14.L10' },
     { term: 'ground test log', source_lesson_id: 'T14.L10' },
-    { term: 'grounds per mile', source_lesson_id: 'T14.L11' },
+    { term: 'grounds per mile', source_lesson_id: 'T14.L02' },
     { term: 'grounding interval', source_lesson_id: 'T14.L11' },
   ],
   learning_objectives: [
@@ -203,7 +203,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'Current probe minimum = 5 × 8 ft = 40 ft. Potential probe = 62% × 40 ft = 24.8 ft. This is the 62% rule from IEEE 81 §9.3 that places the potential probe in the flat zone of the resistance curve. (T14.L06.)',
+                'Current probe minimum = 5 × 8 ft = 40 ft. Potential probe = 62% × 40 ft = 24.8 ft. This is the 62% rule from IEEE 81-2012 §9.3 that places the potential probe in the flat zone of the resistance curve. (T14.L06.)',
             },
             {
               id: 'T14L12Q10',
@@ -216,7 +216,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'Variation of ±0.1 Ω on an 18 Ω reading = ±0.6% — well within the ±2% IEEE 81 validation criterion. The probe was in the flat zone. Test result of 18 Ω is valid. (Source: IEEE 81 §9.3. T14.L06.)',
+                'Variation of ±0.1 Ω on an 18 Ω reading = ±0.6% — well within the ±2% IEEE 81 validation criterion. The probe was in the flat zone. Test result of 18 Ω is valid. (Source: IEEE 81-2012 §9.3. T14.L06.)',
             },
             {
               id: 'T14L12Q11',
@@ -229,7 +229,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'The arrester must divert the surge BEFORE it enters the protected underground/indoor portion. Line-side placement at the riser transition is correct. A second-stage protector is also required at building entry. (Sources: IEEE Std 1100 §8.5; NESC Rule 97. T14.L07.)',
+                'The arrester must divert the surge BEFORE it enters the protected underground/indoor portion. Line-side placement at the riser transition is correct. A second-stage protector is also required at building entry. (Sources: IEEE Std 1100-2005 §8.5 [confirm edition]; NESC Rule 97. T14.L07.)',
             },
             {
               id: 'T14L12Q12',
@@ -307,7 +307,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'On a single new rod with no parallel GES paths, the clamp-on measures the series impedance of the measurement circuit — not the electrode resistance alone. Only the fall-of-potential method per IEEE 81 §9.3 gives a valid single-rod acceptance measurement. (Source: IEEE 81 §9.4. T14.L06.)',
+                'On a single new rod with no parallel GES paths, the clamp-on measures the series impedance of the measurement circuit — not the electrode resistance alone. Only the fall-of-potential method per IEEE 81-2012 §9.3 gives a valid single-rod acceptance measurement. (Source: IEEE 81-2012 §9.4. T14.L06.)',
             },
             {
               id: 'T14L12Q18',
@@ -320,7 +320,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'The ground ring serves two purposes: (1) large surface area contact with earth gives low resistance meeting the 5 Ω threshold; (2) the ring creates an equipotential surface under the building footprint so GPR raises everything inside the ring together — no dangerous voltage gradients. (Sources: NEC §250.52(A)(4); IEEE Std 1100 §8.3. T14.L07.)',
+                'The ground ring serves two purposes: (1) large surface area contact with earth gives low resistance meeting the 5 Ω threshold; (2) the ring creates an equipotential surface under the building footprint so GPR raises everything inside the ring together — no dangerous voltage gradients. (Sources: NEC §250.52(A)(4); IEEE Std 1100-2005 §8.3 [confirm edition]. T14.L07.)',
             },
             // ── ADVANCED TIER (2 Q) ──────────────────────────
             {

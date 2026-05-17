@@ -292,7 +292,7 @@ export default function T14L05_IBTandGES() {
               ],
               correct: 1,
               explanation:
-                'If each service bonds to a different electrode, those electrodes can be at different voltages during a GPR event — creating dangerous potential differences between services inside the building. Bonding all services to one common GES via the IBT ensures they rise and fall together, eliminating voltage differences. (Source: NEC §250.94; IEEE Std 1100 §1.2–1.3.)',
+                'If each service bonds to a different electrode, those electrodes can be at different voltages during a GPR event — creating dangerous potential differences between services inside the building. Bonding all services to one common GES via the IBT ensures they rise and fall together, eliminating voltage differences. (Source: NEC §250.94; IEEE Std 1100-2005 §1.2–1.3 [confirm edition].)',
             },
             {
               id: 'T14L05Q2',
