@@ -1579,3 +1579,42 @@ When asked to review a consult / external framework: identify which empirical bu
 - 60-80% cost reduction comes from cutting saturation = the loop that catches the cascade bugs.
 
 Accepted from consult: prompt caching concept (limited within Claude Code constraints), standardized matrix outputs (mostly already in place), observability layer (production-tier — defer).
+
+## Implementation 2026-05-17 — agent-protocol.md consolidated + dispatch-prompt slim pattern
+
+Carter caught me 2026-05-17: I gave best-thoughts on cost optimizations + didn't implement them. Fixed:
+
+1. **`audit-output/agent-protocol.md` rewritten** to current standards (post-saturation-rule, post-rogue-agent countermeasures, current branch=main, write-path allowlist enforcement, anti-patterns, closeout requirements, primary-source verification mandate). 13 sections.
+
+2. **Going forward, dispatch prompts reference it by path** instead of inlining boilerplate:
+   ```
+   First line of every dispatch prompt:
+   > "Read audit-output/agent-protocol.md first. Follow sections 1-13 verbatim. Write-path allowlist: <path>. Then..."
+   ```
+   Saves ~300-400 Opus output tokens per dispatch. Real money over dozens of dispatches per wave.
+
+3. **What survives in the per-dispatch prompt:** wave-specific scope, the canonical / findings to address, model parameter, token cap, deliverable path, framing-specific instructions (e.g., "corroboration-adversarial framing"). All boilerplate (anti-patterns, signing wrapper, closeout, primary-source mandate) lives in agent-protocol.md.
+
+4. **Lesson:** when I commit to operational changes in chat, IMPLEMENT them before the next dispatch. Don't let proposals decay into intent. Carter's verbatim catch: *"you gave your best thoughts and didn't do them silly guy."*
+
+## Timer-as-wake-up — honest limitations (logged 2026-05-17)
+
+Carter asked: if HE sets a timer for usage reset and I cap out BEFORE timer fires, can I wake myself up after reset?
+
+**Honest answer: NO direct self-wake. I'm stateless between turns.** Cap = conversation ends. I can't autonomously resume.
+
+What CAN wake me after cap reset:
+1. **Carter messages me** — most reliable. His ping is a fresh turn.
+2. **A background process outputs to harness AFTER reset** — bash `sleep N && echo` scheduled past reset. If output lands during cap, the wake is wasted (turn likely rejected). If output lands post-reset, harness wakes me.
+3. **Agent dispatch completion lands AFTER reset** — agents I leave in flight have their own Sonnet budget independent of my Opus cap. Their completion notification wakes me.
+
+**Workable pattern when usage is approaching cap:**
+- Write RESUME_HERE.md with state pointer
+- Queue 1-2 long-running agents scheduled to land past reset (their notifications wake me)
+- OR: bash `sleep <seconds-until-reset+buffer> && echo "RESUME"` (background)
+- Don't dispatch new orchestrator work until either fires
+
+**Catch:** multi-hour bash sleep is unreliable in this env (CLAUDE.md prior lesson 2026-05-16, missed wake-up). For ≤30 min sleep is fine. For multi-hour delays, the most reliable wake is Carter pinging me.
+
+**Carter-side timer suggestion:** if he sets a phone alarm at expected reset + manually pings me, that's 100% reliable. The bash-sleep approach is 70-80% reliable for short waits.
+
