@@ -19,11 +19,6 @@ export const meta = {
   ],
   key_terms: [
     {
-      term: 'grounds per mile',
-      definition:
-        'The minimum number of grounding electrodes required per mile of aerial communications plant, as set by NESC Section 09. Each electrode provides a discharge path to earth for fault current and lightning induction at that point along the route. The NESC requirement is a minimum — RUS bulletins or site-specific engineering may require more frequent grounding in high-lightning or high-fault-current areas.',
-    },
-    {
       term: 'grounding interval',
       definition:
         'The maximum spacing (in feet or miles) between successive ground electrodes on an aerial communications route. NESC Section 09 sets the maximum interval; RUS 1751F-630 §7 may specify a stricter (shorter) interval for RUS-funded aerial plant. Whichever interval is shorter (more frequent) is the controlling requirement.',

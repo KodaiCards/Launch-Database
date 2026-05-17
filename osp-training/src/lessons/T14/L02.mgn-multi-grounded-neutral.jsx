@@ -21,11 +21,6 @@ export const meta = {
   ],
   key_terms: [
     {
-      term: 'MGN',
-      definition:
-        'Multi-Grounded Neutral — a distribution system design in which the neutral conductor is connected to earth at every pole (or at defined intervals per NESC Section 09), creating a continuous low-impedance return path for fault current that dramatically reduces the voltage rise on communications plant bonded to it.',
-    },
-    {
       term: 'neutral wire',
       definition:
         'The grounded conductor on a distribution system that carries return current back to the substation transformer. On an MGN system, the neutral is bonded to earth at frequent intervals so it stays very close to earth potential. Communications messengers bonded to an MGN neutral inherit that near-earth potential.',

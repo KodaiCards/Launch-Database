@@ -28,11 +28,6 @@ export const meta = {
         'A protective device that clamps a transient overvoltage spike (from lightning or switching) to a safe level by diverting the excess energy to ground. Surge arresters are placed at every aerial-to-underground transition and at every facility entry where the OSP plant enters a building or equipment cabinet.',
     },
     {
-      term: 'primary protector',
-      definition:
-        'A listed surge protective device (UL 497B for optical fiber and coaxial, UL 497 for telephone pairs) installed at the building entry point. The primary protector is the first line of defense against lightning-induced or power-contact surges traveling on the OSP cable from outside to the inside. Required by NEC Art. 770 (optical fiber) and Art. 800 (comm cables). (Sources: NEC §770.93; NEC §800.93.)',
-    },
-    {
       term: 'MOV',
       definition:
         'Metal Oxide Varistor — a solid-state arrester component that clamps voltage surges. An MOV has a non-linear resistance characteristic: it is essentially an open circuit at normal voltages and a very low resistance at surge voltages, rapidly diverting the surge energy to ground. MOVs are the dominant arrester technology in modern communication equipment protectors.',

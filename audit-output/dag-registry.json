@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T18:41:55.394Z",
+  "generated_at": "2026-05-17T19:08:38.996Z",
   "lesson_count": 149,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -11254,12 +11254,6 @@
     },
     {
       "from_lesson": "T14.L08",
-      "term": "floating messenger",
-      "claimed_source": "T14.L08",
-      "verified": true
-    },
-    {
-      "from_lesson": "T14.L08",
       "term": "NEC",
       "claimed_source": "T01.L08",
       "verified": true
@@ -12841,7 +12835,7 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1343,
+  "verified_pointers_count": 1342,
   "broken_pointers_count": 115,
   "missing_source_lesson_pointers": [
     {
