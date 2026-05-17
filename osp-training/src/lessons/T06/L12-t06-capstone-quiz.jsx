@@ -242,7 +242,7 @@ export default function T06L12_CapstoneQuiz() {
               'Compacted clay in residential lawns',
             ],
             answerIndex: 2,
-            explanation: 'Cable plowing requires the plow blade to cut through the soil without encountering immovable material. Rock and buried concrete stop the blade and can cause the cable to kink or shear under the tension. Sandy loam, wetland muck, and compacted clay (with no rock) are all plowable — the plow displaces the soil around the cable. (Source: T06.L01; CGA Best Practices v19.)',
+            explanation: 'Cable plowing requires the plow blade to cut through the soil without encountering immovable material. Rock and buried concrete stop the blade and can cause the cable to kink or shear under the tension. Sandy loam, wetland muck, and compacted clay (with no rock) are all plowable — the plow displaces the soil around the cable. (Source: T06.L01; CGA Best Practices v20.0 (2024).)',
           },
           // L02: Burial depth hierarchy
           {
@@ -284,7 +284,7 @@ export default function T06L12_CapstoneQuiz() {
               'HDPE has a larger internal diameter than PVC for the same nominal size',
             ],
             answerIndex: 1,
-            explanation: 'HDD bore paths follow a curved arc from entry to exit. PVC is rigid and will crack if bent beyond its rated radius — which is far straighter than typical HDD curves. HDPE is flexible and can follow the bore curve without cracking. This is why virtually all HDD-installed fiber conduit is HDPE rather than PVC. (Source: T06.L03; RUS 1751F-635 §5; CGA Best Practices v19.)',
+            explanation: 'HDD bore paths follow a curved arc from entry to exit. PVC is rigid and will crack if bent beyond its rated radius — which is far straighter than typical HDD curves. HDPE is flexible and can follow the bore curve without cracking. This is why virtually all HDD-installed fiber conduit is HDPE rather than PVC. (Source: T06.L03; RUS 1751F-635 §5; CGA Best Practices v20.0 (2024).)',
           },
           // L04: Fill percentage
           {
@@ -330,7 +330,7 @@ export default function T06L12_CapstoneQuiz() {
               { id: 'tvault', label: 'NIU demarcation in a commercial parking lot' },
             ],
             correctMap: { tmh: 'mh', thh: 'hh', tvault: 'vault' },
-            explanation: 'Manholes are traffic-rated for installation under paved roads where vehicle loads apply. NTC handholes are for non-traffic locations (residential lawns, utility easements). Vaults with H-20 lids are used when an enclosure must sit in a driveable surface (parking lot, driveway) — H-20 covers the 10-ton axle load rating for commercial vehicles. (Source: T06.L05; T06.L08.)',
+            explanation: 'Manholes are traffic-rated for installation under paved roads where vehicle loads apply. NTC handholes are for non-traffic locations (residential lawns, utility easements). Vaults with H-20 lids are used when an enclosure must sit in a driveable surface (parking lot, driveway) — H-20 corresponds to AASHTO HS-20, a 20-ton GVW two-axle truck with a 32,000 lb rear axle (16 tons rear), the standard live-load rating for traffic-rated enclosures. (Source: T06.L05; T06.L08.)',
           },
           // L06: APWA color
           {
@@ -353,7 +353,7 @@ export default function T06L12_CapstoneQuiz() {
             prompt: 'APWA uniform color code: red locate paint marks indicate a ____ utility.',
             answer: 'electric',
             answerDisplay: 'electric supply',
-            explanation: 'Red = electric power lines and cables. This is the highest-consequence utility to encounter — contact with energized electric supply cable is a potentially fatal utility strike. Red marks demand the most cautious approach: hand-dig or vacuum excavate to expose the utility before any bore or open-cut work proceeds in that zone. (Source: APWA Utility Color Code; T06.L06; CGA Best Practices v19.)',
+            explanation: 'Red = electric power lines and cables. This is the highest-consequence utility to encounter — contact with energized electric supply cable is a potentially fatal utility strike. Red marks demand the most cautious approach: hand-dig or vacuum excavate to expose the utility before any bore or open-cut work proceeds in that zone. (Source: APWA Utility Color Code; T06.L06; CGA Best Practices v20.0 (2024).)',
           },
           // L07: Pilot bore
           {
@@ -367,7 +367,7 @@ export default function T06L12_CapstoneQuiz() {
               'That the exit pit has been filled and compacted before reaming',
             ],
             answerIndex: 0,
-            explanation: 'Before committing to reaming (which widens the bore path and makes it harder to change), the crew should verify that the pilot bore depth and path match the design profile — particularly at road crossings and utility crossings. The walkover locating system tracks the drill head depth during the pilot bore. If the actual depth is significantly shallower than the design calls for at a critical point, the pilot bore needs to be corrected before reaming. (Source: T06.L07; CGA Best Practices v19.)',
+            explanation: 'Before committing to reaming (which widens the bore path and makes it harder to change), the crew should verify that the pilot bore depth and path match the design profile — particularly at road crossings and utility crossings. The walkover locating system tracks the drill head depth during the pilot bore. If the actual depth is significantly shallower than the design calls for at a critical point, the pilot bore needs to be corrected before reaming. (Source: T06.L07; CGA Best Practices v20.0 (2024).)',
           },
           // L07: Bentonite function
           {
@@ -381,7 +381,7 @@ export default function T06L12_CapstoneQuiz() {
               'The bore path collapses immediately due to insufficient wall pressure',
             ],
             answerIndex: 1,
-            explanation: 'Bentonite slurry viscosity must be within the working range. Too thin (too much water) → the slurry doesn\'t carry cuttings efficiently. Cuttings settle and pack the bore path, eventually seizing the drill stem or blocking the bore path. Too thick → pump pressure rises, risk of heave. The correct Marsh funnel viscosity for most fiber bore conditions is 36–48 seconds per quart. (Source: T06.L07; CGA Best Practices v19.)',
+            explanation: 'Bentonite slurry viscosity must be within the working range. Too thin (too much water) → the slurry doesn\'t carry cuttings efficiently. Cuttings settle and pack the bore path, eventually seizing the drill stem or blocking the bore path. Too thick → pump pressure rises, risk of heave. The correct Marsh funnel viscosity for most fiber bore conditions is 36–48 seconds per quart. (Source: T06.L07; CGA Best Practices v20.0 (2024).)',
           },
           // L08: Pedestal placement
           {
@@ -493,7 +493,7 @@ export default function T06L12_CapstoneQuiz() {
               'Yellow marks are for proposed excavation — these are probably old survey marks from the permit application, not active utility locates',
             ],
             answerIndex: 1,
-            explanation: 'Yellow locate paint = gas / petroleum pipeline (APWA Uniform Color Code). A gas line crossing through the bore corridor is a serious hazard — contact with a gas line during HDD can cause a leak, explosion, or fire. The correct action is to STOP, call the one-call center, and hand-excavate or vacuum-excavate to positively identify the gas line\'s location and depth before any boring proceeds. "Adjusting depth by 6 inches" is not acceptable — locate accuracy is ±18 inches and the actual line could be at any depth in that range. (Source: APWA Utility Color Code; CGA Best Practices v19; T06.L06; T06.L07.)',
+            explanation: 'Yellow locate paint = gas / petroleum pipeline (APWA Uniform Color Code). A gas line crossing through the bore corridor is a serious hazard — contact with a gas line during HDD can cause a leak, explosion, or fire. The correct action is to STOP, call the one-call center, and hand-excavate or vacuum-excavate to positively identify the gas line\'s location and depth before any boring proceeds. "Adjusting depth by 6 inches" is not acceptable — locate accuracy is ±18 inches and the actual line could be at any depth in that range. (Source: APWA Utility Color Code; CGA Best Practices v20.0 (2024); T06.L06; T06.L07.)',
           },
         ]}
         onComplete={(result) => {

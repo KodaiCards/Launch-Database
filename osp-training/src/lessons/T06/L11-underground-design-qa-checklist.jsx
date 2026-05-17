@@ -94,7 +94,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
           <li><strong>Missing depth callout</strong> — the drawing shows the conduit route but doesn't specify burial depth at road crossings or utility crossings</li>
           <li><strong>Fill overrun</strong> — the conduit schedule is too small for the cable count, or innerducts are sized incorrectly</li>
           <li><strong>Pedestal spacing violation</strong> — the route between two pedestals exceeds 330 feet along the cable path</li>
-          <li><strong>Separation deficiency</strong> — the route runs too close to an electric supply cable, violating NESC §32 or §35 separation requirements</li>
+          <li><strong>Separation deficiency</strong> — the route runs too close to an electric supply cable, violating NESC §35 Rule 354 separation requirements</li>
         </ol>
 
         {/* Key Terms Flashcards */}
@@ -175,11 +175,11 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             <p className="font-semibold text-slate-100">4. Separation from foreign utilities — crossings and parallels</p>
             <p className="text-sm text-slate-300/90 mt-1">
               For each utility crossing shown on the design: confirm the vertical separation meets
-              NESC §35 minimum (cable in conduit) or §32 (direct-buried), and that field practice
-              12-inch minimum is honored at crossings with electric supply. For parallel runs:
-              confirm 6-inch minimum separation in the same corridor. Flag any crossing without
-              separation callout as INCOMPLETE. (Source: NESC C2 §32/§35 [confirm edition];
-              T06.L09.)
+              NESC §35 Rule 354 minimum (governs both direct-buried cable and cable in duct not
+              part of a conduit system), and that field practice 12-inch minimum is honored at
+              crossings with electric supply. For parallel runs: confirm 6-inch minimum separation
+              in the same corridor. Flag any crossing without separation callout as INCOMPLETE.
+              (Source: NESC C2 §35 Rule 354 [confirm edition]; T06.L09.)
             </p>
           </div>
 
@@ -212,7 +212,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
               Confirm the design calls out warning tape (orange / telecom color per APWA) at
               6–12 inches above conduit for all buried segments. Flag segments without warning
               tape callout as INCOMPLETE. (Source: APWA Utility Color Code; T06.L09; CGA
-              Best Practices v19.)
+              Best Practices v20.0 (2024).)
             </p>
           </div>
 
@@ -274,7 +274,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             <strong>Frac-out contingency plan.</strong> The construction plan must include a
             frac-out response procedure for waterway crossings: what to do if slurry breaks
             through to the waterway, who to call, how to contain the spill. (Source: CGA Best
-            Practices v19; NWP conditions; field practice.)
+            Practices v20.0 (2024); NWP conditions; field practice.)
           </li>
           <li>
             <strong>Conduit sealed at both ends during bore.</strong> Verify the bore plan
