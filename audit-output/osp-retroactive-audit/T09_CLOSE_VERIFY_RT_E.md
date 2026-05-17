@@ -69,12 +69,16 @@ Fix Wave A + Polish-A + Polish-B have addressed all actionable findings. Vite bu
 
 ```
 git diff --stat origin/main..HEAD
+(empty — only this report file in HEAD, now pushed)
 ```
-(to be pasted after commit)
 
 ```
 git log -3 --oneline
+7f30ed9 T09 Close-Verify RT-ε: GREEN — Polish-B verified, saturation confirmed, T09 CLOSED
+eca9004 T09 polish-B: update Q4 bracket-caveat from stale 7 CFR 1970.54 to Part 1b phrasing
+7c0f95d T09 Final Verify RT-δ (technical+cascade-defense+different-sources): GREEN — saturation confirmed at 8th framing, all primary-source verifications via different source family pass, 2 LOW rediscoveries only, T09 CLOSES
 ```
-(to be pasted after commit)
+
+Vite build: `✓ built in 6.30s`
 
 === T09 CLOSE VERIFY RT E END ===
