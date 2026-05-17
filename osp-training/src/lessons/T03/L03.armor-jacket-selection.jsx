@@ -31,6 +31,7 @@ export const meta = {
     { term: 'armor',        source_lesson_id: 'T01.L03' },
     { term: 'sheath',       source_lesson_id: 'T01.L03' },
     { term: 'HDPE',         source_lesson_id: 'T01.L08' },
+    { term: 'NEC',          source_lesson_id: 'T01.L08' },
     { term: 'loose-tube',   source_lesson_id: 'T03.L01' },
     { term: 'OFNR',         source_lesson_id: 'T03.L02' },
     { term: 'OFNP',         source_lesson_id: 'T03.L02' },

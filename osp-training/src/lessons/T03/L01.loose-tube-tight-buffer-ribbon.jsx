@@ -34,6 +34,7 @@ export const meta = {
     { term: 'buffer tube',  source_lesson_id: 'T01.L03' },
     { term: 'armor',        source_lesson_id: 'T01.L03' },
     { term: 'SMF',          source_lesson_id: 'T01.L08' },
+    { term: 'NEC',          source_lesson_id: 'T01.L08' },
     { term: 'G.652.D',      source_lesson_id: 'T02.L01' },
     { term: 'macrobend',    source_lesson_id: 'T02.L04' },
     { term: 'MFD',          source_lesson_id: 'T02.L01' },

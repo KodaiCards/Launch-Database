@@ -33,6 +33,7 @@ export const meta = {
     { term: 'FDH',           source_lesson_id: 'T01.L07' },
     { term: 'ONT',           source_lesson_id: 'T01.L01' },
     { term: 'HDPE',          source_lesson_id: 'T01.L08' },
+    { term: 'NEC',           source_lesson_id: 'T01.L08' },
     { term: 'figure-8 cable', source_lesson_id: 'T03.L04' },
     { term: 'ADSS',          source_lesson_id: 'T03.L04' },
     { term: 'G.657.A1',      source_lesson_id: 'T03.L05' },

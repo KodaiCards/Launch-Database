@@ -45,6 +45,7 @@ export const meta = {
     { term: 'MFD', source_lesson_id: 'T02.L01' },
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'dB/km', source_lesson_id: 'T02.L02' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'MFD tolerance (RUS)', source_lesson_id: 'T03.L10' },
     { term: 'qualification testing', source_lesson_id: 'T03.L10' },
     { term: 'ICEA S-87-640', source_lesson_id: 'T03.L01' },

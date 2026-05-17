@@ -20,6 +20,7 @@ export const meta = {
   ],
   vocabulary_introduced: [],
   vocabulary_assumed: [
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'loose-tube', source_lesson_id: 'T03.L01' },
     { term: 'tight-buffered', source_lesson_id: 'T03.L01' },
     { term: 'ribbon', source_lesson_id: 'T03.L01' },
