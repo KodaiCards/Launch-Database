@@ -48,7 +48,7 @@ export const meta = {
     {
       term: 'traffic loading',
       definition:
-        'The vehicle load classification that a buried structure must withstand without deformation or failure. H-20 (HS-20) rating: 16,000 lb single axle load — suitable for driveways, parking lots, and private access roads. H-25 (HS-25) rating: 20,000 lb single axle load — required for any structure in a public roadway or under a traffic lane.',
+        'The vehicle load classification that a buried structure must withstand without deformation or failure. H-20 (HS-20) rating: 16,000 lb per rear-tandem axle — suitable for driveways, parking lots, and private access roads. H-25 (HS-25) rating: 20,000 lb per rear-tandem axle — required for any structure in a public roadway or under a traffic lane.',
     },
   ],
   vocabulary_assumed: [
@@ -148,7 +148,7 @@ export default function T10L07_ManholeHandholeInstallation() {
               {
                 id: 'T10-L07-fc-frame-cover',
                 front: 'What is a frame-and-cover and what traffic rating must it have in a public roadway?',
-                back: 'The lid assembly placed over a vault or manhole — typically cast iron with a steel frame seating in the vault wall. In a public roadway under a traffic lane, it must be rated H-25 (20,000 lb single axle load). H-20 (16,000 lb) is acceptable for driveways and private access roads.',
+                back: 'The lid assembly placed over a vault or manhole — typically cast iron with a steel frame seating in the vault wall. In a public roadway under a traffic lane, it must be rated H-25 (20,000 lb per rear-tandem axle). H-20 (16,000 lb per rear-tandem axle) is acceptable for driveways and private access roads.',
               },
               {
                 id: 'T10-L07-fc-traffic-loading',
@@ -250,7 +250,7 @@ export default function T10L07_ManholeHandholeInstallation() {
         </p>
         <ul className="list-disc list-inside mt-2 space-y-1 text-slate-300">
           <li><strong>H-20 (HS-20):</strong> 16,000 lb per rear-tandem axle (8,000 lb steer + 32,000 lb rear tandem = 40,000 lb GVW per the AASHTO HS-20 classification). Acceptable for private driveways, parking lots, and private access roads where heavy delivery trucks don't commonly drive.</li>
-          <li><strong>H-25 (HS-25):</strong> 20,000 lb per single axle. Required for any structure in or under a public roadway where utility trucks, delivery vehicles, or transit buses travel. Most state DOT permits specify H-25 for any work within the paved ROW.</li>
+          <li><strong>H-25 (HS-25):</strong> 20,000 lb per rear-tandem axle. Required for any structure in or under a public roadway where utility trucks, delivery vehicles, or transit buses travel. Most state DOT permits specify H-25 for any work within the paved ROW.</li>
         </ul>
         <p className="mt-2 p-3 bg-amber-900/30 border border-amber-500/40 rounded-lg text-amber-200 text-sm">
           <strong>Common installation error:</strong> A contractor installs an H-20 structure in a location that will be under a paved road after subdivision development. Initial installation is fine. Road is built over it later. A delivery truck parks over the lid and the vault collapses. The contractor is liable. Always spec H-25 for any structure that might ever be in or adjacent to a paved roadway.
@@ -306,7 +306,7 @@ export default function T10L07_ManholeHandholeInstallation() {
                 ],
                 correctId: 'b',
                 explanation:
-                  'H-20 is rated for 16,000 lb single axle — a typical utility truck or loaded delivery vehicle can exceed this. H-25 (20,000 lb) is required for any structure under a paved road surface where utility or commercial vehicles will travel. Once the structure is under paving that sees truck traffic, the H-20 rating is inadequate. The structure must be replaced or reinforced to H-25 before the road opens to truck traffic.',
+                  'H-20 is rated for 16,000 lb per rear-tandem axle — a typical utility truck or loaded delivery vehicle can exceed this. H-25 (20,000 lb per rear-tandem axle) is required for any structure under a paved road surface where utility or commercial vehicles will travel. Once the structure is under paving that sees truck traffic, the H-20 rating is inadequate. The structure must be replaced or reinforced to H-25 before the road opens to truck traffic.',
               },
             ]}
           />

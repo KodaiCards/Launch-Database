@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T19:08:38.996Z",
+  "generated_at": "2026-05-17T19:38:20.330Z",
   "lesson_count": 149,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -354,6 +354,7 @@
       "handoff package",
       "design input",
       "as-surveyed",
+      "as-designed",
       "design constraints",
       "gap analysis",
       "deliverable checklist"
@@ -606,6 +607,7 @@
     "T07.L02": [
       "plan-and-profile",
       "stationing",
+      "station",
       "offset",
       "PI",
       "cross-section",
@@ -875,7 +877,6 @@
     "T10.L05": [
       "pull tension",
       "capstan formula",
-      "conduit fill",
       "mid-assist",
       "fish tape"
     ],
@@ -920,8 +921,7 @@
       "kick-back authority",
       "field inspector",
       "substantial completion",
-      "acceptance walk",
-      "RUS Form 219"
+      "acceptance walk"
     ],
     "T10.L12": [],
     "T14.L01": [
@@ -1316,8 +1316,7 @@
       "T01.L05"
     ],
     "rus form 219": [
-      "T01.L05",
-      "T10.L11"
+      "T01.L05"
     ],
     "designer": [
       "T01.L06"
@@ -1984,6 +1983,9 @@
     "as-surveyed": [
       "T04.L08"
     ],
+    "as-designed": [
+      "T04.L08"
+    ],
     "design constraints": [
       "T04.L08"
     ],
@@ -2371,8 +2373,7 @@
       "T06.L03"
     ],
     "conduit fill": [
-      "T06.L04",
-      "T10.L05"
+      "T06.L04"
     ],
     "40% fill rule": [
       "T06.L04"
@@ -2534,6 +2535,9 @@
       "T09.L06"
     ],
     "stationing": [
+      "T07.L02"
+    ],
+    "station": [
       "T07.L02"
     ],
     "offset": [
@@ -3686,13 +3690,6 @@
       ]
     },
     {
-      "term": "rus form 219",
-      "introduced_by": [
-        "T01.L05",
-        "T10.L11"
-      ]
-    },
-    {
       "term": "staker",
       "introduced_by": [
         "T01.L06",
@@ -3895,13 +3892,6 @@
       "introduced_by": [
         "T05.L12",
         "T19.L09"
-      ]
-    },
-    {
-      "term": "conduit fill",
-      "introduced_by": [
-        "T06.L04",
-        "T10.L05"
       ]
     },
     {
@@ -10190,9 +10180,8 @@
     {
       "from_lesson": "T10.L01",
       "term": "ROW",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L01",
@@ -10209,9 +10198,8 @@
     {
       "from_lesson": "T10.L01",
       "term": "MUTCD",
-      "claimed_source": "T18.L08",
-      "verified": false,
-      "reason": "'MUTCD' is introduced by T01.L08, T18.L06, not T18.L08"
+      "claimed_source": "T18.L06",
+      "verified": true
     },
     {
       "from_lesson": "T10.L02",
@@ -10222,16 +10210,14 @@
     {
       "from_lesson": "T10.L02",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L02",
       "term": "innerduct",
-      "claimed_source": "T06.L02",
-      "verified": false,
-      "reason": "'innerduct' is introduced by T06.L03, not T06.L02"
+      "claimed_source": "T06.L03",
+      "verified": true
     },
     {
       "from_lesson": "T10.L02",
@@ -10284,9 +10270,8 @@
     {
       "from_lesson": "T10.L03",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L03",
@@ -10327,9 +10312,8 @@
     {
       "from_lesson": "T10.L04",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L04",
@@ -10340,9 +10324,8 @@
     {
       "from_lesson": "T10.L04",
       "term": "ROW",
-      "claimed_source": "T09.L01",
-      "verified": false,
-      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L04",
@@ -10359,16 +10342,14 @@
     {
       "from_lesson": "T10.L04",
       "term": "station",
-      "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'station' is not introduced by any lesson in the curriculum"
+      "claimed_source": "T07.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L04",
       "term": "plan-and-profile",
-      "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'plan-and-profile' is introduced by T07.L02, T09.L06, not T07.L01"
+      "claimed_source": "T07.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L04",
@@ -10379,23 +10360,20 @@
     {
       "from_lesson": "T10.L05",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L05",
       "term": "innerduct",
-      "claimed_source": "T06.L02",
-      "verified": false,
-      "reason": "'innerduct' is introduced by T06.L03, not T06.L02"
+      "claimed_source": "T06.L03",
+      "verified": true
     },
     {
       "from_lesson": "T10.L05",
-      "term": "conduit fill (40% rule)",
+      "term": "conduit fill",
       "claimed_source": "T06.L04",
-      "verified": false,
-      "reason": "'conduit fill (40% rule)' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T10.L05",
@@ -10424,16 +10402,14 @@
     {
       "from_lesson": "T10.L06",
       "term": "bend radius",
-      "claimed_source": "T03.L02",
-      "verified": false,
-      "reason": "'bend radius' is introduced by T02.L04, not T03.L02"
+      "claimed_source": "T02.L04",
+      "verified": true
     },
     {
       "from_lesson": "T10.L06",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L07",
@@ -10456,16 +10432,14 @@
     {
       "from_lesson": "T10.L07",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L07",
       "term": "bend radius",
-      "claimed_source": "T03.L02",
-      "verified": false,
-      "reason": "'bend radius' is introduced by T02.L04, not T03.L02"
+      "claimed_source": "T02.L04",
+      "verified": true
     },
     {
       "from_lesson": "T10.L07",
@@ -10476,9 +10450,8 @@
     {
       "from_lesson": "T10.L07",
       "term": "confined space",
-      "claimed_source": "T18.L05",
-      "verified": false,
-      "reason": "'confined space' is introduced by T18.L03, not T18.L05"
+      "claimed_source": "T18.L03",
+      "verified": true
     },
     {
       "from_lesson": "T10.L07",
@@ -10488,10 +10461,9 @@
     },
     {
       "from_lesson": "T10.L08",
-      "term": "open-cut",
+      "term": "open-cut trench",
       "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'open-cut' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T10.L08",
@@ -10502,9 +10474,8 @@
     {
       "from_lesson": "T10.L08",
       "term": "ROW",
-      "claimed_source": "T09.L01",
-      "verified": false,
-      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L08",
@@ -10533,9 +10504,8 @@
     {
       "from_lesson": "T10.L09",
       "term": "MUTCD",
-      "claimed_source": "T18.L08",
-      "verified": false,
-      "reason": "'MUTCD' is introduced by T01.L08, T18.L06, not T18.L08"
+      "claimed_source": "T18.L06",
+      "verified": true
     },
     {
       "from_lesson": "T10.L09",
@@ -10552,9 +10522,8 @@
     {
       "from_lesson": "T10.L09",
       "term": "ROW",
-      "claimed_source": "T09.L01",
-      "verified": false,
-      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L09",
@@ -10565,16 +10534,14 @@
     {
       "from_lesson": "T10.L10",
       "term": "plan-and-profile",
-      "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'plan-and-profile' is introduced by T07.L02, T09.L06, not T07.L01"
+      "claimed_source": "T07.L02",
+      "verified": true
     },
     {
       "from_lesson": "T10.L10",
       "term": "as-designed",
-      "claimed_source": "T04.L02",
-      "verified": false,
-      "reason": "'as-designed' is not introduced by any lesson in the curriculum"
+      "claimed_source": "T04.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L10",
@@ -10585,9 +10552,8 @@
     {
       "from_lesson": "T10.L10",
       "term": "ROW",
-      "claimed_source": "T09.L01",
-      "verified": false,
-      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L10",
@@ -10646,9 +10612,8 @@
     {
       "from_lesson": "T10.L11",
       "term": "as-designed",
-      "claimed_source": "T04.L02",
-      "verified": false,
-      "reason": "'as-designed' is not introduced by any lesson in the curriculum"
+      "claimed_source": "T04.L08",
+      "verified": true
     },
     {
       "from_lesson": "T10.L11",
@@ -10665,9 +10630,14 @@
     {
       "from_lesson": "T10.L11",
       "term": "ROW",
-      "claimed_source": "T09.L01",
-      "verified": false,
-      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "RUS Form 219",
+      "claimed_source": "T01.L05",
+      "verified": true
     },
     {
       "from_lesson": "T10.L12",
@@ -10744,7 +10714,7 @@
     {
       "from_lesson": "T10.L12",
       "term": "conduit fill",
-      "claimed_source": "T10.L05",
+      "claimed_source": "T06.L04",
       "verified": true
     },
     {
@@ -10822,7 +10792,7 @@
     {
       "from_lesson": "T10.L12",
       "term": "RUS Form 219",
-      "claimed_source": "T10.L11",
+      "claimed_source": "T01.L05",
       "verified": true
     },
     {
@@ -12835,8 +12805,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1342,
-  "broken_pointers_count": 115,
+  "verified_pointers_count": 1369,
+  "broken_pointers_count": 89,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",
