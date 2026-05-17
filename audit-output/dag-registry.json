@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-17T17:10:21.067Z",
-  "lesson_count": 125,
+  "generated_at": "2026-05-17T17:36:11.353Z",
+  "lesson_count": 137,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -840,6 +840,84 @@
       "Environmental Impact Memorandum (EIM)"
     ],
     "T09.L12": [],
+    "T14.L01": [
+      "grounding",
+      "bonding",
+      "fault current",
+      "equipotential",
+      "ground potential rise"
+    ],
+    "T14.L02": [
+      "MGN",
+      "neutral wire",
+      "grounds per mile",
+      "neutral-to-ground bond"
+    ],
+    "T14.L03": [
+      "messenger bond",
+      "bond clamp",
+      "downlead",
+      "NESC Rule 96F",
+      "bonded-messenger separation",
+      "ADSS exemption"
+    ],
+    "T14.L04": [
+      "ground rod",
+      "concrete-encased electrode (Ufer)",
+      "water pipe electrode",
+      "ring electrode",
+      "4 AWG bare copper",
+      "5/8-in. × 8-ft copper-clad rod",
+      "supplemental electrode"
+    ],
+    "T14.L05": [
+      "IBT",
+      "GES",
+      "PBB",
+      "SBB",
+      "bonding conductor"
+    ],
+    "T14.L06": [
+      "fall-of-potential",
+      "current probe",
+      "potential probe",
+      "62% rule",
+      "clamp-on method",
+      "soil resistivity"
+    ],
+    "T14.L07": [
+      "surge arrester",
+      "primary protector",
+      "MOV",
+      "gas-tube arrester",
+      "VPL",
+      "ground ring"
+    ],
+    "T14.L08": [
+      "stray voltage",
+      "induced AC voltage",
+      "floating messenger",
+      "LOTO sequence",
+      "de-energization"
+    ],
+    "T14.L09": [
+      "cathodic protection",
+      "corrosion cell",
+      "anode",
+      "cathode",
+      "sacrificial anode",
+      "dielectric flange",
+      "isolation coupling"
+    ],
+    "T14.L10": [
+      "aerial plant bonding schedule",
+      "ground test log"
+    ],
+    "T14.L11": [
+      "grounds per mile",
+      "grounding interval"
+    ],
+    "T14.L12": [],
     "T18.L01": [
       "general duty clause",
       "1910.268",
@@ -1231,14 +1309,17 @@
     ],
     "mgn": [
       "T01.L08",
+      "T14.L02",
       "T19.L06"
     ],
     "ibt": [
       "T01.L08",
+      "T14.L05",
       "T19.L06"
     ],
     "ges": [
       "T01.L08",
+      "T14.L05",
       "T19.L06"
     ],
     "nec": [
@@ -2853,6 +2934,161 @@
     "environmental impact memorandum (eim)": [
       "T09.L11"
     ],
+    "grounding": [
+      "T14.L01"
+    ],
+    "bonding": [
+      "T14.L01"
+    ],
+    "fault current": [
+      "T14.L01"
+    ],
+    "equipotential": [
+      "T14.L01"
+    ],
+    "ground potential rise": [
+      "T14.L01"
+    ],
+    "neutral wire": [
+      "T14.L02"
+    ],
+    "grounds per mile": [
+      "T14.L02",
+      "T14.L11"
+    ],
+    "neutral-to-ground bond": [
+      "T14.L02"
+    ],
+    "messenger bond": [
+      "T14.L03"
+    ],
+    "bond clamp": [
+      "T14.L03"
+    ],
+    "downlead": [
+      "T14.L03"
+    ],
+    "nesc rule 96f": [
+      "T14.L03"
+    ],
+    "bonded-messenger separation": [
+      "T14.L03"
+    ],
+    "adss exemption": [
+      "T14.L03"
+    ],
+    "ground rod": [
+      "T14.L04"
+    ],
+    "concrete-encased electrode (ufer)": [
+      "T14.L04"
+    ],
+    "water pipe electrode": [
+      "T14.L04"
+    ],
+    "ring electrode": [
+      "T14.L04"
+    ],
+    "4 awg bare copper": [
+      "T14.L04"
+    ],
+    "5/8-in. × 8-ft copper-clad rod": [
+      "T14.L04"
+    ],
+    "supplemental electrode": [
+      "T14.L04"
+    ],
+    "pbb": [
+      "T14.L05"
+    ],
+    "sbb": [
+      "T14.L05"
+    ],
+    "bonding conductor": [
+      "T14.L05"
+    ],
+    "fall-of-potential": [
+      "T14.L06"
+    ],
+    "current probe": [
+      "T14.L06"
+    ],
+    "potential probe": [
+      "T14.L06"
+    ],
+    "62% rule": [
+      "T14.L06"
+    ],
+    "clamp-on method": [
+      "T14.L06"
+    ],
+    "soil resistivity": [
+      "T14.L06"
+    ],
+    "surge arrester": [
+      "T14.L07"
+    ],
+    "primary protector": [
+      "T14.L07",
+      "T19.L06"
+    ],
+    "mov": [
+      "T14.L07"
+    ],
+    "gas-tube arrester": [
+      "T14.L07"
+    ],
+    "vpl": [
+      "T14.L07"
+    ],
+    "ground ring": [
+      "T14.L07"
+    ],
+    "stray voltage": [
+      "T14.L08"
+    ],
+    "induced ac voltage": [
+      "T14.L08"
+    ],
+    "floating messenger": [
+      "T14.L08"
+    ],
+    "loto sequence": [
+      "T14.L08"
+    ],
+    "de-energization": [
+      "T14.L08"
+    ],
+    "cathodic protection": [
+      "T14.L09"
+    ],
+    "corrosion cell": [
+      "T14.L09"
+    ],
+    "anode": [
+      "T14.L09"
+    ],
+    "cathode": [
+      "T14.L09"
+    ],
+    "sacrificial anode": [
+      "T14.L09"
+    ],
+    "dielectric flange": [
+      "T14.L09"
+    ],
+    "isolation coupling": [
+      "T14.L09"
+    ],
+    "aerial plant bonding schedule": [
+      "T14.L10"
+    ],
+    "ground test log": [
+      "T14.L10"
+    ],
+    "grounding interval": [
+      "T14.L11"
+    ],
     "general duty clause": [
       "T18.L01"
     ],
@@ -3090,9 +3326,6 @@
     "heat load": [
       "T19.L05"
     ],
-    "primary protector": [
-      "T19.L06"
-    ],
     "ibt-entry": [
       "T19.L06"
     ],
@@ -3246,6 +3479,7 @@
       "term": "mgn",
       "introduced_by": [
         "T01.L08",
+        "T14.L02",
         "T19.L06"
       ]
     },
@@ -3253,6 +3487,7 @@
       "term": "ibt",
       "introduced_by": [
         "T01.L08",
+        "T14.L05",
         "T19.L06"
       ]
     },
@@ -3260,6 +3495,7 @@
       "term": "ges",
       "introduced_by": [
         "T01.L08",
+        "T14.L05",
         "T19.L06"
       ]
     },
@@ -3445,6 +3681,20 @@
       "introduced_by": [
         "T09.L01",
         "T09.L06"
+      ]
+    },
+    {
+      "term": "grounds per mile",
+      "introduced_by": [
+        "T14.L02",
+        "T14.L11"
+      ]
+    },
+    {
+      "term": "primary protector",
+      "introduced_by": [
+        "T14.L07",
+        "T19.L06"
       ]
     }
   ],
@@ -9647,6 +9897,840 @@
       "verified": true
     },
     {
+      "from_lesson": "T14.L01",
+      "term": "OSP",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "fiber",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "sheath",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "messenger",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "armor",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "joint-use",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L01",
+      "term": "pole",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'pole' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "fault current",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "equipotential",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "joint-use",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "messenger",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "clearance",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "span",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L02",
+      "term": "attachment",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "fault current",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "MGN",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "neutral wire",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "messenger",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "armor",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "span",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "clearance",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "joint-use",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L03",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "fault current",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "ground potential rise",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "messenger bond",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "downlead",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L04",
+      "term": "GES",
+      "claimed_source": "T14.L01",
+      "verified": false,
+      "reason": "'GES' is introduced by T01.L08, T14.L05, T19.L06, not T14.L01"
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "ground potential rise",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "ground rod",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "concrete-encased electrode (Ufer)",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "ring electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "supplemental electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "conduit",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "headend",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L06",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L06",
+      "term": "ground rod",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L06",
+      "term": "supplemental electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L06",
+      "term": "GES",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L06",
+      "term": "IBT",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L06",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "ground potential rise",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "GES",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "IBT",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "ring electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "conduit",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "headend",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "fault current",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "messenger bond",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "floating messenger",
+      "claimed_source": "T14.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "joint-use",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L08",
+      "term": "LOTO",
+      "claimed_source": "T18.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "ground rod",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "GES",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "conduit",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "pedestal",
+      "claimed_source": "T06.L05",
+      "verified": false,
+      "reason": "'pedestal' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "burial depth",
+      "claimed_source": "T06.L02",
+      "verified": false,
+      "reason": "'burial depth' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T14.L09",
+      "term": "duct",
+      "claimed_source": "T06.L02",
+      "verified": false,
+      "reason": "'duct' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "fall-of-potential",
+      "claimed_source": "T14.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "62% rule",
+      "claimed_source": "T14.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "ground rod",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "supplemental electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "messenger bond",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "downlead",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "GES",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "NEC",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T14.L10",
+      "term": "RUS",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "MGN",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "neutral-to-ground bond",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "messenger bond",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "ground rod",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "RUS",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "aerial plant bonding schedule",
+      "claimed_source": "T14.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "ground test log",
+      "claimed_source": "T14.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "bonding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "fault current",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "equipotential",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "ground potential rise",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "MGN",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "neutral wire",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "neutral-to-ground bond",
+      "claimed_source": "T14.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "messenger bond",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "bond clamp",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "downlead",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "NESC Rule 96F",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "ADSS exemption",
+      "claimed_source": "T14.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "ground rod",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "concrete-encased electrode (Ufer)",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "ring electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "supplemental electrode",
+      "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "IBT",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "GES",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "PBB",
+      "claimed_source": "T14.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "fall-of-potential",
+      "claimed_source": "T14.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "62% rule",
+      "claimed_source": "T14.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "clamp-on method",
+      "claimed_source": "T14.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "soil resistivity",
+      "claimed_source": "T14.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "surge arrester",
+      "claimed_source": "T14.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "primary protector",
+      "claimed_source": "T14.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "MOV",
+      "claimed_source": "T14.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "gas-tube arrester",
+      "claimed_source": "T14.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "ground ring",
+      "claimed_source": "T14.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "stray voltage",
+      "claimed_source": "T14.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "induced AC voltage",
+      "claimed_source": "T14.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "LOTO sequence",
+      "claimed_source": "T14.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "cathodic protection",
+      "claimed_source": "T14.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "dielectric flange",
+      "claimed_source": "T14.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "aerial plant bonding schedule",
+      "claimed_source": "T14.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "ground test log",
+      "claimed_source": "T14.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "grounds per mile",
+      "claimed_source": "T14.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L12",
+      "term": "grounding interval",
+      "claimed_source": "T14.L11",
+      "verified": true
+    },
+    {
       "from_lesson": "T18.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -10806,8 +11890,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1128,
-  "broken_pointers_count": 85,
+  "verified_pointers_count": 1253,
+  "broken_pointers_count": 97,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",
