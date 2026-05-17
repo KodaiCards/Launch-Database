@@ -67,3 +67,14 @@ R-2 self-assesses saturation reached. But per Carter's no-severity-gate rule, R-
 **Next on resume (T06):** R-3 forensic/field-failure framing. Verify R-2's NESC §34 + §32.2410 claims via DIFFERENT sources (cascade-defense). Sweep remaining T06 lessons for cascade bugs.
 
 **T06 canonical accumulating:** 5 HIGH (R-1: 3 + R-2: 2) + 6 MED (R-1: 4 + R-2: 2) + 2 LOW. Heavy fix wave + 2-RT pair + polish + final-verify pair anticipated.
+
+## Update — Haiku §34 vs §35 tiebreaker resolved `51f4482`
+
+- §34 = Cable in underground structures (vaults/conduits/handholes) — supply + comm
+- §35 = Direct-Buried Cable and Cable in Duct Not Part of a Conduit System — supply + comm
+- Distinction is LOCATION not cable type
+- **R-2's H1 specific claim "§34 = comm exclusively" REFUTED.** R-3 correct.
+
+**Impact on T06 Fix Wave A canonical:** drop R-2's "add §34 framework" instruction. Keep R-1's §32/§35 framework correction (§32=supply conduit, §33=supply cable, §35=direct-buried both). Lesson does NOT need §34 added.
+
+**Haiku ground-truth efficiency confirmed:** 89K tokens / 38 sec / definitive on section-title question. Perfect role for this class.
