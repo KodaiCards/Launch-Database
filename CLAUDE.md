@@ -1660,3 +1660,43 @@ Test results from 2026-05-17 cap cycle:
 - **If Carter wants autonomous resume:** he sets a phone alarm + pings me. The harness side cannot self-resume.
 - **Don't try the Haiku-wake or in-flight-agent-wake trick again.** Burns tokens, doesn't deliver wake.
 
+
+## Carter directive 2026-05-17 night — proactive cost-discovery + 17% over-burn recovery target (LOCKED)
+
+Carter's verbatim:
+> "Great do all of that and anything else. Your job is to always have been finding these things and implementing them on your own. A good manager can make his teams efficient, reliable, cheap and accurate. You know the importance of everything so don't allow yourself to forget and do what's in the best interest of the project at all times. I'm using you as an opus agent with the highest settings so that you can make reasonable decisions. Make them, research and log data so you know what's the best practices. Get to know you team and refine things. Your token is costly so be efficient with it but you are sorely responsible for everything. I expect you to not cap out on a 5 hour rolling window while still being productive most of the time. You were outpacing your usage by 17% with just single agent. The changes you introduced need to at least cover that"
+
+**Operating contract additions:**
+
+27. **AUTONOMOUS PROACTIVE COST-DISCOVERY (locked 2026-05-17 night, Carter):** Don't wait to be asked. Continuously identify waste patterns + implement countermeasures on my own. Meta-audit dispatches, infrastructure builds, registry creation, prompt-template iteration — all autonomous orchestrator work. Carter's bar: a good manager makes teams efficient + reliable + cheap + accurate. All four simultaneously. Never compromise quality (RT saturation, primary-source verify, 2-RT pair minimum, <1% error). Cost cuts come from infrastructure + tooling + discipline, never from skipping verification.
+
+28. **17% OVER-BURN RECOVERY TARGET (locked 2026-05-17 night, Carter):** Pre-changes, single-agent throttle burn rate = 117% of sustainable (caps before 5-hr window resets). Changes I'm implementing this session MUST recover ≥17% to stay within 100% sustainable. Infrastructure budget:
+- Agent-protocol slim references → ~300-400 Opus saved per dispatch (~25-40% prompt-write Opus reduction)
+- Schema validator + DAG registry → ~34M Sonnet saved across remaining ~12 topics per meta-audit
+- Citation registry → ~1.8M Sonnet saved across audit pipeline
+- Tight chat discipline → variable but real; <200 word responses target
+Estimated combined: well above the 17% gap if discipline holds.
+
+29. **DON'T CAP WITHIN 5-HOUR WINDOW (locked 2026-05-17 night, Carter):** "I expect you to not cap out on a 5 hour rolling window while still being productive most of the time." Productive ≠ frantic. Sustainable burn rate at default operating mode. When Carter explicitly says "sprint" or "burn cap" or "keep going I want usage to cap" — temporary override. Default = sustainable.
+
+30. **GET-TO-KNOW-TEAM PRACTICE (locked 2026-05-17 night, Carter):** Periodically review agent performance data — empirical token costs per framing, finding-rates per RT type, time-to-saturation per topic class. Refine prompts + framings + sequencing based on data. Log results in self-improvement log. Treat agents as a team I'm managing, characterize their strengths + drift patterns.
+
+**Empirical agent team data (seed, 2026-05-17 night):**
+
+| Agent role | Typical Sonnet cost | Typical wall-clock | Find rate per dispatch |
+|---|---|---|---|
+| R-1 primary-source-skeptical | 70-100K | 5-9 min | 1-3 HIGH + 2-4 MED |
+| R-2 corroboration-adversarial | 125-155K | 5-7 min | 2-3 NEW HIGH/MED (cascade catch) |
+| R-3 forensic/incident | 140-160K | 6-9 min | 0-1 NEW HIGH + 2-3 MED |
+| R-4..R-7 specialized framings | 70-170K | 6-10 min | diminishing — saturation curve |
+| Haiku ground-truth | 30-75K | 12-60 sec | binary verify, perfect for citations |
+| Fix-agent canonical | 100-160K | 8-12 min | applies canonical + neighborhood-flags |
+| Polish-agent (fresh eyes) | 60-100K | 5-8 min | LOWs + cosmetic + Polish Queue back-fill |
+| Post-fix RT pair (each) | 130-150K | 5-7 min | catches Fix Wave A regressions + cascade-replacement bugs |
+| Meta-audit / infrastructure | 110-200K | 5-10 min | one-time analysis or build |
+
+**Per-topic saturation curve (avg, post-2026-05-16):**
+- Standard topic: 3 audit rounds + 1 fix + 2 RT pairs + 1 polish + 1 final-verify RT pair ≈ 1.0-1.5M Sonnet
+- Cascade-heavy topic (T02/T08/T18/T09): 4+ audit rounds + multiple polish stages + 5-16 RT framings ≈ 2-3M Sonnet
+- Trade-off: 2-3x cost catches ~30% more bugs at <1% margin
+
