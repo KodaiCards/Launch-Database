@@ -61,12 +61,11 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'ISP', source_lesson_id: 'T01.L01' },
-    { term: 'OLT', source_lesson_id: 'T01.L08' },
-    { term: 'FDH', source_lesson_id: 'T01.L08' },
-    { term: 'feeder', source_lesson_id: 'T01.L08' },
-    { term: 'ONT', source_lesson_id: 'T01.L08' },
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
-    { term: 'aerial cable', source_lesson_id: 'T05.L01' },
+    { term: 'OLT', source_lesson_id: 'T01.L01' },
+    { term: 'ONT', source_lesson_id: 'T01.L01' },
+    { term: 'FDH', source_lesson_id: 'T01.L07' },
+    { term: 'feeder', source_lesson_id: 'T01.L07' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
   ],
   estimated_minutes: 20,
 };

@@ -44,7 +44,7 @@ export const meta = {
     { term: 'wind span', source_lesson_id: 'T05.L05' },
     { term: 'Rule 232', source_lesson_id: 'T05.L02' },
     { term: 'design clearance margin', source_lesson_id: 'T05.L02' },
-    { term: 'messenger', source_lesson_id: 'T03.L04' },
+    { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'EDS', source_lesson_id: 'T03.L04' },
     { term: 'RTS', source_lesson_id: 'T03.L04' },
     { term: 'span', source_lesson_id: 'T01.L02' },

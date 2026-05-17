@@ -47,7 +47,7 @@ export const meta = {
     { term: 'aeolian vibration', source_lesson_id: 'T05.L10' },
     { term: 'EDS (Everyday Stress)', source_lesson_id: 'T03.L04' },
     { term: 'RTS (Rated Tensile Strength)', source_lesson_id: 'T03.L04' },
-    { term: 'ADSS', source_lesson_id: 'T03.L04' },
+    { term: 'ADSS', source_lesson_id: 'T01.L08' },
     { term: 'PON', source_lesson_id: 'T05.L12' },
     { term: 'GPON', source_lesson_id: 'T05.L12' },
     { term: 'split ratio', source_lesson_id: 'T05.L12' },

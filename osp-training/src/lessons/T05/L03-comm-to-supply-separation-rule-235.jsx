@@ -39,7 +39,7 @@ export const meta = {
     { term: 'pole', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'span', source_lesson_id: 'T01.L02' },
-    { term: 'messenger', source_lesson_id: 'T03.L04' },
+    { term: 'messenger', source_lesson_id: 'T01.L03' },
   ],
   key_terms: [
     {

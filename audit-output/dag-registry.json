@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T16:31:25.207Z",
+  "generated_at": "2026-05-17T17:10:21.067Z",
   "lesson_count": 125,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -245,8 +245,6 @@
       "rodent-proof armor"
     ],
     "T03.L04": [
-      "ADSS",
-      "messenger",
       "lashing wire",
       "EDS",
       "RTS",
@@ -428,7 +426,6 @@
       "Heavy loading district",
       "Extreme Wind loading district",
       "Rule 250",
-      "radial ice thickness",
       "ice load formula",
       "combined load",
       "Extreme Wind overlay (Rule 250C)",
@@ -536,6 +533,7 @@
       "conduit trade size"
     ],
     "T06.L04": [
+      "conduit fill",
       "40% fill rule",
       "jam ratio",
       "coefficient of friction (µ)",
@@ -1087,8 +1085,7 @@
       "T01.L03"
     ],
     "messenger": [
-      "T01.L03",
-      "T03.L04"
+      "T01.L03"
     ],
     "fiber": [
       "T01.L03"
@@ -1273,8 +1270,7 @@
       "T02.L08"
     ],
     "adss": [
-      "T01.L08",
-      "T03.L04"
+      "T01.L08"
     ],
     "row": [
       "T01.L08",
@@ -1677,8 +1673,7 @@
       "T03.L09"
     ],
     "radial ice thickness": [
-      "T03.L09",
-      "T05.L06"
+      "T03.L09"
     ],
     "wind pressure": [
       "T03.L09"
@@ -2216,6 +2211,9 @@
     ],
     "conduit trade size": [
       "T06.L03"
+    ],
+    "conduit fill": [
+      "T06.L04"
     ],
     "40% fill rule": [
       "T06.L04"
@@ -3208,13 +3206,6 @@
       ]
     },
     {
-      "term": "messenger",
-      "introduced_by": [
-        "T01.L03",
-        "T03.L04"
-      ]
-    },
-    {
       "term": "otmr",
       "introduced_by": [
         "T01.L05",
@@ -3277,13 +3268,6 @@
       "introduced_by": [
         "T01.L08",
         "T02.L08"
-      ]
-    },
-    {
-      "term": "adss",
-      "introduced_by": [
-        "T01.L08",
-        "T03.L04"
       ]
     },
     {
@@ -3369,13 +3353,6 @@
       "introduced_by": [
         "T03.L04",
         "T05.L11"
-      ]
-    },
-    {
-      "term": "radial ice thickness",
-      "introduced_by": [
-        "T03.L09",
-        "T05.L06"
       ]
     },
     {
@@ -4620,6 +4597,24 @@
     },
     {
       "from_lesson": "T03.L01",
+      "term": "NEC",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L01",
+      "term": "FOA",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L01",
+      "term": "RUS",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L01",
       "term": "G.652.D",
       "claimed_source": "T02.L01",
       "verified": true
@@ -4686,6 +4681,12 @@
     },
     {
       "from_lesson": "T03.L03",
+      "term": "NEC",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L03",
       "term": "loose-tube",
       "claimed_source": "T03.L01",
       "verified": true
@@ -4722,6 +4723,12 @@
     },
     {
       "from_lesson": "T03.L04",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L04",
       "term": "attachment",
       "claimed_source": "T01.L02",
       "verified": true
@@ -4734,8 +4741,20 @@
     },
     {
       "from_lesson": "T03.L04",
+      "term": "messenger",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L04",
       "term": "armor",
       "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L04",
+      "term": "RUS",
+      "claimed_source": "T01.L01",
       "verified": true
     },
     {
@@ -4843,7 +4862,19 @@
     {
       "from_lesson": "T03.L07",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L07",
+      "term": "NEC",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L07",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
       "verified": true
     },
     {
@@ -4872,6 +4903,12 @@
     },
     {
       "from_lesson": "T03.L08",
+      "term": "NEC",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L08",
       "term": "figure-8 cable",
       "claimed_source": "T03.L04",
       "verified": true
@@ -4879,7 +4916,7 @@
     {
       "from_lesson": "T03.L08",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -4909,7 +4946,7 @@
     {
       "from_lesson": "T03.L09",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -4986,6 +5023,30 @@
     },
     {
       "from_lesson": "T03.L11",
+      "term": "NEC",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L11",
+      "term": "FOA",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L11",
+      "term": "RUS",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L11",
+      "term": "ICEA",
+      "claimed_source": "T01.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L11",
       "term": "MFD tolerance (RUS)",
       "claimed_source": "T03.L10",
       "verified": true
@@ -5018,6 +5079,36 @@
       "from_lesson": "T03.L11",
       "term": "EDS",
       "claimed_source": "T03.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L12",
+      "term": "NEC",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L12",
+      "term": "FOA",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L12",
+      "term": "RUS",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L12",
+      "term": "ITU-T",
+      "claimed_source": "T01.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L12",
+      "term": "NESC",
+      "claimed_source": "T01.L02",
       "verified": true
     },
     {
@@ -5095,13 +5186,13 @@
     {
       "from_lesson": "T03.L12",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
       "from_lesson": "T03.L12",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6426,7 +6517,7 @@
     {
       "from_lesson": "T05.L03",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6519,7 +6610,7 @@
     {
       "from_lesson": "T05.L05",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6574,7 +6665,7 @@
     {
       "from_lesson": "T05.L06",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6583,6 +6674,12 @@
       "claimed_source": "T03.L09",
       "verified": false,
       "reason": "'EDS' is introduced by T03.L04, not T03.L09"
+    },
+    {
+      "from_lesson": "T05.L06",
+      "term": "radial ice thickness",
+      "claimed_source": "T03.L09",
+      "verified": true
     },
     {
       "from_lesson": "T05.L07",
@@ -6642,7 +6739,7 @@
     {
       "from_lesson": "T05.L07",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6709,7 +6806,7 @@
     {
       "from_lesson": "T05.L08",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6769,7 +6866,7 @@
     {
       "from_lesson": "T05.L10",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -6838,7 +6935,7 @@
     {
       "from_lesson": "T05.L10",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6856,7 +6953,7 @@
     {
       "from_lesson": "T05.L11",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -6882,7 +6979,7 @@
     {
       "from_lesson": "T05.L11",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -6957,13 +7054,13 @@
     {
       "from_lesson": "T05.L12",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
       "from_lesson": "T05.L12",
       "term": "messenger",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L03",
       "verified": true
     },
     {
@@ -7147,7 +7244,7 @@
       "term": "ADSS",
       "claimed_source": "T05.L10",
       "verified": false,
-      "reason": "'ADSS' is introduced by T01.L08, T03.L04, not T05.L10"
+      "reason": "'ADSS' is introduced by T01.L08, not T05.L10"
     },
     {
       "from_lesson": "T05.L14",
@@ -7331,7 +7428,7 @@
     {
       "from_lesson": "T05.L15",
       "term": "ADSS",
-      "claimed_source": "T03.L04",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -7650,8 +7747,7 @@
       "from_lesson": "T06.L10",
       "term": "conduit fill",
       "claimed_source": "T06.L04",
-      "verified": false,
-      "reason": "'conduit fill' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T06.L10",
@@ -7681,8 +7777,7 @@
       "from_lesson": "T06.L11",
       "term": "conduit fill",
       "claimed_source": "T06.L04",
-      "verified": false,
-      "reason": "'conduit fill' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T06.L11",
@@ -7784,8 +7879,7 @@
       "from_lesson": "T06.L12",
       "term": "conduit fill",
       "claimed_source": "T06.L04",
-      "verified": false,
-      "reason": "'conduit fill' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T06.L12",
@@ -8647,9 +8741,8 @@
     {
       "from_lesson": "T08.L07",
       "term": "make-ready",
-      "claimed_source": "T08.L01",
-      "verified": false,
-      "reason": "'make-ready' is introduced by T01.L05, not T08.L01"
+      "claimed_source": "T01.L05",
+      "verified": true
     },
     {
       "from_lesson": "T08.L07",
@@ -8674,13 +8767,6 @@
       "term": "make-ready cost causation",
       "claimed_source": "T08.L04",
       "verified": true
-    },
-    {
-      "from_lesson": "T08.L07",
-      "term": "cost estimation",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'cost estimation' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T08.L08",
@@ -9984,44 +10070,32 @@
     {
       "from_lesson": "T19.L01",
       "term": "OLT",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'OLT' is introduced by T01.L01, T19.L02, not T01.L08"
-    },
-    {
-      "from_lesson": "T19.L01",
-      "term": "FDH",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'FDH' is introduced by T01.L07, T19.L09, not T01.L08"
-    },
-    {
-      "from_lesson": "T19.L01",
-      "term": "feeder",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'feeder' is introduced by T01.L07, not T01.L08"
+      "claimed_source": "T01.L01",
+      "verified": true
     },
     {
       "from_lesson": "T19.L01",
       "term": "ONT",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'ONT' is introduced by T01.L01, not T01.L08"
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L01",
+      "term": "FDH",
+      "claimed_source": "T01.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L01",
+      "term": "feeder",
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T19.L01",
       "term": "conduit",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
-    },
-    {
-      "from_lesson": "T19.L01",
-      "term": "aerial cable",
-      "claimed_source": "T05.L01",
-      "verified": false,
-      "reason": "'aerial cable' is not introduced by any lesson in the curriculum"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T19.L02",
@@ -10050,23 +10124,20 @@
     {
       "from_lesson": "T19.L02",
       "term": "OLT",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'OLT' is introduced by T01.L01, T19.L02, not T01.L08"
+      "claimed_source": "T01.L01",
+      "verified": true
     },
     {
       "from_lesson": "T19.L02",
       "term": "ONT",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'ONT' is introduced by T01.L01, not T01.L08"
+      "claimed_source": "T01.L01",
+      "verified": true
     },
     {
       "from_lesson": "T19.L02",
       "term": "feeder",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'feeder' is introduced by T01.L07, not T01.L08"
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T19.L02",
@@ -10077,9 +10148,8 @@
     {
       "from_lesson": "T19.L02",
       "term": "splitter",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'splitter' is introduced by T01.L07, not T01.L08"
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T19.L02",
@@ -10204,16 +10274,14 @@
     {
       "from_lesson": "T19.L06",
       "term": "messenger",
-      "claimed_source": "T05.L01",
-      "verified": false,
-      "reason": "'messenger' is introduced by T01.L03, T03.L04, not T05.L01"
+      "claimed_source": "T01.L03",
+      "verified": true
     },
     {
       "from_lesson": "T19.L06",
       "term": "armor",
-      "claimed_source": "T03.L01",
-      "verified": false,
-      "reason": "'armor' is introduced by T01.L03, not T03.L01"
+      "claimed_source": "T01.L03",
+      "verified": true
     },
     {
       "from_lesson": "T19.L07",
@@ -10290,16 +10358,14 @@
     {
       "from_lesson": "T19.L08",
       "term": "feeder",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'feeder' is introduced by T01.L07, not T01.L08"
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T19.L08",
       "term": "FDH",
-      "claimed_source": "T01.L08",
-      "verified": false,
-      "reason": "'FDH' is introduced by T01.L07, T19.L09, not T01.L08"
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T19.L09",
@@ -10346,9 +10412,8 @@
     {
       "from_lesson": "T19.L09",
       "term": "feeder cable",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'feeder cable' is introduced by T03.L08, not T06.L01"
+      "claimed_source": "T03.L08",
+      "verified": true
     },
     {
       "from_lesson": "T19.L10",
@@ -10741,8 +10806,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1090,
-  "broken_pointers_count": 105,
+  "verified_pointers_count": 1128,
+  "broken_pointers_count": 85,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",

@@ -32,7 +32,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'span',       source_lesson_id: 'T01.L02' },
     { term: 'sag',        source_lesson_id: 'T01.L02' },
-    { term: 'ADSS',       source_lesson_id: 'T03.L04' },
+    { term: 'ADSS',       source_lesson_id: 'T01.L08' },
     { term: 'EDS',        source_lesson_id: 'T03.L04' },
     { term: 'RTS',        source_lesson_id: 'T03.L04' },
     { term: 'NESC',       source_lesson_id: 'T01.L02' },

@@ -30,7 +30,7 @@ export const meta = {
     'suspension clamp',
   ],
   vocabulary_assumed: [
-    { term: 'ADSS', source_lesson_id: 'T03.L04' },
+    { term: 'ADSS', source_lesson_id: 'T01.L08' },
     { term: 'EDS (Everyday Stress)', source_lesson_id: 'T03.L04' },
     { term: 'RTS (Rated Tensile Strength)', source_lesson_id: 'T03.L04' },
     { term: 'sag (s)', source_lesson_id: 'T05.L07' },
@@ -41,7 +41,7 @@ export const meta = {
     { term: 'Light loading district', source_lesson_id: 'T05.L06' },
     { term: 'Rule 232', source_lesson_id: 'T05.L02' },
     { term: 'joint use', source_lesson_id: 'T05.L08' },
-    { term: 'messenger', source_lesson_id: 'T03.L04' },
+    { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
   ],

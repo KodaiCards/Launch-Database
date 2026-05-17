@@ -35,7 +35,7 @@ export const meta = {
     { term: 'HDPE',          source_lesson_id: 'T01.L08' },
     { term: 'NEC',           source_lesson_id: 'T01.L08' },
     { term: 'figure-8 cable', source_lesson_id: 'T03.L04' },
-    { term: 'ADSS',          source_lesson_id: 'T03.L04' },
+    { term: 'ADSS',          source_lesson_id: 'T01.L08' },
     { term: 'G.657.A1',      source_lesson_id: 'T03.L05' },
     { term: 'G.657.A2',      source_lesson_id: 'T03.L05' },
   ],

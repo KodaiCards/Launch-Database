@@ -76,8 +76,8 @@ export const meta = {
     { term: 'hut', source_lesson_id: 'T19.L01' },
     { term: 'main entrance facility', source_lesson_id: 'T19.L01' },
     { term: 'OSP termination point', source_lesson_id: 'T19.L01' },
-    { term: 'messenger', source_lesson_id: 'T05.L01' },
-    { term: 'armor', source_lesson_id: 'T03.L01' },
+    { term: 'messenger', source_lesson_id: 'T01.L03' },
+    { term: 'armor', source_lesson_id: 'T01.L03' },
   ],
   estimated_minutes: 30,
 };

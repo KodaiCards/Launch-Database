@@ -46,12 +46,11 @@ export const vocabulary_introduced = {
 };
 
 export const vocabulary_assumed = [
-  { term: 'make-ready', source_lesson_id: 'T08.L01' },
+  { term: 'make-ready', source_lesson_id: 'T01.L05' },
   { term: 'transfer', source_lesson_id: 'T08.L04' },
   { term: 'reframe', source_lesson_id: 'T08.L05' },
   { term: 'pole replacement', source_lesson_id: 'T08.L06' },
   { term: 'make-ready cost causation', source_lesson_id: 'T08.L04' },
-  { term: 'cost estimation', source_lesson_id: 'T01.L01' },
 ];
 
 export const key_terms = Object.entries(vocabulary_introduced).map(([term, definition]) => ({

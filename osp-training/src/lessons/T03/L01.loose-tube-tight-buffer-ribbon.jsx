@@ -35,6 +35,8 @@ export const meta = {
     { term: 'armor',        source_lesson_id: 'T01.L03' },
     { term: 'SMF',          source_lesson_id: 'T01.L08' },
     { term: 'NEC',          source_lesson_id: 'T01.L08' },
+    { term: 'FOA',          source_lesson_id: 'T01.L08' },
+    { term: 'RUS',          source_lesson_id: 'T01.L01' },
     { term: 'G.652.D',      source_lesson_id: 'T02.L01' },
     { term: 'macrobend',    source_lesson_id: 'T02.L04' },
     { term: 'MFD',          source_lesson_id: 'T02.L01' },

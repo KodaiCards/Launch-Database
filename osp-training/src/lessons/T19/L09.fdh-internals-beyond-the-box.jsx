@@ -64,7 +64,7 @@ export const meta = {
     { term: 'OLT', source_lesson_id: 'T19.L02' },
     { term: 'GPON', source_lesson_id: 'T01.L08' },
     { term: 'splice organizer', source_lesson_id: 'T19.L07' },
-    { term: 'feeder cable', source_lesson_id: 'T06.L01' },
+    { term: 'feeder cable', source_lesson_id: 'T03.L08' },
   ],
   estimated_minutes: 25,
 };

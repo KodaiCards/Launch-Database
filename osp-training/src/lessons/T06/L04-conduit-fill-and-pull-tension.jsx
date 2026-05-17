@@ -24,6 +24,7 @@ export const meta = {
   ],
   estimated_minutes: 30,
   vocabulary_introduced: [
+    'conduit fill',
     '40% fill rule',
     'jam ratio',
     'coefficient of friction (µ)',

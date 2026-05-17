@@ -29,7 +29,6 @@ export const meta = {
     'Heavy loading district',
     'Extreme Wind loading district',
     'Rule 250',
-    'radial ice thickness',
     'ice load formula',
     'combined load',
     'Extreme Wind overlay (Rule 250C)',
@@ -43,8 +42,9 @@ export const meta = {
     { term: 'wind span', source_lesson_id: 'T05.L05' },
     { term: 'w_wind', source_lesson_id: 'T05.L05' },
     { term: 'span', source_lesson_id: 'T01.L02' },
-    { term: 'messenger', source_lesson_id: 'T03.L04' },
+    { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'EDS', source_lesson_id: 'T03.L09' },
+    { term: 'radial ice thickness', source_lesson_id: 'T03.L09' },
   ],
   key_terms: [
     {

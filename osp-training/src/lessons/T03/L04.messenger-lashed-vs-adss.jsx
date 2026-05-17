@@ -23,8 +23,6 @@ export const meta = {
     'Apply the manufacturer datasheet span table to select an ADSS cable meeting EDS and MAT requirements',
   ],
   vocabulary_introduced: [
-    'ADSS',
-    'messenger',
     'lashing wire',
     'EDS',
     'RTS',
@@ -34,9 +32,12 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'span',       source_lesson_id: 'T01.L02' },
     { term: 'sag',        source_lesson_id: 'T01.L02' },
+    { term: 'NESC',       source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'ADSS',       source_lesson_id: 'T01.L08' },
+    { term: 'messenger',  source_lesson_id: 'T01.L03' },
     { term: 'armor',      source_lesson_id: 'T01.L03' },
+    { term: 'RUS',        source_lesson_id: 'T01.L01' },
     { term: 'macrobend',  source_lesson_id: 'T02.L04' },
     { term: 'loose-tube', source_lesson_id: 'T03.L01' },
   ],

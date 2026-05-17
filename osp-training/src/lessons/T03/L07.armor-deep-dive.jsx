@@ -16,7 +16,7 @@ export const meta = {
   learning_objectives: [
     'Describe the corrugated aluminum tape (CAT) armor and when it is preferred over CST',
     'Define dielectric cable and explain why it eliminates bonding/grounding requirements at poles',
-    'Correctly interpret NEC §770.179(B) as covering cable type designation and marking, not separate armor-permission rules',
+    'Correctly interpret NEC §770.179(B) as listing the permitted armor configurations for indoor fiber cable in riser applications, enabling UL-listed CST-armored cables to be installed in building riser shafts',
     'Select the appropriate armor type for corrosive soil environments vs. standard direct-burial vs. aerial applications',
     'Explain the galvanic corrosion risk of CST/interlocked armor in coastal or industrial soil environments',
   ],
@@ -30,8 +30,9 @@ export const meta = {
     { term: 'interlocked armor',            source_lesson_id: 'T03.L03' },
     { term: 'direct-burial',               source_lesson_id: 'T03.L03' },
     { term: 'rodent-proof armor',          source_lesson_id: 'T03.L03' },
-    { term: 'ADSS',                         source_lesson_id: 'T03.L04' },
+    { term: 'ADSS',                         source_lesson_id: 'T01.L08' },
     { term: 'NEC',                          source_lesson_id: 'T01.L08' },
+    { term: 'NESC',                         source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {
