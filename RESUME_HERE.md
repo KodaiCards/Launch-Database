@@ -197,3 +197,17 @@ Locked countermeasure #7 (post-dispatch git scope verification) + commit-msg hoo
 2. T11 author (brief `bd35619` landed; ready to dispatch)
 3. T12+ research briefs queue
 4. Cross-topic vocab-pointer sweep (post-Polish-F's T14 sweep showed same pattern likely in T01-T09)
+
+## T10 CLOSED ✅ 2026-05-17 night
+
+Final SHA: `1044fcf` (RT-κ GREEN). T10 OSP Construction.
+
+Arc: Rogue-author `1fd431d` (mistakenly authored when T14 RT-β prompt given). Real RT-α `3924599` YELLOW (9 MED DAG + 7 LOW). RT-β `4ff77fc` saturation. Polish-A `e01f8aa` (cross-topic scope creep into T04/T07 — 5th rogue). 4 polish + 10 RT framings to saturation.
+
+Bugs caught/fixed: 9 MED DAG pointers + ~11 LOW (Flashcard gaps, BranchingScenario feedback, H-20 GVW, 1910.146 trigger overclaim, OSHA 4-ft framing, H-25 axle terminology harmonization, L12 capstone follow-through).
+
+## NEXT QUEUE
+
+1. T11 author (brief `bd35619` Splicing) — ready
+2. T12+ research briefs
+3. Cross-topic vocab-pointer sweep (T04 ROW/MUTCD/conduit pattern likely applies to T01-T09)
