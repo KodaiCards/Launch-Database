@@ -265,8 +265,8 @@ export default function T07L05_StakingNotesRUSForm740() {
             <p className="font-semibold text-green-300 mb-1">Strong design delta (use this)</p>
             <p className="text-slate-300/80">
               "P-047, STA 7+25, 3 ft N. Existing comm wire: field 27.0 ft (LAS), design 30.0 ft,
-              delta −3.0 ft. New fiber at revised height 22.5 ft — road clearance 22.5 ft &gt; 18 ft
-              NESC min — OK. Design update required: revise all heights at this pole. Pole leaning
+              delta −3.0 ft. New fiber at revised height 22.5 ft — road clearance 22.5 ft &gt; 15.5 ft
+              NESC Rule 232 comm min (supply conductors require 18 ft — this is fiber) — OK. Design update required: revise all heights at this pole. Pole leaning
               2° east, photo attached, condition acceptable. MR: No. CALL: Design update only."
             </p>
             <p className="text-slate-400/70 mt-2 italic">
@@ -423,18 +423,18 @@ export default function T07L05_StakingNotesRUSForm740() {
             explanation: 'New fiber will actually attach at 22.5 ft, not 25.5 ft as designed. This is 3 feet lower than the design shows — a design update is needed.',
           },
           {
-            label: 'Step 3 — Verify road clearance (span crosses county road)',
-            formula: 'clearance = H_new_actual vs. NESC Rule 232 minimum 18.0 ft',
-            substitution: 'clearance = 22.5 ft vs. 18.0 ft minimum',
-            result: '22.5 ft > 18.0 ft — clearance OK',
-            explanation: '22.5 feet above the road surface is 4.5 feet above the 18-foot NESC Rule 232 minimum. No make-ready work required for this reason.',
+            label: 'Step 3 — Verify road clearance (span crosses county road, fiber/comm cable)',
+            formula: 'clearance = H_new_actual vs. NESC Rule 232 Table 232-1 comm minimum 15.5 ft [confirm NESC C2-2023 edition]',
+            substitution: 'clearance = 22.5 ft vs. 15.5 ft minimum (communications cable over truck-accessible road)',
+            result: '22.5 ft > 15.5 ft — clearance OK',
+            explanation: '22.5 feet above the road is 7 feet above the 15.5-foot NESC Rule 232 Table 232-1 minimum for communications cables over roads accessible to truck traffic [confirm NESC C2-2023 edition]. No make-ready work required for this reason. Note: supply conductors (power lines) require 18 ft over the same road — the comm cable row is the applicable row here, not the supply row.',
           },
           {
             label: 'Step 4 — Write the staking note entry',
             formula: 'Form 740 entry format: [Pole No.] / [STA] / [OFF] / [Existing H] / [Design H] / [Delta] / [Call-out] / [MR Flag] / [Notes]',
             substitution: 'P-047 / 7+25 / 3 ft N / Comm: 27.0 ft (LAS) / 30.0 ft / −3.0 ft / CALL / No / ...',
             result: 'Form 740 entry complete',
-            explanation: 'Full entry: "P-047, STA 7+25, OFF 3 ft N. Existing comm wire: 27.0 ft (LAS). Design: 30.0 ft. Delta: −3.0 ft. New fiber revised to 22.5 ft. Road clr 22.5 ft > 18 ft NESC min — OK. Pole lean 2° east, photo P047-A+B attached. MR: No. CALL: Design update required at this pole — revise all heights."',
+            explanation: 'Full entry: "P-047, STA 7+25, OFF 3 ft N. Existing comm wire: 27.0 ft (LAS). Design: 30.0 ft. Delta: −3.0 ft. New fiber revised to 22.5 ft. Road clr 22.5 ft > 15.5 ft NESC Rule 232 comm min — OK. Pole lean 2° east, photo P047-A+B attached. MR: No. CALL: Design update required at this pole — revise all heights."',
           },
           {
             label: 'Step 5 — Add to cover summary',
@@ -444,7 +444,7 @@ export default function T07L05_StakingNotesRUSForm740() {
             explanation: 'The cover summary entry lets the engineer find this specific issue instantly without searching through 47 rows of staking data. One line captures the key facts: which pole, what kind of issue, and whether it\'s blocking construction.',
           },
         ]}
-        sanityCheck="The final staking note gives the engineer everything they need: the measured height (27.0 ft), the design assumption (30.0 ft), the delta (−3.0 ft), the recalculated new fiber position (22.5 ft), the clearance check result (22.5 ft > 18 ft — OK), and the action required (design update — no make-ready). The engineer can close this call-out from their desk in 5 minutes."
+        sanityCheck="The final staking note gives the engineer everything they need: the measured height (27.0 ft), the design assumption (30.0 ft), the delta (−3.0 ft), the recalculated new fiber position (22.5 ft), the clearance check result (22.5 ft > 15.5 ft NESC Rule 232 comm min — OK), and the action required (design update — no make-ready). The engineer can close this call-out from their desk in 5 minutes. The 15.5 ft minimum applies here because this is a communications cable over a truck-accessible road — supply conductors over the same road require 18 ft, but that row does not apply to fiber."
       />
 
       {/* ── PER-LESSON QUIZ ─────────────────────────────────────────────── */}
