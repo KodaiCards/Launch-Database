@@ -71,17 +71,24 @@ Every result message MUST include:
 5. For fix/polish agents: BEFORE → AFTER verbatim snippets per canonical item
 6. For agents claiming citation/numeric corrections: PRIMARY-SOURCE VERIFICATION LOG with URLs + verbatim quotes BEFORE listing edits
 
-## 8. Primary-source verification mandate (cascade-defense)
+## 8. Primary-source verification — REGISTRY-FIRST mandate (cascade-defense)
 
 Cascade precedents: T02 OM5 28000 fabricated, T09 Biden PM 86 FR 7491 not 7667, T08 §1.1413→§1.1411(i).
 
-**Before applying ANY numeric / citation / regulation replacement:**
-1. Look up the REPLACEMENT value from a primary source (eCFR, NIST, NIOSH, NESC, IEEE Xplore, FCC ECFS — not Wikipedia or secondary blogs)
-2. Confirm primary source matches the canonical's claim
-3. If primary source disagrees, REPORT and STOP — do not apply
-4. Paste verbatim quote + URL in closeout
+**Verification workflow — STOP redundant re-verification:**
 
-**RT agents:** when verifying a "replaced X with Y" fix, do NOT trust the prior agent's claim of what Y is — re-verify Y against a DIFFERENT primary source than the fix-agent used.
+1. **REGISTRY FIRST.** Open `audit-output/citation-registry.md`. Search for the citation.
+2. **Registry hit + Last Verified within 90 days + not flagged `CONFLICT PENDING`** → **USE the registry entry. DO NOT re-verify from primary source.** Cite the registry entry's "Verified By" SHA in your closeout instead of repeating the lookup.
+3. **Registry hit but `CONFLICT PENDING` or stale (>90 days)** → primary-source lookup, then UPDATE the registry with new "Last Verified" date + your commit SHA.
+4. **Registry miss** → primary-source lookup (eCFR, NIST, NIOSH, NESC, IEEE Xplore, FCC ECFS — not Wikipedia or secondary blogs), then APPEND to registry.
+
+**Only do primary-source lookup when registry actually requires it.** The registry IS the cascade-defense. Skipping the lookup when registry is fresh is the cost-cut.
+
+**Apply-replacement rule** (still mandatory):
+- Before applying ANY numeric/citation/regulation replacement, the replacement value must be either (a) registry-verified fresh, or (b) you primary-source-verified it just now and added to registry.
+- If primary source disagrees with canonical's claim → REPORT and STOP — do not apply.
+
+**RT-β duplicate-verification skip:** When pair-mate RT-α has already primary-source-verified an item in the same wave, RT-β trusts RT-α's verification for that specific item (RT-α's closeout will be in the wave's `audit-output/` dir). RT-β's "different framing" applies to NEW items / under-audited surfaces / cascade sweeps — not to re-doing the same citation lookups. Rotation across waves prevents single-RT capture: orchestrator alternates which RT does primary-source-first.
 
 ## 9. Audit prompt patterns (baseline)
 
@@ -128,14 +135,18 @@ Drift-prevention.
 
 Three infrastructure tools now exist. Use them BEFORE doing manual checks.
 
-### 14a. Citation lookup → `audit-output/citation-registry.md`
+### 14a. Citation lookup → `audit-output/citation-registry.md` (HARD RULE)
 
 Before looking up any primary source (47 CFR section, NESC rule, OSHA regulation, ITU-T standard, ANSI standard, chemical safety value):
 
 1. Open `audit-output/citation-registry.md`
 2. Search for the citation
-3. If found AND `Last Verified` date is within 90 days of today: **use the entry, skip the lookup**
-4. If absent or stale: do the primary-source lookup, then **append** your verified entry with your commit SHA
+3. If found AND `Last Verified` date is within 90 days of today AND not flagged `CONFLICT PENDING`: **USE the entry. SKIP the lookup. Cite the registry's "Verified By" SHA in your closeout — DO NOT repeat the primary-source query.**
+4. If absent or stale or CONFLICT PENDING: do the primary-source lookup, then **append/update** the entry with your commit SHA + today's date
+
+**This is the cost-cut.** Agents that re-verify registry-fresh citations waste 10-50K tokens per dispatch. Don't.
+
+**Reverse-priming for cascade-defense:** the registry's "Notes" column captures past wrong-answers (e.g., §32.2210 was wrongly claimed by two prior agents to be "Land" / "Cable & Wire" before primary-source said "Central office—switching"). Reading the Notes column protects against re-creating the same cascade.
 
 **Format for new entries:**
 ```
@@ -187,3 +198,13 @@ When your audit or RT pass verifies a primary source that isn't in the registry:
 3. Commit the updated registry file as part of your wave's commit sequence
 
 This ensures future agents inherit your verification instead of re-doing the lookup.
+
+### 14e. Known-cascade-patterns FIRST → `audit-output/known-cascade-patterns.md`
+
+**Every audit / RT / fix-agent reads this file's pattern list BEFORE looking for novel bugs.** Pattern-match-first is cheaper than rediscovery. The patterns catalogue cascade bugs that have already cost the curriculum multiple round-trips (P1 §32.2210, P6 OM1/OM2 Flashcards, P7 G.655/G.656, P9 §32.2411, etc.).
+
+**Audit step 1:** grep the topic under audit for each listed pattern. Report occurrences. THEN look for novel bugs.
+
+**RT step 1:** verify fix-agent's changes did NOT re-introduce or perpetuate any pattern.
+
+**Fix-agent step 1:** before applying any citation/value/regulation replacement, check whether the replacement value matches a known wrong-value in the register. If so → STOP and report.
