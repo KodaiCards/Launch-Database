@@ -171,9 +171,9 @@ export default function T14L04_NEC250Electrodes() {
               No resistance specification — the ring is a recognized electrode regardless of
               measured resistance. Required (or strongly preferred) at CO/FDH sites for GPR
               protection via a perimeter equipotential ring. NEC §250.52(A)(4) sets the 30-inch
-              depth floor; IEEE Std 1100 §8.3 [confirm edition] may recommend deeper burial for
+              depth floor; IEEE Std 1100-2005 §8.3 [confirm edition] may recommend deeper burial for
               specific facility types — the NEC minimum is the non-negotiable code floor.
-              (Sources: NEC §250.52(A)(4); IEEE Std 1100 §8.3 [confirm edition].)
+              (Sources: NEC §250.52(A)(4); IEEE Std 1100-2005 §8.3 [confirm edition].)
             </p>
           </div>
           <div className="border border-white/10 rounded-lg p-4">
