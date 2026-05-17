@@ -31,3 +31,23 @@
 - P6 T02.L08 OM1/OM2 Flashcard render -> T02 retroactive polish
 - P7 T02/T03 G.655 -> T02 retroactive + T03 audit
 - P9 T04 L07 §32.2210/§32.2410/§32.2420 -> T04 back-fill sweep
+
+## Update — T06 R-1 landed during pause
+
+T06 R-1 verdict: YELLOW. 3 HIGH + 4 MED + 2 LOW. Math clean. Vite clean.
+
+**3 HIGH:**
+- T06-H1: L09 NESC §32 vs §35 framing entirely wrong (comm/supply split is fictional — Section 32 = Underground Conduit Systems supply infra, §33 = Supply Cable, §35 = Direct-Buried both supply+comm; comm/supply separation lives in Rule 320, Rule 353/354)
+- T06-H2: T06.L01 vocab_assumed "soil type" → T04.L03 (GIS lesson) — soil type not introduced anywhere
+- T06-H3: T06.L01 vocab_assumed "route alignment" → T04.L02 (Drone/LiDAR) — route alignment not introduced anywhere
+
+**4 MED:**
+- T06-M1: L04 "40% fill — NEC Chapter 9 Table 1" — wrong; NEC 770.110(B) + 800.110(B) exempt comm cables from Chapter 9 fill tables. 40% is industry convention not NEC mandate.
+- T06-M2: L06 annotated diagram cites "NESC §35 6-inch minimum" comm-crossing-supply — wrong section (cascade with H1)
+- T06-M3: CGA Best Practices cited as v19 — current is v20.0 (2024)
+- T06-M4: T06.L01 vocab_assumed "conduit" → T04.L01 — should be T01.L02
+
+**Next on resume (T06):** Dispatch R-2 corroboration-adversarial framing (sequential, SAME scope DIFFERENT framing). R-2 hint: sample L05 (H-20/H-25 ratings, 330 ft pedestal spacing), L07 (HDD slurry/frac-out), L08 (pedestal spacing standards).
+
+**Saturation rule applies:** continue R-3+ until no new finds.
+
