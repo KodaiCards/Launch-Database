@@ -209,12 +209,12 @@ const capstoneQuestions = [
     type: 'multiple-choice',
     options: [
       { id: 'a', text: 'A-16 (pedestrian loading only — no vehicles expected).' },
-      { id: 'b', text: 'H-20 (16,000 lb single axle — private driveways and parking lots).' },
-      { id: 'c', text: 'H-25 (20,000 lb single axle — all public roadways and many commercial driveways).' },
+      { id: 'b', text: 'H-20 (16,000 lb per rear-tandem axle — private driveways and parking lots).' },
+      { id: 'c', text: 'H-25 (20,000 lb per rear-tandem axle — all public roadways and many commercial driveways).' },
       { id: 'd', text: 'HS-20 (80,000 lb gross — any farm driveway where agricultural equipment operates).' },
     ],
     correctId: 'b',
-    explanation: 'H-20 (AASHTO H-20 loading = 16,000 lb single-axle, 32,000 lb tandem axle) is the minimum for private driveways and parking areas where vehicles operate. Pedestrian-only rated handholes (A-16) are only acceptable in non-traffic areas like inside fence lines, equipment pads, or building interiors. Farm driveways do see heavy equipment, but H-20 is the standard private-driveway rating — the permit AHJ specifies the actual minimum.',
+    explanation: 'H-20 (AASHTO H-20 loading = 16,000 lb per rear-tandem axle) is the minimum for private driveways and parking areas where vehicles operate. Pedestrian-only rated handholes (A-16) are only acceptable in non-traffic areas like inside fence lines, equipment pads, or building interiors. Farm driveways do see heavy equipment, but H-20 is the standard private-driveway rating — the permit AHJ specifies the actual minimum.',
   },
   // L07 — confined space
   {
