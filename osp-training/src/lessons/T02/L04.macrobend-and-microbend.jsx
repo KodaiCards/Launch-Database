@@ -109,7 +109,13 @@ export default function T02L04_MacrobendAndMicrobend() {
         </p>
         <p className="mt-2">
           Macrobend loss is highly wavelength-dependent — it grows approximately as
-          exp(−C / R) where R is bend radius. The longer the wavelength, the larger the
+          exp(−C × R) where R is bend radius and C is a wavelength- and fiber-dependent
+          coefficient (units of 1/length). The form exp(−C × R) captures the key
+          physics: as bend radius R <em>decreases</em> (tighter bend), the exponent becomes
+          less negative and loss climbs exponentially. As R <em>increases</em> (gentler
+          bend), the exponent grows more negative and loss drops rapidly — which is why
+          straightening a tight coil restores signal almost instantly.
+          The longer the wavelength, the larger the
           "evanescent field" that extends into the cladding, and the more susceptible the
           fiber is to macrobend loss. This is the physics behind why 1625 nm exaggerates
           bend events on an OTDR.
