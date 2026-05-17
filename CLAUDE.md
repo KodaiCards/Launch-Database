@@ -1700,3 +1700,26 @@ Estimated combined: well above the 17% gap if discipline holds.
 - Cascade-heavy topic (T02/T08/T18/T09): 4+ audit rounds + multiple polish stages + 5-16 RT framings ≈ 2-3M Sonnet
 - Trade-off: 2-3x cost catches ~30% more bugs at <1% margin
 
+
+## Hard throttle rule re-locked 2026-05-17 night — Carter clarified
+
+Verbatim: *"The default is 1 agent at a time. At 1 agent at a time you may possibly be under cap if you implement all of the changes discussed which you never confirmed you did."*
+
+**OPERATING RULE (supersedes prior fuzzy thresholds):**
+
+- **Default = 1 agent at a time. Period.** No "1-2 sustainable" carveout. Single sequential dispatch is the floor.
+- **Sprint = explicit Carter direction only** (e.g., "go faster", "burn cap", "I want usage to cap"). Not orchestrator discretion.
+- **Read-only verification class agents that genuinely run in parallel** (e.g., RT-α + RT-β post-fix pair) are 1 dispatch pair, not 2 separate agents.
+- **Haiku ground-truth tiebreakers** dispatched WITHIN a sequential flow don't count as parallel — they're ground-truth substeps.
+
+**Discipline going forward:** when an agent lands, NEXT dispatch is the immediate next step in the same flow. Don't fan out to multiple topics simultaneously.
+
+**Confirmation status of cost-cuts (Carter called out 2026-05-17 night):**
+
+- ✅ agent-protocol.md slim-reference pattern (`cd9dff1`) — in use, ~300-400 Opus saved per dispatch
+- ⏳ Schema validator / DAG registry / citation registry — infrastructure-build agent in flight, NOT verified working yet
+- ❌ Anthropic API prompt caching — not implementable from inside Claude Code orchestration layer (documented limitation)
+- ⏳ Tight chat discipline — practicing; no metric. Goal ≤200 words per turn unless real engineering content.
+
+When infrastructure-build agent lands, VERIFY each deliverable runs successfully before claiming implemented.
+
