@@ -191,6 +191,7 @@ export default function T03L12_CapstoneQuiz() {
                   label: 'OFNR (riser-rated) — required for the 100 ft vertical riser shaft; transition from outdoor cable at building entry',
                   consequence:
                     'Correct. A 100 ft vertical run inside a riser shaft exceeds the NEC §770.48(A) ' +
+                    '[NEC 2023 edition — confirm edition applicable to your jurisdiction] ' +
                     '50 ft rule for unlisted OSP cable inside a building. A riser shaft is a vertical ' +
                     'pathway — OFNR (Optical Fiber Non-conductive Riser, listed to UL 1666) is the ' +
                     'minimum required rating. Transition the outdoor cable to OFNR indoor fiber at the ' +
@@ -204,7 +205,8 @@ export default function T03L12_CapstoneQuiz() {
                     'OFNP (plenum-rated) is required for air-handling spaces — plenum ceilings and raised ' +
                     'access floors where HVAC air circulates. A riser shaft is NOT a plenum space; it is ' +
                     'a vertical fire-stopped pathway. OFNR is sufficient and less expensive. Specifying ' +
-                    'OFNP for a riser is over-specification — OFNP can substitute for OFNR per NEC §770.154, ' +
+                    'OFNP for a riser is over-specification — OFNP can substitute for OFNR per NEC §770.154 ' +
+                    '[NEC 2023 edition — confirm edition applicable to your jurisdiction], ' +
                     'but it is unnecessary cost.',
                   nextId: 'mfd-question',
                 },
@@ -454,7 +456,7 @@ export default function T03L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'The correct approach is: (a) OSP-rated cable for the aerial and duct segments, (b) transition to OFNR (or use a dual-rated cable) when entering the building, (c) add armor if the duct section has rodent exposure. Running plain HDPE-jacketed OSP cable more than 50 ft inside a building violates NEC §770.48(A). Tight-buffered cable is not rated for outdoor use. T03.L02, T03.L03.',
+              'The correct approach is: (a) OSP-rated cable for the aerial and duct segments, (b) transition to OFNR (or use a dual-rated cable) when entering the building, (c) add armor if the duct section has rodent exposure. Running plain HDPE-jacketed OSP cable more than 50 ft inside a building violates NEC §770.48(A) [NEC 2023 — confirm edition applicable to your jurisdiction]. Tight-buffered cable is not rated for outdoor use. T03.L02, T03.L03.',
           },
           {
             id: 'T03-CAP-Q13',

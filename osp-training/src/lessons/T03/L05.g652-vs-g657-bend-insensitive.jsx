@@ -14,11 +14,20 @@ export const meta = {
   order: 5,
   lesson_type: 'working',
   prerequisites: ['T02.L04', 'T03.L01'],
+  learning_objectives: [
+    'Apply the G.657 bend-radius decision tree: ≥30 mm → G.652.D, 10–30 mm → A1, 7.5–10 mm → A2, ≤5 mm → B3',
+    'Explain the trench-assisted refractive index profile and why G.657.B3 is not guaranteed splice-compatible with G.652.D',
+    'State the 2024 ITU-T G.657 edition change merging B2 into A2',
+    'Apply the FOA bend-radius rule correctly: "20× cable OD dynamic, 10× cable OD static" — the OD is the cable outer diameter, not the bare fiber coating diameter',
+    'Identify the field failure mode of using G.652.D drop cable in tight-bend drop installations',
+  ],
   vocabulary_introduced: [
     'G.657.A1',
     'G.657.A2',
     'G.657.B3',
     'trench-assisted profile',
+    'G.655 (NZDSF)',
+    'G.656',
   ],
   vocabulary_assumed: [
     { term: 'G.652.D',    source_lesson_id: 'T02.L01' },
@@ -46,6 +55,16 @@ export const meta = {
       term: 'trench-assisted profile',
       definition:
         'A refractive index design in G.657.B3 fibers (and formerly G.657.B2, which was merged into A2 in the 2024 ITU-T G.657 edition) where a low-index "trench" around the core increases confinement of optical modes, reducing bend-induced loss. The trench profile achieves better bend performance at the cost of potentially different splicing behavior with G.652.D. [verify 2024 edition consolidation]',
+    },
+    {
+      term: 'G.655 (NZDSF)',
+      definition:
+        'ITU-T G.655 — Non-Zero Dispersion-Shifted Single-Mode Fiber. Engineered for long-haul DWDM transport (1530–1565 nm C-band). Has reduced chromatic dispersion (typically 1–10 ps/nm·km vs. G.652.D\'s ~17 ps/nm·km at 1550 nm) to reduce four-wave mixing while still allowing dispersion-compensating techniques. NOT the standard choice for OSP metro/access builds — seen at long-haul carrier handoff points. (Source: ITU-T G.655 — itu.int)',
+    },
+    {
+      term: 'G.656',
+      definition:
+        'ITU-T G.656 — Wideband Non-Zero Dispersion-Shifted Single-Mode Fiber. Similar to G.655 but with a wider low-dispersion passband covering the S-, C-, and L-bands (1460–1625 nm). Designed for metropolitan and access WDM applications. Rarely seen in new builds; primarily encountered when reviewing legacy infrastructure. (Source: ITU-T G.656 — itu.int)',
     },
   ],
   estimated_minutes: 25,
@@ -126,9 +145,12 @@ export default function T03L05_G652VsG657BendInsensitive() {
           feeder cables, backbone spans where bends are gentle and follow the natural
           curve of the route. The FOA field guide cites the practical bend radius rule
           for G.652.D: "20× OD dynamic, 10× OD static" as the industry rule of thumb.
-          For a standard 250 µm coated fiber, that means approximately 2.5 mm × 20 = 50 mm
-          (2 inches) for installation pulls (dynamic) and 2.5 mm × 10 = 25 mm for long-term
-          routing (static). (Source: FOA Reference Guide bend radius page — verified)
+          Critically, the <strong>OD here is the cable outer diameter, not the bare fiber
+          coating diameter</strong>. The bare fiber coating is 250 µm = 0.25 mm — 20× that
+          would give only 5 mm, far tighter than is safe. For a typical OSP loose-tube cable
+          with a 12 mm OD, the rule gives 12 mm × 20 = 240 mm (~9.5 inches) for installation
+          pulls (dynamic) and 12 mm × 10 = 120 mm for long-term routing (static).
+          (Source: FOA Reference Guide bend radius page — verified)
         </p>
         <p className="mt-2">
           When a G.652.D fiber is bent tighter than its minimum radius, the mode field
@@ -219,6 +241,65 @@ export default function T03L05_G652VsG657BendInsensitive() {
           </div>
         </div>
 
+        <h3 className="mt-6 font-semibold">G.655 and G.656 — fibers you may encounter at long-haul handoffs</h3>
+        <p>
+          G.652.D and G.657 cover virtually all new OSP metro and access builds. But when
+          your fiber route terminates at a long-haul carrier hand-off point — a telecom
+          hut, a major CO, or a carrier hotel — you may encounter fiber types with
+          different physics: <strong>G.655 (NZDSF)</strong> and
+          <strong> G.656 (wideband NZDSF)</strong>.
+        </p>
+
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm border border-white/10 rounded-lg">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Fiber type</th>
+                <th className="px-3 py-2 text-left">Key characteristic</th>
+                <th className="px-3 py-2 text-left">When you see it</th>
+                <th className="px-3 py-2 text-left">OSP decision</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono font-semibold">G.652.D</td>
+                <td className="px-3 py-2">Standard SMF; ~17 ps/nm·km dispersion @ 1550 nm</td>
+                <td className="px-3 py-2">All new OSP metro/access/FTTH builds</td>
+                <td className="px-3 py-2 text-green-300">Default spec — use this</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono font-semibold">G.655</td>
+                <td className="px-3 py-2">NZDSF; 1–10 ps/nm·km reduced dispersion @ 1550 nm; optimized for C-band DWDM; lower MFD than G.652.D</td>
+                <td className="px-3 py-2">Long-haul backbone; carrier DWDM routes; legacy inter-CO fiber</td>
+                <td className="px-3 py-2 text-yellow-300">Do NOT specify for OSP metro/access unless explicitly a long-haul DWDM project</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono font-semibold">G.656</td>
+                <td className="px-3 py-2">Wideband NZDSF; low dispersion across S+C+L bands (1460–1625 nm); niche</td>
+                <td className="px-3 py-2">Legacy metropolitan WDM; rarely in new builds</td>
+                <td className="px-3 py-2 text-yellow-300">Encounter only when reviewing existing plant; not specified for new OSP</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-3 p-3 border border-blue-400/20 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Why G.655 is NOT the right choice for typical OSP</p>
+          <ul className="list-disc pl-4 space-y-1 text-slate-300/90">
+            <li><strong>MFD difference:</strong> G.655 typically has a smaller Mode Field Diameter than G.652.D. Splicing G.655 to G.652.D introduces measurable splice loss, which accumulates on multi-splice routes. (Source: ITU-T G.655)</li>
+            <li><strong>DWDM optimization is irrelevant for access:</strong> The reduced dispersion benefit only matters on EDFA-amplified long-haul systems (100+ km spans). A 5-mile FTTH distribution route gains nothing from low dispersion.</li>
+            <li><strong>Compatibility problems:</strong> If a future crew splices G.652.D into a G.655 backbone without awareness of the MFD difference, the added splice loss may push a long-haul link budget into failure.</li>
+          </ul>
+        </div>
+
+        <p className="mt-3 text-sm text-slate-300/80">
+          <strong>Decision rule:</strong> For every OSP project you design or spec, use <strong>G.652.D</strong>
+          unless the project explicitly involves long-haul DWDM transport and your client's network
+          engineering team specifies G.655. If you see G.655 in an existing cable plant and need to
+          splice into it, measure the actual splice loss — it will likely be higher than a
+          G.652.D-to-G.652.D splice. Budget accordingly. (Source: ITU-T G.655; ITU-T G.656 — itu.int)
+        </p>
+
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
@@ -255,7 +336,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
         rows={[
           {
             attribute: 'Minimum bend radius',
-            left: '~30 mm (installation); ~25 mm long-term — FOA rule of thumb for 250 µm coated fiber',
+            left: '~240 mm installation (20× cable OD for 12 mm OD cable); ~120 mm long-term (10× cable OD). FOA "20×/10× OD" rule applies to cable outer diameter, not bare fiber coating (250 µm = 0.25 mm — a distinct concept).',
             right: 'A1: 10 mm · A2: 7.5 mm · B3: 5 mm (some products: 2.5 mm)',
           },
           {
@@ -332,6 +413,16 @@ export default function T03L05_G652VsG657BendInsensitive() {
             front: 'What happened to G.657.B2 in the 2024 ITU-T standard?',
             back: 'The August 2024 edition of ITU-T G.657 merged category B2 into category A2. The current standard has three active subcategories: A1, A2, and B3. When reviewing older datasheets or specifications that reference G.657.B2, understand it maps to the current G.657.A2. [verify 2024 edition consolidation against itu.int]',
           },
+          {
+            id: 'T03-L05-fc-g655',
+            front: 'What is G.655 (NZDSF) and when does an OSP engineer encounter it?',
+            back: 'ITU-T G.655 — Non-Zero Dispersion-Shifted SMF. Designed for long-haul DWDM transport in the C-band (1530–1565 nm). Has reduced chromatic dispersion (~1–10 ps/nm·km vs. ~17 ps/nm·km for G.652.D). NOT used in new OSP metro/access builds — encountered at long-haul carrier handoff points and in legacy backbone fiber. Splicing G.655 to G.652.D may add measurable loss due to MFD differences. (ITU-T G.655 — itu.int)',
+          },
+          {
+            id: 'T03-L05-fc-g656',
+            front: 'What is G.656 and how does it differ from G.655?',
+            back: 'ITU-T G.656 — Wideband Non-Zero Dispersion-Shifted SMF. Similar to G.655 but with a wider low-dispersion passband covering S+C+L bands (1460–1625 nm). Rarely seen in new builds; primarily encountered when reviewing legacy metropolitan WDM infrastructure. Neither G.655 nor G.656 is the correct spec for new OSP access/distribution projects. (ITU-T G.656 — itu.int)',
+          },
         ]}
       />
 
@@ -357,13 +448,18 @@ export default function T03L05_G652VsG657BendInsensitive() {
           },
           {
             id: 'T03-L05-Q2',
-            type: 'fill-in-blank',
+            type: 'mc',
             prompt:
-              'The 2024 edition of ITU-T G.657 merged category _____ into category A2.',
-            answer: 'B2',
-            answerDisplay: 'B2',
+              'A long-haul carrier is handing off fiber at your CO. The splice record shows the incoming fiber is ITU-T G.655. Your distribution plant uses G.652.D. What should you do before splicing G.652.D directly onto the G.655 carrier fiber?',
+            choices: [
+              'Splice directly — G.655 and G.652.D are fully interchangeable at the core level',
+              'Measure actual splice loss at the G.655/G.652.D interface — MFD differences may add measurable loss that needs to be budgeted',
+              'Replace the entire distribution plant with G.655 fiber for compatibility',
+              'G.655 is a multimode fiber — you cannot splice it to G.652.D single-mode',
+            ],
+            answerIndex: 1,
             explanation:
-              'ITU-T G.657 August 2024 edition merged category B2 into category A2. The current G.657 standard has three active subcategories: A1, A2, and B3. Older datasheets referencing G.657.B2 now correspond to G.657.A2. [verify 2024 edition consolidation against itu.int G.657 publication page]',
+              'G.655 (NZDSF) and G.652.D both are single-mode fibers, but G.655 typically has a slightly different MFD. Splicing them together may introduce measurable splice loss that would not occur at a G.652.D-to-G.652.D joint. Before finalizing the link budget, measure the actual splice loss at the interface. If it is within budget, proceed. If not, use an intermediate fiber or discuss the MFD issue with the carrier. (Source: ITU-T G.655 — itu.int)',
           },
           {
             id: 'T03-L05-Q3',

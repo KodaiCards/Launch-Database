@@ -15,22 +15,30 @@ export const meta = {
   order: 4,
   lesson_type: 'working',
   prerequisites: ['T03.L01', 'T03.L03'],
+  learning_objectives: [
+    'Compare lashed messenger cable vs. ADSS on key dimensions: bonding requirements, fiber count limits, and install cost',
+    'Define EDS (Everyday Stress) and state the recommended 16–25% RTS target range',
+    'Explain the role of lashing wire and how a lashing machine attaches cable to messenger',
+    'Identify when a figure-8 cable reduces installation time vs. pre-installing a separate strand',
+    'Apply the manufacturer datasheet span table to select an ADSS cable meeting EDS and MAT requirements',
+  ],
   vocabulary_introduced: [
     'ADSS',
     'messenger',
     'lashing wire',
-    'EDS (everyday stress)',
-    'RTS (rated tensile strength)',
+    'EDS',
+    'RTS',
     'figure-8 cable',
+    'OPGW',
   ],
   vocabulary_assumed: [
     { term: 'span',       source_lesson_id: 'T01.L02' },
     { term: 'sag',        source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'ADSS',       source_lesson_id: 'T01.L08' },
+    { term: 'armor',      source_lesson_id: 'T01.L03' },
     { term: 'macrobend',  source_lesson_id: 'T02.L04' },
     { term: 'loose-tube', source_lesson_id: 'T03.L01' },
-    { term: 'armor',      source_lesson_id: 'T03.L03' },
   ],
   key_terms: [
     {
@@ -62,6 +70,11 @@ export const meta = {
       term: 'figure-8 cable',
       definition:
         'An integrated aerial cable where the steel messenger is molded into the same jacket as the fiber-bearing element, forming a figure-8 cross-section. Eliminates the need to pre-install a separate messenger strand, reducing installation time by up to 50%.',
+    },
+    {
+      term: 'OPGW',
+      definition:
+        'Optical Ground Wire. An aerial cable used exclusively on electric utility transmission lines that combines the transmission line\'s static/shield ground wire with fiber optic strands. Outer layer: metallic strands (steel-aluminum) for fault current and lightning shielding. Inner core: fiber in a protected tube. NOT used on standard OSP distribution or FTTH builds — only on high-voltage transmission infrastructure where the utility owns the fiber.',
     },
   ],
   estimated_minutes: 28,
@@ -340,6 +353,32 @@ export default function T03L04_MessengerLashedVsADSS() {
           bonding requirement.
         </p>
 
+        <h3 className="mt-5 font-semibold">OPGW — Optical Ground Wire (a special aerial fiber type)</h3>
+        <p>
+          When reviewing aerial cable options, you may encounter a fourth type:
+          <strong> OPGW (Optical Ground Wire)</strong>. OPGW replaces the static
+          (shield/ground) wire on a transmission line with a combined ground wire + fiber
+          cable. The outer layer is grounded metallic strands (steel-aluminum composite)
+          that carry fault current and shield the transmission conductors. Inside, a
+          stainless-steel loose tube or aluminum tube protects the fiber bundle.
+        </p>
+        <p className="mt-2">
+          OPGW is <strong>NOT typical OSP access/distribution cable</strong>. It is used
+          exclusively by electric utilities on high-voltage transmission lines where they
+          need to combine ground wire infrastructure with fiber connectivity between
+          substations. You will not specify OPGW for a FTTH build, a campus network,
+          or a typical RUS-financed fiber project.
+        </p>
+        <div className="mt-3 p-3 border border-blue-400/20 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-1">OPGW vs. standard OSP aerial cable — quick distinction</p>
+          <ul className="list-disc pl-4 space-y-1 text-slate-300/90">
+            <li><strong>OPGW:</strong> transmission line ground wire + fiber; requires utility ownership; not available on distribution poles.</li>
+            <li><strong>Lashed cable on messenger:</strong> fiber only; steel messenger is separate; standard for distribution and FTTH.</li>
+            <li><strong>ADSS:</strong> all-dielectric self-supporting; no steel; standard for joint-use distribution.</li>
+          </ul>
+          <p className="mt-1 text-slate-300/80">If you see "OPGW" on a drawing, you are looking at an electric utility's transmission fiber — not a cable you will splice into during a normal OSP job without specific authorization from the utility.</p>
+        </div>
+
         <h3 className="mt-5 font-semibold">Aeolian vibration — why EDS matters long-term</h3>
         <p>
           Aeolian vibration is wind-induced resonance in a taut aerial cable, similar to a
@@ -381,6 +420,21 @@ export default function T03L04_MessengerLashedVsADSS() {
             id: 'T03-L04-fc-fig8',
             front: 'What is a figure-8 cable and when is it used?',
             back: 'An integrated aerial cable where the steel messenger is molded into the same jacket as the fiber-bearing element, forming a figure-8 cross-section. Eliminates pre-installation of a separate messenger, reducing install time by up to 50%. Still requires bonding. (outsideplantcabling.com; fibereast.com)',
+          },
+          {
+            id: 'T03-L04-fc-lashing',
+            front: 'What is lashing wire and how is it applied?',
+            back: 'A small-diameter galvanized steel wire applied in a continuous helix around both the fiber cable and the messenger strand using a lashing machine. The machine travels along the span while dispensing wire, binding the fiber cable to the messenger. The lashed assembly bears no tensile load in the fiber cable — the messenger strand carries all sag and tension forces.',
+          },
+          {
+            id: 'T03-L04-fc-rts',
+            front: 'What is RTS (Rated Tensile Strength) for an ADSS cable?',
+            back: 'The manufacturer-rated breaking strength of the ADSS cable in lbf or Newtons — used as the denominator in EDS calculations. The cable must never be installed at a tension that exceeds its Maximum Allowable Tension (MAT) under any design load combination. EDS (long-term tension) is expressed as a percentage of RTS.',
+          },
+          {
+            id: 'T03-L04-fc-opgw',
+            front: 'What is OPGW and when does an OSP engineer encounter it?',
+            back: 'Optical Ground Wire — a transmission-line aerial cable combining a metallic static/shield wire (fault current + lightning shielding) with an inner fiber bundle. Used exclusively by electric utilities on high-voltage transmission lines. NOT a standard OSP distribution or FTTH cable. If you see OPGW on a drawing, you are looking at utility transmission infrastructure — do not splice into it without explicit utility authorization.',
           },
         ]}
       />

@@ -14,11 +14,20 @@ export const meta = {
   order: 1,
   lesson_type: 'foundation',
   prerequisites: ['T02.L01'],
+  learning_objectives: [
+    'Describe the mechanical difference between loose-tube, tight-buffer, and ribbon cable constructions',
+    'Explain why loose-tube dominates OSP trunk cable applications',
+    'Identify which construction type is appropriate for high-count feeder splicing',
+    'Recognize field misuse of tight-buffer in OSP environments and the failure mode it causes',
+    'State the TIA-598-D 12-color fiber sequence used in OSP cable color coding',
+  ],
   vocabulary_introduced: [
     'loose-tube',
     'tight-buffered',
     'ribbon',
     'rollable ribbon',
+    'TIA-598-D',
+    'ICEA S-87-640',
   ],
   vocabulary_assumed: [
     { term: 'sheath',       source_lesson_id: 'T01.L03' },
@@ -49,6 +58,16 @@ export const meta = {
       term: 'rollable ribbon',
       definition:
         'A variant of ribbon where the bonding between fibers in the matrix is intermittent, allowing the ribbon to roll into a cylindrical form for handling but to unroll for splicing. Combines loose-tube-like field handling with mass-splice speed.',
+    },
+    {
+      term: 'TIA-598-D',
+      definition:
+        'TIA-598 — Optical Fiber Cable Color Coding. Defines the 12-color fiber identification sequence (Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua) used in OSP cables. [confirm current edition against tiaonline.org]',
+    },
+    {
+      term: 'ICEA S-87-640',
+      definition:
+        'Insulated Cable Engineers Association standard S-87-640 — the primary construction standard for OSP fiber optic cable. Covers buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking. Every RUS-funded project requires cable meeting this standard. [confirm current edition]',
     },
   ],
   estimated_minutes: 22,
@@ -336,6 +355,16 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
             id: 'T03-L01-fc-rollable',
             front: 'What is rollable ribbon and why was it developed?',
             back: 'A ribbon variant with intermittent bonding between fibers, allowing it to roll into a cylindrical form for storage and unroll flat for mass splicing. Combines loose-tube-like field handling with mass-splice speed and higher fiber density than loose individual fibers. (OFS Optics)',
+          },
+          {
+            id: 'T03-L01-fc-tia598',
+            front: 'What is TIA-598-D and what does it define?',
+            back: 'TIA-598 is the Optical Fiber Cable Color Coding standard. It defines the 12-color fiber identification sequence used in OSP cables: Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua. Fibers beyond 12 per tube use a stripe or dot to distinguish repeating sequences. [confirm current edition — tiaonline.org]',
+          },
+          {
+            id: 'T03-L01-fc-icea',
+            front: 'What is ICEA S-87-640 and why does it matter on RUS projects?',
+            back: 'ICEA S-87-640 is the Insulated Cable Engineers Association construction standard for OSP fiber optic cable. It specifies buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking performance. All cable on RUS-financed projects must meet ICEA S-87-640 as incorporated by 7 CFR 1755.902. [confirm current edition]',
           },
         ]}
       />

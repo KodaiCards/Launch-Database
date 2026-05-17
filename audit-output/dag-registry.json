@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T09:24:18.349Z",
+  "generated_at": "2026-05-17T16:31:25.207Z",
   "lesson_count": 125,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -228,7 +228,9 @@
       "loose-tube",
       "tight-buffered",
       "ribbon",
-      "rollable ribbon"
+      "rollable ribbon",
+      "TIA-598-D",
+      "ICEA S-87-640"
     ],
     "T03.L02": [
       "OFNR",
@@ -246,20 +248,24 @@
       "ADSS",
       "messenger",
       "lashing wire",
-      "EDS (everyday stress)",
-      "RTS (rated tensile strength)",
-      "figure-8 cable"
+      "EDS",
+      "RTS",
+      "figure-8 cable",
+      "OPGW"
     ],
     "T03.L05": [
       "G.657.A1",
       "G.657.A2",
       "G.657.B3",
-      "trench-assisted profile"
+      "trench-assisted profile",
+      "G.655 (NZDSF)",
+      "G.656"
     ],
     "T03.L06": [
       "LSZH",
       "flooding compound",
-      "water-blocking tape / dry-block",
+      "water-blocking tape",
+      "dry-block",
       "carbon black loading"
     ],
     "T03.L07": [
@@ -1567,6 +1573,12 @@
     "rollable ribbon": [
       "T03.L01"
     ],
+    "tia-598-d": [
+      "T03.L01"
+    ],
+    "icea s-87-640": [
+      "T03.L01"
+    ],
     "ofnr": [
       "T03.L02"
     ],
@@ -1594,14 +1606,18 @@
     "lashing wire": [
       "T03.L04"
     ],
-    "eds (everyday stress)": [
+    "eds": [
       "T03.L04"
     ],
-    "rts (rated tensile strength)": [
+    "rts": [
       "T03.L04"
     ],
     "figure-8 cable": [
       "T03.L04"
+    ],
+    "opgw": [
+      "T03.L04",
+      "T05.L11"
     ],
     "g.657.a1": [
       "T03.L05"
@@ -1615,13 +1631,22 @@
     "trench-assisted profile": [
       "T03.L05"
     ],
+    "g.655 (nzdsf)": [
+      "T03.L05"
+    ],
+    "g.656": [
+      "T03.L05"
+    ],
     "lszh": [
       "T03.L06"
     ],
     "flooding compound": [
       "T03.L06"
     ],
-    "water-blocking tape / dry-block": [
+    "water-blocking tape": [
+      "T03.L06"
+    ],
+    "dry-block": [
       "T03.L06"
     ],
     "carbon black loading": [
@@ -2073,9 +2098,6 @@
     ],
     "suspension clamp": [
       "T05.L10"
-    ],
-    "opgw": [
-      "T05.L11"
     ],
     "shield wire": [
       "T05.L11"
@@ -3340,6 +3362,13 @@
       "introduced_by": [
         "T01.L08",
         "T18.L06"
+      ]
+    },
+    {
+      "term": "opgw",
+      "introduced_by": [
+        "T03.L04",
+        "T05.L11"
       ]
     },
     {
@@ -4622,13 +4651,18 @@
     {
       "from_lesson": "T03.L02",
       "term": "NEC",
-      "claimed_source": "T01.L09",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L09"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T03.L02",
       "term": "loose-tube",
+      "claimed_source": "T03.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L02",
+      "term": "ICEA S-87-640",
       "claimed_source": "T03.L01",
       "verified": true
     },
@@ -4647,9 +4681,8 @@
     {
       "from_lesson": "T03.L03",
       "term": "HDPE",
-      "claimed_source": "T01.L03",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T01.L03"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T03.L03",
@@ -4701,6 +4734,12 @@
     },
     {
       "from_lesson": "T03.L04",
+      "term": "armor",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L04",
       "term": "macrobend",
       "claimed_source": "T02.L04",
       "verified": true
@@ -4710,13 +4749,6 @@
       "term": "loose-tube",
       "claimed_source": "T03.L01",
       "verified": true
-    },
-    {
-      "from_lesson": "T03.L04",
-      "term": "armor",
-      "claimed_source": "T03.L03",
-      "verified": false,
-      "reason": "'armor' is introduced by T01.L03, not T03.L03"
     },
     {
       "from_lesson": "T03.L05",
@@ -4751,9 +4783,8 @@
     {
       "from_lesson": "T03.L06",
       "term": "HDPE",
-      "claimed_source": "T01.L03",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T01.L03"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T03.L06",
@@ -4818,21 +4849,25 @@
     {
       "from_lesson": "T03.L08",
       "term": "drop",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'drop' is introduced by T01.L07, not T01.L01"
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T03.L08",
       "term": "FDH",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'FDH' is introduced by T01.L07, T19.L09, not T01.L01"
+      "claimed_source": "T01.L07",
+      "verified": true
     },
     {
       "from_lesson": "T03.L08",
       "term": "ONT",
       "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T03.L08",
+      "term": "HDPE",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -4860,13 +4895,6 @@
       "verified": true
     },
     {
-      "from_lesson": "T03.L08",
-      "term": "HDPE",
-      "claimed_source": "T03.L06",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T03.L06"
-    },
-    {
       "from_lesson": "T03.L09",
       "term": "span",
       "claimed_source": "T01.L02",
@@ -4888,15 +4916,13 @@
       "from_lesson": "T03.L09",
       "term": "EDS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'EDS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L09",
       "term": "RTS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'RTS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L09",
@@ -4926,15 +4952,13 @@
       "from_lesson": "T03.L10",
       "term": "RTS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'RTS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L10",
       "term": "ICEA S-87-640",
       "claimed_source": "T03.L01",
-      "verified": false,
-      "reason": "'ICEA S-87-640' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L10",
@@ -4976,8 +5000,7 @@
       "from_lesson": "T03.L11",
       "term": "ICEA S-87-640",
       "claimed_source": "T03.L01",
-      "verified": false,
-      "reason": "'ICEA S-87-640' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L11",
@@ -4989,15 +5012,13 @@
       "from_lesson": "T03.L11",
       "term": "RTS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'RTS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L11",
       "term": "EDS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'EDS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L12",
@@ -5093,15 +5114,13 @@
       "from_lesson": "T03.L12",
       "term": "EDS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'EDS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L12",
       "term": "RTS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'RTS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L12",
@@ -5149,15 +5168,13 @@
       "from_lesson": "T03.L12",
       "term": "water-blocking tape",
       "claimed_source": "T03.L06",
-      "verified": false,
-      "reason": "'water-blocking tape' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L12",
       "term": "dry-block",
       "claimed_source": "T03.L06",
-      "verified": false,
-      "reason": "'dry-block' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T03.L12",
@@ -6565,7 +6582,7 @@
       "term": "EDS",
       "claimed_source": "T03.L09",
       "verified": false,
-      "reason": "'EDS' is not introduced by any lesson in the curriculum"
+      "reason": "'EDS' is introduced by T03.L04, not T03.L09"
     },
     {
       "from_lesson": "T05.L07",
@@ -6632,15 +6649,13 @@
       "from_lesson": "T05.L07",
       "term": "EDS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'EDS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L07",
       "term": "RTS",
       "claimed_source": "T03.L04",
-      "verified": false,
-      "reason": "'RTS' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L07",
@@ -6761,13 +6776,15 @@
       "from_lesson": "T05.L10",
       "term": "EDS (Everyday Stress)",
       "claimed_source": "T03.L04",
-      "verified": true
+      "verified": false,
+      "reason": "'EDS (Everyday Stress)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L10",
       "term": "RTS (Rated Tensile Strength)",
       "claimed_source": "T03.L04",
-      "verified": true
+      "verified": false,
+      "reason": "'RTS (Rated Tensile Strength)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L10",
@@ -6847,14 +6864,14 @@
       "term": "EDS (Everyday Stress)",
       "claimed_source": "T05.L10",
       "verified": false,
-      "reason": "'EDS (Everyday Stress)' is introduced by T03.L04, not T05.L10"
+      "reason": "'EDS (Everyday Stress)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L11",
       "term": "RTS (Rated Tensile Strength)",
       "claimed_source": "T05.L10",
       "verified": false,
-      "reason": "'RTS (Rated Tensile Strength)' is introduced by T03.L04, not T05.L10"
+      "reason": "'RTS (Rated Tensile Strength)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L11",
@@ -7137,7 +7154,7 @@
       "term": "EDS (Everyday Stress)",
       "claimed_source": "T05.L10",
       "verified": false,
-      "reason": "'EDS (Everyday Stress)' is introduced by T03.L04, not T05.L10"
+      "reason": "'EDS (Everyday Stress)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L14",
@@ -7301,13 +7318,15 @@
       "from_lesson": "T05.L15",
       "term": "EDS (Everyday Stress)",
       "claimed_source": "T03.L04",
-      "verified": true
+      "verified": false,
+      "reason": "'EDS (Everyday Stress)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L15",
       "term": "RTS (Rated Tensile Strength)",
       "claimed_source": "T03.L04",
-      "verified": true
+      "verified": false,
+      "reason": "'RTS (Rated Tensile Strength)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T05.L15",
@@ -10722,8 +10741,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1073,
-  "broken_pointers_count": 121,
+  "verified_pointers_count": 1090,
+  "broken_pointers_count": 105,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",

@@ -13,6 +13,13 @@ export const meta = {
   order: 7,
   lesson_type: 'advanced',
   prerequisites: ['T03.L03', 'T03.L04'],
+  learning_objectives: [
+    'Describe the corrugated aluminum tape (CAT) armor and when it is preferred over CST',
+    'Define dielectric cable and explain why it eliminates bonding/grounding requirements at poles',
+    'Correctly interpret NEC §770.179(B) as covering cable type designation and marking, not separate armor-permission rules',
+    'Select the appropriate armor type for corrosive soil environments vs. standard direct-burial vs. aerial applications',
+    'Explain the galvanic corrosion risk of CST/interlocked armor in coastal or industrial soil environments',
+  ],
   vocabulary_introduced: [
     'corrugated aluminum tape (CAT)',
     'dielectric cable',

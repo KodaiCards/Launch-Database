@@ -15,6 +15,13 @@ export const meta = {
   order: 8,
   lesson_type: 'working',
   prerequisites: ['T03.L04', 'T03.L05', 'T03.L06'],
+  learning_objectives: [
+    'Size feeder, distribution, and drop cable fiber counts for a FTTH network segment',
+    'Apply growth margin principles to avoid premature cable replacement',
+    'Select G.657 drop cable grade for specific FTTH drop bend scenarios',
+    'Distinguish dark fiber strategy from active fiber provisioning and explain the economic tradeoff',
+    'Specify the correct aerial drop type (figure-8 vs. ADSS vs. lashed) for a given span and attachment situation',
+  ],
   vocabulary_introduced: [
     'distribution cable',
     'feeder cable',
@@ -22,14 +29,14 @@ export const meta = {
     'growth margin',
   ],
   vocabulary_assumed: [
-    { term: 'drop',          source_lesson_id: 'T01.L01' },
-    { term: 'FDH',           source_lesson_id: 'T01.L01' },
+    { term: 'drop',          source_lesson_id: 'T01.L07' },
+    { term: 'FDH',           source_lesson_id: 'T01.L07' },
     { term: 'ONT',           source_lesson_id: 'T01.L01' },
+    { term: 'HDPE',          source_lesson_id: 'T01.L08' },
     { term: 'figure-8 cable', source_lesson_id: 'T03.L04' },
     { term: 'ADSS',          source_lesson_id: 'T03.L04' },
     { term: 'G.657.A1',      source_lesson_id: 'T03.L05' },
     { term: 'G.657.A2',      source_lesson_id: 'T03.L05' },
-    { term: 'HDPE',          source_lesson_id: 'T03.L06' },
   ],
   key_terms: [
     {
@@ -339,6 +346,78 @@ export default function T03L08_DropCableSelection() {
           designs are more common in dense urban multi-story buildings where the riser
           infrastructure is already in place.
         </p>
+
+        <h3 className="mt-5 font-semibold">Maximum installation pulling tension — GR-20 and what it means in the field</h3>
+        <p>
+          Every OSP fiber cable has two tension ratings that are completely different
+          concepts and easy to confuse:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
+          <li>
+            <strong>Maximum installation pulling tension (short-term):</strong> The highest
+            force you may apply to the cable during the cable pull itself. This is a temporary
+            load — it lasts only as long as the pull takes. Governed by Telcordia{' '}
+            <strong>GR-20 (Generic Requirements for Optical Fiber and Optical Fiber Cable)</strong>,
+            which specifies minimum tensile rating requirements for OSP fiber cable products.
+            ICEA S-87-640 (T03.L01) is the complementary construction standard; GR-20 sets the
+            performance floor the cable must meet. [confirm GR-20 issue with your cable supplier's
+            datasheet — issue numbers update periodically]
+          </li>
+          <li>
+            <strong>Long-term EDS (Everyday Stress, from T03.L04):</strong> The sustained
+            tension the cable must tolerate indefinitely when installed on a span. EDS is
+            typically 16–25% of RTS — a much lower value than the installation tension limit.
+          </li>
+        </ul>
+        <p className="mt-3">
+          Typical GR-20 installation tension limits for common drop cable types:
+        </p>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Cable type</th>
+              <th className="px-3 py-2 text-left">Typical GR-20 max pulling tension</th>
+              <th className="px-3 py-2 text-left">Field note</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90 text-xs">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">2F–12F drop (dielectric, no messenger)</td>
+              <td className="px-3 py-2">~300–600 N (67–135 lbf)</td>
+              <td className="px-3 py-2">Pull by the cable jacket — do NOT pull by the fiber; use a pulling grip around the cable sheath</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">Figure-8 drop (with steel messenger)</td>
+              <td className="px-3 py-2">Messenger rated separately; cable body ~600–900 N</td>
+              <td className="px-3 py-2">The steel messenger carries the mechanical load; pulling grip on the messenger — NOT on the fiber cable body</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">OSP loose-tube distribution cable (24–96F)</td>
+              <td className="px-3 py-2">~1,300–2,700 N (290–600 lbf) [verify on product datasheet]</td>
+              <td className="px-3 py-2">GR-20 short-term install tension — NOT the long-term span EDS rating</td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Why this matters in the field</p>
+          <p className="text-slate-300/90">
+            Exceeding the GR-20 installation tension can microfracture the glass fiber
+            inside the cable without any visible external damage. The cable looks fine after
+            the pull, tests may pass at ambient temperature, but the microfractures grow over
+            time under temperature cycling and mechanical fatigue. The result is elevated
+            attenuation or outright fiber break months or years after installation — and it's
+            nearly impossible to trace back to the installation pull without OTDR records from
+            immediately post-installation.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Standard field discipline:</strong> (1) obtain the pulling tension limit
+            from the cable manufacturer's datasheet before the pull; (2) use a calibrated
+            tensionmeter or tension-limiting swivel on pulls longer than ~50 m; (3) log the
+            maximum tension observed during the pull in the as-built records alongside the
+            OTDR trace. If the recorded tension approaches or exceeds the GR-20 limit, flag
+            the cable segment for monitoring — don't assume it's fine.
+          </p>
+        </div>
       </section>
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}

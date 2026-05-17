@@ -15,6 +15,13 @@ export const meta = {
   order: 9,
   lesson_type: 'working',
   prerequisites: ['T03.L04'],
+  learning_objectives: [
+    'Identify the NESC loading district (Heavy / Medium / Light) applicable to a given project location',
+    'Calculate wind load per unit length and ice weight per unit length for a cable in a given district',
+    'Apply the parabolic sag formula to find sag for a given span, unit weight, and tension',
+    'Use a manufacturer ADSS span table to select a cable meeting EDS and MAT requirements',
+    'Explain when Extreme Wind loading (NESC Rule 250C) applies and why it supplements the standard three-district table',
+  ],
   vocabulary_introduced: [
     'NESC loading district',
     'Extreme Wind loading',
@@ -436,6 +443,45 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           target a design sag that leaves at least 1 ft of clearance margin above the
           NESC minimum after accounting for thermal + creep sag increase.
         </p>
+
+        <h3 className="mt-5 font-semibold">From math to catalog — reading a manufacturer span table</h3>
+        <p>
+          The load calculations above tell you the forces on the cable. The manufacturer's
+          span table tells you whether a specific cable product survives those forces at
+          your span length. Here's how to use one:
+        </p>
+        <ol className="list-decimal pl-5 space-y-2 mt-2 text-sm">
+          <li>
+            <strong>Identify your loading district</strong> — Heavy, Medium, or Light.
+            Confirm with your NESC loading district map (NESC C2-2023 Figure 250-2) or
+            check your state's standard for local overlay maps.
+          </li>
+          <li>
+            <strong>Find the span column</strong> for your design span length (e.g., 300 ft).
+            Look up the corresponding row for the NESC loading district.
+          </li>
+          <li>
+            <strong>Read EDS%</strong> — the table will show EDS as a percent of RTS at
+            the design span under the stated loading conditions. Confirm it falls in the
+            16–25% RTS range for vibration-managed design (or &lt;16% if no dampers).
+          </li>
+          <li>
+            <strong>Verify MAT is not exceeded</strong> — the table shows maximum tension
+            at the worst-case load case (usually the ice + wind + temperature loading).
+            Confirm this does not exceed the cable's MAT.
+          </li>
+          <li>
+            <strong>Check sag at the design temperature</strong> — the table typically
+            shows sag at the NESC design temperature (+ initial, + final after creep).
+            Confirm sag stays within your clearance budget.
+          </li>
+        </ol>
+        <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
+          <strong>Field tip:</strong> Real ADSS datasheets from CommScope, OCC, Corning,
+          and similar manufacturers have span tables broken out by NESC loading district.
+          Always use the district-specific table for your project geography, not the
+          generic "maximum span" headline number on the product page.
+        </p>
       </section>
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
@@ -461,6 +507,11 @@ export default function T03L09_ADSSSpanWindIceLoading() {
             id: 'T03-L09-fc-mat',
             front: 'What is MAT (Maximum Allowable Tension) for an ADSS cable?',
             back: 'The manufacturer-rated maximum tension the ADSS cable may experience under any design loading combination (ice + wind + temperature). Must never be exceeded at the worst-case NESC load case. The design checks both MAT (never exceeded) and EDS (16–25% of RTS at everyday conditions).',
+          },
+          {
+            id: 'T03-L09-fc-windpressure',
+            front: 'What are the NESC wind pressure values for each loading district?',
+            back: 'Light district: 9 lb/ft² wind pressure (no ice). Medium district: 4 lb/ft² wind pressure + 0.25 in. radial ice. Heavy district: 4 lb/ft² wind pressure + 0.50 in. radial ice. Wind load per unit length = (wind pressure) × (cable projected diameter including ice) ÷ 12. [Confirm against NESC C2-2023 Table 250-1]',
           },
         ]}
       />

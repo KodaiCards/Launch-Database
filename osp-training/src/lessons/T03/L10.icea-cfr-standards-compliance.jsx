@@ -17,6 +17,13 @@ export const meta = {
     'T03.L01', 'T03.L02', 'T03.L03', 'T03.L04',
     'T03.L05', 'T03.L06', 'T03.L07', 'T03.L08', 'T03.L09',
   ],
+  learning_objectives: [
+    'Explain the difference between qualification testing (per design) and acceptance testing (per lot)',
+    'State the RUS MFD tolerance requirement under 7 CFR 1755.902 and why it prevents splice-loss spikes',
+    'Identify the ICEA S-87-640 standard installation tensile rating and lower-tier rating',
+    'Verify a cable datasheet for ICEA S-87-640 and 7 CFR 1755.902 compliance using a structured checklist',
+    'Distinguish the roles of ICEA S-87-640 (construction standard) and 7 CFR 1755.902 (federal compliance requirement)',
+  ],
   vocabulary_introduced: [
     'qualification testing',
     'acceptance testing',
@@ -181,7 +188,7 @@ export default function T03L10_StandardsCompliance() {
         </p>
         <ul className="list-disc ml-6 mt-2 space-y-2">
           <li>
-            <strong>Standard installation tensile rating: 2,670 N (600 lbf).</strong> This is
+            <strong>Standard installation tensile rating: 2,670 N (600 lbf) [confirm current ICEA S-87-640 edition].</strong> This is
             the maximum tensile load you can apply to the cable during installation — whether
             you're pulling it through conduit, lashing it to a messenger, or plowing it in.
             Exceeding this risks fiber breakage or permanent elongation.

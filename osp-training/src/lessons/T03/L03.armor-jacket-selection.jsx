@@ -14,6 +14,13 @@ export const meta = {
   order: 3,
   lesson_type: 'working',
   prerequisites: ['T03.L01', 'T03.L02'],
+  learning_objectives: [
+    'Identify when CST armor vs. interlocked armor vs. no armor is the correct specification',
+    'Explain the role of the internal ripcord in CST-armored cable installation',
+    'Apply NEC §770.179(B) correctly — it defines cable type designations and marking, not armor configuration rules',
+    'Specify cable for a multi-environment route (aerial + direct-burial + building riser) with splice points',
+    'Recognize when dielectric cable is preferable over metallic armor in joint-use and corrosive environments',
+  ],
   vocabulary_introduced: [
     'corrugated steel tape (CST)',
     'interlocked armor',
@@ -23,7 +30,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'armor',        source_lesson_id: 'T01.L03' },
     { term: 'sheath',       source_lesson_id: 'T01.L03' },
-    { term: 'HDPE',         source_lesson_id: 'T01.L03' },
+    { term: 'HDPE',         source_lesson_id: 'T01.L08' },
     { term: 'loose-tube',   source_lesson_id: 'T03.L01' },
     { term: 'OFNR',         source_lesson_id: 'T03.L02' },
     { term: 'OFNP',         source_lesson_id: 'T03.L02' },
@@ -38,7 +45,7 @@ export const meta = {
     {
       term: 'interlocked armor',
       definition:
-        'An aluminum or steel armor formed by interlocking metal strips in a helical pattern around the cable. Provides crush resistance and rodent protection; common in indoor/outdoor riser cables and campus underground runs. Can be listed OFNR per NEC §770.179(B).',
+        'An aluminum or steel armor formed by interlocking metal strips in a helical pattern around the cable. Provides crush resistance and rodent protection; common in indoor/outdoor riser cables and campus underground runs. Can be manufactured and marked as OFNR (riser-rated) per the NEC Article 770 type-designation system, enabling use in building risers.',
     },
     {
       term: 'direct-burial',
@@ -107,7 +114,7 @@ export default function T03L03_ArmorJacketSelection() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">NEC</td>
               <td className="px-3 py-2">National Electrical Code (NFPA 70)</td>
-              <td className="px-3 py-2">Building code; §770.179(B) covers armored indoor fiber cable</td>
+              <td className="px-3 py-2">Building code; Article 770 governs optical fiber cables; §770.179(B) covers cable type designations and marking (OFNR, OFNP, OFN)</td>
             </tr>
           </tbody>
         </table>
@@ -153,10 +160,15 @@ export default function T03L03_ArmorJacketSelection() {
           documentation; ICEA S-87-640 Annex — armor for direct-burial rodent protection)
         </p>
         <p className="mt-2">
-          <strong>UL listing:</strong> CST-armored cables from manufacturers like OCC are
-          UL listed per NEC §770.179(B) for riser applications — meaning the steel armor
-          doesn't prevent the cable from meeting indoor fire ratings. (Source: OCC D-Series
-          product page: "UL listed in accordance with NEC section 770.179(b)" — verified)
+          <strong>UL listing and NEC type marking:</strong> CST-armored cables from
+          manufacturers like OCC can be manufactured, tested, and marked as OFNR
+          (riser-rated) per NEC Article 770's type-designation system — meaning the
+          steel armor does not prevent the cable from meeting indoor fire ratings.
+          NEC §770.179(B) covers cable type designations and marking requirements
+          (what designations like OFNR, OFNP, and OFN mean and how cables must be
+          marked), not a separate "permitted armor" rule. (Source: OCC D-Series
+          product page: "UL listed in accordance with NEC section 770.179(b)" —
+          verified; NEC NFPA 70-2023 Article 770 §770.179)
         </p>
 
         <h3 className="mt-5 font-semibold">Interlocked armor — indoor-outdoor and campus use</h3>
@@ -168,9 +180,10 @@ export default function T03L03_ArmorJacketSelection() {
         </p>
         <p className="mt-2">
           Interlocked armor is common for campus indoor-outdoor riser cables and some
-          underground installations. It can be listed OFNR (riser-rated) per NEC
-          §770.179(B), making it suitable for running from outdoor duct into a building
-          riser shaft without a transition. (Source: fiberoptics4sale.com F1-LK12D product
+          underground installations. It can be manufactured and marked as OFNR
+          (riser-rated) under NEC Article 770's type-designation scheme, making it
+          suitable for running from outdoor duct into a building riser shaft without
+          a transition. (Source: fiberoptics4sale.com F1-LK12D product
           description: "OFCR Riser Rated, rodent protection suitable for outdoor direct
           burial" — verified via vendor datasheet)
         </p>
@@ -354,7 +367,7 @@ export default function T03L03_ArmorJacketSelection() {
           {
             id: 'T03-L03-fc-interlocked',
             front: 'What is interlocked armor and when is it used?',
-            back: 'An aluminum or steel armor formed from interlocking metal strips in a helical pattern around the cable. Provides crush resistance and rodent protection; common in indoor/outdoor riser cables and campus underground runs. Can be UL-listed OFNR per NEC §770.179(B) for building riser applications.',
+            back: 'An aluminum or steel armor formed from interlocking metal strips in a helical pattern around the cable. Provides crush resistance and rodent protection; common in indoor/outdoor riser cables and campus underground runs. Can be manufactured, tested, and marked as OFNR (riser-rated) under NEC Article 770\'s type-designation system, enabling use in building risers without a separate transition.',
           },
           {
             id: 'T03-L03-fc-db',

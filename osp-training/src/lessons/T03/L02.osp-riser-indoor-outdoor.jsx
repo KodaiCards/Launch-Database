@@ -15,6 +15,13 @@ export const meta = {
   order: 2,
   lesson_type: 'working',
   prerequisites: ['T03.L01'],
+  learning_objectives: [
+    'Define the NEC fire-rating designations OFNR and OFNP and the test standards each must pass',
+    'Apply the NEC §770.48(A) 50-ft unlisted cable entry rule to real building-entry scenarios',
+    'Distinguish between outdoor-rated (UV-stable) and indoor fire-rated cable properties',
+    'Specify the correct cable type for aerial, underground, and building-entry segments of a route',
+    'Recognize when a dual-rated cable eliminates the need for a building-entry transition splice',
+  ],
   vocabulary_introduced: [
     'OFNR',
     'OFNP',
@@ -24,8 +31,9 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'OSP',      source_lesson_id: 'T01.L01' },
     { term: 'sheath',   source_lesson_id: 'T01.L03' },
-    { term: 'NEC',      source_lesson_id: 'T01.L09' },
+    { term: 'NEC',      source_lesson_id: 'T01.L08' },
     { term: 'loose-tube', source_lesson_id: 'T03.L01' },
+    { term: 'ICEA S-87-640', source_lesson_id: 'T03.L01' },
   ],
   key_terms: [
     {
@@ -226,6 +234,9 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
             cable in a riser means removing and replacing the cable — pulling the route
             again at full labor cost. A dual-rated cable spec on the front end costs maybe
             $0.10/ft more; the inspection failure costs several times that in rework.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>AHJ override risk:</strong> Local Authorities Having Jurisdiction (AHJ) — your city or county building official — can and sometimes do impose stricter requirements than the NEC minimum. In some jurisdictions, any unlisted OSP cable entering the building requires transition at the entry point regardless of the 50 ft NEC provision. Confirm with the local AHJ on commercial projects before relying on the 50 ft exemption.
           </p>
         </div>
       </section>

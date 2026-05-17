@@ -14,15 +14,23 @@ export const meta = {
   order: 6,
   lesson_type: 'working',
   prerequisites: ['T03.L02', 'T03.L03'],
+  learning_objectives: [
+    'State why HDPE with 2–3% carbon black loading is the standard OSP jacket material',
+    'Distinguish between LSZH jacket chemistry and OFNR/OFNP NEC fire-performance listing — they are independent requirements',
+    'Explain the difference between gel-filled (flooding compound) and dry-block (SAP tape/yarn) water-blocking and the field implications for splice prep time',
+    'Select the correct jacket material for aerial, direct-burial, and indoor-rated applications',
+    'Identify when LSZH is required vs. when standard HDPE is sufficient',
+  ],
   vocabulary_introduced: [
     'LSZH',
     'flooding compound',
-    'water-blocking tape / dry-block',
+    'water-blocking tape',
+    'dry-block',
     'carbon black loading',
   ],
   vocabulary_assumed: [
     { term: 'sheath',        source_lesson_id: 'T01.L03' },
-    { term: 'HDPE',          source_lesson_id: 'T01.L03' },
+    { term: 'HDPE',          source_lesson_id: 'T01.L08' },
     { term: 'OFNR',          source_lesson_id: 'T03.L02' },
     { term: 'OFNP',          source_lesson_id: 'T03.L02' },
     { term: 'outdoor-rated', source_lesson_id: 'T03.L02' },
@@ -41,9 +49,14 @@ export const meta = {
         'A gel (typically petroleum-based or non-petroleum synthetic) filling the cable core to block water migration longitudinally. Standard in gel-filled loose-tube cables. Requires cleaning with isopropyl alcohol before splicing.',
     },
     {
-      term: 'water-blocking tape / dry-block',
+      term: 'water-blocking tape',
       definition:
-        'SAP (superabsorbent polymer) tapes and yarns that swell on contact with water to block migration, replacing gel in "dry" or "gel-free" cable designs. Requires no gel cleanup at splice prep — typically achievable in approximately one-third the time of gel-filled tube prep.',
+        'SAP (superabsorbent polymer) tapes and yarns wrapped around the cable core that swell on contact with water to block migration. Used in dry-block cable designs as an alternative to flooding compound gel.',
+    },
+    {
+      term: 'dry-block',
+      definition:
+        'A cable water-blocking design using SAP tapes or yarns instead of petroleum gel. Requires no gel cleanup at splice prep — typically achievable in approximately one-third the time of gel-filled tube prep. Also called "gel-free" construction.',
     },
     {
       term: 'carbon black loading',
@@ -331,6 +344,11 @@ export default function T03L06_CableSheathJacketMaterial() {
             id: 'T03-L06-fc-flooding',
             front: 'What is flooding compound (gel) in a loose-tube cable?',
             back: 'A petroleum-based or synthetic gel filling the cable core to block water migration longitudinally. Standard in gel-filled loose-tube designs. Requires isopropyl alcohol cleaning before splicing — gel must be completely removed from fibers before fusion. High-count tubes: gel also keeps fiber bundles grouped. (stl.tech; remee.com)',
+          },
+          {
+            id: 'T03-L06-fc-waterblocking',
+            front: 'What is a water-blocking tape in an OSP cable?',
+            back: 'SAP (superabsorbent polymer) tape or yarn wrapped around the cable core that swells on contact with water, blocking longitudinal water migration. Used in dry-block (gel-free) cable designs as an alternative to flooding compound. The water-blocking tape is the key component that eliminates the need for gel cleanup at splice prep.',
           },
           {
             id: 'T03-L06-fc-dryblock',
