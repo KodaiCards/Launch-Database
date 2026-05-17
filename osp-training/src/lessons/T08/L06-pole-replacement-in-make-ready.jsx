@@ -1,7 +1,7 @@
 // T08.L06 — Pole Replacement in Make-Ready
 // Working lesson: when pole replacement is required, cost split formula, causation rules
 // Source: net-new (no prior module equivalent)
-// Regulatory anchors: NESC C2-2023 §24; RUS 1751F-630 §8; FCC 18-111; RUS 1724E-150
+// Regulatory anchors: NESC C2-2023 Section 26 (strength requirements) / Rule 261; RUS 1751F-630 §8; FCC 18-111; RUS 1724E-150
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -32,7 +32,7 @@ export const meta = {
     {
       term: 'pole replacement',
       definition:
-        'A make-ready action in which an existing utility pole is replaced with a new pole — either because the existing pole is physically failed (rotten, cracked, or structurally compromised) or because the additional load from the new attachment exceeds the pole\'s rated capacity under NESC C2-2023 §24 loading calculations. Pole replacement is the most expensive make-ready action and always requires multi-party coordination regardless of OTMR status, since the pole owner must physically remove and replace the pole.',
+        'A make-ready action in which an existing utility pole is replaced with a new pole — either because the existing pole is physically failed (rotten, cracked, or structurally compromised) or because the additional load from the new attachment exceeds the pole\'s rated capacity under NESC C2-2023 Section 26 strength requirements. Pole replacement is the most expensive make-ready action and always requires multi-party coordination regardless of OTMR status, since the pole owner must physically remove and replace the pole.',
     },
     {
       term: 'joint-owned cost',
@@ -107,7 +107,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             {
               id: 'T08-L06-fc-polereplacement',
               front: 'What is pole replacement in the context of make-ready?',
-              back: 'A make-ready action in which an existing utility pole is replaced with a new pole — either because the existing pole is physically failed (rotten, cracked, or structurally compromised) or because the additional load from the new attachment exceeds the pole\'s rated capacity under NESC C2-2023 §24 loading calculations. Pole replacement is the most expensive make-ready action and always requires multi-party coordination regardless of OTMR status, since the pole owner must physically remove and replace the pole.',
+              back: 'A make-ready action in which an existing utility pole is replaced with a new pole — either because the existing pole is physically failed (rotten, cracked, or structurally compromised) or because the additional load from the new attachment exceeds the pole\'s rated capacity under NESC C2-2023 Section 26 strength requirements. Pole replacement is the most expensive make-ready action and always requires multi-party coordination regardless of OTMR status, since the pole owner must physically remove and replace the pole.',
             },
             {
               id: 'T08-L06-fc-jointcost',
@@ -143,7 +143,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             <p className="font-semibold text-red-300 mb-2">Trigger 1 — Physical Pole Failure</p>
             <p className="text-slate-300/90">
               The existing pole is rotten, cracked, leaning, or has deteriorated below
-              the NESC §24 structural integrity standard. A pole inspector assesses
+              the NESC Section 26 structural strength standard. A pole inspector assesses
               physical condition using a Deterioration Index (various utility-specific
               scales exist, often 1–5 or 0–100%). Poles below a utility's minimum
               integrity threshold must be replaced regardless of whether a new
@@ -166,11 +166,11 @@ export default function T08L06_PoleReplacementInMakeReady() {
               data) shows the total load percentage.
             </p>
             <p className="text-slate-300/90 mt-2">
-              NESC C2-2023 §24 sets maximum stress requirements for poles. A pole rated
+              NESC C2-2023 Section 26 sets the strength requirements for poles (including the load and strength factors applied to structural calculations). A pole rated
               Class 4 at 25 ft has a specific maximum fiber stress at the groundline;
               once the combined loading from existing attachments + new fiber exceeds that
-              limit, the pole must be upgraded or replaced.{' '}
-              <em>[Confirm specific NESC §24 capacity formula and allowable fiber-stress
+              limit under Section 26 strength factors, the pole must be upgraded or replaced.{' '}
+              <em>[Confirm specific Section 26 / Rule 261 capacity formula and allowable fiber-stress
               values at time of design; values vary by pole class, height, and loading district.]</em>
             </p>
             <p className="text-slate-300/90 mt-2">
@@ -205,7 +205,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book (FCC 18-111, NESC §24 [confirm edition]):</strong> Pole
+            <strong>Book (FCC 18-111, NESC Section 26 [confirm edition]):</strong> Pole
             replacement cost is allocated based on proportional load contribution.
             The FCC provides the framework; actual cost splits are negotiated between
             parties based on the loading calculation outputs.
@@ -342,7 +342,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             substitution: '92% > 90%',
             result: 'YES — pole replacement required',
             explanation:
-              'The combined load of 92% exceeds the utility\'s 90% threshold. Even if NESC §24 allows a higher theoretical limit, most utilities set a 90% operating threshold to maintain a safety margin for future attachments, storm loading, and hardware degradation. The threshold triggers replacement here.',
+              'The combined load of 92% exceeds the utility\'s 90% threshold. Even if NESC Section 26 strength factors allow a higher theoretical computed limit in some configurations, most utilities set a 90% operating threshold to maintain a safety margin for future attachments, storm loading, and hardware degradation. The threshold triggers replacement here.',
           },
           {
             stepNumber: 3,
@@ -393,8 +393,8 @@ export default function T08L06_PoleReplacementInMakeReady() {
             ],
             answerIndex: 1,
             explanation:
-              'Pole replacement is triggered by two independent conditions: (1) physical pole failure (structural deterioration below NESC §24 integrity standards) or (2) over-strength loading where the combined existing + new attachment loads exceed the pole\'s rated capacity. Either condition alone is sufficient. Age alone is not a trigger — a 40-year-old pole in excellent physical condition with adequate strength rating doesn\'t need replacement just because it\'s old.',
-            citation: 'NESC C2-2023 §24 [confirm edition]; RUS 1751F-630 §8.',
+              'Pole replacement is triggered by two independent conditions: (1) physical pole failure (structural deterioration below NESC Section 26 strength standards) or (2) over-strength loading where the combined existing + new attachment loads exceed the pole\'s rated capacity. Either condition alone is sufficient. Age alone is not a trigger — a 40-year-old pole in excellent physical condition with adequate strength rating doesn\'t need replacement just because it\'s old.',
+            citation: 'NESC C2-2023 Section 26 / Rule 261 [confirm edition]; RUS 1751F-630 §8.',
           },
           {
             id: 'T08-L06-Q2',
@@ -426,7 +426,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             answerIndex: 1,
             explanation:
               'Pole replacement physically removes and replaces the structure that supports ALL existing attachments. Every cable on the pole — power conductors, ILEC copper, cable TV, existing fiber — must be transferred from the old pole to the new pole. Power conductors cannot be handled by telecom contractors. The result is that every party\'s crew must be coordinated on the replacement day, making it inherently multi-party regardless of OTMR status.',
-            citation: 'FCC 18-111 (2018); NESC C2-2023 §24 [confirm edition].',
+            citation: 'FCC 18-111 (2018); NESC C2-2023 Section 26 [confirm edition].',
           },
           {
             id: 'T08-L06-Q4',
@@ -442,7 +442,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             answerIndex: 1,
             explanation:
               'Physical pole failure is the pole owner\'s maintenance responsibility. A rotten pole must be replaced regardless of whether a new attachment is being added — the fiber project simply revealed the existing problem. The fiber applicant did not cause the rot. Under the cost-causation principle, the pole owner absorbs the full replacement cost. The fiber applicant\'s loading contribution is not relevant when the trigger is physical failure, not capacity overrun.',
-            citation: 'FCC 18-111 (2018); NESC C2-2023 §24 [confirm edition]; RUS 1751F-630 §8.',
+            citation: 'FCC 18-111 (2018); NESC C2-2023 Section 26 [confirm edition]; RUS 1751F-630 §8.',
           },
           {
             id: 'T08-L06-Q5',

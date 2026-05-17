@@ -283,7 +283,7 @@ export default function T08L05_ReframeAdjustingWithoutMoving() {
           (1) a partial reframe + transfer of the bottommost cable, (2) a full multi-cable
           transfer, or (3) pole replacement if the height simply isn't available. The staker's
           report should identify which applies before any make-ready estimate is generated.
-          (Source: NESC C2-2023 §235, clearance between conductors of different circuits
+          (Source: NESC C2-2023 Rule 235, clearance between conductors of different circuits
           [confirm edition]; RUS 1751F-630 §8.)
         </p>
       </section>

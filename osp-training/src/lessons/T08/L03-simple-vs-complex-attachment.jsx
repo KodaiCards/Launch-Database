@@ -397,7 +397,7 @@ export default function T08L03_SimpleVsComplexAttachment() {
             answerIndex: 1,
             explanation:
               'The cost-causation principle: if the existing cable is already out of compliance (15 ft 8 in is below the 17 ft NESC road crossing minimum), the pole owner or the cable owner is responsible for correcting that non-compliance. The fiber applicant did not cause the violation. The fiber project simply revealed it. The cable TV company or pole owner absorbs the cost of NESC compliance.',
-            citation: 'FCC 18-111 (2018); NESC C2-2023 §232 [confirm edition]; RUS 1751F-630 §8.',
+            citation: 'FCC 18-111 (2018); NESC C2-2023 Rule 232 [confirm edition]; RUS 1751F-630 §8.',
           },
           {
             id: 'T08-L03-Q3',
@@ -413,7 +413,7 @@ export default function T08L03_SimpleVsComplexAttachment() {
             answerIndex: 1,
             explanation:
               'Power conductor work is never OTMR-eligible, regardless of who owns the pole. Energized power conductors require qualified power utility linemen — not telecom contractors — to de-energize, move, and re-energize. This triggers complex, multi-party make-ready involving the power company\'s crew.',
-            citation: 'FCC 18-111 (2018); NESC C2-2023 §23, §24 [confirm edition].',
+            citation: 'FCC 18-111 (2018); NESC C2-2023 Rule 235 (communication-worker safety zone), Section 24 (grades of construction) [confirm edition].',
           },
           {
             id: 'T08-L03-Q4',
