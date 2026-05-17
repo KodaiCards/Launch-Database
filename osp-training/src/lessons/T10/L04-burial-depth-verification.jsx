@@ -59,13 +59,13 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'HDD', source_lesson_id: 'T06.L01' },
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
-    { term: 'ROW', source_lesson_id: 'T09.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L01' },
     { term: 'stake', source_lesson_id: 'T07.L01' },
-    { term: 'station', source_lesson_id: 'T07.L01' },
-    { term: 'plan-and-profile', source_lesson_id: 'T07.L01' },
+    { term: 'station', source_lesson_id: 'T07.L02' },
+    { term: 'plan-and-profile', source_lesson_id: 'T07.L02' },
     { term: 'bedding sand', source_lesson_id: 'T10.L03' },
   ],
 };
@@ -200,6 +200,11 @@ export default function T10L04_BurialDepthVerification() {
                 id: 'T10-L04-fc-finished-grade',
                 front: 'What is "finished grade" and how does it differ from "natural grade"?',
                 back: '"Finished grade" is the final surface elevation after all construction — including pavement overlays and fill. "Natural grade" is the pre-construction ground surface. When a permit says depth from "finished grade," the measurement starts from the final walking surface — which may be several inches higher than where dirt starts.',
+              },
+              {
+                id: 'T10-L04-fc-natural-grade',
+                front: 'What is "natural grade" and when does it produce a shallower installation than "finished grade"?',
+                back: 'The existing ground surface elevation before any construction fill, grading, or pavement overlay. When a permit specifies depth from natural grade, the burial measurement starts from the pre-construction ground level. This produces a shallower installation than "from finished grade" if fill is added during construction — because the conduit ends up closer to the new surface than to the original ground.',
               },
             ]}
           />

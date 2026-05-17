@@ -14,7 +14,7 @@ export const meta = {
   title: 'Manhole and Handhole Installation',
   order: 7,
   lesson_type: 'working',
-  prerequisites: ['T10.L03', 'T10.L04', 'T06.L05', 'T18.L05'],
+  prerequisites: ['T10.L03', 'T10.L04', 'T06.L05', 'T18.L03'],
   learning_objectives: [
     'Distinguish a handhole, a manhole, and a vault by size, access type, and typical use case',
     'State the 500–1,000 ft planning interval for handholes and explain why the as-built location often differs',
@@ -55,10 +55,10 @@ export const meta = {
     { term: 'manhole', source_lesson_id: 'T06.L05' },
     { term: 'handhole', source_lesson_id: 'T06.L05' },
     { term: 'vault', source_lesson_id: 'T06.L05' },
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
-    { term: 'bend radius', source_lesson_id: 'T03.L02' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
+    { term: 'bend radius', source_lesson_id: 'T02.L04' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
-    { term: 'confined space', source_lesson_id: 'T18.L05' },
+    { term: 'confined space', source_lesson_id: 'T18.L03' },
     { term: 'shoring', source_lesson_id: 'T10.L03' },
   ],
 };

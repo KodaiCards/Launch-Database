@@ -71,10 +71,10 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L01' },
-    { term: 'MUTCD', source_lesson_id: 'T18.L08' },
+    { term: 'MUTCD', source_lesson_id: 'T18.L06' },
   ],
 };
 

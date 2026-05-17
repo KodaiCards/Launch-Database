@@ -14,7 +14,7 @@ export const meta = {
   title: 'Slack Loops — Why and Where',
   order: 6,
   lesson_type: 'working',
-  prerequisites: ['T10.L01', 'T10.L03', 'T06.L05', 'T03.L02'],
+  prerequisites: ['T10.L01', 'T10.L03', 'T06.L05', 'T02.L04'],
   learning_objectives: [
     'Explain the three reasons slack loops are required: splice-trailer reach, future re-termination, and thermal expansion',
     'State common contract-band slack lengths for intermediate handholes, splice-point handholes, building entrances, and aerial-to-buried transitions',
@@ -60,8 +60,8 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'handhole', source_lesson_id: 'T06.L05' },
     { term: 'vault', source_lesson_id: 'T06.L05' },
-    { term: 'bend radius', source_lesson_id: 'T03.L02' },
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
+    { term: 'bend radius', source_lesson_id: 'T02.L04' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
   ],
 };
 

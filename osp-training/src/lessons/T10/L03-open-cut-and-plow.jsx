@@ -65,7 +65,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'plowing', source_lesson_id: 'T06.L01' },
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'LOTO', source_lesson_id: 'T18.L02' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L01' },
@@ -157,6 +157,11 @@ export default function T10L03_OpenCutAndPlow() {
                 id: 'T10-L03-fc-compaction',
                 front: 'What is trench backfill compaction and why must it be done in lifts?',
                 back: 'Mechanical densification of backfill in layers (typically 6–8 inches) to achieve required density (often 95% Proctor). Lifts ensure the compactor reaches full density throughout the fill depth. Skipping lifts (filling and compacting once) leaves pockets of loose soil that settle later, creating a visible ghost trench.',
+              },
+              {
+                id: 'T10-L03-fc-open-cut-restoration',
+                front: 'What is open-cut restoration and what does it include?',
+                back: 'The process of returning a trench excavation to a condition equal to or better than pre-construction. Includes backfill compaction, sub-base reconstruction, surface course replacement (asphalt or concrete to match the adjacent surface), and sod/seed restoration for non-paved areas. Required by most AHJ encroachment permits.',
               },
             ]}
           />

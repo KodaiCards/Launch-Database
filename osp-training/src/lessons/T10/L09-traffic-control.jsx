@@ -14,7 +14,7 @@ export const meta = {
   title: 'Traffic Control in Construction Zones',
   order: 9,
   lesson_type: 'working',
-  prerequisites: ['T10.L01', 'T09.L06', 'T18.L08'],
+  prerequisites: ['T10.L01', 'T09.L06', 'T18.L06'],
   learning_objectives: [
     'Explain the MUTCD Part 6 framework for temporary traffic control',
     'Identify the four components of a work-zone layout: advance warning area, transition taper, activity area, termination taper',
@@ -70,10 +70,10 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'MUTCD', source_lesson_id: 'T18.L08' },
+    { term: 'MUTCD', source_lesson_id: 'T18.L06' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L06' },
-    { term: 'ROW', source_lesson_id: 'T09.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'Call-811', source_lesson_id: 'T10.L01' },
   ],
 };
@@ -136,6 +136,21 @@ export default function T10L09_TrafficControl() {
                 id: 'T10-L09-fc-flagger',
                 front: 'What certification do flaggers need and what common training programs provide it?',
                 back: 'Flaggers must be trained and certified, typically through ATSSA (American Traffic Safety Services Association) or state-approved equivalents. Many states have specific certification requirements. Certification ensures the flagger understands STOP/SLOW paddle use, positioning, communication protocols, and emergency procedures.',
+              },
+              {
+                id: 'T10-L09-fc-flagger-station',
+                front: 'What is a flagger station in a work zone?',
+                back: 'The designated location where a certified flagging crew member controls traffic through a one-lane work zone. The flagger uses a STOP/SLOW paddle to direct traffic alternately from each direction. Position and spacing from the activity area are defined in the TCP per MUTCD Part 6 minimums.',
+              },
+              {
+                id: 'T10-L09-fc-lane-closure',
+                front: 'What is required to establish a lane closure on a primary state road?',
+                back: 'Partial or full blocking of a roadway lane to create a protected work zone. Requires a Traffic Control Plan (TCP), channelization devices (cones, drums, or barriers), flagger stations or traffic signals, and advance warning signs. On most state primary roads, also requires a permit and a PE-stamped TCP.',
+              },
+              {
+                id: 'T10-L09-fc-channelization-device',
+                front: 'What are the three common channelization device types and when is each used?',
+                back: 'Traffic cones — temporary, lightweight, short-duration closures. Drums — higher visibility and more stable than cones, used for higher-speed or longer-duration work. Concrete barrier (Jersey barrier) — provides crash protection for long-duration or high-speed closures. Selection is based on speed, duration, and traffic volume per MUTCD Part 6.',
               },
             ]}
           />

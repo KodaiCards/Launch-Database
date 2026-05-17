@@ -57,10 +57,10 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'plan-and-profile', source_lesson_id: 'T07.L01' },
-    { term: 'as-designed', source_lesson_id: 'T04.L02' },
+    { term: 'plan-and-profile', source_lesson_id: 'T07.L02' },
+    { term: 'as-designed', source_lesson_id: 'T04.L08' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
-    { term: 'ROW', source_lesson_id: 'T09.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'depth probe', source_lesson_id: 'T10.L04' },
     { term: 'cover card', source_lesson_id: 'T10.L04' },
@@ -120,6 +120,11 @@ export default function T10L10_DailyFieldReporting() {
                 id: 'T10-L10-fc-as-built-redline',
                 front: 'What is an as-built redline and how is it produced?',
                 back: 'A marked-up set of the approved plan-and-profile drawings showing actual as-installed conditions in red. Produced by transferring deviation log entries to the design drawings. Becomes the permanent GIS record of the route.',
+              },
+              {
+                id: 'T10-L10-fc-pay-application',
+                front: 'What is a pay application and what triggers a payment hold?',
+                back: 'The monthly billing document submitted by the contractor requesting payment for work completed during the period. References DFR quantity logs to verify installed quantities. Unverified quantities or discrepancies between DFR records and actual field conditions trigger payment holds.',
               },
             ]}
           />

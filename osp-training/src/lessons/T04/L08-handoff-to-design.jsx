@@ -19,6 +19,7 @@ export const meta = {
     'handoff package',
     'design input',
     'as-surveyed',
+    'as-designed',
     'design constraints',
     'gap analysis',
     'deliverable checklist',
@@ -63,6 +64,11 @@ export const meta = {
     term: 'as-surveyed',
     definition:
       'Field-measured conditions captured at the time of the survey — as opposed to design records (what was planned) or as-built records (what was actually constructed). An as-surveyed pole height means the height measured in the field on the survey date, which may differ from the utility company\'s database record or the original construction plan.',
+  },
+  {
+    term: 'as-designed',
+    definition:
+      'The approved engineering design — the plan-and-profile drawings, specifications, and staking notes as released for construction. "As-designed" describes what the engineer intended to be built, before any field conditions or contractor decisions alter the route. The as-designed drawings are the baseline against which field deviations are tracked in the deviation log.',
   },
   {
     term: 'design constraints',

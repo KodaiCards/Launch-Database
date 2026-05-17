@@ -40,7 +40,7 @@ export const meta = {
     { term: 'depth probe', source_lesson_id: 'T10.L04' },
     { term: 'cover card', source_lesson_id: 'T10.L04' },
     { term: 'pull tension', source_lesson_id: 'T10.L05' },
-    { term: 'conduit fill', source_lesson_id: 'T10.L05' },
+    { term: 'conduit fill', source_lesson_id: 'T06.L04' },
     { term: 'slack loop', source_lesson_id: 'T10.L06' },
     { term: 'MSA', source_lesson_id: 'T10.L06' },
     { term: 'cast-in-place', source_lesson_id: 'T10.L07' },
@@ -53,7 +53,7 @@ export const meta = {
     { term: 'deviation log', source_lesson_id: 'T10.L10' },
     { term: 'punch list', source_lesson_id: 'T10.L11' },
     { term: 'kick-back authority', source_lesson_id: 'T10.L11' },
-    { term: 'RUS Form 219', source_lesson_id: 'T10.L11' },
+    { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
   ],
 };
 

@@ -24,6 +24,7 @@ export const meta = {
   vocabulary_introduced: [
     'plan-and-profile',
     'stationing',
+    'station',
     'offset',
     'PI',
     'cross-section',
@@ -47,6 +48,11 @@ export const meta = {
       term: 'stationing',
       definition:
         'A distance measurement along the design route centerline, expressed in feet from a reference point (station 0+00). The format reads as "hundreds of feet + remainder." Station 3+75 means 375 feet from the start. Station 12+00 means 1,200 feet. Stationing lets every point on the route have an unambiguous address.',
+    },
+    {
+      term: 'station',
+      definition:
+        'A specific point on the design route identified by its stationing value — for example, "station 2340+00" means 234,000 feet (approximately 44.3 miles) from the route origin. In the field, stations are the primary addressing system: every pole, handhole, depth-probe point, and deviation is recorded by station. "Meet me at station 12+00" means walk 1,200 feet from the start of the route.',
     },
     {
       term: 'offset',
@@ -180,6 +186,11 @@ export default function T07L02_ReadingPlansInTheField() {
               id: 'T07-L02-fc-stationing',
               front: 'What is stationing on a design plan?',
               back: 'A distance measurement along the design route centerline, expressed in feet from a reference point (station 0+00). Format: hundreds of feet + remainder. Station 3+75 means 375 feet from the start. Station 12+00 means 1,200 feet.',
+            },
+            {
+              id: 'T07-L02-fc-station',
+              front: 'What is a "station" on a design plan and how is it used in the field?',
+              back: 'A specific point on the design route identified by its stationing value — e.g., "station 2340+00" = 234,000 ft from the route origin. Every pole, handhole, depth-probe point, and deviation log entry is recorded by station. Stations are the field addressing system: "meet me at station 12+00" means walk 1,200 ft from the route start.',
             },
             {
               id: 'T07-L02-fc-offset',

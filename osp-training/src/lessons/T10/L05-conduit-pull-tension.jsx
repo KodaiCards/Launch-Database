@@ -26,7 +26,6 @@ export const meta = {
   vocabulary_introduced: [
     'pull tension',
     'capstan formula',
-    'conduit fill',
     'mid-assist',
     'fish tape',
   ],
@@ -58,9 +57,9 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
-    { term: 'innerduct', source_lesson_id: 'T06.L02' },
-    { term: 'conduit fill (40% rule)', source_lesson_id: 'T06.L04' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
+    { term: 'innerduct', source_lesson_id: 'T06.L03' },
+    { term: 'conduit fill', source_lesson_id: 'T06.L04' },
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'breakaway swivel', source_lesson_id: 'T10.L02' },
   ],
@@ -181,6 +180,11 @@ export default function T10L05_ConduitPullTension() {
                 id: 'T10-L05-fc-mid-assist',
                 front: 'What is a mid-assist capstan and when is it needed?',
                 back: 'An intermediate capstan placed at a vault or handhole midpoint on a long pull to split the total tension across two shorter pulls. Needed when the cumulative effect of route length and bends would push exit tension above the cable\'s rated limit.',
+              },
+              {
+                id: 'T10-L05-fc-fish-tape',
+                front: 'What is a fish tape and when is it used in conduit work?',
+                back: 'A steel or fiberglass tape threaded through a conduit to pull in a pull string or cable. The pull string is then used to pull the actual cable or conduit bundle. Used when the conduit is empty and there is no pre-installed pull string.',
               },
             ]}
           />

@@ -65,8 +65,8 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'HDD', source_lesson_id: 'T06.L01' },
-    { term: 'conduit', source_lesson_id: 'T06.L01' },
-    { term: 'innerduct', source_lesson_id: 'T06.L02' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
+    { term: 'innerduct', source_lesson_id: 'T06.L03' },
     { term: 'pull tension', source_lesson_id: 'T06.L04' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'NWP 57', source_lesson_id: 'T09.L05' },
@@ -132,6 +132,19 @@ export default function T10L02_HDDExecution() {
         {
           id: 'wrong',
           text: '600 lbf — the rating of the strongest duct',
+          nextId: 'swivel-correction',
+        },
+      ],
+    },
+    {
+      id: 'swivel-correction',
+      prompt:
+        'Incorrect. Setting the swivel to 600 lbf (the strongest duct) leaves the 500 lbf duct unprotected. If downstream tension reaches 501 lbf, the weakest duct deforms or fails before the swivel ever breaks. The breakaway swivel protects the BUNDLE — and the bundle is only as strong as its weakest link. The swivel must be set to 500 lbf so it sacrifices itself before any duct is damaged.',
+      question: 'Correct answer: 500 lbf — the weakest duct in the bundle.',
+      choices: [
+        {
+          id: 'continue',
+          text: 'Understood — proceed to lesson summary',
           nextId: 'end',
         },
       ],

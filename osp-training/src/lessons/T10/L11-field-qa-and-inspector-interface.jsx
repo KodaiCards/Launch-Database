@@ -29,7 +29,6 @@ export const meta = {
     'field inspector',
     'substantial completion',
     'acceptance walk',
-    'RUS Form 219',
   ],
   key_terms: [
     {
@@ -52,10 +51,6 @@ export const meta = {
       term: 'acceptance walk',
       definition: 'A formal site walkthrough between the contractor and inspector (and often the owner\'s engineer) to document the condition of the finished work and generate the punch list.',
     },
-    {
-      term: 'RUS Form 219',
-      definition: 'The RUS Inspection Report form used on RUS-funded projects to document as-built conditions, inspector observations, materials used, and final acceptance. Full detail in T13.',
-    },
   ],
   vocabulary_assumed: [
     { term: 'DFR', source_lesson_id: 'T10.L10' },
@@ -64,10 +59,11 @@ export const meta = {
     { term: 'depth probe', source_lesson_id: 'T10.L04' },
     { term: 'cover card', source_lesson_id: 'T10.L04' },
     { term: 'slack loop', source_lesson_id: 'T10.L06' },
-    { term: 'as-designed', source_lesson_id: 'T04.L02' },
+    { term: 'as-designed', source_lesson_id: 'T04.L08' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L06' },
-    { term: 'ROW', source_lesson_id: 'T09.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
+    { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
   ],
 };
 

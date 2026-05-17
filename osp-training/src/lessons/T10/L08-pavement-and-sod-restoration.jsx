@@ -58,9 +58,9 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'open-cut', source_lesson_id: 'T06.L01' },
+    { term: 'open-cut trench', source_lesson_id: 'T06.L01' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
-    { term: 'ROW', source_lesson_id: 'T09.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L06' },
     { term: 'bedding sand', source_lesson_id: 'T10.L03' },
     { term: 'compaction', source_lesson_id: 'T10.L03' },
@@ -189,6 +189,11 @@ export default function T10L08_PavementSodRestoration() {
                 id: 'T10-L08-fc-ghost-trench',
                 front: 'What is a ghost trench and what causes it?',
                 back: 'A visible road-surface depression appearing 3–12 months after construction when backfill settles. Caused by insufficient compaction — not filling in lifts, not achieving required density per lift, or using expansive native clay. A warranty callback for the contractor.',
+              },
+              {
+                id: 'T10-L08-fc-sod-restoration',
+                front: 'What does sod restoration require and what is the survivability inspection?',
+                back: 'Replacement of grass cover and topsoil in non-paved disturbed areas. Process: remove and stockpile topsoil during excavation, return topsoil as the top backfill layer, install sod or seed and mulch, maintain irrigation until vegetation establishes. Most permits require a 30-day survivability inspection by the AHJ — the vegetation must still be alive and healthy at 30 days.',
               },
             ]}
           />
