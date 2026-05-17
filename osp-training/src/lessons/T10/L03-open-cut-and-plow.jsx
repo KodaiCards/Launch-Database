@@ -206,8 +206,12 @@ export default function T10L03_OpenCutAndPlow() {
         <h3 className="mt-4 font-semibold">OSHA shoring — the rule crews most often ignore</h3>
         <p>
           OSHA 29 CFR §1926 Subpart P requires protective systems (shoring, shielding, or
-          sloping) for any excavation deeper than 5 feet in any soil type except solid rock.
-          At 4 feet, it's advisory. At 5 feet and 1 inch, it's the law.
+          sloping) for any excavation 5 feet or deeper in any soil type except solid rock.
+          Below 5 feet, protective systems are mandatory. Below that threshold, a protective
+          system is not required by Subpart P — but §1926.651 still requires a competent
+          person to inspect the excavation daily, after rain or other hazard-increasing events,
+          and to monitor and control water accumulation. "Under 5 feet" is not "anything goes"
+          — the inspection and water-management duties apply at every depth.
         </p>
         <p className="mt-2">
           The soil classification system under Subpart P: Type A (hard, cohesive — e.g.,

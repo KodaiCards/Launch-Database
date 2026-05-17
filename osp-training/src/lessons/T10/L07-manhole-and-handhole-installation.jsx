@@ -121,9 +121,12 @@ export default function T10L07_ManholeHandholeInstallation() {
           </tbody>
         </table>
         <p className="mt-2 text-sm text-slate-400">
-          Safety note: any structure where a crew member's head enters the air space (whether or not
-          their feet touch the bottom) is a confined space entry per OSHA 1910.146. See T18.L05 for
-          confined space entry procedures — required before entering any manhole or deep vault.
+          Safety note: manholes and deep vaults frequently qualify as permit-required confined spaces
+          under OSHA 1910.146(b) — three criteria all apply: (1) large enough for a worker to bodily
+          enter, (2) limited means of entry or egress, and (3) not designed for continuous occupancy.
+          Shallow handholes (typically accessed by hand only) generally do not satisfy all three
+          criteria and are not confined spaces. When in doubt, apply the 1910.146(b) test before
+          sending a crew member in. See T18.L05 for the full confined-space entry protocol.
         </p>
 
         {/* Flashcards */}
@@ -150,7 +153,7 @@ export default function T10L07_ManholeHandholeInstallation() {
               {
                 id: 'T10-L07-fc-traffic-loading',
                 front: 'What is the difference between H-20 and H-25 traffic loading ratings?',
-                back: 'H-20 (HS-20): 16,000 lb single axle load — for driveways, parking lots, and private access roads. H-25 (HS-25): 20,000 lb single axle load — required for any structure in a public roadway or under a traffic lane.',
+                back: 'H-20 (HS-20): 16,000 lb per rear-tandem axle; 40,000 lb GVW (8,000 lb steer + 32,000 lb rear tandem) — for driveways, parking lots, and private access roads. H-25 (HS-25): 20,000 lb per rear-tandem axle — required for any structure in a public roadway or under a traffic lane.',
               },
             ]}
           />
@@ -246,7 +249,7 @@ export default function T10L07_ManholeHandholeInstallation() {
           above it. The two standard ratings:
         </p>
         <ul className="list-disc list-inside mt-2 space-y-1 text-slate-300">
-          <li><strong>H-20 (HS-20):</strong> 16,000 lb per single axle, 32,000 lb total vehicle weight per the original AASHTO classification. Acceptable for private driveways, parking lots, and private access roads where heavy delivery trucks don't commonly drive.</li>
+          <li><strong>H-20 (HS-20):</strong> 16,000 lb per rear-tandem axle (8,000 lb steer + 32,000 lb rear tandem = 40,000 lb GVW per the AASHTO HS-20 classification). Acceptable for private driveways, parking lots, and private access roads where heavy delivery trucks don't commonly drive.</li>
           <li><strong>H-25 (HS-25):</strong> 20,000 lb per single axle. Required for any structure in or under a public roadway where utility trucks, delivery vehicles, or transit buses travel. Most state DOT permits specify H-25 for any work within the paved ROW.</li>
         </ul>
         <p className="mt-2 p-3 bg-amber-900/30 border border-amber-500/40 rounded-lg text-amber-200 text-sm">
@@ -316,12 +319,14 @@ export default function T10L07_ManholeHandholeInstallation() {
 
         <h3 className="mt-4 font-semibold">Manhole entry as a confined space operation</h3>
         <p>
-          Any structure where a crew member enters headfirst — even if they don't descend
-          their full body — triggers OSHA 1910.146 confined space requirements. For
-          manholes and deep vaults this means: atmospheric testing before entry (oxygen,
-          combustibles, H₂S), attendant stationed at the surface, retrieval equipment on
-          site, and entry permit for permit-required confined spaces. See T18.L05 for the
-          full confined-space entry protocol.
+          Manholes and most deep vaults satisfy all three criteria of OSHA 1910.146(b) for
+          a confined space: (1) large enough for a worker to bodily enter and perform work,
+          (2) limited means of entry or egress (ladder access through a ring opening), and
+          (3) not designed for continuous employee occupancy. When all three criteria are met
+          and atmospheric hazards are present or possible, the structure is a permit-required
+          confined space. This means: atmospheric testing before entry (oxygen, combustibles,
+          H₂S), attendant stationed at the surface, retrieval equipment on site, and a
+          signed entry permit. See T18.L05 for the full confined-space entry protocol.
         </p>
         <p className="mt-2">
           The specific risks in underground telecom structures: methane (from organic
