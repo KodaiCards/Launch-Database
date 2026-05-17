@@ -120,3 +120,16 @@ Full T08 retroactive arc:
 Total Sonnet burn ~1.6M. Bugs caught/fixed: 2 HIGH + 3 MED + 8 LOW. Vite clean throughout. Validator 12/12 PASS post-close.
 
 **T05 Polish queue add:** RT-ζ flagged Rule 261 citation-registry entry uses T05's "Grades B/C/N triggers" framing but T08 teaches "strength of line supports" — T08 is more accurate per NESC. Haiku ground-truth tiebreaker needed during next T05 polish wave; registry update accordingly.
+
+## T06 CLOSED ✅ 2026-05-17 overnight
+
+Final SHA: `3ccdb4b` (RT-ζ GREEN).
+
+Arc: R-1 + R-2 + R-3 + Haiku tiebreaker (~400K) → Fix Wave A `7488214` (15 canonical: 4 HIGH + 8 MED + 3 LOW) → 2 RT pair (HIGH regression L11 + CGA v19 sweep incomplete) → Polish-A `81d5e8e` → 2 RT pair (3 new LOWs RT-δ) → Polish-B `1a9a956` (Q6 hedge + H-20/HS-20 + 12 DAG pointers) → 2 RT pair GREEN/GREEN.
+
+Burn ~1.4M Sonnet. Bugs caught/fixed: 4 HIGH + 8 MED + 9 LOW. Global broken-DAG count 152→139 (T06-internal 0).
+
+**Outstanding queue:**
+- T07 R-3 (R-2 found 2 NEW HIGH — saturation rule continues)
+- T03 R-3 (R-2 found 5 new MEDs — saturation rule continues)
+- After T07/T03 close: cross-topic curriculum-wide Fix Wave (47 missing LOs + 139 remaining broken DAG pointers + the 5 cross-topic DAG bugs RT-δ neighborhood scan flagged)
