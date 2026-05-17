@@ -307,7 +307,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'On a single new rod with no parallel GES paths, the clamp-on measures the series impedance of the measurement circuit — not the electrode resistance alone. Only the fall-of-potential method per IEEE 81-2012 §9.3 gives a valid single-rod acceptance measurement. (Source: IEEE 81-2012 §9.4. T14.L06.)',
+                'On a single new rod with no parallel GES paths, the clamp-on measures the series impedance of the measurement circuit — not the electrode resistance alone. Only the fall-of-potential method per IEEE 81-2012 §9.3 gives a valid single-rod acceptance measurement. (Source: IEEE 81-2012 §9.3. T14.L06.)',
             },
             {
               id: 'T14L12Q18',
