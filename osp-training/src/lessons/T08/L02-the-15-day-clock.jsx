@@ -1,7 +1,7 @@
 // T08.L02 — The 15-Day Clock
 // Working lesson: FCC 15-day deadline, self-help remedy, and escalation options
 // Source: M03 §3.7 partial (expanded from FCC 18-111 + 47 CFR §1.1411)
-// FCC authority: 47 CFR §1.1411, §1.1413, §1.1414; FCC 18-111 (2018)
+// FCC authority: 47 CFR §1.1411, §1.1411(i) (self-help cost recovery), §1.1404 (complaint proceedings); FCC 18-111 (2018)
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -252,8 +252,7 @@ export default function T08L02_The15DayClock() {
           </table>
         </div>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: 47 CFR §1.1411; FCC 18-111 (2018); 47 CFR §1.1413 [confirm section] (cost recovery rules for
-          self-help make-ready).
+          Source: 47 CFR §1.1411(i) (cost recovery rules for self-help make-ready); FCC 18-111 (2018).
         </p>
 
         <h3 className="mt-5 font-semibold">Tolling — when the clock pauses</h3>
@@ -399,7 +398,7 @@ export default function T08L02_The15DayClock() {
           </table>
         </div>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: 47 CFR §1.1411; 47 CFR §1.1413 [confirm section]; RUS Bulletin 1751F-630 §8 (coordination
+          Source: 47 CFR §1.1411; 47 CFR §1.1411(i) (cost recovery for self-help make-ready); RUS Bulletin 1751F-630 §8 (coordination
           requirements for RUS-funded aerial projects). Timelines are typical ranges; actual
           schedules vary by project size and pole owner responsiveness.
         </p>
@@ -530,7 +529,7 @@ export default function T08L02_The15DayClock() {
             answerIndex: 1,
             explanation:
               'Legitimate, documented reasons outside the pole owner\'s control — including storm restoration — can toll the 15-day clock. The key requirements are: (1) the reason must be specific and documented, (2) it must be communicated to the applicant in writing, and (3) it must include a specific timeline. "We\'re busy" is not sufficient; "storm crews tied up through Day 19" with documentation is.',
-            citation: '47 CFR §1.1411; 47 CFR §1.1413 [confirm section].',
+            citation: '47 CFR §1.1411; 47 CFR §1.1411(i) (cost recovery for self-help).',
           },
           {
             id: 'T08-L02-Q4',
@@ -546,7 +545,7 @@ export default function T08L02_The15DayClock() {
             answerIndex: 1,
             explanation:
               'The self-help remedy requires: (1) 3-business-day written advance notice to the pole owner and affected parties, (2) use of FCC-approved and qualified contractors, (3) complete documentation of all work and costs, and (4) billing the pole owner at actual cost plus reasonable overhead only. Filing an FCC complaint is a separate parallel option, not a substitute for self-help.',
-            citation: '47 CFR §1.1411; 47 CFR §1.1413 [confirm section].',
+            citation: '47 CFR §1.1411; 47 CFR §1.1411(i) (cost recovery for self-help).',
           },
           {
             id: 'T08-L02-Q5',

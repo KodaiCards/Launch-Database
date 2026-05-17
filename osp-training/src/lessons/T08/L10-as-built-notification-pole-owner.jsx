@@ -1,6 +1,6 @@
 // Net-new — T08.L10 As-Built Notification Back to Pole Owner
 // Author B — as-built documentation requirements, pole-loading update, NESC certification
-// Sources: net-new; NESC C2-2023 §23 [confirm edition]; RUS 1751F-630 §8; field practice
+// Sources: net-new; NESC C2-2023 Rule 232 [confirm edition]; RUS 1751F-630 §8; field practice
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -37,7 +37,7 @@ export const vocabulary_introduced = {
   'as-built notice': 'The formal post-installation notification the fiber applicant sends to the pole owner confirming that the cable has been installed and providing documentation of what was actually built vs. what was originally designed. An as-built notice is not just a courtesy — many pole owners require it by tariff within a defined timeframe (typically 30–90 days of cable installation). The notice triggers the pole owner to update their pole records, which affects how much additional capacity they can offer to future applicants. At minimum, the as-built notice should include: the project name, pole IDs, installation date, and a statement that as-built documentation (drawing + loading calc + PE certification if required) is attached or forthcoming.',
   'as-built drawing': 'A design drawing that reflects what was actually built in the field, as distinct from the original design drawing (which shows what was planned). As-built drawings for pole attachments show: the actual attachment height (measured, not designed), the actual cable position and sag, the type and size of cable installed, the hardware used (bracket type, bonding clamp model), and any deviations from the original design with a brief explanation. As-built drawings are entered into the pole owner\'s pole management database and become the record that future applicants are evaluated against when they want to attach to the same pole. An inaccurate as-built is the most damaging type of error: it misleads future applicants about available pole space and can cause a structural design failure on the next attachment.',
   'pole-loading update': 'The revised structural calculation showing the total load on the pole after the new fiber cable is installed, including all existing attachments plus the new cable. Pole-loading updates are required to verify that the pole still meets NESC design standards (§24 strength requirements; §25 loading district criteria — see T05) with the new attachment included. If the new attachment causes any pole to move from one loading category to another, or causes the maximum utilization ratio to approach 100%, the as-built notice must flag this and the pole owner may place a restriction on future attachments to that pole. Under RUS 1751F-630 §8, pole-loading calculations for RUS-funded attachments must demonstrate compliance with NESC loading district requirements applicable to the project geography. For Macon, GA (Light loading district per NESC), see T05 for loading district specifics.',
-  'NESC compliance certification': 'A formal written statement, typically from a Licensed Professional Engineer (PE), certifying that the as-built installation complies with all applicable NESC (National Electrical Safety Code, ANSI C2) requirements for: attachment height above ground (§23 clearance tables), mechanical strength of pole and attachments (§24), and loading district design loads (§25). Whether a PE certification is required depends on: (1) the pole owner\'s tariff (some require a PE cert for all attachments, others only for complex ones), (2) state law (some states require a PE seal on any telecommunications infrastructure structural calculation), and (3) the RUS borrower requirement (RUS projects typically require PE-signed pole loading calculations, per RUS 1751F-630 §8). If a PE certification is required, it must come from a PE licensed in the state where the poles are located.',
+  'NESC compliance certification': 'A formal written statement, typically from a Licensed Professional Engineer (PE), certifying that the as-built installation complies with all applicable NESC (National Electrical Safety Code, ANSI C2) requirements for: attachment height above ground (Rule 232 — vertical clearance tables), mechanical strength of pole and attachments (Rule 250/261), and loading district design loads (Rule 250 loading criteria). Whether a PE certification is required depends on: (1) the pole owner\'s tariff (some require a PE cert for all attachments, others only for complex ones), (2) state law (some states require a PE seal on any telecommunications infrastructure structural calculation), and (3) the RUS borrower requirement (RUS projects typically require PE-signed pole loading calculations, per RUS 1751F-630 §8). If a PE certification is required, it must come from a PE licensed in the state where the poles are located.',
 };
 
 export const vocabulary_assumed = [
@@ -105,7 +105,7 @@ export default function T08L10_AsBuiltNotificationPoleOwner() {
             {
               id: 'T08-L10-fc-pe-cert',
               front: 'What is an NESC compliance certification, and when is a PE signature required?',
-              back: 'A formal statement certifying the as-built installation complies with all applicable NESC requirements for attachment height (§23), mechanical strength (§24), and loading district design loads (§25). A PE certification is required when: the pole owner\'s tariff requires it, state law requires it, or the project is RUS-funded (RUS 1751F-630 §8 typically requires PE-signed pole loading calculations). The PE must be licensed in the state where the poles are located.',
+              back: 'A formal statement certifying the as-built installation complies with all applicable NESC requirements for attachment height above ground (Rule 232 — vertical clearance tables), mechanical strength (Rule 250/261), and loading district design loads (Rule 250 criteria). A PE certification is required when: the pole owner\'s tariff requires it, state law requires it, or the project is RUS-funded (RUS 1751F-630 §8 typically requires PE-signed pole loading calculations). The PE must be licensed in the state where the poles are located.',
             },
           ]}
         />
@@ -162,9 +162,9 @@ export default function T08L10_AsBuiltNotificationPoleOwner() {
             <p className="font-semibold text-slate-100">Component 3: NESC Compliance Certification</p>
             <p className="text-sm text-slate-300/90 mt-1">
               A signed statement (sometimes a PE-sealed letter) certifying that the as-built
-              installation complies with NESC C2 [confirm edition] §23 (vertical clearances),
-              §24 (mechanical strength), and §25 (loading district requirements applicable to
-              this geography). For RUS-funded projects, this certification is typically required
+              installation complies with NESC C2 [confirm edition] Rule 232 (vertical clearances),
+              Rule 250/261 (mechanical strength), and Rule 250 loading district requirements applicable to
+              this geography. For RUS-funded projects, this certification is typically required
               by RUS 1751F-630 §8 and must be prepared by a PE licensed in the project state.
             </p>
             <p className="text-sm text-slate-400 mt-1">

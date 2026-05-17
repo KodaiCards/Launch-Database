@@ -179,6 +179,11 @@ export default function T08L03_SimpleVsComplexAttachment() {
         </div>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: FCC 18-111 (2018); 47 CFR §1.1411; RUS Bulletin 1751F-630 §8.
+          Note: "work within power space" means any work at or above the lowest power conductor,
+          within the communication-worker safety zone defined by NESC Rule 235 — a minimum
+          40-inch vertical separation that telecom workers must maintain below energized power
+          conductors. Any pole configuration requiring work inside that 40-inch zone requires
+          the power utility's qualified crew, regardless of OTMR eligibility.
         </p>
 
         <h3 className="mt-5 font-semibold">Cost causation: who pays for complex make-ready?</h3>
@@ -192,7 +197,7 @@ export default function T08L03_SimpleVsComplexAttachment() {
           <div className="p-3 border border-green-400/30 bg-green-400/5 rounded-lg text-sm">
             <p className="font-semibold text-green-300 mb-1">Scenario A — Existing cable is out of compliance → Pole owner or existing attacher pays</p>
             <p className="text-slate-300/90">
-              The cable TV coax is hanging at 16 ft. NESC §232 requires a minimum 15.5 ft
+              The cable TV coax is hanging at 16 ft. NESC Rule 232 requires a minimum 15.5 ft
               clearance over the road in this district, so it's technically compliant —
               but the pole owner's own standard says 17 ft minimum for this pole class.
               The cable has to move regardless of whether the fiber company shows up.
@@ -283,7 +288,7 @@ export default function T08L03_SimpleVsComplexAttachment() {
           inflate costs — the applicant can dispute the determination.
         </p>
         <p className="mt-2 text-sm">
-          Disputes go through a two-step process under 47 CFR §1.1414:
+          Disputes go through a two-step process under 47 CFR §1.1404 (Pole attachment complaint proceedings):
         </p>
         <ol className="list-decimal pl-5 space-y-2 mt-2 text-sm">
           <li>
@@ -424,7 +429,7 @@ export default function T08L03_SimpleVsComplexAttachment() {
             answerIndex: 2,
             explanation:
               'The cost-causation rule: the cable TV coax is already NESC-compliant and would not need to move at all without the fiber applicant\'s project. The fiber applicant is the sole cause of the need for the 4-inch raise. Therefore the fiber applicant pays for the transfer of the coax.',
-            citation: 'FCC 18-111 (2018); 47 CFR §1.1413 [confirm section].',
+            citation: 'FCC 18-111 (2018); 47 CFR §1.1411(i).',
           },
           {
             id: 'T08-L03-Q5',

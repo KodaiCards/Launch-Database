@@ -262,7 +262,7 @@ export default function T08L01_OTMRvsMultiParty() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Electric utility (power company)</td>
                 <td className="px-3 py-2 text-red-400 font-medium">No — multi-party required</td>
-                <td className="px-3 py-2">Energized power conductors cannot be moved by telecom contractors regardless of OTMR rules; NESC §23 + utility tariff governs</td>
+                <td className="px-3 py-2">Energized power conductors cannot be moved by telecom contractors regardless of OTMR rules; NESC Rule 235 (communication-worker safety zone) + utility tariff governs</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Pole owner (same entity owns the pole and an attachment)</td>
@@ -342,7 +342,7 @@ export default function T08L01_OTMRvsMultiParty() {
           specifically for <em>telecom attachment applicants</em> adding new fiber to poles
           owned by utilities. Power companies generally own their own poles, so they don't
           need attachment rights — they're the pole owner. And energized power conductors are
-          subject to NESC §23 and §24 safety rules that require qualified utility linemen,
+          subject to NESC Rule 235 (communication-worker safety zone) and structural strength rules that require qualified utility linemen,
           not third-party telecom contractors, for any adjustment.
         </p>
         <p className="mt-2">
@@ -469,13 +469,13 @@ export default function T08L01_OTMRvsMultiParty() {
               'Which federal rule established the One-Touch Make-Ready (OTMR) framework for pole attachments?',
             choices: [
               'RUS Bulletin 1751F-630 §8',
-              'NESC C2-2023 §23',
+              'NESC C2-2023 Rule 235',
               'FCC Order 18-111, codified at 47 CFR §1.1411',
               '47 CFR Part 68 — Terminal Equipment Registration',
             ],
             answerIndex: 2,
             explanation:
-              'FCC Order 18-111 (issued 2018, "Accelerating Wireline Broadband Deployment") is the legal source of OTMR. The regulatory text is codified at 47 CFR §1.1411. RUS 1751F-630 §8 addresses pole coordination for RUS-funded projects but did not create OTMR. NESC §23 is a clearance standard, not a make-ready access rule.',
+              'FCC Order 18-111 (issued 2018, "Accelerating Wireline Broadband Deployment") is the legal source of OTMR. The regulatory text is codified at 47 CFR §1.1411. RUS 1751F-630 §8 addresses pole coordination for RUS-funded projects but did not create OTMR. NESC Rule 235 governs the communication-worker safety zone near power conductors — a clearance/safety standard, not a make-ready access rule.',
             citation: 'FCC 18-111 (2018); 47 CFR §1.1411.',
           },
           {

@@ -159,6 +159,14 @@ export default function T08L07_ReadingAMakeReadyEstimate() {
               work requires arc flash PPE, insulated bucket trucks, and certified journeyman linemen.
               This line item is non-negotiable (set by utility tariff) but the scope of work is.
             </p>
+            <p className="text-sm text-slate-300/70 mt-1">
+              Safety context: NESC Rule 235 establishes the communication-worker safety zone — a minimum
+              40-inch vertical separation that telecom workers must maintain below the lowest energized
+              power conductor. Any make-ready work that would bring telecom crew within that zone
+              automatically requires the power utility's qualified crew. If the MRE includes a
+              sub-contractor power-crew charge, verify the pole audit confirms the proposed attachment
+              height would have required work within the Rule 235 safety zone.
+            </p>
           </div>
 
           <div className="p-4 border border-white/10 rounded-lg bg-white/3">

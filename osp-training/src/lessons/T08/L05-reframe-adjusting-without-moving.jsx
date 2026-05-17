@@ -251,7 +251,7 @@ export default function T08L05_ReframeAdjustingWithoutMoving() {
             <strong>Power attachment reframe:</strong> Even if a power company's attachment
             needs only a 2-inch reframe, the power utility's crew must do it. OTMR contractors
             have zero authority to adjust energized conductors regardless of how minor the
-            adjustment appears. This is a safety rule (NESC §23) and an operational rule
+            adjustment appears. This is a safety rule (NESC Rule 235 — communication-worker safety zone) and an operational rule
             (utility tariff) — both are enforced.
           </p>
         </div>
@@ -338,8 +338,8 @@ export default function T08L05_ReframeAdjustingWithoutMoving() {
             ],
             answerIndex: 2,
             explanation:
-              'Power utility attachments — regardless of how small the adjustment — cannot be touched by OTMR telecom contractors. Power conductors are energized or de-energized by qualified utility linemen only. NESC §23 safety rules and utility tariff obligations both prohibit telecom contractors from adjusting power utility attachments. This rule applies to reframes as much as transfers.',
-            citation: 'NESC C2-2023 §23 [confirm edition]; FCC 18-111 (2018).',
+              'Power utility attachments — regardless of how small the adjustment — cannot be touched by OTMR telecom contractors. Power conductors are energized or de-energized by qualified utility linemen only. NESC Rule 235 (communication-worker safety zone) and utility tariff obligations both prohibit telecom contractors from adjusting power utility attachments. This rule applies to reframes as much as transfers.',
+            citation: 'NESC C2-2023 Rule 235 [confirm edition]; FCC 18-111 (2018).',
           },
           {
             id: 'T08-L05-Q4',

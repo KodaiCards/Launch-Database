@@ -1,7 +1,7 @@
 // T08.L04 — Transfer — Moving Someone Else's Wire
 // Working lesson: transfer mechanics, height compliance, cost allocation
 // Source: net-new (no prior module equivalent)
-// Regulatory anchors: FCC 18-111; 47 CFR §1.1411; NESC C2-2023 §232; RUS 1751F-630 §8
+// Regulatory anchors: FCC 18-111; 47 CFR §1.1411; NESC C2-2023 Rule 232; RUS 1751F-630 §8
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -36,7 +36,7 @@ export const meta = {
     {
       term: 'height compliance',
       definition:
-        'The condition in which an existing attachment on a utility pole meets the minimum vertical clearance requirements established by NESC C2-2023 §232 (clearance above ground and road surfaces) and the pole owner\'s own attachment standards. An attachment that is below the NESC minimum is out of height compliance, even if it was properly installed years ago when standards were less stringent.',
+        'The condition in which an existing attachment on a utility pole meets the minimum vertical clearance requirements established by NESC C2-2023 Rule 232 (clearance above ground and road surfaces) and the pole owner\'s own attachment standards. An attachment that is below the NESC minimum is out of height compliance, even if it was properly installed years ago when standards were less stringent.',
     },
     {
       term: 'make-ready cost causation',
@@ -102,7 +102,7 @@ export default function T08L04_TransferMovingWire() {
             {
               id: 'T08-L04-fc-heightcompliance',
               front: 'What is "height compliance" for a pole attachment?',
-              back: 'The condition in which an existing attachment on a utility pole meets the minimum vertical clearance requirements established by NESC C2-2023 §232 (clearance above ground and road surfaces) and the pole owner\'s own attachment standards. An attachment that is below the NESC minimum is out of height compliance, even if it was properly installed years ago when standards were less stringent.',
+              back: 'The condition in which an existing attachment on a utility pole meets the minimum vertical clearance requirements established by NESC C2-2023 Rule 232 (clearance above ground and road surfaces) and the pole owner\'s own attachment standards. An attachment that is below the NESC minimum is out of height compliance, even if it was properly installed years ago when standards were less stringent.',
             },
             {
               id: 'T08-L04-fc-causation',
@@ -173,8 +173,10 @@ export default function T08L04_TransferMovingWire() {
             <p className="font-semibold text-green-300 mb-2">Case 1: Cable is out of compliance — Existing cable owner or pole owner pays</p>
             <p className="text-slate-300/90">
               Cable TV coax is hanging at 14 ft 8 in. The NESC minimum for this type of
-              road crossing in a Light loading district is 15 ft 6 in (NESC C2-2023 §232,
-              [confirm edition]). The cable is already 10 inches below the minimum —
+              road crossing in a Light loading district is 15 ft 6 in (NESC C2-2023 Rule 232,
+              [confirm edition] — for roads accessible to typical-height vehicles; lower clearances
+              apply over roads with posted vehicle restrictions per the applicable Rule 232 table).
+              The cable is already 10 inches below the minimum —
               a violation that exists regardless of the fiber project.
             </p>
             <p className="text-slate-300/90 mt-2">
@@ -219,7 +221,7 @@ export default function T08L04_TransferMovingWire() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book (FCC 18-111, NESC §232 [confirm edition]):</strong> Transfer is
+            <strong>Book (FCC 18-111, NESC Rule 232 [confirm edition]):</strong> Transfer is
             defined as moving an existing attachment to a new vertical position. The new
             position must meet all NESC clearance requirements. Cost allocation follows
             the causation rule.
@@ -336,7 +338,7 @@ export default function T08L04_TransferMovingWire() {
             answerIndex: 1,
             explanation:
               'Cost causation: the cable TV coax at 14 ft 4 in is already 1 ft 2 in below the NESC minimum of 15 ft 6 in. This violation existed before the fiber project. The fiber applicant did not create the problem. The cable TV company (as the non-compliant cable owner) or the pole owner is responsible for the cost of correcting the NESC violation.',
-            citation: 'FCC 18-111 (2018); NESC C2-2023 §232 [confirm edition].',
+            citation: 'FCC 18-111 (2018); NESC C2-2023 Rule 232 [confirm edition].',
           },
           {
             id: 'T08-L04-Q3',

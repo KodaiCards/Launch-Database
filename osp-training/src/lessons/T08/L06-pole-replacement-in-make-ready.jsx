@@ -251,8 +251,67 @@ export default function T08L06_PoleReplacementInMakeReady() {
           loading methodology aligned with NESC that is widely used for RUS-funded projects.
           For make-ready calculations on RUS-financed aerial builds, the RUS loading method
           provides a standard approach that utilities and co-ops recognize.{' '}
-          <em>(Source: RUS 1724E-150, §[confirm section]; NESC C2-2023 §24, §25 [confirm edition].)
+          <em>(Source: RUS 1724E-150, §[confirm section]; NESC C2-2023 Rule 250/261 [confirm edition].)
           </em>
+        </p>
+
+        <h3 className="mt-5 font-semibold">Betterment rule — FCC 23-109 (December 2023)</h3>
+        <p>
+          A persistent problem for fiber applicants: pole owners sometimes demanded that the
+          attacher pay 100% of a pole replacement cost even when the existing pole was already
+          near the end of its service life or was flagged for replacement anyway. The attacher
+          ends up funding a brand-new pole that benefits every existing attacher — a{' '}
+          <strong>betterment</strong> to the pole owner at the attacher's expense.
+        </p>
+        <p className="mt-2 text-sm">
+          FCC Order 23-109 (December 2023) clarified the "necessitated solely" standard: a
+          new attacher is responsible for pole replacement costs ONLY when the replacement is
+          necessitated solely by their attachment. If the replacement would have been required
+          anyway for another reason, the attacher's cost responsibility is limited to the
+          incremental cost their attachment caused (e.g., the added cost of a taller or
+          stronger pole than what the base replacement would have required).
+        </p>
+        <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">FCC 23-109 — Exemptions from "Necessitated Solely" (attacher does not bear 100% of cost)</p>
+          <ol className="list-decimal pl-5 space-y-2 text-slate-300/90">
+            <li>
+              <strong>Pole already on replacement schedule:</strong> If the utility had the
+              pole on its internal replacement schedule — regardless of when that replacement
+              was scheduled — the new attacher is not the sole cause of the replacement.
+            </li>
+            <li>
+              <strong>Road expansion, property development, or similar government-imposed requirement:</strong>{' '}
+              If the replacement is required because of a road widening, utility relocation
+              order, or similar external mandate, the attacher did not necessitate it.
+            </li>
+            <li>
+              <strong>Storm hardening:</strong> If the replacement is required as part of a
+              government-mandated or utility-wide storm hardening program, it falls outside
+              the "necessitated solely" category.
+            </li>
+            <li>
+              <strong>Current pole fails NESC or applicable engineering standards independently:</strong>{' '}
+              If the pole would need replacement because it fails NESC structural requirements
+              independent of the new load, the replacement is not solely the attacher's fault.
+            </li>
+            <li>
+              <strong>Utility's change to its own internal construction standards:</strong>{' '}
+              If the utility updated its own internal standards (unrelated to the new attachment)
+              and that upgrade triggers the replacement, the attacher bears only incremental cost.
+            </li>
+          </ol>
+          <p className="mt-2 text-slate-300/70 text-xs">
+            Source: FCC 23-109 (December 2023) — Fourth Report and Order on Pole Attachment
+            Rules. Note: utilities may not evade cost-causation obligations by failing to "red tag"
+            a pole that has known safety violations or is out of compliance with applicable standards.
+          </p>
+        </div>
+        <p className="mt-2 text-sm">
+          <strong>Practical implication:</strong> Before accepting a pole replacement cost as
+          "100% on the applicant," check: (1) Is this pole on the utility's replacement list?
+          (2) Is there a storm hardening or road project in the area? (3) Did the pole already
+          fail structural inspection independently of your loading? Any YES answer activates the
+          betterment argument — document it in writing to the pole owner and reference FCC 23-109.
         </p>
       </section>
 
@@ -351,7 +410,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             answerIndex: 2,
             explanation:
               'Cost causation: the fiber applicant contributed 6 load percentage points out of 94 total. 6 / 94 = 0.0638, or approximately 6.4%. The existing attachers contributed 88 out of 94, or approximately 93.6%. The fiber applicant does not pay 100% (they only caused 6.4% of the problem), nor do they pay 0% (they did contribute to exceeding the threshold). The proportional split is the correct FCC-framework approach.',
-            citation: 'FCC 18-111 (2018); 47 CFR §1.1413 [confirm section].',
+            citation: 'FCC 18-111 (2018); 47 CFR §1.1411(i) (cost-causation framework).',
           },
           {
             id: 'T08-L06-Q3',
@@ -393,7 +452,7 @@ export default function T08L06_PoleReplacementInMakeReady() {
             answer: 'load',
             answerDisplay: 'load',
             explanation:
-              'The cost-causation framework divides pole replacement costs based on each party\'s proportional load contribution — the percentage of the pole\'s total rated capacity that each attacher\'s cables, hardware, and spans consume. A party whose attachments use 80% of the capacity pays 80% of the replacement cost; a new attacher whose cable contributes 12% pays 12%. This is the FCC\'s framework for equitable cost allocation under 47 CFR §1.1413 [confirm section].',
+              'The cost-causation framework divides pole replacement costs based on each party\'s proportional load contribution — the percentage of the pole\'s total rated capacity that each attacher\'s cables, hardware, and spans consume. A party whose attachments use 80% of the capacity pays 80% of the replacement cost; a new attacher whose cable contributes 12% pays 12%. This is the FCC\'s framework for equitable cost allocation under 47 CFR §1.1411(i).',
           },
         ]}
       />
