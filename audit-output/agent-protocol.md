@@ -123,3 +123,67 @@ Your first line must paste back the write-path allowlist verbatim. Example:
 > "Write-path constraints acknowledged: only `audit-output/<wave>/<agent>.md` written."
 
 Drift-prevention.
+
+## 14. Registry usage — save tokens, avoid redundant lookups
+
+Three infrastructure tools now exist. Use them BEFORE doing manual checks.
+
+### 14a. Citation lookup → `audit-output/citation-registry.md`
+
+Before looking up any primary source (47 CFR section, NESC rule, OSHA regulation, ITU-T standard, ANSI standard, chemical safety value):
+
+1. Open `audit-output/citation-registry.md`
+2. Search for the citation
+3. If found AND `Last Verified` date is within 90 days of today: **use the entry, skip the lookup**
+4. If absent or stale: do the primary-source lookup, then **append** your verified entry with your commit SHA
+
+**Format for new entries:**
+```
+| 47 CFR §X.YYYY | "Verbatim title from eCFR" | https://ecfr.gov/current/... | YYYY-MM-DD | <your-commit-sha> | Notes |
+```
+
+Entries marked "CONFLICT RESOLVED" or "CASCADE BUG FIXED" document cases where multiple prior agents got
+the value wrong. These entries are the ground truth — do not re-open without a primary-source citation
+that explicitly contradicts the entry.
+
+### 14b. DAG pointer checks → `audit-output/dag-registry.json`
+
+Instead of manually reading JSX files to check `vocabulary_assumed` pointer correctness:
+
+1. Open `audit-output/dag-registry.json`
+2. Check `vocabulary_assumed_pointers` array — filter for `"verified": false` entries in the lesson you're auditing
+3. Check `duplicate_introductions` for terms that appear in multiple lessons (these cause confusion about which lesson "owns" the term)
+4. Check `lessons_with_no_vocabulary_assumed` for lessons that should have assumed vocabulary but declare none
+
+**Regenerate the registry** after any lesson edits touching `vocabulary_introduced` or `vocabulary_assumed`:
+```bash
+node osp-training/scripts/build-dag-registry.js
+```
+
+### 14c. Schema + Flashcard compliance → `validate-lesson-schema.js`
+
+Instead of manually checking whether lessons have `key_terms`, `<Quiz>`, and `<Flashcard>` components:
+
+```bash
+# Check specific topic
+node osp-training/scripts/validate-lesson-schema.js T08
+
+# Check all topics
+node osp-training/scripts/validate-lesson-schema.js
+```
+
+Output format:
+- `PASS` = lesson compliant
+- `FAIL` = actionable gap (e.g., missing `learning_objectives`, no `<Quiz>`, missing `vocabulary_assumed`)
+- `WARN` = likely gap worth checking manually (e.g., key_terms count > Flashcard card count)
+
+**Run this instead of manually reading lesson files to count Flashcard cards.** Saves per-topic audit time.
+
+### 14d. New citations go into the registry
+
+When your audit or RT pass verifies a primary source that isn't in the registry:
+1. Add it to `audit-output/citation-registry.md` in the appropriate section
+2. Include your commit SHA in the `Verified By` column
+3. Commit the updated registry file as part of your wave's commit sequence
+
+This ensures future agents inherit your verification instead of re-doing the lookup.
