@@ -29,11 +29,10 @@ export const meta = {
     'staking packet',
   ],
   vocabulary_assumed: [
-    { term: 'RUS program context', source_lesson_id: 'T04.L01' },
-    { term: 'make-ready data', source_lesson_id: 'T07.L01' },
-    { term: 'pole ID sequence', source_lesson_id: 'T04.L02' },
+    { term: 'site walk', source_lesson_id: 'T04.L01' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
     { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },
+    { term: 'field verification', source_lesson_id: 'T07.L01' },
     { term: 'stationing', source_lesson_id: 'T07.L02' },
     { term: 'offset', source_lesson_id: 'T07.L02' },
     { term: 'height delta', source_lesson_id: 'T07.L04' },

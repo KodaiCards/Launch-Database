@@ -23,12 +23,12 @@ export const meta = {
   estimated_minutes: 25,
   vocabulary_introduced: ['pole tag', 'SCID', 'GPS coordinate', 'attachment photo', 'GNSS'],
   vocabulary_assumed: [
-    { term: 'pole numbering from survey', source_lesson_id: 'T04.L02' },
-    { term: 'attachment height', source_lesson_id: 'T07.L01' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
-    { term: 'staking notes', source_lesson_id: 'T07.L01' },
+    { term: 'stake', source_lesson_id: 'T07.L01' },
     { term: 'field verification', source_lesson_id: 'T07.L01' },
+    { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },
     { term: 'design intent mark', source_lesson_id: 'T07.L02' },
+    { term: 'stationing', source_lesson_id: 'T07.L02' },
   ],
   key_terms: [
     {

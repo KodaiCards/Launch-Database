@@ -32,8 +32,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'site walk', source_lesson_id: 'T04.L01' },
-    { term: 'existing utilities', source_lesson_id: 'T04.L01' },
-    { term: 'pole locations from design', source_lesson_id: 'T04.L02' },
+    { term: 'existing utility', source_lesson_id: 'T04.L01' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
     { term: 'stake', source_lesson_id: 'T07.L01' },
     { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },

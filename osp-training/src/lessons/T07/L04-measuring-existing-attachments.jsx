@@ -30,9 +30,9 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'clearance', source_lesson_id: 'T01.L02' },
-    { term: 'NESC Rule 232', source_lesson_id: 'T05.L01' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'make-ready', source_lesson_id: 'T01.L05' },
-    { term: 'attachment point', source_lesson_id: 'T01.L02' },
+    { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
     { term: 'field verification', source_lesson_id: 'T07.L01' },
@@ -111,7 +111,7 @@ export default function T07L04_MeasuringExistingAttachments() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">NESC</td>
               <td className="px-3 py-2">National Electrical Safety Code</td>
-              <td className="px-3 py-2">Rule 232 sets the minimum height wires must be above the ground at various surface types</td>
+              <td className="px-3 py-2">Rule 232 Table 232-1 sets the minimum height wires must be above the ground — different rows apply to supply conductors (power) vs. communications cables (fiber)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">MR</td>
@@ -239,27 +239,39 @@ export default function T07L04_MeasuringExistingAttachments() {
 
         <h3 className="mt-5 font-semibold">The Rule 232 clearance field check</h3>
         <p>
-          NESC Rule 232 sets the minimum height above ground for communication cables
-          [NESC C2-2023 Rule 232 — confirm edition]. The key thresholds for communications
-          wires in rural OSP work:
+          NESC Rule 232 Table 232-1 sets the minimum height above ground for wires and cables
+          [NESC C2-2023 Rule 232 — confirm edition]. Critically, <strong>supply conductors
+          (power lines) and communications cables have separate rows in Table 232-1</strong> —
+          the values differ. As a staker working on fiber, always use the <em>communications
+          cable</em> row, not the supply row. The key thresholds for communications cables in
+          rural OSP work:
         </p>
-        <ul className="list-disc pl-5 space-y-1 mt-1 text-sm">
-          <li><strong>Above roads (traffic lanes):</strong> 18 feet minimum</li>
+        <div className="mt-2 p-3 border border-amber-400/20 bg-amber-400/5 rounded text-sm">
+          <p className="font-semibold text-amber-300 mb-1">Supply vs. Communications — Rule 232 Table 232-1</p>
+          <p className="text-slate-300/90">
+            Over roads accessible to truck traffic: <strong>supply conductors = 18 ft</strong> minimum;
+            <strong> communications cables = 15.5 ft</strong> minimum. The difference (~2.5 ft) exists
+            because communications cables carry no dangerous voltage — so NESC allows them to be
+            lower. When you see "18 ft road clearance" in engineering specs, verify whether it refers
+            to power lines or fiber — they are not the same requirement.
+          </p>
+        </div>
+        <ul className="list-disc pl-5 space-y-1 mt-3 text-sm">
+          <li><strong>Above roads accessible to truck traffic:</strong> <strong>15.5 feet minimum</strong> for communications cables [NESC C2-2023 Rule 232 Table 232-1 — confirm edition]</li>
           <li>
-            <strong>Above driveways, parking areas:</strong> 18 feet minimum for
-            truck-accessible driveways; 15.5 feet may apply to light-vehicle-only
-            private lanes (verify with Rule 232 Table footnotes and local jurisdiction —
-            some state utility commissions adopt modified thresholds for private
-            right-of-way classifications)
+            <strong>Above driveways, parking areas accessible to trucks:</strong> 15.5 feet minimum;
+            verify with Rule 232 Table footnotes and local jurisdiction — some state utility commissions
+            adopt modified thresholds for private right-of-way classifications
           </li>
           <li><strong>Above pedestrian areas, sidewalks:</strong> 15.5 feet minimum</li>
-          <li><strong>Above agricultural land (crop-farming accessible):</strong> 18 feet minimum</li>
-          <li><strong>Above other land (no equipment access):</strong> 15.5 feet minimum</li>
+          <li><strong>Above agricultural land (crop-farming equipment accessible):</strong> 15.5 feet minimum</li>
+          <li><strong>Above other land (no vehicle access):</strong> 15.5 feet minimum</li>
           <li><strong>Above water:</strong> 17.5 feet minimum for navigable waterways (verify with jurisdiction)</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: NESC C2-2023 Rule 232 — clearance tables [confirm current edition against project
-          jurisdiction requirements; some state utility commissions adopt modified clearance tables].
+          Source: NESC C2-2023 Rule 232 Table 232-1 — clearance tables for communications cables
+          [confirm current edition against project jurisdiction requirements; some state utility
+          commissions adopt modified clearance tables].
         </p>
         <p className="mt-2">
           When you measure an existing wire, compare it against the applicable Rule 232
@@ -395,7 +407,7 @@ export default function T07L04_MeasuringExistingAttachments() {
           { symbol: 'H_design', label: 'Design assumed attachment height', value: 30.0, unit: 'ft', description: 'The design assumed the existing communication wire was at 30 feet before staking began' },
           { symbol: 'H_new', label: 'Proposed new fiber attachment height', value: 25.5, unit: 'ft', description: 'The design places your new fiber 4.5 feet below the existing communication wire' },
           { symbol: 'Sep_min', label: 'Minimum separation (NESC Rule 235, comm-to-comm)', value: 1.0, unit: 'ft', description: 'NESC Rule 235 requires at least 12 inches (1.0 ft) between communication wires on the same pole [confirm current NESC C2 edition Rule 235]' },
-          { symbol: 'Clr_min', label: 'Minimum clearance above road (NESC Rule 232)', value: 18.0, unit: 'ft', description: 'This span crosses a public road — minimum height is 18 feet [NESC C2-2023 Rule 232, confirm edition]' },
+          { symbol: 'Clr_min', label: 'Minimum clearance above road — communications cable (NESC Rule 232 Table 232-1)', value: 15.5, unit: 'ft', description: 'This span crosses a public road — minimum height for a communications cable accessible to truck traffic is 15.5 ft per NESC Rule 232 Table 232-1 [confirm NESC C2-2023 edition]. Note: supply conductors (power lines) require 18 ft over the same road surface — the two values differ because communications cables carry lower voltage hazard.' },
         ]}
         steps={[
           {
@@ -424,7 +436,7 @@ export default function T07L04_MeasuringExistingAttachments() {
             formula: 'road clearance = H_new_actual (assuming new fiber is the lowest wire)',
             substitution: 'road clearance = 22.5 ft',
             result: 'road clearance = 22.5 ft',
-            explanation: '22.5 ft above the road. Minimum required by NESC Rule 232 is 18.0 ft. 22.5 ft >> 18.0 ft. Road clearance is fine.',
+            explanation: '22.5 ft above the road. Minimum required by NESC Rule 232 Table 232-1 for a communications cable over roads accessible to truck traffic is 15.5 ft [confirm NESC C2-2023 edition]. 22.5 ft >> 15.5 ft. Road clearance is fine. (Supply conductors require 18 ft over the same road — but this is fiber, not power.)',
           },
           {
             label: 'Step 5 — Issue the staking note',
@@ -434,7 +446,7 @@ export default function T07L04_MeasuringExistingAttachments() {
             explanation: 'The new fiber clears all requirements even with the wire 3 feet lower than assumed. No make-ready work is needed. BUT the design must be updated to show the existing wire at 27 ft (not 30 ft) and the new fiber at 22.5 ft (not 25.5 ft). Issue a call-out: "Existing comm wire at 27.0 ft, design assumed 30.0 ft, delta −3.0 ft. New fiber height recalculated to 22.5 ft. All clearances pass at revised heights. Design update required."',
           },
         ]}
-        sanityCheck="22.5 feet of new fiber height is over 4 feet above the 18-foot road clearance minimum — well within code. The 3-foot measurement discrepancy is significant but doesn't create a violation. Still needs a design update so construction crews work from the correct heights."
+        sanityCheck="22.5 feet of new fiber height is over 7 feet above the 15.5-foot communications-cable road clearance minimum — well within code. (The 18 ft value seen in some specs applies to supply conductors, not fiber/comms cables.) The 3-foot measurement discrepancy is significant but doesn't create a violation. Still needs a design update so construction crews work from the correct heights."
       />
 
       {/* ── PER-LESSON QUIZ ─────────────────────────────────────────────── */}
@@ -476,7 +488,7 @@ export default function T07L04_MeasuringExistingAttachments() {
             id: 'T07-L04-Q3',
             type: 'mc',
             prompt:
-              'NESC Rule 232 requires a minimum height of 18 feet above a public road for communication cables. A staker measures the existing cable at 16.8 feet above a county road. What should the staker do?',
+              'NESC Rule 232 Table 232-1 requires a minimum height of 15.5 feet above a public road for communications cables (roads accessible to truck traffic). A staker measures the existing fiber cable at 13.2 feet above a county road. What should the staker do?',
             choices: [
               'Nothing — staking only records what\'s there, not whether it\'s in violation',
               'Issue a call-out documenting the pre-existing violation and note it as a clearance hazard — do not flag as a new make-ready item unless the new fiber would also be at that height',
@@ -485,8 +497,8 @@ export default function T07L04_MeasuringExistingAttachments() {
             ],
             answerIndex: 1,
             explanation:
-              'A pre-existing clearance violation (wire below NESC Rule 232 minimum) should be documented as a call-out with the specific height and the applicable standard. It\'s NOT the staker\'s project that created the violation — but it IS the staker\'s job to document it. The call-out flags it for the engineer and client to determine responsibility and remediation.',
-            citation: 'NESC C2-2023 Rule 232 [confirm current edition].',
+              'A pre-existing clearance violation (13.2 ft, below the 15.5 ft minimum for communications cables over truck-accessible roads per NESC Rule 232 Table 232-1) should be documented as a call-out with the specific height and the applicable standard. It\'s NOT the staker\'s project that created the violation — but it IS the staker\'s job to document it. The call-out flags it for the engineer and client to determine responsibility and remediation. Note: the 18 ft clearance value you may see elsewhere applies to supply conductors (power lines), not to fiber/comms cables.',
+            citation: 'NESC C2-2023 Rule 232 Table 232-1 [confirm current edition].',
           },
           {
             id: 'T07-L04-Q4',
@@ -502,17 +514,17 @@ export default function T07L04_MeasuringExistingAttachments() {
             id: 'T07-L04-Q5',
             type: 'mc',
             prompt:
-              'An existing communication wire is measured at 19.0 feet above a public road. The design plans to attach new fiber at 16.0 feet (3 feet below the existing comm wire). NESC Rule 232 requires 18 feet minimum above the road. Does this require a make-ready flag?',
+              'An existing communication wire is measured at 19.0 feet above a public road (accessible to truck traffic). The design plans to attach new fiber at 14.5 feet (4.5 feet below the existing comm wire). NESC Rule 232 Table 232-1 requires 15.5 feet minimum for communications cables over truck-accessible roads. Does this require a make-ready flag?',
             choices: [
-              'No — the existing wire is above 18 feet, so no violation exists',
-              'Yes — the proposed new fiber at 16.0 feet would be below the 18-foot Rule 232 minimum',
-              'No — the 3-foot separation between the existing wire and the new fiber satisfies NESC Rule 235',
+              'No — the existing wire is above 15.5 feet, so no violation exists',
+              'Yes — the proposed new fiber at 14.5 feet would be below the 15.5-foot Rule 232 minimum for communications cables',
+              'No — the 4.5-foot separation between the existing wire and the new fiber satisfies NESC Rule 235',
               'Only if the pole owner agrees that make-ready is required',
             ],
             answerIndex: 1,
             explanation:
-              'The proposed new fiber would be at 16.0 feet above the road — 2 feet below the NESC Rule 232 minimum of 18 feet. This is a clearance violation. A make-ready flag is required. The make-ready crew needs to raise the existing communication wire (and possibly others) to create room for the new fiber to attach above 18 feet.',
-            citation: 'NESC C2-2023 Rule 232 — minimum clearances above roads [confirm current edition].',
+              'The proposed new fiber would be at 14.5 feet above the road — 1 foot below the 15.5 ft minimum for communications cables over roads accessible to truck traffic per NESC Rule 232 Table 232-1 [confirm current edition]. This is a clearance violation. A make-ready flag is required so the make-ready crew can raise the existing communication wire or otherwise create room for the new fiber to attach at or above 15.5 ft. Remember: the 18 ft value applies to supply conductors (power), not to fiber/comms cables — knowing which row of Table 232-1 to apply is essential.',
+            citation: 'NESC C2-2023 Rule 232 Table 232-1 — minimum clearances for communications cables above roads [confirm current edition].',
           },
         ]}
       />

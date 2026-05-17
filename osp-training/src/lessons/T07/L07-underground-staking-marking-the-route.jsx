@@ -61,7 +61,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'staker', source_lesson_id: 'T07.L01' },
     { term: 'stationing', source_lesson_id: 'T07.L02' },
-    { term: 'PI (point of intersection)', source_lesson_id: 'T07.L02' },
+    { term: 'PI', source_lesson_id: 'T07.L02' },
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'open-cut trench', source_lesson_id: 'T06.L01' },
     { term: 'minimum cover', source_lesson_id: 'T06.L02' },

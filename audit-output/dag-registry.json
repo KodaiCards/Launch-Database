@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T08:36:35.362Z",
+  "generated_at": "2026-05-17T09:24:18.349Z",
   "lesson_count": 125,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -605,7 +605,8 @@
       "offset",
       "PI",
       "cross-section",
-      "design intent mark"
+      "design intent mark",
+      "contour"
     ],
     "T07.L03": [
       "pole tag",
@@ -2361,6 +2362,9 @@
       "T07.L02"
     ],
     "design intent mark": [
+      "T07.L02"
+    ],
+    "contour": [
       "T07.L02"
     ],
     "pole tag": [
@@ -7905,10 +7909,9 @@
     },
     {
       "from_lesson": "T07.L01",
-      "term": "attachment point",
+      "term": "attachment",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'attachment point' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L01",
@@ -7936,24 +7939,9 @@
     },
     {
       "from_lesson": "T07.L02",
-      "term": "contour",
-      "claimed_source": "T04.L03",
-      "verified": false,
-      "reason": "'contour' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T07.L02",
-      "term": "existing utilities",
+      "term": "existing utility",
       "claimed_source": "T04.L01",
-      "verified": false,
-      "reason": "'existing utilities' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T07.L02",
-      "term": "pole locations from design",
-      "claimed_source": "T04.L02",
-      "verified": false,
-      "reason": "'pole locations from design' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L02",
@@ -7975,30 +7963,15 @@
     },
     {
       "from_lesson": "T07.L03",
-      "term": "pole numbering from survey",
-      "claimed_source": "T04.L02",
-      "verified": false,
-      "reason": "'pole numbering from survey' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T07.L03",
-      "term": "attachment height",
-      "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'attachment height' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T07.L03",
       "term": "call-out",
       "claimed_source": "T07.L01",
       "verified": true
     },
     {
       "from_lesson": "T07.L03",
-      "term": "staking notes",
+      "term": "stake",
       "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'staking notes' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L03",
@@ -8008,7 +7981,19 @@
     },
     {
       "from_lesson": "T07.L03",
+      "term": "measurement tolerance",
+      "claimed_source": "T07.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T07.L03",
       "term": "design intent mark",
+      "claimed_source": "T07.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T07.L03",
+      "term": "stationing",
       "claimed_source": "T07.L02",
       "verified": true
     },
@@ -8020,24 +8005,21 @@
     },
     {
       "from_lesson": "T07.L04",
-      "term": "NESC Rule 232",
+      "term": "Rule 232",
       "claimed_source": "T05.L01",
-      "verified": false,
-      "reason": "'NESC Rule 232' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L04",
       "term": "make-ready",
-      "claimed_source": "T05.L08",
-      "verified": false,
-      "reason": "'make-ready' is introduced by T01.L05, not T05.L08"
+      "claimed_source": "T01.L05",
+      "verified": true
     },
     {
       "from_lesson": "T07.L04",
-      "term": "attachment point",
+      "term": "attachment",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'attachment point' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L04",
@@ -8059,24 +8041,9 @@
     },
     {
       "from_lesson": "T07.L05",
-      "term": "RUS program context",
+      "term": "site walk",
       "claimed_source": "T04.L01",
-      "verified": false,
-      "reason": "'RUS program context' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T07.L05",
-      "term": "make-ready data",
-      "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'make-ready data' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T07.L05",
-      "term": "pole ID sequence",
-      "claimed_source": "T04.L02",
-      "verified": false,
-      "reason": "'pole ID sequence' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L05",
@@ -8087,6 +8054,12 @@
     {
       "from_lesson": "T07.L05",
       "term": "measurement tolerance",
+      "claimed_source": "T07.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T07.L05",
+      "term": "field verification",
       "claimed_source": "T07.L01",
       "verified": true
     },
@@ -8147,9 +8120,8 @@
     {
       "from_lesson": "T07.L06",
       "term": "make-ready",
-      "claimed_source": "T05.L08",
-      "verified": false,
-      "reason": "'make-ready' is introduced by T01.L05, not T05.L08"
+      "claimed_source": "T01.L05",
+      "verified": true
     },
     {
       "from_lesson": "T07.L06",
@@ -8160,9 +8132,8 @@
     {
       "from_lesson": "T07.L06",
       "term": "pole audit",
-      "claimed_source": "T04.L01",
-      "verified": false,
-      "reason": "'pole audit' is introduced by T04.L04, not T04.L01"
+      "claimed_source": "T04.L04",
+      "verified": true
     },
     {
       "from_lesson": "T07.L07",
@@ -8178,24 +8149,21 @@
     },
     {
       "from_lesson": "T07.L07",
-      "term": "PI (point of intersection)",
+      "term": "PI",
       "claimed_source": "T07.L02",
-      "verified": false,
-      "reason": "'PI (point of intersection)' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T07.L07",
       "term": "HDD",
-      "claimed_source": "T06.L04",
-      "verified": false,
-      "reason": "'HDD' is introduced by T01.L08, T06.L01, not T06.L04"
+      "claimed_source": "T06.L01",
+      "verified": true
     },
     {
       "from_lesson": "T07.L07",
-      "term": "open-cut",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'open-cut' is not introduced by any lesson in the curriculum"
+      "term": "open-cut trench",
+      "claimed_source": "T06.L01",
+      "verified": true
     },
     {
       "from_lesson": "T07.L07",
@@ -8230,9 +8198,8 @@
     {
       "from_lesson": "T07.L08",
       "term": "GIS",
-      "claimed_source": "T04.L01",
-      "verified": false,
-      "reason": "'GIS' is introduced by T01.L08, not T04.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T07.L08",
@@ -10755,8 +10722,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1057,
-  "broken_pointers_count": 140,
+  "verified_pointers_count": 1073,
+  "broken_pointers_count": 121,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",
