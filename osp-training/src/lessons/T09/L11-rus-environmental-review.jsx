@@ -1,6 +1,7 @@
 // T09.L11 — RUS Environmental Review
-// Advanced lesson: 7 CFR Part 1970 RUS NEPA; CE checklist; EIM vs. full report; BEAD vs. RUS procedures
-// Sources: net-new; 7 CFR Part 1970; RUS Form 307; NTIA BEAD NEPA (same CE C-8)
+// Advanced lesson: 7 CFR Part 1b (formerly Part 1970) RUS NEPA; CE checklist; EIM vs. full report; BEAD vs. RUS procedures
+// Sources: net-new; 7 CFR Part 1b (effective April 3, 2026, FR 2026-06537, replaces 7 CFR Part 1970); RUS Form 307; NTIA BEAD NEPA
+// Note: NTIA adopted its own Commerce Dept-level CEs for BEAD; it did NOT adopt CE C-8 (RUS nomenclature) — see body text
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -15,7 +16,7 @@ export const meta = {
   lesson_type: 'advanced',
   prerequisites: ['T09.L02', 'T09.L01'],
   learning_objectives: [
-    'Explain the difference between RUS/USDA 7 CFR 1970 NEPA procedures and NTIA/BEAD NEPA procedures',
+    'Explain the difference between RUS/USDA 7 CFR Part 1b NEPA procedures and NTIA/BEAD NEPA procedures',
     'Complete a RUS CE determination checklist for a sample aerial-fiber project',
     'Identify which circumstances trigger an Environmental Impact Memorandum (EIM) rather than a CE checklist',
     'Describe what RUS Form 307 documents and when it is required',
@@ -25,7 +26,7 @@ export const meta = {
     'RUS environmental report',
     'RUS CE checklist',
     'BEAD environmental compliance milestone',
-    '7 CFR 1970',
+    '7 CFR Part 1b',
     'Environmental Impact Memorandum (EIM)',
   ],
   vocabulary_assumed: [
@@ -36,7 +37,6 @@ export const meta = {
     { term: 'extraordinary circumstances', source_lesson_id: 'T09.L02' },
     { term: 'CE C-8', source_lesson_id: 'T09.L02' },
     { term: 'federal nexus', source_lesson_id: 'T09.L01' },
-    { term: 'RUS program context', source_lesson_id: 'T09.L01' },
   ],
   key_terms: [
     {
@@ -47,7 +47,7 @@ export const meta = {
     {
       term: 'RUS CE checklist',
       definition:
-        'A structured form used to document whether a proposed RUS-financed project qualifies for a categorical exclusion under 7 CFR 1970 — specifically, whether the project falls within a defined CE class and has no extraordinary circumstances requiring elevated review. The checklist is completed by the applicant (the RUS borrower) and reviewed by RUS prior to loan or grant approval.',
+        'A structured form used to document whether a proposed RUS-financed project qualifies for a categorical exclusion under 7 CFR Part 1b (effective April 3, 2026) — specifically, whether the project falls within a defined CE class and has no extraordinary circumstances requiring elevated review. The checklist is completed by the applicant (the RUS borrower) and reviewed by RUS prior to loan or grant approval.',
     },
     {
       term: 'BEAD environmental compliance milestone',
@@ -55,14 +55,14 @@ export const meta = {
         'A project milestone in a BEAD subgrant agreement requiring the subgrantee to demonstrate completion of the required environmental review (CE determination, EA with FONSI, or full EIS) before NTIA or the state broadband office will authorize construction. Failure to clear the environmental compliance milestone blocks construction authorization regardless of other permit status.',
     },
     {
-      term: '7 CFR 1970',
+      term: '7 CFR Part 1b',
       definition:
-        'Title 7, Code of Federal Regulations, Part 1970 — the USDA/RUS Environmental Policies and Procedures regulation, effective March 2, 2016. This regulation governs how RUS implements NEPA for all RUS-financed projects, including telecommunications, electric, and water/waste programs. It replaced the prior 7 CFR 1794 rule and introduced a updated list of categorical exclusions and extraordinary circumstances.',
+        'Title 7, Code of Federal Regulations, Part 1b — the USDA/RUS Environmental Policies and Procedures regulation, effective April 3, 2026 (FR 2026-06537). Part 1b replaced 7 CFR Part 1970 (which itself replaced 7 CFR Part 1794) and governs how RUS and USDA Rural Development implement NEPA for all financed projects, including telecommunications, electric, and water/waste programs. It defines categorical exclusions and extraordinary circumstances for RUS project review. [Verify current section numbers and CE class designations against eCFR at time of application.]',
     },
     {
       term: 'Environmental Impact Memorandum (EIM)',
       definition:
-        'An intermediate-level environmental review document under 7 CFR 1970, used when a project does not qualify for a CE but the anticipated environmental impacts are limited enough that a full Environmental Assessment (EA) may not be necessary. An EIM documents the environmental effects of the proposed project and any mitigation measures, and is reviewed by RUS before loan or grant approval.',
+        'An intermediate-level environmental review document under 7 CFR Part 1b (formerly 7 CFR Part 1970), used when a project does not qualify for a CE but the anticipated environmental impacts are limited enough that a full Environmental Assessment (EA) may not be necessary. An EIM documents the environmental effects of the proposed project and any mitigation measures, and is reviewed by RUS before loan or grant approval.',
     },
   ],
 };
@@ -78,7 +78,8 @@ export default function T09L11_RusEnvironmentalReview() {
           via a RUS loan, a ReConnect grant, or a similar USDA rural broadband program — you
           have an additional layer of environmental review on top of the general NEPA framework
           you learned in L02. This is the RUS-specific implementation of NEPA, codified in
-          7 CFR Part 1970.
+          7 CFR Part 1b (effective April 3, 2026; this regulation replaced the prior 7 CFR Part
+          1970 — verify current section numbers against eCFR at time of application).
         </p>
         <p className="mt-2">
           The good news: for most routine aerial or buried fiber construction in existing ROW,
@@ -97,25 +98,53 @@ export default function T09L11_RusEnvironmentalReview() {
       {/* FLASHCARDS */}
       <section data-tier="foundations">
         <h3>Key Terms — Flashcards</h3>
-        {meta.key_terms.map(({ term, definition }) => (
-          <Flashcard key={term} term={term} definition={definition} />
-        ))}
+        <Flashcard
+          deckId="T09-L11"
+          cards={[
+            {
+              id: 'T09-L11-fc-rus-env-report',
+              front: 'What is a RUS environmental report and what determines which type is required?',
+              back: 'A formal environmental review document required by the Rural Utilities Service (RUS) for telecommunications infrastructure projects receiving RUS loans or grants. The type required (CE checklist, EIM, or full environmental report) depends on the nature and scale of the project and the presence of extraordinary circumstances.',
+            },
+            {
+              id: 'T09-L11-fc-rus-ce-checklist',
+              front: 'What is the RUS CE checklist and who prepares it?',
+              back: 'A structured form used to document whether a proposed RUS-financed project qualifies for a categorical exclusion under 7 CFR Part 1b (effective April 3, 2026) — whether the project falls within a defined CE class and has no extraordinary circumstances requiring elevated review. The checklist is completed by the applicant (the RUS borrower) and reviewed by RUS prior to loan or grant approval.',
+            },
+            {
+              id: 'T09-L11-fc-bead-milestone',
+              front: 'What is the BEAD environmental compliance milestone?',
+              back: 'A project milestone in a BEAD subgrant agreement requiring the subgrantee to demonstrate completion of the required environmental review (CE determination, EA with FONSI, or full EIS) before NTIA or the state broadband office will authorize construction. Failure to clear this milestone blocks construction authorization regardless of other permit status.',
+            },
+            {
+              id: 'T09-L11-fc-part-1b',
+              front: 'What is 7 CFR Part 1b?',
+              back: '7 CFR Part 1b — the USDA/RUS Environmental Policies and Procedures regulation, effective April 3, 2026 (FR 2026-06537). Part 1b replaced 7 CFR Part 1970 and governs how RUS and USDA Rural Development implement NEPA for all financed projects, including telecommunications, electric, and water/waste programs. It defines categorical exclusions and extraordinary circumstances for RUS project review.',
+            },
+            {
+              id: 'T09-L11-fc-eim',
+              front: 'What is an Environmental Impact Memorandum (EIM) and when is it used?',
+              back: 'An intermediate-level environmental review document under 7 CFR Part 1b (formerly 7 CFR Part 1970), used when a project does not qualify for a CE but the anticipated environmental impacts are limited enough that a full EA may not be necessary. An EIM documents the environmental effects and any mitigation measures, and is reviewed by RUS before loan or grant approval.',
+            },
+          ]}
+        />
       </section>
 
       <section data-tier="working">
-        <h3>7 CFR 1970 — The RUS NEPA Rule in Plain English</h3>
+        <h3>7 CFR Part 1b — The RUS NEPA Rule in Plain English</h3>
         <p>
-          7 CFR Part 1970 is the regulation that tells the Rural Utilities Service how to
+          7 CFR Part 1b is the regulation that tells the Rural Utilities Service how to
           implement the National Environmental Policy Act (NEPA) for projects it finances.
-          Think of it as USDA's version of the CEQ rules (40 CFR Parts 1500–1508) — same
-          underlying law, same three tiers (CE, EA/FONSI, EIS), but with USDA-specific
-          categorical exclusion categories and extraordinary-circumstances lists.
+          Think of it as USDA's version of the CEQ rules — same underlying law, same three
+          tiers (CE, EA/FONSI, EIS), but with USDA-specific categorical exclusion categories
+          and extraordinary-circumstances lists.
         </p>
         <p className="mt-2">
-          The regulation was substantially revised in 2016 (81 FR 11024, effective March 2,
-          2016), replacing the prior 7 CFR Part 1794. The 2016 version reorganized the
-          categorical exclusion list and added a cleaner extraordinary-circumstances screening
-          process.
+          <strong>Regulatory history note:</strong> This rule was previously codified at
+          7 CFR Part 1970 (effective March 2, 2016) and before that at 7 CFR Part 1794.
+          The current citation is 7 CFR Part 1b (effective April 3, 2026, FR 2026-06537).
+          Older project files and RUS guidance documents may still reference Part 1970 section
+          numbers — verify against current eCFR at time of application.
         </p>
 
         <h3 className="mt-6">The Three RUS Review Tiers</h3>
@@ -124,16 +153,16 @@ export default function T09L11_RusEnvironmentalReview() {
         <p>
           A categorical exclusion is the determination that a class of actions does not normally
           cause significant environmental effects and therefore does not require an EA or EIS.
-          Under 7 CFR 1970, RUS has defined specific classes of CEs for telecommunications projects.
+          Under 7 CFR Part 1b, RUS has defined specific classes of CEs for telecommunications projects.
         </p>
         <p className="mt-2">
           For aerial or buried telecommunications fiber in existing ROW — the standard BEAD/RUS
-          aerial project — the applicable CE is generally analogous to CE C-8 (the "existing ROW"
-          CE you learned in L02), though 7 CFR 1970 uses its own CE numbering. The key requirement:
-          the project must not trigger any extraordinary circumstances listed in 7 CFR 1970.14.
+          aerial project — the applicable CE is in the "construction within existing ROW" class
+          under 7 CFR Part 1b. The key requirement: the project must not trigger any extraordinary
+          circumstances listed in the regulation (verify current section references against eCFR).
         </p>
         <p className="mt-2">
-          Extraordinary circumstances under 7 CFR 1970.14 include (among others):
+          Extraordinary circumstances under 7 CFR Part 1b include (among others):
         </p>
         <ul className="list-disc pl-6 mt-2 space-y-1">
           <li>Threatened or endangered species or critical habitat present in the project area (triggers ESA §7 consultation)</li>
@@ -162,7 +191,7 @@ export default function T09L11_RusEnvironmentalReview() {
         <ul className="list-disc pl-6 mt-2 space-y-2">
           <li>
             <strong>CE checklist applies when:</strong> The project falls within a RUS CE class
-            AND no extraordinary circumstances from 7 CFR 1970.14 apply. CE checklist documents
+            AND no extraordinary circumstances from 7 CFR Part 1b apply. CE checklist documents
             this determination. RUS reviews and approves. No additional environmental study required.
           </li>
           <li>
@@ -185,7 +214,7 @@ export default function T09L11_RusEnvironmentalReview() {
 
         <h4 className="mt-6 font-semibold">Tier 3: Full Environmental Assessment (EA) / EIS</h4>
         <p>
-          Same as the general NEPA process — the RUS 7 CFR 1970 procedure for EA and EIS
+          Same as the general NEPA process — the RUS 7 CFR Part 1b procedure for EA and EIS
           follows CEQ rules with USDA-specific agency coordination requirements. For a routine
           aerial fiber project, reaching this tier is uncommon. Projects that require a full
           EA are typically those with significant route deviations from existing ROW, wetland
@@ -209,39 +238,51 @@ export default function T09L11_RusEnvironmentalReview() {
           conditions." If a condition was not met, it must be disclosed in Form 307.
         </p>
 
-        <h3 className="mt-6">RUS NEPA vs. NTIA/BEAD NEPA — The Same CE?</h3>
+        <h3 className="mt-6">RUS NEPA vs. NTIA/BEAD NEPA — Are They the Same CE?</h3>
         <p>
           This question comes up constantly when a project has both RUS and BEAD funding, or
           when a project team has done BEAD NEPA work and wants to know if RUS accepts it.
         </p>
         <p className="mt-2">
-          <strong>The answer:</strong> Both RUS (7 CFR 1970) and NTIA/BEAD use the same
-          underlying CE language — specifically the CE covering aerial or buried utility and
-          communications construction within or adjacent to existing rights-of-way. This CE
-          language comes from the CEQ rules and is adopted by both programs. Both programs
-          also use the same extraordinary-circumstances framework.
+          <strong>Important clarification on CE C-8 and NTIA:</strong> The term "CE C-8" is
+          RUS nomenclature — it appears in 7 CFR Part 1b (formerly Part 1970) as a specific
+          categorical exclusion class designation used by USDA Rural Development. <em>NTIA did
+          not adopt CE C-8</em> when it established its BEAD NEPA procedures. NTIA's 2024
+          CE rulemaking explicitly excluded CE C-8: the notice stated that NTIA is "not including
+          CE C-8 because the actions they cover are encompassed by existing Department-wide CEs."
+          NTIA instead uses Commerce Department-level CEs for BEAD environmental review.
         </p>
         <p className="mt-2">
-          <strong>But there are procedural differences:</strong>
+          <strong>The practical answer:</strong> Both RUS (7 CFR Part 1b) and NTIA/BEAD cover
+          the same general category — aerial or buried utility and communications construction
+          within or adjacent to existing rights-of-way. But they use different CE designations
+          and different procedural frameworks. Do not assume "CE C-8" applies to a BEAD project
+          just because it applies to a RUS project.
+        </p>
+        <p className="mt-2">
+          <strong>Procedural differences:</strong>
         </p>
         <ul className="list-disc pl-6 mt-2 space-y-2">
           <li>
             <strong>RUS:</strong> The RUS borrower (the fiber company or electric cooperative)
             prepares the CE checklist and submits it to RUS for review and approval as part
-            of the loan/grant application. RUS makes the formal NEPA determination.
+            of the loan/grant application. RUS makes the formal NEPA determination using
+            7 CFR Part 1b CE classes.
           </li>
           <li>
             <strong>BEAD/NTIA:</strong> The state broadband office is the lead federal agency
             for BEAD NEPA. The subgrantee prepares the required environmental documentation,
             but the state broadband office makes the NEPA determination (or delegates to NTIA).
-            The process and forms differ by state broadband office.
+            NTIA uses Commerce Department-level CEs — not RUS CE numbering. The process and
+            forms differ by state broadband office.
           </li>
           <li>
             <strong>Dual-funded projects:</strong> If a project receives both RUS financing
-            and BEAD funding, both agencies must independently make their NEPA determinations.
-            In practice, agencies often cooperate to avoid duplicating the same environmental
-            review — but the formal determinations are separate. Coordinate early with both
-            agencies to establish whether a joint environmental review is acceptable.
+            and BEAD funding, both agencies must independently make their NEPA determinations
+            under their respective CE frameworks. In practice, agencies often cooperate to
+            avoid duplicating the same environmental review — but the formal determinations
+            are separate. Coordinate early with both agencies to establish whether a joint
+            environmental review is acceptable.
           </li>
         </ul>
 
@@ -251,15 +292,16 @@ export default function T09L11_RusEnvironmentalReview() {
         </p>
         <ol className="list-decimal pl-6 mt-2 space-y-2">
           <li>
-            <strong>Identify the applicable CE class.</strong> Review 7 CFR 1970, Exhibit B,
-            to identify which CE class covers the proposed project action. For aerial fiber
-            in existing ROW, the applicable class is generally in the "construction within
-            existing ROW" category — cite the specific class designation from the current
-            regulation (confirm section number against current eCFR at time of application).
+            <strong>Identify the applicable CE class.</strong> Review 7 CFR Part 1b to
+            identify which CE class covers the proposed project action. For aerial fiber
+            in existing ROW, the applicable class is in the "construction within existing ROW"
+            category — cite the specific class designation from the current regulation (confirm
+            section number against current eCFR at time of application; Part 1b section numbers
+            may differ from the prior Part 1970 Exhibit B structure).
           </li>
           <li>
             <strong>Screen for extraordinary circumstances.</strong> Go through every item in
-            7 CFR 1970.14 systematically. For each item: document whether it applies, and if
+            7 CFR Part 1b systematically (verify current section reference against eCFR). For each item: document whether it applies, and if
             it applies, what the impact is. This is where your prior environmental work pays off:
             IPaC results (L04), SHPO pre-consultation (L03), and route survey documentation
             (T04) all feed into this screening.
@@ -286,7 +328,7 @@ export default function T09L11_RusEnvironmentalReview() {
 
         <h3 className="mt-6">Book vs. Field: The CE Is Not Automatic</h3>
         <p>
-          <strong>Book:</strong> 7 CFR 1970 defines CEs for classes of actions that normally
+          <strong>Book:</strong> 7 CFR Part 1b defines CEs for classes of actions that normally
           do not cause significant environmental effects. Aerial fiber in existing ROW qualifies.
           File the checklist and proceed.
         </p>
@@ -338,13 +380,13 @@ export default function T09L11_RusEnvironmentalReview() {
             ],
             answerIndex: 1,
             explanation:
-              'NLEB presence triggers an extraordinary circumstance under 7 CFR 1970.14 (T&E species). The CE is not automatic when an extraordinary circumstance is present. The applicant must either: (a) complete an EIM documenting that the impact is limited (e.g., construction avoids the tree-clearing window, IPaC shows the route corridor is not critical habitat), or (b) complete ESA §7 informal consultation. If the consultation results in a no-jeopardy finding with standard conditions (tree-clearing avoidance window), the CE may still apply after the consultation. Note: confirm current NLEB listing status at fws.gov/species at time of project — species status is dynamic. T09.L11.',
+              'NLEB presence triggers an extraordinary circumstance under 7 CFR Part 1b (T&E species). The CE is not automatic when an extraordinary circumstance is present. The applicant must either: (a) complete an EIM documenting that the impact is limited (e.g., construction avoids the tree-clearing window, IPaC shows the route corridor is not critical habitat), or (b) complete ESA §7 informal consultation. If the consultation results in a no-jeopardy finding with standard conditions (tree-clearing avoidance window), the CE may still apply after the consultation. Note: confirm current NLEB listing status at fws.gov/species at time of project — species status is dynamic. T09.L11.',
           },
           {
             id: 'T09-L11-Q02',
             type: 'mc',
             prompt:
-              'What is the key difference between the Environmental Impact Memorandum (EIM) and a full Environmental Assessment (EA) in the 7 CFR 1970 framework?',
+              'What is the key difference between the Environmental Impact Memorandum (EIM) and a full Environmental Assessment (EA) in the 7 CFR Part 1b framework?',
             choices: [
               'They are the same document with different names — the EIM is just an older term for EA',
               'An EIM is used when extraordinary circumstances are triggered but limited analysis can document that the actual impact is not significant — it\'s an intermediate tier between the CE checklist and a full EA. A full EA is required when the EIM analysis cannot demonstrate limited impact',

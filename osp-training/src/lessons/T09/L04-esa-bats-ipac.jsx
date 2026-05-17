@@ -50,7 +50,7 @@ export const meta = {
     {
       term: 'endangered',
       definition:
-        'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered effective February 2023 (88 FR 6358). [Confirm current listing status at fws.gov/species at time of project.]',
+        'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); the effective date was extended to March 31, 2023 per 88 FR 5528. [Confirm current listing status at fws.gov/species at time of project.]',
     },
     {
       term: 'IPaC DKey',
@@ -365,7 +365,8 @@ export default function T09L04_ESABatsIPaC() {
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 16 USC §§1531–1544 (ESA); 16 USC §1538 (take prohibition); 50 CFR §17.3
           (harm definition) [confirm current edition against ecfr.gov]. USFWS Northern
-          Long-Eared Bat Final Rule (88 FR 6358, Jan. 30, 2023 — Endangered reclassification).
+          Long-Eared Bat Final Rule (87 FR 73488, Nov. 30, 2022 — Endangered reclassification;
+          effective March 31, 2023 per 88 FR 5528).
           [Confirm current NLEB and Tricolored Bat listing status at fws.gov/species at
           time of project.]
         </p>
@@ -434,8 +435,8 @@ export default function T09L04_ESABatsIPaC() {
             ],
             answerIndex: 1,
             explanation:
-              'Tree clearing in documented NLEB Endangered range during the active season (April 1–October 31) can constitute "take" under ESA §9 — specifically, felling a roost tree during the season when bats are present. The standard mitigation is the tree-clearing avoidance window: clear trees outside the April–October window. Starting April 15 means you must either (a) clear the 12 trees before April 1, or (b) delay tree clearing until November 1. Note: The NLEB was reclassified from Threatened to Endangered in February 2023 (88 FR 6358). [Confirm current listing status at fws.gov/species.]',
-            citation: '16 USC §1538 (take prohibition); USFWS IPaC DKey NLEB guidance; 88 FR 6358 (NLEB Endangered reclassification, 2023).',
+              'Tree clearing in documented NLEB Endangered range during the active season (April 1–October 31) can constitute "take" under ESA §9 — specifically, felling a roost tree during the season when bats are present. The standard mitigation is the tree-clearing avoidance window: clear trees outside the April–October window. Starting April 15 means you must either (a) clear the 12 trees before April 1, or (b) delay tree clearing until November 1. Note: The NLEB was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); effective March 31, 2023 per 88 FR 5528. [Confirm current listing status at fws.gov/species.]',
+            citation: '16 USC §1538 (take prohibition); USFWS IPaC DKey NLEB guidance; 87 FR 73488 (NLEB Endangered reclassification rule, Nov. 30, 2022; effective March 31, 2023 per 88 FR 5528).',
           },
           {
             id: 'T09-L04-Q2',
@@ -466,8 +467,8 @@ export default function T09L04_ESABatsIPaC() {
             ],
             answerIndex: 1,
             explanation:
-              'ESA listing status is dynamic. The Northern Long-Eared Bat was reclassified from Threatened to Endangered effective February 2023 (88 FR 6358). A team operating on 2022 data would not know about this reclassification. Endangered status can increase consultation obligations beyond those required for Threatened status. ESA status must be verified immediately before any permitting decision, not just at project kickoff months or years earlier. ACHP is the Section 106 historic preservation body — it has no role in ESA bat species listings.',
-            citation: '88 FR 6358 (NLEB Endangered reclassification, effective Feb. 2023); 16 USC §1536.',
+              'ESA listing status is dynamic. The Northern Long-Eared Bat was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); effective March 31, 2023 per 88 FR 5528. A team operating on 2022 data would not know about this reclassification. Endangered status can increase consultation obligations beyond those required for Threatened status. ESA status must be verified immediately before any permitting decision, not just at project kickoff months or years earlier. ACHP is the Section 106 historic preservation body — it has no role in ESA bat species listings.',
+            citation: '87 FR 73488 (NLEB Endangered reclassification rule, Nov. 30, 2022; effective March 31, 2023 per 88 FR 5528); 16 USC §1536.',
           },
           {
             id: 'T09-L04-Q4',

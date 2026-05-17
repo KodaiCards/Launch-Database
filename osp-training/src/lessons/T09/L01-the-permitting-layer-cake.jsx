@@ -350,9 +350,12 @@ export default function T09L01_ThePermittingLayerCake() {
           rather than running as separate processes.
         </p>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: 40 CFR §1501.7 (CEQ regulations on lead and cooperating agencies in NEPA).
-          [Confirm with current CEQ rules at ecfr.gov — CEQ updated its NEPA implementing
-          regulations in 2023.]
+          Source: CEQ regulations on lead and cooperating agencies in NEPA.
+          [Note: The CEQ regulations previously codified at 40 CFR Parts 1500–1508 (including
+          §1501.7) were removed effective January 8, 2026 (FR 2026-00178). The underlying
+          statutory authority (42 USC §4332) remains in effect. Verify current NEPA implementing
+          guidance at Council on Environmental Quality (ceq.doe.gov) at the time of project
+          execution.]
         </p>
 
         <h3 className="mt-5 font-semibold">Programmatic vs. project-level review</h3>
@@ -436,7 +439,7 @@ export default function T09L01_ThePermittingLayerCake() {
             answerIndex: 1,
             explanation:
               'BEAD funding creates a federal nexus, which activates all federal environmental review requirements: NEPA (42 USC §4321 et seq.), Section 106 of the NHPA (54 USC §306108), and ESA Section 7 consultation (16 USC §1536). The DOT encroachment permit is a state-layer requirement; private easements are a private-property layer requirement — neither is triggered by the presence of federal funding.',
-            citation: '40 CFR Part 1500–1508 (NEPA CEQ rules); 54 USC §306108 (NHPA §106); 16 USC §1536 (ESA §7).',
+            citation: '42 USC §4321 et seq. (NEPA); 54 USC §306108 (NHPA §106); 16 USC §1536 (ESA §7). [Note: CEQ regulations at 40 CFR Parts 1500–1508 were removed effective January 8, 2026 — cite to statutory authority and current agency guidance.]',
           },
           {
             id: 'T09-L01-Q2',
@@ -452,7 +455,7 @@ export default function T09L01_ThePermittingLayerCake() {
             answerIndex: 1,
             explanation:
               'The book rule is sequential in approval, not in submission. Experienced permitting teams submit to all agencies simultaneously to compress the schedule. The DOT may issue the encroachment permit before NEPA concludes — but construction on that DOT-permitted segment cannot begin until the NEPA review also clears (because the federal nexus from BEAD funding applies to the entire project). Parallelizing submissions while enforcing the approval sequence is standard practice.',
-            citation: 'M03 §3.1 (permit timeline management); 40 CFR §1506.1 (NEPA — no irreversible actions before NEPA conclusion).',
+            citation: 'M03 §3.1 (permit timeline management); 42 USC §4332 (NEPA — no irreversible commitments before review conclusion). [CEQ §1506.1 formerly codified at 40 CFR §1506.1; removed effective January 8, 2026 — verify current NEPA guidance at ceq.doe.gov.]',
           },
           {
             id: 'T09-L01-Q3',

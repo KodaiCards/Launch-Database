@@ -119,6 +119,18 @@ export default function T09L05_USACEWetlandsNWP57() {
           utility lines moved to NWP 57 in the 2021 nationwide permit reissuance. Any team
           citing "NWP 12 for fiber" is working from outdated guidance.
         </p>
+        <div className="mt-3 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-1">2026 NWP Reissuance — Now Operative</p>
+          <p className="text-slate-300/90">
+            Nationwide permits are reissued on 5-year cycles. The 2021 reissuance (which established
+            NWP 57 for telecom) expired March 14, 2026. The 2026 reissuance (FR 2026-00121) is now
+            the operative NWP authority. This lesson teaches the general framework (NWP 57 for telecom,
+            PCN triggers, thresholds) which carries forward, but specific conditions, thresholds, and
+            NWP numbering may change in each reissuance. Always verify current NWP number, conditions,
+            and PCN thresholds at https://www.usace.army.mil/Missions/Civil-Works/Regulatory-Program-and-Permits/Nationwide-Permits/
+            before relying on any specific permit condition.
+          </p>
+        </div>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">

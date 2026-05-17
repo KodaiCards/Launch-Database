@@ -132,9 +132,46 @@ export default function T09L08_MunicipalRowTimelinesReality() {
       {/* FLASHCARDS */}
       <section data-tier="foundations">
         <h3>Key Terms — Flashcards</h3>
-        {meta.key_terms.map(({ term, definition }) => (
-          <Flashcard key={term} term={term} definition={definition} />
-        ))}
+        <Flashcard
+          deckId="T09-L08"
+          cards={[
+            {
+              id: 'T09-L08-fc-franchise',
+              front: 'What is a franchise agreement and when is it required for fiber ISPs?',
+              back: 'A contract between a municipality and a telecommunications carrier granting the carrier the right to use the public ROW in exchange for conditions such as franchise fees, build-out commitments, and public benefit requirements. Historically required for cable TV operators; now contested for modern internet service providers — 47 USC §253(a) limits municipalities from using franchise requirements to block market entry indefinitely.',
+            },
+            {
+              id: 'T09-L08-fc-fiber-fee',
+              front: 'What is a municipal fiber fee and how does it differ from a permit fee?',
+              back: 'A per-linear-foot, per-mile, or percentage-of-revenue charge levied by a municipality for fiber installed in the public right-of-way. Distinct from a permit fee (one-time processing cost) — a municipal fiber fee is an ongoing or recurring charge for occupying the ROW.',
+            },
+            {
+              id: 'T09-L08-fc-bond',
+              front: 'What is an ROW restoration bond?',
+              back: 'A performance bond or cash deposit required by a municipality as a condition of a ROW permit. The bond guarantees that the permittee will restore pavement, curbs, sidewalks, and landscaping to their pre-construction condition. Released after final inspection.',
+            },
+            {
+              id: 'T09-L08-fc-ordinance',
+              front: 'What is a ROW ordinance?',
+              back: 'A local law that governs how utilities and telecommunications providers use the public right-of-way — covering permit requirements, fees, performance bonds, restoration standards, and construction timing restrictions.',
+            },
+            {
+              id: 'T09-L08-fc-moratorium',
+              front: 'What is a pavement cut moratorium and what construction method does it force?',
+              back: 'A municipal restriction prohibiting new utility cuts in a recently resurfaced street for a defined period — typically 3–7 years after repaving. If your route crosses a moratorium street, you may be required to bore under it rather than open-cut, at significantly higher cost.',
+            },
+            {
+              id: 'T09-L08-fc-noise',
+              front: 'What is a noise ordinance and how does it affect OSP construction?',
+              back: 'A local law limiting construction noise during certain hours — typically restricting heavy equipment operation before 7:00 AM and after 9:00 PM on weekdays, with tighter restrictions on weekends and holidays. Violations result in fines and stop-work orders.',
+            },
+            {
+              id: 'T09-L08-fc-workzone',
+              front: 'What is a work-zone permit and how does it differ from a ROW encroachment permit?',
+              back: 'A traffic control permit issued by the municipality or state DOT authorizing the use of travel lanes or parking lanes as a work zone. Required when construction equipment or excavation occupies a portion of a public road. Separate from the ROW encroachment permit.',
+            },
+          ]}
+        />
       </section>
 
       <section data-tier="working">
@@ -326,6 +363,28 @@ export default function T09L08_MunicipalRowTimelinesReality() {
           not a first response. Informal escalation — phone calls to the right manager, a visit to
           the public works office — resolves most delays faster than a legal letter.
         </p>
+
+        <div className="mt-5 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Active Regulatory Proceeding — FCC §253 Wireline Preemption (2025)</p>
+          <p className="text-slate-300/90">
+            In September 2025, the FCC launched a Notice of Inquiry (NOI) in WC Docket No. 25-253
+            examining the scope of Section 253 of the Communications Act (47 USC §253) as applied to
+            wireline broadband providers. The proceeding is examining whether the FCC should clarify
+            or expand its preemption of state and local requirements — including franchise conditions,
+            ROW fees, and permit conditions — that may effectively prohibit broadband deployment.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Practical implication:</strong> If this proceeding results in an FCC order expanding
+            §253 preemption, some municipal franchise fees, recurring ROW occupancy charges, and
+            franchise-as-a-prerequisite conditions currently common in fiber permitting may become
+            legally challengeable. Verify the current state of WC Docket 25-253 at the time of project
+            execution — a new FCC order could change the legal landscape for municipal ROW negotiations.
+          </p>
+          <p className="text-slate-300/90 mt-2 text-xs text-slate-400">
+            Source: FCC WC Docket No. 25-253, Notice of Inquiry (September 2025). Check FCC ECFS for
+            current proceeding status: https://www.fcc.gov/ecfs/search/search-filings/filing?q=%2225-253%22
+          </p>
+        </div>
       </section>
 
       {/* BRANCHING SCENARIO */}

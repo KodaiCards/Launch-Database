@@ -112,14 +112,84 @@ export default function T09L09_TribalCoordinationThpoNho() {
             significance.
           </li>
         </ul>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">THPO</td>
+              <td className="px-3 py-2">Tribal Historic Preservation Officer</td>
+              <td className="px-3 py-2">The tribal equivalent of the SHPO; assumes SHPO role on tribal lands when an approved program exists</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">NHO</td>
+              <td className="px-3 py-2">Native Hawaiian Organization</td>
+              <td className="px-3 py-2">Representative body for Native Hawaiian interests in NHPA Section 106 consultation</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">BIA</td>
+              <td className="px-3 py-2">Bureau of Indian Affairs</td>
+              <td className="px-3 py-2">Federal agency maintaining tribal land boundary information and area-of-concern data</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">NATHPO</td>
+              <td className="px-3 py-2">National Association of Tribal Historic Preservation Officers</td>
+              <td className="px-3 py-2">Maintains the THPO directory used to identify which tribes have approved THPO programs</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">ACHP</td>
+              <td className="px-3 py-2">Advisory Council on Historic Preservation</td>
+              <td className="px-3 py-2">Federal agency that publishes the Section 106 Tribal Handbook and oversees NHPA §106 compliance</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       {/* FLASHCARDS */}
       <section data-tier="foundations">
         <h3>Key Terms — Flashcards</h3>
-        {meta.key_terms.map(({ term, definition }) => (
-          <Flashcard key={term} term={term} definition={definition} />
-        ))}
+        <Flashcard
+          deckId="T09-L09"
+          cards={[
+            {
+              id: 'T09-L09-fc-thpo',
+              front: 'What is a THPO and when does it replace the SHPO in Section 106?',
+              back: 'Tribal Historic Preservation Officer — the official designated by a federally recognized tribe to perform functions equivalent to the SHPO for historic properties on tribal lands or within a tribe\'s area of traditional cultural concern. When a THPO has been designated, the tribe assumes SHPO-equivalent authority for the Section 106 process on their lands.',
+            },
+            {
+              id: 'T09-L09-fc-nho',
+              front: 'What is an NHO and when does NHO consultation apply?',
+              back: 'Native Hawaiian Organization — an organization that serves and represents the interests of Native Hawaiians under the NHPA. NHOs are consulting parties in the Section 106 process for undertakings affecting historic properties in Hawaii or affecting Native Hawaiian ancestral, cultural, or religious sites outside Hawaii.',
+            },
+            {
+              id: 'T09-L09-fc-g2g',
+              front: 'What is government-to-government consultation and why does it differ from SHPO consultation?',
+              back: 'A formal consultation process conducted between the federal government and a sovereign tribal government or NHO. Reflects the nation-to-nation relationship between the United States and federally recognized tribes. Distinct from SHPO consultation — tribal governments have sovereign standing that typically requires more formal communication, higher-level federal officials, and longer timelines.',
+            },
+            {
+              id: 'T09-L09-fc-sacred-sites',
+              front: 'What are sacred sites and what federal protection applies?',
+              back: 'Specific geographic locations of established religious or cultural significance to a tribal community. Executive Order 13007 (Indian Sacred Sites) directs federal agencies to accommodate access to and ceremonial use of sacred sites, and to avoid adversely affecting their physical integrity. Fiber routes through or near sacred sites can trigger additional consultation beyond the standard Section 106 process.',
+            },
+            {
+              id: 'T09-L09-fc-protocol',
+              front: 'What is a government-to-government protocol?',
+              back: 'A written or established set of procedures defining how formal government-to-government consultation is conducted between a federal agency and a tribal nation. Specifies who contacts whom, what documentation is required, timelines for response, and how disagreements are escalated. Many tribes publish their own consultation protocols on tribal government websites.',
+            },
+            {
+              id: 'T09-L09-fc-achp-handbook',
+              front: 'What is the ACHP Tribal Handbook?',
+              back: 'The Advisory Council on Historic Preservation\'s publication "Consultation with Indian Tribes in the Section 106 Review Process: A Handbook" — a publicly available guidance document explaining tribal consultation requirements, timing, and best practices under Section 106 of the NHPA. Available at achp.gov (verify current edition at time of project execution).',
+            },
+          ]}
+        />
       </section>
 
       <section data-tier="working">
@@ -212,8 +282,8 @@ export default function T09L09_TribalCoordinationThpoNho() {
             on their websites specifying exactly how they want to be contacted, what information
             they need, and how much time they require to respond. Following the tribe's protocol
             is not optional — it's the procedurally correct approach under federal policy
-            (see Presidential Memorandum on Tribal Consultation, November 2009, and the 2022
-            update — verify current federal guidance at the time of project execution).
+            (see Presidential Memorandum on Tribal Consultation, January 26, 2021, 86 FR 7667
+            — verify current federal guidance at the time of project execution).
           </li>
           <li>
             <strong>Extended timeline for response.</strong> While the SHPO has a defined 30-day

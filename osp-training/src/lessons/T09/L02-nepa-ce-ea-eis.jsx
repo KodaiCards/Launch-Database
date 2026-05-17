@@ -37,7 +37,7 @@ export const meta = {
     {
       term: 'NEPA',
       definition:
-        'National Environmental Policy Act — the 1969 federal law (42 USC §4321 et seq.) that requires federal agencies to analyze the environmental effects of their actions before proceeding. For OSP fiber projects, NEPA applies whenever there is a federal nexus (BEAD funding, RUS loans, USACE permits). The Council on Environmental Quality (CEQ) implements NEPA through regulations at 40 CFR Part 1500–1508.',
+        'National Environmental Policy Act — the 1969 federal law (42 USC §4321 et seq.) that requires federal agencies to analyze the environmental effects of their actions before proceeding. For OSP fiber projects, NEPA applies whenever there is a federal nexus (BEAD funding, RUS loans, USACE permits). The Council on Environmental Quality (CEQ) has historically implemented NEPA through agency-specific regulations; the CEQ\'s own implementing regulations previously codified at 40 CFR Parts 1500–1508 were removed effective January 8, 2026. Verify current NEPA implementing guidance at ceq.doe.gov and with the applicable lead federal agency at time of project.',
     },
     {
       term: 'categorical exclusion (CE)',
@@ -67,7 +67,7 @@ export const meta = {
     {
       term: 'CE C-8',
       definition:
-        'A categorical exclusion specific to NTIA and USDA/RUS programs covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. CE C-8 applies to most standard fiber route deployment in existing utility corridors. It eliminates the need for an EA or EIS provided no extraordinary circumstances are present. [Confirm current CE designation against NTIA and 7 CFR 1970.54 at time of project.]',
+        'CE C-8 is a categorical exclusion designation in USDA/RUS regulations (7 CFR Part 1b, formerly 7 CFR Part 1970) covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It eliminates the need for an EA or EIS for RUS-financed fiber projects provided no extraordinary circumstances are present. Important: CE C-8 is RUS nomenclature. NTIA did not adopt CE C-8 for BEAD — NTIA\'s 2024 CE rulemaking explicitly excluded CE C-8, noting that the actions it covers are encompassed by existing Commerce Department-level CEs. BEAD projects use Commerce Dept-level CEs, not CE C-8. Verify the applicable CE designation with the lead federal agency (RUS or NTIA/state broadband office) at time of project.',
     },
     {
       term: 'ESAPTT',
@@ -177,7 +177,7 @@ export default function T09L02_NepaTypes() {
             {
               id: 'T09-L02-fc-nepa',
               front: 'What is NEPA and when does it apply to a fiber project?',
-              back: 'National Environmental Policy Act — the 1969 federal law (42 USC §4321 et seq.) that requires federal agencies to analyze the environmental effects of their actions before proceeding. For OSP fiber projects, NEPA applies whenever there is a federal nexus (BEAD funding, RUS loans, USACE permits). The Council on Environmental Quality (CEQ) implements NEPA through regulations at 40 CFR Part 1500–1508.',
+              back: 'National Environmental Policy Act — the 1969 federal law (42 USC §4321 et seq.) that requires federal agencies to analyze the environmental effects of their actions before proceeding. For OSP fiber projects, NEPA applies whenever there is a federal nexus (BEAD funding, RUS loans, USACE permits). CEQ\'s own NEPA implementing regulations (formerly at 40 CFR Parts 1500–1508) were removed effective January 8, 2026 — verify current guidance at ceq.doe.gov and with the lead federal agency at time of project.',
             },
             {
               id: 'T09-L02-fc-ce',
@@ -206,8 +206,8 @@ export default function T09L02_NepaTypes() {
             },
             {
               id: 'T09-L02-fc-ce-c8',
-              front: 'What is CE C-8 and what does it cover?',
-              back: 'A categorical exclusion specific to NTIA and USDA/RUS programs covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. CE C-8 applies to most standard fiber route deployment in existing utility corridors. It eliminates the need for an EA or EIS provided no extraordinary circumstances are present. [Confirm current CE designation against NTIA and 7 CFR 1970.54 at time of project.]',
+              front: 'What is CE C-8 and who uses it?',
+              back: 'CE C-8 is a USDA/RUS categorical exclusion designation (7 CFR Part 1b, formerly 7 CFR Part 1970) covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It is RUS nomenclature — NTIA did not adopt CE C-8 for BEAD; NTIA uses Commerce Department-level CEs instead. For RUS-financed fiber projects, CE C-8 eliminates the need for an EA or EIS provided no extraordinary circumstances are present. Verify the applicable CE designation with the lead federal agency at time of project.',
             },
           ]}
         />
@@ -345,8 +345,9 @@ export default function T09L02_NepaTypes() {
           the human environment" (42 USC §4332(C)).
         </p>
         <p className="mt-2">
-          "Significantly" is defined in CEQ regulations (40 CFR §1508.27) along two
-          dimensions:
+          "Significantly" has been defined in CEQ regulations (historically at 40 CFR §1508.27,
+          which was removed effective January 8, 2026) along two dimensions that remain the
+          substantive standard even as the regulatory text changed:
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
           <li>
@@ -368,29 +369,51 @@ export default function T09L02_NepaTypes() {
           public scrutiny.
         </p>
 
-        <h3 className="mt-5 font-semibold">RUS vs. NTIA NEPA procedures — same CE, different process</h3>
+        <h3 className="mt-5 font-semibold">RUS vs. NTIA NEPA procedures — related but not identical</h3>
         <p>
-          Both USDA/RUS and NTIA have adopted CE C-8 (or equivalent) for utility
-          communications construction in existing ROW, but their implementing procedures
-          differ:
+          USDA/RUS and NTIA both have CE procedures for utility communications construction
+          in existing ROW, but they use different CE frameworks and implementing procedures:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
           <li>
-            <strong>RUS:</strong> 7 CFR Part 1970 (Environmental Policies and Procedures,
-            2016 rule). RUS CE checklist and extraordinary-circumstances review are
-            agency-internal processes coordinated with the RUS Area Director.
+            <strong>RUS:</strong> 7 CFR Part 1b (effective April 3, 2026; replaced 7 CFR Part
+            1970, 2016 rule). RUS uses its own CE designation (CE C-8 is RUS nomenclature).
+            CE checklist and extraordinary-circumstances review are agency-internal processes
+            coordinated with the RUS Area Director.
           </li>
           <li>
-            <strong>NTIA/BEAD:</strong> NTIA-approved state NEPA processes vary by state
-            BEAD plan. Some states have negotiated programmatic NEPA agreements (PAs) with
-            NTIA that cover the entire state program. Verify the state's specific NEPA
-            process with the NTIA-approved state broadband office before starting.
+            <strong>NTIA/BEAD:</strong> NTIA's 2024 CE rulemaking adopted Commerce
+            Department-level CEs — it explicitly did NOT adopt CE C-8, noting that CE C-8
+            actions are covered by existing Department-wide CEs. NTIA/state broadband office
+            NEPA processes vary by state BEAD plan. Verify the state's specific NEPA process
+            with the NTIA-approved state broadband office before starting.
           </li>
         </ul>
+
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">FCC CE for Aerial Fiber — 47 CFR §1.1306</p>
+          <p className="text-slate-300/90">
+            NEPA applies to fiber projects with a federal nexus from BEAD or RUS funding. But
+            what about fiber projects with a federal nexus from an FCC license or authorization?
+            The FCC has its own NEPA implementing rules (47 CFR Part 1, Subpart I). Under
+            47 CFR §1.1306, a categorical exclusion applies to "construction of new or modified
+            [antenna] facilities" that fall below specified thresholds — and by extension,
+            aerial fiber installations on existing pole infrastructure in existing corridors.
+            For OSP projects that require FCC authorization (licensed spectrum, microwave backhaul,
+            or facilities subject to FCC environmental review), 47 CFR §1.1306 is the applicable
+            CE — not CE C-8. Confirm with the applicable FCC authorization bureau when a federal
+            nexus flows from an FCC action rather than a USDA or NTIA funding source.
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Source: 47 CFR §1.1306 (FCC environmental NEPA CE); verify current applicability
+            at ecfr.gov and with the relevant FCC bureau at time of project.
+          </p>
+        </div>
+
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: 7 CFR Part 1970 (81 FR 11024, effective March 2, 2016) [confirm current
-          edition against ecfr.gov at time of project]. NTIA BEAD procedures [confirm with
-          state's BEAD volume 2 environmental compliance documents at time of project].
+          Source: 7 CFR Part 1b (effective April 3, 2026; FR 2026-06537) [verify current
+          section numbers against ecfr.gov at time of project]. NTIA BEAD procedures [confirm
+          with state's BEAD volume 2 environmental compliance documents at time of project].
         </p>
       </section>
 

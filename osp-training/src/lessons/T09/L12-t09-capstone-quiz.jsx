@@ -166,7 +166,7 @@ export default function T09L12_CapstoneQuiz() {
             id: 'T09-CAP-Q06',
             type: 'mc',
             prompt:
-              'Which nationwide permit covers fiber optic cable installation in wetlands and waters of the U.S. as of the 2021 USACE reissuance?',
+              'Which nationwide permit covers fiber optic cable installation in wetlands and waters of the U.S.?',
             choices: [
               'NWP 12 — the standard utility line nationwide permit',
               'NWP 57 — the telecom/electric utility line activities permit that replaced NWP 12 coverage for telecom in the 2021 reissuance',
@@ -175,7 +175,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'The 2021 USACE nationwide permit reissuance moved telecom and electric utility activities from NWP 12 to NWP 57. NWP 12 now covers oil and gas pipeline activities only. Fiber optic cable installation in wetlands and waters of the US uses NWP 57 (verify current permit number and conditions against current USACE reissuance at time of project — permits are reissued on 5-year cycles). T09.L05.',
+              'The 2021 USACE nationwide permit reissuance moved telecom and electric utility activities from NWP 12 to NWP 57. NWP 12 now covers oil and gas pipeline activities only. Note: The 2021 reissuance expired March 14, 2026; the 2026 reissuance (FR 2026-00121) is now operative. Fiber optic cable installation in wetlands and waters of the US falls under the utility line activities NWP — verify current permit number and conditions against the active USACE NWP reissuance at time of project, as NWPs are reissued on 5-year cycles. T09.L05.',
           },
           // L07: easement type
           {

@@ -119,9 +119,41 @@ export default function T09L10_PermitTrackingPmProblem() {
       {/* FLASHCARDS */}
       <section data-tier="foundations">
         <h3>Key Terms — Flashcards</h3>
-        {meta.key_terms.map(({ term, definition }) => (
-          <Flashcard key={term} term={term} definition={definition} />
-        ))}
+        <Flashcard
+          deckId="T09-L10"
+          cards={[
+            {
+              id: 'T09-L10-fc-permit-log',
+              front: 'What is a permit log and what does it track?',
+              back: 'A project management record tracking every permit required for a project — type of permit, submitting agency, submission date, expected review period, receipt-acknowledged date, status, and actual issuance date. The permit log is the PM\'s primary tool for monitoring the permitting critical path.',
+            },
+            {
+              id: 'T09-L10-fc-shot-clock',
+              front: 'What is a shot clock in the FCC sense?',
+              back: 'A defined maximum review period imposed on a governmental authority by federal regulation, after which the authority is deemed to have approved the application or is subject to legal challenge. FCC shot clocks apply to wireless tower siting (47 USC §332(c)(7)(B)(ii)), certain wireline ROW access, and make-ready under FCC 18-111 (OTMR Order).',
+            },
+            {
+              id: 'T09-L10-fc-critical-path',
+              front: 'What is the permit critical path?',
+              back: 'The single permit (or sequence of permits) that determines the earliest possible construction start date. When multiple permits are in review simultaneously, the critical-path permit is the one with the latest expected completion date — all other permits will be issued before it, leaving the project waiting on the critical-path permit alone.',
+            },
+            {
+              id: 'T09-L10-fc-otmr',
+              front: 'What is the OTMR interface in permit tracking?',
+              back: 'The intersection between the fiber project\'s municipal ROW permitting and the make-ready (pole attachment) permitting processes. OTMR (One-Touch Make-Ready) is the FCC framework (FCC 18-111) governing how quickly pole owners must process make-ready requests. When both a ROW permit and a make-ready permit are in parallel, the PM must track both clocks and determine which is the critical path.',
+            },
+            {
+              id: 'T09-L10-fc-lag',
+              front: 'What is the permit-to-construction date lag?',
+              back: 'The time between permit issuance and the first day of construction. Even after a permit is issued, the construction crew may not be able to mobilize immediately — contractor scheduling, material lead times, and weather windows create a practical lag. This lag must be included in the project schedule alongside the permit review periods.',
+            },
+            {
+              id: 'T09-L10-fc-matrix',
+              front: 'What is a permit matrix?',
+              back: 'A tabular or timeline-based tool showing all permits required for a project, their submission dates, review periods, and expected issuance dates displayed in parallel. The permit matrix visualizes which permits overlap, which are sequential dependencies, and which is the critical path.',
+            },
+          ]}
+        />
       </section>
 
       <section data-tier="working">

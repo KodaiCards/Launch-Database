@@ -135,9 +135,51 @@ export default function T09L07_RowEasementsPrivateProperty() {
       <section data-tier="foundations">
         <h3>Key Terms — Flashcards</h3>
         <p>Review each term before continuing. These are the building blocks for the rest of this lesson.</p>
-        {meta.key_terms.map(({ term, definition }) => (
-          <Flashcard key={term} term={term} definition={definition} />
-        ))}
+        <Flashcard
+          deckId="T09-L07"
+          cards={[
+            {
+              id: 'T09-L07-fc-prescriptive',
+              front: 'What is a prescriptive easement and why is it risky for OSP routes?',
+              back: 'A property right arising from continuous, open, and hostile use of someone else\'s land over a statutory period (commonly 10 years, varies by state). Not recorded at time of creation — emerges over time and is recorded after the fact or confirmed by court order. Risky because it relies on historical use rather than documented agreement.',
+            },
+            {
+              id: 'T09-L07-fc-express',
+              front: 'What is an express easement and why is it the gold standard for fiber routes?',
+              back: 'A written, signed, and legally recorded agreement granting a specific party the right to use a defined strip of private land for a stated purpose (such as installing and maintaining fiber optic cable). Express easements are the gold standard for fiber routes across private property because they are recorded and bind future property owners.',
+            },
+            {
+              id: 'T09-L07-fc-license',
+              front: 'What is a license (property access) and what makes it high-risk for long-term OSP?',
+              back: 'A revocable permission granted by a property owner allowing a specific party to use the property for a limited purpose. Unlike an easement, a license is personal, generally not recorded, and can be revoked at will by the property owner — making it a high-risk long-term access instrument.',
+            },
+            {
+              id: 'T09-L07-fc-fee-simple',
+              front: 'What is fee-simple acquisition and when is it used in OSP?',
+              back: 'The purchase of full ownership of a parcel or strip of land, conveying all property rights to the buyer. Fee-simple gives the acquirer absolute ownership and control, including the right to exclude others. Used for major OSP facilities (equipment buildings, splice vaults) where permanent exclusive use is required.',
+            },
+            {
+              id: 'T09-L07-fc-dedication',
+              front: 'What is dedication and how does it relate to public ROW?',
+              back: 'The voluntary transfer of private land to the public (city, county, state) for public use — typically as part of a subdivision or development approval. Dedicated ROW becomes public right-of-way, meaning fiber installers can use it under a standard encroachment permit rather than acquiring a private easement.',
+            },
+            {
+              id: 'T09-L07-fc-grantor',
+              front: 'In an easement, who is the grantor?',
+              back: 'The property owner who grants the easement right to another party. The grantor signs the easement document and retains ownership of the underlying land while giving up specific use rights over the easement strip.',
+            },
+            {
+              id: 'T09-L07-fc-grantee',
+              front: 'In an easement, who is the grantee?',
+              back: 'The party receiving the easement right — typically the telecommunications company or utility. The grantee gains the right to use, access, and maintain the easement strip for the stated purpose.',
+            },
+            {
+              id: 'T09-L07-fc-recording',
+              front: 'What does "recording" an easement mean and why does it matter?',
+              back: 'The official filing of a signed easement document with the county recorder\'s office (or equivalent jurisdiction), creating a public record. Once recorded, the easement "runs with the land," meaning it survives property sales and binds future owners — the new owner cannot invalidate it.',
+            },
+          ]}
+        />
       </section>
 
       <section data-tier="working">
