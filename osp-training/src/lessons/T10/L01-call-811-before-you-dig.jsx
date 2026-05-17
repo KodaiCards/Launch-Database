@@ -1,0 +1,443 @@
+// T10.L01 — Call-811 Before You Dig
+// Foundation lesson: one-call notification, APWA color code, private laterals, ticket validity
+// Source: M09 §9.1 (migrated) + CGA Best Practices v20.0 + net-new expansion
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T10.L01',
+  course_id: 'T10',
+  title: 'Call-811 Before You Dig',
+  order: 1,
+  lesson_type: 'foundation',
+  prerequisites: ['T01.L01', 'T09.L01', 'T18.L08'],
+  learning_objectives: [
+    'Explain the legal requirement to call 811 before any ground disturbance and the consequences of skipping it',
+    'Identify the APWA Uniform Color Code for all eight utility types',
+    'Distinguish what 811 DOES locate (member utilities) versus what it does NOT (private laterals, irrigation, propane service lines)',
+    'Describe what a locate ticket is, who issues it, and what a ticket validity window means',
+    'Apply the hand-expose / daylight requirement before mechanized excavation at unmarked or uncertain crossings',
+  ],
+  estimated_minutes: 25,
+  vocabulary_introduced: [
+    'Call-811',
+    'locate ticket',
+    'APWA color code',
+    'ticket validity window',
+    'CGA',
+    'daylight',
+    'sleeve',
+  ],
+  key_terms: [
+    {
+      term: 'Call-811',
+      definition:
+        'The national one-call phone number (811 in the US) used to notify underground utility owners before any excavation. The notification triggers locate crews to mark the approximate location of buried utilities with paint or flags using the APWA color code. Required by law in all 50 states before any ground disturbance.',
+    },
+    {
+      term: 'locate ticket',
+      definition:
+        'The official record generated when you call 811. It documents the excavation location, scope, and start date; triggers notification to all member utilities; and has a validity window after which the marks expire and a new ticket must be called before digging continues.',
+    },
+    {
+      term: 'APWA color code',
+      definition:
+        'American Public Works Association uniform color standard for temporary marking of underground utilities. Eight colors: White = proposed excavation area; Pink = temporary survey markings; Red = electric power / lighting; Yellow = gas, oil, steam, petroleum; Orange = communications (fiber, cable TV, telephone, alarm); Blue = potable water; Purple = reclaimed water / irrigation / slurry; Green = sewer / drain lines.',
+    },
+    {
+      term: 'ticket validity window',
+      definition:
+        'The state-specified period during which locate marks from a 811 ticket are considered valid and excavation may proceed. Ranges from 10 business days (many states) to 28 calendar days depending on jurisdiction. If excavation has not started or is not complete before the window expires, a new ticket must be called.',
+    },
+    {
+      term: 'CGA',
+      definition:
+        'Common Ground Alliance — the nonprofit organization that administers the 811 damage-prevention system in North America, publishes the Best Practices guide, and collects the annual DIRT (Damage Information Reporting Tool) Report tracking underground utility strikes nationally.',
+    },
+    {
+      term: 'daylight',
+      definition:
+        'To hand-expose a buried utility by careful hand digging (or soft-dig vacuum excavation) to visually confirm its exact location and depth before proceeding with mechanized equipment. Required by CGA Best Practices and most state laws within a tolerance zone around any marked utility or at any crossing of an unmarked private utility.',
+    },
+    {
+      term: 'sleeve',
+      definition:
+        'A protective conduit section placed around a cable at road crossings, stream crossings, or other high-risk zones. Provides mechanical protection and allows future cable replacement without re-boring.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'OSP', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'AHJ', source_lesson_id: 'T09.L01' },
+    { term: 'encroachment permit', source_lesson_id: 'T09.L01' },
+    { term: 'MUTCD', source_lesson_id: 'T18.L08' },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+
+export const key_terms = meta.key_terms;
+
+export default function T10L01_Call811BeforeYouDig() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Before your crew digs a single shovel of dirt or pushes a single HDD bore, you are
+          required by law to call 811. That's the nationwide "call before you dig" number. When
+          you call, utility companies that have buried infrastructure in your work area send
+          locate crews to spray-paint or flag the ground where their pipes and cables run. You
+          don't dig until those marks are down.
+        </p>
+        <p className="mt-2">
+          This isn't a formality. CGA's 2024 DIRT Report tracked{' '}
+          <strong>196,977 underground utility strikes</strong> in the US in a single year —
+          and 24.5% of them happened because the excavator never called 811. Striking a gas
+          main kills people. Striking a power line kills people. Striking a fiber backbone
+          cable takes down internet for thousands of customers and generates massive liability.
+          The law and common sense say the same thing: call first.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Acronym</th>
+              <th className="px-3 py-2 text-left">Full name</th>
+              <th className="px-3 py-2 text-left">What it means in practice</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">811</td>
+              <td className="px-3 py-2">National one-call number</td>
+              <td className="px-3 py-2">The number you call before every excavation. Free. Required by law.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">CGA</td>
+              <td className="px-3 py-2">Common Ground Alliance</td>
+              <td className="px-3 py-2">The nonprofit that runs the 811 system and tracks utility-strike data nationally</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">APWA</td>
+              <td className="px-3 py-2">American Public Works Association</td>
+              <td className="px-3 py-2">The organization that defined the eight-color utility marking standard used nationwide</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">DIRT</td>
+              <td className="px-3 py-2">Damage Information Reporting Tool</td>
+              <td className="px-3 py-2">CGA's annual report on underground utility strikes — the data source for why 811 matters</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Flashcards — vocabulary_introduced */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-3">Key Terms</h3>
+          <Flashcard
+            deckId="T10-L01"
+            cards={[
+              {
+                id: 'T10-L01-fc-call-811',
+                front: 'What is 811 and when are you legally required to call it?',
+                back: 'The national one-call phone number used to notify underground utility owners before any excavation. Required by law in all 50 states before any ground disturbance. Calling triggers locate crews to mark the approximate location of buried utilities with APWA color-coded paint or flags.',
+              },
+              {
+                id: 'T10-L01-fc-locate-ticket',
+                front: 'What is a locate ticket and what does it contain?',
+                back: 'The official record generated when you call 811. It documents the excavation location, scope, and start date; triggers notification to all member utilities; and has a validity window after which the marks expire and a new ticket must be called before digging continues.',
+              },
+              {
+                id: 'T10-L01-fc-apwa',
+                front: 'What are the eight APWA color codes for underground utility marking?',
+                back: 'White = proposed excavation; Pink = temporary survey; Red = electric power/lighting; Yellow = gas, oil, steam, petroleum; Orange = communications (fiber, cable TV, phone, alarm); Blue = potable water; Purple = reclaimed water/irrigation/slurry; Green = sewer/drain.',
+              },
+              {
+                id: 'T10-L01-fc-ticket-validity',
+                front: 'What is a ticket validity window and what happens when it expires?',
+                back: 'The state-specified period during which locate marks from an 811 ticket are considered valid. Ranges from 10 business days to 28 calendar days depending on jurisdiction. If excavation has not started or is not complete before the window expires, a new ticket must be called.',
+              },
+              {
+                id: 'T10-L01-fc-cga',
+                front: 'What is the CGA and what data does it publish?',
+                back: 'Common Ground Alliance — the nonprofit that administers the 811 damage-prevention system. Publishes the Best Practices guide and the annual DIRT Report tracking underground utility strikes. The 2024 DIRT Report recorded 196,977 strikes nationally.',
+              },
+              {
+                id: 'T10-L01-fc-daylight',
+                front: 'What does it mean to "daylight" a utility and when is it required?',
+                back: 'To hand-expose a buried utility by careful hand digging or soft-dig vacuum excavation to visually confirm its exact location and depth before mechanized equipment. Required by CGA Best Practices and most state laws within the tolerance zone around any marked utility or at any crossing of an unmarked private utility.',
+              },
+              {
+                id: 'T10-L01-fc-sleeve',
+                front: 'What is a sleeve in OSP construction?',
+                back: 'A protective conduit section placed around a cable at road crossings, stream crossings, or other high-risk zones. Provides mechanical protection and allows future cable replacement without re-boring.',
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ── WORKING ─────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>How the 811 System Works</h2>
+
+        <h3 className="mt-4 font-semibold">Step 1 — Call (or click) before you dig</h3>
+        <p>
+          You call 811 (or submit online at your state's one-call portal) at least{' '}
+          <strong>two business days before excavation begins</strong> — earlier if your state
+          requires it. You describe the excavation: address, GPS coordinates, type of work,
+          start date, depth. The one-call center notifies every member utility that has
+          infrastructure in the area. Those utilities send locate crews.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Step 2 — Locate crews mark the ground</h3>
+        <p>
+          Within the notification period (typically two business days), each utility's locate
+          crew visits the site and spray-paints or flags the approximate path of their buried
+          lines using the APWA color code. "Approximate" is the key word — locate marks show
+          the <em>general area</em> of the utility, not its precise depth or horizontal
+          position. CGA Best Practices specifies an 18-24 inch tolerance zone on each side
+          of the mark.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Step 3 — Daylight before mechanized dig</h3>
+        <p>
+          Within the tolerance zone around any mark — typically 18-24 inches on each side —
+          you <strong>hand dig or soft-dig (vacuum excavate)</strong> before using any
+          mechanized equipment. This is the daylight step. You're visually confirming the
+          actual position of the utility before a backhoe bucket gets anywhere near it.
+        </p>
+
+        {/* AnnotatedDiagram — APWA color map */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-3">APWA Utility Color Code</h3>
+          <AnnotatedDiagram
+            imageUrl={null}
+            alt="APWA utility color code diagram"
+            width={700}
+            height={380}
+            annotations={[
+              {
+                id: 'white',
+                x: 48,
+                y: 30,
+                label: 'White',
+                description: 'Proposed excavation area — marks where YOUR work will occur so locate crews know where to check.',
+              },
+              {
+                id: 'pink',
+                x: 48,
+                y: 70,
+                label: 'Pink',
+                description: 'Temporary survey markings — reference points set by surveyors, not utility marks.',
+              },
+              {
+                id: 'red',
+                x: 48,
+                y: 110,
+                label: 'Red',
+                description: 'Electric power lines and lighting cables. Striking these can cause electrocution and arc-flash explosions.',
+              },
+              {
+                id: 'yellow',
+                x: 48,
+                y: 150,
+                label: 'Yellow',
+                description: 'Gas, oil, steam, and petroleum products. These are the ones that explode or burn. Treat yellow marks with extreme caution.',
+              },
+              {
+                id: 'orange',
+                x: 390,
+                y: 30,
+                label: 'Orange',
+                description: 'Communications: fiber optic, cable TV, telephone, alarm systems. This is your fiber cable. Orange marks can be from the utility that owns the existing plant.',
+              },
+              {
+                id: 'blue',
+                x: 390,
+                y: 70,
+                label: 'Blue',
+                description: 'Potable water lines. Striking these causes flooding, erosion, and service disruption.',
+              },
+              {
+                id: 'purple',
+                x: 390,
+                y: 110,
+                label: 'Purple',
+                description: 'Reclaimed water, irrigation, or slurry lines. Not potable but still a pressurized hazard.',
+              },
+              {
+                id: 'green',
+                x: 390,
+                y: 150,
+                label: 'Green',
+                description: 'Sewer and drain lines. Striking these causes sewage spills, regulatory violations, and health hazards.',
+              },
+            ]}
+          />
+          <p className="text-sm text-slate-400 mt-2">
+            Source: CGA Marking Standards Manual v10; APWA Uniform Color Code for Temporary Marking of Underground Facilities.
+          </p>
+        </div>
+
+        <h3 className="mt-6 font-semibold">The critical gap: what 811 does NOT cover</h3>
+        <p>
+          Here's the thing crews get wrong: <strong>811 only locates member utilities.</strong>{' '}
+          A "member utility" is a company or municipality that has registered with the one-call
+          system and pays to be part of it. Large electric companies, gas utilities, municipal
+          water systems, and major telecom carriers are almost always members. But:
+        </p>
+        <ul className="list-disc list-inside mt-2 space-y-1 text-slate-300">
+          <li><strong>Private irrigation systems</strong> — homeowner or farm irrigation lines are almost never registered</li>
+          <li><strong>Private propane service lines</strong> — the line from the road to a farmhouse tank is not in any one-call database</li>
+          <li><strong>Private electric laterals</strong> — the service drop from a utility pole to a barn or outbuilding</li>
+          <li><strong>Private water laterals</strong> — the water line from the main to a house</li>
+          <li><strong>Abandoned utilities</strong> — lines that were cut-off and left in place; may or may not be registered</li>
+        </ul>
+        <p className="mt-3 p-3 bg-amber-900/30 border border-amber-500/40 rounded-lg text-amber-200 text-sm">
+          <strong>Field reality:</strong> On rural residential construction, private irrigation and propane lines are the #1
+          cause of utility strikes. CGA DIRT data shows telecom facilities are struck in 49% of damage events — and a large
+          share of those are telecom companies striking OTHER companies' buried plant because the victim's lines weren't
+          in the one-call database. Your 811 ticket covers what's IN the system. Hand-expose every crossing at every property.
+        </p>
+
+        <h3 className="mt-6 font-semibold">Ticket validity window — don't let it expire</h3>
+        <p>
+          Your locate ticket is only valid for a state-specified window, typically{' '}
+          <strong>10 business days</strong> from the date locate marks were placed (Georgia, for
+          example, uses 10 business days). If your job runs longer — which almost every job does —
+          you must call a new ticket before the window expires. Excavating on an expired ticket
+          is legally the same as not calling at all.
+        </p>
+        <p className="mt-2">
+          The ticket validity trap: a crew calls 811 on Monday, locate marks go down Tuesday,
+          and the actual excavation doesn't start until two weeks later. Marks have faded from
+          rain and traffic. Ticket is expired. The crew digs anyway. If they strike a utility,
+          they are legally exposed. The fix is simple: re-call when the window is approaching,
+          before expiration.
+        </p>
+
+        {/* Quiz */}
+        <div className="mt-6">
+          <Quiz
+            id="T10-L01-quiz-1"
+            questions={[
+              {
+                id: 'q1',
+                text: 'Your 811 ticket is valid, all utilities are marked, and the locate marks are fresh. During excavation you notice an unmarked plastic pipe crossing your route. What do you do?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Continue — your 811 ticket covers all utilities in the area' },
+                  { id: 'b', text: 'Stop mechanized digging, hand-expose the crossing to identify the pipe before proceeding' },
+                  { id: 'c', text: 'Call 811 again and wait for a re-locate before doing anything' },
+                  { id: 'd', text: 'Mark the pipe orange and note it on your daily field report' },
+                ],
+                correctId: 'b',
+                explanation:
+                  '811 only locates member utilities — registered companies and municipalities. Private irrigation lines, propane service laterals, private water lines, and abandoned utilities are NOT in the one-call system and will NOT be marked. An unmarked pipe is almost certainly a private facility. Stop mechanized digging, hand-expose the crossing, and identify what you have before proceeding. Continuing with the backhoe can strike a gas line or energized service drop.',
+              },
+              {
+                id: 'q2',
+                text: 'What color flag/paint marks a buried fiber optic cable under the APWA color code?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Red — electric/power' },
+                  { id: 'b', text: 'Blue — water' },
+                  { id: 'c', text: 'Orange — communications (fiber, cable TV, telephone, alarm)' },
+                  { id: 'd', text: 'Yellow — gas/petroleum' },
+                ],
+                correctId: 'c',
+                explanation:
+                  'Orange is the APWA color for all communications utilities: fiber optic, cable TV, telephone, and alarm systems. This means your fiber cable gets marked orange — and so does the existing telecom plant you might strike if you\'re not careful.',
+              },
+              {
+                id: 'q3',
+                text: 'You called 811 on a Monday. The locate marks went down on Wednesday. Your state has a 10 business-day validity window. When does your ticket expire, and what must you do if excavation isn\'t complete by then?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'The ticket expires 10 calendar days after the Monday call; call a new ticket before digging more' },
+                  { id: 'b', text: 'The ticket expires 10 business days after Wednesday (the locate date); call a new ticket before continuing excavation after expiration' },
+                  { id: 'c', text: 'The ticket never expires; you only need to call once per project' },
+                  { id: 'd', text: 'The ticket expires 10 business days after Monday; digging can continue as long as the marks are still visible' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'Validity windows vary by state, but most run from the date the locates were placed (Wednesday in this example), not from when you called. The marks — and your legal right to dig — expire 10 business days from Wednesday. If your job isn\'t done by then, you must call a new ticket. Excavating on an expired ticket is the same as not calling at all, legally.',
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ── ADVANCED ─────────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Book vs. Field: When the Ticket Isn't Enough</h2>
+
+        <h3 className="mt-4 font-semibold">The book says: call 811, follow the marks</h3>
+        <p>
+          CGA Best Practices v20.0 (2024 edition) defines the standard process: submit a
+          locate request, wait the required notice period, verify all members have responded
+          (positive response system), then excavate within the tolerance zone using hand tools
+          before mechanized equipment. The process is sound and legally required.
+        </p>
+
+        <h3 className="mt-4 font-semibold">The field reality: private facilities kill people</h3>
+        <p>
+          On rural construction routes — where most RUS-funded fiber work happens — the
+          homestead model creates a web of private utilities that 811 will never see. A
+          1950s farmhouse might have a propane line buried 8 inches deep with no markings,
+          no registration, no record anywhere. The family that lives there knows where it is.
+          Nobody else does.
+        </p>
+        <p className="mt-2">
+          CGA Best Practices §7.2 addresses this explicitly: when you encounter an unmarked
+          crossing or have reason to believe a private utility exists (visible propane tank
+          nearby, irrigation heads in the field, electric service to a structure that has no
+          marked service entrance), you <strong>must hand-expose before mechanized digging.</strong>
+          This isn't advisory — in most states it's now codified in the state damage-prevention
+          law.
+        </p>
+
+        <h3 className="mt-4 font-semibold">CGA Best Practices tolerance zone rule</h3>
+        <p>
+          Within the tolerance zone (18–24 inches on each side of any mark), use hand tools only.
+          No backhoes, no trenchers, no plows, no boring rigs. The locate marks show the{' '}
+          <em>approximate</em> centerline, not the exact position. The utility could be offset
+          from the mark by a foot or more. Hand digging lets you find it before you cut it.
+        </p>
+        <p className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg text-blue-200 text-sm">
+          <strong>Advanced context:</strong> Several states (including Georgia) use a Positive
+          Response system — every member utility must electronically confirm it has either
+          (a) marked its facilities, (b) confirmed there are no facilities in the area, or
+          (c) requested more time, before the ticket is considered clear. Check your state's
+          one-call system for positive-response requirements before mobilizing. A ticket with
+          pending responses is not a clear-to-dig authorization.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Contractor liability when 811 fails</h3>
+        <p>
+          Even when you follow 811 perfectly, you can still be held liable for striking an
+          unmarked private utility — especially if a reasonable contractor would have known to
+          check. Visible evidence of a private utility (propane tank, irrigation control box,
+          fence energizer, electric junction box on a structure) creates constructive knowledge:
+          you should have known to look. Courts in multiple states have held contractors liable
+          for striking unmarked private utilities when these physical cues were present.
+        </p>
+        <p className="mt-2">
+          The professional practice: always walk the route before mobilizing equipment. Note
+          every structure, every tank, every irrigation head, every service entrance. If you
+          see any of these, assume there's a buried private utility feeding it. Mark those
+          crossings for hand-expose before your crew arrives.
+        </p>
+      </section>
+
+    </LessonLayout>
+  );
+}
