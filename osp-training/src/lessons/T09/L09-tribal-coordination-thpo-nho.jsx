@@ -282,7 +282,7 @@ export default function T09L09_TribalCoordinationThpoNho() {
             on their websites specifying exactly how they want to be contacted, what information
             they need, and how much time they require to respond. Following the tribe's protocol
             is not optional — it's the procedurally correct approach under federal policy
-            (see Presidential Memorandum on Tribal Consultation, January 26, 2021, 86 FR 7667
+            (see Presidential Memorandum on Tribal Consultation, January 26, 2021, 86 FR 7491
             — verify current federal guidance at the time of project execution).
           </li>
           <li>

@@ -1,8 +1,8 @@
 // T09.L02 — NEPA: CE, EA, and EIS
 // Working lesson: NEPA tier screening, CE C-8, extraordinary circumstances, BEAD/RUS nexus
 // Source: M03 §3.2 (NEPA, CE, extraordinary circumstances)
-// Authority: 42 USC §4321 et seq. (NEPA); 40 CFR Part 1500-1508 (CEQ rules);
-//            7 CFR Part 1970 (RUS NEPA); NTIA BEAD NEPA procedures
+// Authority: 42 USC §4321 et seq. (NEPA); 40 CFR Part 1500-1508 (CEQ rules — removed eff. Jan. 8, 2026);
+//            7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970 RUS NEPA); NTIA BEAD NEPA procedures
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -165,7 +165,7 @@ export default function T09L02_NepaTypes() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">CEQ</td>
               <td className="px-3 py-2">Council on Environmental Quality</td>
-              <td className="px-3 py-2">White House office that writes the NEPA implementation rules (40 CFR Part 1500)</td>
+              <td className="px-3 py-2">White House office overseeing NEPA — CEQ regulations at 40 CFR Parts 1500–1508 removed eff. January 8, 2026 (FR 2026-00178); NEPA now implemented through agency-specific procedures</td>
             </tr>
           </tbody>
         </table>
@@ -223,8 +223,8 @@ export default function T09L02_NepaTypes() {
           or highway ROW, the applicable categorical exclusion is{' '}
           <strong>CE C-8</strong> — the CE covering "aerial or buried utility and
           communications construction within or adjacent to existing rights-of-way."
-          (Source: 7 CFR §1970.54 for RUS; NTIA BEAD program NEPA procedures [confirm
-          current NTIA CE designation at time of project].)
+          (Source: 7 CFR Part 1b [eff. April 3, 2026; replaced 7 CFR Part 1970] for RUS;
+          NTIA BEAD program NEPA procedures [confirm current NTIA CE designation at time of project].)
         </p>
         <p className="mt-2">
           Applying CE C-8 means you're arguing that your fiber route is routine utility
@@ -284,9 +284,10 @@ export default function T09L02_NepaTypes() {
           </table>
         </div>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: 40 CFR §1508.4 (CEQ extraordinary circumstances definition); 7 CFR
-          §1970.54 (RUS CE procedures) [confirm edition — 7 CFR Part 1970 was substantially
-          revised in 2016 (81 FR 11024)].
+          Source: 40 CFR §1508.4 (CEQ extraordinary circumstances definition — note: 40 CFR
+          Parts 1500–1508 removed eff. January 8, 2026; extraordinary circumstances concept
+          survives in agency procedures); 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR
+          Part 1970 RUS NEPA procedures).
         </p>
 
         <h3 className="mt-5 font-semibold">What does "within or adjacent to existing ROW" actually mean?</h3>
@@ -308,7 +309,7 @@ export default function T09L02_NepaTypes() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book (7 CFR 1970.54 / NTIA CE procedures):</strong> CE C-8 is automatic
+            <strong>Book (7 CFR Part 1b [eff. April 3, 2026; formerly 7 CFR 1970.54] / NTIA CE procedures):</strong> CE C-8 is automatic
             for utility construction in existing ROW provided no extraordinary circumstances
             apply. The CE checklist is the mechanism; check the boxes, document the result,
             submit to the lead federal agency.
@@ -396,13 +397,15 @@ export default function T09L02_NepaTypes() {
             NEPA applies to fiber projects with a federal nexus from BEAD or RUS funding. But
             what about fiber projects with a federal nexus from an FCC license or authorization?
             The FCC has its own NEPA implementing rules (47 CFR Part 1, Subpart I). Under
-            47 CFR §1.1306, a categorical exclusion applies to "construction of new or modified
-            [antenna] facilities" that fall below specified thresholds — and by extension,
-            aerial fiber installations on existing pole infrastructure in existing corridors.
-            For OSP projects that require FCC authorization (licensed spectrum, microwave backhaul,
-            or facilities subject to FCC environmental review), 47 CFR §1.1306 is the applicable
-            CE — not CE C-8. Confirm with the applicable FCC authorization bureau when a federal
-            nexus flows from an FCC action rather than a USDA or NTIA funding source.
+            47 CFR §1.1306, the installation of aerial wire or cable over existing aerial
+            corridors of prior or permitted use is <strong>directly</strong> categorically
+            excluded from NEPA environmental processing — the regulation states explicitly
+            that such installations do not require an Environmental Assessment. This is a direct
+            CE, not an extension from the antenna provision. For OSP projects that require FCC
+            authorization (licensed spectrum, microwave backhaul, or facilities subject to
+            FCC environmental review), 47 CFR §1.1306 is the applicable CE — not CE C-8.
+            Confirm with the applicable FCC authorization bureau when a federal nexus flows
+            from an FCC action rather than a USDA or NTIA funding source.
           </p>
           <p className="mt-1 text-xs text-slate-400">
             Source: 47 CFR §1.1306 (FCC environmental NEPA CE); verify current applicability
@@ -494,7 +497,7 @@ export default function T09L02_NepaTypes() {
             answerIndex: 1,
             explanation:
               'The three NEPA tiers from least to most intensive are: (1) Categorical Exclusion (CE) — no EA/EIS required, pre-determined non-significant; (2) Environmental Assessment (EA) — mid-level analysis leading to FONSI or requirement for EIS; (3) Environmental Impact Statement (EIS) — full-scale analysis for actions that may significantly affect the environment. FONSI is an outcome of a successful EA, not a separate tier.',
-            citation: '40 CFR Part 1500–1508 (CEQ NEPA implementing regulations).',
+            citation: '42 USC §4332 (NEPA statutory tiers). [Note: CEQ implementing regulations at 40 CFR Parts 1500–1508 removed eff. January 8, 2026 — NEPA tiers now implemented through agency-specific procedures.]',
           },
           {
             id: 'T09-L02-Q2',
@@ -510,7 +513,7 @@ export default function T09L02_NepaTypes() {
             answerIndex: 1,
             explanation:
               'T&E species or critical habitat in the project footprint is an extraordinary circumstance that prevents CE from applying without further analysis. However, an extraordinary circumstance does not automatically require an EA or EIS — it requires documented resolution of the circumstance. If analysis shows no impact pathway (e.g., no tree clearing in bat habitat) and USFWS concurs, the CE can still be used with the documented concurrence. An EA is required only if the extraordinary circumstance cannot be resolved at the CE level.',
-            citation: '40 CFR §1508.4; 7 CFR §1970.54 [confirm edition]; ESA §7 (16 USC §1536).',
+            citation: 'Extraordinary circumstances concept per CEQ/agency procedures (40 CFR §1508.4 removed eff. Jan. 8, 2026; concept survives in agency procedures); 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR §1970.54); ESA §7 (16 USC §1536).',
           },
           {
             id: 'T09-L02-Q3',
@@ -526,7 +529,7 @@ export default function T09L02_NepaTypes() {
             answerIndex: 2,
             explanation:
               'When an EA concludes that a project will not significantly affect the environment, the lead federal agency issues a Finding of No Significant Impact (FONSI). The FONSI is the authorization to proceed without an EIS. A Record of Decision (ROD) is issued at the conclusion of an EIS process, not an EA. A CE checklist is used when no EA is required at all.',
-            citation: '40 CFR §1508.1(l) (FONSI definition); 40 CFR Part 1501 (choosing the appropriate NEPA process).',
+            citation: 'FONSI definition per CEQ/agency procedures (40 CFR §1508.1(l) removed eff. Jan. 8, 2026; 42 USC §4332(C) remains statutory anchor); 40 CFR Part 1501 procedures removed eff. Jan. 8, 2026 — see agency-specific NEPA procedures.',
           },
           {
             id: 'T09-L02-Q4',
@@ -542,7 +545,7 @@ export default function T09L02_NepaTypes() {
             answerIndex: 1,
             explanation:
               'CE C-8 specifically covers aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It applies to both aerial (pole-mounted fiber) and buried (direct-buried or conduit) construction in existing utility corridors. It does NOT apply to any federally-funded project generally — the project type must match the CE\'s scope, and extraordinary circumstances must still be checked. [Confirm current CE C-8 language against NTIA and 7 CFR 1970.54 at time of project.]',
-            citation: '7 CFR §1970.54 [confirm edition]; NTIA BEAD NEPA procedures.',
+            citation: '7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR §1970.54); NTIA BEAD NEPA procedures.',
           },
         ]}
       />

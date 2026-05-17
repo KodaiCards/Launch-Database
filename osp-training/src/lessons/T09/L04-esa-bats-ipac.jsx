@@ -266,12 +266,12 @@ export default function T09L04_ESABatsIPaC() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-medium">November 1 – March 31</td>
                 <td className="px-3 py-2 text-green-400 font-medium">Generally allowed</td>
-                <td className="px-3 py-2">Bats in hibernation; standard avoidance period for NLEB and Tricolored Bat</td>
+                <td className="px-3 py-2">Bats in hibernation; standard avoidance period for NLEB and Tricolored Bat. <em>Verify current IPaC guidance for your project location at time of project — windows can vary by species and geography.</em></td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-medium">April 1 – October 31</td>
                 <td className="px-3 py-2 text-red-400 font-medium">Avoid (standard mitigation)</td>
-                <td className="px-3 py-2">Active roosting and pup-rearing season; tree clearing can constitute "take" under ESA</td>
+                <td className="px-3 py-2">Active roosting and pup-rearing season; tree clearing can constitute "take" under ESA. <em>Verify current IPaC guidance at time of project.</em></td>
               </tr>
             </tbody>
           </table>

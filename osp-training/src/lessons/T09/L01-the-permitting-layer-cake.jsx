@@ -498,7 +498,7 @@ export default function T09L01_ThePermittingLayerCake() {
             answerDisplay: 'nexus',
             explanation:
               'The federal nexus is the link that connects a project to federal environmental law. Without a nexus, NEPA, Section 106, and ESA Section 7 do not apply. With a nexus — whether from BEAD funding, RUS loans, or a USACE wetlands permit — all applicable federal environmental reviews become mandatory.',
-            citation: 'M03 §3.1; 40 CFR §1508.1 (CEQ NEPA regulations definitions).',
+            citation: 'M03 §3.1; 42 USC §4321 et seq. (NEPA statutory authority). [Note: CEQ regulations at 40 CFR §1508.1 et seq. removed eff. January 8, 2026 — cite to statutory authority and current agency guidance.]',
           },
         ]}
       />
