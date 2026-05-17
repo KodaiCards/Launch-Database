@@ -1557,3 +1557,25 @@ Session scope was assessment, not fix-phase work. Came back after 5-day usage ou
 **Cost target met:** ~30-40% per-agent reduction at same quality bar. Reviews surfaced concrete actionable findings; nothing lost in compression.
 
 ## Session 3 — TBD (Phase 1 demo-blocker fix + Phase 2 Projection wave onward)
+
+## Carter directive 2026-05-17 — BARELY-AROUND MODE (locked, full autonomous trust)
+
+Carter's verbatim:
+> "Sounds great. Do what you want man! You're the boss I trust you. I'm barely around I just want this thing to run automatically."
+
+**Operating contract additions:**
+
+24. **BARELY-AROUND MODE (locked 2026-05-17, Carter):** Run retroactive-audit queue + forward queue without check-ins. Sleep-mode-style silence by default — chat only when (a) a wave commits, (b) genuinely-irreversible decision, (c) a real blocker that can't self-resolve. Notes never skimped. Continue through entire queue per directive 21 (no stop at OSP-RW.7). Token discipline (directive 14/17) still applies.
+
+25. **Consult-blueprint review framework (logged 2026-05-17).** When external consult / framework / tool recommendation lands: evaluate with EMPIRICAL EVIDENCE from our logs, not theoretical merit. Name the bugs our current pipeline caught that the proposed framework would have shipped. Cite SHAs + lesson entries as counter-evidence. Push back hard when diagnosis is backwards (consult's "death spiral" was actually saturation working — T02 RT-θ OM5 28000 + T09 RT-β Biden PM 86 FR 7491 + T08 RT-β §24→§26 cascade catches). Cherry-pick real wins (prompt caching, tighter prompts, observability) reject the rest with named tradeoffs.
+
+26. **Prompt caching reality check (logged 2026-05-17):** Anthropic API-level prompt caching (90% cached-prefix discount) requires SDK-layer access I don't have from inside Claude Code orchestration. Functional approximation (agents Read a boilerplate file instead of pasting it into prompts) reduces orchestrator-side prompt tokens but doesn't get API-layer discount since agent still tokenizes the file. Realistic optimizations I CAN do: (a) trim 800-word prompts to 250-300 by moving boilerplate to cached CLAUDE.md sections + reference agent-protocol.md by path, (b) cap-aware checkpointing — pause cleanly when cap <30 min from reset, resume without losing momentum.
+
+## Orchestrator lesson 2026-05-17 — consult-blueprint analysis pattern
+
+When asked to review a consult / external framework: identify which empirical bugs from our own data would have shipped under the proposed framework. Don't argue theory — cite SHAs. Carter explicitly asked for pushback. The consult's framework rejected based on:
+- Siloed-scope RTs (RT1 math / RT2 compliance) = anti-pattern in §3 (split-scope-vs-cross-verification). T02 OM5 28000 was a math+citation hybrid no single-scope RT would catch.
+- Single-Pass Educator with frozen math = ships wrong math when "primary-source verified" claims are wrong (T02/T09 precedent).
+- 60-80% cost reduction comes from cutting saturation = the loop that catches the cascade bugs.
+
+Accepted from consult: prompt caching concept (limited within Claude Code constraints), standardized matrix outputs (mostly already in place), observability layer (production-tier — defer).
