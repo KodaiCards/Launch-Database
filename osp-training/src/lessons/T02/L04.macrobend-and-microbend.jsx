@@ -88,7 +88,7 @@ export default function T02L04_MacrobendAndMicrobend() {
             { id: 'T02-L04-fc-macrobend', front: 'What is macrobend loss?', back: 'Loss from a bend you can see with your eyes — a loop or kink in the fiber. Common causes: tight coils in a handhole, fiber pinched behind a patch panel, loops on sharp corners. The bend radius is measurable in centimeters. Shows as a discrete loss event on an OTDR trace.' },
             { id: 'T02-L04-fc-microbend', front: 'What is microbend loss?', back: 'Loss from microscopic deformations you cannot see — usually sub-millimeter irregularities from improper installation, excessive cable tension, or poor buffer tube support. Shows up as elevated background attenuation across a section of OTDR trace, not a discrete event.' },
             { id: 'T02-L04-fc-bendradius', front: 'What is the minimum bend radius for fiber cable?', back: 'The tightest arc the cable can follow before causing meaningful signal loss. Common rules of thumb: 20x cable outer diameter while pulling (dynamic), 10x cable OD after installation (static). Always verify against the specific cable manufacturer\'s installation guide.' },
-            { id: 'T02-L04-fc-mandrel', front: 'What is the mandrel test for fiber?', back: 'The standard qualification test for macrobend performance -- wrapping fiber around a cylinder (mandrel) of specified diameter for a specified number of turns, then measuring added loss. G.652.D: 100 turns at 30 mm radius, max <= 0.5 dB added loss @ 1625 nm.' },
+            { id: 'T02-L04-fc-mandrel', front: 'What is the mandrel test for fiber?', back: 'The standard qualification test for macrobend performance -- wrapping fiber around a cylinder (mandrel) of specified diameter for a specified number of turns, then measuring added loss. G.652.D: 100 turns at 30 mm radius, max ≤ 0.1 dB added loss at both 1550 nm and 1625 nm.' },
             { id: 'T02-L04-fc-g657', front: 'What is ITU-T G.657?', back: 'The standard for bend-insensitive single-mode fiber. Uses a trench or ring in the cladding index profile to better confine the mode field and resist macrobend loss. G.657.A1 is backward-compatible with G.652.D for splicing. Common in FTTH drop cables.' },
             { id: 'T02-L04-fc-bif', front: 'What is bend-insensitive fiber?', back: 'Fiber designed to resist macrobend loss at tighter bend radii than standard G.652.D SMF (per ITU-T G.657). Common in FTTH drop cables that go around corners, through staples, and into tight entry conduits. Does NOT mean abuse-proof -- mechanical bend limits still apply.' },
           ]}
@@ -136,8 +136,8 @@ export default function T02L04_MacrobendAndMicrobend() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">G.652.D (standard SMF)</td>
                 <td className="px-3 py-2">100 turns, 30 mm radius</td>
-                <td className="px-3 py-2">≤ 0.5 dB</td>
-                <td className="px-3 py-2">≤ 1.0 dB</td>
+                <td className="px-3 py-2">≤ 0.1 dB</td>
+                <td className="px-3 py-2">≤ 0.1 dB</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2" rowSpan={2}>G.657.A1 (bend-insensitive)</td>
