@@ -42,7 +42,7 @@ export const meta = {
     {
       term: '40% fill rule',
       definition:
-        'The conduit fill rule that limits total cable cross-sectional area to no more than 40% of the conduit\'s interior cross-sectional area. This limit ensures cables can be pulled without jamming and leaves room for future cable additions. For three or more cables in a conduit, NEC Chapter 9 Table 1 specifies 40% maximum fill.',
+        'The industry convention limiting total cable cross-sectional area to no more than 40% of a conduit\'s interior cross-sectional area. This limit ensures cables can be pulled without jamming and leaves room for future cable additions. Note: NEC Chapter 9 Table 1 governs fill for electrical conductors — communications cables are explicitly exempt from those tables under NEC 770.110(B) and 800.110(B). The 40% figure is an industry convention followed by OSP engineers and reflected in BICSI standards, not an NEC mandate for telecom cable.',
     },
     {
       term: 'jam ratio',
@@ -120,18 +120,18 @@ Conduit area = π × (1.0335)² = 3.1416 × 1.0681 = 3.356 in²`,
       content: `Fill percentage = (total cable area / conduit area) × 100%.`,
       formula: `Fill% = (0.6461 / 3.356) × 100%
 = 0.1925 × 100%
-= 19.2%`,
-      result: 'Fill = 19.2% — well under the 40% maximum.',
+= 19.25%`,
+      result: 'Fill = 19.25% — well under the 40% maximum.',
     },
     {
       label: 'Step 5 — Sanity check and interpretation',
-      content: `19.2% fill means the two cables occupy roughly one-fifth of the conduit interior cross-section. There is room for a third cable of similar size or a future upgrade. The cable will pull with moderate friction and no jamming risk. The 40% rule is satisfied with margin to spare.`,
+      content: `19.25% fill means the two cables occupy roughly one-fifth of the conduit interior cross-section. There is room for a third cable of similar size or a future upgrade. The cable will pull with moderate friction and no jamming risk. The 40% rule is satisfied with margin to spare.`,
       formula: 'If fill% > 40%: upsize conduit. If fill% between 33-40%: OK but tight — verify jam ratio. If fill% < 33%: plenty of room.',
       result: 'Installation is compliant with the 40% fill rule. Conduit selection is correct for this cable count.',
     },
   ],
   sanityCheck:
-    '19.2% fill is comfortable. Visually, the two cables sitting side by side in the conduit would look like two tennis balls in a coffee can — plenty of room to slide around. At 40% fill, the cables barely fit and friction makes pulling very difficult. Above 40%, the cables jam and can\'t be pulled without damage.',
+    '19.25% fill is comfortable. Visually, the two cables sitting side by side in the conduit would look like two tennis balls in a coffee can — plenty of room to slide around. At 40% fill, the cables barely fit and friction makes pulling very difficult. Above 40%, the cables jam and can\'t be pulled without damage.',
 };
 
 // ---------------------------------------------------------------------------
@@ -432,21 +432,22 @@ export default function T06L04_ConduitFillAndPullTension() {
             Conduit area = π × (ID/2)²
           </p>
           <p className="mt-3 text-slate-300/90">
-            The result must be ≤ 40% for three or more cables. For two cables, NEC Chapter 9
-            Table 1 actually allows 31%; for one cable, 53%. In OSP practice, designers
-            use 40% as the universal limit — it's the one to know for any exam.
+            The result must be ≤ 40% as an industry design limit. In OSP practice, designers
+            use 40% as the universal fill ceiling for any number of cables — it is the one to
+            know for any exam and for project specifications.
           </p>
         </div>
 
         <div className="mt-5 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-blue-300">Book practice (NEC Chapter 9 Table 1):</p>
+          <p className="font-semibold text-blue-300">Book practice (industry convention and NEC distinction):</p>
           <p className="mt-1 text-slate-300/90">
-            NEC Chapter 9 Table 1 is the authoritative fill table for electrical conductors in
-            conduit. Telecom designers use it as a floor — 40% for three or more cables. BICSI
-            ITSIMM specifies 25% initial / 40% maximum for innerduct systems to preserve future
-            pull-in capacity. If your project spec says 25%, that's the design target. If it
-            says "NEC compliance," 40% is the limit.
-            [NEC paywalled; reproduced in NEC-compliant vendor literature — VERIFIED-via-secondary-source]
+            NEC Chapter 9 Table 1 governs fill percentages for electrical conductors (power wiring)
+            in conduit. Communications cables — including OSP fiber and innerduct — are explicitly
+            exempt from those tables under NEC 770.110(B) (optical fiber) and NEC 800.110(B)
+            (communications circuits). The 40% fill convention for telecom cable comes from BICSI
+            ITSIMM and industry practice, not NEC mandate. BICSI ITSIMM specifies 25% initial /
+            40% maximum for innerduct systems to preserve future pull-in capacity. If your project
+            spec says 25%, that is the design target. If it says 40%, that is the ceiling.
           </p>
         </div>
         <div className="mt-3 bg-green-900/20 border border-green-500/30 rounded-lg p-4 text-sm">

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T07:22:35.394Z",
+  "generated_at": "2026-05-17T08:01:40.659Z",
   "lesson_count": 125,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -507,7 +507,9 @@
       "decision matrix",
       "ROW",
       "bore pit",
-      "slurry"
+      "slurry",
+      "soil type",
+      "route alignment"
     ],
     "T06.L02": [
       "minimum cover",
@@ -572,10 +574,11 @@
       "slack-loop storage"
     ],
     "T06.L09": [
-      "NESC §32",
+      "NESC §34",
       "NESC §35",
       "supply-communication separation",
-      "communication-to-ground clearance"
+      "communication-to-ground clearance",
+      "NESC Rule 354"
     ],
     "T06.L10": [
       "RUS 1751F-643 innerduct qualification",
@@ -2143,6 +2146,12 @@
     "slurry": [
       "T06.L01"
     ],
+    "soil type": [
+      "T06.L01"
+    ],
+    "route alignment": [
+      "T06.L01"
+    ],
     "minimum cover": [
       "T06.L02"
     ],
@@ -2287,7 +2296,7 @@
     "slack-loop storage": [
       "T06.L08"
     ],
-    "nesc §32": [
+    "nesc §34": [
       "T06.L09"
     ],
     "nesc §35": [
@@ -2297,6 +2306,9 @@
       "T06.L09"
     ],
     "communication-to-ground clearance": [
+      "T06.L09"
+    ],
+    "nesc rule 354": [
       "T06.L09"
     ],
     "rus 1751f-643 innerduct qualification": [
@@ -7332,23 +7344,8 @@
     {
       "from_lesson": "T06.L01",
       "term": "conduit",
-      "claimed_source": "T04.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T04.L01"
-    },
-    {
-      "from_lesson": "T06.L01",
-      "term": "soil type",
-      "claimed_source": "T04.L03",
-      "verified": false,
-      "reason": "'soil type' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T06.L01",
-      "term": "route alignment",
-      "claimed_source": "T04.L02",
-      "verified": false,
-      "reason": "'route alignment' is not introduced by any lesson in the curriculum"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L02",
@@ -7619,6 +7616,12 @@
       "verified": true
     },
     {
+      "from_lesson": "T06.L09",
+      "term": "manhole",
+      "claimed_source": "T06.L05",
+      "verified": true
+    },
+    {
       "from_lesson": "T06.L10",
       "term": "innerduct",
       "claimed_source": "T06.L03",
@@ -7856,7 +7859,8 @@
       "from_lesson": "T06.L12",
       "term": "NESC §32",
       "claimed_source": "T06.L09",
-      "verified": true
+      "verified": false,
+      "reason": "'NESC §32' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T06.L12",
@@ -10758,8 +10762,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1042,
-  "broken_pointers_count": 155,
+  "verified_pointers_count": 1043,
+  "broken_pointers_count": 153,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",

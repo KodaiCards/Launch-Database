@@ -183,8 +183,13 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
           carrying cuttings will flow back up the annular space (the gap between the drill
           stem and the borehole wall) and collect in the pit. The crew must pump this slurry
           to a holding tank or vac truck — it cannot be discharged into drainage ditches or
-          waterways. Bentonite is classified as a controlled waste in most jurisdictions.
-          (Source: CGA Best Practices v19, Damage Prevention chapter; RUS 1751F-635 §6.)
+          waterways. Bentonite itself is a naturally occurring, non-hazardous inorganic clay
+          mineral and is not classified as a hazardous waste under RCRA. However, bentonite
+          slurry discharge into waters of the United States is regulated under CWA Section 404
+          (dredge-and-fill activities) and NPDES discharge permits. Surface discharges to
+          waterways, roadside drainage, or wetlands require permit compliance or are prohibited.
+          (Source: CGA Best Practices v20.0, Damage Prevention chapter; RUS 1751F-635 §6;
+          40 CFR Part 232 [CWA §404 definition of discharge of dredged or fill material].)
         </p>
 
         <h3 className="mt-5 font-semibold">Phase 2: Pilot bore — establishing the path</h3>
@@ -246,7 +251,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
         <p className="mt-2 text-sm text-slate-300/70">
           Rule of thumb: each reaming pass should not exceed 2–3× the previous diameter
           to avoid over-stressing the formation and causing slurry fracture (heave).
-          (Source: CGA Best Practices v19; industry field practice.)
+          (Source: CGA Best Practices v20.0; industry field practice.)
         </p>
 
         <h3 className="mt-5 font-semibold">Slurry management — the make-or-break variable</h3>
@@ -276,7 +281,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
           mixed too thick increases pump pressure and risk of heave. Experienced bore operators
           test slurry viscosity with a <em>Marsh funnel</em> — a standardized cone that measures
           how fast the slurry flows. For typical fiber bore conditions, a Marsh funnel viscosity
-          of 36–48 seconds per quart is standard. (Source: field practice per CGA Best Practices v19.)
+          of 36–48 seconds per quart is standard. (Source: field practice per CGA Best Practices v20.0.)
         </p>
 
         <h3 className="mt-5 font-semibold">Phase 4: Swabbing — verify before committing conduit</h3>
@@ -359,7 +364,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
           </li>
         </ol>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: CGA Best Practices v19 (damage-prevention chapter, HDD operations); industry
+          Source: CGA Best Practices v20.0 (damage-prevention chapter, HDD operations); industry
           field practice.
         </p>
 
@@ -367,9 +372,13 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
         <p>
           A frac-out occurs when slurry pressure fractures through the formation and slurry
           reaches the surface — including into waterways, roadside drainage, or a property
-          owner's yard. Bentonite is generally non-toxic, but a frac-out under or near a
-          waterway is a reportable environmental event in most states (Section 404 permits,
-          state DOT encroachment permits, USACE NWP conditions). Response:
+          owner's yard. Bentonite is non-hazardous clay, but a frac-out under or near a
+          waterway is a reportable environmental event in most states. For telecom fiber HDD
+          crossings of navigable waters, wetlands, and waterways, the applicable USACE permit
+          is typically NWP 57 (Electric Line and Telecommunications Activities). Note: NWP 12
+          — the former Utility Line Activities permit — was split in 2021 (86 FR 2744); telecom
+          HDD crossings that previously used NWP 12 now use NWP 57. A frac-out during an NWP 57
+          permitted crossing must be reported to the USACE district immediately. Response:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
           <li>Stop drilling immediately</li>
@@ -408,7 +417,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
           {
             id: 'flush-drill',
             type: 'outcome',
-            text: "Wrong call. Continuing to drill with active slurry at the surface is a permit violation under most state DOT encroachment permits and USACE NWP conditions. The crack can widen into a sinkhole. You've now got a reportable environmental event AND a road damage claim. Stop, document, notify.",
+            text: "Wrong call. Continuing to drill with active slurry at the surface is a permit violation under most state DOT encroachment permits and USACE NWP 57 conditions (for telecom crossings of waters/wetlands). The crack can widen into a sinkhole. You've now got a reportable environmental event AND a road damage claim. Stop, document, notify.",
             variant: 'bad',
           },
           {
@@ -463,7 +472,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
               'To test soil strength before selecting conduit material',
             ],
             answerIndex: 1,
-            explanation: 'The pilot bore cuts a small-diameter path (typically 4–6 inches) from entry to exit, establishing the bore path geometry. All subsequent reaming passes and the final conduit pull-back follow this exact path. Getting the pilot bore path right is the most critical step in HDD. (Source: RUS 1751F-635; CGA Best Practices v19.)',
+            explanation: 'The pilot bore cuts a small-diameter path (typically 4–6 inches) from entry to exit, establishing the bore path geometry. All subsequent reaming passes and the final conduit pull-back follow this exact path. Getting the pilot bore path right is the most critical step in HDD. (Source: RUS 1751F-635; CGA Best Practices v20.0.)',
           },
           {
             id: 'T06-L07-Q2',
@@ -476,7 +485,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
               'Replaces conduit backfill, bonds conduit to soil, identifies utility crossings',
             ],
             answerIndex: 0,
-            explanation: 'Bentonite slurry has exactly three jobs: (1) carry drill cuttings back out of the bore path to the entry pit, (2) stabilize the borehole walls to prevent collapse, and (3) lubricate the bore path to reduce pull tension during conduit installation. Slurry that returns to the surface must be managed as waste. (Source: CGA Best Practices v19.)',
+            explanation: 'Bentonite slurry has exactly three jobs: (1) carry drill cuttings back out of the bore path to the entry pit, (2) stabilize the borehole walls to prevent collapse, and (3) lubricate the bore path to reduce pull tension during conduit installation. Slurry that returns to the surface must be managed as waste. (Source: CGA Best Practices v20.0.)',
           },
           {
             id: 'T06-L07-Q3',
@@ -489,7 +498,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
               'Bore path too shallow for the conduit OD',
             ],
             answerIndex: 1,
-            explanation: 'Ground heave is the result of too much slurry pressure fracturing the formation and pushing slurry upward through soil voids to the surface. The opposite failure mode (insufficient pressure) causes borehole collapse. Preventing heave requires staying within the formation\'s fracture gradient — a bore-specific pressure limit. (Source: CGA Best Practices v19.)',
+            explanation: 'Ground heave is the result of too much slurry pressure fracturing the formation and pushing slurry upward through soil voids to the surface. The opposite failure mode (insufficient pressure) causes borehole collapse. Preventing heave requires staying within the formation\'s fracture gradient — a bore-specific pressure limit. (Source: CGA Best Practices v20.0.)',
           },
           {
             id: 'T06-L07-Q4',
@@ -502,7 +511,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
               'To locate utility crossings in the bore corridor',
             ],
             answerIndex: 1,
-            explanation: 'Swabbing verifies the bore path is clear before you commit the conduit to the hole. A foam-tipped mandrel is pulled through the bore; if it passes cleanly with normal tension, the bore is ready. If the swab gets stuck or requires excessive force, there\'s a problem in the bore path that must be resolved before conduit installation. (Source: CGA Best Practices v19; field practice.)',
+            explanation: 'Swabbing verifies the bore path is clear before you commit the conduit to the hole. A foam-tipped mandrel is pulled through the bore; if it passes cleanly with normal tension, the bore is ready. If the swab gets stuck or requires excessive force, there\'s a problem in the bore path that must be resolved before conduit installation. (Source: CGA Best Practices v20.0; field practice.)',
           },
           {
             id: 'T06-L07-Q5',

@@ -45,8 +45,9 @@ export const meta = {
     { term: 'NIU', source_lesson_id: 'T06.L08' },
     { term: 'pedestal spacing', source_lesson_id: 'T06.L08' },
     { term: 'slack-loop storage', source_lesson_id: 'T06.L08' },
-    { term: 'NESC §32', source_lesson_id: 'T06.L09' },
+    { term: 'NESC §34', source_lesson_id: 'T06.L09' },
     { term: 'NESC §35', source_lesson_id: 'T06.L09' },
+    { term: 'NESC Rule 354', source_lesson_id: 'T06.L09' },
     { term: 'supply-communication separation', source_lesson_id: 'T06.L09' },
     { term: 'RUS 1751F-643 innerduct qualification', source_lesson_id: 'T06.L10' },
     { term: 'innerduct traceability', source_lesson_id: 'T06.L10' },
@@ -192,19 +193,19 @@ export default function T06L12_CapstoneQuiz() {
             text: "Correct — 36 inches under paved road. Now check separation: the electric supply direct-buried cable runs 20 feet north parallel to your route. Your conduit will be in the road ROW. Are you in violation of any NESC separation rule?",
             choices: [
               { label: 'Yes — 20 feet is under the NESC minimum parallel separation', nextId: 'sep-bad' },
-              { label: 'No — 20 feet horizontal separation in a parallel corridor far exceeds the NESC §35 minimum of 6 inches for cable in conduit', nextId: 'sep-good' },
+              { label: 'No — 20 feet horizontal separation in a parallel corridor far exceeds the NESC §35 Rule 354 minimum of 6 inches for cable in conduit', nextId: 'sep-good' },
             ],
           },
           {
             id: 'sep-bad',
             type: 'outcome',
-            text: "Incorrect. NESC §35 requires a minimum of 6 inches of separation for communication conduit in a parallel corridor with electric supply. 20 feet = 240 inches — far above the minimum. The separation concern would arise if the route ran within 6 inches of the supply cable. At 20 feet, there is no NESC §35 violation.",
+            text: "Incorrect. NESC §35 Rule 354 requires a minimum of 6 inches of separation for communication conduit crossing or running parallel to electric supply. 20 feet = 240 inches — far above the minimum. The separation concern would arise if the route ran within 6 inches of the supply cable. At 20 feet, there is no NESC §35 Rule 354 violation.",
             variant: 'bad',
           },
           {
             id: 'sep-good',
             type: 'outcome',
-            text: "Correct! 20 feet of separation far exceeds the NESC §35 minimum. Your design passes the parallel separation check. Final step for this capstone: pedestal spacing. On the 1-mile (5,280 ft) route, you place pedestals at 0 ft, 280 ft, 560 ft, 840 ft, 1,180 ft, 1,450 ft, 1,730 ft, 2,060 ft, 2,390 ft, 2,720 ft, 3,050 ft, 3,350 ft, 3,680 ft, 4,010 ft, 4,340 ft, 4,670 ft, 5,000 ft, and 5,280 ft. All segments ≤ 330 ft. Design passes all four QA checks. Issue for bid.",
+            text: "Correct! 20 feet of separation far exceeds the NESC §35 Rule 354 minimum. Your design passes the parallel separation check. Final step for this capstone: pedestal spacing. On the 1-mile (5,280 ft) route, you place pedestals at 0 ft, 280 ft, 560 ft, 840 ft, 1,180 ft, 1,450 ft, 1,730 ft, 2,060 ft, 2,390 ft, 2,720 ft, 3,050 ft, 3,350 ft, 3,680 ft, 4,010 ft, 4,340 ft, 4,670 ft, 5,000 ft, and 5,280 ft. All segments ≤ 330 ft. Design passes all four QA checks. Issue for bid.",
             variant: 'good',
           },
         ]}
@@ -414,29 +415,29 @@ export default function T06L12_CapstoneQuiz() {
           {
             id: 'T06-CAP-Q15',
             type: 'mc',
-            prompt: 'A communication cable is direct-buried (no conduit) and must cross under a direct-buried 120V residential service cable. Which NESC section governs the minimum vertical separation at this crossing?',
+            prompt: 'A communication cable is direct-buried (no conduit) and must cross under a direct-buried 120V residential service cable. Which NESC section and rule govern the minimum vertical separation at this crossing?',
             choices: [
-              'NESC §35 — because the 120V cable is in the supply category',
-              'NESC §32 — because the communication cable is direct-buried (no conduit)',
+              'NESC §34 — because the cables are in an underground structure',
+              'NESC §35 Rule 354 — because the communication cable is direct-buried (not in a conduit system)',
               'NESC §23 — because this is a clearance situation',
               'NEC 830.47 — because this is a communication cable application',
             ],
             answerIndex: 1,
-            explanation: 'The NESC section applied is determined by the communication cable\'s installation type. The communication cable is direct-buried (no conduit), so NESC §32 applies to it. §35 would apply if the communication cable were in conduit. §23 covers aerial clearances, not underground. NEC 830.47 covers communications cable burial depth, not utility separation. (Source: NESC C2 §32 [confirm edition]; T06.L09.)',
+            explanation: 'NESC §35 governs Direct-Buried Cable and Cable in Duct Not Part of a Conduit System — for both supply and communications cables. When a communication cable is direct-buried, Rule 354 (within §35) governs the minimum vertical separation when crossing supply cables. §34 applies to cable in underground structures (manholes, vaults). §23 covers aerial clearances, not underground. NEC 830.47 covers communications cable burial depth, not utility separation. (Source: NESC C2 §35 Rule 354 [confirm edition]; T06.L09.)',
           },
           // L09: Separation at crossing field practice
           {
             id: 'T06-CAP-Q16',
             type: 'mc',
-            prompt: 'Why do experienced bore crews maintain 12 inches of vertical separation at supply-communication crossings even when NESC §35 may technically permit less?',
+            prompt: 'Why do experienced bore crews maintain 12 inches of vertical separation at supply-communication crossings even when NESC §35 Rule 354 may technically permit less?',
             choices: [
-              'RUS 1751F-635 imposes a 12-inch minimum that overrides NESC §35 in all cases',
+              'RUS 1751F-635 imposes a 12-inch minimum that overrides NESC §35 Rule 354 in all cases',
               'Utility locate accuracy is typically ±18 inches — designing to 12 inches covers the locate tolerance and the NESC minimum simultaneously',
               '12 inches is the NEC 830.47 communication cable cover requirement, which coincidentally equals the separation minimum',
               'Crews use 12 inches because their bore rigs cannot be controlled to finer depth increments',
             ],
             answerIndex: 1,
-            explanation: 'Utility locate services typically have a positional accuracy of ±18 inches. If you design your bore to run 6 inches from a located supply cable and the locate is 12 inches off, your bore could run within 6 inches of the actual cable — or potentially contact it. Designing to 12 inches of separation covers the locate error range while still meeting the NESC §35 minimum. It\'s cheap insurance: a slightly deeper bore profile costs nothing but prevents a potentially fatal utility strike. (Source: field practice; CGA Best Practices v19; T06.L09.)',
+            explanation: 'Utility locate services typically have a positional accuracy of ±18 inches. If you design your bore to run 6 inches from a located supply cable and the locate is 12 inches off, your bore could run within 6 inches of the actual cable — or potentially contact it. Designing to 12 inches of separation covers the locate error range while still meeting the NESC §35 Rule 354 minimum. It\'s cheap insurance: a slightly deeper bore profile costs nothing but prevents a potentially fatal utility strike. (Source: field practice; CGA Best Practices v20.0; T06.L09.)',
           },
           // L10: AML requirement
           {

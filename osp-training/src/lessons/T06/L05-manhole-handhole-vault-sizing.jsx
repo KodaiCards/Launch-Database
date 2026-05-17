@@ -58,12 +58,12 @@ export const meta = {
     {
       term: 'H-20 live loading',
       definition:
-        'The standard highway live load class corresponding to an HS-20 truck (20-ton axle, AASHTO designation). An H-20-rated structure can support a typical single-unit truck. Suitable for driveways, parking lots, and secondary roads. Most common rating for residential and light-commercial OSP access structures.',
+        'The standard highway live load class corresponding to an AASHTO HS-20 design vehicle — a truck with a 20-ton gross vehicle weight (GVW). The rear axle of the HS-20 truck carries 32,000 lb (16 tons); the drive axle carries 8,000 lb. An H-20-rated structure is designed to withstand that axle loading. Suitable for driveways, parking lots, and secondary roads. Most common rating for residential and light-commercial OSP access structures.',
     },
     {
       term: 'H-25 live loading',
       definition:
-        'An enhanced live load class equivalent to an HS-25 truck (25-ton axle). Required for primary roadways, intersections, and locations subject to heavy truck traffic (freight routes, loading docks, DOT highway ROW). H-25 requires heavier structure walls and lid/frame than H-20.',
+        'An enhanced live load class corresponding to an AASHTO HS-25 design vehicle — 25% heavier than HS-20. Required for primary roadways, intersections, and locations subject to heavy truck traffic (freight routes, loading docks, DOT highway ROW). H-25 requires heavier structure walls and lid/frame than H-20.',
     },
     {
       term: 'pull point',
@@ -163,7 +163,7 @@ const quizQuestions = [
     ],
     answerIndex: 1,
     rationale:
-      'H-20 (HS-20 equivalent, 20-ton axle) is the standard for driveways, parking areas, and any location subject to vehicle traffic including passenger vehicles. A personal car weighs 2–4 tons; even a small truck or delivery vehicle can overload an NTC cover. NTC is appropriate only in yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is a trip hazard and a permit violation.',
+      'H-20 — the AASHTO HS-20 design vehicle with 20-ton gross vehicle weight and 32,000 lb rear axle — is the standard for driveways, parking areas, and any location subject to vehicle traffic. A personal car weighs 2–4 tons; even a small truck or delivery vehicle can overload an NTC cover. NTC is appropriate only in yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is a trip hazard and a permit violation.',
   },
   {
     id: 'q2',

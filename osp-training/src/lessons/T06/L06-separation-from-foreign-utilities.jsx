@@ -1,6 +1,6 @@
 // T06.L06 — Separation from Foreign Utilities
 // Working lesson: APWA color codes, parallel separation, crossing separation, locate-before-dig
-// Source: Module09_OSPConstruction.jsx §9.1 + RUS 1751F-635 §6 + CGA Best Practices v19
+// Source: Module09_OSPConstruction.jsx §9.1 + RUS 1751F-635 §6 + CGA Best Practices v20.0
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -58,7 +58,7 @@ export const meta = {
     {
       term: 'crossing separation',
       definition:
-        'The minimum vertical distance maintained when a new conduit crosses over or under an existing foreign utility. NESC §35 (cables in conduit) and APWA guidelines specify crossing clearances. Typical minimum: 6 inches vertical separation at the crossing point for communications crossing communications; greater clearance required for communications crossing electric supply conduit.',
+        'The minimum vertical distance maintained when a new conduit crosses over or under an existing foreign utility. NESC §34 (Cable in Underground Structures) and NESC §35 Rule 354 (Direct-Buried Cable and Cable in Duct) specify crossing clearances between communications and supply facilities. Typical minimum: 6 inches vertical separation at the crossing point for communications crossing communications; greater clearance required for communications crossing electric supply conduit.',
     },
     {
       term: 'pothole exposure',
@@ -68,7 +68,7 @@ export const meta = {
     {
       term: 'CGA Best Practices',
       definition:
-        'The Common Ground Alliance (CGA) Best Practices Guide — currently version 19 — which defines the complete underground damage-prevention workflow from 811 ticket placement through excavation completion. The 2024 DIRT (Damage Information Reporting Tool) Report, maintained by CGA, recorded 196,977 unique utility damages nationwide in 2024; 24.5% were caused by failure to notify 811.',
+        'The Common Ground Alliance (CGA) Best Practices Guide — currently version 20.0 (2024) — which defines the complete underground damage-prevention workflow from 811 ticket placement through excavation completion. The 2024 DIRT (Damage Information Reporting Tool) Report, maintained by CGA, recorded 196,977 unique utility damages nationwide in 2024; 24.5% were caused by failure to notify 811.',
     },
     {
       term: 'tolerance zone',
@@ -95,7 +95,7 @@ const utilityBoreDiagram = {
       label: 'Electric supply conduit (red flag)',
       x: '15%', y: '22%', width: '70%', height: '8%',
       description:
-        'Electric supply conduit — marked with RED flags by the 811 locate technician. Running at approximately 18–24 inches depth. The new fiber conduit bore must pass below this at sufficient clearance. NESC §35 [confirm current edition] and APWA guidelines require at least 6 inches of vertical separation at the crossing point for communications-in-conduit crossing supply-in-conduit. Many state DOTs require 12 inches or more. Field practice: most crews target 12 inches minimum even when 6 is the code floor.',
+        'Electric supply conduit — marked with RED flags by the 811 locate technician. Running at approximately 18–24 inches depth. The new fiber conduit bore must pass below this at sufficient clearance. NESC §35 Rule 354 [confirm current edition] and APWA guidelines require at least 6 inches of vertical separation at the crossing point for communications-in-conduit crossing supply-in-conduit. Many state DOTs require 12 inches or more. Field practice: most crews target 12 inches minimum even when 6 is the code floor.',
     },
     {
       id: 'gas-main',
@@ -116,7 +116,7 @@ const utilityBoreDiagram = {
       label: 'Vertical separation — fiber to electric',
       x: '5%', y: '30%', width: '10%', height: '28%',
       description:
-        'Vertical separation at crossing = 42 in (fiber depth) − 24 in (electric depth) = 18 inches. This exceeds the NESC §35 6-inch minimum [confirm current edition] and the typical DOT 12-inch requirement. A safety margin of 12–18 inches is the field-practice target.',
+        'Vertical separation at crossing = 42 in (fiber depth) − 24 in (electric depth) = 18 inches. This exceeds the NESC §35 Rule 354 6-inch minimum [confirm current edition] and the typical DOT 12-inch requirement. A safety margin of 12–18 inches is the field-practice target.',
     },
     {
       id: 'separation-gas',
@@ -161,7 +161,7 @@ const quizQuestions = [
     ],
     answerIndex: 1,
     rationale:
-      '18 inches is a code-compliant clearance from the locate mark — but locate marks are approximate. The actual gas main may be 12–18 inches from the flag, which could put the actual separation well below the 6-inch NESC minimum once boring is underway. Standard practice (and CGA Best Practices v19 requirement) is to pothole-expose the utility at the point of closest approach to confirm actual position before mechanized excavation. You build your bore path from the confirmed position, not from the approximate locate mark.',
+      '18 inches is a code-compliant clearance from the locate mark — but locate marks are approximate. The actual gas main may be 12–18 inches from the flag, which could put the actual separation well below the 6-inch NESC minimum once boring is underway. Standard practice (and CGA Best Practices v20.0 requirement) is to pothole-expose the utility at the point of closest approach to confirm actual position before mechanized excavation. You build your bore path from the confirmed position, not from the approximate locate mark.',
   },
   {
     id: 'q2',
@@ -200,13 +200,13 @@ const quizQuestions = [
       'Your fiber conduit runs parallel to an electric supply conduit for 600 feet in a utility corridor. The 811 locate shows the electric at 24-inch depth along the entire corridor. You plan to install the fiber at 36-inch depth, 18 inches to the south. Is there a problem?',
     choices: [
       'No — vertical separation (12 inches) and horizontal separation (18 inches) both exceed typical minimums',
-      'Yes — fiber must always be installed north of electric supply to comply with NESC §35',
+      'Yes — fiber must always be installed north of electric supply to comply with NESC §35 Rule 354',
       'Yes — 18-inch horizontal separation violates the RUS 1751F-635 §6 parallel separation requirement',
       'No problem in terms of depth, but a permit from the electric utility is still required for parallel runs in shared corridors',
     ],
     answerIndex: 3,
     rationale:
-      'The separation distances are likely acceptable (12 inches vertical, 18 inches horizontal exceeds typical NESC §35 and APWA minimums [confirm current NESC edition]). However, parallel runs in a shared utility corridor typically require coordination with the existing utility owner. For a 600-foot parallel run adjacent to an electric supply line, the electric utility may require an encroachment permit, notification, or inspection even if the separation distances are met. "Code-compliant" and "no coordination required" are not the same thing in shared corridors.',
+      'The separation distances are likely acceptable (12 inches vertical, 18 inches horizontal exceeds typical NESC §35 Rule 354 and APWA minimums [confirm current NESC edition]). However, parallel runs in a shared utility corridor typically require coordination with the existing utility owner. For a 600-foot parallel run adjacent to an electric supply line, the electric utility may require an encroachment permit, notification, or inspection even if the separation distances are met. "Code-compliant" and "no coordination required" are not the same thing in shared corridors.',
   },
   {
     id: 'q5',
@@ -332,23 +332,37 @@ export default function T06L06_SeparationFromForeignUtilities() {
           state notice window (commonly two to three business days). This is the legally
           required first step before any ground disturbance.
         </p>
+
+        <div className="mt-3 bg-white/5 rounded-lg p-4 text-sm">
+          <p className="font-semibold text-slate-200">811 ticket lifecycle — know these before you dig:</p>
+          <ol className="mt-2 list-decimal pl-5 space-y-1 text-slate-300/90">
+            <li><strong>Notice window:</strong> After calling 811, excavation cannot begin until the state-required notice period passes — commonly 2 to 3 business days (varies by state; verify at call8-1-1.com for your jurisdiction).</li>
+            <li><strong>Ticket validity:</strong> A locate ticket is valid for a state-specific period — typically 10 to 15 working days from the date marks are placed. After the validity window, the marks are considered stale and the ticket must be renewed before excavation continues. Do not assume marks placed 3 weeks ago are still valid.</li>
+            <li><strong>Pre-mark your work area:</strong> White paint, flags, or stakes mark your proposed excavation area BEFORE calling 811 — this tells the locate technician exactly where to look. Failure to pre-mark results in missed or inaccurate locate marks.</li>
+            <li><strong>Hand-dig tolerance zone:</strong> Once marks are placed, mechanical excavation is prohibited within the tolerance zone (state-specific; commonly 18–24 inches on each side of the marked centerline) until the utility is hand-exposed and confirmed.</li>
+            <li><strong>Ticket renewal:</strong> If work extends beyond the ticket validity period, call 811 to renew the ticket and have utilities re-marked before excavation resumes. Re-marking is especially important if the ground has been disturbed since the original marks were placed, as marks may have been covered or shifted.</li>
+          </ol>
+          <p className="mt-2 text-slate-400 text-xs">State notice periods and ticket validity windows are defined by state law and vary by jurisdiction. Confirm requirements for your state at the 811 system or your state one-call center. [Per CGA Best Practices v20.0; state one-call center requirements]</p>
+        </div>
+
         <p className="mt-3">
           <strong>What 811 does NOT cover:</strong>
         </p>
         <ul className="mt-2 list-disc pl-5 space-y-1 text-sm text-slate-300/90">
           <li><strong>Private laterals</strong> — irrigation lines, propane service lines, electric drops from a meter to a detached garage, fire suppression feeds — are NOT in the 811 system and will not be marked</li>
+          <li><strong>Agricultural tile drains</strong> — perforated clay or plastic drain tiles buried 2–4 feet deep across farmland are NOT registered with 811 and are rarely mapped. These are extremely common on rural routes and are a frequent strike hazard for plowing and open-cut in agricultural areas. Identify their presence by consulting landowners and local drainage district records before mechanized excavation in farmland.</li>
           <li><strong>Abandoned utilities</strong> — old copper, abandoned gas mains, and decommissioned water services may not be registered</li>
           <li><strong>Accuracy</strong> — 811 locate marks are approximate (±18–24 inches); the actual utility may be 12–18 inches from the flag</li>
           <li><strong>Depth</strong> — 811 marks show horizontal position only; depth must be confirmed by pothole exposure at crossings</li>
         </ul>
         <div className="mt-3 bg-amber-900/20 border border-amber-500/30 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-amber-300">CGA DIRT Report data (2024):</p>
+          <p className="font-semibold text-amber-300">CGA DIRT Report data (most recent available):</p>
           <p className="mt-1 text-slate-300/90">
             The 2024 DIRT Report recorded 196,977 unique utility damages nationwide.
             <br />• 24.5% caused by failure to notify 811 (largest single root cause)
             <br />• 49% of damaged utilities were telecom facilities
             <br />• "Insufficient locate practices" was a contributing factor in thousands of incidents where 811 was called but pothole exposure was skipped
-            [VERIFIED-public-source — CGA, dirt.commongroundalliance.com]
+            [VERIFIED-public-source — CGA, dirt.commongroundalliance.com — verify at publication for most recent report year]
           </p>
         </div>
 
@@ -368,13 +382,13 @@ export default function T06L06_SeparationFromForeignUtilities() {
                 <td className="px-3 py-2">Comms conduit crossing comms conduit</td>
                 <td className="px-3 py-2">6 inches vertical</td>
                 <td className="px-3 py-2">12 inches (standard field target)</td>
-                <td className="px-3 py-2">NESC §35 [confirm current edition — paywalled]; APWA guidelines</td>
+                <td className="px-3 py-2">NESC §35 Rule 354 [confirm current edition — paywalled]; APWA guidelines</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Comms conduit crossing electric supply conduit</td>
                 <td className="px-3 py-2">6 inches vertical</td>
                 <td className="px-3 py-2">12–18 inches (field target; some electric utilities require more)</td>
-                <td className="px-3 py-2">NESC §35 [confirm current edition]; electric utility encroachment permit</td>
+                <td className="px-3 py-2">NESC §35 Rule 354 [confirm current edition]; electric utility encroachment permit</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Comms conduit crossing gas main</td>
@@ -393,12 +407,14 @@ export default function T06L06_SeparationFromForeignUtilities() {
         </div>
 
         <div className="mt-4 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-blue-300">Book practice (NESC §35 crossing clearance):</p>
+          <p className="font-semibold text-blue-300">Book practice (NESC Rule 354 crossing clearance):</p>
           <p className="mt-1 text-slate-300/90">
-            NESC §35 (cables in conduit) is more permissive than §32 (direct-buried) because conduit
-            provides mechanical protection that direct-buried cable lacks. NESC §35 allows
-            communications-in-conduit to cross supply-in-conduit with 6-inch minimum separation
-            [confirm current edition — NESC paywalled]. The 6-inch floor is the code minimum.
+            NESC §35 Rule 354 governs supply-to-communication separation for direct-buried cable
+            and cable in duct that is not part of a conduit system. For communications in duct
+            crossing supply in conduit, the 6-inch minimum vertical separation applies at the
+            crossing point [confirm current NESC C2 edition — paywalled]. The 6-inch floor is the
+            code minimum; field practice targets 12 inches to account for bore-path and locate-mark
+            uncertainty.
           </p>
         </div>
         <div className="mt-3 bg-green-900/20 border border-green-500/30 rounded-lg p-4 text-sm">
@@ -411,7 +427,7 @@ export default function T06L06_SeparationFromForeignUtilities() {
             Experienced crews target 12 inches minimum — which with ±6 inches of bore variance
             still leaves a real-world floor of 6 inches at worst. The extra 6 inches of bore depth
             costs nothing and may prevent a strike.
-            [Per field practice — Module09 notes, CGA Best Practices v19]
+            [Per field practice — Module09 notes, CGA Best Practices v20.0]
           </p>
         </div>
 
@@ -429,7 +445,7 @@ export default function T06L06_SeparationFromForeignUtilities() {
         </p>
         <div className="mt-2 font-mono text-sm bg-white/5 rounded p-3 space-y-1">
           <p>Fiber to electric: 42 in − 24 in = 18 inches vertical separation</p>
-          <p>Compare to NESC §35 minimum (6 in): 18 &gt; 6 ✓</p>
+          <p>Compare to NESC §35 Rule 354 minimum (6 in): 18 &gt; 6 ✓</p>
           <p>Compare to field-practice target (12 in): 18 &gt; 12 ✓</p>
           <p></p>
           <p>Fiber to gas: 42 in − 30 in = 12 inches vertical separation</p>

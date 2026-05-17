@@ -29,11 +29,11 @@ export const meta = {
     'ROW',
     'bore pit',
     'slurry',
+    'soil type',
+    'route alignment',
   ],
   vocabulary_assumed: [
-    { term: 'conduit', source_lesson_id: 'T04.L01' },
-    { term: 'soil type', source_lesson_id: 'T04.L03' },
-    { term: 'route alignment', source_lesson_id: 'T04.L02' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {
@@ -70,6 +70,16 @@ export const meta = {
       term: 'slurry',
       definition:
         'Drilling fluid — typically a bentonite (natural clay mineral) and water mixture — used in HDD to cool the drill bit, lubricate the bore path, and flush rock and soil cuttings back to the surface through the annular space around the drill rod. Slurry management (containment, disposal) is a significant operational and regulatory concern on HDD jobs.',
+    },
+    {
+      term: 'soil type',
+      definition:
+        'The classification of soil based on its particle size, cohesion, and drainage properties — typically clay, silt, sand, loam, or rock. Soil type is the single most important factor in underground construction method selection: cooperative soils (clay, sandy loam, black dirt) allow plowing; sandy or saturated soils require open-cut; rock of any depth requires open-cut with a rock saw or HDD with a specialty rig.',
+    },
+    {
+      term: 'route alignment',
+      definition:
+        'The planned horizontal path of an underground cable or conduit route as shown on engineering drawings. The route alignment determines which obstacles (roads, rivers, railroads, structures) must be crossed and which construction method is required at each crossing point. A poor alignment choice can convert a plow-able rural route into a series of expensive HDD bores.',
     },
   ],
 };
@@ -290,7 +300,12 @@ export default function T06L01_HDDvsOpenCutvsPlowing() {
           ))}
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {key_terms.slice(3).map((kt) => (
+          {key_terms.slice(3, 7).map((kt) => (
+            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
+          ))}
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {key_terms.slice(7).map((kt) => (
             <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
           ))}
         </div>
@@ -395,6 +410,32 @@ export default function T06L01_HDDvsOpenCutvsPlowing() {
             <li><strong>Cannot replace an HDD crossing</strong> — plowing across an active road, river, or railroad is not permitted</li>
           </ul>
         </div>
+
+        {/* Soil Type and Route Alignment */}
+        <h3 className="mt-6 font-semibold text-lg">Two Concepts That Drive Every Method Decision</h3>
+        <p className="mt-2">
+          Before you can score any route segment, you need two site facts in hand:
+        </p>
+        <p className="mt-3">
+          <strong>Soil type</strong> is the classification of the material you will be boring or
+          trenching through — clay, silt, sand, loam, or rock. Clay and sandy loam are{' '}
+          <em>cooperative soils</em>: the plow blade tracks straight, the bore stays on path,
+          and the trench walls are stable. Sandy or saturated soils are harder to plow (the
+          furrow does not close) and harder to bore (bore walls collapse). Rock — even at
+          24 inches depth — stops a vibratory plow entirely and adds $20–50+/ft to any open-cut
+          (rock-saw attachment required). Soil type is the single most important factor in
+          construction method selection. A 10-mile route through Iowa black dirt plows in 3 days;
+          the same route through central Pennsylvania shale can take 3 weeks with a rock saw.
+        </p>
+        <p className="mt-3">
+          <strong>Route alignment</strong> is the planned horizontal path shown on the engineering
+          drawings — where the route goes. Alignment drives method selection because it determines
+          which obstacles must be crossed: a route through open farmland might plow 100%; the same
+          route shifted two blocks to follow a state highway requires HDD at every road crossing
+          and may require open-cut through the utility-dense core. A well-chosen alignment can
+          eliminate HDD bores worth tens of thousands of dollars. Designers optimize alignment to
+          minimize obstacle crossings before finalizing method selection.
+        </p>
 
         {/* Decision Matrix */}
         <h3 className="mt-6 font-semibold text-lg">The Decision Matrix: Scoring Your Route</h3>
