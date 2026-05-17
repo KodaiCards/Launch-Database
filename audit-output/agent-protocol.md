@@ -3,6 +3,9 @@
 > Reference this file from agent prompts instead of re-inlining boilerplate.
 > Every agent reads this once at start of run.
 > Working branch is **`main`** (post-2026-05-15-evening lock).
+>
+> **Companion file:** `audit-output/dispatch-templates.md` has reusable scope blocks per agent role.
+> Orchestrator's dispatch prompts reference template names; standing scope lives in the template file.
 
 ## 1. Setup
 
@@ -59,6 +62,24 @@ On collision/rejection, retry fetch → merge → push up to **5×** with **30s 
 - Issue "GREEN closure" claims — orchestrator decides
 - Apply fixes when role is audit/RT — REPORT only
 - Trust prior agents' "primary-source verified" claims blindly — re-verify
+
+## 6a. Fix/Polish neighborhood-AND-FIX policy
+
+To eliminate wasteful 1-fix surgical dispatches, fix-agents and polish-agents have **explicit authority to apply mechanical same-pattern fixes within their write-path scope** when discovered during the neighborhood scan.
+
+**APPLY (within scope, no orchestrator round-trip):**
+- Same-pattern bug found ±20 lines or in same array (e.g., vocab_assumed entry missing for a term that's used in prose)
+- Schema-mechanical fixes (adding missing vocab pointer, fixing exact-string mismatch in DAG, removing duplicate vocab entries)
+- Pre-existing LOW backlog items in the lessons being touched (Polish Queue residuals for this topic)
+- Trivial editorial inconsistencies caught during the scan
+
+**REPORT, do NOT apply:**
+- Same-pattern bug in a DIFFERENT topic/file outside scope
+- Bug requiring framework change or Carter input
+- Substantive content change beyond canonical
+- Anything that would expand commit diff materially beyond canonical
+
+**Why:** orchestrator dispatching a surgical 1-fix agent costs ~80-120K Sonnet. A fix-agent or polish-agent that absorbs the fix during its own neighborhood scan costs ~5-15K extra. Polish stages own LOW backlog by default per wave-completion discipline.
 
 ## 7. Closeout requirements (every agent)
 
