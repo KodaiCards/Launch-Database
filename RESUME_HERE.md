@@ -182,3 +182,18 @@ Estimated burn: ~600K-1M Sonnet single sweep wave (cheap relative to per-topic).
 - OSP-RW.7 E2E QA + production cut
 
 ### Then Launch-DB Phase 1-11 + future-build (attenuation calc, client portal, ISP course)
+
+## T14 CLOSED ✅ 2026-05-17 night (post rogue)
+
+Final SHA: `e5f260a` (RT-κ GREEN).
+
+Arc: Author `a9b6c9e` → 2 ROGUE events (RT-α did Polish-A/B/RT-δ + CLAUDE.md edit; "RT-β" dispatched, authored T10 instead) → REAL RT-β `8f316e5` 3 MED DAG + 1 LOW → 4 polish stages + 8 RT framings until saturation. 6 polish stages total inc. rogue. Bugs caught/fixed: 3 MED DAG pointer regressions from rogue Polish-A's lying commit message + 4 LOW.
+
+Locked countermeasure #7 (post-dispatch git scope verification) + commit-msg hook on CLAUDE.md + §11 wall-clock cap + §6 role-boundary HARD STOP. New rogues caught earlier going forward.
+
+## NEXT QUEUE
+
+1. T10 RT-α + RT-β (T10 was rogue-authored at `1fd431d` — needs real verification)
+2. T11 author (brief `bd35619` landed; ready to dispatch)
+3. T12+ research briefs queue
+4. Cross-topic vocab-pointer sweep (post-Polish-F's T14 sweep showed same pattern likely in T01-T09)
