@@ -1,0 +1,294 @@
+// T12.L13 — Acceptance Testing: What Passes
+// Working lesson: acceptance thresholds, TIA-568 link model, NECA/FOA 301, dual-wavelength requirement
+// R-2 correction N-4 applied: dual-wavelength 1310+1550 nm baseline for all OSP singlemode acceptance
+// Source: NECA/FOA 301-2016 | TIA-568.3-D | RUS 1753F-401 §5 | UFGS 33 82 00
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T12.L13',
+  course_id: 'T12',
+  title: 'Acceptance Testing — What Passes',
+  order: 13,
+  lesson_type: 'working',
+  prerequisites: ['T12.L02', 'T12.L07', 'T12.L11'],
+  learning_objectives: [
+    'State the OLTS maximum insertion loss formula from TIA-568.3-D (channel loss model)',
+    'State the RUS splice acceptance threshold and what standard it derives from',
+    'Apply the NECA/FOA 301 acceptance criteria to a described test result',
+    'Explain why dual-wavelength (1310 nm + 1550 nm) testing is required for singlemode OSP acceptance',
+  ],
+  estimated_minutes: 32,
+  vocabulary_introduced: [
+    'acceptance threshold',
+    'TIA-568 channel loss model',
+    'NECA/FOA 301',
+    'dual-wavelength baseline',
+  ],
+  vocabulary_assumed: [
+    { term: 'OLTS', source_lesson_id: 'T12.L01' },
+    { term: 'bidirectional OTDR', source_lesson_id: 'T12.L07' },
+    { term: 'CIC sequence', source_lesson_id: 'T12.L11' },
+    { term: 'dual-wavelength acceptance testing', source_lesson_id: 'T12.L01' },
+  ],
+  key_terms: [
+    {
+      term: 'acceptance threshold',
+      definition:
+        'The maximum allowable loss (or other parameter limit) that a fiber link or splice must meet to pass acceptance testing. Thresholds are set by the applicable standard or contract — they may differ between Tier-1 OLTS (end-to-end link loss), Tier-2 OTDR (individual splice loss), and connector inspection (zone grades). Exceeding a threshold requires investigation, repair, or rejection of the link or splice.',
+    },
+    {
+      term: 'TIA-568 channel loss model',
+      definition:
+        'The channel insertion loss formula from TIA-568.3-D (Optical Fiber Cabling Standards) used to calculate the maximum allowable end-to-end channel loss for a structured cabling installation. For singlemode OS2 fiber: max loss = (number of connectors × 0.75 dB) + (span length km × attenuation coefficient dB/km) + (number of splices × 0.3 dB). The total defines the pass/fail threshold for the OLTS Tier-1 test.',
+    },
+    {
+      term: 'NECA/FOA 301',
+      definition:
+        'NECA/FOA 301 — "Standard for Installing and Testing Fiber Optic Cables" published jointly by NECA (National Electrical Contractors Association) and FOA (Fiber Optic Association). Available as a free public PDF at thefoa.org. A widely-used installation and acceptance standard, particularly for commercial and industrial fiber OSP builds. Provides maximum loss budgets, connector loss limits, splice loss limits, and test documentation requirements. Often referenced in private project specs where TIA-568 is not the primary standard.',
+    },
+    {
+      term: 'dual-wavelength baseline',
+      definition:
+        'The requirement to perform both 1310 nm and 1550 nm OLTS and OTDR measurements on every singlemode OSP span acceptance test. 1310 nm verifies performance in the O-band (primary window for many regional carrier systems). 1550 nm verifies performance in the C-band (primary window for DWDM and long-haul). A span that passes at 1310 nm may fail at 1550 nm due to macrobends (which are more severe at longer wavelengths). Dual-wavelength testing is the minimum required baseline per NECA/FOA 301 and good OSP practice.',
+    },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T12L13_AcceptanceTesting() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ── */}
+      <section data-tier="foundations">
+        <h2>What "Passes" Depends on Which Standard Applies</h2>
+
+        <p>
+          Acceptance testing is not just "run the OTDR and see if anything looks bad." A formal
+          acceptance test compares every measurement against a specific numerical threshold defined
+          in the applicable standard or contract. Different projects use different standards:
+        </p>
+        <ul>
+          <li><strong>RUS-funded builds:</strong> RUS 1753F-401 §5 (splice loss) + NECA/FOA 301 or TIA-526-7 (link loss)</li>
+          <li><strong>Commercial carrier builds:</strong> carrier-specific specification (may reference TIA-568, NECA/FOA 301, or ITU-T G.650.1 measurement procedures)</li>
+          <li><strong>Structured cabling in premises:</strong> TIA-568.3-D channel loss model</li>
+          <li><strong>Government/federal builds:</strong> UFGS 33 82 00 (Unified Facilities Guide Specification — includes RUS references for telecom)</li>
+        </ul>
+        <p>
+          The project engineer's job is to know which standard applies, calculate the thresholds
+          before testing, and evaluate every result against those thresholds.
+        </p>
+      </section>
+
+      {/* ── WORKING ── */}
+      <section data-tier="working">
+        <h2>The Key Acceptance Thresholds You Need to Know</h2>
+
+        <h3>1. OLTS link loss — TIA-568.3-D channel model</h3>
+        <p>
+          For singlemode OS2 fiber cabling, TIA-568.3-D defines the maximum channel loss formula:
+        </p>
+        <blockquote>
+          <strong>Max loss = (n_connectors × 0.75 dB) + (L_km × 0.4 dB/km at 1310 nm)</strong><br />
+          <strong>Max loss = (n_connectors × 0.75 dB) + (L_km × 0.4 dB/km at 1550 nm)</strong>
+        </blockquote>
+        <p>
+          Where n_connectors = number of mated connector pairs in the channel (exclude launch/receive
+          reference cords) and L_km = total fiber length in km. Note: 0.4 dB/km is the TIA-568.3-D
+          cabling standard's design allowance for OS2 fiber; actual fiber attenuation for G.652.D
+          is typically ≤ 0.35 dB/km at 1310 nm and ≤ 0.20 dB/km at 1550 nm — the cabling standard
+          includes a conservative margin.
+        </p>
+
+        <WorkedExample
+          title="Maximum OLTS channel loss for a 12 km OSP span with 4 connectors"
+          formula="Max loss = (n_connectors × 0.75 dB) + (L × 0.4 dB/km)"
+          variables={[
+            { symbol: 'n_connectors', label: 'Mated connector pairs', value: 4, unit: 'pairs' },
+            { symbol: 'connector_budget', label: 'Loss per connector pair', value: 0.75, unit: 'dB/pair (TIA-568.3-D)' },
+            { symbol: 'L', label: 'Fiber span length', value: 12, unit: 'km' },
+            { symbol: 'attenuation', label: 'Fiber attenuation allowance at 1310 nm', value: 0.4, unit: 'dB/km' },
+          ]}
+          steps={[
+            'Connector budget = 4 × 0.75 dB = 3.00 dB',
+            'Fiber loss budget = 12 km × 0.4 dB/km = 4.80 dB',
+            'Max channel loss = 3.00 + 4.80 = 7.80 dB',
+            'If OLTS reads ≤ 7.80 dB (with reference cord subtracted): PASS',
+            'If OLTS reads > 7.80 dB: FAIL — investigate connectors or fiber for excess loss',
+          ]}
+          answer="Maximum allowable OLTS loss = 7.80 dB at 1310 nm for this channel"
+          sanityCheck="A 12 km span with 4 connector pairs. At 0.4 dB/km × 12 km = 4.8 dB just for the fiber; add 3.0 dB for connectors = 7.8 dB total. If the measured OLTS reading is, say, 6.2 dB, the channel passes with 1.6 dB of margin. That margin is real value — it tells you the link has room for aging, cleaning degradation, and future field work."
+        />
+
+        <h3>2. Splice loss — RUS 1753F-401 §5</h3>
+        <p>
+          For RUS builds, every fusion splice must have a bidirectional-average loss of ≤ 0.30 dB
+          per RUS 1753F-401 §5. This is the <strong>contract maximum</strong>. The quality target
+          used by professional splice crews is typically ≤ 0.10–0.15 dB — values approaching
+          0.30 dB indicate a marginal splice that should be re-done.
+        </p>
+        <p>
+          <strong>Field note:</strong> The 0.30 dB RUS threshold is not a performance target —
+          it's a contractual outer limit. Running a span at 0.28 dB per splice technically
+          passes, but the cumulative effect of marginal splices on link loss budget (and OSNR
+          on high-capacity routes) is real. Crews that consistently achieve 0.05–0.10 dB per
+          splice are demonstrating quality workmanship.
+        </p>
+
+        <h3>3. NECA/FOA 301 — common commercial acceptance thresholds</h3>
+        <table>
+          <thead>
+            <tr><th>Parameter</th><th>Threshold</th><th>Method</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Connector insertion loss (singlemode)</td>
+              <td>≤ 0.75 dB per mated pair (typical; site spec may be tighter)</td>
+              <td>OLTS reference measurement</td>
+            </tr>
+            <tr>
+              <td>Splice loss (fusion, singlemode)</td>
+              <td>≤ 0.15 dB bidirectional average (quality target)</td>
+              <td>Bidirectional OTDR per FOTP-61</td>
+            </tr>
+            <tr>
+              <td>End-to-end link loss</td>
+              <td>Calculated from components: fiber + connectors + splices</td>
+              <td>OLTS per FOTP-61 / TIA-526-7</td>
+            </tr>
+            <tr>
+              <td>Connector end-face</td>
+              <td>Grade A per IEC 61300-3-35</td>
+              <td>VIP inspection per CIC protocol</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4. Dual-wavelength requirement for singlemode OSP acceptance</h3>
+        <p>
+          Per NECA/FOA 301 and as confirmed by R-2 research (N-4): all singlemode OSP acceptance
+          testing requires measurement at BOTH 1310 nm and 1550 nm as a minimum baseline.
+          A single-wavelength test at 1310 nm is insufficient because:
+        </p>
+        <ul>
+          <li>
+            <strong>Macrobends are wavelength-selective:</strong> a macrobend may be invisible
+            at 1310 nm but cause significant loss at 1550 nm (where most DWDM traffic runs).
+            A 1310 nm pass + 1550 nm fail means the fiber has a bend that will degrade service.
+          </li>
+          <li>
+            <strong>Most network transport uses 1550 nm:</strong> C-band DWDM (1530–1565 nm)
+            is the primary window for all high-capacity backbone traffic. A 1310 nm-only test
+            doesn't verify the fiber's performance in the wavelength range where it will actually
+            carry traffic.
+          </li>
+          <li>
+            <strong>Add 1625 nm for macrobend investigation:</strong> if macrobend signature is
+            suspected (e.g., trace shows increased slope only at 1550 nm), adding 1625 nm OTDR
+            sweep makes macrobend locations clearly visible.
+          </li>
+        </ul>
+      </section>
+
+      {/* ── ADVANCED ── */}
+      <section data-tier="advanced">
+        <h2>Advanced: Loss Budget Comparison — Building the Pre-Test Calculation</h2>
+        <p>
+          Best practice before any acceptance test: calculate the expected link loss budget using
+          component specs, then set this as the test threshold. The calculation:
+        </p>
+        <ol>
+          <li>
+            <strong>Fiber loss:</strong> span length (km) × fiber attenuation (dB/km). Use the
+            ITU-T G.652.D maximum (≤ 0.35 dB/km at 1310 nm, ≤ 0.20 dB/km at 1550 nm) for
+            a conservative upper bound.
+          </li>
+          <li>
+            <strong>Connector loss:</strong> number of mated pairs × maximum connector insertion
+            loss (typically 0.50 dB for new APC, 0.75 dB for UPC per TIA-568.3-D).
+          </li>
+          <li>
+            <strong>Splice loss:</strong> number of splices × maximum splice loss (typically
+            0.10 dB quality target, or 0.30 dB contract maximum for RUS).
+          </li>
+          <li>
+            <strong>Total budget:</strong> sum of all components.
+          </li>
+          <li>
+            <strong>Margin check:</strong> subtract total budget from the system receive
+            sensitivity to verify adequate margin remains (typically ≥ 3 dB of margin for
+            a 25-year design life).
+          </li>
+        </ol>
+        <p>
+          This pre-test calculation makes the acceptance test faster and more useful: the technician
+          knows what to expect and can immediately identify anomalies that exceed calculated values.
+        </p>
+      </section>
+
+      {/* ── QUIZ ── */}
+      <section data-tier="quiz">
+        <Quiz
+          id="T12L13-quiz"
+          questions={[
+            {
+              id: 'q1',
+              type: 'multiple-choice',
+              text: 'A 20 km G.652.D singlemode span has 6 mated connector pairs. Using the TIA-568.3-D OS2 model, what is the maximum allowable OLTS channel loss at 1310 nm?',
+              options: [
+                { id: 'a', text: '4.50 dB (6 connectors × 0.75 dB only)' },
+                { id: 'b', text: '12.50 dB (6 × 0.75 dB + 20 km × 0.4 dB/km)' },
+                { id: 'c', text: '8.00 dB (20 km × 0.4 dB/km only, connectors separate)' },
+                { id: 'd', text: '6.50 dB (6 × 0.5 dB + 20 × 0.2 dB/km)' },
+              ],
+              correct: 'b',
+              explanation: 'Max loss = (6 × 0.75 dB) + (20 km × 0.4 dB/km) = 4.50 + 8.00 = 12.50 dB. TIA-568.3-D uses 0.75 dB per connector pair and 0.4 dB/km for OS2 singlemode. Both connector and fiber loss components are included in the formula.',
+            },
+            {
+              id: 'q2',
+              type: 'multiple-choice',
+              text: 'A contractor submits a splice acceptance report for a RUS build showing all splices at 0.22–0.28 dB bidirectional average. The report says "all splices pass." Is the contractor correct?',
+              options: [
+                { id: 'a', text: 'No — the RUS threshold is 0.10 dB and all splices exceed it' },
+                { id: 'b', text: 'Yes — all splices are below the RUS 1753F-401 §5 contract maximum of 0.30 dB' },
+                { id: 'c', text: 'No — the contract maximum is 0.15 dB per NECA/FOA 301' },
+                { id: 'd', text: 'Yes — values under 0.30 dB are within the quality target, not just the contractual maximum' },
+              ],
+              correct: 'b',
+              explanation: 'The RUS 1753F-401 §5 contract maximum is 0.30 dB per splice (bidirectional average). All splices at 0.22–0.28 dB are below this threshold and technically pass. However, values this close to the limit represent marginal splices — a quality-conscious contractor should re-splice values above 0.15–0.20 dB. The fact that they "pass" does not mean the splices are good quality.',
+            },
+            {
+              id: 'q3',
+              type: 'multiple-choice',
+              text: 'A singlemode OSP span passes the 1310 nm OLTS test with 2.5 dB of margin. The 1550 nm OLTS test shows the link is 0.4 dB OVER the maximum channel loss threshold. What is the most likely cause and correct action?',
+              options: [
+                { id: 'a', text: 'Probable cause: connector contamination. Action: clean connectors and retest.' },
+                { id: 'b', text: 'Probable cause: macrobend in the fiber. Action: locate and correct the tight bend, then retest at both wavelengths.' },
+                { id: 'c', text: 'Probable cause: the OTDR IOR is set incorrectly. Action: verify EIOR and retest.' },
+                { id: 'd', text: 'Probable cause: incorrect reference cord calibration. Action: recalibrate reference cords and retest.' },
+              ],
+              correct: 'b',
+              explanation: 'A pass at 1310 nm but fail at 1550 nm — with the excess loss appearing only at the longer wavelength — is the classic macrobend signature. Macrobends strip longer-wavelength light preferentially. Connector contamination and reference cord errors would affect both wavelengths roughly equally. An OTDR IOR error affects distance but not loss magnitude. The correct action is to locate the bend using dual-wavelength OTDR, correct it, and retest.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── FLASHCARDS ── */}
+      <section data-tier="flashcards">
+        <h2>Key Terms</h2>
+        {meta.key_terms.map((kt) => (
+          <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
+        ))}
+      </section>
+
+    </LessonLayout>
+  );
+}

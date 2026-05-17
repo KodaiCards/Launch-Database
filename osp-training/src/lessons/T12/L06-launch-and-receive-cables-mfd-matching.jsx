@@ -1,0 +1,261 @@
+// T12.L06 — Launch and Receive Cables: MFD Matching
+// Working lesson: MFD mismatch gainer artifacts, launch cable MFD matching, receive cable requirements
+// Source: EXFO AN298 | TIA-455-61 | IEC 61280-4-2 | Corning WP1281
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T12.L06',
+  course_id: 'T12',
+  title: 'Launch and Receive Cables — MFD Matching',
+  order: 6,
+  lesson_type: 'working',
+  prerequisites: ['T12.L04', 'T02.L05'],
+  learning_objectives: [
+    'Explain what MFD mismatch is and why it can produce a gainer artifact on an OTDR trace',
+    'State the requirement that launch cable MFD must match the fiber under test',
+    'Calculate the apparent "gain" from an MFD mismatch at a splice',
+    'Describe why bidirectional averaging eliminates MFD-mismatch gainer artifacts',
+  ],
+  estimated_minutes: 25,
+  vocabulary_introduced: [
+    'MFD mismatch gainer',
+    'launch cable MFD matching',
+    'receive cable minimum length',
+    'directional bias',
+  ],
+  vocabulary_assumed: [
+    { term: 'MFD (Mode Field Diameter)', source_lesson_id: 'T02.L05' },
+    { term: 'launch cable', source_lesson_id: 'T12.L04' },
+    { term: 'receive cable', source_lesson_id: 'T12.L04' },
+    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'Rayleigh backscatter', source_lesson_id: 'T12.L03' },
+  ],
+  key_terms: [
+    {
+      term: 'MFD mismatch gainer',
+      definition:
+        'A false "negative loss" (gain) reading on an OTDR trace at a splice between two fibers with different Mode Field Diameters (MFDs). When light travels from a smaller-MFD fiber to a larger-MFD fiber, the backscatter coefficient of the larger fiber is lower — so the backscatter slope drops suddenly, making the splice appear to have negative loss (a gainer). The splice still has real loss; the gainer is a measurement artifact caused by the MFD-driven backscatter coefficient difference.',
+    },
+    {
+      term: 'launch cable MFD matching',
+      definition:
+        'The requirement that the launch cable fiber type and MFD must match the fiber under test as closely as possible. A launch cable with a different MFD will introduce a gainer artifact at the point where the launch cable meets the first connector of the span, making the first connector appear to have negative loss and distorting all subsequent measurements.',
+    },
+    {
+      term: 'receive cable minimum length',
+      definition:
+        'The minimum length of fiber jumper connected to the far end of the span before measurement. Purpose: (1) ensures the far-end connector loss is captured as an event on the trace rather than at the last usable data point; (2) prevents the end-face reflection from masking the final splice or segment. Minimum = same table as launch cable: ≥150 m (5–30 ns pulse), ≥500 m (100–500 ns), ≥1 km (1–3 µs), ≥2.5 km (10–20 µs).',
+    },
+    {
+      term: 'directional bias',
+      definition:
+        'The systematic difference in loss reading for the same physical event depending on the direction of OTDR measurement. Caused by MFD differences between the fibers on each side of the event. Eliminated by bidirectional averaging: true loss = (loss A→B + loss B→A) / 2.',
+    },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T12L06_LaunchReceiveMFD() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ── */}
+      <section data-tier="foundations">
+        <h2>When Two Fibers Have Different Beam Sizes — the MFD Mismatch Problem</h2>
+
+        <p>
+          In Lesson T02.L05 you learned that singlemode fiber transmits light in a single guided mode,
+          and the <strong>Mode Field Diameter (MFD)</strong> is the effective diameter of that beam.
+          Standard G.652.D singlemode has an MFD of 9.2 ± 0.4 µm at 1310 nm. Modern fibers are
+          manufactured to tight tolerances, but MFD can still vary slightly from one manufacturer's
+          batch to another, from one cable reel to another, and is definitely different between
+          dispersion-shifted or bend-insensitive fiber types.
+        </p>
+        <p>
+          When two fibers with different MFDs are fusion-spliced, the intensity of Rayleigh
+          backscatter changes at the splice point. Here's the key physics: backscatter intensity scales
+          with the <em>inverse square of the MFD</em> (larger beam = lower backscatter density per
+          unit area). If the fiber after the splice has a larger MFD, its backscatter will be
+          lower — the OTDR trace will step down at the splice, as if the splice had loss.
+          But if the fiber after the splice has a <em>smaller</em> MFD, its backscatter will be
+          higher — the trace will step <em>up</em>, appearing to have negative loss. That impossible-
+          looking "gain" is the <strong>MFD mismatch gainer artifact</strong>.
+        </p>
+        <p>
+          <strong>It's not real gain.</strong> The splice does consume light (coupling efficiency is
+          always ≤ 1). But the OTDR sees the backscatter increase from the smaller-MFD fiber and
+          reports a gainer. The typical range of this artifact: −0.05 to −0.3 dB depending on the
+          MFD difference between the two fibers.
+        </p>
+      </section>
+
+      {/* ── WORKING ── */}
+      <section data-tier="working">
+        <h2>Why Your Launch Cable Must Match the Fiber Under Test</h2>
+
+        <p>
+          The most common place to encounter an MFD mismatch gainer is between the launch cable and
+          the first connector of the fiber under test. If the launch cable has a slightly different
+          MFD than the span fiber, the OTDR will see a gainer or artificially high loss at the first
+          in-line connector — and every subsequent event will be offset by that artifact.
+        </p>
+        <p>
+          <strong>Rule:</strong> match the launch cable fiber type to the fiber type you're testing.
+          Testing G.652.D? Use a G.652.D launch reel. Testing G.657.A2 bend-insensitive fiber in
+          the drop section? Use a G.657.A2 launch reel. Never use a multimode launch cable on a
+          singlemode fiber — you'll see wild measurement errors.
+        </p>
+
+        <WorkedExample
+          title="Estimating MFD-mismatch gainer magnitude"
+          formula="Apparent gain (dB) ≈ 10 × log₁₀(MFD₂² / MFD₁²) = 20 × log₁₀(MFD₂ / MFD₁)"
+          variables={[
+            { symbol: 'MFD₁', label: 'Launch cable MFD (fiber before splice)', value: 9.2, unit: 'µm' },
+            { symbol: 'MFD₂', label: 'Span fiber MFD (fiber after splice)', value: 9.8, unit: 'µm' },
+          ]}
+          steps={[
+            'Ratio = MFD₂ / MFD₁ = 9.8 / 9.2 = 1.0652',
+            'Apparent gainer = 20 × log₁₀(1.0652) = 20 × 0.0274 = +0.55 dB',
+            'But the true splice has some real loss, say 0.05 dB.',
+            'OTDR-reported loss = 0.55 – 0.05 = −0.50 dB (a significant gainer artifact)',
+          ]}
+          answer="~0.55 dB apparent gainer (before accounting for real splice loss)"
+          sanityCheck="A 0.6 µm MFD difference (9.2 → 9.8 µm) produces a ~0.55 dB backscatter-level gainer. This is large enough to dominate a typical OSP splice reading and would cause you to under-report or misqualify every splice in the span. The fix is to use a 9.2 µm launch reel when testing 9.2 µm fiber."
+        />
+
+        <h3>Receive cable — the far-end counterpart</h3>
+        <p>
+          The receive cable serves two purposes: (1) it lets the OTDR see the far-end connector as
+          a measurable event on the trace rather than the last noisy pixels before the range limit, and
+          (2) it prevents the end-face reflection from masking the final splice.
+        </p>
+        <p>
+          The receive cable must also match the span fiber's MFD — for the same reason as the launch
+          cable. If the receive cable has a different MFD, the last splice (span fiber → receive cable)
+          will appear to have anomalous loss or gain.
+        </p>
+        <p>
+          In most OSP fieldwork, the receive cable is staged at the far end of the span, connected
+          to the fiber under test before the OTDR technician starts the measurement. On bidirectional
+          measurements (required per TIA-455-61 for splice acceptance), a launch reel is staged at
+          each end.
+        </p>
+
+        <h3>Bidirectional measurement eliminates the directional bias</h3>
+        <p>
+          Because backscatter is directional (launch-cable and span-fiber MFD differences affect
+          each direction differently), the loss reading for the same splice varies depending on which
+          direction you shoot the OTDR. This is called <strong>directional bias</strong>.
+        </p>
+        <p>
+          The correct bidirectional average formula (from TIA-455-61):
+        </p>
+        <blockquote>
+          <strong>True splice loss = (L<sub>A→B</sub> + L<sub>B→A</sub>) / 2</strong>
+        </blockquote>
+        <p>
+          Where L<sub>A→B</sub> is the loss reading from end A shooting to end B, and L<sub>B→A</sub>
+          is the loss reading from end B shooting to end A. Averaging eliminates the MFD-mismatch
+          directional bias entirely.
+        </p>
+        <p>
+          Example: Splice reads −0.05 dB from the A end (gainer artifact) and +0.15 dB from the
+          B end. True loss = (−0.05 + 0.15) / 2 = 0.05 dB. That 0.05 dB is the real splice loss.
+        </p>
+      </section>
+
+      {/* ── ADVANCED ── */}
+      <section data-tier="advanced">
+        <h2>Advanced: Backscatter Coefficient and Why MFD Drives It</h2>
+        <p>
+          Rayleigh backscatter intensity in a singlemode fiber is proportional to the fraction of
+          scattered power that re-couples into the guided mode and travels back toward the OTDR.
+          This fraction is the <em>capture coefficient</em>, which scales approximately as
+          (NA)² / (π × MFD²) — inversely with MFD squared. A larger MFD means less power couples
+          back per unit length of fiber, producing a lower backscatter level.
+        </p>
+        <p>
+          OTDR manufacturers specify the fiber's backscatter coefficient in their instruments
+          (expressed in dB/ns or dB per unit time window). When you set the correct fiber type in
+          the OTDR, it compensates for the backscatter difference between common fiber types.
+          However, if you're using a launch reel of a fiber type that is not precisely the same as
+          the span fiber, the OTDR's built-in compensation only applies at the fiber type boundary
+          if the OTDR supports two-fiber-type measurement modes (rare in field instruments).
+          Most field OTDRs assume uniform fiber throughout and cannot automatically correct for
+          a fiber-type mismatch mid-span.
+        </p>
+        <p>
+          For this reason, <strong>two-fiber-type spans</strong> (e.g., a G.652.D feeder spliced to
+          a G.657.A2 drop at the closure) must be measured bidirectionally with matched launch/receive
+          reels on each end. The bidirectional average will cancel the MFD-driven directional bias
+          at the transition splice. Attempting to average with unmatched reels introduces an
+          additional bias that bidirectional averaging does not eliminate.
+        </p>
+      </section>
+
+      {/* ── QUIZ ── */}
+      <section data-tier="quiz">
+        <Quiz
+          id="T12L06-quiz"
+          questions={[
+            {
+              id: 'q1',
+              type: 'multiple-choice',
+              text: 'An OTDR trace shows a reading of −0.12 dB at the first splice of a span. This means:',
+              options: [
+                { id: 'a', text: 'The splice is exceptionally good — negative loss means the signal is being amplified' },
+                { id: 'b', text: 'The splice is a gainer artifact — light is not actually being amplified, but an MFD mismatch is distorting the reading' },
+                { id: 'c', text: 'The OTDR is defective — negative splice loss readings are physically impossible and indicate instrument failure' },
+                { id: 'd', text: 'The launch cable is too long, causing overshoot at the first splice' },
+              ],
+              correct: 'b',
+              explanation: 'A negative loss reading (gainer) on an OTDR trace does not mean light is being amplified — that would violate energy conservation. It means the Rayleigh backscatter coefficient changed in a way that makes the trace step up, typically due to a fiber MFD mismatch. The splice still has real (positive) loss; the gainer is a measurement artifact.',
+            },
+            {
+              id: 'q2',
+              type: 'multiple-choice',
+              text: 'You are testing a 15 km G.652.D singlemode span using a 1 µs pulse width. Which launch cable setup is correct?',
+              options: [
+                { id: 'a', text: 'G.657.A2 bend-insensitive fiber, 150 m reel — adequate for any pulse width under 1 µs' },
+                { id: 'b', text: 'G.652.D fiber, 150 m reel — matches the fiber type, shorter reel to save cost' },
+                { id: 'c', text: 'G.652.D fiber, 1,000 m reel — matches fiber type and meets the 1 µs pulse minimum length requirement' },
+                { id: 'd', text: 'Any singlemode fiber, 500 m reel — MFD differences between G.652.D types are negligible' },
+              ],
+              correct: 'c',
+              explanation: 'Two requirements must both be met: (1) fiber type = G.652.D to match the span fiber and avoid MFD-mismatch gainer artifacts, and (2) reel length ≥ 1,000 m for a 1 µs pulse width to clear the ADZ. Options A and D use the wrong fiber type. Option B uses the right fiber type but at 150 m, which is insufficient for a 1 µs pulse (need ≥ 1 km).',
+            },
+            {
+              id: 'q3',
+              type: 'multiple-choice',
+              text: 'A splice measures +0.18 dB from end A and −0.08 dB from end B. What is the bidirectional average (true splice loss)?',
+              options: [
+                { id: 'a', text: '0.18 dB — always use the worst-case reading' },
+                { id: 'b', text: '0.05 dB — average of the two readings' },
+                { id: 'c', text: '0.10 dB — take the positive reading divided by 2' },
+                { id: 'd', text: '0.26 dB — sum of the two readings' },
+              ],
+              correct: 'b',
+              explanation: 'True splice loss = (L_A→B + L_B→A) / 2 = (0.18 + (−0.08)) / 2 = 0.10 / 2 = 0.05 dB. The directional bias (MFD mismatch) inflated the A→B reading and produced an apparent gainer on B→A. Averaging cancels the bias. Note: the −0.08 dB reading is a gainer artifact, not real gain.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── FLASHCARDS ── */}
+      <section data-tier="flashcards">
+        <h2>Key Terms</h2>
+        {meta.key_terms.map((kt) => (
+          <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
+        ))}
+      </section>
+
+    </LessonLayout>
+  );
+}

@@ -1,0 +1,317 @@
+// T12.L03 — OTDR Fundamentals: Pulse, Range, Averaging
+// Working lesson: Rayleigh backscatter, pulse width tradeoffs, averaging time, EIOR entry
+// Source: M08 §8.2 (migrated + expanded) | EXFO AN194 | EXFO AN296 | Yamasaki Optical 2025
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T12.L03',
+  course_id: 'T12',
+  title: 'OTDR Fundamentals — Pulse, Range, Averaging',
+  order: 3,
+  lesson_type: 'working',
+  prerequisites: ['T12.L01', 'T02.L02', 'T02.L07'],
+  learning_objectives: [
+    'Explain how Rayleigh backscatter creates the OTDR trace slope and what a step-down event looks like',
+    'Predict what happens to range, noise floor, and event resolution when pulse width is increased',
+    'Select appropriate pulse width and averaging time for three representative OSP scenarios',
+    'Enter the correct EIOR value from a cable datasheet and explain why using the default value introduces distance errors',
+  ],
+  estimated_minutes: 30,
+  vocabulary_introduced: [
+    'Rayleigh backscatter',
+    'pulse width',
+    'dynamic range',
+    'averaging time',
+    'EIOR (Effective Group Index of Refraction)',
+  ],
+  key_terms: [
+    {
+      term: 'Rayleigh backscatter',
+      definition:
+        'Microscopic density variations (impurities in the glass at the atomic level) scatter a tiny fraction of the traveling light back toward the OTDR. This is continuous and predictable — the backscatter level falls steadily as the pulse travels further because the signal weakens with distance. The OTDR measures this backscatter level over time and converts it to distance. When the trace falls faster than the normal slope, there is extra loss — a splice, bend, or connector.',
+    },
+    {
+      term: 'pulse width',
+      definition:
+        'Duration of the OTDR\'s laser burst in nanoseconds (ns) or microseconds (µs). Controls the fundamental tradeoff: long pulse = more optical energy = more range = larger dead zones. Short pulse = less energy = shorter range = smaller dead zones (better event resolution). Must be selected based on span length. Rule of thumb: use the narrowest pulse that gives adequate range for the span under test.',
+    },
+    {
+      term: 'dynamic range',
+      definition:
+        'The dB difference between the OTDR backscatter level at the launch point and the instrument noise floor. Higher dynamic range means the OTDR can measure longer fibers before the backscatter signal disappears into noise. Dynamic range increases with averaging time (√N improvement) and with longer pulse width (more optical energy).',
+    },
+    {
+      term: 'averaging time',
+      definition:
+        'The duration over which the OTDR accumulates and averages repeated pulse measurements. More averaging = lower noise = better dynamic range, improving by approximately √N (every 4× increase in averaging time reduces noise by ~2× = ~0.5 dB improvement). Diminishing returns beyond ~3 minutes; typical OSP acceptance uses 30–120 seconds per span direction.',
+    },
+    {
+      term: 'EIOR (Effective Group Index of Refraction)',
+      definition:
+        'The value the OTDR uses to convert the round-trip pulse travel time to a physical distance: d = (c × t) / (2 × n). Also called EGI (Effective Group Index). MUST be taken from the specific cable manufacturer\'s datasheet before every test — typical G.652.D values are ~1.4677 at 1550 nm, but values vary by manufacturer and production lot. Entering the wrong EIOR produces a systematic distance error on every event position in the trace. See T12.L10 for the distance error calculation.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L02' },
+    { term: 'wavelength windows', source_lesson_id: 'T02.L07' },
+    { term: 'dB/dBm', source_lesson_id: 'T02.L02' },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T12L03_OTDRFundamentals() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Imagine throwing a rubber ball down a long hallway and listening for the echo.
+          The longer the hallway, the quieter the echo when it comes back. If there's a wall
+          partway down the hall, you hear a louder echo at that distance. The OTDR does
+          exactly this — but with a laser pulse instead of a rubber ball, and at the speed
+          of light.
+        </p>
+        <p className="mt-2">
+          The OTDR fires a pulse into the fiber. As the pulse travels, a tiny fraction of the
+          light scatters back toward the instrument — that's Rayleigh backscatter. The OTDR
+          measures that backscatter level over time, and since light travels at a known speed,
+          it converts time to distance. The result is a "trace" — a graph showing how much
+          backscatter level is left at every point along the fiber.
+        </p>
+        <p className="mt-2">
+          The trace normally slopes downward at a steady rate (the fiber's attenuation).
+          Any event that causes extra loss — a splice, connector, tight bend — appears as a
+          sudden step-down in the trace. That's how the OTDR finds events and estimates their
+          loss.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Key Terms</h3>
+        <Flashcard
+          deckId="T12-L03"
+          cards={[
+            {
+              id: 'T12-L03-fc-rayleigh',
+              front: 'What is Rayleigh backscatter and why does it create the OTDR trace slope?',
+              back: 'Microscopic density variations in the glass scatter ~0.01% of the traveling light back toward the OTDR. As the pulse travels further it weakens, so backscatter level falls — creating the downward-sloping trace. Extra loss events (splices, bends) cause additional step-downs. Rayleigh backscatter rate = fiber attenuation coefficient in the reverse direction.',
+            },
+            {
+              id: 'T12-L03-fc-pulsewidth',
+              front: 'What is the tradeoff controlled by OTDR pulse width?',
+              back: 'Long pulse: more optical energy → more range → larger dead zones (poor event resolution). Short pulse: less energy → shorter range → smaller dead zones (better event resolution). Select the narrowest pulse that provides adequate range for the span under test.',
+            },
+            {
+              id: 'T12-L03-fc-averaging',
+              front: 'How does OTDR averaging time improve the measurement, and when does it stop helping?',
+              back: 'More averaging reduces noise: SNR improves by √N, so 4× more averaging time = ~0.5 dB better dynamic range. Diminishing returns beyond ~3 min. Typical OSP acceptance: 30–120 sec per direction. Long averaging won\'t fix fundamental limitations like insufficient dynamic range for a very long span — that requires longer pulse width.',
+            },
+            {
+              id: 'T12-L03-fc-eior',
+              front: 'What is EIOR and what happens if you use the default value instead of the datasheet value?',
+              back: 'EIOR (Effective Group Index of Refraction) converts round-trip time to distance: d = (c × t) / (2 × n). Must come from the cable manufacturer\'s datasheet. Default values (~1.4677 for G.652.D at 1550 nm) may differ from the actual reel. A 5-unit error at the 4th decimal on a 40 km span produces ~14 m distance error — sends fault-location crews to the wrong location.',
+            },
+          ]}
+        />
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────────────── */}
+      <section data-tier="working" className="mt-10">
+        <h2>Pulse Width Selection by Application</h2>
+        <p className="mt-2">
+          Pulse width is the most important OTDR parameter to set correctly. The table below
+          shows typical pulse width bands per application class (Source: EXFO Application Note
+          296, VIAVI Reference Guide Vol 1):
+        </p>
+
+        <div className="mt-4 rounded-xl border border-white/10 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Pulse width</th>
+                <th className="px-3 py-2 text-left">Span range</th>
+                <th className="px-3 py-2 text-left">Application</th>
+                <th className="px-3 py-2 text-left">ADZ (typical)</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono">5–30 ns</td>
+                <td className="px-3 py-2">≤ 2 km</td>
+                <td className="px-3 py-2">FTTH MDU, premises, near-end patch panel</td>
+                <td className="px-3 py-2">1–3 m</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono">100–500 ns</td>
+                <td className="px-3 py-2">≤ 10 km</td>
+                <td className="px-3 py-2">FTTx feeder, short OSP runs</td>
+                <td className="px-3 py-2">10–50 m</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono">1–3 µs</td>
+                <td className="px-3 py-2">10–40 km</td>
+                <td className="px-3 py-2">Metro/regional OSP</td>
+                <td className="px-3 py-2">100–300 m</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-mono">10–20 µs</td>
+                <td className="px-3 py-2">&gt; 40 km</td>
+                <td className="px-3 py-2">Long-haul backbone</td>
+                <td className="px-3 py-2">500–1000+ m</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <AnnotatedDiagram
+          title="OTDR Trace Anatomy"
+          description="A typical OTDR trace from left to right: launch ramp → connector spike → downward slope (Rayleigh backscatter) → splice step → macrobend event → Fresnel reflection at fiber end. The slope rate equals the fiber's attenuation coefficient in dB/km."
+          src=""
+          alt="OTDR trace diagram showing launch ramp, connector spike, backscatter slope, splice step-down, macrobend step-down, and end Fresnel reflection"
+          annotations={[
+            { x: 10, y: 20, label: 'Launch ramp: OTDR oversaturated by launch connector reflection — dead zone region' },
+            { x: 28, y: 55, label: 'Connector spike + step-down: reflective event (connector) then loss step' },
+            { x: 55, y: 68, label: 'Normal backscatter slope: fiber attenuation in dB/km — trace falls linearly' },
+            { x: 65, y: 75, label: 'Splice step-down: non-reflective loss event — step with no spike' },
+            { x: 90, y: 85, label: 'End reflection: Fresnel reflection at fiber end or break — spike at far end' },
+          ]}
+        />
+
+        <h2 className="mt-8">Setting the EIOR Before Every Test</h2>
+        <p className="mt-2">
+          The OTDR cannot directly measure distance — it measures time. To convert time to
+          distance it uses this formula:
+        </p>
+        <div className="bg-slate-800/50 rounded-xl border border-white/10 p-4 mt-3 font-mono text-center">
+          d = (c × t) / (2 × n)
+        </div>
+        <div className="mt-2 text-sm text-slate-300/90">
+          Where: <strong>d</strong> = distance (m), <strong>c</strong> = speed of light in vacuum
+          (2.998 × 10⁸ m/s), <strong>t</strong> = round-trip travel time (seconds),
+          <strong> n</strong> = EIOR (from cable datasheet)
+        </div>
+        <p className="mt-3">
+          The EIOR must come from the cable manufacturer's datasheet for the specific cable type
+          installed. Never leave the OTDR at its factory default — different manufacturers and
+          production runs produce slightly different EIOR values. A 5-unit error at the 4th
+          decimal (e.g., using 1.4677 when the actual value is 1.4682) produces a 13.6-meter
+          position error on a 40 km span. See T12.L10 for the full distance-error calculation.
+        </p>
+
+        <WorkedExample
+          title="OTDR Parameter Selection for a 40 km Metro Span"
+          formula="Pulse width selection: minimum pulse where range ≥ span × 1.2 safety factor"
+          variables={[
+            { name: 'Span length', value: '40 km', description: 'Total fiber length under test' },
+            { name: 'Safety factor', value: '1.2×', description: 'Extra range headroom so far-end connector is not cut off by OTDR range setting' },
+            { name: 'Required range', value: '48 km', description: '40 km × 1.2 = 48 km minimum range setting' },
+          ]}
+          steps={[
+            'Required OTDR range: 40 km × 1.2 = 48 km — set OTDR range to ≥ 50 km',
+            'From table: a 40 km span falls in the 10–40 km metro class — select pulse width in the 1–3 µs range',
+            'Start with 1 µs (narrowest pulse giving sufficient range); if dynamic range is insufficient, increase to 2 µs or 3 µs',
+            'Set EIOR from the cable reel datasheet (e.g., 1.4677 at 1550 nm for this specific manufacturer)',
+            'Set averaging time: 60 seconds per direction is adequate for acceptance testing on this span',
+            'Resulting ADZ at 1 µs: ~100–150 m — launch cable must be ≥ 150 m (borderline; use ≥ 500 m for safety on metro spans)',
+          ]}
+          result="Settings: range ≥ 50 km, pulse 1–2 µs, averaging 60 s, EIOR from datasheet, launch cable ≥ 500 m"
+          sanityCheck="A 40 km G.652.D span at 0.20 dB/km attenuation loses 8 dB of signal before adding connector/splice losses. An OTDR with 35–40 dB dynamic range easily handles this span with 60 s of averaging."
+        />
+      </section>
+
+      {/* ── ADVANCED ──────────────────────────────────────────────────────── */}
+      <section data-tier="advanced" className="mt-10">
+        <h2>Book vs. Field: Pulse Width Defaults</h2>
+        <div className="rounded-xl border border-white/10 overflow-hidden mt-3">
+          <table className="w-full text-sm">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Book (correct)</th>
+                <th className="px-3 py-2 text-left">Field shortcut</th>
+                <th className="px-3 py-2 text-left">Consequence</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">Pulse width selected per span class; EIOR set from datasheet before each new cable type</td>
+                <td className="px-3 py-2">Single "metro" or "auto" preset used on every job regardless of span; default EIOR never changed</td>
+                <td className="px-3 py-2">Short spans: dead zones from long preset pulse corrupt near-end connector data. Long spans: 14 m position errors in fault-location mode.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-4 text-sm text-slate-400">
+          <strong>Sources:</strong> EXFO Application Note 194 (OTDR fundamentals); EXFO Application Note 296
+          (pulse selection and dead zones); VIAVI Reference Guide Vol 1; Yamasaki Optical "IOR and OTDR
+          Testing" 2025; Corning AN3060.
+        </p>
+      </section>
+
+      {/* ── QUIZ ──────────────────────────────────────────────────────────── */}
+      <section data-tier="quiz" className="mt-10">
+        <Quiz
+          lessonId="T12.L03"
+          questions={[
+            {
+              id: 'T12-L03-Q1',
+              type: 'mc',
+              question:
+                'A technician increases the OTDR pulse width from 100 ns to 1 µs on a 15 km OSP span. What effect will this have?',
+              choices: [
+                'Shorter dead zones (ADZ and EDZ improve)',
+                'Longer range and better dynamic range, but larger dead zones (worse event resolution near reflective events)',
+                'No change — pulse width only affects averaging time',
+                'Higher noise floor and reduced dynamic range',
+              ],
+              correct: 1,
+              explanation:
+                'Longer pulse = more optical energy = more range and better dynamic range (less noise floor). But the longer pulse also creates a longer dead zone — the detector is saturated for a longer period after a reflective event. Events close together may be unresolvable. This is the fundamental pulse-width tradeoff.',
+            },
+            {
+              id: 'T12-L03-Q2',
+              type: 'mc',
+              question:
+                'A technician wants to reduce the OTDR trace noise floor on a 35 km span. The OTDR currently has 30 seconds of averaging. Increasing averaging time to 120 seconds will improve dynamic range by approximately:',
+              choices: [
+                '4× (quadruple the dynamic range)',
+                '0.5 dB (√4 = 2 → 2× noise reduction ≈ 0.5 dB improvement)',
+                '4 dB (one dB per 30 seconds of additional averaging)',
+                '2 dB (linear relationship: 4× averaging = 4× improvement)',
+              ],
+              correct: 1,
+              explanation:
+                'Dynamic range improves by √N. Going from 30 s to 120 s is a 4× increase in averaging. √4 = 2 — so noise reduces by 2×, which equals approximately 0.5 dB improvement in dynamic range. The improvement is real but logarithmic; you quickly hit diminishing returns beyond 3–5 minutes.',
+            },
+            {
+              id: 'T12-L03-Q3',
+              type: 'mc',
+              question:
+                'A technician is setting up the OTDR for a new cable segment. The cable datasheet lists EIOR = 1.4682 at 1550 nm. The OTDR default is 1.4677. On a 40 km span, what distance error will result if the default is used instead of the datasheet value?',
+              choices: [
+                'No significant error — EIOR differences at the 4th decimal are negligible',
+                'Approximately 14 meters (too short — events appear closer than they are)',
+                'Approximately 14 meters (too long — events appear farther than they are)',
+                'Approximately 140 meters (the error compounds with each splice)',
+              ],
+              correct: 2,
+              explanation:
+                'ΔD = (ΔN / N) × D = (0.0005 / 1.4682) × 40,000 m = 13.6 m ≈ 14 m. A higher actual EIOR means light travels slower, so the actual physical distance is longer than the OTDR calculates. Events appear closer (shorter distance) than they actually are — so the error is 14 m too short on the OTDR display.',
+            },
+          ]}
+        />
+      </section>
+
+    </LessonLayout>
+  );
+}
