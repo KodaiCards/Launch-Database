@@ -1618,3 +1618,26 @@ What CAN wake me after cap reset:
 
 **Carter-side timer suggestion:** if he sets a phone alarm at expected reset + manually pings me, that's 100% reliable. The bash-sleep approach is 70-80% reliable for short waits.
 
+
+## Wake-mechanism experiment 2026-05-17 — Haiku-agent-sleeper NO BETTER than direct bash sleep
+
+Hypothesis: dispatch Haiku agent with internal `sleep 2200` then write WAKE file. Theory: completion notification fires post-cap-reset = autonomous wake.
+
+**Actual result (Haiku agent `a09208e57fd2e19d4`):**
+- Agent discovered Bash tool blocks long synchronous sleeps in this env
+- Agent used `run_in_background: true` to detach the sleep
+- Agent's own run ended in 35 seconds (idle after detach)
+- Background bash now runs in session task pool, will fire notification when sleep completes
+- Cost: ~87K Haiku tokens for what was effectively a bash dispatch
+
+**Lesson:** Haiku-agent-as-wake-wrapper = no advantage over orchestrator launching the bash directly. The agent is a no-op middleman that costs 87K extra tokens.
+
+**Correct pattern for autonomous wake:**
+- Orchestrator launches background bash directly: `(sleep N && echo "WAKE") &` — costs ~zero tokens
+- Notification fires on completion = wake event
+- Don't wrap in agent
+
+**The deeper finding:** agents CANNOT sustain long-running idle states. Bash tool blocks long syncs. Background tasks detach from agent lifecycle. So any "long-running agent" plan is actually a "short-running agent that spawns a background task" — no different from doing it from the orchestrator side.
+
+**Multi-hour wake-up: still requires Carter manually pinging me OR an agent dispatch that's doing real work landing post-reset (not idle sleep).**
+
