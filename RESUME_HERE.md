@@ -51,3 +51,19 @@ T06 R-1 verdict: YELLOW. 3 HIGH + 4 MED + 2 LOW. Math clean. Vite clean.
 
 **Saturation rule applies:** continue R-3+ until no new finds.
 
+
+## Update — T06 R-2 landed `7df11fa`
+
+R-1 reconciliation: all 9 AGREE, no conflicts.
+
+**4 NEW findings:**
+- R2-N1 HIGH: L09:306 `47 CFR §32.2210` → `§32.2410` (Cable and wire facilities). Same P9 systemic bug from T04 propagated.
+- R2-N2 HIGH: L09 missing NESC §34 (= Underground Communication Cable). Whole lesson conceptual framework wrong — attributes §34 scope to §32. Flashcards/quizzes/LOs all need rework.
+- R2-N3 MED: L07:186 bentonite "controlled waste" wrong (non-hazardous inert clay). Misleading for crews.
+- R2-N4 MED: L05 H-20 = "20-ton axle" + L08.Q3 H-20 = "10-ton axle" — both wrong + contradictory. AASHTO H-20 = 40,000 lb GVW two-axle, rear axle 32,000 lb.
+
+R-2 self-assesses saturation reached. But per Carter's no-severity-gate rule, R-2 found 2 NEW HIGH → dispatch R-3 before fix wave.
+
+**Next on resume (T06):** R-3 forensic/field-failure framing. Verify R-2's NESC §34 + §32.2410 claims via DIFFERENT sources (cascade-defense). Sweep remaining T06 lessons for cascade bugs.
+
+**T06 canonical accumulating:** 5 HIGH (R-1: 3 + R-2: 2) + 6 MED (R-1: 4 + R-2: 2) + 2 LOW. Heavy fix wave + 2-RT pair + polish + final-verify pair anticipated.
