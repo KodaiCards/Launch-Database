@@ -31,6 +31,7 @@ export const meta = {
     { term: 'direct-burial',               source_lesson_id: 'T03.L03' },
     { term: 'rodent-proof armor',          source_lesson_id: 'T03.L03' },
     { term: 'ADSS',                         source_lesson_id: 'T03.L04' },
+    { term: 'NEC',                          source_lesson_id: 'T01.L08' },
   ],
   key_terms: [
     {
