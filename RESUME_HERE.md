@@ -78,3 +78,28 @@ R-2 self-assesses saturation reached. But per Carter's no-severity-gate rule, R-
 **Impact on T06 Fix Wave A canonical:** drop R-2's "add §34 framework" instruction. Keep R-1's §32/§35 framework correction (§32=supply conduit, §33=supply cable, §35=direct-buried both). Lesson does NOT need §34 added.
 
 **Haiku ground-truth efficiency confirmed:** 89K tokens / 38 sec / definitive on section-title question. Perfect role for this class.
+
+## Update — Infrastructure landed `6bd224f` + curriculum-wide bug findings
+
+Schema validator + DAG registry + citation registry all working. Validator caught REAL bugs that per-topic audits missed:
+
+**Systematic curriculum-wide bugs (queued for cross-topic Fix Wave after retroactive audits close):**
+
+| # | Bug | Scope | Source |
+|---|---|---|---|
+| C-1 | 47 lessons missing `learning_objectives` in meta | T02/T03/T04/T18/T19 | validator |
+| C-2 | 155 broken DAG pointers (12.9% error rate) | All topics | dag-registry.json |
+| C-3 | "pole" assumed by 19 lessons but never introduced | T07/T08/T05 etc | dag-registry |
+| C-4 | EDS/RTS never introduced anywhere | T05 references | dag-registry |
+| C-5 | T19.L08 references T11.L01 (doesn't exist) | T19 | validator |
+
+These are CHEAPER to fix as a single curriculum-wide sweep than per-topic. Queue after T03/T06/T07/T08 retroactive audits close.
+
+**Available tooling for future audits/RTs:**
+- `audit-output/citation-registry.md` (30+ verified citations + 6 cascade-resolved entries)
+- `audit-output/dag-registry.json` (1042 verified pointers, 155 broken — listed)
+- `audit-output/known-cascade-patterns.md` (12 patterns)
+- `osp-training/scripts/validate-lesson-schema.js` (5 sec runtime)
+- agent-protocol.md §14 (registry usage rule)
+
+Future audits should use these BEFORE manual checks. Should cut ~30-50% of mechanical audit work.
