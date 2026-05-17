@@ -544,7 +544,7 @@ export default function T09L02_NepaTypes() {
             ],
             answerIndex: 1,
             explanation:
-              'CE C-8 specifically covers aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It applies to both aerial (pole-mounted fiber) and buried (direct-buried or conduit) construction in existing utility corridors. It does NOT apply to any federally-funded project generally — the project type must match the CE\'s scope, and extraordinary circumstances must still be checked. [Confirm current CE C-8 language against NTIA and 7 CFR 1970.54 at time of project.]',
+              'CE C-8 specifically covers aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It applies to both aerial (pole-mounted fiber) and buried (direct-buried or conduit) construction in existing utility corridors. It does NOT apply to any federally-funded project generally — the project type must match the CE\'s scope, and extraordinary circumstances must still be checked. [Confirm current CE C-8 language against NTIA and 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970) at time of project.]',
             citation: '7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR §1970.54); NTIA BEAD NEPA procedures.',
           },
         ]}
