@@ -27,7 +27,7 @@ export const meta = {
     {
       term: 'fall-of-potential',
       definition:
-        'The standard three-terminal method for measuring ground resistance per IEEE 81 §9.3. A test current is injected from the electrode under test to a remote current probe. A separate potential probe is placed between them to measure the voltage drop. Resistance = voltage measured / current injected. The "fall of potential" name describes how the voltage drops as you move the potential probe away from the electrode (from high near the rod, falling to near-zero at true remote earth).',
+        'The standard three-terminal method for measuring ground resistance per IEEE 81-2012 §9.3. A test current is injected from the electrode under test to a remote current probe. A separate potential probe is placed between them to measure the voltage drop. Resistance = voltage measured / current injected. The "fall of potential" name describes how the voltage drops as you move the potential probe away from the electrode (from high near the rod, falling to near-zero at true remote earth).',
     },
     {
       term: 'current probe',
@@ -42,12 +42,12 @@ export const meta = {
     {
       term: '62% rule',
       definition:
-        'The potential-probe placement rule from IEEE 81 §9.3: the potential probe must be placed at 62% of the distance between the electrode under test and the current probe. At this position, the probe falls within the "flat" zone of the resistance curve — the region of true remote earth where the reading is stable. A ±10% probe-movement validation confirms the probe is in the correct zone.',
+        'The potential-probe placement rule from IEEE 81-2012 §9.3: the potential probe must be placed at 62% of the distance between the electrode under test and the current probe. At this position, the probe falls within the "flat" zone of the resistance curve — the region of true remote earth where the reading is stable. A ±10% probe-movement validation confirms the probe is in the correct zone.',
     },
     {
       term: 'clamp-on method',
       definition:
-        'A ground resistance measurement technique that uses a clamp-on impedance meter clamped around the ground conductor without disconnecting anything. Valid only within a multi-electrode GES where multiple parallel paths exist. Per IEEE 81 §9.4, the clamp-on method is NOT valid for the primary acceptance test on a new single-rod installation. It is a maintenance/trending tool, not an acceptance tool.',
+        'A ground resistance measurement technique that uses a clamp-on impedance meter clamped around the ground conductor without disconnecting anything. Valid only within a multi-electrode GES where multiple parallel paths exist. Per IEEE 81-2012 §9.4, the clamp-on method is NOT valid for the primary acceptance test on a new single-rod installation. It is a maintenance/trending tool, not an acceptance tool.',
     },
     {
       term: 'soil resistivity',
@@ -64,7 +64,7 @@ export const meta = {
     { term: 'NEC', source_lesson_id: 'T01.L01' },
   ],
   learning_objectives: [
-    'Set up and execute the three-terminal fall-of-potential test per IEEE 81 §9.3',
+    'Set up and execute the three-terminal fall-of-potential test per IEEE 81-2012 §9.3',
     'Apply the 62% rule correctly to position the potential probe',
     'Validate the test using the ±10% probe-movement check',
     'Interpret results against NEC §250.56 (25 Ω) and GR-1275 (5 Ω) acceptance thresholds',
@@ -88,7 +88,7 @@ export default function T14L06_GroundResistanceTesting() {
         </p>
         <p className="mt-2">
           The test that answers this question is the fall-of-potential method, described in
-          IEEE 81 §9.3. You drive two small auxiliary probes into the soil near the rod,
+          IEEE 81-2012 §9.3. You drive two small auxiliary probes into the soil near the rod,
           inject a test current, and measure the voltage that develops. Divide voltage by current,
           and you have the ground resistance. Compare to the 25 Ω NEC threshold (or 5 Ω at FDH
           sites) and you know whether the electrode passes or whether you need to add another rod.
@@ -139,7 +139,7 @@ export default function T14L06_GroundResistanceTesting() {
             <strong>Current probe (C2):</strong> Drive it into the soil at least 5 times the
             rod length away from the electrode. For a standard 8-ft rod, that's at least 40 ft
             from the rod. The current probe must be far enough that its own resistance zone
-            doesn't overlap with the electrode's resistance zone. (Source: IEEE 81 §9.3.)
+            doesn't overlap with the electrode's resistance zone. (Source: IEEE 81-2012 §9.3.)
           </li>
           <li>
             <strong>Potential probe (P2):</strong> Drive it at 62% of the distance between the
@@ -160,7 +160,7 @@ export default function T14L06_GroundResistanceTesting() {
             C1-to-C2 distance in both directions (±4 ft for 40-ft total spacing). Read the
             meter again at each position. If the three readings agree within ±2%, you are in
             the "flat zone" — the test is valid. If they vary more than 2%, the current probe
-            is too close — move it farther out and repeat. (Source: IEEE 81 §9.3.)
+            is too close — move it farther out and repeat. (Source: IEEE 81-2012 §9.3.)
           </li>
         </ol>
 
@@ -186,7 +186,7 @@ export default function T14L06_GroundResistanceTesting() {
               y: 50,
               label: 'Potential Probe P2 (62% = 24.8 ft)',
               explanation:
-                '62% of 40 ft = 24.8 ft from the electrode. This is the 62% rule position. At this distance, the probe is in the "flat zone" of the resistance curve — far enough from the electrode\'s resistance zone that the reading is stable. (Source: IEEE 81 §9.3.)',
+                '62% of 40 ft = 24.8 ft from the electrode. This is the 62% rule position. At this distance, the probe is in the "flat zone" of the resistance curve — far enough from the electrode\'s resistance zone that the reading is stable. (Source: IEEE 81-2012 §9.3.)',
               type: 'click',
             },
             {
@@ -195,7 +195,7 @@ export default function T14L06_GroundResistanceTesting() {
               y: 50,
               label: 'Current Probe C2 (≥40 ft)',
               explanation:
-                'Minimum 5 × rod length = 40 ft from the electrode for an 8-ft rod. Must be far enough that its resistance zone does not overlap the electrode\'s zone. If the ±10% validation test fails, move this probe farther out. (Source: IEEE 81 §9.3.)',
+                'Minimum 5 × rod length = 40 ft from the electrode for an 8-ft rod. Must be far enough that its resistance zone does not overlap the electrode\'s zone. If the ±10% validation test fails, move this probe farther out. (Source: IEEE 81-2012 §9.3.)',
               type: 'click',
             },
           ]}
@@ -268,11 +268,11 @@ export default function T14L06_GroundResistanceTesting() {
           electrode's path through the GES, not the electrode alone.
         </p>
         <p className="mt-2">
-          Per IEEE 81 §9.4: the clamp-on method is NOT valid for the primary acceptance test
+          Per IEEE 81-2012 §9.4: the clamp-on method is NOT valid for the primary acceptance test
           on a new single-rod installation. Why? On a single rod with no parallel paths, the
           clamp measures the series impedance of the whole test circuit — which includes the
           meter's own internal resistance path, not just the electrode. The reading is not a
-          true ground resistance measurement. (Source: IEEE 81 §9.4.)
+          true ground resistance measurement. (Source: IEEE 81-2012 §9.4.)
         </p>
         <p className="mt-2">
           Use the clamp-on method for: periodic maintenance checks on an existing GES with
@@ -287,7 +287,7 @@ export default function T14L06_GroundResistanceTesting() {
             RUS close-out documentation requiring a verified ground resistance test on each
             new electrode, you need the fall-of-potential result. The inspector will ask
             "what method?" and "clamp-on on a new single rod" is the wrong answer per
-            IEEE 81. Use the three-terminal test for acceptance.
+            IEEE 81-2012. Use the three-terminal test for acceptance.
           </em>
         </p>
       </section>
@@ -317,7 +317,7 @@ export default function T14L06_GroundResistanceTesting() {
               ],
               correct: 2,
               explanation:
-                'IEEE 81 §9.3 requires the current probe to be at a minimum of 5 times the rod length from the electrode. For an 8-ft rod: 5 × 8 = 40 ft. The 5× rule ensures the current probe is outside the resistance zone of the electrode under test, establishing a true remote-earth reference. (Source: IEEE 81 §9.3.)',
+                'IEEE 81-2012 §9.3 requires the current probe to be at a minimum of 5 times the rod length from the electrode. For an 8-ft rod: 5 × 8 = 40 ft. The 5× rule ensures the current probe is outside the resistance zone of the electrode under test, establishing a true remote-earth reference. (Source: IEEE 81-2012 §9.3.)',
             },
             {
               id: 'T14L06Q2',
@@ -330,7 +330,7 @@ export default function T14L06_GroundResistanceTesting() {
               ],
               correct: 1,
               explanation:
-                '62% × 40 ft = 24.8 ft from the electrode. At this position, the potential probe is in the "flat zone" of the resistance curve — the region where the voltage reading is stable and representative of true remote earth. (Source: IEEE 81 §9.3.)',
+                '62% × 40 ft = 24.8 ft from the electrode. At this position, the potential probe is in the "flat zone" of the resistance curve — the region where the voltage reading is stable and representative of true remote earth. (Source: IEEE 81-2012 §9.3.)',
             },
             {
               id: 'T14L06Q3',
@@ -343,11 +343,11 @@ export default function T14L06_GroundResistanceTesting() {
               ],
               correct: 1,
               explanation:
-                '18.2 Ω and 17.8 Ω vs. 18 Ω represent a variation of about ±1.1% — well within the ±2% threshold for the ±10% probe-movement validation. This confirms the potential probe was in the flat zone of the resistance curve, making the 18 Ω reading valid. Compare 18 Ω to NEC 25 Ω threshold: passes for aerial pole. (Source: IEEE 81 §9.3.)',
+                '18.2 Ω and 17.8 Ω vs. 18 Ω represent a variation of about ±1.1% — well within the ±2% threshold for the ±10% probe-movement validation. This confirms the potential probe was in the flat zone of the resistance curve, making the 18 Ω reading valid. Compare 18 Ω to NEC 25 Ω threshold: passes for aerial pole. (Source: IEEE 81-2012 §9.3.)',
             },
             {
               id: 'T14L06Q4',
-              text: 'A new single ground rod was just installed at an FDH site. The crew uses a clamp-on meter and gets 12 Ω. Is this a valid acceptance test per IEEE 81?',
+              text: 'A new single ground rod was just installed at an FDH site. The crew uses a clamp-on meter and gets 12 Ω. Is this a valid acceptance test per IEEE 81-2012?',
               options: [
                 'Yes — 12 Ω is below 25 Ω, so it passes the NEC threshold',
                 'No — the clamp-on method is not valid for primary acceptance testing on a new single-rod installation',
@@ -356,7 +356,7 @@ export default function T14L06_GroundResistanceTesting() {
               ],
               correct: 1,
               explanation:
-                'IEEE 81 §9.4 explicitly states that the clamp-on method is not valid for primary acceptance testing on a new single-rod installation. The clamp-on reading without parallel GES paths does not accurately represent the electrode\'s true ground resistance. A three-terminal fall-of-potential test is required for RUS close-out acceptance. Additionally, 12 Ω fails the GR-1275 5 Ω threshold for FDH sites, so the site would need additional electrodes regardless. (Source: IEEE 81 §9.4.)',
+                'IEEE 81-2012 §9.4 explicitly states that the clamp-on method is not valid for primary acceptance testing on a new single-rod installation. The clamp-on reading without parallel GES paths does not accurately represent the electrode\'s true ground resistance. A three-terminal fall-of-potential test is required for RUS close-out acceptance. Additionally, 12 Ω fails the GR-1275 5 Ω threshold for FDH sites, so the site would need additional electrodes regardless. (Source: IEEE 81-2012 §9.4.)',
             },
           ]}
         />

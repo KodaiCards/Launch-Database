@@ -51,7 +51,7 @@ export const meta = {
     {
       term: 'dielectric flange',
       definition:
-        'An insulating fitting (flange, union, or coupling) installed in a metallic pipeline or conduit run to electrically isolate the protected section from adjacent metallic infrastructure. Prevents current flow between a cathodically protected conduit and an unprotected adjacent pipe, which would short out the protection system. Required at points where the communications conduit interfaces with the gas or water utility system. (Source: NACE SP0169 [confirm current edition — now AMPP SP0169].)',
+        'An insulating fitting (flange, union, or coupling) installed in a metallic pipeline or conduit run to electrically isolate the protected section from adjacent metallic infrastructure. Prevents current flow between a cathodically protected conduit and an unprotected adjacent pipe, which would short out the protection system. Required at points where the communications conduit interfaces with the gas or water utility system. (Source: AMPP SP0169, formerly NACE SP0169.)',
     },
     {
       term: 'isolation coupling',

@@ -40,7 +40,7 @@ export const meta = {
     {
       term: 'LOTO sequence',
       definition:
-        'Lockout/tagout — the OSHA 1910.147 procedure for controlling hazardous energy before making contact with potentially energized equipment. For OSP stray-voltage scenarios: (1) contact the pole owner\'s dispatcher and request isolation of the adjacent distribution circuit; (2) verify isolation with a voltage test; (3) apply personal lockout devices and tags; (4) re-test to confirm zero energy before proceeding. PPG (personnel protective grounding) is applied AFTER LOTO confirmation, not instead of it. (Source: OSHA 29 CFR §1910.147.)',
+        'Lockout/tagout — the OSHA 1910.147 procedure for controlling hazardous energy before making contact with potentially energized equipment. For OSP stray-voltage scenarios: (1) contact the pole owner\'s system operator (also called the "dispatcher" — the electric cooperative or utility operations center employee who can open and lock out the adjacent distribution circuit) and request isolation; (2) verify isolation with a voltage test; (3) apply personal lockout devices and tags; (4) re-test to confirm zero energy before proceeding. PPG (personnel protective grounding) is applied AFTER LOTO confirmation, not instead of it. (Source: OSHA 29 CFR §1910.147.)',
     },
     {
       term: 'de-energization',

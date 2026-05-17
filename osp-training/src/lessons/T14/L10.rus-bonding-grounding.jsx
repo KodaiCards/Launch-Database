@@ -1,4 +1,4 @@
-// T14.L10 — RUS 1751F-815 Bonding and Grounding
+// T14.L10 — RUS Bonding and Grounding Requirements
 // Advanced lesson: RUS bonding schedule, ground test log, Form 219 close-out
 
 import React from 'react';
@@ -10,7 +10,7 @@ import Flashcard from '../../components/Flashcard.jsx';
 export const meta = {
   id: 'T14.L10',
   course_id: 'T14',
-  title: 'RUS 1751F-815 Bonding and Grounding',
+  title: 'RUS Bonding and Grounding Requirements',
   order: 10,
   lesson_type: 'advanced',
   prerequisites: ['T14.L06', 'T14.L03'],

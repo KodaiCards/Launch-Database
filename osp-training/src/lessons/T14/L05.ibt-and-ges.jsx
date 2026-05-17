@@ -15,8 +15,6 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T14.L04'],
   vocabulary_introduced: [
-    'IBT',
-    'GES',
     'PBB',
     'SBB',
     'bonding conductor',
@@ -35,7 +33,7 @@ export const meta = {
     {
       term: 'PBB',
       definition:
-        'Primary Bonding Busbar — the main bonding conductor assembly at the service entrance or main communications room. All bonding conductors (grounding electrode conductor, equipment grounding conductors, bonding jumpers) originate here. In a telecom context, the PBB is the main bus that bonds the power system ground to all communication service grounds. (Source: TIA-607-D §4 [confirm edition].)',
+        'Primary Bonding Busbar — the main bonding conductor assembly at the service entrance or main communications room. All bonding conductors (grounding electrode conductor, equipment grounding conductors, bonding jumpers) originate here. In a telecom context, the PBB is the main bus that bonds the power system ground to all communication service grounds. (Source: TIA-607-D §4.)',
     },
     {
       term: 'SBB',
@@ -52,6 +50,8 @@ export const meta = {
     { term: 'grounding', source_lesson_id: 'T14.L01' },
     { term: 'bonding', source_lesson_id: 'T14.L01' },
     { term: 'ground potential rise', source_lesson_id: 'T14.L01' },
+    { term: 'IBT', source_lesson_id: 'T01.L08' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
     { term: 'ground rod', source_lesson_id: 'T14.L04' },
     { term: 'concrete-encased electrode (Ufer)', source_lesson_id: 'T14.L04' },
     { term: 'ring electrode', source_lesson_id: 'T14.L04' },

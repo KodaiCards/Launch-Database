@@ -18,7 +18,7 @@ export const meta = {
     'concrete-encased electrode (Ufer)',
     'water pipe electrode',
     'ring electrode',
-    '4 AWG bare copper',
+    '4 AWG bare copper (Ufer minimum)',
     '5/8-in. × 8-ft copper-clad rod',
     'supplemental electrode',
   ],
@@ -41,10 +41,10 @@ export const meta = {
     {
       term: 'ring electrode',
       definition:
-        'A bare copper conductor buried in a ring (circle or rectangle) around the structure at a depth of at least 2.5 feet, with a total length of at least 20 feet. Per NEC §250.52(A)(4). Used at CO/FDH sites where a full perimeter ground ring is required for GPR protection and equipment bonding. Good for large facilities.',
+        'A bare copper conductor (minimum 2 AWG) buried in a ring (circle or rectangle) around the structure at a depth of at least 2.5 feet (30 inches), with a total length of at least 20 feet. Per NEC §250.52(A)(4). Used at CO/FDH sites where a full perimeter ground ring is required for GPR protection and equipment bonding. Good for large facilities.',
     },
     {
-      term: '4 AWG bare copper',
+      term: '4 AWG bare copper (Ufer minimum)',
       definition:
         'The minimum conductor size specified for the concrete-encased electrode (Ufer) per NEC §250.52(A)(3). #4 AWG bare copper is also commonly used as the GEC (grounding electrode conductor) for larger services. In OSP applications, #6 AWG is the minimum downlead; #4 AWG provides extra capacity for high-fault-current environments.',
     },
@@ -166,12 +166,14 @@ export default function T14L04_NEC250Electrodes() {
           <div className="border border-white/10 rounded-lg p-4">
             <p className="font-semibold text-slate-200">§250.52(A)(4) — Ring Electrode</p>
             <p className="text-sm text-slate-300/90 mt-1">
-              Bare copper conductor buried at least 2.5 feet deep encircling the structure, minimum
-              20 feet total length. No resistance specification — the ring is a recognized electrode
-              regardless of measured resistance. Required (or strongly preferred) at CO/FDH sites
-              for GPR protection via a perimeter equipotential ring. IEEE Std 1100 §8.3 specifies
-              the ring at 18–24 inches depth, #2 AWG minimum for large enclosures.
-              (Sources: NEC §250.52(A)(4); IEEE Std 1100 §8.3.)
+              Bare copper conductor (minimum 2 AWG per NEC §250.52(A)(4)) buried at least
+              30 inches (2.5 feet) deep encircling the structure, minimum 20 feet total length.
+              No resistance specification — the ring is a recognized electrode regardless of
+              measured resistance. Required (or strongly preferred) at CO/FDH sites for GPR
+              protection via a perimeter equipotential ring. NEC §250.52(A)(4) sets the 30-inch
+              depth floor; IEEE Std 1100 §8.3 [confirm edition] may recommend deeper burial for
+              specific facility types — the NEC minimum is the non-negotiable code floor.
+              (Sources: NEC §250.52(A)(4); IEEE Std 1100 §8.3 [confirm edition].)
             </p>
           </div>
           <div className="border border-white/10 rounded-lg p-4">

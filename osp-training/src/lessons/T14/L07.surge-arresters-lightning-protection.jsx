@@ -16,7 +16,6 @@ export const meta = {
   prerequisites: ['T14.L05'],
   vocabulary_introduced: [
     'surge arrester',
-    'primary protector',
     'MOV',
     'gas-tube arrester',
     'VPL',
@@ -51,7 +50,7 @@ export const meta = {
     {
       term: 'ground ring',
       definition:
-        'A bare copper conductor buried around the perimeter of a structure, bonded to all ground electrodes and equipment grounds inside the facility. Provides an equipotential reference plane under the building footprint and ties all building steel and equipment frames to the same potential. At CO/headend sites, the ground ring is the primary GPR mitigation tool. (Sources: NEC §250.52(A)(4); IEEE Std 1100 §8.3.)',
+        'A bare copper conductor buried around the perimeter of a structure, bonded to all ground electrodes and equipment grounds inside the facility. Provides an equipotential reference plane under the building footprint and ties all building steel and equipment frames to the same potential. At CO/headend sites, the ground ring is the primary GPR mitigation tool. (Sources: NEC §250.52(A)(4); IEEE Std 1100-2005 §8.3 [confirm edition].)',
     },
   ],
   vocabulary_assumed: [
@@ -61,6 +60,7 @@ export const meta = {
     { term: 'GES', source_lesson_id: 'T14.L05' },
     { term: 'IBT', source_lesson_id: 'T14.L05' },
     { term: 'ring electrode', source_lesson_id: 'T14.L04' },
+    { term: 'primary protector', source_lesson_id: 'T19.L06' },
     { term: 'NEC', source_lesson_id: 'T01.L01' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'headend', source_lesson_id: 'T01.L01' },
@@ -188,7 +188,7 @@ export default function T14L07_SurgeArrestersLightning() {
             <strong>Aerial-to-underground transition (riser):</strong> At the point where the
             aerial fiber drops from the pole into conduit underground. The arrester goes on the
             aerial side — before the cable enters the conduit — so the surge is diverted before
-            it enters the protected underground portion. (Source: IEEE Std 1100 §8.5; NESC
+            it enters the protected underground portion. (Source: IEEE Std 1100-2005 §8.5 [confirm edition]; NESC
             C2-2023 Rule 97.)
           </li>
           <li>
@@ -227,7 +227,7 @@ export default function T14L07_SurgeArrestersLightning() {
               y: 50,
               label: 'Line-Side Arrester (Riser)',
               explanation:
-                'First-stage arrester at the aerial-to-underground transition. A gas-tube or combination device. Absorbs the large initial energy of the lightning surge before it enters the protected conduit. Grounded to the pole ground rod. (Sources: IEEE Std 1100 §8.5; NESC C2-2023 Rule 97.)',
+                'First-stage arrester at the aerial-to-underground transition. A gas-tube or combination device. Absorbs the large initial energy of the lightning surge before it enters the protected conduit. Grounded to the pole ground rod. (Sources: IEEE Std 1100-2005 §8.5 [confirm edition]; NESC C2-2023 Rule 97.)',
               type: 'click',
             },
             {
@@ -254,7 +254,7 @@ export default function T14L07_SurgeArrestersLightning() {
               y: 50,
               label: 'Equipment (OLT / ONT)',
               explanation:
-                'The protected electronic equipment. The equipment\'s immunity rating (surge withstand in the datasheet) must EXCEED the primary protector\'s VPL with a margin. If VPL > equipment immunity → equipment can still be damaged. The protection chain must be designed to match. (Source: IEEE Std 1100 §8.6.)',
+                'The protected electronic equipment. The equipment\'s immunity rating (surge withstand in the datasheet) must EXCEED the primary protector\'s VPL with a margin. If VPL > equipment immunity → equipment can still be damaged. The protection chain must be designed to match. (Source: IEEE Std 1100-2005 §8.6 [confirm edition].)',
               type: 'click',
             },
           ]}
@@ -264,7 +264,7 @@ export default function T14L07_SurgeArrestersLightning() {
         <p className="mt-2">
           At a central office, headend, or large FDH building, a single driven rod isn't enough.
           The ground ring (a bare copper conductor buried in a ring around the building footprint,
-          per NEC §250.52(A)(4) and IEEE Std 1100 §8.3) serves two purposes:
+          per NEC §250.52(A)(4) and IEEE Std 1100-2005 §8.3 [confirm edition]) serves two purposes:
         </p>
         <ol className="list-decimal ml-6 mt-2 space-y-1 text-slate-300/90">
           <li>
@@ -275,9 +275,9 @@ export default function T14L07_SurgeArrestersLightning() {
           <li>
             <strong>Equipotential platform:</strong> During a GPR event, the entire ring rises to
             the same voltage. Any equipment bonded to the ring is also at that same voltage.
-            No dangerous gradients inside the ring's perimeter. This is why IEEE Std 1100 and
+            No dangerous gradients inside the ring's perimeter. This is why IEEE Std 1100-2005 [confirm edition] and
             the Telcordia GR-1275 both require the ring as the foundation for CO/headend
-            grounding. (Sources: IEEE Std 1100 §8.3; NEC §250.52(A)(4).)
+            grounding. (Sources: IEEE Std 1100-2005 §8.3 [confirm edition]; NEC §250.52(A)(4).)
           </li>
         </ol>
       </section>
@@ -307,7 +307,7 @@ export default function T14L07_SurgeArrestersLightning() {
               ],
               correct: 1,
               explanation:
-                'The arrester must be on the line (aerial) side — before the cable enters the conduit. Placing it there means the surge is diverted into the ground at the transition point, before it enters the protected underground portion. If placed inside the building, the full surge energy travels through the entire conduit run first. (Sources: IEEE Std 1100 §8.5; NESC C2-2023 Rule 97.)',
+                'The arrester must be on the line (aerial) side — before the cable enters the conduit. Placing it there means the surge is diverted into the ground at the transition point, before it enters the protected underground portion. If placed inside the building, the full surge energy travels through the entire conduit run first. (Sources: IEEE Std 1100-2005 §8.5 [confirm edition]; NESC C2-2023 Rule 97.)',
             },
             {
               id: 'T14L07Q2',
@@ -333,7 +333,7 @@ export default function T14L07_SurgeArrestersLightning() {
               ],
               correct: 1,
               explanation:
-                'The ground ring serves a dual purpose: its large surface area in contact with the earth gives very low ground resistance (helping meet the 5 Ω GR-1275 threshold); and during a GPR event, the entire ring rises to the same voltage, creating an equipotential surface under the building footprint that prevents dangerous voltage gradients between equipment inside the ring. (Sources: NEC §250.52(A)(4); IEEE Std 1100 §8.3.)',
+                'The ground ring serves a dual purpose: its large surface area in contact with the earth gives very low ground resistance (helping meet the 5 Ω GR-1275 threshold); and during a GPR event, the entire ring rises to the same voltage, creating an equipotential surface under the building footprint that prevents dangerous voltage gradients between equipment inside the ring. (Sources: NEC §250.52(A)(4); IEEE Std 1100-2005 §8.3 [confirm edition].)',
             },
           ]}
         />

@@ -15,7 +15,6 @@ export const meta = {
   lesson_type: 'advanced',
   prerequisites: ['T14.L03', 'T14.L10'],
   vocabulary_introduced: [
-    'grounds per mile',
     'grounding interval',
   ],
   key_terms: [
@@ -33,6 +32,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'grounding', source_lesson_id: 'T14.L01' },
     { term: 'MGN', source_lesson_id: 'T14.L02' },
+    { term: 'grounds per mile', source_lesson_id: 'T14.L02' },
     { term: 'neutral-to-ground bond', source_lesson_id: 'T14.L02' },
     { term: 'messenger bond', source_lesson_id: 'T14.L03' },
     { term: 'ground rod', source_lesson_id: 'T14.L04' },

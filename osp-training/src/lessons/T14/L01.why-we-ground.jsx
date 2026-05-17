@@ -222,13 +222,20 @@ export default function T14L01_WhyWeGround() {
           gradient").
         </p>
         <p className="mt-2">
-          At a headend or FDH with multiple pieces of equipment, GPR is why IEEE Std 1100 and
+          At a headend or FDH with multiple pieces of equipment, GPR is why IEEE Std 1100-2005 [confirm edition] and
           NEC Article 250 both require all service types (power, telephone, cable TV, fiber)
           to bond to the same ground electrode system. If the power service's electrode rises
           to 5,000 V during a fault and the fiber's electrode is still at 0 V, there is
           5,000 V of potential difference between the power equipment and the fiber equipment —
           across a path that includes technicians, connectors, and cable sheaths.
-          (Sources: IEEE Std 1100 §1.2–1.3; NEC §250.94.)
+          (Sources: IEEE Std 1100-2005 §1.2–1.3 [confirm edition]; NEC §250.94.)
+        </p>
+        <p className="mt-2">
+          The headend-entry hardware that directly addresses GPR — the primary protector,
+          the IBT-entry bonding bar, and the GES tie-in at the building entry — is covered in
+          detail in T19.L06 (Headend Grounding: Where the OSP/MGN Terminates). That lesson
+          explains how the OSP feeder cable's messenger and armor bond to the GES at the
+          building entry, and why the primary protector is mandatory at every CO cable entry.
         </p>
       </section>
 
@@ -336,7 +343,7 @@ export default function T14L01_WhyWeGround() {
               ],
               correct: 1,
               explanation:
-                'GPR is a temporary rise in electrode voltage during a fault. If different service types (power, fiber, telephone) bond to different electrodes, their electrodes may rise to different voltages during a fault event — creating dangerous potential differences between services. IEEE Std 1100 §1.2–1.3 and NEC §250.94 require all services to bond to one common GES to keep everything at the same elevated potential during GPR events. (Sources: IEEE Std 1100 §1.2–1.3; NEC §250.94.)',
+                'GPR is a temporary rise in electrode voltage during a fault. If different service types (power, fiber, telephone) bond to different electrodes, their electrodes may rise to different voltages during a fault event — creating dangerous potential differences between services. IEEE Std 1100-2005 §1.2–1.3 [confirm edition] and NEC §250.94 require all services to bond to one common GES to keep everything at the same elevated potential during GPR events. (Sources: IEEE Std 1100-2005 §1.2–1.3 [confirm edition]; NEC §250.94.)',
             },
           ]}
         />

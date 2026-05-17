@@ -15,7 +15,6 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T14.L01', 'T05.L01', 'T01.L02'],
   vocabulary_introduced: [
-    'MGN',
     'neutral wire',
     'grounds per mile',
     'neutral-to-ground bond',
@@ -53,6 +52,7 @@ export const meta = {
     { term: 'clearance', source_lesson_id: 'T01.L02' },
     { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },
+    { term: 'MGN', source_lesson_id: 'T01.L08' },
   ],
   learning_objectives: [
     'Describe how an MGN distribution system works and why it reduces fault-current exposure for communications plant',
