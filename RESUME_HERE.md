@@ -211,3 +211,26 @@ Bugs caught/fixed: 9 MED DAG pointers + ~11 LOW (Flashcard gaps, BranchingScenar
 1. T11 author (brief `bd35619` Splicing) — ready
 2. T12+ research briefs
 3. Cross-topic vocab-pointer sweep (T04 ROW/MUTCD/conduit pattern likely applies to T01-T09)
+
+## T11 CLOSED ✅ 2026-05-18
+
+Final SHA: `9751d77` (RT-ζ GREEN). T11 Splicing.
+
+Arc: 2-phase author (salvage `dab720a` L01-L02 + continuation `413da78` L03-L15) + Fix Wave A `11c0eba` (8 canonical) + Polish-A `38c81b1` + 6 RT framings to saturation.
+
+Bugs caught/fixed:
+- F2 prod-blocker: L13+L14 wrong Flashcard API silently rendering empty (RT-α catch)
+- L05 G.657.A2 MFD 8.4→8.6µm (RT-β primary-source catch; Polish-A swept residuals)
+- 3-doc vocab_assumed schema fix (L13/L14/L15 plain strings → objects)
+- 6 Flashcard count gaps + 5 DAG dupes + cascading vocab pointers
+
+Cross-topic carry: T19.L08 `fusion splice` pointer should point T11.L04 not T11.L01 (RT-γ flag — fold into T19 polish).
+
+## NEXT QUEUE
+
+1. T12 (Testing — OLTS/OTDR/Inspection) research brief — prereqs T01+T02+T11 all CLOSED ✅
+2. T13 (Inspection/QA) — prereqs T01+T05+T10+T12+T18 all CLOSED except T12
+3. T15 (Restoration), T16 (As-Built/GIS), T17 (Estimation/Revenue)
+4. C04 (Cert Practice Bank — OSP Designer + CFOS only)
+5. Cross-topic vocab-pointer sweep
+6. T19.L08 fusion splice pointer fix
