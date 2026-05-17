@@ -109,6 +109,16 @@
 
 ---
 
+## T11 Polish-A Additions (2026-05-17)
+
+| Citation | Description | Source | Last Verified | Verified By | Notes |
+|---|---|---|---|---|---|
+| **ITU-T L.400** | Splice loss target ≤0.10 dB per fusion splice | https://www.itu.int/rec/T-REC-L.400/en | 2026-05-17 | T11 RT-γ/RT-δ primary-source reads | Cited in T11. Design target: ≤0.10 dB per splice. Paywalled; verify edition at publication time. |
+| **RUS 1753F-401** | Optical Fiber Splicing — Maximum allowable splice loss ≤0.30 dB | https://www.rd.usda.gov/publications/rds/1753f-401 | 2026-05-17 | T11 RT-γ/RT-δ primary-source reads | Cited in T11. RUS contract maximum: ≤0.30 dB per fusion splice. Verify current bulletin number at publication time. |
+| **Gel degradation timeline** | Petroleum-based FP-1 gel degradation of modern PE cable jackets | Vendor technical literature (multiple sources) | 2026-05-17 | T11 RT-β/RT-δ primary-source reads | Field-observed 5–10 year timeline for FP-1 degradation at modern HDPE cable jacket interfaces. Not codified in a single standard — sourced from vendor technical notes (Tyco/CommScope gel compatibility data). Verify with cable manufacturer compatibility table before substituting sealing compounds. |
+
+---
+
 ## Federal Register Notices (FR citations)
 
 | Citation | Description | Source | Last Verified | Verified By | Notes |

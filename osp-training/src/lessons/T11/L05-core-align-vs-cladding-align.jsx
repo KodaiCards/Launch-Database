@@ -147,7 +147,7 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
                 <td className="px-3 py-2">Cross splice at bend-insensitive zone (FDH, last-mile drop)</td>
                 <td className="px-3 py-2">G.652.D to G.657.A2</td>
                 <td className="px-3 py-2 text-blue-400 font-semibold">Core-align</td>
-                <td className="px-3 py-2">Different MFD (9.2 µm vs 8.4–8.9 µm range). Cladding-align adds 0.02–0.12 dB extra loss from core offset. Core-align reduces this to ≤0.02 dB.</td>
+                <td className="px-3 py-2">Different MFD (9.2 µm vs 8.6–9.5 µm range per ITU-T G.657 Table 5). Cladding-align adds 0.02–0.12 dB extra loss from core offset. Core-align reduces this to ≤0.02 dB.</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Emergency field restoration, wet or dirty fibers</td>
@@ -239,7 +239,7 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
                   { id: 'd', text: 'Cladding-align for G.657.A2-to-G.657.A2 splices and core-align only for G.652.D-to-G.652.D' },
                 ],
                 correctId: 'b',
-                explanation: 'G.652.D has an MFD of ~9.2 µm; G.657.A2 has a nominal MFD of ~8.4–9.0 µm depending on manufacturer. When these differ (even slightly), cladding-align introduces a core-offset penalty because the cladding surfaces are centered, not the cores. Core-align (LID-based) finds the actual core in each fiber and centers those, minimizing the MFD mismatch contribution. On 200 cross-splices in an FDH build, the difference is 8–16 dB — a meaningful link budget impact.',
+                explanation: 'G.652.D has an MFD of ~9.2 µm; G.657.A2 has a nominal MFD of 8.6–9.5 µm per ITU-T G.657 Table 5. When these differ (even slightly), cladding-align introduces a core-offset penalty because the cladding surfaces are centered, not the cores. Core-align (LID-based) finds the actual core in each fiber and centers those, minimizing the MFD mismatch contribution. On 200 cross-splices in an FDH build, the difference is 8–16 dB — a meaningful link budget impact.',
               },
               {
                 id: 'q2',

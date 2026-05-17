@@ -34,7 +34,7 @@ export const meta = {
     {
       term: 'flooding compound (FP-1/FP-2)',
       definition:
-        'A water-blocking compound used to flood the interior of a gel-sealed splice case. BICSI OSP Design Reference Manual classifies flooding compounds by type: FP-1 (petroleum-based, petroleum-jelly consistency — common in older installations) and FP-2 (synthetic polymer gel — more compatible with modern cable jacket materials). The compound fills all air voids in the case interior, preventing water migration along cable interstices. FP-1 is incompatible with some modern polyethylene jacket compounds — check cable manufacturer compatibility before selecting.',
+        'A water-blocking compound used to flood the interior of a gel-sealed splice case. BICSI OSP Design Reference Manual [confirm BICSI OSPDR edition] classifies flooding compounds by type: FP-1 (petroleum-based, petroleum-jelly consistency — common in older installations) and FP-2 (synthetic polymer gel — more compatible with modern cable jacket materials). The compound fills all air voids in the case interior, preventing water migration along cable interstices. FP-1 is incompatible with some modern polyethylene jacket compounds — check cable manufacturer compatibility before selecting.',
     },
     {
       term: 'heat-shrink port seal',
@@ -104,7 +104,7 @@ export default function T11L10_GelSealHeatShrinkReenterable() {
               {
                 id: 'T11-L10-fc-fplooding',
                 front: 'What is flooding compound (FP-1 vs. FP-2) and why does compatibility matter?',
-                back: 'FP-1 = petroleum-based gel (petroleum-jelly consistency). FP-2 = synthetic polymer gel. FP-1 can swell or degrade modern polyethylene cable jackets over time (compatibility issue). FP-2 is compatible with most modern jacket materials. Always check cable manufacturer compatibility before selecting. BICSI OSP Design Reference Manual classifies both types.',
+                back: 'FP-1 = petroleum-based gel (petroleum-jelly consistency). FP-2 = synthetic polymer gel. FP-1 can swell or degrade modern polyethylene cable jackets over time (compatibility issue). FP-2 is compatible with most modern jacket materials. Always check cable manufacturer compatibility before selecting. BICSI OSP Design Reference Manual [confirm BICSI OSPDR edition] classifies both types.',
               },
               {
                 id: 'T11-L10-fc-heatshrink',

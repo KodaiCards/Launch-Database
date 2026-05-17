@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T22:33:19.218Z",
+  "generated_at": "2026-05-17T22:46:04.719Z",
   "lesson_count": 164,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -1016,7 +1016,6 @@
     "T11.L13": [
       "electrode life counter",
       "daily arc calibration",
-      "cleaver blade replacement interval",
       "cleaning arc",
       "electrode oxidation",
       "splicer storage (silica gel)"
@@ -3386,8 +3385,7 @@
       "T11.L06"
     ],
     "cleaver blade replacement interval": [
-      "T11.L06",
-      "T11.L13"
+      "T11.L06"
     ],
     "arc calibration": [
       "T11.L06"
@@ -4309,13 +4307,6 @@
       "introduced_by": [
         "T10.L09",
         "T18.L06"
-      ]
-    },
-    {
-      "term": "cleaver blade replacement interval",
-      "introduced_by": [
-        "T11.L06",
-        "T11.L13"
       ]
     }
   ],
@@ -11580,6 +11571,12 @@
       "verified": true
     },
     {
+      "from_lesson": "T11.L13",
+      "term": "cleaver blade replacement interval",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
       "from_lesson": "T11.L14",
       "term": "fusion splice",
       "claimed_source": "T11.L04",
@@ -13708,7 +13705,7 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1442,
+  "verified_pointers_count": 1443,
   "broken_pointers_count": 105,
   "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [

@@ -26,7 +26,6 @@ export const meta = {
   vocabulary_introduced: [
     'electrode life counter',
     'daily arc calibration',
-    'cleaver blade replacement interval',
     'cleaning arc',
     'electrode oxidation',
     'splicer storage (silica gel)',
@@ -36,6 +35,7 @@ export const meta = {
     { term: 'arc calibration', source_lesson_id: 'T11.L06' },
     { term: 'cleave angle', source_lesson_id: 'T11.L06' },
     { term: 'arc power', source_lesson_id: 'T11.L06' },
+    { term: 'cleaver blade replacement interval', source_lesson_id: 'T11.L06' },
   ],
 };
 
