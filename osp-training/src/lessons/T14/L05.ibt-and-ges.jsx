@@ -21,16 +21,6 @@ export const meta = {
   ],
   key_terms: [
     {
-      term: 'IBT',
-      definition:
-        'Intersystem Bonding Termination — a device or means at the building entry point where all incoming communication service protectors (cable TV, telephone, fiber, satellite) bond to the same GES. Required by NEC §250.94 to ensure every service is at the same ground potential, preventing dangerous voltage differences between services. The IBT is the single meeting point for all communication service grounds.',
-    },
-    {
-      term: 'GES',
-      definition:
-        'Grounding Electrode System — all the grounding electrodes at a facility (driven rods, water pipe, Ufer, ring electrode) connected together into one unified system. NEC Article 250 requires all recognized electrodes at a site to be bonded to each other and to the service entrance ground. The GES is the "one common ground" rule in hardware form.',
-    },
-    {
       term: 'PBB',
       definition:
         'Primary Bonding Busbar — the main bonding conductor assembly at the service entrance or main communications room. All bonding conductors (grounding electrode conductor, equipment grounding conductors, bonding jumpers) originate here. In a telecom context, the PBB is the main bus that bonds the power system ground to all communication service grounds. (Source: TIA-607-D §4.)',

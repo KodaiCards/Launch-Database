@@ -216,7 +216,7 @@ export default function T14L12_CapstonQuiz() {
               ],
               correct: 1,
               explanation:
-                'Variation of ±0.1 Ω on an 18 Ω reading = ±0.6% — well within the ±2% IEEE 81 validation criterion. The probe was in the flat zone. Test result of 18 Ω is valid. (Source: IEEE 81-2012 §9.3. T14.L06.)',
+                'Variation of ±0.2 Ω on an 18 Ω reading = ±1.1% — well within the ±2% IEEE 81 validation criterion. The probe was in the flat zone. Test result of 18 Ω is valid. (Source: IEEE 81-2012 §9.3. T14.L06.)',
             },
             {
               id: 'T14L12Q11',
