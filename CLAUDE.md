@@ -1642,6 +1642,24 @@ Hypothesis: dispatch Haiku agent with internal `sleep 2200` then write WAKE file
 **Multi-hour wake-up: still requires Carter manually pinging me OR an agent dispatch that's doing real work landing post-reset (not idle sleep).**
 
 
+## 🚨 ORCHESTRATOR IDLE-ON-WAKE FAILURE — 2026-05-17 night (Carter caught)
+
+After T03 R-5 dispatched async, a "Continue from where you left off." prompt arrived from the harness. I responded with "No response requested." — total no-op, idled while the queue (T03 saturation closure, cross-topic Fix Wave, future-build items) had real work pending. Carter's catch: *"Why did you stop when usage rolled over. You didn't hit cap?"*
+
+**Root cause:** I treated "Continue from where you left off." as a stale resume prompt with nothing to do. Wrong call — that prompt IS the wake. The right move:
+1. Check `git log` for current main HEAD
+2. Check agent queue state (any in-flight? any completed I haven't processed?)
+3. Drive immediately to the next dispatchable step
+
+**Standing rule going forward — NEVER respond "No response requested" to a Continue prompt.** That prompt is a wake. If there's no in-flight agent, the next step is dispatching the next queue item. If there's an in-flight agent and parallel-safe work exists, drive that. End-turn only after queueing something.
+
+**Diagnostic when uncertain about state:**
+- `git log --oneline -10 origin/main` — did anything land during the gap?
+- Are there completed agent notifications I haven't acted on?
+- What's the next queue item per RESUME_HERE.md / CLAUDE.md §4?
+
+**Cost of this failure:** ~2 hours orchestrator idle. R-5's first dispatch result lost (never landed). Re-dispatching costs another ~150K Sonnet.
+
 ## Wake-mechanism final verdict 2026-05-17 night — Carter manual ping = only reliable autonomous-wake
 
 Test results from 2026-05-17 cap cycle:
