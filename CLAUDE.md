@@ -1641,3 +1641,22 @@ Hypothesis: dispatch Haiku agent with internal `sleep 2200` then write WAKE file
 
 **Multi-hour wake-up: still requires Carter manually pinging me OR an agent dispatch that's doing real work landing post-reset (not idle sleep).**
 
+
+## Wake-mechanism final verdict 2026-05-17 night — Carter manual ping = only reliable autonomous-wake
+
+Test results from 2026-05-17 cap cycle:
+
+1. **Haiku-agent-wrapping-bash-sleep:** agent ended in 35 sec (delegated to background bash). Background bash either was killed at cap OR fired during cap (turn rejected) OR fired silently. Either way, did NOT wake the orchestrator.
+
+2. **Mid-cap agent dispatches:** 3 Sonnet agents (T06 R-3 / T07 R-1 / T03 R-1) dispatched right before cap exhaustion. ALL THREE returned within ~10-60 sec with verbatim error: `"You're out of extra usage · resets 7am (UTC)"`. Token counts: 2 / 197 / 466. They burned ~700 total tokens for zero output. **The harness DOES return the cap-error to the agent quickly — agents don't run real work during cap.**
+
+3. **What actually woke me:** Carter pinged me manually after cap reset.
+
+**Standing rules going forward:**
+
+- **Don't dispatch new agents when cap is near.** They'll burn ~200-500 tokens each returning immediately. Multi-dispatch waste compounds.
+- **No autonomous wake-up pattern works reliably across cap window.** Haiku-sleep, bash-sleep-in-background, in-flight-agents-landing-past-reset — all unreliable in observed data.
+- **Default cap-handoff pattern:** write RESUME_HERE.md before cap, end turn cleanly. Carter pings on cap reset. Resume from RESUME_HERE.md.
+- **If Carter wants autonomous resume:** he sets a phone alarm + pings me. The harness side cannot self-resume.
+- **Don't try the Haiku-wake or in-flight-agent-wake trick again.** Burns tokens, doesn't deliver wake.
+
