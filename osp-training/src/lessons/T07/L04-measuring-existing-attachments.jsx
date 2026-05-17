@@ -31,7 +31,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'clearance', source_lesson_id: 'T01.L02' },
     { term: 'NESC Rule 232', source_lesson_id: 'T05.L01' },
-    { term: 'make-ready', source_lesson_id: 'T05.L08' },
+    { term: 'make-ready', source_lesson_id: 'T01.L05' },
     { term: 'attachment point', source_lesson_id: 'T01.L02' },
     { term: 'measurement tolerance', source_lesson_id: 'T07.L01' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
@@ -245,7 +245,13 @@ export default function T07L04_MeasuringExistingAttachments() {
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-1 text-sm">
           <li><strong>Above roads (traffic lanes):</strong> 18 feet minimum</li>
-          <li><strong>Above driveways, parking areas:</strong> 18 feet minimum</li>
+          <li>
+            <strong>Above driveways, parking areas:</strong> 18 feet minimum for
+            truck-accessible driveways; 15.5 feet may apply to light-vehicle-only
+            private lanes (verify with Rule 232 Table footnotes and local jurisdiction —
+            some state utility commissions adopt modified thresholds for private
+            right-of-way classifications)
+          </li>
           <li><strong>Above pedestrian areas, sidewalks:</strong> 15.5 feet minimum</li>
           <li><strong>Above agricultural land (crop-farming accessible):</strong> 18 feet minimum</li>
           <li><strong>Above other land (no equipment access):</strong> 15.5 feet minimum</li>
@@ -464,7 +470,7 @@ export default function T07L04_MeasuringExistingAttachments() {
             ],
             answerIndex: 1,
             explanation:
-              'Laser measurers provide ±0.1 ft accuracy from the ground — better than tape (±0.5 ft) — and eliminate the need to climb for measurements. Climbing introduces fall risk (OSHA 1910.268(g)(1) requires fall protection above 10 feet) and takes significantly more time. The laser is both more accurate and safer for most measurements.',
+              'Laser measurers provide ±0.1 ft accuracy from the ground — better than tape (±0.5 ft) — and eliminate the need to climb entirely. OSHA 1910.268(g)(1) requires a positioning system or personal fall arrest system for any pole work above 4 feet; laser measurement from the ground sidesteps that trigger completely. The laser is both more accurate and safer for most measurements.',
           },
           {
             id: 'T07-L04-Q3',

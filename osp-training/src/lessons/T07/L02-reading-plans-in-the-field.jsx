@@ -28,10 +28,10 @@ export const meta = {
     'PI',
     'cross-section',
     'design intent mark',
+    'contour',
   ],
   vocabulary_assumed: [
     { term: 'site walk', source_lesson_id: 'T04.L01' },
-    { term: 'contour', source_lesson_id: 'T04.L03' },
     { term: 'existing utilities', source_lesson_id: 'T04.L01' },
     { term: 'pole locations from design', source_lesson_id: 'T04.L02' },
     { term: 'call-out', source_lesson_id: 'T07.L01' },
@@ -68,6 +68,11 @@ export const meta = {
       term: 'design intent mark',
       definition:
         'A notation on a staking plan indicating the designer\'s intent at a specific location — typically expressed as stationing + offset + proposed attachment height. The staker\'s job is to find this point on the ground, verify conditions match the intent, and flag any mismatch via a call-out.',
+    },
+    {
+      term: 'contour',
+      definition:
+        'A line on a topographic map or profile drawing that connects all points at the same elevation above sea level. Contour lines that are close together indicate steep terrain (elevation changes rapidly over short distance). Contour lines that are spread far apart indicate gentle slopes or flat terrain. On a staking plan profile view, closely-spaced contour values in the ground line signal a hill or ridge that the cable sag must clear. Understanding contours helps the staker anticipate terrain before arriving at each station.',
     },
   ],
 };
@@ -196,6 +201,11 @@ export default function T07L02_ReadingPlansInTheField() {
               id: 'T07-L02-fc-dim',
               front: 'What is a design intent mark?',
               back: 'A notation on a staking plan indicating the designer\'s intent at a specific location — expressed as stationing + offset + proposed attachment height. The staker finds this point on the ground, verifies conditions match the intent, and flags any mismatch via a call-out.',
+            },
+            {
+              id: 'T07-L02-fc-contour',
+              front: 'What is a contour line on a staking plan or topographic map?',
+              back: 'A line connecting all points at the same elevation above sea level. Closely-spaced contour lines = steep terrain (elevation changes quickly). Widely-spaced contour lines = gentle slopes or flat terrain. On a profile view, contour spacing in the ground line tells the staker how steep the terrain is between poles — steep terrain can threaten cable clearances at midspan low points.',
             },
           ]}
         />

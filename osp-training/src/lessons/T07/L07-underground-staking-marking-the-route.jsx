@@ -58,19 +58,18 @@ export const meta = {
       definition: 'A sketch or field note at the pull pit location (the exit point of an HDD bore) showing: the exit angle of the conduit from the ground, the required trench dimensions for pulling conduit, the distance from the road or traffic-control boundary, and any overhead obstacles. The pull pit must be positioned so that the bore crew can feed the conduit back through from the exit point without vehicle conflicts.',
     },
   ],
+  vocabulary_assumed: [
+    { term: 'staker', source_lesson_id: 'T07.L01' },
+    { term: 'stationing', source_lesson_id: 'T07.L02' },
+    { term: 'PI (point of intersection)', source_lesson_id: 'T07.L02' },
+    { term: 'HDD', source_lesson_id: 'T06.L01' },
+    { term: 'open-cut trench', source_lesson_id: 'T06.L01' },
+    { term: 'minimum cover', source_lesson_id: 'T06.L02' },
+  ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;
-
-export const vocabulary_assumed = [
-  { term: 'staker', source_lesson_id: 'T07.L01' },
-  { term: 'stationing', source_lesson_id: 'T07.L02' },
-  { term: 'PI (point of intersection)', source_lesson_id: 'T07.L02' },
-  { term: 'HDD', source_lesson_id: 'T06.L04' },
-  { term: 'open-cut', source_lesson_id: 'T06.L03' },
-  { term: 'minimum cover', source_lesson_id: 'T06.L02' },
-];
-
+export const vocabulary_assumed = meta.vocabulary_assumed;
 export const key_terms = meta.key_terms;
 
 export default function T07L07_UndergroundStakingMarkingTheRoute() {

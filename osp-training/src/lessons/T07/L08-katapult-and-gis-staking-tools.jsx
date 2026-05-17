@@ -57,20 +57,19 @@ export const meta = {
       definition: 'The automatic transfer of field-collected data (photos, measurements, GPS coordinates, condition notes) from a field device to a cloud database accessible in the engineering office, occurring via cellular data connection while the staker is still in the field. Real-time sync means the office engineer can review a pole\'s data while the staker is still two poles away — allowing real-time QA questions ("can you re-photograph pole 47? the photo is blurry") without requiring a separate re-stake visit.',
     },
   ],
+  vocabulary_assumed: [
+    { term: 'staker', source_lesson_id: 'T07.L01' },
+    { term: 'RUS Form 740', source_lesson_id: 'T07.L05' },
+    { term: 'attachment height measurement', source_lesson_id: 'T07.L04' },
+    { term: 'SCID', source_lesson_id: 'T07.L03' },
+    { term: 'GIS', source_lesson_id: 'T01.L08' },
+    { term: 'pole tag', source_lesson_id: 'T07.L03' },
+    { term: 'make-ready flag', source_lesson_id: 'T07.L06' },
+  ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;
-
-export const vocabulary_assumed = [
-  { term: 'staker', source_lesson_id: 'T07.L01' },
-  { term: 'RUS Form 740', source_lesson_id: 'T07.L05' },
-  { term: 'attachment height measurement', source_lesson_id: 'T07.L04' },
-  { term: 'SCID', source_lesson_id: 'T07.L03' },
-  { term: 'GIS', source_lesson_id: 'T04.L01' },
-  { term: 'pole tag', source_lesson_id: 'T07.L03' },
-  { term: 'make-ready flag', source_lesson_id: 'T07.L06' },
-];
-
+export const vocabulary_assumed = meta.vocabulary_assumed;
 export const key_terms = meta.key_terms;
 
 export default function T07L08_KatapultAndGISStakingTools() {
@@ -164,6 +163,11 @@ export default function T07L08_KatapultAndGISStakingTools() {
               id: 'T07-L08-fc-sync',
               front: 'What is field-to-office real-time sync?',
               back: 'The automatic transfer of field-collected data (photos, measurements, GPS coordinates, condition notes) from a field device to a cloud database accessible in the engineering office, occurring via cellular data connection while the staker is still in the field. Real-time sync means the office engineer can review a pole\'s data while the staker is still two poles away.',
+            },
+            {
+              id: 'T07-L08-fc-fieldcom',
+              front: 'What is FieldCom in OSP staking?',
+              back: 'A field data collection platform used for utility asset management, pole inspection, and staking. Similar in purpose to Katapult but with a broader asset management scope — FieldCom integrates with GIS databases, allowing field crews to update pole records directly in the utility\'s asset management system. The underlying concept (mobile field data collection with real-time sync) is the same as Katapult; the specific workflows and integrations differ by vendor implementation.',
             },
           ]}
         />

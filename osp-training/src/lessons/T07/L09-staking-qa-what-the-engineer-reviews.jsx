@@ -54,19 +54,18 @@ export const meta = {
       definition: 'A condition found during QA review that requires the staking crew to return to the field and re-stake some or all of a route section. Common triggers: a section of poles missing entirely from the package (GPS record shows the crew didn\'t visit them); attachment height measurements missing for multiple poles (the engineer cannot confirm make-ready requirements without them); photos for a section are missing, blurry, or don\'t show the measurement display; make-ready flags lack supporting measurement evidence. A re-stake adds time and cost to the project — the goal is to catch completeness gaps before leaving the field, not discover them in QA.',
     },
   ],
+  vocabulary_assumed: [
+    { term: 'staker', source_lesson_id: 'T07.L01' },
+    { term: 'RUS Form 740', source_lesson_id: 'T07.L05' },
+    { term: 'make-ready flag', source_lesson_id: 'T07.L06' },
+    { term: 'photo-attach', source_lesson_id: 'T07.L08' },
+    { term: 'attachment height measurement', source_lesson_id: 'T07.L04' },
+    { term: 'staking sheet', source_lesson_id: 'T07.L05' },
+  ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;
-
-export const vocabulary_assumed = [
-  { term: 'staker', source_lesson_id: 'T07.L01' },
-  { term: 'RUS Form 740', source_lesson_id: 'T07.L05' },
-  { term: 'make-ready flag', source_lesson_id: 'T07.L06' },
-  { term: 'photo-attach', source_lesson_id: 'T07.L08' },
-  { term: 'attachment height measurement', source_lesson_id: 'T07.L04' },
-  { term: 'staking sheet', source_lesson_id: 'T07.L05' },
-];
-
+export const vocabulary_assumed = meta.vocabulary_assumed;
 export const key_terms = meta.key_terms;
 
 export default function T07L09_StakingQAWhatTheEngineerReviews() {

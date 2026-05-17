@@ -44,7 +44,7 @@ export const meta = {
     {
       term: 'RUS Form 740',
       definition:
-        'The Contractor\'s Statement and Acknowledgment form used on RUS-funded projects to document staking data: pole locations, attachment heights, field conditions, and design-versus-field deltas. Form 740 is a required deliverable on RUS telephone and broadband programs — missing or incomplete Form 740 documentation can trigger program compliance findings during audit. (Source: USDA Rural Development public form)',
+        'A USDA Rural Development form used on RUS-funded projects to document staking data: pole locations, attachment heights, field conditions, and design-versus-field deltas. [confirm official form title — commonly referenced as "Contractor\'s Statement and Acknowledgment" but verify against current USDA RD form catalog] Form 740 is a required deliverable on RUS telephone and broadband programs — missing or incomplete Form 740 documentation can trigger program compliance findings during audit. (Source: USDA Rural Development public form)',
     },
     {
       term: 'staking sheet',

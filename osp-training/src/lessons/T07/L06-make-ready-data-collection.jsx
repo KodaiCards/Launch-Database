@@ -1,6 +1,6 @@
 // T07.L06 — Make-Ready Data Collection
 // Staker identifies poles requiring make-ready work: transfers, replacements, force poles.
-// Sources: RUS Bulletin 1751F-630 §2/§7; 47 CFR 1.1411 (OTMR); NESC C2-2023 Rule 232 [confirm edition]
+// Sources: RUS Bulletin 1751F-630 §2/§7; 47 CFR 1.1411 (OTMR); NESC C2-2023 Rule 235 Table 235-5 (supply-to-comm on same pole); NESC C2-2023 Rule 232 (ground/road vertical clearances)
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -62,9 +62,9 @@ export const vocabulary_assumed = [
   { term: 'staking sheet', source_lesson_id: 'T07.L05' },
   { term: 'RUS Form 740', source_lesson_id: 'T07.L05' },
   { term: 'attachment height measurement', source_lesson_id: 'T07.L04' },
-  { term: 'make-ready', source_lesson_id: 'T05.L08' },
+  { term: 'make-ready', source_lesson_id: 'T01.L05' },
   { term: 'OTMR', source_lesson_id: 'T05.L09' },
-  { term: 'pole audit', source_lesson_id: 'T04.L01' },
+  { term: 'pole audit', source_lesson_id: 'T04.L04' },
 ];
 
 export const key_terms = meta.key_terms;
@@ -125,7 +125,7 @@ export default function T07L06_MakeReadyDataCollection() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">NESC</td>
               <td className="px-3 py-2">National Electrical Safety Code</td>
-              <td className="px-3 py-2">Sets minimum clearance rules that drive transfer requirements (Rule 232 vertical clearances)</td>
+              <td className="px-3 py-2">Sets minimum clearance rules that drive transfer requirements — Rule 232 for vertical clearances above ground/roads; Rule 235 for supply-to-comm separation on the same pole</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">ROW</td>
@@ -180,15 +180,18 @@ export default function T07L06_MakeReadyDataCollection() {
           determine whether the new fiber can go at 28 feet with the required clearances.
         </p>
         <p className="mt-2">
-          The two clearance rules you're checking (per NESC Rule 232 [confirm edition]):
+          The two clearance rules you're checking (NESC C2-2023):
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-slate-300/90">
           <li>
-            <strong>Clearance above the new fiber:</strong> The new fiber must be at least a
-            certain distance below the existing power conductors on the pole. NESC Rule 232
-            Table 2 specifies these values by voltage class — typically 40 inches (3.3 feet)
-            from a 120/240V supply conductor to a communication cable. [confirm current NESC
-            C2 edition Rule 232 Table 2]
+            <strong>Clearance above the new fiber (supply-to-comm on the same pole):</strong>{' '}
+            The new fiber must maintain a minimum vertical separation from the power conductors
+            above it on the same pole. This is governed by{' '}
+            <strong>NESC Rule 235, Table 235-5</strong> — not Rule 232 (which covers
+            ground/road/waterway clearances). Table 235-5 specifies supply-to-communication
+            separation by voltage class: typically 40 inches (3.33 feet) from a 120/240V
+            supply conductor to a communication cable attachment on the same structure.
+            [confirm current NESC C2 edition Rule 235, Table 235-5]
           </li>
           <li>
             <strong>Clearance below the new fiber:</strong> The new fiber must maintain
@@ -449,7 +452,7 @@ export default function T07L06_MakeReadyDataCollection() {
           {
             id: 'T07-L06-Q1',
             type: 'mc',
-            prompt: 'A staker measures an existing supply conductor at 31.0 ft on a pole where the design calls for new fiber at 28.0 ft. NESC Rule 232 requires 40 inches (3.33 ft) clearance above the fiber to the supply conductor. Is there a make-ready conflict?',
+            prompt: 'A staker measures an existing supply conductor at 31.0 ft on a pole where the design calls for new fiber at 28.0 ft. NESC Rule 235, Table 235-5 requires 40 inches (3.33 ft) supply-to-communication separation on the same pole structure. Is there a make-ready conflict?',
             choices: [
               'No — the supply is above the fiber, so there is no conflict',
               'Yes — 31.0 − 28.0 = 3.0 ft clearance, which is less than the required 3.33 ft. Flag for transfer of the supply wire.',
@@ -457,7 +460,7 @@ export default function T07L06_MakeReadyDataCollection() {
               'No — transfers only apply when the supply wire is below the fiber',
             ],
             answerIndex: 1,
-            explanation: '31.0 − 28.0 = 3.0 ft of clearance. Required: 40 inches = 3.33 ft. 3.0 ft < 3.33 ft — there is a make-ready conflict. The supply wire must be raised (or the fiber design height must be lowered) to restore the required clearance. Flag: transfer required. (Source: NESC Rule 232 [confirm edition]; RUS 1751F-630 §7.)',
+            explanation: '31.0 − 28.0 = 3.0 ft of clearance. Required per NESC Rule 235 Table 235-5: 40 inches = 3.33 ft (supply-to-comm on same structure). 3.0 ft < 3.33 ft — there is a make-ready conflict. The supply wire must be raised (or the fiber design height lowered) to restore the required clearance. Flag: transfer required. (Note: Rule 232 covers ground/road/waterway clearances; Rule 235 covers supply-to-comm separation on the same pole. Source: NESC C2-2023 Rule 235 Table 235-5; RUS 1751F-630 §7.)',
           },
           {
             id: 'T07-L06-Q2',

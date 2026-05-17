@@ -272,8 +272,9 @@ export default function T07L01_WhatAStakerDoes() {
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
             <strong>Book (OSHA 1910.268(g)(1)):</strong> Fall protection is required for
-            pole work above 10 feet. In theory, stakers measuring high attachment heights
-            should climb with tie-off.
+            pole work above 4 feet above the ground. Any climbing — even a brief check — that
+            takes you more than 4 feet off the ground requires a positioning system or personal
+            fall arrest system.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> Most experienced stakers measure from the ground using a
@@ -287,6 +288,28 @@ export default function T07L01_WhatAStakerDoes() {
             <strong>Risk of confusion:</strong> A new staker who only reads the regulation might
             assume they must climb every pole to measure. Don't climb when the laser gives you
             a cleaner, faster, safer measurement from the ground.
+          </p>
+        </div>
+
+        <div className="mt-4 p-4 border border-blue-400/20 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Fall-Arrest Equipment: Body Belts Are Banned (Since 1998)</p>
+          <p className="text-slate-300/90">
+            <strong>Critical distinction:</strong> OSHA permanently banned <strong>body belts</strong> as
+            fall-arrest devices for telecom pole work in 1998. A body belt (the old single-strap waist
+            belt with a lanyard) is only permitted as a <em>positioning</em> device — keeping a worker
+            at a fixed height on a pole while working with both hands — not as fall protection. If a fall
+            occurs while using only a body belt, the forces concentrate at the waist and can cause serious
+            internal injury. A <strong>full body harness</strong> (ANSI Z359.11) is required whenever
+            fall arrest — stopping a fall in progress — is the goal.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>ANSI Z133 / double-lanyard practice:</strong> ANSI Z133 (Safety Requirements for
+            Arboricultural Operations) is sometimes referenced as a model for utility pole climbing,
+            particularly for the <em>100% tie-off</em> concept: at no point during a climb should
+            a worker be without at least one point of connection. The double-lanyard technique —
+            alternating two lanyards so one is always attached while the other is repositioned above
+            the next climbing step — achieves 100% tie-off throughout the ascent and descent. This is
+            best practice for any staking climb where a full-body harness PFAS is in use.
           </p>
         </div>
       </section>
@@ -414,7 +437,7 @@ export default function T07L01_WhatAStakerDoes() {
             id: 'T07-L01-Q4',
             type: 'mc',
             prompt:
-              'OSHA 1910.268(g)(1) requires fall protection for pole work above 10 feet. How do most experienced field stakers handle measuring attachment heights on tall poles?',
+              'OSHA 1910.268(g)(1) requires fall protection (a positioning system or personal fall arrest system) for pole work above 4 feet above the ground. How do most experienced field stakers handle measuring attachment heights on tall poles while still complying with this requirement?',
             choices: [
               'Always climb the pole with full tie-off for every measurement',
               'Skip measuring any attachment above 15 feet as too dangerous',
@@ -423,8 +446,8 @@ export default function T07L01_WhatAStakerDoes() {
             ],
             answerIndex: 2,
             explanation:
-              'Ground-level laser measurement provides ±0.1-foot accuracy — better than tape on a pole — and eliminates unnecessary climbing. Climbing is reserved for situations where the laser line-of-sight is blocked. When climbing is needed, 100% tie-off is always required per OSHA 1910.268(g)(1). Laser measurement is not a safety shortcut; it\'s the more accurate and safer technique for most measurements.',
-            citation: 'OSHA 1910.268(g)(1) — Fall protection requirements for pole work.',
+              'Ground-level laser measurement provides ±0.1-foot accuracy — better than tape on a pole — and eliminates unnecessary climbing entirely. Because the staker stays on the ground, the 4-foot OSHA trigger (1910.268(g)(1)) never applies. Climbing is reserved for situations where the laser line-of-sight is blocked; when climbing is needed, a positioning system or PFAS is always required. Laser measurement is not a safety shortcut — it\'s the more accurate and safer technique for most measurements.',
+            citation: 'OSHA 1910.268(g)(1) — Fall protection requirements for telecom pole work above 4 feet.',
           },
           {
             id: 'T07-L01-Q5',
