@@ -1,0 +1,302 @@
+// T11.L12 — Connector Loss — Three Numbers
+// Working lesson: UPC/APC specs, IL/RL tiers, contamination as #1 cause, IEC 61300-3-35
+// Source: M04 §4.7 migrated + three-number framework table + WorkedExample
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T11.L12',
+  course_id: 'T11',
+  title: 'Connector Loss — Three Numbers',
+  order: 12,
+  lesson_type: 'working',
+  prerequisites: ['T11.L11'],
+  learning_objectives: [
+    'State the three insertion loss tiers (reference-grade, field-acceptable, reject) and the return loss spec for each',
+    'Explain why APC return loss (≥60 dB) is superior to UPC (≥55 dB) and what physical feature causes the difference',
+    'Identify the number-one field cause of high connector insertion loss and describe the correct cleaning sequence',
+    'Apply the three-tier framework to classify three connector IL measurements',
+  ],
+  estimated_minutes: 25,
+  vocabulary_introduced: [
+    'UPC (Ultra Physical Contact)',
+    'APC (Angle Physical Contact)',
+    'insertion loss (IL)',
+    'return loss (RL)',
+    'reference-grade connector',
+    'contamination',
+  ],
+  key_terms: [
+    {
+      term: 'UPC (Ultra Physical Contact)',
+      definition:
+        'A fiber optic connector with a flat (0°) but ultra-smoothly polished end-face. The "ultra" polish achieves better physical contact between the two fiber end-faces than older PC (Physical Contact) connectors. Return loss: ≥55 dB typical. Insertion loss: ≤0.3 dB field-acceptable, ≤0.1 dB reference-grade. Body color: BLUE per TIA-598-D. Standard for most telecom and data applications.',
+    },
+    {
+      term: 'APC (Angle Physical Contact)',
+      definition:
+        'A fiber optic connector with an 8° angled polished end-face. The angle causes Fresnel back-reflection to exit the fiber core at 16° (twice the 8° incident angle) instead of returning toward the source. Achieves return loss ≥60 dB — 5 dB better than UPC. Body color: GREEN per TIA-598-D. Required for GPON, CATV, and RF-over-fiber applications where back-reflection degrades the OLT laser or RF signal quality.',
+    },
+    {
+      term: 'insertion loss (IL)',
+      definition:
+        'The optical power lost at a fiber connector when it is mated to another connector or adapter. Measured in dB. In a perfect connector, IL would be 0 dB (all light passes through). In practice, IL results from end-face separation, angular misalignment, lateral offset, and contamination. The accepted specification tiers for single-mode connectors: reference-grade ≤0.1 dB, field-acceptable ≤0.3 dB, reject >0.5 dB (investigate cause).',
+    },
+    {
+      term: 'return loss (RL)',
+      definition:
+        'The ratio of incident optical power to reflected optical power at a connector, expressed in dB. Higher return loss = less back-reflection = better. A return loss of 60 dB means only 1 millionth of the incident power is reflected back toward the source. Low return loss (< 40 dB) causes laser instability, noise, and bit errors in high-speed coherent systems and GPON. Target: ≥55 dB UPC, ≥60 dB APC.',
+    },
+    {
+      term: 'reference-grade connector',
+      definition:
+        'A connector meeting the highest performance tier: IL ≤0.1 dB, RL ≥65 dB (APC) or ≥60 dB (UPC). Used in test equipment, laboratory setups, and high-precision carrier-grade installations. More expensive and requires careful handling — reference-grade performance is destroyed by a single contaminated mating cycle without cleaning.',
+    },
+    {
+      term: 'contamination',
+      definition:
+        'The presence of dust, oil, gel residue, or particulate matter on the fiber end-face. The number-one field cause of high connector insertion loss. Even a single dust particle on the 9 µm core of a single-mode fiber can block 10–50% of optical power, resulting in 0.5–3 dB insertion loss. Contamination is prevented by keeping dust caps on unmated connectors and cleaned by using the proper IEC 61300-3-35 [confirm edition] pre-clean protocol before every mating.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'APC (Angle Physical Contact)', source_lesson_id: 'T11.L02' },
+    { term: 'UPC (Ultra Physical Contact)', source_lesson_id: 'T11.L02' },
+    { term: 'APC/UPC mating prohibition', source_lesson_id: 'T11.L02' },
+    { term: 'attenuation dB/km', source_lesson_id: 'T02.L02' },
+    { term: 'dB', source_lesson_id: 'T02.L05' },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T11L12_ConnectorLossThreeNumbers() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          A fiber connector is a demountable joint — unlike a fusion splice, you can plug and
+          unplug it. That flexibility comes with a cost: connectors lose more light than splices
+          (0.1–0.5 dB per connector vs. ≤0.10 dB per fusion splice), and their loss can change
+          every time they're mated if contamination is present.
+        </p>
+        <p className="mt-2">
+          Every connector measurement you take gets classified against three numbers: the
+          reference-grade specification, the field-acceptable specification, and the reject
+          threshold. This lesson teaches those three numbers and the most important thing you
+          can do in the field to keep connector loss in spec: clean before you mate.
+        </p>
+
+        {/* Flashcards */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-3">Key Terms</h3>
+          <Flashcard
+            deckId="T11-L12"
+            cards={[
+              {
+                id: 'T11-L12-fc-il',
+                front: 'What are the three insertion loss tiers for single-mode fiber connectors?',
+                back: 'Reference-grade: IL ≤0.1 dB. Field-acceptable: IL ≤0.3 dB. Reject (investigate): IL >0.5 dB. Between 0.3 and 0.5 dB is a yellow zone — technically acceptable but worth investigating. Source: TIA-568.3-D §6; IEC 61300-3-35 [confirm edition].',
+              },
+              {
+                id: 'T11-L12-fc-rl',
+                front: 'What are the return loss specs for UPC and APC connectors?',
+                back: 'UPC: ≥55 dB typical, ≥50 dB minimum. APC: ≥60 dB typical, ≥55 dB minimum. Reference-grade: ≥65 dB (APC) or ≥60 dB (UPC). Higher RL = less back-reflection = better. APC\'s 5 dB RL advantage is critical for PON and CATV applications.',
+              },
+              {
+                id: 'T11-L12-fc-contamination',
+                front: 'What is the #1 field cause of high connector insertion loss?',
+                back: 'Contamination — dust, oil, gel residue on the fiber end-face. Even one particle on the 9 µm single-mode core can block 10–50% of power (0.5–3 dB IL). Fix: IEC 61300-3-35 [confirm edition] pre-clean protocol before every mating: dry wipe first (blow off loose particles), then wet IPA wipe, then inspect with a ≥200× end-face scope before mating.',
+              },
+              {
+                id: 'T11-L12-fc-apc-rl',
+                front: 'Why does APC achieve higher return loss than UPC?',
+                back: 'The 8° angled end-face causes Fresnel back-reflection to exit the fiber at 16° (twice the angle), which is well outside the fiber core acceptance angle. The reflected light cannot re-couple back into the core and is absorbed as cladding radiation. UPC\'s flat end-face sends reflections directly back toward the source, and ~1/100,000 of that power couples back into the core. That small fraction is enough to disrupt sensitive laser sources.',
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The Three-Tier Connector Specification</h2>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm border border-white/10 rounded-lg">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Tier</th>
+                <th className="px-3 py-2 text-left">IL (UPC or APC)</th>
+                <th className="px-3 py-2 text-left">RL — APC</th>
+                <th className="px-3 py-2 text-left">RL — UPC</th>
+                <th className="px-3 py-2 text-left">Application / action</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10 bg-green-900/10">
+                <td className="px-3 py-2 font-semibold text-green-400">Reference-grade</td>
+                <td className="px-3 py-2 text-green-400">≤0.1 dB</td>
+                <td className="px-3 py-2 text-green-400">≥65 dB</td>
+                <td className="px-3 py-2 text-green-400">≥60 dB</td>
+                <td className="px-3 py-2">Test equipment, lab setups, carrier-grade patch panels. Handle with dust caps at all times.</td>
+              </tr>
+              <tr className="border-t border-white/10 bg-yellow-900/10">
+                <td className="px-3 py-2 font-semibold text-yellow-400">Field-acceptable</td>
+                <td className="px-3 py-2 text-yellow-400">0.1 – 0.3 dB</td>
+                <td className="px-3 py-2 text-yellow-400">≥60 dB</td>
+                <td className="px-3 py-2 text-yellow-400">≥55 dB</td>
+                <td className="px-3 py-2">Standard OSP and premises connectors. Acceptable for most telecom applications. Log and monitor.</td>
+              </tr>
+              <tr className="border-t border-white/10 bg-orange-900/10">
+                <td className="px-3 py-2 font-semibold text-orange-400">Marginal / investigate</td>
+                <td className="px-3 py-2 text-orange-400">0.3 – 0.5 dB</td>
+                <td className="px-3 py-2 text-orange-400">&lt;60 dB APC</td>
+                <td className="px-3 py-2 text-orange-400">&lt;55 dB UPC</td>
+                <td className="px-3 py-2">Clean end-face and re-test. If reading improves → contamination. If reading stays high → damaged connector, replace.</td>
+              </tr>
+              <tr className="border-t border-white/10 bg-red-900/20">
+                <td className="px-3 py-2 font-semibold text-red-400">Reject</td>
+                <td className="px-3 py-2 text-red-400">&gt;0.5 dB</td>
+                <td className="px-3 py-2 text-red-400">&lt;50 dB</td>
+                <td className="px-3 py-2 text-red-400">&lt;45 dB UPC</td>
+                <td className="px-3 py-2">Do not put into service. Clean and re-test first. If reading stays high after cleaning: damaged end-face — replace connector or terminate new pigtail.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-slate-400 text-sm">
+          Source: TIA-568.3-D §6 (insertion loss and return loss requirements for optical connectors); IEC 61300-3-35 [confirm edition] (end-face inspection standards for zone-based pass/fail criteria).
+        </p>
+
+        {/* WorkedExample — classify three readings */}
+        <div className="mt-6">
+          <WorkedExample
+            id="T11-L12-we-classify"
+            title="Classify three connector IL readings against the three-tier framework"
+            variables={[
+              { symbol: 'IL_A', value: '0.08', unit: 'dB', description: 'Connector A — just measured with OLTS' },
+              { symbol: 'IL_B', value: '0.35', unit: 'dB', description: 'Connector B — just measured with OLTS' },
+              { symbol: 'IL_C', value: '0.52', unit: 'dB', description: 'Connector C — just measured with OLTS' },
+            ]}
+            steps={[
+              {
+                label: 'Connector A (0.08 dB) — vs. reference-grade threshold',
+                expression: '0.08 dB ≤ 0.1 dB?',
+                result: 'Yes → Reference-grade',
+                note: '0.08 dB is at the top of reference-grade performance. Accept and document. No action needed. (Verify RL is also meeting spec with a return loss meter if this is a PON application.)',
+              },
+              {
+                label: 'Connector B (0.35 dB) — vs. field-acceptable threshold',
+                expression: '0.35 dB ≤ 0.3 dB?',
+                result: 'No → Marginal (0.30–0.50 dB zone)',
+                note: '0.35 dB is above field-acceptable (0.3 dB). Clean the end-face per IEC 61300-3-35 pre-clean protocol and re-test. If it improves to ≤0.3 dB → contamination was the cause, accept. If it stays ≥0.35 dB → end-face damage, replace connector.',
+              },
+              {
+                label: 'Connector C (0.52 dB) — vs. reject threshold',
+                expression: '0.52 dB > 0.5 dB?',
+                result: 'Yes → Reject',
+                note: 'Do not put into service. Clean and re-test. Even if it improves, log the incident. If it stays above 0.5 dB after cleaning: damaged end-face (scratch, chip, or permanent contamination in the IEC 61300-3-35 zone A core area). Replace the connector or pigtail.',
+              },
+            ]}
+            sanityCheck="Connector A at 0.08 dB = excellent. Connector B at 0.35 dB = dirty or slightly damaged — clean first. Connector C at 0.52 dB = reject — something is wrong. In a 10-connector link budget, if all connectors were 0.52 dB each, connectors alone contribute 5.2 dB — consuming a significant portion of a typical 28 dB GPON power budget."
+          />
+        </div>
+
+        <h3 className="mt-6 font-semibold">The IEC 61300-3-35 Pre-Clean Protocol</h3>
+        <p>
+          IEC 61300-3-35 [confirm edition] defines the visual inspection criteria for fiber
+          end-faces using a zone-based map: Zone A (core — most critical), Zone B (cladding),
+          Zone C (contact area), Zone D (ferrule). Contamination in Zone A directly causes
+          insertion loss; contamination in Zone B can cause return loss degradation.
+        </p>
+        <p className="mt-2">
+          Before every connector mating, follow this sequence:
+        </p>
+        <div className="mt-3 space-y-2">
+          {[
+            '1. Remove dust cap. Keep cap to replace if connector is not immediately mated.',
+            '2. Blow off loose particles with a clean air blow (canned air or nitrogen). This removes large particles that an IPA wipe would just drag across the end-face.',
+            '3. Wet IPA wipe: use a lint-free reel-type cleaner or a fresh cassette push. One wipe, center to edge — do not wipe back and forth.',
+            '4. Inspect with a ≥200× fiber end-face scope (or inspection probe). Verify: Zone A clean (no contamination visible), Zone B clean or minor dust only, no scratches crossing Zone A.',
+            '5. If zone A still shows contamination after cleaning: clean again (up to two more times). If contamination persists after three cleaning cycles: the connector is damaged — replace.',
+            '6. Mate immediately after cleaning. A cleaned end-face re-contaminates from room-air particles within 30–60 seconds in typical field environments.',
+          ].map((step, i) => (
+            <div key={i} className="flex gap-2 p-2 bg-slate-800/40 rounded text-sm">
+              <p className="text-slate-300">{step}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Quiz */}
+        <div className="mt-6">
+          <Quiz
+            id="T11-L12-quiz-1"
+            questions={[
+              {
+                id: 'q1',
+                type: 'multiple-choice',
+                text: 'A technician mates an SC/APC connector and measures 0.08 dB insertion loss and 55 dB return loss. Is this acceptable for a GPON PON port?',
+                options: [
+                  { id: 'a', text: 'Yes — 0.08 dB IL is reference-grade and 55 dB RL is at the APC minimum' },
+                  { id: 'b', text: 'No — APC return loss should be ≥60 dB; 55 dB is below the field-acceptable APC specification and may cause OLT laser instability in GPON' },
+                  { id: 'c', text: 'Yes — 55 dB return loss is acceptable for all fiber applications' },
+                  { id: 'd', text: 'No — the IL needs to be ≤0.05 dB for GPON applications' },
+                ],
+                correctId: 'b',
+                explanation: 'For APC connectors, the field-acceptable return loss specification is ≥60 dB. At 55 dB, this connector is in the marginal range (55–60 dB for APC). While 55 dB is above the absolute rejection threshold (~50 dB), for a GPON PON port where OLT laser stability is critical, ≥60 dB is the design target. The correct action: clean the APC end-face (contamination can reduce RL even on an APC by partially filling the air gap with particles that scatter light backward) and re-test. If RL improves to ≥60 dB → contamination was the cause. If not → the 8° polish may be worn or the ferrule is damaged.',
+              },
+              {
+                id: 'q2',
+                type: 'multiple-choice',
+                text: 'A crew measures 0.65 dB insertion loss on an SC/UPC connector. They clean the end-face with IPA and re-measure: 0.62 dB. No improvement. What is the most likely cause and correct next step?',
+                options: [
+                  { id: 'a', text: 'The connector polish is worn — order a new connector and terminate a fresh pigtail' },
+                  { id: 'b', text: 'The IPA wipe was not effective — use acetone instead of IPA' },
+                  { id: 'c', text: 'The insertion loss is within spec — 0.62 dB is field-acceptable for UPC connectors' },
+                  { id: 'd', text: 'The OLTS is miscalibrated — use a different meter to re-measure' },
+                ],
+                correctId: 'a',
+                explanation: '0.65 dB → cleaning → 0.62 dB with no meaningful improvement indicates the problem is not contamination. Contamination-caused IL drops sharply with cleaning (from 0.65 to ≤0.3 dB). A reading that stays elevated after proper IPA cleaning suggests physical damage to the end-face: a scratch in Zone A (visible under ≥200× inspection), a chipped ferrule edge, or excessive end-face convexity from worn polishing. The correct action: inspect the end-face under a fiber scope and replace the connector if damage is visible. Never use acetone on a fiber connector — it attacks the ferrule adhesive and may damage the connector body.',
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ── ADVANCED ──────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Why Contamination Is Worse Than It Looks</h2>
+        <p>
+          A single dust particle in Zone A of a 9 µm single-mode fiber core can block 25–50%
+          of the optical power crossing the connector. At 50% power loss:
+        </p>
+        <div className="mt-2 p-4 bg-slate-800/60 border border-slate-600/40 rounded-lg font-mono text-sm">
+          <p className="text-slate-200">Power loss = −10 × log₁₀(0.50) = −10 × (−0.301) = 3.01 dB</p>
+          <p className="mt-1 text-slate-400 text-xs">A single dust particle causes 3 dB of insertion loss — 30× the reference-grade specification.</p>
+        </div>
+        <p className="mt-3">
+          In a GPON system with a 28 dB power budget, a 3 dB connector loss at the ONT consumes
+          10.7% of the entire link budget in one connection. This is why the "clean before mate"
+          rule is non-negotiable, and why dust caps must stay on every unmated connector.
+        </p>
+        <p className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg text-blue-200 text-sm">
+          <strong>Field wisdom:</strong> the most expensive connector in a fiber plant is the
+          most-mated one — the OLT port at the CO. Every activation, every test, every
+          troubleshooting visit mates and unmates this connector. Track mate counts on OLT
+          ports. After 500+ mate cycles, inspect with a ≥400× scope and polish or replace
+          if end-face wear is visible. The cost of one OLT connector failure in a live PON
+          system far exceeds the cost of scheduled replacement.
+        </p>
+      </section>
+
+    </LessonLayout>
+  );
+}

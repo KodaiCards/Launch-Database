@@ -1,0 +1,312 @@
+// T11.L05 — Core-Align vs. Cladding-Align
+// Working lesson: alignment mode selection, MFD mismatch loss, Gaussian beam formula
+// Source: M04 §4.3 + WorkedExample with Gaussian derivation
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+
+export const meta = {
+  id: 'T11.L05',
+  course_id: 'T11',
+  title: 'Core-Align vs. Cladding-Align',
+  order: 5,
+  lesson_type: 'working',
+  prerequisites: ['T11.L04'],
+  learning_objectives: [
+    'Select the correct alignment mode for three splice scenarios: same-type, cross-type, and emergency',
+    'Predict the approximate insertion loss penalty from MFD mismatch using the Gaussian beam approximation',
+    'Explain why bidirectional OTDR shows different loss values for a cross-fiber-type splice',
+    'Describe the field failure mode when cladding-align is used for a G.652.D-to-G.657.A2 cross splice',
+  ],
+  estimated_minutes: 25,
+  vocabulary_introduced: [
+    'LID (Local Injection and Detection)',
+    'core-align splicer',
+    'cladding-align (profile alignment system PAS)',
+    'MFD mismatch loss',
+  ],
+  key_terms: [
+    {
+      term: 'LID (Local Injection and Detection)',
+      definition:
+        'Local Injection and Detection — the technology used in core-align fusion splicers to find the fiber\'s actual light-guiding core. The splicer injects light into the fiber near the splice point and reads the scattered intensity distribution. Where light is strongest defines the core center. LID alignment is more accurate than cladding alignment because it finds where light actually travels, not just the outer glass boundary.',
+    },
+    {
+      term: 'core-align splicer',
+      definition:
+        'A fusion splicer that uses LID (or profile-image core detection) to align the actual light-guiding cores of the two fibers before firing the arc. Core alignment produces lower splice loss — especially on fibers with non-concentric cores or mismatched mode field diameters. Required for cross-type splices (e.g., G.652.D to G.657.A2) and for any splice where achieving ≤0.10 dB is important.',
+    },
+    {
+      term: 'cladding-align (profile alignment system PAS)',
+      definition:
+        'An alignment method that uses the outer cladding (125 µm glass boundary) as the alignment reference rather than the core. Faster than core-align because core detection is not required. Produces ≤0.10 dB on same-type fibers (where the core is well-centered in the cladding), but can produce 0.02–0.12 dB additional loss on fibers with different mode field diameters (G.652.D to G.657.A2) because centering the claddings does not guarantee centering the cores.',
+    },
+    {
+      term: 'MFD mismatch loss',
+      definition:
+        'Insertion loss caused by joining two fibers with different Mode Field Diameters. Light traveling through the larger-MFD fiber expands into a Gaussian beam that does not fully couple into the smaller-MFD fiber\'s core. The unmatched portion radiates as cladding modes and is lost. The loss is directional: larger-to-smaller and smaller-to-larger produce different insertion loss values, which is why bidirectional OTDR shows asymmetric events at cross-type splices.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'MFD', source_lesson_id: 'T02.L03' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L05' },
+    { term: 'G.657', source_lesson_id: 'T02.L05' },
+    { term: 'fusion splice', source_lesson_id: 'T11.L04' },
+    { term: 'align', source_lesson_id: 'T11.L04' },
+    { term: 'splicer display', source_lesson_id: 'T11.L04' },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T11L05_CoreAlignVsCladdingAlign() {
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          When the splicer aligns two fibers before firing the arc, it has two strategies:
+          find the outer glass boundary (the cladding, 125 µm diameter) and center those, or
+          find the actual light-carrying core and center those. Centering the cladding is
+          faster; centering the core is more accurate.
+        </p>
+        <p className="mt-2">
+          For most splices — same fiber type, clean ends, standard G.652.D cable — cladding
+          alignment works fine because the core is well-centered in the cladding. But splice
+          a G.652.D fiber (9.2 µm core) to a G.657.A2 bend-insensitive fiber (8.4 µm core)
+          using cladding alignment, and you've centered two different-sized light beams against
+          each other's walls instead of against each other's centers. Some light misses the
+          target. That missed light is your insertion loss penalty.
+        </p>
+        <p className="mt-2">
+          Think of it like threading a needle: cladding-align finds the hole in the fabric
+          (the cladding), core-align finds the actual needle eye (the core). For most needles
+          the hole and the eye are concentric, so either works. For special needles they
+          aren't — use core-align.
+        </p>
+
+        {/* Flashcards */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-3">Key Terms</h3>
+          <Flashcard
+            deckId="T11-L05"
+            cards={[
+              {
+                id: 'T11-L05-fc-lid',
+                front: 'What is LID (Local Injection and Detection) and what does it find?',
+                back: 'Local Injection and Detection — the technology core-align splicers use to find the actual light-guiding core. The splicer injects light near the splice point and measures scattered intensity. The brightest region is the core center. More accurate than cladding-align for fibers with non-concentric cores or different MFDs.',
+              },
+              {
+                id: 'T11-L05-fc-core-align',
+                front: 'When must you use core-align mode instead of cladding-align?',
+                back: 'Use core-align for: (1) any cross-type splice (G.652.D to G.657.A2, different MFDs), (2) permanently important splices where ≤0.10 dB is the target, (3) any time the fibers have non-circular cores or eccentric core geometry. Cladding-align is acceptable for same-type splices on clean fiber where speed matters.',
+              },
+              {
+                id: 'T11-L05-fc-mfd-mismatch',
+                front: 'What is MFD mismatch loss and what formula approximates it?',
+                back: 'Loss from joining fibers with different Mode Field Diameters. Approximated by the Gaussian beam formula: IL ≈ −10·log₁₀[(2·w₁·w₂)²/(w₁²+w₂²)²] where w₁, w₂ are the mode field radii (half the MFD). For G.652.D (MFD 9.2 µm) to G.657.A2 (MFD 8.6 µm): ~0.03 dB theoretical, which can reach 0.08–0.12 dB in cladding-align mode due to core offset.',
+              },
+              {
+                id: 'T11-L05-fc-directional',
+                front: 'Why does a cross-type splice show different loss values in each OTDR direction?',
+                back: 'MFD mismatch loss is directional. Larger-to-smaller (9.2 µm G.652.D → 8.6 µm G.657.A2): more light misses the smaller core = higher apparent loss in that direction. Smaller-to-larger: some light is re-captured by the larger core = lower apparent loss, sometimes looks like an apparent gain. Bidirectional average is the true insertion loss.',
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Which Mode for Which Scenario</h2>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm border border-white/10 rounded-lg">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Scenario</th>
+                <th className="px-3 py-2 text-left">Fiber types</th>
+                <th className="px-3 py-2 text-left">Correct mode</th>
+                <th className="px-3 py-2 text-left">Why</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">Standard build, same fiber throughout</td>
+                <td className="px-3 py-2">G.652.D to G.652.D</td>
+                <td className="px-3 py-2 text-green-400 font-semibold">Cladding-align</td>
+                <td className="px-3 py-2">Same MFD, well-centered core. Cladding reference is reliable. Faster throughput on large splice jobs.</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">Cross splice at bend-insensitive zone (FDH, last-mile drop)</td>
+                <td className="px-3 py-2">G.652.D to G.657.A2</td>
+                <td className="px-3 py-2 text-blue-400 font-semibold">Core-align</td>
+                <td className="px-3 py-2">Different MFD (9.2 µm vs 8.4–8.9 µm range). Cladding-align adds 0.02–0.12 dB extra loss from core offset. Core-align reduces this to ≤0.02 dB.</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">Emergency field restoration, wet or dirty fibers</td>
+                <td className="px-3 py-2">Any (same type)</td>
+                <td className="px-3 py-2 text-yellow-400 font-semibold">Cladding-align</td>
+                <td className="px-3 py-2">Core-align requires core detection, which fails on wet or heavily contaminated fibers. Cladding-align at least makes a splice; core-align may give "cannot detect core" error. Clean as best you can and use cladding-align for an emergency repair.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="mt-6 font-semibold">MFD Mismatch Loss — the Gaussian Beam Approximation</h3>
+        <p>
+          When two fibers with different Mode Field Diameters are joined, the light beam
+          expanding from the larger fiber does not fully couple into the smaller fiber's core.
+          The fraction that misses = the insertion loss. We can estimate this using the
+          Gaussian beam approximation.
+        </p>
+        <p className="mt-2">
+          The Gaussian beam model treats the light intensity distribution in the fiber as a
+          bell-curve (Gaussian) shape centered on the fiber axis. Each fiber has a mode field
+          radius <em>w</em> (= MFD ÷ 2). The coupling efficiency between two mismatched fibers
+          facing each other (assuming perfect lateral alignment) is:
+        </p>
+        <div className="mt-3 p-4 bg-slate-800/60 border border-slate-600/40 rounded-lg font-mono text-sm text-center">
+          <p className="text-slate-200">η = (2·w₁·w₂) / (w₁² + w₂²)</p>
+          <p className="mt-1 text-slate-200">IL ≈ −10 · log₁₀(η²)</p>
+          <p className="mt-2 text-slate-400 text-xs">where w₁ and w₂ are the mode field radii (µm) of each fiber. η = coupling efficiency (dimensionless, 0–1). IL = insertion loss in dB. Source: Gloge-Marcuse Gaussian beam approximation, widely cited in ITU-T G.652/G.657 splice loss estimation.</p>
+        </div>
+
+        {/* WorkedExample — MFD mismatch */}
+        <div className="mt-4">
+          <WorkedExample
+            id="T11-L05-we-mfd"
+            title="MFD mismatch loss: G.652.D (MFD = 9.2 µm) spliced to G.657.A2 (MFD = 8.4 µm)"
+            variables={[
+              { symbol: 'w₁', value: '4.6', unit: 'µm', description: 'Mode field radius of G.652.D fiber (MFD 9.2 µm ÷ 2). Per ITU-T G.652.D, MFD range 8.8–9.6 µm @ 1310 nm; use 9.2 µm as nominal center.' },
+              { symbol: 'w₂', value: '4.2', unit: 'µm', description: 'Mode field radius of G.657.A2 fiber (MFD 8.4 µm ÷ 2). Per ITU-T G.657, G.657.A2 MFD compatible range allows down to 8.4 µm.' },
+            ]}
+            steps={[
+              {
+                label: 'Step 1 — Calculate the numerator: 2·w₁·w₂',
+                expression: '2 × 4.6 × 4.2 = 2 × 19.32',
+                result: '38.64',
+                note: 'This is twice the product of the two mode field radii.',
+              },
+              {
+                label: 'Step 2 — Calculate the denominator: w₁² + w₂²',
+                expression: '4.6² + 4.2² = 21.16 + 17.64',
+                result: '38.80',
+                note: 'Sum of the squares of both mode field radii.',
+              },
+              {
+                label: 'Step 3 — Calculate coupling efficiency η',
+                expression: 'η = 38.64 / 38.80',
+                result: '0.9959',
+                note: 'η = 0.9959 means 99.59% of light couples into the second fiber at the ideal junction.',
+              },
+              {
+                label: 'Step 4 — Calculate insertion loss from η²',
+                expression: 'IL = −10 · log₁₀(0.9959²) = −10 · log₁₀(0.9918)',
+                result: '−10 × (−0.00361) = 0.036 dB',
+                note: 'The theoretical minimum insertion loss from this MFD mismatch alone (perfect alignment, core-align mode) is ~0.04 dB.',
+              },
+              {
+                label: 'Step 5 — Field reality with cladding-align',
+                expression: 'Add core offset penalty (cladding-align ≈ +0.04–0.08 dB for this mismatch)',
+                result: '0.04 + 0.06 = ~0.10 dB total',
+                note: 'In cladding-align mode, the centering error compounds with the MFD mismatch. Total insertion loss in cladding-align on this cross splice: typically 0.08–0.12 dB measured by bidirectional OTDR average.',
+              },
+            ]}
+            sanityCheck="A perfect core-align splice of G.652.D to G.657.A2 produces ~0.04 dB from MFD mismatch alone — below the 0.10 dB design target and passing RUS contract. The same splice in cladding-align mode typically produces 0.08–0.12 dB. Both pass the 0.30 dB contract threshold individually, but on a 200-splice cross-type build, cladding-align adds (200 × 0.06 dB) = 12 dB of excess splice loss vs. core-align — a budget-threatening difference on a long GPON distribution feeder."
+          />
+        </div>
+
+        {/* Quiz */}
+        <div className="mt-6">
+          <Quiz
+            id="T11-L05-quiz-1"
+            questions={[
+              {
+                id: 'q1',
+                type: 'multiple-choice',
+                text: 'A crew is splicing a 48F G.657.A2 drop cable into a G.652.D distribution feeder at an FDH enclosure. Which alignment mode should they use?',
+                options: [
+                  { id: 'a', text: 'Cladding-align — it\'s faster and both fibers are single-mode so MFD differences are negligible' },
+                  { id: 'b', text: 'Core-align — the G.652.D and G.657.A2 have different MFDs, and cladding-align will add 0.04–0.08 dB penalty per splice' },
+                  { id: 'c', text: 'Either mode — the splicer will automatically select the best mode for the fiber types detected' },
+                  { id: 'd', text: 'Cladding-align for G.657.A2-to-G.657.A2 splices and core-align only for G.652.D-to-G.652.D' },
+                ],
+                correctId: 'b',
+                explanation: 'G.652.D has an MFD of ~9.2 µm; G.657.A2 has a nominal MFD of ~8.4–9.0 µm depending on manufacturer. When these differ (even slightly), cladding-align introduces a core-offset penalty because the cladding surfaces are centered, not the cores. Core-align (LID-based) finds the actual core in each fiber and centers those, minimizing the MFD mismatch contribution. On 200 cross-splices in an FDH build, the difference is 8–16 dB — a meaningful link budget impact.',
+              },
+              {
+                id: 'q2',
+                type: 'multiple-choice',
+                text: 'A bidirectional OTDR test on a splice shows 0.15 dB in the forward direction and apparently −0.03 dB (an apparent gain) in the reverse direction. What is the true insertion loss and what caused the asymmetry?',
+                options: [
+                  { id: 'a', text: 'True IL = 0.15 dB; the apparent gain is a measurement artifact with no physical meaning' },
+                  { id: 'b', text: 'True IL = (0.15 + (−0.03)) / 2 = 0.06 dB; asymmetry is caused by MFD mismatch — smaller-to-larger coupling looks like an apparent gain' },
+                  { id: 'c', text: 'True IL = 0.15 dB; the −0.03 dB reading means the OTDR was miscalibrated in the reverse direction' },
+                  { id: 'd', text: 'True IL = 0.15 − (−0.03) = 0.18 dB; the apparent gain is from OTDR noise floor' },
+                ],
+                correctId: 'b',
+                explanation: 'The bidirectional average is the true insertion loss: (0.15 + (−0.03)) ÷ 2 = 0.12 ÷ 2 = 0.06 dB. The asymmetry is the hallmark of MFD mismatch. In the forward direction (larger-MFD to smaller-MFD), some light misses the smaller core = 0.15 dB apparent loss. In the reverse direction (smaller-MFD to larger-MFD), more light is captured by the larger core = apparent gain of 0.03 dB. This is not a gain; it is an artifact of the OTDR measurement method. The true insertion loss is the bidirectional average = 0.06 dB, which passes the design target.',
+              },
+              {
+                id: 'q3',
+                type: 'multiple-choice',
+                text: 'A crew is doing emergency splice restoration after a cable cut in a flooded manhole. The fibers are wet and contaminated with dirt. They switch to core-align mode. The splicer shows "cannot detect core" and refuses to fire. What is the correct response?',
+                options: [
+                  { id: 'a', text: 'Switch to cladding-align mode — contaminated or wet fibers prevent core detection, and cladding-align can still produce an acceptable splice' },
+                  { id: 'b', text: 'Continue attempting core-align — the splicer will eventually detect the core after several tries' },
+                  { id: 'c', text: 'Skip alignment entirely and fire the arc manually at maximum power to burn off the contamination' },
+                  { id: 'd', text: 'Declare the fiber unspliceable and document as a complete service loss' },
+                ],
+                correctId: 'a',
+                explanation: 'In wet or heavily contaminated field conditions, core detection (LID mode) fails because the scattered light signal is too weak or inconsistent for the splicer\'s image processing. Cladding-align is more tolerant of surface contamination because it relies on the physical outer boundary of the glass, which is visible even under degraded conditions. For an emergency restoration, a cladding-align splice at 0.10–0.20 dB is far better than no splice. After restoring service, the splice can be replaced with a proper core-align splice when conditions improve.',
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ── ADVANCED ──────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Book vs. Field: "Auto" Mode and Cladding-Align Masking Cross-Type Splices</h2>
+
+        <h3 className="mt-4 font-semibold">The book standard</h3>
+        <p>
+          ITU-T G.652.D and G.657 recommend core-align for all permanent single-mode splices,
+          especially cross-type. Splicer manufacturers recommend core-align as the default mode
+          for precision work. The FOA CFOS-S KSA standard references core-align as best practice
+          for G.652-to-G.657 splices.
+        </p>
+
+        <h3 className="mt-4 font-semibold">Field reality: most crews leave the splicer on "auto"</h3>
+        <p>
+          Most portable fusion splicers have an "auto" mode that selects between core-align
+          and cladding-align based on the splicer's fiber detection. When fiber ends are wet,
+          dirty, or ambiguously detected, "auto" frequently defaults to cladding-align. Crew
+          members who never change the mode leave the splicer in "auto" and trust it.
+        </p>
+        <p className="mt-2">
+          The problem: "auto" mode does not know the fiber type. It cannot distinguish
+          G.652.D from G.657.A2 without operator input. On a job where the splicer's "auto"
+          mode selects cladding-align for a G.652.D-to-G.657.A2 cross splice, the splicer
+          produces an estimated loss of 0.08 dB — which passes. The OTDR bidirectional
+          average shows 0.22 dB. The splicer was "right" by its measurement; the job was
+          wrong by the standard.
+        </p>
+        <p className="mt-2 p-3 bg-amber-900/30 border border-amber-500/40 rounded-lg text-amber-200 text-sm">
+          <strong>Standing rule for cross-type splices:</strong> Whenever you are splicing at
+          a junction between two different fiber types (feeder to distribution, distribution
+          to drop), manually set the splicer to core-align mode. Do not trust "auto" when
+          fiber types differ. Verify with bidirectional OTDR.
+        </p>
+      </section>
+
+    </LessonLayout>
+  );
+}
