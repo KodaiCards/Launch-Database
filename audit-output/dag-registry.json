@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-17T17:36:11.353Z",
-  "lesson_count": 137,
+  "generated_at": "2026-05-17T18:34:43.159Z",
+  "lesson_count": 149,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -840,6 +840,90 @@
       "Environmental Impact Memorandum (EIM)"
     ],
     "T09.L12": [],
+    "T10.L01": [
+      "Call-811",
+      "locate ticket",
+      "APWA color code",
+      "ticket validity window",
+      "CGA",
+      "daylight",
+      "sleeve"
+    ],
+    "T10.L02": [
+      "pilot bore",
+      "reaming",
+      "slurry management",
+      "product pull",
+      "frac-out",
+      "breakaway swivel"
+    ],
+    "T10.L03": [
+      "shoring",
+      "bedding sand",
+      "warning tape",
+      "vibratory plow",
+      "compaction",
+      "open-cut restoration"
+    ],
+    "T10.L04": [
+      "depth probe",
+      "cover card",
+      "GPR",
+      "finished grade",
+      "natural grade"
+    ],
+    "T10.L05": [
+      "pull tension",
+      "capstan formula",
+      "conduit fill",
+      "mid-assist",
+      "fish tape"
+    ],
+    "T10.L06": [
+      "slack loop",
+      "storage coil",
+      "MSA",
+      "NIU slack",
+      "expansion loop"
+    ],
+    "T10.L07": [
+      "cast-in-place",
+      "pre-cast",
+      "frame-and-cover",
+      "traffic loading"
+    ],
+    "T10.L08": [
+      "trench backfill",
+      "pavement match",
+      "sod restoration",
+      "proctor density",
+      "ghost trench"
+    ],
+    "T10.L09": [
+      "TCP",
+      "flagger station",
+      "lane closure",
+      "MUTCD Part 6",
+      "channelization device",
+      "advance warning area",
+      "transition taper"
+    ],
+    "T10.L10": [
+      "DFR",
+      "quantity tracking",
+      "deviation log",
+      "as-built redline",
+      "pay application"
+    ],
+    "T10.L11": [
+      "punch list",
+      "kick-back authority",
+      "field inspector",
+      "substantial completion",
+      "acceptance walk",
+      "RUS Form 219"
+    ],
+    "T10.L12": [],
     "T14.L01": [
       "grounding",
       "bonding",
@@ -848,7 +932,6 @@
       "ground potential rise"
     ],
     "T14.L02": [
-      "MGN",
       "neutral wire",
       "grounds per mile",
       "neutral-to-ground bond"
@@ -866,13 +949,11 @@
       "concrete-encased electrode (Ufer)",
       "water pipe electrode",
       "ring electrode",
-      "4 AWG bare copper",
+      "4 AWG bare copper (Ufer minimum)",
       "5/8-in. × 8-ft copper-clad rod",
       "supplemental electrode"
     ],
     "T14.L05": [
-      "IBT",
-      "GES",
       "PBB",
       "SBB",
       "bonding conductor"
@@ -887,7 +968,6 @@
     ],
     "T14.L07": [
       "surge arrester",
-      "primary protector",
       "MOV",
       "gas-tube arrester",
       "VPL",
@@ -914,7 +994,6 @@
       "ground test log"
     ],
     "T14.L11": [
-      "grounds per mile",
       "grounding interval"
     ],
     "T14.L12": [],
@@ -1237,7 +1316,8 @@
       "T01.L05"
     ],
     "rus form 219": [
-      "T01.L05"
+      "T01.L05",
+      "T10.L11"
     ],
     "designer": [
       "T01.L06"
@@ -1309,17 +1389,14 @@
     ],
     "mgn": [
       "T01.L08",
-      "T14.L02",
       "T19.L06"
     ],
     "ibt": [
       "T01.L08",
-      "T14.L05",
       "T19.L06"
     ],
     "ges": [
       "T01.L08",
-      "T14.L05",
       "T19.L06"
     ],
     "nec": [
@@ -2294,7 +2371,8 @@
       "T06.L03"
     ],
     "conduit fill": [
-      "T06.L04"
+      "T06.L04",
+      "T10.L05"
     ],
     "40% fill rule": [
       "T06.L04"
@@ -2306,16 +2384,19 @@
       "T06.L04"
     ],
     "pull tension": [
-      "T06.L04"
+      "T06.L04",
+      "T10.L05"
     ],
     "mid-assist": [
-      "T06.L04"
+      "T06.L04",
+      "T10.L05"
     ],
     "kellems grip": [
       "T06.L04"
     ],
     "breakaway swivel": [
-      "T06.L04"
+      "T06.L04",
+      "T10.L02"
     ],
     "manhole": [
       "T06.L05"
@@ -2336,7 +2417,8 @@
       "T06.L05"
     ],
     "slack loop": [
-      "T06.L05"
+      "T06.L05",
+      "T10.L06"
     ],
     "sump": [
       "T06.L05"
@@ -2363,7 +2445,8 @@
       "T06.L06"
     ],
     "pilot bore": [
-      "T06.L07"
+      "T06.L07",
+      "T10.L02"
     ],
     "reaming passes": [
       "T06.L07"
@@ -2934,6 +3017,170 @@
     "environmental impact memorandum (eim)": [
       "T09.L11"
     ],
+    "call-811": [
+      "T10.L01"
+    ],
+    "locate ticket": [
+      "T10.L01"
+    ],
+    "apwa color code": [
+      "T10.L01"
+    ],
+    "ticket validity window": [
+      "T10.L01"
+    ],
+    "cga": [
+      "T10.L01"
+    ],
+    "daylight": [
+      "T10.L01"
+    ],
+    "sleeve": [
+      "T10.L01"
+    ],
+    "reaming": [
+      "T10.L02"
+    ],
+    "slurry management": [
+      "T10.L02"
+    ],
+    "product pull": [
+      "T10.L02"
+    ],
+    "frac-out": [
+      "T10.L02"
+    ],
+    "shoring": [
+      "T10.L03"
+    ],
+    "bedding sand": [
+      "T10.L03"
+    ],
+    "warning tape": [
+      "T10.L03"
+    ],
+    "vibratory plow": [
+      "T10.L03"
+    ],
+    "compaction": [
+      "T10.L03"
+    ],
+    "open-cut restoration": [
+      "T10.L03"
+    ],
+    "depth probe": [
+      "T10.L04"
+    ],
+    "cover card": [
+      "T10.L04"
+    ],
+    "gpr": [
+      "T10.L04",
+      "T19.L06"
+    ],
+    "finished grade": [
+      "T10.L04"
+    ],
+    "natural grade": [
+      "T10.L04"
+    ],
+    "capstan formula": [
+      "T10.L05"
+    ],
+    "fish tape": [
+      "T10.L05"
+    ],
+    "storage coil": [
+      "T10.L06"
+    ],
+    "msa": [
+      "T10.L06"
+    ],
+    "niu slack": [
+      "T10.L06"
+    ],
+    "expansion loop": [
+      "T10.L06"
+    ],
+    "cast-in-place": [
+      "T10.L07"
+    ],
+    "pre-cast": [
+      "T10.L07"
+    ],
+    "frame-and-cover": [
+      "T10.L07"
+    ],
+    "traffic loading": [
+      "T10.L07"
+    ],
+    "trench backfill": [
+      "T10.L08"
+    ],
+    "pavement match": [
+      "T10.L08"
+    ],
+    "sod restoration": [
+      "T10.L08"
+    ],
+    "proctor density": [
+      "T10.L08"
+    ],
+    "ghost trench": [
+      "T10.L08"
+    ],
+    "tcp": [
+      "T10.L09",
+      "T18.L06"
+    ],
+    "flagger station": [
+      "T10.L09"
+    ],
+    "lane closure": [
+      "T10.L09"
+    ],
+    "mutcd part 6": [
+      "T10.L09"
+    ],
+    "channelization device": [
+      "T10.L09"
+    ],
+    "advance warning area": [
+      "T10.L09"
+    ],
+    "transition taper": [
+      "T10.L09"
+    ],
+    "dfr": [
+      "T10.L10"
+    ],
+    "quantity tracking": [
+      "T10.L10"
+    ],
+    "deviation log": [
+      "T10.L10"
+    ],
+    "as-built redline": [
+      "T10.L10"
+    ],
+    "pay application": [
+      "T10.L10"
+    ],
+    "punch list": [
+      "T10.L11"
+    ],
+    "kick-back authority": [
+      "T10.L11"
+    ],
+    "field inspector": [
+      "T10.L11"
+    ],
+    "substantial completion": [
+      "T10.L11"
+    ],
+    "acceptance walk": [
+      "T10.L11"
+    ],
     "grounding": [
       "T14.L01"
     ],
@@ -2953,8 +3200,7 @@
       "T14.L02"
     ],
     "grounds per mile": [
-      "T14.L02",
-      "T14.L11"
+      "T14.L02"
     ],
     "neutral-to-ground bond": [
       "T14.L02"
@@ -2989,7 +3235,7 @@
     "ring electrode": [
       "T14.L04"
     ],
-    "4 awg bare copper": [
+    "4 awg bare copper (ufer minimum)": [
       "T14.L04"
     ],
     "5/8-in. × 8-ft copper-clad rod": [
@@ -3027,10 +3273,6 @@
     ],
     "surge arrester": [
       "T14.L07"
-    ],
-    "primary protector": [
-      "T14.L07",
-      "T19.L06"
     ],
     "mov": [
       "T14.L07"
@@ -3169,9 +3411,6 @@
     ],
     "hi-vis vest": [
       "T18.L05"
-    ],
-    "tcp": [
-      "T18.L06"
     ],
     "flagger certification": [
       "T18.L06"
@@ -3326,6 +3565,9 @@
     "heat load": [
       "T19.L05"
     ],
+    "primary protector": [
+      "T19.L06"
+    ],
     "ibt-entry": [
       "T19.L06"
     ],
@@ -3339,9 +3581,6 @@
       "T19.L06"
     ],
     "tbb": [
-      "T19.L06"
-    ],
-    "gpr": [
       "T19.L06"
     ],
     "patch panel": [
@@ -3447,6 +3686,13 @@
       ]
     },
     {
+      "term": "rus form 219",
+      "introduced_by": [
+        "T01.L05",
+        "T10.L11"
+      ]
+    },
+    {
       "term": "staker",
       "introduced_by": [
         "T01.L06",
@@ -3479,7 +3725,6 @@
       "term": "mgn",
       "introduced_by": [
         "T01.L08",
-        "T14.L02",
         "T19.L06"
       ]
     },
@@ -3487,7 +3732,6 @@
       "term": "ibt",
       "introduced_by": [
         "T01.L08",
-        "T14.L05",
         "T19.L06"
       ]
     },
@@ -3495,7 +3739,6 @@
       "term": "ges",
       "introduced_by": [
         "T01.L08",
-        "T14.L05",
         "T19.L06"
       ]
     },
@@ -3655,6 +3898,48 @@
       ]
     },
     {
+      "term": "conduit fill",
+      "introduced_by": [
+        "T06.L04",
+        "T10.L05"
+      ]
+    },
+    {
+      "term": "pull tension",
+      "introduced_by": [
+        "T06.L04",
+        "T10.L05"
+      ]
+    },
+    {
+      "term": "mid-assist",
+      "introduced_by": [
+        "T06.L04",
+        "T10.L05"
+      ]
+    },
+    {
+      "term": "breakaway swivel",
+      "introduced_by": [
+        "T06.L04",
+        "T10.L02"
+      ]
+    },
+    {
+      "term": "slack loop",
+      "introduced_by": [
+        "T06.L05",
+        "T10.L06"
+      ]
+    },
+    {
+      "term": "pilot bore",
+      "introduced_by": [
+        "T06.L07",
+        "T10.L02"
+      ]
+    },
+    {
       "term": "plan-and-profile",
       "introduced_by": [
         "T07.L02",
@@ -3684,17 +3969,17 @@
       ]
     },
     {
-      "term": "grounds per mile",
+      "term": "gpr",
       "introduced_by": [
-        "T14.L02",
-        "T14.L11"
+        "T10.L04",
+        "T19.L06"
       ]
     },
     {
-      "term": "primary protector",
+      "term": "tcp",
       "introduced_by": [
-        "T14.L07",
-        "T19.L06"
+        "T10.L09",
+        "T18.L06"
       ]
     }
   ],
@@ -9897,6 +10182,650 @@
       "verified": true
     },
     {
+      "from_lesson": "T10.L01",
+      "term": "OSP",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L01",
+      "term": "ROW",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T01.L01"
+    },
+    {
+      "from_lesson": "T10.L01",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L01",
+      "term": "encroachment permit",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L01",
+      "term": "MUTCD",
+      "claimed_source": "T18.L08",
+      "verified": false,
+      "reason": "'MUTCD' is introduced by T01.L08, T18.L06, not T18.L08"
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "HDD",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "conduit",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "innerduct",
+      "claimed_source": "T06.L02",
+      "verified": false,
+      "reason": "'innerduct' is introduced by T06.L03, not T06.L02"
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "pull tension",
+      "claimed_source": "T06.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "NWP 57",
+      "claimed_source": "T09.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "Call-811",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "locate ticket",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L02",
+      "term": "daylight",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "HDD",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "plowing",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "conduit",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "LOTO",
+      "claimed_source": "T18.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "encroachment permit",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "Call-811",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L03",
+      "term": "daylight",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "HDD",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "conduit",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "ROW",
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "encroachment permit",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "stake",
+      "claimed_source": "T07.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "station",
+      "claimed_source": "T07.L01",
+      "verified": false,
+      "reason": "'station' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "plan-and-profile",
+      "claimed_source": "T07.L01",
+      "verified": false,
+      "reason": "'plan-and-profile' is introduced by T07.L02, T09.L06, not T07.L01"
+    },
+    {
+      "from_lesson": "T10.L04",
+      "term": "bedding sand",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L05",
+      "term": "conduit",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+    },
+    {
+      "from_lesson": "T10.L05",
+      "term": "innerduct",
+      "claimed_source": "T06.L02",
+      "verified": false,
+      "reason": "'innerduct' is introduced by T06.L03, not T06.L02"
+    },
+    {
+      "from_lesson": "T10.L05",
+      "term": "conduit fill (40% rule)",
+      "claimed_source": "T06.L04",
+      "verified": false,
+      "reason": "'conduit fill (40% rule)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T10.L05",
+      "term": "HDD",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L05",
+      "term": "breakaway swivel",
+      "claimed_source": "T10.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L06",
+      "term": "handhole",
+      "claimed_source": "T06.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L06",
+      "term": "vault",
+      "claimed_source": "T06.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L06",
+      "term": "bend radius",
+      "claimed_source": "T03.L02",
+      "verified": false,
+      "reason": "'bend radius' is introduced by T02.L04, not T03.L02"
+    },
+    {
+      "from_lesson": "T10.L06",
+      "term": "conduit",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "manhole",
+      "claimed_source": "T06.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "handhole",
+      "claimed_source": "T06.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "vault",
+      "claimed_source": "T06.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "conduit",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T06.L01"
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "bend radius",
+      "claimed_source": "T03.L02",
+      "verified": false,
+      "reason": "'bend radius' is introduced by T02.L04, not T03.L02"
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "confined space",
+      "claimed_source": "T18.L05",
+      "verified": false,
+      "reason": "'confined space' is introduced by T18.L03, not T18.L05"
+    },
+    {
+      "from_lesson": "T10.L07",
+      "term": "shoring",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "open-cut",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'open-cut' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "ROW",
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "encroachment permit",
+      "claimed_source": "T09.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "bedding sand",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "compaction",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L08",
+      "term": "warning tape",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L09",
+      "term": "MUTCD",
+      "claimed_source": "T18.L08",
+      "verified": false,
+      "reason": "'MUTCD' is introduced by T01.L08, T18.L06, not T18.L08"
+    },
+    {
+      "from_lesson": "T10.L09",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L09",
+      "term": "encroachment permit",
+      "claimed_source": "T09.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L09",
+      "term": "ROW",
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+    },
+    {
+      "from_lesson": "T10.L09",
+      "term": "Call-811",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "plan-and-profile",
+      "claimed_source": "T07.L01",
+      "verified": false,
+      "reason": "'plan-and-profile' is introduced by T07.L02, T09.L06, not T07.L01"
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "as-designed",
+      "claimed_source": "T04.L02",
+      "verified": false,
+      "reason": "'as-designed' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "ROW",
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "HDD",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "depth probe",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L10",
+      "term": "cover card",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "DFR",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "as-built redline",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "deviation log",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "depth probe",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "cover card",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "slack loop",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "as-designed",
+      "claimed_source": "T04.L02",
+      "verified": false,
+      "reason": "'as-designed' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "AHJ",
+      "claimed_source": "T09.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "encroachment permit",
+      "claimed_source": "T09.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L11",
+      "term": "ROW",
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'ROW' is introduced by T01.L08, T06.L01, not T09.L01"
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "Call-811",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "locate ticket",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "APWA color code",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "pilot bore",
+      "claimed_source": "T10.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "frac-out",
+      "claimed_source": "T10.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "breakaway swivel",
+      "claimed_source": "T10.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "shoring",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "bedding sand",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "warning tape",
+      "claimed_source": "T10.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "depth probe",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "cover card",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "pull tension",
+      "claimed_source": "T10.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "conduit fill",
+      "claimed_source": "T10.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "slack loop",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "MSA",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "cast-in-place",
+      "claimed_source": "T10.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "traffic loading",
+      "claimed_source": "T10.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "ghost trench",
+      "claimed_source": "T10.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "proctor density",
+      "claimed_source": "T10.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "TCP",
+      "claimed_source": "T10.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "MUTCD Part 6",
+      "claimed_source": "T10.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "DFR",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "deviation log",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "kick-back authority",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T10.L12",
+      "term": "RUS Form 219",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
       "from_lesson": "T14.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -10013,6 +10942,12 @@
       "verified": true
     },
     {
+      "from_lesson": "T14.L02",
+      "term": "MGN",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
       "from_lesson": "T14.L03",
       "term": "grounding",
       "claimed_source": "T14.L01",
@@ -10034,7 +10969,8 @@
       "from_lesson": "T14.L03",
       "term": "MGN",
       "claimed_source": "T14.L02",
-      "verified": true
+      "verified": false,
+      "reason": "'MGN' is introduced by T01.L08, T19.L06, not T14.L02"
     },
     {
       "from_lesson": "T14.L03",
@@ -10126,7 +11062,7 @@
       "term": "GES",
       "claimed_source": "T14.L01",
       "verified": false,
-      "reason": "'GES' is introduced by T01.L08, T14.L05, T19.L06, not T14.L01"
+      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L01"
     },
     {
       "from_lesson": "T14.L05",
@@ -10144,6 +11080,18 @@
       "from_lesson": "T14.L05",
       "term": "ground potential rise",
       "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "IBT",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L05",
+      "term": "GES",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -10211,13 +11159,15 @@
       "from_lesson": "T14.L06",
       "term": "GES",
       "claimed_source": "T14.L05",
-      "verified": true
+      "verified": false,
+      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
     },
     {
       "from_lesson": "T14.L06",
       "term": "IBT",
       "claimed_source": "T14.L05",
-      "verified": true
+      "verified": false,
+      "reason": "'IBT' is introduced by T01.L08, T19.L06, not T14.L05"
     },
     {
       "from_lesson": "T14.L06",
@@ -10248,18 +11198,26 @@
       "from_lesson": "T14.L07",
       "term": "GES",
       "claimed_source": "T14.L05",
-      "verified": true
+      "verified": false,
+      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
     },
     {
       "from_lesson": "T14.L07",
       "term": "IBT",
       "claimed_source": "T14.L05",
-      "verified": true
+      "verified": false,
+      "reason": "'IBT' is introduced by T01.L08, T19.L06, not T14.L05"
     },
     {
       "from_lesson": "T14.L07",
       "term": "ring electrode",
       "claimed_source": "T14.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T14.L07",
+      "term": "primary protector",
+      "claimed_source": "T19.L06",
       "verified": true
     },
     {
@@ -10352,7 +11310,8 @@
       "from_lesson": "T14.L09",
       "term": "GES",
       "claimed_source": "T14.L05",
-      "verified": true
+      "verified": false,
+      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
     },
     {
       "from_lesson": "T14.L09",
@@ -10433,7 +11392,8 @@
       "from_lesson": "T14.L10",
       "term": "GES",
       "claimed_source": "T14.L05",
-      "verified": true
+      "verified": false,
+      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
     },
     {
       "from_lesson": "T14.L10",
@@ -10457,6 +11417,13 @@
     {
       "from_lesson": "T14.L11",
       "term": "MGN",
+      "claimed_source": "T14.L02",
+      "verified": false,
+      "reason": "'MGN' is introduced by T01.L08, T19.L06, not T14.L02"
+    },
+    {
+      "from_lesson": "T14.L11",
+      "term": "grounds per mile",
       "claimed_source": "T14.L02",
       "verified": true
     },
@@ -10535,7 +11502,7 @@
     {
       "from_lesson": "T14.L12",
       "term": "MGN",
-      "claimed_source": "T14.L02",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -10607,13 +11574,13 @@
     {
       "from_lesson": "T14.L12",
       "term": "IBT",
-      "claimed_source": "T14.L05",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
       "from_lesson": "T14.L12",
       "term": "GES",
-      "claimed_source": "T14.L05",
+      "claimed_source": "T01.L08",
       "verified": true
     },
     {
@@ -10655,7 +11622,7 @@
     {
       "from_lesson": "T14.L12",
       "term": "primary protector",
-      "claimed_source": "T14.L07",
+      "claimed_source": "T19.L06",
       "verified": true
     },
     {
@@ -10721,7 +11688,7 @@
     {
       "from_lesson": "T14.L12",
       "term": "grounds per mile",
-      "claimed_source": "T14.L11",
+      "claimed_source": "T14.L02",
       "verified": true
     },
     {
@@ -11890,8 +12857,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1253,
-  "broken_pointers_count": 97,
+  "verified_pointers_count": 1327,
+  "broken_pointers_count": 131,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",
