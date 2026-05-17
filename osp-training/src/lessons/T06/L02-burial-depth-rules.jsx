@@ -34,8 +34,8 @@ export const meta = {
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'open-cut trench', source_lesson_id: 'T06.L01' },
     { term: 'plowing', source_lesson_id: 'T06.L01' },
-    { term: 'conduit', source_lesson_id: 'T04.L01' },
-    { term: 'AHJ', source_lesson_id: 'T06.L01' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
+    { term: 'AHJ', source_lesson_id: 'T01.L08' },
     { term: 'ROW', source_lesson_id: 'T06.L01' },
   ],
   key_terms: [

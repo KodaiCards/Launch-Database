@@ -63,8 +63,8 @@ export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'HDD', source_lesson_id: 'T06.L01' },
-  { term: 'conduit', source_lesson_id: 'T06.L03' },
-  { term: 'HDPE', source_lesson_id: 'T06.L03' },
+  { term: 'conduit', source_lesson_id: 'T01.L02' },
+  { term: 'HDPE', source_lesson_id: 'T01.L08' },
   { term: 'pull tension', source_lesson_id: 'T06.L04' },
   { term: 'ROW', source_lesson_id: 'T06.L01' },
   { term: 'bore-pit depth', source_lesson_id: 'T06.L02' },

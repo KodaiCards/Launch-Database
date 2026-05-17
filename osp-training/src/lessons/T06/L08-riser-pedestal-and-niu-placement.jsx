@@ -61,9 +61,9 @@ export const meta = {
 export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
-  { term: 'conduit', source_lesson_id: 'T06.L03' },
+  { term: 'conduit', source_lesson_id: 'T01.L02' },
   { term: 'Schedule 80 PVC', source_lesson_id: 'T06.L03' },
-  { term: 'HDPE', source_lesson_id: 'T06.L03' },
+  { term: 'HDPE', source_lesson_id: 'T01.L08' },
   { term: 'manhole', source_lesson_id: 'T06.L05' },
   { term: 'handhole', source_lesson_id: 'T06.L05' },
   { term: 'H-20 live loading', source_lesson_id: 'T06.L05' },
@@ -317,7 +317,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
           splice tray, and slack loops. The vault lid must be:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-slate-300/90">
-          <li>H-20 load-rated (AASHTO HS-20 design vehicle, 20-ton GVW / 32,000 lb rear axle) if installed in any area that can be driven over — driveways, parking lots, lawn areas reachable by service vehicles</li>
+          <li>H-20 load-rated (2-axle highway loading class, 40,000 lb / 20-ton GVW, 32,000 lb rear axle) if installed in any area that can be driven over — driveways, parking lots, lawn areas reachable by service vehicles</li>
           <li>Labeled with a utility marker on the surface ("FIBER — CALL BEFORE DIG")</li>
           <li>Set at finished grade, not above grade (a proud lid is a trip hazard and will be hit by mowers)</li>
           <li>Accessible without equipment: a hand key or standard security bit opens it, not a backhoe</li>
@@ -440,12 +440,12 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
             prompt: 'A vaulted NIU is installed flush with the finished grade in a commercial parking lot. What load rating must the vault lid have?',
             choices: [
               'H-10 (non-standard rating — not applicable)',
-              'H-20 (AASHTO HS-20 design vehicle, 20-ton GVW / 32,000 lb rear axle)',
+              'H-20 (2-axle highway loading class, 40,000 lb / 20-ton GVW, 32,000 lb rear axle)',
               'NEMA 3R (weather-resistant)',
               'No load rating required since it is in a parking lot, not on a road',
             ],
             answerIndex: 1,
-            explanation: 'Any vault installed where it can be driven over — driveways, parking lots, or any lawn area reachable by service vehicles — must have an H-20 load-rated lid. H-20 corresponds to the AASHTO HS-20 design vehicle: 20-ton gross vehicle weight with a rear axle load of 32,000 lb. A non-rated lid in a parking lot will fail under a delivery truck, creating a safety hazard and damaging the equipment inside. (Source: RUS 1751F-635 §7; NFPA 70 §830.)',
+            explanation: 'Any vault installed where it can be driven over — driveways, parking lots, or any lawn area reachable by service vehicles — must have an H-20 load-rated lid. H-20 is the standard 2-axle highway live load class: 40,000 lb gross vehicle weight (20 short tons) with a rear axle load of 32,000 lb. A non-rated lid in a parking lot will fail under a delivery truck, creating a safety hazard and damaging the equipment inside. (Source: RUS 1751F-635 §7; NFPA 70 §830.)',
           },
           {
             id: 'T06-L08-Q4',

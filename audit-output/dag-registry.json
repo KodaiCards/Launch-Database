@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T08:01:40.659Z",
+  "generated_at": "2026-05-17T08:36:35.362Z",
   "lesson_count": 125,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -7368,16 +7368,14 @@
     {
       "from_lesson": "T06.L02",
       "term": "conduit",
-      "claimed_source": "T04.L01",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T04.L01"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L02",
       "term": "AHJ",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'AHJ' is introduced by T01.L08, T05.L01, T09.L01, not T06.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T06.L02",
@@ -7436,9 +7434,8 @@
     {
       "from_lesson": "T06.L05",
       "term": "conduit",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L03"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L05",
@@ -7497,9 +7494,8 @@
     {
       "from_lesson": "T06.L06",
       "term": "conduit",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L03"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L07",
@@ -7510,16 +7506,14 @@
     {
       "from_lesson": "T06.L07",
       "term": "conduit",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L03"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L07",
       "term": "HDPE",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T06.L03"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T06.L07",
@@ -7542,9 +7536,8 @@
     {
       "from_lesson": "T06.L08",
       "term": "conduit",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L03"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L08",
@@ -7555,9 +7548,8 @@
     {
       "from_lesson": "T06.L08",
       "term": "HDPE",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T06.L03"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T06.L08",
@@ -7592,16 +7584,14 @@
     {
       "from_lesson": "T06.L09",
       "term": "conduit",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'conduit' is introduced by T01.L02, not T06.L03"
+      "claimed_source": "T01.L02",
+      "verified": true
     },
     {
       "from_lesson": "T06.L09",
       "term": "AHJ",
-      "claimed_source": "T06.L02",
-      "verified": false,
-      "reason": "'AHJ' is introduced by T01.L08, T05.L01, T09.L01, not T06.L02"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T06.L09",
@@ -7643,9 +7633,8 @@
     {
       "from_lesson": "T06.L10",
       "term": "HDPE",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T06.L03"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T06.L10",
@@ -7753,9 +7742,8 @@
     {
       "from_lesson": "T06.L12",
       "term": "HDPE",
-      "claimed_source": "T06.L03",
-      "verified": false,
-      "reason": "'HDPE' is introduced by T01.L08, not T06.L03"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T06.L12",
@@ -7857,14 +7845,19 @@
     },
     {
       "from_lesson": "T06.L12",
-      "term": "NESC §32",
+      "term": "NESC §34",
       "claimed_source": "T06.L09",
-      "verified": false,
-      "reason": "'NESC §32' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T06.L12",
       "term": "NESC §35",
+      "claimed_source": "T06.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T06.L12",
+      "term": "NESC Rule 354",
       "claimed_source": "T06.L09",
       "verified": true
     },
@@ -10762,8 +10755,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1043,
-  "broken_pointers_count": 153,
+  "verified_pointers_count": 1057,
+  "broken_pointers_count": 140,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",

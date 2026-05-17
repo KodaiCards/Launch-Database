@@ -66,8 +66,8 @@ export const vocabulary_introduced = meta.vocabulary_introduced;
 
 export const vocabulary_assumed = [
   { term: 'NESC', source_lesson_id: 'T05.L01' },
-  { term: 'conduit', source_lesson_id: 'T06.L03' },
-  { term: 'AHJ', source_lesson_id: 'T06.L02' },
+  { term: 'conduit', source_lesson_id: 'T01.L02' },
+  { term: 'AHJ', source_lesson_id: 'T01.L08' },
   { term: 'minimum cover', source_lesson_id: 'T06.L02' },
   { term: 'foreign utility', source_lesson_id: 'T06.L06' },
   { term: 'manhole', source_lesson_id: 'T06.L05' },
@@ -418,12 +418,12 @@ export default function T06L09_NESCUndergroundRules() {
             prompt: 'Scenario: You\'re reviewing a design where communication conduit runs in the same trench as a residential electric supply at 18 inches cover. The designer shows 4 inches of horizontal separation in the parallel trench. Is this acceptable per NESC §35/Rule 354 and field best practice?',
             choices: [
               'Yes — 4 inches is acceptable because NESC §35 only requires 3 inches for conduit-to-conduit',
-              'No — NESC §35 / Rule 354 requires at minimum 6 inches of separation for parallel conduit runs in the same corridor, and field practice recommends 12 inches',
+              'No — NESC §35 / Rule 354 requires at minimum 6 inches of separation for parallel conduit runs in the same corridor [confirm current edition], and field practice recommends 12 inches',
               'Yes — separation only matters at crossings, not parallel runs',
               'No — communication conduit cannot share a trench with electric supply under any circumstances',
             ],
             answerIndex: 1,
-            explanation: 'NESC §35 / Rule 354 requires at minimum 6 inches of horizontal separation for communication conduit running parallel to electric supply in the same corridor. At 4 inches, this design is non-compliant. Field best practice (driven by locate tolerance and damage prevention) calls for 12 inches or more. The fix is easy: re-route the trench or add a separation board between the two conduits. (Source: RUS 1751F-635; NESC C2 §35 / Rule 354 [confirm edition].)',
+            explanation: 'NESC §35 / Rule 354 requires at minimum 6 inches of horizontal separation for communication conduit running parallel to electric supply in the same corridor [per NESC C2-2023 Rule 354 — confirm current edition value; the standard is paywalled and values may be updated in future editions]. At 4 inches, this design is non-compliant. Field best practice (driven by locate tolerance and damage prevention) calls for 12 inches or more. The fix is easy: re-route the trench or add a separation board between the two conduits. (Source: RUS 1751F-635; NESC C2 §35 / Rule 354 [confirm edition].)',
           },
         ]}
       />

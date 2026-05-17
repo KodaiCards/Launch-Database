@@ -33,7 +33,7 @@ export const meta = {
     'sump',
   ],
   vocabulary_assumed: [
-    { term: 'conduit', source_lesson_id: 'T06.L03' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'innerduct', source_lesson_id: 'T06.L03' },
     { term: 'pull tension', source_lesson_id: 'T06.L04' },
     { term: 'mid-assist', source_lesson_id: 'T06.L04' },
@@ -58,7 +58,7 @@ export const meta = {
     {
       term: 'H-20 live loading',
       definition:
-        'The standard highway live load class corresponding to an AASHTO HS-20 design vehicle — a truck with a 20-ton gross vehicle weight (GVW). The rear axle of the HS-20 truck carries 32,000 lb (16 tons); the drive axle carries 8,000 lb. An H-20-rated structure is designed to withstand that axle loading. Suitable for driveways, parking lots, and secondary roads. Most common rating for residential and light-commercial OSP access structures.',
+        'A standard highway live load class designating a single-unit 2-axle truck at 40,000 lb gross vehicle weight (GVW) — 20 short tons — with a 32,000 lb rear axle and 8,000 lb front axle (the original AASHO 1944 H-series designation). H-20-rated access structures are designed to withstand that rear-axle loading. Suitable for driveways, parking lots, and secondary roads; most common rating for residential and light-commercial OSP access structures. The related AASHTO HS-20 designation refers to a 3-axle semi-trailer combination (72,000 lb GVW) that produces similar peak live loads on bridge spans — industry ratings often cite both together, but H-20 is the correct designation for access-structure load ratings under AASHTO and ASTM standards.',
     },
     {
       term: 'H-25 live loading',
@@ -163,7 +163,7 @@ const quizQuestions = [
     ],
     answerIndex: 1,
     rationale:
-      'H-20 — the AASHTO HS-20 design vehicle with 20-ton gross vehicle weight and 32,000 lb rear axle — is the standard for driveways, parking areas, and any location subject to vehicle traffic. A personal car weighs 2–4 tons; even a small truck or delivery vehicle can overload an NTC cover. NTC is appropriate only in yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is a trip hazard and a permit violation.',
+      'H-20 — the standard 2-axle highway live load class at 40,000 lb GVW (20 short tons) with a 32,000 lb rear axle — is the standard for driveways, parking areas, and any location subject to vehicle traffic. A personal car weighs 2–4 tons; even a small truck or delivery vehicle can overload an NTC cover. NTC is appropriate only in yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is a trip hazard and a permit violation.',
   },
   {
     id: 'q2',

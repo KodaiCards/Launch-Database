@@ -52,7 +52,7 @@ export const vocabulary_assumed = [
   { term: 'innerduct', source_lesson_id: 'T06.L03' },
   { term: 'microduct', source_lesson_id: 'T06.L03' },
   { term: 'conduit fill', source_lesson_id: 'T06.L04' },
-  { term: 'HDPE', source_lesson_id: 'T06.L03' },
+  { term: 'HDPE', source_lesson_id: 'T01.L08' },
   { term: 'RUS 1751F-635', source_lesson_id: 'T06.L02' },
   { term: 'pull tension', source_lesson_id: 'T06.L04' },
 ];

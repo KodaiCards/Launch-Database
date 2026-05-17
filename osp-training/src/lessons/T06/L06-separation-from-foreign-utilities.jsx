@@ -37,7 +37,7 @@ export const meta = {
     { term: 'plowing', source_lesson_id: 'T06.L01' },
     { term: 'bore pit', source_lesson_id: 'T06.L01' },
     { term: 'ROW', source_lesson_id: 'T06.L01' },
-    { term: 'conduit', source_lesson_id: 'T06.L03' },
+    { term: 'conduit', source_lesson_id: 'T01.L02' },
   ],
   key_terms: [
     {

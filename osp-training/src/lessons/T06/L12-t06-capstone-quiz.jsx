@@ -28,7 +28,7 @@ export const meta = {
     { term: 'AHJ override', source_lesson_id: 'T06.L02' },
     { term: 'Schedule 40 PVC', source_lesson_id: 'T06.L03' },
     { term: 'Schedule 80 PVC', source_lesson_id: 'T06.L03' },
-    { term: 'HDPE', source_lesson_id: 'T06.L03' },
+    { term: 'HDPE', source_lesson_id: 'T01.L08' },
     { term: 'innerduct', source_lesson_id: 'T06.L03' },
     { term: 'microduct', source_lesson_id: 'T06.L03' },
     { term: 'conduit fill', source_lesson_id: 'T06.L04' },
