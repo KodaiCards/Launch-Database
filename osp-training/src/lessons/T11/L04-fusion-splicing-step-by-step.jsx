@@ -94,8 +94,8 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'attenuation dB/km', source_lesson_id: 'T02.L02' },
-    { term: 'G.652.D', source_lesson_id: 'T02.L05' },
-    { term: 'G.657', source_lesson_id: 'T02.L05' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
+    { term: 'G.657', source_lesson_id: 'T02.L04' },
     { term: 'buffer tube', source_lesson_id: 'T01.L03' },
     { term: 'FOA design target', source_lesson_id: 'T11.L03' },
     { term: 'splice loss acceptance threshold', source_lesson_id: 'T11.L03' },
@@ -156,6 +156,36 @@ export default function T11L04_FusionSplicingStepByStep() {
                 id: 'T11-L04-fc-vgroove',
                 front: 'What is the V-groove assembly and why must it be clean?',
                 back: 'The V-shaped precision channel that holds the fiber during cleaving and inside the splicer. If the V-groove has dust, gel residue, or fiber fragments, the fiber sits at the wrong height or angle, causing poor alignment and elevated splice loss even when the fiber ends are perfectly cleaved and cleaned. Clean the V-groove with a lint-free wipe + IPA before every splice session.',
+              },
+              {
+                id: 'T11-L04-fc-arc-discharge',
+                front: 'What is arc discharge in fusion splicing?',
+                back: 'The high-temperature plasma arc fired between the splicer\'s tungsten electrodes that melts the two fiber end-faces together. Temperatures exceed 1,700°C at the fusion point. The arc duration and power are controlled by the splicer profile for each fiber type — too low leaves a weak joint, too high distorts the fiber geometry.',
+              },
+              {
+                id: 'T11-L04-fc-strip',
+                front: 'What is the "strip" step in fusion splicing?',
+                back: 'Removing the 250 µm acrylate coating from the fiber end to expose the bare 125 µm glass cladding. Performed with a precision fiber stripper (hot or mechanical). Length: 3–4 cm of bare fiber. The resulting surface must be smooth with no coating residue — residue causes contamination at the fusion interface.',
+              },
+              {
+                id: 'T11-L04-fc-clean',
+                front: 'What is the "clean" step in fusion splicing?',
+                back: 'Removing contamination (dust, oil, gel residue) from the stripped bare fiber surface before cleaving. Sequence: dry lint-free wipe (one direction) to remove bulk debris, then IPA-soaked lint-free wipe (one direction) to dissolve oil and moisture. Never re-wipe with a used surface. Do not touch the cleaned fiber with bare fingers.',
+              },
+              {
+                id: 'T11-L04-fc-cleave',
+                front: 'What is the "cleave" step in fusion splicing?',
+                back: 'Making a precise perpendicular cut across the stripped, cleaned fiber end-face using a precision cleaver. The cleave angle must be ≤0.5° (target) or ≤1.0° (maximum acceptable). A bad cleave creates a wedge gap between the two end-faces during alignment, causing a bubble void and elevated insertion loss.',
+              },
+              {
+                id: 'T11-L04-fc-align',
+                front: 'What is the "align" step in fusion splicing?',
+                back: 'The splicer\'s automatic process of positioning the two cleaved fiber ends facing each other with precise lateral and axial alignment before firing the arc. Two modes: core-align (LID — centers the actual light-guiding core) and cladding-align (PAS — centers the outer 125 µm glass boundary). Core-align required for cross-type splices and ≤0.10 dB targets.',
+              },
+              {
+                id: 'T11-L04-fc-fuse',
+                front: 'What is the "fuse" step in fusion splicing?',
+                back: 'The arc discharge cycle that melts and permanently joins the two aligned fiber ends. Typically two phases: cleaning arc (short, low-power — burns surface contamination) followed by main fuse arc (full-power — achieves glass flow and permanent joint). The splicer displays estimated insertion loss after fusion.',
               },
             ]}
           />

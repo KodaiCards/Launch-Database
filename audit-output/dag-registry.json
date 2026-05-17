@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-17T19:38:20.330Z",
-  "lesson_count": 149,
+  "generated_at": "2026-05-17T22:33:19.218Z",
+  "lesson_count": 164,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -924,6 +924,113 @@
       "acceptance walk"
     ],
     "T10.L12": [],
+    "T11.L01": [
+      "TIA-598 color sequence",
+      "12-color system",
+      "mnemonic",
+      "color-blind crew accommodation",
+      "tube-within-tube system"
+    ],
+    "T11.L02": [
+      "all 12 colors (Blue/Orange/Green/Brown/Slate/White/Red/Black/Yellow/Violet/Rose/Aqua)",
+      "fiber-within-tube counting",
+      "APC (Angle Physical Contact)",
+      "UPC (Ultra Physical Contact)",
+      "APC/UPC mating prohibition"
+    ],
+    "T11.L03": [
+      "FOA design target",
+      "ITU-T L.400 design target",
+      "RUS contract maximum",
+      "concern threshold",
+      "per-splice budget allocation"
+    ],
+    "T11.L04": [
+      "fusion splice",
+      "arc discharge",
+      "strip",
+      "clean",
+      "cleave",
+      "align",
+      "fuse",
+      "proof-test",
+      "splice protector",
+      "splicer display",
+      "fiber holder (V-groove assembly)"
+    ],
+    "T11.L05": [
+      "LID (Local Injection and Detection)",
+      "core-align splicer",
+      "cladding-align (profile alignment system PAS)",
+      "MFD mismatch loss"
+    ],
+    "T11.L06": [
+      "cleave angle",
+      "cleaver blade replacement interval",
+      "arc calibration",
+      "arc power",
+      "pre-fuse (cleaning arc)",
+      "main fuse",
+      "tail-end weld"
+    ],
+    "T11.L07": [
+      "ribbon fiber (12F/24F standard)",
+      "mass fusion splicer",
+      "ribbon splice protector"
+    ],
+    "T11.L08": [
+      "mechanical splice",
+      "index-matching gel",
+      "ceramic-sleeve mechanical splice",
+      "crimp-and-cleave splice"
+    ],
+    "T11.L09": [
+      "butt-splice (inline/horizontal) closure",
+      "wall-mount/pedestal closure",
+      "heat-shrink vs. cold-seal entry port",
+      "case re-entry",
+      "splice case mounting",
+      "case capacity (tray count)"
+    ],
+    "T11.L10": [
+      "flooding compound (FP-1/FP-2)",
+      "heat-shrink port seal",
+      "re-enterable cold-seal",
+      "oversheath heat-shrink tube",
+      "gel displacement during re-entry",
+      "sealing compound compatibility"
+    ],
+    "T11.L11": [
+      "buffer tube routing",
+      "express loop",
+      "slack storage coil",
+      "fiber management organizer"
+    ],
+    "T11.L12": [
+      "insertion loss (IL)",
+      "return loss (RL)",
+      "reference-grade connector",
+      "contamination",
+      "IEC 61300-3-35 inspection protocol"
+    ],
+    "T11.L13": [
+      "electrode life counter",
+      "daily arc calibration",
+      "cleaver blade replacement interval",
+      "cleaning arc",
+      "electrode oxidation",
+      "splicer storage (silica gel)"
+    ],
+    "T11.L14": [
+      "contamination (dust, oil, moisture, buffer gel residue)",
+      "IPA wipe (99% isopropyl alcohol)",
+      "lint-free wipe",
+      "dry-cleave-first rule",
+      "gel cleanup sequence (dry-then-wet)",
+      "controlled splice environment",
+      "IEC 61300-3-35 end-face zones (A/B/C/D)"
+    ],
+    "T11.L15": [],
     "T14.L01": [
       "grounding",
       "bonding",
@@ -3185,6 +3292,238 @@
     "acceptance walk": [
       "T10.L11"
     ],
+    "tia-598 color sequence": [
+      "T11.L01"
+    ],
+    "12-color system": [
+      "T11.L01"
+    ],
+    "mnemonic": [
+      "T11.L01"
+    ],
+    "color-blind crew accommodation": [
+      "T11.L01"
+    ],
+    "tube-within-tube system": [
+      "T11.L01"
+    ],
+    "all 12 colors (blue/orange/green/brown/slate/white/red/black/yellow/violet/rose/aqua)": [
+      "T11.L02"
+    ],
+    "fiber-within-tube counting": [
+      "T11.L02"
+    ],
+    "apc (angle physical contact)": [
+      "T11.L02"
+    ],
+    "upc (ultra physical contact)": [
+      "T11.L02"
+    ],
+    "apc/upc mating prohibition": [
+      "T11.L02"
+    ],
+    "foa design target": [
+      "T11.L03"
+    ],
+    "itu-t l.400 design target": [
+      "T11.L03"
+    ],
+    "rus contract maximum": [
+      "T11.L03"
+    ],
+    "concern threshold": [
+      "T11.L03"
+    ],
+    "per-splice budget allocation": [
+      "T11.L03"
+    ],
+    "fusion splice": [
+      "T11.L04"
+    ],
+    "arc discharge": [
+      "T11.L04"
+    ],
+    "strip": [
+      "T11.L04"
+    ],
+    "clean": [
+      "T11.L04"
+    ],
+    "cleave": [
+      "T11.L04"
+    ],
+    "align": [
+      "T11.L04"
+    ],
+    "fuse": [
+      "T11.L04"
+    ],
+    "proof-test": [
+      "T11.L04"
+    ],
+    "splice protector": [
+      "T11.L04"
+    ],
+    "splicer display": [
+      "T11.L04"
+    ],
+    "fiber holder (v-groove assembly)": [
+      "T11.L04"
+    ],
+    "lid (local injection and detection)": [
+      "T11.L05"
+    ],
+    "core-align splicer": [
+      "T11.L05"
+    ],
+    "cladding-align (profile alignment system pas)": [
+      "T11.L05"
+    ],
+    "mfd mismatch loss": [
+      "T11.L05"
+    ],
+    "cleave angle": [
+      "T11.L06"
+    ],
+    "cleaver blade replacement interval": [
+      "T11.L06",
+      "T11.L13"
+    ],
+    "arc calibration": [
+      "T11.L06"
+    ],
+    "arc power": [
+      "T11.L06"
+    ],
+    "pre-fuse (cleaning arc)": [
+      "T11.L06"
+    ],
+    "main fuse": [
+      "T11.L06"
+    ],
+    "tail-end weld": [
+      "T11.L06"
+    ],
+    "ribbon fiber (12f/24f standard)": [
+      "T11.L07"
+    ],
+    "mass fusion splicer": [
+      "T11.L07"
+    ],
+    "ribbon splice protector": [
+      "T11.L07"
+    ],
+    "mechanical splice": [
+      "T11.L08"
+    ],
+    "index-matching gel": [
+      "T11.L08"
+    ],
+    "ceramic-sleeve mechanical splice": [
+      "T11.L08"
+    ],
+    "crimp-and-cleave splice": [
+      "T11.L08"
+    ],
+    "butt-splice (inline/horizontal) closure": [
+      "T11.L09"
+    ],
+    "wall-mount/pedestal closure": [
+      "T11.L09"
+    ],
+    "heat-shrink vs. cold-seal entry port": [
+      "T11.L09"
+    ],
+    "case re-entry": [
+      "T11.L09"
+    ],
+    "splice case mounting": [
+      "T11.L09"
+    ],
+    "case capacity (tray count)": [
+      "T11.L09"
+    ],
+    "flooding compound (fp-1/fp-2)": [
+      "T11.L10"
+    ],
+    "heat-shrink port seal": [
+      "T11.L10"
+    ],
+    "re-enterable cold-seal": [
+      "T11.L10"
+    ],
+    "oversheath heat-shrink tube": [
+      "T11.L10"
+    ],
+    "gel displacement during re-entry": [
+      "T11.L10"
+    ],
+    "sealing compound compatibility": [
+      "T11.L10"
+    ],
+    "buffer tube routing": [
+      "T11.L11"
+    ],
+    "express loop": [
+      "T11.L11"
+    ],
+    "slack storage coil": [
+      "T11.L11"
+    ],
+    "fiber management organizer": [
+      "T11.L11"
+    ],
+    "insertion loss (il)": [
+      "T11.L12"
+    ],
+    "return loss (rl)": [
+      "T11.L12"
+    ],
+    "reference-grade connector": [
+      "T11.L12"
+    ],
+    "contamination": [
+      "T11.L12"
+    ],
+    "iec 61300-3-35 inspection protocol": [
+      "T11.L12"
+    ],
+    "electrode life counter": [
+      "T11.L13"
+    ],
+    "daily arc calibration": [
+      "T11.L13"
+    ],
+    "cleaning arc": [
+      "T11.L13"
+    ],
+    "electrode oxidation": [
+      "T11.L13"
+    ],
+    "splicer storage (silica gel)": [
+      "T11.L13"
+    ],
+    "contamination (dust, oil, moisture, buffer gel residue)": [
+      "T11.L14"
+    ],
+    "ipa wipe (99% isopropyl alcohol)": [
+      "T11.L14"
+    ],
+    "lint-free wipe": [
+      "T11.L14"
+    ],
+    "dry-cleave-first rule": [
+      "T11.L14"
+    ],
+    "gel cleanup sequence (dry-then-wet)": [
+      "T11.L14"
+    ],
+    "controlled splice environment": [
+      "T11.L14"
+    ],
+    "iec 61300-3-35 end-face zones (a/b/c/d)": [
+      "T11.L14"
+    ],
     "grounding": [
       "T14.L01"
     ],
@@ -3970,6 +4309,13 @@
       "introduced_by": [
         "T10.L09",
         "T18.L06"
+      ]
+    },
+    {
+      "term": "cleaver blade replacement interval",
+      "introduced_by": [
+        "T11.L06",
+        "T11.L13"
       ]
     }
   ],
@@ -10796,6 +11142,556 @@
       "verified": true
     },
     {
+      "from_lesson": "T11.L01",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L01",
+      "term": "fiber",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L01",
+      "term": "loose-tube",
+      "claimed_source": "T03.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L01",
+      "term": "ribbon",
+      "claimed_source": "T03.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L01",
+      "term": "TIA-598-D",
+      "claimed_source": "T03.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L01",
+      "term": "splice tray",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L01",
+      "term": "splice case",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L02",
+      "term": "TIA-598 color sequence",
+      "claimed_source": "T11.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L02",
+      "term": "tube-within-tube system",
+      "claimed_source": "T11.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L02",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L03",
+      "term": "attenuation dB/km",
+      "claimed_source": "T02.L02",
+      "verified": false,
+      "reason": "'attenuation dB/km' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L03",
+      "term": "link budget",
+      "claimed_source": "T02.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L03",
+      "term": "dB",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L03",
+      "term": "dBm",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L03",
+      "term": "TIA-598 color sequence",
+      "claimed_source": "T11.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L04",
+      "term": "attenuation dB/km",
+      "claimed_source": "T02.L02",
+      "verified": false,
+      "reason": "'attenuation dB/km' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L04",
+      "term": "G.652.D",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L04",
+      "term": "G.657",
+      "claimed_source": "T02.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L04",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L04",
+      "term": "FOA design target",
+      "claimed_source": "T11.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L04",
+      "term": "splice loss acceptance threshold",
+      "claimed_source": "T11.L03",
+      "verified": false,
+      "reason": "'splice loss acceptance threshold' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L05",
+      "term": "MFD",
+      "claimed_source": "T02.L03",
+      "verified": false,
+      "reason": "'MFD' is introduced by T02.L01, not T02.L03"
+    },
+    {
+      "from_lesson": "T11.L05",
+      "term": "G.652.D",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L05",
+      "term": "G.657",
+      "claimed_source": "T02.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L05",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L05",
+      "term": "align",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L05",
+      "term": "splicer display",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L06",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L06",
+      "term": "cleave",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L06",
+      "term": "arc discharge",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L06",
+      "term": "splicer display",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L06",
+      "term": "proof-test",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L07",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L07",
+      "term": "cleave angle",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L07",
+      "term": "splice protector",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L07",
+      "term": "TIA-598 color sequence",
+      "claimed_source": "T11.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L07",
+      "term": "rollable ribbon",
+      "claimed_source": "T03.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L08",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L08",
+      "term": "splice loss acceptance threshold",
+      "claimed_source": "T11.L03",
+      "verified": false,
+      "reason": "'splice loss acceptance threshold' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L08",
+      "term": "cleave angle",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L08",
+      "term": "cleave",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "splice case",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "dome closure",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "conduit",
+      "claimed_source": "T10.L01",
+      "verified": false,
+      "reason": "'conduit' is introduced by T01.L02, not T10.L01"
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "manhole",
+      "claimed_source": "T10.L01",
+      "verified": false,
+      "reason": "'manhole' is introduced by T06.L05, not T10.L01"
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "pedestal",
+      "claimed_source": "T10.L01",
+      "verified": false,
+      "reason": "'pedestal' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "aerial lashing",
+      "claimed_source": "T10.L04",
+      "verified": false,
+      "reason": "'aerial lashing' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "mechanical splice",
+      "claimed_source": "T11.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L09",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L10",
+      "term": "dome closure",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L10",
+      "term": "butt-splice (inline/horizontal) closure",
+      "claimed_source": "T11.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L10",
+      "term": "heat-shrink vs. cold-seal entry port",
+      "claimed_source": "T11.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L10",
+      "term": "case re-entry",
+      "claimed_source": "T11.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L10",
+      "term": "cable jacket types",
+      "claimed_source": "T03.L01",
+      "verified": false,
+      "reason": "'cable jacket types' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L10",
+      "term": "gel-filled",
+      "claimed_source": "T03.L01",
+      "verified": false,
+      "reason": "'gel-filled' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L11",
+      "term": "splice tray",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L11",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L11",
+      "term": "splice case",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L11",
+      "term": "splice protector",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L11",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L11",
+      "term": "TIA-598 color sequence",
+      "claimed_source": "T11.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L12",
+      "term": "APC (Angle Physical Contact)",
+      "claimed_source": "T11.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L12",
+      "term": "UPC (Ultra Physical Contact)",
+      "claimed_source": "T11.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L12",
+      "term": "APC/UPC mating prohibition",
+      "claimed_source": "T11.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L12",
+      "term": "attenuation dB/km",
+      "claimed_source": "T02.L02",
+      "verified": false,
+      "reason": "'attenuation dB/km' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L12",
+      "term": "dB",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L13",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L13",
+      "term": "arc calibration",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L13",
+      "term": "cleave angle",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L13",
+      "term": "arc power",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L14",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L14",
+      "term": "cleave angle",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L14",
+      "term": "insertion loss",
+      "claimed_source": "T11.L12",
+      "verified": false,
+      "reason": "'insertion loss' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L14",
+      "term": "IEC 61300-3-35 inspection protocol",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L14",
+      "term": "IPA hazmat awareness",
+      "claimed_source": "T18.L04",
+      "verified": false,
+      "reason": "'IPA hazmat awareness' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "TIA-598 color sequence",
+      "claimed_source": "T11.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "arc calibration",
+      "claimed_source": "T11.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "insertion loss (IL)",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "return loss (RL)",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "splice tray",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "dome closure",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "electrode life counter",
+      "claimed_source": "T11.L13",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "gel cleanup sequence",
+      "claimed_source": "T11.L14",
+      "verified": false,
+      "reason": "'gel cleanup sequence' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "attenuation",
+      "claimed_source": "T02.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "MFD",
+      "claimed_source": "T02.L03",
+      "verified": false,
+      "reason": "'MFD' is introduced by T02.L01, not T02.L03"
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "G.652.D",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T11.L15",
+      "term": "G.657",
+      "claimed_source": "T02.L04",
+      "verified": true
+    },
+    {
       "from_lesson": "T14.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -12367,6 +13263,13 @@
       "verified": true
     },
     {
+      "from_lesson": "T19.L08",
+      "term": "fusion splice",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'fusion splice' is introduced by T11.L04, not T11.L01"
+    },
+    {
       "from_lesson": "T19.L09",
       "term": "FOSC",
       "claimed_source": "T19.L08",
@@ -12805,16 +13708,9 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1369,
-  "broken_pointers_count": 89,
-  "missing_source_lesson_pointers": [
-    {
-      "from_lesson": "T19.L08",
-      "term": "fusion splice",
-      "claimed_source": "T11.L01",
-      "reason": "Source lesson T11.L01 not found in curriculum"
-    }
-  ],
+  "verified_pointers_count": 1442,
+  "broken_pointers_count": 105,
+  "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01"
   ],

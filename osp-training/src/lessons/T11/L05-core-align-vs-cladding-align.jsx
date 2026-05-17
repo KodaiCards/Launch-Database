@@ -52,8 +52,8 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'MFD', source_lesson_id: 'T02.L03' },
-    { term: 'G.652.D', source_lesson_id: 'T02.L05' },
-    { term: 'G.657', source_lesson_id: 'T02.L05' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
+    { term: 'G.657', source_lesson_id: 'T02.L04' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'align', source_lesson_id: 'T11.L04' },
     { term: 'splicer display', source_lesson_id: 'T11.L04' },
@@ -79,7 +79,7 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
         <p className="mt-2">
           For most splices — same fiber type, clean ends, standard G.652.D cable — cladding
           alignment works fine because the core is well-centered in the cladding. But splice
-          a G.652.D fiber (9.2 µm core) to a G.657.A2 bend-insensitive fiber (8.4 µm core)
+          a G.652.D fiber (9.2 µm core) to a G.657.A2 bend-insensitive fiber (8.6 µm core)
           using cladding alignment, and you've centered two different-sized light beams against
           each other's walls instead of against each other's centers. Some light misses the
           target. That missed light is your insertion loss penalty.
@@ -182,44 +182,44 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
         <div className="mt-4">
           <WorkedExample
             id="T11-L05-we-mfd"
-            title="MFD mismatch loss: G.652.D (MFD = 9.2 µm) spliced to G.657.A2 (MFD = 8.4 µm)"
+            title="MFD mismatch loss: G.652.D (MFD = 9.2 µm) spliced to G.657.A2 (MFD = 8.6 µm)"
             variables={[
               { symbol: 'w₁', value: '4.6', unit: 'µm', description: 'Mode field radius of G.652.D fiber (MFD 9.2 µm ÷ 2). Per ITU-T G.652.D, MFD range 8.8–9.6 µm @ 1310 nm; use 9.2 µm as nominal center.' },
-              { symbol: 'w₂', value: '4.2', unit: 'µm', description: 'Mode field radius of G.657.A2 fiber (MFD 8.4 µm ÷ 2). Per ITU-T G.657, G.657.A2 MFD compatible range allows down to 8.4 µm.' },
+              { symbol: 'w₂', value: '4.3', unit: 'µm', description: 'Mode field radius of G.657.A2 fiber (MFD 8.6 µm ÷ 2). Per ITU-T G.657 Table 5, G.657.A2 minimum MFD = 8.6 µm @ 1310 nm; use 8.6 µm as the minimum-spec value.' },
             ]}
             steps={[
               {
                 label: 'Step 1 — Calculate the numerator: 2·w₁·w₂',
-                expression: '2 × 4.6 × 4.2 = 2 × 19.32',
-                result: '38.64',
+                expression: '2 × 4.6 × 4.3 = 2 × 19.78',
+                result: '39.56',
                 note: 'This is twice the product of the two mode field radii.',
               },
               {
                 label: 'Step 2 — Calculate the denominator: w₁² + w₂²',
-                expression: '4.6² + 4.2² = 21.16 + 17.64',
-                result: '38.80',
+                expression: '4.6² + 4.3² = 21.16 + 18.49',
+                result: '39.65',
                 note: 'Sum of the squares of both mode field radii.',
               },
               {
                 label: 'Step 3 — Calculate coupling efficiency η',
-                expression: 'η = 38.64 / 38.80',
-                result: '0.9959',
-                note: 'η = 0.9959 means 99.59% of light couples into the second fiber at the ideal junction.',
+                expression: 'η = 39.56 / 39.65',
+                result: '0.9977',
+                note: 'η = 0.9977 means 99.77% of light couples into the second fiber at the ideal junction.',
               },
               {
                 label: 'Step 4 — Calculate insertion loss from η²',
-                expression: 'IL = −10 · log₁₀(0.9959²) = −10 · log₁₀(0.9918)',
-                result: '−10 × (−0.00361) = 0.036 dB',
-                note: 'The theoretical minimum insertion loss from this MFD mismatch alone (perfect alignment, core-align mode) is ~0.04 dB.',
+                expression: 'IL = −10 · log₁₀(0.9977²) = −10 · log₁₀(0.9955)',
+                result: '−10 × (−0.00197) = 0.020 dB',
+                note: 'The theoretical minimum insertion loss from this MFD mismatch alone (perfect alignment, core-align mode) is ~0.02 dB.',
               },
               {
                 label: 'Step 5 — Field reality with cladding-align',
                 expression: 'Add core offset penalty (cladding-align ≈ +0.04–0.08 dB for this mismatch)',
-                result: '0.04 + 0.06 = ~0.10 dB total',
-                note: 'In cladding-align mode, the centering error compounds with the MFD mismatch. Total insertion loss in cladding-align on this cross splice: typically 0.08–0.12 dB measured by bidirectional OTDR average.',
+                result: '0.02 + 0.06 = ~0.08 dB total',
+                note: 'In cladding-align mode, the centering error compounds with the MFD mismatch. Total insertion loss in cladding-align on this cross splice: typically 0.06–0.10 dB measured by bidirectional OTDR average.',
               },
             ]}
-            sanityCheck="A perfect core-align splice of G.652.D to G.657.A2 produces ~0.04 dB from MFD mismatch alone — below the 0.10 dB design target and passing RUS contract. The same splice in cladding-align mode typically produces 0.08–0.12 dB. Both pass the 0.30 dB contract threshold individually, but on a 200-splice cross-type build, cladding-align adds (200 × 0.06 dB) = 12 dB of excess splice loss vs. core-align — a budget-threatening difference on a long GPON distribution feeder."
+            sanityCheck="A perfect core-align splice of G.652.D to G.657.A2 produces ~0.02 dB from MFD mismatch alone — well below the 0.10 dB design target. The same splice in cladding-align mode typically produces 0.06–0.10 dB. Both pass the 0.30 dB contract threshold individually, but on a 200-splice cross-type build, cladding-align adds (200 × 0.06 dB) = 12 dB of excess splice loss vs. core-align — a budget-threatening difference on a long GPON distribution feeder."
           />
         </div>
 

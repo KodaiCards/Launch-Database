@@ -32,10 +32,10 @@ export const meta = {
     'splicer storage (silica gel)',
   ],
   vocabulary_assumed: [
-    'fusion splice (T11.L04)',
-    'arc calibration (T11.L06)',
-    'cleave angle (T11.L06)',
-    'arc power (T11.L06)',
+    { term: 'fusion splice', source_lesson_id: 'T11.L04' },
+    { term: 'arc calibration', source_lesson_id: 'T11.L06' },
+    { term: 'cleave angle', source_lesson_id: 'T11.L06' },
+    { term: 'arc power', source_lesson_id: 'T11.L06' },
   ],
 };
 
@@ -185,11 +185,41 @@ export default function L13SplicerMaintenanceSchedule() {
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-3">Key Terms — Flashcards</h3>
-          <div className="grid gap-3">
-            {key_terms.map((term) => (
-              <Flashcard key={term.term} term={term.term} definition={term.definition} />
-            ))}
-          </div>
+          <Flashcard
+            deckId="T11-L13"
+            cards={[
+              {
+                id: 'T11-L13-fc-electrode-life',
+                front: 'What is the electrode life counter and what does it track?',
+                back: 'An internal counter in the fusion splicer that tracks how many arc cycles the electrodes have fired. When it reaches the model-specific threshold (typically 1,500–3,000 arcs — confirm your splicer manual), the machine prompts you to replace the electrodes. Ignoring the prompt risks inconsistent fusion quality.',
+              },
+              {
+                id: 'T11-L13-fc-daily-cal',
+                front: 'What is daily arc calibration and when must it be performed?',
+                back: 'A test-fire sequence (usually 3–10 cleaning arcs followed by a test splice) that the splicer uses to measure actual discharge intensity and auto-adjust its parameters to compensate for electrode wear, humidity, altitude, and temperature. Takes 2–3 minutes. Must be performed at the start of every work day, after any fiber-type change, and after electrode replacement.',
+              },
+              {
+                id: 'T11-L13-fc-blade-interval',
+                front: 'What is the cleaver blade replacement interval?',
+                back: 'The number of cleaves a precision cleaver blade can make before its edge degrades and begins producing marginal or reject angles. Typical range: 1,000–3,000 cleaves depending on model and fiber type — check your cleaver manual. Many cleavers have a multi-position blade that can be rotated to expose a fresh edge section before full blade replacement.',
+              },
+              {
+                id: 'T11-L13-fc-cleaning-arc',
+                front: 'What is a cleaning arc and what is it NOT a substitute for?',
+                back: 'A short, low-power arc fired before the main splice arc to burn off residual contamination, moisture, or buffer gel from the fiber ends immediately before fusion. A cleaning arc is NOT a substitute for proper mechanical cleaning — it supplements it.',
+              },
+              {
+                id: 'T11-L13-fc-electrode-oxidation',
+                front: 'What is electrode oxidation and how do you recognize it?',
+                back: 'The buildup of oxide deposits on electrode tips caused by repeated high-temperature arcing in the presence of oxygen. Visible signs: irregular arc shape on the splicer monitor, asymmetric loss estimations, and pitting or dark discoloration at the electrode tips visible under magnification. The solution is electrode replacement — not recalibration alone.',
+              },
+              {
+                id: 'T11-L13-fc-silica-gel',
+                front: 'What does silica gel do in splicer storage and when should it be replaced?',
+                back: 'When a fusion splicer is stored for extended periods (days to weeks), a sealed transport case with fresh silica gel desiccant packets absorbs ambient moisture that would otherwise corrode electrodes and contaminate V-grooves. Replace silica gel when color-indicator changes from blue to pink (most common indicator type).',
+              },
+            ]}
+          />
         </div>
       </section>
 

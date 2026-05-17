@@ -23,12 +23,11 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
-    'UPC (Ultra Physical Contact)',
-    'APC (Angle Physical Contact)',
     'insertion loss (IL)',
     'return loss (RL)',
     'reference-grade connector',
     'contamination',
+    'IEC 61300-3-35 inspection protocol',
   ],
   key_terms: [
     {
@@ -39,7 +38,7 @@ export const meta = {
     {
       term: 'APC (Angle Physical Contact)',
       definition:
-        'A fiber optic connector with an 8° angled polished end-face. The angle causes Fresnel back-reflection to exit the fiber core at 16° (twice the 8° incident angle) instead of returning toward the source. Achieves return loss ≥60 dB — 5 dB better than UPC. Body color: GREEN per TIA-598-D. Required for GPON, CATV, and RF-over-fiber applications where back-reflection degrades the OLT laser or RF signal quality.',
+        'A fiber optic connector with an 8° angled polished end-face. The angle causes Fresnel back-reflection to exit the fiber core at 16° (twice the 8° incident angle) instead of returning toward the source. Return loss: ≥60 dB (field-acceptable); ≥65 dB (reference-grade). Body color: GREEN per TIA-598-D. Required for GPON, CATV, and RF-over-fiber applications where back-reflection degrades the OLT laser or RF signal quality.',
     },
     {
       term: 'insertion loss (IL)',
@@ -118,7 +117,17 @@ export default function T11L12_ConnectorLossThreeNumbers() {
               {
                 id: 'T11-L12-fc-apc-rl',
                 front: 'Why does APC achieve higher return loss than UPC?',
-                back: 'The 8° angled end-face causes Fresnel back-reflection to exit the fiber at 16° (twice the angle), which is well outside the fiber core acceptance angle. The reflected light cannot re-couple back into the core and is absorbed as cladding radiation. UPC\'s flat end-face sends reflections directly back toward the source, and ~1/100,000 of that power couples back into the core. That small fraction is enough to disrupt sensitive laser sources.',
+                back: 'The 8° angled end-face causes Fresnel back-reflection to exit the fiber at 16° (twice the angle), which is well outside the fiber core acceptance angle. The reflected light cannot re-couple back into the core and is absorbed as cladding radiation. APC return loss: ≥60 dB (field-acceptable); ≥65 dB (reference-grade). UPC\'s flat end-face sends reflections directly back toward the source — typical UPC RL ≥55 dB.',
+              },
+              {
+                id: 'T11-L12-fc-reference-grade',
+                front: 'What is a reference-grade connector?',
+                back: 'A connector meeting the highest performance tier: IL ≤0.1 dB, RL ≥65 dB (APC) or ≥60 dB (UPC). Used in test equipment, laboratory setups, and high-precision carrier-grade installations. More expensive and requires careful handling — reference-grade performance is destroyed by a single contaminated mating cycle without cleaning.',
+              },
+              {
+                id: 'T11-L12-fc-iec-inspect',
+                front: 'What is the IEC 61300-3-35 inspection protocol?',
+                back: 'A four-zone classification standard for fiber end-face inspection. Defines acceptance criteria by zone: Zone A (core) = automatic reject if any defect; Zones B/C/D = size-graded limits by connector grade (A/B/C). Applied using a fiber inspection scope (≥200×) before every connector mating. Prevents contamination-driven loss events.',
               },
             ]}
           />

@@ -26,7 +26,6 @@ export const meta = {
     'ribbon fiber (12F/24F standard)',
     'mass fusion splicer',
     'ribbon splice protector',
-    'rollable ribbon',
   ],
   key_terms: [
     {

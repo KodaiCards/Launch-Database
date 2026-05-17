@@ -125,6 +125,21 @@ export default function T11L06_CleaveAngleAndArcQuality() {
                 front: 'What is the pre-fuse (cleaning arc) and what does it do?',
                 back: 'A brief, lower-power arc fired before the main fusion arc. It burns off residual surface contamination from the fiber end-faces — moisture, organic residue, microscopic particles that survived the IPA cleaning step. Visible as a brief spark on the splicer display before the main fusion.',
               },
+              {
+                id: 'T11-L06-fc-arc-power',
+                front: 'What is arc power and why does it vary by fiber type?',
+                back: 'The electrical current level applied to the electrodes during the fusion arc, set by the splicer profile for each fiber type. Different fiber types require different power levels to achieve full glass flow without over-melting or under-fusing. Arc calibration verifies the actual output matches the programmed target for current electrode condition and environmental parameters.',
+              },
+              {
+                id: 'T11-L06-fc-mainfuse',
+                front: 'What is the main fuse arc?',
+                back: 'The full-power arc discharge fired after the cleaning arc. Raises both fiber end-faces above the glass softening temperature, causing the glass to flow together and form a permanent joint. Duration: typically 1.5–3 seconds depending on fiber type and splicer model. The splicer estimates insertion loss from the fused image after this arc.',
+              },
+              {
+                id: 'T11-L06-fc-tailend',
+                front: 'What is the tail-end weld?',
+                back: 'A final short arc pulse applied after the main fusion arc to complete glass flow at the weld boundary and reduce residual stress at the splice point. Also called a "tail arc" or "push-arc." Reduces the risk of a residual cold zone at the weld edge that could cause long-term failure under tension.',
+              },
             ]}
           />
         </div>

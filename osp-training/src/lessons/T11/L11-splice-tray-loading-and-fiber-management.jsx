@@ -23,7 +23,6 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
-    'splice tray',
     'buffer tube routing',
     'express loop',
     'slack storage coil',
@@ -59,7 +58,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'splice tray', source_lesson_id: 'T01.L04' },
     { term: 'buffer tube', source_lesson_id: 'T01.L03' },
-    { term: 'splice case', source_lesson_id: 'T11.L09' },
+    { term: 'splice case', source_lesson_id: 'T01.L04' },
     { term: 'splice protector', source_lesson_id: 'T11.L04' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'TIA-598 color sequence', source_lesson_id: 'T11.L01' },
@@ -115,6 +114,11 @@ export default function T11L11_SpliceTrayLoadingAndFiberManagement() {
                 id: 'T11-L11-fc-organizer',
                 front: 'What is the fiber management organizer and why is it important for re-entry?',
                 back: 'A plastic routing frame inside the splice case (fingers, channels) that separates buffer tubes from different cables and guides each to its designated tray. Without it, re-opening the case disturbs tube routing and can cause fiber breaks. Proper use of the organizer is what makes a splice case re-enterable without disruption.',
+              },
+              {
+                id: 'T11-L11-fc-tube-routing',
+                front: 'What is buffer tube routing?',
+                back: 'The organized path each buffer tube takes from the cable entry port through the splice case to its designated splice tray. Proper routing: each tube enters through its own cable entry port, routes through the fiber management organizer fingers, loops at minimum bend radius, and terminates at the tray where its fibers are spliced. Tubes from different cables are routed separately and labeled to prevent mis-identification during re-entry.',
               },
             ]}
           />

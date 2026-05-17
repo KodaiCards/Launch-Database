@@ -63,7 +63,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'dome closure', source_lesson_id: 'T11.L09' },
+    { term: 'dome closure', source_lesson_id: 'T01.L04' },
     { term: 'butt-splice (inline/horizontal) closure', source_lesson_id: 'T11.L09' },
     { term: 'heat-shrink vs. cold-seal entry port', source_lesson_id: 'T11.L09' },
     { term: 'case re-entry', source_lesson_id: 'T11.L09' },
@@ -120,6 +120,16 @@ export default function T11L10_GelSealHeatShrinkReenterable() {
                 id: 'T11-L10-fc-reentry-mistake',
                 front: 'What is the single biggest field mistake when re-entering a heat-shrink sealed case?',
                 back: 'Slitting the heat-shrink oversheath longitudinally and trying to "reuse" it. The re-compressed sleeve does not seal reliably after being cut. Moisture ingress at the opened joint often migrates along the cable into the splice tray over the following wet season. Correct procedure: cut the oversheath back to factory-clean cable jacket, clean the jacket surface, install a NEW oversheath.',
+              },
+              {
+                id: 'T11-L10-fc-oversheath',
+                front: 'What is an oversheath heat-shrink tube?',
+                back: 'A large-diameter heat-shrink sleeve with hot-melt adhesive lining that covers the entire cable entry port area of a splice case. Applied with a heat gun, it shrinks to create a watertight bond between the case body and cable jacket. Must be applied over a clean, dry jacket surface. Cannot be reused after cutting — a new tube is required for any re-entry.',
+              },
+              {
+                id: 'T11-L10-fc-compatibility',
+                front: 'What is sealing compound compatibility and why does it matter?',
+                back: 'The chemical compatibility between the sealing compound (flooding gel, hot-melt adhesive) and the cable jacket material (HDPE, MDPE, PVC, lldPE). Incompatible combinations can cause jacket swelling, seal degradation, and moisture ingress over years. FP-1 (petroleum-based gel) can attack polyethylene jackets; FP-2 (synthetic) is broadly compatible. Always verify manufacturer compatibility tables before mixing sealing compounds with cable jacket types.',
               },
             ]}
           />

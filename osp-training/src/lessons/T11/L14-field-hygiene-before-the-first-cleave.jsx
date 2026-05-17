@@ -33,11 +33,11 @@ export const meta = {
     'IEC 61300-3-35 end-face zones (A/B/C/D)',
   ],
   vocabulary_assumed: [
-    'fusion splice (T11.L04)',
-    'cleave angle (T11.L06)',
-    'insertion loss (T11.L12)',
-    'IEC 61300-3-35 inspection protocol (T11.L12)',
-    'IPA hazmat awareness (T18.L04)',
+    { term: 'fusion splice', source_lesson_id: 'T11.L04' },
+    { term: 'cleave angle', source_lesson_id: 'T11.L06' },
+    { term: 'insertion loss', source_lesson_id: 'T11.L12' },
+    { term: 'IEC 61300-3-35 inspection protocol', source_lesson_id: 'T11.L12' },
+    { term: 'IPA hazmat awareness', source_lesson_id: 'T18.L04' },
   ],
 };
 
@@ -219,11 +219,46 @@ export default function L14FieldHygieneBeforeTheFirstCleave() {
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-3">Key Terms — Flashcards</h3>
-          <div className="grid gap-3">
-            {key_terms.map((term) => (
-              <Flashcard key={term.term} term={term.term} definition={term.definition} />
-            ))}
-          </div>
+          <Flashcard
+            deckId="T11-L14"
+            cards={[
+              {
+                id: 'T11-L14-fc-contamination',
+                front: 'What are the four types of fiber contamination in the field?',
+                back: 'Dust (airborne particulate), oil (skin oils from bare-hand contact), moisture (condensation or rain), and buffer gel residue (petroleum or water-blocking gel inside the cable). Each type requires a specific removal sequence. Dust and oil are invisible to the naked eye.',
+              },
+              {
+                id: 'T11-L14-fc-ipa',
+                front: 'What is an IPA wipe and what purity is required?',
+                back: 'A lint-free wipe saturated with 99% isopropyl alcohol (IPA) used to dissolve and remove oil and moisture contamination from fiber surfaces. Must be 99% purity — lower grades contain water that leaves residue. SAFETY: IPA is flammable. Use nitrile gloves and ensure ventilation. Do not use near open flames.',
+              },
+              {
+                id: 'T11-L14-fc-lintfree',
+                front: 'What is the correct wiping technique with a lint-free wipe?',
+                back: 'Always ROLL the wipe along the fiber — never wipe back-and-forth. Pull the wipe in one direction only, then use a fresh surface or fresh wipe. Back-and-forth motion re-deposits contamination that was just lifted off the fiber surface.',
+              },
+              {
+                id: 'T11-L14-fc-dry-cleave-first',
+                front: 'What is the dry-cleave-first rule?',
+                back: 'A short section of fiber is cleaved and discarded BEFORE beginning the IPA cleaning sequence. Purpose: removes the first few millimeters of fiber that may have the highest contamination load from the cleaver\'s blade contact. After dry-cleave, clean, then cleave again for the actual splice.',
+              },
+              {
+                id: 'T11-L14-fc-gel-cleanup',
+                front: 'What is the gel cleanup sequence and why must dry come before wet?',
+                back: 'When removing buffer gel from fibers, always dry-wipe first to mechanically lift and absorb the gel, THEN apply IPA. If IPA is applied first, it partially dissolves the gel and smears it into a thin film that is much harder to remove than the original gel. Dry first, then wet — never the reverse.',
+              },
+              {
+                id: 'T11-L14-fc-controlled-env',
+                front: 'What is a controlled splice environment and why is it required for aerial work?',
+                back: 'Any enclosure, tent, or barrier that reduces wind, rain, and airborne dust at the splice work area. A fusion arc is extinguished by even a moderate breeze — and wind carries dust particles directly onto the cleaved fiber end. Field splice tents ($30–$80, lightweight) are standard equipment for aerial and outside-plant splicing.',
+              },
+              {
+                id: 'T11-L14-fc-zone-map',
+                front: 'What are the IEC 61300-3-35 end-face zones A/B/C/D and which is always a reject?',
+                back: 'Zone A = core area (light-carrying region, center); Zone B = cladding area (inner ring); Zone C = contact/epoxy area; Zone D = outer ferrule rim. Any defect in Zone A is an automatic reject — defects there directly increase insertion loss. Zones B/C/D have size-graded acceptance criteria.',
+              },
+            ]}
+          />
         </div>
       </section>
 

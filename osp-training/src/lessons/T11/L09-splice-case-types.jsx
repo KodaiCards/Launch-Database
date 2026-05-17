@@ -24,7 +24,6 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
-    'dome closure',
     'butt-splice (inline/horizontal) closure',
     'wall-mount/pedestal closure',
     'heat-shrink vs. cold-seal entry port',
@@ -72,6 +71,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'splice case', source_lesson_id: 'T01.L04' },
+    { term: 'dome closure', source_lesson_id: 'T01.L04' },
     { term: 'buffer tube', source_lesson_id: 'T01.L03' },
     { term: 'conduit', source_lesson_id: 'T10.L01' },
     { term: 'manhole', source_lesson_id: 'T10.L01' },
@@ -129,6 +129,21 @@ export default function T11L09_SpliceCaseTypes() {
                 id: 'T11-L09-fc-capacity',
                 front: 'How is splice case capacity measured and how do you size a case?',
                 back: 'By tray count: each standard tray holds 12 splice protectors (12 spliced fibers). Size the case for the current fiber count PLUS future add capacity. A 48F cable needs at minimum a 4-tray case (48 splices), but a 6-tray case gives room for two future 24F adds.',
+              },
+              {
+                id: 'T11-L09-fc-wallmount',
+                front: 'What is a wall-mount/pedestal closure and where is it used?',
+                back: 'A box-shaped enclosure with mounting flanges and a hinged or latch cover. Cable entries at bottom or sides via compression grommet fittings. Applications: building entry, inside pedestals on mounting shelf, equipment shelter walls, CO/headend rack-adjacent locations. NOT for direct burial.',
+              },
+              {
+                id: 'T11-L09-fc-entry-port',
+                front: 'What is the difference between heat-shrink and cold-seal entry ports?',
+                back: 'Heat-shrink port seal: a heat-applied shrink tube that bonds to the cable jacket — permanent, watertight, requires cutting for re-entry. Cold-seal port: a compression grommet or gel-filled fitting that can be opened and re-sealed without heat tools — re-enterable. Cold-seal is required where adds/moves/changes are expected (CO, pedestal). Heat-shrink is preferred for permanent aerial and buried applications.',
+              },
+              {
+                id: 'T11-L09-fc-mounting',
+                front: 'What is splice case mounting and how does it differ by case type?',
+                back: 'The hardware and method used to secure the splice case in its operating environment. Dome closures: rest on a sand bed in a handhole or vault — no mounting hardware needed for burial. Inline closures: lash clamps along the aerial messenger strand or hang from support rings in a vault. Wall-mount cases: bolt to a wall, pole, or pedestal shelf via mounting flanges. Rack-mount cases: slide into 19-inch or 23-inch equipment rack rails.',
               },
             ]}
           />

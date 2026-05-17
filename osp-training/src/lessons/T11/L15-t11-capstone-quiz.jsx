@@ -7,6 +7,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T11.L15',
@@ -25,9 +26,19 @@ export const meta = {
   estimated_minutes: 30,
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    'all T11 vocabulary (T11.L01 through T11.L14)',
-    'attenuation / link budget (T02)',
-    'MFD / G.652.D / G.657 (T02, T03)',
+    { term: 'TIA-598 color sequence', source_lesson_id: 'T11.L01' },
+    { term: 'fusion splice', source_lesson_id: 'T11.L04' },
+    { term: 'arc calibration', source_lesson_id: 'T11.L06' },
+    { term: 'insertion loss (IL)', source_lesson_id: 'T11.L12' },
+    { term: 'return loss (RL)', source_lesson_id: 'T11.L12' },
+    { term: 'splice tray', source_lesson_id: 'T01.L04' },
+    { term: 'dome closure', source_lesson_id: 'T01.L04' },
+    { term: 'electrode life counter', source_lesson_id: 'T11.L13' },
+    { term: 'gel cleanup sequence', source_lesson_id: 'T11.L14' },
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'MFD', source_lesson_id: 'T02.L03' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
+    { term: 'G.657', source_lesson_id: 'T02.L04' },
   ],
 };
 
@@ -547,6 +558,50 @@ export default function L15T11CapstoneQuiz() {
             title="Part 2 — T11 Knowledge Check (25 Questions)"
           />
         </div>
+      </section>
+
+      {/* ── T11 REVIEW FLASHCARD DECK ───────────────────── */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">T11 Key Terms — Full Review Deck</h2>
+        <p className="text-gray-600 mb-4">
+          Use this deck to review all T11 terms before moving to T12. Cards are drawn in spaced-repetition
+          order — focus on the ones you struggle with.
+        </p>
+        <Flashcard
+          deckId="T11-L15-review"
+          cards={[
+            { id: 'T11-L15-rv-tia598', front: 'What is the TIA-598-D 12-color sequence in order?', back: '1-Blue, 2-Orange, 3-Green, 4-Brown, 5-Slate, 6-White, 7-Red, 8-Black, 9-Yellow, 10-Violet, 11-Rose, 12-Aqua. Mnemonic: "Big Orange Gorillas Browse Slowly While Reading Books — You\'re Very Relaxed Always".' },
+            { id: 'T11-L15-rv-fusion', front: 'What is a fusion splice and what insertion loss does it target?', back: 'A permanent joint made by melting two fiber ends together with an electric arc. Targets ≤0.10 dB insertion loss. Standard for permanent RUS and carrier-grade OSP builds.' },
+            { id: 'T11-L15-rv-arc-discharge', front: 'What is arc discharge in fusion splicing?', back: 'The high-temperature plasma arc fired between tungsten electrodes that melts the fiber end-faces together. Temperatures exceed 1,700°C at the fusion point, causing the glass to flow and merge into a continuous core.' },
+            { id: 'T11-L15-rv-strip', front: 'In fusion splicing, what does "strip" refer to?', back: 'Removing the 250 µm acrylate coating from the fiber end to expose the bare 125 µm glass cladding before cleaving and splicing. Performed with a precision fiber stripper (hot or mechanical).' },
+            { id: 'T11-L15-rv-clean', front: 'What does the "clean" step in fusion splicing accomplish?', back: 'Removes contamination (dust, oil, gel residue) from the stripped bare fiber surface using a dry lint-free wipe followed by a 99% IPA wipe (one-direction each). Must occur AFTER stripping and BEFORE cleaving.' },
+            { id: 'T11-L15-rv-cleave', front: 'What is cleaving and what is the acceptance angle limit?', back: 'Making a precise perpendicular cut across the fiber end-face using a precision cleaver. Target angle: ≤0.5°. Maximum acceptable for most splicers: ≤1.0°. Measured automatically by the splicer camera system.' },
+            { id: 'T11-L15-rv-align', front: 'What are the two fiber alignment modes in fusion splicing?', back: 'Core-align (LID — Local Injection and Detection): finds and centers the actual light-guiding cores. Cladding-align (PAS — Profile Alignment System): centers the outer 125 µm glass boundary. Core-align is required for cross-type splices (G.652.D to G.657.A2) and where ≤0.10 dB is critical.' },
+            { id: 'T11-L15-rv-fuse', front: 'What happens during the "fuse" step?', back: 'The splicer fires the arc discharge to melt and join the two fiber ends. Typically two phases: cleaning arc (short, low-power) to burn surface contamination, then main fuse arc to permanently join the glass. Estimated insertion loss displays after fusion.' },
+            { id: 'T11-L15-rv-prooftest', front: 'What is a splice proof-test?', back: 'Automatic axial tension test (1–2 N / 200–400 g) applied by the splicer immediately after fusion. Confirms mechanical integrity. A joint that breaks at proof-test indicates weak fusion — re-splice required.' },
+            { id: 'T11-L15-rv-cleave-angle', front: 'What splice problem does a bad cleave angle cause?', back: 'A wedge-shaped gap between the two fiber ends when pressed together during alignment, creating a bubble void in the fused joint and elevated insertion loss. Target ≤0.5°; reject if >1.0°.' },
+            { id: 'T11-L15-rv-arc-cal', front: 'When must arc calibration be performed? (3 triggers)', back: '1) Start of every work day; 2) after any fiber type change; 3) after electrode replacement. Arc calibration adjusts splicer parameters to compensate for electrode wear, altitude, temperature, and humidity.' },
+            { id: 'T11-L15-rv-arc-power', front: 'What is arc power in fusion splicing?', back: 'The electrical current level applied to the electrodes during the fusion arc. Set by the splicer profile for each fiber type. Too low = incomplete fusion (bubbles, high loss). Too high = over-melting (fiber geometry distortion). Arc calibration optimizes arc power for current conditions.' },
+            { id: 'T11-L15-rv-prefuse', front: 'What is the pre-fuse (cleaning arc) step?', back: 'A short, low-power arc fired immediately before the main fusion arc. Burns off residual contamination from the fiber end-face. NOT a substitute for proper mechanical cleaning — it is a final-step supplement.' },
+            { id: 'T11-L15-rv-mainfuse', front: 'What is the main fuse arc?', back: 'The full-power arc discharge that raises both fiber ends above the glass softening temperature, causing them to flow together and form a permanent fused joint. Follows the pre-fuse (cleaning arc).' },
+            { id: 'T11-L15-rv-tailend', front: 'What is the tail-end weld in fusion splicing?', back: 'A final short arc pulse after the main fusion arc that completes glass flow at the weld boundary and reduces residual stress at the splice point. Also called a "tail arc" or "push-arc." Present in most splicer arc sequences.' },
+            { id: 'T11-L15-rv-core-align', front: 'What is core alignment (LID) and when is it required?', back: 'A fusion splicer alignment mode using Local Injection and Detection to find the actual light-guiding cores. Required for: (1) cross-type splices (G.652.D to G.657.A2), (2) any splice where ≤0.10 dB is the target, (3) fibers with non-concentric or eccentric cores.' },
+            { id: 'T11-L15-rv-mfd-mismatch', front: 'What is MFD mismatch loss?', back: 'Insertion loss from joining fibers with different Mode Field Diameters. Light from the larger MFD fiber does not fully couple into the smaller core. Directional: larger-to-smaller has higher apparent loss than smaller-to-larger. Bidirectional OTDR average gives true IL.' },
+            { id: 'T11-L15-rv-ribbon', front: 'What is ribbon mass fusion splicing and what is its advantage?', back: 'Simultaneously splicing all 12 (or more) fibers in a flat ribbon cable using a mass fusion splicer. Advantage: splices an entire ribbon in one arc cycle vs 12 individual splices. Requires ribbon fan-out, mass cleaving, and mass splicer. Productivity multiplier for large-count cables.' },
+            { id: 'T11-L15-rv-rollable-ribbon', front: 'What is rollable ribbon fiber?', back: 'A ribbon fiber format where the fibers are joined by a flexible matrix that allows the ribbon to roll into a round cross-section for routing in round buffer tubes. Must be unrolled to flat configuration before mass cleaving. More flexible routing than traditional flat ribbon.' },
+            { id: 'T11-L15-rv-mechanical-splice', front: 'What is a mechanical splice and when is it used?', back: 'A temporary or low-cost splice using index-matching gel and a V-groove or rotary alignment sleeve to hold two fiber ends in contact. Higher loss than fusion (typically 0.20–0.50 dB). Used for emergency restoration, aerial environments without power, or temporary repairs. Not acceptable for permanent RUS contract work.' },
+            { id: 'T11-L15-rv-dome-closure', front: 'What is a dome closure and where is it preferred?', back: 'A splice case where the top half (dome) lifts off the base with all cable entries at the base. Self-seals under soil pressure. Preferred for direct-buried and vault/handhole environments. Per Telcordia GR-763-CORE [confirm edition], meets direct-buried environmental requirements.' },
+            { id: 'T11-L15-rv-butt-closure', front: 'What is a butt-splice (inline/horizontal) closure?', back: 'A splice case where cable entries are at both ends of the case body. Designed for mid-span aerial (lashing along the cable path) and inline underground applications. Also called inline closure or horizontal closure.' },
+            { id: 'T11-L15-rv-reentry', front: 'What is the difference between re-enterable and permanent splice cases?', back: 'Re-enterable: uses cold-seal gel or mechanical closure that can be opened and re-sealed without heat tools. Required for CO rack environments and locations where adds/moves/changes are expected. Permanent: heat-shrink sealed, not intended for re-entry. Lower cost but requires case replacement if re-entry needed.' },
+            { id: 'T11-L15-rv-heat-shrink-port', front: 'What is a heat-shrink port seal and when is it permanent?', back: 'A heat-applied shrink tube that seals cable entries into the splice case. Bonds to the cable outer jacket under heat, creating a watertight seal. Permanent — re-entry requires cutting back the original heat-affected jacket section before re-sealing.' },
+            { id: 'T11-L15-rv-gel-seq', front: 'What is the gel cleanup sequence (dry-then-wet)?', back: 'When cleaning gel-flooded fibers: (1) dry wipe first to mechanically absorb bulk gel; (2) IPA wipe to dissolve remaining oil residue. If IPA is applied first, it partially dissolves the gel into a thin smear film that is harder to remove than the original gel.' },
+            { id: 'T11-L15-rv-upc', front: 'What is a UPC connector and what are its loss specs?', back: 'Ultra Physical Contact — flat (0°) ultra-polished end-face. Body color: BLUE. Return loss ≥55 dB typical. Insertion loss: ≤0.1 dB reference-grade, ≤0.3 dB field-acceptable. Standard for most telecom and data applications.' },
+            { id: 'T11-L15-rv-apc', front: 'What is an APC connector and what are its loss specs?', back: 'Angle Physical Contact — 8° angled polished end-face. Body color: GREEN. Return loss ≥60 dB (field-acceptable), ≥65 dB (reference-grade). Required for GPON, CATV, RF-over-fiber. Never mate APC to UPC — physical damage results.' },
+            { id: 'T11-L15-rv-il', front: 'What are the three insertion loss tiers for single-mode connectors?', back: 'Reference-grade: ≤0.1 dB. Field-acceptable: ≤0.3 dB. Reject/investigate: >0.5 dB. A connector reading 0.30–0.50 dB is in the "marginal" zone — clean and re-measure before deciding to replace.' },
+            { id: 'T11-L15-rv-electrode-life', front: 'What is the electrode life counter threshold range?', back: 'Typically 1,500–3,000 arc cycles depending on splicer model. Always check YOUR specific splicer manual — thresholds differ by manufacturer and model. When the counter triggers, replace electrodes immediately and run arc calibration before the next splice.' },
+            { id: 'T11-L15-rv-zone-a', front: 'What does an IEC 61300-3-35 Zone A defect mean?', back: 'Zone A is the core area of the fiber end-face. Any defect in Zone A is an automatic reject — no size exceptions. Defects in Zone A directly interrupt the guided light path and increase insertion loss regardless of defect size.' },
+          ]}
+        />
       </section>
 
       {/* ── COMPLETION ──────────────────────────────────── */}
