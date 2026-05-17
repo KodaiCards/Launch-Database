@@ -133,3 +133,15 @@ Burn ~1.4M Sonnet. Bugs caught/fixed: 4 HIGH + 8 MED + 9 LOW. Global broken-DAG 
 - T07 R-3 (R-2 found 2 NEW HIGH — saturation rule continues)
 - T03 R-3 (R-2 found 5 new MEDs — saturation rule continues)
 - After T07/T03 close: cross-topic curriculum-wide Fix Wave (47 missing LOs + 139 remaining broken DAG pointers + the 5 cross-topic DAG bugs RT-δ neighborhood scan flagged)
+
+## T07 CLOSED ✅ 2026-05-17 overnight
+
+Final SHA: `3c35d3c` (RT-δ GREEN).
+
+Arc: R-1 + R-2 + R-3 (~430K) → Fix Wave A `25571c9` (17 items: 5 HIGH + 6 MED + 6 LOW) → 2 RT pair YELLOW (cross-topic 18/15.5 cascade catch) → Haiku tiebreaker `911128d` (15.5 ft comm, 18 ft supply per NESC Rule 232 Table 232-1) → Polish-A `07e16f7` → RT-γ caught L05 scope miss → Polish-B `a6d1614` → RT-δ GREEN.
+
+Burn ~1.5M Sonnet. Bugs caught/fixed: 6 HIGH + 7 MED + 7 LOW = 20. T07 DAG broken 19→0 (perfect). Global 139→121.
+
+**Outstanding queue:**
+- T03 R-3 (R-2 found 5 new MEDs/LOWs — saturation rule continues)
+- After T03 closes: cross-topic curriculum-wide Fix Wave (47 missing LOs + 121 remaining broken DAG pointers + the 5 cross-topic DAG bugs flagged earlier)
