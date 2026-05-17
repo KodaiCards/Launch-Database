@@ -157,17 +157,26 @@ export default function T02L04_MacrobendAndMicrobend() {
                 <td className="px-3 py-2">≤ 1.0 dB</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2">G.657.A2 (more bend-insensitive)</td>
+                <td className="px-3 py-2" rowSpan={3}>G.657.A2 (more bend-insensitive)</td>
                 <td className="px-3 py-2">1 turn, 7.5 mm radius</td>
+                <td className="px-3 py-2">≤ 0.50 dB</td>
+                <td className="px-3 py-2">≤ 1.0 dB</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">1 turn, 10 mm radius</td>
+                <td className="px-3 py-2">≤ 0.10 dB</td>
+                <td className="px-3 py-2">≤ 0.20 dB</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2">10 turns, 15 mm radius</td>
                 <td className="px-3 py-2">≤ 0.03 dB</td>
-                <td className="px-3 py-2">≤ 0.08 dB</td>
+                <td className="px-3 py-2">≤ 0.10 dB</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          Source: ITU-T G.652 (2024 edition — [confirm edition]) and ITU-T G.657 (2016 — [confirm
-          current edition]). Test conditions are per the respective standard.
+          Source: ITU-T G.652 (2024 edition — [confirm edition]) and ITU-T G.657 (08/2024 edition). Test conditions are per the respective standard.
           <strong> Common confusion:</strong> the "10 turns at 10 mm radius" combination is sometimes
           cited, but it is not a published G.657.A1 test condition. The two real conditions are listed
           above: 1 turn at 10 mm radius (tight bend, single wrap) and 10 turns at 15 mm radius
