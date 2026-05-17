@@ -145,3 +145,40 @@ Burn ~1.5M Sonnet. Bugs caught/fixed: 6 HIGH + 7 MED + 7 LOW = 20. T07 DAG broke
 **Outstanding queue:**
 - T03 R-3 (R-2 found 5 new MEDs/LOWs — saturation rule continues)
 - After T03 closes: cross-topic curriculum-wide Fix Wave (47 missing LOs + 121 remaining broken DAG pointers + the 5 cross-topic DAG bugs flagged earlier)
+
+## T03 CLOSED ✅ 2026-05-18 (continuing past midnight UTC)
+
+Final SHA: `7d40db8` (RT-δ GREEN).
+
+Arc: R-1 + R-2 + R-3 + R-4 + R-5 (~700K, 5 framings) → Fix Wave A `d3216ac` (1 HIGH + 10 MED + 15 LOW + 9 DAG fixes: G.655/G.656 added L05 with comparison table + Flashcards; L05 unit error; NEC DAG; §770.179(B) framing; OPGW advanced L04; TIA-598-D color code L01; ADSS span guide L09; GR-20 pulling tension L08; learning_objectives all 12; NEC edition markers; ICEA confirm markers) → 2 RT pair YELLOW (NEC pointer L07 missing) → Polish-A `f0e39db` + Polish-B `0c803b0` (NEC pointers added across 6 lessons total) → 2 RT pair GREEN with editorial-only LOWs.
+
+Burn ~1.7M Sonnet. Bugs caught/fixed: 1 HIGH + 10 MED + 15 LOW + 9 DAG. Validator 1/12 → 12/12 PASS. T03 DAG broken 0.
+
+## OSP RETROACTIVE AUDIT PHASE COMPLETE ✅
+
+All 9 originally-authored topics CLOSED under new saturation pipeline:
+- T01 ✅ T02 ✅ T03 ✅ T04 ✅ T05 ✅ T06 ✅ T07 ✅ T08 ✓ (P5 polish remnant) T09 ✅ T18 ✅ T19 ✓ (under new pipeline)
+
+Aggregate burn estimate: ~14M Sonnet across all retroactive audits. Bugs caught/fixed: ~50+ HIGH (cascade catches like H₂S IDLH 100ppm, OM5 EMB 4700 not 28000, 18ft/15.5ft Rule 232 cross-topic, methane density up not down) + ~80+ MED + ~120+ LOW.
+
+## NEXT QUEUE (priority order)
+
+### Cross-topic curriculum-wide sweep wave (HIGH priority — final retroactive cleanup)
+
+1. **Vocab-pointer sweep** — same NEC pattern but for TIA, FOA, RUS, ICEA, ITU-T, NESC across T03 L01/L11/L12. Plus T07/T08 same pattern. Plus T05.L06 `radial ice thickness` should be vocab_assumed from T03.L09. Plus L04 ADSS+messenger dupe.
+2. **5 cross-topic DAG bugs** flagged from earlier audits:
+   - T07.L07 HDD pointer → T06.L01
+   - T07.L07 open-cut term-string
+   - T19.L01 conduit → T01.L02
+   - T19.L09 feeder cable → T03.L08
+   - T06.L04 conduit fill alias
+3. **Polish Queue residuals** (P3, P5 from §4)
+
+Estimated burn: ~600K-1M Sonnet single sweep wave (cheap relative to per-topic).
+
+### OSP-RW remaining authoring (after sweep)
+- T10-T17, T20-T22 (general remaining + cert prep tracks). 12 topics × ~1.5M = ~18M Sonnet.
+- OSP-RW.6 Moodle teardown
+- OSP-RW.7 E2E QA + production cut
+
+### Then Launch-DB Phase 1-11 + future-build (attenuation calc, client portal, ISP course)
