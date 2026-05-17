@@ -103,3 +103,20 @@ These are CHEAPER to fix as a single curriculum-wide sweep than per-topic. Queue
 - agent-protocol.md §14 (registry usage rule)
 
 Future audits should use these BEFORE manual checks. Should cut ~30-50% of mechanical audit work.
+
+## T08 CLOSED ✅ 2026-05-17 overnight
+
+Final SHA: `bd28816` (RT-ζ GREEN).
+
+Full T08 retroactive arc:
+- R-1 + R-2 + R-3 audit (3 framings, ~350K)
+- Fix Wave A `0558e4c`: 2 HIGH (§1.1413→§1.1411(i), §1.1414→§1.1404) + 2 MED (NESC notation, FCC 23-109 betterment) + 4 LOW
+- RT-α YELLOW + RT-β cascade catch (§24→§26)
+- Polish-A `e8cf7a9`: 12 L06 §24→§26 + 4 notation sweep
+- RT-γ + RT-δ YELLOW (4 LOWs)
+- Polish-B `870b65f`: §25 notation + Section 26 anchor + Rule 250/261 split
+- RT-ε `87995a2` GREEN + RT-ζ `bd28816` GREEN
+
+Total Sonnet burn ~1.6M. Bugs caught/fixed: 2 HIGH + 3 MED + 8 LOW. Vite clean throughout. Validator 12/12 PASS post-close.
+
+**T05 Polish queue add:** RT-ζ flagged Rule 261 citation-registry entry uses T05's "Grades B/C/N triggers" framing but T08 teaches "strength of line supports" — T08 is more accurate per NESC. Haiku ground-truth tiebreaker needed during next T05 polish wave; registry update accordingly.
