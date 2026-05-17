@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T18:34:43.159Z",
+  "generated_at": "2026-05-17T18:41:55.394Z",
   "lesson_count": 149,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -10864,9 +10864,8 @@
     {
       "from_lesson": "T14.L01",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L01",
@@ -10968,9 +10967,8 @@
     {
       "from_lesson": "T14.L03",
       "term": "MGN",
-      "claimed_source": "T14.L02",
-      "verified": false,
-      "reason": "'MGN' is introduced by T01.L08, T19.L06, not T14.L02"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L03",
@@ -11053,16 +11051,14 @@
     {
       "from_lesson": "T14.L04",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L04",
       "term": "GES",
-      "claimed_source": "T14.L01",
-      "verified": false,
-      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L05",
@@ -11121,9 +11117,8 @@
     {
       "from_lesson": "T14.L05",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L05",
@@ -11158,23 +11153,20 @@
     {
       "from_lesson": "T14.L06",
       "term": "GES",
-      "claimed_source": "T14.L05",
-      "verified": false,
-      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L06",
       "term": "IBT",
-      "claimed_source": "T14.L05",
-      "verified": false,
-      "reason": "'IBT' is introduced by T01.L08, T19.L06, not T14.L05"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L06",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L07",
@@ -11197,16 +11189,14 @@
     {
       "from_lesson": "T14.L07",
       "term": "GES",
-      "claimed_source": "T14.L05",
-      "verified": false,
-      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L07",
       "term": "IBT",
-      "claimed_source": "T14.L05",
-      "verified": false,
-      "reason": "'IBT' is introduced by T01.L08, T19.L06, not T14.L05"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L07",
@@ -11223,9 +11213,8 @@
     {
       "from_lesson": "T14.L07",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L07",
@@ -11272,9 +11261,8 @@
     {
       "from_lesson": "T14.L08",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L08",
@@ -11309,9 +11297,8 @@
     {
       "from_lesson": "T14.L09",
       "term": "GES",
-      "claimed_source": "T14.L05",
-      "verified": false,
-      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L09",
@@ -11391,16 +11378,14 @@
     {
       "from_lesson": "T14.L10",
       "term": "GES",
-      "claimed_source": "T14.L05",
-      "verified": false,
-      "reason": "'GES' is introduced by T01.L08, T19.L06, not T14.L05"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L10",
       "term": "NEC",
-      "claimed_source": "T01.L01",
-      "verified": false,
-      "reason": "'NEC' is introduced by T01.L08, not T01.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L10",
@@ -11417,9 +11402,8 @@
     {
       "from_lesson": "T14.L11",
       "term": "MGN",
-      "claimed_source": "T14.L02",
-      "verified": false,
-      "reason": "'MGN' is introduced by T01.L08, T19.L06, not T14.L02"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T14.L11",
@@ -12857,8 +12841,8 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1327,
-  "broken_pointers_count": 131,
+  "verified_pointers_count": 1343,
+  "broken_pointers_count": 115,
   "missing_source_lesson_pointers": [
     {
       "from_lesson": "T19.L08",

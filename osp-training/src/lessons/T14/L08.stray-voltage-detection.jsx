@@ -54,7 +54,7 @@ export const meta = {
     { term: 'fault current', source_lesson_id: 'T14.L01' },
     { term: 'messenger bond', source_lesson_id: 'T14.L03' },
     { term: 'floating messenger', source_lesson_id: 'T14.L08' },
-    { term: 'NEC', source_lesson_id: 'T01.L01' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'NESC', source_lesson_id: 'T01.L02' },
     { term: 'joint-use', source_lesson_id: 'T01.L02' },
     { term: 'LOTO', source_lesson_id: 'T18.L02' },

@@ -31,7 +31,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'grounding', source_lesson_id: 'T14.L01' },
-    { term: 'MGN', source_lesson_id: 'T14.L02' },
+    { term: 'MGN', source_lesson_id: 'T01.L08' },
     { term: 'grounds per mile', source_lesson_id: 'T14.L02' },
     { term: 'neutral-to-ground bond', source_lesson_id: 'T14.L02' },
     { term: 'messenger bond', source_lesson_id: 'T14.L03' },
@@ -149,7 +149,7 @@ export default function T14L11_NESCGroundsPerMile() {
           description="Calculate the minimum number of ground electrodes for a 5-mile RUS aerial route using both the NESC minimum interval and a RUS-specified interval, then determine which controls."
           variables={[
             { key: 'route_miles', label: 'Aerial route length', units: 'miles', default: 5, min: 0.5, max: 50, step: 0.5 },
-            { key: 'nesc_interval_ft', label: 'NESC interval (confirm from NESC §9 / RUS 1751F-630 §7)', units: 'ft', default: 1320, min: 500, max: 5280, step: 100 },
+            { key: 'nesc_interval_ft', label: 'NESC interval (confirm from NESC §9 / RUS 1751F-630 §7)', units: 'ft', default: 1320, min: 500, max: 5280, step: 100, note: '1320 ft is an example value — verify the applicable interval from NESC §9 and your project\'s RUS bulletin before design.' },
             { key: 'rus_interval_ft', label: 'RUS bulletin interval (from 1751F-630 §7)', units: 'ft', default: 1000, min: 500, max: 5280, step: 100 },
           ]}
           formula={(v) => {

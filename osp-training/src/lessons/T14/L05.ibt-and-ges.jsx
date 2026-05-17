@@ -56,7 +56,7 @@ export const meta = {
     { term: 'concrete-encased electrode (Ufer)', source_lesson_id: 'T14.L04' },
     { term: 'ring electrode', source_lesson_id: 'T14.L04' },
     { term: 'supplemental electrode', source_lesson_id: 'T14.L04' },
-    { term: 'NEC', source_lesson_id: 'T01.L01' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'headend', source_lesson_id: 'T01.L01' },
   ],

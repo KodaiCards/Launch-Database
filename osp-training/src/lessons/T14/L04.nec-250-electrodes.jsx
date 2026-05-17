@@ -66,8 +66,8 @@ export const meta = {
     { term: 'ground potential rise', source_lesson_id: 'T14.L01' },
     { term: 'messenger bond', source_lesson_id: 'T14.L03' },
     { term: 'downlead', source_lesson_id: 'T14.L03' },
-    { term: 'NEC', source_lesson_id: 'T01.L01' },
-    { term: 'GES', source_lesson_id: 'T14.L01' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
   ],
   learning_objectives: [
     'Identify all NEC §250.52(A) electrode types by name and installation spec',

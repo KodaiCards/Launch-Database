@@ -39,8 +39,8 @@ export const meta = {
     { term: 'supplemental electrode', source_lesson_id: 'T14.L04' },
     { term: 'messenger bond', source_lesson_id: 'T14.L03' },
     { term: 'downlead', source_lesson_id: 'T14.L03' },
-    { term: 'GES', source_lesson_id: 'T14.L05' },
-    { term: 'NEC', source_lesson_id: 'T01.L01' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'RUS', source_lesson_id: 'T01.L01' },
   ],
   learning_objectives: [

@@ -59,9 +59,9 @@ export const meta = {
     { term: 'grounding', source_lesson_id: 'T14.L01' },
     { term: 'ground rod', source_lesson_id: 'T14.L04' },
     { term: 'supplemental electrode', source_lesson_id: 'T14.L04' },
-    { term: 'GES', source_lesson_id: 'T14.L05' },
-    { term: 'IBT', source_lesson_id: 'T14.L05' },
-    { term: 'NEC', source_lesson_id: 'T01.L01' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
+    { term: 'IBT', source_lesson_id: 'T01.L08' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
   ],
   learning_objectives: [
     'Set up and execute the three-terminal fall-of-potential test per IEEE 81-2012 §9.3',

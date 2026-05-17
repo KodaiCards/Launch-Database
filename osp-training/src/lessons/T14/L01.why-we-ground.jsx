@@ -54,7 +54,7 @@ export const meta = {
     { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'armor', source_lesson_id: 'T01.L03' },
     { term: 'joint-use', source_lesson_id: 'T01.L02' },
-    { term: 'NEC', source_lesson_id: 'T01.L01' },
+    { term: 'NEC', source_lesson_id: 'T01.L08' },
     { term: 'NESC', source_lesson_id: 'T01.L02' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
   ],

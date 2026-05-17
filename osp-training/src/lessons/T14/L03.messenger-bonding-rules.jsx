@@ -58,7 +58,7 @@ export const meta = {
     { term: 'grounding', source_lesson_id: 'T14.L01' },
     { term: 'bonding', source_lesson_id: 'T14.L01' },
     { term: 'fault current', source_lesson_id: 'T14.L01' },
-    { term: 'MGN', source_lesson_id: 'T14.L02' },
+    { term: 'MGN', source_lesson_id: 'T01.L08' },
     { term: 'neutral wire', source_lesson_id: 'T14.L02' },
     { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'armor', source_lesson_id: 'T01.L03' },

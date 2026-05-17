@@ -62,7 +62,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'grounding', source_lesson_id: 'T14.L01' },
     { term: 'ground rod', source_lesson_id: 'T14.L04' },
-    { term: 'GES', source_lesson_id: 'T14.L05' },
+    { term: 'GES', source_lesson_id: 'T01.L08' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
     { term: 'pedestal', source_lesson_id: 'T06.L05' },
     { term: 'burial depth', source_lesson_id: 'T06.L02' },
