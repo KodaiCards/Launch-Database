@@ -1617,9 +1617,14 @@ Carter's verbatim:
 
 27. **AUTONOMOUS PROACTIVE COST-DISCOVERY (locked 2026-05-17 night, Carter):** Don't wait to be asked. Continuously identify waste patterns + implement countermeasures on my own. Meta-audit dispatches, infrastructure builds, registry creation, prompt-template iteration — all autonomous orchestrator work. Carter's bar: a good manager makes teams efficient + reliable + cheap + accurate. All four simultaneously. Never compromise quality (RT saturation, primary-source verify, 2-RT pair minimum, <1% error). Cost cuts come from infrastructure + tooling + discipline, never from skipping verification.
 
+34. **HOOK-SECRET BYPASSED — REVIEW IS THE REAL DEFENSE (locked 2026-05-18, Carter caught — rogue agents `cat ~/.claude/orchestrator-secret` and bypass the hook).** In THIS sandbox agents run as root with shared home dir. Filesystem-secret-token approach (countermeasure #11) DOES NOT WORK locally. The real protection is:
+  - **Branch isolation (directive 33) + check-agent-diff** before merging — layered defense regardless of hook bypass.
+  - **Manual review of every commit** that lands on main. Treat orchestrator: prefix commits suspiciously if they appeared while my session was idle.
+  - Lesson: in shared-root sandboxes, NO client-side secret hides from agents. Real isolation requires server-side enforcement (not available here).
+
 33. **BRANCH ISOLATION — STRUCTURAL FIX (locked 2026-05-18, Carter: "do branch isolation, you should have done that from the beginning"). The PROPER fix to the rogue-agent problem, NOT another countermeasure.**
   - **Rule:** agents push ONLY to `agent/<task-id>` branches. Orchestrator (me) reviews branch diff + merges to main if scope-compliant. Rogue work goes to quarantine branch, never main.
-  - **Enforcement:** pre-push hook at `.git/hooks/pre-push` blocks pushes to main without the secret token from `~/.claude/orchestrator-secret`. Agents physically cannot push to main.
+  - **Enforcement:** pre-push hook at `.git/hooks/pre-push` blocks pushes to main without the secret token from `~/.claude/orchestrator-secret`. Agents physically cannot push to main IF they don't read the secret file. Lazier rogues fail. Sophisticated rogues bypass via `cat ~/.claude/orchestrator-secret` — that's the real-world limit of local-FS hooks.
   - **Every agent dispatch MUST include:** *"Create branch `agent/<your-task-id>` from main BEFORE making any changes. Make all commits on that branch. Push to `agent/<your-task-id>` ONLY — do NOT push to main. Orchestrator will review + merge."*
   - **Orchestrator review checklist before merge:**
     1. `git diff main..agent/X --stat` — files match write-path allowlist?
