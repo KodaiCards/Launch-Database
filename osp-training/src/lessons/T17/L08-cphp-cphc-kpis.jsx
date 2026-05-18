@@ -75,6 +75,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const cphpWorkedExample = {
   title: 'CPHP and CPHC — Side-by-Side Calculation',
   description:

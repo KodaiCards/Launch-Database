@@ -77,6 +77,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const quizQuestions = [
   {
     id: 'T17L04_q1',

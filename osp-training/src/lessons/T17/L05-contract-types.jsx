@@ -79,6 +79,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const contractScenario = {
   id: 'T17L05_scenario',
   title: 'Choosing the Right Contract Type',

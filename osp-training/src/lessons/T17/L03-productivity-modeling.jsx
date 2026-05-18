@@ -73,6 +73,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const productivityWorkedExample = {
   title: 'Converting Productivity Rates Into a Labor-Hour Estimate',
   description:

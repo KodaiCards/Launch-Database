@@ -139,12 +139,12 @@ const capstoneQuestions = [
     options: [
       '$3,960,000 — 10% contingency applied to base (100% design floor)',
       '$4,194,000 — 15% contingency + 3% flat escalation added to base',
-      '$4,230,690 — 15% contingency then 3.5% escalation (14 months at 3%/year) compounded',
+      '$4,285,000 — 15% contingency then 3% escalation (14 months at 3%/year) compounded',
       '$4,374,000 — 21.5% total allowance applied as a flat percentage',
     ],
     correct: 2,
     explanation:
-      '75% design → 15% contingency. Contingency = $3,600,000 × 0.15 = $540,000. Contingency-inclusive = $4,140,000. Escalation: (1.03)^(14/12) = (1.03)^1.167 ≈ 1.035. Escalation amount = $4,140,000 × 0.035 = $144,900. Total budget = $4,140,000 + $144,900 = $4,284,900. Option C ($4,230,690) uses 3.5%/year as an approximation for 14 months at 3%/year, which rounds differently. The correct answer to nearest whole number is approximately $4,285,000. The key process: (1) apply contingency to base, (2) apply escalation on top of contingency-inclusive amount. Do NOT add both percentages as a flat sum — that ignores compounding.',
+      '75% design → 15% contingency. Contingency = $3,600,000 × 0.15 = $540,000. Contingency-inclusive = $4,140,000. Escalation period = 14 months = 1.167 years. Escalation multiplier = (1.03)^1.167 ≈ 1.035. Escalation amount = $4,140,000 × 0.035 = $145,000 (approximately). Total budget = $4,140,000 + $145,000 ≈ $4,285,000. The key process: (1) apply contingency percentage to the base estimate, (2) apply escalation on top of the contingency-inclusive amount using the time period in years. Do NOT add both percentages as a flat sum — the compound effect is what matters.',
   },
   {
     id: 'T17CAP_q7',

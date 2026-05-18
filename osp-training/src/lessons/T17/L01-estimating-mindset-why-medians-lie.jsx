@@ -72,6 +72,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 export default function L01() {
   return (
     <LessonLayout meta={meta}>

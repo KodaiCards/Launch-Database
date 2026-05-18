@@ -75,6 +75,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const revenueWorkedExample = {
   title: 'Simplified Revenue Model and Payback Period',
   description:

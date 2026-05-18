@@ -74,6 +74,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const budgetWorkedExample = {
   title: 'Project Budget with Contingency and Escalation',
   description:

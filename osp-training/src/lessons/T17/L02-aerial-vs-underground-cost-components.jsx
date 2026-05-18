@@ -74,6 +74,8 @@ const key_terms = [
   },
 ];
 
+export { key_terms };
+
 const aerialWorkedExample = {
   title: 'Aerial Cost Breakdown — Lashed Cable on Existing Poles',
   description:
