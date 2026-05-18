@@ -257,6 +257,10 @@ export default function T13L12FederalComplianceMonitoring() {
           found during excavation). You are the first line of detection — the specialists step
           in when you flag a problem.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T13.L11 Daily Inspection Records — RUS Form 565</strong> — the Form 565 is where you document everything daily, including environmental conditions, worker observations, and any compliance issues. This lesson expands that discipline to federal compliance specifics (wage documentation, environmental discovery protocols) that RUS and the borrower will rely on months or years later.
+        </p>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}

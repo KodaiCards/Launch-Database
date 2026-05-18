@@ -266,6 +266,11 @@ export default function T13L13FieldDecisionWorkflow() {
           stop the crew. You decide what goes on the punch list. Each decision is documented on Form 565 and ultimately
           determines whether the project gets closed out and how much of it passes final inspection.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T13.L01 Inspector Role, Authority, and Documentation Framework</strong> — the QA/QC framework, inspector-arrival workflow, and inspection segment definition. This lesson operationalizes those frameworks into the specific decision tree you will use in the field each day.
+        </p>
+
         <p>
           This lesson walks you through the four critical decision scenarios you will face:
         </p>
