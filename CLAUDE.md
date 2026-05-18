@@ -1636,6 +1636,16 @@ Carter's verbatim:
   - **Why this works:** all prior countermeasures (#5-#13) treated symptoms — "stop agents from writing X" via prompts the agent can ignore. Branch isolation removes the WRITE PATH entirely. Rogue work still happens but stays quarantined.
   - **My failure:** I should have set this up at session-start. I treated each rogue as a new countermeasure-opportunity instead of recognizing the structural pattern (agent → main with no review gate). Carter is right that performance has slipped. Locking this as the standing baseline going forward.
 
+36. **COURSE ARCHITECTURE V3 + FINAL EXAM + LEARNING SIMULATION (locked 2026-05-18, Carter scope expansion).**
+  - **Splash hierarchy:** top-level chooser → OSP course / ISP course (future) / Cert tracks (BICSI OSPDR, FOA CFOS-O, BICSI RCDD, others). **Certs are SEPARATE products from courses, not embedded.** Cert tracks live outside OSP/ISP.
+  - **C04 Practice Exam Bank moves to ISP scope** (not OSP). Update queue.
+  - **OSP course final exam:** 60 questions at end of T19 (or end of full OSP track). 80% required to pass. Fixed-answer assessments only.
+  - **NO FREE-TEXT ANSWERS anywhere.** All quiz / capstone / final-exam items must be MC / drag-match / fill-in-blank with fixed answer keys. Scan all existing lessons + remove any "write your response" / open-ended Q.
+  - **Final audit pipeline (post all OSP topics CLOSED):**
+    1. **3 Sonnet adversarial audit agents** — full-course audit, different framings, full-depth saturation.
+    2. **1 Opus learning-simulation agent:** ZERO context, read-only, reads every lesson SEQUENTIALLY (cannot rewind / search / look back), then takes the 60-Q final exam blind. Score = our teaching-effectiveness signal. Below 80% = curriculum has a gap.
+  - **Per-lesson quizzes + per-topic capstones unchanged** — those continue. Final exam is course-level.
+
 35. **HAIKU-FIRST DEFAULT (locked 2026-05-18, Carter: "If you used haiku this whole thing would've been done faster too would it"). I admitted: yes.** Empirical: Haiku is 4-5x faster + 3x cheaper than Sonnet. T02 OM5 ground-truth, T13 vault thresholds, T17 verify v2, T16 Flashcard fix, T16 DAG pointer fix, T17 DAG term gap fix — all Haiku, all accurate. The cap I'm hitting now would have been avoided if I'd been Haiku-heavy from session start (8-12 hours saved + no cap interruption).
   - **Default for every task: Haiku.** Default = Haiku-narrow-focused. Specify `model: "haiku"` in every Agent dispatch unless I can name a specific reason it would miss something.
   - **Sonnet ONLY when:** (a) deep adversarial multi-step reasoning required to catch cascade bugs (T02 OM5 4700/28000 class), (b) complex authoring where pedagogy + math + citations interplay in non-trivial ways, (c) cross-topic systemic pattern analysis spanning 5+ topics.
