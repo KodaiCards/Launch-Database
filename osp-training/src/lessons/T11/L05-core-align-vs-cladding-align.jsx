@@ -70,6 +70,9 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T02.L03, the Mode Field Diameter (MFD)</strong> — each fiber type has a different MFD value. G.652.D ≈ 10.4 µm, G.657.A2 ≈ 8.6 µm. This lesson explains what happens when you splice fibers with different MFDs and why alignment mode matters.
+        </p>
         <p>
           When the splicer aligns two fibers before firing the arc, it has two strategies:
           find the outer glass boundary (the cladding, 125 µm diameter) and center those, or

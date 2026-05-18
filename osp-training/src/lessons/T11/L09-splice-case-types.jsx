@@ -98,6 +98,9 @@ export default function T11L09_SpliceCaseTypes() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T01.L04, splice cases and closures</strong> — we introduced the concept. This lesson goes deep into four case types and how to pick the right one for each environment.
+        </p>
         <p>
           Once you've made the splices, those delicate glass joints need to be protected —
           from moisture, from physical damage, from soil pressure, and from whatever

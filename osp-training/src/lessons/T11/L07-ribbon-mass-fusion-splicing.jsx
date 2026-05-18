@@ -68,6 +68,9 @@ export default function T11L07_RibbonMassFusionSplicing() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T11.L06, cleave angle quality</strong> — even a small angle error in one cleave kills the splice. Ribbon splicing multiplies that risk: if 1 of 12 fibers in a ribbon has a bad cleave, the entire set fails. This lesson explains the tradeoff and when to use it.
+        </p>
         <p>
           Splicing a 144-fiber cable one fiber at a time takes hours. Splicing it 12 fibers at
           a time — a mass fusion ribbon splice — takes a fraction of that. The physics is

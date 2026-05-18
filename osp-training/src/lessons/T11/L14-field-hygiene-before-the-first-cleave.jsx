@@ -217,6 +217,10 @@ export default function L14FieldHygieneBeforeTheFirstCleave() {
           Same principle, smaller scale.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T11.L03 Splice Loss — Four Numbers</strong> — even a single contaminated splice that exceeds 0.30 dB fails the contract. Everything in this lesson is the precision work that keeps you at or under that threshold. Field hygiene is not optional.
+        </p>
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-3">Key Terms — Flashcards</h3>
           <Flashcard

@@ -95,6 +95,10 @@ export default function T11L01_WhyWeColorCodeFibers() {
           anyone else.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T01.L03 Cable Construction</strong> — a buffer tube is the protective layer that wraps individual optical fibers inside the cable sheath. The TIA-598 color code applies to fibers within each buffer tube, making it the key to identifying fibers once you've opened the cable.
+        </p>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

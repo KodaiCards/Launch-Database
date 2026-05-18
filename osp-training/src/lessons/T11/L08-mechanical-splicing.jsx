@@ -68,6 +68,9 @@ export default function T11L08_MechanicalSplicing() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T11.L03, the splice loss numbers</strong> — mechanical splices have higher insertion loss (≤0.5 dB typical) compared to fusion (≤0.10 dB). This lesson covers when and why you'd choose mechanical despite the penalty.
+        </p>
         <p>
           A mechanical splice is a quick-connect for fiber: two cleaved ends pushed into a
           precision tube full of matching gel, crimped or locked in place. No electricity, no

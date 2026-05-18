@@ -82,6 +82,9 @@ export default function T11L10_GelSealHeatShrinkReenterable() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T11.L09, splice case types and re-entry</strong> — some cases are re-enterable (cold-seal) and some are permanent (heat-shrink). This lesson goes into the sealing mechanics and procedures.
+        </p>
         <p>
           Once you've selected the right splice case (L09), you need to choose the right
           sealing system to close it. The sealing system is what keeps moisture out for

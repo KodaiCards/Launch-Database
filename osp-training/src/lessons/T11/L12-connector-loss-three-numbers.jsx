@@ -80,6 +80,9 @@ export default function T11L12_ConnectorLossThreeNumbers() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T11.L02, APC vs. UPC connectors</strong> — green (APC) and blue (UPC) describe the connector type and their return loss specs. This lesson covers insertion loss and the three-number framework.
+        </p>
         <p>
           A fiber connector is a demountable joint — unlike a fusion splice, you can plug and
           unplug it. That flexibility comes with a cost: connectors lose more light than splices

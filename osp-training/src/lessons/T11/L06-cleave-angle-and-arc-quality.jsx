@@ -99,6 +99,10 @@ export default function T11L06_CleaveAngleAndArcQuality() {
           splicer display when they happen.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T11.L04 Fusion Splicing Step-by-Step</strong> — the goal is ≤0.10 dB per splice. Cleave quality and arc calibration are the two foundations that make that target achievable. Neglect either one and even the best handling technique can't save a splice.
+        </p>
+
         {/* Flashcards */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Key Terms</h3>

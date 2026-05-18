@@ -183,6 +183,10 @@ export default function L13SplicerMaintenanceSchedule() {
           the counter hits the threshold in your manual.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T11.L06 Cleave Angle and Arc Quality</strong> — arc calibration is one of the three critical preventive measures. This lesson gives you the schedule and the discipline to keep that tool in specification throughout every working day.
+        </p>
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-3">Key Terms — Flashcards</h3>
           <Flashcard

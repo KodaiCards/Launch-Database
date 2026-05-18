@@ -73,6 +73,9 @@ export default function T11L02_TIA598ColorSequenceEveryFiber() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T11.L01, the TIA-598 color sequence</strong> — Blue through Aqua in positions 1-12. This lesson applies that sequence to the tube-within-tube arithmetic you'll do every day on multi-fiber cables.
+        </p>
         <p>
           In the last lesson you learned that fibers are colored 1–12 (Blue through Aqua) and
           that tubes in a multi-tube cable follow the same sequence. Now let's turn that into

@@ -75,6 +75,9 @@ export default function T11L11_SpliceTrayLoadingAndFiberManagement() {
       {/* ── FOUNDATIONS ──────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T01.L03 and T01.L04, buffer tubes and splice trays</strong> — buffer tubes carry the fibers, trays organize the splices. This lesson shows you how to load them correctly.
+        </p>
         <p>
           Making good splices is only half the job. How you organize those splices inside
           the case determines whether a technician can re-enter and work on the case 10 years
