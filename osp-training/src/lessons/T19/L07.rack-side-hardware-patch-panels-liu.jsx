@@ -173,6 +173,11 @@ export default function T19L07_RackSideHardwarePatchPanelsLiu() {
               front: 'What is a trunk cable?',
               back: 'A pre-terminated multi-fiber cable with factory MPO/MTP connectors on both ends. Used for high-density connections between adjacent racks without field splicing. Must match fiber count and connector type on both ends exactly.',
             },
+            {
+              id: 'T19-L07-fc-odf-rack',
+              front: 'What is an ODF rack?',
+              back: 'Optical Distribution Frame rack — the equipment rack (typically 7-foot, EIA 19-inch wide) that houses the ODF patch panels, LIUs, splice organizers, and fiber management hardware at the CO or headend. The ODF rack is the heart of the OSP-to-ISP handoff. It typically stands near the cable entry point in the MDF room. All OSP feeder fibers terminate on the ODF rack.',
+            },
           ]}
         />
       </section>
