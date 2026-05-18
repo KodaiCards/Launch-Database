@@ -231,6 +231,10 @@ export default function T15L01OutageResponseFirst30() {
           carrier that restores service in 3.5 hours but never issued an ETR and opened no MOP is in
           breach of most SLA frameworks even if the repair was technically perfect.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T13.L01 Inspector Role and QA/QC Framework</strong> — the inspector's role is quality verification and documentation. <strong>T10.L11 Acceptance Walk and Project Closure</strong> — formal acceptance and close-out procedures. This lesson shifts focus: from daily inspection during construction to emergency response during an outage. The same documentation discipline (bridge call log, MOP, as-built records) now runs in parallel with fault-finding and repair work.
+        </p>
       </section>
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}

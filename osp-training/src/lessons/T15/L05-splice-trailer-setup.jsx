@@ -160,6 +160,10 @@ export default function L05SpliceTrailerSetup() {
           environmental controls for field splicing, equipment pre-checks, and what should be in every
           emergency restoration kit.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T11.L04 Fusion Splicing Process</strong> — tools and materials for splicing. <strong>T12.L08 Post-Splice Testing and Closure</strong> — closure sealing. This lesson covers the logistics: splice trailer setup and equipment checklist for field mobilization during an outage when time is critical.
+        </p>
       </section>
 
       {/* ── GENERATOR SAFETY ──────────────────────────────────────────────── */}

@@ -182,6 +182,10 @@ export default function T15L03PhysicalRouteWalk() {
           member approaches a damaged joint-use pole.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T15.L02 Fault Locate with OTDR</strong> — OTDR converts signal round-trip time into cable distance. <strong>T10.L01 Project Planning and Scoping</strong> — as-built drawings + route survey + marker post intervals. This lesson operationalizes the hand-off: OTDR gives cable distance, slack factor converts to survey distance, marker posts + probe rod + hand-dig zone rules locate the physical break.
+        </p>
+
         <h3>Why Cable Distance ≠ Route Distance</h3>
         <p>
           When cable is installed, it has extra length built in. For buried cable: the burial path

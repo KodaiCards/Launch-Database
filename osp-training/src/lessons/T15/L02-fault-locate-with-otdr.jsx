@@ -237,6 +237,10 @@ export default function T15L02FaultLocateOTDR() {
           break signatures, and how to convert from OTDR cable distance to physical field location.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T12.L07 Testing with OTDR and OLTS</strong> — OTDR trace interpretation and event tables. <strong>T15.L01 Outage Response: First 30 Minutes</strong> — the technical track includes fault locate as the first step. This lesson deepens OTDR skills for the outage context: how to use OTDR to pinpoint the break location quickly so your field crew knows which section of route to access for the repair.
+        </p>
+
         <h3>How the OTDR Knows Where the Break Is</h3>
         <p>
           The OTDR fires a very short pulse of light into the fiber. That pulse travels down the

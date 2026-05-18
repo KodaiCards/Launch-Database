@@ -228,6 +228,10 @@ export default function L07CustomerCommunicationDuringOutages() {
           This lesson covers: how to structure outage updates, when to revise an ETR, what post-restoration
           notification actually means, and the 48-hour verification window.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T15.L01 Outage Response: First 30 Minutes</strong> — the communication track, ETR definition, outage bridge call. This lesson details the specifics: how frequently to update the customer, when to revise ETR, post-restoration notification requirements, and the SLA 48-hour verification window that closes the incident.
+        </p>
       </section>
 
       {/* ── ETR STRUCTURE ─────────────────────────────────────────────────── */}

@@ -266,6 +266,10 @@ export default function L04TemporaryVsPermanentRepair() {
           type can mean the repair fails even with a perfect splice), when temporary vs. permanent repair
           is appropriate, and how to seal and document correctly.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T15.L03 Physical Route Walk</strong> — you've located the break. <strong>T11.L04 Fusion Splicing Process</strong> — how to perform a fusion splice. <strong>T12.L08 Post-Splice Testing and Closure</strong> — OTDR verification post-splice. This lesson applies those skills to the outage context: determining whether you have time for a permanent splice or must do a temporary patch, how to confirm fiber type before splicing, and critical post-splice documentation.
+        </p>
       </section>
 
       {/* ── FIBER TYPE CONFIRMATION ────────────────────────────────────── */}

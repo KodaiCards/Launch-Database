@@ -139,6 +139,10 @@ export default function L09PostRestorationAsBuiltUpdate() {
           correctly (.sor format vs. screenshots), how to calculate MTTR from concurrent documentation,
           and what the 24-hour closeout sequence looks like.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T10.L12 Design Documentation and Record Drawings</strong> — as-built drawing standards, GPS coordinates, closure models. <strong>T12.L08 Post-Splice Testing</strong> — OTDR trace archival and .sor file format. <strong>T15.L08 Method of Procedure</strong> — concurrent documentation during the repair. This lesson ties the threads together: consolidate your concurrent notes into a final as-built + OTDR traces + calculate MTTR + close the incident formally within 24 hours.
+        </p>
       </section>
 
       {/* ── AS-BUILT UPDATE ───────────────────────────────────────────────── */}

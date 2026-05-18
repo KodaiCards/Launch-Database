@@ -230,6 +230,10 @@ export default function L06EmergencyCivilWork() {
           people think), the shoring requirements that apply even in emergencies, vacuum excavation as the
           right tool for working near utilities, and what to do when you smell gas in a trench.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T15.L03 Physical Route Walk</strong> — hand-dig zones and 811 locate. <strong>T10.L02 Make-Ready and Excavation Safety</strong> — trench shoring, confined space, utility coordination. This lesson applies those principles to an active outage emergency: the rules don't go away, but the process compresses — emergency 811 shortens wait times, but shoring, hand-dig zones, and utility clearance still apply.
+        </p>
       </section>
 
       {/* ── EMERGENCY 811 EXCEPTION ───────────────────────────────────────── */}

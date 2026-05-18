@@ -222,6 +222,10 @@ export default function L08MethodOfProcedure() {
           But the documentation requirement doesn't disappear — it shifts to concurrent documentation
           (writing it down as you go) and verbal authorization instead of written approval chains.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T15.L01 Outage Response: First 30 Minutes</strong> — documentation track, emergency MOP vs. scheduled MOP, verbal emergency authorization. <strong>T10.L12 Design Documentation and Record Drawings</strong> — MOP structure for planned work. This lesson adapts MOP discipline to the emergency context: the elements stay the same (header, scope, preconditions, step-by-step, rollback, verification), but timing shifts to concurrent writing instead of advance approval.
+        </p>
       </section>
 
       {/* ── MOP ELEMENTS ──────────────────────────────────────────────────── */}
