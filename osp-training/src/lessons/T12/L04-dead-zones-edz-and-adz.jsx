@@ -24,36 +24,36 @@ export const meta = {
   ],
   estimated_minutes: 28,
   vocabulary_introduced: [
-    'EDZ (Event Dead Zone)',
-    'ADZ (Attenuation Dead Zone)',
-    'launch cable (OTDR)',
-    'receive cable (OTDR)',
+    'EDZ',
+    'ADZ',
+    'launch cable',
+    'receive cable',
     'ghost reflection',
   ],
   vocabulary_assumed: [
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'pulse width', source_lesson_id: 'T12.L03' },
     { term: 'Rayleigh backscatter', source_lesson_id: 'T12.L03' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
   ],
   key_terms: [
     {
-      term: 'EDZ (Event Dead Zone)',
+      term: 'EDZ',
       definition:
         'The minimum distance after a reflective event (connector or mechanical splice) within which the OTDR cannot detect a second distinct event. Defined as the distance from the start of a reflection peak to the point where the trace recovers to within 0.5 dB of the backscatter baseline. Typically 1–5 m for singlemode with narrow pulses.',
     },
     {
-      term: 'ADZ (Attenuation Dead Zone)',
+      term: 'ADZ',
       definition:
         'The minimum distance after a reflective event within which the OTDR cannot accurately measure loss — because the trace has not settled flat enough to run a valid backscatter fit. Larger than the EDZ. Defined as the distance from the start of a reflection peak to where the trace returns to within 0.5 dB of undisturbed backscatter. Typically 3–10 m for singlemode at narrow pulse widths; scales roughly linearly with pulse width.',
     },
     {
-      term: 'launch cable (OTDR)',
+      term: 'launch cable',
       definition:
         'A known-good fiber jumper (or reel) connected between the OTDR port and the fiber under test. Its purpose is to push the first connector of the link under test beyond the OTDR\'s dead zone so that loss and reflectance at that connector can be measured. Minimum length depends on pulse width and required dead-zone clearance.',
     },
     {
-      term: 'receive cable (OTDR)',
+      term: 'receive cable',
       definition:
         'A known-good fiber jumper connected to the far end of the span, allowing the OTDR to measure the far-end connector loss and verify the final splice or termination. Also called a "tail cable." Without a receive cable, the far-end connector reflection buries the final few meters of usable trace.',
     },

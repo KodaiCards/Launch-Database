@@ -29,11 +29,11 @@ export const meta = {
     'G.657 macrobend-insensitive fiber',
   ],
   vocabulary_assumed: [
-    { term: 'macrobend', source_lesson_id: 'T02.L02' },
-    { term: 'MFD', source_lesson_id: 'T02.L05' },
-    { term: 'G.652.D', source_lesson_id: 'T02.L08' },
-    { term: 'G.657', source_lesson_id: 'T02.L08' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'macrobend', source_lesson_id: 'T02.L04' },
+    { term: 'MFD', source_lesson_id: 'T02.L01' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
+    { term: 'G.657', source_lesson_id: 'T02.L04' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'loss event', source_lesson_id: 'T12.L08' },
   ],
   key_terms: [

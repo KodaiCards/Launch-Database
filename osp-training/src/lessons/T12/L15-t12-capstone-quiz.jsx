@@ -27,8 +27,8 @@ export const meta = {
   estimated_minutes: 45,
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    { term: 'OLTS', source_lesson_id: 'T12.L01' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OLTS', source_lesson_id: 'T01.L08' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'VFL', source_lesson_id: 'T12.L01' },
     { term: 'bidirectional OTDR', source_lesson_id: 'T12.L07' },
     { term: 'ADZ', source_lesson_id: 'T12.L04' },

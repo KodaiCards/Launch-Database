@@ -24,13 +24,13 @@ export const meta = {
   estimated_minutes: 30,
   vocabulary_introduced: [
     'bulk IOR',
-    'EIOR (Effective Index of Refraction)',
+    'EIOR',
     'distance error',
     'multi-reel IOR variation',
   ],
   vocabulary_assumed: [
     { term: 'EIOR', source_lesson_id: 'T12.L03' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'manual cursor placement', source_lesson_id: 'T12.L08' },
     { term: 'ADZ', source_lesson_id: 'T12.L04' },
   ],
@@ -41,7 +41,7 @@ export const meta = {
         'The refractive index of the core glass material at a specific wavelength, calculated from first-principles material composition (e.g., silica + GeO₂). Bulk IOR for standard G.652.D fiber at 1310 nm is typically quoted as 1.4677. This is NOT the same as the EIOR — the bulk IOR ignores waveguide effects and the group velocity modification caused by the fiber\'s index profile. Using bulk IOR in an OTDR produces systematic distance errors.',
     },
     {
-      term: 'EIOR (Effective Index of Refraction)',
+      term: 'EIOR',
       definition:
         'The refractive index value that correctly converts OTDR round-trip time to physical fiber length, accounting for both material dispersion AND waveguide dispersion effects in the fiber\'s index profile. Always specified on the fiber manufacturer\'s datasheet per ITU-T G.650.1. Typical G.652.D EIOR: 1.4675–1.4685 at 1310 nm, 1.4676–1.4689 at 1550 nm. Must be set accurately in the OTDR before measurement to ensure correct event distances.',
     },

@@ -109,6 +109,15 @@
 
 ---
 
+## T12 Fix Wave A Additions (2026-05-18)
+
+| Citation | Description | Source | Last Verified | Verified By | Notes |
+|---|---|---|---|---|---|
+| **IEC 61300-3-35:2022 Ed.3** | Fibre optic interconnecting devices and passive components — Connector end-face visual and automated inspection | https://www.iec.ch/pressroom/publications/iec61300-3-35.htm | 2026-05-18 | T12 Fix Wave A (RT-α/β + primary-source audit) | Cited in T12.L11. Current edition (2022 Ed.3) defines Zone A = 0–25 µm; Zone B = 25–110 µm; Zones C/D = informational only. **Prior edition Zone B = 115 µm** (not 120 µm). Paywalled; verify edition at publication time. |
+| **EXFO Application Note 342** | Link loss measurement uncertainties: OTDR vs. OLTS | https://www.exfo.com/en/resources/application-notes/ | 2026-05-18 | T12 Fix Wave A (RT-β primary-source review) | Cited in T12.L01 (Standards section) and T12.L07 (prior to Fix Wave A). **KEY FINDING:** AN342's ~0.25 dB systematic bias is a **multimode-only** effect; singlemode plant with bidirectional OTDR averaging shows much closer agreement with OLTS. Do NOT apply the 0.25 dB figure to singlemode OSP links. T12.L07 advanced section corrected in Fix Wave A. |
+
+---
+
 ## T11 Polish-A Additions (2026-05-17)
 
 | Citation | Description | Source | Last Verified | Verified By | Notes |

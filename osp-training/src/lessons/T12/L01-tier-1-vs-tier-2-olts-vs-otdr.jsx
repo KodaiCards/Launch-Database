@@ -23,25 +23,25 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
-    'OLTS (Optical Loss Test Set)',
-    'OTDR (Optical Time-Domain Reflectometer)',
-    'VFL (Visual Fault Locator)',
+    'OLTS',
+    'OTDR',
+    'VFL',
     'TIA-526',
     'dual-wavelength acceptance testing',
   ],
   key_terms: [
     {
-      term: 'OLTS (Optical Loss Test Set)',
+      term: 'OLTS',
       definition:
         'A two-piece instrument — a calibrated light source on one end and an optical power meter on the other — that measures how much light actually travels from one end of a fiber to the other. The result is the true end-to-end insertion loss in dB. This is the Tier-1 certification measurement. OLTS is the only instrument that directly measures optical power loss; all other tools are diagnostic.',
     },
     {
-      term: 'OTDR (Optical Time-Domain Reflectometer)',
+      term: 'OTDR',
       definition:
-        'An instrument that injects a short laser pulse into one end of a fiber and measures the tiny fraction of light that scatters back (Rayleigh backscatter) over time, producing a graph of backscatter level vs. distance. OTDRs characterize individual events — splice loss, connector loss, macrobends, fiber breaks — and locate them by distance. OTDR is a Tier-2 diagnostic tool. OTDR-derived total link loss can differ from true OLTS insertion loss by up to ~0.25 dB (whole link) because it measures backscatter, not transmitted power.',
+        'An instrument that injects a short laser pulse into one end of a fiber and measures the tiny fraction of light that scatters back (Rayleigh backscatter) over time, producing a graph of backscatter level vs. distance. OTDRs characterize individual events — splice loss, connector loss, macrobends, fiber breaks — and locate them by distance. OTDR is a Tier-2 diagnostic tool. Because OTDR estimates loss indirectly from backscatter rather than measuring transmitted power directly, OTDR-derived loss values are not equivalent to OLTS insertion loss. On singlemode plant the measurement approaches agree closely when a proper bidirectional average is used; however, OTDR still does not replace OLTS as the acceptance certification measurement (TIA-526-7A).',
     },
     {
-      term: 'VFL (Visual Fault Locator)',
+      term: 'VFL',
       definition:
         'A handheld tool that injects visible red laser light (typically 650 nm) into a fiber. The red glow is visible through the cable jacket at breaks, tight bends, or macrobend sites within roughly 5 km. A VFL is the first field verification step — it confirms continuity (does ANY light come out the far end?) and helps identify which fiber in a bundle you are touching. VFL is not a certification instrument but is the fastest, cheapest starting point. Called Tier 0 in this course: VFL → OLTS → OTDR.',
     },
@@ -58,7 +58,8 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
-    { term: 'dB/dBm', source_lesson_id: 'T02.L02' },
+    { term: 'dB', source_lesson_id: 'T02.L05' },
+    { term: 'dBm', source_lesson_id: 'T02.L05' },
     { term: 'link budget', source_lesson_id: 'T02.L06' },
     { term: 'insertion loss (IL)', source_lesson_id: 'T11.L12' },
     { term: 'return loss (RL)', source_lesson_id: 'T11.L12' },
@@ -145,7 +146,7 @@ export default function T12L01_TierVsTier() {
               {
                 id: 'T12-L01-fc-otdr',
                 front: 'What does an OTDR measure and how does its reading differ from OLTS?',
-                back: 'OTDR = Optical Time-Domain Reflectometer. Tier-2 diagnostic instrument. Injects a pulse and measures backscattered light to characterize individual events (splices, connectors, bends) by distance. OTDR does NOT replace OLTS — OTDR-derived total link loss can differ from true OLTS loss by up to ~0.25 dB (whole link) because backscatter is indirect.',
+                back: 'OTDR = Optical Time-Domain Reflectometer. Tier-2 diagnostic instrument. Injects a pulse and measures backscattered light to characterize individual events (splices, connectors, bends) by distance. OTDR does NOT replace OLTS — OTDR estimates loss from backscatter rather than measuring transmitted power, so OTDR-derived results are not equivalent to OLTS insertion loss. TIA-526-7A requires OLTS as the acceptance certification measurement regardless of OTDR results.',
               },
               {
                 id: 'T12-L01-fc-vfl',
@@ -219,10 +220,13 @@ export default function T12L01_TierVsTier() {
           The OTDR is an <em>indirect backscatter measurement</em>. It sends a pulse and
           listens for the echo. Each event (splice, connector, bend) reflects or scatters a
           tiny amount of light back. The OTDR estimates the event's loss from those backscatter
-          signals — but backscatter physics introduces a systematic bias. EXFO's technical
-          analysis (Application Note 342) shows OTDR-derived total link loss can differ from
-          true OLTS loss by approximately 0.25 dB across a typical OSP link. On a tight
-          link budget, that 0.25 dB is the difference between pass and fail.
+          signals — but this is an indirect calculation, not a direct power measurement. For
+          singlemode plant, a properly executed bidirectional OTDR average will come close to
+          the true insertion loss for most links; however, OTDR-derived results are still not
+          equivalent to OLTS and do not substitute for Tier-1 certification (per TIA-526-7A).
+          OTDR measurements can diverge from OLTS on links with MFD-mismatched splices
+          (gainer artifacts) or unusual backscatter coefficients — exactly the cases where
+          an independent power measurement matters most.
         </p>
 
         <h3 className="mt-6 font-semibold">When is each tier required?</h3>
@@ -289,7 +293,7 @@ export default function T12L01_TierVsTier() {
           <li><strong>TIA-526-14B</strong> — OLTS measurement procedure for multimode installed plant [paywalled — confirm edition]; cited via NECA/FOA 301-2016</li>
           <li><strong>IEC 61280-4-2</strong> — Field measurement of optical attenuation of installed singlemode plant; references bidirectional OTDR [paywalled — confirm edition]</li>
           <li><strong>NECA/FOA 301-2016</strong> — Standard for Installing and Testing Fiber Optics; public PDF at thefoa.org; §1 covers tier definitions and dual-wavelength requirements</li>
-          <li><strong>EXFO Application Note 342</strong> — Link loss measurement uncertainties: OTDR vs. OLTS; public at exfo.com; quantifies ~0.25 dB whole-link systematic bias</li>
+          <li><strong>EXFO Application Note 342</strong> — Link loss measurement uncertainties: OTDR vs. OLTS; public at exfo.com; discusses measurement difference sources between OTDR and OLTS. Note: systematic bias effects documented in AN342 are predominantly a multimode concern; singlemode plant with bidirectional OTDR averaging shows much closer agreement with OLTS.</li>
         </ul>
       </section>
 

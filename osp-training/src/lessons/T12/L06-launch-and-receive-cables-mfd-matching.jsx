@@ -29,10 +29,10 @@ export const meta = {
     'directional bias',
   ],
   vocabulary_assumed: [
-    { term: 'MFD (Mode Field Diameter)', source_lesson_id: 'T02.L05' },
+    { term: 'MFD', source_lesson_id: 'T02.L01' },
     { term: 'launch cable', source_lesson_id: 'T12.L04' },
     { term: 'receive cable', source_lesson_id: 'T12.L04' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'Rayleigh backscatter', source_lesson_id: 'T12.L03' },
   ],
   key_terms: [

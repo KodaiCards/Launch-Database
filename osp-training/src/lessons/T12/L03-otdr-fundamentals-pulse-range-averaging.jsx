@@ -28,7 +28,7 @@ export const meta = {
     'pulse width',
     'dynamic range',
     'averaging time',
-    'EIOR (Effective Group Index of Refraction)',
+    'EIOR',
   ],
   key_terms: [
     {
@@ -52,17 +52,18 @@ export const meta = {
         'The duration over which the OTDR accumulates and averages repeated pulse measurements. More averaging = lower noise = better dynamic range, improving by approximately √N (every 4× increase in averaging time reduces noise by ~2× = ~0.5 dB improvement). Diminishing returns beyond ~3 minutes; typical OSP acceptance uses 30–120 seconds per span direction.',
     },
     {
-      term: 'EIOR (Effective Group Index of Refraction)',
+      term: 'EIOR',
       definition:
         'The value the OTDR uses to convert the round-trip pulse travel time to a physical distance: d = (c × t) / (2 × n). Also called EGI (Effective Group Index). MUST be taken from the specific cable manufacturer\'s datasheet before every test — typical G.652.D values are ~1.4677 at 1550 nm, but values vary by manufacturer and production lot. Entering the wrong EIOR produces a systematic distance error on every event position in the trace. See T12.L10 for the distance error calculation.',
     },
   ],
   vocabulary_assumed: [
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
-    { term: 'G.652.D', source_lesson_id: 'T02.L02' },
-    { term: 'wavelength windows', source_lesson_id: 'T02.L07' },
-    { term: 'dB/dBm', source_lesson_id: 'T02.L02' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
+    { term: 'wavelength window', source_lesson_id: 'T02.L07' },
+    { term: 'dB', source_lesson_id: 'T02.L05' },
+    { term: 'dBm', source_lesson_id: 'T02.L05' },
   ],
 };
 
@@ -115,6 +116,11 @@ export default function T12L03_OTDRFundamentals() {
               id: 'T12-L03-fc-averaging',
               front: 'How does OTDR averaging time improve the measurement, and when does it stop helping?',
               back: 'More averaging reduces noise: SNR improves by √N, so 4× more averaging time = ~0.5 dB better dynamic range. Diminishing returns beyond ~3 min. Typical OSP acceptance: 30–120 sec per direction. Long averaging won\'t fix fundamental limitations like insufficient dynamic range for a very long span — that requires longer pulse width.',
+            },
+            {
+              id: 'T12-L03-fc-dynamicrange',
+              front: 'What is OTDR dynamic range and how do you increase it?',
+              back: 'Dynamic range = the dB difference between the backscatter level at the launch point and the instrument noise floor. Higher dynamic range = longer fiber the OTDR can reach. Increase it by: (1) using a longer pulse width (more optical energy), (2) increasing averaging time (√N improvement — 4× more averaging = ~0.5 dB gain). Typical OTDR for OSP metro spans: 30–40 dB dynamic range.',
             },
             {
               id: 'T12-L03-fc-eior',

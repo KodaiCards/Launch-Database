@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-17T22:46:04.719Z",
-  "lesson_count": 164,
+  "generated_at": "2026-05-18T00:02:46.275Z",
+  "lesson_count": 179,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -1030,6 +1030,97 @@
       "IEC 61300-3-35 end-face zones (A/B/C/D)"
     ],
     "T11.L15": [],
+    "T12.L01": [
+      "OLTS",
+      "OTDR",
+      "VFL",
+      "TIA-526",
+      "dual-wavelength acceptance testing"
+    ],
+    "T12.L02": [
+      "one-cord reference method",
+      "two-cord reference method",
+      "three-cord reference method",
+      "directional variation",
+      "bidirectional average (OLTS)"
+    ],
+    "T12.L03": [
+      "Rayleigh backscatter",
+      "pulse width",
+      "dynamic range",
+      "averaging time",
+      "EIOR"
+    ],
+    "T12.L04": [
+      "EDZ",
+      "ADZ",
+      "launch cable",
+      "receive cable",
+      "ghost reflection"
+    ],
+    "T12.L05": [
+      "coherence length",
+      "source-coherence peak",
+      "source masking",
+      "reflection masking"
+    ],
+    "T12.L06": [
+      "MFD mismatch gainer",
+      "launch cable MFD matching",
+      "receive cable minimum length",
+      "directional bias"
+    ],
+    "T12.L07": [
+      "bidirectional OTDR",
+      "direction-dependent loss",
+      "unidirectional OTDR",
+      "RUS bidirectional requirement"
+    ],
+    "T12.L08": [
+      "event table",
+      "loss event",
+      "reflection event",
+      "manual cursor placement",
+      "end-of-fiber marker"
+    ],
+    "T12.L09": [
+      "macrobend signature",
+      "dual-wavelength differential",
+      "1625 nm in-service window",
+      "G.657 macrobend-insensitive fiber"
+    ],
+    "T12.L10": [
+      "bulk IOR",
+      "EIOR",
+      "distance error",
+      "multi-reel IOR variation"
+    ],
+    "T12.L11": [
+      "IEC 61300-3-35 zone map",
+      "CIC sequence",
+      "video inspection probe",
+      "end-face contamination"
+    ],
+    "T12.L12": [
+      "PMD",
+      "DGD",
+      "CD",
+      "PMD coefficient",
+      "FOTP"
+    ],
+    "T12.L13": [
+      "acceptance threshold",
+      "TIA-568 channel loss model",
+      "NECA/FOA 301",
+      "dual-wavelength baseline"
+    ],
+    "T12.L14": [
+      "SOR file",
+      "loss report",
+      "test report components",
+      "as-tested fiber record"
+    ],
+    "T12.L15": [],
     "T14.L01": [
       "grounding",
       "bonding",
@@ -1487,10 +1578,12 @@
       "T01.L08"
     ],
     "otdr": [
-      "T01.L08"
+      "T01.L08",
+      "T12.L01"
     ],
     "olts": [
-      "T01.L08"
+      "T01.L08",
+      "T12.L01"
     ],
     "mgn": [
       "T01.L08",
@@ -1665,7 +1758,8 @@
       "T02.L03"
     ],
     "cd": [
-      "T02.L03"
+      "T02.L03",
+      "T12.L12"
     ],
     "zero-dispersion wavelength": [
       "T02.L03"
@@ -1677,7 +1771,8 @@
       "T02.L03"
     ],
     "pmd": [
-      "T02.L03"
+      "T02.L03",
+      "T12.L12"
     ],
     "macrobend": [
       "T02.L04"
@@ -1773,7 +1868,8 @@
       "T02.L08"
     ],
     "dgd": [
-      "T02.L09"
+      "T02.L09",
+      "T12.L12"
     ],
     "sopmd": [
       "T02.L09"
@@ -3522,6 +3618,175 @@
     "iec 61300-3-35 end-face zones (a/b/c/d)": [
       "T11.L14"
     ],
+    "vfl": [
+      "T12.L01"
+    ],
+    "tia-526": [
+      "T12.L01"
+    ],
+    "dual-wavelength acceptance testing": [
+      "T12.L01"
+    ],
+    "one-cord reference method": [
+      "T12.L02"
+    ],
+    "two-cord reference method": [
+      "T12.L02"
+    ],
+    "three-cord reference method": [
+      "T12.L02"
+    ],
+    "directional variation": [
+      "T12.L02"
+    ],
+    "bidirectional average (olts)": [
+      "T12.L02"
+    ],
+    "rayleigh backscatter": [
+      "T12.L03"
+    ],
+    "pulse width": [
+      "T12.L03"
+    ],
+    "dynamic range": [
+      "T12.L03"
+    ],
+    "averaging time": [
+      "T12.L03"
+    ],
+    "eior": [
+      "T12.L03",
+      "T12.L10"
+    ],
+    "edz": [
+      "T12.L04"
+    ],
+    "adz": [
+      "T12.L04"
+    ],
+    "launch cable": [
+      "T12.L04"
+    ],
+    "receive cable": [
+      "T12.L04"
+    ],
+    "ghost reflection": [
+      "T12.L04"
+    ],
+    "coherence length": [
+      "T12.L05"
+    ],
+    "source-coherence peak": [
+      "T12.L05"
+    ],
+    "source masking": [
+      "T12.L05"
+    ],
+    "reflection masking": [
+      "T12.L05"
+    ],
+    "mfd mismatch gainer": [
+      "T12.L06"
+    ],
+    "launch cable mfd matching": [
+      "T12.L06"
+    ],
+    "receive cable minimum length": [
+      "T12.L06"
+    ],
+    "directional bias": [
+      "T12.L06"
+    ],
+    "bidirectional otdr": [
+      "T12.L07"
+    ],
+    "direction-dependent loss": [
+      "T12.L07"
+    ],
+    "unidirectional otdr": [
+      "T12.L07"
+    ],
+    "rus bidirectional requirement": [
+      "T12.L07"
+    ],
+    "event table": [
+      "T12.L08"
+    ],
+    "loss event": [
+      "T12.L08"
+    ],
+    "reflection event": [
+      "T12.L08"
+    ],
+    "manual cursor placement": [
+      "T12.L08"
+    ],
+    "end-of-fiber marker": [
+      "T12.L08"
+    ],
+    "macrobend signature": [
+      "T12.L09"
+    ],
+    "dual-wavelength differential": [
+      "T12.L09"
+    ],
+    "1625 nm in-service window": [
+      "T12.L09"
+    ],
+    "g.657 macrobend-insensitive fiber": [
+      "T12.L09"
+    ],
+    "bulk ior": [
+      "T12.L10"
+    ],
+    "distance error": [
+      "T12.L10"
+    ],
+    "multi-reel ior variation": [
+      "T12.L10"
+    ],
+    "iec 61300-3-35 zone map": [
+      "T12.L11"
+    ],
+    "cic sequence": [
+      "T12.L11"
+    ],
+    "video inspection probe": [
+      "T12.L11"
+    ],
+    "end-face contamination": [
+      "T12.L11"
+    ],
+    "pmd coefficient": [
+      "T12.L12"
+    ],
+    "fotp": [
+      "T12.L12"
+    ],
+    "acceptance threshold": [
+      "T12.L13"
+    ],
+    "tia-568 channel loss model": [
+      "T12.L13"
+    ],
+    "neca/foa 301": [
+      "T12.L13"
+    ],
+    "dual-wavelength baseline": [
+      "T12.L13"
+    ],
+    "sor file": [
+      "T12.L14"
+    ],
+    "loss report": [
+      "T12.L14"
+    ],
+    "test report components": [
+      "T12.L14"
+    ],
+    "as-tested fiber record": [
+      "T12.L14"
+    ],
     "grounding": [
       "T14.L01"
     ],
@@ -4056,6 +4321,20 @@
       ]
     },
     {
+      "term": "otdr",
+      "introduced_by": [
+        "T01.L08",
+        "T12.L01"
+      ]
+    },
+    {
+      "term": "olts",
+      "introduced_by": [
+        "T01.L08",
+        "T12.L01"
+      ]
+    },
+    {
       "term": "mgn",
       "introduced_by": [
         "T01.L08",
@@ -4159,6 +4438,27 @@
       "introduced_by": [
         "T01.L08",
         "T18.L06"
+      ]
+    },
+    {
+      "term": "cd",
+      "introduced_by": [
+        "T02.L03",
+        "T12.L12"
+      ]
+    },
+    {
+      "term": "pmd",
+      "introduced_by": [
+        "T02.L03",
+        "T12.L12"
+      ]
+    },
+    {
+      "term": "dgd",
+      "introduced_by": [
+        "T02.L09",
+        "T12.L12"
       ]
     },
     {
@@ -4307,6 +4607,13 @@
       "introduced_by": [
         "T10.L09",
         "T18.L06"
+      ]
+    },
+    {
+      "term": "eior",
+      "introduced_by": [
+        "T12.L03",
+        "T12.L10"
       ]
     }
   ],
@@ -11689,6 +11996,510 @@
       "verified": true
     },
     {
+      "from_lesson": "T12.L01",
+      "term": "attenuation",
+      "claimed_source": "T02.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L01",
+      "term": "dB",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L01",
+      "term": "dBm",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L01",
+      "term": "link budget",
+      "claimed_source": "T02.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L01",
+      "term": "insertion loss (IL)",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L01",
+      "term": "return loss (RL)",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L02",
+      "term": "OLTS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L02",
+      "term": "insertion loss (IL)",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L02",
+      "term": "attenuation",
+      "claimed_source": "T02.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L02",
+      "term": "dB/km",
+      "claimed_source": "T02.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L02",
+      "term": "dual-wavelength acceptance testing",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L02",
+      "term": "IEC 61300-3-35 inspection protocol",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L03",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L03",
+      "term": "attenuation",
+      "claimed_source": "T02.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L03",
+      "term": "G.652.D",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L03",
+      "term": "wavelength window",
+      "claimed_source": "T02.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L03",
+      "term": "dB",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L03",
+      "term": "dBm",
+      "claimed_source": "T02.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L04",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L04",
+      "term": "pulse width",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L04",
+      "term": "Rayleigh backscatter",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L04",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L05",
+      "term": "ghost reflection",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L05",
+      "term": "EDZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L05",
+      "term": "ADZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L05",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L05",
+      "term": "Rayleigh backscatter",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L06",
+      "term": "MFD",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L06",
+      "term": "launch cable",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L06",
+      "term": "receive cable",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L06",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L06",
+      "term": "Rayleigh backscatter",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L07",
+      "term": "MFD mismatch gainer",
+      "claimed_source": "T12.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L07",
+      "term": "directional bias",
+      "claimed_source": "T12.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L07",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L07",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L07",
+      "term": "launch cable",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L07",
+      "term": "receive cable",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "Rayleigh backscatter",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "pulse width",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "EIOR",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "EDZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "ADZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "launch cable",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "ghost reflection",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L08",
+      "term": "bidirectional OTDR",
+      "claimed_source": "T12.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L09",
+      "term": "macrobend",
+      "claimed_source": "T02.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L09",
+      "term": "MFD",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L09",
+      "term": "G.652.D",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L09",
+      "term": "G.657",
+      "claimed_source": "T02.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L09",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L09",
+      "term": "loss event",
+      "claimed_source": "T12.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L10",
+      "term": "EIOR",
+      "claimed_source": "T12.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L10",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L10",
+      "term": "manual cursor placement",
+      "claimed_source": "T12.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L10",
+      "term": "ADZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L11",
+      "term": "OLTS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L11",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L11",
+      "term": "reflection event",
+      "claimed_source": "T12.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L12",
+      "term": "G.652.D",
+      "claimed_source": "T02.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L12",
+      "term": "wavelength window",
+      "claimed_source": "T02.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L12",
+      "term": "OLTS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L12",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L13",
+      "term": "OLTS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L13",
+      "term": "bidirectional OTDR",
+      "claimed_source": "T12.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L13",
+      "term": "CIC sequence",
+      "claimed_source": "T12.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L13",
+      "term": "dual-wavelength acceptance testing",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L14",
+      "term": "OLTS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L14",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L14",
+      "term": "bidirectional OTDR",
+      "claimed_source": "T12.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L14",
+      "term": "event table",
+      "claimed_source": "T12.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L14",
+      "term": "acceptance threshold",
+      "claimed_source": "T12.L13",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "OLTS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "OTDR",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "VFL",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "bidirectional OTDR",
+      "claimed_source": "T12.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "ADZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "EDZ",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "ghost reflection",
+      "claimed_source": "T12.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "MFD mismatch gainer",
+      "claimed_source": "T12.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "IEC 61300-3-35 zone map",
+      "claimed_source": "T12.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "acceptance threshold",
+      "claimed_source": "T12.L13",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "SOR file",
+      "claimed_source": "T12.L14",
+      "verified": true
+    },
+    {
+      "from_lesson": "T12.L15",
+      "term": "PMD coefficient",
+      "claimed_source": "T12.L12",
+      "verified": true
+    },
+    {
       "from_lesson": "T14.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -13705,7 +14516,7 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1443,
+  "verified_pointers_count": 1527,
   "broken_pointers_count": 105,
   "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [

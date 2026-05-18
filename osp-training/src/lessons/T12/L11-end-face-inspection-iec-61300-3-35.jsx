@@ -25,13 +25,13 @@ export const meta = {
   estimated_minutes: 30,
   vocabulary_introduced: [
     'IEC 61300-3-35 zone map',
-    'CIC (Clean-Inspect-Clean) sequence',
-    'video inspection probe (VIP)',
+    'CIC sequence',
+    'video inspection probe',
     'end-face contamination',
   ],
   vocabulary_assumed: [
-    { term: 'OLTS', source_lesson_id: 'T12.L01' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OLTS', source_lesson_id: 'T01.L08' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'reflection event', source_lesson_id: 'T12.L08' },
   ],
   key_terms: [
@@ -41,12 +41,12 @@ export const meta = {
         'The four concentric inspection zones defined in IEC 61300-3-35 (Fiber Optic Interconnecting Devices and Passive Components — End-face Inspection) for evaluating connector end-face cleanliness and quality. Zone A: core area (0–25 µm diameter). Zone B: cladding area (25–110 µm outer boundary in the 2022 Edition 3). Zones C and D are defined in the standard but were removed from mandatory pass/fail criteria in the 2022 Edition 3 — they are informational only for the current standard. Only Zones A and B are mandatory inspection zones in IEC 61300-3-35:2022.',
     },
     {
-      term: 'CIC (Clean-Inspect-Clean) sequence',
+      term: 'CIC sequence',
       definition:
         'The correct sequence for preparing a fiber optic connector for mating or testing: (1) CLEAN the end-face with appropriate tooling (dry wipe or wet + dry wipe), (2) INSPECT with a video inspection probe (VIP) to verify the end-face meets cleanliness criteria, (3) if the inspection passes, CLEAN once more with a dry wipe immediately before mating. If the inspection fails, clean again and re-inspect. Never mate a connector without a post-inspection dry wipe. Never inspect with a connector already mated to a live source without proper eye protection.',
     },
     {
-      term: 'video inspection probe (VIP)',
+      term: 'video inspection probe',
       definition:
         'A calibrated fiber optic microscope (usually digital with 200× or 400× magnification) used to image the connector end-face. Modern VIPs include automated zone-based pass/fail analysis against IEC 61300-3-35 criteria. Can inspect connectors without unmating (through-adapter probes) or after disconnection. Required for compliant end-face inspection per TIA-455-57B and IEC 61300-3-35.',
     },
@@ -105,7 +105,7 @@ export default function T12L11_EndFaceInspection() {
         <p>
           <strong>Important edition note:</strong> Earlier editions (pre-2022) included Zone C
           and Zone D in mandatory pass/fail criteria and defined Zone B outer boundary as
-          120 µm (some references) or 125 µm (full cladding). The current 2022 Edition 3 defines:
+          115 µm (per IEC 61300-3-35 prior editions). The current 2022 Edition 3 defines:
         </p>
         <ul>
           <li>Zone A: 0–25 µm (core area)</li>
@@ -114,7 +114,7 @@ export default function T12L11_EndFaceInspection() {
         </ul>
         <p>
           When reviewing inspection reports, verify which edition of IEC 61300-3-35 was used.
-          An older Grade A report using the pre-2022 Zone B = 120 µm boundary was evaluated against
+          An older Grade A report using the pre-2022 Zone B = 115 µm boundary was evaluated against
           slightly different criteria.
         </p>
       </section>
@@ -236,12 +236,12 @@ export default function T12L11_EndFaceInspection() {
               text: 'Per IEC 61300-3-35:2022 Edition 3, what is the outer boundary of Zone B (the cladding zone)?',
               options: [
                 { id: 'a', text: '125 µm — the full cladding diameter of standard singlemode fiber' },
-                { id: 'b', text: '120 µm — the previous edition boundary' },
+                { id: 'b', text: '115 µm — the previous edition boundary' },
                 { id: 'c', text: '110 µm — the 2022 Edition 3 Zone B outer boundary' },
                 { id: 'd', text: '50 µm — the Zone A outer boundary, also called the cladding zone' },
               ],
               correct: 'c',
-              explanation: 'IEC 61300-3-35:2022 Edition 3 defines Zone B as the cladding area from 25 µm to 110 µm. The 120 µm boundary is from a previous edition. Zone A is the core area (0–25 µm). Zones C and D (outer areas) are informational only in the 2022 edition.',
+              explanation: 'IEC 61300-3-35:2022 Edition 3 defines Zone B as the cladding area from 25 µm to 110 µm. The 115 µm boundary is from a previous edition. Zone A is the core area (0–25 µm). Zones C and D (outer areas) are informational only in the 2022 edition.',
             },
             {
               id: 'q2',

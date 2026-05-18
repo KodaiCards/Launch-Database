@@ -60,9 +60,10 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'OLTS', source_lesson_id: 'T12.L01' },
+    { term: 'OLTS', source_lesson_id: 'T01.L08' },
     { term: 'insertion loss (IL)', source_lesson_id: 'T11.L12' },
-    { term: 'attenuation dB/km', source_lesson_id: 'T02.L02' },
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'dB/km', source_lesson_id: 'T02.L02' },
     { term: 'dual-wavelength acceptance testing', source_lesson_id: 'T12.L01' },
     { term: 'IEC 61300-3-35 inspection protocol', source_lesson_id: 'T11.L12' },
   ],

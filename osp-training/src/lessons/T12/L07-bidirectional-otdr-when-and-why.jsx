@@ -31,7 +31,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'MFD mismatch gainer', source_lesson_id: 'T12.L06' },
     { term: 'directional bias', source_lesson_id: 'T12.L06' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'launch cable', source_lesson_id: 'T12.L04' },
     { term: 'receive cable', source_lesson_id: 'T12.L04' },
@@ -208,17 +208,17 @@ export default function T12L07_BidirectionalOTDR() {
         </p>
         <p>
           The OTDR derives total link loss by summing event losses and fiber attenuation slope.
-          The OTDR's systematic error (from backscatter-level differences and fiber type settings)
-          means the OTDR typically reads ~0.25 dB lower than the true insertion loss across the
-          whole link. This is the EXFO AN342 finding: ~0.25 dB whole-link systematic bias
-          (not per-event compounding).
+          On singlemode OSP links, a well-calibrated OTDR using bidirectional averaging closely
+          tracks OLTS readings — any residual difference typically reflects IOR group index
+          uncertainty, connector reflections at the launch point, or slight differences in
+          measurement reference conditions rather than a predictable systematic offset.
         </p>
         <p>
           The OLTS measures true insertion loss end-to-end. It's the Tier-1 measurement.
-          If OTDR says 8.2 dB and OLTS says 8.45 dB, the 0.25 dB difference is exactly what
-          you'd expect from the systematic bias. Both are valid within their defined measurement
-          methodologies — but for link budget acceptance (does the link meet the TIA loss model?),
-          the OLTS reading is the authoritative number.
+          If OTDR says 8.2 dB and OLTS says 8.45 dB, the difference reflects each instrument's
+          measurement methodology. Both are valid within their defined methodologies — but for
+          link budget acceptance (does the link meet the TIA loss model?), the OLTS reading
+          is the authoritative number.
         </p>
         <p>
           For splice acceptance (is each individual splice within spec?), the bidirectional OTDR

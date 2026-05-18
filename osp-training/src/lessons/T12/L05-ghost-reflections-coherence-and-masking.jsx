@@ -31,7 +31,7 @@ export const meta = {
     { term: 'ghost reflection', source_lesson_id: 'T12.L04' },
     { term: 'EDZ', source_lesson_id: 'T12.L04' },
     { term: 'ADZ', source_lesson_id: 'T12.L04' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'Rayleigh backscatter', source_lesson_id: 'T12.L03' },
   ],
   key_terms: [

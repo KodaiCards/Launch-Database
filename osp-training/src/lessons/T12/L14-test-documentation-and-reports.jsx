@@ -22,21 +22,21 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
-    'SOR file (Bellcore)',
+    'SOR file',
     'loss report',
     'test report components',
     'as-tested fiber record',
   ],
   vocabulary_assumed: [
-    { term: 'OLTS', source_lesson_id: 'T12.L01' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OLTS', source_lesson_id: 'T01.L08' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
     { term: 'bidirectional OTDR', source_lesson_id: 'T12.L07' },
     { term: 'event table', source_lesson_id: 'T12.L08' },
     { term: 'acceptance threshold', source_lesson_id: 'T12.L13' },
   ],
   key_terms: [
     {
-      term: 'SOR file (Bellcore)',
+      term: 'SOR file',
       definition:
         'The standard binary file format for storing OTDR traces, defined by Bellcore (now Telcordia) in GR-196-CORE (also referenced as SR-NWT-001756). Stands for Standard OTDR Record. SOR files contain the raw trace data, measurement parameters (wavelength, pulse width, EIOR, averaging time, range), event table, instrument identification, and test date/time. All major OTDR manufacturers produce SOR-format files. SOR files can be replayed in independent viewers (EXFO FastReporter, Greenlee, VIAVI SmartOTDR Viewer) for third-party review — critical for acceptance documentation where the owner verifies the contractor\'s data.',
     },

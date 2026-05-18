@@ -24,31 +24,31 @@ export const meta = {
   ],
   estimated_minutes: 35,
   vocabulary_introduced: [
-    'PMD (Polarization Mode Dispersion)',
-    'DGD (Differential Group Delay)',
-    'CD (Chromatic Dispersion)',
+    'PMD',
+    'DGD',
+    'CD',
     'PMD coefficient',
-    'FOTP (Fiber Optic Test Procedure)',
+    'FOTP',
   ],
   vocabulary_assumed: [
-    { term: 'G.652.D', source_lesson_id: 'T02.L08' },
+    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
     { term: 'wavelength window', source_lesson_id: 'T02.L07' },
-    { term: 'OLTS', source_lesson_id: 'T12.L01' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
+    { term: 'OLTS', source_lesson_id: 'T01.L08' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
   ],
   key_terms: [
     {
-      term: 'PMD (Polarization Mode Dispersion)',
+      term: 'PMD',
       definition:
         'A fiber impairment caused by slight differences in the propagation speed of two orthogonal polarization components of the optical signal. In a perfectly circular, stress-free singlemode fiber, both polarization states travel at the same speed. In real fiber (slightly elliptical core, internal stress), one polarization travels faster than the other. The resulting time delay between the two components (DGD) causes pulse broadening and inter-symbol interference at high bit rates. PMD is measured in picoseconds (ps) or normalized as a PMD coefficient in ps/√km.',
     },
     {
-      term: 'DGD (Differential Group Delay)',
+      term: 'DGD',
       definition:
         'The instantaneous time difference between the fast and slow polarization modes at a given wavelength. DGD varies randomly with wavelength and time (environmental stress, temperature). OTDR-measured PMD represents the mean DGD over a statistical distribution. System designers use PMD = coefficient × √(span length) to calculate the maximum expected DGD for budget compliance.',
     },
     {
-      term: 'CD (Chromatic Dispersion)',
+      term: 'CD',
       definition:
         'The broadening of optical pulses caused by different wavelengths (colors) of light traveling at different speeds in the fiber. Consists of two components: material dispersion (a property of the silica glass) and waveguide dispersion (a property of the fiber\'s index profile). CD is expressed in ps/(nm·km) — how many picoseconds of pulse broadening per nanometer of source linewidth per kilometer of fiber. G.652.D at 1550 nm: CD ≈ 17 ps/(nm·km). Zero-dispersion wavelength (ZDW) for G.652.D: typically 1302–1322 nm.',
     },
@@ -58,7 +58,7 @@ export const meta = {
         'The normalized PMD of a fiber expressed in ps/√km. Used to calculate the total PMD for any span length: PMD_total = PMD_coefficient × √(length_km). G.652.D maximum PMD coefficient = 0.2 ps/√km (ITU-T G.652 subpart D). Legacy G.652A and G.652C fibers have a maximum PMD coefficient of 0.5 ps/√km — these older fiber types cannot support 40 Gbps or higher without dispersion compensation. Modern OSP builds should use G.652.D.',
     },
     {
-      term: 'FOTP (Fiber Optic Test Procedure)',
+      term: 'FOTP',
       definition:
         'A TIA standard measurement procedure for a specific fiber optic parameter. FOTPs are numbered sequentially (e.g., TIA-455-61 = FOTP-61, the OTDR measurement procedure). Relevant FOTPs for PMD and CD: TIA-455-124 (PMD measurement) and TIA-455-168 (CD measurement). When a contract specifies "per FOTP-124," it means the PMD measurement must follow the TIA-455-124 procedure.',
     },

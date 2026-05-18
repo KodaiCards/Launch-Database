@@ -30,7 +30,7 @@ export const meta = {
     'dual-wavelength baseline',
   ],
   vocabulary_assumed: [
-    { term: 'OLTS', source_lesson_id: 'T12.L01' },
+    { term: 'OLTS', source_lesson_id: 'T01.L08' },
     { term: 'bidirectional OTDR', source_lesson_id: 'T12.L07' },
     { term: 'CIC sequence', source_lesson_id: 'T12.L11' },
     { term: 'dual-wavelength acceptance testing', source_lesson_id: 'T12.L01' },
@@ -103,8 +103,10 @@ export default function T12L13_AcceptanceTesting() {
           Where n_connectors = number of mated connector pairs in the channel (exclude launch/receive
           reference cords) and L_km = total fiber length in km. Note: 0.4 dB/km is the TIA-568.3-D
           cabling standard's design allowance for OS2 fiber; actual fiber attenuation for G.652.D
-          is typically ≤ 0.35 dB/km at 1310 nm and ≤ 0.20 dB/km at 1550 nm — the cabling standard
-          includes a conservative margin.
+          is typically ≤ 0.32–0.36 dB/km at 1310 nm and ≤ 0.18–0.22 dB/km at 1550 nm — well below
+          the ITU-T G.652.D spec max of 0.40 dB/km @ 1310 nm and 0.30 dB/km @ 1550 nm. The cabling
+          standard's 0.4 dB/km allowance provides a conservative margin against both spec-max fiber
+          and installation aging.
         </p>
 
         <WorkedExample
@@ -207,8 +209,9 @@ export default function T12L13_AcceptanceTesting() {
         <ol>
           <li>
             <strong>Fiber loss:</strong> span length (km) × fiber attenuation (dB/km). Use the
-            ITU-T G.652.D maximum (≤ 0.35 dB/km at 1310 nm, ≤ 0.20 dB/km at 1550 nm) for
-            a conservative upper bound.
+            ITU-T G.652.D spec maximum (≤ 0.40 dB/km at 1310 nm, ≤ 0.30 dB/km at 1550 nm) for
+            a conservative upper bound. Using spec-max values ensures the budget works even with
+            the worst-qualifying fiber and accounts for aging over the design life.
           </li>
           <li>
             <strong>Connector loss:</strong> number of mated pairs × maximum connector insertion
