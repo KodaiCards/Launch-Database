@@ -95,7 +95,7 @@ export default function L08() {
           from the as-built records. If your as-built records are organized to match the Part 32
           account structure, close-out is straightforward. If they are not, someone has to
           sort through thousands of feet of cable footage to figure out which footage is aerial
-          (§32.2420), which is underground conduit (§32.2423), and which is direct-buried (§32.2426).
+          (§32.2420), which is underground conduit (§32.2421), and which is direct-buried (§32.2423).
         </p>
 
         <p>
@@ -165,13 +165,9 @@ export default function L08() {
               <td>Conduit Systems</td>
               <td>
                 Conduit footage by type (HDPE, PVC, steel), innerduct, handholes, vaults, manholes,
-                conduit end-caps
+                conduit end-caps, inline splice closures (RUS practice: booked as accessory conduit
+                system hardware)
               </td>
-            </tr>
-            <tr>
-              <td>§32.2682</td>
-              <td>Other Terminal Equipment</td>
-              <td>Splice closures, pedestals, splice hardware installed at customer endpoints</td>
             </tr>
           </tbody>
         </table>
@@ -217,8 +213,11 @@ export default function L08() {
             <tr>
               <td>Splice closure (enclosure)</td>
               <td>Yes</td>
-              <td>§32.2682</td>
-              <td>Each closure tracked individually by serial number or location ID</td>
+              <td>§32.2441</td>
+              <td>
+                RUS practice: inline splice closures are booked as accessory conduit-system hardware
+                under §32.2441. Each closure tracked individually by location ID.
+              </td>
             </tr>
             <tr>
               <td>Splice tray (inside a closure)</td>
@@ -290,9 +289,9 @@ export default function L08() {
                 '0.4 miles = 2,112 LF of direct-buried 96-count fiber → §32.2423 (Buried Cable). No conduit, so no §32.2441 entry. If innerduct was used inside the conduit on the 2.0-mile segment, the innerduct footage would be a separate sub-item within §32.2441.',
             },
             {
-              label: '3 Splice Closures — §32.2682',
+              label: '3 Splice Closures — §32.2441',
               content:
-                '3 splice closures, each with 2 splice trays → §32.2682. Unit of property is the closure, not the trays. On Form 219 line for §32.2682: Quantity = 3, Description = "96-count inline splice closure, above-grade pedestal mount." Each closure gets an individual administration record (location record) in TIA-606-C, referenced by closure ID (e.g., IFB-SC-01 through IFB-SC-03).',
+                '3 splice closures, each with 2 splice trays → §32.2441 (Conduit Systems, accessory hardware — RUS standard practice). Unit of property is the closure, not the trays. On Form 219 line for §32.2441: Quantity = 3 (closures), Description = "96-count inline splice closure, above-grade pedestal mount." Each closure gets an individual administration record (location record) in TIA-606-C, referenced by closure ID (e.g., IFB-SC-01 through IFB-SC-03).',
             },
             {
               label: '6 Handholes — §32.2441',
@@ -302,7 +301,7 @@ export default function L08() {
             {
               label: 'Form 219 Summary for This Segment',
               content:
-                '§32.2420: 9,504 LF aerial 96-count fiber + lashing hardware | §32.2421: 10,560 LF underground 96-count fiber | §32.2423: 2,112 LF direct-buried 96-count fiber | §32.2441: 10,560 LF HDPE conduit + 6 handholes | §32.2682: 3 inline splice closures. Total 5 account line items from one 4.2-mile segment.',
+                '§32.2420: 9,504 LF aerial 96-count fiber + lashing hardware | §32.2421: 10,560 LF underground 96-count fiber | §32.2423: 2,112 LF direct-buried 96-count fiber | §32.2441: 10,560 LF HDPE conduit + 6 handholes + 3 inline splice closures. Total 4 account line items from one 4.2-mile segment.',
             },
           ]}
         />
@@ -401,7 +400,7 @@ export default function L08() {
             question:
               'A RUS borrower installs 2,500 feet of fiber optic cable in HDPE conduit underground. Under 47 CFR Part 32, the fiber cable and the conduit are classified in which accounts, respectively?',
             options: [
-              'Both in §32.2423 (Buried Cable and Wire) as a single item',
+              'Both in §32.2423 (Buried Cable) as a single item',
               'Fiber in §32.2421 (Underground Cable and Wire); conduit in §32.2441 (Conduit Systems)',
               'Fiber in §32.2441 (Conduit Systems) because it is inside conduit; conduit is not separately tracked',
               'Both in §32.2410 (Cable and Wire Facilities) as the parent account',

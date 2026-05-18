@@ -334,22 +334,22 @@ export default function L07() {
             <tr>
               <td>§32.2420</td>
               <td>Aerial Cable and Wire</td>
-              <td>Messenger, hardware, lashing wire, ADSS footage</td>
+              <td>Aerial fiber footage, messenger strand, lashing wire, ADSS footage</td>
+            </tr>
+            <tr>
+              <td>§32.2421</td>
+              <td>Underground Cable and Wire</td>
+              <td>Fiber cable installed inside conduit underground</td>
             </tr>
             <tr>
               <td>§32.2423</td>
-              <td>Underground Cable and Wire</td>
-              <td>Direct buried and conduit footage, splice closures, handholes, vaults</td>
-            </tr>
-            <tr>
-              <td>§32.2426</td>
-              <td>Buried Cable and Wire</td>
-              <td>Direct buried cable footage without conduit</td>
+              <td>Buried Cable</td>
+              <td>Direct-buried fiber cable without conduit</td>
             </tr>
             <tr>
               <td>§32.2441</td>
               <td>Conduit Systems</td>
-              <td>Conduit footage by type, innerduct, end plugs</td>
+              <td>Conduit footage by type, innerduct, handholes, vaults, inline splice closures</td>
             </tr>
           </tbody>
         </table>
