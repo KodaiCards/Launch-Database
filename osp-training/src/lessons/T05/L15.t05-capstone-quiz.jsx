@@ -25,7 +25,7 @@ export const meta = {
   vocabulary_introduced: [],
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
-    { term: 'Rule 232', source_lesson_id: 'T05.L02' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'Rule 235', source_lesson_id: 'T05.L03' },
     { term: 'grade of construction', source_lesson_id: 'T05.L04' },
     { term: 'Grade B', source_lesson_id: 'T05.L04' },

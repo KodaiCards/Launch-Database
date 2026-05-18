@@ -39,7 +39,7 @@ export const meta = {
     { term: 'OTMR', source_lesson_id: 'T05.L09' },
     { term: 'simple make-ready', source_lesson_id: 'T05.L09' },
     { term: 'complex make-ready', source_lesson_id: 'T05.L09' },
-    { term: 'Rule 232', source_lesson_id: 'T05.L02' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'Rule 235', source_lesson_id: 'T05.L03' },
     { term: 'grade of construction', source_lesson_id: 'T05.L04' },
     { term: 'attachment', source_lesson_id: 'T01.L02' },

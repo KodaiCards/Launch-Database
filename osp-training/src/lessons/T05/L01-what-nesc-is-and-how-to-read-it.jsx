@@ -39,8 +39,8 @@ export const meta = {
     { term: 'attachment', source_lesson_id: 'T01.L02' },
     { term: 'supply space', source_lesson_id: 'T01.L02' },
     { term: 'communication space', source_lesson_id: 'T01.L02' },
-    { term: 'RUS', source_lesson_id: 'T01.L09' },
-    { term: 'TIA', source_lesson_id: 'T01.L09' },
+    { term: 'RUS', source_lesson_id: 'T01.L01' },
+    { term: 'TIA', source_lesson_id: 'T01.L08' },
   ],
   key_terms: [
     {

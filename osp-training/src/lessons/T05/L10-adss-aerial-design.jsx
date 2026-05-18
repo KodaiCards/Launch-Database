@@ -39,7 +39,7 @@ export const meta = {
     { term: 'loading district', source_lesson_id: 'T05.L06' },
     { term: 'ice load formula', source_lesson_id: 'T05.L06' },
     { term: 'Light loading district', source_lesson_id: 'T05.L06' },
-    { term: 'Rule 232', source_lesson_id: 'T05.L02' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'joint use', source_lesson_id: 'T05.L08' },
     { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'span', source_lesson_id: 'T01.L02' },

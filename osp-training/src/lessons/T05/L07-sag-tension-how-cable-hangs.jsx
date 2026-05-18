@@ -42,7 +42,7 @@ export const meta = {
     { term: 'combined load', source_lesson_id: 'T05.L06' },
     { term: 'pole loading', source_lesson_id: 'T05.L05' },
     { term: 'wind span', source_lesson_id: 'T05.L05' },
-    { term: 'Rule 232', source_lesson_id: 'T05.L02' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'design clearance margin', source_lesson_id: 'T05.L02' },
     { term: 'messenger', source_lesson_id: 'T01.L03' },
     { term: 'EDS', source_lesson_id: 'T03.L04' },

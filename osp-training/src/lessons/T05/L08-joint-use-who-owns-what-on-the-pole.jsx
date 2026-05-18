@@ -37,7 +37,7 @@ export const meta = {
     { term: 'NESC', source_lesson_id: 'T05.L01' },
     { term: 'supply space', source_lesson_id: 'T01.L02' },
     { term: 'communication space', source_lesson_id: 'T01.L02' },
-    { term: 'Rule 232', source_lesson_id: 'T05.L02' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'Rule 235', source_lesson_id: 'T05.L03' },
     { term: 'communication worker safety zone', source_lesson_id: 'T05.L03' },
     { term: 'messenger', source_lesson_id: 'T01.L03' },

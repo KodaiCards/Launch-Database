@@ -51,7 +51,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OTMR', source_lesson_id: 'T08.L01' },
-    { term: 'pole owner', source_lesson_id: 'T05.L03' },
+    { term: 'pole owner', source_lesson_id: 'T01.L02' },
     { term: 'attachment applicant', source_lesson_id: 'T08.L01' },
     { term: 'multi-party make-ready', source_lesson_id: 'T08.L01' },
     { term: 'pole audit', source_lesson_id: 'T07.L02' },

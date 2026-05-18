@@ -32,7 +32,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
     { term: 'AHJ', source_lesson_id: 'T05.L01' },
-    { term: 'Rule 232', source_lesson_id: 'T05.L02' },
+    { term: 'Rule 232', source_lesson_id: 'T05.L01' },
     { term: 'supply space', source_lesson_id: 'T01.L02' },
     { term: 'communication space', source_lesson_id: 'T01.L02' },
     { term: 'climbing space', source_lesson_id: 'T01.L02' },
