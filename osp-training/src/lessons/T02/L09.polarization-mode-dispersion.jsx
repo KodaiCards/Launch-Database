@@ -102,6 +102,10 @@ export default function T02L09_PolarizationModeDispersion() {
       <section data-tier="working">
         <h2>PMD — The Details</h2>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T02.L03 (Dispersion)</strong>, you learned that chromatic dispersion blurs signals because different WAVELENGTHS travel at different speeds. PMD is a sibling impairment where the two POLARIZATION states of the same wavelength travel at different speeds. Both limit long-distance, high-bit-rate transmission.
+        </p>
+
         <h3 className="mt-4 font-semibold">Polarization of light — very briefly</h3>
         <p>
           Light is a transverse electromagnetic wave — it oscillates perpendicular to its

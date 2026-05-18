@@ -121,6 +121,11 @@ export default function T02L03_DispersionWhySignalsBlur() {
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Chromatic Dispersion (CD) — the Main Mechanism in SMF</h2>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T02.L02 (Attenuation)</strong>, you learned that signal loses POWER over distance. Now: dispersion is the problem where signal arrives with enough POWER but blurred in time. These are TWO SEPARATE link-limiting mechanisms — you must design for both.
+        </p>
+
         <p>
           In single-mode fiber (SMF), the dominant dispersion mechanism is <strong>chromatic
           dispersion (CD)</strong>. Every real light source emits a range of wavelengths —

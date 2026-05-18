@@ -55,6 +55,10 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
           dB on the job. You need to know three key facts and one formula. That's it.
         </p>
 
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, we introduced attenuation as signal loss measured in dB/km (decibels per kilometer). This lesson unpacks what a "decibel" actually is and how the dB unit makes loss calculations simple instead of complex.
+        </div>
+
         <h3 className="mt-5 font-semibold">The three facts you must know cold</h3>
         <ol className="list-decimal pl-5 space-y-3 mt-2">
           <li>

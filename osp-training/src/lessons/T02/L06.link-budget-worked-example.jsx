@@ -65,6 +65,10 @@ export default function T02L06_LinkBudgetWorkedExample() {
           If it's over, you don't — and you need to redesign the trip.
         </p>
 
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> You learned the building blocks in <strong>T02.L02</strong> (attenuation — signal loss as light travels through fiber), <strong>T02.L05</strong> (decibels — the arithmetic that makes losses simple to add), and <strong>T02.L02</strong> (dB/km — how attenuation is specified). This lesson brings all three together into one calculation: the link budget.
+        </div>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">
@@ -130,6 +134,11 @@ export default function T02L06_LinkBudgetWorkedExample() {
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>A Complete Worked Budget</h2>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L02 Lesson (Attenuation)</strong> — signal loses power as it travels through fiber, and losses are measured in dB/km. Recall from <strong>T02.L05 (Decibels Without the Algebra Fear)</strong> — the dB unit lets us add losses instead of multiplying them. Now we'll use both concepts together in a single calculation.
+        </p>
+
         <p>
           Let's walk through a full link budget for a real-world scenario:
           an 18 km single-mode OSP fiber run at 1550 nm, with 6 fusion splices,

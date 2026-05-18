@@ -78,9 +78,9 @@ export default function T02L07_WavelengthWindows() {
           frequency. Fiber systems choose wavelengths in the same way — pick the "station" that
           gives the lowest noise (attenuation) and best range for the job.
         </p>
-        <p className="mt-3 italic text-slate-400">
-          (Quick refresher: from T02.L02, <strong>attenuation</strong> is the loss rate in dB/km — the reason we pick 1550 nm over other wavelengths is that G.652.D SMF has the lowest attenuation there. From T02.L03, <strong>chromatic dispersion</strong> is pulse spreading — 1550 nm has MORE dispersion than 1310 nm, so longer links need compensation.)
-        </p>
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> From <strong>T02.L02</strong>, attenuation is signal loss measured in dB/km — different wavelengths have different attenuation rates in the same fiber. From <strong>T02.L03</strong>, chromatic dispersion is pulse broadening — longer wavelengths have more dispersion. This lesson explains why OSP systems pick specific wavelengths based on these two properties.
+        </div>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
@@ -140,6 +140,10 @@ export default function T02L07_WavelengthWindows() {
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>The Five Key Wavelengths</h2>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L02 (Attenuation)</strong> and <strong>T02.L03 (Dispersion)</strong> — the fiber's loss and pulse broadening both depend on which wavelength you use. This lesson shows you why OSP systems pick specific wavelengths to balance low attenuation (e.g., 1550 nm) against acceptable dispersion (e.g., prefer 1310 nm for short runs to avoid dispersion penalty).
+        </p>
 
         <h3 className="mt-4 font-semibold">850 nm — Multimode short-reach</h3>
         <p>
