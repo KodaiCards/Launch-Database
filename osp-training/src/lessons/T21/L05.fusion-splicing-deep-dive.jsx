@@ -273,8 +273,8 @@ export default function T21L05_FusionSplicingDeepDive() {
         questions={[
           {
             id: 'T21.L05.Q1',
-            type: 'multiple-choice',
-            question: 'What is the OSP standard field acceptance criterion for a single fusion splice?',
+            type: 'mc',
+            prompt: 'What is the OSP standard field acceptance criterion for a single fusion splice?',
             options: [
               { id: 'a', text: 'EL ≤ 0.1 dB' },
               { id: 'b', text: 'EL ≤ 0.3 dB', isCorrect: true },
@@ -285,7 +285,7 @@ export default function T21L05_FusionSplicingDeepDive() {
           },
           {
             id: 'T21.L05.Q2',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'You insert two cleaved fibers into the splicer and see they are misaligned on the microscope display. What should you do?',
             options: [
               { id: 'a', text: 'Force the splice anyway; alignment can be close enough' },
@@ -297,7 +297,7 @@ export default function T21L05_FusionSplicingDeepDive() {
           },
           {
             id: 'T21.L05.Q3',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'A splice shows EL = 0.08 dB in the field (excellent), but OTDR later shows 0.6 dB at that location. What is the most likely cause?',
             options: [
               { id: 'a', text: 'The OTDR is miscalibrated' },
@@ -309,8 +309,8 @@ export default function T21L05_FusionSplicingDeepDive() {
           },
           {
             id: 'T21.L05.Q4',
-            type: 'multiple-choice',
-            question: 'What should you do if the fusion splicer displays "no arc" error when attempting to fuse two fibers?',
+            type: 'mc',
+            question: 'What should you do if the fusion splicer displays 'no arc" error when attempting to fuse two fibers?',
             options: [
               { id: 'a', text: 'Immediately increase the arc power setting to maximum' },
               { id: 'b', text: 'Clean the electrodes and check fiber alignment; re-try', isCorrect: true },

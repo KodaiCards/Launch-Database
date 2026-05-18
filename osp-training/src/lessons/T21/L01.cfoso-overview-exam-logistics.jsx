@@ -27,10 +27,10 @@ export const meta = {
     'Blueprint (exam scope definition)',
   ],
   vocabulary_assumed: [
-    { term: 'fiber optics', source_lesson_id: 'T01.L02' },
+    { term: 'fiber optics', source_lesson_id: 'T02.L01' },
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'CFOT', source_lesson_id: 'T01.L01' },
-    { term: 'splice', source_lesson_id: 'T11.L01' },
+    { term: 'splice', source_lesson_id: 'T11.L02' },
   ],
 };
 
@@ -289,47 +289,47 @@ export default function T21L01_CFOSOOverview() {
             id: 'T21-L01-Q1',
             type: 'mc',
             prompt: 'CFOS-O is most similar to which certification pathway?',
-            options: [
-              { key: 'a', text: 'CFOT (entry-level generalist)' },
-              { key: 'b', text: 'CFOS-T (inside plant specialist)' },
-              { key: 'c', text: 'Advanced CFOT with OSP specialization' },
-              { key: 'd', text: 'CompTIA Network+ for fiber technicians' },
+            choices: [
+              'CFOT (entry-level generalist)',
+              'CFOS-T (inside plant specialist)',
+              'Advanced CFOT with OSP specialization',
+              'CompTIA Network+ for fiber technicians',
             ],
-            correct: 'c',
+            answerIndex: 2,
           },
           {
             id: 'T21-L01-Q2',
             type: 'mc',
             prompt: 'What is the written exam pass threshold for CFOS-O?',
-            options: [
-              { key: 'a', text: '60% correct' },
-              { key: 'b', text: '70% correct' },
-              { key: 'c', text: '80% correct' },
-              { key: 'd', text: '85% correct' },
+            choices: [
+              '60% correct',
+              '70% correct',
+              '80% correct',
+              '85% correct',
             ],
-            correct: 'b',
+            answerIndex: 1,
           },
           {
             id: 'T21-L01-Q3',
             type: 'mc',
             prompt: 'Of the 7 CFOS-O domains, which carries the heaviest exam weight?',
-            options: [
-              { key: 'a', text: 'Safety + workmanship' },
-              { key: 'b', text: 'Fiber fundamentals' },
-              { key: 'c', text: 'OSP cable types + installation' },
-              { key: 'd', text: 'Make-ready + design review' },
+            choices: [
+              'Safety + workmanship',
+              'Fiber fundamentals',
+              'OSP cable types + installation',
+              'Make-ready + design review',
             ],
-            correct: 'c',
+            answerIndex: 2,
           },
           {
             id: 'T21-L01-Q4',
             type: 'mc',
             prompt: 'True or false: If you pass the written exam but fail the practical, you can retake only the practical exam.',
-            options: [
-              { key: 'a', text: 'True — you keep the written pass' },
-              { key: 'b', text: 'False — you must retake both written and practical' },
+            choices: [
+              'True — you keep the written pass',
+              'False — you must retake both written and practical',
             ],
-            correct: 'b',
+            answerIndex: 1,
           },
         ]}
       />

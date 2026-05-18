@@ -267,8 +267,8 @@ export default function T21L06_OTDRTesting() {
         questions={[
           {
             id: 'T21.L06.Q1',
-            type: 'multiple-choice',
-            question: 'What is the OSP acceptance criterion for attenuation coefficient (slope) of singlemode fiber at 1550 nm?',
+            type: 'mc',
+            prompt: 'What is the OSP acceptance criterion for attenuation coefficient (slope) of singlemode fiber at 1550 nm?',
             options: [
               { id: 'a', text: '≤0.15 dB/km' },
               { id: 'b', text: '≤0.25 dB/km', isCorrect: true },
@@ -279,7 +279,7 @@ export default function T21L06_OTDRTesting() {
           },
           {
             id: 'T21.L06.Q2',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'On an OTDR trace, a fusion splice appears as which characteristic signature?',
             options: [
               { id: 'a', text: 'A sharp positive peak (strong reflection)' },
@@ -291,7 +291,7 @@ export default function T21L06_OTDRTesting() {
           },
           {
             id: 'T21.L06.Q3',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'Your OTDR shows Splice A at 3.5 km with only 0.05 dB loss (excellent), but 6 hours later OTDR re-test shows 0.8 dB at the same location. What is the most likely explanation?',
             options: [
               { id: 'a', text: 'The OTDR calibration drifted between tests' },
@@ -303,8 +303,8 @@ export default function T21L06_OTDRTesting() {
           },
           {
             id: 'T21.L06.Q4',
-            type: 'multiple-choice',
-            question: 'When setting up an OTDR in the field, what is the purpose of establishing a "launch condition"?',
+            type: 'mc',
+            question: 'When setting up an OTDR in the field, what is the purpose of establishing a 'launch condition"?',
             options: [
               { id: 'a', text: 'To increase the OTDR range by 50%' },
               { id: 'b', text: 'To stabilize the light source and eliminate dead zone artifacts near the start of the trace', isCorrect: true },

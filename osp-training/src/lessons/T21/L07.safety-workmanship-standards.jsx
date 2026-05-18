@@ -244,8 +244,8 @@ export default function T21L07_SafetyWorkmanship() {
         questions={[
           {
             id: 'T21.L07.Q1',
-            type: 'multiple-choice',
-            question: 'Per NESC Rule 234, what is the minimum horizontal clearance from a fiber climber\'s body/tools to a 0–750V power line on a joint-use pole?',
+            type: 'mc',
+            prompt: 'Per NESC Rule 234, what is the minimum horizontal clearance from a fiber climber\'s body/tools to a 0–750V power line on a joint-use pole?',
             options: [
               { id: 'a', text: '6 inches' },
               { id: 'b', text: '12 inches', isCorrect: true },
@@ -256,7 +256,7 @@ export default function T21L07_SafetyWorkmanship() {
           },
           {
             id: 'T21.L07.Q2',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'What is required before a worker enters a confined space (vault) to perform fiber splicing?',
             options: [
               { id: 'a', text: 'Visual inspection for hazards is sufficient' },
@@ -268,7 +268,7 @@ export default function T21L07_SafetyWorkmanship() {
           },
           {
             id: 'T21.L07.Q3',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'When looking into a fiber end to check for light, what precaution must be taken for 1550 nm light (invisible to the eye)?',
             options: [
               { id: 'a', text: 'Use a simple visual inspection; infrared is harmless' },
@@ -280,7 +280,7 @@ export default function T21L07_SafetyWorkmanship() {
           },
           {
             id: 'T21.L07.Q4',
-            type: 'multiple-choice',
+            type: 'mc',
             question: 'Per OSHA 1910.268, what must be documented before pole climbing work begins?',
             options: [
               { id: 'a', text: 'A weather forecast' },

@@ -28,8 +28,8 @@ export const meta = {
     'Credential maintenance (renewal requirements)',
   ],
   vocabulary_assumed: [
-    { term: 'fiber optics', source_lesson_id: 'T01.L01' },
-    { term: 'splice', source_lesson_id: 'T11.L01' },
+    { term: 'fiber optics', source_lesson_id: 'T02.L01' },
+    { term: 'splice', source_lesson_id: 'T11.L02' },
     { term: 'OTDR', source_lesson_id: 'T12.L01' },
     { term: 'safety', source_lesson_id: 'T18.L01' },
   ],

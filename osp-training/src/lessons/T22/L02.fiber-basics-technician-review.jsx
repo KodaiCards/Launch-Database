@@ -21,7 +21,6 @@ export const meta = {
     'Single-mode fiber (SMF)',
     'Multimode fiber (MMF)',
     'Core diameter',
-    'Cladding',
     'Modal dispersion',
     'Attenuation (dB/km)',
     'G.652.D (standard single-mode)',
@@ -29,10 +28,11 @@ export const meta = {
     'Cutoff wavelength (λc)',
   ],
   vocabulary_assumed: [
-    { term: 'fiber optic', source_lesson_id: 'T01.L01' },
-    { term: 'wavelength', source_lesson_id: 'T01.L02' },
-    { term: 'dB (decibel)', source_lesson_id: 'T01.L03' },
-    { term: 'refraction', source_lesson_id: 'T01.L02' },
+    { term: 'fiber optic', source_lesson_id: 'T02.L01' },
+    { term: 'wavelength', source_lesson_id: 'T02.L02' },
+    { term: 'dB (decibel)', source_lesson_id: 'T02.L03' },
+    { term: 'refraction', source_lesson_id: 'T02.L02' },
+    { term: 'cladding', source_lesson_id: 'T02.L01' },
   ],
 };
 

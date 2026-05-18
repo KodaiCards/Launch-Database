@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-18T14:41:34.137Z",
-  "lesson_count": 230,
+  "generated_at": "2026-05-18T15:19:59.989Z",
+  "lesson_count": 249,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -1635,7 +1635,157 @@
     "T20.L06": [],
     "T20.L07": [],
     "T20.L08": [],
-    "T20.L09": []
+    "T20.L09": [],
+    "T21.L01": [
+      "CFOS-O (Certified Fiber Optic Specialist, Outside Plant)",
+      "KSAs (Knowledge, Skills, Abilities)",
+      "Practical exam (hands-on component)",
+      "Domain (exam subject area)",
+      "Blueprint (exam scope definition)"
+    ],
+    "T21.L02": [
+      "Mode stripper (mode conditioning for multimode launch)",
+      "Spectral window (1310 vs 1490 vs 1550 nm applications)"
+    ],
+    "T21.L03": [
+      "Aerial installation",
+      "Underground installation",
+      "Direct burial",
+      "Conduit-based installation",
+      "Cable pulling tension",
+      "Bend radius (field context)",
+      "Clearance (NESC)"
+    ],
+    "T21.L04": [
+      "Cable jacket stripping",
+      "Buffer removal",
+      "Cleaving (fiber end preparation)",
+      "Mechanical connector",
+      "Pigtail termination",
+      "Connector polish (endface quality)",
+      "Return loss (connector quality metric)"
+    ],
+    "T21.L05": [
+      "Arc discharge (fusion heating)",
+      "Splicer alignment mode",
+      "Estimated loss (splicer display)",
+      "Splice loss verification",
+      "Micromotion compensation",
+      "Contamination detection",
+      "Splice enclosure / heat-shrink sleeve"
+    ],
+    "T21.L06": [
+      "OTDR trace",
+      "Launch condition (reference pulse)",
+      "Splice signature (positive vs. negative peak)",
+      "Connector reflection (reflection peak)",
+      "Attenuation coefficient (dB/km)",
+      "Loss per unit length",
+      "Event loss (splice or connector)"
+    ],
+    "T21.L07": [
+      "Competent climber",
+      "Rescue plan",
+      "Electrical hazard awareness",
+      "PPE (Personal Protective Equipment)",
+      "Tool inspection and maintenance",
+      "Fiber safety (eye hazard awareness)",
+      "Qualified person (OSHA definition)"
+    ],
+    "T21.L08": [
+      "Make-ready (pre-deployment work)",
+      "Design review (checkpoint before build)",
+      "Power coordination (utility notification)",
+      "Pole inspection (as-built vs. as-designed)",
+      "Clearance verification (final check)",
+      "Conflict resolution (design vs. site reality)",
+      "Burndown (resolve issues before build)"
+    ],
+    "T21.L09": [],
+    "T21.L10": [],
+    "T22.L01": [
+      "CFOT (Certified Fiber Optic Technician)",
+      "FOA (Fiber Optic Association)",
+      "Domain (exam subject area)",
+      "Blueprint (exam scope and weighting)",
+      "Pass rate (percentage required to pass)",
+      "Credential maintenance (renewal requirements)"
+    ],
+    "T22.L02": [
+      "Single-mode fiber (SMF)",
+      "Multimode fiber (MMF)",
+      "Core diameter",
+      "Cladding",
+      "Modal dispersion",
+      "Attenuation (dB/km)",
+      "G.652.D (standard single-mode)",
+      "OM3, OM4, OM5 (multimode grades)",
+      "Cutoff wavelength (λc)"
+    ],
+    "T22.L03": [
+      "fusion splicer",
+      "cleave",
+      "stripper",
+      "splice loss",
+      "ARC time",
+      "oven mode",
+      "real-time monitor",
+      "heat-shrink sleeve",
+      "splice protector sleeve",
+      "mechanical splice"
+    ],
+    "T22.L04": [
+      "OTDR (Optical Time-Domain Reflectometer)",
+      "launch cable",
+      "dead zone",
+      "backscatter coefficient",
+      "acceptance test",
+      "singlemode window (1310/1550 nm)",
+      "insertion loss",
+      "reflectance",
+      "event",
+      "passive test"
+    ],
+    "T22.L05": [
+      "cable pulling",
+      "pulling tension (maximum allowable)",
+      "slack storage",
+      "bend radius (installation vs. long-term)",
+      "termination",
+      "polishing (fiber end prep)",
+      "cleaver (mechanical)",
+      "polishing pad"
+    ],
+    "T22.L06": [
+      "PPE (Personal Protective Equipment)",
+      "OSHA 1910.147 (Lockout-Tagout)",
+      "OSHA 1910.1200 (GHS)",
+      "confined space",
+      "grounding",
+      "fall protection",
+      "incident report",
+      "competent person"
+    ],
+    "T22.L07": [
+      "fault isolation",
+      "non-destructive testing",
+      "OTDR signature",
+      "intermittent failure",
+      "fiber break (hard break)",
+      "signal degradation",
+      "splice loss spike"
+    ],
+    "T22.L08": [
+      "mock exam",
+      "timed test",
+      "domain breakdown",
+      "passing score"
+    ],
+    "T22.L09": [
+      "second mock exam",
+      "focused review",
+      "certification readiness"
+    ]
   },
   "all_vocabulary_introduced": {
     "osp": [
@@ -1770,7 +1920,8 @@
       "T01.L04"
     ],
     "slack storage": [
-      "T01.L04"
+      "T01.L04",
+      "T22.L05"
     ],
     "survey": [
       "T01.L05"
@@ -2009,7 +2160,8 @@
       "T02.L01"
     ],
     "cladding": [
-      "T02.L01"
+      "T02.L01",
+      "T22.L02"
     ],
     "na": [
       "T02.L01"
@@ -2058,7 +2210,8 @@
       "T02.L03"
     ],
     "modal dispersion": [
-      "T02.L03"
+      "T02.L03",
+      "T22.L02"
     ],
     "pmd": [
       "T02.L03",
@@ -3744,7 +3897,8 @@
       "T11.L04"
     ],
     "cleave": [
-      "T11.L04"
+      "T11.L04",
+      "T22.L03"
     ],
     "align": [
       "T11.L04"
@@ -3808,7 +3962,8 @@
       "T11.L07"
     ],
     "mechanical splice": [
-      "T11.L08"
+      "T11.L08",
+      "T22.L03"
     ],
     "index-matching gel": [
       "T11.L08"
@@ -3964,7 +4119,8 @@
       "T12.L04"
     ],
     "launch cable": [
-      "T12.L04"
+      "T12.L04",
+      "T22.L04"
     ],
     "receive cable": [
       "T12.L04"
@@ -4216,7 +4372,8 @@
       "T13.L12"
     ],
     "grounding": [
-      "T14.L01"
+      "T14.L01",
+      "T22.L06"
     ],
     "bonding": [
       "T14.L01"
@@ -4826,7 +4983,8 @@
       "T18.L01"
     ],
     "competent person": [
-      "T18.L01"
+      "T18.L01",
+      "T22.L06"
     ],
     "lockout-tagout": [
       "T18.L02"
@@ -4841,7 +4999,8 @@
       "T18.L02"
     ],
     "confined space": [
-      "T18.L03"
+      "T18.L03",
+      "T22.L06"
     ],
     "permit-required confined space": [
       "T18.L03"
@@ -4856,7 +5015,8 @@
       "T18.L03"
     ],
     "fall protection": [
-      "T18.L04"
+      "T18.L04",
+      "T22.L06"
     ],
     "lanyard": [
       "T18.L04"
@@ -5130,6 +5290,314 @@
     ],
     "rus covenant": [
       "T20.L01"
+    ],
+    "cfos-o (certified fiber optic specialist, outside plant)": [
+      "T21.L01"
+    ],
+    "ksas (knowledge, skills, abilities)": [
+      "T21.L01"
+    ],
+    "practical exam (hands-on component)": [
+      "T21.L01"
+    ],
+    "domain (exam subject area)": [
+      "T21.L01",
+      "T22.L01"
+    ],
+    "blueprint (exam scope definition)": [
+      "T21.L01"
+    ],
+    "mode stripper (mode conditioning for multimode launch)": [
+      "T21.L02"
+    ],
+    "spectral window (1310 vs 1490 vs 1550 nm applications)": [
+      "T21.L02"
+    ],
+    "aerial installation": [
+      "T21.L03"
+    ],
+    "underground installation": [
+      "T21.L03"
+    ],
+    "direct burial": [
+      "T21.L03"
+    ],
+    "conduit-based installation": [
+      "T21.L03"
+    ],
+    "cable pulling tension": [
+      "T21.L03"
+    ],
+    "bend radius (field context)": [
+      "T21.L03"
+    ],
+    "clearance (nesc)": [
+      "T21.L03"
+    ],
+    "cable jacket stripping": [
+      "T21.L04"
+    ],
+    "buffer removal": [
+      "T21.L04"
+    ],
+    "cleaving (fiber end preparation)": [
+      "T21.L04"
+    ],
+    "mechanical connector": [
+      "T21.L04"
+    ],
+    "pigtail termination": [
+      "T21.L04"
+    ],
+    "connector polish (endface quality)": [
+      "T21.L04"
+    ],
+    "return loss (connector quality metric)": [
+      "T21.L04"
+    ],
+    "arc discharge (fusion heating)": [
+      "T21.L05"
+    ],
+    "splicer alignment mode": [
+      "T21.L05"
+    ],
+    "estimated loss (splicer display)": [
+      "T21.L05"
+    ],
+    "splice loss verification": [
+      "T21.L05"
+    ],
+    "micromotion compensation": [
+      "T21.L05"
+    ],
+    "contamination detection": [
+      "T21.L05"
+    ],
+    "splice enclosure / heat-shrink sleeve": [
+      "T21.L05"
+    ],
+    "otdr trace": [
+      "T21.L06"
+    ],
+    "launch condition (reference pulse)": [
+      "T21.L06"
+    ],
+    "splice signature (positive vs. negative peak)": [
+      "T21.L06"
+    ],
+    "connector reflection (reflection peak)": [
+      "T21.L06"
+    ],
+    "attenuation coefficient (db/km)": [
+      "T21.L06"
+    ],
+    "loss per unit length": [
+      "T21.L06"
+    ],
+    "event loss (splice or connector)": [
+      "T21.L06"
+    ],
+    "competent climber": [
+      "T21.L07"
+    ],
+    "rescue plan": [
+      "T21.L07"
+    ],
+    "electrical hazard awareness": [
+      "T21.L07"
+    ],
+    "ppe (personal protective equipment)": [
+      "T21.L07",
+      "T22.L06"
+    ],
+    "tool inspection and maintenance": [
+      "T21.L07"
+    ],
+    "fiber safety (eye hazard awareness)": [
+      "T21.L07"
+    ],
+    "qualified person (osha definition)": [
+      "T21.L07"
+    ],
+    "make-ready (pre-deployment work)": [
+      "T21.L08"
+    ],
+    "design review (checkpoint before build)": [
+      "T21.L08"
+    ],
+    "power coordination (utility notification)": [
+      "T21.L08"
+    ],
+    "pole inspection (as-built vs. as-designed)": [
+      "T21.L08"
+    ],
+    "clearance verification (final check)": [
+      "T21.L08"
+    ],
+    "conflict resolution (design vs. site reality)": [
+      "T21.L08"
+    ],
+    "burndown (resolve issues before build)": [
+      "T21.L08"
+    ],
+    "cfot (certified fiber optic technician)": [
+      "T22.L01"
+    ],
+    "foa (fiber optic association)": [
+      "T22.L01"
+    ],
+    "blueprint (exam scope and weighting)": [
+      "T22.L01"
+    ],
+    "pass rate (percentage required to pass)": [
+      "T22.L01"
+    ],
+    "credential maintenance (renewal requirements)": [
+      "T22.L01"
+    ],
+    "single-mode fiber (smf)": [
+      "T22.L02"
+    ],
+    "multimode fiber (mmf)": [
+      "T22.L02"
+    ],
+    "core diameter": [
+      "T22.L02"
+    ],
+    "attenuation (db/km)": [
+      "T22.L02"
+    ],
+    "g.652.d (standard single-mode)": [
+      "T22.L02"
+    ],
+    "om3, om4, om5 (multimode grades)": [
+      "T22.L02"
+    ],
+    "cutoff wavelength (λc)": [
+      "T22.L02"
+    ],
+    "fusion splicer": [
+      "T22.L03"
+    ],
+    "stripper": [
+      "T22.L03"
+    ],
+    "splice loss": [
+      "T22.L03"
+    ],
+    "arc time": [
+      "T22.L03"
+    ],
+    "oven mode": [
+      "T22.L03"
+    ],
+    "real-time monitor": [
+      "T22.L03"
+    ],
+    "heat-shrink sleeve": [
+      "T22.L03"
+    ],
+    "splice protector sleeve": [
+      "T22.L03"
+    ],
+    "otdr (optical time-domain reflectometer)": [
+      "T22.L04"
+    ],
+    "dead zone": [
+      "T22.L04"
+    ],
+    "backscatter coefficient": [
+      "T22.L04"
+    ],
+    "acceptance test": [
+      "T22.L04"
+    ],
+    "singlemode window (1310/1550 nm)": [
+      "T22.L04"
+    ],
+    "insertion loss": [
+      "T22.L04"
+    ],
+    "reflectance": [
+      "T22.L04"
+    ],
+    "event": [
+      "T22.L04"
+    ],
+    "passive test": [
+      "T22.L04"
+    ],
+    "cable pulling": [
+      "T22.L05"
+    ],
+    "pulling tension (maximum allowable)": [
+      "T22.L05"
+    ],
+    "bend radius (installation vs. long-term)": [
+      "T22.L05"
+    ],
+    "termination": [
+      "T22.L05"
+    ],
+    "polishing (fiber end prep)": [
+      "T22.L05"
+    ],
+    "cleaver (mechanical)": [
+      "T22.L05"
+    ],
+    "polishing pad": [
+      "T22.L05"
+    ],
+    "osha 1910.147 (lockout-tagout)": [
+      "T22.L06"
+    ],
+    "osha 1910.1200 (ghs)": [
+      "T22.L06"
+    ],
+    "incident report": [
+      "T22.L06"
+    ],
+    "fault isolation": [
+      "T22.L07"
+    ],
+    "non-destructive testing": [
+      "T22.L07"
+    ],
+    "otdr signature": [
+      "T22.L07"
+    ],
+    "intermittent failure": [
+      "T22.L07"
+    ],
+    "fiber break (hard break)": [
+      "T22.L07"
+    ],
+    "signal degradation": [
+      "T22.L07"
+    ],
+    "splice loss spike": [
+      "T22.L07"
+    ],
+    "mock exam": [
+      "T22.L08"
+    ],
+    "timed test": [
+      "T22.L08"
+    ],
+    "domain breakdown": [
+      "T22.L08"
+    ],
+    "passing score": [
+      "T22.L08"
+    ],
+    "second mock exam": [
+      "T22.L09"
+    ],
+    "focused review": [
+      "T22.L09"
+    ],
+    "certification readiness": [
+      "T22.L09"
     ]
   },
   "duplicate_introductions": [
@@ -5166,6 +5634,13 @@
       "introduced_by": [
         "T01.L02",
         "T04.L04"
+      ]
+    },
+    {
+      "term": "slack storage",
+      "introduced_by": [
+        "T01.L04",
+        "T22.L05"
       ]
     },
     {
@@ -5333,10 +5808,24 @@
       ]
     },
     {
+      "term": "cladding",
+      "introduced_by": [
+        "T02.L01",
+        "T22.L02"
+      ]
+    },
+    {
       "term": "cd",
       "introduced_by": [
         "T02.L03",
         "T12.L12"
+      ]
+    },
+    {
+      "term": "modal dispersion",
+      "introduced_by": [
+        "T02.L03",
+        "T22.L02"
       ]
     },
     {
@@ -5502,6 +5991,13 @@
       ]
     },
     {
+      "term": "cleave",
+      "introduced_by": [
+        "T11.L04",
+        "T22.L03"
+      ]
+    },
+    {
       "term": "arc calibration",
       "introduced_by": [
         "T11.L06",
@@ -5509,10 +6005,66 @@
       ]
     },
     {
+      "term": "mechanical splice",
+      "introduced_by": [
+        "T11.L08",
+        "T22.L03"
+      ]
+    },
+    {
+      "term": "launch cable",
+      "introduced_by": [
+        "T12.L04",
+        "T22.L04"
+      ]
+    },
+    {
+      "term": "grounding",
+      "introduced_by": [
+        "T14.L01",
+        "T22.L06"
+      ]
+    },
+    {
       "term": "etr (estimated time to restore)",
       "introduced_by": [
         "T15.L01",
         "T15.L07"
+      ]
+    },
+    {
+      "term": "competent person",
+      "introduced_by": [
+        "T18.L01",
+        "T22.L06"
+      ]
+    },
+    {
+      "term": "confined space",
+      "introduced_by": [
+        "T18.L03",
+        "T22.L06"
+      ]
+    },
+    {
+      "term": "fall protection",
+      "introduced_by": [
+        "T18.L04",
+        "T22.L06"
+      ]
+    },
+    {
+      "term": "domain (exam subject area)",
+      "introduced_by": [
+        "T21.L01",
+        "T22.L01"
+      ]
+    },
+    {
+      "term": "ppe (personal protective equipment)",
+      "introduced_by": [
+        "T21.L07",
+        "T22.L06"
       ]
     }
   ],
@@ -9103,7 +9655,7 @@
       "term": "attenuation (dB/km)",
       "claimed_source": "T02.L02",
       "verified": false,
-      "reason": "'attenuation (dB/km)' is not introduced by any lesson in the curriculum"
+      "reason": "'attenuation (dB/km)' is introduced by T22.L02, not T02.L02"
     },
     {
       "from_lesson": "T05.L12",
@@ -12788,7 +13340,7 @@
       "term": "insertion loss",
       "claimed_source": "T11.L12",
       "verified": false,
-      "reason": "'insertion loss' is not introduced by any lesson in the curriculum"
+      "reason": "'insertion loss' is introduced by T22.L04, not T11.L12"
     },
     {
       "from_lesson": "T11.L14",
@@ -14973,7 +15525,7 @@
       "term": "insertion loss",
       "claimed_source": "T12.L06",
       "verified": false,
-      "reason": "'insertion loss' is not introduced by any lesson in the curriculum"
+      "reason": "'insertion loss' is introduced by T22.L04, not T12.L06"
     },
     {
       "from_lesson": "T15.L02",
@@ -15050,7 +15602,7 @@
       "term": "OTDR trace",
       "claimed_source": "T12.L07",
       "verified": false,
-      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+      "reason": "'OTDR trace' is introduced by T21.L06, not T12.L07"
     },
     {
       "from_lesson": "T15.L04",
@@ -15063,7 +15615,7 @@
       "term": "mechanical splice",
       "claimed_source": "T11.L02",
       "verified": false,
-      "reason": "'mechanical splice' is introduced by T11.L08, not T11.L02"
+      "reason": "'mechanical splice' is introduced by T11.L08, T22.L03, not T11.L02"
     },
     {
       "from_lesson": "T15.L04",
@@ -15123,7 +15675,7 @@
       "term": "OTDR trace",
       "claimed_source": "T12.L07",
       "verified": false,
-      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+      "reason": "'OTDR trace' is introduced by T21.L06, not T12.L07"
     },
     {
       "from_lesson": "T15.L05",
@@ -15305,7 +15857,7 @@
       "term": "OTDR trace",
       "claimed_source": "T12.L07",
       "verified": false,
-      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+      "reason": "'OTDR trace' is introduced by T21.L06, not T12.L07"
     },
     {
       "from_lesson": "T15.L09",
@@ -15686,7 +16238,7 @@
       "term": "OTDR trace",
       "claimed_source": "T12.L07",
       "verified": false,
-      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+      "reason": "'OTDR trace' is introduced by T21.L06, not T12.L07"
     },
     {
       "from_lesson": "T16.L02",
@@ -17114,10 +17666,488 @@
       "claimed_source": "T10.L01",
       "verified": false,
       "reason": "'contractor' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L01",
+      "term": "fiber optics",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'fiber optics' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L01",
+      "term": "OSP",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T21.L01",
+      "term": "CFOT",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'CFOT' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T21.L01",
+      "term": "splice",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'splice' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L02",
+      "term": "fiber optic",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'fiber optic' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L02",
+      "term": "single-mode fiber",
+      "claimed_source": "T02.L08",
+      "verified": false,
+      "reason": "'single-mode fiber' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L02",
+      "term": "multimode fiber",
+      "claimed_source": "T02.L08",
+      "verified": false,
+      "reason": "'multimode fiber' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L02",
+      "term": "attenuation",
+      "claimed_source": "T02.L01",
+      "verified": false,
+      "reason": "'attenuation' is introduced by T02.L02, not T02.L01"
+    },
+    {
+      "from_lesson": "T21.L02",
+      "term": "dispersion",
+      "claimed_source": "T02.L01",
+      "verified": false,
+      "reason": "'dispersion' is introduced by T02.L03, not T02.L01"
+    },
+    {
+      "from_lesson": "T21.L02",
+      "term": "numerical aperture",
+      "claimed_source": "T01.L03",
+      "verified": false,
+      "reason": "'numerical aperture' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L03",
+      "term": "OSP cable",
+      "claimed_source": "T03.L01",
+      "verified": false,
+      "reason": "'OSP cable' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L03",
+      "term": "NESC",
+      "claimed_source": "T05.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T21.L03",
+      "term": "pole",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'pole' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L03",
+      "term": "burial depth",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'burial depth' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L03",
+      "term": "splice case",
+      "claimed_source": "T01.L03",
+      "verified": false,
+      "reason": "'splice case' is introduced by T01.L04, not T01.L03"
+    },
+    {
+      "from_lesson": "T21.L04",
+      "term": "buffer tube",
+      "claimed_source": "T03.L01",
+      "verified": false,
+      "reason": "'buffer tube' is introduced by T01.L03, not T03.L01"
+    },
+    {
+      "from_lesson": "T21.L04",
+      "term": "fiber stripping",
+      "claimed_source": "T01.L05",
+      "verified": false,
+      "reason": "'fiber stripping' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L04",
+      "term": "splice",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'splice' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L04",
+      "term": "fusion splicer",
+      "claimed_source": "T11.L02",
+      "verified": false,
+      "reason": "'fusion splicer' is introduced by T22.L03, not T11.L02"
+    },
+    {
+      "from_lesson": "T21.L05",
+      "term": "fusion splicing",
+      "claimed_source": "T11.L02",
+      "verified": false,
+      "reason": "'fusion splicing' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L05",
+      "term": "fiber alignment",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'fiber alignment' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L05",
+      "term": "cleaving",
+      "claimed_source": "T21.L04",
+      "verified": false,
+      "reason": "'cleaving' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L05",
+      "term": "splice case",
+      "claimed_source": "T01.L03",
+      "verified": false,
+      "reason": "'splice case' is introduced by T01.L04, not T01.L03"
+    },
+    {
+      "from_lesson": "T21.L06",
+      "term": "OTDR",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T21.L06",
+      "term": "attenuation",
+      "claimed_source": "T02.L01",
+      "verified": false,
+      "reason": "'attenuation' is introduced by T02.L02, not T02.L01"
+    },
+    {
+      "from_lesson": "T21.L06",
+      "term": "fusion splice",
+      "claimed_source": "T21.L05",
+      "verified": false,
+      "reason": "'fusion splice' is introduced by T11.L04, not T21.L05"
+    },
+    {
+      "from_lesson": "T21.L06",
+      "term": "fiber link",
+      "claimed_source": "T01.L07",
+      "verified": false,
+      "reason": "'fiber link' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L07",
+      "term": "OSHA",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'OSHA' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L07",
+      "term": "NESC",
+      "claimed_source": "T05.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T21.L07",
+      "term": "PPE",
+      "claimed_source": "T18.L02",
+      "verified": false,
+      "reason": "'PPE' is introduced by T01.L08, T18.L05, not T18.L02"
+    },
+    {
+      "from_lesson": "T21.L07",
+      "term": "pole climbing",
+      "claimed_source": "T18.L03",
+      "verified": false,
+      "reason": "'pole climbing' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L08",
+      "term": "design",
+      "claimed_source": "T05.L01",
+      "verified": false,
+      "reason": "'design' is introduced by T01.L05, not T05.L01"
+    },
+    {
+      "from_lesson": "T21.L08",
+      "term": "pole",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'pole' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L08",
+      "term": "NESC",
+      "claimed_source": "T05.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T21.L08",
+      "term": "make-ready",
+      "claimed_source": "T08.L01",
+      "verified": false,
+      "reason": "'make-ready' is introduced by T01.L05, not T08.L01"
+    },
+    {
+      "from_lesson": "T21.L09",
+      "term": "CFOS-O exam",
+      "claimed_source": "T21.L01",
+      "verified": false,
+      "reason": "'CFOS-O exam' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L09",
+      "term": "domains",
+      "claimed_source": "T21.L01",
+      "verified": false,
+      "reason": "'domains' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T21.L10",
+      "term": "CFOS-O exam blueprint",
+      "claimed_source": "T21.L01",
+      "verified": false,
+      "reason": "'CFOS-O exam blueprint' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L01",
+      "term": "fiber optics",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'fiber optics' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L01",
+      "term": "splice",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'splice' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L01",
+      "term": "OTDR",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L01",
+      "term": "safety",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'safety' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L02",
+      "term": "fiber optic",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'fiber optic' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L02",
+      "term": "wavelength",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'wavelength' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L02",
+      "term": "dB (decibel)",
+      "claimed_source": "T01.L03",
+      "verified": false,
+      "reason": "'dB (decibel)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L02",
+      "term": "refraction",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'refraction' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "fiber",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "single-mode fiber",
+      "claimed_source": "T02.L01",
+      "verified": false,
+      "reason": "'single-mode fiber' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "multimode fiber",
+      "claimed_source": "T02.L02",
+      "verified": false,
+      "reason": "'multimode fiber' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "fusion splice",
+      "claimed_source": "T01.L04",
+      "verified": false,
+      "reason": "'fusion splice' is introduced by T11.L04, not T01.L04"
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "splice loss",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'splice loss' is introduced by T22.L03, not T11.L01"
+    },
+    {
+      "from_lesson": "T22.L03",
+      "term": "OTDR",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L04",
+      "term": "attenuation",
+      "claimed_source": "T02.L06",
+      "verified": false,
+      "reason": "'attenuation' is introduced by T02.L02, not T02.L06"
+    },
+    {
+      "from_lesson": "T22.L04",
+      "term": "loss",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'loss' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L04",
+      "term": "OLTS",
+      "claimed_source": "T12.L04",
+      "verified": false,
+      "reason": "'OLTS' is introduced by T01.L08, T12.L01, not T12.L04"
+    },
+    {
+      "from_lesson": "T22.L04",
+      "term": "splice",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'splice' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L04",
+      "term": "connector",
+      "claimed_source": "T02.L04",
+      "verified": false,
+      "reason": "'connector' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L05",
+      "term": "fiber",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L05",
+      "term": "aerial cable",
+      "claimed_source": "T03.L01",
+      "verified": false,
+      "reason": "'aerial cable' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L05",
+      "term": "underground cable",
+      "claimed_source": "T06.L01",
+      "verified": false,
+      "reason": "'underground cable' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L05",
+      "term": "splice case",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L06",
+      "term": "electrical hazard",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'electrical hazard' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L06",
+      "term": "safety glasses",
+      "claimed_source": "T18.L02",
+      "verified": false,
+      "reason": "'safety glasses' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L06",
+      "term": "OSHA",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'OSHA' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L07",
+      "term": "OTDR",
+      "claimed_source": "T12.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T22.L07",
+      "term": "splice",
+      "claimed_source": "T11.L01",
+      "verified": false,
+      "reason": "'splice' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T22.L07",
+      "term": "attenuation",
+      "claimed_source": "T02.L06",
+      "verified": false,
+      "reason": "'attenuation' is introduced by T02.L02, not T02.L06"
+    },
+    {
+      "from_lesson": "T22.L08",
+      "term": "CFOT",
+      "claimed_source": "T22.L01",
+      "verified": false,
+      "reason": "'CFOT' is introduced by T01.L08, not T22.L01"
+    },
+    {
+      "from_lesson": "T22.L09",
+      "term": "CFOT",
+      "claimed_source": "T22.L01",
+      "verified": false,
+      "reason": "'CFOT' is introduced by T01.L08, not T22.L01"
     }
   ],
-  "verified_pointers_count": 1716,
-  "broken_pointers_count": 186,
+  "verified_pointers_count": 1728,
+  "broken_pointers_count": 244,
   "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01",

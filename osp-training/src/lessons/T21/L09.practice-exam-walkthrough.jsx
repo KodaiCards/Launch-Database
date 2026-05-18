@@ -90,8 +90,8 @@ export default function T21L09_PracticeExam() {
         questions={[
           {
             id: 'T21.L09.Q1',
-            type: 'multiple-choice',
-            question: '(Domain 1) What is the attenuation coefficient for singlemode fiber at 1550 nm, typical for OSP?',
+            type: 'mc',
+            prompt: '(Domain 1) What is the attenuation coefficient for singlemode fiber at 1550 nm, typical for OSP?',
             options: [
               { id: 'a', text: '~0.10 dB/km' },
               { id: 'b', text: '~0.20 dB/km', isCorrect: true },
@@ -102,7 +102,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q2',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 2) Per NESC, what is the minimum pulling tension limit for OSP fiber on poles?',
             options: [
               { id: 'a', text: '200 lbs per strand' },
@@ -114,7 +114,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q3',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 3) After cleaving a fiber, what is the maximum acceptable angle of the endface perpendicular to the fiber axis?',
             options: [
               { id: 'a', text: '±0.5°', isCorrect: true },
@@ -126,7 +126,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q4',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 4) The fusion splicer displays EL = 0.25 dB. Is this acceptable per OSP standard?',
             options: [
               { id: 'a', text: 'Yes; EL must be ≤0.5 dB' },
@@ -138,7 +138,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q5',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 5) On an OTDR trace, a splice appears as which signature?',
             options: [
               { id: 'a', text: 'A sharp positive peak' },
@@ -150,7 +150,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q6',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 6) Per OSHA 1910.268, what must be documented before pole climbing begins?',
             options: [
               { id: 'a', text: 'A rescue plan (trained rescuer, rescue equipment, communication, <5 min response)', isCorrect: true },
@@ -162,7 +162,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q7',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 7) During design review, you discover a discrepancy between the design and GIS pole locations. What should you do?',
             options: [
               { id: 'a', text: 'Proceed with installation using the design (it\'s the authority)' },
@@ -174,7 +174,7 @@ export default function T21L09_PracticeExam() {
           },
           {
             id: 'T21.L09.Q8',
-            type: 'multiple-choice',
+            type: 'mc',
             question: '(Domain 1 review) What is modal bandwidth, and why does it matter in OSP?',
             options: [
               { id: 'a', text: 'The wavelength range; affects which fiber can be used' },
@@ -187,7 +187,7 @@ export default function T21L09_PracticeExam() {
         ]}
       />
 
-      <p className="mt-6 text-sm text-slate-300">
+      <p className='mt-6 text-sm text-slate-300">
         This represents a sample from the 50-question practice exam. For the full set, continue to L10 (100-question mock exam)
         after reviewing your weak areas based on these sample questions.
       </p>

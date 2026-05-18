@@ -22,12 +22,12 @@ export const meta = {
     'Spectral window (1310 vs 1490 vs 1550 nm applications)',
   ],
   vocabulary_assumed: [
-    { term: 'fiber optic', source_lesson_id: 'T01.L02' },
+    { term: 'fiber optic', source_lesson_id: 'T02.L01' },
     { term: 'single-mode fiber', source_lesson_id: 'T02.L08' },
     { term: 'multimode fiber', source_lesson_id: 'T02.L08' },
     { term: 'attenuation', source_lesson_id: 'T02.L01' },
     { term: 'dispersion', source_lesson_id: 'T02.L01' },
-    { term: 'numerical aperture', source_lesson_id: 'T01.L03' },
+    { term: 'numerical aperture', source_lesson_id: 'T02.L02' },
   ],
 };
 
@@ -291,49 +291,50 @@ export default function T21L02_FiberFundamentalsReview() {
             id: 'T21-L02-Q1',
             type: 'mc',
             prompt: 'For a 3 km OSP feeder route with 10 Gbps service requirement, which fiber type is most appropriate?',
-            options: [
-              { key: 'a', text: 'OM1 multimode (cost-optimized)' },
-              { key: 'b', text: 'OS2 single-mode (distance and speed capable)' },
-              { key: 'c', text: 'OM5 multimode (budget allows)' },
-              { key: 'd', text: 'Any multimode fiber (all equivalent at this distance)' },
+            choices: [
+              'OM1 multimode (cost-optimized)',
+              'OS2 single-mode (distance and speed capable)',
+              'OM5 multimode (budget allows)',
+              'Any multimode fiber (all equivalent at this distance)',
             ],
-            correct: 'b',
+            answerIndex: 1,
           },
           {
             id: 'T21-L02-Q2',
             type: 'mc',
             prompt: 'At 1550 nm, single-mode fiber exhibits attenuation of ~0.18 dB/km. Over a 10 km span, approximately what percentage of power remains?',
-            options: [
-              { key: 'a', text: '64%' },
-              { key: 'b', text: '75%' },
-              { key: 'c', text: '84%' },
-              { key: 'd', text: '96%' },
+            choices: [
+              '66%',
+              '75%',
+              '84%',
+              '96%',
             ],
-            correct: 'c',
+            answerIndex: 0,
+            explanation: 'Total loss: 0.18 dB/km × 10 km = 1.8 dB. Power remaining: 10^(-1.8/10) ≈ 0.66 = 66%.',
           },
           {
             id: 'T21-L02-Q3',
             type: 'mc',
             prompt: 'Why is 1550 nm preferred over 1310 nm for modern OSP feeder routes?',
-            options: [
-              { key: 'a', text: '1550 nm has lower attenuation (~0.18 vs ~0.28 dB/km)' },
-              { key: 'b', text: '1550 nm equipment is cheaper' },
-              { key: 'c', text: '1550 nm is immune to dispersion' },
-              { key: 'd', text: '1310 nm is obsolete and no longer supported' },
+            choices: [
+              '1550 nm has lower attenuation (~0.18 vs ~0.28 dB/km)',
+              '1550 nm equipment is cheaper',
+              '1550 nm is immune to dispersion',
+              '1310 nm is obsolete and no longer supported',
             ],
-            correct: 'a',
+            answerIndex: 0,
           },
           {
             id: 'T21-L02-Q4',
             type: 'mc',
             prompt: 'What is the purpose of a mode stripper in multimode fiber spans?',
-            options: [
-              { key: 'a', text: 'To remove high-order modes that contribute to dispersion and noise' },
-              { key: 'b', text: 'To boost signal strength at the receiver' },
-              { key: 'c', text: 'To convert multimode to single-mode automatically' },
-              { key: 'd', text: 'To prevent cross-talk between adjacent fibers' },
+            choices: [
+              'To remove high-order modes that contribute to dispersion and noise',
+              'To boost signal strength at the receiver',
+              'To convert multimode to single-mode automatically',
+              'To prevent cross-talk between adjacent fibers',
             ],
-            correct: 'a',
+            answerIndex: 0,
           },
         ]}
       />
