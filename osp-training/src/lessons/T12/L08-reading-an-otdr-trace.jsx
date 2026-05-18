@@ -119,6 +119,10 @@ export default function T12L08_ReadingOTDRTrace() {
           <li><strong>End-of-fiber marker:</strong> the far-end connector or cleaved end-face.</li>
           <li><strong>Noise floor:</strong> below the end marker, no useful information. If this appears before the end marker, the fiber span is beyond the OTDR's dynamic range.</li>
         </ol>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L04 Dead Zones</strong> — the launch cable length is set based on the ADZ (attenuation dead zone), which is why you can see the first connector's true loss. That's the entire reason launch cables exist.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

@@ -94,6 +94,10 @@ export default function T12L01_TierVsTier() {
           acceptance package.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L06 Link Budget</strong> — the optical budget defines how much loss the link can tolerate. Testing with both OLTS and OTDR ensures the plant actually meets that budget. OTDR alone cannot prove the cable is acceptable; only OLTS measurements match the link budget tier requirements.
+        </p>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

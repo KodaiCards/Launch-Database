@@ -109,6 +109,10 @@ export default function T12L07_BidirectionalOTDR() {
           by 2. If one reading is a gainer (negative), it partially cancels the other, pulling the
           average down to the true value.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L02 OLTS Reference Methods</strong> — the same bidirectional averaging principle applies to OLTS measurements. Two-direction testing eliminates directional asymmetry in both instruments, ensuring you get the true loss regardless of measurement direction.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

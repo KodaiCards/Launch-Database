@@ -117,6 +117,10 @@ export default function T12L11_EndFaceInspection() {
           An older Grade A report using the pre-2022 Zone B = 115 µm boundary was evaluated against
           slightly different criteria.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T11.L14 Field Hygiene</strong> — IEC 61300-3-35 is the standard for inspecting connector end-faces before fusion. The same zone map and grade criteria apply when you're testing with OLTS or OTDR. End-face cleanliness directly affects your test results and the plant's long-term performance.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

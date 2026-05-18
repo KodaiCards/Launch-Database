@@ -94,6 +94,10 @@ export default function T12L06_LaunchReceiveMFD() {
           reports a gainer. The typical range of this artifact: −0.05 to −0.3 dB depending on the
           MFD difference between the two fibers.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L03 Mode Field Diameter</strong> — MFD mismatch is the root cause of gainer artifacts in OTDR traces. When your launch cable doesn't match the cable under test, the MFD discontinuity creates a false loss step. Always verify launch cable spec before testing.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

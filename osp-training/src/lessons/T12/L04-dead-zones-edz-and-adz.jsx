@@ -130,6 +130,10 @@ export default function T12L04_DeadZones() {
           Both scale roughly linearly with pulse width. A 1 µs pulse may produce an ADZ of 50–100 m.
           A 10 µs pulse needed for long-haul can produce an ADZ of 500 m or more.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L03 OTDR Fundamentals</strong> — pulse width is the lever that controls dead zone size. Longer pulses create bigger dead zones. Understanding EDZ and ADZ explains why pulse width selection is one of the most critical OTDR setup decisions.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

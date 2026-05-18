@@ -127,6 +127,10 @@ export default function T12L12_PMDandCD() {
           It requires either PMD compensation equipment (expensive, used in long-haul systems) or
           fiber with very low PMD.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L08 Dispersion</strong> — chromatic dispersion (CD) and polarization mode dispersion (PMD) both limit the distance you can go without regeneration. Testing for both is part of the complete acceptance package on long links.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

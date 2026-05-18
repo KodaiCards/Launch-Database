@@ -93,6 +93,10 @@ export default function T12L09_MacrobendDetection() {
           1310 nm, you can miss bends that will cause significant attenuation at the 1550 nm
           wavelength that most DWDM traffic uses.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L07 Wavelength Windows</strong> — different wavelengths have different characteristics in the same fiber. That's why dual-wavelength testing is mandatory for OSP acceptance. What you miss at 1310 nm will hurt you at 1550 nm.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

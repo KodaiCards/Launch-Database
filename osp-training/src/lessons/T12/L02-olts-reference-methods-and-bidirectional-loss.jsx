@@ -94,6 +94,10 @@ export default function T12L02_OLTSReferenceMethods() {
           which way the electrons flow through the optical fiber.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L01 Tier 1 vs. Tier 2</strong> — OLTS is the Tier-1 certification measurement. How you set up the reference method directly determines whether the measured loss is contractually valid. Wrong method = failed job acceptance.
+        </p>
+
         <h3 className="mt-5 font-semibold">Key Terms</h3>
         <Flashcard
           deckId="T12-L02"

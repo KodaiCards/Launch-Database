@@ -85,6 +85,10 @@ export default function T12L13_AcceptanceTesting() {
           The project engineer's job is to know which standard applies, calculate the thresholds
           before testing, and evaluate every result against those thresholds.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L06 Link Budget</strong> — the optical budget sets the maximum allowed loss. Acceptance testing validates that the built plant meets that budget. Understanding what standard applies (RUS, TIA, carrier-specific, or federal) is the first step of any acceptance job.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

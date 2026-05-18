@@ -100,6 +100,10 @@ export default function T12L10_IORDistanceErrors() {
           place. But on a 40 km span, even a tiny IOR error can produce 10+ meters of position
           error. That matters when you're trying to locate a fault and you're digging.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L03 OTDR Fundamentals</strong> — EIOR is the value the OTDR uses to convert time to distance. Getting EIOR wrong is one of the most common field mistakes that leads to location errors on fault finding. Always verify the cable datasheet EIOR before testing.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

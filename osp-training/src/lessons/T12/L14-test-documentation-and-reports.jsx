@@ -88,6 +88,10 @@ export default function T12L14_TestDocumentation() {
           Wrong documentation = re-test and re-submit. Complete, organized documentation = faster
           payment and fewer disputes.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L13 Acceptance Testing — What Passes</strong> — once you've tested the fiber, the documentation you submit is what the customer actually receives. Incomplete or poorly organized reports trigger re-tests and delays payment. Thoroughness at the documentation stage is what separates professional work from amateur work.
+        </p>
       </section>
 
       {/* ── WORKING ── */}

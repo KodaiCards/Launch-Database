@@ -98,6 +98,10 @@ export default function T12L03_OTDRFundamentals() {
           loss.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T02.L02 Attenuation</strong> — the fiber's base attenuation sets the normal slope of the OTDR trace. Any deviation from that slope signals a splice, connector, or bend. Understanding attenuation is essential to reading an OTDR trace correctly.
+        </p>
+
         <h3 className="mt-5 font-semibold">Key Terms</h3>
         <Flashcard
           deckId="T12-L03"

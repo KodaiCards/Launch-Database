@@ -121,6 +121,10 @@ export default function T12L05_GhostReflections() {
             at the same level after the peak. This distinguishes both from real events.
           </li>
         </ol>
+
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L04 Dead Zones</strong> — high reflectance is what creates dead zones in the first place. Ghost reflections and coherence peaks are phenomena that occur in high-reflectance environments. Understanding dead zones teaches you why these artifacts appear.
+        </p>
       </section>
 
       {/* ── WORKING ── */}
