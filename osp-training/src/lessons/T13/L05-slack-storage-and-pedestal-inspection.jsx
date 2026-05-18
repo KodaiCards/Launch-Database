@@ -104,7 +104,7 @@ export default function T13L05SlackInspection() {
       options: ['7 feet', '15 feet', '56 feet', '80 feet'],
       correct: 2,
       explanation:
-        '8 wraps × 7 feet per wrap = 56 feet of estimated slack. This is an estimate — the per-wrap length depends on the coil diameter, which varies by structure type. For a handhole coil, typical wrap length is 6–8 feet; for a pedestal coil, 4–6 feet. Record the estimate with the wrap count (not just the total) so the calculation can be verified. 56 feet at an intermediate point satisfies the T10.L06 50-foot minimum; at a splice point it falls short of the 100-foot minimum.',
+        '8 wraps × 7 feet per wrap = 56 feet of estimated slack. This is an estimate — the per-wrap length depends on the coil diameter, which varies by structure type. For a handhole coil, typical wrap length is 6–8 feet; for a pedestal coil, 4–6 feet. Record the estimate with the wrap count (not just the total) so the calculation can be verified. 56 feet at an intermediate point would satisfy a T10.L06-style 50-foot MSA minimum; at a splice point it may fall short if the project MSA schedule requires 100 ft — always verify against the contract MSA schedule, not a standalone T13 minimum.',
     },
   ];
 
