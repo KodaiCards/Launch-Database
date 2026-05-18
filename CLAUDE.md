@@ -1,14 +1,50 @@
 # CLAUDE.md — Master Operating File
 
-> **Read this file at the start of every session, before doing anything else.**
-> This is the single source of truth for how to operate, who the user is,
-> what the project is, what's happening right now, and the cost trajectory.
-> Update it constantly — write things down, don't rely on conversation memory.
+> ⚠️ **AGENTS: DO NOT READ THIS FILE.** This is the orchestrator's private notes. Reading it = scope failure. Your dispatch prompt contains everything you need.
 >
-> Other places worth knowing about (but not read by default):
-> - `audit-output/<wave>/` in the repo — full audit reports + canonical lists
-> - The repo's own `CLAUDE.md` (different file) — repo-level conventions
-> - `git log --oneline` on the active branch — deep history beyond §4
+> **Orchestrator (Claude-Opus-on-this-session):** read this at session-start. Single source of truth: who Carter is, what the project is, what's queued, how to operate.
+
+---
+
+## TL;DR (read this first; rest is depth)
+
+**Carter Trantham** — Launch Fiber Services, Macon GA. Solo founder. Engineering services firm; primary client PSC on RUS engineering contracts. Quality bar: **million-dollar grade, <1% error**. Friends-not-boss register, explicit language welcome, push back when warranted. He ASKS, never orders.
+
+**The project:** internal multi-portal operations platform (Express + vanilla JS + Postgres). Active build = **OSP Training Rewrite** — replace Moodle with a Vite SPA served at `/training/` behind `requireAuth()`. 22 topics (T01..T22), ~245 lessons total. Branch isolation since 2026-05-18 — agents work on `agent/<task-id>` branches; orchestrator merges to main.
+
+**OSP topics CLOSED (saturated):** T01, T02, T03, T04, T05, T06, T07, T08, T09, T10, T11, T12, T14, T18, T19. **In flight:** T13 (post-rogue verify), T15/T16/T17 (rogue-authored, need proper RT). **Not started:** T20–T22 (cert prep), C04 (practice bank), OSP-RW.6 Moodle teardown, OSP-RW.7 production cut.
+
+**Operating mode:**
+- Default 2 agents max simultaneously (Carter lock 2026-05-18).
+- Sonnet for coding/audit/verify/fix. Haiku for research/extraction. Opus stays on me.
+- Every dispatch sets `model:` explicitly; default = Opus = expensive.
+- Pipeline per topic: research (≥2 framings, saturate until no new findings) → author → RT pair (pedagogy + technical, different framings) → polish → final-verify RT pair. No-severity-gate saturation rule: ANY new finding = continue.
+- Branch isolation MANDATORY: agents push to `agent/<task-id>` ONLY. Pre-push hook blocks main pushes without secret token at `~/.claude/orchestrator-secret`.
+- agent-protocol.md (in repo) is what agents read. CLAUDE.md is orchestrator-only.
+
+**Token discipline:** Claude Max 5x ~50M / 5hr window. Stay <100% sustainable. Cap recovery + over-burn target per directive 28. Sonnet currently capped until 2026-05-20 1pm UTC.
+
+**Key directives (full text below in §3):**
+- #1-11: dispatch everything, no orchestrator code work
+- #14-17: token discipline, timestamps, compaction protection
+- #18z-19: <1% error standard, 2-RT minimum per topic
+- #21-22: continue through full queue, OSP-expert framing on all prompts
+- #23: agent concurrency throttle (2 max sustained)
+- #31: agent wall-clock abandonment (research 15min, fix 20min, etc.)
+- #32: agent context minimization (don't tell them to read CLAUDE.md)
+- #33: branch isolation (agents push to agent/* only; orchestrator merges main)
+
+**Rogue events this session: 7.** Root cause: agents reading CLAUDE.md + having direct push access to main. Branch isolation (directive 33) is the structural fix.
+
+**Other paths worth knowing:**
+- `audit-output/agent-protocol.md` — what agents read (rules of conduct)
+- `audit-output/dispatch-templates.md` — reusable scope blocks per role
+- `audit-output/citation-registry.md` — verified primary-source citations
+- `audit-output/dag-registry.json` — vocab/lesson DAG
+- `audit-output/<wave>/` — full audit reports per topic
+- `RESUME_HERE.md` — fast-resume pointer after compaction
+- `scripts/check-agent-diff.sh` — orchestrator tool to validate agent branch before merge
+- `~/.claude/launch-db-archive.md` — archived historical content (session metrics, OSP-RW arch v2 lock details, old polish queue)
 
 ---
 
@@ -1533,88 +1569,6 @@ The mis-targeted Design Picker discovery agent A found 3 real design.html bugs t
 
 ---
 
-# §5 Session Metrics
-
-> Last 3 sessions only. Older session-level summaries are dropped to keep
-> file size sane. The deep deliverable history lives in git log.
-
-## Session 1 — 2026-05-09 (baseline, pre-cost-v2)
-
-**Output:**
-- Commits shipped: 7 (Wave 1 ×3 + Wave 1.1 hotfix + RUS-Fix ×3) + 1 checkpoint = 8 total
-- Audits: 24 reports across 8 waves
-- Verifications: 7 reports
-- Fix agents: 2 + 1 hand-applied
-- Failed verification dispatches (cap-hit mid-run): 5; all re-dispatched cleanly on reset
-
-**Per-agent average tokens** (sampled from completion notifications):
-
-| Agent type | Avg total_tokens | Range |
-|---|---|---|
-| Audit (broad) | ~140K | 105K–167K |
-| Audit (adversarial) | ~145K | 120K–150K |
-| Audit (high-precision) | ~115K | 80K–135K |
-| Audit (specialist) | ~100K | 80K–125K |
-| Verification | ~100K | 78K–117K |
-| Fix agent | ~150K | 136K (RUS) – 162K (W1) |
-| Discovery (one-shot) | ~95K | 82K–110K |
-
-**Approximate cumulative agent tokens (this session):**
-- 24 audits × ~120K = ~2.9M
-- 7 verifications × ~100K = ~700K
-- 2 fix agents × ~150K = ~300K
-- Failed re-dispatches (~30K wasted)
-- **Session total agent tokens: ~4.0M** (rough)
-- Plus orchestrator (Opus) cycles reading full reports — meaningful additional cost, not directly measured
-
-**Quality outcome:**
-- 0 hallucinations confirmed across all 6 final verification reports
-- Wave 1 Post-Fix Verification caught 1 HIGH regression + 2 LOW DDL gaps — all hand-fixed in Wave 1.1
-- RUS-Fix landed 16/16 canonical items, zero deferrals
-- Agents that hit cap surfaced cleanly — no half-finished pushes
-
-**What drove cost (priority order):**
-1. Audit prose verbosity (2500-3500 words avg vs. 1200 target)
-2. Canonical lists inlined in prompts (5-8K tokens × every fix-agent dispatch)
-3. Three auditors per wave even on standard waves (high-precision was redundant)
-4. Orchestrator reading full audit reports into context (Opus cost)
-
-## Session 2 — 2026-05-13 (Wednesday post-outage review)
-
-Session scope was assessment, not fix-phase work. Came back after 5-day usage outage. Temp Claude had shipped substantial work on `main` during outage; Monday demo failed.
-
-**Output:**
-- Merge conflict resolved (`ca92036`) — merged main into dev, took main's version for 3 conflict regions, dev now superset
-- 3 parallel review agents dispatched: Quality (A), Gap analysis (B), Daily-use sanity (C)
-- Reviews pushed to `audit-output/wednesday-review/`
-- Phase 1 demo-blocker cleanup fix agent dispatched (in flight at end of session-2 turn count)
-- Doc consolidation: merged manager-notes.md + session-metrics.md INTO CLAUDE.md (one source of truth)
-
-**Per-agent average tokens (session 2 sample):**
-
-| Agent type | total_tokens |
-|---|---|
-| Quality review (A) | 89K |
-| Gap analysis (B) | 81K |
-| Daily-use review (C) | 114K |
-| Phase 1 fix agent | (in flight at compaction) |
-
-**Quality outcome:**
-- Wed-Review-A identified the actual cause of demo failure (3 cascading commits)
-- Wed-Review-B produced 145-item canonical gap analysis (pre-merge; post-merge state is better than B reported because main brought in additional fixes)
-- Wed-Review-C identified the 8 concrete demo-blockers, all surgical fixes
-- Merge resolution: clean, no work lost from dev branch
-
-**Notable cost wins vs Session 1:**
-- Cost-v2 patterns applied: structured output, ≤200-word summaries, full reports to repo files, 1500-2000 word caps
-- Auditor A: 89K vs Session-1 audit average ~140K (**-36%**)
-- Auditor B: 81K vs Session-1 audit average ~140K (**-42%**)
-- Auditor C: 114K vs Session-1 audit average ~140K (**-19%**)
-
-**Cost target met:** ~30-40% per-agent reduction at same quality bar. Reviews surfaced concrete actionable findings; nothing lost in compression.
-
-## Session 3 — TBD (Phase 1 demo-blocker fix + Phase 2 Projection wave onward)
-
 ## Carter directive 2026-05-17 — BARELY-AROUND MODE (locked, full autonomous trust)
 
 Carter's verbatim:
@@ -1653,88 +1607,6 @@ Carter caught me 2026-05-17: I gave best-thoughts on cost optimizations + didn't
 3. **What survives in the per-dispatch prompt:** wave-specific scope, the canonical / findings to address, model parameter, token cap, deliverable path, framing-specific instructions (e.g., "corroboration-adversarial framing"). All boilerplate (anti-patterns, signing wrapper, closeout, primary-source mandate) lives in agent-protocol.md.
 
 4. **Lesson:** when I commit to operational changes in chat, IMPLEMENT them before the next dispatch. Don't let proposals decay into intent. Carter's verbatim catch: *"you gave your best thoughts and didn't do them silly guy."*
-
-## Timer-as-wake-up — honest limitations (logged 2026-05-17)
-
-Carter asked: if HE sets a timer for usage reset and I cap out BEFORE timer fires, can I wake myself up after reset?
-
-**Honest answer: NO direct self-wake. I'm stateless between turns.** Cap = conversation ends. I can't autonomously resume.
-
-What CAN wake me after cap reset:
-1. **Carter messages me** — most reliable. His ping is a fresh turn.
-2. **A background process outputs to harness AFTER reset** — bash `sleep N && echo` scheduled past reset. If output lands during cap, the wake is wasted (turn likely rejected). If output lands post-reset, harness wakes me.
-3. **Agent dispatch completion lands AFTER reset** — agents I leave in flight have their own Sonnet budget independent of my Opus cap. Their completion notification wakes me.
-
-**Workable pattern when usage is approaching cap:**
-- Write RESUME_HERE.md with state pointer
-- Queue 1-2 long-running agents scheduled to land past reset (their notifications wake me)
-- OR: bash `sleep <seconds-until-reset+buffer> && echo "RESUME"` (background)
-- Don't dispatch new orchestrator work until either fires
-
-**Catch:** multi-hour bash sleep is unreliable in this env (CLAUDE.md prior lesson 2026-05-16, missed wake-up). For ≤30 min sleep is fine. For multi-hour delays, the most reliable wake is Carter pinging me.
-
-**Carter-side timer suggestion:** if he sets a phone alarm at expected reset + manually pings me, that's 100% reliable. The bash-sleep approach is 70-80% reliable for short waits.
-
-
-## Wake-mechanism experiment 2026-05-17 — Haiku-agent-sleeper NO BETTER than direct bash sleep
-
-Hypothesis: dispatch Haiku agent with internal `sleep 2200` then write WAKE file. Theory: completion notification fires post-cap-reset = autonomous wake.
-
-**Actual result (Haiku agent `a09208e57fd2e19d4`):**
-- Agent discovered Bash tool blocks long synchronous sleeps in this env
-- Agent used `run_in_background: true` to detach the sleep
-- Agent's own run ended in 35 seconds (idle after detach)
-- Background bash now runs in session task pool, will fire notification when sleep completes
-- Cost: ~87K Haiku tokens for what was effectively a bash dispatch
-
-**Lesson:** Haiku-agent-as-wake-wrapper = no advantage over orchestrator launching the bash directly. The agent is a no-op middleman that costs 87K extra tokens.
-
-**Correct pattern for autonomous wake:**
-- Orchestrator launches background bash directly: `(sleep N && echo "WAKE") &` — costs ~zero tokens
-- Notification fires on completion = wake event
-- Don't wrap in agent
-
-**The deeper finding:** agents CANNOT sustain long-running idle states. Bash tool blocks long syncs. Background tasks detach from agent lifecycle. So any "long-running agent" plan is actually a "short-running agent that spawns a background task" — no different from doing it from the orchestrator side.
-
-**Multi-hour wake-up: still requires Carter manually pinging me OR an agent dispatch that's doing real work landing post-reset (not idle sleep).**
-
-
-## 🚨 ORCHESTRATOR IDLE-ON-WAKE FAILURE — 2026-05-17 night (Carter caught)
-
-After T03 R-5 dispatched async, a "Continue from where you left off." prompt arrived from the harness. I responded with "No response requested." — total no-op, idled while the queue (T03 saturation closure, cross-topic Fix Wave, future-build items) had real work pending. Carter's catch: *"Why did you stop when usage rolled over. You didn't hit cap?"*
-
-**Root cause:** I treated "Continue from where you left off." as a stale resume prompt with nothing to do. Wrong call — that prompt IS the wake. The right move:
-1. Check `git log` for current main HEAD
-2. Check agent queue state (any in-flight? any completed I haven't processed?)
-3. Drive immediately to the next dispatchable step
-
-**Standing rule going forward — NEVER respond "No response requested" to a Continue prompt.** That prompt is a wake. If there's no in-flight agent, the next step is dispatching the next queue item. If there's an in-flight agent and parallel-safe work exists, drive that. End-turn only after queueing something.
-
-**Diagnostic when uncertain about state:**
-- `git log --oneline -10 origin/main` — did anything land during the gap?
-- Are there completed agent notifications I haven't acted on?
-- What's the next queue item per RESUME_HERE.md / CLAUDE.md §4?
-
-**Cost of this failure:** ~2 hours orchestrator idle. R-5's first dispatch result lost (never landed). Re-dispatching costs another ~150K Sonnet.
-
-## Wake-mechanism final verdict 2026-05-17 night — Carter manual ping = only reliable autonomous-wake
-
-Test results from 2026-05-17 cap cycle:
-
-1. **Haiku-agent-wrapping-bash-sleep:** agent ended in 35 sec (delegated to background bash). Background bash either was killed at cap OR fired during cap (turn rejected) OR fired silently. Either way, did NOT wake the orchestrator.
-
-2. **Mid-cap agent dispatches:** 3 Sonnet agents (T06 R-3 / T07 R-1 / T03 R-1) dispatched right before cap exhaustion. ALL THREE returned within ~10-60 sec with verbatim error: `"You're out of extra usage · resets 7am (UTC)"`. Token counts: 2 / 197 / 466. They burned ~700 total tokens for zero output. **The harness DOES return the cap-error to the agent quickly — agents don't run real work during cap.**
-
-3. **What actually woke me:** Carter pinged me manually after cap reset.
-
-**Standing rules going forward:**
-
-- **Don't dispatch new agents when cap is near.** They'll burn ~200-500 tokens each returning immediately. Multi-dispatch waste compounds.
-- **No autonomous wake-up pattern works reliably across cap window.** Haiku-sleep, bash-sleep-in-background, in-flight-agents-landing-past-reset — all unreliable in observed data.
-- **Default cap-handoff pattern:** write RESUME_HERE.md before cap, end turn cleanly. Carter pings on cap reset. Resume from RESUME_HERE.md.
-- **If Carter wants autonomous resume:** he sets a phone alarm + pings me. The harness side cannot self-resume.
-- **Don't try the Haiku-wake or in-flight-agent-wake trick again.** Burns tokens, doesn't deliver wake.
-
 
 ## Carter directive 2026-05-17 night — proactive cost-discovery + 17% over-burn recovery target (LOCKED)
 
