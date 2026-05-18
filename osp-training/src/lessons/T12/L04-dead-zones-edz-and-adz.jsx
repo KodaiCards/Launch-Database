@@ -182,12 +182,12 @@ export default function T12L04_DeadZones() {
             { symbol: 'factor', label: 'ADZ factor (conservative)', value: 0.10, unit: 'm/ns' },
           ]}
           steps={[
-            'ADZ ≈ 500 ns × 0.10 m/ns = 50 m  (absolute minimum)',
+            'ADZ ≈ 500 ns × 0.10 m/ns = 50 m  (theoretical minimum — just clears the ADZ)',
             'Practical minimum with 10× safety margin: 50 m × 10 = 500 m',
             'Use a 500 m launch reel for this pulse width class.',
           ]}
           answer="≥ 500 m launch cable"
-          sanityCheck="A 500 ns pulse generates at most ~50 m of ADZ on singlemode. A 500 m reel gives 10× clearance — more than enough even for slightly degraded launch connectors."
+          sanityCheck="The formula gives the theoretical ADZ minimum — 50 m is just enough fiber to move the first connector past the dead zone under ideal conditions. The recommended launch cable in the table (≥ 500 m) is 10× that value, which is the real-world standard. The extra length provides margin for connector reflectance variation, ensures multiple averaging passes have clean dynamic range over the event, and accounts for the fact that a dirty or slightly misaligned launch connector can push the ADZ further than the theoretical value. The formula tells you the floor; the table tells you what to carry in the truck."
         />
 
         <h3>Receive cable — measuring the far-end connector</h3>
