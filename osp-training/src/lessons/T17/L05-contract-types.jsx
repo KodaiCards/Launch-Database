@@ -338,6 +338,28 @@ export default function L05ContractTypes() {
           by estimated quantities.
         </p>
 
+        <h4>Davis-Bacon Act Prevailing Wages — RUS Grants vs. Loans</h4>
+
+        <p>
+          RUS grants (including BEAD grants) require Davis-Bacon Act prevailing wages per 40 USC §3141 et seq.
+          Contractors on these projects must pay laborers and mechanics the federal prevailing wage for the county
+          and trade. RUS direct loans typically do not trigger Davis-Bacon requirements — the applicability depends
+          on the specific funding source and whether the project involves federal funding above the threshold. Inspectors
+          and project managers must verify Davis-Bacon applicability based on the project's actual funding source(s)
+          at contract award time. Non-compliance can void federal funding.
+        </p>
+
+        <h4>Bid Bonds and Performance Bonds</h4>
+
+        <p>
+          Competitive unit-price and lump-sum contracts typically require two bonds: a bid bond (5–10% of the
+          bid price) due upon bid submission to ensure the bidder will sign the contract if awarded, and a
+          performance bond (100% of the contract value) due at contract execution to guarantee the contractor will
+          complete the work per specifications. Federal contracts (FAR 28.102) require both for contracts exceeding
+          small-purchase thresholds. Private projects vary by owner policy. The bid bond is refunded to unsuccessful
+          bidders; the performance bond is held through project completion.
+        </p>
+
         <p>
           During construction, actual quantities are tracked per the staked route and as-built drawings. The owner
           pays unit price × actual quantity, not unit price × estimated quantity.
