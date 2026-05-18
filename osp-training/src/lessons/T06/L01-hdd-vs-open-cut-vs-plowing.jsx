@@ -25,6 +25,8 @@ export const meta = {
     'HDD',
     'open-cut trench',
     'plowing',
+    'bore',
+    'pavement restoration',
     'decision matrix',
     'ROW',
     'bore pit',
@@ -50,6 +52,16 @@ export const meta = {
       term: 'plowing',
       definition:
         'A trenchless underground installation method that pulls a blade through the soil at the target depth, simultaneously laying conduit or direct-buried cable into the slot the blade creates. The soil closes behind the blade — no open trench. Best in soft, cooperative soil (clay, sandy loam, black dirt); fails in rock or near existing utilities.',
+    },
+    {
+      term: 'bore',
+      definition:
+        'The drilled hole created during horizontal directional drilling (HDD). The bore is created in two main phases: (1) a pilot bore — a small-diameter steering hole (typically 4–6 inches) that runs the full distance from entry pit to exit pit, and (2) reaming passes that progressively enlarge the bore to the final diameter required for conduit or cable pull-back. The bore itself is a hole filled with drilling fluid; the conduit or cable is installed in a second operation after reaming is complete.',
+    },
+    {
+      term: 'pavement restoration',
+      definition:
+        'The repair and resurfacing of roads, sidewalks, or other paved surfaces after underground construction work that has required surface excavation. Pavement restoration includes removing and disposing of the broken asphalt or concrete, re-compacting the subgrade, and installing new asphalt or concrete to match the adjacent surface. This is a line-item cost on open-cut and plowing projects, often running $20–80 per linear foot for asphalt on urban streets and more for concrete. Trenchless methods (HDD, plowing) minimize restoration because they avoid excavating beneath the pavement surface.',
     },
     {
       term: 'decision matrix',
