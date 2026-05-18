@@ -32,7 +32,7 @@ export const meta = {
     'coverage map (USDA ReConnect)',
   ],
   vocabulary_assumed: [
-    { term: 'GIS', source_lesson_id: 'T04.L03' },
+    { term: 'GIS', source_lesson_id: 'T01.L08' },
     { term: 'shapefile (.shp/.shx/.dbf/.prj)', source_lesson_id: 'T04.L03' },
     { term: 'geodatabase', source_lesson_id: 'T04.L03' },
     { term: 'KMZ', source_lesson_id: 'T04.L06' },
