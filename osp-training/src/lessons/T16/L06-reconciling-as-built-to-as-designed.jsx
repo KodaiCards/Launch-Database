@@ -346,10 +346,156 @@ export default function L06() {
             conditions. Discrepancies found at this stage = audit exposure.
           </li>
         </ol>
+
+        <h3>Who Creates Redlines, Who Consolidates Them — Organizational Roles</h3>
+
+        <p>
+          Reconciliation is not a solo job. It spans field crews, superintendents, designers, and engineers — and each role has distinct responsibilities. RUS Bulletin 1751F-630 §12.6 (Final Construction Package) requires a clear chain of custody for redlines. Confusion about who is responsible for what leads to incomplete redlines, lost documentation, and incomplete as-built records.
+        </p>
+
+        <p>
+          Here is the typical organizational structure on RUS projects:
+        </p>
+
+        <table className="standard-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Redline Responsibility</th>
+              <th>Authority &amp; Limitations</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Field Crew (Installation Technicians)</strong></td>
+              <td>Create initial redlines documenting their day-to-day field changes. Mark deviations in red on site — do not wait until week's end. Include dimensions, station numbers, dates, and initials. Note: crew may NOT approve changes; only document them.</td>
+              <td>Authorized to MARK changes; NOT authorized to approve them or decide if they are significant enough for engineer review.</td>
+            </tr>
+            <tr>
+              <td><strong>Construction Foreman / Crew Superintendent</strong></td>
+              <td>Collect all redlines from crew members at end of each work day or shift. Consolidate redlines from multiple crews on the same segment. Ensure redlines are legible and include all required notation. Submit consolidated redlines to the Project Inspector within 10 business days per project specs. Certify via signature that redlines are complete for their scope.</td>
+              <td>Authorized to consolidate and certify COMPLETENESS; NOT authorized to alter crew-marked deviations or dismiss changes as "too minor."</td>
+            </tr>
+            <tr>
+              <td><strong>Project Inspector / Resident Engineer</strong></td>
+              <td>Verify that redlines are consistent with daily inspection reports, photos, and field observations. Cross-check foreman's certification against the inspector's own records. Flag any discrepancies between redline annotations and inspection findings for foreman clarification. Submit consolidated redlines to design engineering.</td>
+              <td>Authorized to VERIFY and flag discrepancies; NOT authorized to alter redline content. If a redline conflicts with inspector findings, both are documented and routed to engineer for resolution.</td>
+            </tr>
+            <tr>
+              <td><strong>Design Engineering Firm (Drafting/Designer)</strong></td>
+              <td>Receive consolidated redlines from project inspector. Log all changes in the change register (drawing sheet, station, description, status). Perform an internal review to ensure redline legibility and that no obvious documentation is missing. Draft the CAD/GIS updates and circulate for engineer of record review. Responsible for preparing the clean, final as-built drawing set.</td>
+              <td>Authorized to INTERPRET and draft solutions; NOT authorized to ignore redlines or reinterpret a crew's marked change without engineer approval. Any ambiguity is escalated to engineer of record.</td>
+            </tr>
+            <tr>
+              <td><strong>Engineer of Record (Licensed P.E.)</strong></td>
+              <td>Review the consolidated redlines, change register, and draft as-built drawing set. Approve each flagged change OR require a field fix OR issue a retroactive Field Change Order with engineering justification. Apply professional seal and signature to the final as-built set. Certify conformance to NESC, NEC, TIA, and RUS standards. This is the quality gate.</td>
+              <td>ONLY role authorized to approve deviations. Can require field remediation. Can approve deviations via retroactive FCO if justified. Cannot approve an as-built that does not accurately reflect constructed conditions.</td>
+            </tr>
+            <tr>
+              <td><strong>RUS Project Inspector / Loan Officer</strong></td>
+              <td>Final RUS review of as-built drawing set and Form 219 closeout package. May compare sample of as-built records against field conditions during final inspections. Documents findings; does not approve or modify the as-built (that role is the engineer of record).</td>
+              <td>Authorized to AUDIT and flag discrepancies. Any discrepancies found = audit findings and cure requirements. Does NOT approve the as-built — the borrower's engineer of record has already certified it.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The key lesson: <strong>Redlines flow in one direction — from field to engineer.</strong> Every role in the chain is responsible for ensuring that the redlines they pass downstream are complete and accurate. A foreman who dismisses a small change as "too minor" has broken the chain. A designer who alters a crew-marked deviation without engineer approval has broken the chain. A break in the chain shows up later in an audit finding.
+        </p>
       </section>
 
       {/* ── ADVANCED ─────────────────────────────────────────────── */}
       <section className="lesson-section advanced">
+        <h2>Long-Term As-Built Records Management</h2>
+
+        <p>
+          7 CFR §1755.400 requires that as-built records be maintained <strong>for the life of the facility</strong>. This language sounds straightforward until you realize that a fiber plant built in 2025 may still be in service (and under RUS oversight) in 2085. The as-built record is not a static document submitted at closeout — it is a <strong>living document</strong> that evolves as the plant is modified, extended, or repaired over its lifetime.
+        </p>
+
+        <h3>The Living-Document Challenge</h3>
+
+        <p>
+          When a plant is modified years after closeout, the as-built must be updated to reflect the modification. Examples:
+        </p>
+
+        <ul className="standard-list">
+          <li><strong>Plant Extension:</strong> In 2029, a borrower extends the fiber plant by 5 miles to reach a new service area. The new fiber splices into existing closures. Do you create a new Form 219, update the old one, or create an amendment? The as-built record must be updated to show the new route, new splice locations, and the connection points into the existing plant.</li>
+          <li><strong>Splice Replacement:</strong> In 2031, a splicer discovers that a field-spliced connection shows higher loss than spec. The splice is re-done. The as-built record must document the original splice location, the reason for replacement, and the new splice loss values.</li>
+          <li><strong>Cable Repair or Reroute:</strong> In 2032, construction damage severs a conduit segment. Crews install a new detour. The route changes. The as-built must reflect the new routing.</li>
+        </ul>
+
+        <p>
+          <strong>The central question:</strong> How do you maintain version control on an as-built record that has been amended multiple times over 10+ years? The answer depends on whether your organization uses a living GIS record or a paper-and-amendment trail.
+        </p>
+
+        <h3>Version Control for Long-Term Records</h3>
+
+        <p>
+          Best practice is to establish a version-control scheme upfront in your project specification. Two common approaches:
+        </p>
+
+        <ol className="step-list">
+          <li><strong>Revision numbering (e.g., Rev 0, Rev 1, Rev 2):</strong> The initial as-built is submitted as Rev 0. If a modification is made, a new drawing set is issued as Rev 1 with a change notation indicating the date and nature of the modification. This approach works well for borrowers who do occasional updates and want clear audit trails. RUS records will show Rev 0 as the project closeout baseline and Rev 1+ as post-closeout amendments.</li>
+          <li><strong>Living GIS with amendment log:</strong> The as-built is stored as a GIS database (shapefile, geodatabase, or web service). Each amendment is recorded in a linked amendment log with fields for: Date, Modification Description, Authorized By, New Feature IDs, Affected Splice Locations. The GIS always shows the current state, and the amendment log provides the audit trail back to the original as-built. This approach scales well for plants that undergo frequent updates (e.g., carrier networks with ongoing optimization). RUS retains the original Form 219 (baseline) and the borrower maintains the GIS + amendment log internally.</li>
+        </ol>
+
+        <p>
+          <strong>Amendment triggers:</strong> Document upfront what events trigger a formal as-built amendment vs. a log entry. Typical triggers:
+        </p>
+
+        <ul className="standard-list">
+          <li>Plant extension of &gt; 1 mile (new Form 219 submitted)</li>
+          <li>Splice relocation (log entry; GIS updated)</li>
+          <li>Route deviation due to emergency repair (log entry or Rev 1, depending on extent)</li>
+          <li>Addition of new cable types or fiber counts (new form 219 or amendment)</li>
+          <li>Replacement of failed cable or equipment (log entry unless the replacement changes the as-built geometry/count)</li>
+        </ul>
+
+        <p>
+          RUS Bulletin 1751F-630 §12.7 (Final Construction Package) does not mandate a specific versioning scheme, but it does require that "all deviations from design are documented and approved by the engineer of record." This applies to post-closeout amendments as much as to initial construction — if a plant modification happens after closeout, the engineer must still review and approve the amendment before it becomes part of the official record.
+        </p>
+
+        <h3>Real-World Example: Plant Extension Amendment</h3>
+
+        <p>
+          A borrower completes a 12-mile fiber build in 2025, submits Form 219, and receives final advance. In 2029, they fund an extension to reach a new service area 5 miles away. The crew splices the new fiber into two existing closures (Closure 4 and Closure 7) from the original plant.
+        </p>
+
+        <p>
+          <strong>The documentation process:</strong>
+        </p>
+
+        <ol className="step-list">
+          <li>Field crews create redline drawings for the new 5-mile segment, including dimensions showing where the new fiber splices into the existing closures.</li>
+          <li>A reconciliation workflow similar to the original project is followed: redlines collected, change register compiled, engineer review, final as-built drawings created.</li>
+          <li>Because the modification extends the plant and involves new Form 1755-A unit costs, a new Form 219 amendment (or supplemental Form 219, depending on RUS guidance) is submitted documenting:
+            <ul className="standard-list">
+              <li>The new 5-mile segment with all route, splice, and equipment details</li>
+              <li>The connection points into the existing plant (Closure 4 & 7 splice identification)</li>
+              <li>Updated plant total (17 miles vs. original 12 miles)</li>
+              <li>Engineer certification that the extension meets NESC, NEC, and RUS standards</li>
+            </ul>
+          </li>
+          <li>The original 2025 Form 219 (Rev 0) remains on file as the project baseline. The 2029 amendment becomes part of the permanent record. Future RUS auditors will see both documents and will understand the plant evolution.</li>
+        </ol>
+
+        <p>
+          This approach works because RUS is not asking you to overwrite history — it's asking you to maintain a clear, time-stamped record of every modification. Each Form 219 (and each amendment) becomes a snapshot of the plant at a specific moment in time.
+        </p>
+
+        <h3>GIS Database Maintenance for the Long Term</h3>
+
+        <p>
+          If your as-built is stored in GIS (preferred for long-term management of large plants), establish these practices upfront:
+        </p>
+
+        <ol className="step-list">
+          <li><strong>Authoritative geometry layer:</strong> One "true" geometry layer reflects the current state of the plant. Don't create separate layers for "original design," "as-built 2025," and "as-built 2029" — that leads to confusion. The single authoritative layer is the as-built, and it is updated whenever field conditions change.</li>
+          <li><strong>Amendment log table:</strong> Maintain a linked database table recording: DateModified, ModificationType, OriginalFeatureID, NewFeatureID, AuthorizedBy, ApprovedBy, RUSFormNumber (if a new Form 219 was filed). This table is the audit trail. When a RUS auditor asks "why does the GIS show splice 42 at coordinates X,Y but the 2025 Form 219 shows it at X2,Y2?" you can open the amendment log and say "amendment in 2029, here's the approved field change order."</li>
+          <li><strong>Baseline snapshot:</strong> Retain a read-only copy of the original as-built GIS dated at project closeout. Label it clearly (e.g., "As-Built Baseline 2025-06-30"). Never modify it. This is your audit baseline — it matches the original Form 219. Future amendments reference this baseline.</li>
+          <li><strong>Version control for the GIS itself:</strong> If your GIS is file-based (shapefile, geodatabase), consider using git or another version-control system to track changes. If it's web-based (ArcGIS Online, etc.), rely on the platform's audit log and backup functionality. The goal is that 10 years later, you can reconstruct "what did the as-built show on June 30, 2025?" and "what does it show today, and what changed between then and now?"</li>
+        </ol>
+
         <h2>RUS Audit Exposure</h2>
 
         <p>
@@ -431,6 +577,36 @@ export default function L06() {
           exists precisely because the window for accurate reconciliation closes fast. Best
           practice on RUS projects: reconcile within 15 business days of completing each section,
           not after the entire project is done.
+        </p>
+
+        <h3>The Inspection-to-As-Built Feedback Loop: Closing the QA Cycle</h3>
+
+        <p>
+          As-built reconciliation does not exist in isolation. It is the final step of the Quality Assurance chain that began during construction. The path is: Construction Execution → Daily Inspection (T13) → Inspection Findings → As-Built Reconciliation (T16) → As-Built Updates → Form 219 Closure.
+        </p>
+
+        <p>
+          The critical handoff is from T13 (Inspection) to T16 (As-Built). T13 QA inspectors identify defects, missing items, and discrepancies in the field — e.g., splice case not installed, burial depth 2 inches shallower than spec, missing slack at a pedestal. These findings are documented in the Daily Field Report (DFR) and Inspection Report. When the inspector approves the plant for acceptance, they are saying "I inspected this against the specs and I found these items." If an inspection finding identifies a missing item or a buried deviation, that finding MUST flow into the as-built record — it cannot be left as a loose end.
+        </p>
+
+        <p>
+          Per 7 CFR §1755.400(c)(4), the as-built record must reflect actual field conditions as accepted. If an inspector found that burial depth was 30 inches instead of the 36 inches specified, the as-built drawing must show 30 inches AND must include a note explaining that depth was reduced due to rock conditions at station X and was approved by the engineer via FCO-XXXX. The as-built is not complete until every inspection finding is either (a) remediated in the field and re-inspected, or (b) documented in the as-built with engineer approval via an FCO.
+        </p>
+
+        <p>
+          <strong>The feedback loop in practice:</strong>
+        </p>
+
+        <ol className="step-list">
+          <li>Inspector files Inspection Report flagging: "Slack coil missing at Pedestal P-12" and "Burial depth 30 inches vs. 36 inches spec at sta. 18+40."</li>
+          <li>Project PM routes the report to the field crew + engineer for closure.</li>
+          <li>Field crew installs slack coil at P-12 and re-inspects (approved). Burial depth deviation at 18+40 is documented in change register as "unavoidable rock" and engineer issues retroactive FCO-024 approving the 30-inch depth.</li>
+          <li>Engineer of record receives the inspection report + FCO and updates the as-built drawing: (a) P-12 now shows slack coil, (b) section at 18+40 now shows 30-inch depth with note "FCO-024, rock conditions."</li>
+          <li>As-built is finalized, sealed, and submitted with Form 219. The feedback loop is closed — no inspection finding is left orphaned.</li>
+        </ol>
+
+        <p>
+          If this loop is broken — if an inspection finding is logged but never reconciled into the as-built — the RUS auditor will find that discrepancy: "Inspector found burial depth 30 inches but as-built shows 36 inches." This is an audit exposure that can disallow costs and require remediation.
         </p>
       </section>
 

@@ -26,6 +26,7 @@ export const meta = {
     'ANSI/TIA-606-C',
     'administration (fiber infrastructure)',
     'GIS record of record',
+    'GIS',
   ],
   vocabulary_assumed: [
     { term: 'as-built', source_lesson_id: 'T01.L05' },
@@ -33,7 +34,6 @@ export const meta = {
     { term: 'as-designed', source_lesson_id: 'T04.L08' },
     { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
     { term: 'Form 219 certification scope', source_lesson_id: 'T13.L07' },
-    { term: 'GIS', source_lesson_id: 'T01.L08' },
     { term: 'post-restoration as-built', source_lesson_id: 'T15.L09' },
     { term: 'DFR (Daily Field Report)', source_lesson_id: 'T10.L10' },
     { term: 'deviation log', source_lesson_id: 'T10.L10' },
@@ -58,6 +58,11 @@ export const meta = {
       term: 'GIS record of record',
       definition:
         'The authoritative, accepted GIS dataset that represents the official location and configuration of the fiber plant. Once a project closes out (Form 219 signed, as-built drawings accepted), the GIS record of record is the version that feeds the 811 one-call system, the borrower\'s plant accounting records, and any future design work on the route. It supersedes any draft or working GIS layers. Changes to the plant after close-out require a formal as-built update and a new GIS record of record.',
+    },
+    {
+      term: 'GIS',
+      definition:
+        'Geographic Information System — a database and software tool that stores spatial data (coordinates, map layers, feature attributes) in an organized, queryable format. In OSP work, the GIS stores the cable route geometry (polylines with lat/long coordinates), splice case locations (points with metadata), and attribute tables linking GIS features to administration records, splice matrices, and maintenance history. The as-built GIS is the system-of-record for plant location.',
     },
   ],
 };
@@ -238,6 +243,68 @@ export default function T16L01WhatIsAnAsBuilt() {
 
       {/* ── ADVANCED ─────────────────────────────────────────────────────── */}
       <section className="lesson-section advanced">
+        <h2>Organizational Roles — Who Creates, Owns, and Maintains the As-Built?</h2>
+
+        <p>
+          The as-built is a business record that spans multiple roles and departments. Without clarity on who is responsible for what, ownership becomes orphaned and the record deteriorates. Here is how responsibility should be distributed:
+        </p>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', margin: '16px 0' }}>
+          <thead>
+            <tr style={{ background: '#1e293b' }}>
+              <th style={{ border: '1px solid #475569', padding: '8px', textAlign: 'left' }}>Role</th>
+              <th style={{ border: '1px solid #475569', padding: '8px', textAlign: 'left' }}>Responsibility for As-Built</th>
+              <th style={{ border: '1px solid #475569', padding: '8px', textAlign: 'left' }}>Authority &amp; Limitations</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Field Installation Crew</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Document deviations from design in Daily Field Report (DFR) and redline drawings. Create redlines as work progresses — do not wait until week's end. Include GPS coordinates, cable depths, splice locations, and date/time stamps. Submit redlines to crew foreman daily.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to DOCUMENT what they install; NOT authorized to decide whether a deviation is "important enough" to record. Record everything.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Construction Foreman / Superintendent</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Collect daily redlines from crew members. Consolidate redlines from multiple crews on the same segment. Verify redlines are legible and complete. Maintain a consolidated redline set for the project section. Submit consolidated redlines to Project Inspector within 10 business days of completing section work per project specifications.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to consolidate and organize; NOT authorized to reject or dismiss redlines as "too minor." Every redline is forwarded upstream.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Project Inspector / Resident Engineer</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Verify consolidated redlines against daily inspection reports, photos, and field observations. Cross-check foreman's redline set against inspector's own records. Flag any discrepancies for foreman clarification before submitting to design engineer. Certify on project form (often a "Final Inspection Report") that all redlines have been reviewed and are consistent with as-constructed conditions.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to VERIFY and request clarification; NOT authorized to alter redline content. If redlines conflict with inspection findings, both are documented and routed for engineer resolution.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Design Engineering / GIS Team</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Receive consolidated redlines from project inspector. Create a change register (one row per change: sheet, station, description, status). Draft the final as-built CAD/GIS drawings incorporating every accepted change. Generate the splice matrix, administration records (TIA-606-C classes), and fiber topology data structure. Prepare the complete as-built documentation package for engineer of record review.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to DRAFT and synthesize records; NOT authorized to ignore, alter, or reinterpret field redlines without engineer approval. Any ambiguity in the redlines is escalated to the engineer of record, not assumed away.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Engineer of Record (Licensed P.E.)</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Review the complete as-built documentation package (redlines, change register, draft drawings, splice matrix, administration records). Approve the final as-built as representative of the constructed plant. Apply professional engineer's seal and signature certifying that the as-built accurately reflects constructed conditions and complies with NESC, NEC, TIA-606-C, and RUS standards. This is the quality gate — the engineer's signature is what makes the as-built official.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>ONLY role authorized to approve the as-built. Can require field corrections or issue retroactive Field Change Orders. Cannot seal an as-built that does not accurately reflect field conditions.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Project Owner / Borrower Manager</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Receive the signed, sealed as-built documentation. Submit the sealed as-built package with Form 219 closeout documents to RUS (if RUS-funded) or retained in project files (non-RUS). Establish an archival location for the as-built GIS and splice matrix — typically a secure server, GIS database, or cloud storage accessible to O&amp;M and restoration crews. Assign responsibility to an O&amp;M manager or database administrator for long-term maintenance and updates.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to receive and archive; responsible for assigning post-closeout ownership. Does NOT modify or alter the engineer-sealed as-built without engineer approval.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>Operations &amp; Maintenance (O&amp;M) Team</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Maintain the as-built GIS and splice matrix as the operating-reference database. When plant is modified (emergency restoration, service adds, capital projects), update the as-built records to reflect the new conditions. For major modifications, coordinate with the engineer of record or design firm to prepare amendment documentation and obtain engineer sign-off. Submit amended as-built packages to RUS if required (depends on RUS loan conditions).</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to maintain, update, and operate the as-built database. NOT authorized to approve major modifications without engineer review. For emergency repairs, make temporary updates to the as-built with notation "pending engineer review" and formalize within 10 business days.</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}><strong>RUS State Office / Loan Officer (RUS-funded only)</strong></td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Review as-built documentation as part of project closeout and Form 219 submission. During the project audit period, conduct spot-checks comparing as-built records against field conditions. Document findings; does not approve or modify the as-built. If discrepancies are found, issues are documented as audit findings and require borrower cure.</td>
+              <td style={{ border: '1px solid #475569', padding: '8px' }}>Authorized to AUDIT and verify accuracy; does NOT approve the as-built. The borrower's engineer of record owns quality; RUS verifies compliance and accountability.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          <strong>The key principle:</strong> The as-built flows downstream through the chain — from field observation (crew) through consolidation (foreman) through verification (inspector) through drafting (design engineer) through approval (engineer of record) to retention (owner/O&amp;M). Each role in the chain is responsible for ensuring that what they pass downstream is complete and accurate. A crew that forgets to redline a splice location, a foreman who dismisses a change as "too minor," or a designer who alters a field redline without engineer approval breaks the chain. When the chain breaks, the as-built becomes inaccurate — and that inaccuracy shows up later in audit findings, 811 locate errors, or restoration delays.
+        </p>
+
         <h2>As-Built Is a Living Record</h2>
         <p>
           The as-built is not a one-time deliverable. It is a living record that must be updated every time the plant changes:
