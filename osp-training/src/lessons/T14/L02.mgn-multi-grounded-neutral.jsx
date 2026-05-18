@@ -274,6 +274,21 @@ export default function T14L02_MGNMultiGroundedNeutral() {
           protection benefit is entirely from the communications-side electrodes rather than
           shared with the distribution system.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Understanding MGN architecture is essential for joint-use pole design:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T05.L01 NESC Joint-Use Pole Fundamentals</strong> — MGN systems appear in NESC Rule 232 guidance. On an MGN pole, the distribution neutral-to-ground bond creates an equipotential surface that your communications cable lashes to or bonding hardware connects to. Understanding this equipotential baseline is critical for safe work.</li>
+            <li><strong>T08.L02 Make-Ready &amp; Bonding Verification</strong> — During make-ready on an MGN pole, you must verify (a) that the neutral-to-ground bond exists and is sound (visual + continuity check), and (b) that communications bonding connections (cable messenger, grounding wire) are electrically continuous with the MGN reference. A broken neutral-to-ground bond invalidates the entire MGN protection strategy.</li>
+            <li><strong>T13.L03 Aerial Construction Inspection</strong> — During fiber installation on an MGN pole, the inspector verifies bonding connections at termination points. If a messenger bond is loose or missing, the fiber is not safely bonded to the MGN neutral, creating shock hazard for future maintenance crews.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            MGN is not just distribution power infrastructure — it's the electrical reference your communications bonding system depends on for safety.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ───────────────────────────────────────────────────── */}

@@ -259,6 +259,21 @@ export default function T14L05_IBTandGES() {
           services can add their bonding conductors as the building's services change over time.
           (Source: NEC §250.94.)
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            The IBT/GES concept cascades from building entry through all bonding design:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T14.L01 Grounding &amp; Bonding Fundamentals</strong> — The IBT is the point where all communications bonding converges to tie into the building's main GES. Without this tie point, each communication service (telco, cable, fiber) would have its own isolated GES — creating multiple ground-potential differences that cause currents to flow between systems.</li>
+            <li><strong>T14.L06 Ground Resistance Testing</strong> — The GES (and therefore the IBT connection point) is tested for resistance-to-earth. High IBT resistance means fault currents stay elevated, creating shock hazard. The ground resistance spec (typically ≤5 Ω for telco, ≤25 Ω for cable) is measured at the GES/IBT location.</li>
+            <li><strong>T19.L09 Headend &amp; CO Bonding to ISP Infrastructure</strong> — At the headend/CO, the fiber grounding conductor bonds to the same GES as the power system and existing communication services. The principle is identical: one equipotential GES, all services bonded there.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The IBT is not a luxury — it's the structural foundation that prevents your communications system from floating at a different potential than the building's power system.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ───────────────────────────────────────────────────── */}

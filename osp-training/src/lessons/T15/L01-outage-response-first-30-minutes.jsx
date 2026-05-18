@@ -356,6 +356,21 @@ export default function T15L01OutageResponseFirst30() {
           of the specific SLA, because the borrower can't afford the reputational damage of a
           single missed critical-circuit SLA with a government or public-safety customer.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            The first-30-minutes response cascades into root-cause analysis and MOP execution:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T13.L07 Close-Out Documentation &amp; Form 219</strong> — As-built records (the Form 219 and fiber splice matrix) are your diagnostic starting point on an outage call. You need to know which routes, fiber types, splice methods, and test baseline are on record to narrow fault location. A missing or inaccurate Form 219 delays the first-30-minute response and extends MTTR.</li>
+            <li><strong>T16.L06 Reconciling As-Built to As-Designed</strong> — If the actual plant (observed in GIS) doesn't match the as-built records (Form 219), fault location during outage becomes guesswork. Accurate Form 219 + accurate as-built records = you can dispatch the crew confidently to the right location within the first 15 minutes.</li>
+            <li><strong>T17.L08 Emergency MOP &amp; Crew Authorization</strong> — If your ETR assessment at minute 20 says "we need to make an emergency splice," the emergency MOP must be approved in real time (verbal authorization, documented in the bridge call notes, followed by procedure). Understanding MOP hierarchy and authorization roles is essential during outage bridges.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The first 30 minutes are about information gathering and decision-making, not panic. Accurate as-built records are the single biggest time-saver.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ─────────────────────────────────────────────────── */}
