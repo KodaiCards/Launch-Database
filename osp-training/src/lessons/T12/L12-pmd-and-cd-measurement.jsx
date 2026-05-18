@@ -50,7 +50,7 @@ export const meta = {
     {
       term: 'CD',
       definition:
-        'The broadening of optical pulses caused by different wavelengths (colors) of light traveling at different speeds in the fiber. Consists of two components: material dispersion (a property of the silica glass) and waveguide dispersion (a property of the fiber\'s index profile). CD is expressed in ps/(nm·km) — how many picoseconds of pulse broadening per nanometer of source linewidth per kilometer of fiber. G.652.D at 1550 nm: CD ≈ 17 ps/(nm·km). Zero-dispersion wavelength (ZDW) for G.652.D: typically 1302–1322 nm.',
+        'The broadening of optical pulses caused by different wavelengths (colors) of light traveling at different speeds in the fiber. Consists of two components: material dispersion (a property of the silica glass) and waveguide dispersion (a property of the fiber\'s index profile). CD is expressed in ps/(nm·km) — how many picoseconds of pulse broadening per nanometer of source linewidth per kilometer of fiber. G.652.D at 1550 nm: CD ≈ 17 ps/(nm·km). Zero-dispersion wavelength (ZDW) for G.652.D: 1300–1324 nm (per ITU-T G.652.D Table 1).',
     },
     {
       term: 'PMD coefficient',
@@ -233,7 +233,7 @@ export default function T12L12_PMDandCD() {
         <h2>Advanced: CD Compensation and the Zero-Dispersion Wavelength</h2>
         <p>
           G.652.D fiber has a <em>zero-dispersion wavelength (ZDW)</em> in the 1300 nm window
-          (typically 1302–1322 nm), where CD ≈ 0. At 1550 nm, CD is +17 ps/(nm·km). At 1310 nm,
+          (1300–1324 nm per ITU-T G.652.D Table 1), where CD ≈ 0. At 1550 nm, CD is +17 ps/(nm·km). At 1310 nm,
           CD is close to zero but slightly positive or negative depending on the exact fiber.
         </p>
         <p>

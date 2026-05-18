@@ -97,8 +97,8 @@ export default function T12L04_DeadZones() {
           alt="OTDR dead zone diagram showing reflection peak, EDZ region, ADZ region, and recovered backscatter"
           annotations={[
             { x: 15, y: 45, label: 'Reflection peak', description: 'High-reflectance event (connector). Saturates the OTDR receiver.' },
-            { x: 30, y: 60, label: 'EDZ', description: 'Event Dead Zone — OTDR cannot detect a second event here. Typically 1–5 m on singlemode at narrow pulse widths.' },
-            { x: 50, y: 70, label: 'ADZ', description: 'Attenuation Dead Zone — OTDR cannot accurately measure loss here. Typically 3–10 m singlemode at narrow pulse widths. Always larger than EDZ.' },
+            { x: 30, y: 60, label: 'EDZ', description: 'Event Dead Zone — OTDR cannot detect a second event here. Range: 1–5 m singlemode (0.5–2 m for narrow 5–30 ns pulses).' },
+            { x: 50, y: 70, label: 'ADZ', description: 'Attenuation Dead Zone — OTDR cannot accurately measure loss here. Range: 3–10 m singlemode (3–8 m for narrow 5–30 ns pulses). Always larger than EDZ.' },
             { x: 75, y: 55, label: 'Recovered backscatter', description: 'Trace has settled flat. Valid loss and event measurements resume here.' },
           ]}
         />
@@ -123,8 +123,8 @@ export default function T12L04_DeadZones() {
           <strong>Rule of thumb for singlemode at narrow pulses (5–30 ns):</strong>
         </p>
         <ul>
-          <li>EDZ: ≈ 0.5–2 m</li>
-          <li>ADZ: ≈ 3–8 m</li>
+          <li>EDZ: ≈ 0.5–2 m (narrow-pulse sub-range; full EDZ range across all pulse widths: 1–5 m)</li>
+          <li>ADZ: ≈ 3–8 m (narrow-pulse sub-range; full ADZ range across all pulse widths: 3–10 m)</li>
         </ul>
         <p>
           Both scale roughly linearly with pulse width. A 1 µs pulse may produce an ADZ of 50–100 m.

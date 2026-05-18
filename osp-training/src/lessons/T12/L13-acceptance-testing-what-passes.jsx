@@ -96,8 +96,8 @@ export default function T12L13_AcceptanceTesting() {
           For singlemode OS2 fiber cabling, TIA-568.3-D defines the maximum channel loss formula:
         </p>
         <blockquote>
-          <strong>Max loss = (n_connectors × 0.75 dB) + (L_km × 0.4 dB/km at 1310 nm)</strong><br />
-          <strong>Max loss = (n_connectors × 0.75 dB) + (L_km × 0.4 dB/km at 1550 nm)</strong>
+          <strong>Max loss = (n_connectors × 0.75 dB) + (L_km × 0.4 dB/km at 1310 nm) + (n_splices × 0.3 dB)</strong><br />
+          <strong>Max loss = (n_connectors × 0.75 dB) + (L_km × 0.4 dB/km at 1550 nm) + (n_splices × 0.3 dB)</strong>
         </blockquote>
         <p>
           Where n_connectors = number of mated connector pairs in the channel (exclude launch/receive
@@ -110,23 +110,26 @@ export default function T12L13_AcceptanceTesting() {
         </p>
 
         <WorkedExample
-          title="Maximum OLTS channel loss for a 12 km OSP span with 4 connectors"
-          formula="Max loss = (n_connectors × 0.75 dB) + (L × 0.4 dB/km)"
+          title="Maximum OLTS channel loss for a 12 km OSP span with 4 connectors and 8 splices"
+          formula="Max loss = (n_connectors × 0.75 dB) + (L × 0.4 dB/km) + (n_splices × 0.3 dB)"
           variables={[
             { symbol: 'n_connectors', label: 'Mated connector pairs', value: 4, unit: 'pairs' },
             { symbol: 'connector_budget', label: 'Loss per connector pair', value: 0.75, unit: 'dB/pair (TIA-568.3-D)' },
             { symbol: 'L', label: 'Fiber span length', value: 12, unit: 'km' },
             { symbol: 'attenuation', label: 'Fiber attenuation allowance at 1310 nm', value: 0.4, unit: 'dB/km' },
+            { symbol: 'n_splices', label: 'Fusion splices in the channel', value: 8, unit: 'splices' },
+            { symbol: 'splice_budget', label: 'Loss per splice (TIA-568.3-D channel model)', value: 0.3, unit: 'dB/splice' },
           ]}
           steps={[
             'Connector budget = 4 × 0.75 dB = 3.00 dB',
             'Fiber loss budget = 12 km × 0.4 dB/km = 4.80 dB',
-            'Max channel loss = 3.00 + 4.80 = 7.80 dB',
-            'If OLTS reads ≤ 7.80 dB (with reference cord subtracted): PASS',
-            'If OLTS reads > 7.80 dB: FAIL — investigate connectors or fiber for excess loss',
+            'Splice budget = 8 × 0.3 dB = 2.40 dB',
+            'Max channel loss = 3.00 + 4.80 + 2.40 = 10.20 dB',
+            'If OLTS reads ≤ 10.20 dB (with reference cord subtracted): PASS',
+            'If OLTS reads > 10.20 dB: FAIL — investigate connectors, fiber, or splices for excess loss',
           ]}
-          answer="Maximum allowable OLTS loss = 7.80 dB at 1310 nm for this channel"
-          sanityCheck="A 12 km span with 4 connector pairs. At 0.4 dB/km × 12 km = 4.8 dB just for the fiber; add 3.0 dB for connectors = 7.8 dB total. If the measured OLTS reading is, say, 6.2 dB, the channel passes with 1.6 dB of margin. That margin is real value — it tells you the link has room for aging, cleaning degradation, and future field work."
+          answer="Maximum allowable OLTS loss = 10.20 dB at 1310 nm for this channel"
+          sanityCheck="A 12 km span with 4 connector pairs and 8 fusion splices. Fiber = 4.8 dB, connectors = 3.0 dB, splices = 2.4 dB, total = 10.2 dB. If the measured OLTS reads, say, 8.5 dB, the channel passes with 1.7 dB of margin. The splice budget (2.4 dB) uses the TIA-568.3-D maximum of 0.3 dB/splice — real field splices averaging 0.05–0.10 dB each will consume far less of this budget, leaving more margin."
         />
 
         <h3>2. Splice loss — RUS 1753F-401 §5</h3>
