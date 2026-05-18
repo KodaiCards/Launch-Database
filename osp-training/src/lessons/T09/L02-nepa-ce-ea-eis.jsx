@@ -295,6 +295,28 @@ export default function T09L02_NepaTypes() {
           Part 1970 RUS NEPA procedures).
         </p>
 
+        <h3 className="mt-5 font-semibold">Multi-Circumstance Agency Sequencing — When Multiple Extraordinary Circumstances Co-Occur</h3>
+        <p>
+          A single route may trigger multiple extraordinary circumstances at the same time — for example, a corridor with both a listed T&E species habitat AND a historic property within the Area of Potential Effect (APE) AND wetlands that require USACE Section 404 permits. When this happens, the project requires coordination across three separate federal agencies, each with its own timeline and legal authority.
+        </p>
+        <p className="mt-2">
+          <strong>The federal agency call-order when multiple circumstances exist:</strong>
+        </p>
+        <ol className="list-decimal pl-5 space-y-2 mt-2">
+          <li>
+            <strong>USFWS (U.S. Fish and Wildlife Service) — Endangered Species Act Section 7 consultation.</strong> If any T&E species or critical habitat is in the project footprint, the lead federal agency (RUS or NTIA) must initiate formal or informal Section 7 consultation with USFWS. USFWS has 30 days (informal) to 90 days (formal) to respond. Biological Opinion or concurrence required. This can trigger mitigation measures (timing restrictions for nesting season, habitat restoration, etc.). Typical timeline: 2–4 months for informal, 6–12 months for formal.
+          </li>
+          <li>
+            <strong>SHPO (State Historic Preservation Office) — NHPA Section 106 consultation.</strong> If any historic properties (archaeological sites, listed buildings, historic districts) are in the APE, a separate Section 106 consultation with SHPO (state-specific) must conclude. SHPO has 30 days to comment; if concerns exist, Memoranda of Agreement (MOA) or phased mitigation negotiations can extend this to 6–12 months. Section 106 concludes AFTER USFWS consultation results are known so mitigation strategies are coordinated.
+          </li>
+          <li>
+            <strong>USACE (U.S. Army Corps of Engineers) — CWA Section 404 / Nationwide Permit (NWP) coverage.</strong> If wetlands or floodplains are crossed, the project requires either (a) a Nationwide Permit (NWP) authorization from USACE (10–20 business days if the project qualifies), or (b) an Individual Permit (IP) application to USACE (6–12 months if the project doesn't fit a standard NWP). The key distinction: if the wetland impact is minimal (≤0.1 acres) and confined to existing utility corridor, a NWP may cover it. If impacts are larger or the project is not in an existing corridor, a full IP application is required. USACE coordination often occurs in parallel with USFWS and SHPO (all three may be reviewing the same Environmental Assessment) but the Section 404 permit is the binding approval mechanism for water crossings.
+          </li>
+        </ol>
+        <p className="mt-3">
+          <strong>Practical timeline when all three agencies are involved:</strong> Figure 4–6 months minimum (best case: informal USFWS, quick SHPO clearance, NWP coverage). If formal USFWS Section 7 or individual USACE permit is required, budget 9–18 months. The lead federal agency (RUS or NTIA) is responsible for coordinating across all three, but the project cannot proceed until ALL consultations conclude and environmental clearance (CE, FONSI, or ROD) is issued.
+        </p>
+
         <h3 className="mt-5 font-semibold">What does "within or adjacent to existing ROW" actually mean?</h3>
         <p>
           CE C-8 covers construction "within or adjacent to existing ROW." In practice,
