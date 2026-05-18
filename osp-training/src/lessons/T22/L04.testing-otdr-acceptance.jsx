@@ -15,7 +15,6 @@ export const meta = {
   prerequisites: ['T22.L02', 'T12.L01', 'T12.L05', 'T12.L06'],
   vocabulary_introduced: [
     'OTDR (Optical Time-Domain Reflectometer)',
-    'launch cable',
     'dead zone',
     'backscatter coefficient',
     'acceptance test',
@@ -27,9 +26,9 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'attenuation', source_lesson_id: 'T02.L06' },
-    { term: 'loss', source_lesson_id: 'T11.L01' },
+    { term: 'loss', source_lesson_id: 'T11.L02' },
     { term: 'OLTS', source_lesson_id: 'T12.L04' },
-    { term: 'splice', source_lesson_id: 'T11.L01' },
+    { term: 'splice', source_lesson_id: 'T11.L02' },
     { term: 'connector', source_lesson_id: 'T02.L04' },
   ],
   estimated_minutes: 25,

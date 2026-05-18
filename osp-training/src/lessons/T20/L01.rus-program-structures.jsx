@@ -26,9 +26,9 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'fiber', source_lesson_id: 'T01.L02' },
+    { term: 'fiber', source_lesson_id: 'T01.L03' },
     { term: 'feeder', source_lesson_id: 'T01.L07' },
-    { term: 'FTTH', source_lesson_id: 'T01.L01' },
+    { term: 'FTTH', source_lesson_id: 'T07.L01' },
   ],
 };
 

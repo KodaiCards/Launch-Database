@@ -14,11 +14,9 @@ export const meta = {
   lesson_type: 'working',
   prerequisites: ['T18.L01', 'T18.L02', 'T18.L07'],
   vocabulary_introduced: [
-    'PPE (Personal Protective Equipment)',
     'OSHA 1910.147 (Lockout-Tagout)',
     'OSHA 1910.1200 (GHS)',
     'confined space',
-    'grounding',
     'fall protection',
     'incident report',
     'competent person',

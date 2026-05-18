@@ -257,8 +257,8 @@ export default function T21L08_MakeReadyDesignReview() {
         questions={[
           {
             id: 'T21.L08.Q1',
-            type: 'mc',
-            prompt: 'What is the primary purpose of the design-review phase?',
+            type: 'multiple-choice',
+            question: 'What is the primary purpose of the design-review phase?',
             options: [
               { id: 'a', text: 'To approve the budget for cable installation' },
               { id: 'b', text: 'To catch discrepancies between the design and actual site conditions before field work begins', isCorrect: true },
@@ -269,7 +269,7 @@ export default function T21L08_MakeReadyDesignReview() {
           },
           {
             id: 'T21.L08.Q2',
-            type: 'mc',
+            type: 'multiple-choice',
             question: 'During make-ready, you discover that a pole is leaning significantly and appears structurally unsafe. What should you do?',
             options: [
               { id: 'a', text: 'Proceed with installation; the pole is already there' },
@@ -281,8 +281,8 @@ export default function T21L08_MakeReadyDesignReview() {
           },
           {
             id: 'T21.L08.Q3',
-            type: 'mc',
-            question: 'What should be verified during the 'clearance verification" step of make-ready?',
+            type: 'multiple-choice',
+            question: 'What should be verified during the "clearance verification" step of make-ready?',
             options: [
               { id: 'a', text: 'Only the visual appearance of the route' },
               { id: 'b', text: 'Measured clearance to power lines (≥12" horizontal, ≥18" vertical for 750V) using a measuring tape', isCorrect: true },
@@ -293,8 +293,8 @@ export default function T21L08_MakeReadyDesignReview() {
           },
           {
             id: 'T21.L08.Q4',
-            type: 'mc',
-            prompt: 'What is a 'burndown list" in the context of make-ready?',
+            type: 'multiple-choice',
+            question: 'What is a "burndown list" in the context of make-ready?',
             options: [
               { id: 'a', text: 'A list of poles that are structurally unsafe' },
               { id: 'b', text: 'A tracking list of issues found during make-ready, each assigned an owner and due date for resolution', isCorrect: true },

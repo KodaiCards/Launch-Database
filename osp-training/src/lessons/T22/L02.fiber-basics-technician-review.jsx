@@ -21,7 +21,7 @@ export const meta = {
     'Single-mode fiber (SMF)',
     'Multimode fiber (MMF)',
     'Core diameter',
-    'Modal dispersion',
+    
     'Attenuation (dB/km)',
     'G.652.D (standard single-mode)',
     'OM3, OM4, OM5 (multimode grades)',
@@ -32,7 +32,6 @@ export const meta = {
     { term: 'wavelength', source_lesson_id: 'T02.L02' },
     { term: 'dB (decibel)', source_lesson_id: 'T02.L03' },
     { term: 'refraction', source_lesson_id: 'T02.L02' },
-    { term: 'cladding', source_lesson_id: 'T02.L01' },
   ],
 };
 

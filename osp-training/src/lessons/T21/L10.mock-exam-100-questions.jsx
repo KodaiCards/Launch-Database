@@ -86,8 +86,8 @@ export default function T21L10_MockExam() {
             // Domain 1: Fiber Fundamentals (15 questions) — sample 5 shown
             {
               id: 'T21.L10.Q1',
-              type: 'mc',
-              prompt: '(Domain 1) What is the refractive index of typical singlemode fiber cladding?',
+              type: 'multiple-choice',
+              question: '(Domain 1) What is the refractive index of typical singlemode fiber cladding?',
               options: [
                 { id: 'a', text: '~1.37' },
                 { id: 'b', text: '~1.47', isCorrect: true },
@@ -98,7 +98,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q2',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 1) How many decibels does light lose crossing 50 km of singlemode fiber at 1550 nm?',
               options: [
                 { id: 'a', text: '~5 dB' },
@@ -110,7 +110,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q3',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 1) What fiber type is standard in modern OSP cable plants?',
               options: [
                 { id: 'a', text: 'Multimode OM1' },
@@ -122,7 +122,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q4',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 1) Dispersion causes different wavelengths to travel at different speeds. Which fiber type minimizes dispersion effects?',
               options: [
                 { id: 'a', text: 'Multimode fiber' },
@@ -134,7 +134,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q5',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 1) What is the cut-off wavelength of singlemode fiber, and why does it matter?',
               options: [
                 { id: 'a', text: 'Below cutoff wavelength, the fiber guides multiple modes; above it, only singlemode' },
@@ -148,7 +148,7 @@ export default function T21L10_MockExam() {
             // Domain 2: Installation Techniques (15 questions) — sample 5
             {
               id: 'T21.L10.Q6',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 2) In aerial installation, what controls how much the cable sags between two poles?',
               options: [
                 { id: 'a', text: 'Cable weight, span length, and pulling tension', isCorrect: true },
@@ -160,7 +160,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q7',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 2) What is the maximum pulling tension for fiber in a conduit?',
               options: [
                 { id: 'a', text: '200–300 lbs', isCorrect: true },
@@ -172,7 +172,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q8',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 2) Direct-buried cable is typically buried at what depth in low-traffic areas?',
               options: [
                 { id: 'a', text: '6–12 inches' },
@@ -184,7 +184,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q9',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 2) What is the primary advantage of HDPE conduit over PVC?',
               options: [
                 { id: 'a', text: 'Lower cost' },
@@ -196,7 +196,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q10',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 2) When would you choose direct-burial over conduit?',
               options: [
                 { id: 'a', text: 'When cost and speed are priorities, and future fiber replacement is not planned', isCorrect: true },
@@ -210,7 +210,7 @@ export default function T21L10_MockExam() {
             // Domain 3: Cable Prep & Termination (12 questions) — sample 3
             {
               id: 'T21.L10.Q11',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 3) After stripping the cable jacket, what should NOT be cut?',
               options: [
                 { id: 'a', text: 'The water-blocking gel' },
@@ -222,7 +222,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q12',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 3) What is the acceptable angle tolerance for a cleaved fiber endface?',
               options: [
                 { id: 'a', text: '±2°' },
@@ -234,7 +234,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q13',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 3) A mechanical connector has an insertion loss of 0.8 dB. Is this acceptable in an OSP link?',
               options: [
                 { id: 'a', text: 'Yes; 0.8 dB is within limits' },
@@ -248,7 +248,7 @@ export default function T21L10_MockExam() {
             // Domain 4: Fusion Splicing (13 questions) — sample 3
             {
               id: 'T21.L10.Q14',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 4) Your fusion splicer displays EL = 0.45 dB. What should you do?',
               options: [
                 { id: 'a', text: 'Accept it; it\'s within the 0.5 dB marginal range' },
@@ -260,8 +260,8 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q15',
-              type: 'mc',
-              question: '(Domain 4) If the fusion splicer reports 'no arc" error, what is the most likely cause?',
+              type: 'multiple-choice',
+              question: '(Domain 4) If the fusion splicer reports "no arc" error, what is the most likely cause?',
               options: [
                 { id: 'a', text: 'The fiber is broken' },
                 { id: 'b', text: 'Contaminated electrodes or poor fiber alignment', isCorrect: true },
@@ -272,8 +272,8 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q16',
-              type: 'mc',
-              prompt: '(Domain 4) What is the purpose of a heat-shrink sleeve around a splice?',
+              type: 'multiple-choice',
+              question: '(Domain 4) What is the purpose of a heat-shrink sleeve around a splice?',
               options: [
                 { id: 'a', text: 'To reduce the loss of the splice' },
                 { id: 'b', text: 'To protect the splice from contamination and mechanical stress in the field', isCorrect: true },
@@ -286,8 +286,8 @@ export default function T21L10_MockExam() {
             // Domain 5: OTDR Testing (13 questions) — sample 3
             {
               id: 'T21.L10.Q17',
-              type: 'mc',
-              question: '(Domain 5) What is the purpose of a 'launch condition" when setting up an OTDR?',
+              type: 'multiple-choice',
+              question: '(Domain 5) What is the purpose of a "launch condition" when setting up an OTDR?',
               options: [
                 { id: 'a', text: 'To stabilize the light source and eliminate dead-zone artifacts near the start of the trace', isCorrect: true },
                 { id: 'b', text: 'To increase the OTDR range by 100%' },
@@ -298,8 +298,8 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q18',
-              type: 'mc',
-              prompt: '(Domain 5) Your OTDR shows attenuation slope of 0.35 dB/km (steeper than the expected 0.20 dB/km). What could cause this?',
+              type: 'multiple-choice',
+              question: '(Domain 5) Your OTDR shows attenuation slope of 0.35 dB/km (steeper than the expected 0.20 dB/km). What could cause this?',
               options: [
                 { id: 'a', text: 'Poor-quality fiber, macrobends during installation, or microbends from stress', isCorrect: true },
                 { id: 'b', text: 'High splice loss only' },
@@ -310,7 +310,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q19',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 5) On an OTDR trace, a connector appears as which signature?',
               options: [
                 { id: 'a', text: 'A dip (negative peak, loss only)' },
@@ -324,7 +324,7 @@ export default function T21L10_MockExam() {
             // Domain 6: Safety & Workmanship (15 questions) — sample 3
             {
               id: 'T21.L10.Q20',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 6) Per NESC Rule 235, what is the minimum vertical clearance from a fiber climber to a 0–750V power line?',
               options: [
                 { id: 'a', text: '6 inches' },
@@ -336,7 +336,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q21',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 6) What is required before entering a confined space (e.g., vault) to work on fiber?',
               options: [
                 { id: 'a', text: 'Only a visual inspection' },
@@ -348,7 +348,7 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q22',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 6) 1550 nm light (used in OSP telecom) is visible to the human eye.',
               options: [
                 { id: 'a', text: 'True; you can see it as red light' },
@@ -362,7 +362,7 @@ export default function T21L10_MockExam() {
             // Domain 7: Make-Ready & Design Review (17 questions) — sample 4
             {
               id: 'T21.L10.Q23',
-              type: 'mc',
+              type: 'multiple-choice',
               question: '(Domain 7) During design review, what should be compared to GIS and aerial photos?',
               options: [
                 { id: 'a', text: 'Pole locations, span lengths, power-line positions, obstacles', isCorrect: true },
@@ -374,8 +374,8 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q24',
-              type: 'mc',
-              question: '(Domain 7) What is a 'burndown list" in make-ready?',
+              type: 'multiple-choice',
+              question: '(Domain 7) What is a "burndown list" in make-ready?',
               options: [
                 { id: 'a', text: 'A schedule for when to install cable' },
                 { id: 'b', text: 'A tracking list of issues found during make-ready, assigned to owners with due dates', isCorrect: true },
@@ -386,8 +386,8 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q25',
-              type: 'mc',
-              prompt: '(Domain 7) Before any work on joint-use poles, what utility procedure is required?',
+              type: 'multiple-choice',
+              question: '(Domain 7) Before any work on joint-use poles, what utility procedure is required?',
               options: [
                 { id: 'a', text: 'Filing a permit with the county' },
                 { id: 'b', text: 'Notifying the power utility; they inspect poles and order any needed make-ready work', isCorrect: true },
@@ -398,8 +398,8 @@ export default function T21L10_MockExam() {
             },
             {
               id: 'T21.L10.Q26',
-              type: 'mc',
-              question: '(Domain 7) During make-ready field work, you measure clearance at a pole and find 10 inches (design called for 12'). What do you do?',
+              type: 'multiple-choice',
+              question: '(Domain 7) During make-ready field work, you measure clearance at a pole and find 10 inches (design called for 12"). What do you do?',
               options: [
                 { id: 'a', text: 'Proceed; 10 inches is close enough' },
                 { id: 'b', text: 'Document the issue, escalate to the design engineer, add to burndown list', isCorrect: true },
