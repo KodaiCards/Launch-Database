@@ -47,7 +47,7 @@ export const meta = {
   ],
 };
 
-const key_terms = [
+export const key_terms = [
   {
     term: 'Redline Drawing',
     definition:
