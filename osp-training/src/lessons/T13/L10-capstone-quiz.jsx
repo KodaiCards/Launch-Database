@@ -308,17 +308,17 @@ export default function T13L10Capstone() {
     {
       id: 'c18',
       question:
-        'Under 7 CFR §1753.19, if the inspector is unable to be present for an entire work day of active construction, the inspector must:',
+        'Under 7 CFR §1753 [confirm current section], if the inspector is unable to be present for an entire work day of active construction, the inspector must:',
       type: 'multiple-choice',
       options: [
         'Nothing — periodic inspection is acceptable for routine cable installation',
         'Arrange for a qualified substitute to provide competent inspection for that day, notify the GFR, and document the coverage arrangement on Form 565',
-        'Halt construction until the inspector can be present — 7 CFR §1753.19 requires inspector presence for ALL active construction days',
+        'Halt construction until the inspector can be present — 7 CFR §1753 requires inspector presence for ALL active construction days',
         'Have the contractor self-certify the day\'s work and attach it to the next Form 565',
       ],
       correct: 1,
       explanation:
-        '7 CFR §1753.19 requires competent resident inspection — not necessarily the same individual for every hour, but a qualified inspector must provide coverage for each active construction day. If the primary inspector cannot attend, a qualified substitute (meeting the same competency standard) must cover. This arrangement is documented: Form 565 for that day names the substitute inspector, their qualifications, and the GFR was notified. Self-certification by the contractor is not resident inspection.',
+        '7 CFR §1753 [confirm current section] requires competent resident inspection — not necessarily the same individual for every hour, but a qualified inspector must provide coverage for each active construction day. If the primary inspector cannot attend, a qualified substitute (meeting the same competency standard) must cover. This arrangement is documented: Form 565 for that day names the substitute inspector, their qualifications, and the GFR was notified. Self-certification by the contractor is not resident inspection.',
     },
     // ── L12: Federal Compliance Monitoring — Davis-Bacon ────────────────
     {
@@ -367,6 +367,22 @@ export default function T13L10Capstone() {
       correct: 1,
       explanation:
         '2 CFR §200.334 requires federal grant recipients to retain ALL financial records, supporting documents, statistical records, and other records pertinent to a federal award for 3 years from the date of submission of the final expenditure report. For a RUS-funded project, this includes: Form 565 daily reports, material certifications, OTDR SOR archives, ground resistance records, compaction test reports, WH-347 certified payrolls, environmental compliance logs, NCN records, and correspondence. Form 219 certifies that this package is complete; it does not replace the underlying records. Both paper and electronic records are included.',
+    },
+    // ── L11: Form 7d advance chain + Form 553a submission requirement ──────
+    {
+      id: 'c21b',
+      question:
+        'The contractor has submitted a Form 7d requesting a loan advance draw for Weeks 4–6. The inspector\'s Form 565 records for those weeks are complete and on file. What additional documentation must the GFR verify is in order before approving the Form 7d advance?',
+      type: 'multiple-choice',
+      options: [
+        'Form 553a (Contractor\'s Certificate) — the contractor must certify completion before any advance can be released',
+        'The engineer\'s certification of progress AND the contractor\'s pay application with supporting work quantities, in addition to Form 565 records',
+        'Form 219 close-out certification — no advance can be released without final close-out',
+        'Nothing beyond Form 565 — the inspector\'s daily record is the only required supporting document',
+      ],
+      correct: 1,
+      explanation:
+        'The federal advance chain requires multiple documents per advance cycle: (1) Inspector\'s Form 565 records documenting conforming work (T13.L11), (2) contractor\'s pay application with work quantities for the period, and (3) engineer\'s certification of progress. Form 553a is a close-out document submitted in parallel with Form 219 — it is NOT required for interim advance draws. Form 219 is only at final close-out. The GFR reviews all three components before approving a Form 7d. Missing any one of the three — even with complete Form 565 records — may delay or suspend the advance.',
     },
     // ── Integrated: L09 retainage-release dispute scenario (L-09) ───────
     {

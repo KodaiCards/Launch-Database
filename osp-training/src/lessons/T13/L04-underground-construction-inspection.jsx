@@ -26,18 +26,12 @@ export const meta = {
   estimated_minutes: 38,
   vocabulary_introduced: [
     'clamp-on ground resistance measurement procedure',
-    'ASTM D1557 Modified Proctor',
   ],
   key_terms: [
     {
       term: 'clamp-on ground resistance measurement procedure',
       definition:
         'The step-by-step IEEE 81-2012 §7 method for measuring a grounding electrode\'s resistance using a clamp-on earth resistance tester. The clamp encircles the grounding conductor (not the conductor and pipe together). Method: (1) Confirm a closed current path exists (clamp method requires a loop through the earth). (2) Clamp around the grounding conductor lead, not around the bonding conductor. (3) Verify EM interference is low (trigger the interference check mode on the meter). (4) Read the resistance — must be ≤25Ω per NEC §250.56 for a single driven rod. (5) Record: meter model, serial number, calibration date, measurement reading, GPS location. Note: for bond strap resistance measurements ≤0.1Ω, the clamp-on DMM approach is inadequate — a 4-wire Kelvin (DLRO) measurement is required because the DMM\'s test-lead resistance exceeds the measurement target.',
-    },
-    {
-      term: 'ASTM D1557 Modified Proctor',
-      definition:
-        'The ASTM standard test method for determining the maximum dry density and optimum moisture content of soil (Modified Proctor Compaction Test). Establishes the 100% compaction baseline for a specific soil. Trench backfill compaction acceptance is specified as a percentage of Proctor density (e.g., "95% Modified Proctor in roadway"). This term was introduced in T10.L08. In T13, we verify that compaction TESTING was performed and that field measurements meet the project-specified percentage — we do not re-derive the Proctor baseline.',
     },
   ],
   vocabulary_assumed: [
@@ -47,6 +41,7 @@ export const meta = {
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: 'confined space, atmospheric testing, attendant', source_lesson_id: 'T18.L03' },
     { term: 'proctor density', source_lesson_id: 'T10.L08' },
+    { term: 'ASTM D1557 Modified Proctor', source_lesson_id: 'T10.L08' },
     { term: 'depth probe', source_lesson_id: 'T10.L04' },
     { term: 'cover card', source_lesson_id: 'T10.L04' },
     { term: 'Call-811, locate ticket', source_lesson_id: 'T10.L01' },
@@ -113,7 +108,7 @@ export default function T13L04UndergroundInspection() {
         choices: [{ label: 'Try again', nextNode: 'start' }],
       },
       correct_stop: {
-        text: '✅ Stop work. Per 29 CFR 1910.268(o) (telecommunications work) and T18.L03 confined space protocol: before any worker enters a below-grade vault, enclosure, or confined space, the following must be confirmed: (1) Atmospheric testing performed (O₂, CO, H₂S, LEL/combustible gas) by a competent person with a calibrated multi-gas detector. (2) Results within safe limits: O₂ 19.5–23.5%, CO <35 ppm (OSHA PEL), H₂S <10 ppm (OSHA ceiling), LEL <10% of LEL. (3) Trained attendant stationed OUTSIDE the vault, in continuous communication. (4) Rescue equipment on-site (retrieval tripod and harness, or equivalent). Document on Form 565: "Vault entry suspended 0930 — atmospheric testing equipment not on site. Contractor directed to obtain equipment before proceeding." The crew must return with the equipment before any entry.',
+        text: '✅ Stop work. Per 29 CFR 1910.268(o) (telecommunications work) and T18.L03 confined space protocol: before any worker enters a below-grade vault, enclosure, or confined space, the following must be confirmed: (1) Atmospheric testing performed (O₂, CO, H₂S, LEL/combustible gas) by a competent person with a calibrated multi-gas detector. (2) Results within safe limits per T18.L03: O₂ 19.5–23.5%, CO <25 ppm (ACGIH TLV-TWA), H₂S <1 ppm, LEL <10% of LEL. (OSHA regulatory benchmarks for reference: CO PEL = 50 ppm per 29 CFR 1910.1000 Table Z-1; H₂S ceiling = 20 ppm per 29 CFR 1910.1000 Table Z-2. T18.L03 uses the more conservative ACGIH TLV-TWA thresholds — use T18.L03 values for entry decisions.) (3) Trained attendant stationed OUTSIDE the vault, in continuous communication. (4) Rescue equipment on-site (retrieval tripod and harness, or equivalent). Document on Form 565: "Vault entry suspended 0930 — atmospheric testing equipment not on site. Contractor directed to obtain equipment before proceeding." The crew must return with the equipment before any entry.',
         choices: [{ label: 'Continue', nextNode: 'lesson' }],
       },
       wrong_human: {
@@ -337,16 +332,19 @@ export default function T13L04UndergroundInspection() {
 
         <h3>Compaction Verification</h3>
         <p>
-          Compaction requirements for trench backfill (proctor density — T10.L08) are
-          typically specified as a percentage of Modified Proctor maximum dry density (ASTM
-          D1557). Common requirements: 95% Modified Proctor in roadways, 90% in open field.
+          Compaction requirements for trench backfill are typically specified as a percentage
+          of the Modified Proctor maximum dry density per ASTM D1557 (introduced in T10.L08 as
+          proctor density). Common requirements: 95% Modified Proctor in roadways, 90% in open
+          field. T13 does not re-derive the Proctor baseline — we verify that the licensed
+          technician performed the compaction tests at the required frequency and that field
+          measurements meet the project-specified percentage.
         </p>
         <p>
           The inspector verifies: (1) a nuclear densometer or sand-cone compaction test was
           performed at the required frequency (typically every 500 linear feet of trench, per
           project spec), (2) test results meet the specified percentage, (3) test results and
           locations are documented. The inspector does NOT perform the nuclear densometer
-          test (that requires a state license in most jurisdictions), but must confirm the
+          test (that requires a state license in most jurisdictions) — only confirms the
           licensed technician performed tests at the required frequency.
         </p>
         <p>

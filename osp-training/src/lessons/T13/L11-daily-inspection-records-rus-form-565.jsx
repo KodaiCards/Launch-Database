@@ -1,7 +1,10 @@
 // T13.L11 — Daily Inspection Records: RUS Form 565
 // NEW lesson per R-9-H1/H2: Form 565 fields, federal advance chain,
 // competent-resident-inspection obligation, loan advance suspension trigger
-// Standards: 7 CFR §1753.19, §1753.22; RUS Forms 565, 7d, 553a; 2 CFR §200.334
+// Standards: 7 CFR §1753 (inspection obligation — verify current section: §1753.47 or §1753.48);
+//   RUS Forms 565, 7d, 553a; 2 CFR §200.334
+// NOTE: 7 CFR §1753.19 is [Reserved] in current eCFR. Inspection obligation lives in
+//   §1753.47 (plans and specifications, subpart F) or §1753.48 — verify at publication time.
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -20,14 +23,14 @@ export const meta = {
   learning_objectives: [
     'Complete every required field of RUS Form 565 accurately for a hypothetical construction day',
     'Explain the Form 565 → Form 7d → Form 553a → Form 219 federal advance chain and the inspector\'s role in each link',
-    'Define "competent resident inspection at all times" per 7 CFR §1753.19 and apply it to multi-crew scenarios',
+    'Define "competent resident inspection at all times" per 7 CFR §1753 [confirm current section] and apply it to multi-crew scenarios',
     'State the inspector transition protocol (vacation/illness gap) that prevents loan advance suspension',
     'Identify two actions the GFR may take when Form 565 records are missing',
   ],
   estimated_minutes: 28,
   vocabulary_introduced: [
     'RUS Form 565 (Inspector\'s Daily Report)',
-    '7 CFR §1753.19 inspection obligation',
+    '7 CFR §1753 inspection obligation [confirm current section]',
     'loan advance suspension trigger',
     'competent resident inspection',
     'RUS Form 553a (Contractor\'s Certificate)',
@@ -39,12 +42,12 @@ export const meta = {
     {
       term: 'RUS Form 565 (Inspector\'s Daily Report)',
       definition:
-        'The official daily record kept by the RUS borrower\'s field inspector on every construction day. Required by 7 CFR §1753.19. Contains: date, project and contract identifiers, weather conditions, contractor crew size and equipment present, description of work performed, measurements taken (depth, lashing pitch, ground resistance), deficiencies noted with location references, and inspector signature. Form 565 is not optional — it is the evidentiary basis for all loan advance requests and the primary document reviewed during GFR audits.',
+        'The official daily record kept by the RUS borrower\'s field inspector on every construction day. Required by 7 CFR §1753 [confirm current section]. Contains: date, project and contract identifiers, weather conditions, contractor crew size and equipment present, description of work performed, measurements taken (depth, lashing pitch, ground resistance), deficiencies noted with location references, and inspector signature. Form 565 is not optional — it is the evidentiary basis for all loan advance requests and the primary document reviewed during GFR audits.',
     },
     {
-      term: '7 CFR §1753.19 inspection obligation',
+      term: '7 CFR §1753 inspection obligation [confirm current section]',
       definition:
-        'The federal regulation that mandates "competent resident inspection at all times" during construction of RUS-financed telephone plant. This means the inspector must be physically present during active construction — not a drive-by once per week. The requirement cannot be satisfied by relying on contractor quality control; it requires an independent, owner-employed or owner-hired inspector. Failure to maintain continuous qualified inspection is a loan condition default.',
+        'The RUS regulation (7 CFR Part 1753, verify current active section — §1753.19 is [Reserved] in current eCFR; inspection obligation likely in §1753.47 or §1753.48 — confirm at publication time) that mandates "competent resident inspection at all times" during construction of RUS-financed telephone plant. This means the inspector must be physically present during active construction — not a drive-by once per week. The requirement cannot be satisfied by relying on contractor quality control; it requires an independent, owner-employed or owner-hired inspector. Failure to maintain continuous qualified inspection is a loan condition default.',
     },
     {
       term: 'loan advance suspension trigger',
@@ -54,7 +57,7 @@ export const meta = {
     {
       term: 'competent resident inspection',
       definition:
-        'Under 7 CFR §1753.19, an inspection performed by a qualified individual with sufficient technical knowledge to evaluate OSP construction against contract documents, applicable standards (NESC, RUS bulletins, project specifications), and regulatory requirements. "Resident" means on-site during active construction. "Competent" means technically qualified — not just any available employee. If the designated inspector is absent (vacation, illness), a qualified substitute must be designated in writing and their Form 565 entries must identify them by name and qualification.',
+        'Under 7 CFR §1753 [confirm current section], an inspection performed by a qualified individual with sufficient technical knowledge to evaluate OSP construction against contract documents, applicable standards (NESC, RUS bulletins, project specifications), and regulatory requirements. "Resident" means on-site during active construction. "Competent" means technically qualified — not just any available employee. If the designated inspector is absent (vacation, illness), a qualified substitute must be designated in writing and their Form 565 entries must identify them by name and qualification.',
     },
     {
       term: 'RUS Form 553a (Contractor\'s Certificate)',
@@ -120,7 +123,7 @@ export default function T13L11DailyInspectionRecords() {
         choices: [{ label: 'Continue', nextNode: 'lesson' }],
       },
       wrong_contractor: {
-        text: '❌ The inspector\'s records must be independently prepared by the inspector. Having the contractor prepare your inspection reports destroys the independence that makes the records credible. The GFR will reject such records, and this would be a violation of 7 CFR §1753.19\'s independent-inspection requirement.',
+        text: '❌ The inspector\'s records must be independently prepared by the inspector. Having the contractor prepare your inspection reports destroys the independence that makes the records credible. The GFR will reject such records, and this would be a violation of 7 CFR §1753 [confirm current section] independent-inspection requirement.',
         choices: [{ label: 'Try again', nextNode: 'start' }],
       },
       lesson: {
@@ -133,7 +136,7 @@ export default function T13L11DailyInspectionRecords() {
   const quizQuestions = [
     {
       id: 'q1',
-      question: 'Under 7 CFR §1753.19, "competent resident inspection at all times" means:',
+      question: 'Under 7 CFR §1753 [confirm current section], "competent resident inspection at all times" means:',
       type: 'multiple-choice',
       options: [
         'The inspector must be on-site every day construction is active, and must be technically qualified',

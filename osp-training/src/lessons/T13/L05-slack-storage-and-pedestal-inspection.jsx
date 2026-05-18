@@ -47,13 +47,13 @@ export default function T13L05SlackInspection() {
       type: 'multiple-choice',
       options: [
         '30 feet minimum at aerial attachment points, 50–100 feet in vaults',
-        '50 feet at intermediate points, 100 feet at splice points per the project MSA schedule from T10.L06',
+        'Verify against the contract MSA schedule (commonly 50 ft at intermediate points / 100 ft at splice points per T10.L06, but the contract governs)',
         'Independently defined by the inspector based on the fiber count',
         'Whatever the contractor installed — slack minimums are a design deliverable, not an inspection parameter',
       ],
       correct: 1,
       explanation:
-        'T13 does NOT introduce independent slack minimums. The project MSA (Minimum Slack Allocation) schedule from T10.L06 defines the minimums for this project. T13 verifies installed slack against those project-specific values. The T10.L06 values (50 ft intermediate / 100 ft splice point) are common but the actual numbers for any project come from the project MSA schedule.',
+        'T13 does NOT introduce independent slack minimums. The project MSA (Minimum Slack Allocation) schedule, introduced in T10.L06, defines the minimums for this specific project. T13 verifies installed slack against those contract values. The 50 ft / 100 ft figures are a common industry band (often used as defaults in T10.L06 examples) but the actual enforceable numbers for any project come from the contract MSA schedule — the inspector verifies against that document, not against T13 or T10 standalone values.',
     },
     {
       id: 'q2',

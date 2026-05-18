@@ -89,7 +89,7 @@ export default function T13L09ContractorRelations() {
         choices: [{ label: 'Continue', nextNode: 'lesson' }],
       },
       wrong_contractor: {
-        text: '❌ The contractor cannot prepare your inspection records. The 7 CFR §1753.19 requirement is for INDEPENDENT inspector documentation. Having the contractor write what the inspector should have observed destroys the independence that makes the records credible. This is a false records risk AND a 7 CFR §1753.19 violation.',
+        text: '❌ The contractor cannot prepare your inspection records. The 7 CFR §1753 [confirm current section] requirement is for INDEPENDENT inspector documentation. Having the contractor write what the inspector should have observed destroys the independence that makes the records credible. This is a false records risk AND a 7 CFR §1753 independent-inspection violation.',
         choices: [{ label: 'Try again', nextNode: 'start' }],
       },
       lesson: {

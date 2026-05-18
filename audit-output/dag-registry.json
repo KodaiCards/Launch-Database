@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-18T00:17:06.987Z",
-  "lesson_count": 179,
+  "generated_at": "2026-05-18T04:25:45.330Z",
+  "lesson_count": 191,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -1120,6 +1120,70 @@
       "as-tested fiber record"
     ],
     "T12.L15": [],
+    "T13.L01": [
+      "QA/QC",
+      "material deficiency",
+      "rework",
+      "retainage",
+      "inspection segment",
+      "inspector-arrival workflow"
+    ],
+    "T13.L02": [
+      "pre-construction acceptance baseline",
+      "acceptance criteria document",
+      "inspection cadence"
+    ],
+    "T13.L03": [
+      "pre-climb structural assessment",
+      "go/no-go decision (pole condition)"
+    ],
+    "T13.L04": [
+      "clamp-on ground resistance measurement procedure"
+    ],
+    "T13.L05": [],
+    "T13.L06": [
+      "material lot traceability",
+      "lot/batch number verification"
+    ],
+    "T13.L07": [
+      "OTDR archive verification checklist",
+      "records package handoff",
+      "Form 219 certification scope"
+    ],
+    "T13.L08": [
+      "47 CFR §32.2411 (Poles)",
+      "joint-use inspection record",
+      "clearance verification log"
+    ],
+    "T13.L09": [
+      "DSC (differing-site conditions) protocol",
+      "retainage release milestone",
+      "re-inspection cost allocation"
+    ],
+    "T13.L10": [],
+    "T13.L11": [
+      "RUS Form 565 (Inspector's Daily Report)",
+      "7 CFR §1753 inspection obligation [confirm current section]",
+      "loan advance suspension trigger",
+      "competent resident inspection",
+      "RUS Form 553a (Contractor's Certificate)",
+      "RUS Form 7d (advance authorization)",
+      "construction advance chain",
+      "federal advance certification"
+    ],
+    "T13.L12": [
+      "Davis-Bacon Act",
+      "prevailing wage determination",
+      "WH-347 (certified payroll)",
+      "wage determination poster",
+      "worker classification (Davis-Bacon)",
+      "NEPA condition of approval",
+      "ESA §7 incidental-take protocol (construction site)",
+      "inadvertent discovery protocol (Section 106)",
+      "environmental compliance monitoring log",
+      "2 CFR §200.334 records retention",
+      "non-Federal entity obligation"
+    ],
     "T14.L01": [
       "grounding",
       "bonding",
@@ -3784,6 +3848,132 @@
     ],
     "as-tested fiber record": [
       "T12.L14"
+    ],
+    "qa/qc": [
+      "T13.L01"
+    ],
+    "material deficiency": [
+      "T13.L01"
+    ],
+    "rework": [
+      "T13.L01"
+    ],
+    "retainage": [
+      "T13.L01"
+    ],
+    "inspection segment": [
+      "T13.L01"
+    ],
+    "inspector-arrival workflow": [
+      "T13.L01"
+    ],
+    "pre-construction acceptance baseline": [
+      "T13.L02"
+    ],
+    "acceptance criteria document": [
+      "T13.L02"
+    ],
+    "inspection cadence": [
+      "T13.L02"
+    ],
+    "pre-climb structural assessment": [
+      "T13.L03"
+    ],
+    "go/no-go decision (pole condition)": [
+      "T13.L03"
+    ],
+    "clamp-on ground resistance measurement procedure": [
+      "T13.L04"
+    ],
+    "material lot traceability": [
+      "T13.L06"
+    ],
+    "lot/batch number verification": [
+      "T13.L06"
+    ],
+    "otdr archive verification checklist": [
+      "T13.L07"
+    ],
+    "records package handoff": [
+      "T13.L07"
+    ],
+    "form 219 certification scope": [
+      "T13.L07"
+    ],
+    "47 cfr §32.2411 (poles)": [
+      "T13.L08"
+    ],
+    "joint-use inspection record": [
+      "T13.L08"
+    ],
+    "clearance verification log": [
+      "T13.L08"
+    ],
+    "dsc (differing-site conditions) protocol": [
+      "T13.L09"
+    ],
+    "retainage release milestone": [
+      "T13.L09"
+    ],
+    "re-inspection cost allocation": [
+      "T13.L09"
+    ],
+    "rus form 565 (inspector's daily report)": [
+      "T13.L11"
+    ],
+    "7 cfr §1753 inspection obligation [confirm current section]": [
+      "T13.L11"
+    ],
+    "loan advance suspension trigger": [
+      "T13.L11"
+    ],
+    "competent resident inspection": [
+      "T13.L11"
+    ],
+    "rus form 553a (contractor's certificate)": [
+      "T13.L11"
+    ],
+    "rus form 7d (advance authorization)": [
+      "T13.L11"
+    ],
+    "construction advance chain": [
+      "T13.L11"
+    ],
+    "federal advance certification": [
+      "T13.L11"
+    ],
+    "davis-bacon act": [
+      "T13.L12"
+    ],
+    "prevailing wage determination": [
+      "T13.L12"
+    ],
+    "wh-347 (certified payroll)": [
+      "T13.L12"
+    ],
+    "wage determination poster": [
+      "T13.L12"
+    ],
+    "worker classification (davis-bacon)": [
+      "T13.L12"
+    ],
+    "nepa condition of approval": [
+      "T13.L12"
+    ],
+    "esa §7 incidental-take protocol (construction site)": [
+      "T13.L12"
+    ],
+    "inadvertent discovery protocol (section 106)": [
+      "T13.L12"
+    ],
+    "environmental compliance monitoring log": [
+      "T13.L12"
+    ],
+    "2 cfr §200.334 records retention": [
+      "T13.L12"
+    ],
+    "non-federal entity obligation": [
+      "T13.L12"
     ],
     "grounding": [
       "T14.L01"
@@ -12491,6 +12681,651 @@
       "verified": true
     },
     {
+      "from_lesson": "T13.L01",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L01",
+      "term": "acceptance walk",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L01",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L01",
+      "term": "kick-back authority",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L01",
+      "term": "field inspector",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L01",
+      "term": "substantial completion",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L01",
+      "term": "RUS Form 219",
+      "claimed_source": "T01.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "inspection segment",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "QA/QC",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "MSA",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "proctor density",
+      "claimed_source": "T10.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "OTDR",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR' is introduced by T01.L08, T12.L01, not T12.L07"
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "ground resistance threshold (25Ω, NEC §250.56)",
+      "claimed_source": "T14.L06",
+      "verified": false,
+      "reason": "'ground resistance threshold (25Ω, NEC §250.56)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L02",
+      "term": "MUTCD traffic control",
+      "claimed_source": "T10.L03",
+      "verified": false,
+      "reason": "'MUTCD traffic control' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "inspection segment",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "acceptance criteria document",
+      "claimed_source": "T13.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "inspection cadence",
+      "claimed_source": "T13.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "fall protection, aerial lift",
+      "claimed_source": "T18.L04",
+      "verified": false,
+      "reason": "'fall protection, aerial lift' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "MAD, MAB",
+      "claimed_source": "T18.L07",
+      "verified": false,
+      "reason": "'MAD, MAB' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "PPE (general)",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'PPE (general)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L03",
+      "term": "MUTCD traffic control",
+      "claimed_source": "T10.L03",
+      "verified": false,
+      "reason": "'MUTCD traffic control' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "inspection segment",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "acceptance criteria document",
+      "claimed_source": "T13.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "confined space, atmospheric testing, attendant",
+      "claimed_source": "T18.L03",
+      "verified": false,
+      "reason": "'confined space, atmospheric testing, attendant' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "proctor density",
+      "claimed_source": "T10.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "ASTM D1557 Modified Proctor",
+      "claimed_source": "T10.L08",
+      "verified": false,
+      "reason": "'ASTM D1557 Modified Proctor' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "depth probe",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "cover card",
+      "claimed_source": "T10.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "Call-811, locate ticket",
+      "claimed_source": "T10.L01",
+      "verified": false,
+      "reason": "'Call-811, locate ticket' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "ground resistance threshold (25Ω, NEC §250.56)",
+      "claimed_source": "T14.L06",
+      "verified": false,
+      "reason": "'ground resistance threshold (25Ω, NEC §250.56)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "MUTCD traffic control",
+      "claimed_source": "T10.L03",
+      "verified": false,
+      "reason": "'MUTCD traffic control' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L04",
+      "term": "PPE (general)",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'PPE (general)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "acceptance walk",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "MSA",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "slack loop",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "NIU slack",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "expansion loop",
+      "claimed_source": "T10.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "locate ticket",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "material deficiency",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L05",
+      "term": "as-built drawings",
+      "claimed_source": "T10.L11",
+      "verified": false,
+      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "kick-back authority",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "material deficiency",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "rework",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "retainage",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "inspection segment",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L06",
+      "term": "OTDR",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR' is introduced by T01.L08, T12.L01, not T12.L07"
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "RUS Form 219",
+      "claimed_source": "T01.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "RUS Form 553a (Contractor's Certificate)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "construction advance chain",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "federal advance certification",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "FCA implied certification",
+      "claimed_source": "T04.L09",
+      "verified": false,
+      "reason": "'FCA implied certification' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "OTDR",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR' is introduced by T01.L08, T12.L01, not T12.L07"
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "OLTS",
+      "claimed_source": "T12.L06",
+      "verified": false,
+      "reason": "'OLTS' is introduced by T01.L08, T12.L01, not T12.L06"
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "material lot traceability",
+      "claimed_source": "T13.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "2 CFR §200.334 records retention",
+      "claimed_source": "T13.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "ground resistance threshold (25Ω, NEC §250.56)",
+      "claimed_source": "T14.L06",
+      "verified": false,
+      "reason": "'ground resistance threshold (25Ω, NEC §250.56)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "NEPA condition of approval",
+      "claimed_source": "T13.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L07",
+      "term": "inspection cadence",
+      "claimed_source": "T13.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "NESC (National Electrical Safety Code)",
+      "claimed_source": "T05.L02",
+      "verified": false,
+      "reason": "'NESC (National Electrical Safety Code)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "loading district",
+      "claimed_source": "T05.L02",
+      "verified": false,
+      "reason": "'loading district' is introduced by T05.L06, not T05.L02"
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "pre-construction acceptance baseline",
+      "claimed_source": "T13.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "acceptance criteria document",
+      "claimed_source": "T13.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "MAD, MAB",
+      "claimed_source": "T18.L07",
+      "verified": false,
+      "reason": "'MAD, MAB' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L08",
+      "term": "Form 219 certification scope",
+      "claimed_source": "T13.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "acceptance walk",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "kick-back authority",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "substantial completion",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "inspection segment",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "material deficiency",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "rework",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "retainage",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "construction advance chain",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L09",
+      "term": "Form 219 certification scope",
+      "claimed_source": "T13.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L11",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L11",
+      "term": "RUS Form 219",
+      "claimed_source": "T01.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L11",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L11",
+      "term": "inspector-arrival workflow",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L11",
+      "term": "QA/QC",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L11",
+      "term": "material deficiency",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "RUS Form 219",
+      "claimed_source": "T01.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "7 CFR §1753 inspection obligation [confirm current section]",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "construction advance chain",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
       "from_lesson": "T14.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -14507,11 +15342,37 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1527,
-  "broken_pointers_count": 105,
-  "missing_source_lesson_pointers": [],
+  "verified_pointers_count": 1596,
+  "broken_pointers_count": 142,
+  "missing_source_lesson_pointers": [
+    {
+      "from_lesson": "T13.L09",
+      "term": "NEPA",
+      "claimed_source": "T09",
+      "reason": "Source lesson T09 not found in curriculum"
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "NEPA",
+      "claimed_source": "T09",
+      "reason": "Source lesson T09 not found in curriculum"
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "ESA §7 consultation",
+      "claimed_source": "T09",
+      "reason": "Source lesson T09 not found in curriculum"
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "Section 106 (NHPA)",
+      "claimed_source": "T09",
+      "reason": "Source lesson T09 not found in curriculum"
+    }
+  ],
   "lessons_with_no_vocabulary_assumed": [
-    "T01.L01"
+    "T01.L01",
+    "T13.L10"
   ],
   "vocabulary_assumed_without_source_id": []
 }

@@ -230,7 +230,7 @@ export default function T13L01InspectorRole() {
       ],
       correct: 1,
       explanation:
-        'Form 565 is the Inspector\'s Daily Report — required by 7 CFR §1753.19. It documents daily construction progress and inspection findings. The Form 565 chain feeds Form 7d (advance authorization) and ultimately Form 219 (close-out certification). Missing Form 565 weeks can cause the GFR to suspend loan advance draws — directly impacting the borrower\'s cash flow. Form 565 is filled out every day, not just when deficiencies occur.',
+        'Form 565 is the Inspector\'s Daily Report — required by 7 CFR §1753 [confirm current section]. It documents daily construction progress and inspection findings. The Form 565 chain feeds Form 7d (advance authorization) and ultimately Form 219 (close-out certification). Missing Form 565 weeks can cause the GFR to suspend loan advance draws — directly impacting the borrower\'s cash flow. Form 565 is filled out every day, not just when deficiencies occur.',
     },
   ];
 
@@ -322,7 +322,7 @@ export default function T13L01InspectorRole() {
         <h2>The Inspector-Arrival Daily Workflow</h2>
         <p>
           The six steps below are the professional standard for how an OSP inspector starts every
-          single field day. This is not optional on RUS-program work — 7 CFR §1753.19 requires
+          single field day. This is not optional on RUS-program work — 7 CFR §1753 [confirm current section] requires
           "competent resident inspection at all times" during construction, which means continuous
           presence AND consistent documentation. The inspector-arrival workflow is how you achieve
           that documentation requirement day after day.
@@ -336,7 +336,7 @@ export default function T13L01InspectorRole() {
 
         <p>
           <strong>Why Step 3 matters:</strong> If you arrive at the site and the contractor's
-          representative is not present, work cannot legally proceed under 7 CFR §1753.19 on
+          representative is not present, work cannot legally proceed under 7 CFR §1753 [confirm current section] on
           RUS-financed projects. Your Form 565 entry for that day: "Contractor representative
           absent at 0730 arrival. [Name/Company] notified by phone at 0732. Work held until
           0815 when representative [Name] arrived." That entry protects the owner if there is
@@ -368,7 +368,7 @@ export default function T13L01InspectorRole() {
         <h3>RUS Form 565 — The Foundation of the Advance Chain</h3>
         <p>
           On RUS-financed projects, the inspector's daily record is <strong>RUS Form 565</strong>{' '}
-          (Inspector's Daily Report), required by 7 CFR §1753.19. Think of Form 565 as the raw
+          (Inspector's Daily Report), required by 7 CFR §1753 [confirm current section]. Think of Form 565 as the raw
           evidence that eventually justifies every dollar of federal loan money the borrower draws.
           Here's why that matters to you personally as the inspector:
         </p>

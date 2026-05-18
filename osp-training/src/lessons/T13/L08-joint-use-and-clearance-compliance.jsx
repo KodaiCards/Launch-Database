@@ -31,7 +31,7 @@ export const meta = {
     {
       term: '47 CFR §32.2411 (Poles)',
       definition:
-        'The FCC Part 32 plant account that covers poles — the physical wooden or concrete structures. Under 47 CFR Part 32 (Uniform System of Accounts for telecommunications carriers), pole investment and maintenance are recorded under Account 2411 (Poles). This is distinct from §32.2420, which is the parent account category "Cable and Wire Facilities" — §32.2420 covers cables and wires, not poles. When recording joint-use pole inspections in carrier accounting records, cite §32.2411 (Poles). Do not confuse with §32.2410 (Cable and wire), §32.2411 (Poles), or §32.2420 (parent "Cable and wire facilities" umbrella). For pole-attachment inspection records on RUS-financed projects, the relevant account is §32.2411.',
+        'The FCC Part 32 plant account that covers poles — the physical wooden or concrete structures. Under 47 CFR Part 32 (Uniform System of Accounts for telecommunications carriers), pole investment and maintenance are recorded under Account 2411 (Poles). This is distinct from §32.2420, which is the parent account category "Cable and Wire Facilities." When recording joint-use pole inspections in carrier accounting records, cite §32.2411 (Poles). Do not confuse with §32.2410 (Cable and wire — individual cable plant, one account level down) or §32.2420 (parent "Cable and wire facilities" umbrella that encompasses §32.2410 and other sub-accounts). Account 2411 (Poles) is a separate top-level plant account, not under §32.2420. For pole-attachment inspection records on RUS-financed projects, the relevant account is §32.2411.',
     },
     {
       term: 'joint-use inspection record',

@@ -221,7 +221,7 @@ export default function T13L07CloseOutDocumentation() {
             </tr>
             <tr>
               <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>All Form 565 daily reports</td>
-              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>7 CFR §1753.19; 2 CFR §200.334</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>7 CFR §1753 [confirm current section]; 2 CFR §200.334</td>
               <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>No gaps in coverage for active construction days</td>
             </tr>
             <tr>

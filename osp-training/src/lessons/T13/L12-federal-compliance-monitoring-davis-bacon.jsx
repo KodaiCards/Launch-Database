@@ -41,7 +41,7 @@ export const meta = {
     {
       term: 'Davis-Bacon Act',
       definition:
-        'Federal law (40 USC §3142) that requires contractors and subcontractors performing construction, alteration, or repair work under a federally funded contract to pay workers no less than the locally prevailing wages and fringe benefits for the same type of work in the same locality. On RUS-financed projects, Davis-Bacon applies to ALL construction contracts — there is no minimum dollar threshold for RUS loans. The inspector\'s role: collect weekly certified payrolls (WH-347) and verify wage rates against the wage determination included in the contract documents.',
+        'Federal law (40 USC §3142) that requires contractors and subcontractors performing construction, alteration, or repair work under a federally funded contract to pay workers no less than the locally prevailing wages and fringe benefits for the same type of work in the same locality. The statute\'s threshold is $2,000 (40 USC §3142(a)); however, RUS loan agreements incorporate Davis-Bacon compliance as a condition of financial assistance per RUS Form 515 Article IX — effectively applying it to ALL RUS construction contracts regardless of dollar amount. On RUS-financed projects, Davis-Bacon applies to every construction contract, not just those above $2,000. The inspector\'s role: collect weekly certified payrolls (WH-347) and verify wage rates against the wage determination included in the contract documents.',
     },
     {
       term: 'prevailing wage determination',
@@ -98,7 +98,7 @@ export const meta = {
     { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
     { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
-    { term: '7 CFR §1753.19 inspection obligation', source_lesson_id: 'T13.L11' },
+    { term: '7 CFR §1753 inspection obligation [confirm current section]', source_lesson_id: 'T13.L11' },
     { term: 'construction advance chain', source_lesson_id: 'T13.L11' },
     { term: 'NEPA', source_lesson_id: 'T09' },
     { term: 'ESA §7 consultation', source_lesson_id: 'T09' },
@@ -162,7 +162,7 @@ export default function T13L12FederalComplianceMonitoring() {
       ],
       correct: 2,
       explanation:
-        'Davis-Bacon (40 USC §3142) applies to ALL RUS-financed construction. The $2,000 threshold applies to other federal programs but NOT to RUS loans. If RUS financing is involved, Davis-Bacon applies regardless of contract size. This is a common misunderstanding — contractors who have worked on non-RUS projects may not realize there is no threshold exemption for RUS.',
+        'Davis-Bacon (40 USC §3142) applies to ALL RUS-financed construction. The statute\'s $2,000 threshold (40 USC §3142(a)) applies to federal appropriated-fund contracts, but RUS loan agreements incorporate Davis-Bacon compliance as a condition of financial assistance per RUS Form 515 Article IX — this contractual incorporation makes the $2,000 statutory threshold irrelevant for RUS projects. If RUS financing is involved, Davis-Bacon applies regardless of contract size. This is a common misunderstanding — contractors who have worked on non-RUS federal programs may not realize the loan-agreement mechanism removes the threshold.',
     },
     {
       id: 'q2',

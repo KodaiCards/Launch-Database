@@ -320,15 +320,17 @@ export default function T13L03AerialInspection() {
         <p>
           <strong>Step 4 — Compare to schedule:</strong> Read the engineered sag schedule for
           this span length at the observed ambient temperature. The measured sag should be
-          within the specified tolerance (typically ±2 inches of the scheduled value).
+          within the standard field tolerance of ±2 inches of the scheduled value (or ±5% of
+          design sag, whichever is greater on longer spans). If the project specification states
+          a different tolerance, that value governs — verify with the engineer of record.
         </p>
         <p>
-          <strong>Step 5 — Escalation:</strong> If sag is outside tolerance:
+          <strong>Step 5 — Escalation:</strong> If sag is outside the ±2-inch (or project-specified) tolerance:
         </p>
         <ul>
           <li>Under-sag (cable too tight) → excessive tension, can damage cable at ice/wind loading → issue punch-list, require re-sag.</li>
           <li>Over-sag (cable too loose) → NESC Rule 232 clearance may be violated at minimum temperature → issue punch-list, require re-sag AND verify clearances are still met.</li>
-          <li>More than 6 inches outside tolerance → stop stringing work on this route until the cause is identified.</li>
+          <li><strong>More than 6 inches outside tolerance → stop stringing work on this route and notify the engineer of record.</strong> A 6-inch deviation may indicate incorrect stringing tension, wrong hardware, thermal effects not accounted for in the schedule, or span measurement error. Work resumes only after the engineer identifies and approves a resolution.</li>
         </ul>
       </section>
 
