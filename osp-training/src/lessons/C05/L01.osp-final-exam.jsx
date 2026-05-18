@@ -140,30 +140,30 @@ const finalExamQuestions = [
   {
     id: 'c05-final-008',
     topic: 'T03',
-    stem: 'A direct-burial cable is specified with an aluminum armor layer. What is the primary failure mode if aluminum armor is used instead of steel armor?',
+    stem: 'A direct-burial cable is specified with an aluminum armor layer. What is the primary advantage of corrugated aluminum tape (CAT) armor over steel (CST) armor?',
     choices: [
-      'Aluminum corrodes faster in acidic soils, compromising structural integrity',
+      'Aluminum forms a passive oxide layer and has better corrosion resistance than steel in moist or coastal soil',
       'Aluminum is too flexible and offers inadequate protection against digging',
-      'Aluminum interacts with copper grounding, creating galvanic corrosion on the messenger',
-      'Aluminum has no recognized failure mode; it is equivalent to steel in OSP',
+      'Aluminum interacts with copper grounding, creating beneficial surface hardening',
+      'Aluminum is lighter and equivalent to steel in all environmental conditions',
     ],
     answerIndex: 0,
     explanation:
-      'Aluminum armor corrodes in acidic and alkaline soils, reducing structural protection and eventually exposing the fiber bundle. Steel armor (with proper corrosion inhibition) is the OSP standard. Some applications use stainless steel for extreme corrosion risk. (Source: T03, ICEA S-87-640)',
+      'CAT (corrugated aluminum tape) armor has better corrosion resistance than steel CST (corrugated steel tape) because aluminum forms a passive oxide layer that prevents rusting. The tradeoff: aluminum is softer than steel, providing less rodent resistance. CAT is preferred in aerial and conduit applications where weight and corrosion resistance matter more than rodent protection. CST remains preferred for direct-burial in rodent-active areas. (Source: T03.L07, ICEA S-87-640)',
   },
   {
     id: 'c05-final-009',
     topic: 'T03',
-    stem: 'What pulling tension is appropriate for a 12-fiber loose-tube cable rated for 600 pounds tensile strength?',
+    stem: 'A cable datasheet specifies "breaking strength 600 pounds" and "GR-20 installation max 600 pounds." A crew pulls at 300 pounds tension. Is this pulling tension acceptable?',
     choices: [
-      '600 pounds (maximum strength)',
-      '300 pounds (50% of strength)',
-      '150 pounds (25% of strength)',
-      'Any tension below 600 pounds; no percentage limit',
+      'No; 300 pounds exceeds GR-20 installation limit of 150 pounds (25% of break)',
+      'Yes; 300 pounds is below the breaking strength of 600 pounds',
+      'Yes; GR-20 allows up to 600 pounds (full datasheet value) during installation',
+      'Cannot determine without knowing the cable diameter and buffer tube material',
     ],
     answerIndex: 2,
     explanation:
-      'Standard practice limits installation pulling tension to 25% of the cable\'s rated breaking strength to avoid damage to the fiber and buffer tubes. For a 600-pound cable, maximum pulling tension is 150 pounds. Exceeding this risks fiber micro-cracking and premature failure. (Source: T03, cable manufacturers\' specifications)',
+      'GR-20 (industry standard) allows installation pulling tension up to the cable\'s full datasheet rating during initial pulling, typically 300-2700 pounds depending on cable size and construction. The 25% rule applies to LONG-TERM sustained tension (EDS = Establish Designed Strength over months/years). During installation, GR-20 allows full datasheet pulling without damage to properly-designed cable. After installation, sustained tension is limited to EDS (16-25% RTS). (Source: T03.L08, cable manufacturers\' GR-20 specifications)',
   },
 
   // T04 Route Survey (2 questions)
@@ -214,16 +214,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-013',
     topic: 'T05',
-    stem: 'A pole attachment point is 30 feet above ground. A fiber cable is to be attached 10 feet below the power line attachment. What is the vertical clearance under NESC Rule 215A?',
+    stem: 'A pole attachment point is 30 feet above ground. A fiber cable is to be attached 10 feet below the power line attachment (static position). What is the vertical clearance under NESC Rule 235?',
     choices: [
       '10 feet (measured to the pole)',
       '20 feet (the distance between the two attachments)',
       'Cannot be determined without knowing the power line sag',
-      '40 inches (30 inches + 10-inch cable separation)',
+      '40 inches (the minimum Rule 235 clearance between supply and communication cable)',
     ],
     answerIndex: 2,
     explanation:
-      'Vertical clearance under Rule 215A (30 inches) is measured between the lowest point of the power conductor and the highest point of the telecom conductor, accounting for sag in both. Without power line sag data, the clearance cannot be confirmed. Additional analysis is required. (Source: T05, NESC Rule 215A)',
+      'Vertical clearance under Rule 235 (communication-to-supply separation, typically 30-40 inches) is measured between the lowest point of the power conductor and the highest point of the telecom conductor, accounting for sag in both lines under worst-case (wind/ice) conditions. A static 10-foot separation is adequate for clearance, but the actual clearance must account for wind deflection and ice-added sag. Without sag analysis, the safe clearance cannot be confirmed. (Source: T05.L02, NESC Rule 235)',
   },
   {
     id: 'c05-final-014',
@@ -244,16 +244,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-015',
     topic: 'T06',
-    stem: 'An underground route in a private residential property requires crossing a buried utility line (water main). What is the required clearance under NESC Rule 335?',
+    stem: 'An underground route must cross a buried water main. Under NESC §35 Rule 354, what is the minimum clearance between the fiber conduit and the water main?',
     choices: [
       '12 inches horizontal clearance',
-      '24 inches vertical clearance',
-      '6 inches clearance in any direction',
-      'NESC Rule 335 does not specify clearance; contact the water utility for local rules',
+      '6-12 inches vertical clearance at crossings',
+      'Direct contact is acceptable if the water utility approves',
+      'NESC §35 Rule 354 specifies only horizontal clearance, not vertical',
     ],
-    answerIndex: 3,
+    answerIndex: 1,
     explanation:
-      'NESC Rule 335 addresses separation of communication cables from other utilities but references state and local regulations. Clearance for water main crossing is typically 12 inches horizontal or 12 inches vertical, varying by jurisdiction and utility. Direct coordination with the water utility is required. (Source: T06, NESC Rule 335)',
+      'NESC §35 (Underground Supply and Communication) Rule 354 specifies that communication cables crossing other utilities require 6-12 inches vertical separation (typical at crossings) and 12-24 inches horizontal separation (along parallel runs). At a water main crossing, 6-12 inches vertical is the standard. Direct coordination with the water utility is required to confirm actual depths and route conflicts. (Source: T06.L09, NESC Rule 354)',
   },
   {
     id: 'c05-final-016',
@@ -304,16 +304,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-019',
     topic: 'T08',
-    stem: 'An OTMR (One-Touch Make-Ready) was issued 14 days ago. No work has started. What is the FCC deadline for completion?',
+    stem: 'An OTMR (One-Touch Make-Ready) was issued 14 days ago by the pole owner. The pole owner has not started work. Under FCC 47 CFR §1.1411, what is the consequence?',
     choices: [
-      '15 days from OTMR issue',
-      '30 days from OTMR issue',
-      'One business day after make-ready work begins',
-      '60 days from OTMR issue (extendable to 120 days by agreement)',
+      'The fiber company must wait 30 more days for the pole owner to complete',
+      'The fiber company can proceed with self-help: perform the make-ready themselves after the 15-day clock expires',
+      'The FCC automatically approves the attachment if work is not complete by day 15',
+      'The fiber company must request an extension in writing',
     ],
-    answerIndex: 2,
+    answerIndex: 1,
     explanation:
-      'OTMR timing (per FCC 18-111) is complex. Generally, work must be completed within a reasonable timeframe, and if the attaching party disputes the completion deadline, the FCC requires one business day\'s notice before starting work. Detailed timing depends on the type of work (simple vs. complex make-ready). Consult the OTMR paperwork for exact dates. (Source: T08, FCC 18-111)',
+      'Under FCC 47 CFR §1.1411 (pole access rule), the pole owner has 15 days from receipt of a complete OTMR application to complete make-ready work. If the pole owner does not start work within 15 days, the attaching party (fiber company) may proceed with self-help: perform the work themselves at the pole owner\'s expense. The 15-day clock is a deadline, not a courtesy. (Source: T08.L02, FCC 47 CFR §1.1411)',
   },
 
   // T09 Permitting (2 questions)
@@ -424,16 +424,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-027',
     topic: 'T12',
-    stem: 'An OTDR is set to 200-meter pulse width to maximize range. A splice at 500 meters is not visible in the trace. Why?',
+    stem: 'An OTDR is set to a 2 µs (microsecond) pulse width, which corresponds to approximately 200 meters of attenuation dead zone (ADZ). A splice at 500 meters is not visible in the trace. Why?',
     choices: [
       'The splice is outside the OTDR range',
-      'The 200-meter pulse width creates a dead zone larger than the splice signature',
+      'The 200-meter ADZ creates a spatial dead zone larger than the splice signature; events within 200 meters of each other cannot be resolved',
       'The OTDR wavelength (1310 nm) does not resolve discrete events at 500 meters',
       'The splice is perfect (zero loss) and therefore invisible',
     ],
     answerIndex: 1,
     explanation:
-      'A 200-meter pulse width creates a spatial dead zone; any event smaller than 200 meters is not resolved. A 500-meter splice is outside the dead zone but may still be masked by the pulse-width limiting. For better resolution at 500 meters, use a shorter pulse (50 meters) and accept shorter range. (Source: T12, TIA-568.3-D)',
+      'Pulse width (measured in nanoseconds or microseconds) determines the length of light sent into the fiber. A longer pulse covers more distance but creates a larger attenuation dead zone (ADZ in meters). A 2 µs pulse → ~200 meter ADZ. Any event smaller in signature than the ADZ is not resolved separately. For better resolution at 500 meters, use a shorter pulse (e.g., 500 ns → 50 meter ADZ) and accept shorter range. (Source: T12.L06, TIA-568.3-D)',
   },
   {
     id: 'c05-final-028',
@@ -484,16 +484,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-031',
     topic: 'T14',
-    stem: 'A grounding electrode system measures 8 Ω resistance. The design target is 5 Ω or less per RUS Bulletin 1751F-815. What is the next step?',
+    stem: 'A grounding electrode system measures 8 Ω resistance. At an FDH (fiber distribution hub) cabinet, Telcordia GR-1275 §5 requires ≤5 Ω. What is the next step?',
     choices: [
       'Accept as-is; 8 Ω is close to 5 Ω and field variations are normal',
-      'Add a second driven rod or upgrade the electrode system to lower resistance',
-      'Document the variance and submit to RUS for approval',
+      'Add a second driven rod (at least 8 feet away) or use conductive backfill (bentonite) and re-test',
+      'Document the variance and submit to the telecom regulator for approval',
       'Increase the depth of the existing rod by 2 feet and re-measure',
     ],
     answerIndex: 1,
     explanation:
-      'RUS specifies maximum ground resistance (typically 5–10 Ω depending on environment). 8 Ω exceeds the target and increases lightning and stray-voltage risk. The contractor must add parallel electrodes (second driven rod, parallel conductor) or use a chemical ground enhancer to lower resistance to spec. (Source: T14, RUS 1751F-815; IEEE Std 1100)',
+      'Telcordia GR-1275 §5 specifies ≤5 Ω for FDH ground systems (stricter than NEC §250.56\'s ≤25 Ω for poles). At 8 Ω, the system is non-compliant. Remediation: drive a second rod at least 8 feet away from the first rod (creating a parallel combination), or backfill the rod area with bentonite (conductive soil amendment) to lower soil resistivity. Re-test after improvement. For some high-resistivity soils, a ground ring electrode may be needed to reach 5 Ω. (Source: T14.L04, Telcordia GR-1275 §5; NEC §250.56)',
   },
   {
     id: 'c05-final-032',
@@ -576,16 +576,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-037',
     topic: 'T18',
-    stem: 'A crew is working on a pole with a Class II PPG (Rubber Glove Class). The crew member touches a power line and does not feel shock or arc. What is the likely cause?',
+    stem: 'An OSP crew is working near a power line. Per OSHA 1910.269, how should an unqualified telecom worker approach the power line?',
     choices: [
-      'The power line is de-energized',
-      'Class II gloves are faulty and not providing protection',
-      'The power line voltage is below 50 volts and is safe to touch',
-      'The crew member is wearing a Class II harness, not Class II gloves; glove class and harness class are different',
+      'Maintain minimum approach distance (MAD) outside the "red zone" based on voltage class',
+      'Never touch or assume de-energization without a voltmeter verification',
+      'Contact a qualified electrical worker or utility to verify de-energization before any work',
+      'All of the above',
     ],
-    answerIndex: 0,
+    answerIndex: 3,
     explanation:
-      'Class II gloves are rated for up to 17,000 volts and should provide protection if properly maintained and tested. If no shock is felt, the line is likely de-energized or is at zero potential. Never assume de-energization without verification via a voltmeter; always test power lines before touching. (Source: T18, ANSI Z89.1; OSHA 1910.268)',
+      'OSHA 1910.269 (Electrical Workers) and 1910.268 (Telecommunications) classify OSP crews as unqualified to work on or near power lines. The curriculum teaches: (1) Maintain Minimum Approach Distance (MAD) determined by voltage; (2) Never assume de-energization without visible, independent verification (voltmeter test); (3) Request utility assistance or qualified electrical worker presence if work must approach the power line. Rubber glove classes (ANSI D120) are for qualified electrical workers, not for OSP crews. (Source: T18.L03, OSHA 1910.269)',
   },
   {
     id: 'c05-final-038',
@@ -650,16 +650,16 @@ const finalExamQuestions = [
   {
     id: 'c05-final-042',
     topic: 'T02',
-    stem: 'Chromatic dispersion in a 10-km G.652.D span at 1550 nm is approximately 170 ps (0.17 ns). How does this affect a 10-Gbps signal?',
+    stem: 'Chromatic dispersion in a 10-km G.652.D span at 1550 nm is approximately 170 ps. How does this affect a 10-Gbps signal?',
     choices: [
       'Dispersion is negligible; 10 Gbps can tolerate 0.17 ns',
       'Dispersion limits the span to ~5 km; regeneration is required at 10 km',
-      'Dispersion causes bit-rate-dependent signal widening; at 10 Gbps, 0.17 ns is approximately 1.7% of the bit window, acceptable but approaching limits',
+      'Dispersion causes bit-rate-dependent signal widening; at 10 Gbps (100-ps bit width), 170 ps dispersion is significant (1.7× the bit window) but still within 10-km reach tolerance',
       'Dispersion only affects wavelengths below 1310 nm; 1550 nm is unaffected',
     ],
     answerIndex: 2,
     explanation:
-      'At 10 Gbps, each bit is ~100 ps wide. A dispersion of 170 ps is significant (170 ps / 100 ps ≈ 1.7 bit windows). G.652.D is designed for 1550-nm operation; dispersion is unavoidable but within tolerances for distances up to ~40–80 km depending on modulation and receiver sensitivity. At 10 km, 170 ps is acceptable. (Source: T02, ITU-T G.652.D)',
+      'At 10 Gbps, each bit is ~100 ps wide. A dispersion of 170 ps spreads the signal by 1.7× the bit width (170 ÷ 100 ≈ 1.7), which is significant. G.652.D is designed for 1550-nm operation; chromatic dispersion is unavoidable but within receiver tolerances for distances up to ~40–80 km depending on receiver sensitivity and modulation format. At 10 km with 170 ps total dispersion, the signal is acceptable but approaching limits. Higher-dispersion systems (40+ km at 10 Gbps) require dispersion compensation. (Source: T02.L03, ITU-T G.652.D)',
   },
   {
     id: 'c05-final-043',
